@@ -1,0 +1,30 @@
+lint:
+  use:
+    - DEFAULT
+  enum_zero_value_suffix: _NONE
+  service_suffix: API
+  ignore: []
+  except: []
+  allow_comment_ignores: false
+  ignore_only: {}
+deps:
+  - github.com/bufbuild/protoc-gen-validate@v1.2.1
+generate:
+  inputs:
+    - directory: hatchet
+    - directory: crossplane
+#    - git_repo:
+#        url: github.com/stroppy-io/stroppy
+#        sub_directory: proto
+  plugins:
+    - name: go
+      out: ../../internal/proto
+      opts:
+        paths: source_relative
+    - name: go-grpc
+      out: ../../internal/proto
+      opts:
+        paths: source_relative
+breaking:
+  ignore: []
+  against_git_ref: master

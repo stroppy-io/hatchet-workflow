@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package crossplane;
+
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane";
+
+message OnlyNameRef {
+    string name = 1 [(validate.rules).string.min_len = 1];
+}
+
+message Ref {
+    string namespace = 1 [(validate.rules).string.min_len = 1];
+    string name = 2 [(validate.rules).string.min_len = 1];
+}
+
+message ExtRef {
+    Ref ref = 1 [(validate.rules).message.required = true];
+    string api_version = 2 [(validate.rules).string.min_len = 1];
+    string kind = 3 [(validate.rules).string.min_len = 1];
+}
+
+message Base64Value {
+    string value = 1 [(validate.rules).string.min_len = 1];
+}
+
+message Metadata {
+    string name = 1 [(validate.rules).string.min_len = 1];
+    string namespace = 2 [(validate.rules).string.min_len = 1];
+    map<string, string> annotations = 3;
+}
+
+enum SupportedCloud {
+    SUPPORTED_CLOUD_UNSPECIFIED = 0;
+    SUPPORTED_CLOUD_YANDEX = 1;
+}
+
+message Ip {
+    string value = 1 [(validate.rules).string.min_len = 1];
+}
+
+message Cidr {
+    string value = 1 [(validate.rules).string.min_len = 1];
+}
+
+enum CrossplaneDeletionPolicy {
+    CROSSPLANE_DELETION_POLICY_UNSPECIFIED = 0;
+    DELETE = 1;
+    ORPHAN = 2;
+}
+

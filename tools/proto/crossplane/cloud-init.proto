@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package crossplane;
+
+
+option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane";
+
+message User {
+    string name = 1;
+    string gecos = 2;                           // Fullname/description
+    repeated string groups = 3;
+    string shell = 4;
+    string passwd = 5;                          // Hashed password
+    string plain_text_passwd = 6;               // (not recommended)
+    bool lock_passwd = 7;
+    repeated string ssh_authorized_keys = 8;
+    repeated string ssh_import_id = 9;          // gh:user or lp:user
+    bool sudo = 10;
+    string sudo_rules = 11;                     // Example: "ALL=(ALL) NOPASSWD:ALL"
+    string home = 12;
+    bool no_create_home = 13;
+    bool system = 14;
+    string primary_group = 15;
+    int32 uid = 16;
+    int32 expiredate = 17;
+}
+
+message SSHConfig {
+    bool emit_keys_to_console = 1;
+    repeated SSHKey ssh_keys = 2;
+    repeated string ssh_authorized_keys = 3;    // Global keys
+    bool disable_root = 4;
+    string disable_root_opts = 5;
+    bool allow_public_ssh_keys = 6;
+}
+
+message SSHKey {
+    string type = 1;      // rsa, ed25519, ecdsa
+    string private = 2;
+    string public = 3;
+    optional string cert = 4;
+}
+
+message WriteFile {
+    string path = 1;
+    string content = 2;
+    string encoding = 3;          // text, base64, gzip, gz+base64
+    string owner = 4;             // "user:group"
+    string permissions = 5;       // "0644"
+    bool append = 6;
+    bool defer = 7;
+}
+
+message CloudInit {
+    repeated User users = 1;
+    repeated string groups = 2;
+
+    SSHConfig ssh = 3;
+    repeated WriteFile write_files = 4;
+    repeated string runcmd = 6;
+}

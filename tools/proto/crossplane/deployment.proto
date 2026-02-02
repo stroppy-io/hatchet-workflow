@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package crossplane;
+
+import "crossplane/cloud-init.proto";
+import "crossplane/resource.proto";
+import "crossplane/types.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane";
+
+message MachineInfo {
+    uint32 cores = 1; // in cores
+    uint32 memory = 2; // in GB
+    uint32 disk = 3; // in GB
+    string base_image_id = 5 [(validate.rules).string.min_len = 1];
+}
+
+message Quota {
+    enum Kind {
+        KIND_UNSPECIFIED = 0;
+        KIND_NETWORK = 1;
+        KIND_SUBNET = 2;
+        KIND_VM = 3;
+        KIND_PUBLIC_IP_ADDRESS = 4;
+    }
+    message List {repeated Quota quotas = 1;}
+    crossplane.SupportedCloud cloud = 1 [(validate.rules).enum.defined_only = true];
+    Kind kind = 2 [(validate.rules).enum.defined_only = true];
+    uint32 maximum = 4 [(validate.rules).uint32.gte = 0];
+    uint32 current = 5 [(validate.rules).uint32.gte = 0];
+}
+
+message Deployment {
+    message Vm {
+        message NetworkParams {
+            Ip internal_ip = 1 [(validate.rules).message.required = true];
+            Cidr assigned_cidr = 2 [(validate.rules).message.required = true];
+            bool public_ip = 3;
+            optional string external_ip = 4; // if public_ip == true
+        }
+        MachineInfo machine_info = 4 [(validate.rules).message.required = true];
+        CloudInit cloud_init = 6 [(validate.rules).message.required = true];
+        NetworkParams network_params = 7 [(validate.rules).message.required = true];
+    }
+    message Cluster {
+        repeated Vm vms = 2 [(validate.rules).repeated.min_items = 1];
+    }
+    string id = 1 [(validate.rules).string.min_len = 1];
+    SupportedCloud supported_cloud = 2 [(validate.rules).enum.defined_only = true];
+    Quota.List using_quotas = 3 [(validate.rules).repeated.min_items = 1];
+    repeated Resource resources = 4 [(validate.rules).message.required = true];
+    oneof deployment {
+        Vm vm = 100 [(validate.rules).message.required = true];
+        Cluster cluster = 101 [(validate.rules).message.required = true];
+    }
+}
