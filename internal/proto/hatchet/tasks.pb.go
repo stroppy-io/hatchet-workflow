@@ -109,6 +109,7 @@ type NightlyCloudStroppyResponse struct {
 	RunId         string                            `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	Deployments   map[string]*crossplane.Deployment `protobuf:"bytes,2,rep,name=deployments,proto3" json:"deployments,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	GrafanaUrl    string                            `protobuf:"bytes,3,opt,name=grafana_url,json=grafanaUrl,proto3" json:"grafana_url,omitempty"`
+	UsedNetwork   *crossplane.CidrWithIps           `protobuf:"bytes,4,opt,name=used_network,json=usedNetwork,proto3" json:"used_network,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -162,6 +163,13 @@ func (x *NightlyCloudStroppyResponse) GetGrafanaUrl() string {
 		return x.GrafanaUrl
 	}
 	return ""
+}
+
+func (x *NightlyCloudStroppyResponse) GetUsedNetwork() *crossplane.CidrWithIps {
+	if x != nil {
+		return x.UsedNetwork
+	}
+	return nil
 }
 
 type ProvisionCloudResponse struct {
@@ -457,12 +465,13 @@ const file_hatchet_tasks_proto_rawDesc = "" +
 	"\n" +
 	"stroppy_vm\x18\x06 \x01(\v2\x17.crossplane.MachineInfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tstroppyVm\x12D\n" +
 	"\vrun_request\x18\b \x01(\v2\x19.hatchet.RunStroppyParamsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
-	"runRequest\"\xa3\x02\n" +
+	"runRequest\"\xe9\x02\n" +
 	"\x1bNightlyCloudStroppyResponse\x12\x1f\n" +
 	"\x06run_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05runId\x12a\n" +
 	"\vdeployments\x18\x02 \x03(\v25.hatchet.NightlyCloudStroppyResponse.DeploymentsEntryB\b\xfaB\x05\x9a\x01\x02\b\x02R\vdeployments\x12(\n" +
 	"\vgrafana_url\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\n" +
-	"grafanaUrl\x1aV\n" +
+	"grafanaUrl\x12D\n" +
+	"\fused_network\x18\x04 \x01(\v2\x17.crossplane.CidrWithIpsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\vusedNetwork\x1aV\n" +
 	"\x10DeploymentsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.crossplane.DeploymentR\x05value:\x028\x01\"\xac\x02\n" +
@@ -539,18 +548,19 @@ var file_hatchet_tasks_proto_depIdxs = []int32{
 	12, // 3: hatchet.NightlyCloudStroppyRequest.stroppy_vm:type_name -> crossplane.MachineInfo
 	4,  // 4: hatchet.NightlyCloudStroppyRequest.run_request:type_name -> hatchet.RunStroppyParams
 	6,  // 5: hatchet.NightlyCloudStroppyResponse.deployments:type_name -> hatchet.NightlyCloudStroppyResponse.DeploymentsEntry
-	7,  // 6: hatchet.ProvisionCloudResponse.deployments:type_name -> hatchet.ProvisionCloudResponse.DeploymentsEntry
-	13, // 7: hatchet.ProvisionCloudResponse.network:type_name -> crossplane.CidrWithIps
-	8,  // 8: hatchet.InstallPostgresParams.settings:type_name -> hatchet.InstallPostgresParams.SettingsEntry
-	9,  // 9: hatchet.InstallPostgresParams.orioledb_settings:type_name -> hatchet.InstallPostgresParams.OrioledbSettingsEntry
-	10, // 10: hatchet.RunStroppyParams.env:type_name -> hatchet.RunStroppyParams.EnvEntry
-	14, // 11: hatchet.NightlyCloudStroppyResponse.DeploymentsEntry.value:type_name -> crossplane.Deployment
-	14, // 12: hatchet.ProvisionCloudResponse.DeploymentsEntry.value:type_name -> crossplane.Deployment
-	13, // [13:13] is the sub-list for method output_type
-	13, // [13:13] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	13, // 6: hatchet.NightlyCloudStroppyResponse.used_network:type_name -> crossplane.CidrWithIps
+	7,  // 7: hatchet.ProvisionCloudResponse.deployments:type_name -> hatchet.ProvisionCloudResponse.DeploymentsEntry
+	13, // 8: hatchet.ProvisionCloudResponse.network:type_name -> crossplane.CidrWithIps
+	8,  // 9: hatchet.InstallPostgresParams.settings:type_name -> hatchet.InstallPostgresParams.SettingsEntry
+	9,  // 10: hatchet.InstallPostgresParams.orioledb_settings:type_name -> hatchet.InstallPostgresParams.OrioledbSettingsEntry
+	10, // 11: hatchet.RunStroppyParams.env:type_name -> hatchet.RunStroppyParams.EnvEntry
+	14, // 12: hatchet.NightlyCloudStroppyResponse.DeploymentsEntry.value:type_name -> crossplane.Deployment
+	14, // 13: hatchet.ProvisionCloudResponse.DeploymentsEntry.value:type_name -> crossplane.Deployment
+	14, // [14:14] is the sub-list for method output_type
+	14, // [14:14] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_hatchet_tasks_proto_init() }

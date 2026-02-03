@@ -414,6 +414,46 @@ func (m *NightlyCloudStroppyResponse) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if m.GetUsedNetwork() == nil {
+		err := NightlyCloudStroppyResponseValidationError{
+			field:  "UsedNetwork",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetUsedNetwork()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, NightlyCloudStroppyResponseValidationError{
+					field:  "UsedNetwork",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, NightlyCloudStroppyResponseValidationError{
+					field:  "UsedNetwork",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetUsedNetwork()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return NightlyCloudStroppyResponseValidationError{
+				field:  "UsedNetwork",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return NightlyCloudStroppyResponseMultiError(errors)
 	}

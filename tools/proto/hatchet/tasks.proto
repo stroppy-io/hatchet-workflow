@@ -29,6 +29,7 @@ message NightlyCloudStroppyResponse {
     string run_id = 1 [(validate.rules).string.len = 26];
     map<string, crossplane.Deployment> deployments = 2 [(validate.rules).map.min_pairs = 2];
     string grafana_url = 3 [(validate.rules).string.min_len = 1];
+    crossplane.CidrWithIps used_network = 4 [(validate.rules).message.required = true];
 }
 
 message ProvisionCloudResponse {

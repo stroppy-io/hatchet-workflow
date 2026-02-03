@@ -165,7 +165,14 @@ func NightlyCloudStroppyProvisionWorkflow(
 	workflow.NewTask(
 		"destroy-deployments",
 		func(ctx hatchetLib.Context, input *hatchet.NightlyCloudStroppyResponse) (*hatchet.NightlyCloudStroppyResponse, error) {
-			err := provision.DestroyDeployments(ctx, crossplaneSvc, input.Deployments)
+			err := provision.DestroyDeployments(
+				ctx,
+				crossplaneSvc,
+				quotaManager,
+				networkManager,
+				input.Deployments,
+				input.GetUsedNetwork(),
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -186,10 +193,17 @@ func NightlyCloudStroppyProvisionWorkflow(
 		}
 		// Access successful step outputs for cleanup
 		var step1Output *hatchet.ProvisionCloudResponse
-		if err := ctx.StepOutput("first-step", &step1Output); err == nil {
+		if err := ctx.StepOutput("build-deployments", &step1Output); err == nil {
 			log.Printf("First step completed successfully with: %s", step1Output.RunId)
 		}
-		errr := provision.DestroyDeployments(ctx, crossplaneSvc, step1Output.Deployments)
+		errr := provision.DestroyDeployments(
+			ctx,
+			crossplaneSvc,
+			quotaManager,
+			networkManager,
+			step1Output.Deployments,
+			step1Output.GetNetwork(),
+		)
 		if errr != nil {
 			return FailureHandlerOutput{
 				FailureHandled: false,

@@ -115,7 +115,7 @@ func BuildDeployments(
 	}
 	quotaErr := quotaManager.ReserveQuotas(
 		ctx,
-		append(postgresVm.UsingQuotas.Quotas, stroppyVm.UsingQuotas.Quotas...),
+		append(postgresVm.UsingQuotas, stroppyVm.UsingQuotas...),
 	)
 	if quotaErr != nil {
 		return nil, network, fmt.Errorf("failed to reserve quotas: %w", quotaErr)
@@ -159,11 +159,27 @@ func WaitDeployment(ctx context.Context, actor DeploymentActor, deployments Depl
 	return waitPool.Wait()
 }
 
-func DestroyDeployments(ctx context.Context, actor DeploymentActor, deployments DeploymentsMap) error {
+func DestroyDeployments(
+	ctx context.Context,
+	actor DeploymentActor,
+	quotaManager QuotaManager,
+	ipManager NetworkManager,
+	deployments DeploymentsMap,
+	network *crossplane.CidrWithIps,
+) error {
 	for _, deployment := range deployments {
 		if err := actor.DestroyDeployment(ctx, deployment); err != nil {
 			return fmt.Errorf("failed to destroy deployment: %w", err)
 		}
+	}
+	if err := ipManager.FreeNetwork(ctx, network); err != nil {
+		return fmt.Errorf("failed to free network: %w", err)
+	}
+	if err := quotaManager.FreeQuotas(ctx, append(
+		deployments[PostgresVmName].UsingQuotas,
+		deployments[StroppyVmName].UsingQuotas...,
+	)); err != nil {
+		return fmt.Errorf("failed to free quotas: %w", err)
 	}
 	return nil
 }
