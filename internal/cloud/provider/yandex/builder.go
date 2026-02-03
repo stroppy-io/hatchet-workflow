@@ -310,9 +310,7 @@ func (y *CloudBuilder) BuildVmDeployment(
 	return &crossplane.Deployment{
 		Id:             ids2.NewUlid().GetId(),
 		SupportedCloud: crossplane.SupportedCloud_SUPPORTED_CLOUD_YANDEX,
-		UsingQuotas: &crossplane.Quota_List{
-			Quotas: quotas,
-		},
+		UsingQuotas:    quotas,
 		Resources: []*crossplane.Resource{
 			{
 				Ref:          ids2.ExtRefFromResourceDef(networkRef, networkDef),

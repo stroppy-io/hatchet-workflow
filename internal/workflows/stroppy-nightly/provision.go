@@ -38,10 +38,6 @@ const (
 	DefaultVmPlatformId        = "standard-v2"
 )
 
-const (
-	DefaultStroppyVersion = "v2.0.0"
-)
-
 func NightlyCloudStroppyProvisionWorkflow(
 	c *hatchetLib.Client,
 	valkeyClient valkeygo.Client,
@@ -124,10 +120,15 @@ func NightlyCloudStroppyProvisionWorkflow(
 		"run-stroppy-test",
 		func(ctx hatchetLib.Context, input *hatchet.ProvisionCloudResponse) (*hatchet.NightlyCloudStroppyResponse, error) {
 			ctx.Log("Running Stroppy Test")
+			var workflowInput hatchet.NightlyCloudStroppyRequest
+			err = ctx.WorkflowInput(&workflowInput)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get workflow input: %w", err)
+			}
 			postgresResult, err := NightlyCloudStroppyRunPostgresTask(input.GetRunId(), c).Run(ctx, &hatchet.InstallPostgresParams{
 				RunId:    input.GetRunId(),
-				Version:  "17",
-				Settings: map[string]string{},
+				Version:  workflowInput.GetPostgresVersion(),
+				Settings: workflowInput.GetPostgresSettings(),
 				//EnableOrioledb: false,
 				//OrioledbSettings: map[string]string{},
 			})
@@ -141,10 +142,13 @@ func NightlyCloudStroppyProvisionWorkflow(
 			}
 			runStroppyResult, err := NightlyCloudStroppyRunWorkflow(input.GetRunId(), c).
 				Run(ctx, &hatchet.RunStroppyParams{
-					RunId:        input.GetRunId(),
-					WorkloadName: "tpcc",
+					RunId: input.GetRunId(),
+					//BinaryPath: "" // NOTE: Not set cause installer chose it by himself
+					Version:      workflowInput.GetStroppyVersion(),
+					WorkloadName: workflowInput.GetStroppyWorkflowName(),
 					// WARN: This is the Postgres URL for the first IP in the network by provisioning design
 					ConnectionString: install.DefaultConfig().PostgresUrlByIp(input.GetNetwork().GetIps()[0].GetValue()),
+					Env:              workflowInput.GetStroppyEnv(),
 				})
 			if err != nil {
 				return nil, fmt.Errorf("failed to run Stroppy workflow: %w", err)

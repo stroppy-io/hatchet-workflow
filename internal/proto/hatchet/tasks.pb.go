@@ -11,7 +11,6 @@ import (
 	crossplane "github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -29,14 +28,17 @@ type NightlyCloudStroppyRequest struct {
 	Cloud crossplane.SupportedCloud `protobuf:"varint,1,opt,name=cloud,proto3,enum=crossplane.SupportedCloud" json:"cloud,omitempty"` // now ony yandex
 	// MachineInfo for the VM where PostgreSQL will be installed.
 	// We also use this Vm settings for run orioledb.
-	PostgresVm            *crossplane.MachineInfo `protobuf:"bytes,2,opt,name=postgres_vm,json=postgresVm,proto3" json:"postgres_vm,omitempty"`
-	InstallPostgresParams *InstallPostgresParams  `protobuf:"bytes,3,opt,name=install_postgres_params,json=installPostgresParams,proto3" json:"install_postgres_params,omitempty"`
+	PostgresVm       *crossplane.MachineInfo `protobuf:"bytes,2,opt,name=postgres_vm,json=postgresVm,proto3" json:"postgres_vm,omitempty"`
+	PostgresVersion  string                  `protobuf:"bytes,3,opt,name=postgres_version,json=postgresVersion,proto3" json:"postgres_version,omitempty"`
+	PostgresSettings map[string]string       `protobuf:"bytes,4,rep,name=postgres_settings,json=postgresSettings,proto3" json:"postgres_settings,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// MachineInfo for the VM where Stroppy will be installed.
 	// We also use this Vm settings for run orioledb.
-	StroppyVm     *crossplane.MachineInfo `protobuf:"bytes,6,opt,name=stroppy_vm,json=stroppyVm,proto3" json:"stroppy_vm,omitempty"`
-	RunRequest    *RunStroppyParams       `protobuf:"bytes,8,opt,name=run_request,json=runRequest,proto3" json:"run_request,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	StroppyVm           *crossplane.MachineInfo `protobuf:"bytes,6,opt,name=stroppy_vm,json=stroppyVm,proto3" json:"stroppy_vm,omitempty"`
+	StroppyVersion      string                  `protobuf:"bytes,7,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
+	StroppyWorkflowName string                  `protobuf:"bytes,8,opt,name=stroppy_workflow_name,json=stroppyWorkflowName,proto3" json:"stroppy_workflow_name,omitempty"`
+	StroppyEnv          map[string]string       `protobuf:"bytes,9,rep,name=stroppy_env,json=stroppyEnv,proto3" json:"stroppy_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *NightlyCloudStroppyRequest) Reset() {
@@ -83,9 +85,16 @@ func (x *NightlyCloudStroppyRequest) GetPostgresVm() *crossplane.MachineInfo {
 	return nil
 }
 
-func (x *NightlyCloudStroppyRequest) GetInstallPostgresParams() *InstallPostgresParams {
+func (x *NightlyCloudStroppyRequest) GetPostgresVersion() string {
 	if x != nil {
-		return x.InstallPostgresParams
+		return x.PostgresVersion
+	}
+	return ""
+}
+
+func (x *NightlyCloudStroppyRequest) GetPostgresSettings() map[string]string {
+	if x != nil {
+		return x.PostgresSettings
 	}
 	return nil
 }
@@ -97,9 +106,23 @@ func (x *NightlyCloudStroppyRequest) GetStroppyVm() *crossplane.MachineInfo {
 	return nil
 }
 
-func (x *NightlyCloudStroppyRequest) GetRunRequest() *RunStroppyParams {
+func (x *NightlyCloudStroppyRequest) GetStroppyVersion() string {
 	if x != nil {
-		return x.RunRequest
+		return x.StroppyVersion
+	}
+	return ""
+}
+
+func (x *NightlyCloudStroppyRequest) GetStroppyWorkflowName() string {
+	if x != nil {
+		return x.StroppyWorkflowName
+	}
+	return ""
+}
+
+func (x *NightlyCloudStroppyRequest) GetStroppyEnv() map[string]string {
+	if x != nil {
+		return x.StroppyEnv
 	}
 	return nil
 }
@@ -456,16 +479,25 @@ var File_hatchet_tasks_proto protoreflect.FileDescriptor
 
 const file_hatchet_tasks_proto_rawDesc = "" +
 	"\n" +
-	"\x13hatchet/tasks.proto\x12\ahatchet\x1a\x1bcrossplane/deployment.proto\x1a\x16crossplane/types.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x17validate/validate.proto\"\x86\x03\n" +
+	"\x13hatchet/tasks.proto\x12\ahatchet\x1a\x1bcrossplane/deployment.proto\x1a\x16crossplane/types.proto\x1a\x17validate/validate.proto\"\xc3\x05\n" +
 	"\x1aNightlyCloudStroppyRequest\x12:\n" +
 	"\x05cloud\x18\x01 \x01(\x0e2\x1a.crossplane.SupportedCloudB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05cloud\x12B\n" +
 	"\vpostgres_vm\x18\x02 \x01(\v2\x17.crossplane.MachineInfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
-	"postgresVm\x12`\n" +
-	"\x17install_postgres_params\x18\x03 \x01(\v2\x1e.hatchet.InstallPostgresParamsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x15installPostgresParams\x12@\n" +
+	"postgresVm\x122\n" +
+	"\x10postgres_version\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x0fpostgresVersion\x12f\n" +
+	"\x11postgres_settings\x18\x04 \x03(\v29.hatchet.NightlyCloudStroppyRequest.PostgresSettingsEntryR\x10postgresSettings\x12@\n" +
 	"\n" +
-	"stroppy_vm\x18\x06 \x01(\v2\x17.crossplane.MachineInfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tstroppyVm\x12D\n" +
-	"\vrun_request\x18\b \x01(\v2\x19.hatchet.RunStroppyParamsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
-	"runRequest\"\xe9\x02\n" +
+	"stroppy_vm\x18\x06 \x01(\v2\x17.crossplane.MachineInfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tstroppyVm\x120\n" +
+	"\x0fstroppy_version\x18\a \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x0estroppyVersion\x12;\n" +
+	"\x15stroppy_workflow_name\x18\b \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x13stroppyWorkflowName\x12T\n" +
+	"\vstroppy_env\x18\t \x03(\v23.hatchet.NightlyCloudStroppyRequest.StroppyEnvEntryR\n" +
+	"stroppyEnv\x1aC\n" +
+	"\x15PostgresSettingsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a=\n" +
+	"\x0fStroppyEnvEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe9\x02\n" +
 	"\x1bNightlyCloudStroppyResponse\x12\x1f\n" +
 	"\x06run_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05runId\x12a\n" +
 	"\vdeployments\x18\x02 \x03(\v25.hatchet.NightlyCloudStroppyResponse.DeploymentsEntryB\b\xfaB\x05\x9a\x01\x02\b\x02R\vdeployments\x12(\n" +
@@ -523,7 +555,7 @@ func file_hatchet_tasks_proto_rawDescGZIP() []byte {
 	return file_hatchet_tasks_proto_rawDescData
 }
 
-var file_hatchet_tasks_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_hatchet_tasks_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_hatchet_tasks_proto_goTypes = []any{
 	(*NightlyCloudStroppyRequest)(nil),  // 0: hatchet.NightlyCloudStroppyRequest
 	(*NightlyCloudStroppyResponse)(nil), // 1: hatchet.NightlyCloudStroppyResponse
@@ -531,31 +563,33 @@ var file_hatchet_tasks_proto_goTypes = []any{
 	(*InstallPostgresParams)(nil),       // 3: hatchet.InstallPostgresParams
 	(*RunStroppyParams)(nil),            // 4: hatchet.RunStroppyParams
 	(*RunStroppyResponse)(nil),          // 5: hatchet.RunStroppyResponse
-	nil,                                 // 6: hatchet.NightlyCloudStroppyResponse.DeploymentsEntry
-	nil,                                 // 7: hatchet.ProvisionCloudResponse.DeploymentsEntry
-	nil,                                 // 8: hatchet.InstallPostgresParams.SettingsEntry
-	nil,                                 // 9: hatchet.InstallPostgresParams.OrioledbSettingsEntry
-	nil,                                 // 10: hatchet.RunStroppyParams.EnvEntry
-	(crossplane.SupportedCloud)(0),      // 11: crossplane.SupportedCloud
-	(*crossplane.MachineInfo)(nil),      // 12: crossplane.MachineInfo
-	(*crossplane.CidrWithIps)(nil),      // 13: crossplane.CidrWithIps
-	(*crossplane.Deployment)(nil),       // 14: crossplane.Deployment
+	nil,                                 // 6: hatchet.NightlyCloudStroppyRequest.PostgresSettingsEntry
+	nil,                                 // 7: hatchet.NightlyCloudStroppyRequest.StroppyEnvEntry
+	nil,                                 // 8: hatchet.NightlyCloudStroppyResponse.DeploymentsEntry
+	nil,                                 // 9: hatchet.ProvisionCloudResponse.DeploymentsEntry
+	nil,                                 // 10: hatchet.InstallPostgresParams.SettingsEntry
+	nil,                                 // 11: hatchet.InstallPostgresParams.OrioledbSettingsEntry
+	nil,                                 // 12: hatchet.RunStroppyParams.EnvEntry
+	(crossplane.SupportedCloud)(0),      // 13: crossplane.SupportedCloud
+	(*crossplane.MachineInfo)(nil),      // 14: crossplane.MachineInfo
+	(*crossplane.CidrWithIps)(nil),      // 15: crossplane.CidrWithIps
+	(*crossplane.Deployment)(nil),       // 16: crossplane.Deployment
 }
 var file_hatchet_tasks_proto_depIdxs = []int32{
-	11, // 0: hatchet.NightlyCloudStroppyRequest.cloud:type_name -> crossplane.SupportedCloud
-	12, // 1: hatchet.NightlyCloudStroppyRequest.postgres_vm:type_name -> crossplane.MachineInfo
-	3,  // 2: hatchet.NightlyCloudStroppyRequest.install_postgres_params:type_name -> hatchet.InstallPostgresParams
-	12, // 3: hatchet.NightlyCloudStroppyRequest.stroppy_vm:type_name -> crossplane.MachineInfo
-	4,  // 4: hatchet.NightlyCloudStroppyRequest.run_request:type_name -> hatchet.RunStroppyParams
-	6,  // 5: hatchet.NightlyCloudStroppyResponse.deployments:type_name -> hatchet.NightlyCloudStroppyResponse.DeploymentsEntry
-	13, // 6: hatchet.NightlyCloudStroppyResponse.used_network:type_name -> crossplane.CidrWithIps
-	7,  // 7: hatchet.ProvisionCloudResponse.deployments:type_name -> hatchet.ProvisionCloudResponse.DeploymentsEntry
-	13, // 8: hatchet.ProvisionCloudResponse.network:type_name -> crossplane.CidrWithIps
-	8,  // 9: hatchet.InstallPostgresParams.settings:type_name -> hatchet.InstallPostgresParams.SettingsEntry
-	9,  // 10: hatchet.InstallPostgresParams.orioledb_settings:type_name -> hatchet.InstallPostgresParams.OrioledbSettingsEntry
-	10, // 11: hatchet.RunStroppyParams.env:type_name -> hatchet.RunStroppyParams.EnvEntry
-	14, // 12: hatchet.NightlyCloudStroppyResponse.DeploymentsEntry.value:type_name -> crossplane.Deployment
-	14, // 13: hatchet.ProvisionCloudResponse.DeploymentsEntry.value:type_name -> crossplane.Deployment
+	13, // 0: hatchet.NightlyCloudStroppyRequest.cloud:type_name -> crossplane.SupportedCloud
+	14, // 1: hatchet.NightlyCloudStroppyRequest.postgres_vm:type_name -> crossplane.MachineInfo
+	6,  // 2: hatchet.NightlyCloudStroppyRequest.postgres_settings:type_name -> hatchet.NightlyCloudStroppyRequest.PostgresSettingsEntry
+	14, // 3: hatchet.NightlyCloudStroppyRequest.stroppy_vm:type_name -> crossplane.MachineInfo
+	7,  // 4: hatchet.NightlyCloudStroppyRequest.stroppy_env:type_name -> hatchet.NightlyCloudStroppyRequest.StroppyEnvEntry
+	8,  // 5: hatchet.NightlyCloudStroppyResponse.deployments:type_name -> hatchet.NightlyCloudStroppyResponse.DeploymentsEntry
+	15, // 6: hatchet.NightlyCloudStroppyResponse.used_network:type_name -> crossplane.CidrWithIps
+	9,  // 7: hatchet.ProvisionCloudResponse.deployments:type_name -> hatchet.ProvisionCloudResponse.DeploymentsEntry
+	15, // 8: hatchet.ProvisionCloudResponse.network:type_name -> crossplane.CidrWithIps
+	10, // 9: hatchet.InstallPostgresParams.settings:type_name -> hatchet.InstallPostgresParams.SettingsEntry
+	11, // 10: hatchet.InstallPostgresParams.orioledb_settings:type_name -> hatchet.InstallPostgresParams.OrioledbSettingsEntry
+	12, // 11: hatchet.RunStroppyParams.env:type_name -> hatchet.RunStroppyParams.EnvEntry
+	16, // 12: hatchet.NightlyCloudStroppyResponse.DeploymentsEntry.value:type_name -> crossplane.Deployment
+	16, // 13: hatchet.ProvisionCloudResponse.DeploymentsEntry.value:type_name -> crossplane.Deployment
 	14, // [14:14] is the sub-list for method output_type
 	14, // [14:14] is the sub-list for method input_type
 	14, // [14:14] is the sub-list for extension type_name
@@ -574,7 +608,7 @@ func file_hatchet_tasks_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_hatchet_tasks_proto_rawDesc), len(file_hatchet_tasks_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

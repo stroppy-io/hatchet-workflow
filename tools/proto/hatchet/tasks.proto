@@ -4,7 +4,6 @@ package hatchet;
 
 import "crossplane/deployment.proto";
 import "crossplane/types.proto";
-import "google/protobuf/empty.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet";
@@ -16,13 +15,16 @@ message NightlyCloudStroppyRequest {
         We also use this Vm settings for run orioledb.
     */
     crossplane.MachineInfo postgres_vm = 2 [(validate.rules).message.required = true];
-    InstallPostgresParams install_postgres_params = 3 [(validate.rules).message.required = true];
+    string postgres_version = 3 [(validate.rules).string.min_len = 1];
+    map<string, string> postgres_settings = 4;
     /*
         MachineInfo for the VM where Stroppy will be installed.
         We also use this Vm settings for run orioledb.
     */
     crossplane.MachineInfo stroppy_vm = 6 [(validate.rules).message.required = true];
-    RunStroppyParams run_request = 8 [(validate.rules).message.required = true];
+    string stroppy_version = 7 [(validate.rules).string.min_len = 1];
+    string stroppy_workflow_name = 8 [(validate.rules).string.min_len = 1];
+    map<string, string> stroppy_env = 9;
 }
 
 message NightlyCloudStroppyResponse {

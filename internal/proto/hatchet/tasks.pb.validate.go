@@ -112,10 +112,10 @@ func (m *NightlyCloudStroppyRequest) validate(all bool) error {
 		}
 	}
 
-	if m.GetInstallPostgresParams() == nil {
+	if utf8.RuneCountInString(m.GetPostgresVersion()) < 1 {
 		err := NightlyCloudStroppyRequestValidationError{
-			field:  "InstallPostgresParams",
-			reason: "value is required",
+			field:  "PostgresVersion",
+			reason: "value length must be at least 1 runes",
 		}
 		if !all {
 			return err
@@ -123,34 +123,7 @@ func (m *NightlyCloudStroppyRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if all {
-		switch v := interface{}(m.GetInstallPostgresParams()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, NightlyCloudStroppyRequestValidationError{
-					field:  "InstallPostgresParams",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, NightlyCloudStroppyRequestValidationError{
-					field:  "InstallPostgresParams",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetInstallPostgresParams()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return NightlyCloudStroppyRequestValidationError{
-				field:  "InstallPostgresParams",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
+	// no validation rules for PostgresSettings
 
 	if m.GetStroppyVm() == nil {
 		err := NightlyCloudStroppyRequestValidationError{
@@ -192,10 +165,10 @@ func (m *NightlyCloudStroppyRequest) validate(all bool) error {
 		}
 	}
 
-	if m.GetRunRequest() == nil {
+	if utf8.RuneCountInString(m.GetStroppyVersion()) < 1 {
 		err := NightlyCloudStroppyRequestValidationError{
-			field:  "RunRequest",
-			reason: "value is required",
+			field:  "StroppyVersion",
+			reason: "value length must be at least 1 runes",
 		}
 		if !all {
 			return err
@@ -203,34 +176,18 @@ func (m *NightlyCloudStroppyRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if all {
-		switch v := interface{}(m.GetRunRequest()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, NightlyCloudStroppyRequestValidationError{
-					field:  "RunRequest",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, NightlyCloudStroppyRequestValidationError{
-					field:  "RunRequest",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
+	if utf8.RuneCountInString(m.GetStroppyWorkflowName()) < 1 {
+		err := NightlyCloudStroppyRequestValidationError{
+			field:  "StroppyWorkflowName",
+			reason: "value length must be at least 1 runes",
 		}
-	} else if v, ok := interface{}(m.GetRunRequest()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return NightlyCloudStroppyRequestValidationError{
-				field:  "RunRequest",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
+		if !all {
+			return err
 		}
+		errors = append(errors, err)
 	}
+
+	// no validation rules for StroppyEnv
 
 	if len(errors) > 0 {
 		return NightlyCloudStroppyRequestMultiError(errors)

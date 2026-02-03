@@ -43,9 +43,16 @@ func createQuotasIfNotExists(valkeyClient valkey.Client, quotas []*crossplane.Qu
 	ctx := context.Background()
 	for _, quota := range quotas {
 		key := quotaKey(quota)
-		cmd := valkeyClient.B().Set().Key(key).Value(fmt.Sprintf("%d", quota.GetMaximum())).Nx().Build()
-		if err := valkeyClient.Do(ctx, cmd).Error(); err != nil {
-			return fmt.Errorf("failed to create quota %s: %w", key, err)
+		checkCmd := valkeyClient.B().Exists().Key(key).Build()
+		exists, err := valkeyClient.Do(ctx, checkCmd).ToInt64()
+		if err != nil {
+			return fmt.Errorf("failed to check quota %s: %w", key, err)
+		}
+		if exists == 0 {
+			cmd := valkeyClient.B().Set().Key(key).Value(fmt.Sprintf("%d", quota.GetMaximum())).Nx().Build()
+			if err := valkeyClient.Do(ctx, cmd).Error(); err != nil {
+				return fmt.Errorf("failed to create quota %s: %w", key, err)
+			}
 		}
 	}
 	return nil

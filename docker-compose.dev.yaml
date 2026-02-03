@@ -1,0 +1,18 @@
+volumes:
+  valkey-data:
+
+services:
+  provision-worker:
+    container_name: provision-worker
+    build:
+      context: .
+      dockerfile: deployments/docker/provision.Dockerfile
+    restart: always
+    volumes:
+      - ./deployments/.kubectl.config.yaml:/k8s/config:ro
+    network_mode: "host"
+    environment:
+      HATCHET_CLIENT_TOKEN: "${HATCHET_CLIENT_TOKEN}"
+      HATCHET_CLIENT_TLS_STRATEGY: "none"
+      K8S_CONFIG_PATH: "/k8s/config"
+      VALKEY_URL: "redis://default:developer@localhost:6379"
