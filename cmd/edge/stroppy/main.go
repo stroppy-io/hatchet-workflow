@@ -24,7 +24,7 @@ func main() {
 	}
 
 	worker, err := c.NewWorker(
-		"deployment-worker",
+		stroppynightly.RuntimeStroppyWorkerName(runId),
 		hatchetLib.WithWorkflows(
 			stroppynightly.NightlyCloudStroppyRunWorkflow(runId, c),
 		),

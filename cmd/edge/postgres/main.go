@@ -24,7 +24,7 @@ func main() {
 	}
 
 	worker, err := c.NewWorker(
-		"deployment-worker",
+		stroppynightly.RuntimePostgresWorkerName(runId),
 		hatchetLib.WithWorkflows(
 			stroppynightly.NightlyCloudStroppyRunPostgresTask(runId, c),
 		),

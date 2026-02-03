@@ -11,7 +11,7 @@ option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/cross
 
 message ResourceDef {
     message Spec {
-        Ref write_connection_secret_to_ref = 1 [(validate.rules).message.required = true];
+        Ref write_connection_secret_to_ref = 1;
         string deletion_policy = 2 [(validate.rules).string.min_len = 1];
         map<string, string> provider_config_ref = 3;
         oneof for_provider {

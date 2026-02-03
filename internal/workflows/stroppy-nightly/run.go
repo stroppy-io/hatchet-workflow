@@ -11,10 +11,10 @@ import (
 func NightlyCloudStroppyRunPostgresTask(runId string, c *hatchetLib.Client) *hatchetLib.StandaloneTask {
 	return c.NewStandaloneTask(
 		fmt.Sprintf("run-postgres-%s", runId),
-		func(ctx hatchetLib.Context, input *hatchet.InstallPostgresParams) (*hatchet.InstallPostgresParams, error) {
+		func(ctx hatchetLib.Context, input hatchet.InstallPostgresParams) (hatchet.InstallPostgresParams, error) {
 			installer := install.New(install.DefaultConfig())
-			if err := installer.InstallPostgres(ctx, input); err != nil {
-				return nil, err
+			if err := installer.InstallPostgres(ctx, &input); err != nil {
+				return hatchet.InstallPostgresParams{}, err
 			}
 			return input, nil
 		},
@@ -39,19 +39,19 @@ func NightlyCloudStroppyRunWorkflow(
 	)
 	installStroppyTask := w.NewTask(
 		stroppyInstallTaskName(runId),
-		func(ctx hatchetLib.Context, input *hatchet.RunStroppyParams) (*hatchet.RunStroppyParams, error) {
+		func(ctx hatchetLib.Context, input hatchet.RunStroppyParams) (hatchet.RunStroppyParams, error) {
 			installer := install.New(install.DefaultConfig())
-			if err := installer.InstallStroppy(ctx, input); err != nil {
-				return nil, err
+			if err := installer.InstallStroppy(ctx, &input); err != nil {
+				return hatchet.RunStroppyParams{}, err
 			}
 			return input, nil
 		},
 	)
 	w.NewTask(
 		stroppyRunTaskName(runId),
-		func(ctx hatchetLib.Context, input *hatchet.RunStroppyParams) (*hatchet.RunStroppyResponse, error) {
+		func(ctx hatchetLib.Context, input hatchet.RunStroppyParams) (hatchet.RunStroppyResponse, error) {
 			ctx.Log(fmt.Sprintf("Running Stroppy, Postgres URL: %s", input.GetConnectionString()))
-			return &hatchet.RunStroppyResponse{
+			return hatchet.RunStroppyResponse{
 				Output:       "Stroppy output",
 				WorkloadName: input.GetWorkloadName(),
 				GrafanaUrl:   fmt.Sprintf("http://grafana.com/runId=%s", runId),

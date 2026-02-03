@@ -30,6 +30,10 @@ generate:
       opts:
         lang: go
         paths: source_relative
+    - name: go-json
+      out: ../../internal/proto
+      opts:
+        paths: source_relative
 breaking:
   ignore: []
   against_git_ref: master

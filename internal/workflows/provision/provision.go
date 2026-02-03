@@ -82,6 +82,17 @@ func BuildDeployments(
 			Vm: &crossplane.Deployment_Vm{
 				MachineInfo: input.GetPostgresVm(),
 				// TODO: CloudInit:
+				CloudInit: &crossplane.CloudInit{
+					Users: []*crossplane.User{
+						{
+							Name:              "postgres",
+							SshAuthorizedKeys: []string{},
+						},
+					},
+					Runcmd: []string{
+						"apt-get update",
+					},
+				},
 				NetworkParams: &crossplane.Deployment_Vm_NetworkParams{
 					InternalIp:   network.GetIps()[0],
 					AssignedCidr: network.GetCidr(),
@@ -101,6 +112,17 @@ func BuildDeployments(
 			Vm: &crossplane.Deployment_Vm{
 				MachineInfo: input.GetStroppyVm(),
 				// TODO: CloudInit:
+				CloudInit: &crossplane.CloudInit{
+					Users: []*crossplane.User{
+						{
+							Name:              "stroppy",
+							SshAuthorizedKeys: []string{},
+						},
+					},
+					Runcmd: []string{
+						"apt-get update",
+					},
+				},
 				NetworkParams: &crossplane.Deployment_Vm_NetworkParams{
 					InternalIp:   network.GetIps()[1],
 					AssignedCidr: network.GetCidr(),
@@ -123,18 +145,22 @@ func BuildDeployments(
 	return map[string]*crossplane.Deployment{PostgresVmName: postgresVm, StroppyVmName: stroppyVm}, network, nil
 }
 
-func CreateDeployment(ctx context.Context, actor DeploymentActor, deployments DeploymentsMap) error {
-	for _, deployment := range deployments {
-		if _, err := actor.CreateDeployment(ctx, deployment); err != nil {
-			return fmt.Errorf("failed to create deployment: %w", err)
+func CreateDeployment(ctx context.Context, actor DeploymentActor, deployments DeploymentsMap) (DeploymentsMap, error) {
+	result := make(DeploymentsMap)
+	for name, deployment := range deployments {
+		if createdDeployment, err := actor.CreateDeployment(ctx, deployment); err != nil {
+			return nil, fmt.Errorf("failed to create deployment: %w", err)
+		} else {
+			result[name] = createdDeployment
 		}
 	}
-	return nil
+	return result, nil
 }
 
-func WaitDeployment(ctx context.Context, actor DeploymentActor, deployments DeploymentsMap) error {
+func WaitDeployment(ctx context.Context, actor DeploymentActor, deployments DeploymentsMap) (DeploymentsMap, error) {
 	waitPool := pool.New().WithContext(ctx).WithFailFast().WithCancelOnError()
-	for _, deployment := range deployments {
+	result := make(DeploymentsMap)
+	for name, deployment := range deployments {
 		waitPool.Go(func(ctx context.Context) error {
 			for {
 				select {
@@ -148,6 +174,7 @@ func WaitDeployment(ctx context.Context, actor DeploymentActor, deployments Depl
 					if err != nil {
 						continue
 					}
+					result[name] = deploymentWithStatus
 					if !crossplaneLib.IsResourcesReady(deploymentWithStatus.GetResources()) {
 						continue
 					}
@@ -156,7 +183,7 @@ func WaitDeployment(ctx context.Context, actor DeploymentActor, deployments Depl
 			}
 		})
 	}
-	return waitPool.Wait()
+	return result, waitPool.Wait()
 }
 
 func DestroyDeployments(

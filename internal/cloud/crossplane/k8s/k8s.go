@@ -158,7 +158,7 @@ func (c *Client) DeleteResource(
 	if err := ri.Delete(ctx, ref.GetRef().GetName(), metav1.DeleteOptions{}); err != nil {
 		if apierrors.IsNotFound(err) {
 			// Resource already deleted or doesn't exist - consider it success
-
+			return nil
 		}
 		return fmt.Errorf("failed to delete resource: %w", err)
 	}

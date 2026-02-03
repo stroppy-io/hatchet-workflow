@@ -54,7 +54,7 @@ message YandexCloud {
 
     // converted to crossplane k8s yaml
     message ResourceDefSpec {
-        Ref write_connection_secret_to_ref = 1 [(validate.rules).message.required = true];
+        Ref write_connection_secret_to_ref = 1;
         CrossplaneDeletionPolicy deletion_policy = 2 [(validate.rules).enum.defined_only = true];
         map<string, string> provider_config_ref = 3;
         oneof for_provider {

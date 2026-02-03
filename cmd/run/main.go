@@ -1,4 +1,4 @@
-package run
+package main
 
 import (
 	"context"
@@ -30,8 +30,8 @@ func main() {
 			PostgresVersion:  "17",
 			PostgresSettings: map[string]string{},
 			StroppyVm: &crossplane.MachineInfo{
-				Cores:       4,
-				Memory:      8,
+				Cores:       2,
+				Memory:      2,
 				Disk:        10,
 				BaseImageId: "fd82pkek8uu0ejjkh4vn",
 			},

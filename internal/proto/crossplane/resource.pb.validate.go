@@ -498,17 +498,6 @@ func (m *ResourceDef_Spec) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetWriteConnectionSecretToRef() == nil {
-		err := ResourceDef_SpecValidationError{
-			field:  "WriteConnectionSecretToRef",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	if all {
 		switch v := interface{}(m.GetWriteConnectionSecretToRef()).(type) {
 		case interface{ ValidateAll() error }:

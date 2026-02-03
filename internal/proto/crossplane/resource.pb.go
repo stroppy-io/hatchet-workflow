@@ -392,15 +392,15 @@ var File_crossplane_resource_proto protoreflect.FileDescriptor
 const file_crossplane_resource_proto_rawDesc = "" +
 	"\n" +
 	"\x19crossplane/resource.proto\x12\n" +
-	"crossplane\x1a\x16crossplane/types.proto\x1a\x17crossplane/yandex.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xa2\x06\n" +
+	"crossplane\x1a\x16crossplane/types.proto\x1a\x17crossplane/yandex.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\x98\x06\n" +
 	"\vResourceDef\x12(\n" +
 	"\vapi_version\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\n" +
 	"apiVersion\x12\x1b\n" +
 	"\x04kind\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04kind\x120\n" +
 	"\bmetadata\x18\x03 \x01(\v2\x14.crossplane.MetadataR\bmetadata\x12:\n" +
-	"\x04spec\x18\x04 \x01(\v2\x1c.crossplane.ResourceDef.SpecB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04spec\x1a\xdd\x04\n" +
-	"\x04Spec\x12]\n" +
-	"\x1ewrite_connection_secret_to_ref\x18\x01 \x01(\v2\x0f.crossplane.RefB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x1awriteConnectionSecretToRef\x120\n" +
+	"\x04spec\x18\x04 \x01(\v2\x1c.crossplane.ResourceDef.SpecB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04spec\x1a\xd3\x04\n" +
+	"\x04Spec\x12S\n" +
+	"\x1ewrite_connection_secret_to_ref\x18\x01 \x01(\v2\x0f.crossplane.RefR\x1awriteConnectionSecretToRef\x120\n" +
 	"\x0fdeletion_policy\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x0edeletionPolicy\x12c\n" +
 	"\x13provider_config_ref\x18\x03 \x03(\v23.crossplane.ResourceDef.Spec.ProviderConfigRefEntryR\x11providerConfigRef\x12N\n" +
 	"\x0fyandex_cloud_vm\x18d \x01(\v2\x1a.crossplane.YandexCloud.VmB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\ryandexCloudVm\x12]\n" +

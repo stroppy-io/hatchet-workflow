@@ -721,17 +721,6 @@ func (m *YandexCloud_ResourceDefSpec) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetWriteConnectionSecretToRef() == nil {
-		err := YandexCloud_ResourceDefSpecValidationError{
-			field:  "WriteConnectionSecretToRef",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	if all {
 		switch v := interface{}(m.GetWriteConnectionSecretToRef()).(type) {
 		case interface{ ValidateAll() error }:

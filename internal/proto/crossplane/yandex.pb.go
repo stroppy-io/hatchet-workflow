@@ -686,7 +686,7 @@ var File_crossplane_yandex_proto protoreflect.FileDescriptor
 const file_crossplane_yandex_proto_rawDesc = "" +
 	"\n" +
 	"\x17crossplane/yandex.proto\x12\n" +
-	"crossplane\x1a\x16crossplane/types.proto\x1a\x17validate/validate.proto\"\xd9\x0f\n" +
+	"crossplane\x1a\x16crossplane/types.proto\x1a\x17validate/validate.proto\"\xcf\x0f\n" +
 	"\vYandexCloud\x1a&\n" +
 	"\aNetwork\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x1a\xaa\x02\n" +
@@ -722,9 +722,9 @@ const file_crossplane_yandex_proto_rawDesc = "" +
 	"ip_address\x18\x03 \x01(\tR\tipAddress\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a\x9a\x05\n" +
-	"\x0fResourceDefSpec\x12]\n" +
-	"\x1ewrite_connection_secret_to_ref\x18\x01 \x01(\v2\x0f.crossplane.RefB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x1awriteConnectionSecretToRef\x12W\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a\x90\x05\n" +
+	"\x0fResourceDefSpec\x12S\n" +
+	"\x1ewrite_connection_secret_to_ref\x18\x01 \x01(\v2\x0f.crossplane.RefR\x1awriteConnectionSecretToRef\x12W\n" +
 	"\x0fdeletion_policy\x18\x02 \x01(\x0e2$.crossplane.CrossplaneDeletionPolicyB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0edeletionPolicy\x12n\n" +
 	"\x13provider_config_ref\x18\x03 \x03(\v2>.crossplane.YandexCloud.ResourceDefSpec.ProviderConfigRefEntryR\x11providerConfigRef\x12N\n" +
 	"\x0fyandex_cloud_vm\x18d \x01(\v2\x1a.crossplane.YandexCloud.VmB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\ryandexCloudVm\x12]\n" +
