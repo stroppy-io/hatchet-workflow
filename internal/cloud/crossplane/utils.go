@@ -7,3 +7,12 @@ func IsResourceReady(resource *crossplane.Resource) bool {
 		resource.GetSynced() &&
 		resource.GetExternalId() != ""
 }
+
+func IsResourcesReady(resources []*crossplane.Resource) bool {
+	for _, resource := range resources {
+		if !IsResourceReady(resource) {
+			return false
+		}
+	}
+	return true
+}

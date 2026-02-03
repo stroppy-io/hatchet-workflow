@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/stroppy-io/hatchet-workflow/internal/domain/ids"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/ids"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
 )
 
@@ -345,7 +345,7 @@ func TestCloudBuilder_BuildVmResourceDag_WithPublicIP(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	// Check quotas - should have SUBNET, VM, PUBLIC_IP_ADDRESS
+	// Check quota - should have SUBNET, VM, PUBLIC_IP_ADDRESS
 	require.Len(t, result.UsingQuotas.Quotas, 3)
 	hasPublicIp := false
 	for _, q := range result.UsingQuotas.Quotas {
@@ -449,7 +449,7 @@ func TestCloudBuilder_BuildVmResourceDag_WithoutPublicIP(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	// Check quotas - should have SUBNET, VM (no PUBLIC_IP_ADDRESS)
+	// Check quota - should have SUBNET, VM (no PUBLIC_IP_ADDRESS)
 	require.Len(t, result.UsingQuotas.Quotas, 2)
 	for _, q := range result.UsingQuotas.Quotas {
 		require.NotEqual(t, crossplane.Quota_KIND_PUBLIC_IP_ADDRESS, q.Kind, "Should not have PUBLIC_IP_ADDRESS quota")

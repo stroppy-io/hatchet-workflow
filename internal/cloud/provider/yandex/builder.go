@@ -8,16 +8,18 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/oklog/ulid/v2"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/defaults"
+	ids2 "github.com/stroppy-io/hatchet-workflow/internal/core/ids"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/protoyaml"
 
-	"github.com/stroppy-io/hatchet-workflow/internal/domain/ids"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type ProviderConfig struct {
-	DefaultNetworkId string `mapstructure:"default_network_id" validate:"required"`
+	K8sNamespace       string `mapstructure:"k8s_namespace" validate:"required"`
+	DefaultNetworkName string `mapstructure:"default_network_name" validate:"required"`
+	DefaultNetworkId   string `mapstructure:"default_network_id" validate:"required"`
 
 	DefaultVmZone       string `mapstructure:"default_vm_zone" validate:"required"`
 	DefaultVmPlatformId string `mapstructure:"default_vm_platform_id" validate:"required"`
@@ -213,8 +215,7 @@ func (y *CloudBuilder) marshalWithReplaceOneOffs(def *crossplane.ResourceDef) (s
 }
 
 func (y *CloudBuilder) BuildVmDeployment(
-	namespace string,
-	commonId string,
+	runId string,
 	vm *crossplane.Deployment_Vm,
 ) (*crossplane.Deployment, error) {
 	if vm.GetNetworkParams().GetAssignedCidr().GetValue() == "" {
@@ -258,23 +259,23 @@ func (y *CloudBuilder) BuildVmDeployment(
 
 	// __WARNING__
 	// Here we use vmId to generate unique names for vm
-	// commonId used to generate unique names for subnet only
-	// if caller of this function wants, they can set commonId to some other subnet (if they call twice)
-	subnetName := fmt.Sprintf("stroppy-cloud-subnet-%s", strings.ToLower(commonId))
+	// runId used to generate unique names for subnet only
+	// if caller of this function wants, they can set runId to some other subnet (if they call twice)
+	subnetName := fmt.Sprintf("stroppy-cloud-subnet-%s", strings.ToLower(runId))
 	machineName := fmt.Sprintf("stroppy-cloud-vm-%s", strings.ToLower(ulid.Make().String()))
 	// __WARNING__
 
 	saveSecretTo := &crossplane.Ref{
 		Name:      fmt.Sprintf("%s-access-secret", machineName),
-		Namespace: namespace,
+		Namespace: y.Config.K8sNamespace,
 	}
 	networkRef := &crossplane.Ref{
-		Name:      defaultNetworkName,
-		Namespace: namespace,
+		Name:      defaults.StringOrDefault(y.Config.DefaultNetworkName, defaultNetworkName),
+		Namespace: y.Config.K8sNamespace,
 	}
 	subnetRef := &crossplane.Ref{
 		Name:      subnetName,
-		Namespace: namespace,
+		Namespace: y.Config.K8sNamespace,
 	}
 	networkDef := y.newNetworkDef(networkRef)
 	//addQuota(crossplane.Quota_KIND_NETWORK) // now we use one network for all vms
@@ -282,7 +283,7 @@ func (y *CloudBuilder) BuildVmDeployment(
 	addQuota(crossplane.Quota_KIND_SUBNET)
 	vmRef := &crossplane.Ref{
 		Name:      machineName,
-		Namespace: namespace,
+		Namespace: y.Config.K8sNamespace,
 	}
 	vmDef, err := y.newVmDef(vmRef, subnetRef, saveSecretTo, vm, assignedInternalIp)
 	if err != nil {
@@ -307,14 +308,14 @@ func (y *CloudBuilder) BuildVmDeployment(
 	}
 
 	return &crossplane.Deployment{
-		Id:             ids.NewUlid().GetId(),
+		Id:             ids2.NewUlid().GetId(),
 		SupportedCloud: crossplane.SupportedCloud_SUPPORTED_CLOUD_YANDEX,
 		UsingQuotas: &crossplane.Quota_List{
 			Quotas: quotas,
 		},
 		Resources: []*crossplane.Resource{
 			{
-				Ref:          ids.ExtRefFromResourceDef(networkRef, networkDef),
+				Ref:          ids2.ExtRefFromResourceDef(networkRef, networkDef),
 				ResourceDef:  networkDef,
 				CreatedAt:    timestamppb.Now(),
 				UpdatedAt:    timestamppb.Now(),
@@ -322,7 +323,7 @@ func (y *CloudBuilder) BuildVmDeployment(
 				Status:       crossplane.Resource_STATUS_CREATING,
 			},
 			{
-				Ref:          ids.ExtRefFromResourceDef(subnetRef, subnetDef),
+				Ref:          ids2.ExtRefFromResourceDef(subnetRef, subnetDef),
 				ResourceDef:  subnetDef,
 				CreatedAt:    timestamppb.Now(),
 				UpdatedAt:    timestamppb.Now(),
@@ -330,7 +331,7 @@ func (y *CloudBuilder) BuildVmDeployment(
 				Status:       crossplane.Resource_STATUS_CREATING,
 			},
 			{
-				Ref:          ids.ExtRefFromResourceDef(vmRef, vmDef),
+				Ref:          ids2.ExtRefFromResourceDef(vmRef, vmDef),
 				ResourceDef:  vmDef,
 				CreatedAt:    timestamppb.Now(),
 				UpdatedAt:    timestamppb.Now(),

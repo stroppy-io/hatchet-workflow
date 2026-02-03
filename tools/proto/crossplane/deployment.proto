@@ -48,8 +48,8 @@ message Deployment {
     }
     string id = 1 [(validate.rules).string.min_len = 1];
     SupportedCloud supported_cloud = 2 [(validate.rules).enum.defined_only = true];
-    Quota.List using_quotas = 3 [(validate.rules).repeated.min_items = 1];
-    repeated Resource resources = 4 [(validate.rules).message.required = true];
+    repeated Quota using_quotas = 3;
+    repeated Resource resources = 4;
     oneof deployment {
         Vm vm = 100 [(validate.rules).message.required = true];
         Cluster cluster = 101 [(validate.rules).message.required = true];

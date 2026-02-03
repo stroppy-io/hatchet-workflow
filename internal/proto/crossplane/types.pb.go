@@ -465,6 +465,58 @@ func (x *Cidr) GetValue() string {
 	return ""
 }
 
+type CidrWithIps struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Cidr          *Cidr                  `protobuf:"bytes,1,opt,name=cidr,proto3" json:"cidr,omitempty"`
+	Ips           []*Ip                  `protobuf:"bytes,2,rep,name=ips,proto3" json:"ips,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CidrWithIps) Reset() {
+	*x = CidrWithIps{}
+	mi := &file_crossplane_types_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CidrWithIps) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CidrWithIps) ProtoMessage() {}
+
+func (x *CidrWithIps) ProtoReflect() protoreflect.Message {
+	mi := &file_crossplane_types_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CidrWithIps.ProtoReflect.Descriptor instead.
+func (*CidrWithIps) Descriptor() ([]byte, []int) {
+	return file_crossplane_types_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CidrWithIps) GetCidr() *Cidr {
+	if x != nil {
+		return x.Cidr
+	}
+	return nil
+}
+
+func (x *CidrWithIps) GetIps() []*Ip {
+	if x != nil {
+		return x.Ips
+	}
+	return nil
+}
+
 var File_crossplane_types_proto protoreflect.FileDescriptor
 
 const file_crossplane_types_proto_rawDesc = "" +
@@ -493,7 +545,10 @@ const file_crossplane_types_proto_rawDesc = "" +
 	"\x02Ip\x12\x1d\n" +
 	"\x05value\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05value\"%\n" +
 	"\x04Cidr\x12\x1d\n" +
-	"\x05value\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05value*M\n" +
+	"\x05value\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05value\"i\n" +
+	"\vCidrWithIps\x12.\n" +
+	"\x04cidr\x18\x01 \x01(\v2\x10.crossplane.CidrB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04cidr\x12*\n" +
+	"\x03ips\x18\x02 \x03(\v2\x0e.crossplane.IpB\b\xfaB\x05\x92\x01\x02\b\x01R\x03ips*M\n" +
 	"\x0eSupportedCloud\x12\x1f\n" +
 	"\x1bSUPPORTED_CLOUD_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16SUPPORTED_CLOUD_YANDEX\x10\x01*^\n" +
@@ -517,7 +572,7 @@ func file_crossplane_types_proto_rawDescGZIP() []byte {
 }
 
 var file_crossplane_types_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_crossplane_types_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_crossplane_types_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_crossplane_types_proto_goTypes = []any{
 	(SupportedCloud)(0),           // 0: crossplane.SupportedCloud
 	(CrossplaneDeletionPolicy)(0), // 1: crossplane.CrossplaneDeletionPolicy
@@ -528,16 +583,19 @@ var file_crossplane_types_proto_goTypes = []any{
 	(*Metadata)(nil),              // 6: crossplane.Metadata
 	(*Ip)(nil),                    // 7: crossplane.Ip
 	(*Cidr)(nil),                  // 8: crossplane.Cidr
-	nil,                           // 9: crossplane.Metadata.AnnotationsEntry
+	(*CidrWithIps)(nil),           // 9: crossplane.CidrWithIps
+	nil,                           // 10: crossplane.Metadata.AnnotationsEntry
 }
 var file_crossplane_types_proto_depIdxs = []int32{
-	3, // 0: crossplane.ExtRef.ref:type_name -> crossplane.Ref
-	9, // 1: crossplane.Metadata.annotations:type_name -> crossplane.Metadata.AnnotationsEntry
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	3,  // 0: crossplane.ExtRef.ref:type_name -> crossplane.Ref
+	10, // 1: crossplane.Metadata.annotations:type_name -> crossplane.Metadata.AnnotationsEntry
+	8,  // 2: crossplane.CidrWithIps.cidr:type_name -> crossplane.Cidr
+	7,  // 3: crossplane.CidrWithIps.ips:type_name -> crossplane.Ip
+	4,  // [4:4] is the sub-list for method output_type
+	4,  // [4:4] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_crossplane_types_proto_init() }
@@ -551,7 +609,7 @@ func file_crossplane_types_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_crossplane_types_proto_rawDesc), len(file_crossplane_types_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   8,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -26,22 +26,22 @@ type K8SActor interface {
 	) error
 }
 
-type CrossplaneService struct {
+type Service struct {
 	k8sActor          K8SActor
 	reconcileInterval time.Duration
 }
 
-func NewCrossplaneService(
+func NewService(
 	k8sActor K8SActor,
 	reconcileInterval time.Duration,
-) *CrossplaneService {
-	return &CrossplaneService{
+) *Service {
+	return &Service{
 		k8sActor:          k8sActor,
 		reconcileInterval: reconcileInterval,
 	}
 }
 
-func (c *CrossplaneService) CreateDeployment(
+func (c *Service) CreateDeployment(
 	ctx context.Context,
 	deployment *crossplane.Deployment,
 ) (*crossplane.Deployment, error) {
@@ -57,7 +57,7 @@ func (c *CrossplaneService) CreateDeployment(
 	return deployment, nil
 }
 
-func (c *CrossplaneService) ProcessDeploymentStatus(
+func (c *Service) ProcessDeploymentStatus(
 	ctx context.Context,
 	deployment *crossplane.Deployment,
 ) (*crossplane.Deployment, error) {
@@ -100,7 +100,7 @@ func (c *CrossplaneService) ProcessDeploymentStatus(
 	return deployment, nil
 }
 
-func (c *CrossplaneService) DestroyDeployment(
+func (c *Service) DestroyDeployment(
 	ctx context.Context,
 	deployment *crossplane.Deployment,
 ) error {

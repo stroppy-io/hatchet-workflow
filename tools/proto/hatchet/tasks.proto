@@ -22,65 +22,40 @@ message NightlyCloudStroppyRequest {
         We also use this Vm settings for run orioledb.
     */
     crossplane.MachineInfo stroppy_vm = 6 [(validate.rules).message.required = true];
-    InstallStroppyParams install_stroppy_params = 7 [(validate.rules).message.required = true];
     RunStroppyParams run_request = 8 [(validate.rules).message.required = true];
 }
 
 message NightlyCloudStroppyResponse {
-    string run_id = 1 [(validate.rules).string.min_len = 1];
+    string run_id = 1 [(validate.rules).string.len = 26];
     map<string, crossplane.Deployment> deployments = 2 [(validate.rules).map.min_pairs = 2];
     string grafana_url = 3 [(validate.rules).string.min_len = 1];
 }
 
-//service Workflow {
-//    rpc NightlyCloudStroppy (NightlyCloudStroppyRequest) returns (NightlyCloudStroppyResponse);
-//}
-
-message ProvisionCloudRequest {
-    string run_id = 1 [(validate.rules).string.min_len = 1];
-    map<string, crossplane.Deployment> deployments = 2 [(validate.rules).map.min_pairs = 1];
-}
-
 message ProvisionCloudResponse {
-    string run_id = 1 [(validate.rules).string.min_len = 1];
+    string run_id = 1 [(validate.rules).string.len = 26];
     map<string, crossplane.Deployment> deployments = 2 [(validate.rules).map.min_pairs = 1];
-}
-
-service Provisioner {
-    rpc ProvisionCloud (ProvisionCloudRequest) returns (ProvisionCloudResponse);
-    rpc RemoveCloud (ProvisionCloudRequest) returns (ProvisionCloudResponse);
+    crossplane.CidrWithIps network = 3 [(validate.rules).message.required = true];
 }
 
 message InstallPostgresParams {
-    string version = 1 [(validate.rules).string.min_len = 1];
-    map<string, string> settings = 2;
-    bool enable_orioledb = 3;
-    map<string, string> orioledb_settings = 4;
-}
-
-message InstallStroppyParams {
-    string version = 1 [(validate.rules).string.min_len = 1];
-    string binary_path = 2 [(validate.rules).string.min_len = 1];
-}
-
-service Installer {
-    rpc InstallPostgres (InstallPostgresParams) returns (google.protobuf.Empty);
-    rpc InstallStroppy (InstallStroppyParams) returns (google.protobuf.Empty);
+    string run_id = 1 [(validate.rules).string.len = 26];
+    string version = 2 [(validate.rules).string.min_len = 1];
+    map<string, string> settings = 3;
+    bool enable_orioledb = 4;
+    map<string, string> orioledb_settings = 5;
 }
 
 message RunStroppyParams {
-    string binary_path = 1 [(validate.rules).string.min_len = 1];
-    string workflow_name = 2 [(validate.rules).string.min_len = 1];
-    map<string, string> env = 3;
+    string run_id = 1 [(validate.rules).string.len = 26];
+    string version = 2 [(validate.rules).string.min_len = 1];
+    string binary_path = 3 [(validate.rules).string.min_len = 1];
+    string workload_name = 4 [(validate.rules).string.min_len = 1];
+    string connection_string = 5 [(validate.rules).string.min_len = 1];
+    map<string, string> env = 6;
 }
 
 message RunStroppyResponse {
     string output = 1 [(validate.rules).string.min_len = 1];
-    string grafana_url = 2 [(validate.rules).string.min_len = 1];
+    string workload_name = 2 [(validate.rules).string.min_len = 1];
+    string grafana_url = 3 [(validate.rules).string.min_len = 1];
 }
-
-
-service Runner {
-    rpc RunStroppy (RunStroppyParams) returns (RunStroppyResponse);
-}
-

@@ -25,6 +25,11 @@ generate:
       out: ../../internal/proto
       opts:
         paths: source_relative
+    - name: validate
+      out: ../../internal/proto
+      opts:
+        lang: go
+        paths: source_relative
 breaking:
   ignore: []
   against_git_ref: master

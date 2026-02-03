@@ -686,17 +686,17 @@ var File_crossplane_yandex_proto protoreflect.FileDescriptor
 const file_crossplane_yandex_proto_rawDesc = "" +
 	"\n" +
 	"\x17crossplane/yandex.proto\x12\n" +
-	"crossplane\x1a\x16crossplane/types.proto\x1a\x17validate/validate.proto\"\xb4\x0f\n" +
+	"crossplane\x1a\x16crossplane/types.proto\x1a\x17validate/validate.proto\"\xd9\x0f\n" +
 	"\vYandexCloud\x1a&\n" +
 	"\aNetwork\x12\x1b\n" +
-	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x1a\xfb\x01\n" +
+	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x1a\xaa\x02\n" +
 	"\x06Subnet\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x12[\n" +
-	"\x0enetwork_id_ref\x18\x02 \x01(\v2+.crossplane.YandexCloud.Subnet.NetworkIdRefB\b\xfaB\x05\x8a\x01\x02\x10\x01R\fnetworkIdRef\x12-\n" +
-	"\x0ev4_cidr_blocks\x18\x03 \x03(\tB\a\xfaB\x04r\x02\x10\x01R\fv4CidrBlocks\x12\x1b\n" +
+	"\x0enetwork_id_ref\x18\x02 \x01(\v2+.crossplane.YandexCloud.Subnet.NetworkIdRefB\b\xfaB\x05\x8a\x01\x02\x10\x01R\fnetworkIdRef\x12\\\n" +
+	"\x0ev4_cidr_blocks\x18\x03 \x03(\tB6\xfaB3\x92\x010\".r,2*^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$R\fv4CidrBlocks\x12\x1b\n" +
 	"\x04zone\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04zone\x1a+\n" +
 	"\fNetworkIdRef\x12\x1b\n" +
-	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x1a\x8b\a\n" +
+	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x1a\x81\a\n" +
 	"\x02Vm\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x123\n" +
 	"\vplatform_id\x18\x03 \x01(\tB\x12\xfaB\x0fr\r\n" +
@@ -704,10 +704,10 @@ const file_crossplane_yandex_proto_rawDesc = "" +
 	"platformId\x12(\n" +
 	"\x04zone\x18\x04 \x01(\tB\x14\xfaB\x11r\x0f\n" +
 	"\rru-central1-dR\x04zone\x12L\n" +
-	"\tresources\x18\x05 \x03(\v2$.crossplane.YandexCloud.Vm.ResourcesB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tresources\x12F\n" +
+	"\tresources\x18\x05 \x03(\v2$.crossplane.YandexCloud.Vm.ResourcesB\b\xfaB\x05\x92\x01\x02\b\x01R\tresources\x12F\n" +
 	"\tboot_disk\x18\x06 \x03(\v2\x1f.crossplane.YandexCloud.Vm.DiskB\b\xfaB\x05\x92\x01\x02\b\x01R\bbootDisk\x12b\n" +
-	"\x11network_interface\x18\a \x03(\v2+.crossplane.YandexCloud.Vm.NetworkInterfaceB\b\xfaB\x05\x92\x01\x02\b\x01R\x10networkInterface\x12N\n" +
-	"\bmetadata\x18\b \x03(\v2(.crossplane.YandexCloud.Vm.MetadataEntryB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bmetadata\x1aK\n" +
+	"\x11network_interface\x18\a \x03(\v2+.crossplane.YandexCloud.Vm.NetworkInterfaceB\b\xfaB\x05\x92\x01\x02\b\x01R\x10networkInterface\x12D\n" +
+	"\bmetadata\x18\b \x03(\v2(.crossplane.YandexCloud.Vm.MetadataEntryR\bmetadata\x1aK\n" +
 	"\tResources\x12\x1d\n" +
 	"\x05cores\x18\x01 \x01(\rB\a\xfaB\x04*\x02(\x01R\x05cores\x12\x1f\n" +
 	"\x06memory\x18\x02 \x01(\rB\a\xfaB\x04*\x02(\x01R\x06memory\x1a\xa7\x01\n" +

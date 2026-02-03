@@ -217,7 +217,7 @@ type Deployment struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	SupportedCloud SupportedCloud         `protobuf:"varint,2,opt,name=supported_cloud,json=supportedCloud,proto3,enum=crossplane.SupportedCloud" json:"supported_cloud,omitempty"`
-	UsingQuotas    *Quota_List            `protobuf:"bytes,3,opt,name=using_quotas,json=usingQuotas,proto3" json:"using_quotas,omitempty"`
+	UsingQuotas    []*Quota               `protobuf:"bytes,3,rep,name=using_quotas,json=usingQuotas,proto3" json:"using_quotas,omitempty"`
 	Resources      []*Resource            `protobuf:"bytes,4,rep,name=resources,proto3" json:"resources,omitempty"`
 	// Types that are valid to be assigned to Deployment:
 	//
@@ -272,7 +272,7 @@ func (x *Deployment) GetSupportedCloud() SupportedCloud {
 	return SupportedCloud_SUPPORTED_CLOUD_UNSPECIFIED
 }
 
-func (x *Deployment) GetUsingQuotas() *Quota_List {
+func (x *Deployment) GetUsingQuotas() []*Quota {
 	if x != nil {
 		return x.UsingQuotas
 	}
@@ -566,13 +566,13 @@ const file_crossplane_deployment_proto_rawDesc = "" +
 	"\fKIND_NETWORK\x10\x01\x12\x0f\n" +
 	"\vKIND_SUBNET\x10\x02\x12\v\n" +
 	"\aKIND_VM\x10\x03\x12\x1a\n" +
-	"\x16KIND_PUBLIC_IP_ADDRESS\x10\x04\"\x8c\a\n" +
+	"\x16KIND_PUBLIC_IP_ADDRESS\x10\x04\"\xf3\x06\n" +
 	"\n" +
 	"Deployment\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12M\n" +
-	"\x0fsupported_cloud\x18\x02 \x01(\x0e2\x1a.crossplane.SupportedCloudB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0esupportedCloud\x12C\n" +
-	"\fusing_quotas\x18\x03 \x01(\v2\x16.crossplane.Quota.ListB\b\xfaB\x05\x92\x01\x02\b\x01R\vusingQuotas\x12<\n" +
-	"\tresources\x18\x04 \x03(\v2\x14.crossplane.ResourceB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tresources\x125\n" +
+	"\x0fsupported_cloud\x18\x02 \x01(\x0e2\x1a.crossplane.SupportedCloudB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0esupportedCloud\x124\n" +
+	"\fusing_quotas\x18\x03 \x03(\v2\x11.crossplane.QuotaR\vusingQuotas\x122\n" +
+	"\tresources\x18\x04 \x03(\v2\x14.crossplane.ResourceR\tresources\x125\n" +
 	"\x02vm\x18d \x01(\v2\x19.crossplane.Deployment.VmB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\x02vm\x12D\n" +
 	"\acluster\x18e \x01(\v2\x1e.crossplane.Deployment.ClusterB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\acluster\x1a\xc5\x03\n" +
 	"\x02Vm\x12D\n" +
@@ -626,7 +626,7 @@ var file_crossplane_deployment_proto_depIdxs = []int32{
 	8,  // 0: crossplane.Quota.cloud:type_name -> crossplane.SupportedCloud
 	0,  // 1: crossplane.Quota.kind:type_name -> crossplane.Quota.Kind
 	8,  // 2: crossplane.Deployment.supported_cloud:type_name -> crossplane.SupportedCloud
-	4,  // 3: crossplane.Deployment.using_quotas:type_name -> crossplane.Quota.List
+	2,  // 3: crossplane.Deployment.using_quotas:type_name -> crossplane.Quota
 	9,  // 4: crossplane.Deployment.resources:type_name -> crossplane.Resource
 	5,  // 5: crossplane.Deployment.vm:type_name -> crossplane.Deployment.Vm
 	6,  // 6: crossplane.Deployment.cluster:type_name -> crossplane.Deployment.Cluster
