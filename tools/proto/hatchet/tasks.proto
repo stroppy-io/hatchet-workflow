@@ -23,7 +23,7 @@ message NightlyCloudStroppyRequest {
     */
     crossplane.MachineInfo stroppy_vm = 6 [(validate.rules).message.required = true];
     string stroppy_version = 7 [(validate.rules).string.min_len = 1];
-    string stroppy_workflow_name = 8 [(validate.rules).string.min_len = 1];
+    string stroppy_workload_name = 8 [(validate.rules).string.min_len = 1];
     map<string, string> stroppy_env = 9;
 }
 

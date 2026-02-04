@@ -176,9 +176,9 @@ func (m *NightlyCloudStroppyRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetStroppyWorkflowName()) < 1 {
+	if utf8.RuneCountInString(m.GetStroppyWorkloadName()) < 1 {
 		err := NightlyCloudStroppyRequestValidationError{
-			field:  "StroppyWorkflowName",
+			field:  "StroppyWorkloadName",
 			reason: "value length must be at least 1 runes",
 		}
 		if !all {

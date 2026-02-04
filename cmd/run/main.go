@@ -36,7 +36,7 @@ func main() {
 				BaseImageId: "fd82pkek8uu0ejjkh4vn",
 			},
 			StroppyVersion:      "v2.0.0",
-			StroppyWorkflowName: "tpcc",
+			StroppyWorkloadName: "tpcc",
 			StroppyEnv:          map[string]string{},
 		},
 	)

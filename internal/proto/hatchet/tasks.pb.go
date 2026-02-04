@@ -35,7 +35,7 @@ type NightlyCloudStroppyRequest struct {
 	// We also use this Vm settings for run orioledb.
 	StroppyVm           *crossplane.MachineInfo `protobuf:"bytes,6,opt,name=stroppy_vm,json=stroppyVm,proto3" json:"stroppy_vm,omitempty"`
 	StroppyVersion      string                  `protobuf:"bytes,7,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
-	StroppyWorkflowName string                  `protobuf:"bytes,8,opt,name=stroppy_workflow_name,json=stroppyWorkflowName,proto3" json:"stroppy_workflow_name,omitempty"`
+	StroppyWorkloadName string                  `protobuf:"bytes,8,opt,name=stroppy_workload_name,json=stroppyWorkloadName,proto3" json:"stroppy_workload_name,omitempty"`
 	StroppyEnv          map[string]string       `protobuf:"bytes,9,rep,name=stroppy_env,json=stroppyEnv,proto3" json:"stroppy_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
@@ -113,9 +113,9 @@ func (x *NightlyCloudStroppyRequest) GetStroppyVersion() string {
 	return ""
 }
 
-func (x *NightlyCloudStroppyRequest) GetStroppyWorkflowName() string {
+func (x *NightlyCloudStroppyRequest) GetStroppyWorkloadName() string {
 	if x != nil {
-		return x.StroppyWorkflowName
+		return x.StroppyWorkloadName
 	}
 	return ""
 }
@@ -489,7 +489,7 @@ const file_hatchet_tasks_proto_rawDesc = "" +
 	"\n" +
 	"stroppy_vm\x18\x06 \x01(\v2\x17.crossplane.MachineInfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tstroppyVm\x120\n" +
 	"\x0fstroppy_version\x18\a \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x0estroppyVersion\x12;\n" +
-	"\x15stroppy_workflow_name\x18\b \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x13stroppyWorkflowName\x12T\n" +
+	"\x15stroppy_workload_name\x18\b \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x13stroppyWorkloadName\x12T\n" +
 	"\vstroppy_env\x18\t \x03(\v23.hatchet.NightlyCloudStroppyRequest.StroppyEnvEntryR\n" +
 	"stroppyEnv\x1aC\n" +
 	"\x15PostgresSettingsEntry\x12\x10\n" +

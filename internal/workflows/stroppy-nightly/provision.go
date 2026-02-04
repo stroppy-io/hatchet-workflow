@@ -216,7 +216,7 @@ func NightlyCloudStroppyProvisionWorkflow(
 					RunId: waitOutput.GetRunId(),
 					//BinaryPath: "" // NOTE: Not set cause installer chose it by himself
 					Version:      input.GetStroppyVersion(),
-					WorkloadName: input.GetStroppyWorkflowName(),
+					WorkloadName: input.GetStroppyWorkloadName(),
 					// WARN: This is the Postgres URL for the first IP in the network by provisioning design
 					ConnectionString: install.DefaultConfig().PostgresUrlByIp(waitOutput.GetNetwork().GetIps()[0].GetValue()),
 					Env:              input.GetStroppyEnv(),
