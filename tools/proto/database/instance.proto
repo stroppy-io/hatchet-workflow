@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package database;
+
+import "database/postgres.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet";
+
+message Sidecar {
+    message NodeExporter {
+        bool enabled = 1;
+        uint32 port = 2;  // default 9100
+        repeated string collectors = 3;  // ["cpu", "memory", "disk"]
+    }
+    message Filebeat {
+        bool enabled = 1;
+        string logstash_host = 2;
+        repeated string log_paths = 3;
+    }
+    message VectorAgent {
+        bool enabled = 1;
+        string sink_endpoint = 2;
+        map<string, string> extra_config = 3;
+    }
+    oneof sidecar {
+        option (validate.required) = true;
+        NodeExporter node_exporter = 2;
+        Filebeat filebeat = 4;
+        VectorAgent vector = 5;
+        Postgres.Sidecar.PostgresExporter postgres_exporter = 6;
+        Postgres.Sidecar.PgbouncerExporter pgbouncer_exporter = 7;
+    }
+}
+
+message VmSpec {
+    uint32 cpu = 1 [(validate.rules).uint32.gte = 1];
+    string memory = 2 [(validate.rules).string.min_len = 1];  // "8Gi"
+    string disk = 3 [(validate.rules).string.min_len = 1];    // "100Gi"
+}
+
+message Instance {
+    VmSpec vm_spec = 1 [(validate.rules).message.required = true];
+    repeated Sidecar sidecars = 2;
+    string version = 3 [(validate.rules).string.min_len = 1];
+    oneof settings {
+        option (validate.required) = true;
+        Postgres.InstanceSettings postgres = 6;
+    }
+}

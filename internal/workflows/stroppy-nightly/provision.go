@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hatchet-dev/hatchet/pkg/client/create"
 	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog/log"
@@ -56,6 +57,18 @@ const (
 	DestroyDeploymentsTaskName = "destroy-deployments"
 )
 
+func getParentProvisionCloudParams(ctx hatchetLib.Context, parentTask create.NamedTask) (hatchet.ProvisionCloudParams, error) {
+	var provisionCloudParams hatchet.ProvisionCloudParams
+	if err := ctx.ParentOutput(parentTask, &provisionCloudParams); err != nil {
+		return hatchet.ProvisionCloudParams{}, err
+	}
+	err := provisionCloudParams.Validate()
+	if err != nil {
+		return hatchet.ProvisionCloudParams{}, err
+	}
+	return provisionCloudParams, nil
+}
+
 func NightlyCloudStroppyProvisionWorkflow(
 	c *hatchetLib.Client,
 	valkeyClient valkeygo.Client,
@@ -89,11 +102,11 @@ func NightlyCloudStroppyProvisionWorkflow(
 		hatchetLib.WithWorkflowDescription("Nightly Cloud Stroppy Workflow"),
 	)
 	buildDeploymentsTask := workflow.NewTask(BuildDeploymentsTaskName,
-		func(ctx hatchetLib.Context, input hatchet.NightlyCloudStroppyRequest) (hatchet.ProvisionCloudResponse, error) {
+		func(ctx hatchetLib.Context, input hatchet.NightlyCloudStroppy) (hatchet.ProvisionCloudParams, error) {
 			ctx.Log("Building Deployments")
 			err := input.Validate()
 			if err != nil {
-				return hatchet.ProvisionCloudResponse{}, fmt.Errorf("failed to validate input: %w", err)
+				return hatchet.ProvisionCloudParams{}, fmt.Errorf("failed to validate input: %w", err)
 			}
 			deployments, network, err := provision.BuildDeployments(
 				ctx,
@@ -104,9 +117,9 @@ func NightlyCloudStroppyProvisionWorkflow(
 				&input,
 			)
 			if err != nil {
-				return hatchet.ProvisionCloudResponse{}, err
+				return hatchet.ProvisionCloudParams{}, err
 			}
-			return hatchet.ProvisionCloudResponse{
+			return hatchet.ProvisionCloudParams{
 				RunId:       ulid.Make().String(),
 				Deployments: deployments,
 				Network:     network,
@@ -114,22 +127,17 @@ func NightlyCloudStroppyProvisionWorkflow(
 		},
 	)
 	createDeploymentTask := workflow.NewTask(CreateDeploymentTaskName,
-		func(ctx hatchetLib.Context, input hatchet.NightlyCloudStroppyRequest) (hatchet.ProvisionCloudResponse, error) {
+		func(ctx hatchetLib.Context, input hatchet.NightlyCloudStroppy) (hatchet.ProvisionCloudParams, error) {
 			ctx.Log("Creating Deployments")
-			var buildOutput hatchet.ProvisionCloudResponse
-			if err := ctx.ParentOutput(buildDeploymentsTask, &buildOutput); err != nil {
-				return hatchet.ProvisionCloudResponse{}, err
-			}
-			err := buildOutput.Validate()
+			buildOutput, err := getParentProvisionCloudParams(ctx, buildDeploymentsTask)
 			if err != nil {
-				return hatchet.ProvisionCloudResponse{}, err
+				return hatchet.ProvisionCloudParams{}, err
 			}
-
 			result, err := provision.CreateDeployment(ctx, crossplaneSvc, buildOutput.Deployments)
 			if err != nil {
-				return hatchet.ProvisionCloudResponse{}, err
+				return hatchet.ProvisionCloudParams{}, err
 			}
-			return hatchet.ProvisionCloudResponse{
+			return hatchet.ProvisionCloudParams{
 				RunId:       buildOutput.GetRunId(),
 				Deployments: result,
 				Network:     buildOutput.GetNetwork(),
@@ -139,20 +147,17 @@ func NightlyCloudStroppyProvisionWorkflow(
 		hatchetLib.WithParents(buildDeploymentsTask),
 	)
 	waitDeploymentTask := workflow.NewTask(WaitDeploymentTaskName,
-		func(ctx hatchetLib.Context, input hatchet.NightlyCloudStroppyRequest) (hatchet.ProvisionCloudResponse, error) {
-			var createOutput hatchet.ProvisionCloudResponse
-			if err := ctx.ParentOutput(createDeploymentTask, &createOutput); err != nil {
-				return hatchet.ProvisionCloudResponse{}, err
-			}
-			err := createOutput.Validate()
+		func(ctx hatchetLib.Context, input hatchet.NightlyCloudStroppy) (hatchet.ProvisionCloudParams, error) {
+			ctx.Log("Waiting for Deployments")
+			createOutput, err := getParentProvisionCloudParams(ctx, createDeploymentTask)
 			if err != nil {
-				return hatchet.ProvisionCloudResponse{}, err
+				return hatchet.ProvisionCloudParams{}, err
 			}
 			result, err := provision.WaitDeployment(ctx, crossplaneSvc, createOutput.Deployments)
 			if err != nil {
-				return hatchet.ProvisionCloudResponse{}, err
+				return hatchet.ProvisionCloudParams{}, err
 			}
-			return hatchet.ProvisionCloudResponse{
+			return hatchet.ProvisionCloudParams{
 				RunId:       createOutput.GetRunId(),
 				Deployments: result,
 				Network:     createOutput.GetNetwork(),
@@ -162,38 +167,38 @@ func NightlyCloudStroppyProvisionWorkflow(
 		hatchetLib.WithParents(createDeploymentTask),
 	)
 	waitWorkerInHatchet := workflow.NewTask(WaitWorkerInHatchet,
-		func(ctx hatchetLib.Context, input hatchet.NightlyCloudStroppyRequest) (hatchet.NightlyCloudStroppyResponse, error) {
+		func(ctx hatchetLib.Context, input hatchet.NightlyCloudStroppy) (hatchet.NightlyCloudStroppyResult, error) {
 			ctx.Log("Running Stroppy Test")
-			var waitOutput hatchet.ProvisionCloudResponse
+			var waitOutput hatchet.ProvisionCloudParams
 			if err := ctx.ParentOutput(waitDeploymentTask, &waitOutput); err != nil {
-				return hatchet.NightlyCloudStroppyResponse{}, err
+				return hatchet.NightlyCloudStroppyResult{}, err
 			}
 			err := waitOutput.Validate()
 			if err != nil {
-				return hatchet.NightlyCloudStroppyResponse{}, err
+				return hatchet.NightlyCloudStroppyResult{}, err
 			}
 			err = waitMultipleWorkersUp(ctx, c,
 				RuntimeStroppyWorkerName(waitOutput.GetRunId()),
 				RuntimePostgresWorkerName(waitOutput.GetRunId()),
 			)
 			if err != nil {
-				return hatchet.NightlyCloudStroppyResponse{}, err
+				return hatchet.NightlyCloudStroppyResult{}, err
 			}
-			return hatchet.NightlyCloudStroppyResponse{}, nil
+			return hatchet.NightlyCloudStroppyResult{}, nil
 		},
 		hatchetLib.WithExecutionTimeout(1*time.Minute),
 		hatchetLib.WithParents(waitDeploymentTask),
 	)
 	runStroppyTask := workflow.NewTask(RunStroppyTaskName,
-		func(ctx hatchetLib.Context, input hatchet.NightlyCloudStroppyRequest) (hatchet.NightlyCloudStroppyResponse, error) {
+		func(ctx hatchetLib.Context, input hatchet.NightlyCloudStroppy) (hatchet.NightlyCloudStroppyResult, error) {
 			ctx.Log("Running Stroppy Test")
-			var waitOutput hatchet.ProvisionCloudResponse
+			var waitOutput hatchet.ProvisionCloudParams
 			if err := ctx.ParentOutput(waitWorkerInHatchet, &waitOutput); err != nil {
-				return hatchet.NightlyCloudStroppyResponse{}, err
+				return hatchet.NightlyCloudStroppyResult{}, err
 			}
 			err := waitOutput.Validate()
 			if err != nil {
-				return hatchet.NightlyCloudStroppyResponse{}, err
+				return hatchet.NightlyCloudStroppyResult{}, err
 			}
 			postgresResult, err := NightlyCloudStroppyRunPostgresTask(waitOutput.GetRunId(), c).
 				Run(ctx, &hatchet.InstallPostgresParams{
@@ -204,12 +209,12 @@ func NightlyCloudStroppyProvisionWorkflow(
 					//OrioledbSettings: map[string]string{},
 				})
 			if err != nil {
-				return hatchet.NightlyCloudStroppyResponse{}, err
+				return hatchet.NightlyCloudStroppyResult{}, err
 			}
 			var postgresOutput hatchet.InstallPostgresParams
 			err = postgresResult.Into(&postgresOutput)
 			if err != nil {
-				return hatchet.NightlyCloudStroppyResponse{}, fmt.Errorf("failed to get child workflow result: %w", err)
+				return hatchet.NightlyCloudStroppyResult{}, fmt.Errorf("failed to get child workflow result: %w", err)
 			}
 			runStroppyResult, err := NightlyCloudStroppyRunWorkflow(waitOutput.GetRunId(), c).
 				Run(ctx, &hatchet.RunStroppyParams{
@@ -222,14 +227,14 @@ func NightlyCloudStroppyProvisionWorkflow(
 					Env:              input.GetStroppyEnv(),
 				})
 			if err != nil {
-				return hatchet.NightlyCloudStroppyResponse{}, fmt.Errorf("failed to run Stroppy workflow: %w", err)
+				return hatchet.NightlyCloudStroppyResult{}, fmt.Errorf("failed to run Stroppy workflow: %w", err)
 			}
 			var runStroppyOutput hatchet.RunStroppyResponse
 			err = runStroppyResult.TaskOutput(stroppyRunTaskName(waitOutput.GetRunId())).Into(&runStroppyOutput)
 			if err != nil {
-				return hatchet.NightlyCloudStroppyResponse{}, fmt.Errorf("failed to get child workflow result: %w", err)
+				return hatchet.NightlyCloudStroppyResult{}, fmt.Errorf("failed to get child workflow result: %w", err)
 			}
-			return hatchet.NightlyCloudStroppyResponse{
+			return hatchet.NightlyCloudStroppyResult{
 				RunId:       waitOutput.GetRunId(),
 				Deployments: waitOutput.GetDeployments(),
 				GrafanaUrl:  runStroppyOutput.GetGrafanaUrl(),
@@ -238,10 +243,10 @@ func NightlyCloudStroppyProvisionWorkflow(
 		hatchetLib.WithParents(waitWorkerInHatchet),
 	)
 	workflow.NewTask(DestroyDeploymentsTaskName,
-		func(ctx hatchetLib.Context, input hatchet.NightlyCloudStroppyRequest) (hatchet.NightlyCloudStroppyResponse, error) {
-			var runStroppyOutput hatchet.NightlyCloudStroppyResponse
+		func(ctx hatchetLib.Context, input hatchet.NightlyCloudStroppy) (hatchet.NightlyCloudStroppyResult, error) {
+			var runStroppyOutput hatchet.NightlyCloudStroppyResult
 			if err := ctx.ParentOutput(runStroppyTask, &runStroppyOutput); err != nil {
-				return hatchet.NightlyCloudStroppyResponse{}, err
+				return hatchet.NightlyCloudStroppyResult{}, err
 			}
 			err := provision.DestroyDeployments(
 				ctx,
@@ -252,7 +257,7 @@ func NightlyCloudStroppyProvisionWorkflow(
 				runStroppyOutput.GetUsedNetwork(),
 			)
 			if err != nil {
-				return hatchet.NightlyCloudStroppyResponse{}, err
+				return hatchet.NightlyCloudStroppyResult{}, err
 			}
 			return runStroppyOutput, nil
 		},
@@ -270,7 +275,7 @@ func NightlyCloudStroppyProvisionWorkflow(
 			errorDetails += stepName + ": " + errorMsg + "; "
 		}
 		// Access successful step outputs for cleanup
-		var step1Output *hatchet.ProvisionCloudResponse
+		var step1Output *hatchet.ProvisionCloudParams
 		if err := ctx.StepOutput("build-deployments", &step1Output); err == nil {
 			log.Printf("First step completed successfully with: %s", step1Output.RunId)
 		}

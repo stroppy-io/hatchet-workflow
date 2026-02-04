@@ -8,7 +8,7 @@ import (
 )
 
 // MarshalJSON implements json.Marshaler
-func (msg *NightlyCloudStroppyRequest) MarshalJSON() ([]byte, error) {
+func (msg *NightlyCloudStroppy) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -17,14 +17,14 @@ func (msg *NightlyCloudStroppyRequest) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *NightlyCloudStroppyRequest) UnmarshalJSON(b []byte) error {
+func (msg *NightlyCloudStroppy) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *NightlyCloudStroppyResponse) MarshalJSON() ([]byte, error) {
+func (msg *NightlyCloudStroppyResult) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -33,14 +33,14 @@ func (msg *NightlyCloudStroppyResponse) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *NightlyCloudStroppyResponse) UnmarshalJSON(b []byte) error {
+func (msg *NightlyCloudStroppyResult) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *ProvisionCloudResponse) MarshalJSON() ([]byte, error) {
+func (msg *ProvisionCloudParams) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -49,7 +49,7 @@ func (msg *ProvisionCloudResponse) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *ProvisionCloudResponse) UnmarshalJSON(b []byte) error {
+func (msg *ProvisionCloudParams) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)

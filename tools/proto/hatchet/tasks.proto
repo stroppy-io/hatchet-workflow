@@ -3,62 +3,47 @@ syntax = "proto3";
 package hatchet;
 
 import "crossplane/deployment.proto";
-import "crossplane/types.proto";
+import "database/database.proto";
+import "stroppy/test.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet";
 
-message NightlyCloudStroppyRequest {
-    crossplane.SupportedCloud cloud = 1 [(validate.rules).enum.defined_only = true]; // now ony yandex
+message Tasks {
+    message Provision {
+        message Input {
+            crossplane.DeploymentSet.Request request = 1 [(validate.rules).message.required = true];
+        }
+        message Output {
+            crossplane.DeploymentSet deployment_set = 1;
+        }
+    }
+
     /*
-        MachineInfo for the VM where PostgreSQL will be installed.
-        We also use this Vm settings for run orioledb.
+        Setup database for stroppy test if one of test.database_ref is Database
+        This step can request provisioning of database if it is not already provisioned
     */
-    crossplane.MachineInfo postgres_vm = 2 [(validate.rules).message.required = true];
-    string postgres_version = 3 [(validate.rules).string.min_len = 1];
-    map<string, string> postgres_settings = 4;
+    message SetupDatabase {
+        message Input {
+            database.Database database = 1 [(validate.rules).message.required = true];
+        }
+        message Output {
+            // Connection string to deployed database
+            string connection_string = 1 [(validate.rules).string.min_len = 1];
+        }
+    }
+
     /*
-        MachineInfo for the VM where Stroppy will be installed.
-        We also use this Vm settings for run orioledb.
+        Run stroppy test
+        This step can request database setup if one of test.database_ref is Database
     */
-    crossplane.MachineInfo stroppy_vm = 6 [(validate.rules).message.required = true];
-    string stroppy_version = 7 [(validate.rules).string.min_len = 1];
-    string stroppy_workload_name = 8 [(validate.rules).string.min_len = 1];
-    map<string, string> stroppy_env = 9;
+    message StroppyTestSuite {
+        message Input {
+            stroppy.TestSuite suite = 1 [(validate.rules).message.required = true];
+        }
+        message Output {
+            repeated stroppy.TestSuiteResult results = 1 [(validate.rules).repeated.min_items = 1];
+        }
+    }
 }
 
-message NightlyCloudStroppyResponse {
-    string run_id = 1 [(validate.rules).string.len = 26];
-    map<string, crossplane.Deployment> deployments = 2 [(validate.rules).map.min_pairs = 2];
-    string grafana_url = 3 [(validate.rules).string.min_len = 1];
-    crossplane.CidrWithIps used_network = 4 [(validate.rules).message.required = true];
-}
-
-message ProvisionCloudResponse {
-    string run_id = 1 [(validate.rules).string.len = 26];
-    map<string, crossplane.Deployment> deployments = 2 [(validate.rules).map.min_pairs = 1];
-    crossplane.CidrWithIps network = 3 [(validate.rules).message.required = true];
-}
-
-message InstallPostgresParams {
-    string run_id = 1 [(validate.rules).string.len = 26];
-    string version = 2 [(validate.rules).string.min_len = 1];
-    map<string, string> settings = 3;
-    bool enable_orioledb = 4;
-    map<string, string> orioledb_settings = 5;
-}
-
-message RunStroppyParams {
-    string run_id = 1 [(validate.rules).string.len = 26];
-    string version = 2 [(validate.rules).string.min_len = 1];
-    string binary_path = 3 [(validate.rules).string.min_len = 1];
-    string workload_name = 4 [(validate.rules).string.min_len = 1];
-    string connection_string = 5 [(validate.rules).string.min_len = 1];
-    map<string, string> env = 6;
-}
-
-message RunStroppyResponse {
-    string output = 1 [(validate.rules).string.min_len = 1];
-    string workload_name = 2 [(validate.rules).string.min_len = 1];
-    string grafana_url = 3 [(validate.rules).string.min_len = 1];
-}

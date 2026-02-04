@@ -32,6 +32,12 @@ message Quota {
 }
 
 message Deployment {
+    message Request {
+        string name = 2 [(validate.rules).string.min_len = 1];
+        MachineInfo machine_info = 3 [(validate.rules).message.required = true];
+        CloudInit cloud_init = 4 [(validate.rules).message.required = true];
+        map<string, string> labels = 7;
+    }
     message Vm {
         message NetworkParams {
             Ip internal_ip = 1 [(validate.rules).message.required = true];
@@ -43,15 +49,28 @@ message Deployment {
         CloudInit cloud_init = 6 [(validate.rules).message.required = true];
         NetworkParams network_params = 7 [(validate.rules).message.required = true];
     }
-    message Cluster {
-        repeated Vm vms = 2 [(validate.rules).repeated.min_items = 1];
-    }
     string id = 1 [(validate.rules).string.min_len = 1];
-    SupportedCloud supported_cloud = 2 [(validate.rules).enum.defined_only = true];
-    repeated Quota using_quotas = 3;
-    repeated Resource resources = 4;
-    oneof deployment {
-        Vm vm = 100 [(validate.rules).message.required = true];
-        Cluster cluster = 101 [(validate.rules).message.required = true];
-    }
+    string name = 2 [(validate.rules).string.min_len = 1];
+    SupportedCloud supported_cloud = 3 [(validate.rules).enum.defined_only = true];
+    repeated Quota using_quotas = 4;
+    repeated Resource resources = 5;
+    Vm vm = 6 [(validate.rules).message.required = true];
+    map<string, string> labels = 7;
 }
+
+message DeploymentSet {
+    message Request {
+        string name = 1 [(validate.rules).string.min_len = 1];
+        repeated Deployment.Request requests = 2 [(validate.rules).repeated.min_items = 1];
+    }
+    message Network {
+        string id = 1 [(validate.rules).string.min_len = 1];
+        string name = 2 [(validate.rules).string.min_len = 1];
+        CidrWithIps cidr_with_ips = 3 [(validate.rules).message.required = true];
+    }
+    Network network = 1 [(validate.rules).message.required = true];
+    repeated Deployment deployments = 2 [(validate.rules).repeated.min_items = 1];
+}
+
+
+

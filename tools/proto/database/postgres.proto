@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package database;
+
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet";
+
+
+message Postgres {
+    message Sidecar {
+        message PostgresExporter {
+            bool enabled = 1;
+            uint32 port = 2;  // default 9187
+            repeated string custom_queries_paths = 3;
+        }
+        message PgbouncerExporter {
+            bool enabled = 1;
+            uint32 port = 2;  // default 9127
+        }
+    }
+    message Infra {
+        message Pgbouncer {
+            enum PoolMode {
+                POOL_MODE_UNSPECIFIED = 0;
+                SESSION = 1;
+                TRANSACTION = 2;
+                STATEMENT = 3;
+            }
+            uint32 pool_size = 1;
+            PoolMode pool_mode = 2;
+            uint32 max_client_conn = 3;
+        }
+        message Patroni {
+            uint32 ttl = 1;
+            uint32 loop_wait = 2;
+        }
+        message Etcd {
+            uint32 cluster_size = 1 [(validate.rules).uint32 = {in: [1, 3, 5]}];
+        }
+        message Backup {
+            enum Tool {
+                TOOL_UNSPECIFIED = 0;
+                WAL_G = 1;
+                PG_DUMP = 2;
+            }
+            message S3Storage {
+                string bucket = 1 [(validate.rules).string.min_len = 1];
+                string region = 2 [(validate.rules).string.min_len = 1];
+                string endpoint = 3 [(validate.rules).string.min_len = 1];
+                string access_key_id = 4 [(validate.rules).string.min_len = 1];
+                string secret_access_key = 5 [(validate.rules).string.min_len = 1];
+            }
+            message LocalStorage {
+                string path = 1 [(validate.rules).string.min_len = 1];
+            }
+            string schedule = 1 [(validate.rules).string.min_len = 1];
+            string retention = 2;
+            Tool tool = 3;
+            oneof storage {
+                option (validate.required) = true;
+                S3Storage s3 = 10;
+                LocalStorage local = 12;
+            }
+        }
+    }
+    message InstanceSettings {
+        enum StorageBackend {
+            STORAGE_TYPE_UNSPECIFIED = 0;
+            STORAGE_TYPE_POSTGRES = 1;
+            STORAGE_TYPE_ORIOLEDB = 2;
+        }
+        StorageBackend storage_backend = 2 [(validate.rules).enum.defined_only = true];
+        map<string, string> postgresql_conf = 3;
+        map<string, string> orioledb_conf = 4;
+    }
+}

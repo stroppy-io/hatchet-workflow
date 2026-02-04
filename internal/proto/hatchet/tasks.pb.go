@@ -23,7 +23,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type NightlyCloudStroppyRequest struct {
+type NightlyCloudStroppy struct {
 	state protoimpl.MessageState    `protogen:"open.v1"`
 	Cloud crossplane.SupportedCloud `protobuf:"varint,1,opt,name=cloud,proto3,enum=crossplane.SupportedCloud" json:"cloud,omitempty"` // now ony yandex
 	// MachineInfo for the VM where PostgreSQL will be installed.
@@ -41,20 +41,20 @@ type NightlyCloudStroppyRequest struct {
 	sizeCache           protoimpl.SizeCache
 }
 
-func (x *NightlyCloudStroppyRequest) Reset() {
-	*x = NightlyCloudStroppyRequest{}
+func (x *NightlyCloudStroppy) Reset() {
+	*x = NightlyCloudStroppy{}
 	mi := &file_hatchet_tasks_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NightlyCloudStroppyRequest) String() string {
+func (x *NightlyCloudStroppy) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NightlyCloudStroppyRequest) ProtoMessage() {}
+func (*NightlyCloudStroppy) ProtoMessage() {}
 
-func (x *NightlyCloudStroppyRequest) ProtoReflect() protoreflect.Message {
+func (x *NightlyCloudStroppy) ProtoReflect() protoreflect.Message {
 	mi := &file_hatchet_tasks_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -66,68 +66,68 @@ func (x *NightlyCloudStroppyRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NightlyCloudStroppyRequest.ProtoReflect.Descriptor instead.
-func (*NightlyCloudStroppyRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use NightlyCloudStroppy.ProtoReflect.Descriptor instead.
+func (*NightlyCloudStroppy) Descriptor() ([]byte, []int) {
 	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *NightlyCloudStroppyRequest) GetCloud() crossplane.SupportedCloud {
+func (x *NightlyCloudStroppy) GetCloud() crossplane.SupportedCloud {
 	if x != nil {
 		return x.Cloud
 	}
 	return crossplane.SupportedCloud(0)
 }
 
-func (x *NightlyCloudStroppyRequest) GetPostgresVm() *crossplane.MachineInfo {
+func (x *NightlyCloudStroppy) GetPostgresVm() *crossplane.MachineInfo {
 	if x != nil {
 		return x.PostgresVm
 	}
 	return nil
 }
 
-func (x *NightlyCloudStroppyRequest) GetPostgresVersion() string {
+func (x *NightlyCloudStroppy) GetPostgresVersion() string {
 	if x != nil {
 		return x.PostgresVersion
 	}
 	return ""
 }
 
-func (x *NightlyCloudStroppyRequest) GetPostgresSettings() map[string]string {
+func (x *NightlyCloudStroppy) GetPostgresSettings() map[string]string {
 	if x != nil {
 		return x.PostgresSettings
 	}
 	return nil
 }
 
-func (x *NightlyCloudStroppyRequest) GetStroppyVm() *crossplane.MachineInfo {
+func (x *NightlyCloudStroppy) GetStroppyVm() *crossplane.MachineInfo {
 	if x != nil {
 		return x.StroppyVm
 	}
 	return nil
 }
 
-func (x *NightlyCloudStroppyRequest) GetStroppyVersion() string {
+func (x *NightlyCloudStroppy) GetStroppyVersion() string {
 	if x != nil {
 		return x.StroppyVersion
 	}
 	return ""
 }
 
-func (x *NightlyCloudStroppyRequest) GetStroppyWorkloadName() string {
+func (x *NightlyCloudStroppy) GetStroppyWorkloadName() string {
 	if x != nil {
 		return x.StroppyWorkloadName
 	}
 	return ""
 }
 
-func (x *NightlyCloudStroppyRequest) GetStroppyEnv() map[string]string {
+func (x *NightlyCloudStroppy) GetStroppyEnv() map[string]string {
 	if x != nil {
 		return x.StroppyEnv
 	}
 	return nil
 }
 
-type NightlyCloudStroppyResponse struct {
+type NightlyCloudStroppyResult struct {
 	state         protoimpl.MessageState            `protogen:"open.v1"`
 	RunId         string                            `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	Deployments   map[string]*crossplane.Deployment `protobuf:"bytes,2,rep,name=deployments,proto3" json:"deployments,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
@@ -137,20 +137,20 @@ type NightlyCloudStroppyResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NightlyCloudStroppyResponse) Reset() {
-	*x = NightlyCloudStroppyResponse{}
+func (x *NightlyCloudStroppyResult) Reset() {
+	*x = NightlyCloudStroppyResult{}
 	mi := &file_hatchet_tasks_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NightlyCloudStroppyResponse) String() string {
+func (x *NightlyCloudStroppyResult) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NightlyCloudStroppyResponse) ProtoMessage() {}
+func (*NightlyCloudStroppyResult) ProtoMessage() {}
 
-func (x *NightlyCloudStroppyResponse) ProtoReflect() protoreflect.Message {
+func (x *NightlyCloudStroppyResult) ProtoReflect() protoreflect.Message {
 	mi := &file_hatchet_tasks_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -162,40 +162,40 @@ func (x *NightlyCloudStroppyResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NightlyCloudStroppyResponse.ProtoReflect.Descriptor instead.
-func (*NightlyCloudStroppyResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use NightlyCloudStroppyResult.ProtoReflect.Descriptor instead.
+func (*NightlyCloudStroppyResult) Descriptor() ([]byte, []int) {
 	return file_hatchet_tasks_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *NightlyCloudStroppyResponse) GetRunId() string {
+func (x *NightlyCloudStroppyResult) GetRunId() string {
 	if x != nil {
 		return x.RunId
 	}
 	return ""
 }
 
-func (x *NightlyCloudStroppyResponse) GetDeployments() map[string]*crossplane.Deployment {
+func (x *NightlyCloudStroppyResult) GetDeployments() map[string]*crossplane.Deployment {
 	if x != nil {
 		return x.Deployments
 	}
 	return nil
 }
 
-func (x *NightlyCloudStroppyResponse) GetGrafanaUrl() string {
+func (x *NightlyCloudStroppyResult) GetGrafanaUrl() string {
 	if x != nil {
 		return x.GrafanaUrl
 	}
 	return ""
 }
 
-func (x *NightlyCloudStroppyResponse) GetUsedNetwork() *crossplane.CidrWithIps {
+func (x *NightlyCloudStroppyResult) GetUsedNetwork() *crossplane.CidrWithIps {
 	if x != nil {
 		return x.UsedNetwork
 	}
 	return nil
 }
 
-type ProvisionCloudResponse struct {
+type ProvisionCloudParams struct {
 	state         protoimpl.MessageState            `protogen:"open.v1"`
 	RunId         string                            `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	Deployments   map[string]*crossplane.Deployment `protobuf:"bytes,2,rep,name=deployments,proto3" json:"deployments,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
@@ -204,20 +204,20 @@ type ProvisionCloudResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ProvisionCloudResponse) Reset() {
-	*x = ProvisionCloudResponse{}
+func (x *ProvisionCloudParams) Reset() {
+	*x = ProvisionCloudParams{}
 	mi := &file_hatchet_tasks_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ProvisionCloudResponse) String() string {
+func (x *ProvisionCloudParams) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ProvisionCloudResponse) ProtoMessage() {}
+func (*ProvisionCloudParams) ProtoMessage() {}
 
-func (x *ProvisionCloudResponse) ProtoReflect() protoreflect.Message {
+func (x *ProvisionCloudParams) ProtoReflect() protoreflect.Message {
 	mi := &file_hatchet_tasks_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -229,26 +229,26 @@ func (x *ProvisionCloudResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ProvisionCloudResponse.ProtoReflect.Descriptor instead.
-func (*ProvisionCloudResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ProvisionCloudParams.ProtoReflect.Descriptor instead.
+func (*ProvisionCloudParams) Descriptor() ([]byte, []int) {
 	return file_hatchet_tasks_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ProvisionCloudResponse) GetRunId() string {
+func (x *ProvisionCloudParams) GetRunId() string {
 	if x != nil {
 		return x.RunId
 	}
 	return ""
 }
 
-func (x *ProvisionCloudResponse) GetDeployments() map[string]*crossplane.Deployment {
+func (x *ProvisionCloudParams) GetDeployments() map[string]*crossplane.Deployment {
 	if x != nil {
 		return x.Deployments
 	}
 	return nil
 }
 
-func (x *ProvisionCloudResponse) GetNetwork() *crossplane.CidrWithIps {
+func (x *ProvisionCloudParams) GetNetwork() *crossplane.CidrWithIps {
 	if x != nil {
 		return x.Network
 	}
@@ -479,37 +479,37 @@ var File_hatchet_tasks_proto protoreflect.FileDescriptor
 
 const file_hatchet_tasks_proto_rawDesc = "" +
 	"\n" +
-	"\x13hatchet/tasks.proto\x12\ahatchet\x1a\x1bcrossplane/deployment.proto\x1a\x16crossplane/types.proto\x1a\x17validate/validate.proto\"\xc3\x05\n" +
-	"\x1aNightlyCloudStroppyRequest\x12:\n" +
+	"\x13hatchet/tasks.proto\x12\ahatchet\x1a\x1bcrossplane/deployment.proto\x1a\x16crossplane/types.proto\x1a\x17validate/validate.proto\"\xae\x05\n" +
+	"\x13NightlyCloudStroppy\x12:\n" +
 	"\x05cloud\x18\x01 \x01(\x0e2\x1a.crossplane.SupportedCloudB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05cloud\x12B\n" +
 	"\vpostgres_vm\x18\x02 \x01(\v2\x17.crossplane.MachineInfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
 	"postgresVm\x122\n" +
-	"\x10postgres_version\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x0fpostgresVersion\x12f\n" +
-	"\x11postgres_settings\x18\x04 \x03(\v29.hatchet.NightlyCloudStroppyRequest.PostgresSettingsEntryR\x10postgresSettings\x12@\n" +
+	"\x10postgres_version\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x0fpostgresVersion\x12_\n" +
+	"\x11postgres_settings\x18\x04 \x03(\v22.hatchet.NightlyCloudStroppy.PostgresSettingsEntryR\x10postgresSettings\x12@\n" +
 	"\n" +
 	"stroppy_vm\x18\x06 \x01(\v2\x17.crossplane.MachineInfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tstroppyVm\x120\n" +
 	"\x0fstroppy_version\x18\a \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x0estroppyVersion\x12;\n" +
-	"\x15stroppy_workload_name\x18\b \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x13stroppyWorkloadName\x12T\n" +
-	"\vstroppy_env\x18\t \x03(\v23.hatchet.NightlyCloudStroppyRequest.StroppyEnvEntryR\n" +
+	"\x15stroppy_workload_name\x18\b \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x13stroppyWorkloadName\x12M\n" +
+	"\vstroppy_env\x18\t \x03(\v2,.hatchet.NightlyCloudStroppy.StroppyEnvEntryR\n" +
 	"stroppyEnv\x1aC\n" +
 	"\x15PostgresSettingsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a=\n" +
 	"\x0fStroppyEnvEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe9\x02\n" +
-	"\x1bNightlyCloudStroppyResponse\x12\x1f\n" +
-	"\x06run_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05runId\x12a\n" +
-	"\vdeployments\x18\x02 \x03(\v25.hatchet.NightlyCloudStroppyResponse.DeploymentsEntryB\b\xfaB\x05\x9a\x01\x02\b\x02R\vdeployments\x12(\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe5\x02\n" +
+	"\x19NightlyCloudStroppyResult\x12\x1f\n" +
+	"\x06run_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05runId\x12_\n" +
+	"\vdeployments\x18\x02 \x03(\v23.hatchet.NightlyCloudStroppyResult.DeploymentsEntryB\b\xfaB\x05\x9a\x01\x02\b\x02R\vdeployments\x12(\n" +
 	"\vgrafana_url\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\n" +
 	"grafanaUrl\x12D\n" +
 	"\fused_network\x18\x04 \x01(\v2\x17.crossplane.CidrWithIpsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\vusedNetwork\x1aV\n" +
 	"\x10DeploymentsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
-	"\x05value\x18\x02 \x01(\v2\x16.crossplane.DeploymentR\x05value:\x028\x01\"\xac\x02\n" +
-	"\x16ProvisionCloudResponse\x12\x1f\n" +
-	"\x06run_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05runId\x12\\\n" +
-	"\vdeployments\x18\x02 \x03(\v20.hatchet.ProvisionCloudResponse.DeploymentsEntryB\b\xfaB\x05\x9a\x01\x02\b\x01R\vdeployments\x12;\n" +
+	"\x05value\x18\x02 \x01(\v2\x16.crossplane.DeploymentR\x05value:\x028\x01\"\xa8\x02\n" +
+	"\x14ProvisionCloudParams\x12\x1f\n" +
+	"\x06run_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05runId\x12Z\n" +
+	"\vdeployments\x18\x02 \x03(\v2..hatchet.ProvisionCloudParams.DeploymentsEntryB\b\xfaB\x05\x9a\x01\x02\b\x01R\vdeployments\x12;\n" +
 	"\anetwork\x18\x03 \x01(\v2\x17.crossplane.CidrWithIpsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\anetwork\x1aV\n" +
 	"\x10DeploymentsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
@@ -557,39 +557,39 @@ func file_hatchet_tasks_proto_rawDescGZIP() []byte {
 
 var file_hatchet_tasks_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_hatchet_tasks_proto_goTypes = []any{
-	(*NightlyCloudStroppyRequest)(nil),  // 0: hatchet.NightlyCloudStroppyRequest
-	(*NightlyCloudStroppyResponse)(nil), // 1: hatchet.NightlyCloudStroppyResponse
-	(*ProvisionCloudResponse)(nil),      // 2: hatchet.ProvisionCloudResponse
-	(*InstallPostgresParams)(nil),       // 3: hatchet.InstallPostgresParams
-	(*RunStroppyParams)(nil),            // 4: hatchet.RunStroppyParams
-	(*RunStroppyResponse)(nil),          // 5: hatchet.RunStroppyResponse
-	nil,                                 // 6: hatchet.NightlyCloudStroppyRequest.PostgresSettingsEntry
-	nil,                                 // 7: hatchet.NightlyCloudStroppyRequest.StroppyEnvEntry
-	nil,                                 // 8: hatchet.NightlyCloudStroppyResponse.DeploymentsEntry
-	nil,                                 // 9: hatchet.ProvisionCloudResponse.DeploymentsEntry
-	nil,                                 // 10: hatchet.InstallPostgresParams.SettingsEntry
-	nil,                                 // 11: hatchet.InstallPostgresParams.OrioledbSettingsEntry
-	nil,                                 // 12: hatchet.RunStroppyParams.EnvEntry
-	(crossplane.SupportedCloud)(0),      // 13: crossplane.SupportedCloud
-	(*crossplane.MachineInfo)(nil),      // 14: crossplane.MachineInfo
-	(*crossplane.CidrWithIps)(nil),      // 15: crossplane.CidrWithIps
-	(*crossplane.Deployment)(nil),       // 16: crossplane.Deployment
+	(*NightlyCloudStroppy)(nil),       // 0: hatchet.NightlyCloudStroppy
+	(*NightlyCloudStroppyResult)(nil), // 1: hatchet.NightlyCloudStroppyResult
+	(*ProvisionCloudParams)(nil),      // 2: hatchet.ProvisionCloudParams
+	(*InstallPostgresParams)(nil),     // 3: hatchet.InstallPostgresParams
+	(*RunStroppyParams)(nil),          // 4: hatchet.RunStroppyParams
+	(*RunStroppyResponse)(nil),        // 5: hatchet.RunStroppyResponse
+	nil,                               // 6: hatchet.NightlyCloudStroppy.PostgresSettingsEntry
+	nil,                               // 7: hatchet.NightlyCloudStroppy.StroppyEnvEntry
+	nil,                               // 8: hatchet.NightlyCloudStroppyResult.DeploymentsEntry
+	nil,                               // 9: hatchet.ProvisionCloudParams.DeploymentsEntry
+	nil,                               // 10: hatchet.InstallPostgresParams.SettingsEntry
+	nil,                               // 11: hatchet.InstallPostgresParams.OrioledbSettingsEntry
+	nil,                               // 12: hatchet.RunStroppyParams.EnvEntry
+	(crossplane.SupportedCloud)(0),    // 13: crossplane.SupportedCloud
+	(*crossplane.MachineInfo)(nil),    // 14: crossplane.MachineInfo
+	(*crossplane.CidrWithIps)(nil),    // 15: crossplane.CidrWithIps
+	(*crossplane.Deployment)(nil),     // 16: crossplane.Deployment
 }
 var file_hatchet_tasks_proto_depIdxs = []int32{
-	13, // 0: hatchet.NightlyCloudStroppyRequest.cloud:type_name -> crossplane.SupportedCloud
-	14, // 1: hatchet.NightlyCloudStroppyRequest.postgres_vm:type_name -> crossplane.MachineInfo
-	6,  // 2: hatchet.NightlyCloudStroppyRequest.postgres_settings:type_name -> hatchet.NightlyCloudStroppyRequest.PostgresSettingsEntry
-	14, // 3: hatchet.NightlyCloudStroppyRequest.stroppy_vm:type_name -> crossplane.MachineInfo
-	7,  // 4: hatchet.NightlyCloudStroppyRequest.stroppy_env:type_name -> hatchet.NightlyCloudStroppyRequest.StroppyEnvEntry
-	8,  // 5: hatchet.NightlyCloudStroppyResponse.deployments:type_name -> hatchet.NightlyCloudStroppyResponse.DeploymentsEntry
-	15, // 6: hatchet.NightlyCloudStroppyResponse.used_network:type_name -> crossplane.CidrWithIps
-	9,  // 7: hatchet.ProvisionCloudResponse.deployments:type_name -> hatchet.ProvisionCloudResponse.DeploymentsEntry
-	15, // 8: hatchet.ProvisionCloudResponse.network:type_name -> crossplane.CidrWithIps
+	13, // 0: hatchet.NightlyCloudStroppy.cloud:type_name -> crossplane.SupportedCloud
+	14, // 1: hatchet.NightlyCloudStroppy.postgres_vm:type_name -> crossplane.MachineInfo
+	6,  // 2: hatchet.NightlyCloudStroppy.postgres_settings:type_name -> hatchet.NightlyCloudStroppy.PostgresSettingsEntry
+	14, // 3: hatchet.NightlyCloudStroppy.stroppy_vm:type_name -> crossplane.MachineInfo
+	7,  // 4: hatchet.NightlyCloudStroppy.stroppy_env:type_name -> hatchet.NightlyCloudStroppy.StroppyEnvEntry
+	8,  // 5: hatchet.NightlyCloudStroppyResult.deployments:type_name -> hatchet.NightlyCloudStroppyResult.DeploymentsEntry
+	15, // 6: hatchet.NightlyCloudStroppyResult.used_network:type_name -> crossplane.CidrWithIps
+	9,  // 7: hatchet.ProvisionCloudParams.deployments:type_name -> hatchet.ProvisionCloudParams.DeploymentsEntry
+	15, // 8: hatchet.ProvisionCloudParams.network:type_name -> crossplane.CidrWithIps
 	10, // 9: hatchet.InstallPostgresParams.settings:type_name -> hatchet.InstallPostgresParams.SettingsEntry
 	11, // 10: hatchet.InstallPostgresParams.orioledb_settings:type_name -> hatchet.InstallPostgresParams.OrioledbSettingsEntry
 	12, // 11: hatchet.RunStroppyParams.env:type_name -> hatchet.RunStroppyParams.EnvEntry
-	16, // 12: hatchet.NightlyCloudStroppyResponse.DeploymentsEntry.value:type_name -> crossplane.Deployment
-	16, // 13: hatchet.ProvisionCloudResponse.DeploymentsEntry.value:type_name -> crossplane.Deployment
+	16, // 12: hatchet.NightlyCloudStroppyResult.DeploymentsEntry.value:type_name -> crossplane.Deployment
+	16, // 13: hatchet.ProvisionCloudParams.DeploymentsEntry.value:type_name -> crossplane.Deployment
 	14, // [14:14] is the sub-list for method output_type
 	14, // [14:14] is the sub-list for method input_type
 	14, // [14:14] is the sub-list for extension type_name
