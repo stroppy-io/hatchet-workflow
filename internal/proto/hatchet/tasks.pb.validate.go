@@ -17,8 +17,6 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
-
-	crossplane "github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
 )
 
 // ensure the imports are used
@@ -35,174 +33,42 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
-
-	_ = crossplane.SupportedCloud(0)
 )
 
-// Validate checks the field values on NightlyCloudStroppy with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *NightlyCloudStroppy) Validate() error {
+// Validate checks the field values on Tasks with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Tasks) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on NightlyCloudStroppy with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// NightlyCloudStroppyMultiError, or nil if none found.
-func (m *NightlyCloudStroppy) ValidateAll() error {
+// ValidateAll checks the field values on Tasks with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in TasksMultiError, or nil if none found.
+func (m *Tasks) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *NightlyCloudStroppy) validate(all bool) error {
+func (m *Tasks) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	if _, ok := crossplane.SupportedCloud_name[int32(m.GetCloud())]; !ok {
-		err := NightlyCloudStroppyValidationError{
-			field:  "Cloud",
-			reason: "value must be one of the defined enum values",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if m.GetPostgresVm() == nil {
-		err := NightlyCloudStroppyValidationError{
-			field:  "PostgresVm",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetPostgresVm()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, NightlyCloudStroppyValidationError{
-					field:  "PostgresVm",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, NightlyCloudStroppyValidationError{
-					field:  "PostgresVm",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetPostgresVm()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return NightlyCloudStroppyValidationError{
-				field:  "PostgresVm",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if utf8.RuneCountInString(m.GetPostgresVersion()) < 1 {
-		err := NightlyCloudStroppyValidationError{
-			field:  "PostgresVersion",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	// no validation rules for PostgresSettings
-
-	if m.GetStroppyVm() == nil {
-		err := NightlyCloudStroppyValidationError{
-			field:  "StroppyVm",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetStroppyVm()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, NightlyCloudStroppyValidationError{
-					field:  "StroppyVm",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, NightlyCloudStroppyValidationError{
-					field:  "StroppyVm",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetStroppyVm()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return NightlyCloudStroppyValidationError{
-				field:  "StroppyVm",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if utf8.RuneCountInString(m.GetStroppyVersion()) < 1 {
-		err := NightlyCloudStroppyValidationError{
-			field:  "StroppyVersion",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetStroppyWorkloadName()) < 1 {
-		err := NightlyCloudStroppyValidationError{
-			field:  "StroppyWorkloadName",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	// no validation rules for StroppyEnv
-
 	if len(errors) > 0 {
-		return NightlyCloudStroppyMultiError(errors)
+		return TasksMultiError(errors)
 	}
 
 	return nil
 }
 
-// NightlyCloudStroppyMultiError is an error wrapping multiple validation
-// errors returned by NightlyCloudStroppy.ValidateAll() if the designated
-// constraints aren't met.
-type NightlyCloudStroppyMultiError []error
+// TasksMultiError is an error wrapping multiple validation errors returned by
+// Tasks.ValidateAll() if the designated constraints aren't met.
+type TasksMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m NightlyCloudStroppyMultiError) Error() string {
+func (m TasksMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -211,11 +77,11 @@ func (m NightlyCloudStroppyMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m NightlyCloudStroppyMultiError) AllErrors() []error { return m }
+func (m TasksMultiError) AllErrors() []error { return m }
 
-// NightlyCloudStroppyValidationError is the validation error returned by
-// NightlyCloudStroppy.Validate if the designated constraints aren't met.
-type NightlyCloudStroppyValidationError struct {
+// TasksValidationError is the validation error returned by Tasks.Validate if
+// the designated constraints aren't met.
+type TasksValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -223,24 +89,22 @@ type NightlyCloudStroppyValidationError struct {
 }
 
 // Field function returns field value.
-func (e NightlyCloudStroppyValidationError) Field() string { return e.field }
+func (e TasksValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e NightlyCloudStroppyValidationError) Reason() string { return e.reason }
+func (e TasksValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e NightlyCloudStroppyValidationError) Cause() error { return e.cause }
+func (e TasksValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e NightlyCloudStroppyValidationError) Key() bool { return e.key }
+func (e TasksValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e NightlyCloudStroppyValidationError) ErrorName() string {
-	return "NightlyCloudStroppyValidationError"
-}
+func (e TasksValidationError) ErrorName() string { return "TasksValidationError" }
 
 // Error satisfies the builtin error interface
-func (e NightlyCloudStroppyValidationError) Error() string {
+func (e TasksValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -252,14 +116,14 @@ func (e NightlyCloudStroppyValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sNightlyCloudStroppy.%s: %s%s",
+		"invalid %sTasks.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = NightlyCloudStroppyValidationError{}
+var _ error = TasksValidationError{}
 
 var _ interface {
 	Field() string
@@ -267,610 +131,611 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = NightlyCloudStroppyValidationError{}
+} = TasksValidationError{}
 
-// Validate checks the field values on NightlyCloudStroppyResult with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *NightlyCloudStroppyResult) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on NightlyCloudStroppyResult with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// NightlyCloudStroppyResultMultiError, or nil if none found.
-func (m *NightlyCloudStroppyResult) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *NightlyCloudStroppyResult) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if utf8.RuneCountInString(m.GetRunId()) != 26 {
-		err := NightlyCloudStroppyResultValidationError{
-			field:  "RunId",
-			reason: "value length must be 26 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-
-	}
-
-	if len(m.GetDeployments()) < 2 {
-		err := NightlyCloudStroppyResultValidationError{
-			field:  "Deployments",
-			reason: "value must contain at least 2 pair(s)",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	{
-		sorted_keys := make([]string, len(m.GetDeployments()))
-		i := 0
-		for key := range m.GetDeployments() {
-			sorted_keys[i] = key
-			i++
-		}
-		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
-		for _, key := range sorted_keys {
-			val := m.GetDeployments()[key]
-			_ = val
-
-			// no validation rules for Deployments[key]
-
-			if all {
-				switch v := interface{}(val).(type) {
-				case interface{ ValidateAll() error }:
-					if err := v.ValidateAll(); err != nil {
-						errors = append(errors, NightlyCloudStroppyResultValidationError{
-							field:  fmt.Sprintf("Deployments[%v]", key),
-							reason: "embedded message failed validation",
-							cause:  err,
-						})
-					}
-				case interface{ Validate() error }:
-					if err := v.Validate(); err != nil {
-						errors = append(errors, NightlyCloudStroppyResultValidationError{
-							field:  fmt.Sprintf("Deployments[%v]", key),
-							reason: "embedded message failed validation",
-							cause:  err,
-						})
-					}
-				}
-			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-				if err := v.Validate(); err != nil {
-					return NightlyCloudStroppyResultValidationError{
-						field:  fmt.Sprintf("Deployments[%v]", key),
-						reason: "embedded message failed validation",
-						cause:  err,
-					}
-				}
-			}
-
-		}
-	}
-
-	if utf8.RuneCountInString(m.GetGrafanaUrl()) < 1 {
-		err := NightlyCloudStroppyResultValidationError{
-			field:  "GrafanaUrl",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if m.GetUsedNetwork() == nil {
-		err := NightlyCloudStroppyResultValidationError{
-			field:  "UsedNetwork",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetUsedNetwork()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, NightlyCloudStroppyResultValidationError{
-					field:  "UsedNetwork",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, NightlyCloudStroppyResultValidationError{
-					field:  "UsedNetwork",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetUsedNetwork()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return NightlyCloudStroppyResultValidationError{
-				field:  "UsedNetwork",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return NightlyCloudStroppyResultMultiError(errors)
-	}
-
-	return nil
-}
-
-// NightlyCloudStroppyResultMultiError is an error wrapping multiple validation
-// errors returned by NightlyCloudStroppyResult.ValidateAll() if the
-// designated constraints aren't met.
-type NightlyCloudStroppyResultMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m NightlyCloudStroppyResultMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m NightlyCloudStroppyResultMultiError) AllErrors() []error { return m }
-
-// NightlyCloudStroppyResultValidationError is the validation error returned by
-// NightlyCloudStroppyResult.Validate if the designated constraints aren't met.
-type NightlyCloudStroppyResultValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e NightlyCloudStroppyResultValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e NightlyCloudStroppyResultValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e NightlyCloudStroppyResultValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e NightlyCloudStroppyResultValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e NightlyCloudStroppyResultValidationError) ErrorName() string {
-	return "NightlyCloudStroppyResultValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e NightlyCloudStroppyResultValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sNightlyCloudStroppyResult.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = NightlyCloudStroppyResultValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = NightlyCloudStroppyResultValidationError{}
-
-// Validate checks the field values on ProvisionCloudParams with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *ProvisionCloudParams) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on ProvisionCloudParams with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// ProvisionCloudParamsMultiError, or nil if none found.
-func (m *ProvisionCloudParams) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *ProvisionCloudParams) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if utf8.RuneCountInString(m.GetRunId()) != 26 {
-		err := ProvisionCloudParamsValidationError{
-			field:  "RunId",
-			reason: "value length must be 26 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-
-	}
-
-	if len(m.GetDeployments()) < 1 {
-		err := ProvisionCloudParamsValidationError{
-			field:  "Deployments",
-			reason: "value must contain at least 1 pair(s)",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	{
-		sorted_keys := make([]string, len(m.GetDeployments()))
-		i := 0
-		for key := range m.GetDeployments() {
-			sorted_keys[i] = key
-			i++
-		}
-		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
-		for _, key := range sorted_keys {
-			val := m.GetDeployments()[key]
-			_ = val
-
-			// no validation rules for Deployments[key]
-
-			if all {
-				switch v := interface{}(val).(type) {
-				case interface{ ValidateAll() error }:
-					if err := v.ValidateAll(); err != nil {
-						errors = append(errors, ProvisionCloudParamsValidationError{
-							field:  fmt.Sprintf("Deployments[%v]", key),
-							reason: "embedded message failed validation",
-							cause:  err,
-						})
-					}
-				case interface{ Validate() error }:
-					if err := v.Validate(); err != nil {
-						errors = append(errors, ProvisionCloudParamsValidationError{
-							field:  fmt.Sprintf("Deployments[%v]", key),
-							reason: "embedded message failed validation",
-							cause:  err,
-						})
-					}
-				}
-			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-				if err := v.Validate(); err != nil {
-					return ProvisionCloudParamsValidationError{
-						field:  fmt.Sprintf("Deployments[%v]", key),
-						reason: "embedded message failed validation",
-						cause:  err,
-					}
-				}
-			}
-
-		}
-	}
-
-	if m.GetNetwork() == nil {
-		err := ProvisionCloudParamsValidationError{
-			field:  "Network",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetNetwork()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ProvisionCloudParamsValidationError{
-					field:  "Network",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ProvisionCloudParamsValidationError{
-					field:  "Network",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetNetwork()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ProvisionCloudParamsValidationError{
-				field:  "Network",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return ProvisionCloudParamsMultiError(errors)
-	}
-
-	return nil
-}
-
-// ProvisionCloudParamsMultiError is an error wrapping multiple validation
-// errors returned by ProvisionCloudParams.ValidateAll() if the designated
-// constraints aren't met.
-type ProvisionCloudParamsMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m ProvisionCloudParamsMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m ProvisionCloudParamsMultiError) AllErrors() []error { return m }
-
-// ProvisionCloudParamsValidationError is the validation error returned by
-// ProvisionCloudParams.Validate if the designated constraints aren't met.
-type ProvisionCloudParamsValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e ProvisionCloudParamsValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e ProvisionCloudParamsValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e ProvisionCloudParamsValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e ProvisionCloudParamsValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e ProvisionCloudParamsValidationError) ErrorName() string {
-	return "ProvisionCloudParamsValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e ProvisionCloudParamsValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sProvisionCloudParams.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = ProvisionCloudParamsValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = ProvisionCloudParamsValidationError{}
-
-// Validate checks the field values on InstallPostgresParams with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *InstallPostgresParams) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on InstallPostgresParams with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// InstallPostgresParamsMultiError, or nil if none found.
-func (m *InstallPostgresParams) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *InstallPostgresParams) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if utf8.RuneCountInString(m.GetRunId()) != 26 {
-		err := InstallPostgresParamsValidationError{
-			field:  "RunId",
-			reason: "value length must be 26 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-
-	}
-
-	if utf8.RuneCountInString(m.GetVersion()) < 1 {
-		err := InstallPostgresParamsValidationError{
-			field:  "Version",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	// no validation rules for Settings
-
-	// no validation rules for EnableOrioledb
-
-	// no validation rules for OrioledbSettings
-
-	if len(errors) > 0 {
-		return InstallPostgresParamsMultiError(errors)
-	}
-
-	return nil
-}
-
-// InstallPostgresParamsMultiError is an error wrapping multiple validation
-// errors returned by InstallPostgresParams.ValidateAll() if the designated
-// constraints aren't met.
-type InstallPostgresParamsMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m InstallPostgresParamsMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m InstallPostgresParamsMultiError) AllErrors() []error { return m }
-
-// InstallPostgresParamsValidationError is the validation error returned by
-// InstallPostgresParams.Validate if the designated constraints aren't met.
-type InstallPostgresParamsValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e InstallPostgresParamsValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e InstallPostgresParamsValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e InstallPostgresParamsValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e InstallPostgresParamsValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e InstallPostgresParamsValidationError) ErrorName() string {
-	return "InstallPostgresParamsValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e InstallPostgresParamsValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sInstallPostgresParams.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = InstallPostgresParamsValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = InstallPostgresParamsValidationError{}
-
-// Validate checks the field values on RunStroppyParams with the rules defined
+// Validate checks the field values on Tasks_Provision with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
-func (m *RunStroppyParams) Validate() error {
+func (m *Tasks_Provision) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on RunStroppyParams with the rules
+// ValidateAll checks the field values on Tasks_Provision with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// RunStroppyParamsMultiError, or nil if none found.
-func (m *RunStroppyParams) ValidateAll() error {
+// Tasks_ProvisionMultiError, or nil if none found.
+func (m *Tasks_Provision) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *RunStroppyParams) validate(all bool) error {
+func (m *Tasks_Provision) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetRunId()) != 26 {
-		err := RunStroppyParamsValidationError{
-			field:  "RunId",
-			reason: "value length must be 26 runes",
+	if len(errors) > 0 {
+		return Tasks_ProvisionMultiError(errors)
+	}
+
+	return nil
+}
+
+// Tasks_ProvisionMultiError is an error wrapping multiple validation errors
+// returned by Tasks_Provision.ValidateAll() if the designated constraints
+// aren't met.
+type Tasks_ProvisionMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Tasks_ProvisionMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Tasks_ProvisionMultiError) AllErrors() []error { return m }
+
+// Tasks_ProvisionValidationError is the validation error returned by
+// Tasks_Provision.Validate if the designated constraints aren't met.
+type Tasks_ProvisionValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Tasks_ProvisionValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Tasks_ProvisionValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Tasks_ProvisionValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Tasks_ProvisionValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Tasks_ProvisionValidationError) ErrorName() string { return "Tasks_ProvisionValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Tasks_ProvisionValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTasks_Provision.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Tasks_ProvisionValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Tasks_ProvisionValidationError{}
+
+// Validate checks the field values on Tasks_SetupDatabase with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Tasks_SetupDatabase) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Tasks_SetupDatabase with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Tasks_SetupDatabaseMultiError, or nil if none found.
+func (m *Tasks_SetupDatabase) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Tasks_SetupDatabase) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return Tasks_SetupDatabaseMultiError(errors)
+	}
+
+	return nil
+}
+
+// Tasks_SetupDatabaseMultiError is an error wrapping multiple validation
+// errors returned by Tasks_SetupDatabase.ValidateAll() if the designated
+// constraints aren't met.
+type Tasks_SetupDatabaseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Tasks_SetupDatabaseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Tasks_SetupDatabaseMultiError) AllErrors() []error { return m }
+
+// Tasks_SetupDatabaseValidationError is the validation error returned by
+// Tasks_SetupDatabase.Validate if the designated constraints aren't met.
+type Tasks_SetupDatabaseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Tasks_SetupDatabaseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Tasks_SetupDatabaseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Tasks_SetupDatabaseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Tasks_SetupDatabaseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Tasks_SetupDatabaseValidationError) ErrorName() string {
+	return "Tasks_SetupDatabaseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Tasks_SetupDatabaseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTasks_SetupDatabase.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Tasks_SetupDatabaseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Tasks_SetupDatabaseValidationError{}
+
+// Validate checks the field values on Tasks_StroppyTestSuite with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Tasks_StroppyTestSuite) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Tasks_StroppyTestSuite with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Tasks_StroppyTestSuiteMultiError, or nil if none found.
+func (m *Tasks_StroppyTestSuite) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Tasks_StroppyTestSuite) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return Tasks_StroppyTestSuiteMultiError(errors)
+	}
+
+	return nil
+}
+
+// Tasks_StroppyTestSuiteMultiError is an error wrapping multiple validation
+// errors returned by Tasks_StroppyTestSuite.ValidateAll() if the designated
+// constraints aren't met.
+type Tasks_StroppyTestSuiteMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Tasks_StroppyTestSuiteMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Tasks_StroppyTestSuiteMultiError) AllErrors() []error { return m }
+
+// Tasks_StroppyTestSuiteValidationError is the validation error returned by
+// Tasks_StroppyTestSuite.Validate if the designated constraints aren't met.
+type Tasks_StroppyTestSuiteValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Tasks_StroppyTestSuiteValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Tasks_StroppyTestSuiteValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Tasks_StroppyTestSuiteValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Tasks_StroppyTestSuiteValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Tasks_StroppyTestSuiteValidationError) ErrorName() string {
+	return "Tasks_StroppyTestSuiteValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Tasks_StroppyTestSuiteValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTasks_StroppyTestSuite.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Tasks_StroppyTestSuiteValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Tasks_StroppyTestSuiteValidationError{}
+
+// Validate checks the field values on Tasks_Provision_Input with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Tasks_Provision_Input) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Tasks_Provision_Input with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Tasks_Provision_InputMultiError, or nil if none found.
+func (m *Tasks_Provision_Input) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Tasks_Provision_Input) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetRequest() == nil {
+		err := Tasks_Provision_InputValidationError{
+			field:  "Request",
+			reason: "value is required",
 		}
 		if !all {
 			return err
 		}
 		errors = append(errors, err)
-
 	}
 
-	if utf8.RuneCountInString(m.GetVersion()) < 1 {
-		err := RunStroppyParamsValidationError{
-			field:  "Version",
-			reason: "value length must be at least 1 runes",
+	if all {
+		switch v := interface{}(m.GetRequest()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Tasks_Provision_InputValidationError{
+					field:  "Request",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Tasks_Provision_InputValidationError{
+					field:  "Request",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRequest()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Tasks_Provision_InputValidationError{
+				field:  "Request",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Tasks_Provision_InputMultiError(errors)
+	}
+
+	return nil
+}
+
+// Tasks_Provision_InputMultiError is an error wrapping multiple validation
+// errors returned by Tasks_Provision_Input.ValidateAll() if the designated
+// constraints aren't met.
+type Tasks_Provision_InputMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Tasks_Provision_InputMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Tasks_Provision_InputMultiError) AllErrors() []error { return m }
+
+// Tasks_Provision_InputValidationError is the validation error returned by
+// Tasks_Provision_Input.Validate if the designated constraints aren't met.
+type Tasks_Provision_InputValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Tasks_Provision_InputValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Tasks_Provision_InputValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Tasks_Provision_InputValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Tasks_Provision_InputValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Tasks_Provision_InputValidationError) ErrorName() string {
+	return "Tasks_Provision_InputValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Tasks_Provision_InputValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTasks_Provision_Input.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Tasks_Provision_InputValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Tasks_Provision_InputValidationError{}
+
+// Validate checks the field values on Tasks_Provision_Output with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Tasks_Provision_Output) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Tasks_Provision_Output with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Tasks_Provision_OutputMultiError, or nil if none found.
+func (m *Tasks_Provision_Output) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Tasks_Provision_Output) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetDeploymentSet()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Tasks_Provision_OutputValidationError{
+					field:  "DeploymentSet",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Tasks_Provision_OutputValidationError{
+					field:  "DeploymentSet",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeploymentSet()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Tasks_Provision_OutputValidationError{
+				field:  "DeploymentSet",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Tasks_Provision_OutputMultiError(errors)
+	}
+
+	return nil
+}
+
+// Tasks_Provision_OutputMultiError is an error wrapping multiple validation
+// errors returned by Tasks_Provision_Output.ValidateAll() if the designated
+// constraints aren't met.
+type Tasks_Provision_OutputMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Tasks_Provision_OutputMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Tasks_Provision_OutputMultiError) AllErrors() []error { return m }
+
+// Tasks_Provision_OutputValidationError is the validation error returned by
+// Tasks_Provision_Output.Validate if the designated constraints aren't met.
+type Tasks_Provision_OutputValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Tasks_Provision_OutputValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Tasks_Provision_OutputValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Tasks_Provision_OutputValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Tasks_Provision_OutputValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Tasks_Provision_OutputValidationError) ErrorName() string {
+	return "Tasks_Provision_OutputValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Tasks_Provision_OutputValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTasks_Provision_Output.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Tasks_Provision_OutputValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Tasks_Provision_OutputValidationError{}
+
+// Validate checks the field values on Tasks_SetupDatabase_Input with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Tasks_SetupDatabase_Input) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Tasks_SetupDatabase_Input with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Tasks_SetupDatabase_InputMultiError, or nil if none found.
+func (m *Tasks_SetupDatabase_Input) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Tasks_SetupDatabase_Input) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetDatabase() == nil {
+		err := Tasks_SetupDatabase_InputValidationError{
+			field:  "Database",
+			reason: "value is required",
 		}
 		if !all {
 			return err
@@ -878,30 +743,139 @@ func (m *RunStroppyParams) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetBinaryPath()) < 1 {
-		err := RunStroppyParamsValidationError{
-			field:  "BinaryPath",
-			reason: "value length must be at least 1 runes",
+	if all {
+		switch v := interface{}(m.GetDatabase()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Tasks_SetupDatabase_InputValidationError{
+					field:  "Database",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Tasks_SetupDatabase_InputValidationError{
+					field:  "Database",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
 		}
-		if !all {
-			return err
+	} else if v, ok := interface{}(m.GetDatabase()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Tasks_SetupDatabase_InputValidationError{
+				field:  "Database",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
 		}
-		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetWorkloadName()) < 1 {
-		err := RunStroppyParamsValidationError{
-			field:  "WorkloadName",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
+	if len(errors) > 0 {
+		return Tasks_SetupDatabase_InputMultiError(errors)
 	}
+
+	return nil
+}
+
+// Tasks_SetupDatabase_InputMultiError is an error wrapping multiple validation
+// errors returned by Tasks_SetupDatabase_Input.ValidateAll() if the
+// designated constraints aren't met.
+type Tasks_SetupDatabase_InputMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Tasks_SetupDatabase_InputMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Tasks_SetupDatabase_InputMultiError) AllErrors() []error { return m }
+
+// Tasks_SetupDatabase_InputValidationError is the validation error returned by
+// Tasks_SetupDatabase_Input.Validate if the designated constraints aren't met.
+type Tasks_SetupDatabase_InputValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Tasks_SetupDatabase_InputValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Tasks_SetupDatabase_InputValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Tasks_SetupDatabase_InputValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Tasks_SetupDatabase_InputValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Tasks_SetupDatabase_InputValidationError) ErrorName() string {
+	return "Tasks_SetupDatabase_InputValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Tasks_SetupDatabase_InputValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTasks_SetupDatabase_Input.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Tasks_SetupDatabase_InputValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Tasks_SetupDatabase_InputValidationError{}
+
+// Validate checks the field values on Tasks_SetupDatabase_Output with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Tasks_SetupDatabase_Output) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Tasks_SetupDatabase_Output with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Tasks_SetupDatabase_OutputMultiError, or nil if none found.
+func (m *Tasks_SetupDatabase_Output) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Tasks_SetupDatabase_Output) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
 
 	if utf8.RuneCountInString(m.GetConnectionString()) < 1 {
-		err := RunStroppyParamsValidationError{
+		err := Tasks_SetupDatabase_OutputValidationError{
 			field:  "ConnectionString",
 			reason: "value length must be at least 1 runes",
 		}
@@ -911,22 +885,20 @@ func (m *RunStroppyParams) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	// no validation rules for Env
-
 	if len(errors) > 0 {
-		return RunStroppyParamsMultiError(errors)
+		return Tasks_SetupDatabase_OutputMultiError(errors)
 	}
 
 	return nil
 }
 
-// RunStroppyParamsMultiError is an error wrapping multiple validation errors
-// returned by RunStroppyParams.ValidateAll() if the designated constraints
-// aren't met.
-type RunStroppyParamsMultiError []error
+// Tasks_SetupDatabase_OutputMultiError is an error wrapping multiple
+// validation errors returned by Tasks_SetupDatabase_Output.ValidateAll() if
+// the designated constraints aren't met.
+type Tasks_SetupDatabase_OutputMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m RunStroppyParamsMultiError) Error() string {
+func (m Tasks_SetupDatabase_OutputMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -935,11 +907,11 @@ func (m RunStroppyParamsMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m RunStroppyParamsMultiError) AllErrors() []error { return m }
+func (m Tasks_SetupDatabase_OutputMultiError) AllErrors() []error { return m }
 
-// RunStroppyParamsValidationError is the validation error returned by
-// RunStroppyParams.Validate if the designated constraints aren't met.
-type RunStroppyParamsValidationError struct {
+// Tasks_SetupDatabase_OutputValidationError is the validation error returned
+// by Tasks_SetupDatabase_Output.Validate if the designated constraints aren't met.
+type Tasks_SetupDatabase_OutputValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -947,22 +919,24 @@ type RunStroppyParamsValidationError struct {
 }
 
 // Field function returns field value.
-func (e RunStroppyParamsValidationError) Field() string { return e.field }
+func (e Tasks_SetupDatabase_OutputValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e RunStroppyParamsValidationError) Reason() string { return e.reason }
+func (e Tasks_SetupDatabase_OutputValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e RunStroppyParamsValidationError) Cause() error { return e.cause }
+func (e Tasks_SetupDatabase_OutputValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e RunStroppyParamsValidationError) Key() bool { return e.key }
+func (e Tasks_SetupDatabase_OutputValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e RunStroppyParamsValidationError) ErrorName() string { return "RunStroppyParamsValidationError" }
+func (e Tasks_SetupDatabase_OutputValidationError) ErrorName() string {
+	return "Tasks_SetupDatabase_OutputValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e RunStroppyParamsValidationError) Error() string {
+func (e Tasks_SetupDatabase_OutputValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -974,14 +948,14 @@ func (e RunStroppyParamsValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sRunStroppyParams.%s: %s%s",
+		"invalid %sTasks_SetupDatabase_Output.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = RunStroppyParamsValidationError{}
+var _ error = Tasks_SetupDatabase_OutputValidationError{}
 
 var _ interface {
 	Field() string
@@ -989,34 +963,34 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = RunStroppyParamsValidationError{}
+} = Tasks_SetupDatabase_OutputValidationError{}
 
-// Validate checks the field values on RunStroppyResponse with the rules
-// defined in the proto definition for this message. If any rules are
+// Validate checks the field values on Tasks_StroppyTestSuite_Input with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *RunStroppyResponse) Validate() error {
+func (m *Tasks_StroppyTestSuite_Input) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on RunStroppyResponse with the rules
-// defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on Tasks_StroppyTestSuite_Input with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// RunStroppyResponseMultiError, or nil if none found.
-func (m *RunStroppyResponse) ValidateAll() error {
+// Tasks_StroppyTestSuite_InputMultiError, or nil if none found.
+func (m *Tasks_StroppyTestSuite_Input) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *RunStroppyResponse) validate(all bool) error {
+func (m *Tasks_StroppyTestSuite_Input) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetOutput()) < 1 {
-		err := RunStroppyResponseValidationError{
-			field:  "Output",
-			reason: "value length must be at least 1 runes",
+	if m.GetSuite() == nil {
+		err := Tasks_StroppyTestSuite_InputValidationError{
+			field:  "Suite",
+			reason: "value is required",
 		}
 		if !all {
 			return err
@@ -1024,42 +998,49 @@ func (m *RunStroppyResponse) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetWorkloadName()) < 1 {
-		err := RunStroppyResponseValidationError{
-			field:  "WorkloadName",
-			reason: "value length must be at least 1 runes",
+	if all {
+		switch v := interface{}(m.GetSuite()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Tasks_StroppyTestSuite_InputValidationError{
+					field:  "Suite",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Tasks_StroppyTestSuite_InputValidationError{
+					field:  "Suite",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
 		}
-		if !all {
-			return err
+	} else if v, ok := interface{}(m.GetSuite()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Tasks_StroppyTestSuite_InputValidationError{
+				field:  "Suite",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
 		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetGrafanaUrl()) < 1 {
-		err := RunStroppyResponseValidationError{
-			field:  "GrafanaUrl",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
 	}
 
 	if len(errors) > 0 {
-		return RunStroppyResponseMultiError(errors)
+		return Tasks_StroppyTestSuite_InputMultiError(errors)
 	}
 
 	return nil
 }
 
-// RunStroppyResponseMultiError is an error wrapping multiple validation errors
-// returned by RunStroppyResponse.ValidateAll() if the designated constraints
-// aren't met.
-type RunStroppyResponseMultiError []error
+// Tasks_StroppyTestSuite_InputMultiError is an error wrapping multiple
+// validation errors returned by Tasks_StroppyTestSuite_Input.ValidateAll() if
+// the designated constraints aren't met.
+type Tasks_StroppyTestSuite_InputMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m RunStroppyResponseMultiError) Error() string {
+func (m Tasks_StroppyTestSuite_InputMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1068,11 +1049,12 @@ func (m RunStroppyResponseMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m RunStroppyResponseMultiError) AllErrors() []error { return m }
+func (m Tasks_StroppyTestSuite_InputMultiError) AllErrors() []error { return m }
 
-// RunStroppyResponseValidationError is the validation error returned by
-// RunStroppyResponse.Validate if the designated constraints aren't met.
-type RunStroppyResponseValidationError struct {
+// Tasks_StroppyTestSuite_InputValidationError is the validation error returned
+// by Tasks_StroppyTestSuite_Input.Validate if the designated constraints
+// aren't met.
+type Tasks_StroppyTestSuite_InputValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1080,24 +1062,24 @@ type RunStroppyResponseValidationError struct {
 }
 
 // Field function returns field value.
-func (e RunStroppyResponseValidationError) Field() string { return e.field }
+func (e Tasks_StroppyTestSuite_InputValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e RunStroppyResponseValidationError) Reason() string { return e.reason }
+func (e Tasks_StroppyTestSuite_InputValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e RunStroppyResponseValidationError) Cause() error { return e.cause }
+func (e Tasks_StroppyTestSuite_InputValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e RunStroppyResponseValidationError) Key() bool { return e.key }
+func (e Tasks_StroppyTestSuite_InputValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e RunStroppyResponseValidationError) ErrorName() string {
-	return "RunStroppyResponseValidationError"
+func (e Tasks_StroppyTestSuite_InputValidationError) ErrorName() string {
+	return "Tasks_StroppyTestSuite_InputValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e RunStroppyResponseValidationError) Error() string {
+func (e Tasks_StroppyTestSuite_InputValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1109,14 +1091,14 @@ func (e RunStroppyResponseValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sRunStroppyResponse.%s: %s%s",
+		"invalid %sTasks_StroppyTestSuite_Input.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = RunStroppyResponseValidationError{}
+var _ error = Tasks_StroppyTestSuite_InputValidationError{}
 
 var _ interface {
 	Field() string
@@ -1124,4 +1106,147 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = RunStroppyResponseValidationError{}
+} = Tasks_StroppyTestSuite_InputValidationError{}
+
+// Validate checks the field values on Tasks_StroppyTestSuite_Output with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Tasks_StroppyTestSuite_Output) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Tasks_StroppyTestSuite_Output with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// Tasks_StroppyTestSuite_OutputMultiError, or nil if none found.
+func (m *Tasks_StroppyTestSuite_Output) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Tasks_StroppyTestSuite_Output) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetResults() == nil {
+		err := Tasks_StroppyTestSuite_OutputValidationError{
+			field:  "Results",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetResults()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Tasks_StroppyTestSuite_OutputValidationError{
+					field:  "Results",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Tasks_StroppyTestSuite_OutputValidationError{
+					field:  "Results",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetResults()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Tasks_StroppyTestSuite_OutputValidationError{
+				field:  "Results",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Tasks_StroppyTestSuite_OutputMultiError(errors)
+	}
+
+	return nil
+}
+
+// Tasks_StroppyTestSuite_OutputMultiError is an error wrapping multiple
+// validation errors returned by Tasks_StroppyTestSuite_Output.ValidateAll()
+// if the designated constraints aren't met.
+type Tasks_StroppyTestSuite_OutputMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Tasks_StroppyTestSuite_OutputMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Tasks_StroppyTestSuite_OutputMultiError) AllErrors() []error { return m }
+
+// Tasks_StroppyTestSuite_OutputValidationError is the validation error
+// returned by Tasks_StroppyTestSuite_Output.Validate if the designated
+// constraints aren't met.
+type Tasks_StroppyTestSuite_OutputValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Tasks_StroppyTestSuite_OutputValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Tasks_StroppyTestSuite_OutputValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Tasks_StroppyTestSuite_OutputValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Tasks_StroppyTestSuite_OutputValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Tasks_StroppyTestSuite_OutputValidationError) ErrorName() string {
+	return "Tasks_StroppyTestSuite_OutputValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Tasks_StroppyTestSuite_OutputValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTasks_StroppyTestSuite_Output.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Tasks_StroppyTestSuite_OutputValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Tasks_StroppyTestSuite_OutputValidationError{}

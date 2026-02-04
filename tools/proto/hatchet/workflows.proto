@@ -9,10 +9,11 @@ import "stroppy/test.proto";
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet";
 
 message NightlyCloudStroppy {
-    message Result {
-        string run_id = 1 [(validate.rules).string.len = 26];
-        string grafana_url = 3 [(validate.rules).string.min_len = 1];
+    message Input {
+        crossplane.SupportedCloud cloud = 1 [(validate.rules).enum.defined_only = true]; // now ony yandex
+        stroppy.TestSuite test_suite = 2;
     }
-    crossplane.SupportedCloud cloud = 1 [(validate.rules).enum.defined_only = true]; // now ony yandex
-    stroppy.TestSuite test_suite = 2;
+    message Output {
+        stroppy.TestSuiteResult results = 1 [(validate.rules).message.required = true];
+    }
 }

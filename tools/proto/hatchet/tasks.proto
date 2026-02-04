@@ -42,7 +42,7 @@ message Tasks {
             stroppy.TestSuite suite = 1 [(validate.rules).message.required = true];
         }
         message Output {
-            repeated stroppy.TestSuiteResult results = 1 [(validate.rules).repeated.min_items = 1];
+            stroppy.TestSuiteResult results = 1 [(validate.rules).message.required = true];
         }
     }
 }

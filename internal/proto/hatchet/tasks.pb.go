@@ -23,38 +23,26 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type NightlyCloudStroppy struct {
-	state protoimpl.MessageState    `protogen:"open.v1"`
-	Cloud crossplane.SupportedCloud `protobuf:"varint,1,opt,name=cloud,proto3,enum=crossplane.SupportedCloud" json:"cloud,omitempty"` // now ony yandex
-	// MachineInfo for the VM where PostgreSQL will be installed.
-	// We also use this Vm settings for run orioledb.
-	PostgresVm       *crossplane.MachineInfo `protobuf:"bytes,2,opt,name=postgres_vm,json=postgresVm,proto3" json:"postgres_vm,omitempty"`
-	PostgresVersion  string                  `protobuf:"bytes,3,opt,name=postgres_version,json=postgresVersion,proto3" json:"postgres_version,omitempty"`
-	PostgresSettings map[string]string       `protobuf:"bytes,4,rep,name=postgres_settings,json=postgresSettings,proto3" json:"postgres_settings,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// MachineInfo for the VM where Stroppy will be installed.
-	// We also use this Vm settings for run orioledb.
-	StroppyVm           *crossplane.MachineInfo `protobuf:"bytes,6,opt,name=stroppy_vm,json=stroppyVm,proto3" json:"stroppy_vm,omitempty"`
-	StroppyVersion      string                  `protobuf:"bytes,7,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
-	StroppyWorkloadName string                  `protobuf:"bytes,8,opt,name=stroppy_workload_name,json=stroppyWorkloadName,proto3" json:"stroppy_workload_name,omitempty"`
-	StroppyEnv          map[string]string       `protobuf:"bytes,9,rep,name=stroppy_env,json=stroppyEnv,proto3" json:"stroppy_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+type Tasks struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NightlyCloudStroppy) Reset() {
-	*x = NightlyCloudStroppy{}
+func (x *Tasks) Reset() {
+	*x = Tasks{}
 	mi := &file_hatchet_tasks_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NightlyCloudStroppy) String() string {
+func (x *Tasks) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NightlyCloudStroppy) ProtoMessage() {}
+func (*Tasks) ProtoMessage() {}
 
-func (x *NightlyCloudStroppy) ProtoReflect() protoreflect.Message {
+func (x *Tasks) ProtoReflect() protoreflect.Message {
 	mi := &file_hatchet_tasks_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -66,91 +54,31 @@ func (x *NightlyCloudStroppy) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NightlyCloudStroppy.ProtoReflect.Descriptor instead.
-func (*NightlyCloudStroppy) Descriptor() ([]byte, []int) {
+// Deprecated: Use Tasks.ProtoReflect.Descriptor instead.
+func (*Tasks) Descriptor() ([]byte, []int) {
 	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *NightlyCloudStroppy) GetCloud() crossplane.SupportedCloud {
-	if x != nil {
-		return x.Cloud
-	}
-	return crossplane.SupportedCloud(0)
-}
-
-func (x *NightlyCloudStroppy) GetPostgresVm() *crossplane.MachineInfo {
-	if x != nil {
-		return x.PostgresVm
-	}
-	return nil
-}
-
-func (x *NightlyCloudStroppy) GetPostgresVersion() string {
-	if x != nil {
-		return x.PostgresVersion
-	}
-	return ""
-}
-
-func (x *NightlyCloudStroppy) GetPostgresSettings() map[string]string {
-	if x != nil {
-		return x.PostgresSettings
-	}
-	return nil
-}
-
-func (x *NightlyCloudStroppy) GetStroppyVm() *crossplane.MachineInfo {
-	if x != nil {
-		return x.StroppyVm
-	}
-	return nil
-}
-
-func (x *NightlyCloudStroppy) GetStroppyVersion() string {
-	if x != nil {
-		return x.StroppyVersion
-	}
-	return ""
-}
-
-func (x *NightlyCloudStroppy) GetStroppyWorkloadName() string {
-	if x != nil {
-		return x.StroppyWorkloadName
-	}
-	return ""
-}
-
-func (x *NightlyCloudStroppy) GetStroppyEnv() map[string]string {
-	if x != nil {
-		return x.StroppyEnv
-	}
-	return nil
-}
-
-type NightlyCloudStroppyResult struct {
-	state         protoimpl.MessageState            `protogen:"open.v1"`
-	RunId         string                            `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	Deployments   map[string]*crossplane.Deployment `protobuf:"bytes,2,rep,name=deployments,proto3" json:"deployments,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	GrafanaUrl    string                            `protobuf:"bytes,3,opt,name=grafana_url,json=grafanaUrl,proto3" json:"grafana_url,omitempty"`
-	UsedNetwork   *crossplane.CidrWithIps           `protobuf:"bytes,4,opt,name=used_network,json=usedNetwork,proto3" json:"used_network,omitempty"`
+type Tasks_Provision struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NightlyCloudStroppyResult) Reset() {
-	*x = NightlyCloudStroppyResult{}
+func (x *Tasks_Provision) Reset() {
+	*x = Tasks_Provision{}
 	mi := &file_hatchet_tasks_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NightlyCloudStroppyResult) String() string {
+func (x *Tasks_Provision) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NightlyCloudStroppyResult) ProtoMessage() {}
+func (*Tasks_Provision) ProtoMessage() {}
 
-func (x *NightlyCloudStroppyResult) ProtoReflect() protoreflect.Message {
+func (x *Tasks_Provision) ProtoReflect() protoreflect.Message {
 	mi := &file_hatchet_tasks_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -162,62 +90,33 @@ func (x *NightlyCloudStroppyResult) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NightlyCloudStroppyResult.ProtoReflect.Descriptor instead.
-func (*NightlyCloudStroppyResult) Descriptor() ([]byte, []int) {
-	return file_hatchet_tasks_proto_rawDescGZIP(), []int{1}
+// Deprecated: Use Tasks_Provision.ProtoReflect.Descriptor instead.
+func (*Tasks_Provision) Descriptor() ([]byte, []int) {
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 0}
 }
 
-func (x *NightlyCloudStroppyResult) GetRunId() string {
-	if x != nil {
-		return x.RunId
-	}
-	return ""
-}
-
-func (x *NightlyCloudStroppyResult) GetDeployments() map[string]*crossplane.Deployment {
-	if x != nil {
-		return x.Deployments
-	}
-	return nil
-}
-
-func (x *NightlyCloudStroppyResult) GetGrafanaUrl() string {
-	if x != nil {
-		return x.GrafanaUrl
-	}
-	return ""
-}
-
-func (x *NightlyCloudStroppyResult) GetUsedNetwork() *crossplane.CidrWithIps {
-	if x != nil {
-		return x.UsedNetwork
-	}
-	return nil
-}
-
-type ProvisionCloudParams struct {
-	state         protoimpl.MessageState            `protogen:"open.v1"`
-	RunId         string                            `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	Deployments   map[string]*crossplane.Deployment `protobuf:"bytes,2,rep,name=deployments,proto3" json:"deployments,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Network       *crossplane.CidrWithIps           `protobuf:"bytes,3,opt,name=network,proto3" json:"network,omitempty"`
+// Setup database for stroppy test if one of test.database_ref is Database
+// This step can request provisioning of database if it is not already provisioned
+type Tasks_SetupDatabase struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ProvisionCloudParams) Reset() {
-	*x = ProvisionCloudParams{}
+func (x *Tasks_SetupDatabase) Reset() {
+	*x = Tasks_SetupDatabase{}
 	mi := &file_hatchet_tasks_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ProvisionCloudParams) String() string {
+func (x *Tasks_SetupDatabase) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ProvisionCloudParams) ProtoMessage() {}
+func (*Tasks_SetupDatabase) ProtoMessage() {}
 
-func (x *ProvisionCloudParams) ProtoReflect() protoreflect.Message {
+func (x *Tasks_SetupDatabase) ProtoReflect() protoreflect.Message {
 	mi := &file_hatchet_tasks_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -229,57 +128,33 @@ func (x *ProvisionCloudParams) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ProvisionCloudParams.ProtoReflect.Descriptor instead.
-func (*ProvisionCloudParams) Descriptor() ([]byte, []int) {
-	return file_hatchet_tasks_proto_rawDescGZIP(), []int{2}
+// Deprecated: Use Tasks_SetupDatabase.ProtoReflect.Descriptor instead.
+func (*Tasks_SetupDatabase) Descriptor() ([]byte, []int) {
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 1}
 }
 
-func (x *ProvisionCloudParams) GetRunId() string {
-	if x != nil {
-		return x.RunId
-	}
-	return ""
+// Run stroppy test
+// This step can request database setup if one of test.database_ref is Database
+type Tasks_StroppyTestSuite struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ProvisionCloudParams) GetDeployments() map[string]*crossplane.Deployment {
-	if x != nil {
-		return x.Deployments
-	}
-	return nil
-}
-
-func (x *ProvisionCloudParams) GetNetwork() *crossplane.CidrWithIps {
-	if x != nil {
-		return x.Network
-	}
-	return nil
-}
-
-type InstallPostgresParams struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	RunId            string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	Version          string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
-	Settings         map[string]string      `protobuf:"bytes,3,rep,name=settings,proto3" json:"settings,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	EnableOrioledb   bool                   `protobuf:"varint,4,opt,name=enable_orioledb,json=enableOrioledb,proto3" json:"enable_orioledb,omitempty"`
-	OrioledbSettings map[string]string      `protobuf:"bytes,5,rep,name=orioledb_settings,json=orioledbSettings,proto3" json:"orioledb_settings,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *InstallPostgresParams) Reset() {
-	*x = InstallPostgresParams{}
+func (x *Tasks_StroppyTestSuite) Reset() {
+	*x = Tasks_StroppyTestSuite{}
 	mi := &file_hatchet_tasks_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *InstallPostgresParams) String() string {
+func (x *Tasks_StroppyTestSuite) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*InstallPostgresParams) ProtoMessage() {}
+func (*Tasks_StroppyTestSuite) ProtoMessage() {}
 
-func (x *InstallPostgresParams) ProtoReflect() protoreflect.Message {
+func (x *Tasks_StroppyTestSuite) ProtoReflect() protoreflect.Message {
 	mi := &file_hatchet_tasks_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -291,72 +166,32 @@ func (x *InstallPostgresParams) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use InstallPostgresParams.ProtoReflect.Descriptor instead.
-func (*InstallPostgresParams) Descriptor() ([]byte, []int) {
-	return file_hatchet_tasks_proto_rawDescGZIP(), []int{3}
+// Deprecated: Use Tasks_StroppyTestSuite.ProtoReflect.Descriptor instead.
+func (*Tasks_StroppyTestSuite) Descriptor() ([]byte, []int) {
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 2}
 }
 
-func (x *InstallPostgresParams) GetRunId() string {
-	if x != nil {
-		return x.RunId
-	}
-	return ""
+type Tasks_Provision_Input struct {
+	state         protoimpl.MessageState            `protogen:"open.v1"`
+	Request       *crossplane.DeploymentSet_Request `protobuf:"bytes,1,opt,name=request,proto3" json:"request,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *InstallPostgresParams) GetVersion() string {
-	if x != nil {
-		return x.Version
-	}
-	return ""
-}
-
-func (x *InstallPostgresParams) GetSettings() map[string]string {
-	if x != nil {
-		return x.Settings
-	}
-	return nil
-}
-
-func (x *InstallPostgresParams) GetEnableOrioledb() bool {
-	if x != nil {
-		return x.EnableOrioledb
-	}
-	return false
-}
-
-func (x *InstallPostgresParams) GetOrioledbSettings() map[string]string {
-	if x != nil {
-		return x.OrioledbSettings
-	}
-	return nil
-}
-
-type RunStroppyParams struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	RunId            string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	Version          string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
-	BinaryPath       string                 `protobuf:"bytes,3,opt,name=binary_path,json=binaryPath,proto3" json:"binary_path,omitempty"`
-	WorkloadName     string                 `protobuf:"bytes,4,opt,name=workload_name,json=workloadName,proto3" json:"workload_name,omitempty"`
-	ConnectionString string                 `protobuf:"bytes,5,opt,name=connection_string,json=connectionString,proto3" json:"connection_string,omitempty"`
-	Env              map[string]string      `protobuf:"bytes,6,rep,name=env,proto3" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *RunStroppyParams) Reset() {
-	*x = RunStroppyParams{}
+func (x *Tasks_Provision_Input) Reset() {
+	*x = Tasks_Provision_Input{}
 	mi := &file_hatchet_tasks_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RunStroppyParams) String() string {
+func (x *Tasks_Provision_Input) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RunStroppyParams) ProtoMessage() {}
+func (*Tasks_Provision_Input) ProtoMessage() {}
 
-func (x *RunStroppyParams) ProtoReflect() protoreflect.Message {
+func (x *Tasks_Provision_Input) ProtoReflect() protoreflect.Message {
 	mi := &file_hatchet_tasks_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -368,77 +203,173 @@ func (x *RunStroppyParams) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RunStroppyParams.ProtoReflect.Descriptor instead.
-func (*RunStroppyParams) Descriptor() ([]byte, []int) {
-	return file_hatchet_tasks_proto_rawDescGZIP(), []int{4}
+// Deprecated: Use Tasks_Provision_Input.ProtoReflect.Descriptor instead.
+func (*Tasks_Provision_Input) Descriptor() ([]byte, []int) {
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 0, 0}
 }
 
-func (x *RunStroppyParams) GetRunId() string {
+func (x *Tasks_Provision_Input) GetRequest() *crossplane.DeploymentSet_Request {
 	if x != nil {
-		return x.RunId
+		return x.Request
 	}
-	return ""
+	return nil
 }
 
-func (x *RunStroppyParams) GetVersion() string {
+type Tasks_Provision_Output struct {
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	DeploymentSet *crossplane.DeploymentSet `protobuf:"bytes,1,opt,name=deployment_set,json=deploymentSet,proto3" json:"deployment_set,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Tasks_Provision_Output) Reset() {
+	*x = Tasks_Provision_Output{}
+	mi := &file_hatchet_tasks_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tasks_Provision_Output) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tasks_Provision_Output) ProtoMessage() {}
+
+func (x *Tasks_Provision_Output) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_tasks_proto_msgTypes[5]
 	if x != nil {
-		return x.Version
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
 	}
-	return ""
+	return mi.MessageOf(x)
 }
 
-func (x *RunStroppyParams) GetBinaryPath() string {
+// Deprecated: Use Tasks_Provision_Output.ProtoReflect.Descriptor instead.
+func (*Tasks_Provision_Output) Descriptor() ([]byte, []int) {
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 0, 1}
+}
+
+func (x *Tasks_Provision_Output) GetDeploymentSet() *crossplane.DeploymentSet {
 	if x != nil {
-		return x.BinaryPath
+		return x.DeploymentSet
 	}
-	return ""
+	return nil
 }
 
-func (x *RunStroppyParams) GetWorkloadName() string {
+type Tasks_SetupDatabase_Input struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Database      *Database              `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Tasks_SetupDatabase_Input) Reset() {
+	*x = Tasks_SetupDatabase_Input{}
+	mi := &file_hatchet_tasks_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tasks_SetupDatabase_Input) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tasks_SetupDatabase_Input) ProtoMessage() {}
+
+func (x *Tasks_SetupDatabase_Input) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_tasks_proto_msgTypes[6]
 	if x != nil {
-		return x.WorkloadName
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
 	}
-	return ""
+	return mi.MessageOf(x)
 }
 
-func (x *RunStroppyParams) GetConnectionString() string {
+// Deprecated: Use Tasks_SetupDatabase_Input.ProtoReflect.Descriptor instead.
+func (*Tasks_SetupDatabase_Input) Descriptor() ([]byte, []int) {
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 1, 0}
+}
+
+func (x *Tasks_SetupDatabase_Input) GetDatabase() *Database {
+	if x != nil {
+		return x.Database
+	}
+	return nil
+}
+
+type Tasks_SetupDatabase_Output struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Connection string to deployed database
+	ConnectionString string `protobuf:"bytes,1,opt,name=connection_string,json=connectionString,proto3" json:"connection_string,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *Tasks_SetupDatabase_Output) Reset() {
+	*x = Tasks_SetupDatabase_Output{}
+	mi := &file_hatchet_tasks_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tasks_SetupDatabase_Output) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tasks_SetupDatabase_Output) ProtoMessage() {}
+
+func (x *Tasks_SetupDatabase_Output) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_tasks_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Tasks_SetupDatabase_Output.ProtoReflect.Descriptor instead.
+func (*Tasks_SetupDatabase_Output) Descriptor() ([]byte, []int) {
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 1, 1}
+}
+
+func (x *Tasks_SetupDatabase_Output) GetConnectionString() string {
 	if x != nil {
 		return x.ConnectionString
 	}
 	return ""
 }
 
-func (x *RunStroppyParams) GetEnv() map[string]string {
-	if x != nil {
-		return x.Env
-	}
-	return nil
-}
-
-type RunStroppyResponse struct {
+type Tasks_StroppyTestSuite_Input struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Output        string                 `protobuf:"bytes,1,opt,name=output,proto3" json:"output,omitempty"`
-	WorkloadName  string                 `protobuf:"bytes,2,opt,name=workload_name,json=workloadName,proto3" json:"workload_name,omitempty"`
-	GrafanaUrl    string                 `protobuf:"bytes,3,opt,name=grafana_url,json=grafanaUrl,proto3" json:"grafana_url,omitempty"`
+	Suite         *TestSuite             `protobuf:"bytes,1,opt,name=suite,proto3" json:"suite,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RunStroppyResponse) Reset() {
-	*x = RunStroppyResponse{}
-	mi := &file_hatchet_tasks_proto_msgTypes[5]
+func (x *Tasks_StroppyTestSuite_Input) Reset() {
+	*x = Tasks_StroppyTestSuite_Input{}
+	mi := &file_hatchet_tasks_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RunStroppyResponse) String() string {
+func (x *Tasks_StroppyTestSuite_Input) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RunStroppyResponse) ProtoMessage() {}
+func (*Tasks_StroppyTestSuite_Input) ProtoMessage() {}
 
-func (x *RunStroppyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_tasks_proto_msgTypes[5]
+func (x *Tasks_StroppyTestSuite_Input) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_tasks_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -449,99 +380,83 @@ func (x *RunStroppyResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RunStroppyResponse.ProtoReflect.Descriptor instead.
-func (*RunStroppyResponse) Descriptor() ([]byte, []int) {
-	return file_hatchet_tasks_proto_rawDescGZIP(), []int{5}
+// Deprecated: Use Tasks_StroppyTestSuite_Input.ProtoReflect.Descriptor instead.
+func (*Tasks_StroppyTestSuite_Input) Descriptor() ([]byte, []int) {
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 2, 0}
 }
 
-func (x *RunStroppyResponse) GetOutput() string {
+func (x *Tasks_StroppyTestSuite_Input) GetSuite() *TestSuite {
 	if x != nil {
-		return x.Output
+		return x.Suite
 	}
-	return ""
+	return nil
 }
 
-func (x *RunStroppyResponse) GetWorkloadName() string {
-	if x != nil {
-		return x.WorkloadName
-	}
-	return ""
+type Tasks_StroppyTestSuite_Output struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Results       *TestSuiteResult       `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RunStroppyResponse) GetGrafanaUrl() string {
+func (x *Tasks_StroppyTestSuite_Output) Reset() {
+	*x = Tasks_StroppyTestSuite_Output{}
+	mi := &file_hatchet_tasks_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tasks_StroppyTestSuite_Output) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tasks_StroppyTestSuite_Output) ProtoMessage() {}
+
+func (x *Tasks_StroppyTestSuite_Output) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_tasks_proto_msgTypes[9]
 	if x != nil {
-		return x.GrafanaUrl
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
 	}
-	return ""
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Tasks_StroppyTestSuite_Output.ProtoReflect.Descriptor instead.
+func (*Tasks_StroppyTestSuite_Output) Descriptor() ([]byte, []int) {
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 2, 1}
+}
+
+func (x *Tasks_StroppyTestSuite_Output) GetResults() *TestSuiteResult {
+	if x != nil {
+		return x.Results
+	}
+	return nil
 }
 
 var File_hatchet_tasks_proto protoreflect.FileDescriptor
 
 const file_hatchet_tasks_proto_rawDesc = "" +
 	"\n" +
-	"\x13hatchet/tasks.proto\x12\ahatchet\x1a\x1bcrossplane/deployment.proto\x1a\x16crossplane/types.proto\x1a\x17validate/validate.proto\"\xae\x05\n" +
-	"\x13NightlyCloudStroppy\x12:\n" +
-	"\x05cloud\x18\x01 \x01(\x0e2\x1a.crossplane.SupportedCloudB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05cloud\x12B\n" +
-	"\vpostgres_vm\x18\x02 \x01(\v2\x17.crossplane.MachineInfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
-	"postgresVm\x122\n" +
-	"\x10postgres_version\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x0fpostgresVersion\x12_\n" +
-	"\x11postgres_settings\x18\x04 \x03(\v22.hatchet.NightlyCloudStroppy.PostgresSettingsEntryR\x10postgresSettings\x12@\n" +
-	"\n" +
-	"stroppy_vm\x18\x06 \x01(\v2\x17.crossplane.MachineInfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tstroppyVm\x120\n" +
-	"\x0fstroppy_version\x18\a \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x0estroppyVersion\x12;\n" +
-	"\x15stroppy_workload_name\x18\b \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x13stroppyWorkloadName\x12M\n" +
-	"\vstroppy_env\x18\t \x03(\v2,.hatchet.NightlyCloudStroppy.StroppyEnvEntryR\n" +
-	"stroppyEnv\x1aC\n" +
-	"\x15PostgresSettingsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a=\n" +
-	"\x0fStroppyEnvEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe5\x02\n" +
-	"\x19NightlyCloudStroppyResult\x12\x1f\n" +
-	"\x06run_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05runId\x12_\n" +
-	"\vdeployments\x18\x02 \x03(\v23.hatchet.NightlyCloudStroppyResult.DeploymentsEntryB\b\xfaB\x05\x9a\x01\x02\b\x02R\vdeployments\x12(\n" +
-	"\vgrafana_url\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\n" +
-	"grafanaUrl\x12D\n" +
-	"\fused_network\x18\x04 \x01(\v2\x17.crossplane.CidrWithIpsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\vusedNetwork\x1aV\n" +
-	"\x10DeploymentsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
-	"\x05value\x18\x02 \x01(\v2\x16.crossplane.DeploymentR\x05value:\x028\x01\"\xa8\x02\n" +
-	"\x14ProvisionCloudParams\x12\x1f\n" +
-	"\x06run_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05runId\x12Z\n" +
-	"\vdeployments\x18\x02 \x03(\v2..hatchet.ProvisionCloudParams.DeploymentsEntryB\b\xfaB\x05\x9a\x01\x02\b\x01R\vdeployments\x12;\n" +
-	"\anetwork\x18\x03 \x01(\v2\x17.crossplane.CidrWithIpsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\anetwork\x1aV\n" +
-	"\x10DeploymentsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
-	"\x05value\x18\x02 \x01(\v2\x16.crossplane.DeploymentR\x05value:\x028\x01\"\xb3\x03\n" +
-	"\x15InstallPostgresParams\x12\x1f\n" +
-	"\x06run_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05runId\x12!\n" +
-	"\aversion\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aversion\x12H\n" +
-	"\bsettings\x18\x03 \x03(\v2,.hatchet.InstallPostgresParams.SettingsEntryR\bsettings\x12'\n" +
-	"\x0fenable_orioledb\x18\x04 \x01(\bR\x0eenableOrioledb\x12a\n" +
-	"\x11orioledb_settings\x18\x05 \x03(\v24.hatchet.InstallPostgresParams.OrioledbSettingsEntryR\x10orioledbSettings\x1a;\n" +
-	"\rSettingsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aC\n" +
-	"\x15OrioledbSettingsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd2\x02\n" +
-	"\x10RunStroppyParams\x12\x1f\n" +
-	"\x06run_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05runId\x12!\n" +
-	"\aversion\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aversion\x12(\n" +
-	"\vbinary_path\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\n" +
-	"binaryPath\x12,\n" +
-	"\rworkload_name\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\fworkloadName\x124\n" +
-	"\x11connection_string\x18\x05 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x10connectionString\x124\n" +
-	"\x03env\x18\x06 \x03(\v2\".hatchet.RunStroppyParams.EnvEntryR\x03env\x1a6\n" +
-	"\bEnvEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8d\x01\n" +
-	"\x12RunStroppyResponse\x12\x1f\n" +
-	"\x06output\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06output\x12,\n" +
-	"\rworkload_name\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\fworkloadName\x12(\n" +
-	"\vgrafana_url\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\n" +
-	"grafanaUrlB?Z=github.com/stroppy-io/hatchet-workflow/internal/proto/hatchetb\x06proto3"
+	"\x13hatchet/tasks.proto\x12\ahatchet\x1a\x1bcrossplane/deployment.proto\x1a\x17database/database.proto\x1a\x12stroppy/test.proto\x1a\x17validate/validate.proto\"\xe0\x03\n" +
+	"\x05Tasks\x1a\xa7\x01\n" +
+	"\tProvision\x1aN\n" +
+	"\x05Input\x12E\n" +
+	"\arequest\x18\x01 \x01(\v2!.crossplane.DeploymentSet.RequestB\b\xfaB\x05\x8a\x01\x02\x10\x01R\arequest\x1aJ\n" +
+	"\x06Output\x12@\n" +
+	"\x0edeployment_set\x18\x01 \x01(\v2\x19.crossplane.DeploymentSetR\rdeploymentSet\x1a\x92\x01\n" +
+	"\rSetupDatabase\x1aA\n" +
+	"\x05Input\x128\n" +
+	"\bdatabase\x18\x01 \x01(\v2\x12.database.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x1a>\n" +
+	"\x06Output\x124\n" +
+	"\x11connection_string\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x10connectionString\x1a\x97\x01\n" +
+	"\x10StroppyTestSuite\x1a;\n" +
+	"\x05Input\x122\n" +
+	"\x05suite\x18\x01 \x01(\v2\x12.stroppy.TestSuiteB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05suite\x1aF\n" +
+	"\x06Output\x12<\n" +
+	"\aresults\x18\x01 \x01(\v2\x18.stroppy.TestSuiteResultB\b\xfaB\x05\x8a\x01\x02\x10\x01R\aresultsB?Z=github.com/stroppy-io/hatchet-workflow/internal/proto/hatchetb\x06proto3"
 
 var (
 	file_hatchet_tasks_proto_rawDescOnce sync.Once
@@ -555,46 +470,35 @@ func file_hatchet_tasks_proto_rawDescGZIP() []byte {
 	return file_hatchet_tasks_proto_rawDescData
 }
 
-var file_hatchet_tasks_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_hatchet_tasks_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_hatchet_tasks_proto_goTypes = []any{
-	(*NightlyCloudStroppy)(nil),       // 0: hatchet.NightlyCloudStroppy
-	(*NightlyCloudStroppyResult)(nil), // 1: hatchet.NightlyCloudStroppyResult
-	(*ProvisionCloudParams)(nil),      // 2: hatchet.ProvisionCloudParams
-	(*InstallPostgresParams)(nil),     // 3: hatchet.InstallPostgresParams
-	(*RunStroppyParams)(nil),          // 4: hatchet.RunStroppyParams
-	(*RunStroppyResponse)(nil),        // 5: hatchet.RunStroppyResponse
-	nil,                               // 6: hatchet.NightlyCloudStroppy.PostgresSettingsEntry
-	nil,                               // 7: hatchet.NightlyCloudStroppy.StroppyEnvEntry
-	nil,                               // 8: hatchet.NightlyCloudStroppyResult.DeploymentsEntry
-	nil,                               // 9: hatchet.ProvisionCloudParams.DeploymentsEntry
-	nil,                               // 10: hatchet.InstallPostgresParams.SettingsEntry
-	nil,                               // 11: hatchet.InstallPostgresParams.OrioledbSettingsEntry
-	nil,                               // 12: hatchet.RunStroppyParams.EnvEntry
-	(crossplane.SupportedCloud)(0),    // 13: crossplane.SupportedCloud
-	(*crossplane.MachineInfo)(nil),    // 14: crossplane.MachineInfo
-	(*crossplane.CidrWithIps)(nil),    // 15: crossplane.CidrWithIps
-	(*crossplane.Deployment)(nil),     // 16: crossplane.Deployment
+	(*Tasks)(nil),                            // 0: hatchet.Tasks
+	(*Tasks_Provision)(nil),                  // 1: hatchet.Tasks.Provision
+	(*Tasks_SetupDatabase)(nil),              // 2: hatchet.Tasks.SetupDatabase
+	(*Tasks_StroppyTestSuite)(nil),           // 3: hatchet.Tasks.StroppyTestSuite
+	(*Tasks_Provision_Input)(nil),            // 4: hatchet.Tasks.Provision.Input
+	(*Tasks_Provision_Output)(nil),           // 5: hatchet.Tasks.Provision.Output
+	(*Tasks_SetupDatabase_Input)(nil),        // 6: hatchet.Tasks.SetupDatabase.Input
+	(*Tasks_SetupDatabase_Output)(nil),       // 7: hatchet.Tasks.SetupDatabase.Output
+	(*Tasks_StroppyTestSuite_Input)(nil),     // 8: hatchet.Tasks.StroppyTestSuite.Input
+	(*Tasks_StroppyTestSuite_Output)(nil),    // 9: hatchet.Tasks.StroppyTestSuite.Output
+	(*crossplane.DeploymentSet_Request)(nil), // 10: crossplane.DeploymentSet.Request
+	(*crossplane.DeploymentSet)(nil),         // 11: crossplane.DeploymentSet
+	(*Database)(nil),                         // 12: database.Database
+	(*TestSuite)(nil),                        // 13: stroppy.TestSuite
+	(*TestSuiteResult)(nil),                  // 14: stroppy.TestSuiteResult
 }
 var file_hatchet_tasks_proto_depIdxs = []int32{
-	13, // 0: hatchet.NightlyCloudStroppy.cloud:type_name -> crossplane.SupportedCloud
-	14, // 1: hatchet.NightlyCloudStroppy.postgres_vm:type_name -> crossplane.MachineInfo
-	6,  // 2: hatchet.NightlyCloudStroppy.postgres_settings:type_name -> hatchet.NightlyCloudStroppy.PostgresSettingsEntry
-	14, // 3: hatchet.NightlyCloudStroppy.stroppy_vm:type_name -> crossplane.MachineInfo
-	7,  // 4: hatchet.NightlyCloudStroppy.stroppy_env:type_name -> hatchet.NightlyCloudStroppy.StroppyEnvEntry
-	8,  // 5: hatchet.NightlyCloudStroppyResult.deployments:type_name -> hatchet.NightlyCloudStroppyResult.DeploymentsEntry
-	15, // 6: hatchet.NightlyCloudStroppyResult.used_network:type_name -> crossplane.CidrWithIps
-	9,  // 7: hatchet.ProvisionCloudParams.deployments:type_name -> hatchet.ProvisionCloudParams.DeploymentsEntry
-	15, // 8: hatchet.ProvisionCloudParams.network:type_name -> crossplane.CidrWithIps
-	10, // 9: hatchet.InstallPostgresParams.settings:type_name -> hatchet.InstallPostgresParams.SettingsEntry
-	11, // 10: hatchet.InstallPostgresParams.orioledb_settings:type_name -> hatchet.InstallPostgresParams.OrioledbSettingsEntry
-	12, // 11: hatchet.RunStroppyParams.env:type_name -> hatchet.RunStroppyParams.EnvEntry
-	16, // 12: hatchet.NightlyCloudStroppyResult.DeploymentsEntry.value:type_name -> crossplane.Deployment
-	16, // 13: hatchet.ProvisionCloudParams.DeploymentsEntry.value:type_name -> crossplane.Deployment
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	10, // 0: hatchet.Tasks.Provision.Input.request:type_name -> crossplane.DeploymentSet.Request
+	11, // 1: hatchet.Tasks.Provision.Output.deployment_set:type_name -> crossplane.DeploymentSet
+	12, // 2: hatchet.Tasks.SetupDatabase.Input.database:type_name -> database.Database
+	13, // 3: hatchet.Tasks.StroppyTestSuite.Input.suite:type_name -> stroppy.TestSuite
+	14, // 4: hatchet.Tasks.StroppyTestSuite.Output.results:type_name -> stroppy.TestSuiteResult
+	5,  // [5:5] is the sub-list for method output_type
+	5,  // [5:5] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_hatchet_tasks_proto_init() }
@@ -602,13 +506,15 @@ func file_hatchet_tasks_proto_init() {
 	if File_hatchet_tasks_proto != nil {
 		return
 	}
+	file_database_database_proto_init()
+	file_stroppy_test_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_hatchet_tasks_proto_rawDesc), len(file_hatchet_tasks_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

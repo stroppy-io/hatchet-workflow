@@ -13,8 +13,7 @@ message Test {
         WORKLOAD_TPCC = 1;
         WORKLOAD_TPCB = 2;
     }
-    string run_id = 1;
-    optional string name = 2;
+    string name = 2;
     optional string description = 3;
     Workload workload = 4 [(validate.rules).enum.defined_only = true];
     string stroppy_version = 5;
@@ -36,6 +35,7 @@ message TestSuite {
 }
 
 message TestSuiteResult {
+    // Map of test run_id to test result
     map<string, TestResult> results = 1 [(validate.rules).map.min_pairs = 1];
 }
 
