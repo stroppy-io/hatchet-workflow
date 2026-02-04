@@ -9,6 +9,7 @@ package crossplane
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -437,20 +438,64 @@ func (x *WriteFile) GetDefer() bool {
 	return false
 }
 
+type StringList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Values        []string               `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StringList) Reset() {
+	*x = StringList{}
+	mi := &file_crossplane_cloud_init_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StringList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StringList) ProtoMessage() {}
+
+func (x *StringList) ProtoReflect() protoreflect.Message {
+	mi := &file_crossplane_cloud_init_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StringList.ProtoReflect.Descriptor instead.
+func (*StringList) Descriptor() ([]byte, []int) {
+	return file_crossplane_cloud_init_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *StringList) GetValues() []string {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
 type CloudInit struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Users         []*User                `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
 	Groups        []string               `protobuf:"bytes,2,rep,name=groups,proto3" json:"groups,omitempty"`
 	Ssh           *SSHConfig             `protobuf:"bytes,3,opt,name=ssh,proto3" json:"ssh,omitempty"`
 	WriteFiles    []*WriteFile           `protobuf:"bytes,4,rep,name=write_files,json=writeFiles,proto3" json:"write_files,omitempty"`
-	Runcmd        []string               `protobuf:"bytes,6,rep,name=runcmd,proto3" json:"runcmd,omitempty"`
+	Runcmd        []*StringList          `protobuf:"bytes,6,rep,name=runcmd,proto3" json:"runcmd,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CloudInit) Reset() {
 	*x = CloudInit{}
-	mi := &file_crossplane_cloud_init_proto_msgTypes[4]
+	mi := &file_crossplane_cloud_init_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -462,7 +507,7 @@ func (x *CloudInit) String() string {
 func (*CloudInit) ProtoMessage() {}
 
 func (x *CloudInit) ProtoReflect() protoreflect.Message {
-	mi := &file_crossplane_cloud_init_proto_msgTypes[4]
+	mi := &file_crossplane_cloud_init_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -475,7 +520,7 @@ func (x *CloudInit) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CloudInit.ProtoReflect.Descriptor instead.
 func (*CloudInit) Descriptor() ([]byte, []int) {
-	return file_crossplane_cloud_init_proto_rawDescGZIP(), []int{4}
+	return file_crossplane_cloud_init_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CloudInit) GetUsers() []*User {
@@ -506,7 +551,7 @@ func (x *CloudInit) GetWriteFiles() []*WriteFile {
 	return nil
 }
 
-func (x *CloudInit) GetRuncmd() []string {
+func (x *CloudInit) GetRuncmd() []*StringList {
 	if x != nil {
 		return x.Runcmd
 	}
@@ -518,7 +563,7 @@ var File_crossplane_cloud_init_proto protoreflect.FileDescriptor
 const file_crossplane_cloud_init_proto_rawDesc = "" +
 	"\n" +
 	"\x1bcrossplane/cloud-init.proto\x12\n" +
-	"crossplane\"\xf3\x03\n" +
+	"crossplane\x1a\x1egoogle/protobuf/wrappers.proto\"\xf3\x03\n" +
 	"\x04User\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05gecos\x18\x02 \x01(\tR\x05gecos\x12\x16\n" +
@@ -562,14 +607,17 @@ const file_crossplane_cloud_init_proto_rawDesc = "" +
 	"\x05owner\x18\x04 \x01(\tR\x05owner\x12 \n" +
 	"\vpermissions\x18\x05 \x01(\tR\vpermissions\x12\x16\n" +
 	"\x06append\x18\x06 \x01(\bR\x06append\x12\x14\n" +
-	"\x05defer\x18\a \x01(\bR\x05defer\"\xc4\x01\n" +
+	"\x05defer\x18\a \x01(\bR\x05defer\"$\n" +
+	"\n" +
+	"StringList\x12\x16\n" +
+	"\x06values\x18\x01 \x03(\tR\x06values\"\xdc\x01\n" +
 	"\tCloudInit\x12&\n" +
 	"\x05users\x18\x01 \x03(\v2\x10.crossplane.UserR\x05users\x12\x16\n" +
 	"\x06groups\x18\x02 \x03(\tR\x06groups\x12'\n" +
 	"\x03ssh\x18\x03 \x01(\v2\x15.crossplane.SSHConfigR\x03ssh\x126\n" +
 	"\vwrite_files\x18\x04 \x03(\v2\x15.crossplane.WriteFileR\n" +
-	"writeFiles\x12\x16\n" +
-	"\x06runcmd\x18\x06 \x03(\tR\x06runcmdBBZ@github.com/stroppy-io/hatchet-workflow/internal/proto/crossplaneb\x06proto3"
+	"writeFiles\x12.\n" +
+	"\x06runcmd\x18\x06 \x03(\v2\x16.crossplane.StringListR\x06runcmdBBZ@github.com/stroppy-io/hatchet-workflow/internal/proto/crossplaneb\x06proto3"
 
 var (
 	file_crossplane_cloud_init_proto_rawDescOnce sync.Once
@@ -583,24 +631,26 @@ func file_crossplane_cloud_init_proto_rawDescGZIP() []byte {
 	return file_crossplane_cloud_init_proto_rawDescData
 }
 
-var file_crossplane_cloud_init_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_crossplane_cloud_init_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_crossplane_cloud_init_proto_goTypes = []any{
-	(*User)(nil),      // 0: crossplane.User
-	(*SSHConfig)(nil), // 1: crossplane.SSHConfig
-	(*SSHKey)(nil),    // 2: crossplane.SSHKey
-	(*WriteFile)(nil), // 3: crossplane.WriteFile
-	(*CloudInit)(nil), // 4: crossplane.CloudInit
+	(*User)(nil),       // 0: crossplane.User
+	(*SSHConfig)(nil),  // 1: crossplane.SSHConfig
+	(*SSHKey)(nil),     // 2: crossplane.SSHKey
+	(*WriteFile)(nil),  // 3: crossplane.WriteFile
+	(*StringList)(nil), // 4: crossplane.StringList
+	(*CloudInit)(nil),  // 5: crossplane.CloudInit
 }
 var file_crossplane_cloud_init_proto_depIdxs = []int32{
 	2, // 0: crossplane.SSHConfig.ssh_keys:type_name -> crossplane.SSHKey
 	0, // 1: crossplane.CloudInit.users:type_name -> crossplane.User
 	1, // 2: crossplane.CloudInit.ssh:type_name -> crossplane.SSHConfig
 	3, // 3: crossplane.CloudInit.write_files:type_name -> crossplane.WriteFile
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	4, // 4: crossplane.CloudInit.runcmd:type_name -> crossplane.StringList
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_crossplane_cloud_init_proto_init() }
@@ -615,7 +665,7 @@ func file_crossplane_cloud_init_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_crossplane_cloud_init_proto_rawDesc), len(file_crossplane_cloud_init_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

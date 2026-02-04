@@ -214,14 +214,13 @@ func (x *Quota) GetCurrent() uint32 {
 }
 
 type Deployment struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name           string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	SupportedCloud SupportedCloud         `protobuf:"varint,3,opt,name=supported_cloud,json=supportedCloud,proto3,enum=crossplane.SupportedCloud" json:"supported_cloud,omitempty"`
-	UsingQuotas    []*Quota               `protobuf:"bytes,4,rep,name=using_quotas,json=usingQuotas,proto3" json:"using_quotas,omitempty"`
-	Resources      []*Resource            `protobuf:"bytes,5,rep,name=resources,proto3" json:"resources,omitempty"`
-	Vm             *Deployment_Vm         `protobuf:"bytes,6,opt,name=vm,proto3" json:"vm,omitempty"`
-	Labels         map[string]string      `protobuf:"bytes,7,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state          protoimpl.MessageState   `protogen:"open.v1"`
+	Id             string                   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name           string                   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	SupportedCloud SupportedCloud           `protobuf:"varint,3,opt,name=supported_cloud,json=supportedCloud,proto3,enum=crossplane.SupportedCloud" json:"supported_cloud,omitempty"`
+	Vm             *Deployment_Vm           `protobuf:"bytes,4,opt,name=vm,proto3" json:"vm,omitempty"`
+	CloudDetails   *Deployment_CloudDetails `protobuf:"bytes,5,opt,name=cloud_details,json=cloudDetails,proto3" json:"cloud_details,omitempty"`
+	Labels         map[string]string        `protobuf:"bytes,6,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -277,23 +276,16 @@ func (x *Deployment) GetSupportedCloud() SupportedCloud {
 	return SupportedCloud_SUPPORTED_CLOUD_UNSPECIFIED
 }
 
-func (x *Deployment) GetUsingQuotas() []*Quota {
-	if x != nil {
-		return x.UsingQuotas
-	}
-	return nil
-}
-
-func (x *Deployment) GetResources() []*Resource {
-	if x != nil {
-		return x.Resources
-	}
-	return nil
-}
-
 func (x *Deployment) GetVm() *Deployment_Vm {
 	if x != nil {
 		return x.Vm
+	}
+	return nil
+}
+
+func (x *Deployment) GetCloudDetails() *Deployment_CloudDetails {
+	if x != nil {
+		return x.CloudDetails
 	}
 	return nil
 }
@@ -402,14 +394,14 @@ func (x *Quota_List) GetQuotas() []*Quota {
 }
 
 type Deployment_Request struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	Name               string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	MachineInfo        *MachineInfo           `protobuf:"bytes,2,opt,name=machine_info,json=machineInfo,proto3" json:"machine_info,omitempty"`
-	CloudInit          *CloudInit             `protobuf:"bytes,3,opt,name=cloud_init,json=cloudInit,proto3" json:"cloud_init,omitempty"`
-	UseExistingNetwork *Network               `protobuf:"bytes,4,opt,name=use_existing_network,json=useExistingNetwork,proto3,oneof" json:"use_existing_network,omitempty"`
-	Labels             map[string]string      `protobuf:"bytes,5,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Name           string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	SupportedCloud SupportedCloud         `protobuf:"varint,2,opt,name=supported_cloud,json=supportedCloud,proto3,enum=crossplane.SupportedCloud" json:"supported_cloud,omitempty"`
+	MachineInfo    *MachineInfo           `protobuf:"bytes,3,opt,name=machine_info,json=machineInfo,proto3" json:"machine_info,omitempty"`
+	CloudInit      *CloudInit             `protobuf:"bytes,4,opt,name=cloud_init,json=cloudInit,proto3" json:"cloud_init,omitempty"`
+	Labels         map[string]string      `protobuf:"bytes,6,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Deployment_Request) Reset() {
@@ -449,6 +441,13 @@ func (x *Deployment_Request) GetName() string {
 	return ""
 }
 
+func (x *Deployment_Request) GetSupportedCloud() SupportedCloud {
+	if x != nil {
+		return x.SupportedCloud
+	}
+	return SupportedCloud_SUPPORTED_CLOUD_UNSPECIFIED
+}
+
 func (x *Deployment_Request) GetMachineInfo() *MachineInfo {
 	if x != nil {
 		return x.MachineInfo
@@ -459,13 +458,6 @@ func (x *Deployment_Request) GetMachineInfo() *MachineInfo {
 func (x *Deployment_Request) GetCloudInit() *CloudInit {
 	if x != nil {
 		return x.CloudInit
-	}
-	return nil
-}
-
-func (x *Deployment_Request) GetUseExistingNetwork() *Network {
-	if x != nil {
-		return x.UseExistingNetwork
 	}
 	return nil
 }
@@ -537,6 +529,58 @@ func (x *Deployment_Vm) GetNetworkParams() *Deployment_Vm_NetworkParams {
 	return nil
 }
 
+type Deployment_CloudDetails struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UsingQuotas   []*Quota               `protobuf:"bytes,1,rep,name=using_quotas,json=usingQuotas,proto3" json:"using_quotas,omitempty"`
+	Resources     []*Resource            `protobuf:"bytes,2,rep,name=resources,proto3" json:"resources,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Deployment_CloudDetails) Reset() {
+	*x = Deployment_CloudDetails{}
+	mi := &file_crossplane_deployment_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Deployment_CloudDetails) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Deployment_CloudDetails) ProtoMessage() {}
+
+func (x *Deployment_CloudDetails) ProtoReflect() protoreflect.Message {
+	mi := &file_crossplane_deployment_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Deployment_CloudDetails.ProtoReflect.Descriptor instead.
+func (*Deployment_CloudDetails) Descriptor() ([]byte, []int) {
+	return file_crossplane_deployment_proto_rawDescGZIP(), []int{2, 2}
+}
+
+func (x *Deployment_CloudDetails) GetUsingQuotas() []*Quota {
+	if x != nil {
+		return x.UsingQuotas
+	}
+	return nil
+}
+
+func (x *Deployment_CloudDetails) GetResources() []*Resource {
+	if x != nil {
+		return x.Resources
+	}
+	return nil
+}
+
 type Deployment_Vm_NetworkParams struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	InternalIp    *Ip                    `protobuf:"bytes,1,opt,name=internal_ip,json=internalIp,proto3" json:"internal_ip,omitempty"`
@@ -549,7 +593,7 @@ type Deployment_Vm_NetworkParams struct {
 
 func (x *Deployment_Vm_NetworkParams) Reset() {
 	*x = Deployment_Vm_NetworkParams{}
-	mi := &file_crossplane_deployment_proto_msgTypes[9]
+	mi := &file_crossplane_deployment_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -561,7 +605,7 @@ func (x *Deployment_Vm_NetworkParams) String() string {
 func (*Deployment_Vm_NetworkParams) ProtoMessage() {}
 
 func (x *Deployment_Vm_NetworkParams) ProtoReflect() protoreflect.Message {
-	mi := &file_crossplane_deployment_proto_msgTypes[9]
+	mi := &file_crossplane_deployment_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -606,16 +650,16 @@ func (x *Deployment_Vm_NetworkParams) GetExternalIp() string {
 }
 
 type DeploymentSet_Request struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Requests      []*Deployment_Request  `protobuf:"bytes,2,rep,name=requests,proto3" json:"requests,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Requests           []*Deployment_Request  `protobuf:"bytes,1,rep,name=requests,proto3" json:"requests,omitempty"`
+	UseExistingNetwork *Network               `protobuf:"bytes,5,opt,name=use_existing_network,json=useExistingNetwork,proto3,oneof" json:"use_existing_network,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *DeploymentSet_Request) Reset() {
 	*x = DeploymentSet_Request{}
-	mi := &file_crossplane_deployment_proto_msgTypes[10]
+	mi := &file_crossplane_deployment_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -627,7 +671,7 @@ func (x *DeploymentSet_Request) String() string {
 func (*DeploymentSet_Request) ProtoMessage() {}
 
 func (x *DeploymentSet_Request) ProtoReflect() protoreflect.Message {
-	mi := &file_crossplane_deployment_proto_msgTypes[10]
+	mi := &file_crossplane_deployment_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -643,16 +687,16 @@ func (*DeploymentSet_Request) Descriptor() ([]byte, []int) {
 	return file_crossplane_deployment_proto_rawDescGZIP(), []int{3, 0}
 }
 
-func (x *DeploymentSet_Request) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
 func (x *DeploymentSet_Request) GetRequests() []*Deployment_Request {
 	if x != nil {
 		return x.Requests
+	}
+	return nil
+}
+
+func (x *DeploymentSet_Request) GetUseExistingNetwork() *Network {
+	if x != nil {
+		return x.UseExistingNetwork
 	}
 	return nil
 }
@@ -680,28 +724,26 @@ const file_crossplane_deployment_proto_rawDesc = "" +
 	"\fKIND_NETWORK\x10\x01\x12\x0f\n" +
 	"\vKIND_SUBNET\x10\x02\x12\v\n" +
 	"\aKIND_VM\x10\x03\x12\x1a\n" +
-	"\x16KIND_PUBLIC_IP_ADDRESS\x10\x04\"\x82\n" +
+	"\x16KIND_PUBLIC_IP_ADDRESS\x10\x04\"\xc6\n" +
 	"\n" +
 	"\n" +
 	"Deployment\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x12M\n" +
-	"\x0fsupported_cloud\x18\x03 \x01(\x0e2\x1a.crossplane.SupportedCloudB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0esupportedCloud\x124\n" +
-	"\fusing_quotas\x18\x04 \x03(\v2\x11.crossplane.QuotaR\vusingQuotas\x122\n" +
-	"\tresources\x18\x05 \x03(\v2\x14.crossplane.ResourceR\tresources\x123\n" +
-	"\x02vm\x18\x06 \x01(\v2\x19.crossplane.Deployment.VmB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02vm\x12:\n" +
-	"\x06labels\x18\a \x03(\v2\".crossplane.Deployment.LabelsEntryR\x06labels\x1a\x90\x03\n" +
+	"\x0fsupported_cloud\x18\x03 \x01(\x0e2\x1a.crossplane.SupportedCloudB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0esupportedCloud\x123\n" +
+	"\x02vm\x18\x04 \x01(\v2\x19.crossplane.Deployment.VmB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02vm\x12H\n" +
+	"\rcloud_details\x18\x05 \x01(\v2#.crossplane.Deployment.CloudDetailsR\fcloudDetails\x12:\n" +
+	"\x06labels\x18\x06 \x03(\v2\".crossplane.Deployment.LabelsEntryR\x06labels\x1a\xfa\x02\n" +
 	"\aRequest\x12\x1b\n" +
-	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x12D\n" +
-	"\fmachine_info\x18\x02 \x01(\v2\x17.crossplane.MachineInfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\vmachineInfo\x12>\n" +
+	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x12M\n" +
+	"\x0fsupported_cloud\x18\x02 \x01(\x0e2\x1a.crossplane.SupportedCloudB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0esupportedCloud\x12D\n" +
+	"\fmachine_info\x18\x03 \x01(\v2\x17.crossplane.MachineInfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\vmachineInfo\x12>\n" +
 	"\n" +
-	"cloud_init\x18\x03 \x01(\v2\x15.crossplane.CloudInitB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tcloudInit\x12J\n" +
-	"\x14use_existing_network\x18\x04 \x01(\v2\x13.crossplane.NetworkH\x00R\x12useExistingNetwork\x88\x01\x01\x12B\n" +
-	"\x06labels\x18\x05 \x03(\v2*.crossplane.Deployment.Request.LabelsEntryR\x06labels\x1a9\n" +
+	"cloud_init\x18\x04 \x01(\v2\x15.crossplane.CloudInitB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tcloudInit\x12B\n" +
+	"\x06labels\x18\x06 \x03(\v2*.crossplane.Deployment.Request.LabelsEntryR\x06labels\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x17\n" +
-	"\x15_use_existing_network\x1a\xc5\x03\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a\xc5\x03\n" +
 	"\x02Vm\x12D\n" +
 	"\fmachine_info\x18\x04 \x01(\v2\x17.crossplane.MachineInfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\vmachineInfo\x12>\n" +
 	"\n" +
@@ -714,16 +756,20 @@ const file_crossplane_deployment_proto_rawDesc = "" +
 	"\tpublic_ip\x18\x03 \x01(\bR\bpublicIp\x12$\n" +
 	"\vexternal_ip\x18\x04 \x01(\tH\x00R\n" +
 	"externalIp\x88\x01\x01B\x0e\n" +
-	"\f_external_ip\x1a9\n" +
+	"\f_external_ip\x1ax\n" +
+	"\fCloudDetails\x124\n" +
+	"\fusing_quotas\x18\x01 \x03(\v2\x11.crossplane.QuotaR\vusingQuotas\x122\n" +
+	"\tresources\x18\x02 \x03(\v2\x14.crossplane.ResourceR\tresources\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xfa\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xc3\x02\n" +
 	"\rDeploymentSet\x127\n" +
 	"\anetwork\x18\x01 \x01(\v2\x13.crossplane.NetworkB\b\xfaB\x05\x8a\x01\x02\x10\x01R\anetwork\x12B\n" +
-	"\vdeployments\x18\x02 \x03(\v2\x16.crossplane.DeploymentB\b\xfaB\x05\x92\x01\x02\b\x01R\vdeployments\x1al\n" +
-	"\aRequest\x12\x1b\n" +
-	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x12D\n" +
-	"\brequests\x18\x02 \x03(\v2\x1e.crossplane.Deployment.RequestB\b\xfaB\x05\x92\x01\x02\b\x01R\brequestsBBZ@github.com/stroppy-io/hatchet-workflow/internal/proto/crossplaneb\x06proto3"
+	"\vdeployments\x18\x02 \x03(\v2\x16.crossplane.DeploymentB\b\xfaB\x05\x92\x01\x02\b\x01R\vdeployments\x1a\xb4\x01\n" +
+	"\aRequest\x12D\n" +
+	"\brequests\x18\x01 \x03(\v2\x1e.crossplane.Deployment.RequestB\b\xfaB\x05\x92\x01\x02\b\x01R\brequests\x12J\n" +
+	"\x14use_existing_network\x18\x05 \x01(\v2\x13.crossplane.NetworkH\x00R\x12useExistingNetwork\x88\x01\x01B\x17\n" +
+	"\x15_use_existing_networkBBZ@github.com/stroppy-io/hatchet-workflow/internal/proto/crossplaneb\x06proto3"
 
 var (
 	file_crossplane_deployment_proto_rawDescOnce sync.Once
@@ -738,7 +784,7 @@ func file_crossplane_deployment_proto_rawDescGZIP() []byte {
 }
 
 var file_crossplane_deployment_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_crossplane_deployment_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_crossplane_deployment_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_crossplane_deployment_proto_goTypes = []any{
 	(Quota_Kind)(0),                     // 0: crossplane.Quota.Kind
 	(*MachineInfo)(nil),                 // 1: crossplane.MachineInfo
@@ -748,43 +794,46 @@ var file_crossplane_deployment_proto_goTypes = []any{
 	(*Quota_List)(nil),                  // 5: crossplane.Quota.List
 	(*Deployment_Request)(nil),          // 6: crossplane.Deployment.Request
 	(*Deployment_Vm)(nil),               // 7: crossplane.Deployment.Vm
-	nil,                                 // 8: crossplane.Deployment.LabelsEntry
-	nil,                                 // 9: crossplane.Deployment.Request.LabelsEntry
-	(*Deployment_Vm_NetworkParams)(nil), // 10: crossplane.Deployment.Vm.NetworkParams
-	(*DeploymentSet_Request)(nil),       // 11: crossplane.DeploymentSet.Request
-	(SupportedCloud)(0),                 // 12: crossplane.SupportedCloud
-	(*Resource)(nil),                    // 13: crossplane.Resource
+	(*Deployment_CloudDetails)(nil),     // 8: crossplane.Deployment.CloudDetails
+	nil,                                 // 9: crossplane.Deployment.LabelsEntry
+	nil,                                 // 10: crossplane.Deployment.Request.LabelsEntry
+	(*Deployment_Vm_NetworkParams)(nil), // 11: crossplane.Deployment.Vm.NetworkParams
+	(*DeploymentSet_Request)(nil),       // 12: crossplane.DeploymentSet.Request
+	(SupportedCloud)(0),                 // 13: crossplane.SupportedCloud
 	(*Network)(nil),                     // 14: crossplane.Network
 	(*CloudInit)(nil),                   // 15: crossplane.CloudInit
-	(*Ip)(nil),                          // 16: crossplane.Ip
-	(*Cidr)(nil),                        // 17: crossplane.Cidr
+	(*Resource)(nil),                    // 16: crossplane.Resource
+	(*Ip)(nil),                          // 17: crossplane.Ip
+	(*Cidr)(nil),                        // 18: crossplane.Cidr
 }
 var file_crossplane_deployment_proto_depIdxs = []int32{
-	12, // 0: crossplane.Quota.cloud:type_name -> crossplane.SupportedCloud
+	13, // 0: crossplane.Quota.cloud:type_name -> crossplane.SupportedCloud
 	0,  // 1: crossplane.Quota.kind:type_name -> crossplane.Quota.Kind
-	12, // 2: crossplane.Deployment.supported_cloud:type_name -> crossplane.SupportedCloud
-	2,  // 3: crossplane.Deployment.using_quotas:type_name -> crossplane.Quota
-	13, // 4: crossplane.Deployment.resources:type_name -> crossplane.Resource
-	7,  // 5: crossplane.Deployment.vm:type_name -> crossplane.Deployment.Vm
-	8,  // 6: crossplane.Deployment.labels:type_name -> crossplane.Deployment.LabelsEntry
-	14, // 7: crossplane.DeploymentSet.network:type_name -> crossplane.Network
-	3,  // 8: crossplane.DeploymentSet.deployments:type_name -> crossplane.Deployment
-	2,  // 9: crossplane.Quota.List.quotas:type_name -> crossplane.Quota
+	13, // 2: crossplane.Deployment.supported_cloud:type_name -> crossplane.SupportedCloud
+	7,  // 3: crossplane.Deployment.vm:type_name -> crossplane.Deployment.Vm
+	8,  // 4: crossplane.Deployment.cloud_details:type_name -> crossplane.Deployment.CloudDetails
+	9,  // 5: crossplane.Deployment.labels:type_name -> crossplane.Deployment.LabelsEntry
+	14, // 6: crossplane.DeploymentSet.network:type_name -> crossplane.Network
+	3,  // 7: crossplane.DeploymentSet.deployments:type_name -> crossplane.Deployment
+	2,  // 8: crossplane.Quota.List.quotas:type_name -> crossplane.Quota
+	13, // 9: crossplane.Deployment.Request.supported_cloud:type_name -> crossplane.SupportedCloud
 	1,  // 10: crossplane.Deployment.Request.machine_info:type_name -> crossplane.MachineInfo
 	15, // 11: crossplane.Deployment.Request.cloud_init:type_name -> crossplane.CloudInit
-	14, // 12: crossplane.Deployment.Request.use_existing_network:type_name -> crossplane.Network
-	9,  // 13: crossplane.Deployment.Request.labels:type_name -> crossplane.Deployment.Request.LabelsEntry
-	1,  // 14: crossplane.Deployment.Vm.machine_info:type_name -> crossplane.MachineInfo
-	15, // 15: crossplane.Deployment.Vm.cloud_init:type_name -> crossplane.CloudInit
-	10, // 16: crossplane.Deployment.Vm.network_params:type_name -> crossplane.Deployment.Vm.NetworkParams
-	16, // 17: crossplane.Deployment.Vm.NetworkParams.internal_ip:type_name -> crossplane.Ip
-	17, // 18: crossplane.Deployment.Vm.NetworkParams.assigned_cidr:type_name -> crossplane.Cidr
-	6,  // 19: crossplane.DeploymentSet.Request.requests:type_name -> crossplane.Deployment.Request
-	20, // [20:20] is the sub-list for method output_type
-	20, // [20:20] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	10, // 12: crossplane.Deployment.Request.labels:type_name -> crossplane.Deployment.Request.LabelsEntry
+	1,  // 13: crossplane.Deployment.Vm.machine_info:type_name -> crossplane.MachineInfo
+	15, // 14: crossplane.Deployment.Vm.cloud_init:type_name -> crossplane.CloudInit
+	11, // 15: crossplane.Deployment.Vm.network_params:type_name -> crossplane.Deployment.Vm.NetworkParams
+	2,  // 16: crossplane.Deployment.CloudDetails.using_quotas:type_name -> crossplane.Quota
+	16, // 17: crossplane.Deployment.CloudDetails.resources:type_name -> crossplane.Resource
+	17, // 18: crossplane.Deployment.Vm.NetworkParams.internal_ip:type_name -> crossplane.Ip
+	18, // 19: crossplane.Deployment.Vm.NetworkParams.assigned_cidr:type_name -> crossplane.Cidr
+	6,  // 20: crossplane.DeploymentSet.Request.requests:type_name -> crossplane.Deployment.Request
+	14, // 21: crossplane.DeploymentSet.Request.use_existing_network:type_name -> crossplane.Network
+	22, // [22:22] is the sub-list for method output_type
+	22, // [22:22] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_crossplane_deployment_proto_init() }
@@ -795,15 +844,15 @@ func file_crossplane_deployment_proto_init() {
 	file_crossplane_cloud_init_proto_init()
 	file_crossplane_resource_proto_init()
 	file_crossplane_types_proto_init()
-	file_crossplane_deployment_proto_msgTypes[5].OneofWrappers = []any{}
-	file_crossplane_deployment_proto_msgTypes[9].OneofWrappers = []any{}
+	file_crossplane_deployment_proto_msgTypes[10].OneofWrappers = []any{}
+	file_crossplane_deployment_proto_msgTypes[11].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_crossplane_deployment_proto_rawDesc), len(file_crossplane_deployment_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

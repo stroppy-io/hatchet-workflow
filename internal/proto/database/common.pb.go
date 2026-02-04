@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: database/common.proto
 
-package hatchet
+package database
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
@@ -314,7 +314,7 @@ const file_database_common_proto_rawDesc = "" +
 	"\rreplica_index\x18\x01 \x01(\rR\freplicaIndex\x1aM\n" +
 	"\vDedicatedVm\x12>\n" +
 	"\tvm_params\x18\x01 \x01(\v2\x17.crossplane.MachineInfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bvmParamsB\r\n" +
-	"\x06target\x12\x03\xf8B\x01B?Z=github.com/stroppy-io/hatchet-workflow/internal/proto/hatchetb\x06proto3"
+	"\x06target\x12\x03\xf8B\x01B@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/databaseb\x06proto3"
 
 var (
 	file_database_common_proto_rawDescOnce sync.Once

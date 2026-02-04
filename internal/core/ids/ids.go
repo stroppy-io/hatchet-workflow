@@ -61,3 +61,23 @@ func ExtractFromMediaRoomID(roomId string) (*Ulid, *Ulid, error) {
 	}
 	return UlidFromString(parts[0]), UlidFromString(parts[1]), nil
 }
+
+type RunId string
+
+func NewRunId() RunId {
+	return RunId(strings.ToLower(ulid.Make().String()))
+}
+
+func (id RunId) String() string {
+	return string(id)
+}
+
+type HatchetRunId string
+
+func NewHatchetRunId() HatchetRunId {
+	return HatchetRunId(strings.ToLower(ulid.Make().String()))
+}
+
+func (id HatchetRunId) String() string {
+	return string(id)
+}

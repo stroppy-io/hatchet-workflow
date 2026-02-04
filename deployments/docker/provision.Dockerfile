@@ -7,12 +7,12 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o provision-master ./cmd/master
+RUN go build -o master-worker ./cmd/master
 
 FROM alpine:latest
 
 WORKDIR /root/
 
-COPY --from=builder /app/provision-master .
+COPY --from=builder /app/master-worker .
 
-CMD ["./provision-master"]
+CMD ["./master-worker"]

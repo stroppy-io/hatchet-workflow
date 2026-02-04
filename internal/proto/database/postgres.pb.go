@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: database/postgres.proto
 
-package hatchet
+package database
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
@@ -896,7 +896,7 @@ const file_database_postgres_proto_rawDesc = "" +
 	"\x0eStorageBackend\x12\x1c\n" +
 	"\x18STORAGE_TYPE_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15STORAGE_TYPE_POSTGRES\x10\x01\x12\x19\n" +
-	"\x15STORAGE_TYPE_ORIOLEDB\x10\x02B?Z=github.com/stroppy-io/hatchet-workflow/internal/proto/hatchetb\x06proto3"
+	"\x15STORAGE_TYPE_ORIOLEDB\x10\x02B@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/databaseb\x06proto3"
 
 var (
 	file_database_postgres_proto_rawDescOnce sync.Once

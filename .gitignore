@@ -2,3 +2,4 @@ tools/proto/easyp_vendor
 .idea
 deployments/.kubectl.config.yaml
 .env
+bin

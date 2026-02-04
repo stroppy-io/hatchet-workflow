@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
+	"github.com/stroppy-io/hatchet-workflow/internal/domain/installers"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet"
-	"github.com/stroppy-io/hatchet-workflow/internal/workflows/install"
 )
 
 func runPostgresTaskName(runId string) string {
@@ -16,7 +16,7 @@ func NightlyCloudStroppyRunPostgresTask(runId string, c *hatchetLib.Client) *hat
 	return c.NewStandaloneTask(
 		runPostgresTaskName(runId),
 		func(ctx hatchetLib.Context, input hatchet.InstallPostgresParams) (hatchet.InstallPostgresParams, error) {
-			installer := install.New(install.DefaultConfig())
+			installer := installers.New(installers.DefaultConfig())
 			if err := installer.InstallPostgres(ctx, &input); err != nil {
 				return hatchet.InstallPostgresParams{}, err
 			}
@@ -26,7 +26,7 @@ func NightlyCloudStroppyRunPostgresTask(runId string, c *hatchetLib.Client) *hat
 }
 
 func stroppyInstallTaskName(runId string) string {
-	return fmt.Sprintf("install-stroppy-%s", runId)
+	return fmt.Sprintf("installers-stroppy-%s", runId)
 }
 
 func stroppyRunTaskName(runId string) string {
@@ -44,7 +44,7 @@ func NightlyCloudStroppyRunWorkflow(
 	installStroppyTask := w.NewTask(
 		stroppyInstallTaskName(runId),
 		func(ctx hatchetLib.Context, input hatchet.RunStroppyParams) (hatchet.RunStroppyParams, error) {
-			installer := install.New(install.DefaultConfig())
+			installer := installers.New(installers.DefaultConfig())
 			if err := installer.InstallStroppy(ctx, &input); err != nil {
 				return hatchet.RunStroppyParams{}, err
 			}

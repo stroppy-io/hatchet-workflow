@@ -45,7 +45,7 @@ func (c *Service) CreateDeployment(
 	ctx context.Context,
 	deployment *crossplane.Deployment,
 ) (*crossplane.Deployment, error) {
-	for _, resource := range deployment.GetResources() {
+	for _, resource := range deployment.GetCloudDetails().GetResources() {
 		resource.Status = crossplane.Resource_STATUS_CREATING
 		resource.CreatedAt = timestamppb.Now()
 		resource.UpdatedAt = timestamppb.Now()
@@ -61,7 +61,7 @@ func (c *Service) ProcessDeploymentStatus(
 	ctx context.Context,
 	deployment *crossplane.Deployment,
 ) (*crossplane.Deployment, error) {
-	for _, oldResource := range deployment.GetResources() {
+	for _, oldResource := range deployment.GetCloudDetails().GetResources() {
 		newResource, err := c.k8sActor.UpdateResourceFromRemote(ctx, oldResource)
 		if err != nil {
 			if errors.Is(err, k8s.ErrResourceNotFound) {
@@ -104,7 +104,7 @@ func (c *Service) DestroyDeployment(
 	ctx context.Context,
 	deployment *crossplane.Deployment,
 ) error {
-	for _, node := range deployment.GetResources() {
+	for _, node := range deployment.GetCloudDetails().GetResources() {
 		node.Status = crossplane.Resource_STATUS_DESTROYING
 		err := c.k8sActor.DeleteResource(ctx, node.GetRef())
 		if err != nil {

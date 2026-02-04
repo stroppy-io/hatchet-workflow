@@ -2,32 +2,26 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/hatchet-dev/hatchet/pkg/cmdutils"
 	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
-	"github.com/stroppy-io/hatchet-workflow/internal/core/hatchet"
-	stroppynightly "github.com/stroppy-io/hatchet-workflow/internal/workflows/stroppy-nightly"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/hatchet-ext"
+	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/provisioning"
 )
 
-const RunIdEnvVar = "RUN_ID"
-
 func main() {
-	c, err := hatchet.HatchetClient()
+	c, err := hatchet_ext.HatchetClient()
 	if err != nil {
 		log.Fatalf("Failed to create Hatchet client: %v", err)
 	}
-
-	runId := os.Getenv(RunIdEnvVar)
-	if runId == "" {
-		log.Fatalf("RUN_ID environment variable is not set")
+	provisionWorkflow, err := provisioning.ProvisionWorkflow(c)
+	if err != nil {
+		log.Fatalf("Failed to create provision workflow: %v", err)
 	}
 
 	worker, err := c.NewWorker(
-		stroppynightly.RuntimeStroppyWorkerName(runId),
-		hatchetLib.WithWorkflows(
-			stroppynightly.NightlyCloudStroppyRunWorkflow(runId, c),
-		),
+		"deployment-worker",
+		hatchetLib.WithWorkflows(provisionWorkflow),
 	)
 	if err != nil {
 		log.Fatalf("Failed to create Hatchet worker: %v", err)

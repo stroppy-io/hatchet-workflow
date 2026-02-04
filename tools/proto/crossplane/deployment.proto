@@ -34,10 +34,10 @@ message Quota {
 message Deployment {
     message Request {
         string name = 1 [(validate.rules).string.min_len = 1];
-        MachineInfo machine_info = 2 [(validate.rules).message.required = true];
-        CloudInit cloud_init = 3 [(validate.rules).message.required = true];
-        optional Network use_existing_network = 4;
-        map<string, string> labels = 5;
+        SupportedCloud supported_cloud = 2 [(validate.rules).enum.defined_only = true];
+        MachineInfo machine_info = 3 [(validate.rules).message.required = true];
+        CloudInit cloud_init = 4 [(validate.rules).message.required = true];
+        map<string, string> labels = 6;
     }
     message Vm {
         message NetworkParams {
@@ -50,19 +50,22 @@ message Deployment {
         CloudInit cloud_init = 6 [(validate.rules).message.required = true];
         NetworkParams network_params = 7 [(validate.rules).message.required = true];
     }
+    message CloudDetails {
+        repeated Quota using_quotas = 1;
+        repeated Resource resources = 2;
+    }
     string id = 1 [(validate.rules).string.min_len = 1];
     string name = 2 [(validate.rules).string.min_len = 1];
     SupportedCloud supported_cloud = 3 [(validate.rules).enum.defined_only = true];
-    repeated Quota using_quotas = 4;
-    repeated Resource resources = 5;
-    Vm vm = 6 [(validate.rules).message.required = true];
-    map<string, string> labels = 7;
+    Vm vm = 4 [(validate.rules).message.required = true];
+    CloudDetails cloud_details = 5;
+    map<string, string> labels = 6;
 }
 
 message DeploymentSet {
     message Request {
-        string name = 1 [(validate.rules).string.min_len = 1];
-        repeated Deployment.Request requests = 2 [(validate.rules).repeated.min_items = 1];
+        repeated Deployment.Request requests = 1 [(validate.rules).repeated.min_items = 1];
+        optional Network use_existing_network = 5;
     }
     Network network = 1 [(validate.rules).message.required = true];
     repeated Deployment deployments = 2 [(validate.rules).repeated.min_items = 1];

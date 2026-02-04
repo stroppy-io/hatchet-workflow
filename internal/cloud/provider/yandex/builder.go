@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/iancoleman/strcase"
-	"github.com/oklog/ulid/v2"
+	"github.com/stroppy-io/hatchet-workflow/internal/cloud/cloud-init"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/defaults"
-	ids2 "github.com/stroppy-io/hatchet-workflow/internal/core/ids"
+	ids "github.com/stroppy-io/hatchet-workflow/internal/core/ids"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/protoyaml"
 
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
@@ -131,13 +131,12 @@ func (y *CloudBuilder) newVmDef(
 	subnetIdRef *crossplane.Ref,
 	connectCredsRef *crossplane.Ref,
 	vm *crossplane.Deployment_Vm,
-	assignIpAddr *crossplane.Ip,
 ) (*crossplane.ResourceDef, error) {
 	if vm.GetNetworkParams().GetInternalIp().GetValue() == "" {
 		return nil, ErrEmptyInternalIp
 	}
 
-	machineScriptBytes, err := GenerateCloudInit(vm.GetCloudInit())
+	machineScriptBytes, err := cloud_init.GenerateCloudInit(vm.GetCloudInit())
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate cloud-init: %w", err)
 	}
@@ -187,7 +186,7 @@ func (y *CloudBuilder) newVmDef(
 								Name: subnetIdRef.GetName(),
 							},
 							Nat:       vm.GetNetworkParams().GetPublicIp(),
-							IpAddress: assignIpAddr.GetValue(),
+							IpAddress: vm.GetNetworkParams().GetInternalIp().GetValue(),
 						},
 					},
 					Metadata: metadata,
@@ -214,39 +213,14 @@ func (y *CloudBuilder) marshalWithReplaceOneOffs(def *crossplane.ResourceDef) (s
 	return strings.ReplaceAll(string(yaml), replacedSymbol, "forProvider"), nil
 }
 
-func (y *CloudBuilder) BuildVmDeployment(
-	runId string,
+func (y *CloudBuilder) BuildVmCloudDetails(
+	id string,
+	network *crossplane.Network,
 	vm *crossplane.Deployment_Vm,
-) (*crossplane.Deployment, error) {
-	if vm.GetNetworkParams().GetAssignedCidr().GetValue() == "" {
-		return nil, fmt.Errorf("assigned cidr is empty in deployment")
-	}
-	_, assignedCidrNet, err := net.ParseCIDR(vm.GetNetworkParams().GetAssignedCidr().GetValue())
+) (*crossplane.Deployment_CloudDetails, error) {
+	err := vm.Validate()
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse assigned cidr: %w", err)
-	}
-	// TODO: Implement RandomIP
-	// For now, we'll just use a placeholder or implement a simple random IP generator if needed.
-	// Assuming ips.RandomIP exists somewhere or needs to be replaced.
-	// Since I cannot find ips package, I will comment out RandomIP usage and use a fixed IP or error out for now,
-	// but better yet, I'll try to implement a simple random IP generation here or assume the user will provide one.
-	// However, the original code used `ips.RandomIP`. Let's assume we need to implement it or find where it is.
-	// Given I couldn't find `ips` package in the file list, I'll implement a simple one here or use a placeholder.
-
-	randomIP := func(cidr *net.IPNet) net.IP {
-		// Simple placeholder implementation
-		ip := make(net.IP, len(cidr.IP))
-		copy(ip, cidr.IP)
-		// Increment last byte for simplicity to avoid network address
-		ip[len(ip)-1]++
-		return ip
-	}
-
-	assignedInternalIp := &crossplane.Ip{
-		Value: defaults.StringOrDefault(
-			vm.GetNetworkParams().GetInternalIp().GetValue(),
-			randomIP(assignedCidrNet).String(),
-		),
+		return nil, fmt.Errorf("failed to validate vm: %w", err)
 	}
 	quotas := make([]*crossplane.Quota, 0)
 	addQuota := func(kind crossplane.Quota_Kind) {
@@ -259,10 +233,15 @@ func (y *CloudBuilder) BuildVmDeployment(
 
 	// __WARNING__
 	// Here we use vmId to generate unique names for vm
-	// runId used to generate unique names for subnet only
-	// if caller of this function wants, they can set runId to some other subnet (if they call twice)
-	subnetName := fmt.Sprintf("stroppy-cloud-subnet-%s", strings.ToLower(runId))
-	machineName := fmt.Sprintf("stroppy-cloud-vm-%s", strings.ToLower(ulid.Make().String()))
+	// requestId used to generate unique names for subnet only
+	// if caller of this function wants, they can set requestId to some other subnet (if they call twice)
+	subnetName := strings.ToLower(fmt.Sprintf(
+		"%s-subnet-%s",
+		network.GetName(),
+		network.GetId(),
+	))
+	// we use deployment id to generate unique names for vm (one deployment = one vm)
+	machineName := fmt.Sprintf("cloud-vm-%s", id)
 	// __WARNING__
 
 	saveSecretTo := &crossplane.Ref{
@@ -279,13 +258,17 @@ func (y *CloudBuilder) BuildVmDeployment(
 	}
 	networkDef := y.newNetworkDef(networkRef)
 	//addQuota(crossplane.Quota_KIND_NETWORK) // now we use one network for all vms
-	subnetDef := y.newSubnetDef(networkRef, subnetRef, assignedCidrNet)
+	_, networkCidr, err := net.ParseCIDR(network.GetCidrWithIps().GetCidr().GetValue())
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse network cidr: %w", err)
+	}
+	subnetDef := y.newSubnetDef(networkRef, subnetRef, networkCidr)
 	addQuota(crossplane.Quota_KIND_SUBNET)
 	vmRef := &crossplane.Ref{
 		Name:      machineName,
 		Namespace: y.Config.K8sNamespace,
 	}
-	vmDef, err := y.newVmDef(vmRef, subnetRef, saveSecretTo, vm, assignedInternalIp)
+	vmDef, err := y.newVmDef(vmRef, subnetRef, saveSecretTo, vm)
 	if err != nil {
 		return nil, err
 	}
@@ -307,13 +290,11 @@ func (y *CloudBuilder) BuildVmDeployment(
 		return nil, fmt.Errorf("failed to marshal network def: %w", err)
 	}
 
-	return &crossplane.Deployment{
-		Id:             ids2.NewUlid().GetId(),
-		SupportedCloud: crossplane.SupportedCloud_SUPPORTED_CLOUD_YANDEX,
-		UsingQuotas:    quotas,
+	return &crossplane.Deployment_CloudDetails{
+		UsingQuotas: quotas,
 		Resources: []*crossplane.Resource{
 			{
-				Ref:          ids2.ExtRefFromResourceDef(networkRef, networkDef),
+				Ref:          ids.ExtRefFromResourceDef(networkRef, networkDef),
 				ResourceDef:  networkDef,
 				CreatedAt:    timestamppb.Now(),
 				UpdatedAt:    timestamppb.Now(),
@@ -321,7 +302,7 @@ func (y *CloudBuilder) BuildVmDeployment(
 				Status:       crossplane.Resource_STATUS_CREATING,
 			},
 			{
-				Ref:          ids2.ExtRefFromResourceDef(subnetRef, subnetDef),
+				Ref:          ids.ExtRefFromResourceDef(subnetRef, subnetDef),
 				ResourceDef:  subnetDef,
 				CreatedAt:    timestamppb.Now(),
 				UpdatedAt:    timestamppb.Now(),
@@ -329,23 +310,12 @@ func (y *CloudBuilder) BuildVmDeployment(
 				Status:       crossplane.Resource_STATUS_CREATING,
 			},
 			{
-				Ref:          ids2.ExtRefFromResourceDef(vmRef, vmDef),
+				Ref:          ids.ExtRefFromResourceDef(vmRef, vmDef),
 				ResourceDef:  vmDef,
 				CreatedAt:    timestamppb.Now(),
 				UpdatedAt:    timestamppb.Now(),
 				ResourceYaml: vmYaml,
 				Status:       crossplane.Resource_STATUS_CREATING,
-			},
-		},
-		Deployment: &crossplane.Deployment_Vm_{
-			Vm: &crossplane.Deployment_Vm{
-				MachineInfo: vm.GetMachineInfo(),
-				CloudInit:   vm.GetCloudInit(),
-				NetworkParams: &crossplane.Deployment_Vm_NetworkParams{
-					InternalIp:   assignedInternalIp,
-					AssignedCidr: vm.GetNetworkParams().GetAssignedCidr(),
-					PublicIp:     vm.GetNetworkParams().GetPublicIp(),
-				},
 			},
 		},
 	}, nil

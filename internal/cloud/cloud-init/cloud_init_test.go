@@ -1,4 +1,4 @@
-package yandex
+package cloud_init
 
 import (
 	"testing"

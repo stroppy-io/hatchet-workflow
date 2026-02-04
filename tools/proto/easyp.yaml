@@ -38,4 +38,4 @@ generate:
         paths: source_relative
 breaking:
   ignore: []
-  against_git_ref: master
+  against_git_ref: master-worker

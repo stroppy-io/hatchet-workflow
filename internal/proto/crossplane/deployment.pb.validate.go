@@ -348,74 +348,6 @@ func (m *Deployment) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	for idx, item := range m.GetUsingQuotas() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, DeploymentValidationError{
-						field:  fmt.Sprintf("UsingQuotas[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, DeploymentValidationError{
-						field:  fmt.Sprintf("UsingQuotas[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return DeploymentValidationError{
-					field:  fmt.Sprintf("UsingQuotas[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	for idx, item := range m.GetResources() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, DeploymentValidationError{
-						field:  fmt.Sprintf("Resources[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, DeploymentValidationError{
-						field:  fmt.Sprintf("Resources[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return DeploymentValidationError{
-					field:  fmt.Sprintf("Resources[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
 	if m.GetVm() == nil {
 		err := DeploymentValidationError{
 			field:  "Vm",
@@ -450,6 +382,35 @@ func (m *Deployment) validate(all bool) error {
 		if err := v.Validate(); err != nil {
 			return DeploymentValidationError{
 				field:  "Vm",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetCloudDetails()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DeploymentValidationError{
+					field:  "CloudDetails",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DeploymentValidationError{
+					field:  "CloudDetails",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCloudDetails()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DeploymentValidationError{
+				field:  "CloudDetails",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -886,6 +847,17 @@ func (m *Deployment_Request) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if _, ok := SupportedCloud_name[int32(m.GetSupportedCloud())]; !ok {
+		err := Deployment_RequestValidationError{
+			field:  "SupportedCloud",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if m.GetMachineInfo() == nil {
 		err := Deployment_RequestValidationError{
 			field:  "MachineInfo",
@@ -967,39 +939,6 @@ func (m *Deployment_Request) validate(all bool) error {
 	}
 
 	// no validation rules for Labels
-
-	if m.UseExistingNetwork != nil {
-
-		if all {
-			switch v := interface{}(m.GetUseExistingNetwork()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Deployment_RequestValidationError{
-						field:  "UseExistingNetwork",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Deployment_RequestValidationError{
-						field:  "UseExistingNetwork",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetUseExistingNetwork()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Deployment_RequestValidationError{
-					field:  "UseExistingNetwork",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
 
 	if len(errors) > 0 {
 		return Deployment_RequestMultiError(errors)
@@ -1301,6 +1240,176 @@ var _ interface {
 	ErrorName() string
 } = Deployment_VmValidationError{}
 
+// Validate checks the field values on Deployment_CloudDetails with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Deployment_CloudDetails) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Deployment_CloudDetails with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Deployment_CloudDetailsMultiError, or nil if none found.
+func (m *Deployment_CloudDetails) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Deployment_CloudDetails) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetUsingQuotas() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Deployment_CloudDetailsValidationError{
+						field:  fmt.Sprintf("UsingQuotas[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Deployment_CloudDetailsValidationError{
+						field:  fmt.Sprintf("UsingQuotas[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Deployment_CloudDetailsValidationError{
+					field:  fmt.Sprintf("UsingQuotas[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetResources() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Deployment_CloudDetailsValidationError{
+						field:  fmt.Sprintf("Resources[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Deployment_CloudDetailsValidationError{
+						field:  fmt.Sprintf("Resources[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Deployment_CloudDetailsValidationError{
+					field:  fmt.Sprintf("Resources[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return Deployment_CloudDetailsMultiError(errors)
+	}
+
+	return nil
+}
+
+// Deployment_CloudDetailsMultiError is an error wrapping multiple validation
+// errors returned by Deployment_CloudDetails.ValidateAll() if the designated
+// constraints aren't met.
+type Deployment_CloudDetailsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Deployment_CloudDetailsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Deployment_CloudDetailsMultiError) AllErrors() []error { return m }
+
+// Deployment_CloudDetailsValidationError is the validation error returned by
+// Deployment_CloudDetails.Validate if the designated constraints aren't met.
+type Deployment_CloudDetailsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Deployment_CloudDetailsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Deployment_CloudDetailsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Deployment_CloudDetailsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Deployment_CloudDetailsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Deployment_CloudDetailsValidationError) ErrorName() string {
+	return "Deployment_CloudDetailsValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Deployment_CloudDetailsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDeployment_CloudDetails.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Deployment_CloudDetailsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Deployment_CloudDetailsValidationError{}
+
 // Validate checks the field values on Deployment_Vm_NetworkParams with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -1512,17 +1621,6 @@ func (m *DeploymentSet_Request) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
-		err := DeploymentSet_RequestValidationError{
-			field:  "Name",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	if len(m.GetRequests()) < 1 {
 		err := DeploymentSet_RequestValidationError{
 			field:  "Requests",
@@ -1560,6 +1658,39 @@ func (m *DeploymentSet_Request) validate(all bool) error {
 			if err := v.Validate(); err != nil {
 				return DeploymentSet_RequestValidationError{
 					field:  fmt.Sprintf("Requests[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if m.UseExistingNetwork != nil {
+
+		if all {
+			switch v := interface{}(m.GetUseExistingNetwork()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DeploymentSet_RequestValidationError{
+						field:  "UseExistingNetwork",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DeploymentSet_RequestValidationError{
+						field:  "UseExistingNetwork",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetUseExistingNetwork()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DeploymentSet_RequestValidationError{
+					field:  "UseExistingNetwork",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}

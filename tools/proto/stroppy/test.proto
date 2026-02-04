@@ -4,8 +4,9 @@ package stroppy;
 
 import "database/database.proto";
 import "validate/validate.proto";
+import "crossplane/deployment.proto";
 
-option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet";
+option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/stroppy";
 
 message Test {
     enum Workload {
@@ -18,6 +19,7 @@ message Test {
     Workload workload = 4 [(validate.rules).enum.defined_only = true];
     string stroppy_version = 5;
     map<string, string> stroppy_env = 6;
+    crossplane.MachineInfo machine_info = 7;
     oneof database_ref {
         database.Database database = 101;
         string connection_string = 102 [(validate.rules).string.min_len = 1];

@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: database/instance.proto
 
-package hatchet
+package database
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
@@ -155,8 +155,8 @@ func (*Sidecar_PgbouncerExporter) isSidecar_Sidecar() {}
 type VmSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Cpu           uint32                 `protobuf:"varint,1,opt,name=cpu,proto3" json:"cpu,omitempty"`
-	Memory        string                 `protobuf:"bytes,2,opt,name=memory,proto3" json:"memory,omitempty"` // "8Gi"
-	Disk          string                 `protobuf:"bytes,3,opt,name=disk,proto3" json:"disk,omitempty"`     // "100Gi"
+	Memory        uint32                 `protobuf:"varint,2,opt,name=memory,proto3" json:"memory,omitempty"` // "8Gi"
+	Disk          uint32                 `protobuf:"varint,3,opt,name=disk,proto3" json:"disk,omitempty"`     // "100Gi"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -198,18 +198,18 @@ func (x *VmSpec) GetCpu() uint32 {
 	return 0
 }
 
-func (x *VmSpec) GetMemory() string {
+func (x *VmSpec) GetMemory() uint32 {
 	if x != nil {
 		return x.Memory
 	}
-	return ""
+	return 0
 }
 
-func (x *VmSpec) GetDisk() string {
+func (x *VmSpec) GetDisk() uint32 {
 	if x != nil {
 		return x.Disk
 	}
-	return ""
+	return 0
 }
 
 type Instance struct {
@@ -513,14 +513,14 @@ const file_database_instance_proto_rawDesc = "" +
 	"\asidecar\x12\x03\xf8B\x01\"a\n" +
 	"\x06VmSpec\x12\x19\n" +
 	"\x03cpu\x18\x01 \x01(\rB\a\xfaB\x04*\x02(\x01R\x03cpu\x12\x1f\n" +
-	"\x06memory\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06memory\x12\x1b\n" +
-	"\x04disk\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04disk\"\xe5\x01\n" +
+	"\x06memory\x18\x02 \x01(\rB\a\xfaB\x04*\x02(\x01R\x06memory\x12\x1b\n" +
+	"\x04disk\x18\x03 \x01(\rB\a\xfaB\x04*\x02(\x01R\x04disk\"\xe5\x01\n" +
 	"\bInstance\x123\n" +
 	"\avm_spec\x18\x01 \x01(\v2\x10.database.VmSpecB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06vmSpec\x12-\n" +
 	"\bsidecars\x18\x02 \x03(\v2\x11.database.SidecarR\bsidecars\x12!\n" +
 	"\aversion\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aversion\x12A\n" +
 	"\bpostgres\x18\x06 \x01(\v2#.database.Postgres.InstanceSettingsH\x00R\bpostgresB\x0f\n" +
-	"\bsettings\x12\x03\xf8B\x01B?Z=github.com/stroppy-io/hatchet-workflow/internal/proto/hatchetb\x06proto3"
+	"\bsettings\x12\x03\xf8B\x01B@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/databaseb\x06proto3"
 
 var (
 	file_database_instance_proto_rawDescOnce sync.Once

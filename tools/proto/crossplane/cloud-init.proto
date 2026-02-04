@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package crossplane;
 
+import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane";
 
@@ -51,11 +52,15 @@ message WriteFile {
     bool defer = 7;
 }
 
+message StringList {
+    repeated string values = 1;
+}
+
 message CloudInit {
     repeated User users = 1;
     repeated string groups = 2;
 
     SSHConfig ssh = 3;
     repeated WriteFile write_files = 4;
-    repeated string runcmd = 6;
+    repeated StringList runcmd = 6;
 }

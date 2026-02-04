@@ -6,15 +6,15 @@ services:
     restart: always
     hostname: "postgres"
     environment:
-      - POSTGRES_USER=hatchet
-      - POSTGRES_PASSWORD=hatchet
-      - POSTGRES_DB=hatchet
+      - POSTGRES_USER=hatchet-ext
+      - POSTGRES_PASSWORD=hatchet-ext
+      - POSTGRES_DB=hatchet-ext
     ports:
       - "5435:5432"
     volumes:
       - hatchet_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d hatchet -U hatchet"]
+      test: ["CMD-SHELL", "pg_isready -d hatchet-ext -U hatchet-ext"]
       interval: 10s
       timeout: 10s
       retries: 5
@@ -38,20 +38,20 @@ services:
       timeout: 10s
       retries: 5
   migration:
-    container_name: hatchet-migration
+    container_name: hatchet-ext-migration
     image: ghcr.io/hatchet-dev/hatchet/hatchet-migrate:latest
-    command: /hatchet/hatchet-migrate
+    command: /hatchet-ext/hatchet-ext-migrate
     environment:
-      DATABASE_URL: "postgres://hatchet:hatchet@postgres:5432/hatchet"
+      DATABASE_URL: "postgres://hatchet-ext:hatchet-ext@postgres:5432/hatchet-ext"
     depends_on:
       postgres:
         condition: service_healthy
   setup-config:
-    container_name: hatchet-setup-config
+    container_name: hatchet-ext-setup-config
     image: ghcr.io/hatchet-dev/hatchet/hatchet-admin:latest
-    command: /hatchet/hatchet-admin quickstart --skip certs --generated-config-dir /hatchet/config --overwrite=false
+    command: /hatchet-ext/hatchet-ext-admin quickstart --skip certs --generated-config-dir /hatchet-ext/config --overwrite=false
     environment:
-      DATABASE_URL: "postgres://hatchet:hatchet@postgres:5432/hatchet"
+      DATABASE_URL: "postgres://hatchet-ext:hatchet-ext@postgres:5432/hatchet-ext"
       SERVER_MSGQUEUE_RABBITMQ_URL: amqp://user:password@rabbitmq:5672/
       SERVER_AUTH_COOKIE_DOMAIN: localhost:8080
       SERVER_AUTH_COOKIE_INSECURE: "t"
@@ -59,10 +59,10 @@ services:
       SERVER_GRPC_INSECURE: "t"
       SERVER_GRPC_BROADCAST_ADDRESS: localhost:7077
       SERVER_DEFAULT_ENGINE_VERSION: "V1"
-      SERVER_INTERNAL_CLIENT_INTERNAL_GRPC_BROADCAST_ADDRESS: hatchet-engine:7070
+      SERVER_INTERNAL_CLIENT_INTERNAL_GRPC_BROADCAST_ADDRESS: hatchet-ext-engine:7070
     volumes:
-      - hatchet_certs:/hatchet/certs
-      - hatchet_config:/hatchet/config
+      - hatchet_certs:/hatchet-ext/certs
+      - hatchet_config:/hatchet-ext/config
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -71,9 +71,9 @@ services:
       postgres:
         condition: service_healthy
   hatchet-engine:
-    container_name: hatchet-engine
+    container_name: hatchet-ext-engine
     image: ghcr.io/hatchet-dev/hatchet/hatchet-engine:latest
-    command: /hatchet/hatchet-engine --config /hatchet/config
+    command: /hatchet-ext/hatchet-ext-engine --config /hatchet-ext/config
     restart: on-failure
     depends_on:
       setup-config:
@@ -83,16 +83,16 @@ services:
     ports:
       - "7077:7070"
     environment:
-      DATABASE_URL: "postgres://hatchet:hatchet@postgres:5432/hatchet"
+      DATABASE_URL: "postgres://hatchet-ext:hatchet-ext@postgres:5432/hatchet-ext"
       SERVER_GRPC_BIND_ADDRESS: "0.0.0.0"
       SERVER_GRPC_INSECURE: "t"
     volumes:
-      - hatchet_certs:/hatchet/certs
-      - hatchet_config:/hatchet/config
+      - hatchet_certs:/hatchet-ext/certs
+      - hatchet_config:/hatchet-ext/config
   hatchet-dashboard:
-    container_name: hatchet-dashboard
+    container_name: hatchet-ext-dashboard
     image: ghcr.io/hatchet-dev/hatchet/hatchet-dashboard:latest
-    command: sh ./entrypoint.sh --config /hatchet/config
+    command: sh ./entrypoint.sh --config /hatchet-ext/config
     ports:
       - 8080:80
     restart: on-failure
@@ -102,10 +102,10 @@ services:
       migration:
         condition: service_completed_successfully
     environment:
-      DATABASE_URL: "postgres://hatchet:hatchet@postgres:5432/hatchet"
+      DATABASE_URL: "postgres://hatchet-ext:hatchet-ext@postgres:5432/hatchet-ext"
     volumes:
-      - hatchet_certs:/hatchet/certs
-      - hatchet_config:/hatchet/config
+      - hatchet_certs:/hatchet-ext/certs
+      - hatchet_config:/hatchet-ext/config
   valkey:
     container_name: valkey
     image: valkey/valkey

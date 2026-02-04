@@ -9,6 +9,7 @@ package hatchet
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	crossplane "github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
+	stroppy "github.com/stroppy-io/hatchet-workflow/internal/proto/stroppy"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -62,7 +63,7 @@ func (*NightlyCloudStroppy) Descriptor() ([]byte, []int) {
 type NightlyCloudStroppy_Input struct {
 	state         protoimpl.MessageState    `protogen:"open.v1"`
 	Cloud         crossplane.SupportedCloud `protobuf:"varint,1,opt,name=cloud,proto3,enum=crossplane.SupportedCloud" json:"cloud,omitempty"` // now ony yandex
-	TestSuite     *TestSuite                `protobuf:"bytes,2,opt,name=test_suite,json=testSuite,proto3" json:"test_suite,omitempty"`
+	TestSuite     *stroppy.TestSuite        `protobuf:"bytes,2,opt,name=test_suite,json=testSuite,proto3" json:"test_suite,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -104,7 +105,7 @@ func (x *NightlyCloudStroppy_Input) GetCloud() crossplane.SupportedCloud {
 	return crossplane.SupportedCloud(0)
 }
 
-func (x *NightlyCloudStroppy_Input) GetTestSuite() *TestSuite {
+func (x *NightlyCloudStroppy_Input) GetTestSuite() *stroppy.TestSuite {
 	if x != nil {
 		return x.TestSuite
 	}
@@ -112,8 +113,8 @@ func (x *NightlyCloudStroppy_Input) GetTestSuite() *TestSuite {
 }
 
 type NightlyCloudStroppy_Output struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Results       *TestSuiteResult       `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"`
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Results       *stroppy.TestSuiteResult `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -148,7 +149,7 @@ func (*NightlyCloudStroppy_Output) Descriptor() ([]byte, []int) {
 	return file_hatchet_workflows_proto_rawDescGZIP(), []int{0, 1}
 }
 
-func (x *NightlyCloudStroppy_Output) GetResults() *TestSuiteResult {
+func (x *NightlyCloudStroppy_Output) GetResults() *stroppy.TestSuiteResult {
 	if x != nil {
 		return x.Results
 	}
@@ -186,8 +187,8 @@ var file_hatchet_workflows_proto_goTypes = []any{
 	(*NightlyCloudStroppy_Input)(nil),  // 1: hatchet.NightlyCloudStroppy.Input
 	(*NightlyCloudStroppy_Output)(nil), // 2: hatchet.NightlyCloudStroppy.Output
 	(crossplane.SupportedCloud)(0),     // 3: crossplane.SupportedCloud
-	(*TestSuite)(nil),                  // 4: stroppy.TestSuite
-	(*TestSuiteResult)(nil),            // 5: stroppy.TestSuiteResult
+	(*stroppy.TestSuite)(nil),          // 4: stroppy.TestSuite
+	(*stroppy.TestSuiteResult)(nil),    // 5: stroppy.TestSuiteResult
 }
 var file_hatchet_workflows_proto_depIdxs = []int32{
 	3, // 0: hatchet.NightlyCloudStroppy.Input.cloud:type_name -> crossplane.SupportedCloud
@@ -205,7 +206,6 @@ func file_hatchet_workflows_proto_init() {
 	if File_hatchet_workflows_proto != nil {
 		return
 	}
-	file_stroppy_test_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

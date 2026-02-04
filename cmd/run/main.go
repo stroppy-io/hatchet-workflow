@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	hatchetLib "github.com/stroppy-io/hatchet-workflow/internal/core/hatchet"
+	hatchetLib "github.com/stroppy-io/hatchet-workflow/internal/core/hatchet-ext"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet"
 )

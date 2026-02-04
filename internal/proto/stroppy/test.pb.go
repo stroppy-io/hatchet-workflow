@@ -4,10 +4,12 @@
 // 	protoc        (unknown)
 // source: stroppy/test.proto
 
-package hatchet
+package stroppy
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	crossplane "github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
+	database "github.com/stroppy-io/hatchet-workflow/internal/proto/database"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -72,12 +74,13 @@ func (Test_Workload) EnumDescriptor() ([]byte, []int) {
 }
 
 type Test struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Name           string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description    *string                `protobuf:"bytes,3,opt,name=description,proto3,oneof" json:"description,omitempty"`
-	Workload       Test_Workload          `protobuf:"varint,4,opt,name=workload,proto3,enum=stroppy.Test_Workload" json:"workload,omitempty"`
-	StroppyVersion string                 `protobuf:"bytes,5,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
-	StroppyEnv     map[string]string      `protobuf:"bytes,6,rep,name=stroppy_env,json=stroppyEnv,proto3" json:"stroppy_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state          protoimpl.MessageState  `protogen:"open.v1"`
+	Name           string                  `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description    *string                 `protobuf:"bytes,3,opt,name=description,proto3,oneof" json:"description,omitempty"`
+	Workload       Test_Workload           `protobuf:"varint,4,opt,name=workload,proto3,enum=stroppy.Test_Workload" json:"workload,omitempty"`
+	StroppyVersion string                  `protobuf:"bytes,5,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
+	StroppyEnv     map[string]string       `protobuf:"bytes,6,rep,name=stroppy_env,json=stroppyEnv,proto3" json:"stroppy_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	MachineInfo    *crossplane.MachineInfo `protobuf:"bytes,7,opt,name=machine_info,json=machineInfo,proto3" json:"machine_info,omitempty"`
 	// Types that are valid to be assigned to DatabaseRef:
 	//
 	//	*Test_Database
@@ -152,6 +155,13 @@ func (x *Test) GetStroppyEnv() map[string]string {
 	return nil
 }
 
+func (x *Test) GetMachineInfo() *crossplane.MachineInfo {
+	if x != nil {
+		return x.MachineInfo
+	}
+	return nil
+}
+
 func (x *Test) GetDatabaseRef() isTest_DatabaseRef {
 	if x != nil {
 		return x.DatabaseRef
@@ -159,7 +169,7 @@ func (x *Test) GetDatabaseRef() isTest_DatabaseRef {
 	return nil
 }
 
-func (x *Test) GetDatabase() *Database {
+func (x *Test) GetDatabase() *database.Database {
 	if x != nil {
 		if x, ok := x.DatabaseRef.(*Test_Database); ok {
 			return x.Database
@@ -182,7 +192,7 @@ type isTest_DatabaseRef interface {
 }
 
 type Test_Database struct {
-	Database *Database `protobuf:"bytes,101,opt,name=database,proto3,oneof"`
+	Database *database.Database `protobuf:"bytes,101,opt,name=database,proto3,oneof"`
 }
 
 type Test_ConnectionString struct {
@@ -346,14 +356,15 @@ var File_stroppy_test_proto protoreflect.FileDescriptor
 
 const file_stroppy_test_proto_rawDesc = "" +
 	"\n" +
-	"\x12stroppy/test.proto\x12\astroppy\x1a\x17database/database.proto\x1a\x17validate/validate.proto\"\xfd\x03\n" +
+	"\x12stroppy/test.proto\x12\astroppy\x1a\x17database/database.proto\x1a\x17validate/validate.proto\x1a\x1bcrossplane/deployment.proto\"\xb9\x04\n" +
 	"\x04Test\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12%\n" +
 	"\vdescription\x18\x03 \x01(\tH\x01R\vdescription\x88\x01\x01\x12<\n" +
 	"\bworkload\x18\x04 \x01(\x0e2\x16.stroppy.Test.WorkloadB\b\xfaB\x05\x82\x01\x02\x10\x01R\bworkload\x12'\n" +
 	"\x0fstroppy_version\x18\x05 \x01(\tR\x0estroppyVersion\x12>\n" +
 	"\vstroppy_env\x18\x06 \x03(\v2\x1d.stroppy.Test.StroppyEnvEntryR\n" +
-	"stroppyEnv\x120\n" +
+	"stroppyEnv\x12:\n" +
+	"\fmachine_info\x18\a \x01(\v2\x17.crossplane.MachineInfoR\vmachineInfo\x120\n" +
 	"\bdatabase\x18e \x01(\v2\x12.database.DatabaseH\x00R\bdatabase\x126\n" +
 	"\x11connection_string\x18f \x01(\tB\a\xfaB\x04r\x02\x10\x01H\x00R\x10connectionString\x1a=\n" +
 	"\x0fStroppyEnvEntry\x12\x10\n" +
@@ -378,7 +389,7 @@ const file_stroppy_test_proto_rawDesc = "" +
 	"\aresults\x18\x01 \x03(\v2%.stroppy.TestSuiteResult.ResultsEntryB\b\xfaB\x05\x9a\x01\x02\b\x01R\aresults\x1aO\n" +
 	"\fResultsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12)\n" +
-	"\x05value\x18\x02 \x01(\v2\x13.stroppy.TestResultR\x05value:\x028\x01B?Z=github.com/stroppy-io/hatchet-workflow/internal/proto/hatchetb\x06proto3"
+	"\x05value\x18\x02 \x01(\v2\x13.stroppy.TestResultR\x05value:\x028\x01B?Z=github.com/stroppy-io/hatchet-workflow/internal/proto/stroppyb\x06proto3"
 
 var (
 	file_stroppy_test_proto_rawDescOnce sync.Once
@@ -395,28 +406,30 @@ func file_stroppy_test_proto_rawDescGZIP() []byte {
 var file_stroppy_test_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_stroppy_test_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_stroppy_test_proto_goTypes = []any{
-	(Test_Workload)(0),      // 0: stroppy.Test.Workload
-	(*Test)(nil),            // 1: stroppy.Test
-	(*TestResult)(nil),      // 2: stroppy.TestResult
-	(*TestSuite)(nil),       // 3: stroppy.TestSuite
-	(*TestSuiteResult)(nil), // 4: stroppy.TestSuiteResult
-	nil,                     // 5: stroppy.Test.StroppyEnvEntry
-	nil,                     // 6: stroppy.TestSuiteResult.ResultsEntry
-	(*Database)(nil),        // 7: database.Database
+	(Test_Workload)(0),             // 0: stroppy.Test.Workload
+	(*Test)(nil),                   // 1: stroppy.Test
+	(*TestResult)(nil),             // 2: stroppy.TestResult
+	(*TestSuite)(nil),              // 3: stroppy.TestSuite
+	(*TestSuiteResult)(nil),        // 4: stroppy.TestSuiteResult
+	nil,                            // 5: stroppy.Test.StroppyEnvEntry
+	nil,                            // 6: stroppy.TestSuiteResult.ResultsEntry
+	(*crossplane.MachineInfo)(nil), // 7: crossplane.MachineInfo
+	(*database.Database)(nil),      // 8: database.Database
 }
 var file_stroppy_test_proto_depIdxs = []int32{
 	0, // 0: stroppy.Test.workload:type_name -> stroppy.Test.Workload
 	5, // 1: stroppy.Test.stroppy_env:type_name -> stroppy.Test.StroppyEnvEntry
-	7, // 2: stroppy.Test.database:type_name -> database.Database
-	1, // 3: stroppy.TestResult.test:type_name -> stroppy.Test
-	1, // 4: stroppy.TestSuite.tests:type_name -> stroppy.Test
-	6, // 5: stroppy.TestSuiteResult.results:type_name -> stroppy.TestSuiteResult.ResultsEntry
-	2, // 6: stroppy.TestSuiteResult.ResultsEntry.value:type_name -> stroppy.TestResult
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	7, // 2: stroppy.Test.machine_info:type_name -> crossplane.MachineInfo
+	8, // 3: stroppy.Test.database:type_name -> database.Database
+	1, // 4: stroppy.TestResult.test:type_name -> stroppy.Test
+	1, // 5: stroppy.TestSuite.tests:type_name -> stroppy.Test
+	6, // 6: stroppy.TestSuiteResult.results:type_name -> stroppy.TestSuiteResult.ResultsEntry
+	2, // 7: stroppy.TestSuiteResult.ResultsEntry.value:type_name -> stroppy.TestResult
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_stroppy_test_proto_init() }
@@ -424,7 +437,6 @@ func file_stroppy_test_proto_init() {
 	if File_stroppy_test_proto != nil {
 		return
 	}
-	file_database_database_proto_init()
 	file_stroppy_test_proto_msgTypes[0].OneofWrappers = []any{
 		(*Test_Database)(nil),
 		(*Test_ConnectionString)(nil),
