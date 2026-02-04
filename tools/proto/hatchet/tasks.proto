@@ -25,11 +25,41 @@ message Tasks {
     */
     message SetupDatabase {
         message Input {
-            database.Database database = 1 [(validate.rules).message.required = true];
+            string run_id = 1 [(validate.rules).string.min_len = 1];
+            database.Database database = 2 [(validate.rules).message.required = true];
         }
         message Output {
             // Connection string to deployed database
             string connection_string = 1 [(validate.rules).string.min_len = 1];
+        }
+    }
+
+    /*
+        Setup stroppy vm using provisioning
+    */
+    message SetupStroppy {
+        message Input {
+            string run_id = 1 [(validate.rules).string.min_len = 1];
+            string stroppy_version = 2;
+            string bin_path = 3 [(validate.rules).string.min_len = 1];
+        }
+        message Output {
+            crossplane.Deployment deployment = 1 [(validate.rules).message.required = true];
+            string bin_path = 2 [(validate.rules).string.min_len = 1];
+        }
+    }
+
+    /*
+        Run stroppy test
+    */
+    message RunStroppyTest {
+        message Input {
+            string run_id = 1 [(validate.rules).string.min_len = 1];
+            string bin_path = 2 [(validate.rules).string.min_len = 1];
+            map<string, string> stroppy_env = 3;
+        }
+        message Output {
+            stroppy.TestResult result = 1 [(validate.rules).message.required = true];
         }
     }
 

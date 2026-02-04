@@ -133,6 +133,80 @@ func (*Tasks_SetupDatabase) Descriptor() ([]byte, []int) {
 	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 1}
 }
 
+// Setup stroppy vm using provisioning
+type Tasks_SetupStroppy struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Tasks_SetupStroppy) Reset() {
+	*x = Tasks_SetupStroppy{}
+	mi := &file_hatchet_tasks_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tasks_SetupStroppy) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tasks_SetupStroppy) ProtoMessage() {}
+
+func (x *Tasks_SetupStroppy) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_tasks_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Tasks_SetupStroppy.ProtoReflect.Descriptor instead.
+func (*Tasks_SetupStroppy) Descriptor() ([]byte, []int) {
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 2}
+}
+
+// Run stroppy test
+type Tasks_RunStroppyTest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Tasks_RunStroppyTest) Reset() {
+	*x = Tasks_RunStroppyTest{}
+	mi := &file_hatchet_tasks_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tasks_RunStroppyTest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tasks_RunStroppyTest) ProtoMessage() {}
+
+func (x *Tasks_RunStroppyTest) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_tasks_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Tasks_RunStroppyTest.ProtoReflect.Descriptor instead.
+func (*Tasks_RunStroppyTest) Descriptor() ([]byte, []int) {
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 3}
+}
+
 // Run stroppy test
 // This step can request database setup if one of test.database_ref is Database
 type Tasks_StroppyTestSuite struct {
@@ -143,7 +217,7 @@ type Tasks_StroppyTestSuite struct {
 
 func (x *Tasks_StroppyTestSuite) Reset() {
 	*x = Tasks_StroppyTestSuite{}
-	mi := &file_hatchet_tasks_proto_msgTypes[3]
+	mi := &file_hatchet_tasks_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -155,7 +229,7 @@ func (x *Tasks_StroppyTestSuite) String() string {
 func (*Tasks_StroppyTestSuite) ProtoMessage() {}
 
 func (x *Tasks_StroppyTestSuite) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_tasks_proto_msgTypes[3]
+	mi := &file_hatchet_tasks_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -168,7 +242,7 @@ func (x *Tasks_StroppyTestSuite) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Tasks_StroppyTestSuite.ProtoReflect.Descriptor instead.
 func (*Tasks_StroppyTestSuite) Descriptor() ([]byte, []int) {
-	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 2}
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 4}
 }
 
 type Tasks_Provision_Input struct {
@@ -180,7 +254,7 @@ type Tasks_Provision_Input struct {
 
 func (x *Tasks_Provision_Input) Reset() {
 	*x = Tasks_Provision_Input{}
-	mi := &file_hatchet_tasks_proto_msgTypes[4]
+	mi := &file_hatchet_tasks_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -192,7 +266,7 @@ func (x *Tasks_Provision_Input) String() string {
 func (*Tasks_Provision_Input) ProtoMessage() {}
 
 func (x *Tasks_Provision_Input) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_tasks_proto_msgTypes[4]
+	mi := &file_hatchet_tasks_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -224,7 +298,7 @@ type Tasks_Provision_Output struct {
 
 func (x *Tasks_Provision_Output) Reset() {
 	*x = Tasks_Provision_Output{}
-	mi := &file_hatchet_tasks_proto_msgTypes[5]
+	mi := &file_hatchet_tasks_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -236,7 +310,7 @@ func (x *Tasks_Provision_Output) String() string {
 func (*Tasks_Provision_Output) ProtoMessage() {}
 
 func (x *Tasks_Provision_Output) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_tasks_proto_msgTypes[5]
+	mi := &file_hatchet_tasks_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -261,14 +335,15 @@ func (x *Tasks_Provision_Output) GetDeploymentSet() *crossplane.DeploymentSet {
 
 type Tasks_SetupDatabase_Input struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Database      *Database              `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
+	RunId         string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	Database      *Database              `protobuf:"bytes,2,opt,name=database,proto3" json:"database,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Tasks_SetupDatabase_Input) Reset() {
 	*x = Tasks_SetupDatabase_Input{}
-	mi := &file_hatchet_tasks_proto_msgTypes[6]
+	mi := &file_hatchet_tasks_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -280,7 +355,7 @@ func (x *Tasks_SetupDatabase_Input) String() string {
 func (*Tasks_SetupDatabase_Input) ProtoMessage() {}
 
 func (x *Tasks_SetupDatabase_Input) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_tasks_proto_msgTypes[6]
+	mi := &file_hatchet_tasks_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -294,6 +369,13 @@ func (x *Tasks_SetupDatabase_Input) ProtoReflect() protoreflect.Message {
 // Deprecated: Use Tasks_SetupDatabase_Input.ProtoReflect.Descriptor instead.
 func (*Tasks_SetupDatabase_Input) Descriptor() ([]byte, []int) {
 	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 1, 0}
+}
+
+func (x *Tasks_SetupDatabase_Input) GetRunId() string {
+	if x != nil {
+		return x.RunId
+	}
+	return ""
 }
 
 func (x *Tasks_SetupDatabase_Input) GetDatabase() *Database {
@@ -313,7 +395,7 @@ type Tasks_SetupDatabase_Output struct {
 
 func (x *Tasks_SetupDatabase_Output) Reset() {
 	*x = Tasks_SetupDatabase_Output{}
-	mi := &file_hatchet_tasks_proto_msgTypes[7]
+	mi := &file_hatchet_tasks_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -325,7 +407,7 @@ func (x *Tasks_SetupDatabase_Output) String() string {
 func (*Tasks_SetupDatabase_Output) ProtoMessage() {}
 
 func (x *Tasks_SetupDatabase_Output) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_tasks_proto_msgTypes[7]
+	mi := &file_hatchet_tasks_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -348,6 +430,222 @@ func (x *Tasks_SetupDatabase_Output) GetConnectionString() string {
 	return ""
 }
 
+type Tasks_SetupStroppy_Input struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	RunId          string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	StroppyVersion string                 `protobuf:"bytes,2,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
+	BinPath        string                 `protobuf:"bytes,3,opt,name=bin_path,json=binPath,proto3" json:"bin_path,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *Tasks_SetupStroppy_Input) Reset() {
+	*x = Tasks_SetupStroppy_Input{}
+	mi := &file_hatchet_tasks_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tasks_SetupStroppy_Input) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tasks_SetupStroppy_Input) ProtoMessage() {}
+
+func (x *Tasks_SetupStroppy_Input) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_tasks_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Tasks_SetupStroppy_Input.ProtoReflect.Descriptor instead.
+func (*Tasks_SetupStroppy_Input) Descriptor() ([]byte, []int) {
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 2, 0}
+}
+
+func (x *Tasks_SetupStroppy_Input) GetRunId() string {
+	if x != nil {
+		return x.RunId
+	}
+	return ""
+}
+
+func (x *Tasks_SetupStroppy_Input) GetStroppyVersion() string {
+	if x != nil {
+		return x.StroppyVersion
+	}
+	return ""
+}
+
+func (x *Tasks_SetupStroppy_Input) GetBinPath() string {
+	if x != nil {
+		return x.BinPath
+	}
+	return ""
+}
+
+type Tasks_SetupStroppy_Output struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Deployment    *crossplane.Deployment `protobuf:"bytes,1,opt,name=deployment,proto3" json:"deployment,omitempty"`
+	BinPath       string                 `protobuf:"bytes,2,opt,name=bin_path,json=binPath,proto3" json:"bin_path,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Tasks_SetupStroppy_Output) Reset() {
+	*x = Tasks_SetupStroppy_Output{}
+	mi := &file_hatchet_tasks_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tasks_SetupStroppy_Output) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tasks_SetupStroppy_Output) ProtoMessage() {}
+
+func (x *Tasks_SetupStroppy_Output) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_tasks_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Tasks_SetupStroppy_Output.ProtoReflect.Descriptor instead.
+func (*Tasks_SetupStroppy_Output) Descriptor() ([]byte, []int) {
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 2, 1}
+}
+
+func (x *Tasks_SetupStroppy_Output) GetDeployment() *crossplane.Deployment {
+	if x != nil {
+		return x.Deployment
+	}
+	return nil
+}
+
+func (x *Tasks_SetupStroppy_Output) GetBinPath() string {
+	if x != nil {
+		return x.BinPath
+	}
+	return ""
+}
+
+type Tasks_RunStroppyTest_Input struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RunId         string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	BinPath       string                 `protobuf:"bytes,2,opt,name=bin_path,json=binPath,proto3" json:"bin_path,omitempty"`
+	StroppyEnv    map[string]string      `protobuf:"bytes,3,rep,name=stroppy_env,json=stroppyEnv,proto3" json:"stroppy_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Tasks_RunStroppyTest_Input) Reset() {
+	*x = Tasks_RunStroppyTest_Input{}
+	mi := &file_hatchet_tasks_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tasks_RunStroppyTest_Input) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tasks_RunStroppyTest_Input) ProtoMessage() {}
+
+func (x *Tasks_RunStroppyTest_Input) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_tasks_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Tasks_RunStroppyTest_Input.ProtoReflect.Descriptor instead.
+func (*Tasks_RunStroppyTest_Input) Descriptor() ([]byte, []int) {
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 3, 0}
+}
+
+func (x *Tasks_RunStroppyTest_Input) GetRunId() string {
+	if x != nil {
+		return x.RunId
+	}
+	return ""
+}
+
+func (x *Tasks_RunStroppyTest_Input) GetBinPath() string {
+	if x != nil {
+		return x.BinPath
+	}
+	return ""
+}
+
+func (x *Tasks_RunStroppyTest_Input) GetStroppyEnv() map[string]string {
+	if x != nil {
+		return x.StroppyEnv
+	}
+	return nil
+}
+
+type Tasks_RunStroppyTest_Output struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Result        *TestResult            `protobuf:"bytes,1,opt,name=result,proto3" json:"result,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Tasks_RunStroppyTest_Output) Reset() {
+	*x = Tasks_RunStroppyTest_Output{}
+	mi := &file_hatchet_tasks_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tasks_RunStroppyTest_Output) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tasks_RunStroppyTest_Output) ProtoMessage() {}
+
+func (x *Tasks_RunStroppyTest_Output) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_tasks_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Tasks_RunStroppyTest_Output.ProtoReflect.Descriptor instead.
+func (*Tasks_RunStroppyTest_Output) Descriptor() ([]byte, []int) {
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 3, 1}
+}
+
+func (x *Tasks_RunStroppyTest_Output) GetResult() *TestResult {
+	if x != nil {
+		return x.Result
+	}
+	return nil
+}
+
 type Tasks_StroppyTestSuite_Input struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Suite         *TestSuite             `protobuf:"bytes,1,opt,name=suite,proto3" json:"suite,omitempty"`
@@ -357,7 +655,7 @@ type Tasks_StroppyTestSuite_Input struct {
 
 func (x *Tasks_StroppyTestSuite_Input) Reset() {
 	*x = Tasks_StroppyTestSuite_Input{}
-	mi := &file_hatchet_tasks_proto_msgTypes[8]
+	mi := &file_hatchet_tasks_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -369,7 +667,7 @@ func (x *Tasks_StroppyTestSuite_Input) String() string {
 func (*Tasks_StroppyTestSuite_Input) ProtoMessage() {}
 
 func (x *Tasks_StroppyTestSuite_Input) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_tasks_proto_msgTypes[8]
+	mi := &file_hatchet_tasks_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -382,7 +680,7 @@ func (x *Tasks_StroppyTestSuite_Input) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Tasks_StroppyTestSuite_Input.ProtoReflect.Descriptor instead.
 func (*Tasks_StroppyTestSuite_Input) Descriptor() ([]byte, []int) {
-	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 2, 0}
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 4, 0}
 }
 
 func (x *Tasks_StroppyTestSuite_Input) GetSuite() *TestSuite {
@@ -401,7 +699,7 @@ type Tasks_StroppyTestSuite_Output struct {
 
 func (x *Tasks_StroppyTestSuite_Output) Reset() {
 	*x = Tasks_StroppyTestSuite_Output{}
-	mi := &file_hatchet_tasks_proto_msgTypes[9]
+	mi := &file_hatchet_tasks_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -413,7 +711,7 @@ func (x *Tasks_StroppyTestSuite_Output) String() string {
 func (*Tasks_StroppyTestSuite_Output) ProtoMessage() {}
 
 func (x *Tasks_StroppyTestSuite_Output) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_tasks_proto_msgTypes[9]
+	mi := &file_hatchet_tasks_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -426,7 +724,7 @@ func (x *Tasks_StroppyTestSuite_Output) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Tasks_StroppyTestSuite_Output.ProtoReflect.Descriptor instead.
 func (*Tasks_StroppyTestSuite_Output) Descriptor() ([]byte, []int) {
-	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 2, 1}
+	return file_hatchet_tasks_proto_rawDescGZIP(), []int{0, 4, 1}
 }
 
 func (x *Tasks_StroppyTestSuite_Output) GetResults() *TestSuiteResult {
@@ -440,18 +738,40 @@ var File_hatchet_tasks_proto protoreflect.FileDescriptor
 
 const file_hatchet_tasks_proto_rawDesc = "" +
 	"\n" +
-	"\x13hatchet/tasks.proto\x12\ahatchet\x1a\x1bcrossplane/deployment.proto\x1a\x17database/database.proto\x1a\x12stroppy/test.proto\x1a\x17validate/validate.proto\"\xe0\x03\n" +
+	"\x13hatchet/tasks.proto\x12\ahatchet\x1a\x1bcrossplane/deployment.proto\x1a\x17database/database.proto\x1a\x12stroppy/test.proto\x1a\x17validate/validate.proto\"\xae\b\n" +
 	"\x05Tasks\x1a\xa7\x01\n" +
 	"\tProvision\x1aN\n" +
 	"\x05Input\x12E\n" +
 	"\arequest\x18\x01 \x01(\v2!.crossplane.DeploymentSet.RequestB\b\xfaB\x05\x8a\x01\x02\x10\x01R\arequest\x1aJ\n" +
 	"\x06Output\x12@\n" +
-	"\x0edeployment_set\x18\x01 \x01(\v2\x19.crossplane.DeploymentSetR\rdeploymentSet\x1a\x92\x01\n" +
-	"\rSetupDatabase\x1aA\n" +
-	"\x05Input\x128\n" +
-	"\bdatabase\x18\x01 \x01(\v2\x12.database.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x1a>\n" +
+	"\x0edeployment_set\x18\x01 \x01(\v2\x19.crossplane.DeploymentSetR\rdeploymentSet\x1a\xb2\x01\n" +
+	"\rSetupDatabase\x1aa\n" +
+	"\x05Input\x12\x1e\n" +
+	"\x06run_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05runId\x128\n" +
+	"\bdatabase\x18\x02 \x01(\v2\x12.database.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x1a>\n" +
 	"\x06Output\x124\n" +
-	"\x11connection_string\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x10connectionString\x1a\x97\x01\n" +
+	"\x11connection_string\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x10connectionString\x1a\xf4\x01\n" +
+	"\fSetupStroppy\x1at\n" +
+	"\x05Input\x12\x1e\n" +
+	"\x06run_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05runId\x12'\n" +
+	"\x0fstroppy_version\x18\x02 \x01(\tR\x0estroppyVersion\x12\"\n" +
+	"\bbin_path\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\abinPath\x1an\n" +
+	"\x06Output\x12@\n" +
+	"\n" +
+	"deployment\x18\x01 \x01(\v2\x16.crossplane.DeploymentB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
+	"deployment\x12\"\n" +
+	"\bbin_path\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\abinPath\x1a\xb4\x02\n" +
+	"\x0eRunStroppyTest\x1a\xe0\x01\n" +
+	"\x05Input\x12\x1e\n" +
+	"\x06run_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05runId\x12\"\n" +
+	"\bbin_path\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\abinPath\x12T\n" +
+	"\vstroppy_env\x18\x03 \x03(\v23.hatchet.Tasks.RunStroppyTest.Input.StroppyEnvEntryR\n" +
+	"stroppyEnv\x1a=\n" +
+	"\x0fStroppyEnvEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a?\n" +
+	"\x06Output\x125\n" +
+	"\x06result\x18\x01 \x01(\v2\x13.stroppy.TestResultB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06result\x1a\x97\x01\n" +
 	"\x10StroppyTestSuite\x1a;\n" +
 	"\x05Input\x122\n" +
 	"\x05suite\x18\x01 \x01(\v2\x12.stroppy.TestSuiteB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05suite\x1aF\n" +
@@ -470,35 +790,47 @@ func file_hatchet_tasks_proto_rawDescGZIP() []byte {
 	return file_hatchet_tasks_proto_rawDescData
 }
 
-var file_hatchet_tasks_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_hatchet_tasks_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_hatchet_tasks_proto_goTypes = []any{
 	(*Tasks)(nil),                            // 0: hatchet.Tasks
 	(*Tasks_Provision)(nil),                  // 1: hatchet.Tasks.Provision
 	(*Tasks_SetupDatabase)(nil),              // 2: hatchet.Tasks.SetupDatabase
-	(*Tasks_StroppyTestSuite)(nil),           // 3: hatchet.Tasks.StroppyTestSuite
-	(*Tasks_Provision_Input)(nil),            // 4: hatchet.Tasks.Provision.Input
-	(*Tasks_Provision_Output)(nil),           // 5: hatchet.Tasks.Provision.Output
-	(*Tasks_SetupDatabase_Input)(nil),        // 6: hatchet.Tasks.SetupDatabase.Input
-	(*Tasks_SetupDatabase_Output)(nil),       // 7: hatchet.Tasks.SetupDatabase.Output
-	(*Tasks_StroppyTestSuite_Input)(nil),     // 8: hatchet.Tasks.StroppyTestSuite.Input
-	(*Tasks_StroppyTestSuite_Output)(nil),    // 9: hatchet.Tasks.StroppyTestSuite.Output
-	(*crossplane.DeploymentSet_Request)(nil), // 10: crossplane.DeploymentSet.Request
-	(*crossplane.DeploymentSet)(nil),         // 11: crossplane.DeploymentSet
-	(*Database)(nil),                         // 12: database.Database
-	(*TestSuite)(nil),                        // 13: stroppy.TestSuite
-	(*TestSuiteResult)(nil),                  // 14: stroppy.TestSuiteResult
+	(*Tasks_SetupStroppy)(nil),               // 3: hatchet.Tasks.SetupStroppy
+	(*Tasks_RunStroppyTest)(nil),             // 4: hatchet.Tasks.RunStroppyTest
+	(*Tasks_StroppyTestSuite)(nil),           // 5: hatchet.Tasks.StroppyTestSuite
+	(*Tasks_Provision_Input)(nil),            // 6: hatchet.Tasks.Provision.Input
+	(*Tasks_Provision_Output)(nil),           // 7: hatchet.Tasks.Provision.Output
+	(*Tasks_SetupDatabase_Input)(nil),        // 8: hatchet.Tasks.SetupDatabase.Input
+	(*Tasks_SetupDatabase_Output)(nil),       // 9: hatchet.Tasks.SetupDatabase.Output
+	(*Tasks_SetupStroppy_Input)(nil),         // 10: hatchet.Tasks.SetupStroppy.Input
+	(*Tasks_SetupStroppy_Output)(nil),        // 11: hatchet.Tasks.SetupStroppy.Output
+	(*Tasks_RunStroppyTest_Input)(nil),       // 12: hatchet.Tasks.RunStroppyTest.Input
+	(*Tasks_RunStroppyTest_Output)(nil),      // 13: hatchet.Tasks.RunStroppyTest.Output
+	nil,                                      // 14: hatchet.Tasks.RunStroppyTest.Input.StroppyEnvEntry
+	(*Tasks_StroppyTestSuite_Input)(nil),     // 15: hatchet.Tasks.StroppyTestSuite.Input
+	(*Tasks_StroppyTestSuite_Output)(nil),    // 16: hatchet.Tasks.StroppyTestSuite.Output
+	(*crossplane.DeploymentSet_Request)(nil), // 17: crossplane.DeploymentSet.Request
+	(*crossplane.DeploymentSet)(nil),         // 18: crossplane.DeploymentSet
+	(*Database)(nil),                         // 19: database.Database
+	(*crossplane.Deployment)(nil),            // 20: crossplane.Deployment
+	(*TestResult)(nil),                       // 21: stroppy.TestResult
+	(*TestSuite)(nil),                        // 22: stroppy.TestSuite
+	(*TestSuiteResult)(nil),                  // 23: stroppy.TestSuiteResult
 }
 var file_hatchet_tasks_proto_depIdxs = []int32{
-	10, // 0: hatchet.Tasks.Provision.Input.request:type_name -> crossplane.DeploymentSet.Request
-	11, // 1: hatchet.Tasks.Provision.Output.deployment_set:type_name -> crossplane.DeploymentSet
-	12, // 2: hatchet.Tasks.SetupDatabase.Input.database:type_name -> database.Database
-	13, // 3: hatchet.Tasks.StroppyTestSuite.Input.suite:type_name -> stroppy.TestSuite
-	14, // 4: hatchet.Tasks.StroppyTestSuite.Output.results:type_name -> stroppy.TestSuiteResult
-	5,  // [5:5] is the sub-list for method output_type
-	5,  // [5:5] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	17, // 0: hatchet.Tasks.Provision.Input.request:type_name -> crossplane.DeploymentSet.Request
+	18, // 1: hatchet.Tasks.Provision.Output.deployment_set:type_name -> crossplane.DeploymentSet
+	19, // 2: hatchet.Tasks.SetupDatabase.Input.database:type_name -> database.Database
+	20, // 3: hatchet.Tasks.SetupStroppy.Output.deployment:type_name -> crossplane.Deployment
+	14, // 4: hatchet.Tasks.RunStroppyTest.Input.stroppy_env:type_name -> hatchet.Tasks.RunStroppyTest.Input.StroppyEnvEntry
+	21, // 5: hatchet.Tasks.RunStroppyTest.Output.result:type_name -> stroppy.TestResult
+	22, // 6: hatchet.Tasks.StroppyTestSuite.Input.suite:type_name -> stroppy.TestSuite
+	23, // 7: hatchet.Tasks.StroppyTestSuite.Output.results:type_name -> stroppy.TestSuiteResult
+	8,  // [8:8] is the sub-list for method output_type
+	8,  // [8:8] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_hatchet_tasks_proto_init() }
@@ -514,7 +846,7 @@ func file_hatchet_tasks_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_hatchet_tasks_proto_rawDesc), len(file_hatchet_tasks_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
