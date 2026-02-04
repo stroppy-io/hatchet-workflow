@@ -31,6 +31,7 @@ message Tasks {
         message Output {
             // Connection string to deployed database
             string connection_string = 1 [(validate.rules).string.min_len = 1];
+            crossplane.DeploymentSet deployment = 2 [(validate.rules).message.required = true];
         }
     }
 
@@ -42,6 +43,10 @@ message Tasks {
             string run_id = 1 [(validate.rules).string.min_len = 1];
             string stroppy_version = 2;
             string bin_path = 3 [(validate.rules).string.min_len = 1];
+            /* Never empty if database_ref is Database
+               Needs to use same subnet policy with database_deployment_set from SetupDatabase
+            */
+            optional crossplane.DeploymentSet database_deployment_set = 4;
         }
         message Output {
             crossplane.Deployment deployment = 1 [(validate.rules).message.required = true];
@@ -57,6 +62,7 @@ message Tasks {
             string run_id = 1 [(validate.rules).string.min_len = 1];
             string bin_path = 2 [(validate.rules).string.min_len = 1];
             map<string, string> stroppy_env = 3;
+            string connection_string = 4 [(validate.rules).string.min_len = 1];
         }
         message Output {
             stroppy.TestResult result = 1 [(validate.rules).message.required = true];

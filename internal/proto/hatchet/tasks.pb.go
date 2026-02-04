@@ -388,7 +388,8 @@ func (x *Tasks_SetupDatabase_Input) GetDatabase() *Database {
 type Tasks_SetupDatabase_Output struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Connection string to deployed database
-	ConnectionString string `protobuf:"bytes,1,opt,name=connection_string,json=connectionString,proto3" json:"connection_string,omitempty"`
+	ConnectionString string                    `protobuf:"bytes,1,opt,name=connection_string,json=connectionString,proto3" json:"connection_string,omitempty"`
+	Deployment       *crossplane.DeploymentSet `protobuf:"bytes,2,opt,name=deployment,proto3" json:"deployment,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -430,13 +431,23 @@ func (x *Tasks_SetupDatabase_Output) GetConnectionString() string {
 	return ""
 }
 
+func (x *Tasks_SetupDatabase_Output) GetDeployment() *crossplane.DeploymentSet {
+	if x != nil {
+		return x.Deployment
+	}
+	return nil
+}
+
 type Tasks_SetupStroppy_Input struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	RunId          string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	StroppyVersion string                 `protobuf:"bytes,2,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
 	BinPath        string                 `protobuf:"bytes,3,opt,name=bin_path,json=binPath,proto3" json:"bin_path,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Never empty if database_ref is Database
+	// Needs to use same subnet policy with database_deployment_set from SetupDatabase
+	DatabaseDeploymentSet *crossplane.DeploymentSet `protobuf:"bytes,4,opt,name=database_deployment_set,json=databaseDeploymentSet,proto3,oneof" json:"database_deployment_set,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *Tasks_SetupStroppy_Input) Reset() {
@@ -488,6 +499,13 @@ func (x *Tasks_SetupStroppy_Input) GetBinPath() string {
 		return x.BinPath
 	}
 	return ""
+}
+
+func (x *Tasks_SetupStroppy_Input) GetDatabaseDeploymentSet() *crossplane.DeploymentSet {
+	if x != nil {
+		return x.DatabaseDeploymentSet
+	}
+	return nil
 }
 
 type Tasks_SetupStroppy_Output struct {
@@ -543,12 +561,13 @@ func (x *Tasks_SetupStroppy_Output) GetBinPath() string {
 }
 
 type Tasks_RunStroppyTest_Input struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RunId         string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	BinPath       string                 `protobuf:"bytes,2,opt,name=bin_path,json=binPath,proto3" json:"bin_path,omitempty"`
-	StroppyEnv    map[string]string      `protobuf:"bytes,3,rep,name=stroppy_env,json=stroppyEnv,proto3" json:"stroppy_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	RunId            string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	BinPath          string                 `protobuf:"bytes,2,opt,name=bin_path,json=binPath,proto3" json:"bin_path,omitempty"`
+	StroppyEnv       map[string]string      `protobuf:"bytes,3,rep,name=stroppy_env,json=stroppyEnv,proto3" json:"stroppy_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ConnectionString string                 `protobuf:"bytes,4,opt,name=connection_string,json=connectionString,proto3" json:"connection_string,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *Tasks_RunStroppyTest_Input) Reset() {
@@ -600,6 +619,13 @@ func (x *Tasks_RunStroppyTest_Input) GetStroppyEnv() map[string]string {
 		return x.StroppyEnv
 	}
 	return nil
+}
+
+func (x *Tasks_RunStroppyTest_Input) GetConnectionString() string {
+	if x != nil {
+		return x.ConnectionString
+	}
+	return ""
 }
 
 type Tasks_RunStroppyTest_Output struct {
@@ -738,35 +764,42 @@ var File_hatchet_tasks_proto protoreflect.FileDescriptor
 
 const file_hatchet_tasks_proto_rawDesc = "" +
 	"\n" +
-	"\x13hatchet/tasks.proto\x12\ahatchet\x1a\x1bcrossplane/deployment.proto\x1a\x17database/database.proto\x1a\x12stroppy/test.proto\x1a\x17validate/validate.proto\"\xae\b\n" +
+	"\x13hatchet/tasks.proto\x12\ahatchet\x1a\x1bcrossplane/deployment.proto\x1a\x17database/database.proto\x1a\x12stroppy/test.proto\x1a\x17validate/validate.proto\"\x9f\n" +
+	"\n" +
 	"\x05Tasks\x1a\xa7\x01\n" +
 	"\tProvision\x1aN\n" +
 	"\x05Input\x12E\n" +
 	"\arequest\x18\x01 \x01(\v2!.crossplane.DeploymentSet.RequestB\b\xfaB\x05\x8a\x01\x02\x10\x01R\arequest\x1aJ\n" +
 	"\x06Output\x12@\n" +
-	"\x0edeployment_set\x18\x01 \x01(\v2\x19.crossplane.DeploymentSetR\rdeploymentSet\x1a\xb2\x01\n" +
+	"\x0edeployment_set\x18\x01 \x01(\v2\x19.crossplane.DeploymentSetR\rdeploymentSet\x1a\xf8\x01\n" +
 	"\rSetupDatabase\x1aa\n" +
 	"\x05Input\x12\x1e\n" +
 	"\x06run_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05runId\x128\n" +
-	"\bdatabase\x18\x02 \x01(\v2\x12.database.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x1a>\n" +
+	"\bdatabase\x18\x02 \x01(\v2\x12.database.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x1a\x83\x01\n" +
 	"\x06Output\x124\n" +
-	"\x11connection_string\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x10connectionString\x1a\xf4\x01\n" +
-	"\fSetupStroppy\x1at\n" +
+	"\x11connection_string\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x10connectionString\x12C\n" +
+	"\n" +
+	"deployment\x18\x02 \x01(\v2\x19.crossplane.DeploymentSetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
+	"deployment\x1a\xe9\x02\n" +
+	"\fSetupStroppy\x1a\xe8\x01\n" +
 	"\x05Input\x12\x1e\n" +
 	"\x06run_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05runId\x12'\n" +
 	"\x0fstroppy_version\x18\x02 \x01(\tR\x0estroppyVersion\x12\"\n" +
-	"\bbin_path\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\abinPath\x1an\n" +
+	"\bbin_path\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\abinPath\x12V\n" +
+	"\x17database_deployment_set\x18\x04 \x01(\v2\x19.crossplane.DeploymentSetH\x00R\x15databaseDeploymentSet\x88\x01\x01B\x1a\n" +
+	"\x18_database_deployment_set\x1an\n" +
 	"\x06Output\x12@\n" +
 	"\n" +
 	"deployment\x18\x01 \x01(\v2\x16.crossplane.DeploymentB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
 	"deployment\x12\"\n" +
-	"\bbin_path\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\abinPath\x1a\xb4\x02\n" +
-	"\x0eRunStroppyTest\x1a\xe0\x01\n" +
+	"\bbin_path\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\abinPath\x1a\xea\x02\n" +
+	"\x0eRunStroppyTest\x1a\x96\x02\n" +
 	"\x05Input\x12\x1e\n" +
 	"\x06run_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05runId\x12\"\n" +
 	"\bbin_path\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\abinPath\x12T\n" +
 	"\vstroppy_env\x18\x03 \x03(\v23.hatchet.Tasks.RunStroppyTest.Input.StroppyEnvEntryR\n" +
-	"stroppyEnv\x1a=\n" +
+	"stroppyEnv\x124\n" +
+	"\x11connection_string\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x10connectionString\x1a=\n" +
 	"\x0fStroppyEnvEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a?\n" +
@@ -821,16 +854,18 @@ var file_hatchet_tasks_proto_depIdxs = []int32{
 	17, // 0: hatchet.Tasks.Provision.Input.request:type_name -> crossplane.DeploymentSet.Request
 	18, // 1: hatchet.Tasks.Provision.Output.deployment_set:type_name -> crossplane.DeploymentSet
 	19, // 2: hatchet.Tasks.SetupDatabase.Input.database:type_name -> database.Database
-	20, // 3: hatchet.Tasks.SetupStroppy.Output.deployment:type_name -> crossplane.Deployment
-	14, // 4: hatchet.Tasks.RunStroppyTest.Input.stroppy_env:type_name -> hatchet.Tasks.RunStroppyTest.Input.StroppyEnvEntry
-	21, // 5: hatchet.Tasks.RunStroppyTest.Output.result:type_name -> stroppy.TestResult
-	22, // 6: hatchet.Tasks.StroppyTestSuite.Input.suite:type_name -> stroppy.TestSuite
-	23, // 7: hatchet.Tasks.StroppyTestSuite.Output.results:type_name -> stroppy.TestSuiteResult
-	8,  // [8:8] is the sub-list for method output_type
-	8,  // [8:8] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	18, // 3: hatchet.Tasks.SetupDatabase.Output.deployment:type_name -> crossplane.DeploymentSet
+	18, // 4: hatchet.Tasks.SetupStroppy.Input.database_deployment_set:type_name -> crossplane.DeploymentSet
+	20, // 5: hatchet.Tasks.SetupStroppy.Output.deployment:type_name -> crossplane.Deployment
+	14, // 6: hatchet.Tasks.RunStroppyTest.Input.stroppy_env:type_name -> hatchet.Tasks.RunStroppyTest.Input.StroppyEnvEntry
+	21, // 7: hatchet.Tasks.RunStroppyTest.Output.result:type_name -> stroppy.TestResult
+	22, // 8: hatchet.Tasks.StroppyTestSuite.Input.suite:type_name -> stroppy.TestSuite
+	23, // 9: hatchet.Tasks.StroppyTestSuite.Output.results:type_name -> stroppy.TestSuiteResult
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_hatchet_tasks_proto_init() }
@@ -840,6 +875,7 @@ func file_hatchet_tasks_proto_init() {
 	}
 	file_database_database_proto_init()
 	file_stroppy_test_proto_init()
+	file_hatchet_tasks_proto_msgTypes[10].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

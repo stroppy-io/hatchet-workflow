@@ -55,3 +55,8 @@ enum CrossplaneDeletionPolicy {
     ORPHAN = 2;
 }
 
+message Network {
+    string id = 1 [(validate.rules).string.min_len = 1];
+    string name = 2 [(validate.rules).string.min_len = 1];
+    CidrWithIps cidr_with_ips = 3 [(validate.rules).message.required = true];
+}

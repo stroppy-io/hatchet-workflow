@@ -1100,6 +1100,46 @@ func (m *Tasks_SetupDatabase_Output) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if m.GetDeployment() == nil {
+		err := Tasks_SetupDatabase_OutputValidationError{
+			field:  "Deployment",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetDeployment()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Tasks_SetupDatabase_OutputValidationError{
+					field:  "Deployment",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Tasks_SetupDatabase_OutputValidationError{
+					field:  "Deployment",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeployment()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Tasks_SetupDatabase_OutputValidationError{
+				field:  "Deployment",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return Tasks_SetupDatabase_OutputMultiError(errors)
 	}
@@ -1224,6 +1264,39 @@ func (m *Tasks_SetupStroppy_Input) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if m.DatabaseDeploymentSet != nil {
+
+		if all {
+			switch v := interface{}(m.GetDatabaseDeploymentSet()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Tasks_SetupStroppy_InputValidationError{
+						field:  "DatabaseDeploymentSet",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Tasks_SetupStroppy_InputValidationError{
+						field:  "DatabaseDeploymentSet",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetDatabaseDeploymentSet()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Tasks_SetupStroppy_InputValidationError{
+					field:  "DatabaseDeploymentSet",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
 	}
 
 	if len(errors) > 0 {
@@ -1504,6 +1577,17 @@ func (m *Tasks_RunStroppyTest_Input) validate(all bool) error {
 	}
 
 	// no validation rules for StroppyEnv
+
+	if utf8.RuneCountInString(m.GetConnectionString()) < 1 {
+		err := Tasks_RunStroppyTest_InputValidationError{
+			field:  "ConnectionString",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return Tasks_RunStroppyTest_InputMultiError(errors)
