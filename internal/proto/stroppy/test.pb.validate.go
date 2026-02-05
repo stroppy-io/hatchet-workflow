@@ -79,16 +79,7 @@ func (m *StroppyCli) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetConnectionString()) < 1 {
-		err := StroppyCliValidationError{
-			field:  "ConnectionString",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for ConnectionString
 
 	// no validation rules for StroppyEnv
 

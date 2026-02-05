@@ -424,15 +424,15 @@ var File_stroppy_test_proto protoreflect.FileDescriptor
 
 const file_stroppy_test_proto_rawDesc = "" +
 	"\n" +
-	"\x12stroppy/test.proto\x12\astroppy\x1a\x1bcrossplane/deployment.proto\x1a\x17database/database.proto\x1a\x17validate/validate.proto\"\xc9\x03\n" +
+	"\x12stroppy/test.proto\x12\astroppy\x1a\x1bcrossplane/deployment.proto\x1a\x17database/database.proto\x1a\x17validate/validate.proto\"\xc0\x03\n" +
 	"\n" +
 	"StroppyCli\x12!\n" +
 	"\aversion\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aversion\x12$\n" +
 	"\vbinary_path\x18\x02 \x01(\tH\x00R\n" +
 	"binaryPath\x88\x01\x01\x12\x1d\n" +
 	"\aworkdir\x18\x03 \x01(\tH\x01R\aworkdir\x88\x01\x01\x12B\n" +
-	"\bworkload\x18\x04 \x01(\x0e2\x1c.stroppy.StroppyCli.WorkloadB\b\xfaB\x05\x82\x01\x02\x10\x01R\bworkload\x124\n" +
-	"\x11connection_string\x18\x05 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x10connectionString\x12D\n" +
+	"\bworkload\x18\x04 \x01(\x0e2\x1c.stroppy.StroppyCli.WorkloadB\b\xfaB\x05\x82\x01\x02\x10\x01R\bworkload\x12+\n" +
+	"\x11connection_string\x18\x05 \x01(\tR\x10connectionString\x12D\n" +
 	"\vstroppy_env\x18\x06 \x03(\v2#.stroppy.StroppyCli.StroppyEnvEntryR\n" +
 	"stroppyEnv\x1a=\n" +
 	"\x0fStroppyEnvEntry\x12\x10\n" +

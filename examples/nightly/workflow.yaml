@@ -1,37 +1,37 @@
 hatchet_url: "http://localhost:8080"
 supported_cloud: SUPPORTED_CLOUD_YANDEX
 suite:
-  - name: "nightly"
-    description: "Nightly test suite"
-    stroppy_cli:
-      #      binary_path: "/stroppy/stroppy"
-      version: "v2.0.0"
-      workload: WORKLOAD_TPCC
-      stroppy_env:
-        DURATION: "60s"
-        SCALE_FACTOR: "1"
-        #"SCALE_FACTOR_TPCC": "1", // 16mb
-        #"SCALE_FACTOR_TPCB": "1", // 68mb
-        K6_OTEL_EXPORTER_TYPE: "http"
-        K6_OTEL_SERVICE_NAME: "stroppy"
-        K6_OTEL_SERVICE_VERSION: "v2.0.0"
-        K6_OTEL_HTTP_EXPORTER_INSECURE: "false"
-        K6_OTEL_HTTP_EXPORTER_ENDPOINT: ""
-        K6_OTEL_HTTP_EXPORTER_URL_PATH: ""
-        K6_OTEL_HEADERS: ""
-    stroppy_hardware:
-      cpu: "2"
-      memory: "2"
-      disk: "10"
-    database:
-      standalone:
-        instance:
+  tests:
+    - name: "nightly"
+      description: "Nightly test suite"
+      stroppy_cli:
+        #      binary_path: "/stroppy/stroppy"
+        version: "v2.0.0"
+        workload: TPCC
+        stroppy_env:
+          DURATION: "60s"
+          SCALE_FACTOR: "1"
+          #"SCALE_FACTOR_TPCC": "1", // 16mb
+          #"SCALE_FACTOR_TPCB": "1", // 68mb
+          K6_OTEL_EXPORTER_TYPE: "http"
+          K6_OTEL_SERVICE_NAME: "stroppy"
+          K6_OTEL_SERVICE_VERSION: "v2.0.0"
+          K6_OTEL_HTTP_EXPORTER_INSECURE: "false"
+          K6_OTEL_HTTP_EXPORTER_ENDPOINT: ""
+          K6_OTEL_HTTP_EXPORTER_URL_PATH: ""
+          K6_OTEL_HEADERS: ""
+      stroppy_hardware:
+        cores: 2
+        memory: 2
+        disk: 10
+      database:
+        standalone:
           hardware:
-            cpu: "2"
-            memory: "2"
-            disk: "10"
+            cores: 2
+            memory: 2
+            disk: 10
           postgres:
-            version: "Postgres_Instance_VERSION_17"
+            version: "VERSION_17"
             storage_backend: "STORAGE_TYPE_POSTGRES"
             password: "postgres"
             username: "postgres"

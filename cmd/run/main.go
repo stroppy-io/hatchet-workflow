@@ -25,12 +25,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to read file: %v", err)
 	}
-	var test *hatchet.Workflows_StroppyTestSuite_Input
-	err = protoyaml.Unmarshal(fileContent, test)
+	var test hatchet.Workflows_StroppyTestSuite_Input
+	err = protoyaml.Unmarshal(fileContent, &test)
 	if err != nil {
 		log.Fatalf("Failed to unmarshal file: %v", err)
 	}
-
+	err = test.Validate()
+	if err != nil {
+		log.Fatalf("Failed to validate %s input: %v", stroppy.TestSuiteWorkflowName, err)
+	}
 	token := os.Getenv("HATCHET_CLIENT_TOKEN")
 	if token == "" {
 		log.Fatalf("HATCHET_CLIENT_TOKEN is not set")
@@ -45,7 +48,7 @@ func main() {
 	result, err := c.Run(
 		interruptCtx,
 		stroppy.TestSuiteWorkflowName,
-		test,
+		&test,
 	)
 	if err != nil {
 		log.Fatalf("Failed to run workflow: %v", err)

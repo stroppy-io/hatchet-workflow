@@ -2,6 +2,12 @@ VERSION := $(shell v=$$(git describe --tags 2>/dev/null | sed -e 's/^v//g' | awk
 LAST_DEV_NUM := $(shell git tag -l "$(VERSION)-dev*" | sed 's/.*-dev//' | grep -E '^[0-9]+$$' | sort -rn | head -n1)
 INCREMENT := $(shell echo $$(($(if $(LAST_DEV_NUM),$(LAST_DEV_NUM),0) + 1)))
 DEV_VERSION := $(VERSION)-dev$(INCREMENT)
+
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
+
 .PHONY: up-infra
 up-infra:
 	docker compose -f docker-compose.infra.yaml up -d
@@ -40,6 +46,10 @@ build:
 build-all:
 	mkdir -p bin
 	go build -o ./bin/ ./cmd/...
+
+.PHONY: run-test
+run-test: build-all
+	./bin/run --file ./examples/test.yaml
 
 .PHONY: release-dev-edge
 release-dev-edge:
