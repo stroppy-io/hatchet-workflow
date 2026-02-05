@@ -22,12 +22,8 @@ const (
 
 func TestSuiteWorkflow(
 	c *hatchetLib.Client,
-) *hatchetLib.Workflow {
-	workflow := c.NewWorkflow(
-		TestSuiteWorkflowName,
-		hatchetLib.WithWorkflowDescription("Stroppy Test Suite Workflow"),
-	)
-	workflow.NewTask(
+) *hatchetLib.StandaloneTask {
+	return c.NewStandaloneTask(
 		TestSuiteTaskName,
 		hatchet_ext.WTask(func(
 			ctx hatchetLib.Context,
@@ -54,7 +50,7 @@ func TestSuiteWorkflow(
 					},
 				}
 			}
-			runRefs, err := workflow.RunMany(ctx, inputs)
+			runRefs, err := c.RunMany(ctx, TestRunWorkflowName, inputs)
 			if err != nil {
 				return nil, err
 			}
@@ -96,6 +92,6 @@ func TestSuiteWorkflow(
 				},
 			}, nil
 		}),
+		hatchetLib.WithWorkflowDescription("Stroppy Test Suite Workflow"),
 	)
-	return workflow
 }

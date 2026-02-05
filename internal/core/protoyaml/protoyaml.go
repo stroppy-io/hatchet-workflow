@@ -42,3 +42,11 @@ func UnmarshalStrict(b []byte, message proto.Message) error {
 
 	return strict.Unmarshal(json, message)
 }
+
+func MarshalPretty(m proto.Message) ([]byte, error) {
+	json, err := protojson.MarshalOptions{Indent: "  "}.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	return yaml.JSONToYAML(json)
+}

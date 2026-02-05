@@ -62,8 +62,8 @@ func main() {
 	}
 
 	interruptCtx, cancel := cmdutils.NewInterruptContext()
-
 	defer cancel()
+
 	log.Printf("Starting edge worker %s with ID %s", build.ServiceName, build.GlobalInstanceId)
 	err = worker.StartBlocking(interruptCtx)
 	if err != nil {

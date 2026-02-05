@@ -5,16 +5,6 @@ REPO="stroppy-io/hatchet-workflow"
 BINARY_NAME="edge-worker"
 INSTALL_DIR="/usr/local/bin"
 
-# Determine the OS and Architecture
-OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-ARCH=$(uname -m)
-
-if [ "$ARCH" == "x86_64" ]; then
-  ARCH="amd64"
-elif [ "$ARCH" == "aarch64" ]; then
-  ARCH="arm64"
-fi
-
 # Get the latest release tag
 LATEST_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 
@@ -26,7 +16,7 @@ fi
 echo "Latest release: $LATEST_TAG"
 
 # Construct the download URL
-DOWNLOAD_URL="https://github.com/$REPO/releases/download/$LATEST_TAG/${BINARY_NAME}_${OS}_${ARCH}"
+DOWNLOAD_URL="https://github.com/$REPO/releases/download/$LATEST_TAG/${BINARY_NAME}"
 
 echo "Downloading $BINARY_NAME from $DOWNLOAD_URL..."
 
@@ -105,7 +95,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=$INSTALL_DIR/$BINARY_NAME start
+ExecStart=$INSTALL_DIR/$BINARY_NAME
 Restart=always
 RestartSec=5
 EnvironmentFile=$ENV_FILE

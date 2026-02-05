@@ -36,6 +36,10 @@ build:
 	mkdir -p bin
 	go build -o ./bin/ ./cmd/...
 
+.PHONY: build-all
+build-all:
+	mkdir -p bin
+	go build -o ./bin/ ./cmd/...
 
 .PHONY: release-dev-edge
 release-dev-edge:

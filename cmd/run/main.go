@@ -1,48 +1,62 @@
 package main
 
 import (
-	"context"
+	"flag"
 	"fmt"
 	"log"
+	"os"
 
-	hatchetLib "github.com/stroppy-io/hatchet-workflow/internal/core/hatchet-ext"
-	"github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
+	v0Client "github.com/hatchet-dev/hatchet/pkg/client"
+	"github.com/hatchet-dev/hatchet/pkg/cmdutils"
+	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/logger"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/protoyaml"
+	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/stroppy"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet"
 )
 
 func main() {
-	c, err := hatchetLib.HatchetClient()
+	filePath := flag.String("file", "", "path to file")
+	flag.Parse()
+	if *filePath == "" {
+		log.Fatal("flag -file is required")
+	}
+	fileContent, err := os.ReadFile(*filePath)
+	if err != nil {
+		log.Fatalf("Failed to read file: %v", err)
+	}
+	var test *hatchet.Workflows_StroppyTestSuite_Input
+	err = protoyaml.Unmarshal(fileContent, test)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal file: %v", err)
+	}
+
+	token := os.Getenv("HATCHET_CLIENT_TOKEN")
+	if token == "" {
+		log.Fatalf("HATCHET_CLIENT_TOKEN is not set")
+	}
+	logger.NewFromEnv()
+	c, err := hatchetLib.NewClient(v0Client.WithLogger(logger.Zerolog()))
 	if err != nil {
 		log.Fatalf("Failed to create Hatchet client: %v", err)
 	}
-
+	interruptCtx, cancel := cmdutils.NewInterruptContext()
+	defer cancel()
 	result, err := c.Run(
-		context.Background(),
-		"nightly-cloud-stroppy",
-		&hatchet.NightlyCloudStroppyRequest{
-			Cloud: crossplane.SupportedCloud_SUPPORTED_CLOUD_YANDEX,
-			PostgresVm: &crossplane.MachineInfo{
-				Cores:       2,
-				Memory:      2,
-				Disk:        10,
-				BaseImageId: "fd82pkek8uu0ejjkh4vn",
-			},
-			PostgresVersion:  "17",
-			PostgresSettings: map[string]string{},
-			StroppyVm: &crossplane.MachineInfo{
-				Cores:       2,
-				Memory:      2,
-				Disk:        10,
-				BaseImageId: "fd82pkek8uu0ejjkh4vn",
-			},
-			StroppyVersion:      "v2.0.0",
-			StroppyWorkloadName: "tpcc",
-			StroppyEnv:          map[string]string{},
-		},
+		interruptCtx,
+		stroppy.TestSuiteWorkflowName,
+		test,
 	)
 	if err != nil {
-		log.Fatalf("Failed to run Hatchet workflow: %v", err)
+		log.Fatalf("Failed to run workflow: %v", err)
 	}
-
-	fmt.Println(result)
+	var output *hatchet.Workflows_StroppyTestSuite_Output
+	if err := result.TaskOutput(stroppy.TestSuiteTaskName).Into(output); err != nil {
+		log.Fatalf("Failed to get %s output: %v", stroppy.TestSuiteTaskName, err)
+	}
+	resultYaml, err := protoyaml.MarshalPretty(output)
+	if err != nil {
+		log.Fatalf("Failed to marshal result: %v", err)
+	}
+	fmt.Println(string(resultYaml))
 }

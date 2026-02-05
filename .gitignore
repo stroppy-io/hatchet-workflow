@@ -3,3 +3,4 @@ tools/proto/easyp_vendor
 deployments/.kubectl.config.yaml
 .env
 bin
+examples/test.yaml
