@@ -14,7 +14,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create Hatchet client: %v", err)
 	}
-	provisionWorkflow, err := provisioning.ProvisionWorkflow(c)
+	provisionWorkflow, err := provision.ProvisionWorkflow(c)
 	if err != nil {
 		log.Fatalf("Failed to create provision workflow: %v", err)
 	}

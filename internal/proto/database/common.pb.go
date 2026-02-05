@@ -254,8 +254,8 @@ func (x *Placement_Replica) GetReplicaIndex() uint32 {
 }
 
 type Placement_DedicatedVm struct {
-	state         protoimpl.MessageState  `protogen:"open.v1"`
-	VmParams      *crossplane.MachineInfo `protobuf:"bytes,1,opt,name=vm_params,json=vmParams,proto3" json:"vm_params,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Hardware      *crossplane.Hardware   `protobuf:"bytes,1,opt,name=hardware,proto3" json:"hardware,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -290,9 +290,9 @@ func (*Placement_DedicatedVm) Descriptor() ([]byte, []int) {
 	return file_database_common_proto_rawDescGZIP(), []int{0, 3}
 }
 
-func (x *Placement_DedicatedVm) GetVmParams() *crossplane.MachineInfo {
+func (x *Placement_DedicatedVm) GetHardware() *crossplane.Hardware {
 	if x != nil {
-		return x.VmParams
+		return x.Hardware
 	}
 	return nil
 }
@@ -301,7 +301,7 @@ var File_database_common_proto protoreflect.FileDescriptor
 
 const file_database_common_proto_rawDesc = "" +
 	"\n" +
-	"\x15database/common.proto\x12\bdatabase\x1a\x1bcrossplane/deployment.proto\x1a\x17validate/validate.proto\"\x9c\x03\n" +
+	"\x15database/common.proto\x12\bdatabase\x1a\x1bcrossplane/deployment.proto\x1a\x17validate/validate.proto\"\x98\x03\n" +
 	"\tPlacement\x124\n" +
 	"\x06master\x18\x01 \x01(\v2\x1a.database.Placement.MasterH\x00R\x06master\x12;\n" +
 	"\tall_nodes\x18\x02 \x01(\v2\x1c.database.Placement.AllNodesH\x00R\ballNodes\x127\n" +
@@ -311,9 +311,9 @@ const file_database_common_proto_rawDesc = "" +
 	"\n" +
 	"\bAllNodes\x1a.\n" +
 	"\aReplica\x12#\n" +
-	"\rreplica_index\x18\x01 \x01(\rR\freplicaIndex\x1aM\n" +
-	"\vDedicatedVm\x12>\n" +
-	"\tvm_params\x18\x01 \x01(\v2\x17.crossplane.MachineInfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bvmParamsB\r\n" +
+	"\rreplica_index\x18\x01 \x01(\rR\freplicaIndex\x1aI\n" +
+	"\vDedicatedVm\x12:\n" +
+	"\bhardware\x18\x01 \x01(\v2\x14.crossplane.HardwareB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bhardwareB\r\n" +
 	"\x06target\x12\x03\xf8B\x01B@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/databaseb\x06proto3"
 
 var (
@@ -330,19 +330,19 @@ func file_database_common_proto_rawDescGZIP() []byte {
 
 var file_database_common_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_database_common_proto_goTypes = []any{
-	(*Placement)(nil),              // 0: database.Placement
-	(*Placement_Master)(nil),       // 1: database.Placement.Master
-	(*Placement_AllNodes)(nil),     // 2: database.Placement.AllNodes
-	(*Placement_Replica)(nil),      // 3: database.Placement.Replica
-	(*Placement_DedicatedVm)(nil),  // 4: database.Placement.DedicatedVm
-	(*crossplane.MachineInfo)(nil), // 5: crossplane.MachineInfo
+	(*Placement)(nil),             // 0: database.Placement
+	(*Placement_Master)(nil),      // 1: database.Placement.Master
+	(*Placement_AllNodes)(nil),    // 2: database.Placement.AllNodes
+	(*Placement_Replica)(nil),     // 3: database.Placement.Replica
+	(*Placement_DedicatedVm)(nil), // 4: database.Placement.DedicatedVm
+	(*crossplane.Hardware)(nil),   // 5: crossplane.Hardware
 }
 var file_database_common_proto_depIdxs = []int32{
 	1, // 0: database.Placement.master:type_name -> database.Placement.Master
 	2, // 1: database.Placement.all_nodes:type_name -> database.Placement.AllNodes
 	3, // 2: database.Placement.replica:type_name -> database.Placement.Replica
 	4, // 3: database.Placement.dedicated:type_name -> database.Placement.DedicatedVm
-	5, // 4: database.Placement.DedicatedVm.vm_params:type_name -> crossplane.MachineInfo
+	5, // 4: database.Placement.DedicatedVm.hardware:type_name -> crossplane.Hardware
 	5, // [5:5] is the sub-list for method output_type
 	5, // [5:5] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name

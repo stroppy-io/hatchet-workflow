@@ -21,6 +21,12 @@ message ExtRef {
     string kind = 3 [(validate.rules).string.min_len = 1];
 }
 
+message Identifier {
+    string id = 1 [(validate.rules).string.min_len = 1];
+    string name = 2 [(validate.rules).string.min_len = 1];
+    SupportedCloud supported_cloud = 3 [(validate.rules).enum.defined_only = true];
+}
+
 message Base64Value {
     string value = 1 [(validate.rules).string.min_len = 1];
 }
@@ -53,10 +59,4 @@ enum CrossplaneDeletionPolicy {
     CROSSPLANE_DELETION_POLICY_UNSPECIFIED = 0;
     DELETE = 1;
     ORPHAN = 2;
-}
-
-message Network {
-    string id = 1 [(validate.rules).string.min_len = 1];
-    string name = 2 [(validate.rules).string.min_len = 1];
-    CidrWithIps cidr_with_ips = 3 [(validate.rules).message.required = true];
 }

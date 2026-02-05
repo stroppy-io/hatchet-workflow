@@ -2,6 +2,7 @@ package stroppy
 
 import (
 	"context"
+	"os"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/hatchet-dev/hatchet/pkg/client/rest"
@@ -30,8 +31,8 @@ func TestSuiteWorkflow(
 		TestSuiteTaskName,
 		hatchet_ext.WTask(func(
 			ctx hatchetLib.Context,
-			input *hatchet.Tasks_StroppyTestSuite_Input,
-		) (*hatchet.Tasks_StroppyTestSuite_Output, error) {
+			input *hatchet.Workflows_StroppyTestSuite_Input,
+		) (*hatchet.Workflows_StroppyTestSuite_Output, error) {
 			err := input.Validate()
 			if err != nil {
 				return nil, err
@@ -40,11 +41,16 @@ func TestSuiteWorkflow(
 			for i, test := range input.GetSuite().GetTests() {
 				inputs[i] = hatchetLib.RunManyOpt{
 					Opts: []hatchetLib.RunOptFunc{},
-					Input: &hatchet.Tasks_StroppyTest_Input{
-						HatchetServer:  input.GetHatchetServer(),
-						RunId:          ids.NewRunId().String(),
-						SupportedCloud: input.GetSupportedCloud(),
-						Test:           test,
+					Input: &hatchet.Workflows_StroppyTest_Input{
+						Common: &hatchet.Common{
+							RunId: ids.NewRunId().String(),
+							HatchetServer: &hatchet.HatchetServer{
+								Url:   input.GetHatchetUrl(),
+								Token: os.Getenv("HATCHET_CLIENT_TOKEN"),
+							},
+							SupportedCloud: input.GetSupportedCloud(),
+						},
+						Test: test,
 					},
 				}
 			}
@@ -84,7 +90,7 @@ func TestSuiteWorkflow(
 			for _, result := range results {
 				ret[result.RunId] = result
 			}
-			return &hatchet.Tasks_StroppyTestSuite_Output{
+			return &hatchet.Workflows_StroppyTestSuite_Output{
 				Results: &stroppy.TestSuiteResult{
 					Results: ret,
 				},

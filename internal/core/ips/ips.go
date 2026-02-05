@@ -335,3 +335,18 @@ func uint32ToIP(n uint32) net.IP {
 	binary.BigEndian.PutUint32(ip, n)
 	return ip
 }
+
+// IsIPInCIDR checks if the given IP address belongs to the specified CIDR range.
+func IsIPInCIDR(ipStr, cidrStr string) (bool, error) {
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return false, fmt.Errorf("invalid IP address: %s", ipStr)
+	}
+
+	_, ipNet, err := net.ParseCIDR(cidrStr)
+	if err != nil {
+		return false, fmt.Errorf("invalid CIDR: %w", err)
+	}
+
+	return ipNet.Contains(ip), nil
+}

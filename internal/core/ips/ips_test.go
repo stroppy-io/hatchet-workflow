@@ -717,3 +717,69 @@ func TestNextSubnetWithIPs(t *testing.T) {
 		})
 	}
 }
+
+func TestIsIPInCIDR(t *testing.T) {
+	tests := []struct {
+		name    string
+		ip      string
+		cidr    string
+		want    bool
+		wantErr bool
+	}{
+		{
+			name:    "IP in CIDR",
+			ip:      "192.168.1.5",
+			cidr:    "192.168.1.0/24",
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name:    "IP not in CIDR",
+			ip:      "192.168.2.5",
+			cidr:    "192.168.1.0/24",
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name:    "Invalid IP",
+			ip:      "invalid-ip",
+			cidr:    "192.168.1.0/24",
+			want:    false,
+			wantErr: true,
+		},
+		{
+			name:    "Invalid CIDR",
+			ip:      "192.168.1.5",
+			cidr:    "invalid-cidr",
+			want:    false,
+			wantErr: true,
+		},
+		{
+			name:    "IPv6 in CIDR",
+			ip:      "2001:db8::1",
+			cidr:    "2001:db8::/64",
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name:    "IPv6 not in CIDR",
+			ip:      "2001:db9::1",
+			cidr:    "2001:db8::/64",
+			want:    false,
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := IsIPInCIDR(tt.ip, tt.cidr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("IsIPInCIDR() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("IsIPInCIDR() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -29,8 +29,6 @@ type Database struct {
 	//	*Database_Standalone
 	//	*Database_Cluster
 	Topology      isDatabase_Topology `protobuf_oneof:"topology"`
-	Name          *string             `protobuf:"bytes,101,opt,name=name,proto3,oneof" json:"name,omitempty"`
-	Description   *string             `protobuf:"bytes,102,opt,name=description,proto3,oneof" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -90,30 +88,16 @@ func (x *Database) GetCluster() *Cluster {
 	return nil
 }
 
-func (x *Database) GetName() string {
-	if x != nil && x.Name != nil {
-		return *x.Name
-	}
-	return ""
-}
-
-func (x *Database) GetDescription() string {
-	if x != nil && x.Description != nil {
-		return *x.Description
-	}
-	return ""
-}
-
 type isDatabase_Topology interface {
 	isDatabase_Topology()
 }
 
 type Database_Standalone struct {
-	Standalone *Instance `protobuf:"bytes,2,opt,name=standalone,proto3,oneof"`
+	Standalone *Instance `protobuf:"bytes,1,opt,name=standalone,proto3,oneof"`
 }
 
 type Database_Cluster struct {
-	Cluster *Cluster `protobuf:"bytes,3,opt,name=cluster,proto3,oneof"`
+	Cluster *Cluster `protobuf:"bytes,2,opt,name=cluster,proto3,oneof"`
 }
 
 func (*Database_Standalone) isDatabase_Topology() {}
@@ -124,17 +108,13 @@ var File_database_database_proto protoreflect.FileDescriptor
 
 const file_database_database_proto_rawDesc = "" +
 	"\n" +
-	"\x17database/database.proto\x12\bdatabase\x1a\x16database/cluster.proto\x1a\x17database/instance.proto\x1a\x17validate/validate.proto\"\xd9\x01\n" +
+	"\x17database/database.proto\x12\bdatabase\x1a\x16database/cluster.proto\x1a\x17database/instance.proto\x1a\x17validate/validate.proto\"\x80\x01\n" +
 	"\bDatabase\x124\n" +
 	"\n" +
-	"standalone\x18\x02 \x01(\v2\x12.database.InstanceH\x00R\n" +
+	"standalone\x18\x01 \x01(\v2\x12.database.InstanceH\x00R\n" +
 	"standalone\x12-\n" +
-	"\acluster\x18\x03 \x01(\v2\x11.database.ClusterH\x00R\acluster\x12\x17\n" +
-	"\x04name\x18e \x01(\tH\x01R\x04name\x88\x01\x01\x12%\n" +
-	"\vdescription\x18f \x01(\tH\x02R\vdescription\x88\x01\x01B\x0f\n" +
-	"\btopology\x12\x03\xf8B\x01B\a\n" +
-	"\x05_nameB\x0e\n" +
-	"\f_descriptionB@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/databaseb\x06proto3"
+	"\acluster\x18\x02 \x01(\v2\x11.database.ClusterH\x00R\aclusterB\x0f\n" +
+	"\btopology\x12\x03\xf8B\x01B@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/databaseb\x06proto3"
 
 var (
 	file_database_database_proto_rawDescOnce sync.Once

@@ -40,7 +40,7 @@ func WTask[WI, O any](f Task[*WI, *O]) Task[WI, O] {
 
 type pTask[PO, I, O any] = func(ctx hatchet.Context, input I, parentOutput PO) (O, error)
 
-func Ptask[PO, WI, O any](parent create.NamedTask, f pTask[*PO, *WI, *O]) Task[WI, O] {
+func PTask[PO, WI, O any](parent create.NamedTask, f pTask[*PO, *WI, *O]) Task[WI, O] {
 	return func(ctx hatchet.Context, input WI) (out O, err error) {
 		var parentOutput PO
 		err = ctx.ParentOutput(parent, &parentOutput)

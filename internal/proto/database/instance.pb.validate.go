@@ -359,137 +359,6 @@ var _ interface {
 	ErrorName() string
 } = SidecarValidationError{}
 
-// Validate checks the field values on VmSpec with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *VmSpec) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on VmSpec with the rules defined in the
-// proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in VmSpecMultiError, or nil if none found.
-func (m *VmSpec) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *VmSpec) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if m.GetCpu() < 1 {
-		err := VmSpecValidationError{
-			field:  "Cpu",
-			reason: "value must be greater than or equal to 1",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if m.GetMemory() < 1 {
-		err := VmSpecValidationError{
-			field:  "Memory",
-			reason: "value must be greater than or equal to 1",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if m.GetDisk() < 1 {
-		err := VmSpecValidationError{
-			field:  "Disk",
-			reason: "value must be greater than or equal to 1",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return VmSpecMultiError(errors)
-	}
-
-	return nil
-}
-
-// VmSpecMultiError is an error wrapping multiple validation errors returned by
-// VmSpec.ValidateAll() if the designated constraints aren't met.
-type VmSpecMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m VmSpecMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m VmSpecMultiError) AllErrors() []error { return m }
-
-// VmSpecValidationError is the validation error returned by VmSpec.Validate if
-// the designated constraints aren't met.
-type VmSpecValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e VmSpecValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e VmSpecValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e VmSpecValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e VmSpecValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e VmSpecValidationError) ErrorName() string { return "VmSpecValidationError" }
-
-// Error satisfies the builtin error interface
-func (e VmSpecValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sVmSpec.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = VmSpecValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = VmSpecValidationError{}
-
 // Validate checks the field values on Instance with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -512,9 +381,9 @@ func (m *Instance) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetVmSpec() == nil {
+	if m.GetHardware() == nil {
 		err := InstanceValidationError{
-			field:  "VmSpec",
+			field:  "Hardware",
 			reason: "value is required",
 		}
 		if !all {
@@ -524,11 +393,11 @@ func (m *Instance) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetVmSpec()).(type) {
+		switch v := interface{}(m.GetHardware()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, InstanceValidationError{
-					field:  "VmSpec",
+					field:  "Hardware",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -536,65 +405,20 @@ func (m *Instance) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, InstanceValidationError{
-					field:  "VmSpec",
+					field:  "Hardware",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetVmSpec()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetHardware()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return InstanceValidationError{
-				field:  "VmSpec",
+				field:  "Hardware",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
 		}
-	}
-
-	for idx, item := range m.GetSidecars() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, InstanceValidationError{
-						field:  fmt.Sprintf("Sidecars[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, InstanceValidationError{
-						field:  fmt.Sprintf("Sidecars[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return InstanceValidationError{
-					field:  fmt.Sprintf("Sidecars[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if utf8.RuneCountInString(m.GetVersion()) < 1 {
-		err := InstanceValidationError{
-			field:  "Version",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
 	}
 
 	oneofSettingsPresent := false

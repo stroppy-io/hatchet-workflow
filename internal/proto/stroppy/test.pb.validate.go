@@ -73,12 +73,23 @@ func (m *Test) validate(all bool) error {
 
 	// no validation rules for StroppyEnv
 
+	if m.GetStroppyHardware() == nil {
+		err := TestValidationError{
+			field:  "StroppyHardware",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if all {
-		switch v := interface{}(m.GetMachineInfo()).(type) {
+		switch v := interface{}(m.GetStroppyHardware()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, TestValidationError{
-					field:  "MachineInfo",
+					field:  "StroppyHardware",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -86,16 +97,16 @@ func (m *Test) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, TestValidationError{
-					field:  "MachineInfo",
+					field:  "StroppyHardware",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetMachineInfo()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetStroppyHardware()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return TestValidationError{
-				field:  "MachineInfo",
+				field:  "StroppyHardware",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

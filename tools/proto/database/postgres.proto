@@ -17,6 +17,11 @@ message Postgres {
             bool enabled = 1;
             uint32 port = 2;  // default 9127
         }
+        oneof sidecar {
+            option (validate.required) = true;
+            PostgresExporter postgres_exporter = 2;
+            PgbouncerExporter pgbouncer_exporter = 3;
+        }
     }
     message Infra {
         message Pgbouncer {
@@ -72,5 +77,9 @@ message Postgres {
         StorageBackend storage_backend = 2 [(validate.rules).enum.defined_only = true];
         map<string, string> postgresql_conf = 3;
         map<string, string> orioledb_conf = 4;
+    }
+    message Instance {
+        string version = 1 [(validate.rules).string.min_len = 1];
+        InstanceSettings settings = 2 [(validate.rules).message.required = true];
     }
 }

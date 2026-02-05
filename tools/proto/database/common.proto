@@ -14,7 +14,7 @@ message Placement {
         uint32 replica_index = 1;  // 0-based индекс реплики
     }
     message DedicatedVm {
-        crossplane.MachineInfo vm_params = 1 [(validate.rules).message.required = true];
+        crossplane.Hardware hardware = 1 [(validate.rules).message.required = true];
     }
     oneof target {
         option (validate.required) = true;

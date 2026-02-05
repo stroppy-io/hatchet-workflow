@@ -1,36 +1,37 @@
 package ids
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/oklog/ulid/v2"
 )
 
-type OIDC = string
-
 type Ulid struct {
 	Id string
 }
 
-func (u *Ulid) GetId() string {
-	if u == nil {
-		return ""
-	}
+type LowerUlid Ulid
+
+func (u LowerUlid) String() string {
+	return strings.ToLower(u.Id)
+}
+
+func (u Ulid) String() string {
 	return u.Id
 }
 
-func NewUlid() *Ulid {
-	return &Ulid{
+func (u Ulid) Lower() LowerUlid {
+	return LowerUlid(u)
+}
+
+func NewUlid() Ulid {
+	return Ulid{
 		Id: ulid.Make().String(),
 	}
 }
 
-func UlidToStr(ulid *Ulid) string {
-	if ulid == nil {
-		return ""
-	}
-	return ulid.GetId()
+func UlidToStr(ulid Ulid) string {
+	return ulid.String()
 }
 
 func UlidFromString(str string) *Ulid {
@@ -39,45 +40,31 @@ func UlidFromString(str string) *Ulid {
 	}
 }
 
-func UlidToStrPtr(ulid *Ulid) *string {
-	if ulid == nil {
-		return nil
-	}
-	val := ulid.GetId()
-	return &val
+func Lower(str string) string {
+	return strings.ToLower(str)
 }
 
-func UlidFromStringPtr(str *string) *Ulid {
-	if str == nil {
-		return nil
+type RunId Ulid
+
+func ParseRunId(str string) RunId {
+	return RunId{
+		Id: Lower(str),
 	}
-	return UlidFromString(*str)
 }
-
-func ExtractFromMediaRoomID(roomId string) (*Ulid, *Ulid, error) {
-	parts := strings.Split(roomId, "-")
-	if len(parts) != 2 {
-		return nil, nil, fmt.Errorf("invalid room id: %s", roomId)
-	}
-	return UlidFromString(parts[0]), UlidFromString(parts[1]), nil
-}
-
-type RunId string
-
 func NewRunId() RunId {
-	return RunId(strings.ToLower(ulid.Make().String()))
+	return RunId(NewUlid().Lower())
 }
 
 func (id RunId) String() string {
-	return string(id)
+	return id.Id
 }
 
-type HatchetRunId string
-
-func NewHatchetRunId() HatchetRunId {
-	return HatchetRunId(strings.ToLower(ulid.Make().String()))
-}
-
-func (id HatchetRunId) String() string {
-	return string(id)
-}
+//type HatchetRunId string
+//
+//func NewHatchetRunId() HatchetRunId {
+//	return HatchetRunId(strings.ToLower(ulid.Make().String()))
+//}
+//
+//func (id HatchetRunId) String() string {
+//	return string(id)
+//}

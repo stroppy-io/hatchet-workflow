@@ -8,6 +8,7 @@ package database
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	crossplane "github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -152,71 +153,9 @@ func (*Sidecar_PostgresExporter) isSidecar_Sidecar() {}
 
 func (*Sidecar_PgbouncerExporter) isSidecar_Sidecar() {}
 
-type VmSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Cpu           uint32                 `protobuf:"varint,1,opt,name=cpu,proto3" json:"cpu,omitempty"`
-	Memory        uint32                 `protobuf:"varint,2,opt,name=memory,proto3" json:"memory,omitempty"` // "8Gi"
-	Disk          uint32                 `protobuf:"varint,3,opt,name=disk,proto3" json:"disk,omitempty"`     // "100Gi"
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *VmSpec) Reset() {
-	*x = VmSpec{}
-	mi := &file_database_instance_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *VmSpec) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*VmSpec) ProtoMessage() {}
-
-func (x *VmSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_database_instance_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use VmSpec.ProtoReflect.Descriptor instead.
-func (*VmSpec) Descriptor() ([]byte, []int) {
-	return file_database_instance_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *VmSpec) GetCpu() uint32 {
-	if x != nil {
-		return x.Cpu
-	}
-	return 0
-}
-
-func (x *VmSpec) GetMemory() uint32 {
-	if x != nil {
-		return x.Memory
-	}
-	return 0
-}
-
-func (x *VmSpec) GetDisk() uint32 {
-	if x != nil {
-		return x.Disk
-	}
-	return 0
-}
-
 type Instance struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
-	VmSpec   *VmSpec                `protobuf:"bytes,1,opt,name=vm_spec,json=vmSpec,proto3" json:"vm_spec,omitempty"`
-	Sidecars []*Sidecar             `protobuf:"bytes,2,rep,name=sidecars,proto3" json:"sidecars,omitempty"`
-	Version  string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
+	Hardware *crossplane.Hardware   `protobuf:"bytes,1,opt,name=hardware,proto3" json:"hardware,omitempty"`
 	// Types that are valid to be assigned to Settings:
 	//
 	//	*Instance_Postgres
@@ -227,7 +166,7 @@ type Instance struct {
 
 func (x *Instance) Reset() {
 	*x = Instance{}
-	mi := &file_database_instance_proto_msgTypes[2]
+	mi := &file_database_instance_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -239,7 +178,7 @@ func (x *Instance) String() string {
 func (*Instance) ProtoMessage() {}
 
 func (x *Instance) ProtoReflect() protoreflect.Message {
-	mi := &file_database_instance_proto_msgTypes[2]
+	mi := &file_database_instance_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -252,28 +191,14 @@ func (x *Instance) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Instance.ProtoReflect.Descriptor instead.
 func (*Instance) Descriptor() ([]byte, []int) {
-	return file_database_instance_proto_rawDescGZIP(), []int{2}
+	return file_database_instance_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *Instance) GetVmSpec() *VmSpec {
+func (x *Instance) GetHardware() *crossplane.Hardware {
 	if x != nil {
-		return x.VmSpec
+		return x.Hardware
 	}
 	return nil
-}
-
-func (x *Instance) GetSidecars() []*Sidecar {
-	if x != nil {
-		return x.Sidecars
-	}
-	return nil
-}
-
-func (x *Instance) GetVersion() string {
-	if x != nil {
-		return x.Version
-	}
-	return ""
 }
 
 func (x *Instance) GetSettings() isInstance_Settings {
@@ -283,7 +208,7 @@ func (x *Instance) GetSettings() isInstance_Settings {
 	return nil
 }
 
-func (x *Instance) GetPostgres() *Postgres_InstanceSettings {
+func (x *Instance) GetPostgres() *Postgres_Instance {
 	if x != nil {
 		if x, ok := x.Settings.(*Instance_Postgres); ok {
 			return x.Postgres
@@ -297,7 +222,7 @@ type isInstance_Settings interface {
 }
 
 type Instance_Postgres struct {
-	Postgres *Postgres_InstanceSettings `protobuf:"bytes,6,opt,name=postgres,proto3,oneof"`
+	Postgres *Postgres_Instance `protobuf:"bytes,100,opt,name=postgres,proto3,oneof"`
 }
 
 func (*Instance_Postgres) isInstance_Settings() {}
@@ -313,7 +238,7 @@ type Sidecar_NodeExporter struct {
 
 func (x *Sidecar_NodeExporter) Reset() {
 	*x = Sidecar_NodeExporter{}
-	mi := &file_database_instance_proto_msgTypes[3]
+	mi := &file_database_instance_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -325,7 +250,7 @@ func (x *Sidecar_NodeExporter) String() string {
 func (*Sidecar_NodeExporter) ProtoMessage() {}
 
 func (x *Sidecar_NodeExporter) ProtoReflect() protoreflect.Message {
-	mi := &file_database_instance_proto_msgTypes[3]
+	mi := &file_database_instance_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -373,7 +298,7 @@ type Sidecar_Filebeat struct {
 
 func (x *Sidecar_Filebeat) Reset() {
 	*x = Sidecar_Filebeat{}
-	mi := &file_database_instance_proto_msgTypes[4]
+	mi := &file_database_instance_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -385,7 +310,7 @@ func (x *Sidecar_Filebeat) String() string {
 func (*Sidecar_Filebeat) ProtoMessage() {}
 
 func (x *Sidecar_Filebeat) ProtoReflect() protoreflect.Message {
-	mi := &file_database_instance_proto_msgTypes[4]
+	mi := &file_database_instance_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -433,7 +358,7 @@ type Sidecar_VectorAgent struct {
 
 func (x *Sidecar_VectorAgent) Reset() {
 	*x = Sidecar_VectorAgent{}
-	mi := &file_database_instance_proto_msgTypes[5]
+	mi := &file_database_instance_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -445,7 +370,7 @@ func (x *Sidecar_VectorAgent) String() string {
 func (*Sidecar_VectorAgent) ProtoMessage() {}
 
 func (x *Sidecar_VectorAgent) ProtoReflect() protoreflect.Message {
-	mi := &file_database_instance_proto_msgTypes[5]
+	mi := &file_database_instance_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -486,7 +411,7 @@ var File_database_instance_proto protoreflect.FileDescriptor
 
 const file_database_instance_proto_rawDesc = "" +
 	"\n" +
-	"\x17database/instance.proto\x12\bdatabase\x1a\x17database/postgres.proto\x1a\x17validate/validate.proto\"\xb6\x06\n" +
+	"\x17database/instance.proto\x12\bdatabase\x1a\x17database/postgres.proto\x1a\x17validate/validate.proto\x1a\x1bcrossplane/deployment.proto\"\xb6\x06\n" +
 	"\aSidecar\x12E\n" +
 	"\rnode_exporter\x18\x02 \x01(\v2\x1e.database.Sidecar.NodeExporterH\x00R\fnodeExporter\x128\n" +
 	"\bfilebeat\x18\x04 \x01(\v2\x1a.database.Sidecar.FilebeatH\x00R\bfilebeat\x127\n" +
@@ -510,16 +435,10 @@ const file_database_instance_proto_rawDesc = "" +
 	"\x10ExtraConfigEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x0e\n" +
-	"\asidecar\x12\x03\xf8B\x01\"a\n" +
-	"\x06VmSpec\x12\x19\n" +
-	"\x03cpu\x18\x01 \x01(\rB\a\xfaB\x04*\x02(\x01R\x03cpu\x12\x1f\n" +
-	"\x06memory\x18\x02 \x01(\rB\a\xfaB\x04*\x02(\x01R\x06memory\x12\x1b\n" +
-	"\x04disk\x18\x03 \x01(\rB\a\xfaB\x04*\x02(\x01R\x04disk\"\xe5\x01\n" +
-	"\bInstance\x123\n" +
-	"\avm_spec\x18\x01 \x01(\v2\x10.database.VmSpecB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06vmSpec\x12-\n" +
-	"\bsidecars\x18\x02 \x03(\v2\x11.database.SidecarR\bsidecars\x12!\n" +
-	"\aversion\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aversion\x12A\n" +
-	"\bpostgres\x18\x06 \x01(\v2#.database.Postgres.InstanceSettingsH\x00R\bpostgresB\x0f\n" +
+	"\asidecar\x12\x03\xf8B\x01\"\x92\x01\n" +
+	"\bInstance\x12:\n" +
+	"\bhardware\x18\x01 \x01(\v2\x14.crossplane.HardwareB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bhardware\x129\n" +
+	"\bpostgres\x18d \x01(\v2\x1b.database.Postgres.InstanceH\x00R\bpostgresB\x0f\n" +
 	"\bsettings\x12\x03\xf8B\x01B@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/databaseb\x06proto3"
 
 var (
@@ -534,34 +453,33 @@ func file_database_instance_proto_rawDescGZIP() []byte {
 	return file_database_instance_proto_rawDescData
 }
 
-var file_database_instance_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_database_instance_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_database_instance_proto_goTypes = []any{
 	(*Sidecar)(nil),              // 0: database.Sidecar
-	(*VmSpec)(nil),               // 1: database.VmSpec
-	(*Instance)(nil),             // 2: database.Instance
-	(*Sidecar_NodeExporter)(nil), // 3: database.Sidecar.NodeExporter
-	(*Sidecar_Filebeat)(nil),     // 4: database.Sidecar.Filebeat
-	(*Sidecar_VectorAgent)(nil),  // 5: database.Sidecar.VectorAgent
-	nil,                          // 6: database.Sidecar.VectorAgent.ExtraConfigEntry
-	(*Postgres_Sidecar_PostgresExporter)(nil),  // 7: database.Postgres.Sidecar.PostgresExporter
-	(*Postgres_Sidecar_PgbouncerExporter)(nil), // 8: database.Postgres.Sidecar.PgbouncerExporter
-	(*Postgres_InstanceSettings)(nil),          // 9: database.Postgres.InstanceSettings
+	(*Instance)(nil),             // 1: database.Instance
+	(*Sidecar_NodeExporter)(nil), // 2: database.Sidecar.NodeExporter
+	(*Sidecar_Filebeat)(nil),     // 3: database.Sidecar.Filebeat
+	(*Sidecar_VectorAgent)(nil),  // 4: database.Sidecar.VectorAgent
+	nil,                          // 5: database.Sidecar.VectorAgent.ExtraConfigEntry
+	(*Postgres_Sidecar_PostgresExporter)(nil),  // 6: database.Postgres.Sidecar.PostgresExporter
+	(*Postgres_Sidecar_PgbouncerExporter)(nil), // 7: database.Postgres.Sidecar.PgbouncerExporter
+	(*crossplane.Hardware)(nil),                // 8: crossplane.Hardware
+	(*Postgres_Instance)(nil),                  // 9: database.Postgres.Instance
 }
 var file_database_instance_proto_depIdxs = []int32{
-	3, // 0: database.Sidecar.node_exporter:type_name -> database.Sidecar.NodeExporter
-	4, // 1: database.Sidecar.filebeat:type_name -> database.Sidecar.Filebeat
-	5, // 2: database.Sidecar.vector:type_name -> database.Sidecar.VectorAgent
-	7, // 3: database.Sidecar.postgres_exporter:type_name -> database.Postgres.Sidecar.PostgresExporter
-	8, // 4: database.Sidecar.pgbouncer_exporter:type_name -> database.Postgres.Sidecar.PgbouncerExporter
-	1, // 5: database.Instance.vm_spec:type_name -> database.VmSpec
-	0, // 6: database.Instance.sidecars:type_name -> database.Sidecar
-	9, // 7: database.Instance.postgres:type_name -> database.Postgres.InstanceSettings
-	6, // 8: database.Sidecar.VectorAgent.extra_config:type_name -> database.Sidecar.VectorAgent.ExtraConfigEntry
-	9, // [9:9] is the sub-list for method output_type
-	9, // [9:9] is the sub-list for method input_type
-	9, // [9:9] is the sub-list for extension type_name
-	9, // [9:9] is the sub-list for extension extendee
-	0, // [0:9] is the sub-list for field type_name
+	2, // 0: database.Sidecar.node_exporter:type_name -> database.Sidecar.NodeExporter
+	3, // 1: database.Sidecar.filebeat:type_name -> database.Sidecar.Filebeat
+	4, // 2: database.Sidecar.vector:type_name -> database.Sidecar.VectorAgent
+	6, // 3: database.Sidecar.postgres_exporter:type_name -> database.Postgres.Sidecar.PostgresExporter
+	7, // 4: database.Sidecar.pgbouncer_exporter:type_name -> database.Postgres.Sidecar.PgbouncerExporter
+	8, // 5: database.Instance.hardware:type_name -> crossplane.Hardware
+	9, // 6: database.Instance.postgres:type_name -> database.Postgres.Instance
+	5, // 7: database.Sidecar.VectorAgent.extra_config:type_name -> database.Sidecar.VectorAgent.ExtraConfigEntry
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_database_instance_proto_init() }
@@ -577,7 +495,7 @@ func file_database_instance_proto_init() {
 		(*Sidecar_PostgresExporter)(nil),
 		(*Sidecar_PgbouncerExporter)(nil),
 	}
-	file_database_instance_proto_msgTypes[2].OneofWrappers = []any{
+	file_database_instance_proto_msgTypes[1].OneofWrappers = []any{
 		(*Instance_Postgres)(nil),
 	}
 	type x struct{}
@@ -586,7 +504,7 @@ func file_database_instance_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_database_instance_proto_rawDesc), len(file_database_instance_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

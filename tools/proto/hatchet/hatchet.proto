@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package hatchet;
+
+import "crossplane/deployment.proto";
+import "crossplane/types.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet";
+
+message HatchetServer {
+    string url = 1 [(validate.rules).string.min_len = 1];
+    string token = 2 [(validate.rules).string.min_len = 1];
+}
+
+message Common {
+    string run_id = 1 [(validate.rules).string.min_len = 1];
+    HatchetServer hatchet_server = 2 [(validate.rules).message.required = true];
+    crossplane.SupportedCloud supported_cloud = 3 [(validate.rules).enum.defined_only = true];
+}

@@ -24,26 +24,26 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type NightlyCloudStroppy struct {
+type Workflows struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NightlyCloudStroppy) Reset() {
-	*x = NightlyCloudStroppy{}
+func (x *Workflows) Reset() {
+	*x = Workflows{}
 	mi := &file_hatchet_workflows_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NightlyCloudStroppy) String() string {
+func (x *Workflows) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NightlyCloudStroppy) ProtoMessage() {}
+func (*Workflows) ProtoMessage() {}
 
-func (x *NightlyCloudStroppy) ProtoReflect() protoreflect.Message {
+func (x *Workflows) ProtoReflect() protoreflect.Message {
 	mi := &file_hatchet_workflows_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -55,33 +55,33 @@ func (x *NightlyCloudStroppy) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NightlyCloudStroppy.ProtoReflect.Descriptor instead.
-func (*NightlyCloudStroppy) Descriptor() ([]byte, []int) {
+// Deprecated: Use Workflows.ProtoReflect.Descriptor instead.
+func (*Workflows) Descriptor() ([]byte, []int) {
 	return file_hatchet_workflows_proto_rawDescGZIP(), []int{0}
 }
 
-type NightlyCloudStroppy_Input struct {
-	state         protoimpl.MessageState    `protogen:"open.v1"`
-	Cloud         crossplane.SupportedCloud `protobuf:"varint,1,opt,name=cloud,proto3,enum=crossplane.SupportedCloud" json:"cloud,omitempty"` // now ony yandex
-	TestSuite     *stroppy.TestSuite        `protobuf:"bytes,2,opt,name=test_suite,json=testSuite,proto3" json:"test_suite,omitempty"`
+// Main workflow for running stroppy test suite
+// This step can request database setup if one of test.database_ref is Database
+type Workflows_StroppyTestSuite struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NightlyCloudStroppy_Input) Reset() {
-	*x = NightlyCloudStroppy_Input{}
+func (x *Workflows_StroppyTestSuite) Reset() {
+	*x = Workflows_StroppyTestSuite{}
 	mi := &file_hatchet_workflows_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NightlyCloudStroppy_Input) String() string {
+func (x *Workflows_StroppyTestSuite) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NightlyCloudStroppy_Input) ProtoMessage() {}
+func (*Workflows_StroppyTestSuite) ProtoMessage() {}
 
-func (x *NightlyCloudStroppy_Input) ProtoReflect() protoreflect.Message {
+func (x *Workflows_StroppyTestSuite) ProtoReflect() protoreflect.Message {
 	mi := &file_hatchet_workflows_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -93,47 +93,168 @@ func (x *NightlyCloudStroppy_Input) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NightlyCloudStroppy_Input.ProtoReflect.Descriptor instead.
-func (*NightlyCloudStroppy_Input) Descriptor() ([]byte, []int) {
+// Deprecated: Use Workflows_StroppyTestSuite.ProtoReflect.Descriptor instead.
+func (*Workflows_StroppyTestSuite) Descriptor() ([]byte, []int) {
 	return file_hatchet_workflows_proto_rawDescGZIP(), []int{0, 0}
 }
 
-func (x *NightlyCloudStroppy_Input) GetCloud() crossplane.SupportedCloud {
+// Run single stroppy test
+// This can create single LocalProvision steps for initialize
+type Workflows_StroppyTest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Workflows_StroppyTest) Reset() {
+	*x = Workflows_StroppyTest{}
+	mi := &file_hatchet_workflows_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Workflows_StroppyTest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Workflows_StroppyTest) ProtoMessage() {}
+
+func (x *Workflows_StroppyTest) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_workflows_proto_msgTypes[2]
 	if x != nil {
-		return x.Cloud
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Workflows_StroppyTest.ProtoReflect.Descriptor instead.
+func (*Workflows_StroppyTest) Descriptor() ([]byte, []int) {
+	return file_hatchet_workflows_proto_rawDescGZIP(), []int{0, 1}
+}
+
+// Provision workers using cloud provider
+type Workflows_Provision struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Workflows_Provision) Reset() {
+	*x = Workflows_Provision{}
+	mi := &file_hatchet_workflows_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Workflows_Provision) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Workflows_Provision) ProtoMessage() {}
+
+func (x *Workflows_Provision) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_workflows_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Workflows_Provision.ProtoReflect.Descriptor instead.
+func (*Workflows_Provision) Descriptor() ([]byte, []int) {
+	return file_hatchet_workflows_proto_rawDescGZIP(), []int{0, 2}
+}
+
+type Workflows_StroppyTestSuite_Input struct {
+	state          protoimpl.MessageState    `protogen:"open.v1"`
+	HatchetUrl     string                    `protobuf:"bytes,1,opt,name=hatchet_url,json=hatchetUrl,proto3" json:"hatchet_url,omitempty"`
+	SupportedCloud crossplane.SupportedCloud `protobuf:"varint,3,opt,name=supported_cloud,json=supportedCloud,proto3,enum=crossplane.SupportedCloud" json:"supported_cloud,omitempty"`
+	Suite          *stroppy.TestSuite        `protobuf:"bytes,4,opt,name=suite,proto3" json:"suite,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *Workflows_StroppyTestSuite_Input) Reset() {
+	*x = Workflows_StroppyTestSuite_Input{}
+	mi := &file_hatchet_workflows_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Workflows_StroppyTestSuite_Input) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Workflows_StroppyTestSuite_Input) ProtoMessage() {}
+
+func (x *Workflows_StroppyTestSuite_Input) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_workflows_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Workflows_StroppyTestSuite_Input.ProtoReflect.Descriptor instead.
+func (*Workflows_StroppyTestSuite_Input) Descriptor() ([]byte, []int) {
+	return file_hatchet_workflows_proto_rawDescGZIP(), []int{0, 0, 0}
+}
+
+func (x *Workflows_StroppyTestSuite_Input) GetHatchetUrl() string {
+	if x != nil {
+		return x.HatchetUrl
+	}
+	return ""
+}
+
+func (x *Workflows_StroppyTestSuite_Input) GetSupportedCloud() crossplane.SupportedCloud {
+	if x != nil {
+		return x.SupportedCloud
 	}
 	return crossplane.SupportedCloud(0)
 }
 
-func (x *NightlyCloudStroppy_Input) GetTestSuite() *stroppy.TestSuite {
+func (x *Workflows_StroppyTestSuite_Input) GetSuite() *stroppy.TestSuite {
 	if x != nil {
-		return x.TestSuite
+		return x.Suite
 	}
 	return nil
 }
 
-type NightlyCloudStroppy_Output struct {
+type Workflows_StroppyTestSuite_Output struct {
 	state         protoimpl.MessageState   `protogen:"open.v1"`
 	Results       *stroppy.TestSuiteResult `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NightlyCloudStroppy_Output) Reset() {
-	*x = NightlyCloudStroppy_Output{}
-	mi := &file_hatchet_workflows_proto_msgTypes[2]
+func (x *Workflows_StroppyTestSuite_Output) Reset() {
+	*x = Workflows_StroppyTestSuite_Output{}
+	mi := &file_hatchet_workflows_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NightlyCloudStroppy_Output) String() string {
+func (x *Workflows_StroppyTestSuite_Output) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NightlyCloudStroppy_Output) ProtoMessage() {}
+func (*Workflows_StroppyTestSuite_Output) ProtoMessage() {}
 
-func (x *NightlyCloudStroppy_Output) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_workflows_proto_msgTypes[2]
+func (x *Workflows_StroppyTestSuite_Output) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_workflows_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -144,14 +265,216 @@ func (x *NightlyCloudStroppy_Output) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NightlyCloudStroppy_Output.ProtoReflect.Descriptor instead.
-func (*NightlyCloudStroppy_Output) Descriptor() ([]byte, []int) {
-	return file_hatchet_workflows_proto_rawDescGZIP(), []int{0, 1}
+// Deprecated: Use Workflows_StroppyTestSuite_Output.ProtoReflect.Descriptor instead.
+func (*Workflows_StroppyTestSuite_Output) Descriptor() ([]byte, []int) {
+	return file_hatchet_workflows_proto_rawDescGZIP(), []int{0, 0, 1}
 }
 
-func (x *NightlyCloudStroppy_Output) GetResults() *stroppy.TestSuiteResult {
+func (x *Workflows_StroppyTestSuite_Output) GetResults() *stroppy.TestSuiteResult {
 	if x != nil {
 		return x.Results
+	}
+	return nil
+}
+
+type Workflows_StroppyTest_Input struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Common        *Common                `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	Test          *stroppy.Test          `protobuf:"bytes,4,opt,name=test,proto3" json:"test,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Workflows_StroppyTest_Input) Reset() {
+	*x = Workflows_StroppyTest_Input{}
+	mi := &file_hatchet_workflows_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Workflows_StroppyTest_Input) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Workflows_StroppyTest_Input) ProtoMessage() {}
+
+func (x *Workflows_StroppyTest_Input) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_workflows_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Workflows_StroppyTest_Input.ProtoReflect.Descriptor instead.
+func (*Workflows_StroppyTest_Input) Descriptor() ([]byte, []int) {
+	return file_hatchet_workflows_proto_rawDescGZIP(), []int{0, 1, 0}
+}
+
+func (x *Workflows_StroppyTest_Input) GetCommon() *Common {
+	if x != nil {
+		return x.Common
+	}
+	return nil
+}
+
+func (x *Workflows_StroppyTest_Input) GetTest() *stroppy.Test {
+	if x != nil {
+		return x.Test
+	}
+	return nil
+}
+
+type Workflows_StroppyTest_Output struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Result        *stroppy.TestResult    `protobuf:"bytes,1,opt,name=result,proto3" json:"result,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Workflows_StroppyTest_Output) Reset() {
+	*x = Workflows_StroppyTest_Output{}
+	mi := &file_hatchet_workflows_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Workflows_StroppyTest_Output) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Workflows_StroppyTest_Output) ProtoMessage() {}
+
+func (x *Workflows_StroppyTest_Output) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_workflows_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Workflows_StroppyTest_Output.ProtoReflect.Descriptor instead.
+func (*Workflows_StroppyTest_Output) Descriptor() ([]byte, []int) {
+	return file_hatchet_workflows_proto_rawDescGZIP(), []int{0, 1, 1}
+}
+
+func (x *Workflows_StroppyTest_Output) GetResult() *stroppy.TestResult {
+	if x != nil {
+		return x.Result
+	}
+	return nil
+}
+
+type Workflows_Provision_Input struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Common *Common                `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	// EdgeWorker's are built in StroppyTest workflow
+	// Workers was deployed in same network|subnet in one cloud provider
+	EdgeWorkersSet *EdgeWorkersSet `protobuf:"bytes,2,opt,name=edge_workers_set,json=edgeWorkersSet,proto3" json:"edge_workers_set,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *Workflows_Provision_Input) Reset() {
+	*x = Workflows_Provision_Input{}
+	mi := &file_hatchet_workflows_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Workflows_Provision_Input) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Workflows_Provision_Input) ProtoMessage() {}
+
+func (x *Workflows_Provision_Input) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_workflows_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Workflows_Provision_Input.ProtoReflect.Descriptor instead.
+func (*Workflows_Provision_Input) Descriptor() ([]byte, []int) {
+	return file_hatchet_workflows_proto_rawDescGZIP(), []int{0, 2, 0}
+}
+
+func (x *Workflows_Provision_Input) GetCommon() *Common {
+	if x != nil {
+		return x.Common
+	}
+	return nil
+}
+
+func (x *Workflows_Provision_Input) GetEdgeWorkersSet() *EdgeWorkersSet {
+	if x != nil {
+		return x.EdgeWorkersSet
+	}
+	return nil
+}
+
+type Workflows_Provision_Output struct {
+	state               protoimpl.MessageState  `protogen:"open.v1"`
+	Deployment          *crossplane.Deployment  `protobuf:"bytes,1,opt,name=deployment,proto3" json:"deployment,omitempty"`
+	DeployedEdgeWorkers *DeployedEdgeWorkersSet `protobuf:"bytes,2,opt,name=deployed_edge_workers,json=deployedEdgeWorkers,proto3" json:"deployed_edge_workers,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *Workflows_Provision_Output) Reset() {
+	*x = Workflows_Provision_Output{}
+	mi := &file_hatchet_workflows_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Workflows_Provision_Output) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Workflows_Provision_Output) ProtoMessage() {}
+
+func (x *Workflows_Provision_Output) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_workflows_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Workflows_Provision_Output.ProtoReflect.Descriptor instead.
+func (*Workflows_Provision_Output) Descriptor() ([]byte, []int) {
+	return file_hatchet_workflows_proto_rawDescGZIP(), []int{0, 2, 1}
+}
+
+func (x *Workflows_Provision_Output) GetDeployment() *crossplane.Deployment {
+	if x != nil {
+		return x.Deployment
+	}
+	return nil
+}
+
+func (x *Workflows_Provision_Output) GetDeployedEdgeWorkers() *DeployedEdgeWorkersSet {
+	if x != nil {
+		return x.DeployedEdgeWorkers
 	}
 	return nil
 }
@@ -160,14 +483,31 @@ var File_hatchet_workflows_proto protoreflect.FileDescriptor
 
 const file_hatchet_workflows_proto_rawDesc = "" +
 	"\n" +
-	"\x17hatchet/workflows.proto\x12\ahatchet\x1a\x16crossplane/types.proto\x1a\x17validate/validate.proto\x1a\x12stroppy/test.proto\"\xd5\x01\n" +
-	"\x13NightlyCloudStroppy\x1av\n" +
-	"\x05Input\x12:\n" +
-	"\x05cloud\x18\x01 \x01(\x0e2\x1a.crossplane.SupportedCloudB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05cloud\x121\n" +
-	"\n" +
-	"test_suite\x18\x02 \x01(\v2\x12.stroppy.TestSuiteR\ttestSuite\x1aF\n" +
+	"\x17hatchet/workflows.proto\x12\ahatchet\x1a\x1bcrossplane/deployment.proto\x1a\x16crossplane/types.proto\x1a\x12hatchet/edge.proto\x1a\x15hatchet/hatchet.proto\x1a\x12stroppy/test.proto\x1a\x17validate/validate.proto\"\x93\x06\n" +
+	"\tWorkflows\x1a\x91\x02\n" +
+	"\x10StroppyTestSuite\x1a\xb4\x01\n" +
+	"\x05Input\x12(\n" +
+	"\vhatchet_url\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\n" +
+	"hatchetUrl\x12M\n" +
+	"\x0fsupported_cloud\x18\x03 \x01(\x0e2\x1a.crossplane.SupportedCloudB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0esupportedCloud\x122\n" +
+	"\x05suite\x18\x04 \x01(\v2\x12.stroppy.TestSuiteB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05suite\x1aF\n" +
 	"\x06Output\x12<\n" +
-	"\aresults\x18\x01 \x01(\v2\x18.stroppy.TestSuiteResultB\b\xfaB\x05\x8a\x01\x02\x10\x01R\aresultsB?Z=github.com/stroppy-io/hatchet-workflow/internal/proto/hatchetb\x06proto3"
+	"\aresults\x18\x01 \x01(\v2\x18.stroppy.TestSuiteResultB\b\xfaB\x05\x8a\x01\x02\x10\x01R\aresults\x1a\xb7\x01\n" +
+	"\vStroppyTest\x1ag\n" +
+	"\x05Input\x121\n" +
+	"\x06common\x18\x01 \x01(\v2\x0f.hatchet.CommonB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06common\x12+\n" +
+	"\x04test\x18\x04 \x01(\v2\r.stroppy.TestB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04test\x1a?\n" +
+	"\x06Output\x125\n" +
+	"\x06result\x18\x01 \x01(\v2\x13.stroppy.TestResultB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06result\x1a\xb7\x02\n" +
+	"\tProvision\x1a\x87\x01\n" +
+	"\x05Input\x121\n" +
+	"\x06common\x18\x01 \x01(\v2\x0f.hatchet.CommonB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06common\x12K\n" +
+	"\x10edge_workers_set\x18\x02 \x01(\v2\x17.hatchet.EdgeWorkersSetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0eedgeWorkersSet\x1a\x9f\x01\n" +
+	"\x06Output\x126\n" +
+	"\n" +
+	"deployment\x18\x01 \x01(\v2\x16.crossplane.DeploymentR\n" +
+	"deployment\x12]\n" +
+	"\x15deployed_edge_workers\x18\x02 \x01(\v2\x1f.hatchet.DeployedEdgeWorkersSetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x13deployedEdgeWorkersB?Z=github.com/stroppy-io/hatchet-workflow/internal/proto/hatchetb\x06proto3"
 
 var (
 	file_hatchet_workflows_proto_rawDescOnce sync.Once
@@ -181,24 +521,44 @@ func file_hatchet_workflows_proto_rawDescGZIP() []byte {
 	return file_hatchet_workflows_proto_rawDescData
 }
 
-var file_hatchet_workflows_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_hatchet_workflows_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_hatchet_workflows_proto_goTypes = []any{
-	(*NightlyCloudStroppy)(nil),        // 0: hatchet.NightlyCloudStroppy
-	(*NightlyCloudStroppy_Input)(nil),  // 1: hatchet.NightlyCloudStroppy.Input
-	(*NightlyCloudStroppy_Output)(nil), // 2: hatchet.NightlyCloudStroppy.Output
-	(crossplane.SupportedCloud)(0),     // 3: crossplane.SupportedCloud
-	(*stroppy.TestSuite)(nil),          // 4: stroppy.TestSuite
-	(*stroppy.TestSuiteResult)(nil),    // 5: stroppy.TestSuiteResult
+	(*Workflows)(nil),                         // 0: hatchet.Workflows
+	(*Workflows_StroppyTestSuite)(nil),        // 1: hatchet.Workflows.StroppyTestSuite
+	(*Workflows_StroppyTest)(nil),             // 2: hatchet.Workflows.StroppyTest
+	(*Workflows_Provision)(nil),               // 3: hatchet.Workflows.Provision
+	(*Workflows_StroppyTestSuite_Input)(nil),  // 4: hatchet.Workflows.StroppyTestSuite.Input
+	(*Workflows_StroppyTestSuite_Output)(nil), // 5: hatchet.Workflows.StroppyTestSuite.Output
+	(*Workflows_StroppyTest_Input)(nil),       // 6: hatchet.Workflows.StroppyTest.Input
+	(*Workflows_StroppyTest_Output)(nil),      // 7: hatchet.Workflows.StroppyTest.Output
+	(*Workflows_Provision_Input)(nil),         // 8: hatchet.Workflows.Provision.Input
+	(*Workflows_Provision_Output)(nil),        // 9: hatchet.Workflows.Provision.Output
+	(crossplane.SupportedCloud)(0),            // 10: crossplane.SupportedCloud
+	(*stroppy.TestSuite)(nil),                 // 11: stroppy.TestSuite
+	(*stroppy.TestSuiteResult)(nil),           // 12: stroppy.TestSuiteResult
+	(*Common)(nil),                            // 13: hatchet.Common
+	(*stroppy.Test)(nil),                      // 14: stroppy.Test
+	(*stroppy.TestResult)(nil),                // 15: stroppy.TestResult
+	(*EdgeWorkersSet)(nil),                    // 16: hatchet.EdgeWorkersSet
+	(*crossplane.Deployment)(nil),             // 17: crossplane.Deployment
+	(*DeployedEdgeWorkersSet)(nil),            // 18: hatchet.DeployedEdgeWorkersSet
 }
 var file_hatchet_workflows_proto_depIdxs = []int32{
-	3, // 0: hatchet.NightlyCloudStroppy.Input.cloud:type_name -> crossplane.SupportedCloud
-	4, // 1: hatchet.NightlyCloudStroppy.Input.test_suite:type_name -> stroppy.TestSuite
-	5, // 2: hatchet.NightlyCloudStroppy.Output.results:type_name -> stroppy.TestSuiteResult
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	10, // 0: hatchet.Workflows.StroppyTestSuite.Input.supported_cloud:type_name -> crossplane.SupportedCloud
+	11, // 1: hatchet.Workflows.StroppyTestSuite.Input.suite:type_name -> stroppy.TestSuite
+	12, // 2: hatchet.Workflows.StroppyTestSuite.Output.results:type_name -> stroppy.TestSuiteResult
+	13, // 3: hatchet.Workflows.StroppyTest.Input.common:type_name -> hatchet.Common
+	14, // 4: hatchet.Workflows.StroppyTest.Input.test:type_name -> stroppy.Test
+	15, // 5: hatchet.Workflows.StroppyTest.Output.result:type_name -> stroppy.TestResult
+	13, // 6: hatchet.Workflows.Provision.Input.common:type_name -> hatchet.Common
+	16, // 7: hatchet.Workflows.Provision.Input.edge_workers_set:type_name -> hatchet.EdgeWorkersSet
+	17, // 8: hatchet.Workflows.Provision.Output.deployment:type_name -> crossplane.Deployment
+	18, // 9: hatchet.Workflows.Provision.Output.deployed_edge_workers:type_name -> hatchet.DeployedEdgeWorkersSet
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_hatchet_workflows_proto_init() }
@@ -206,13 +566,15 @@ func file_hatchet_workflows_proto_init() {
 	if File_hatchet_workflows_proto != nil {
 		return
 	}
+	file_hatchet_edge_proto_init()
+	file_hatchet_hatchet_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_hatchet_workflows_proto_rawDesc), len(file_hatchet_workflows_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

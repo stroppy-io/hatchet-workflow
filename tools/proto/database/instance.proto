@@ -4,6 +4,7 @@ package database;
 
 import "database/postgres.proto";
 import "validate/validate.proto";
+import "crossplane/deployment.proto";
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/database";
 
@@ -33,18 +34,10 @@ message Sidecar {
     }
 }
 
-message VmSpec {
-    uint32 cpu = 1 [(validate.rules).uint32.gte = 1];
-    uint32 memory = 2 [(validate.rules).uint32.gte = 1];  // "8Gi"
-    uint32 disk = 3 [(validate.rules).uint32.gte = 1];    // "100Gi"
-}
-
 message Instance {
-    VmSpec vm_spec = 1 [(validate.rules).message.required = true];
-    repeated Sidecar sidecars = 2;
-    string version = 3 [(validate.rules).string.min_len = 1];
+    crossplane.Hardware hardware = 1 [(validate.rules).message.required = true];
     oneof settings {
         option (validate.required) = true;
-        Postgres.InstanceSettings postgres = 6;
+        Postgres.Instance postgres = 100;
     }
 }

@@ -17,29 +17,12 @@ const (
 	networksKey    = "reserved_networks"
 )
 
-type NetworkConfig struct {
-	BaseCidr   string `mapstructure:"base_cidr"`
-	BasePrefix int    `mapstructure:"base_prefix"`
-}
-
-func DefaultNetworkConfig() *NetworkConfig {
-	return &NetworkConfig{
-		BaseCidr:   "10.2.0.0/16",
-		BasePrefix: 24,
-	}
-}
-
 type NetworkManager struct {
 	valkeyClient valkeygo.Client
 	locker       valkeylock.Locker
-	config       *NetworkConfig
 }
 
-func NewNetworkManager(valkeyClient valkeygo.Client, config *NetworkConfig) (*NetworkManager, error) {
-	if config == nil {
-		return nil, fmt.Errorf("network config is nil")
-	}
-
+func NewNetworkManager(valkeyClient valkeygo.Client) (*NetworkManager, error) {
 	locker, err := valkey.NewValkeyLocker(valkeyClient, 5*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create valkey locker: %w", err)
@@ -48,24 +31,32 @@ func NewNetworkManager(valkeyClient valkeygo.Client, config *NetworkConfig) (*Ne
 	return &NetworkManager{
 		valkeyClient: valkeyClient,
 		locker:       locker,
-		config:       config,
 	}, nil
 }
 
-func (n NetworkManager) ReserveNetwork(ctx context.Context, ipCount int) (*crossplane.CidrWithIps, error) {
+func (n NetworkManager) ReserveNetwork(
+	ctx context.Context,
+	networkIdentifier *crossplane.Identifier,
+	subnetIdentifier *crossplane.Identifier,
+	baseCidr string,
+	basePrefix int,
+	ipCount int,
+) (*crossplane.Subnet_Template, error) {
+	if networkIdentifier == nil {
+		return nil, fmt.Errorf("network identifier is nil")
+	}
+
 	// Acquire lock to prevent race conditions
-	// WithContext waits for the lock.
-	// It returns a context that is canceled when the lock is lost or released.
-	// We should use this context for operations that require the lock, but here we just need to hold it
-	// while we read and write to Valkey.
-	_, unlock, err := n.locker.WithContext(ctx, networkLockKey)
+	lockKey := fmt.Sprintf("%s:%s:%s", networkLockKey, networkIdentifier.GetSupportedCloud().String(), networkIdentifier.GetName())
+	_, unlock, err := n.locker.WithContext(ctx, lockKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to acquire network lock: %w", err)
 	}
 	defer unlock()
 
 	// Get existing networks
-	existingNetworks, err := n.valkeyClient.Do(ctx, n.valkeyClient.B().Smembers().Key(networksKey).Build()).AsStrSlice()
+	storageKey := fmt.Sprintf("%s:%s:%s", networksKey, networkIdentifier.GetSupportedCloud().String(), networkIdentifier.GetName())
+	existingNetworks, err := n.valkeyClient.Do(ctx, n.valkeyClient.B().Smembers().Key(storageKey).Build()).AsStrSlice()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get existing networks: %w", err)
 	}
@@ -74,13 +65,14 @@ func (n NetworkManager) ReserveNetwork(ctx context.Context, ipCount int) (*cross
 		ipCount = 3 // Default to 3 IPs if not specified
 	}
 
-	subnet, ipsList, err := ips.NextSubnetWithIPs(n.config.BaseCidr, n.config.BasePrefix, existingNetworks, ipCount)
+	subnet, ipsList, err := ips.NextSubnetWithIPs(baseCidr, basePrefix, existingNetworks, ipCount)
 	if err != nil {
 		return nil, fmt.Errorf("failed to allocate subnet: %w", err)
 	}
 
-	// Create the network object
-	network := &crossplane.CidrWithIps{
+	// Create the subnet template object
+	subnetTemplate := &crossplane.Subnet_Template{
+		Identifier: subnetIdentifier,
 		Cidr: &crossplane.Cidr{
 			Value: subnet.String(),
 		},
@@ -88,29 +80,78 @@ func (n NetworkManager) ReserveNetwork(ctx context.Context, ipCount int) (*cross
 	}
 
 	for i, ip := range ipsList {
-		network.Ips[i] = &crossplane.Ip{
+		subnetTemplate.Ips[i] = &crossplane.Ip{
 			Value: ip.String(),
 		}
 	}
 
 	// Save the new subnet to the set of reserved networks
-	err = n.valkeyClient.Do(ctx, n.valkeyClient.B().Sadd().Key(networksKey).Member(subnet.String()).Build()).Error()
+	added, err := n.valkeyClient.Do(ctx, n.valkeyClient.B().
+		Sadd().
+		Key(storageKey).
+		Member(subnet.String()).
+		Build()).AsInt64()
 	if err != nil {
 		return nil, fmt.Errorf("failed to save reserved network: %w", err)
 	}
+	if added == 0 {
+		return nil, fmt.Errorf("failed to reserve network: subnet %s already reserved", subnet.String())
+	}
 
-	return network, nil
+	return subnetTemplate, nil
 }
 
-func (n NetworkManager) FreeNetwork(ctx context.Context, network *crossplane.CidrWithIps) error {
-	if network == nil || network.Cidr == nil || network.Cidr.Value == "" {
+func (n NetworkManager) FreeNetwork(
+	ctx context.Context,
+	networkIdentifier *crossplane.Identifier,
+	subnet *crossplane.Subnet_Template,
+) error {
+	if networkIdentifier == nil {
+		return fmt.Errorf("network identifier is nil")
+	}
+	if subnet == nil || subnet.Cidr == nil || subnet.Cidr.Value == "" {
 		return nil // Nothing to free
 	}
 
+	storageKey := fmt.Sprintf("%s:%s:%s", networksKey, networkIdentifier.GetSupportedCloud().String(), networkIdentifier.GetName())
 	// Remove from reserved networks
-	err := n.valkeyClient.Do(ctx, n.valkeyClient.B().Srem().Key(networksKey).Member(network.Cidr.Value).Build()).Error()
+	err := n.valkeyClient.Do(ctx, n.valkeyClient.B().Srem().Key(storageKey).Member(subnet.Cidr.Value).Build()).Error()
 	if err != nil {
 		return fmt.Errorf("failed to free network: %w", err)
+	}
+
+	return nil
+}
+
+func (n NetworkManager) FreeNetworkMany(
+	ctx context.Context,
+	networkIdentifier *crossplane.Identifier,
+	subnets []*crossplane.Subnet_Template,
+) error {
+	if networkIdentifier == nil {
+		return fmt.Errorf("network identifier is nil")
+	}
+	if len(subnets) == 0 {
+		return nil
+	}
+
+	storageKey := fmt.Sprintf("%s:%s:%s", networksKey, networkIdentifier.GetSupportedCloud().String(), networkIdentifier.GetName())
+
+	members := make([]string, 0, len(subnets))
+	for _, subnet := range subnets {
+		if subnet != nil && subnet.Cidr != nil && subnet.Cidr.Value != "" {
+			members = append(members, subnet.Cidr.Value)
+		}
+	}
+
+	if len(members) == 0 {
+		return nil
+	}
+
+	// Remove from reserved networks in one go
+	err := n.valkeyClient.Do(ctx, n.valkeyClient.B().Srem().Key(storageKey).Member(members...).Build()).Error()
+	if err != nil {
+		return fmt.Errorf("failed to free networks: %w", err)
 	}
 
 	return nil

@@ -39,22 +39,22 @@ var (
 	_ = crossplane.SupportedCloud(0)
 )
 
-// Validate checks the field values on NightlyCloudStroppy with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *NightlyCloudStroppy) Validate() error {
+// Validate checks the field values on Workflows with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Workflows) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on NightlyCloudStroppy with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// NightlyCloudStroppyMultiError, or nil if none found.
-func (m *NightlyCloudStroppy) ValidateAll() error {
+// ValidateAll checks the field values on Workflows with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in WorkflowsMultiError, or nil
+// if none found.
+func (m *Workflows) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *NightlyCloudStroppy) validate(all bool) error {
+func (m *Workflows) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -62,19 +62,18 @@ func (m *NightlyCloudStroppy) validate(all bool) error {
 	var errors []error
 
 	if len(errors) > 0 {
-		return NightlyCloudStroppyMultiError(errors)
+		return WorkflowsMultiError(errors)
 	}
 
 	return nil
 }
 
-// NightlyCloudStroppyMultiError is an error wrapping multiple validation
-// errors returned by NightlyCloudStroppy.ValidateAll() if the designated
-// constraints aren't met.
-type NightlyCloudStroppyMultiError []error
+// WorkflowsMultiError is an error wrapping multiple validation errors returned
+// by Workflows.ValidateAll() if the designated constraints aren't met.
+type WorkflowsMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m NightlyCloudStroppyMultiError) Error() string {
+func (m WorkflowsMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -83,11 +82,11 @@ func (m NightlyCloudStroppyMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m NightlyCloudStroppyMultiError) AllErrors() []error { return m }
+func (m WorkflowsMultiError) AllErrors() []error { return m }
 
-// NightlyCloudStroppyValidationError is the validation error returned by
-// NightlyCloudStroppy.Validate if the designated constraints aren't met.
-type NightlyCloudStroppyValidationError struct {
+// WorkflowsValidationError is the validation error returned by
+// Workflows.Validate if the designated constraints aren't met.
+type WorkflowsValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -95,24 +94,22 @@ type NightlyCloudStroppyValidationError struct {
 }
 
 // Field function returns field value.
-func (e NightlyCloudStroppyValidationError) Field() string { return e.field }
+func (e WorkflowsValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e NightlyCloudStroppyValidationError) Reason() string { return e.reason }
+func (e WorkflowsValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e NightlyCloudStroppyValidationError) Cause() error { return e.cause }
+func (e WorkflowsValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e NightlyCloudStroppyValidationError) Key() bool { return e.key }
+func (e WorkflowsValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e NightlyCloudStroppyValidationError) ErrorName() string {
-	return "NightlyCloudStroppyValidationError"
-}
+func (e WorkflowsValidationError) ErrorName() string { return "WorkflowsValidationError" }
 
 // Error satisfies the builtin error interface
-func (e NightlyCloudStroppyValidationError) Error() string {
+func (e WorkflowsValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -124,14 +121,14 @@ func (e NightlyCloudStroppyValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sNightlyCloudStroppy.%s: %s%s",
+		"invalid %sWorkflows.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = NightlyCloudStroppyValidationError{}
+var _ error = WorkflowsValidationError{}
 
 var _ interface {
 	Field() string
@@ -139,33 +136,351 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = NightlyCloudStroppyValidationError{}
+} = WorkflowsValidationError{}
 
-// Validate checks the field values on NightlyCloudStroppy_Input with the rules
-// defined in the proto definition for this message. If any rules are
+// Validate checks the field values on Workflows_StroppyTestSuite with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *NightlyCloudStroppy_Input) Validate() error {
+func (m *Workflows_StroppyTestSuite) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on NightlyCloudStroppy_Input with the
+// ValidateAll checks the field values on Workflows_StroppyTestSuite with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// NightlyCloudStroppy_InputMultiError, or nil if none found.
-func (m *NightlyCloudStroppy_Input) ValidateAll() error {
+// Workflows_StroppyTestSuiteMultiError, or nil if none found.
+func (m *Workflows_StroppyTestSuite) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *NightlyCloudStroppy_Input) validate(all bool) error {
+func (m *Workflows_StroppyTestSuite) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	if _, ok := crossplane.SupportedCloud_name[int32(m.GetCloud())]; !ok {
-		err := NightlyCloudStroppy_InputValidationError{
-			field:  "Cloud",
+	if len(errors) > 0 {
+		return Workflows_StroppyTestSuiteMultiError(errors)
+	}
+
+	return nil
+}
+
+// Workflows_StroppyTestSuiteMultiError is an error wrapping multiple
+// validation errors returned by Workflows_StroppyTestSuite.ValidateAll() if
+// the designated constraints aren't met.
+type Workflows_StroppyTestSuiteMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Workflows_StroppyTestSuiteMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Workflows_StroppyTestSuiteMultiError) AllErrors() []error { return m }
+
+// Workflows_StroppyTestSuiteValidationError is the validation error returned
+// by Workflows_StroppyTestSuite.Validate if the designated constraints aren't met.
+type Workflows_StroppyTestSuiteValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Workflows_StroppyTestSuiteValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Workflows_StroppyTestSuiteValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Workflows_StroppyTestSuiteValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Workflows_StroppyTestSuiteValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Workflows_StroppyTestSuiteValidationError) ErrorName() string {
+	return "Workflows_StroppyTestSuiteValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Workflows_StroppyTestSuiteValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sWorkflows_StroppyTestSuite.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Workflows_StroppyTestSuiteValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Workflows_StroppyTestSuiteValidationError{}
+
+// Validate checks the field values on Workflows_StroppyTest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Workflows_StroppyTest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Workflows_StroppyTest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Workflows_StroppyTestMultiError, or nil if none found.
+func (m *Workflows_StroppyTest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Workflows_StroppyTest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return Workflows_StroppyTestMultiError(errors)
+	}
+
+	return nil
+}
+
+// Workflows_StroppyTestMultiError is an error wrapping multiple validation
+// errors returned by Workflows_StroppyTest.ValidateAll() if the designated
+// constraints aren't met.
+type Workflows_StroppyTestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Workflows_StroppyTestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Workflows_StroppyTestMultiError) AllErrors() []error { return m }
+
+// Workflows_StroppyTestValidationError is the validation error returned by
+// Workflows_StroppyTest.Validate if the designated constraints aren't met.
+type Workflows_StroppyTestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Workflows_StroppyTestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Workflows_StroppyTestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Workflows_StroppyTestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Workflows_StroppyTestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Workflows_StroppyTestValidationError) ErrorName() string {
+	return "Workflows_StroppyTestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Workflows_StroppyTestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sWorkflows_StroppyTest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Workflows_StroppyTestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Workflows_StroppyTestValidationError{}
+
+// Validate checks the field values on Workflows_Provision with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Workflows_Provision) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Workflows_Provision with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Workflows_ProvisionMultiError, or nil if none found.
+func (m *Workflows_Provision) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Workflows_Provision) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return Workflows_ProvisionMultiError(errors)
+	}
+
+	return nil
+}
+
+// Workflows_ProvisionMultiError is an error wrapping multiple validation
+// errors returned by Workflows_Provision.ValidateAll() if the designated
+// constraints aren't met.
+type Workflows_ProvisionMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Workflows_ProvisionMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Workflows_ProvisionMultiError) AllErrors() []error { return m }
+
+// Workflows_ProvisionValidationError is the validation error returned by
+// Workflows_Provision.Validate if the designated constraints aren't met.
+type Workflows_ProvisionValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Workflows_ProvisionValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Workflows_ProvisionValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Workflows_ProvisionValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Workflows_ProvisionValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Workflows_ProvisionValidationError) ErrorName() string {
+	return "Workflows_ProvisionValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Workflows_ProvisionValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sWorkflows_Provision.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Workflows_ProvisionValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Workflows_ProvisionValidationError{}
+
+// Validate checks the field values on Workflows_StroppyTestSuite_Input with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *Workflows_StroppyTestSuite_Input) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Workflows_StroppyTestSuite_Input with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// Workflows_StroppyTestSuite_InputMultiError, or nil if none found.
+func (m *Workflows_StroppyTestSuite_Input) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Workflows_StroppyTestSuite_Input) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetHatchetUrl()) < 1 {
+		err := Workflows_StroppyTestSuite_InputValidationError{
+			field:  "HatchetUrl",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := crossplane.SupportedCloud_name[int32(m.GetSupportedCloud())]; !ok {
+		err := Workflows_StroppyTestSuite_InputValidationError{
+			field:  "SupportedCloud",
 			reason: "value must be one of the defined enum values",
 		}
 		if !all {
@@ -174,29 +489,40 @@ func (m *NightlyCloudStroppy_Input) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if m.GetSuite() == nil {
+		err := Workflows_StroppyTestSuite_InputValidationError{
+			field:  "Suite",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if all {
-		switch v := interface{}(m.GetTestSuite()).(type) {
+		switch v := interface{}(m.GetSuite()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, NightlyCloudStroppy_InputValidationError{
-					field:  "TestSuite",
+				errors = append(errors, Workflows_StroppyTestSuite_InputValidationError{
+					field:  "Suite",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, NightlyCloudStroppy_InputValidationError{
-					field:  "TestSuite",
+				errors = append(errors, Workflows_StroppyTestSuite_InputValidationError{
+					field:  "Suite",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetTestSuite()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetSuite()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return NightlyCloudStroppy_InputValidationError{
-				field:  "TestSuite",
+			return Workflows_StroppyTestSuite_InputValidationError{
+				field:  "Suite",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -204,19 +530,20 @@ func (m *NightlyCloudStroppy_Input) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return NightlyCloudStroppy_InputMultiError(errors)
+		return Workflows_StroppyTestSuite_InputMultiError(errors)
 	}
 
 	return nil
 }
 
-// NightlyCloudStroppy_InputMultiError is an error wrapping multiple validation
-// errors returned by NightlyCloudStroppy_Input.ValidateAll() if the
-// designated constraints aren't met.
-type NightlyCloudStroppy_InputMultiError []error
+// Workflows_StroppyTestSuite_InputMultiError is an error wrapping multiple
+// validation errors returned by
+// Workflows_StroppyTestSuite_Input.ValidateAll() if the designated
+// constraints aren't met.
+type Workflows_StroppyTestSuite_InputMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m NightlyCloudStroppy_InputMultiError) Error() string {
+func (m Workflows_StroppyTestSuite_InputMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -225,11 +552,12 @@ func (m NightlyCloudStroppy_InputMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m NightlyCloudStroppy_InputMultiError) AllErrors() []error { return m }
+func (m Workflows_StroppyTestSuite_InputMultiError) AllErrors() []error { return m }
 
-// NightlyCloudStroppy_InputValidationError is the validation error returned by
-// NightlyCloudStroppy_Input.Validate if the designated constraints aren't met.
-type NightlyCloudStroppy_InputValidationError struct {
+// Workflows_StroppyTestSuite_InputValidationError is the validation error
+// returned by Workflows_StroppyTestSuite_Input.Validate if the designated
+// constraints aren't met.
+type Workflows_StroppyTestSuite_InputValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -237,24 +565,24 @@ type NightlyCloudStroppy_InputValidationError struct {
 }
 
 // Field function returns field value.
-func (e NightlyCloudStroppy_InputValidationError) Field() string { return e.field }
+func (e Workflows_StroppyTestSuite_InputValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e NightlyCloudStroppy_InputValidationError) Reason() string { return e.reason }
+func (e Workflows_StroppyTestSuite_InputValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e NightlyCloudStroppy_InputValidationError) Cause() error { return e.cause }
+func (e Workflows_StroppyTestSuite_InputValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e NightlyCloudStroppy_InputValidationError) Key() bool { return e.key }
+func (e Workflows_StroppyTestSuite_InputValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e NightlyCloudStroppy_InputValidationError) ErrorName() string {
-	return "NightlyCloudStroppy_InputValidationError"
+func (e Workflows_StroppyTestSuite_InputValidationError) ErrorName() string {
+	return "Workflows_StroppyTestSuite_InputValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e NightlyCloudStroppy_InputValidationError) Error() string {
+func (e Workflows_StroppyTestSuite_InputValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -266,14 +594,14 @@ func (e NightlyCloudStroppy_InputValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sNightlyCloudStroppy_Input.%s: %s%s",
+		"invalid %sWorkflows_StroppyTestSuite_Input.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = NightlyCloudStroppy_InputValidationError{}
+var _ error = Workflows_StroppyTestSuite_InputValidationError{}
 
 var _ interface {
 	Field() string
@@ -281,24 +609,25 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = NightlyCloudStroppy_InputValidationError{}
+} = Workflows_StroppyTestSuite_InputValidationError{}
 
-// Validate checks the field values on NightlyCloudStroppy_Output with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *NightlyCloudStroppy_Output) Validate() error {
+// Validate checks the field values on Workflows_StroppyTestSuite_Output with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *Workflows_StroppyTestSuite_Output) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on NightlyCloudStroppy_Output with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// NightlyCloudStroppy_OutputMultiError, or nil if none found.
-func (m *NightlyCloudStroppy_Output) ValidateAll() error {
+// ValidateAll checks the field values on Workflows_StroppyTestSuite_Output
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// Workflows_StroppyTestSuite_OutputMultiError, or nil if none found.
+func (m *Workflows_StroppyTestSuite_Output) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *NightlyCloudStroppy_Output) validate(all bool) error {
+func (m *Workflows_StroppyTestSuite_Output) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -306,7 +635,7 @@ func (m *NightlyCloudStroppy_Output) validate(all bool) error {
 	var errors []error
 
 	if m.GetResults() == nil {
-		err := NightlyCloudStroppy_OutputValidationError{
+		err := Workflows_StroppyTestSuite_OutputValidationError{
 			field:  "Results",
 			reason: "value is required",
 		}
@@ -320,7 +649,7 @@ func (m *NightlyCloudStroppy_Output) validate(all bool) error {
 		switch v := interface{}(m.GetResults()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, NightlyCloudStroppy_OutputValidationError{
+				errors = append(errors, Workflows_StroppyTestSuite_OutputValidationError{
 					field:  "Results",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -328,7 +657,7 @@ func (m *NightlyCloudStroppy_Output) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, NightlyCloudStroppy_OutputValidationError{
+				errors = append(errors, Workflows_StroppyTestSuite_OutputValidationError{
 					field:  "Results",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -337,7 +666,7 @@ func (m *NightlyCloudStroppy_Output) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetResults()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return NightlyCloudStroppy_OutputValidationError{
+			return Workflows_StroppyTestSuite_OutputValidationError{
 				field:  "Results",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -346,19 +675,20 @@ func (m *NightlyCloudStroppy_Output) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return NightlyCloudStroppy_OutputMultiError(errors)
+		return Workflows_StroppyTestSuite_OutputMultiError(errors)
 	}
 
 	return nil
 }
 
-// NightlyCloudStroppy_OutputMultiError is an error wrapping multiple
-// validation errors returned by NightlyCloudStroppy_Output.ValidateAll() if
-// the designated constraints aren't met.
-type NightlyCloudStroppy_OutputMultiError []error
+// Workflows_StroppyTestSuite_OutputMultiError is an error wrapping multiple
+// validation errors returned by
+// Workflows_StroppyTestSuite_Output.ValidateAll() if the designated
+// constraints aren't met.
+type Workflows_StroppyTestSuite_OutputMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m NightlyCloudStroppy_OutputMultiError) Error() string {
+func (m Workflows_StroppyTestSuite_OutputMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -367,11 +697,12 @@ func (m NightlyCloudStroppy_OutputMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m NightlyCloudStroppy_OutputMultiError) AllErrors() []error { return m }
+func (m Workflows_StroppyTestSuite_OutputMultiError) AllErrors() []error { return m }
 
-// NightlyCloudStroppy_OutputValidationError is the validation error returned
-// by NightlyCloudStroppy_Output.Validate if the designated constraints aren't met.
-type NightlyCloudStroppy_OutputValidationError struct {
+// Workflows_StroppyTestSuite_OutputValidationError is the validation error
+// returned by Workflows_StroppyTestSuite_Output.Validate if the designated
+// constraints aren't met.
+type Workflows_StroppyTestSuite_OutputValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -379,24 +710,24 @@ type NightlyCloudStroppy_OutputValidationError struct {
 }
 
 // Field function returns field value.
-func (e NightlyCloudStroppy_OutputValidationError) Field() string { return e.field }
+func (e Workflows_StroppyTestSuite_OutputValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e NightlyCloudStroppy_OutputValidationError) Reason() string { return e.reason }
+func (e Workflows_StroppyTestSuite_OutputValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e NightlyCloudStroppy_OutputValidationError) Cause() error { return e.cause }
+func (e Workflows_StroppyTestSuite_OutputValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e NightlyCloudStroppy_OutputValidationError) Key() bool { return e.key }
+func (e Workflows_StroppyTestSuite_OutputValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e NightlyCloudStroppy_OutputValidationError) ErrorName() string {
-	return "NightlyCloudStroppy_OutputValidationError"
+func (e Workflows_StroppyTestSuite_OutputValidationError) ErrorName() string {
+	return "Workflows_StroppyTestSuite_OutputValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e NightlyCloudStroppy_OutputValidationError) Error() string {
+func (e Workflows_StroppyTestSuite_OutputValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -408,14 +739,14 @@ func (e NightlyCloudStroppy_OutputValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sNightlyCloudStroppy_Output.%s: %s%s",
+		"invalid %sWorkflows_StroppyTestSuite_Output.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = NightlyCloudStroppy_OutputValidationError{}
+var _ error = Workflows_StroppyTestSuite_OutputValidationError{}
 
 var _ interface {
 	Field() string
@@ -423,4 +754,683 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = NightlyCloudStroppy_OutputValidationError{}
+} = Workflows_StroppyTestSuite_OutputValidationError{}
+
+// Validate checks the field values on Workflows_StroppyTest_Input with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Workflows_StroppyTest_Input) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Workflows_StroppyTest_Input with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Workflows_StroppyTest_InputMultiError, or nil if none found.
+func (m *Workflows_StroppyTest_Input) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Workflows_StroppyTest_Input) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetCommon() == nil {
+		err := Workflows_StroppyTest_InputValidationError{
+			field:  "Common",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetCommon()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Workflows_StroppyTest_InputValidationError{
+					field:  "Common",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Workflows_StroppyTest_InputValidationError{
+					field:  "Common",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCommon()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Workflows_StroppyTest_InputValidationError{
+				field:  "Common",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetTest() == nil {
+		err := Workflows_StroppyTest_InputValidationError{
+			field:  "Test",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTest()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Workflows_StroppyTest_InputValidationError{
+					field:  "Test",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Workflows_StroppyTest_InputValidationError{
+					field:  "Test",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTest()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Workflows_StroppyTest_InputValidationError{
+				field:  "Test",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Workflows_StroppyTest_InputMultiError(errors)
+	}
+
+	return nil
+}
+
+// Workflows_StroppyTest_InputMultiError is an error wrapping multiple
+// validation errors returned by Workflows_StroppyTest_Input.ValidateAll() if
+// the designated constraints aren't met.
+type Workflows_StroppyTest_InputMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Workflows_StroppyTest_InputMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Workflows_StroppyTest_InputMultiError) AllErrors() []error { return m }
+
+// Workflows_StroppyTest_InputValidationError is the validation error returned
+// by Workflows_StroppyTest_Input.Validate if the designated constraints
+// aren't met.
+type Workflows_StroppyTest_InputValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Workflows_StroppyTest_InputValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Workflows_StroppyTest_InputValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Workflows_StroppyTest_InputValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Workflows_StroppyTest_InputValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Workflows_StroppyTest_InputValidationError) ErrorName() string {
+	return "Workflows_StroppyTest_InputValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Workflows_StroppyTest_InputValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sWorkflows_StroppyTest_Input.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Workflows_StroppyTest_InputValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Workflows_StroppyTest_InputValidationError{}
+
+// Validate checks the field values on Workflows_StroppyTest_Output with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Workflows_StroppyTest_Output) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Workflows_StroppyTest_Output with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Workflows_StroppyTest_OutputMultiError, or nil if none found.
+func (m *Workflows_StroppyTest_Output) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Workflows_StroppyTest_Output) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetResult() == nil {
+		err := Workflows_StroppyTest_OutputValidationError{
+			field:  "Result",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetResult()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Workflows_StroppyTest_OutputValidationError{
+					field:  "Result",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Workflows_StroppyTest_OutputValidationError{
+					field:  "Result",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetResult()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Workflows_StroppyTest_OutputValidationError{
+				field:  "Result",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Workflows_StroppyTest_OutputMultiError(errors)
+	}
+
+	return nil
+}
+
+// Workflows_StroppyTest_OutputMultiError is an error wrapping multiple
+// validation errors returned by Workflows_StroppyTest_Output.ValidateAll() if
+// the designated constraints aren't met.
+type Workflows_StroppyTest_OutputMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Workflows_StroppyTest_OutputMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Workflows_StroppyTest_OutputMultiError) AllErrors() []error { return m }
+
+// Workflows_StroppyTest_OutputValidationError is the validation error returned
+// by Workflows_StroppyTest_Output.Validate if the designated constraints
+// aren't met.
+type Workflows_StroppyTest_OutputValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Workflows_StroppyTest_OutputValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Workflows_StroppyTest_OutputValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Workflows_StroppyTest_OutputValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Workflows_StroppyTest_OutputValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Workflows_StroppyTest_OutputValidationError) ErrorName() string {
+	return "Workflows_StroppyTest_OutputValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Workflows_StroppyTest_OutputValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sWorkflows_StroppyTest_Output.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Workflows_StroppyTest_OutputValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Workflows_StroppyTest_OutputValidationError{}
+
+// Validate checks the field values on Workflows_Provision_Input with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Workflows_Provision_Input) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Workflows_Provision_Input with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Workflows_Provision_InputMultiError, or nil if none found.
+func (m *Workflows_Provision_Input) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Workflows_Provision_Input) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetCommon() == nil {
+		err := Workflows_Provision_InputValidationError{
+			field:  "Common",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetCommon()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Workflows_Provision_InputValidationError{
+					field:  "Common",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Workflows_Provision_InputValidationError{
+					field:  "Common",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCommon()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Workflows_Provision_InputValidationError{
+				field:  "Common",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetEdgeWorkersSet() == nil {
+		err := Workflows_Provision_InputValidationError{
+			field:  "EdgeWorkersSet",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetEdgeWorkersSet()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Workflows_Provision_InputValidationError{
+					field:  "EdgeWorkersSet",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Workflows_Provision_InputValidationError{
+					field:  "EdgeWorkersSet",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetEdgeWorkersSet()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Workflows_Provision_InputValidationError{
+				field:  "EdgeWorkersSet",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Workflows_Provision_InputMultiError(errors)
+	}
+
+	return nil
+}
+
+// Workflows_Provision_InputMultiError is an error wrapping multiple validation
+// errors returned by Workflows_Provision_Input.ValidateAll() if the
+// designated constraints aren't met.
+type Workflows_Provision_InputMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Workflows_Provision_InputMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Workflows_Provision_InputMultiError) AllErrors() []error { return m }
+
+// Workflows_Provision_InputValidationError is the validation error returned by
+// Workflows_Provision_Input.Validate if the designated constraints aren't met.
+type Workflows_Provision_InputValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Workflows_Provision_InputValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Workflows_Provision_InputValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Workflows_Provision_InputValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Workflows_Provision_InputValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Workflows_Provision_InputValidationError) ErrorName() string {
+	return "Workflows_Provision_InputValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Workflows_Provision_InputValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sWorkflows_Provision_Input.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Workflows_Provision_InputValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Workflows_Provision_InputValidationError{}
+
+// Validate checks the field values on Workflows_Provision_Output with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Workflows_Provision_Output) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Workflows_Provision_Output with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Workflows_Provision_OutputMultiError, or nil if none found.
+func (m *Workflows_Provision_Output) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Workflows_Provision_Output) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetDeployment()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Workflows_Provision_OutputValidationError{
+					field:  "Deployment",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Workflows_Provision_OutputValidationError{
+					field:  "Deployment",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeployment()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Workflows_Provision_OutputValidationError{
+				field:  "Deployment",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetDeployedEdgeWorkers() == nil {
+		err := Workflows_Provision_OutputValidationError{
+			field:  "DeployedEdgeWorkers",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetDeployedEdgeWorkers()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Workflows_Provision_OutputValidationError{
+					field:  "DeployedEdgeWorkers",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Workflows_Provision_OutputValidationError{
+					field:  "DeployedEdgeWorkers",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeployedEdgeWorkers()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Workflows_Provision_OutputValidationError{
+				field:  "DeployedEdgeWorkers",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Workflows_Provision_OutputMultiError(errors)
+	}
+
+	return nil
+}
+
+// Workflows_Provision_OutputMultiError is an error wrapping multiple
+// validation errors returned by Workflows_Provision_Output.ValidateAll() if
+// the designated constraints aren't met.
+type Workflows_Provision_OutputMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Workflows_Provision_OutputMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Workflows_Provision_OutputMultiError) AllErrors() []error { return m }
+
+// Workflows_Provision_OutputValidationError is the validation error returned
+// by Workflows_Provision_Output.Validate if the designated constraints aren't met.
+type Workflows_Provision_OutputValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Workflows_Provision_OutputValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Workflows_Provision_OutputValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Workflows_Provision_OutputValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Workflows_Provision_OutputValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Workflows_Provision_OutputValidationError) ErrorName() string {
+	return "Workflows_Provision_OutputValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Workflows_Provision_OutputValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sWorkflows_Provision_Output.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Workflows_Provision_OutputValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Workflows_Provision_OutputValidationError{}

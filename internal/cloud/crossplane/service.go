@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stroppy-io/hatchet-workflow/internal/cloud/crossplane/k8s"
+	"github.com/stroppy-io/hatchet-workflow/internal/cloud/deployment"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -43,9 +44,9 @@ func NewService(
 
 func (c *Service) CreateDeployment(
 	ctx context.Context,
-	deployment *crossplane.Deployment,
+	depl *crossplane.Deployment,
 ) (*crossplane.Deployment, error) {
-	for _, resource := range deployment.GetCloudDetails().GetResources() {
+	for _, resource := range deployment.GetDeploymentResources(depl) {
 		resource.Status = crossplane.Resource_STATUS_CREATING
 		resource.CreatedAt = timestamppb.Now()
 		resource.UpdatedAt = timestamppb.Now()
@@ -54,14 +55,14 @@ func (c *Service) CreateDeployment(
 			return nil, err
 		}
 	}
-	return deployment, nil
+	return depl, nil
 }
 
 func (c *Service) ProcessDeploymentStatus(
 	ctx context.Context,
-	deployment *crossplane.Deployment,
+	depl *crossplane.Deployment,
 ) (*crossplane.Deployment, error) {
-	for _, oldResource := range deployment.GetCloudDetails().GetResources() {
+	for _, oldResource := range deployment.GetDeploymentResources(depl) {
 		newResource, err := c.k8sActor.UpdateResourceFromRemote(ctx, oldResource)
 		if err != nil {
 			if errors.Is(err, k8s.ErrResourceNotFound) {
@@ -97,14 +98,14 @@ func (c *Service) ProcessDeploymentStatus(
 			}
 		}
 	}
-	return deployment, nil
+	return depl, nil
 }
 
 func (c *Service) DestroyDeployment(
 	ctx context.Context,
-	deployment *crossplane.Deployment,
+	depl *crossplane.Deployment,
 ) error {
-	for _, node := range deployment.GetCloudDetails().GetResources() {
+	for _, node := range deployment.GetDeploymentResources(depl) {
 		node.Status = crossplane.Resource_STATUS_DESTROYING
 		err := c.k8sActor.DeleteResource(ctx, node.GetRef())
 		if err != nil {

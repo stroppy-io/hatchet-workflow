@@ -9,67 +9,60 @@ import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane";
 
-message MachineInfo {
+message Hardware {
     uint32 cores = 1; // in cores
     uint32 memory = 2; // in GB
     uint32 disk = 3; // in GB
-    string base_image_id = 5 [(validate.rules).string.min_len = 1];
 }
 
-message Quota {
-    enum Kind {
-        KIND_UNSPECIFIED = 0;
-        KIND_NETWORK = 1;
-        KIND_SUBNET = 2;
-        KIND_VM = 3;
-        KIND_PUBLIC_IP_ADDRESS = 4;
+message Vm {
+    message Template {
+        Identifier identifier = 1 [(validate.rules).message.required = true];
+        Hardware hardware = 2 [(validate.rules).message.required = true];
+        string base_image_id = 5 [(validate.rules).string.min_len = 1];
+        Ip internal_ip = 6 [(validate.rules).message.required = true];
+        bool public_ip = 7;
+        optional string external_ip = 8; // if public_ip == true
+        CloudInit cloud_init = 9 [(validate.rules).message.required = true];
+        map<string, string> labels = 4;
     }
-    message List {repeated Quota quotas = 1;}
-    crossplane.SupportedCloud cloud = 1 [(validate.rules).enum.defined_only = true];
-    Kind kind = 2 [(validate.rules).enum.defined_only = true];
-    uint32 maximum = 4 [(validate.rules).uint32.gte = 0];
-    uint32 current = 5 [(validate.rules).uint32.gte = 0];
+    Template template = 1 [(validate.rules).message.required = true];
+    Resource resource = 4 [(validate.rules).message.required = true];
+}
+
+message Subnet {
+    message Template {
+        Identifier identifier = 1 [(validate.rules).message.required = true];
+        Cidr cidr = 2 [(validate.rules).message.required = true];
+        repeated Ip ips = 3 [(validate.rules).repeated.min_items = 1];
+        map<string, string> labels = 4;
+    }
+    Template template = 1 [(validate.rules).message.required = true];
+    Resource resource = 4 [(validate.rules).message.required = true];
+}
+
+message Network {
+    message Template {
+        Identifier identifier = 1 [(validate.rules).message.required = true];
+        string external_id = 2 [(validate.rules).string.min_len = 1];
+        repeated Subnet.Template subnets = 3 [(validate.rules).repeated.min_items = 1];
+        map<string, string> labels = 4;
+    }
+    Template template = 1 [(validate.rules).message.required = true];
+    Resource resource = 3 [(validate.rules).message.required = true];
+    repeated Subnet subnets = 4 [(validate.rules).repeated.min_items = 1];
 }
 
 message Deployment {
-    message Request {
-        string name = 1 [(validate.rules).string.min_len = 1];
-        SupportedCloud supported_cloud = 2 [(validate.rules).enum.defined_only = true];
-        MachineInfo machine_info = 3 [(validate.rules).message.required = true];
-        CloudInit cloud_init = 4 [(validate.rules).message.required = true];
-        map<string, string> labels = 6;
+    message Template {
+        Identifier identifier = 1 [(validate.rules).message.required = true];
+        Network.Template network_template = 2 [(validate.rules).message.required = true];
+        repeated Vm.Template vm_templates = 3 [(validate.rules).repeated.min_items = 1];
+        map<string, string> labels = 7;
     }
-    message Vm {
-        message NetworkParams {
-            Ip internal_ip = 1 [(validate.rules).message.required = true];
-            Cidr assigned_cidr = 2 [(validate.rules).message.required = true];
-            bool public_ip = 3;
-            optional string external_ip = 4; // if public_ip == true
-        }
-        MachineInfo machine_info = 4 [(validate.rules).message.required = true];
-        CloudInit cloud_init = 6 [(validate.rules).message.required = true];
-        NetworkParams network_params = 7 [(validate.rules).message.required = true];
-    }
-    message CloudDetails {
-        repeated Quota using_quotas = 1;
-        repeated Resource resources = 2;
-    }
-    string id = 1 [(validate.rules).string.min_len = 1];
-    string name = 2 [(validate.rules).string.min_len = 1];
-    SupportedCloud supported_cloud = 3 [(validate.rules).enum.defined_only = true];
-    Vm vm = 4 [(validate.rules).message.required = true];
-    CloudDetails cloud_details = 5;
-    map<string, string> labels = 6;
+    Template template = 1 [(validate.rules).message.required = true];
+    Network network = 2 [(validate.rules).message.required = true];
+    repeated Vm vms = 3 [(validate.rules).repeated.min_items = 1];
 }
-
-message DeploymentSet {
-    message Request {
-        repeated Deployment.Request requests = 1 [(validate.rules).repeated.min_items = 1];
-        optional Network use_existing_network = 5;
-    }
-    Network network = 1 [(validate.rules).message.required = true];
-    repeated Deployment deployments = 2 [(validate.rules).repeated.min_items = 1];
-}
-
 
 

@@ -156,6 +156,106 @@ func (m *Postgres_Sidecar) validate(all bool) error {
 
 	var errors []error
 
+	oneofSidecarPresent := false
+	switch v := m.Sidecar.(type) {
+	case *Postgres_Sidecar_PostgresExporter_:
+		if v == nil {
+			err := Postgres_SidecarValidationError{
+				field:  "Sidecar",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofSidecarPresent = true
+
+		if all {
+			switch v := interface{}(m.GetPostgresExporter()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Postgres_SidecarValidationError{
+						field:  "PostgresExporter",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Postgres_SidecarValidationError{
+						field:  "PostgresExporter",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPostgresExporter()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Postgres_SidecarValidationError{
+					field:  "PostgresExporter",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Postgres_Sidecar_PgbouncerExporter_:
+		if v == nil {
+			err := Postgres_SidecarValidationError{
+				field:  "Sidecar",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofSidecarPresent = true
+
+		if all {
+			switch v := interface{}(m.GetPgbouncerExporter()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Postgres_SidecarValidationError{
+						field:  "PgbouncerExporter",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Postgres_SidecarValidationError{
+						field:  "PgbouncerExporter",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPgbouncerExporter()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Postgres_SidecarValidationError{
+					field:  "PgbouncerExporter",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	default:
+		_ = v // ensures v is used
+	}
+	if !oneofSidecarPresent {
+		err := Postgres_SidecarValidationError{
+			field:  "Sidecar",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return Postgres_SidecarMultiError(errors)
 	}
@@ -450,6 +550,159 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = Postgres_InstanceSettingsValidationError{}
+
+// Validate checks the field values on Postgres_Instance with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Postgres_Instance) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Postgres_Instance with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Postgres_InstanceMultiError, or nil if none found.
+func (m *Postgres_Instance) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Postgres_Instance) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetVersion()) < 1 {
+		err := Postgres_InstanceValidationError{
+			field:  "Version",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetSettings() == nil {
+		err := Postgres_InstanceValidationError{
+			field:  "Settings",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetSettings()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Postgres_InstanceValidationError{
+					field:  "Settings",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Postgres_InstanceValidationError{
+					field:  "Settings",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSettings()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Postgres_InstanceValidationError{
+				field:  "Settings",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Postgres_InstanceMultiError(errors)
+	}
+
+	return nil
+}
+
+// Postgres_InstanceMultiError is an error wrapping multiple validation errors
+// returned by Postgres_Instance.ValidateAll() if the designated constraints
+// aren't met.
+type Postgres_InstanceMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Postgres_InstanceMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Postgres_InstanceMultiError) AllErrors() []error { return m }
+
+// Postgres_InstanceValidationError is the validation error returned by
+// Postgres_Instance.Validate if the designated constraints aren't met.
+type Postgres_InstanceValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Postgres_InstanceValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Postgres_InstanceValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Postgres_InstanceValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Postgres_InstanceValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Postgres_InstanceValidationError) ErrorName() string {
+	return "Postgres_InstanceValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Postgres_InstanceValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPostgres_Instance.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Postgres_InstanceValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Postgres_InstanceValidationError{}
 
 // Validate checks the field values on Postgres_Sidecar_PostgresExporter with
 // the rules defined in the proto definition for this message. If any rules

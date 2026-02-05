@@ -26,6 +26,22 @@ message ResourceDef {
     Spec spec = 4 [(validate.rules).message.required = true];
 }
 
+message Quota {
+    enum Kind {
+        KIND_UNSPECIFIED = 0;
+        KIND_NETWORK = 1;
+        KIND_SUBNET = 2;
+        KIND_VM = 3;
+        KIND_PUBLIC_IP_ADDRESS = 4;
+    }
+    message List {repeated Quota quotas = 1;}
+    crossplane.SupportedCloud cloud = 1 [(validate.rules).enum.defined_only = true];
+    Kind kind = 2 [(validate.rules).enum.defined_only = true];
+    uint32 maximum = 4 [(validate.rules).uint32.gte = 0];
+    uint32 current = 5 [(validate.rules).uint32.gte = 0];
+}
+
+
 message Resource {
     enum Status {
         STATUS_UNSPECIFIED = 0;
@@ -45,4 +61,5 @@ message Resource {
     bool ready = 8; // crossplane default statuses
     string external_id = 9; // crossplane default statuses
     ResourceDef resource_def = 10 [(validate.rules).message.required = true];
+    repeated Quota using_quotas = 11;
 }

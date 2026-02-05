@@ -157,14 +157,6 @@ func (m *Database) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if m.Name != nil {
-		// no validation rules for Name
-	}
-
-	if m.Description != nil {
-		// no validation rules for Description
-	}
-
 	if len(errors) > 0 {
 		return DatabaseMultiError(errors)
 	}

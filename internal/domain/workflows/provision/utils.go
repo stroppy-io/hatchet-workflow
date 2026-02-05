@@ -1,45 +1,23 @@
-package provisioning
+package provision
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
 	"github.com/sourcegraph/conc/pool"
-	valkeygo "github.com/valkey-io/valkey-go"
-)
-
-const (
-	K8SConfigPath = "K8S_CONFIG_PATH"
-	ValkeyUrl     = "VALKEY_URL"
+	"github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet"
 )
 
 var ErrWorkerNotUp = errors.New("worker not up")
 
-func valkeyFromEnv() (valkeygo.Client, error) {
-	urlStr := os.Getenv(ValkeyUrl)
-	if urlStr == "" {
-		return nil, fmt.Errorf("environment variable %s is not set", ValkeyUrl)
-	}
-	valkeyUrl, err := valkeygo.ParseURL(urlStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse Valkey URL: %w", err)
-	}
-	valkeyClient, err := valkeygo.NewClient(valkeyUrl)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Valkey client: %w", err)
-	}
-	return valkeyClient, nil
-}
-
-func waitMultipleWorkersUp(hctx hatchetLib.Context, c *hatchetLib.Client, names ...string) error {
+func waitMultipleWorkersUp(hctx hatchetLib.Context, c *hatchetLib.Client, names ...*hatchet.EdgeWorker) error {
 	p := pool.New().WithContext(hctx.GetContext()).WithFailFast().WithCancelOnError().WithFirstError()
 	for _, name := range names {
 		p.Go(func(ctx context.Context) error {
-			return waitWorkerUp(hctx, c, name)
+			return waitWorkerUp(hctx, c, name.GetWorkerName())
 		})
 	}
 	return p.Wait()

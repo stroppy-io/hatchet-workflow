@@ -2,18 +2,61 @@ syntax = "proto3";
 
 package hatchet;
 
+import "crossplane/deployment.proto";
 import "crossplane/types.proto";
-import "validate/validate.proto";
+import "hatchet/edge.proto";
+import "hatchet/hatchet.proto";
 import "stroppy/test.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet";
 
-message NightlyCloudStroppy {
-    message Input {
-        crossplane.SupportedCloud cloud = 1 [(validate.rules).enum.defined_only = true]; // now ony yandex
-        stroppy.TestSuite test_suite = 2;
+
+message Workflows {
+    /*
+        Main workflow for running stroppy test suite
+        This step can request database setup if one of test.database_ref is Database
+    */
+    message StroppyTestSuite {
+        message Input {
+            string hatchet_url = 1 [(validate.rules).string.min_len = 1];
+            crossplane.SupportedCloud supported_cloud = 3 [(validate.rules).enum.defined_only = true];
+            stroppy.TestSuite suite = 4 [(validate.rules).message.required = true];
+        }
+        message Output {
+            stroppy.TestSuiteResult results = 1 [(validate.rules).message.required = true];
+        }
     }
-    message Output {
-        stroppy.TestSuiteResult results = 1 [(validate.rules).message.required = true];
+
+    /*
+        Run single stroppy test
+        This can create single LocalProvision steps for initialize
+    */
+    message StroppyTest {
+        message Input {
+            Common common = 1 [(validate.rules).message.required = true];
+            stroppy.Test test = 4 [(validate.rules).message.required = true];
+        }
+        message Output {
+            stroppy.TestResult result = 1 [(validate.rules).message.required = true];
+        }
+    }
+
+    /*
+        Provision workers using cloud provider
+    */
+    message Provision {
+        message Input {
+            Common common = 1 [(validate.rules).message.required = true];
+            /*
+                EdgeWorker's are built in StroppyTest workflow
+                Workers was deployed in same network|subnet in one cloud provider
+            */
+            EdgeWorkersSet edge_workers_set = 2 [(validate.rules).message.required = true];
+        }
+        message Output {
+            crossplane.Deployment deployment = 1;
+            DeployedEdgeWorkersSet deployed_edge_workers = 2 [(validate.rules).message.required = true];
+        }
     }
 }

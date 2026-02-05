@@ -1,25 +1,25 @@
 package stroppy
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/hatchet-dev/hatchet/pkg/worker/condition"
 	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
 	hatchet_ext "github.com/stroppy-io/hatchet-workflow/internal/core/hatchet-ext"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/ids"
-	"github.com/stroppy-io/hatchet-workflow/internal/core/types"
-	"github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
-	"github.com/stroppy-io/hatchet-workflow/internal/proto/database"
+	"github.com/stroppy-io/hatchet-workflow/internal/domain/test"
+	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/provision"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet"
+	"github.com/stroppy-io/hatchet-workflow/internal/proto/stroppy"
 )
 
 const (
 	TestRunWorkflowName                 = "stroppy-test-run"
 	TestRunValidateInputWorkflowName    = "stroppy-test-run-validate-input"
-	TestRunSetupDatabaseWorkflowName    = "stroppy-test-run-provision-database"
-	TestRunProvisionStroppyWorkflowName = "stroppy-test-run-provision-stroppy"
-	TestRunRunStroppyWorkflowName       = "stroppy-test-run-run-stroppy"
+	TestRunBuildWorkersWorkflowName     = "stroppy-test-run-build-workers"
+	TestRunProvisionWorkersWorkflowName = "stroppy-test-run-provision-workers"
+	TestRunInstallSoftwareWorkflowName  = "stroppy-test-run-install-software"
+	TestRunStroppyWorkflowName          = "stroppy-test-run-stroppy"
 )
 
 func TestRunWorkflow(
@@ -29,12 +29,15 @@ func TestRunWorkflow(
 		TestRunWorkflowName,
 		hatchetLib.WithWorkflowDescription("Stroppy Test Run Workflow"),
 	)
+	/*
+		Validate input
+	*/
 	validateInputTask := workflow.NewTask(
 		TestRunValidateInputWorkflowName,
 		hatchet_ext.WTask(func(
 			ctx hatchetLib.Context,
-			input *hatchet.Tasks_StroppyTest_Input,
-		) (*hatchet.Tasks_StroppyTest_Input, error) {
+			input *hatchet.Workflows_StroppyTest_Input,
+		) (*hatchet.Workflows_StroppyTest_Input, error) {
 			err := input.Validate()
 			if err != nil {
 				return nil, err
@@ -44,70 +47,81 @@ func TestRunWorkflow(
 		hatchetLib.WithSkipIf(condition.Conditions()),
 	)
 
-	provisionDatabaseTask := workflow.NewTask(
-		TestRunSetupDatabaseWorkflowName,
-		hatchet_ext.Ptask(validateInputTask, func(
+	/*
+		Build workers by requested test
+	*/
+	buildWorkersTask := workflow.NewTask(
+		TestRunBuildWorkersWorkflowName,
+		hatchet_ext.WTask(func(
 			ctx hatchetLib.Context,
-			input *hatchet.Tasks_StroppyTest_Input,
-			parentOutput *hatchet.Tasks_StroppyTest_Input,
-		) (*hatchet.Tasks_StroppyTest_Output, error) {
-			var provisionInput *hatchet.Tasks_Provision_Input
-			switch input.GetTest().GetDatabase().GetTopology().(type) {
-			case *database.Database_Standalone:
-				databaseProvisionInput, err := buildProvisionInput(
-					ids.HatchetRunId(ctx.StepRunId()),
-					ids.RunId(input.RunId),
-					"database-deployment-"+ids.HatchetRunId(ctx.StepRunId()).String(),
-					types.WorkerName("database-worker-"+ids.HatchetRunId(ctx.StepRunId()).String()),
-					input.GetSupportedCloud(),
-					&crossplane.MachineInfo{
-						Cores:       input.GetTest().GetDatabase().GetStandalone().GetVmSpec().GetCpu(),
-						Memory:      input.GetTest().GetDatabase().GetStandalone().GetVmSpec().GetMemory(),
-						Disk:        input.GetTest().GetDatabase().GetStandalone().GetVmSpec().GetDisk(),
-						BaseImageId: UbuntuBaseImageId,
-					},
-				)
-				if err != nil {
-					return nil, fmt.Errorf("failed to build provision database input: %w", err)
-				}
-				provisionInput = databaseProvisionInput
-			case *database.Database_Cluster:
-				return nil, errors.Join(ErrUnsupportedDatabaseTopology, ErrClusterNotImplemented)
-			default:
-				return nil, ErrUnsupportedDatabaseTopology
+			input *hatchet.Workflows_StroppyTest_Input,
+		) (*hatchet.EdgeWorkersSet, error) {
+			return test.NewTestWorkers(
+				ids.ParseRunId(input.GetCommon().GetRunId()),
+				input.GetTest(),
+			)
+		}),
+		hatchetLib.WithParents(validateInputTask),
+	)
+
+	/*
+		Provision workers
+	*/
+	provisionWorkersTask := workflow.NewTask(
+		TestRunProvisionWorkersWorkflowName,
+		hatchet_ext.PTask(buildWorkersTask, func(
+			ctx hatchetLib.Context,
+			input *hatchet.Workflows_StroppyTest_Input,
+			parentOutput *hatchet.EdgeWorkersSet,
+		) (*hatchet.DeployedEdgeWorkersSet, error) {
+			wf, err := provision.ProvisionWorkflow(c)
+			if err != nil {
+				return nil, err
 			}
-			return nil, ErrUnsupportedDatabaseTopology
+			wfResult, err := wf.Run(ctx, &hatchet.Workflows_Provision_Input{
+				Common:         input.GetCommon(),
+				EdgeWorkersSet: parentOutput,
+			})
+			if err != nil {
+				return nil, err
+			}
+			var provisionOutput *hatchet.Workflows_Provision_Output
+			if err := wfResult.TaskOutput(provision.WaitWorkerInHatchet).Into(&provisionOutput); err != nil {
+				return nil, fmt.Errorf("failed to get %s output: %w", provision.WaitWorkerInHatchet, err)
+			}
+			return provisionOutput.GetDeployedEdgeWorkers(), nil
 		}),
 		hatchetLib.WithParents(validateInputTask),
-		hatchetLib.WithSkipIf(condition.ParentCondition(
-			validateInputTask,
-			"output.connection_string != \"\"",
-		)),
 	)
 
-	provisionStroppyTask := workflow.NewTask(
-		TestRunProvisionStroppyWorkflowName,
-		hatchet_ext.Ptask(validateInputTask, func(
+	/*
+		Install software on edge workers
+	*/
+	installSoftwareTask := workflow.NewTask(
+		TestRunInstallSoftwareWorkflowName,
+		hatchet_ext.PTask(provisionWorkersTask, func(
 			ctx hatchetLib.Context,
-			input *hatchet.Tasks_StroppyTest_Input,
-			parentOutput *hatchet.Tasks_StroppyTest_Input,
-		) (*hatchet.Tasks_StroppyTest_Output, error) {
-
+			input *hatchet.Workflows_StroppyTest_Input,
+			parentOutput *hatchet.DeployedEdgeWorkersSet,
+		) (*hatchet.DeployedEdgeWorker, error) {
 			return nil, nil
 		}),
-		hatchetLib.WithParents(validateInputTask),
+		hatchetLib.WithParents(provisionWorkersTask),
 	)
 
+	/*
+		Run Stroppy Test
+	*/
 	runStroppyTask := workflow.NewTask(
-		TestRunRunStroppyWorkflowName,
-		hatchet_ext.Ptask(provisionStroppyTask, func(
+		TestRunStroppyWorkflowName,
+		hatchet_ext.PTask(installSoftwareTask, func(
 			ctx hatchetLib.Context,
-			input *hatchet.Tasks_StroppyTest_Input,
-			parentOutput *hatchet.Tasks_StroppyTest_Output,
-		) (*hatchet.Tasks_StroppyTest_Output, error) {
+			input *hatchet.Workflows_StroppyTest_Input,
+			parentOutput *hatchet.DeployedEdgeWorkersSet,
+		) (*stroppy.TestResult, error) {
 			return nil, nil
 		}),
-		hatchetLib.WithParents(provisionStroppyTask, provisionDatabaseTask),
+		hatchetLib.WithParents(installSoftwareTask, provisionStroppyTask),
 	)
 
 	return workflow
