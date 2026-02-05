@@ -1,4 +1,4 @@
-package logger
+package logger //nolint:testpackage // test package
 
 import (
 	"testing"
@@ -7,14 +7,14 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func TestNewDefault(t *testing.T) {
+func TestNewDefault(t *testing.T) { //nolint:paralleltest // global logger
 	logger := newDefault()
 
 	require.NotNil(t, logger)
 	require.True(t, logger.Core().Enabled(zapcore.DebugLevel))
 }
 
-func TestNewZapCfg(t *testing.T) {
+func TestNewZapCfg(t *testing.T) { //nolint:paralleltest // global logger
 	tests := []struct {
 		name     string
 		mod      LogMod
@@ -41,7 +41,7 @@ func TestNewZapCfg(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt := range tests { //nolint:paralleltest // global logger
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := newZapCfg(tt.mod, tt.level)
 			require.Equal(t, tt.expected, cfg.Level.Level())
@@ -49,7 +49,7 @@ func TestNewZapCfg(t *testing.T) {
 	}
 }
 
-func TestNewFromConfig(t *testing.T) {
+func TestNewFromConfig(t *testing.T) { //nolint:paralleltest // global logger
 	config := &Config{
 		LogMod:   DevelopmentMod,
 		LogLevel: zapcore.InfoLevel.String(),
@@ -60,7 +60,7 @@ func TestNewFromConfig(t *testing.T) {
 	require.True(t, logger.Core().Enabled(zapcore.InfoLevel))
 }
 
-func TestGlobal(t *testing.T) {
+func TestGlobal(t *testing.T) { //nolint:paralleltest // global logger
 	logger1 := Global()
 	require.NotNil(t, logger1)
 
@@ -75,9 +75,4 @@ func TestGlobal(t *testing.T) {
 	require.True(t, logger2.Core().Enabled(zapcore.WarnLevel))
 }
 
-func TestNewStructLogger(t *testing.T) {
-	logger := NewStructLogger("test")
-	require.NotNil(t, logger)
-
-	require.NotNil(t, logger.Named("test"))
-}
+// NOTE: TestNewStructLogger was removed as NewStructLogger function doesn't exist

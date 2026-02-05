@@ -4,16 +4,26 @@ import (
 	"log"
 	"os"
 
+	v0Client "github.com/hatchet-dev/hatchet/pkg/client"
 	"github.com/hatchet-dev/hatchet/pkg/cmdutils"
 	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/build"
-	hatchet_ext "github.com/stroppy-io/hatchet-workflow/internal/core/hatchet-ext"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/logger"
 	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/edge"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet"
 )
 
 func main() {
-	c, err := hatchet_ext.HatchetClient()
+	token := os.Getenv("HATCHET_CLIENT_TOKEN")
+	if token == "" {
+		log.Fatalf("HATCHET_CLIENT_TOKEN is not set")
+	}
+	serverUrl := os.Getenv("HATCHET_CLIENT_SERVER_URL")
+	if serverUrl == "" {
+		log.Fatalf("HATCHET_CLIENT_SERVER_URL is not set")
+	}
+	logger.NewFromEnv()
+	c, err := hatchetLib.NewClient(v0Client.WithLogger(logger.Zerolog()))
 	if err != nil {
 		log.Fatalf("Failed to create Hatchet client: %v", err)
 	}

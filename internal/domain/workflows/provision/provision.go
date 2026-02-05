@@ -3,6 +3,7 @@ package provision
 import (
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/hatchet-dev/hatchet/pkg/worker/condition"
@@ -10,9 +11,12 @@ import (
 	"github.com/samber/lo"
 	crossplaneLib "github.com/stroppy-io/hatchet-workflow/internal/cloud/crossplane"
 	"github.com/stroppy-io/hatchet-workflow/internal/cloud/deployment"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/defaults"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/hatchet-ext"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/ids"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/logger"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/uow"
+	"github.com/stroppy-io/hatchet-workflow/internal/domain/scripting"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet"
 )
@@ -22,13 +26,15 @@ const (
 	DefaultNetworkName         = "stroppy-crossplane-net"
 	DefaultSubnetName          = "stroppy-crossplane-subnet"
 	//DefaultVmName              = "stroppy-crossplane-vm"
-	DefaultDeploymentName   = "stroppy-crossplane-deployment"
-	DefaultNetworkId        = "enp7b429s2br5pja0jci"
-	DefaultUbuntuImageId    = "fd82pkek8uu0ejjkh4vn"
-	DefaultVmZone           = "ru-central1-d"
-	DefaultVmPlatformId     = "standard-v2"
-	DefaultSubnetBaseCidr   = "10.2.0.0/16"
-	DefaultSubnetBasePrefix = 24
+	DefaultDeploymentName     = "stroppy-crossplane-deployment"
+	DefaultNetworkId          = "enp7b429s2br5pja0jci"
+	DefaultUbuntuImageId      = "fd82pkek8uu0ejjkh4vn"
+	DefaultVmZone             = "ru-central1-d"
+	DefaultVmPlatformId       = "standard-v2"
+	DefaultSubnetBaseCidr     = "10.2.0.0/16"
+	DefaultSubnetBasePrefix   = 24
+	DefaultEdgeWorkerUserName = "stroppy-edge-worker"
+	DefaultEdgeWorkerSshKey   = "stroppy-edge-worker-ssh-key"
 )
 
 const (
@@ -44,6 +50,18 @@ const (
 
 const (
 	RunIdLableName = "run_id"
+)
+
+const (
+	HatchetServerUrlKey         = "HATCHET_CLIENT_SERVER_URL"
+	HatchetClientTokenKey       = "HATCHET_CLIENT_TOKEN"
+	HatchetClientTlsStrategyKey = "HATCHET_CLIENT_TLS_STRATEGY"
+
+	HatchetEdgeWorkerUserName = "HATCHET_EDGE_WORKER_USER_NAME"
+	HatchetEdgeWorkerSshKey   = "HATCHET_EDGE_WORKER_SSH_KEY"
+	HatchetEdgeWorkerPublicIp = "HATCHET_EDGE_WORKER_PUBLIC_IP"
+
+	HatchetClientTlsStrategyNone = "none"
 )
 
 type FailureHandlerOutput struct {
@@ -126,10 +144,31 @@ func ProvisionWorkflow(
 					BaseImageId: DefaultUbuntuImageId,
 					// NOTE: We could use internal IP from subnet cause len(subnetTemplate.GetIps()) == len(input.GetEdgeWorkersHardware())
 					InternalIp: subnetTemplate.GetIps()[idx],
-					// NOTE: We don't need public IP for quotas reasons now
-					PublicIp: false,
-					//TODO: Add cloud init for worker
-					CloudInit:  nil,
+					// NOTE: For debugging proposes we can set public IP for VMs by setting HATCHET_EDGE_WORKER_PUBLIC_IP=true
+					PublicIp: os.Getenv(HatchetEdgeWorkerPublicIp) == "true",
+					// TODO: Add cloud init for worker
+					CloudInit: scripting.InstallEdgeWorkerCloudInit(
+						scripting.WithUsers([]*crossplane.User{
+							{
+								Name: defaults.StringOrDefault(os.Getenv(HatchetEdgeWorkerUserName), DefaultEdgeWorkerUserName),
+								SshAuthorizedKeys: []string{
+									defaults.StringOrDefault(os.Getenv(HatchetEdgeWorkerSshKey), DefaultEdgeWorkerSshKey),
+								},
+							},
+						}),
+						scripting.WithEnv(map[string]string{
+							logger.LevelEnvKey:         os.Getenv(logger.LevelEnvKey),
+							logger.LogModEnvKey:        os.Getenv(logger.LogModEnvKey),
+							logger.LogMappingEnvKey:    os.Getenv(logger.LogMappingEnvKey),
+							logger.LogSkipCallerEnvKey: os.Getenv(logger.LogSkipCallerEnvKey),
+							HatchetServerUrlKey:        input.GetCommon().GetHatchetServer().GetUrl(),
+							HatchetClientTokenKey:      input.GetCommon().GetHatchetServer().GetToken(),
+							// TODO: Add tls after domain access
+							HatchetClientTlsStrategyKey: HatchetClientTlsStrategyNone,
+							HatchetEdgeWorkerUserName:   os.Getenv(HatchetEdgeWorkerUserName),
+							HatchetEdgeWorkerSshKey:     os.Getenv(HatchetEdgeWorkerSshKey),
+						}),
+					),
 					ExternalIp: nil,
 					Labels:     worker.GetMetadata(),
 				}

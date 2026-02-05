@@ -31,7 +31,7 @@ services:
       RABBITMQ_DEFAULT_PASS: "password"
     volumes:
       - "hatchet_rabbitmq_data:/var/lib/rabbitmq"
-      - "hatchet_rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf" # Configuration file mount
+#      - "hatchet_rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf" # Configuration file mount
     healthcheck:
       test: ["CMD", "rabbitmqctl", "status"]
       interval: 10s
