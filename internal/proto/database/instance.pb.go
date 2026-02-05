@@ -160,6 +160,7 @@ type Instance struct {
 	//
 	//	*Instance_Postgres
 	Settings      isInstance_Settings `protobuf_oneof:"settings"`
+	Sidecars      []*Sidecar          `protobuf:"bytes,2,rep,name=sidecars,proto3" json:"sidecars,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -213,6 +214,13 @@ func (x *Instance) GetPostgres() *Postgres_Instance {
 		if x, ok := x.Settings.(*Instance_Postgres); ok {
 			return x.Postgres
 		}
+	}
+	return nil
+}
+
+func (x *Instance) GetSidecars() []*Sidecar {
+	if x != nil {
+		return x.Sidecars
 	}
 	return nil
 }
@@ -435,10 +443,11 @@ const file_database_instance_proto_rawDesc = "" +
 	"\x10ExtraConfigEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x0e\n" +
-	"\asidecar\x12\x03\xf8B\x01\"\x92\x01\n" +
+	"\asidecar\x12\x03\xf8B\x01\"\xc1\x01\n" +
 	"\bInstance\x12:\n" +
 	"\bhardware\x18\x01 \x01(\v2\x14.crossplane.HardwareB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bhardware\x129\n" +
-	"\bpostgres\x18d \x01(\v2\x1b.database.Postgres.InstanceH\x00R\bpostgresB\x0f\n" +
+	"\bpostgres\x18d \x01(\v2\x1b.database.Postgres.InstanceH\x00R\bpostgres\x12-\n" +
+	"\bsidecars\x18\x02 \x03(\v2\x11.database.SidecarR\bsidecarsB\x0f\n" +
 	"\bsettings\x12\x03\xf8B\x01B@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/databaseb\x06proto3"
 
 var (
@@ -474,12 +483,13 @@ var file_database_instance_proto_depIdxs = []int32{
 	7, // 4: database.Sidecar.pgbouncer_exporter:type_name -> database.Postgres.Sidecar.PgbouncerExporter
 	8, // 5: database.Instance.hardware:type_name -> crossplane.Hardware
 	9, // 6: database.Instance.postgres:type_name -> database.Postgres.Instance
-	5, // 7: database.Sidecar.VectorAgent.extra_config:type_name -> database.Sidecar.VectorAgent.ExtraConfigEntry
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	0, // 7: database.Instance.sidecars:type_name -> database.Sidecar
+	5, // 8: database.Sidecar.VectorAgent.extra_config:type_name -> database.Sidecar.VectorAgent.ExtraConfigEntry
+	9, // [9:9] is the sub-list for method output_type
+	9, // [9:9] is the sub-list for method input_type
+	9, // [9:9] is the sub-list for extension type_name
+	9, // [9:9] is the sub-list for extension extendee
+	0, // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_database_instance_proto_init() }

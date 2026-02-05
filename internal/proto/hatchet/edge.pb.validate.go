@@ -35,121 +35,6 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on StroppyInstallation with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *StroppyInstallation) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on StroppyInstallation with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// StroppyInstallationMultiError, or nil if none found.
-func (m *StroppyInstallation) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *StroppyInstallation) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for Version
-
-	if utf8.RuneCountInString(m.GetBinaryPath()) < 1 {
-		err := StroppyInstallationValidationError{
-			field:  "BinaryPath",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return StroppyInstallationMultiError(errors)
-	}
-
-	return nil
-}
-
-// StroppyInstallationMultiError is an error wrapping multiple validation
-// errors returned by StroppyInstallation.ValidateAll() if the designated
-// constraints aren't met.
-type StroppyInstallationMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m StroppyInstallationMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m StroppyInstallationMultiError) AllErrors() []error { return m }
-
-// StroppyInstallationValidationError is the validation error returned by
-// StroppyInstallation.Validate if the designated constraints aren't met.
-type StroppyInstallationValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e StroppyInstallationValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e StroppyInstallationValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e StroppyInstallationValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e StroppyInstallationValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e StroppyInstallationValidationError) ErrorName() string {
-	return "StroppyInstallationValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e StroppyInstallationValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sStroppyInstallation.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = StroppyInstallationValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = StroppyInstallationValidationError{}
-
 // Validate checks the field values on Software with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -1385,22 +1270,22 @@ var _ interface {
 	ErrorName() string
 } = EdgeTasks_IdentifierValidationError{}
 
-// Validate checks the field values on EdgeTasks_SetupSoftware with the rules
+// Validate checks the field values on EdgeTasks_InstallSoftware with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *EdgeTasks_SetupSoftware) Validate() error {
+func (m *EdgeTasks_InstallSoftware) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on EdgeTasks_SetupSoftware with the
+// ValidateAll checks the field values on EdgeTasks_InstallSoftware with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// EdgeTasks_SetupSoftwareMultiError, or nil if none found.
-func (m *EdgeTasks_SetupSoftware) ValidateAll() error {
+// EdgeTasks_InstallSoftwareMultiError, or nil if none found.
+func (m *EdgeTasks_InstallSoftware) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *EdgeTasks_SetupSoftware) validate(all bool) error {
+func (m *EdgeTasks_InstallSoftware) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -1408,19 +1293,19 @@ func (m *EdgeTasks_SetupSoftware) validate(all bool) error {
 	var errors []error
 
 	if len(errors) > 0 {
-		return EdgeTasks_SetupSoftwareMultiError(errors)
+		return EdgeTasks_InstallSoftwareMultiError(errors)
 	}
 
 	return nil
 }
 
-// EdgeTasks_SetupSoftwareMultiError is an error wrapping multiple validation
-// errors returned by EdgeTasks_SetupSoftware.ValidateAll() if the designated
-// constraints aren't met.
-type EdgeTasks_SetupSoftwareMultiError []error
+// EdgeTasks_InstallSoftwareMultiError is an error wrapping multiple validation
+// errors returned by EdgeTasks_InstallSoftware.ValidateAll() if the
+// designated constraints aren't met.
+type EdgeTasks_InstallSoftwareMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m EdgeTasks_SetupSoftwareMultiError) Error() string {
+func (m EdgeTasks_InstallSoftwareMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1429,11 +1314,11 @@ func (m EdgeTasks_SetupSoftwareMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m EdgeTasks_SetupSoftwareMultiError) AllErrors() []error { return m }
+func (m EdgeTasks_InstallSoftwareMultiError) AllErrors() []error { return m }
 
-// EdgeTasks_SetupSoftwareValidationError is the validation error returned by
-// EdgeTasks_SetupSoftware.Validate if the designated constraints aren't met.
-type EdgeTasks_SetupSoftwareValidationError struct {
+// EdgeTasks_InstallSoftwareValidationError is the validation error returned by
+// EdgeTasks_InstallSoftware.Validate if the designated constraints aren't met.
+type EdgeTasks_InstallSoftwareValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1441,24 +1326,24 @@ type EdgeTasks_SetupSoftwareValidationError struct {
 }
 
 // Field function returns field value.
-func (e EdgeTasks_SetupSoftwareValidationError) Field() string { return e.field }
+func (e EdgeTasks_InstallSoftwareValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e EdgeTasks_SetupSoftwareValidationError) Reason() string { return e.reason }
+func (e EdgeTasks_InstallSoftwareValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e EdgeTasks_SetupSoftwareValidationError) Cause() error { return e.cause }
+func (e EdgeTasks_InstallSoftwareValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e EdgeTasks_SetupSoftwareValidationError) Key() bool { return e.key }
+func (e EdgeTasks_InstallSoftwareValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e EdgeTasks_SetupSoftwareValidationError) ErrorName() string {
-	return "EdgeTasks_SetupSoftwareValidationError"
+func (e EdgeTasks_InstallSoftwareValidationError) ErrorName() string {
+	return "EdgeTasks_InstallSoftwareValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e EdgeTasks_SetupSoftwareValidationError) Error() string {
+func (e EdgeTasks_InstallSoftwareValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1470,14 +1355,14 @@ func (e EdgeTasks_SetupSoftwareValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sEdgeTasks_SetupSoftware.%s: %s%s",
+		"invalid %sEdgeTasks_InstallSoftware.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = EdgeTasks_SetupSoftwareValidationError{}
+var _ error = EdgeTasks_InstallSoftwareValidationError{}
 
 var _ interface {
 	Field() string
@@ -1485,7 +1370,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = EdgeTasks_SetupSoftwareValidationError{}
+} = EdgeTasks_InstallSoftwareValidationError{}
 
 // Validate checks the field values on EdgeTasks_RunStroppy with the rules
 // defined in the proto definition for this message. If any rules are
@@ -1589,22 +1474,22 @@ var _ interface {
 	ErrorName() string
 } = EdgeTasks_RunStroppyValidationError{}
 
-// Validate checks the field values on EdgeTasks_SetupSoftware_Input with the
+// Validate checks the field values on EdgeTasks_InstallSoftware_Input with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *EdgeTasks_SetupSoftware_Input) Validate() error {
+func (m *EdgeTasks_InstallSoftware_Input) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on EdgeTasks_SetupSoftware_Input with
+// ValidateAll checks the field values on EdgeTasks_InstallSoftware_Input with
 // the rules defined in the proto definition for this message. If any rules
 // are violated, the result is a list of violation errors wrapped in
-// EdgeTasks_SetupSoftware_InputMultiError, or nil if none found.
-func (m *EdgeTasks_SetupSoftware_Input) ValidateAll() error {
+// EdgeTasks_InstallSoftware_InputMultiError, or nil if none found.
+func (m *EdgeTasks_InstallSoftware_Input) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *EdgeTasks_SetupSoftware_Input) validate(all bool) error {
+func (m *EdgeTasks_InstallSoftware_Input) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -1612,7 +1497,7 @@ func (m *EdgeTasks_SetupSoftware_Input) validate(all bool) error {
 	var errors []error
 
 	if m.GetCommon() == nil {
-		err := EdgeTasks_SetupSoftware_InputValidationError{
+		err := EdgeTasks_InstallSoftware_InputValidationError{
 			field:  "Common",
 			reason: "value is required",
 		}
@@ -1626,7 +1511,7 @@ func (m *EdgeTasks_SetupSoftware_Input) validate(all bool) error {
 		switch v := interface{}(m.GetCommon()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, EdgeTasks_SetupSoftware_InputValidationError{
+				errors = append(errors, EdgeTasks_InstallSoftware_InputValidationError{
 					field:  "Common",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1634,7 +1519,7 @@ func (m *EdgeTasks_SetupSoftware_Input) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, EdgeTasks_SetupSoftware_InputValidationError{
+				errors = append(errors, EdgeTasks_InstallSoftware_InputValidationError{
 					field:  "Common",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1643,7 +1528,7 @@ func (m *EdgeTasks_SetupSoftware_Input) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetCommon()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return EdgeTasks_SetupSoftware_InputValidationError{
+			return EdgeTasks_InstallSoftware_InputValidationError{
 				field:  "Common",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -1655,7 +1540,7 @@ func (m *EdgeTasks_SetupSoftware_Input) validate(all bool) error {
 		_, _ = idx, item
 
 		if item == nil {
-			err := EdgeTasks_SetupSoftware_InputValidationError{
+			err := EdgeTasks_InstallSoftware_InputValidationError{
 				field:  fmt.Sprintf("Software[%v]", idx),
 				reason: "value is required",
 			}
@@ -1669,7 +1554,7 @@ func (m *EdgeTasks_SetupSoftware_Input) validate(all bool) error {
 			switch v := interface{}(item).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, EdgeTasks_SetupSoftware_InputValidationError{
+					errors = append(errors, EdgeTasks_InstallSoftware_InputValidationError{
 						field:  fmt.Sprintf("Software[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -1677,7 +1562,7 @@ func (m *EdgeTasks_SetupSoftware_Input) validate(all bool) error {
 				}
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
-					errors = append(errors, EdgeTasks_SetupSoftware_InputValidationError{
+					errors = append(errors, EdgeTasks_InstallSoftware_InputValidationError{
 						field:  fmt.Sprintf("Software[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -1686,7 +1571,7 @@ func (m *EdgeTasks_SetupSoftware_Input) validate(all bool) error {
 			}
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return EdgeTasks_SetupSoftware_InputValidationError{
+				return EdgeTasks_InstallSoftware_InputValidationError{
 					field:  fmt.Sprintf("Software[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1697,19 +1582,19 @@ func (m *EdgeTasks_SetupSoftware_Input) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return EdgeTasks_SetupSoftware_InputMultiError(errors)
+		return EdgeTasks_InstallSoftware_InputMultiError(errors)
 	}
 
 	return nil
 }
 
-// EdgeTasks_SetupSoftware_InputMultiError is an error wrapping multiple
-// validation errors returned by EdgeTasks_SetupSoftware_Input.ValidateAll()
+// EdgeTasks_InstallSoftware_InputMultiError is an error wrapping multiple
+// validation errors returned by EdgeTasks_InstallSoftware_Input.ValidateAll()
 // if the designated constraints aren't met.
-type EdgeTasks_SetupSoftware_InputMultiError []error
+type EdgeTasks_InstallSoftware_InputMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m EdgeTasks_SetupSoftware_InputMultiError) Error() string {
+func (m EdgeTasks_InstallSoftware_InputMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1718,12 +1603,12 @@ func (m EdgeTasks_SetupSoftware_InputMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m EdgeTasks_SetupSoftware_InputMultiError) AllErrors() []error { return m }
+func (m EdgeTasks_InstallSoftware_InputMultiError) AllErrors() []error { return m }
 
-// EdgeTasks_SetupSoftware_InputValidationError is the validation error
-// returned by EdgeTasks_SetupSoftware_Input.Validate if the designated
+// EdgeTasks_InstallSoftware_InputValidationError is the validation error
+// returned by EdgeTasks_InstallSoftware_Input.Validate if the designated
 // constraints aren't met.
-type EdgeTasks_SetupSoftware_InputValidationError struct {
+type EdgeTasks_InstallSoftware_InputValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1731,24 +1616,24 @@ type EdgeTasks_SetupSoftware_InputValidationError struct {
 }
 
 // Field function returns field value.
-func (e EdgeTasks_SetupSoftware_InputValidationError) Field() string { return e.field }
+func (e EdgeTasks_InstallSoftware_InputValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e EdgeTasks_SetupSoftware_InputValidationError) Reason() string { return e.reason }
+func (e EdgeTasks_InstallSoftware_InputValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e EdgeTasks_SetupSoftware_InputValidationError) Cause() error { return e.cause }
+func (e EdgeTasks_InstallSoftware_InputValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e EdgeTasks_SetupSoftware_InputValidationError) Key() bool { return e.key }
+func (e EdgeTasks_InstallSoftware_InputValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e EdgeTasks_SetupSoftware_InputValidationError) ErrorName() string {
-	return "EdgeTasks_SetupSoftware_InputValidationError"
+func (e EdgeTasks_InstallSoftware_InputValidationError) ErrorName() string {
+	return "EdgeTasks_InstallSoftware_InputValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e EdgeTasks_SetupSoftware_InputValidationError) Error() string {
+func (e EdgeTasks_InstallSoftware_InputValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1760,14 +1645,14 @@ func (e EdgeTasks_SetupSoftware_InputValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sEdgeTasks_SetupSoftware_Input.%s: %s%s",
+		"invalid %sEdgeTasks_InstallSoftware_Input.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = EdgeTasks_SetupSoftware_InputValidationError{}
+var _ error = EdgeTasks_InstallSoftware_InputValidationError{}
 
 var _ interface {
 	Field() string
@@ -1775,24 +1660,25 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = EdgeTasks_SetupSoftware_InputValidationError{}
+} = EdgeTasks_InstallSoftware_InputValidationError{}
 
-// Validate checks the field values on EdgeTasks_SetupSoftware_Output with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *EdgeTasks_SetupSoftware_Output) Validate() error {
+// Validate checks the field values on EdgeTasks_InstallSoftware_Output with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *EdgeTasks_InstallSoftware_Output) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on EdgeTasks_SetupSoftware_Output with
+// ValidateAll checks the field values on EdgeTasks_InstallSoftware_Output with
 // the rules defined in the proto definition for this message. If any rules
 // are violated, the result is a list of violation errors wrapped in
-// EdgeTasks_SetupSoftware_OutputMultiError, or nil if none found.
-func (m *EdgeTasks_SetupSoftware_Output) ValidateAll() error {
+// EdgeTasks_InstallSoftware_OutputMultiError, or nil if none found.
+func (m *EdgeTasks_InstallSoftware_Output) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *EdgeTasks_SetupSoftware_Output) validate(all bool) error {
+func (m *EdgeTasks_InstallSoftware_Output) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -1800,19 +1686,20 @@ func (m *EdgeTasks_SetupSoftware_Output) validate(all bool) error {
 	var errors []error
 
 	if len(errors) > 0 {
-		return EdgeTasks_SetupSoftware_OutputMultiError(errors)
+		return EdgeTasks_InstallSoftware_OutputMultiError(errors)
 	}
 
 	return nil
 }
 
-// EdgeTasks_SetupSoftware_OutputMultiError is an error wrapping multiple
-// validation errors returned by EdgeTasks_SetupSoftware_Output.ValidateAll()
-// if the designated constraints aren't met.
-type EdgeTasks_SetupSoftware_OutputMultiError []error
+// EdgeTasks_InstallSoftware_OutputMultiError is an error wrapping multiple
+// validation errors returned by
+// EdgeTasks_InstallSoftware_Output.ValidateAll() if the designated
+// constraints aren't met.
+type EdgeTasks_InstallSoftware_OutputMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m EdgeTasks_SetupSoftware_OutputMultiError) Error() string {
+func (m EdgeTasks_InstallSoftware_OutputMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1821,12 +1708,12 @@ func (m EdgeTasks_SetupSoftware_OutputMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m EdgeTasks_SetupSoftware_OutputMultiError) AllErrors() []error { return m }
+func (m EdgeTasks_InstallSoftware_OutputMultiError) AllErrors() []error { return m }
 
-// EdgeTasks_SetupSoftware_OutputValidationError is the validation error
-// returned by EdgeTasks_SetupSoftware_Output.Validate if the designated
+// EdgeTasks_InstallSoftware_OutputValidationError is the validation error
+// returned by EdgeTasks_InstallSoftware_Output.Validate if the designated
 // constraints aren't met.
-type EdgeTasks_SetupSoftware_OutputValidationError struct {
+type EdgeTasks_InstallSoftware_OutputValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1834,24 +1721,24 @@ type EdgeTasks_SetupSoftware_OutputValidationError struct {
 }
 
 // Field function returns field value.
-func (e EdgeTasks_SetupSoftware_OutputValidationError) Field() string { return e.field }
+func (e EdgeTasks_InstallSoftware_OutputValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e EdgeTasks_SetupSoftware_OutputValidationError) Reason() string { return e.reason }
+func (e EdgeTasks_InstallSoftware_OutputValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e EdgeTasks_SetupSoftware_OutputValidationError) Cause() error { return e.cause }
+func (e EdgeTasks_InstallSoftware_OutputValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e EdgeTasks_SetupSoftware_OutputValidationError) Key() bool { return e.key }
+func (e EdgeTasks_InstallSoftware_OutputValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e EdgeTasks_SetupSoftware_OutputValidationError) ErrorName() string {
-	return "EdgeTasks_SetupSoftware_OutputValidationError"
+func (e EdgeTasks_InstallSoftware_OutputValidationError) ErrorName() string {
+	return "EdgeTasks_InstallSoftware_OutputValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e EdgeTasks_SetupSoftware_OutputValidationError) Error() string {
+func (e EdgeTasks_InstallSoftware_OutputValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1863,14 +1750,14 @@ func (e EdgeTasks_SetupSoftware_OutputValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sEdgeTasks_SetupSoftware_Output.%s: %s%s",
+		"invalid %sEdgeTasks_InstallSoftware_Output.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = EdgeTasks_SetupSoftware_OutputValidationError{}
+var _ error = EdgeTasks_InstallSoftware_OutputValidationError{}
 
 var _ interface {
 	Field() string
@@ -1878,7 +1765,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = EdgeTasks_SetupSoftware_OutputValidationError{}
+} = EdgeTasks_InstallSoftware_OutputValidationError{}
 
 // Validate checks the field values on EdgeTasks_RunStroppy_Input with the
 // rules defined in the proto definition for this message. If any rules are
@@ -1942,9 +1829,9 @@ func (m *EdgeTasks_RunStroppy_Input) validate(all bool) error {
 		}
 	}
 
-	if m.GetInstallation() == nil {
+	if m.GetStroppyCliCall() == nil {
 		err := EdgeTasks_RunStroppy_InputValidationError{
-			field:  "Installation",
+			field:  "StroppyCliCall",
 			reason: "value is required",
 		}
 		if !all {
@@ -1954,11 +1841,11 @@ func (m *EdgeTasks_RunStroppy_Input) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetInstallation()).(type) {
+		switch v := interface{}(m.GetStroppyCliCall()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, EdgeTasks_RunStroppy_InputValidationError{
-					field:  "Installation",
+					field:  "StroppyCliCall",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -1966,56 +1853,16 @@ func (m *EdgeTasks_RunStroppy_Input) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, EdgeTasks_RunStroppy_InputValidationError{
-					field:  "Installation",
+					field:  "StroppyCliCall",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetInstallation()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetStroppyCliCall()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return EdgeTasks_RunStroppy_InputValidationError{
-				field:  "Installation",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if m.GetTest() == nil {
-		err := EdgeTasks_RunStroppy_InputValidationError{
-			field:  "Test",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetTest()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, EdgeTasks_RunStroppy_InputValidationError{
-					field:  "Test",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, EdgeTasks_RunStroppy_InputValidationError{
-					field:  "Test",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetTest()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return EdgeTasks_RunStroppy_InputValidationError{
-				field:  "Test",
+				field:  "StroppyCliCall",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

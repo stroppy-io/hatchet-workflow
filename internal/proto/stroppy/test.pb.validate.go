@@ -35,6 +35,148 @@ var (
 	_ = sort.Sort
 )
 
+// Validate checks the field values on StroppyCli with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *StroppyCli) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StroppyCli with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in StroppyCliMultiError, or
+// nil if none found.
+func (m *StroppyCli) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StroppyCli) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetVersion()) < 1 {
+		err := StroppyCliValidationError{
+			field:  "Version",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := StroppyCli_Workload_name[int32(m.GetWorkload())]; !ok {
+		err := StroppyCliValidationError{
+			field:  "Workload",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetConnectionString()) < 1 {
+		err := StroppyCliValidationError{
+			field:  "ConnectionString",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for StroppyEnv
+
+	if m.BinaryPath != nil {
+		// no validation rules for BinaryPath
+	}
+
+	if m.Workdir != nil {
+		// no validation rules for Workdir
+	}
+
+	if len(errors) > 0 {
+		return StroppyCliMultiError(errors)
+	}
+
+	return nil
+}
+
+// StroppyCliMultiError is an error wrapping multiple validation errors
+// returned by StroppyCli.ValidateAll() if the designated constraints aren't met.
+type StroppyCliMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StroppyCliMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StroppyCliMultiError) AllErrors() []error { return m }
+
+// StroppyCliValidationError is the validation error returned by
+// StroppyCli.Validate if the designated constraints aren't met.
+type StroppyCliValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StroppyCliValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StroppyCliValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StroppyCliValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StroppyCliValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StroppyCliValidationError) ErrorName() string { return "StroppyCliValidationError" }
+
+// Error satisfies the builtin error interface
+func (e StroppyCliValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStroppyCli.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StroppyCliValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StroppyCliValidationError{}
+
 // Validate checks the field values on Test with the rules defined in the proto
 // definition for this message. If any rules are violated, the first error
 // encountered is returned, or nil if there are no violations.
@@ -58,10 +200,10 @@ func (m *Test) validate(all bool) error {
 
 	// no validation rules for Name
 
-	if _, ok := Test_Workload_name[int32(m.GetWorkload())]; !ok {
+	if m.GetStroppyCli() == nil {
 		err := TestValidationError{
-			field:  "Workload",
-			reason: "value must be one of the defined enum values",
+			field:  "StroppyCli",
+			reason: "value is required",
 		}
 		if !all {
 			return err
@@ -69,9 +211,34 @@ func (m *Test) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	// no validation rules for StroppyVersion
-
-	// no validation rules for StroppyEnv
+	if all {
+		switch v := interface{}(m.GetStroppyCli()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestValidationError{
+					field:  "StroppyCli",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestValidationError{
+					field:  "StroppyCli",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetStroppyCli()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestValidationError{
+				field:  "StroppyCli",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if m.GetStroppyHardware() == nil {
 		err := TestValidationError{

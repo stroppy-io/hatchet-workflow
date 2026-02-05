@@ -33,12 +33,13 @@ const (
 
 const (
 	CloudProvisionWorkflowName = "cloud-provision"
-	LogicalProvisionTaskName   = "logical-provision"
-	BuildDeploymentsTaskName   = "build-deployments"
-	ReserveQuotasTaskName      = "reserve-quotas"
-	CreateDeploymentTaskName   = "create-deployments"
-	WaitDeploymentTaskName     = "wait-deployments"
-	WaitWorkerInHatchet        = "wait-worker-in-hatchet"
+
+	LogicalProvisionTaskName = "logical-provision"
+	BuildDeploymentsTaskName = "build-deployments"
+	ReserveQuotasTaskName    = "reserve-quotas"
+	CreateDeploymentTaskName = "create-deployments"
+	WaitDeploymentTaskName   = "wait-deployments"
+	WaitWorkerInHatchet      = "wait-worker-in-hatchet"
 )
 
 const (
@@ -126,7 +127,9 @@ func ProvisionWorkflow(
 					// NOTE: We could use internal IP from subnet cause len(subnetTemplate.GetIps()) == len(input.GetEdgeWorkersHardware())
 					InternalIp: subnetTemplate.GetIps()[idx],
 					// NOTE: We don't need public IP for quotas reasons now
-					PublicIp:   false,
+					PublicIp: false,
+					//TODO: Add cloud init for worker
+					CloudInit:  nil,
 					ExternalIp: nil,
 					Labels:     worker.GetMetadata(),
 				}

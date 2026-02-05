@@ -8,22 +8,6 @@ import (
 )
 
 // MarshalJSON implements json.Marshaler
-func (msg *StroppyInstallation) MarshalJSON() ([]byte, error) {
-	return protojson.MarshalOptions{
-		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
-		UseProtoNames:   false,
-	}.Marshal(msg)
-}
-
-// UnmarshalJSON implements json.Unmarshaler
-func (msg *StroppyInstallation) UnmarshalJSON(b []byte) error {
-	return protojson.UnmarshalOptions{
-		DiscardUnknown: false,
-	}.Unmarshal(b, msg)
-}
-
-// MarshalJSON implements json.Marshaler
 func (msg *Software) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
@@ -136,7 +120,7 @@ func (msg *EdgeTasks_Identifier) UnmarshalJSON(b []byte) error {
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *EdgeTasks_SetupSoftware) MarshalJSON() ([]byte, error) {
+func (msg *EdgeTasks_InstallSoftware) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -145,14 +129,14 @@ func (msg *EdgeTasks_SetupSoftware) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *EdgeTasks_SetupSoftware) UnmarshalJSON(b []byte) error {
+func (msg *EdgeTasks_InstallSoftware) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *EdgeTasks_SetupSoftware_Input) MarshalJSON() ([]byte, error) {
+func (msg *EdgeTasks_InstallSoftware_Input) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -161,14 +145,14 @@ func (msg *EdgeTasks_SetupSoftware_Input) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *EdgeTasks_SetupSoftware_Input) UnmarshalJSON(b []byte) error {
+func (msg *EdgeTasks_InstallSoftware_Input) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *EdgeTasks_SetupSoftware_Output) MarshalJSON() ([]byte, error) {
+func (msg *EdgeTasks_InstallSoftware_Output) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -177,7 +161,7 @@ func (msg *EdgeTasks_SetupSoftware_Output) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *EdgeTasks_SetupSoftware_Output) UnmarshalJSON(b []byte) error {
+func (msg *EdgeTasks_InstallSoftware_Output) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)

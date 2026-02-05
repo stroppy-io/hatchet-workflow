@@ -123,53 +123,126 @@ func (Postgres_Infra_Backup_Tool) EnumDescriptor() ([]byte, []int) {
 	return file_database_postgres_proto_rawDescGZIP(), []int{0, 1, 3, 0}
 }
 
-type Postgres_InstanceSettings_StorageBackend int32
+type Postgres_Instance_StorageBackend int32
 
 const (
-	Postgres_InstanceSettings_STORAGE_TYPE_UNSPECIFIED Postgres_InstanceSettings_StorageBackend = 0
-	Postgres_InstanceSettings_STORAGE_TYPE_POSTGRES    Postgres_InstanceSettings_StorageBackend = 1
-	Postgres_InstanceSettings_STORAGE_TYPE_ORIOLEDB    Postgres_InstanceSettings_StorageBackend = 2
+	Postgres_Instance_STORAGE_TYPE_UNSPECIFIED Postgres_Instance_StorageBackend = 0
+	Postgres_Instance_STORAGE_TYPE_POSTGRES    Postgres_Instance_StorageBackend = 1
+	Postgres_Instance_STORAGE_TYPE_ORIOLEDB    Postgres_Instance_StorageBackend = 2
 )
 
-// Enum value maps for Postgres_InstanceSettings_StorageBackend.
+// Enum value maps for Postgres_Instance_StorageBackend.
 var (
-	Postgres_InstanceSettings_StorageBackend_name = map[int32]string{
+	Postgres_Instance_StorageBackend_name = map[int32]string{
 		0: "STORAGE_TYPE_UNSPECIFIED",
 		1: "STORAGE_TYPE_POSTGRES",
 		2: "STORAGE_TYPE_ORIOLEDB",
 	}
-	Postgres_InstanceSettings_StorageBackend_value = map[string]int32{
+	Postgres_Instance_StorageBackend_value = map[string]int32{
 		"STORAGE_TYPE_UNSPECIFIED": 0,
 		"STORAGE_TYPE_POSTGRES":    1,
 		"STORAGE_TYPE_ORIOLEDB":    2,
 	}
 )
 
-func (x Postgres_InstanceSettings_StorageBackend) Enum() *Postgres_InstanceSettings_StorageBackend {
-	p := new(Postgres_InstanceSettings_StorageBackend)
+func (x Postgres_Instance_StorageBackend) Enum() *Postgres_Instance_StorageBackend {
+	p := new(Postgres_Instance_StorageBackend)
 	*p = x
 	return p
 }
 
-func (x Postgres_InstanceSettings_StorageBackend) String() string {
+func (x Postgres_Instance_StorageBackend) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (Postgres_InstanceSettings_StorageBackend) Descriptor() protoreflect.EnumDescriptor {
+func (Postgres_Instance_StorageBackend) Descriptor() protoreflect.EnumDescriptor {
 	return file_database_postgres_proto_enumTypes[2].Descriptor()
 }
 
-func (Postgres_InstanceSettings_StorageBackend) Type() protoreflect.EnumType {
+func (Postgres_Instance_StorageBackend) Type() protoreflect.EnumType {
 	return &file_database_postgres_proto_enumTypes[2]
 }
 
-func (x Postgres_InstanceSettings_StorageBackend) Number() protoreflect.EnumNumber {
+func (x Postgres_Instance_StorageBackend) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use Postgres_InstanceSettings_StorageBackend.Descriptor instead.
-func (Postgres_InstanceSettings_StorageBackend) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use Postgres_Instance_StorageBackend.Descriptor instead.
+func (Postgres_Instance_StorageBackend) EnumDescriptor() ([]byte, []int) {
 	return file_database_postgres_proto_rawDescGZIP(), []int{0, 2, 0}
+}
+
+type Postgres_Instance_Version int32
+
+const (
+	Postgres_Instance_VERSION_UNSPECIFIED Postgres_Instance_Version = 0
+	Postgres_Instance_VERSION_18          Postgres_Instance_Version = 1
+	Postgres_Instance_VERSION_17          Postgres_Instance_Version = 2
+	Postgres_Instance_VERSION_16          Postgres_Instance_Version = 3
+	Postgres_Instance_VERSION_15          Postgres_Instance_Version = 4
+	Postgres_Instance_VERSION_14          Postgres_Instance_Version = 5
+	Postgres_Instance_VERSION_13          Postgres_Instance_Version = 6
+	Postgres_Instance_VERSION_12          Postgres_Instance_Version = 7
+	Postgres_Instance_VERSION_11          Postgres_Instance_Version = 8
+	Postgres_Instance_VERSION_10          Postgres_Instance_Version = 9
+	Postgres_Instance_VERSION_9           Postgres_Instance_Version = 10
+)
+
+// Enum value maps for Postgres_Instance_Version.
+var (
+	Postgres_Instance_Version_name = map[int32]string{
+		0:  "VERSION_UNSPECIFIED",
+		1:  "VERSION_18",
+		2:  "VERSION_17",
+		3:  "VERSION_16",
+		4:  "VERSION_15",
+		5:  "VERSION_14",
+		6:  "VERSION_13",
+		7:  "VERSION_12",
+		8:  "VERSION_11",
+		9:  "VERSION_10",
+		10: "VERSION_9",
+	}
+	Postgres_Instance_Version_value = map[string]int32{
+		"VERSION_UNSPECIFIED": 0,
+		"VERSION_18":          1,
+		"VERSION_17":          2,
+		"VERSION_16":          3,
+		"VERSION_15":          4,
+		"VERSION_14":          5,
+		"VERSION_13":          6,
+		"VERSION_12":          7,
+		"VERSION_11":          8,
+		"VERSION_10":          9,
+		"VERSION_9":           10,
+	}
+)
+
+func (x Postgres_Instance_Version) Enum() *Postgres_Instance_Version {
+	p := new(Postgres_Instance_Version)
+	*p = x
+	return p
+}
+
+func (x Postgres_Instance_Version) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Postgres_Instance_Version) Descriptor() protoreflect.EnumDescriptor {
+	return file_database_postgres_proto_enumTypes[3].Descriptor()
+}
+
+func (Postgres_Instance_Version) Type() protoreflect.EnumType {
+	return &file_database_postgres_proto_enumTypes[3]
+}
+
+func (x Postgres_Instance_Version) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Postgres_Instance_Version.Descriptor instead.
+func (Postgres_Instance_Version) EnumDescriptor() ([]byte, []int) {
+	return file_database_postgres_proto_rawDescGZIP(), []int{0, 2, 1}
 }
 
 type Postgres struct {
@@ -326,77 +399,23 @@ func (*Postgres_Infra) Descriptor() ([]byte, []int) {
 	return file_database_postgres_proto_rawDescGZIP(), []int{0, 1}
 }
 
-type Postgres_InstanceSettings struct {
-	state          protoimpl.MessageState                   `protogen:"open.v1"`
-	StorageBackend Postgres_InstanceSettings_StorageBackend `protobuf:"varint,2,opt,name=storage_backend,json=storageBackend,proto3,enum=database.Postgres_InstanceSettings_StorageBackend" json:"storage_backend,omitempty"`
-	PostgresqlConf map[string]string                        `protobuf:"bytes,3,rep,name=postgresql_conf,json=postgresqlConf,proto3" json:"postgresql_conf,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	OrioledbConf   map[string]string                        `protobuf:"bytes,4,rep,name=orioledb_conf,json=orioledbConf,proto3" json:"orioledb_conf,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+type Postgres_Instance struct {
+	state          protoimpl.MessageState           `protogen:"open.v1"`
+	Version        Postgres_Instance_Version        `protobuf:"varint,1,opt,name=version,proto3,enum=database.Postgres_Instance_Version" json:"version,omitempty"`
+	StorageBackend Postgres_Instance_StorageBackend `protobuf:"varint,2,opt,name=storage_backend,json=storageBackend,proto3,enum=database.Postgres_Instance_StorageBackend" json:"storage_backend,omitempty"`
+	Password       *string                          `protobuf:"bytes,3,opt,name=password,proto3,oneof" json:"password,omitempty"`
+	Username       *string                          `protobuf:"bytes,4,opt,name=username,proto3,oneof" json:"username,omitempty"`
+	Database       *string                          `protobuf:"bytes,5,opt,name=database,proto3,oneof" json:"database,omitempty"`
+	Port           *uint32                          `protobuf:"varint,6,opt,name=port,proto3,oneof" json:"port,omitempty"`
+	PostgresqlConf map[string]string                `protobuf:"bytes,7,rep,name=postgresql_conf,json=postgresqlConf,proto3" json:"postgresql_conf,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	OrioledbConf   map[string]string                `protobuf:"bytes,8,rep,name=orioledb_conf,json=orioledbConf,proto3" json:"orioledb_conf,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
-func (x *Postgres_InstanceSettings) Reset() {
-	*x = Postgres_InstanceSettings{}
-	mi := &file_database_postgres_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Postgres_InstanceSettings) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Postgres_InstanceSettings) ProtoMessage() {}
-
-func (x *Postgres_InstanceSettings) ProtoReflect() protoreflect.Message {
-	mi := &file_database_postgres_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Postgres_InstanceSettings.ProtoReflect.Descriptor instead.
-func (*Postgres_InstanceSettings) Descriptor() ([]byte, []int) {
-	return file_database_postgres_proto_rawDescGZIP(), []int{0, 2}
-}
-
-func (x *Postgres_InstanceSettings) GetStorageBackend() Postgres_InstanceSettings_StorageBackend {
-	if x != nil {
-		return x.StorageBackend
-	}
-	return Postgres_InstanceSettings_STORAGE_TYPE_UNSPECIFIED
-}
-
-func (x *Postgres_InstanceSettings) GetPostgresqlConf() map[string]string {
-	if x != nil {
-		return x.PostgresqlConf
-	}
-	return nil
-}
-
-func (x *Postgres_InstanceSettings) GetOrioledbConf() map[string]string {
-	if x != nil {
-		return x.OrioledbConf
-	}
-	return nil
-}
-
-type Postgres_Instance struct {
-	state         protoimpl.MessageState     `protogen:"open.v1"`
-	Version       string                     `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
-	Settings      *Postgres_InstanceSettings `protobuf:"bytes,2,opt,name=settings,proto3" json:"settings,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
 func (x *Postgres_Instance) Reset() {
 	*x = Postgres_Instance{}
-	mi := &file_database_postgres_proto_msgTypes[4]
+	mi := &file_database_postgres_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -408,7 +427,7 @@ func (x *Postgres_Instance) String() string {
 func (*Postgres_Instance) ProtoMessage() {}
 
 func (x *Postgres_Instance) ProtoReflect() protoreflect.Message {
-	mi := &file_database_postgres_proto_msgTypes[4]
+	mi := &file_database_postgres_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -421,19 +440,61 @@ func (x *Postgres_Instance) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Postgres_Instance.ProtoReflect.Descriptor instead.
 func (*Postgres_Instance) Descriptor() ([]byte, []int) {
-	return file_database_postgres_proto_rawDescGZIP(), []int{0, 3}
+	return file_database_postgres_proto_rawDescGZIP(), []int{0, 2}
 }
 
-func (x *Postgres_Instance) GetVersion() string {
+func (x *Postgres_Instance) GetVersion() Postgres_Instance_Version {
 	if x != nil {
 		return x.Version
+	}
+	return Postgres_Instance_VERSION_UNSPECIFIED
+}
+
+func (x *Postgres_Instance) GetStorageBackend() Postgres_Instance_StorageBackend {
+	if x != nil {
+		return x.StorageBackend
+	}
+	return Postgres_Instance_STORAGE_TYPE_UNSPECIFIED
+}
+
+func (x *Postgres_Instance) GetPassword() string {
+	if x != nil && x.Password != nil {
+		return *x.Password
 	}
 	return ""
 }
 
-func (x *Postgres_Instance) GetSettings() *Postgres_InstanceSettings {
+func (x *Postgres_Instance) GetUsername() string {
+	if x != nil && x.Username != nil {
+		return *x.Username
+	}
+	return ""
+}
+
+func (x *Postgres_Instance) GetDatabase() string {
+	if x != nil && x.Database != nil {
+		return *x.Database
+	}
+	return ""
+}
+
+func (x *Postgres_Instance) GetPort() uint32 {
+	if x != nil && x.Port != nil {
+		return *x.Port
+	}
+	return 0
+}
+
+func (x *Postgres_Instance) GetPostgresqlConf() map[string]string {
 	if x != nil {
-		return x.Settings
+		return x.PostgresqlConf
+	}
+	return nil
+}
+
+func (x *Postgres_Instance) GetOrioledbConf() map[string]string {
+	if x != nil {
+		return x.OrioledbConf
 	}
 	return nil
 }
@@ -449,7 +510,7 @@ type Postgres_Sidecar_PostgresExporter struct {
 
 func (x *Postgres_Sidecar_PostgresExporter) Reset() {
 	*x = Postgres_Sidecar_PostgresExporter{}
-	mi := &file_database_postgres_proto_msgTypes[5]
+	mi := &file_database_postgres_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -461,7 +522,7 @@ func (x *Postgres_Sidecar_PostgresExporter) String() string {
 func (*Postgres_Sidecar_PostgresExporter) ProtoMessage() {}
 
 func (x *Postgres_Sidecar_PostgresExporter) ProtoReflect() protoreflect.Message {
-	mi := &file_database_postgres_proto_msgTypes[5]
+	mi := &file_database_postgres_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -508,7 +569,7 @@ type Postgres_Sidecar_PgbouncerExporter struct {
 
 func (x *Postgres_Sidecar_PgbouncerExporter) Reset() {
 	*x = Postgres_Sidecar_PgbouncerExporter{}
-	mi := &file_database_postgres_proto_msgTypes[6]
+	mi := &file_database_postgres_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -520,7 +581,7 @@ func (x *Postgres_Sidecar_PgbouncerExporter) String() string {
 func (*Postgres_Sidecar_PgbouncerExporter) ProtoMessage() {}
 
 func (x *Postgres_Sidecar_PgbouncerExporter) ProtoReflect() protoreflect.Message {
-	mi := &file_database_postgres_proto_msgTypes[6]
+	mi := &file_database_postgres_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -561,7 +622,7 @@ type Postgres_Infra_Pgbouncer struct {
 
 func (x *Postgres_Infra_Pgbouncer) Reset() {
 	*x = Postgres_Infra_Pgbouncer{}
-	mi := &file_database_postgres_proto_msgTypes[7]
+	mi := &file_database_postgres_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -573,7 +634,7 @@ func (x *Postgres_Infra_Pgbouncer) String() string {
 func (*Postgres_Infra_Pgbouncer) ProtoMessage() {}
 
 func (x *Postgres_Infra_Pgbouncer) ProtoReflect() protoreflect.Message {
-	mi := &file_database_postgres_proto_msgTypes[7]
+	mi := &file_database_postgres_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -620,7 +681,7 @@ type Postgres_Infra_Patroni struct {
 
 func (x *Postgres_Infra_Patroni) Reset() {
 	*x = Postgres_Infra_Patroni{}
-	mi := &file_database_postgres_proto_msgTypes[8]
+	mi := &file_database_postgres_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -632,7 +693,7 @@ func (x *Postgres_Infra_Patroni) String() string {
 func (*Postgres_Infra_Patroni) ProtoMessage() {}
 
 func (x *Postgres_Infra_Patroni) ProtoReflect() protoreflect.Message {
-	mi := &file_database_postgres_proto_msgTypes[8]
+	mi := &file_database_postgres_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -671,7 +732,7 @@ type Postgres_Infra_Etcd struct {
 
 func (x *Postgres_Infra_Etcd) Reset() {
 	*x = Postgres_Infra_Etcd{}
-	mi := &file_database_postgres_proto_msgTypes[9]
+	mi := &file_database_postgres_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -683,7 +744,7 @@ func (x *Postgres_Infra_Etcd) String() string {
 func (*Postgres_Infra_Etcd) ProtoMessage() {}
 
 func (x *Postgres_Infra_Etcd) ProtoReflect() protoreflect.Message {
-	mi := &file_database_postgres_proto_msgTypes[9]
+	mi := &file_database_postgres_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -722,7 +783,7 @@ type Postgres_Infra_Backup struct {
 
 func (x *Postgres_Infra_Backup) Reset() {
 	*x = Postgres_Infra_Backup{}
-	mi := &file_database_postgres_proto_msgTypes[10]
+	mi := &file_database_postgres_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -734,7 +795,7 @@ func (x *Postgres_Infra_Backup) String() string {
 func (*Postgres_Infra_Backup) ProtoMessage() {}
 
 func (x *Postgres_Infra_Backup) ProtoReflect() protoreflect.Message {
-	mi := &file_database_postgres_proto_msgTypes[10]
+	mi := &file_database_postgres_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -825,7 +886,7 @@ type Postgres_Infra_Backup_S3Storage struct {
 
 func (x *Postgres_Infra_Backup_S3Storage) Reset() {
 	*x = Postgres_Infra_Backup_S3Storage{}
-	mi := &file_database_postgres_proto_msgTypes[11]
+	mi := &file_database_postgres_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -837,7 +898,7 @@ func (x *Postgres_Infra_Backup_S3Storage) String() string {
 func (*Postgres_Infra_Backup_S3Storage) ProtoMessage() {}
 
 func (x *Postgres_Infra_Backup_S3Storage) ProtoReflect() protoreflect.Message {
-	mi := &file_database_postgres_proto_msgTypes[11]
+	mi := &file_database_postgres_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -897,7 +958,7 @@ type Postgres_Infra_Backup_LocalStorage struct {
 
 func (x *Postgres_Infra_Backup_LocalStorage) Reset() {
 	*x = Postgres_Infra_Backup_LocalStorage{}
-	mi := &file_database_postgres_proto_msgTypes[12]
+	mi := &file_database_postgres_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -909,7 +970,7 @@ func (x *Postgres_Infra_Backup_LocalStorage) String() string {
 func (*Postgres_Infra_Backup_LocalStorage) ProtoMessage() {}
 
 func (x *Postgres_Infra_Backup_LocalStorage) ProtoReflect() protoreflect.Message {
-	mi := &file_database_postgres_proto_msgTypes[12]
+	mi := &file_database_postgres_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -936,7 +997,7 @@ var File_database_postgres_proto protoreflect.FileDescriptor
 
 const file_database_postgres_proto_rawDesc = "" +
 	"\n" +
-	"\x17database/postgres.proto\x12\bdatabase\x1a\x17validate/validate.proto\"\xf8\x0f\n" +
+	"\x17database/postgres.proto\x12\bdatabase\x1a\x17validate/validate.proto\"\xa4\x12\n" +
 	"\bPostgres\x1a\x8b\x03\n" +
 	"\aSidecar\x12Z\n" +
 	"\x11postgres_exporter\x18\x02 \x01(\v2+.database.Postgres.Sidecar.PostgresExporterH\x00R\x10postgresExporter\x12]\n" +
@@ -983,11 +1044,16 @@ const file_database_postgres_proto_rawDesc = "" +
 	"\x10TOOL_UNSPECIFIED\x10\x00\x12\t\n" +
 	"\x05WAL_G\x10\x01\x12\v\n" +
 	"\aPG_DUMP\x10\x02B\x0e\n" +
-	"\astorage\x12\x03\xf8B\x01\x1a\xa1\x04\n" +
-	"\x10InstanceSettings\x12e\n" +
-	"\x0fstorage_backend\x18\x02 \x01(\x0e22.database.Postgres.InstanceSettings.StorageBackendB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0estorageBackend\x12`\n" +
-	"\x0fpostgresql_conf\x18\x03 \x03(\v27.database.Postgres.InstanceSettings.PostgresqlConfEntryR\x0epostgresqlConf\x12Z\n" +
-	"\rorioledb_conf\x18\x04 \x03(\v25.database.Postgres.InstanceSettings.OrioledbConfEntryR\forioledbConf\x1aA\n" +
+	"\astorage\x12\x03\xf8B\x01\x1a\xc7\a\n" +
+	"\bInstance\x12G\n" +
+	"\aversion\x18\x01 \x01(\x0e2#.database.Postgres.Instance.VersionB\b\xfaB\x05\x82\x01\x02\x10\x01R\aversion\x12]\n" +
+	"\x0fstorage_backend\x18\x02 \x01(\x0e2*.database.Postgres.Instance.StorageBackendB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0estorageBackend\x12\x1f\n" +
+	"\bpassword\x18\x03 \x01(\tH\x00R\bpassword\x88\x01\x01\x12\x1f\n" +
+	"\busername\x18\x04 \x01(\tH\x01R\busername\x88\x01\x01\x12\x1f\n" +
+	"\bdatabase\x18\x05 \x01(\tH\x02R\bdatabase\x88\x01\x01\x12$\n" +
+	"\x04port\x18\x06 \x01(\rB\v\xfaB\b*\x06\x18\xff\xff\x03(\x01H\x03R\x04port\x88\x01\x01\x12X\n" +
+	"\x0fpostgresql_conf\x18\a \x03(\v2/.database.Postgres.Instance.PostgresqlConfEntryR\x0epostgresqlConf\x12R\n" +
+	"\rorioledb_conf\x18\b \x03(\v2-.database.Postgres.Instance.OrioledbConfEntryR\forioledbConf\x1aA\n" +
 	"\x13PostgresqlConfEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a?\n" +
@@ -997,10 +1063,33 @@ const file_database_postgres_proto_rawDesc = "" +
 	"\x0eStorageBackend\x12\x1c\n" +
 	"\x18STORAGE_TYPE_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15STORAGE_TYPE_POSTGRES\x10\x01\x12\x19\n" +
-	"\x15STORAGE_TYPE_ORIOLEDB\x10\x02\x1ax\n" +
-	"\bInstance\x12!\n" +
-	"\aversion\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aversion\x12I\n" +
-	"\bsettings\x18\x02 \x01(\v2#.database.Postgres.InstanceSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsettingsB@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/databaseb\x06proto3"
+	"\x15STORAGE_TYPE_ORIOLEDB\x10\x02\"\xc1\x01\n" +
+	"\aVersion\x12\x17\n" +
+	"\x13VERSION_UNSPECIFIED\x10\x00\x12\x0e\n" +
+	"\n" +
+	"VERSION_18\x10\x01\x12\x0e\n" +
+	"\n" +
+	"VERSION_17\x10\x02\x12\x0e\n" +
+	"\n" +
+	"VERSION_16\x10\x03\x12\x0e\n" +
+	"\n" +
+	"VERSION_15\x10\x04\x12\x0e\n" +
+	"\n" +
+	"VERSION_14\x10\x05\x12\x0e\n" +
+	"\n" +
+	"VERSION_13\x10\x06\x12\x0e\n" +
+	"\n" +
+	"VERSION_12\x10\a\x12\x0e\n" +
+	"\n" +
+	"VERSION_11\x10\b\x12\x0e\n" +
+	"\n" +
+	"VERSION_10\x10\t\x12\r\n" +
+	"\tVERSION_9\x10\n" +
+	"B\v\n" +
+	"\t_passwordB\v\n" +
+	"\t_usernameB\v\n" +
+	"\t_databaseB\a\n" +
+	"\x05_portB@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/databaseb\x06proto3"
 
 var (
 	file_database_postgres_proto_rawDescOnce sync.Once
@@ -1014,35 +1103,35 @@ func file_database_postgres_proto_rawDescGZIP() []byte {
 	return file_database_postgres_proto_rawDescData
 }
 
-var file_database_postgres_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_database_postgres_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_database_postgres_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_database_postgres_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_database_postgres_proto_goTypes = []any{
-	(Postgres_Infra_Pgbouncer_PoolMode)(0),        // 0: database.Postgres.Infra.Pgbouncer.PoolMode
-	(Postgres_Infra_Backup_Tool)(0),               // 1: database.Postgres.Infra.Backup.Tool
-	(Postgres_InstanceSettings_StorageBackend)(0), // 2: database.Postgres.InstanceSettings.StorageBackend
-	(*Postgres)(nil),                              // 3: database.Postgres
-	(*Postgres_Sidecar)(nil),                      // 4: database.Postgres.Sidecar
-	(*Postgres_Infra)(nil),                        // 5: database.Postgres.Infra
-	(*Postgres_InstanceSettings)(nil),             // 6: database.Postgres.InstanceSettings
-	(*Postgres_Instance)(nil),                     // 7: database.Postgres.Instance
-	(*Postgres_Sidecar_PostgresExporter)(nil),     // 8: database.Postgres.Sidecar.PostgresExporter
-	(*Postgres_Sidecar_PgbouncerExporter)(nil),    // 9: database.Postgres.Sidecar.PgbouncerExporter
-	(*Postgres_Infra_Pgbouncer)(nil),              // 10: database.Postgres.Infra.Pgbouncer
-	(*Postgres_Infra_Patroni)(nil),                // 11: database.Postgres.Infra.Patroni
-	(*Postgres_Infra_Etcd)(nil),                   // 12: database.Postgres.Infra.Etcd
-	(*Postgres_Infra_Backup)(nil),                 // 13: database.Postgres.Infra.Backup
-	(*Postgres_Infra_Backup_S3Storage)(nil),       // 14: database.Postgres.Infra.Backup.S3Storage
-	(*Postgres_Infra_Backup_LocalStorage)(nil),    // 15: database.Postgres.Infra.Backup.LocalStorage
-	nil, // 16: database.Postgres.InstanceSettings.PostgresqlConfEntry
-	nil, // 17: database.Postgres.InstanceSettings.OrioledbConfEntry
+	(Postgres_Infra_Pgbouncer_PoolMode)(0),     // 0: database.Postgres.Infra.Pgbouncer.PoolMode
+	(Postgres_Infra_Backup_Tool)(0),            // 1: database.Postgres.Infra.Backup.Tool
+	(Postgres_Instance_StorageBackend)(0),      // 2: database.Postgres.Instance.StorageBackend
+	(Postgres_Instance_Version)(0),             // 3: database.Postgres.Instance.Version
+	(*Postgres)(nil),                           // 4: database.Postgres
+	(*Postgres_Sidecar)(nil),                   // 5: database.Postgres.Sidecar
+	(*Postgres_Infra)(nil),                     // 6: database.Postgres.Infra
+	(*Postgres_Instance)(nil),                  // 7: database.Postgres.Instance
+	(*Postgres_Sidecar_PostgresExporter)(nil),  // 8: database.Postgres.Sidecar.PostgresExporter
+	(*Postgres_Sidecar_PgbouncerExporter)(nil), // 9: database.Postgres.Sidecar.PgbouncerExporter
+	(*Postgres_Infra_Pgbouncer)(nil),           // 10: database.Postgres.Infra.Pgbouncer
+	(*Postgres_Infra_Patroni)(nil),             // 11: database.Postgres.Infra.Patroni
+	(*Postgres_Infra_Etcd)(nil),                // 12: database.Postgres.Infra.Etcd
+	(*Postgres_Infra_Backup)(nil),              // 13: database.Postgres.Infra.Backup
+	(*Postgres_Infra_Backup_S3Storage)(nil),    // 14: database.Postgres.Infra.Backup.S3Storage
+	(*Postgres_Infra_Backup_LocalStorage)(nil), // 15: database.Postgres.Infra.Backup.LocalStorage
+	nil, // 16: database.Postgres.Instance.PostgresqlConfEntry
+	nil, // 17: database.Postgres.Instance.OrioledbConfEntry
 }
 var file_database_postgres_proto_depIdxs = []int32{
 	8,  // 0: database.Postgres.Sidecar.postgres_exporter:type_name -> database.Postgres.Sidecar.PostgresExporter
 	9,  // 1: database.Postgres.Sidecar.pgbouncer_exporter:type_name -> database.Postgres.Sidecar.PgbouncerExporter
-	2,  // 2: database.Postgres.InstanceSettings.storage_backend:type_name -> database.Postgres.InstanceSettings.StorageBackend
-	16, // 3: database.Postgres.InstanceSettings.postgresql_conf:type_name -> database.Postgres.InstanceSettings.PostgresqlConfEntry
-	17, // 4: database.Postgres.InstanceSettings.orioledb_conf:type_name -> database.Postgres.InstanceSettings.OrioledbConfEntry
-	6,  // 5: database.Postgres.Instance.settings:type_name -> database.Postgres.InstanceSettings
+	3,  // 2: database.Postgres.Instance.version:type_name -> database.Postgres.Instance.Version
+	2,  // 3: database.Postgres.Instance.storage_backend:type_name -> database.Postgres.Instance.StorageBackend
+	16, // 4: database.Postgres.Instance.postgresql_conf:type_name -> database.Postgres.Instance.PostgresqlConfEntry
+	17, // 5: database.Postgres.Instance.orioledb_conf:type_name -> database.Postgres.Instance.OrioledbConfEntry
 	0,  // 6: database.Postgres.Infra.Pgbouncer.pool_mode:type_name -> database.Postgres.Infra.Pgbouncer.PoolMode
 	1,  // 7: database.Postgres.Infra.Backup.tool:type_name -> database.Postgres.Infra.Backup.Tool
 	14, // 8: database.Postgres.Infra.Backup.s3:type_name -> database.Postgres.Infra.Backup.S3Storage
@@ -1063,7 +1152,8 @@ func file_database_postgres_proto_init() {
 		(*Postgres_Sidecar_PostgresExporter_)(nil),
 		(*Postgres_Sidecar_PgbouncerExporter_)(nil),
 	}
-	file_database_postgres_proto_msgTypes[10].OneofWrappers = []any{
+	file_database_postgres_proto_msgTypes[3].OneofWrappers = []any{}
+	file_database_postgres_proto_msgTypes[9].OneofWrappers = []any{
 		(*Postgres_Infra_Backup_S3)(nil),
 		(*Postgres_Infra_Backup_Local)(nil),
 	}
@@ -1072,8 +1162,8 @@ func file_database_postgres_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_database_postgres_proto_rawDesc), len(file_database_postgres_proto_rawDesc)),
-			NumEnums:      3,
-			NumMessages:   15,
+			NumEnums:      4,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

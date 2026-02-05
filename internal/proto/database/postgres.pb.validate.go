@@ -434,123 +434,6 @@ var _ interface {
 	ErrorName() string
 } = Postgres_InfraValidationError{}
 
-// Validate checks the field values on Postgres_InstanceSettings with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Postgres_InstanceSettings) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Postgres_InstanceSettings with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Postgres_InstanceSettingsMultiError, or nil if none found.
-func (m *Postgres_InstanceSettings) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_InstanceSettings) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if _, ok := Postgres_InstanceSettings_StorageBackend_name[int32(m.GetStorageBackend())]; !ok {
-		err := Postgres_InstanceSettingsValidationError{
-			field:  "StorageBackend",
-			reason: "value must be one of the defined enum values",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	// no validation rules for PostgresqlConf
-
-	// no validation rules for OrioledbConf
-
-	if len(errors) > 0 {
-		return Postgres_InstanceSettingsMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_InstanceSettingsMultiError is an error wrapping multiple validation
-// errors returned by Postgres_InstanceSettings.ValidateAll() if the
-// designated constraints aren't met.
-type Postgres_InstanceSettingsMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_InstanceSettingsMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_InstanceSettingsMultiError) AllErrors() []error { return m }
-
-// Postgres_InstanceSettingsValidationError is the validation error returned by
-// Postgres_InstanceSettings.Validate if the designated constraints aren't met.
-type Postgres_InstanceSettingsValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_InstanceSettingsValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_InstanceSettingsValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_InstanceSettingsValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_InstanceSettingsValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_InstanceSettingsValidationError) ErrorName() string {
-	return "Postgres_InstanceSettingsValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Postgres_InstanceSettingsValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_InstanceSettings.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_InstanceSettingsValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_InstanceSettingsValidationError{}
-
 // Validate checks the field values on Postgres_Instance with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -573,10 +456,10 @@ func (m *Postgres_Instance) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetVersion()) < 1 {
+	if _, ok := Postgres_Instance_Version_name[int32(m.GetVersion())]; !ok {
 		err := Postgres_InstanceValidationError{
 			field:  "Version",
-			reason: "value length must be at least 1 runes",
+			reason: "value must be one of the defined enum values",
 		}
 		if !all {
 			return err
@@ -584,10 +467,10 @@ func (m *Postgres_Instance) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if m.GetSettings() == nil {
+	if _, ok := Postgres_Instance_StorageBackend_name[int32(m.GetStorageBackend())]; !ok {
 		err := Postgres_InstanceValidationError{
-			field:  "Settings",
-			reason: "value is required",
+			field:  "StorageBackend",
+			reason: "value must be one of the defined enum values",
 		}
 		if !all {
 			return err
@@ -595,33 +478,35 @@ func (m *Postgres_Instance) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if all {
-		switch v := interface{}(m.GetSettings()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_InstanceValidationError{
-					field:  "Settings",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
+	// no validation rules for PostgresqlConf
+
+	// no validation rules for OrioledbConf
+
+	if m.Password != nil {
+		// no validation rules for Password
+	}
+
+	if m.Username != nil {
+		// no validation rules for Username
+	}
+
+	if m.Database != nil {
+		// no validation rules for Database
+	}
+
+	if m.Port != nil {
+
+		if val := m.GetPort(); val < 1 || val > 65535 {
+			err := Postgres_InstanceValidationError{
+				field:  "Port",
+				reason: "value must be inside range [1, 65535]",
 			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_InstanceValidationError{
-					field:  "Settings",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
+			if !all {
+				return err
 			}
+			errors = append(errors, err)
 		}
-	} else if v, ok := interface{}(m.GetSettings()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_InstanceValidationError{
-				field:  "Settings",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
+
 	}
 
 	if len(errors) > 0 {

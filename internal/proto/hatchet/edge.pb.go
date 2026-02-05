@@ -71,7 +71,7 @@ func (x Software_SetupStrategy) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Software_SetupStrategy.Descriptor instead.
 func (Software_SetupStrategy) EnumDescriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{1, 0}
+	return file_hatchet_edge_proto_rawDescGZIP(), []int{0, 0}
 }
 
 type EdgeTasks_Kind int32
@@ -120,59 +120,7 @@ func (x EdgeTasks_Kind) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use EdgeTasks_Kind.Descriptor instead.
 func (EdgeTasks_Kind) EnumDescriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{6, 0}
-}
-
-type StroppyInstallation struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Version       string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
-	BinaryPath    string                 `protobuf:"bytes,2,opt,name=binary_path,json=binaryPath,proto3" json:"binary_path,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *StroppyInstallation) Reset() {
-	*x = StroppyInstallation{}
-	mi := &file_hatchet_edge_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *StroppyInstallation) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*StroppyInstallation) ProtoMessage() {}
-
-func (x *StroppyInstallation) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_edge_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use StroppyInstallation.ProtoReflect.Descriptor instead.
-func (*StroppyInstallation) Descriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *StroppyInstallation) GetVersion() string {
-	if x != nil {
-		return x.Version
-	}
-	return ""
-}
-
-func (x *StroppyInstallation) GetBinaryPath() string {
-	if x != nil {
-		return x.BinaryPath
-	}
-	return ""
+	return file_hatchet_edge_proto_rawDescGZIP(), []int{5, 0}
 }
 
 type Software struct {
@@ -191,7 +139,7 @@ type Software struct {
 
 func (x *Software) Reset() {
 	*x = Software{}
-	mi := &file_hatchet_edge_proto_msgTypes[1]
+	mi := &file_hatchet_edge_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -203,7 +151,7 @@ func (x *Software) String() string {
 func (*Software) ProtoMessage() {}
 
 func (x *Software) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_edge_proto_msgTypes[1]
+	mi := &file_hatchet_edge_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -216,7 +164,7 @@ func (x *Software) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Software.ProtoReflect.Descriptor instead.
 func (*Software) Descriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{1}
+	return file_hatchet_edge_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Software) GetSetupStrategy() Software_SetupStrategy {
@@ -260,7 +208,7 @@ func (x *Software) GetInfra() *database.Infra {
 	return nil
 }
 
-func (x *Software) GetStroppy() *StroppyInstallation {
+func (x *Software) GetStroppy() *stroppy.StroppyCli {
 	if x != nil {
 		if x, ok := x.Software.(*Software_Stroppy); ok {
 			return x.Stroppy
@@ -286,7 +234,7 @@ type Software_Infra struct {
 }
 
 type Software_Stroppy struct {
-	Stroppy *StroppyInstallation `protobuf:"bytes,5,opt,name=stroppy,proto3,oneof"`
+	Stroppy *stroppy.StroppyCli `protobuf:"bytes,5,opt,name=stroppy,proto3,oneof"`
 }
 
 func (*Software_Postgres) isSoftware_Software() {}
@@ -310,7 +258,7 @@ type EdgeWorker struct {
 
 func (x *EdgeWorker) Reset() {
 	*x = EdgeWorker{}
-	mi := &file_hatchet_edge_proto_msgTypes[2]
+	mi := &file_hatchet_edge_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -322,7 +270,7 @@ func (x *EdgeWorker) String() string {
 func (*EdgeWorker) ProtoMessage() {}
 
 func (x *EdgeWorker) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_edge_proto_msgTypes[2]
+	mi := &file_hatchet_edge_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -335,7 +283,7 @@ func (x *EdgeWorker) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EdgeWorker.ProtoReflect.Descriptor instead.
 func (*EdgeWorker) Descriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{2}
+	return file_hatchet_edge_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *EdgeWorker) GetWorkerName() string {
@@ -382,7 +330,7 @@ type EdgeWorkersSet struct {
 
 func (x *EdgeWorkersSet) Reset() {
 	*x = EdgeWorkersSet{}
-	mi := &file_hatchet_edge_proto_msgTypes[3]
+	mi := &file_hatchet_edge_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -394,7 +342,7 @@ func (x *EdgeWorkersSet) String() string {
 func (*EdgeWorkersSet) ProtoMessage() {}
 
 func (x *EdgeWorkersSet) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_edge_proto_msgTypes[3]
+	mi := &file_hatchet_edge_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -407,7 +355,7 @@ func (x *EdgeWorkersSet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EdgeWorkersSet.ProtoReflect.Descriptor instead.
 func (*EdgeWorkersSet) Descriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{3}
+	return file_hatchet_edge_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *EdgeWorkersSet) GetEdgeWorkers() []*EdgeWorker {
@@ -427,7 +375,7 @@ type DeployedEdgeWorker struct {
 
 func (x *DeployedEdgeWorker) Reset() {
 	*x = DeployedEdgeWorker{}
-	mi := &file_hatchet_edge_proto_msgTypes[4]
+	mi := &file_hatchet_edge_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -439,7 +387,7 @@ func (x *DeployedEdgeWorker) String() string {
 func (*DeployedEdgeWorker) ProtoMessage() {}
 
 func (x *DeployedEdgeWorker) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_edge_proto_msgTypes[4]
+	mi := &file_hatchet_edge_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -452,7 +400,7 @@ func (x *DeployedEdgeWorker) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeployedEdgeWorker.ProtoReflect.Descriptor instead.
 func (*DeployedEdgeWorker) Descriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{4}
+	return file_hatchet_edge_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *DeployedEdgeWorker) GetWorker() *EdgeWorker {
@@ -478,7 +426,7 @@ type DeployedEdgeWorkersSet struct {
 
 func (x *DeployedEdgeWorkersSet) Reset() {
 	*x = DeployedEdgeWorkersSet{}
-	mi := &file_hatchet_edge_proto_msgTypes[5]
+	mi := &file_hatchet_edge_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -490,7 +438,7 @@ func (x *DeployedEdgeWorkersSet) String() string {
 func (*DeployedEdgeWorkersSet) ProtoMessage() {}
 
 func (x *DeployedEdgeWorkersSet) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_edge_proto_msgTypes[5]
+	mi := &file_hatchet_edge_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -503,7 +451,7 @@ func (x *DeployedEdgeWorkersSet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeployedEdgeWorkersSet.ProtoReflect.Descriptor instead.
 func (*DeployedEdgeWorkersSet) Descriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{5}
+	return file_hatchet_edge_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *DeployedEdgeWorkersSet) GetDeployedEdgeWorkers() []*DeployedEdgeWorker {
@@ -522,7 +470,7 @@ type EdgeTasks struct {
 
 func (x *EdgeTasks) Reset() {
 	*x = EdgeTasks{}
-	mi := &file_hatchet_edge_proto_msgTypes[6]
+	mi := &file_hatchet_edge_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -534,7 +482,7 @@ func (x *EdgeTasks) String() string {
 func (*EdgeTasks) ProtoMessage() {}
 
 func (x *EdgeTasks) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_edge_proto_msgTypes[6]
+	mi := &file_hatchet_edge_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -547,7 +495,7 @@ func (x *EdgeTasks) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EdgeTasks.ProtoReflect.Descriptor instead.
 func (*EdgeTasks) Descriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{6}
+	return file_hatchet_edge_proto_rawDescGZIP(), []int{5}
 }
 
 type EdgeTasks_Identifier struct {
@@ -561,7 +509,7 @@ type EdgeTasks_Identifier struct {
 
 func (x *EdgeTasks_Identifier) Reset() {
 	*x = EdgeTasks_Identifier{}
-	mi := &file_hatchet_edge_proto_msgTypes[8]
+	mi := &file_hatchet_edge_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -573,7 +521,7 @@ func (x *EdgeTasks_Identifier) String() string {
 func (*EdgeTasks_Identifier) ProtoMessage() {}
 
 func (x *EdgeTasks_Identifier) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_edge_proto_msgTypes[8]
+	mi := &file_hatchet_edge_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -586,7 +534,7 @@ func (x *EdgeTasks_Identifier) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EdgeTasks_Identifier.ProtoReflect.Descriptor instead.
 func (*EdgeTasks_Identifier) Descriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{6, 0}
+	return file_hatchet_edge_proto_rawDescGZIP(), []int{5, 0}
 }
 
 func (x *EdgeTasks_Identifier) GetRunId() string {
@@ -610,28 +558,28 @@ func (x *EdgeTasks_Identifier) GetKind() EdgeTasks_Kind {
 	return EdgeTasks_KIND_UNSPECIFIED
 }
 
-// Setup software on edge worker
-type EdgeTasks_SetupSoftware struct {
+// Install software on edge worker
+type EdgeTasks_InstallSoftware struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *EdgeTasks_SetupSoftware) Reset() {
-	*x = EdgeTasks_SetupSoftware{}
-	mi := &file_hatchet_edge_proto_msgTypes[9]
+func (x *EdgeTasks_InstallSoftware) Reset() {
+	*x = EdgeTasks_InstallSoftware{}
+	mi := &file_hatchet_edge_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *EdgeTasks_SetupSoftware) String() string {
+func (x *EdgeTasks_InstallSoftware) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EdgeTasks_SetupSoftware) ProtoMessage() {}
+func (*EdgeTasks_InstallSoftware) ProtoMessage() {}
 
-func (x *EdgeTasks_SetupSoftware) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_edge_proto_msgTypes[9]
+func (x *EdgeTasks_InstallSoftware) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_edge_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -642,9 +590,9 @@ func (x *EdgeTasks_SetupSoftware) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EdgeTasks_SetupSoftware.ProtoReflect.Descriptor instead.
-func (*EdgeTasks_SetupSoftware) Descriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{6, 1}
+// Deprecated: Use EdgeTasks_InstallSoftware.ProtoReflect.Descriptor instead.
+func (*EdgeTasks_InstallSoftware) Descriptor() ([]byte, []int) {
+	return file_hatchet_edge_proto_rawDescGZIP(), []int{5, 1}
 }
 
 // Run stroppy test on edge worker
@@ -656,7 +604,7 @@ type EdgeTasks_RunStroppy struct {
 
 func (x *EdgeTasks_RunStroppy) Reset() {
 	*x = EdgeTasks_RunStroppy{}
-	mi := &file_hatchet_edge_proto_msgTypes[10]
+	mi := &file_hatchet_edge_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -668,7 +616,7 @@ func (x *EdgeTasks_RunStroppy) String() string {
 func (*EdgeTasks_RunStroppy) ProtoMessage() {}
 
 func (x *EdgeTasks_RunStroppy) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_edge_proto_msgTypes[10]
+	mi := &file_hatchet_edge_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -681,10 +629,10 @@ func (x *EdgeTasks_RunStroppy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EdgeTasks_RunStroppy.ProtoReflect.Descriptor instead.
 func (*EdgeTasks_RunStroppy) Descriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{6, 2}
+	return file_hatchet_edge_proto_rawDescGZIP(), []int{5, 2}
 }
 
-type EdgeTasks_SetupSoftware_Input struct {
+type EdgeTasks_InstallSoftware_Input struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Common        *Common                `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
 	Software      []*Software            `protobuf:"bytes,2,rep,name=software,proto3" json:"software,omitempty"`
@@ -692,21 +640,21 @@ type EdgeTasks_SetupSoftware_Input struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *EdgeTasks_SetupSoftware_Input) Reset() {
-	*x = EdgeTasks_SetupSoftware_Input{}
-	mi := &file_hatchet_edge_proto_msgTypes[11]
+func (x *EdgeTasks_InstallSoftware_Input) Reset() {
+	*x = EdgeTasks_InstallSoftware_Input{}
+	mi := &file_hatchet_edge_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *EdgeTasks_SetupSoftware_Input) String() string {
+func (x *EdgeTasks_InstallSoftware_Input) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EdgeTasks_SetupSoftware_Input) ProtoMessage() {}
+func (*EdgeTasks_InstallSoftware_Input) ProtoMessage() {}
 
-func (x *EdgeTasks_SetupSoftware_Input) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_edge_proto_msgTypes[11]
+func (x *EdgeTasks_InstallSoftware_Input) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_edge_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -717,46 +665,46 @@ func (x *EdgeTasks_SetupSoftware_Input) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EdgeTasks_SetupSoftware_Input.ProtoReflect.Descriptor instead.
-func (*EdgeTasks_SetupSoftware_Input) Descriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{6, 1, 0}
+// Deprecated: Use EdgeTasks_InstallSoftware_Input.ProtoReflect.Descriptor instead.
+func (*EdgeTasks_InstallSoftware_Input) Descriptor() ([]byte, []int) {
+	return file_hatchet_edge_proto_rawDescGZIP(), []int{5, 1, 0}
 }
 
-func (x *EdgeTasks_SetupSoftware_Input) GetCommon() *Common {
+func (x *EdgeTasks_InstallSoftware_Input) GetCommon() *Common {
 	if x != nil {
 		return x.Common
 	}
 	return nil
 }
 
-func (x *EdgeTasks_SetupSoftware_Input) GetSoftware() []*Software {
+func (x *EdgeTasks_InstallSoftware_Input) GetSoftware() []*Software {
 	if x != nil {
 		return x.Software
 	}
 	return nil
 }
 
-type EdgeTasks_SetupSoftware_Output struct {
+type EdgeTasks_InstallSoftware_Output struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *EdgeTasks_SetupSoftware_Output) Reset() {
-	*x = EdgeTasks_SetupSoftware_Output{}
-	mi := &file_hatchet_edge_proto_msgTypes[12]
+func (x *EdgeTasks_InstallSoftware_Output) Reset() {
+	*x = EdgeTasks_InstallSoftware_Output{}
+	mi := &file_hatchet_edge_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *EdgeTasks_SetupSoftware_Output) String() string {
+func (x *EdgeTasks_InstallSoftware_Output) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EdgeTasks_SetupSoftware_Output) ProtoMessage() {}
+func (*EdgeTasks_InstallSoftware_Output) ProtoMessage() {}
 
-func (x *EdgeTasks_SetupSoftware_Output) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_edge_proto_msgTypes[12]
+func (x *EdgeTasks_InstallSoftware_Output) ProtoReflect() protoreflect.Message {
+	mi := &file_hatchet_edge_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -767,23 +715,22 @@ func (x *EdgeTasks_SetupSoftware_Output) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EdgeTasks_SetupSoftware_Output.ProtoReflect.Descriptor instead.
-func (*EdgeTasks_SetupSoftware_Output) Descriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{6, 1, 1}
+// Deprecated: Use EdgeTasks_InstallSoftware_Output.ProtoReflect.Descriptor instead.
+func (*EdgeTasks_InstallSoftware_Output) Descriptor() ([]byte, []int) {
+	return file_hatchet_edge_proto_rawDescGZIP(), []int{5, 1, 1}
 }
 
 type EdgeTasks_RunStroppy_Input struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Common        *Common                `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
-	Installation  *StroppyInstallation   `protobuf:"bytes,2,opt,name=installation,proto3" json:"installation,omitempty"`
-	Test          *stroppy.Test          `protobuf:"bytes,3,opt,name=test,proto3" json:"test,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Common         *Common                `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	StroppyCliCall *stroppy.StroppyCli    `protobuf:"bytes,2,opt,name=stroppy_cli_call,json=stroppyCliCall,proto3" json:"stroppy_cli_call,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *EdgeTasks_RunStroppy_Input) Reset() {
 	*x = EdgeTasks_RunStroppy_Input{}
-	mi := &file_hatchet_edge_proto_msgTypes[13]
+	mi := &file_hatchet_edge_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -795,7 +742,7 @@ func (x *EdgeTasks_RunStroppy_Input) String() string {
 func (*EdgeTasks_RunStroppy_Input) ProtoMessage() {}
 
 func (x *EdgeTasks_RunStroppy_Input) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_edge_proto_msgTypes[13]
+	mi := &file_hatchet_edge_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -808,7 +755,7 @@ func (x *EdgeTasks_RunStroppy_Input) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EdgeTasks_RunStroppy_Input.ProtoReflect.Descriptor instead.
 func (*EdgeTasks_RunStroppy_Input) Descriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{6, 2, 0}
+	return file_hatchet_edge_proto_rawDescGZIP(), []int{5, 2, 0}
 }
 
 func (x *EdgeTasks_RunStroppy_Input) GetCommon() *Common {
@@ -818,16 +765,9 @@ func (x *EdgeTasks_RunStroppy_Input) GetCommon() *Common {
 	return nil
 }
 
-func (x *EdgeTasks_RunStroppy_Input) GetInstallation() *StroppyInstallation {
+func (x *EdgeTasks_RunStroppy_Input) GetStroppyCliCall() *stroppy.StroppyCli {
 	if x != nil {
-		return x.Installation
-	}
-	return nil
-}
-
-func (x *EdgeTasks_RunStroppy_Input) GetTest() *stroppy.Test {
-	if x != nil {
-		return x.Test
+		return x.StroppyCliCall
 	}
 	return nil
 }
@@ -841,7 +781,7 @@ type EdgeTasks_RunStroppy_Output struct {
 
 func (x *EdgeTasks_RunStroppy_Output) Reset() {
 	*x = EdgeTasks_RunStroppy_Output{}
-	mi := &file_hatchet_edge_proto_msgTypes[14]
+	mi := &file_hatchet_edge_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -853,7 +793,7 @@ func (x *EdgeTasks_RunStroppy_Output) String() string {
 func (*EdgeTasks_RunStroppy_Output) ProtoMessage() {}
 
 func (x *EdgeTasks_RunStroppy_Output) ProtoReflect() protoreflect.Message {
-	mi := &file_hatchet_edge_proto_msgTypes[14]
+	mi := &file_hatchet_edge_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -866,7 +806,7 @@ func (x *EdgeTasks_RunStroppy_Output) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EdgeTasks_RunStroppy_Output.ProtoReflect.Descriptor instead.
 func (*EdgeTasks_RunStroppy_Output) Descriptor() ([]byte, []int) {
-	return file_hatchet_edge_proto_rawDescGZIP(), []int{6, 2, 1}
+	return file_hatchet_edge_proto_rawDescGZIP(), []int{5, 2, 1}
 }
 
 func (x *EdgeTasks_RunStroppy_Output) GetResult() *stroppy.TestResult {
@@ -880,17 +820,13 @@ var File_hatchet_edge_proto protoreflect.FileDescriptor
 
 const file_hatchet_edge_proto_rawDesc = "" +
 	"\n" +
-	"\x12hatchet/edge.proto\x12\ahatchet\x1a\x1bcrossplane/deployment.proto\x1a\x16database/cluster.proto\x1a\x17database/instance.proto\x1a\x17database/postgres.proto\x1a\x15hatchet/hatchet.proto\x1a\x12stroppy/test.proto\x1a\x17validate/validate.proto\"Y\n" +
-	"\x13StroppyInstallation\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\tR\aversion\x12(\n" +
-	"\vbinary_path\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\n" +
-	"binaryPath\"\xa3\x03\n" +
+	"\x12hatchet/edge.proto\x12\ahatchet\x1a\x1bcrossplane/deployment.proto\x1a\x16database/cluster.proto\x1a\x17database/instance.proto\x1a\x17database/postgres.proto\x1a\x15hatchet/hatchet.proto\x1a\x12stroppy/test.proto\x1a\x17validate/validate.proto\"\x9a\x03\n" +
 	"\bSoftware\x12F\n" +
 	"\x0esetup_strategy\x18\x01 \x01(\x0e2\x1f.hatchet.Software.SetupStrategyR\rsetupStrategy\x129\n" +
 	"\bpostgres\x18\x02 \x01(\v2\x1b.database.Postgres.InstanceH\x00R\bpostgres\x12-\n" +
 	"\asidecar\x18\x03 \x01(\v2\x11.database.SidecarH\x00R\asidecar\x12'\n" +
-	"\x05infra\x18\x04 \x01(\v2\x0f.database.InfraH\x00R\x05infra\x128\n" +
-	"\astroppy\x18\x05 \x01(\v2\x1c.hatchet.StroppyInstallationH\x00R\astroppy\"q\n" +
+	"\x05infra\x18\x04 \x01(\v2\x0f.database.InfraH\x00R\x05infra\x12/\n" +
+	"\astroppy\x18\x05 \x01(\v2\x13.stroppy.StroppyCliH\x00R\astroppy\"q\n" +
 	"\rSetupStrategy\x12\x1e\n" +
 	"\x1aSETUP_STRATEGY_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16SETUP_STRATEGY_INSTALL\x10\x01\x12$\n" +
@@ -916,25 +852,24 @@ const file_hatchet_edge_proto_rawDesc = "" +
 	"deployment\x18\x02 \x01(\v2\x0e.crossplane.VmB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
 	"deployment\"s\n" +
 	"\x16DeployedEdgeWorkersSet\x12Y\n" +
-	"\x15deployed_edge_workers\x18\x01 \x03(\v2\x1b.hatchet.DeployedEdgeWorkerB\b\xfaB\x05\x92\x01\x02\b\x01R\x13deployedEdgeWorkers\"\xf2\x04\n" +
+	"\x15deployed_edge_workers\x18\x01 \x03(\v2\x1b.hatchet.DeployedEdgeWorkerB\b\xfaB\x05\x92\x01\x02\b\x01R\x13deployedEdgeWorkers\"\xc4\x04\n" +
 	"\tEdgeTasks\x1a\x85\x01\n" +
 	"\n" +
 	"Identifier\x12\x1e\n" +
 	"\x06run_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05runId\x12 \n" +
 	"\atask_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06taskId\x125\n" +
-	"\x04kind\x18\x03 \x01(\x0e2\x17.hatchet.EdgeTasks.KindB\b\xfaB\x05\x82\x01\x02\x10\x01R\x04kind\x1a\x93\x01\n" +
-	"\rSetupSoftware\x1ax\n" +
+	"\x04kind\x18\x03 \x01(\x0e2\x17.hatchet.EdgeTasks.KindB\b\xfaB\x05\x82\x01\x02\x10\x01R\x04kind\x1a\x95\x01\n" +
+	"\x0fInstallSoftware\x1ax\n" +
 	"\x05Input\x121\n" +
 	"\x06common\x18\x01 \x01(\v2\x0f.hatchet.CommonB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06common\x12<\n" +
 	"\bsoftware\x18\x02 \x03(\v2\x11.hatchet.SoftwareB\r\xfaB\n" +
 	"\x92\x01\a\"\x05\x8a\x01\x02\x10\x01R\bsoftware\x1a\b\n" +
-	"\x06Output\x1a\x83\x02\n" +
+	"\x06Output\x1a\xd3\x01\n" +
 	"\n" +
-	"RunStroppy\x1a\xb3\x01\n" +
+	"RunStroppy\x1a\x83\x01\n" +
 	"\x05Input\x121\n" +
-	"\x06common\x18\x01 \x01(\v2\x0f.hatchet.CommonB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06common\x12J\n" +
-	"\finstallation\x18\x02 \x01(\v2\x1c.hatchet.StroppyInstallationB\b\xfaB\x05\x8a\x01\x02\x10\x01R\finstallation\x12+\n" +
-	"\x04test\x18\x03 \x01(\v2\r.stroppy.TestB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04test\x1a?\n" +
+	"\x06common\x18\x01 \x01(\v2\x0f.hatchet.CommonB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06common\x12G\n" +
+	"\x10stroppy_cli_call\x18\x02 \x01(\v2\x13.stroppy.StroppyCliB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0estroppyCliCall\x1a?\n" +
 	"\x06Output\x125\n" +
 	"\x06result\x18\x01 \x01(\v2\x13.stroppy.TestResultB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06result\"A\n" +
 	"\x04Kind\x12\x14\n" +
@@ -955,60 +890,58 @@ func file_hatchet_edge_proto_rawDescGZIP() []byte {
 }
 
 var file_hatchet_edge_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_hatchet_edge_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_hatchet_edge_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_hatchet_edge_proto_goTypes = []any{
-	(Software_SetupStrategy)(0),            // 0: hatchet.Software.SetupStrategy
-	(EdgeTasks_Kind)(0),                    // 1: hatchet.EdgeTasks.Kind
-	(*StroppyInstallation)(nil),            // 2: hatchet.StroppyInstallation
-	(*Software)(nil),                       // 3: hatchet.Software
-	(*EdgeWorker)(nil),                     // 4: hatchet.EdgeWorker
-	(*EdgeWorkersSet)(nil),                 // 5: hatchet.EdgeWorkersSet
-	(*DeployedEdgeWorker)(nil),             // 6: hatchet.DeployedEdgeWorker
-	(*DeployedEdgeWorkersSet)(nil),         // 7: hatchet.DeployedEdgeWorkersSet
-	(*EdgeTasks)(nil),                      // 8: hatchet.EdgeTasks
-	nil,                                    // 9: hatchet.EdgeWorker.MetadataEntry
-	(*EdgeTasks_Identifier)(nil),           // 10: hatchet.EdgeTasks.Identifier
-	(*EdgeTasks_SetupSoftware)(nil),        // 11: hatchet.EdgeTasks.SetupSoftware
-	(*EdgeTasks_RunStroppy)(nil),           // 12: hatchet.EdgeTasks.RunStroppy
-	(*EdgeTasks_SetupSoftware_Input)(nil),  // 13: hatchet.EdgeTasks.SetupSoftware.Input
-	(*EdgeTasks_SetupSoftware_Output)(nil), // 14: hatchet.EdgeTasks.SetupSoftware.Output
-	(*EdgeTasks_RunStroppy_Input)(nil),     // 15: hatchet.EdgeTasks.RunStroppy.Input
-	(*EdgeTasks_RunStroppy_Output)(nil),    // 16: hatchet.EdgeTasks.RunStroppy.Output
-	(*database.Postgres_Instance)(nil),     // 17: database.Postgres.Instance
-	(*database.Sidecar)(nil),               // 18: database.Sidecar
-	(*database.Infra)(nil),                 // 19: database.Infra
-	(*crossplane.Hardware)(nil),            // 20: crossplane.Hardware
-	(*crossplane.Vm)(nil),                  // 21: crossplane.Vm
-	(*Common)(nil),                         // 22: hatchet.Common
-	(*stroppy.Test)(nil),                   // 23: stroppy.Test
-	(*stroppy.TestResult)(nil),             // 24: stroppy.TestResult
+	(Software_SetupStrategy)(0),              // 0: hatchet.Software.SetupStrategy
+	(EdgeTasks_Kind)(0),                      // 1: hatchet.EdgeTasks.Kind
+	(*Software)(nil),                         // 2: hatchet.Software
+	(*EdgeWorker)(nil),                       // 3: hatchet.EdgeWorker
+	(*EdgeWorkersSet)(nil),                   // 4: hatchet.EdgeWorkersSet
+	(*DeployedEdgeWorker)(nil),               // 5: hatchet.DeployedEdgeWorker
+	(*DeployedEdgeWorkersSet)(nil),           // 6: hatchet.DeployedEdgeWorkersSet
+	(*EdgeTasks)(nil),                        // 7: hatchet.EdgeTasks
+	nil,                                      // 8: hatchet.EdgeWorker.MetadataEntry
+	(*EdgeTasks_Identifier)(nil),             // 9: hatchet.EdgeTasks.Identifier
+	(*EdgeTasks_InstallSoftware)(nil),        // 10: hatchet.EdgeTasks.InstallSoftware
+	(*EdgeTasks_RunStroppy)(nil),             // 11: hatchet.EdgeTasks.RunStroppy
+	(*EdgeTasks_InstallSoftware_Input)(nil),  // 12: hatchet.EdgeTasks.InstallSoftware.Input
+	(*EdgeTasks_InstallSoftware_Output)(nil), // 13: hatchet.EdgeTasks.InstallSoftware.Output
+	(*EdgeTasks_RunStroppy_Input)(nil),       // 14: hatchet.EdgeTasks.RunStroppy.Input
+	(*EdgeTasks_RunStroppy_Output)(nil),      // 15: hatchet.EdgeTasks.RunStroppy.Output
+	(*database.Postgres_Instance)(nil),       // 16: database.Postgres.Instance
+	(*database.Sidecar)(nil),                 // 17: database.Sidecar
+	(*database.Infra)(nil),                   // 18: database.Infra
+	(*stroppy.StroppyCli)(nil),               // 19: stroppy.StroppyCli
+	(*crossplane.Hardware)(nil),              // 20: crossplane.Hardware
+	(*crossplane.Vm)(nil),                    // 21: crossplane.Vm
+	(*Common)(nil),                           // 22: hatchet.Common
+	(*stroppy.TestResult)(nil),               // 23: stroppy.TestResult
 }
 var file_hatchet_edge_proto_depIdxs = []int32{
 	0,  // 0: hatchet.Software.setup_strategy:type_name -> hatchet.Software.SetupStrategy
-	17, // 1: hatchet.Software.postgres:type_name -> database.Postgres.Instance
-	18, // 2: hatchet.Software.sidecar:type_name -> database.Sidecar
-	19, // 3: hatchet.Software.infra:type_name -> database.Infra
-	2,  // 4: hatchet.Software.stroppy:type_name -> hatchet.StroppyInstallation
-	10, // 5: hatchet.EdgeWorker.acceptable_tasks:type_name -> hatchet.EdgeTasks.Identifier
+	16, // 1: hatchet.Software.postgres:type_name -> database.Postgres.Instance
+	17, // 2: hatchet.Software.sidecar:type_name -> database.Sidecar
+	18, // 3: hatchet.Software.infra:type_name -> database.Infra
+	19, // 4: hatchet.Software.stroppy:type_name -> stroppy.StroppyCli
+	9,  // 5: hatchet.EdgeWorker.acceptable_tasks:type_name -> hatchet.EdgeTasks.Identifier
 	20, // 6: hatchet.EdgeWorker.hardware:type_name -> crossplane.Hardware
-	3,  // 7: hatchet.EdgeWorker.software:type_name -> hatchet.Software
-	9,  // 8: hatchet.EdgeWorker.metadata:type_name -> hatchet.EdgeWorker.MetadataEntry
-	4,  // 9: hatchet.EdgeWorkersSet.edge_workers:type_name -> hatchet.EdgeWorker
-	4,  // 10: hatchet.DeployedEdgeWorker.worker:type_name -> hatchet.EdgeWorker
+	2,  // 7: hatchet.EdgeWorker.software:type_name -> hatchet.Software
+	8,  // 8: hatchet.EdgeWorker.metadata:type_name -> hatchet.EdgeWorker.MetadataEntry
+	3,  // 9: hatchet.EdgeWorkersSet.edge_workers:type_name -> hatchet.EdgeWorker
+	3,  // 10: hatchet.DeployedEdgeWorker.worker:type_name -> hatchet.EdgeWorker
 	21, // 11: hatchet.DeployedEdgeWorker.deployment:type_name -> crossplane.Vm
-	6,  // 12: hatchet.DeployedEdgeWorkersSet.deployed_edge_workers:type_name -> hatchet.DeployedEdgeWorker
+	5,  // 12: hatchet.DeployedEdgeWorkersSet.deployed_edge_workers:type_name -> hatchet.DeployedEdgeWorker
 	1,  // 13: hatchet.EdgeTasks.Identifier.kind:type_name -> hatchet.EdgeTasks.Kind
-	22, // 14: hatchet.EdgeTasks.SetupSoftware.Input.common:type_name -> hatchet.Common
-	3,  // 15: hatchet.EdgeTasks.SetupSoftware.Input.software:type_name -> hatchet.Software
+	22, // 14: hatchet.EdgeTasks.InstallSoftware.Input.common:type_name -> hatchet.Common
+	2,  // 15: hatchet.EdgeTasks.InstallSoftware.Input.software:type_name -> hatchet.Software
 	22, // 16: hatchet.EdgeTasks.RunStroppy.Input.common:type_name -> hatchet.Common
-	2,  // 17: hatchet.EdgeTasks.RunStroppy.Input.installation:type_name -> hatchet.StroppyInstallation
-	23, // 18: hatchet.EdgeTasks.RunStroppy.Input.test:type_name -> stroppy.Test
-	24, // 19: hatchet.EdgeTasks.RunStroppy.Output.result:type_name -> stroppy.TestResult
-	20, // [20:20] is the sub-list for method output_type
-	20, // [20:20] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	19, // 17: hatchet.EdgeTasks.RunStroppy.Input.stroppy_cli_call:type_name -> stroppy.StroppyCli
+	23, // 18: hatchet.EdgeTasks.RunStroppy.Output.result:type_name -> stroppy.TestResult
+	19, // [19:19] is the sub-list for method output_type
+	19, // [19:19] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_hatchet_edge_proto_init() }
@@ -1017,7 +950,7 @@ func file_hatchet_edge_proto_init() {
 		return
 	}
 	file_hatchet_hatchet_proto_init()
-	file_hatchet_edge_proto_msgTypes[1].OneofWrappers = []any{
+	file_hatchet_edge_proto_msgTypes[0].OneofWrappers = []any{
 		(*Software_Postgres)(nil),
 		(*Software_Sidecar)(nil),
 		(*Software_Infra)(nil),
@@ -1029,7 +962,7 @@ func file_hatchet_edge_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_hatchet_edge_proto_rawDesc), len(file_hatchet_edge_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   15,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -24,62 +24,144 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Test_Workload int32
+type StroppyCli_Workload int32
 
 const (
-	Test_WORKLOAD_UNSPECIFIED Test_Workload = 0
-	Test_WORKLOAD_TPCC        Test_Workload = 1
-	Test_WORKLOAD_TPCB        Test_Workload = 2
+	StroppyCli_WORKLOAD_UNSPECIFIED StroppyCli_Workload = 0
+	StroppyCli_TPCC                 StroppyCli_Workload = 1
+	StroppyCli_TPCB                 StroppyCli_Workload = 2
 )
 
-// Enum value maps for Test_Workload.
+// Enum value maps for StroppyCli_Workload.
 var (
-	Test_Workload_name = map[int32]string{
+	StroppyCli_Workload_name = map[int32]string{
 		0: "WORKLOAD_UNSPECIFIED",
-		1: "WORKLOAD_TPCC",
-		2: "WORKLOAD_TPCB",
+		1: "TPCC",
+		2: "TPCB",
 	}
-	Test_Workload_value = map[string]int32{
+	StroppyCli_Workload_value = map[string]int32{
 		"WORKLOAD_UNSPECIFIED": 0,
-		"WORKLOAD_TPCC":        1,
-		"WORKLOAD_TPCB":        2,
+		"TPCC":                 1,
+		"TPCB":                 2,
 	}
 )
 
-func (x Test_Workload) Enum() *Test_Workload {
-	p := new(Test_Workload)
+func (x StroppyCli_Workload) Enum() *StroppyCli_Workload {
+	p := new(StroppyCli_Workload)
 	*p = x
 	return p
 }
 
-func (x Test_Workload) String() string {
+func (x StroppyCli_Workload) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (Test_Workload) Descriptor() protoreflect.EnumDescriptor {
+func (StroppyCli_Workload) Descriptor() protoreflect.EnumDescriptor {
 	return file_stroppy_test_proto_enumTypes[0].Descriptor()
 }
 
-func (Test_Workload) Type() protoreflect.EnumType {
+func (StroppyCli_Workload) Type() protoreflect.EnumType {
 	return &file_stroppy_test_proto_enumTypes[0]
 }
 
-func (x Test_Workload) Number() protoreflect.EnumNumber {
+func (x StroppyCli_Workload) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use Test_Workload.Descriptor instead.
-func (Test_Workload) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use StroppyCli_Workload.Descriptor instead.
+func (StroppyCli_Workload) EnumDescriptor() ([]byte, []int) {
 	return file_stroppy_test_proto_rawDescGZIP(), []int{0, 0}
+}
+
+type StroppyCli struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Version          string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	BinaryPath       *string                `protobuf:"bytes,2,opt,name=binary_path,json=binaryPath,proto3,oneof" json:"binary_path,omitempty"`
+	Workdir          *string                `protobuf:"bytes,3,opt,name=workdir,proto3,oneof" json:"workdir,omitempty"`
+	Workload         StroppyCli_Workload    `protobuf:"varint,4,opt,name=workload,proto3,enum=stroppy.StroppyCli_Workload" json:"workload,omitempty"`
+	ConnectionString string                 `protobuf:"bytes,5,opt,name=connection_string,json=connectionString,proto3" json:"connection_string,omitempty"`
+	StroppyEnv       map[string]string      `protobuf:"bytes,6,rep,name=stroppy_env,json=stroppyEnv,proto3" json:"stroppy_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *StroppyCli) Reset() {
+	*x = StroppyCli{}
+	mi := &file_stroppy_test_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StroppyCli) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StroppyCli) ProtoMessage() {}
+
+func (x *StroppyCli) ProtoReflect() protoreflect.Message {
+	mi := &file_stroppy_test_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StroppyCli.ProtoReflect.Descriptor instead.
+func (*StroppyCli) Descriptor() ([]byte, []int) {
+	return file_stroppy_test_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *StroppyCli) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *StroppyCli) GetBinaryPath() string {
+	if x != nil && x.BinaryPath != nil {
+		return *x.BinaryPath
+	}
+	return ""
+}
+
+func (x *StroppyCli) GetWorkdir() string {
+	if x != nil && x.Workdir != nil {
+		return *x.Workdir
+	}
+	return ""
+}
+
+func (x *StroppyCli) GetWorkload() StroppyCli_Workload {
+	if x != nil {
+		return x.Workload
+	}
+	return StroppyCli_WORKLOAD_UNSPECIFIED
+}
+
+func (x *StroppyCli) GetConnectionString() string {
+	if x != nil {
+		return x.ConnectionString
+	}
+	return ""
+}
+
+func (x *StroppyCli) GetStroppyEnv() map[string]string {
+	if x != nil {
+		return x.StroppyEnv
+	}
+	return nil
 }
 
 type Test struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Name            string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Description     *string                `protobuf:"bytes,3,opt,name=description,proto3,oneof" json:"description,omitempty"`
-	Workload        Test_Workload          `protobuf:"varint,4,opt,name=workload,proto3,enum=stroppy.Test_Workload" json:"workload,omitempty"`
-	StroppyVersion  string                 `protobuf:"bytes,5,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
-	StroppyEnv      map[string]string      `protobuf:"bytes,6,rep,name=stroppy_env,json=stroppyEnv,proto3" json:"stroppy_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	StroppyCli      *StroppyCli            `protobuf:"bytes,4,opt,name=stroppy_cli,json=stroppyCli,proto3" json:"stroppy_cli,omitempty"`
 	StroppyHardware *crossplane.Hardware   `protobuf:"bytes,7,opt,name=stroppy_hardware,json=stroppyHardware,proto3" json:"stroppy_hardware,omitempty"`
 	// Types that are valid to be assigned to DatabaseRef:
 	//
@@ -92,7 +174,7 @@ type Test struct {
 
 func (x *Test) Reset() {
 	*x = Test{}
-	mi := &file_stroppy_test_proto_msgTypes[0]
+	mi := &file_stroppy_test_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -104,7 +186,7 @@ func (x *Test) String() string {
 func (*Test) ProtoMessage() {}
 
 func (x *Test) ProtoReflect() protoreflect.Message {
-	mi := &file_stroppy_test_proto_msgTypes[0]
+	mi := &file_stroppy_test_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -117,7 +199,7 @@ func (x *Test) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Test.ProtoReflect.Descriptor instead.
 func (*Test) Descriptor() ([]byte, []int) {
-	return file_stroppy_test_proto_rawDescGZIP(), []int{0}
+	return file_stroppy_test_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Test) GetName() string {
@@ -134,23 +216,9 @@ func (x *Test) GetDescription() string {
 	return ""
 }
 
-func (x *Test) GetWorkload() Test_Workload {
+func (x *Test) GetStroppyCli() *StroppyCli {
 	if x != nil {
-		return x.Workload
-	}
-	return Test_WORKLOAD_UNSPECIFIED
-}
-
-func (x *Test) GetStroppyVersion() string {
-	if x != nil {
-		return x.StroppyVersion
-	}
-	return ""
-}
-
-func (x *Test) GetStroppyEnv() map[string]string {
-	if x != nil {
-		return x.StroppyEnv
+		return x.StroppyCli
 	}
 	return nil
 }
@@ -214,7 +282,7 @@ type TestResult struct {
 
 func (x *TestResult) Reset() {
 	*x = TestResult{}
-	mi := &file_stroppy_test_proto_msgTypes[1]
+	mi := &file_stroppy_test_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -226,7 +294,7 @@ func (x *TestResult) String() string {
 func (*TestResult) ProtoMessage() {}
 
 func (x *TestResult) ProtoReflect() protoreflect.Message {
-	mi := &file_stroppy_test_proto_msgTypes[1]
+	mi := &file_stroppy_test_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -239,7 +307,7 @@ func (x *TestResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestResult.ProtoReflect.Descriptor instead.
 func (*TestResult) Descriptor() ([]byte, []int) {
-	return file_stroppy_test_proto_rawDescGZIP(), []int{1}
+	return file_stroppy_test_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *TestResult) GetRunId() string {
@@ -272,7 +340,7 @@ type TestSuite struct {
 
 func (x *TestSuite) Reset() {
 	*x = TestSuite{}
-	mi := &file_stroppy_test_proto_msgTypes[2]
+	mi := &file_stroppy_test_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -284,7 +352,7 @@ func (x *TestSuite) String() string {
 func (*TestSuite) ProtoMessage() {}
 
 func (x *TestSuite) ProtoReflect() protoreflect.Message {
-	mi := &file_stroppy_test_proto_msgTypes[2]
+	mi := &file_stroppy_test_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -297,7 +365,7 @@ func (x *TestSuite) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestSuite.ProtoReflect.Descriptor instead.
 func (*TestSuite) Descriptor() ([]byte, []int) {
-	return file_stroppy_test_proto_rawDescGZIP(), []int{2}
+	return file_stroppy_test_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *TestSuite) GetTests() []*Test {
@@ -317,7 +385,7 @@ type TestSuiteResult struct {
 
 func (x *TestSuiteResult) Reset() {
 	*x = TestSuiteResult{}
-	mi := &file_stroppy_test_proto_msgTypes[3]
+	mi := &file_stroppy_test_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -329,7 +397,7 @@ func (x *TestSuiteResult) String() string {
 func (*TestSuiteResult) ProtoMessage() {}
 
 func (x *TestSuiteResult) ProtoReflect() protoreflect.Message {
-	mi := &file_stroppy_test_proto_msgTypes[3]
+	mi := &file_stroppy_test_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -342,7 +410,7 @@ func (x *TestSuiteResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestSuiteResult.ProtoReflect.Descriptor instead.
 func (*TestSuiteResult) Descriptor() ([]byte, []int) {
-	return file_stroppy_test_proto_rawDescGZIP(), []int{3}
+	return file_stroppy_test_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *TestSuiteResult) GetResults() map[string]*TestResult {
@@ -356,24 +424,35 @@ var File_stroppy_test_proto protoreflect.FileDescriptor
 
 const file_stroppy_test_proto_rawDesc = "" +
 	"\n" +
-	"\x12stroppy/test.proto\x12\astroppy\x1a\x1bcrossplane/deployment.proto\x1a\x17database/database.proto\x1a\x17validate/validate.proto\"\xc8\x04\n" +
-	"\x04Test\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12%\n" +
-	"\vdescription\x18\x03 \x01(\tH\x01R\vdescription\x88\x01\x01\x12<\n" +
-	"\bworkload\x18\x04 \x01(\x0e2\x16.stroppy.Test.WorkloadB\b\xfaB\x05\x82\x01\x02\x10\x01R\bworkload\x12'\n" +
-	"\x0fstroppy_version\x18\x05 \x01(\tR\x0estroppyVersion\x12>\n" +
-	"\vstroppy_env\x18\x06 \x03(\v2\x1d.stroppy.Test.StroppyEnvEntryR\n" +
-	"stroppyEnv\x12I\n" +
-	"\x10stroppy_hardware\x18\a \x01(\v2\x14.crossplane.HardwareB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0fstroppyHardware\x120\n" +
-	"\bdatabase\x18e \x01(\v2\x12.database.DatabaseH\x00R\bdatabase\x126\n" +
-	"\x11connection_string\x18f \x01(\tB\a\xfaB\x04r\x02\x10\x01H\x00R\x10connectionString\x1a=\n" +
+	"\x12stroppy/test.proto\x12\astroppy\x1a\x1bcrossplane/deployment.proto\x1a\x17database/database.proto\x1a\x17validate/validate.proto\"\xc9\x03\n" +
+	"\n" +
+	"StroppyCli\x12!\n" +
+	"\aversion\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aversion\x12$\n" +
+	"\vbinary_path\x18\x02 \x01(\tH\x00R\n" +
+	"binaryPath\x88\x01\x01\x12\x1d\n" +
+	"\aworkdir\x18\x03 \x01(\tH\x01R\aworkdir\x88\x01\x01\x12B\n" +
+	"\bworkload\x18\x04 \x01(\x0e2\x1c.stroppy.StroppyCli.WorkloadB\b\xfaB\x05\x82\x01\x02\x10\x01R\bworkload\x124\n" +
+	"\x11connection_string\x18\x05 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x10connectionString\x12D\n" +
+	"\vstroppy_env\x18\x06 \x03(\v2#.stroppy.StroppyCli.StroppyEnvEntryR\n" +
+	"stroppyEnv\x1a=\n" +
 	"\x0fStroppyEnvEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"J\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"8\n" +
 	"\bWorkload\x12\x18\n" +
-	"\x14WORKLOAD_UNSPECIFIED\x10\x00\x12\x11\n" +
-	"\rWORKLOAD_TPCC\x10\x01\x12\x11\n" +
-	"\rWORKLOAD_TPCB\x10\x02B\x0e\n" +
+	"\x14WORKLOAD_UNSPECIFIED\x10\x00\x12\b\n" +
+	"\x04TPCC\x10\x01\x12\b\n" +
+	"\x04TPCB\x10\x02B\x0e\n" +
+	"\f_binary_pathB\n" +
+	"\n" +
+	"\b_workdir\"\xd6\x02\n" +
+	"\x04Test\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12%\n" +
+	"\vdescription\x18\x03 \x01(\tH\x01R\vdescription\x88\x01\x01\x12>\n" +
+	"\vstroppy_cli\x18\x04 \x01(\v2\x13.stroppy.StroppyCliB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
+	"stroppyCli\x12I\n" +
+	"\x10stroppy_hardware\x18\a \x01(\v2\x14.crossplane.HardwareB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0fstroppyHardware\x120\n" +
+	"\bdatabase\x18e \x01(\v2\x12.database.DatabaseH\x00R\bdatabase\x126\n" +
+	"\x11connection_string\x18f \x01(\tB\a\xfaB\x04r\x02\x10\x01H\x00R\x10connectionStringB\x0e\n" +
 	"\fdatabase_refB\x0e\n" +
 	"\f_description\"\x86\x01\n" +
 	"\n" +
@@ -404,32 +483,34 @@ func file_stroppy_test_proto_rawDescGZIP() []byte {
 }
 
 var file_stroppy_test_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_stroppy_test_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_stroppy_test_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_stroppy_test_proto_goTypes = []any{
-	(Test_Workload)(0),          // 0: stroppy.Test.Workload
-	(*Test)(nil),                // 1: stroppy.Test
-	(*TestResult)(nil),          // 2: stroppy.TestResult
-	(*TestSuite)(nil),           // 3: stroppy.TestSuite
-	(*TestSuiteResult)(nil),     // 4: stroppy.TestSuiteResult
-	nil,                         // 5: stroppy.Test.StroppyEnvEntry
-	nil,                         // 6: stroppy.TestSuiteResult.ResultsEntry
-	(*crossplane.Hardware)(nil), // 7: crossplane.Hardware
-	(*database.Database)(nil),   // 8: database.Database
+	(StroppyCli_Workload)(0),    // 0: stroppy.StroppyCli.Workload
+	(*StroppyCli)(nil),          // 1: stroppy.StroppyCli
+	(*Test)(nil),                // 2: stroppy.Test
+	(*TestResult)(nil),          // 3: stroppy.TestResult
+	(*TestSuite)(nil),           // 4: stroppy.TestSuite
+	(*TestSuiteResult)(nil),     // 5: stroppy.TestSuiteResult
+	nil,                         // 6: stroppy.StroppyCli.StroppyEnvEntry
+	nil,                         // 7: stroppy.TestSuiteResult.ResultsEntry
+	(*crossplane.Hardware)(nil), // 8: crossplane.Hardware
+	(*database.Database)(nil),   // 9: database.Database
 }
 var file_stroppy_test_proto_depIdxs = []int32{
-	0, // 0: stroppy.Test.workload:type_name -> stroppy.Test.Workload
-	5, // 1: stroppy.Test.stroppy_env:type_name -> stroppy.Test.StroppyEnvEntry
-	7, // 2: stroppy.Test.stroppy_hardware:type_name -> crossplane.Hardware
-	8, // 3: stroppy.Test.database:type_name -> database.Database
-	1, // 4: stroppy.TestResult.test:type_name -> stroppy.Test
-	1, // 5: stroppy.TestSuite.tests:type_name -> stroppy.Test
-	6, // 6: stroppy.TestSuiteResult.results:type_name -> stroppy.TestSuiteResult.ResultsEntry
-	2, // 7: stroppy.TestSuiteResult.ResultsEntry.value:type_name -> stroppy.TestResult
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	0, // 0: stroppy.StroppyCli.workload:type_name -> stroppy.StroppyCli.Workload
+	6, // 1: stroppy.StroppyCli.stroppy_env:type_name -> stroppy.StroppyCli.StroppyEnvEntry
+	1, // 2: stroppy.Test.stroppy_cli:type_name -> stroppy.StroppyCli
+	8, // 3: stroppy.Test.stroppy_hardware:type_name -> crossplane.Hardware
+	9, // 4: stroppy.Test.database:type_name -> database.Database
+	2, // 5: stroppy.TestResult.test:type_name -> stroppy.Test
+	2, // 6: stroppy.TestSuite.tests:type_name -> stroppy.Test
+	7, // 7: stroppy.TestSuiteResult.results:type_name -> stroppy.TestSuiteResult.ResultsEntry
+	3, // 8: stroppy.TestSuiteResult.ResultsEntry.value:type_name -> stroppy.TestResult
+	9, // [9:9] is the sub-list for method output_type
+	9, // [9:9] is the sub-list for method input_type
+	9, // [9:9] is the sub-list for extension type_name
+	9, // [9:9] is the sub-list for extension extendee
+	0, // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_stroppy_test_proto_init() }
@@ -437,18 +518,19 @@ func file_stroppy_test_proto_init() {
 	if File_stroppy_test_proto != nil {
 		return
 	}
-	file_stroppy_test_proto_msgTypes[0].OneofWrappers = []any{
+	file_stroppy_test_proto_msgTypes[0].OneofWrappers = []any{}
+	file_stroppy_test_proto_msgTypes[1].OneofWrappers = []any{
 		(*Test_Database)(nil),
 		(*Test_ConnectionString)(nil),
 	}
-	file_stroppy_test_proto_msgTypes[1].OneofWrappers = []any{}
+	file_stroppy_test_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stroppy_test_proto_rawDesc), len(file_stroppy_test_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

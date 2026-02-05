@@ -1,23 +1,20 @@
-package installers
+package install
 
 import (
 	"fmt"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/dhillondeep/go-getrelease"
+	"github.com/stroppy-io/hatchet-workflow/internal/proto/stroppy"
 )
 
-type StroppyConfig struct {
-	Version     string
-	InstallPath string
-	StartEnv    map[string]string
-}
 type stroppyInstaller struct {
-	config *StroppyConfig
+	config *stroppy.StroppyCli
 	client getrelease.Client
 }
 
-func StroppyInstaller(config *StroppyConfig) Software {
+func StroppyInstaller(config *stroppy.StroppyCli) Installer {
 	return &stroppyInstaller{
 		config: config,
 		client: getrelease.NewGithubClient(nil),
@@ -31,14 +28,14 @@ func (s *stroppyInstaller) Install() error {
 		"stroppy_linux_amd64.tar.gz",
 		"stroppy-io",
 		"stroppy",
-		s.config.Version,
+		s.config.GetVersion(),
 	)
 	if err != nil {
 		return err
 	}
 
 	// Unpack to /usr/bin
-	cmd := exec.Command("tar", "-xzf", downloadPath, "-C", "/usr/bin")
+	cmd := exec.Command("tar", "-xzf", downloadPath, "-C", filepath.Dir(s.config.GetBinaryPath()))
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to unpack stroppy: %s: %w", string(output), err)
 	}
@@ -47,6 +44,5 @@ func (s *stroppyInstaller) Install() error {
 }
 
 func (s *stroppyInstaller) Start() error {
-	//TODO implement me
-	panic("implement me")
+	return InstallerDoesNotImplementStart
 }

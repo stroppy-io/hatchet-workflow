@@ -8,17 +8,24 @@ import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/stroppy";
 
-message Test {
+message StroppyCli {
     enum Workload {
         WORKLOAD_UNSPECIFIED = 0;
-        WORKLOAD_TPCC = 1;
-        WORKLOAD_TPCB = 2;
+        TPCC = 1;
+        TPCB = 2;
     }
+    string version = 1 [(validate.rules).string.min_len = 1];
+    optional string binary_path = 2;
+    optional string workdir = 3;
+    Workload workload = 4 [(validate.rules).enum.defined_only = true];
+    string connection_string = 5 [(validate.rules).string.min_len = 1];
+    map<string, string> stroppy_env = 6;
+}
+
+message Test {
     string name = 2;
     optional string description = 3;
-    Workload workload = 4 [(validate.rules).enum.defined_only = true];
-    string stroppy_version = 5;
-    map<string, string> stroppy_env = 6;
+    StroppyCli stroppy_cli = 4 [(validate.rules).message.required = true];
     crossplane.Hardware stroppy_hardware = 7 [(validate.rules).message.required = true];
     oneof database_ref {
         database.Database database = 101;

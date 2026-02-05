@@ -40,4 +40,5 @@ message Instance {
         option (validate.required) = true;
         Postgres.Instance postgres = 100;
     }
+    repeated Sidecar sidecars = 2;
 }

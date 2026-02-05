@@ -12,10 +12,6 @@ import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet";
 
-message StroppyInstallation {
-    string version = 1;
-    string binary_path = 2 [(validate.rules).string.min_len = 1];
-}
 
 message Software {
     enum SetupStrategy {
@@ -29,7 +25,7 @@ message Software {
         database.Postgres.Instance postgres = 2;
         database.Sidecar sidecar = 3;
         database.Infra infra = 4;
-        StroppyInstallation stroppy = 5;
+        stroppy.StroppyCli stroppy = 5;
     }
 }
 
@@ -69,9 +65,9 @@ message EdgeTasks {
         EdgeTasks.Kind kind = 3 [(validate.rules).enum.defined_only = true];
     }
     /*
-        Setup software on edge worker
+        Install software on edge worker
     */
-    message SetupSoftware {
+    message InstallSoftware {
         message Input {
             Common common = 1 [(validate.rules).message.required = true];
             repeated Software software = 2 [(validate.rules).repeated.items.message.required = true];
@@ -85,8 +81,7 @@ message EdgeTasks {
     message RunStroppy {
         message Input {
             Common common = 1 [(validate.rules).message.required = true];
-            StroppyInstallation installation = 2 [(validate.rules).message.required = true];
-            stroppy.Test test = 3 [(validate.rules).message.required = true];
+            stroppy.StroppyCli stroppy_cli_call = 2 [(validate.rules).message.required = true];
         }
         message Output {
             stroppy.TestResult result = 1 [(validate.rules).message.required = true];
