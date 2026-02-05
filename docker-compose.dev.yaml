@@ -2,11 +2,13 @@ volumes:
   valkey-data:
 
 services:
-  provision-worker:
-    container_name: provision-worker
+  master-worker:
+    container_name: master-worker
     build:
       context: .
-      dockerfile: deployments/docker/provision.Dockerfile
+      dockerfile: deployments/docker/master-worker.Dockerfile
+      args:
+        VERSION: "${VERSION}"
     restart: always
     volumes:
       - ./deployments/.kubectl.config.yaml:/k8s/config:ro

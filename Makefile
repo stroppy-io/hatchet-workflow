@@ -1,3 +1,7 @@
+VERSION := $(shell v=$$(git describe --tags 2>/dev/null | sed -e 's/^v//g' | awk -F "-" '{print $$1}'); [ -n "$$v" ] && echo "$$v" || echo "v0.0.0")
+LAST_DEV_NUM := $(shell git tag -l "$(VERSION)-dev*" | sed 's/.*-dev//' | grep -E '^[0-9]+$$' | sort -rn | head -n1)
+INCREMENT := $(shell echo $$(($(if $(LAST_DEV_NUM),$(LAST_DEV_NUM),0) + 1)))
+DEV_VERSION := $(VERSION)-dev$(INCREMENT)
 .PHONY: up-infra
 up-infra:
 	docker compose -f docker-compose.infra.yaml up -d
@@ -13,7 +17,7 @@ clean-infra:
 
 .PHONY: up-dev
 up-dev:
-	docker compose -f docker-compose.dev.yaml up -d --build
+	VERSION=$(DEV_VERSION) docker compose -f docker-compose.dev.yaml up -d --build
 
 .PHONY: up-dev-no-build
 up-dev-no-build:
@@ -32,19 +36,10 @@ build:
 	mkdir -p bin
 	go build -o ./bin/ ./cmd/...
 
-# Determine the base version by stripping any -dev suffix from the latest tag
-VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/-dev.*//' || echo "v0.0.0")
 
-# Find the highest dev number for this version
-LAST_DEV_NUM := $(shell git tag -l "$(VERSION)-dev*" | sed 's/.*-dev//' | grep -E '^[0-9]+$$' | sort -rn | head -n1)
-
-# Calculate the next increment (default to 1 if no dev tags found)
-INCREMENT := $(shell echo $$(($(if $(LAST_DEV_NUM),$(LAST_DEV_NUM),0) + 1)))
-
-DEV_VERSION := $(VERSION)-dev$(INCREMENT)
-
-.PHONY: release-dev
-release-dev:
+.PHONY: release-dev-edge
+release-dev-edge:
 	mkdir -p bin
-	go build -ldflags "-X main.Version=$(DEV_VERSION)" -o ./bin/ ./cmd/...
+	go build -ldflags "-X github.com/stroppy-io/hatchet-workflow/internal/core/build.Version=$(DEV_VERSION) -X github.com/stroppy-io/hatchet-workflow/internal/core/build.ServiceName=edge-worker" -o ./bin/ ./cmd/edge-worker
 	@echo "Built version: $(DEV_VERSION)"
+	gh release create "$(DEV_VERSION)" ./bin/edge-worker#edge-worker --title "$(DEV_VERSION)" --notes "dev release" --prerelease

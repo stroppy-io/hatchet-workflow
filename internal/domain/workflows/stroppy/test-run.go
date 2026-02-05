@@ -228,7 +228,7 @@ func TestRunWorkflow(
 				},
 			}, nil
 		}),
-		hatchetLib.WithParents(installSoftwareTask, installSoftwareTask),
+		hatchetLib.WithParents(installSoftwareTask),
 	)
 
 	return workflow

@@ -28,9 +28,3 @@ func GetDeploymentUsingQuotas(deployment *crossplane.Deployment) []*crossplane.Q
 	}
 	return ret
 }
-
-func GetCidrWithIps(deployment *crossplane.Deployment) []*crossplane.CidrWithIps {
-	ips := make([]*crossplane.Ip, 0)
-	for _, subnet := range deployment.GetNetwork().GetSubnets() {
-	}
-}

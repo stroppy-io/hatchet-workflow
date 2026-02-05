@@ -1,11 +1,15 @@
 package logger
 
 import (
+	"log"
+	"log/slog"
 	"os"
 	"strings"
-	"sync/atomic"
 
+	"github.com/rs/zerolog"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/build"
 	"go.uber.org/zap"
+	"go.uber.org/zap/exp/zapslog"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -16,16 +20,48 @@ const (
 	ProductionMod  LogMod = "production"
 )
 
+const (
+	LogModEnvKey        = "LOG_MOD"
+	LevelEnvKey         = "LOG_LEVEL"
+	LogMappingEnvKey    = "LOG_MAPPING"
+	LogSkipCallerEnvKey = "LOG_SKIP_CALLER"
+)
+
 type Config struct {
-	LogMod   LogMod `default:"production" mapstructure:"mod"   validate:"oneof=production development"`
-	LogLevel string `default:"info"       mapstructure:"level" validate:"oneof=debug info warn error"`
+	LogMod     LogMod            `mapstructure:"mod" default:"production" validate:"oneof=production development"`
+	LogLevel   string            `mapstructure:"level" default:"info" validate:"oneof=debug info warn error"`
+	LogMapping map[string]LogMod `mapstructure:"mapping"`
+	SkipCaller bool              `mapstructure:"skip_caller"`
 }
 
-var globalLogger = atomic.Pointer[zap.Logger]{} //nolint:gochecknoglobals // global logger needed for all app.
-
-func init() { //nolint: gochecknoinits // allow
-	setGlobalLogger(newDefault())
+func parseMapping(mappingStr string) map[string]LogMod {
+	if mappingStr == "" {
+		return nil
+	}
+	mapping := make(map[string]LogMod)
+	for _, pair := range strings.Split(mappingStr, ",") {
+		kv := strings.Split(pair, "=")
+		if len(kv) != 2 {
+			continue
+		}
+		mapping[kv[0]] = LogMod(kv[1])
+	}
+	return mapping
 }
+
+func configFromEnv() *Config {
+	return &Config{
+		LogMod:     LogMod(os.Getenv(LogModEnvKey)),
+		LogLevel:   os.Getenv(LevelEnvKey),
+		LogMapping: parseMapping(os.Getenv(LogMappingEnvKey)),
+		SkipCaller: os.Getenv(LogSkipCallerEnvKey) == "true",
+	}
+}
+
+var (
+	globalLogger  = newDefault() //nolint:gochecknoglobals // global logger needed for all app.
+	globalMapping = make(map[string]zapcore.Level)
+)
 
 // newDefault creates new default logger.
 func newDefault(opts ...zap.Option) *zap.Logger {
@@ -60,56 +96,103 @@ func NewFromConfig(cfg *Config, opts ...zap.Option) *zap.Logger {
 	}
 
 	zapCfg := newZapCfg(cfg.LogMod, level)
-
 	logger, err := zapCfg.Build(opts...)
 	if err != nil {
 		panic(err)
 	}
 
-	setGlobalLogger(logger)
+	//logger = bridge.AttachToZapLogger(logger)
 
-	return Global()
-}
+	globalLogger = logger.With(
+		zap.String("service", build.ServiceName),
+		zap.String("version", build.Version),
+		zap.String("instance", build.GlobalInstanceId),
+	)
 
-const (
-	envLogLevel = "LOG_LEVEL"
-	envLogMod   = "LOG_MODE"
-)
-
-func SetLoggerEnv(level zapcore.Level, mod LogMod) {
-	os.Setenv(envLogLevel, strings.ToLower(level.String()))
-	os.Setenv(envLogMod, strings.ToLower(string(mod)))
-}
-
-func PrepareLoggerEnvs(level zapcore.Level, mod LogMod) []string {
-	return []string{
-		envLogLevel + "=" + strings.ToLower(level.String()),
-		envLogMod + "=" + strings.ToLower(string(mod)),
+	for name, lvl := range cfg.LogMapping {
+		globalMapping[name], err = zapcore.ParseLevel(string(lvl))
+		if err != nil {
+			panic(err)
+		}
 	}
+
+	if cfg.SkipCaller {
+		globalLogger = globalLogger.WithOptions(zap.WithCaller(false))
+	}
+
+	return globalLogger
 }
 
 func NewFromEnv(opts ...zap.Option) *zap.Logger {
-	cfg := &Config{
-		LogLevel: os.Getenv(envLogLevel),
-		LogMod:   LogMod(os.Getenv(envLogMod)),
-	}
-
-	return NewFromConfig(cfg, opts...)
+	return NewFromConfig(configFromEnv(), opts...)
 }
 
-func setGlobalLogger(logger *zap.Logger) {
-	globalLogger.Store(logger)
+func getNamedLoggerLevel(name string) zapcore.Level {
+	if globalMapping == nil {
+		return Global().Level()
+	}
+	if level, ok := globalMapping[name]; ok {
+		return level
+	}
+	return Global().Level()
 }
 
 // Global returns the global logger.
 func Global() *zap.Logger {
-	return globalLogger.Load()
+	return globalLogger
 }
 
-// StructLogger is an alias for *zap.Logger included in project struct.
-type StructLogger = *zap.Logger
+func Named(name string) *zap.Logger {
+	return globalLogger.Named(name).WithOptions(zap.IncreaseLevel(getNamedLoggerLevel(name)))
+}
 
-// NewStructLogger returns a new StructLogger with the given name.
-func NewStructLogger(name string) StructLogger {
-	return Global().Named(name)
+func Slog() *slog.Logger {
+	return NewSlogFromLogger(Global())
+}
+
+func NamedSlog(name string) *slog.Logger {
+	return NewSlogFromLogger(Named(name))
+}
+
+func NewSlogFromLogger(lg *zap.Logger) *slog.Logger {
+	return slog.New(zapslog.NewHandler(lg.Core()))
+}
+
+func StdLog() *log.Logger {
+	stdOutLogger, err := zap.NewStdLogAt(Global(), Global().Level())
+	if err != nil {
+		panic(err)
+	}
+	return stdOutLogger
+}
+
+func Zerolog() *zerolog.Logger {
+	var zeroLvl zerolog.Level
+	switch Global().Level() {
+	case zapcore.DebugLevel:
+		zeroLvl = zerolog.DebugLevel
+	case zapcore.InfoLevel:
+		zeroLvl = zerolog.InfoLevel
+	case zapcore.WarnLevel:
+		zeroLvl = zerolog.WarnLevel
+	case zapcore.ErrorLevel:
+		zeroLvl = zerolog.ErrorLevel
+	case zapcore.DPanicLevel:
+		zeroLvl = zerolog.PanicLevel
+	case zapcore.PanicLevel:
+		zeroLvl = zerolog.PanicLevel
+	case zapcore.FatalLevel:
+		zeroLvl = zerolog.FatalLevel
+	default:
+		zeroLvl = zerolog.InfoLevel
+	}
+	stdOutLogger := StdLog()
+	logger := zerolog.New(stdOutLogger.Writer()).Level(zeroLvl).With().Fields(
+		map[string]any{
+			"service":  build.ServiceName,
+			"version":  build.Version,
+			"instance": build.GlobalInstanceId,
+		},
+	).Logger()
+	return &logger
 }

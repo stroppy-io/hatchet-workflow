@@ -14,14 +14,14 @@ const ctxLoggerKey contextKey = "logger"
 // NewFromCtx creates new logger from context.
 func NewFromCtx(ctx context.Context) *zap.Logger {
 	if ctx == nil {
-		return Global()
+		return globalLogger
 	}
 
 	if l, ok := ctx.Value(ctxLoggerKey).(*zap.Logger); ok {
 		return l
 	}
 
-	return Global()
+	return globalLogger
 }
 
 // WrapInCtx wraps logger in context.

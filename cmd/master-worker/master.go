@@ -28,7 +28,7 @@ func main() {
 		log.Fatalf("Failed to create provision workflow: %v", err)
 	}
 	worker, err := c.NewWorker(
-		"deployment-worker",
+		"master-worker",
 		hatchetLib.WithWorkflows(
 			stroppy.TestSuiteWorkflow(c),
 			stroppy.TestRunWorkflow(c),
