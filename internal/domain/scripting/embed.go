@@ -29,7 +29,7 @@ func InstallEdgeWorkerCloudInitFile() *crossplane.WriteFile {
 
 func InstallEdgeWorkerCloudInitCmd(env map[string]string) []string {
 	cmd := []string{
-		"sh",
+		"bash",
 		InstallEdgeWorkerCloudInitFileContent,
 	}
 	for k, v := range env {

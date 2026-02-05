@@ -1,12 +1,47 @@
 #!/bin/bash
+set -euo pipefail
 
 # Define the repository and binary name
 REPO="stroppy-io/hatchet-workflow"
 BINARY_NAME="edge-worker"
 INSTALL_DIR="/usr/local/bin"
 
-# Get the latest release tag
-LATEST_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+ensure_command() {
+  local cmd="$1"
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    return 1
+  fi
+  return 0
+}
+
+install_packages_apt() {
+  local pkgs=("$@")
+  if [ -w "/var/lib/apt/lists" ]; then
+    apt-get update -y >/dev/null
+    apt-get install -y "${pkgs[@]}" >/dev/null
+  else
+    sudo apt-get update -y >/dev/null
+    sudo apt-get install -y "${pkgs[@]}" >/dev/null
+  fi
+}
+
+# Ensure required dependencies are installed (Ubuntu/Debian via apt-get)
+if ! ensure_command curl || ! ensure_command systemctl || ! ensure_command bash; then
+  if ensure_command apt-get; then
+    install_packages_apt bash curl ca-certificates systemd
+  else
+    echo "Error: missing required tools (bash, curl, systemctl) and apt-get not found."
+    exit 1
+  fi
+fi
+
+if ! ensure_command curl || ! ensure_command systemctl; then
+  echo "Error: required tools are not available after install."
+  exit 1
+fi
+
+# Get the latest release tag (including prerelease) from /releases
+LATEST_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | grep -m1 '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 
 if [ -z "$LATEST_TAG" ]; then
   echo "Error: Could not fetch the latest release tag."
