@@ -18,6 +18,7 @@ import (
 	"github.com/stroppy-io/hatchet-workflow/internal/core/logger"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/uow"
 	"github.com/stroppy-io/hatchet-workflow/internal/domain/scripting"
+	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/edge"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet"
 	"go.uber.org/zap/zapcore"
@@ -66,8 +67,6 @@ const (
 	HatchetServerHostPortKey    = "HATCHET_CLIENT_HOST_PORT"
 	HatchetClientTokenKey       = "HATCHET_CLIENT_TOKEN"
 	HatchetClientTlsStrategyKey = "HATCHET_CLIENT_TLS_STRATEGY"
-
-	HatchetEdgeWorkerNameEnvKey = "HATCHET_EDGE_WORKER_NAME"
 
 	HatchetEdgeWorkerUserName = "HATCHET_EDGE_WORKER_USER_NAME"
 	HatchetEdgeWorkerSshKey   = "HATCHET_EDGE_WORKER_SSH_KEY"
@@ -198,9 +197,10 @@ func ProvisionWorkflow(
 						}),
 						// NOTE: We must chose between HatchetServerUrlKey and HatchetServerHostPortKey
 						scripting.WithEnv(map[string]string{
-							hatchetServerRefKey:         hatchetServerRef,
-							HatchetEdgeWorkerNameEnvKey: worker.GetWorkerName(),
-							HatchetClientTokenKey:       input.GetCommon().GetHatchetServer().GetToken(),
+							hatchetServerRefKey:              hatchetServerRef,
+							edge.WorkerNameEnvKey:            worker.GetWorkerName(),
+							edge.WorkerAcceptableTasksEnvKey: edge.TaskIdListToString(worker.GetAcceptableTasks()),
+							HatchetClientTokenKey:            input.GetCommon().GetHatchetServer().GetToken(),
 							// TODO: Add tls after domain access
 							HatchetClientTlsStrategyKey: HatchetClientTlsStrategyNone,
 							HatchetEdgeWorkerUserName: defaults.StringOrDefault(
