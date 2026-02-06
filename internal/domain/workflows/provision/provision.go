@@ -67,6 +67,8 @@ const (
 	HatchetClientTokenKey       = "HATCHET_CLIENT_TOKEN"
 	HatchetClientTlsStrategyKey = "HATCHET_CLIENT_TLS_STRATEGY"
 
+	HatchetEdgeWorkerNameEnvKey = "HATCHET_EDGE_WORKER_NAME"
+
 	HatchetEdgeWorkerUserName = "HATCHET_EDGE_WORKER_USER_NAME"
 	HatchetEdgeWorkerSshKey   = "HATCHET_EDGE_WORKER_SSH_KEY"
 	HatchetEdgeWorkerPublicIp = "HATCHET_EDGE_WORKER_PUBLIC_IP"
@@ -196,8 +198,9 @@ func ProvisionWorkflow(
 						}),
 						// NOTE: We must chose between HatchetServerUrlKey and HatchetServerHostPortKey
 						scripting.WithEnv(map[string]string{
-							hatchetServerRefKey:   hatchetServerRef,
-							HatchetClientTokenKey: input.GetCommon().GetHatchetServer().GetToken(),
+							hatchetServerRefKey:         hatchetServerRef,
+							HatchetEdgeWorkerNameEnvKey: worker.GetWorkerName(),
+							HatchetClientTokenKey:       input.GetCommon().GetHatchetServer().GetToken(),
 							// TODO: Add tls after domain access
 							HatchetClientTlsStrategyKey: HatchetClientTlsStrategyNone,
 							HatchetEdgeWorkerUserName: defaults.StringOrDefault(
