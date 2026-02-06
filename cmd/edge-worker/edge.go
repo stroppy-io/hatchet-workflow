@@ -19,8 +19,14 @@ func main() {
 		log.Fatalf("HATCHET_CLIENT_TOKEN is not set")
 	}
 	serverUrl := os.Getenv("HATCHET_CLIENT_SERVER_URL")
-	if serverUrl == "" {
-		log.Fatalf("HATCHET_CLIENT_SERVER_URL is not set")
+	hostPort := os.Getenv("HATCHET_CLIENT_HOST_PORT")
+	if serverUrl == "" && hostPort == "" {
+		log.Fatalf("HATCHET_CLIENT_SERVER_URL or HATCHET_CLIENT_HOST_PORT is not set")
+	}
+	if serverUrl != "" {
+		log.Printf("Using HATCHET_CLIENT_SERVER_URL=%s", serverUrl)
+	} else {
+		log.Printf("Using HATCHET_CLIENT_HOST_PORT=%s", hostPort)
 	}
 	logger.NewFromEnv()
 	c, err := hatchetLib.NewClient(v0Client.WithLogger(logger.Zerolog()))

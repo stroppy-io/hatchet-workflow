@@ -3,7 +3,7 @@ hatchet_server:
   token: "YOUR_TOKEN"
   host_port:
     host: "localhost"
-    port: "7707"
+    port: "7077"
 suite:
   tests:
     - name: "nightly"
