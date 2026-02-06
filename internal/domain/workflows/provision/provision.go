@@ -214,6 +214,8 @@ func ProvisionWorkflow(
 			}
 			return newDeployment, nil
 		}),
+		hatchetLib.WithExecutionTimeout(1*time.Minute),
+		hatchetLib.WithParents(logicalProvisionTask),
 	)
 
 	/*

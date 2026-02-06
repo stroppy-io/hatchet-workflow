@@ -24,7 +24,7 @@ func TestSuiteWorkflow(
 	c *hatchetLib.Client,
 ) *hatchetLib.StandaloneTask {
 	return c.NewStandaloneTask(
-		TestSuiteTaskName,
+		TestSuiteWorkflowName,
 		hatchet_ext.WTask(func(
 			ctx hatchetLib.Context,
 			input *hatchet.Workflows_StroppyTestSuite_Input,

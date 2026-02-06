@@ -23,7 +23,7 @@ clean-infra:
 
 .PHONY: up-dev
 up-dev:
-	VERSION=$(DEV_VERSION) docker compose -f docker-compose.dev.yaml up -d --build
+	VERSION=$(DEV_VERSION) docker compose -f docker-compose.dev.yaml up -d --build --force-recreate
 
 .PHONY: up-dev-no-build
 up-dev-no-build:

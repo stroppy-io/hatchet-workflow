@@ -19,7 +19,7 @@ func main() {
 		log.Fatalf("HATCHET_CLIENT_TOKEN is not set")
 	}
 	logger.NewFromEnv()
-	c, err := hatchetLib.NewClient(v0Client.WithLogger(logger.Zerolog()))
+	c, err := hatchetLib.NewClient(v0Client.WithLogger(logger.Zerolog()), v0Client.WithToken(token))
 	if err != nil {
 		log.Fatalf("Failed to create Hatchet client: %v", err)
 	}
@@ -30,9 +30,9 @@ func main() {
 	worker, err := c.NewWorker(
 		"master-worker",
 		hatchetLib.WithWorkflows(
-			stroppy.TestSuiteWorkflow(c),
-			stroppy.TestRunWorkflow(c),
 			provisionWorkflow,
+			stroppy.TestRunWorkflow(c),
+			stroppy.TestSuiteWorkflow(c),
 		),
 	)
 	if err != nil {
