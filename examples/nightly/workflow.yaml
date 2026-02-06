@@ -1,5 +1,9 @@
-hatchet_url: "http://localhost:8080"
 supported_cloud: SUPPORTED_CLOUD_YANDEX
+hatchet_server:
+  token: "YOUR_TOKEN"
+  host_port:
+    host: "localhost"
+    port: "7707"
 suite:
   tests:
     - name: "nightly"

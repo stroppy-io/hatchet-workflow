@@ -3,6 +3,7 @@ package provision
 import (
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"time"
 
@@ -51,6 +52,13 @@ const (
 
 const (
 	RunIdLableName = "run_id"
+)
+
+const (
+	DefaultUserGroupName = "stroppy-edge-worker"
+	DefaultUserSudo      = true
+	DefaultUserSudoRules = "ALL=(ALL) NOPASSWD:ALL"
+	DefautltUserShell    = "/bin/bash"
 )
 
 const (
@@ -133,6 +141,21 @@ func ProvisionWorkflow(
 			})
 			networkTemplate.Subnets = append(networkTemplate.Subnets, subnetTemplate)
 
+			var hatchetServerRefKey string
+			var hatchetServerRef string
+			switch input.GetCommon().GetHatchetServer().GetServer().(type) {
+			case *hatchet.HatchetServer_HostPort_:
+				hatchetServerRefKey = HatchetServerHostPortKey
+				hatchetServerRef = net.JoinHostPort(
+					input.GetCommon().GetHatchetServer().GetHostPort().GetHost(),
+					input.GetCommon().GetHatchetServer().GetHostPort().GetPort(),
+				)
+			case *hatchet.HatchetServer_Url:
+				hatchetServerRefKey = HatchetServerUrlKey
+				hatchetServerRef = input.GetCommon().GetHatchetServer().GetUrl()
+			default:
+				return nil, fmt.Errorf("unsupported hatchet server type")
+			}
 			vms := make([]*crossplane.Vm_Template, len(workers))
 			for idx, worker := range workers {
 				vms[idx] = &crossplane.Vm_Template{
@@ -157,6 +180,12 @@ func ProvisionWorkflow(
 									os.Getenv(HatchetEdgeWorkerUserName),
 									DefaultEdgeWorkerUserName,
 								),
+								Shell: DefautltUserShell,
+								Groups: []string{
+									DefaultUserGroupName,
+								},
+								Sudo:      DefaultUserSudo,
+								SudoRules: DefaultUserSudoRules,
 								SshAuthorizedKeys: []string{
 									defaults.StringOrDefault(
 										os.Getenv(HatchetEdgeWorkerSshKey),
@@ -165,7 +194,22 @@ func ProvisionWorkflow(
 								},
 							},
 						}),
+						// NOTE: We must chose between HatchetServerUrlKey and HatchetServerHostPortKey
 						scripting.WithEnv(map[string]string{
+							hatchetServerRefKey:   hatchetServerRef,
+							HatchetClientTokenKey: input.GetCommon().GetHatchetServer().GetToken(),
+							// TODO: Add tls after domain access
+							HatchetClientTlsStrategyKey: HatchetClientTlsStrategyNone,
+							HatchetEdgeWorkerUserName: defaults.StringOrDefault(
+								os.Getenv(HatchetEdgeWorkerUserName),
+								DefaultEdgeWorkerUserName,
+							),
+							HatchetEdgeWorkerSshKey: defaults.StringOrDefault(
+								os.Getenv(HatchetEdgeWorkerSshKey),
+								DefaultEdgeWorkerSshKey,
+							),
+						}),
+						scripting.WithAddEnv(map[string]string{
 							logger.LevelEnvKey: defaults.StringOrDefault(
 								os.Getenv(logger.LevelEnvKey),
 								zapcore.InfoLevel.String(),
@@ -178,19 +222,6 @@ func ProvisionWorkflow(
 							logger.LogSkipCallerEnvKey: defaults.StringOrDefault(
 								os.Getenv(logger.LogSkipCallerEnvKey),
 								"true",
-							),
-							HatchetServerUrlKey: input.GetCommon().GetHatchetServer().GetUrl(),
-							//HatchetServerHostPortKey: input.GetCommon().GetHatchetServer().GetHostPort(),
-							HatchetClientTokenKey: input.GetCommon().GetHatchetServer().GetToken(),
-							// TODO: Add tls after domain access
-							HatchetClientTlsStrategyKey: HatchetClientTlsStrategyNone,
-							HatchetEdgeWorkerUserName: defaults.StringOrDefault(
-								os.Getenv(HatchetEdgeWorkerUserName),
-								DefaultEdgeWorkerUserName,
-							),
-							HatchetEdgeWorkerSshKey: defaults.StringOrDefault(
-								os.Getenv(HatchetEdgeWorkerSshKey),
-								DefaultEdgeWorkerSshKey,
 							),
 						}),
 					),
@@ -344,7 +375,7 @@ func ProvisionWorkflow(
 				},
 			}, nil
 		}),
-		hatchetLib.WithExecutionTimeout(1*time.Minute),
+		hatchetLib.WithExecutionTimeout(10*time.Minute),
 		hatchetLib.WithParents(waitDeploymentTask),
 	)
 	/*

@@ -61,9 +61,9 @@ func (m *HatchetServer) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetUrl()) < 1 {
+	if utf8.RuneCountInString(m.GetToken()) < 1 {
 		err := HatchetServerValidationError{
-			field:  "Url",
+			field:  "Token",
 			reason: "value length must be at least 1 runes",
 		}
 		if !all {
@@ -72,10 +72,92 @@ func (m *HatchetServer) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetToken()) < 1 {
+	oneofServerPresent := false
+	switch v := m.Server.(type) {
+	case *HatchetServer_Url:
+		if v == nil {
+			err := HatchetServerValidationError{
+				field:  "Server",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofServerPresent = true
+
+		if utf8.RuneCountInString(m.GetUrl()) < 1 {
+			err := HatchetServerValidationError{
+				field:  "Url",
+				reason: "value length must be at least 1 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	case *HatchetServer_HostPort_:
+		if v == nil {
+			err := HatchetServerValidationError{
+				field:  "Server",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofServerPresent = true
+
+		if m.GetHostPort() == nil {
+			err := HatchetServerValidationError{
+				field:  "HostPort",
+				reason: "value is required",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if all {
+			switch v := interface{}(m.GetHostPort()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, HatchetServerValidationError{
+						field:  "HostPort",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, HatchetServerValidationError{
+						field:  "HostPort",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetHostPort()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return HatchetServerValidationError{
+					field:  "HostPort",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	default:
+		_ = v // ensures v is used
+	}
+	if !oneofServerPresent {
 		err := HatchetServerValidationError{
-			field:  "Token",
-			reason: "value length must be at least 1 runes",
+			field:  "Server",
+			reason: "value is required",
 		}
 		if !all {
 			return err
@@ -320,3 +402,127 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CommonValidationError{}
+
+// Validate checks the field values on HatchetServer_HostPort with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *HatchetServer_HostPort) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on HatchetServer_HostPort with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// HatchetServer_HostPortMultiError, or nil if none found.
+func (m *HatchetServer_HostPort) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *HatchetServer_HostPort) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetHost()) < 1 {
+		err := HatchetServer_HostPortValidationError{
+			field:  "Host",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetPort()) < 1 {
+		err := HatchetServer_HostPortValidationError{
+			field:  "Port",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return HatchetServer_HostPortMultiError(errors)
+	}
+
+	return nil
+}
+
+// HatchetServer_HostPortMultiError is an error wrapping multiple validation
+// errors returned by HatchetServer_HostPort.ValidateAll() if the designated
+// constraints aren't met.
+type HatchetServer_HostPortMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m HatchetServer_HostPortMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m HatchetServer_HostPortMultiError) AllErrors() []error { return m }
+
+// HatchetServer_HostPortValidationError is the validation error returned by
+// HatchetServer_HostPort.Validate if the designated constraints aren't met.
+type HatchetServer_HostPortValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e HatchetServer_HostPortValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e HatchetServer_HostPortValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e HatchetServer_HostPortValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e HatchetServer_HostPortValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e HatchetServer_HostPortValidationError) ErrorName() string {
+	return "HatchetServer_HostPortValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e HatchetServer_HostPortValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sHatchetServer_HostPort.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = HatchetServer_HostPortValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = HatchetServer_HostPortValidationError{}

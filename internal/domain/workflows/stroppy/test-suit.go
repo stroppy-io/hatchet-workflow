@@ -3,7 +3,6 @@ package stroppy
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -41,11 +40,8 @@ func TestSuiteWorkflow(
 					Opts: []hatchetLib.RunOptFunc{},
 					Input: &hatchet.Workflows_StroppyTest_Input{
 						Common: &hatchet.Common{
-							RunId: ids.NewUlid().Lower().String(),
-							HatchetServer: &hatchet.HatchetServer{
-								Url:   input.GetHatchetUrl(),
-								Token: os.Getenv("HATCHET_CLIENT_TOKEN"),
-							},
+							RunId:          ids.NewUlid().Lower().String(),
+							HatchetServer:  input.GetHatchetServer(),
 							SupportedCloud: input.GetSupportedCloud(),
 						},
 						Test: test,

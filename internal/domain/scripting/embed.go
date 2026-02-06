@@ -86,6 +86,14 @@ func WithEnv(env map[string]string) Options {
 	}
 }
 
+func WithAddEnv(env map[string]string) Options {
+	return func(o *installWorkerOptions) {
+		for k, v := range env {
+			o.Env[k] = v
+		}
+	}
+}
+
 func InstallEdgeWorkerCloudInit(
 	opts ...Options,
 ) *crossplane.CloudInit {

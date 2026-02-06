@@ -19,7 +19,7 @@ message Workflows {
     */
     message StroppyTestSuite {
         message Input {
-            string hatchet_url = 1 [(validate.rules).string.min_len = 1];
+            HatchetServer hatchet_server = 1 [(validate.rules).message.required = true];
             crossplane.SupportedCloud supported_cloud = 3 [(validate.rules).enum.defined_only = true];
             stroppy.TestSuite suite = 4 [(validate.rules).message.required = true];
         }
