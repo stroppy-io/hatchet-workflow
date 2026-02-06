@@ -2,7 +2,9 @@ package scripting
 
 import (
 	_ "embed"
+	"encoding/base64"
 	"fmt"
+	"strings"
 
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
 )
@@ -27,15 +29,28 @@ func InstallEdgeWorkerCloudInitFile() *crossplane.WriteFile {
 	}
 }
 
+func shellEscape(value string) string {
+	// Use single-quote escaping for safe shell injection.
+	// Example: abc'def -> 'abc'"'"'def'
+	if value == "" {
+		return "''"
+	}
+	return "'" + strings.ReplaceAll(value, "'", `'"'"'`) + "'"
+}
+
 func InstallEdgeWorkerCloudInitCmd(env map[string]string) []string {
-	cmd := []string{
-		"bash",
-		InstallEdgeWorkerCloudInitFileContent,
-	}
+	scriptB64 := base64.StdEncoding.EncodeToString(InstallEdgeWorker)
+	cmdStr := fmt.Sprintf(
+		"echo %s | base64 -d > %s && chmod +x %s && %s",
+		shellEscape(scriptB64),
+		shellEscape(InstallEdgeWorkerCloudInitFileContent),
+		shellEscape(InstallEdgeWorkerCloudInitFileContent),
+		shellEscape(InstallEdgeWorkerCloudInitFileContent),
+	)
 	for k, v := range env {
-		cmd = append(cmd, fmt.Sprintf("%s=%s", k, v))
+		cmdStr += fmt.Sprintf(" %s=%s", k, shellEscape(v))
 	}
-	return cmd
+	return []string{"bash", "-c", cmdStr}
 }
 
 type installWorkerOptions struct {
@@ -79,12 +94,10 @@ func InstallEdgeWorkerCloudInit(
 		opt(o)
 	}
 	return &crossplane.CloudInit{
-		Users:  o.Users,
-		Groups: o.Groups,
-		Ssh:    o.Ssh,
-		WriteFiles: []*crossplane.WriteFile{
-			InstallEdgeWorkerCloudInitFile(),
-		},
+		Users:      o.Users,
+		Groups:     o.Groups,
+		Ssh:        o.Ssh,
+		WriteFiles: []*crossplane.WriteFile{},
 		Runcmd: []*crossplane.StringList{
 			{
 				Values: InstallEdgeWorkerCloudInitCmd(o.Env),

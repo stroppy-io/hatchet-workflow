@@ -2,8 +2,10 @@ package yandex
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
+	"github.com/samber/lo"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/iancoleman/strcase"
@@ -28,6 +30,15 @@ const (
 
 	ExternalNameAnnotation = "crossplane.io/external-name"
 	constUserDataKey       = "user-data"
+	serialPortEnableKey    = "serial-port-enable"
+
+	serialPortEnableEnvKey = "YANDEX_SERIAL_PORT_ENABLE"
+)
+
+const (
+	one       = "1"
+	zero      = "0"
+	trueValue = "true"
 )
 
 type CloudBuilder struct {
@@ -184,8 +195,12 @@ func (y *CloudBuilder) BuildVm(
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate cloud-init: %w", err)
 	}
-	metadata := make(map[string]string)
-	metadata[constUserDataKey] = string(machineScriptBytes)
+	metadata := map[string]string{
+		serialPortEnableKey: lo.Ternary(
+			os.Getenv(serialPortEnableEnvKey) == trueValue, one, zero,
+		),
+		constUserDataKey: string(machineScriptBytes),
+	}
 	subnetRef := &crossplane.Ref{
 		Name:      subnet.GetTemplate().GetIdentifier().GetName(),
 		Namespace: y.Config.K8sNamespace,

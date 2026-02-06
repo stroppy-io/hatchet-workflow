@@ -9,18 +9,18 @@ import (
 )
 
 const (
-	WorkerNamePrefix = "edge-worker"
+	WorkerNamePrefix = "edge-wrk"
 
 	WorkerNameEnvKey            = "HATCHET_EDGE_WORKER_NAME"
 	WorkerAcceptableTasksEnvKey = "HATCHET_EDGE_ACCEPTABLE_TASKS"
 )
 
-func NewWorkerName(id ids.RunId) string {
+func NewWorkerName(id ids.RunId, role string) string {
 	return fmt.Sprintf(
 		"%s-%s-%s",
 		WorkerNamePrefix,
+		role,
 		id.String(),
-		ids.NewUlid().Lower().String(),
 	)
 }
 

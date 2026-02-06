@@ -15,6 +15,10 @@ import (
 
 type LogMod string
 
+func (l LogMod) String() string {
+	return string(l)
+}
+
 const (
 	DevelopmentMod LogMod = "development"
 	ProductionMod  LogMod = "production"

@@ -40,7 +40,7 @@ func newStroppyWorker(
 	test *stroppy.Test,
 ) *hatchet.EdgeWorker {
 	return &hatchet.EdgeWorker{
-		WorkerName: edge.NewWorkerName(runId),
+		WorkerName: edge.NewWorkerName(runId, WorkerRoleStroppy),
 		AcceptableTasks: []*hatchet.EdgeTasks_Identifier{
 			edge.NewTaskId(runId, hatchet.EdgeTasks_SETUP_SOFTWARE),
 			edge.NewTaskId(runId, hatchet.EdgeTasks_RUN_STROPPY),
@@ -86,7 +86,7 @@ func newDatabaseWorkers(
 	case *database.Database_Standalone:
 		return []*hatchet.EdgeWorker{
 			{
-				WorkerName: edge.NewWorkerName(runId),
+				WorkerName: edge.NewWorkerName(runId, WorkerRoleDatabase),
 				AcceptableTasks: []*hatchet.EdgeTasks_Identifier{
 					edge.NewTaskId(runId, hatchet.EdgeTasks_SETUP_SOFTWARE),
 				},

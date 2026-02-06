@@ -14,7 +14,14 @@ services:
       - ./deployments/.kubectl.config.yaml:/k8s/config:ro
     network_mode: "host"
     environment:
-      HATCHET_CLIENT_TOKEN: "${HATCHET_CLIENT_TOKEN}"
-      HATCHET_CLIENT_TLS_STRATEGY: "none"
       K8S_CONFIG_PATH: "/k8s/config"
       VALKEY_URL: "redis://default:developer@localhost:6379"
+      HATCHET_CLIENT_TOKEN: "${HATCHET_CLIENT_TOKEN}"
+      HATCHET_CLIENT_TLS_STRATEGY: "none"
+      HATCHET_EDGE_WORKER_USER_NAME: "${HATCHET_EDGE_WORKER_USER_NAME}"
+      HATCHET_EDGE_WORKER_SSH_KEY: "${HATCHET_EDGE_WORKER_SSH_KEY}"
+      HATCHET_EDGE_WORKER_PUBLIC_IP: "${HATCHET_EDGE_WORKER_PUBLIC_IP}"
+      YANDEX_SERIAL_PORT_ENABLE: "${YANDEX_SERIAL_PORT_ENABLE}"
+      LOG_MOD: "${LOG_MOD}"
+      LOG_LEVEL: "${LOG_LEVEL}"
+      LOG_SKIP_CALLER: "${LOG_SKIP_CALLER}"

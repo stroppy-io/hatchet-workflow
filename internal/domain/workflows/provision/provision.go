@@ -19,6 +19,7 @@ import (
 	"github.com/stroppy-io/hatchet-workflow/internal/domain/scripting"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -54,6 +55,7 @@ const (
 
 const (
 	HatchetServerUrlKey         = "HATCHET_CLIENT_SERVER_URL"
+	HatchetServerHostPortKey    = "HATCHET_CLIENT_HOST_PORT"
 	HatchetClientTokenKey       = "HATCHET_CLIENT_TOKEN"
 	HatchetClientTlsStrategyKey = "HATCHET_CLIENT_TLS_STRATEGY"
 
@@ -151,23 +153,45 @@ func ProvisionWorkflow(
 					CloudInit: scripting.InstallEdgeWorkerCloudInit(
 						scripting.WithUsers([]*crossplane.User{
 							{
-								Name: defaults.StringOrDefault(os.Getenv(HatchetEdgeWorkerUserName), DefaultEdgeWorkerUserName),
+								Name: defaults.StringOrDefault(
+									os.Getenv(HatchetEdgeWorkerUserName),
+									DefaultEdgeWorkerUserName,
+								),
 								SshAuthorizedKeys: []string{
-									defaults.StringOrDefault(os.Getenv(HatchetEdgeWorkerSshKey), DefaultEdgeWorkerSshKey),
+									defaults.StringOrDefault(
+										os.Getenv(HatchetEdgeWorkerSshKey),
+										DefaultEdgeWorkerSshKey,
+									),
 								},
 							},
 						}),
 						scripting.WithEnv(map[string]string{
-							logger.LevelEnvKey:         os.Getenv(logger.LevelEnvKey),
-							logger.LogModEnvKey:        os.Getenv(logger.LogModEnvKey),
-							logger.LogMappingEnvKey:    os.Getenv(logger.LogMappingEnvKey),
-							logger.LogSkipCallerEnvKey: os.Getenv(logger.LogSkipCallerEnvKey),
-							HatchetServerUrlKey:        input.GetCommon().GetHatchetServer().GetUrl(),
-							HatchetClientTokenKey:      input.GetCommon().GetHatchetServer().GetToken(),
+							logger.LevelEnvKey: defaults.StringOrDefault(
+								os.Getenv(logger.LevelEnvKey),
+								zapcore.InfoLevel.String(),
+							),
+							logger.LogModEnvKey: defaults.StringOrDefault(
+								os.Getenv(logger.LogModEnvKey),
+								logger.ProductionMod.String(),
+							),
+							logger.LogMappingEnvKey: os.Getenv(logger.LogMappingEnvKey),
+							logger.LogSkipCallerEnvKey: defaults.StringOrDefault(
+								os.Getenv(logger.LogSkipCallerEnvKey),
+								"true",
+							),
+							HatchetServerUrlKey: input.GetCommon().GetHatchetServer().GetUrl(),
+							//HatchetServerHostPortKey: input.GetCommon().GetHatchetServer().GetHostPort(),
+							HatchetClientTokenKey: input.GetCommon().GetHatchetServer().GetToken(),
 							// TODO: Add tls after domain access
 							HatchetClientTlsStrategyKey: HatchetClientTlsStrategyNone,
-							HatchetEdgeWorkerUserName:   os.Getenv(HatchetEdgeWorkerUserName),
-							HatchetEdgeWorkerSshKey:     os.Getenv(HatchetEdgeWorkerSshKey),
+							HatchetEdgeWorkerUserName: defaults.StringOrDefault(
+								os.Getenv(HatchetEdgeWorkerUserName),
+								DefaultEdgeWorkerUserName,
+							),
+							HatchetEdgeWorkerSshKey: defaults.StringOrDefault(
+								os.Getenv(HatchetEdgeWorkerSshKey),
+								DefaultEdgeWorkerSshKey,
+							),
 						}),
 					),
 					ExternalIp: nil,
@@ -343,7 +367,7 @@ func ProvisionWorkflow(
 			}, nil
 		}
 		var readyDeployment *crossplane.Deployment
-		if err := ctx.ParentOutput(buildDeploymentsTask, &readyDeployment); err == nil {
+		if err := ctx.ParentOutput(buildDeploymentsTask, &readyDeployment); err != nil {
 			return retErr(false, fmt.Errorf("failed to get %s output", BuildDeploymentsTaskName))
 		}
 		if err := deps.FallbackDestroyDeployment(ctx, readyDeployment); err != nil {
