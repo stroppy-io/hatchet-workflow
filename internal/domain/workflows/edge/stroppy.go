@@ -16,21 +16,6 @@ import (
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet"
 )
 
-/*
-#!/bin/bash
-
-docker run --rm \
-  -v ./tpcc.ts:/test.ts \
-  -e K6_OTEL_EXPORTER_TYPE=http \
-  -e K6_OTEL_METRIC_PREFIX=stroppy_k6_tpcc_ \
-  -e K6_OTEL_SERVICE_NAME=stroppy \
-  -e K6_OTEL_HTTP_EXPORTER_INSECURE=false \
-  -e K6_OTEL_HTTP_EXPORTER_ENDPOINT=vminsert.stroppy.io \
-  -e K6_OTEL_HTTP_EXPORTER_URL_PATH=/insert/multitenant/opentelemetry/v1/metrics \
-  -e K6_OTEL_HEADERS="Authorization=Basic dm1pbnNlcnQ6UEdrYnZjNHBpbGdXVU83RUJKNHoxamJrZA==" \
-  ghcr.io/stroppy-io/stroppy:v2.0.0-dev1.2
-*/
-
 func streamLogsWithPrefix(ctx context.Context, r io.Reader, prefix string, log func(string), wg *sync.WaitGroup) {
 	defer wg.Done()
 	scanner := bufio.NewScanner(r)
@@ -53,6 +38,7 @@ const (
 
 	StroppyWorkdirFlag = "--workdir"
 	StroppyPresetFlag  = "--preset"
+	TagFlag            = "--tag"
 
 	K6RunIdTagName    = "run_id"
 	K6WorkloadTagName = "workload"
@@ -99,9 +85,9 @@ func RunStroppyTask(c *hatchetLib.Client, identifier *hatchet.EdgeTasks_Identifi
 				StroppyCommandRun,
 				fmt.Sprintf("%s.ts", workloadName),
 				fmt.Sprintf("%s.sql", workloadName),
-				"--tag",
+				TagFlag,
 				fmt.Sprintf("%s=%s", K6RunIdTagName, input.GetCommon().GetRunId()),
-				"--tag",
+				TagFlag,
 				fmt.Sprintf("%s=%s", K6WorkloadTagName, workloadName),
 			)
 			runCmd.Dir = filepath.Dir(input.GetStroppyCliCall().GetWorkdir())
