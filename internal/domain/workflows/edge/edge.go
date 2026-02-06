@@ -9,14 +9,19 @@ import (
 )
 
 const (
-	WorkerNamePrefix = "edge-worker-"
+	WorkerNamePrefix = "edge-worker"
 
 	WorkerNameEnvKey            = "HATCHET_EDGE_WORKER_NAME"
 	WorkerAcceptableTasksEnvKey = "HATCHET_EDGE_ACCEPTABLE_TASKS"
 )
 
-func WorkerName(id ids.RunId) string {
-	return WorkerNamePrefix + id.String()
+func NewWorkerName(id ids.RunId) string {
+	return fmt.Sprintf(
+		"%s-%s-%s",
+		WorkerNamePrefix,
+		id.String(),
+		ids.NewUlid().Lower().String(),
+	)
 }
 
 func NewTaskId(runId ids.RunId, kind hatchet.EdgeTasks_Kind) *hatchet.EdgeTasks_Identifier {

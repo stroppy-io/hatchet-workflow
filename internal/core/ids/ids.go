@@ -34,8 +34,8 @@ func UlidToStr(ulid Ulid) string {
 	return ulid.String()
 }
 
-func UlidFromString(str string) *Ulid {
-	return &Ulid{
+func UlidFromString(str string) Ulid {
+	return Ulid{
 		Id: str,
 	}
 }
@@ -47,14 +47,8 @@ func Lower(str string) string {
 type RunId Ulid
 
 func ParseRunId(str string) RunId {
-	return RunId{
-		Id: Lower(str),
-	}
+	return RunId(UlidFromString(str))
 }
-func NewRunId() RunId {
-	return RunId(NewUlid().Lower())
-}
-
 func (id RunId) String() string {
 	return id.Id
 }

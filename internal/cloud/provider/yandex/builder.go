@@ -97,6 +97,7 @@ func (y *CloudBuilder) BuildNetwork(
 		return nil, fmt.Errorf("failed to marshal network def: %w", err)
 	}
 	return &crossplane.Network{
+		Template: template,
 		Resource: &crossplane.Resource{
 			Ref:          ids.ExtRefFromResourceDef(networkRef, networkDef),
 			ResourceDef:  networkDef,
@@ -154,6 +155,7 @@ func (y *CloudBuilder) BuildSubnet(
 		return nil, fmt.Errorf("failed to marshal subnet def: %w", err)
 	}
 	return &crossplane.Subnet{
+		Template: template,
 		Resource: &crossplane.Resource{
 			Ref:          ids.ExtRefFromResourceDef(subnetRef, subnetDef),
 			ResourceDef:  subnetDef,
@@ -261,6 +263,7 @@ func (y *CloudBuilder) BuildVm(
 		})
 	}
 	return &crossplane.Vm{
+		Template: template,
 		Resource: &crossplane.Resource{
 			Ref:          ids.ExtRefFromResourceDef(vmRef, vmResourceDef),
 			ResourceDef:  vmResourceDef,

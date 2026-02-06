@@ -44,17 +44,22 @@ func cidrContainsIP(cidr *crossplane.Cidr, ip *crossplane.Ip) (bool, error) {
 	return ipNet.Contains(net.ParseIP(ip.GetValue())), nil
 }
 
-func foundSubnetForVm(subnets []*crossplane.Subnet, vm *crossplane.Vm_Template) (*crossplane.Subnet, error) {
+func foundSubnetForVm(subnets []*crossplane.Subnet, vmTemplate *crossplane.Vm_Template) (*crossplane.Subnet, error) {
 	for _, subnet := range subnets {
-		has, err := cidrContainsIP(subnet.GetTemplate().GetCidr(), vm.GetInternalIp())
+		has, err := cidrContainsIP(subnet.GetTemplate().GetCidr(), vmTemplate.GetInternalIp())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf(
+				"failed to check if subnet %s contains ip %s : %w",
+				subnet.GetTemplate().GetCidr().GetValue(),
+				vmTemplate.GetInternalIp().GetValue(),
+				err,
+			)
 		}
 		if has {
 			return subnet, nil
 		}
 	}
-	return nil, fmt.Errorf("subnet not found for vm %s", vm.GetIdentifier().GetName())
+	return nil, fmt.Errorf("subnet not found for vmTemplate %s", vmTemplate.GetIdentifier().GetName())
 }
 
 func (d *Factory) CreateNewDeployment(
@@ -85,11 +90,11 @@ func (d *Factory) CreateNewDeployment(
 		}
 		subnets[i] = subnet
 	}
-	network.Subnets = subnets
+	network.Subnets = append(network.Subnets, subnets...)
 
 	vms := make([]*crossplane.Vm, len(template.GetVmTemplates()))
 	for i, vmTemplate := range template.GetVmTemplates() {
-		subnet, err := foundSubnetForVm(subnets, vmTemplate)
+		subnet, err := foundSubnetForVm(network.Subnets, vmTemplate)
 		if err != nil {
 			return nil, err
 		}

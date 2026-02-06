@@ -101,7 +101,7 @@ func ProvisionWorkflow(
 			networkTemplate := &crossplane.Network_Template{
 				Identifier: &crossplane.Identifier{
 					// NOTE: Now we use one predefined network for all subnets
-					Id:             DefaultNetworkId,
+					Id:             ids.NewUlid().Lower().String(),
 					Name:           DefaultNetworkName,
 					SupportedCloud: input.GetCommon().GetSupportedCloud(),
 				},
@@ -124,6 +124,7 @@ func ProvisionWorkflow(
 			if err != nil {
 				return nil, unitOfWork.Rollback(fmt.Errorf("failed to reserve network: %w", err))
 			}
+			ctx.Log(fmt.Sprintf("Reserved network %s (cidr:%s)", networkTemplate.GetIdentifier().GetName(), subnetTemplate.GetCidr().GetValue()))
 			// NOTE: Add rollback for network if next step fails
 			unitOfWork.Add("rollback network", func() error {
 				return deps.NetworkManager.FreeNetwork(ctx, networkTemplate.GetIdentifier(), subnetTemplate)
@@ -174,10 +175,11 @@ func ProvisionWorkflow(
 				}
 			}
 			unitOfWork.Commit()
+			deplId := ids.NewUlid().Lower().String()
 			return &crossplane.Deployment_Template{
 				Identifier: &crossplane.Identifier{
-					Id:             ctx.StepRunId(),
-					Name:           fmt.Sprintf("%s-%s", DefaultDeploymentName, ctx.StepRunId()),
+					Id:             deplId,
+					Name:           fmt.Sprintf("%s-%s", DefaultDeploymentName, deplId),
 					SupportedCloud: input.GetCommon().GetSupportedCloud(),
 				},
 				NetworkTemplate: networkTemplate,
@@ -204,13 +206,9 @@ func ProvisionWorkflow(
 			if err != nil {
 				return nil, fmt.Errorf("failed to validate %s output: %w", LogicalProvisionTaskName, err)
 			}
-			ctx.Log("Building Deployments")
 			newDeployment, err := deps.Factory.CreateNewDeployment(parentOutput)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create deployment: %w", err)
-			}
-			if err := deps.QuotaManager.ReserveQuotas(ctx, deployment.GetDeploymentUsingQuotas(newDeployment)); err != nil {
-				return nil, fmt.Errorf("failed to reserve quotas: %w", err)
 			}
 			return newDeployment, nil
 		}),

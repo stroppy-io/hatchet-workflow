@@ -2,7 +2,9 @@ package stroppy
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/hatchet-dev/hatchet/pkg/client/rest"
@@ -39,7 +41,7 @@ func TestSuiteWorkflow(
 					Opts: []hatchetLib.RunOptFunc{},
 					Input: &hatchet.Workflows_StroppyTest_Input{
 						Common: &hatchet.Common{
-							RunId: ids.NewRunId().String(),
+							RunId: ids.NewUlid().Lower().String(),
 							HatchetServer: &hatchet.HatchetServer{
 								Url:   input.GetHatchetUrl(),
 								Token: os.Getenv("HATCHET_CLIENT_TOKEN"),
@@ -58,15 +60,7 @@ func TestSuiteWorkflow(
 			waitPool := pool.NewWithResults[*stroppy.TestResult]().WithContext(ctx).WithCancelOnError().WithFirstError()
 			for _, ref := range runRefs {
 				waitPool.Go(func(ctx context.Context) (*stroppy.TestResult, error) {
-					var run *rest.V1WorkflowRunDetails
-					err := backoff.Retry(func() error {
-						runModel, err := c.Runs().Get(ctx, ref.RunId)
-						if err != nil {
-							return err
-						}
-						run = runModel
-						return nil
-					}, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 5))
+					run, err := waitForRunCompletion(ctx, c, ref.RunId)
 					if err != nil {
 						return nil, err
 					}
@@ -94,4 +88,37 @@ func TestSuiteWorkflow(
 		}),
 		hatchetLib.WithWorkflowDescription("Stroppy Test Suite Workflow"),
 	)
+}
+
+func waitForRunCompletion(ctx context.Context, c *hatchetLib.Client, runID string) (*rest.V1WorkflowRunDetails, error) {
+	backoffCfg := backoff.NewExponentialBackOff()
+	backoffCfg.InitialInterval = 500 * time.Millisecond
+	backoffCfg.MaxInterval = 5 * time.Second
+	backoffCfg.MaxElapsedTime = 0 // rely on ctx for cancellation
+
+	var run *rest.V1WorkflowRunDetails
+	err := backoff.Retry(func() error {
+		runModel, err := c.Runs().Get(ctx, runID)
+		if err != nil {
+			return err
+		}
+		run = runModel
+
+		switch run.Run.Status {
+		case rest.V1TaskStatusCOMPLETED:
+			return nil
+		case rest.V1TaskStatusFAILED, rest.V1TaskStatusCANCELLED:
+			msg := ""
+			if run.Run.ErrorMessage != nil {
+				msg = *run.Run.ErrorMessage
+			}
+			return backoff.Permanent(fmt.Errorf("workflow %s finished with status %s: %s", runID, run.Run.Status, msg))
+		default:
+			return fmt.Errorf("workflow %s not finished (status %s)", runID, run.Run.Status)
+		}
+	}, backoff.WithContext(backoffCfg, ctx))
+	if err != nil {
+		return nil, err
+	}
+	return run, nil
 }
