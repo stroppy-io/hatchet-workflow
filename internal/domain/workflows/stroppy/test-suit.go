@@ -83,6 +83,7 @@ func TestSuiteWorkflow(
 			}, nil
 		}),
 		hatchetLib.WithWorkflowDescription("Stroppy Test Suite Workflow"),
+		hatchetLib.WithExecutionTimeout(1*time.Hour),
 	)
 }
 

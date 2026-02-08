@@ -225,6 +225,7 @@ func TestRunWorkflow(
 			}, nil
 		}),
 		hatchetLib.WithParents(installSoftwareTask),
+		hatchetLib.WithExecutionTimeout(1*time.Hour),
 	)
 
 	/*
