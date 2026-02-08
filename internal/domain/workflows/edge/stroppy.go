@@ -13,6 +13,7 @@ import (
 
 	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/envs"
+	hatchet_ext "github.com/stroppy-io/hatchet-workflow/internal/core/hatchet-ext"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet"
 )
 
@@ -47,7 +48,7 @@ const (
 func RunStroppyTask(c *hatchetLib.Client, identifier *hatchet.EdgeTasks_Identifier) *hatchetLib.StandaloneTask {
 	return c.NewStandaloneTask(
 		TaskIdToString(identifier),
-		func(ctx hatchetLib.Context, input *hatchet.EdgeTasks_RunStroppy_Input) (*hatchet.EdgeTasks_RunStroppy_Output, error) {
+		hatchet_ext.WTask(func(ctx hatchetLib.Context, input *hatchet.EdgeTasks_RunStroppy_Input) (*hatchet.EdgeTasks_RunStroppy_Output, error) {
 			runcmd := func(cmd *exec.Cmd) error {
 				stdout, _ := cmd.StdoutPipe()
 				stderr, _ := cmd.StderrPipe()
@@ -97,6 +98,6 @@ func RunStroppyTask(c *hatchetLib.Client, identifier *hatchet.EdgeTasks_Identifi
 				return nil, fmt.Errorf("failed to run stroppy: %w", err)
 			}
 			return &hatchet.EdgeTasks_RunStroppy_Output{}, nil
-		},
+		}),
 	)
 }

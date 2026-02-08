@@ -252,7 +252,7 @@ func TestRunWorkflow(
 		}
 
 		var provisionOutput *hatchet.DeployedEdgeWorkersSet
-		if err := ctx.ParentOutput(provisionWorkersTask, &provisionOutput); err != nil {
+		if err := ctx.StepOutput(TestRunProvisionWorkersWorkflowName, &provisionOutput); err != nil {
 			return retErr(false, fmt.Errorf("failed to get %s output: %w", TestRunProvisionWorkersWorkflowName, err))
 		}
 		if provisionOutput == nil || provisionOutput.GetDeployment() == nil {
