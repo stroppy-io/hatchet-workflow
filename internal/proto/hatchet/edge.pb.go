@@ -419,7 +419,8 @@ func (x *DeployedEdgeWorker) GetDeployment() *crossplane.Vm {
 
 type DeployedEdgeWorkersSet struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
-	DeployedEdgeWorkers []*DeployedEdgeWorker  `protobuf:"bytes,1,rep,name=deployed_edge_workers,json=deployedEdgeWorkers,proto3" json:"deployed_edge_workers,omitempty"`
+	Deployment          *crossplane.Deployment `protobuf:"bytes,1,opt,name=deployment,proto3" json:"deployment,omitempty"`
+	DeployedEdgeWorkers []*DeployedEdgeWorker  `protobuf:"bytes,2,rep,name=deployed_edge_workers,json=deployedEdgeWorkers,proto3" json:"deployed_edge_workers,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -452,6 +453,13 @@ func (x *DeployedEdgeWorkersSet) ProtoReflect() protoreflect.Message {
 // Deprecated: Use DeployedEdgeWorkersSet.ProtoReflect.Descriptor instead.
 func (*DeployedEdgeWorkersSet) Descriptor() ([]byte, []int) {
 	return file_hatchet_edge_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *DeployedEdgeWorkersSet) GetDeployment() *crossplane.Deployment {
+	if x != nil {
+		return x.Deployment
+	}
+	return nil
 }
 
 func (x *DeployedEdgeWorkersSet) GetDeployedEdgeWorkers() []*DeployedEdgeWorker {
@@ -850,9 +858,12 @@ const file_hatchet_edge_proto_rawDesc = "" +
 	"\x06worker\x18\x01 \x01(\v2\x13.hatchet.EdgeWorkerB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06worker\x128\n" +
 	"\n" +
 	"deployment\x18\x02 \x01(\v2\x0e.crossplane.VmB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
-	"deployment\"s\n" +
-	"\x16DeployedEdgeWorkersSet\x12Y\n" +
-	"\x15deployed_edge_workers\x18\x01 \x03(\v2\x1b.hatchet.DeployedEdgeWorkerB\b\xfaB\x05\x92\x01\x02\b\x01R\x13deployedEdgeWorkers\"\xc4\x04\n" +
+	"deployment\"\xb5\x01\n" +
+	"\x16DeployedEdgeWorkersSet\x12@\n" +
+	"\n" +
+	"deployment\x18\x01 \x01(\v2\x16.crossplane.DeploymentB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
+	"deployment\x12Y\n" +
+	"\x15deployed_edge_workers\x18\x02 \x03(\v2\x1b.hatchet.DeployedEdgeWorkerB\b\xfaB\x05\x92\x01\x02\b\x01R\x13deployedEdgeWorkers\"\xc4\x04\n" +
 	"\tEdgeTasks\x1a\x85\x01\n" +
 	"\n" +
 	"Identifier\x12\x1e\n" +
@@ -914,8 +925,9 @@ var file_hatchet_edge_proto_goTypes = []any{
 	(*stroppy.StroppyCli)(nil),               // 19: stroppy.StroppyCli
 	(*crossplane.Hardware)(nil),              // 20: crossplane.Hardware
 	(*crossplane.Vm)(nil),                    // 21: crossplane.Vm
-	(*Common)(nil),                           // 22: hatchet.Common
-	(*stroppy.TestResult)(nil),               // 23: stroppy.TestResult
+	(*crossplane.Deployment)(nil),            // 22: crossplane.Deployment
+	(*Common)(nil),                           // 23: hatchet.Common
+	(*stroppy.TestResult)(nil),               // 24: stroppy.TestResult
 }
 var file_hatchet_edge_proto_depIdxs = []int32{
 	0,  // 0: hatchet.Software.setup_strategy:type_name -> hatchet.Software.SetupStrategy
@@ -930,18 +942,19 @@ var file_hatchet_edge_proto_depIdxs = []int32{
 	3,  // 9: hatchet.EdgeWorkersSet.edge_workers:type_name -> hatchet.EdgeWorker
 	3,  // 10: hatchet.DeployedEdgeWorker.worker:type_name -> hatchet.EdgeWorker
 	21, // 11: hatchet.DeployedEdgeWorker.deployment:type_name -> crossplane.Vm
-	5,  // 12: hatchet.DeployedEdgeWorkersSet.deployed_edge_workers:type_name -> hatchet.DeployedEdgeWorker
-	1,  // 13: hatchet.EdgeTasks.Identifier.kind:type_name -> hatchet.EdgeTasks.Kind
-	22, // 14: hatchet.EdgeTasks.InstallSoftware.Input.common:type_name -> hatchet.Common
-	2,  // 15: hatchet.EdgeTasks.InstallSoftware.Input.software:type_name -> hatchet.Software
-	22, // 16: hatchet.EdgeTasks.RunStroppy.Input.common:type_name -> hatchet.Common
-	19, // 17: hatchet.EdgeTasks.RunStroppy.Input.stroppy_cli_call:type_name -> stroppy.StroppyCli
-	23, // 18: hatchet.EdgeTasks.RunStroppy.Output.result:type_name -> stroppy.TestResult
-	19, // [19:19] is the sub-list for method output_type
-	19, // [19:19] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	22, // 12: hatchet.DeployedEdgeWorkersSet.deployment:type_name -> crossplane.Deployment
+	5,  // 13: hatchet.DeployedEdgeWorkersSet.deployed_edge_workers:type_name -> hatchet.DeployedEdgeWorker
+	1,  // 14: hatchet.EdgeTasks.Identifier.kind:type_name -> hatchet.EdgeTasks.Kind
+	23, // 15: hatchet.EdgeTasks.InstallSoftware.Input.common:type_name -> hatchet.Common
+	2,  // 16: hatchet.EdgeTasks.InstallSoftware.Input.software:type_name -> hatchet.Software
+	23, // 17: hatchet.EdgeTasks.RunStroppy.Input.common:type_name -> hatchet.Common
+	19, // 18: hatchet.EdgeTasks.RunStroppy.Input.stroppy_cli_call:type_name -> stroppy.StroppyCli
+	24, // 19: hatchet.EdgeTasks.RunStroppy.Output.result:type_name -> stroppy.TestResult
+	20, // [20:20] is the sub-list for method output_type
+	20, // [20:20] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_hatchet_edge_proto_init() }

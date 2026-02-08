@@ -130,7 +130,7 @@ func TestRunWorkflow(
 					for _, task := range installSoftwareTasks {
 						_, err := edge.InstallSoftwareTask(c, task).
 							Run(ctx,
-								&hatchet.EdgeTasks_InstallSoftware_Input{
+								hatchet.EdgeTasks_InstallSoftware_Input{
 									Common: &hatchet.Common{
 										RunId: worker.GetWorker().GetWorkerName(),
 									},
@@ -186,7 +186,7 @@ func TestRunWorkflow(
 			}
 			runStroppyResult, err := edge.RunStroppyTask(c, stroppyTask).
 				Run(ctx,
-					&hatchet.EdgeTasks_RunStroppy_Input{
+					hatchet.EdgeTasks_RunStroppy_Input{
 						Common: &hatchet.Common{
 							RunId: stroppyWorker.GetWorker().GetWorkerName(),
 						},
@@ -230,6 +230,50 @@ func TestRunWorkflow(
 		}),
 		hatchetLib.WithParents(installSoftwareTask),
 	)
+
+	/*
+		Destroy deployments on failure (if provision succeeded)
+	*/
+	workflow.OnFailure(func(
+		ctx hatchetLib.Context,
+		input hatchet.Workflows_StroppyTest_Input,
+	) (provision.FailureHandlerOutput, error) {
+		stepErrors := ctx.StepRunErrors()
+		var errorDetails string
+		for stepName, errorMsg := range stepErrors {
+			ctx.Log(fmt.Sprintf("Multi-step: Step '%s' failed with error: %s", stepName, errorMsg))
+			errorDetails += stepName + ": " + errorMsg + "; "
+		}
+		retErr := func(handled bool, err error) (provision.FailureHandlerOutput, error) {
+			return provision.FailureHandlerOutput{
+				FailureHandled: handled,
+				ErrorDetails:   "Failed to handle deployments: " + err.Error(),
+			}, nil
+		}
+
+		var provisionOutput *hatchet.DeployedEdgeWorkersSet
+		if err := ctx.ParentOutput(provisionWorkersTask, &provisionOutput); err != nil {
+			return retErr(false, fmt.Errorf("failed to get %s output: %w", TestRunProvisionWorkersWorkflowName, err))
+		}
+		if provisionOutput == nil || provisionOutput.GetDeployment() == nil {
+			return retErr(false, fmt.Errorf("provision output is empty"))
+		}
+
+		deps, err := provision.NewProvisionDeps()
+		if err != nil {
+			return retErr(false, err)
+		}
+		if err := deps.FallbackDestroyDeployment(ctx, provisionOutput.GetDeployment()); err != nil {
+			return retErr(false, err)
+		}
+		if errorDetails != "" {
+			return retErr(true, fmt.Errorf("original failure: %s", errorDetails))
+		}
+		return provision.FailureHandlerOutput{
+			FailureHandled: true,
+			ErrorDetails:   "",
+		}, nil
+	})
 
 	return workflow
 }

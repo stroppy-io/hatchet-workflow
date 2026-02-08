@@ -911,6 +911,46 @@ func (m *DeployedEdgeWorkersSet) validate(all bool) error {
 
 	var errors []error
 
+	if m.GetDeployment() == nil {
+		err := DeployedEdgeWorkersSetValidationError{
+			field:  "Deployment",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetDeployment()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DeployedEdgeWorkersSetValidationError{
+					field:  "Deployment",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DeployedEdgeWorkersSetValidationError{
+					field:  "Deployment",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeployment()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DeployedEdgeWorkersSetValidationError{
+				field:  "Deployment",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(m.GetDeployedEdgeWorkers()) < 1 {
 		err := DeployedEdgeWorkersSetValidationError{
 			field:  "DeployedEdgeWorkers",
