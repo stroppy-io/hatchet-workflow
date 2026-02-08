@@ -16,13 +16,27 @@ ensure_command() {
 
 install_packages_apt() {
   local pkgs=("$@")
-  if [ -w "/var/lib/apt/lists" ]; then
-    apt-get update -y >/dev/null
-    apt-get install -y "${pkgs[@]}" >/dev/null
-  else
-    sudo apt-get update -y >/dev/null
-    sudo apt-get install -y "${pkgs[@]}" >/dev/null
-  fi
+  local max_attempts=10
+  local attempt=1
+  local delay=10
+
+  while [ $attempt -le $max_attempts ]; do
+    echo "Attempting to install packages (attempt $attempt/$max_attempts)..."
+    if [ -w "/var/lib/apt/lists" ]; then
+      if apt-get update -y >/dev/null && apt-get install -y "${pkgs[@]}" >/dev/null; then
+        return 0
+      fi
+    else
+      if sudo apt-get update -y >/dev/null && sudo apt-get install -y "${pkgs[@]}" >/dev/null; then
+        return 0
+      fi
+    fi
+    echo "apt-get failed. Retrying in $delay seconds..."
+    sleep $delay
+    attempt=$((attempt + 1))
+  done
+  echo "Error: apt-get failed after $max_attempts attempts."
+  return 1
 }
 
 # Ensure required dependencies are installed (Ubuntu/Debian via apt-get)
@@ -40,8 +54,28 @@ if ! ensure_command curl || ! ensure_command systemctl; then
   exit 1
 fi
 
+get_latest_tag() {
+  local attempt=1
+  local max_attempts=5
+  local delay=5
+  local tag=""
+
+  while [ $attempt -le $max_attempts ]; do
+    tag=$(curl -s "https://api.github.com/repos/$REPO/releases" | grep -m1 '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    if [ -n "$tag" ]; then
+      echo "$tag"
+      return 0
+    fi
+    echo "Failed to fetch latest tag (attempt $attempt/$max_attempts). Retrying in $delay seconds..."
+    sleep $delay
+    attempt=$((attempt + 1))
+  done
+  return 1
+}
+
 # Get the latest release tag (including prerelease) from /releases
-LATEST_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | grep -m1 '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+echo "Fetching latest release tag..."
+LATEST_TAG=$(get_latest_tag)
 
 if [ -z "$LATEST_TAG" ]; then
   echo "Error: Could not fetch the latest release tag."
