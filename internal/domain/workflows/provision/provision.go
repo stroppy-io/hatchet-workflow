@@ -372,8 +372,8 @@ func ProvisionWorkflow(
 				})
 			}
 			return &hatchet.Workflows_Provision_Output{
-				Deployment: parentOutput,
 				DeployedEdgeWorkers: &hatchet.DeployedEdgeWorkersSet{
+					Deployment:          parentOutput,
 					DeployedEdgeWorkers: deployedWorkers,
 				},
 			}, nil

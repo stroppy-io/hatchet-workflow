@@ -131,9 +131,7 @@ func TestRunWorkflow(
 						_, err := edge.InstallSoftwareTask(c, task).
 							Run(ctx,
 								hatchet.EdgeTasks_InstallSoftware_Input{
-									Common: &hatchet.Common{
-										RunId: worker.GetWorker().GetWorkerName(),
-									},
+									Common:   input.GetCommon(),
 									Software: worker.GetWorker().GetSoftware(),
 								},
 							)
@@ -187,9 +185,7 @@ func TestRunWorkflow(
 			runStroppyResult, err := edge.RunStroppyTask(c, stroppyTask).
 				Run(ctx,
 					hatchet.EdgeTasks_RunStroppy_Input{
-						Common: &hatchet.Common{
-							RunId: stroppyWorker.GetWorker().GetWorkerName(),
-						},
+						Common: input.GetCommon(),
 						StroppyCliCall: &stroppy.StroppyCli{
 							Version: input.GetTest().GetStroppyCli().GetVersion(),
 							BinaryPath: defaults.StringPtrOrDefaultPtr(

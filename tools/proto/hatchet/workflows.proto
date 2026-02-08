@@ -55,7 +55,6 @@ message Workflows {
             EdgeWorkersSet edge_workers_set = 2 [(validate.rules).message.required = true];
         }
         message Output {
-            crossplane.Deployment deployment = 1;
             DeployedEdgeWorkersSet deployed_edge_workers = 2 [(validate.rules).message.required = true];
         }
     }
