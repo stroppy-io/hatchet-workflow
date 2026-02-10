@@ -12,6 +12,7 @@ services:
     restart: always
     volumes:
       - ./deployments/.kubectl.config.yaml:/k8s/config:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     network_mode: "host"
     environment:
       K8S_CONFIG_PATH: "/k8s/config"
@@ -22,6 +23,8 @@ services:
       HATCHET_EDGE_WORKER_SSH_KEY: "${HATCHET_EDGE_WORKER_SSH_KEY}"
       HATCHET_EDGE_WORKER_PUBLIC_IP: "${HATCHET_EDGE_WORKER_PUBLIC_IP}"
       YANDEX_SERIAL_PORT_ENABLE: "${YANDEX_SERIAL_PORT_ENABLE}"
+      DOCKER_NETWORK_NAME: "${DOCKER_NETWORK_NAME:-stroppy-net}"
+      EDGE_WORKER_DOCKER_IMAGE: "${EDGE_WORKER_DOCKER_IMAGE:-stroppy-edge-worker:latest}"
       LOG_MOD: "${LOG_MOD}"
       LOG_LEVEL: "${LOG_LEVEL}"
       LOG_SKIP_CALLER: "${LOG_SKIP_CALLER}"

@@ -597,7 +597,7 @@ const file_crossplane_resource_proto_rawDesc = "" +
 	"\fKIND_NETWORK\x10\x01\x12\x0f\n" +
 	"\vKIND_SUBNET\x10\x02\x12\v\n" +
 	"\aKIND_VM\x10\x03\x12\x1a\n" +
-	"\x16KIND_PUBLIC_IP_ADDRESS\x10\x04\"\xcd\x05\n" +
+	"\x16KIND_PUBLIC_IP_ADDRESS\x10\x04\"\xc3\x05\n" +
 	"\bResource\x12$\n" +
 	"\x03ref\x18\x01 \x01(\v2\x12.crossplane.ExtRefR\x03ref\x12C\n" +
 	"\n" +
@@ -611,9 +611,9 @@ const file_crossplane_resource_proto_rawDesc = "" +
 	"\x06synced\x18\a \x01(\bR\x06synced\x12\x14\n" +
 	"\x05ready\x18\b \x01(\bR\x05ready\x12\x1f\n" +
 	"\vexternal_id\x18\t \x01(\tR\n" +
-	"externalId\x12D\n" +
+	"externalId\x12:\n" +
 	"\fresource_def\x18\n" +
-	" \x01(\v2\x17.crossplane.ResourceDefB\b\xfaB\x05\x8a\x01\x02\x10\x01R\vresourceDef\x124\n" +
+	" \x01(\v2\x17.crossplane.ResourceDefR\vresourceDef\x124\n" +
 	"\fusing_quotas\x18\v \x03(\v2\x11.crossplane.QuotaR\vusingQuotas\"\x89\x01\n" +
 	"\x06Status\x12\x16\n" +
 	"\x12STATUS_UNSPECIFIED\x10\x00\x12\x13\n" +

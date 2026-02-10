@@ -94,6 +94,9 @@ services:
     volumes:
       - hatchet_certs:/hatchet/certs
       - hatchet_config:/hatchet/config
+    networks:
+      - default
+      - stroppy-net
 
   hatchet-dashboard:
     container_name: hatchet-dashboard
@@ -153,6 +156,11 @@ services:
       - "127.0.0.1:9001:9001"
     volumes:
       - minio:/data
+
+networks:
+  stroppy-net:
+    name: stroppy-net
+    driver: bridge
 
 volumes:
   hatchet_postgres_data:

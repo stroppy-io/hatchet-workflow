@@ -40,6 +40,7 @@ message Metadata {
 enum SupportedCloud {
     SUPPORTED_CLOUD_UNSPECIFIED = 0;
     SUPPORTED_CLOUD_YANDEX = 1;
+    SUPPORTED_CLOUD_DOCKER = 2;
 }
 
 message Ip {

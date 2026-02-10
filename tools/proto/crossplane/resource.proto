@@ -60,6 +60,6 @@ message Resource {
     bool synced = 7; // crossplane default statuses
     bool ready = 8; // crossplane default statuses
     string external_id = 9; // crossplane default statuses
-    ResourceDef resource_def = 10 [(validate.rules).message.required = true];
+    ResourceDef resource_def = 10;
     repeated Quota using_quotas = 11;
 }

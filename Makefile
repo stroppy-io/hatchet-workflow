@@ -51,6 +51,10 @@ build-all:
 run-test: build-all
 	./bin/run --file ./examples/test.yaml
 
+.PHONY: build-edge-worker-image
+build-edge-worker-image:
+	docker build -f deployments/docker/edge-worker.Dockerfile -t stroppy-edge-worker:latest .
+
 .PHONY: release-dev-edge
 release-dev-edge:
 	mkdir -p bin

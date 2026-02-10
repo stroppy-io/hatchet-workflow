@@ -103,8 +103,7 @@ func ProvisionWorkflow(
 			if err != nil {
 				return nil, fmt.Errorf("failed to validate workflow input: %w", err)
 			}
-			// NOTE: We don't support other clouds for now
-			if input.GetCommon().GetSupportedCloud() != crossplane.SupportedCloud_SUPPORTED_CLOUD_YANDEX {
+			if input.GetCommon().GetSupportedCloud() == crossplane.SupportedCloud_SUPPORTED_CLOUD_UNSPECIFIED {
 				return nil, fmt.Errorf("unsupported cloud: %s", input.GetCommon().GetSupportedCloud())
 			}
 			workers := input.GetEdgeWorkersSet().GetEdgeWorkers()
@@ -303,7 +302,11 @@ func ProvisionWorkflow(
 			input *hatchet.Workflows_Provision_Input,
 			parentOutput *crossplane.Deployment,
 		) (*crossplane.Deployment, error) {
-			if _, err := deps.CrossplaneSvc.CreateDeployment(ctx, parentOutput); err != nil {
+			svc, err := deps.GetDeploymentSvc(input.GetCommon().GetSupportedCloud())
+			if err != nil {
+				return nil, err
+			}
+			if _, err := svc.CreateDeployment(ctx, parentOutput); err != nil {
 				return nil, fmt.Errorf("failed to create deployment: %w", err)
 			}
 			return parentOutput, nil
@@ -321,6 +324,10 @@ func ProvisionWorkflow(
 			input *hatchet.Workflows_Provision_Input,
 			parentOutput *crossplane.Deployment,
 		) (*crossplane.Deployment, error) {
+			svc, err := deps.GetDeploymentSvc(input.GetCommon().GetSupportedCloud())
+			if err != nil {
+				return parentOutput, err
+			}
 			for {
 				select {
 				case <-ctx.Done():
@@ -329,7 +336,7 @@ func ProvisionWorkflow(
 						parentOutput.GetTemplate().GetIdentifier().GetName(),
 					))
 				default:
-					deploymentWithStatus, err := deps.CrossplaneSvc.ProcessDeploymentStatus(ctx, parentOutput)
+					deploymentWithStatus, err := svc.ProcessDeploymentStatus(ctx, parentOutput)
 					if err != nil {
 						return parentOutput, err
 					}
@@ -404,7 +411,7 @@ func ProvisionWorkflow(
 		if err := ctx.ParentOutput(buildDeploymentsTask, &readyDeployment); err != nil {
 			return retErr(false, fmt.Errorf("failed to get %s output", BuildDeploymentsTaskName))
 		}
-		if err := deps.FallbackDestroyDeployment(ctx, readyDeployment); err != nil {
+		if err := deps.FallbackDestroyDeployment(ctx, input.GetCommon().GetSupportedCloud(), readyDeployment); err != nil {
 			return retErr(false, err)
 		}
 		if err != nil {

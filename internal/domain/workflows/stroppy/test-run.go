@@ -260,7 +260,7 @@ func TestRunWorkflow(
 		if err != nil {
 			return retErr(false, err)
 		}
-		if err := deps.FallbackDestroyDeployment(ctx, provisionOutput.GetDeployment()); err != nil {
+		if err := deps.FallbackDestroyDeployment(ctx, input.GetCommon().GetSupportedCloud(), provisionOutput.GetDeployment()); err != nil {
 			return retErr(false, err)
 		}
 		if errorDetails != "" {

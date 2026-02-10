@@ -27,6 +27,7 @@ type SupportedCloud int32
 const (
 	SupportedCloud_SUPPORTED_CLOUD_UNSPECIFIED SupportedCloud = 0
 	SupportedCloud_SUPPORTED_CLOUD_YANDEX      SupportedCloud = 1
+	SupportedCloud_SUPPORTED_CLOUD_DOCKER      SupportedCloud = 2
 )
 
 // Enum value maps for SupportedCloud.
@@ -34,10 +35,12 @@ var (
 	SupportedCloud_name = map[int32]string{
 		0: "SUPPORTED_CLOUD_UNSPECIFIED",
 		1: "SUPPORTED_CLOUD_YANDEX",
+		2: "SUPPORTED_CLOUD_DOCKER",
 	}
 	SupportedCloud_value = map[string]int32{
 		"SUPPORTED_CLOUD_UNSPECIFIED": 0,
 		"SUPPORTED_CLOUD_YANDEX":      1,
+		"SUPPORTED_CLOUD_DOCKER":      2,
 	}
 )
 
@@ -613,10 +616,11 @@ const file_crossplane_types_proto_rawDesc = "" +
 	"\x05value\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05value\"i\n" +
 	"\vCidrWithIps\x12.\n" +
 	"\x04cidr\x18\x01 \x01(\v2\x10.crossplane.CidrB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04cidr\x12*\n" +
-	"\x03ips\x18\x02 \x03(\v2\x0e.crossplane.IpB\b\xfaB\x05\x92\x01\x02\b\x01R\x03ips*M\n" +
+	"\x03ips\x18\x02 \x03(\v2\x0e.crossplane.IpB\b\xfaB\x05\x92\x01\x02\b\x01R\x03ips*i\n" +
 	"\x0eSupportedCloud\x12\x1f\n" +
 	"\x1bSUPPORTED_CLOUD_UNSPECIFIED\x10\x00\x12\x1a\n" +
-	"\x16SUPPORTED_CLOUD_YANDEX\x10\x01*^\n" +
+	"\x16SUPPORTED_CLOUD_YANDEX\x10\x01\x12\x1a\n" +
+	"\x16SUPPORTED_CLOUD_DOCKER\x10\x02*^\n" +
 	"\x18CrossplaneDeletionPolicy\x12*\n" +
 	"&CROSSPLANE_DELETION_POLICY_UNSPECIFIED\x10\x00\x12\n" +
 	"\n" +

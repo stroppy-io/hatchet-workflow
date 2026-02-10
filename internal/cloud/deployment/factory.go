@@ -70,11 +70,8 @@ func (d *Factory) CreateNewDeployment(
 		return nil, err
 	}
 
-	var resourceBuilder ResourceBuilder
-	switch template.GetIdentifier().GetSupportedCloud() {
-	case crossplane.SupportedCloud_SUPPORTED_CLOUD_YANDEX:
-		resourceBuilder = d.mapping[crossplane.SupportedCloud_SUPPORTED_CLOUD_YANDEX]
-	default:
+	resourceBuilder, ok := d.mapping[template.GetIdentifier().GetSupportedCloud()]
+	if !ok {
 		return nil, ErrUnsupportedCloudType
 	}
 
