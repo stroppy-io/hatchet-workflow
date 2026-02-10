@@ -1,19 +1,22 @@
 package docker
 
-import "os"
+import (
+	"os"
+
+	"github.com/stroppy-io/hatchet-workflow/internal/core/consts"
+)
 
 const (
-	DefaultDockerNetworkName     = "stroppy-net"
-	DefaultEdgeWorkerDockerImage = "stroppy-edge-worker:latest"
+	DefaultDockerNetworkName     consts.DefaultEnvValue = "stroppy-net"
+	DefaultEdgeWorkerDockerImage consts.DefaultEnvValue = "stroppy-edge-worker:latest"
 
-	DockerNetworkNameEnvKey     = "DOCKER_NETWORK_NAME"
-	EdgeWorkerDockerImageEnvKey = "EDGE_WORKER_DOCKER_IMAGE"
+	NetworkNameEnvKey           consts.EnvKey = "DOCKER_NETWORK_NAME"
+	EdgeWorkerDockerImageEnvKey consts.EnvKey = "EDGE_WORKER_DOCKER_IMAGE"
 
-	DockerApiVersion = "docker/v1"
-
-	KindDockerNetwork   = "DockerNetwork"
-	KindDockerSubnet    = "DockerSubnet"
-	KindDockerContainer = "DockerContainer"
+	ApiVersion          consts.ConstValue = "docker/v1"
+	KindDockerNetwork   consts.ConstValue = "DockerNetwork"
+	KindDockerSubnet    consts.ConstValue = "DockerSubnet"
+	KindDockerContainer consts.ConstValue = "DockerContainer"
 )
 
 type ProviderConfig struct {
@@ -26,7 +29,7 @@ func ProviderConfigFromEnv() *ProviderConfig {
 	if image == "" {
 		image = DefaultEdgeWorkerDockerImage
 	}
-	network := os.Getenv(DockerNetworkNameEnvKey)
+	network := os.Getenv(NetworkNameEnvKey)
 	if network == "" {
 		network = DefaultDockerNetworkName
 	}

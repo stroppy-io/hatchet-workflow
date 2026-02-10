@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/samber/lo"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/consts"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/iancoleman/strcase"
@@ -25,20 +26,20 @@ type ProviderConfig struct {
 // yamlKeys
 
 const (
-	CloudVPCCrossplaneApiVersion     = "vpc.yandex-cloud.jet.crossplane.io/v1alpha1"
-	CloudComputeCrossplaneApiVersion = "compute.yandex-cloud.jet.crossplane.io/v1alpha1"
+	CloudVPCCrossplaneApiVersion     consts.ConstValue = "vpc.yandex-cloud.jet.crossplane.io/v1alpha1"
+	CloudComputeCrossplaneApiVersion consts.ConstValue = "compute.yandex-cloud.jet.crossplane.io/v1alpha1"
 
-	ExternalNameAnnotation = "crossplane.io/external-name"
-	constUserDataKey       = "user-data"
-	serialPortEnableKey    = "serial-port-enable"
+	ExternalNameAnnotation consts.Str = "crossplane.io/external-name"
+	constUserDataKey       consts.Str = "user-data"
+	serialPortEnableKey    consts.Str = "serial-port-enable"
 
-	serialPortEnableEnvKey = "YANDEX_SERIAL_PORT_ENABLE"
+	serialPortEnableEnvKey consts.EnvKey = "YANDEX_SERIAL_PORT_ENABLE"
 )
 
 const (
-	one       = "1"
-	zero      = "0"
-	trueValue = "true"
+	one       consts.Str = "1"
+	zero      consts.Str = "0"
+	trueValue consts.Str = "true"
 )
 
 type CloudBuilder struct {

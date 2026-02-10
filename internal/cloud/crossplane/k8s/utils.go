@@ -1,21 +1,24 @@
 package k8s
 
-import "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
-const (
-	fieldManager = "go-apply"
-	trueString   = "True"
+import (
+	"github.com/stroppy-io/hatchet-workflow/internal/core/consts"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 const (
-	syncedCondition = "Synced"
-	readyCondition  = "Ready"
+	fieldManager consts.Str = "go-apply"
+	trueString   consts.Str = "True"
 )
 
 const (
-	statusField     = "status"
-	atProviderField = "atProvider"
-	idField         = "id"
+	syncedCondition consts.Str = "Synced"
+	readyCondition  consts.Str = "Ready"
+)
+
+const (
+	statusField     consts.Str = "status"
+	atProviderField consts.Str = "atProvider"
+	idField         consts.Str = "id"
 )
 
 func pointer(b bool) *bool { return &b }

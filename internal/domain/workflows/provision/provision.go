@@ -12,6 +12,7 @@ import (
 	"github.com/samber/lo"
 	crossplaneLib "github.com/stroppy-io/hatchet-workflow/internal/cloud/crossplane"
 	"github.com/stroppy-io/hatchet-workflow/internal/cloud/deployment"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/consts"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/defaults"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/hatchet-ext"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/ids"
@@ -25,54 +26,54 @@ import (
 )
 
 const (
-	DefaultCrossplaneNamespace = "crossplane-system"
-	DefaultNetworkName         = "stroppy-crossplane-net"
-	DefaultSubnetName          = "stroppy-crossplane-subnet"
-	//DefaultVmName              = "stroppy-crossplane-vm"
-	DefaultDeploymentName     = "stroppy-crossplane-deployment"
-	DefaultNetworkId          = "enp7b429s2br5pja0jci"
-	DefaultUbuntuImageId      = "fd82pkek8uu0ejjkh4vn"
-	DefaultVmZone             = "ru-central1-d"
-	DefaultVmPlatformId       = "standard-v2"
-	DefaultSubnetBaseCidr     = "10.2.0.0/16"
-	DefaultSubnetBasePrefix   = 24
-	DefaultEdgeWorkerUserName = "stroppy-edge-worker"
-	DefaultEdgeWorkerSshKey   = "stroppy-edge-worker-ssh-key"
+	DefaultCrossplaneNamespace consts.DefaultValue = "crossplane-system"
+	DefaultNetworkName         consts.DefaultValue = "stroppy-crossplane-net"
+	DefaultSubnetName          consts.DefaultValue = "stroppy-crossplane-subnet"
+	//DefaultVmName            consts.DefaultValue   = "stroppy-crossplane-vm"
+	DefaultDeploymentName     consts.DefaultValue = "stroppy-crossplane-deployment"
+	DefaultNetworkId          consts.DefaultValue = "enp7b429s2br5pja0jci"
+	DefaultUbuntuImageId      consts.DefaultValue = "fd82pkek8uu0ejjkh4vn"
+	DefaultVmZone             consts.DefaultValue = "ru-central1-d"
+	DefaultVmPlatformId       consts.DefaultValue = "standard-v2"
+	DefaultSubnetBaseCidr     consts.DefaultValue = "10.2.0.0/16"
+	DefaultSubnetBasePrefix                       = 24
+	DefaultEdgeWorkerUserName consts.DefaultValue = "stroppy-edge-worker"
+	DefaultEdgeWorkerSshKey   consts.DefaultValue = "stroppy-edge-worker-ssh-key"
 )
 
 const (
-	CloudProvisionWorkflowName = "cloud-provision"
+	CloudProvisionWorkflowName consts.Str = "cloud-provision"
 
-	LogicalProvisionTaskName = "logical-provision"
-	BuildDeploymentsTaskName = "build-deployments"
-	ReserveQuotasTaskName    = "reserve-quotas"
-	CreateDeploymentTaskName = "create-deployments"
-	WaitDeploymentTaskName   = "wait-deployments"
-	WaitWorkerInHatchet      = "wait-worker-in-hatchet"
+	LogicalProvisionTaskName consts.Str = "logical-provision"
+	BuildDeploymentsTaskName consts.Str = "build-deployments"
+	ReserveQuotasTaskName    consts.Str = "reserve-quotas"
+	CreateDeploymentTaskName consts.Str = "create-deployments"
+	WaitDeploymentTaskName   consts.Str = "wait-deployments"
+	WaitWorkerInHatchet      consts.Str = "wait-worker-in-hatchet"
 )
 
 const (
-	RunIdLableName = "run_id"
+	RunIdLableName consts.Str = "run_id"
 )
 
 const (
-	DefaultUserGroupName = "stroppy-edge-worker"
-	DefaultUserSudo      = true
-	DefaultUserSudoRules = "ALL=(ALL) NOPASSWD:ALL"
-	DefautltUserShell    = "/bin/bash"
+	DefaultUserGroupName consts.DefaultValue = "stroppy-edge-worker"
+	DefaultUserSudo      bool                = true
+	DefaultUserSudoRules consts.DefaultValue = "ALL=(ALL) NOPASSWD:ALL"
+	DefautltUserShell    consts.DefaultValue = "/bin/bash"
 )
 
 const (
-	HatchetServerUrlKey         = "HATCHET_CLIENT_SERVER_URL"
-	HatchetServerHostPortKey    = "HATCHET_CLIENT_HOST_PORT"
-	HatchetClientTokenKey       = "HATCHET_CLIENT_TOKEN"
-	HatchetClientTlsStrategyKey = "HATCHET_CLIENT_TLS_STRATEGY"
+	HatchetServerUrlKey         consts.EnvKey = "HATCHET_CLIENT_SERVER_URL"
+	HatchetServerHostPortKey    consts.EnvKey = "HATCHET_CLIENT_HOST_PORT"
+	HatchetClientTokenKey       consts.EnvKey = "HATCHET_CLIENT_TOKEN"
+	HatchetClientTlsStrategyKey consts.EnvKey = "HATCHET_CLIENT_TLS_STRATEGY"
 
-	HatchetEdgeWorkerUserName = "HATCHET_EDGE_WORKER_USER_NAME"
-	HatchetEdgeWorkerSshKey   = "HATCHET_EDGE_WORKER_SSH_KEY"
-	HatchetEdgeWorkerPublicIp = "HATCHET_EDGE_WORKER_PUBLIC_IP"
+	HatchetEdgeWorkerUserName consts.EnvKey = "HATCHET_EDGE_WORKER_USER_NAME"
+	HatchetEdgeWorkerSshKey   consts.EnvKey = "HATCHET_EDGE_WORKER_SSH_KEY"
+	HatchetEdgeWorkerPublicIp consts.EnvKey = "HATCHET_EDGE_WORKER_PUBLIC_IP"
 
-	HatchetClientTlsStrategyNone = "none"
+	HatchetClientTlsStrategyNone consts.Str = "none"
 )
 
 type FailureHandlerOutput struct {

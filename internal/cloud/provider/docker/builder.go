@@ -48,7 +48,7 @@ func (b *CloudBuilder) BuildNetwork(
 		Resource: &crossplane.Resource{
 			Ref: &crossplane.ExtRef{
 				Ref:        ref,
-				ApiVersion: DockerApiVersion,
+				ApiVersion: ApiVersion,
 				Kind:       KindDockerNetwork,
 			},
 			CreatedAt:    timestamppb.Now(),
@@ -79,7 +79,7 @@ func (b *CloudBuilder) BuildSubnet(
 		Resource: &crossplane.Resource{
 			Ref: &crossplane.ExtRef{
 				Ref:        ref,
-				ApiVersion: DockerApiVersion,
+				ApiVersion: ApiVersion,
 				Kind:       KindDockerSubnet,
 			},
 			CreatedAt:    timestamppb.Now(),
@@ -116,7 +116,7 @@ func (b *CloudBuilder) BuildVm(
 		Resource: &crossplane.Resource{
 			Ref: &crossplane.ExtRef{
 				Ref:        ref,
-				ApiVersion: DockerApiVersion,
+				ApiVersion: ApiVersion,
 				Kind:       KindDockerContainer,
 			},
 			ResourceYaml: string(configJSON),
