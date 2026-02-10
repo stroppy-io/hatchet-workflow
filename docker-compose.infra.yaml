@@ -7,10 +7,10 @@ services:
     hostname: "postgres"
     environment:
       - POSTGRES_USER=hatchet
-      - POSTGRES_PASSWORD=hatchet
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=hatchet
     ports:
-      - "5435:5432"
+      - "127.0.0.1:5435:5432"
     volumes:
       - hatchet_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -19,13 +19,15 @@ services:
       timeout: 10s
       retries: 5
       start_period: 10s
+
   rabbitmq:
     container_name: rabbitmq
     image: "rabbitmq:3-management"
     hostname: "rabbitmq"
+    restart: always
     ports:
-      - "5673:5672" # RabbitMQ
-      - "15673:15672" # Management UI
+      - "127.0.0.1:5673:5672" # RabbitMQ
+      - "127.0.0.1:15673:15672" # Management UI
     environment:
       RABBITMQ_DEFAULT_USER: "user"
       RABBITMQ_DEFAULT_PASS: "password"
@@ -37,21 +39,23 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
+
   migration:
     container_name: hatchet-migration
     image: ghcr.io/hatchet-dev/hatchet/hatchet-migrate:latest
     command: /hatchet/hatchet-migrate
     environment:
-      DATABASE_URL: "postgres://hatchet:hatchet@postgres:5432/hatchet"
+      DATABASE_URL: "postgres://hatchet:${POSTGRES_PASSWORD}@postgres:5432/hatchet"
     depends_on:
       postgres:
         condition: service_healthy
+
   setup-config:
     container_name: hatchet-setup-config
     image: ghcr.io/hatchet-dev/hatchet/hatchet-admin:latest
     command: /hatchet/hatchet-admin quickstart --skip certs --generated-config-dir /hatchet/config --overwrite=false
     environment:
-      DATABASE_URL: "postgres://hatchet:hatchet@postgres:5432/hatchet"
+      DATABASE_URL: "postgres://hatchet:${POSTGRES_PASSWORD}@postgres:5432/hatchet"
       SERVER_MSGQUEUE_RABBITMQ_URL: amqp://user:password@rabbitmq:5672/
       SERVER_AUTH_COOKIE_DOMAIN: localhost:8080
       SERVER_AUTH_COOKIE_INSECURE: "t"
@@ -70,11 +74,12 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+
   hatchet-engine:
     container_name: hatchet-engine
     image: ghcr.io/hatchet-dev/hatchet/hatchet-engine:latest
     command: /hatchet/hatchet-engine --config /hatchet/config
-    restart: on-failure
+    restart: always
     depends_on:
       setup-config:
         condition: service_completed_successfully
@@ -83,29 +88,31 @@ services:
     ports:
       - "7077:7070"
     environment:
-      DATABASE_URL: "postgres://hatchet:hatchet@postgres:5432/hatchet"
+      DATABASE_URL: "postgres://hatchet:${POSTGRES_PASSWORD}@postgres:5432/hatchet"
       SERVER_GRPC_BIND_ADDRESS: "0.0.0.0"
       SERVER_GRPC_INSECURE: "t"
     volumes:
       - hatchet_certs:/hatchet/certs
       - hatchet_config:/hatchet/config
+
   hatchet-dashboard:
     container_name: hatchet-dashboard
     image: ghcr.io/hatchet-dev/hatchet/hatchet-dashboard:latest
     command: sh ./entrypoint.sh --config /hatchet/config
     ports:
       - 8080:80
-    restart: on-failure
+    restart: always
     depends_on:
       setup-config:
         condition: service_completed_successfully
       migration:
         condition: service_completed_successfully
     environment:
-      DATABASE_URL: "postgres://hatchet:hatchet@postgres:5432/hatchet"
+      DATABASE_URL: "postgres://hatchet:${POSTGRES_PASSWORD}@postgres:5432/hatchet"
     volumes:
       - hatchet_certs:/hatchet/certs
       - hatchet_config:/hatchet/config
+
   valkey:
     container_name: valkey
     image: valkey/valkey
@@ -115,12 +122,37 @@ services:
       timeout: 5s
       retries: 5
     environment:
-      VALKEY_EXTRA_FLAGS: --requirepass developer --save 60 1 --loglevel warning
+      VALKEY_EXTRA_FLAGS: --requirepass ${VALKEY_PASSWORD} --save 60 1 --loglevel warning
     restart: always
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - valkey_data:/data
+
+  minio:
+    container_name: minio
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: [ "CMD", "mc", "ready", "local" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      MINIO_ROOT_USER: developer
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD}"
+      MINIO_PROMETHEUS_AUTH_TYPE: public
+      MINIO_CACHE: "on"
+      MINIO_CACHE_QUOTA: 60 # 80% of the drive will be used for caching
+      MINIO_CACHE_AFTER: 100 # Object will be cached after the first request to it
+      MINIO_CACHE_WATERMARK_LOW: 70  # Least accessed objects will be erased after the cache disk reaches the 70% watermark
+      MINIO_CACHE_WATERMARK_HIGH: 90
+    restart: always
+    ports:
+      - "9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio:/data
 
 volumes:
   hatchet_postgres_data:
@@ -129,5 +161,6 @@ volumes:
   hatchet_config:
   hatchet_certs:
   valkey_data:
+  minio:
 
 

@@ -15,7 +15,7 @@ services:
     network_mode: "host"
     environment:
       K8S_CONFIG_PATH: "/k8s/config"
-      VALKEY_URL: "redis://default:developer@localhost:6379"
+      VALKEY_URL: "redis://default:${VALKEY_PASSWORD}@localhost:6379"
       HATCHET_CLIENT_TOKEN: "${HATCHET_CLIENT_TOKEN}"
       HATCHET_CLIENT_TLS_STRATEGY: "none"
       HATCHET_EDGE_WORKER_USER_NAME: "${HATCHET_EDGE_WORKER_USER_NAME}"

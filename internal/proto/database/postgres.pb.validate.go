@@ -467,9 +467,9 @@ func (m *Postgres_Instance) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if _, ok := Postgres_Instance_StorageBackend_name[int32(m.GetStorageBackend())]; !ok {
+	if _, ok := Postgres_Instance_StorageEngine_name[int32(m.GetStorageEngine())]; !ok {
 		err := Postgres_InstanceValidationError{
-			field:  "StorageBackend",
+			field:  "StorageEngine",
 			reason: "value must be one of the defined enum values",
 		}
 		if !all {
@@ -479,8 +479,6 @@ func (m *Postgres_Instance) validate(all bool) error {
 	}
 
 	// no validation rules for PostgresqlConf
-
-	// no validation rules for OrioledbConf
 
 	if m.Password != nil {
 		// no validation rules for Password

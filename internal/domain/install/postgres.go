@@ -35,16 +35,6 @@ func version(config database.Postgres_Instance_Version) embeddedpostgres.Postgre
 		return embeddedpostgres.V15
 	case database.Postgres_Instance_VERSION_14:
 		return embeddedpostgres.V14
-	case database.Postgres_Instance_VERSION_13:
-		return embeddedpostgres.V13
-	case database.Postgres_Instance_VERSION_12:
-		return embeddedpostgres.V12
-	case database.Postgres_Instance_VERSION_11:
-		return embeddedpostgres.V11
-	case database.Postgres_Instance_VERSION_10:
-		return embeddedpostgres.V10
-	case database.Postgres_Instance_VERSION_9:
-		return embeddedpostgres.V9
 	default:
 		return embeddedpostgres.V17
 	}

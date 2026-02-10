@@ -69,31 +69,26 @@ message Postgres {
         }
     }
     message Instance {
-        enum StorageBackend {
-            STORAGE_TYPE_UNSPECIFIED = 0;
-            STORAGE_TYPE_POSTGRES = 1;
-            STORAGE_TYPE_ORIOLEDB = 2;
+        enum StorageEngine {
+            STORAGE_ENGINE_UNSPECIFIED = 0;
+            STORAGE_ENGINE_HEAP = 1;
+            STORAGE_ENGINE_ORIOLEDB = 2;
         }
         enum Version {
             VERSION_UNSPECIFIED = 0;
             VERSION_18 = 1;
-            VERSION_17 = 2;
-            VERSION_16 = 3;
+            VERSION_17 = 2; // enable orioledb
+            VERSION_16 = 3; // enable orioledb needed validation on setup
             VERSION_15 = 4;
             VERSION_14 = 5;
-            VERSION_13 = 6;
-            VERSION_12 = 7;
-            VERSION_11 = 8;
-            VERSION_10 = 9;
-            VERSION_9 = 10;
         }
         Version version = 1 [(validate.rules).enum.defined_only = true];
-        StorageBackend storage_backend = 2 [(validate.rules).enum.defined_only = true];
-        optional string password = 3;
-        optional string username = 4;
-        optional string database = 5;
-        optional uint32 port = 6 [(validate.rules).uint32 = {gte: 1, lte: 65535}];
-        map<string, string> postgresql_conf = 7;
-        map<string, string> orioledb_conf = 8;
+        StorageEngine storage_engine = 2 [(validate.rules).enum.defined_only = true];
+        optional string password = 5;
+        optional string username = 6;
+        optional string database = 7;
+        optional uint32 port = 8 [(validate.rules).uint32 = {gte: 1, lte: 65535}];
+        // Add default_table_access and shared_preload_libraries for orioledb if enabled
+        map<string, string> postgresql_conf = 9;
     }
 }
