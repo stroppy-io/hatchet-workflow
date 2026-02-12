@@ -2,17 +2,24 @@ syntax = "proto3";
 
 package database;
 
-import "database/cluster.proto";
-import "database/instance.proto";
+import "database/postgres.proto";
 import "validate/validate.proto";
+
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/database";
 
-
 message Database {
-    oneof topology {
+    message Template {
+        oneof template {
+            option (validate.required) = true;
+            Postgres.Instance.Template postgres_instance = 2;
+            Postgres.Cluster.Template postgres_cluster = 1;
+        }
+    }
+    Template template = 1 [(validate.rules).message.required = true];
+    oneof database {
         option (validate.required) = true;
-        Instance standalone = 1;
-        Cluster cluster = 2;
+        Postgres.Instance postgres_instance = 2;
+        Postgres.Cluster postgres_cluster = 3;
     }
 }

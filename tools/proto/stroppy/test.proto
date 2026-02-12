@@ -2,8 +2,9 @@ syntax = "proto3";
 
 package stroppy;
 
-import "crossplane/deployment.proto";
 import "database/database.proto";
+import "deployment/deployment.proto";
+import "settings/settings.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/stroppy";
@@ -26,9 +27,10 @@ message Test {
     string name = 2;
     optional string description = 3;
     StroppyCli stroppy_cli = 4 [(validate.rules).message.required = true];
-    crossplane.Hardware stroppy_hardware = 7 [(validate.rules).message.required = true];
+    deployment.Hardware stroppy_hardware = 7 [(validate.rules).message.required = true];
+
     oneof database_ref {
-        database.Database database = 101;
+        database.Database.Template database_template = 101;
         string connection_string = 102 [(validate.rules).string.min_len = 1];
     }
 }
@@ -41,10 +43,24 @@ message TestResult {
 
 message TestSuite {
     repeated Test tests = 1;
+    settings.SelectedTarget selected_target = 2 [(validate.rules).message.required = true];
 }
 
 message TestSuiteResult {
-    // Map of test run_id to test result
-    map<string, TestResult> results = 1 [(validate.rules).map.min_pairs = 1];
+    string run_id = 1;
+    TestSuite suite = 2 [(validate.rules).message.required = true];
+    repeated TestResult results = 3 [(validate.rules).repeated.min_items = 1];
+}
+
+message TestRunContext {
+    string run_id = 1 [(validate.rules).string.min_len = 1];
+    settings.SelectedTarget selected_target = 2 [(validate.rules).message.required = true];
+    Test test = 3 [(validate.rules).message.required = true];
+    message WithNetwork {
+        string run_id = 1 [(validate.rules).string.min_len = 1];
+        settings.SelectedTarget selected_target = 2 [(validate.rules).message.required = true];
+        Test test = 3 [(validate.rules).message.required = true];
+        deployment.Network network = 4 [(validate.rules).message.required = true];
+    }
 }
 

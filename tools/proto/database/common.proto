@@ -2,26 +2,13 @@ syntax = "proto3";
 
 package database;
 
-import "crossplane/deployment.proto";
-import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/database";
 
-message Placement {
-    message Master {}
-    message AllNodes {}
-    message Replica {
-        uint32 replica_index = 1;  // 0-based индекс реплики
-    }
-    message DedicatedVm {
-        crossplane.Hardware hardware = 1 [(validate.rules).message.required = true];
-    }
-    oneof target {
-        option (validate.required) = true;
-        Master master = 1;
-        AllNodes all_nodes = 2;
-        Replica replica = 3;
-        DedicatedVm dedicated = 4;
+message CommonSidecar {
+    message NodeExporter {
+        bool enabled = 1;
+        uint32 port = 2;  // default 9100
+        repeated string collectors = 3;  // ["cpu", "memory", "disk"]
     }
 }
-

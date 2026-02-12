@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package database;
 
+import "database/common.proto";
+import "deployment/deployment.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/database";
@@ -17,13 +19,6 @@ message Postgres {
             bool enabled = 1;
             uint32 port = 2;  // default 9127
         }
-        oneof sidecar {
-            option (validate.required) = true;
-            PostgresExporter postgres_exporter = 2;
-            PgbouncerExporter pgbouncer_exporter = 3;
-        }
-    }
-    message Infra {
         message Pgbouncer {
             enum PoolMode {
                 POOL_MODE_UNSPECIFIED = 0;
@@ -34,13 +29,11 @@ message Postgres {
             uint32 pool_size = 1;
             PoolMode pool_mode = 2;
             uint32 max_client_conn = 3;
-        }
-        message Patroni {
-            uint32 ttl = 1;
-            uint32 loop_wait = 2;
+            optional uint32 port = 4 [(validate.rules).uint32 = {gte: 1, lte: 65535}];  // host port, default 6432
         }
         message Etcd {
             uint32 cluster_size = 1 [(validate.rules).uint32 = {in: [1, 3, 5]}];
+            optional uint32 base_client_port = 2 [(validate.rules).uint32 = {gte: 1, lte: 65535}];  // host port base, default 2379
         }
         message Backup {
             enum Tool {
@@ -67,8 +60,49 @@ message Postgres {
                 LocalStorage local = 12;
             }
         }
+        oneof sidecar {
+            option (validate.required) = true;
+            CommonSidecar.NodeExporter node_exporter = 10;
+            PostgresExporter postgres_exporter = 50;
+            PgbouncerExporter pgbouncer_exporter = 51;
+            Pgbouncer pgbouncer = 52;
+            Etcd etcd = 54;
+            Backup backup = 55;
+        }
+        message Placement {
+            message Master {}
+            message AllNodes {}
+            message Replica {
+                uint32 replica_index = 1;  // 0-based индекс реплики
+            }
+            message DedicatedVm {
+                deployment.Hardware hardware = 1 [(validate.rules).message.required = true];
+            }
+            oneof target {
+                option (validate.required) = true;
+                Master master = 1;
+                AllNodes all_nodes = 2;
+                Replica replica = 3;
+                DedicatedVm dedicated_vm = 4;
+            }
+        }
+        message NeededPlacement {
+            Sidecar.Placement placement = 1 [(validate.rules).message.required = true];
+            Sidecar sidecar = 2 [(validate.rules).message.required = true];
+        }
+        message NeededSinglePlacement {
+            Sidecar sidecar = 1 [(validate.rules).message.required = true];
+        }
+        message Placed {
+            Sidecar.Placement placement = 1 [(validate.rules).message.required = true];
+            Sidecar sidecar = 2 [(validate.rules).message.required = true];
+        }
+        message PlacedGroup {
+            repeated Sidecar.Placed sidecars = 1 [(validate.rules).repeated.min_items = 1];
+        }
     }
-    message Instance {
+
+    message Settings {
         enum StorageEngine {
             STORAGE_ENGINE_UNSPECIFIED = 0;
             STORAGE_ENGINE_HEAP = 1;
@@ -79,16 +113,42 @@ message Postgres {
             VERSION_18 = 1;
             VERSION_17 = 2; // enable orioledb
             VERSION_16 = 3; // enable orioledb needed validation on setup
-            VERSION_15 = 4;
-            VERSION_14 = 5;
+        }
+        message Patroni {
+            uint32 ttl = 1;
+            uint32 loop_wait = 2;
+            uint32 retry_timeout = 3;
+            uint64 maximum_lag_on_failover = 4;  // bytes, default 1048576
+            bool synchronous_mode = 5;
+            uint32 synchronous_node_count = 6;   // default 1 when sync mode on
         }
         Version version = 1 [(validate.rules).enum.defined_only = true];
         StorageEngine storage_engine = 2 [(validate.rules).enum.defined_only = true];
-        optional string password = 5;
-        optional string username = 6;
-        optional string database = 7;
-        optional uint32 port = 8 [(validate.rules).uint32 = {gte: 1, lte: 65535}];
-        // Add default_table_access and shared_preload_libraries for orioledb if enabled
-        map<string, string> postgresql_conf = 9;
+        optional Patroni patroni = 3;
+        map<string, string> postgresql_conf = 4;
+    }
+    message Instance {
+        message Template {
+            Settings settings = 1 [(validate.rules).message.required = true];
+            deployment.Hardware hardware = 2 [(validate.rules).message.required = true];
+            repeated Sidecar.NeededSinglePlacement sidecars_placements = 3;
+        }
+        Template template = 1 [(validate.rules).message.required = true];
+        repeated Sidecar.Placed sidecars = 3;
+    }
+    message Cluster {
+        message Template {
+            Instance.Template master_template = 1 [(validate.rules).message.required = true];
+            repeated Instance.Template replica_templates = 2 [(validate.rules).repeated.min_items = 1];
+            repeated Sidecar.NeededPlacement sidecars_placements = 3;
+        }
+        Template template = 1 [(validate.rules).message.required = true];
+        Instance master = 2 [(validate.rules).message.required = true];
+        repeated Instance replicas = 3 [(validate.rules).repeated.min_items = 1];
+        /*
+            Standalone sidecars are placed on dedicated VMs.
+            For example, pgbouncer or etcd in dedicated VMs.
+        */
+        repeated Sidecar.PlacedGroup standalone_sidecars_groups = 4;
     }
 }

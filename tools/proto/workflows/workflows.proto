@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package workflows;
+
+import "edge/edge.proto";
+import "settings/settings.proto";
+import "stroppy/test.proto";
+import "validate/validate.proto";
+option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/workflows";
+
+
+message Workflows {
+    /*
+        Main workflow for running stroppy test suite
+        This step can request database setup if one of test.database_ref is Database
+    */
+    message StroppyTestSuite {
+        message Input {
+            stroppy.TestSuite suite = 4 [(validate.rules).message.required = true];
+        }
+        message Output {
+            stroppy.TestSuiteResult results = 1 [(validate.rules).message.required = true];
+        }
+    }
+
+    /*
+        Run single stroppy test
+        This can create single LocalProvision steps for initialize
+    */
+    message StroppyTest {
+        message Input {
+            stroppy.TestRunContext context = 1 [(validate.rules).message.required = true];
+        }
+        message Output {
+            stroppy.TestResult result = 1 [(validate.rules).message.required = true];
+        }
+    }
+}

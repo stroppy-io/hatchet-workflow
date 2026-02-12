@@ -11,10 +11,14 @@ deps:
   - github.com/bufbuild/protoc-gen-validate@v1.2.1
 generate:
   inputs:
-    - directory: hatchet
-    - directory: crossplane
+    - directory: common
+    - directory: edge
     - directory: stroppy
     - directory: database
+    - directory: settings
+    - directory: deployment
+    - directory: workflows
+    - directory: provision
 #    - git_repo:
 #        url: github.com/stroppy-io/stroppy
 #        sub_directory: proto
