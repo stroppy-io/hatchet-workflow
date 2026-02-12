@@ -12,7 +12,6 @@ const padding = 3
 
 // FirstFreeIP returns the first free IP in cidr that is not in usedIPs.
 func FirstFreeIP(ipNet *net.IPNet, usedIPs []string) (net.IP, error) {
-
 	// Build a set of used IPs (string form).
 	used := make(map[string]struct{}, len(usedIPs))
 	for _, s := range usedIPs {

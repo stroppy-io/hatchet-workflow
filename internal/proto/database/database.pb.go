@@ -23,12 +23,13 @@ const (
 )
 
 type Database struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Topology:
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Template *Database_Template     `protobuf:"bytes,1,opt,name=template,proto3" json:"template,omitempty"`
+	// Types that are valid to be assigned to Database:
 	//
-	//	*Database_Standalone
-	//	*Database_Cluster
-	Topology      isDatabase_Topology `protobuf_oneof:"topology"`
+	//	*Database_PostgresInstance
+	//	*Database_PostgresCluster
+	Database      isDatabase_Database `protobuf_oneof:"database"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -63,58 +64,150 @@ func (*Database) Descriptor() ([]byte, []int) {
 	return file_database_database_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Database) GetTopology() isDatabase_Topology {
+func (x *Database) GetTemplate() *Database_Template {
 	if x != nil {
-		return x.Topology
+		return x.Template
 	}
 	return nil
 }
 
-func (x *Database) GetStandalone() *Instance {
+func (x *Database) GetDatabase() isDatabase_Database {
 	if x != nil {
-		if x, ok := x.Topology.(*Database_Standalone); ok {
-			return x.Standalone
+		return x.Database
+	}
+	return nil
+}
+
+func (x *Database) GetPostgresInstance() *Postgres_Instance {
+	if x != nil {
+		if x, ok := x.Database.(*Database_PostgresInstance); ok {
+			return x.PostgresInstance
 		}
 	}
 	return nil
 }
 
-func (x *Database) GetCluster() *Cluster {
+func (x *Database) GetPostgresCluster() *Postgres_Cluster {
 	if x != nil {
-		if x, ok := x.Topology.(*Database_Cluster); ok {
-			return x.Cluster
+		if x, ok := x.Database.(*Database_PostgresCluster); ok {
+			return x.PostgresCluster
 		}
 	}
 	return nil
 }
 
-type isDatabase_Topology interface {
-	isDatabase_Topology()
+type isDatabase_Database interface {
+	isDatabase_Database()
 }
 
-type Database_Standalone struct {
-	Standalone *Instance `protobuf:"bytes,1,opt,name=standalone,proto3,oneof"`
+type Database_PostgresInstance struct {
+	PostgresInstance *Postgres_Instance `protobuf:"bytes,2,opt,name=postgres_instance,json=postgresInstance,proto3,oneof"`
 }
 
-type Database_Cluster struct {
-	Cluster *Cluster `protobuf:"bytes,2,opt,name=cluster,proto3,oneof"`
+type Database_PostgresCluster struct {
+	PostgresCluster *Postgres_Cluster `protobuf:"bytes,3,opt,name=postgres_cluster,json=postgresCluster,proto3,oneof"`
 }
 
-func (*Database_Standalone) isDatabase_Topology() {}
+func (*Database_PostgresInstance) isDatabase_Database() {}
 
-func (*Database_Cluster) isDatabase_Topology() {}
+func (*Database_PostgresCluster) isDatabase_Database() {}
+
+type Database_Template struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Template:
+	//
+	//	*Database_Template_PostgresInstance
+	//	*Database_Template_PostgresCluster
+	Template      isDatabase_Template_Template `protobuf_oneof:"template"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Database_Template) Reset() {
+	*x = Database_Template{}
+	mi := &file_database_database_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Database_Template) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Database_Template) ProtoMessage() {}
+
+func (x *Database_Template) ProtoReflect() protoreflect.Message {
+	mi := &file_database_database_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Database_Template.ProtoReflect.Descriptor instead.
+func (*Database_Template) Descriptor() ([]byte, []int) {
+	return file_database_database_proto_rawDescGZIP(), []int{0, 0}
+}
+
+func (x *Database_Template) GetTemplate() isDatabase_Template_Template {
+	if x != nil {
+		return x.Template
+	}
+	return nil
+}
+
+func (x *Database_Template) GetPostgresInstance() *Postgres_Instance_Template {
+	if x != nil {
+		if x, ok := x.Template.(*Database_Template_PostgresInstance); ok {
+			return x.PostgresInstance
+		}
+	}
+	return nil
+}
+
+func (x *Database_Template) GetPostgresCluster() *Postgres_Cluster_Template {
+	if x != nil {
+		if x, ok := x.Template.(*Database_Template_PostgresCluster); ok {
+			return x.PostgresCluster
+		}
+	}
+	return nil
+}
+
+type isDatabase_Template_Template interface {
+	isDatabase_Template_Template()
+}
+
+type Database_Template_PostgresInstance struct {
+	PostgresInstance *Postgres_Instance_Template `protobuf:"bytes,2,opt,name=postgres_instance,json=postgresInstance,proto3,oneof"`
+}
+
+type Database_Template_PostgresCluster struct {
+	PostgresCluster *Postgres_Cluster_Template `protobuf:"bytes,1,opt,name=postgres_cluster,json=postgresCluster,proto3,oneof"`
+}
+
+func (*Database_Template_PostgresInstance) isDatabase_Template_Template() {}
+
+func (*Database_Template_PostgresCluster) isDatabase_Template_Template() {}
 
 var File_database_database_proto protoreflect.FileDescriptor
 
 const file_database_database_proto_rawDesc = "" +
 	"\n" +
-	"\x17database/database.proto\x12\bdatabase\x1a\x16database/cluster.proto\x1a\x17database/instance.proto\x1a\x17validate/validate.proto\"\x80\x01\n" +
-	"\bDatabase\x124\n" +
-	"\n" +
-	"standalone\x18\x01 \x01(\v2\x12.database.InstanceH\x00R\n" +
-	"standalone\x12-\n" +
-	"\acluster\x18\x02 \x01(\v2\x11.database.ClusterH\x00R\aclusterB\x0f\n" +
-	"\btopology\x12\x03\xf8B\x01B@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/databaseb\x06proto3"
+	"\x17database/database.proto\x12\bdatabase\x1a\x17database/postgres.proto\x1a\x17validate/validate.proto\"\xb8\x03\n" +
+	"\bDatabase\x12A\n" +
+	"\btemplate\x18\x01 \x01(\v2\x1b.database.Database.TemplateB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btemplate\x12J\n" +
+	"\x11postgres_instance\x18\x02 \x01(\v2\x1b.database.Postgres.InstanceH\x00R\x10postgresInstance\x12G\n" +
+	"\x10postgres_cluster\x18\x03 \x01(\v2\x1a.database.Postgres.ClusterH\x00R\x0fpostgresCluster\x1a\xc2\x01\n" +
+	"\bTemplate\x12S\n" +
+	"\x11postgres_instance\x18\x02 \x01(\v2$.database.Postgres.Instance.TemplateH\x00R\x10postgresInstance\x12P\n" +
+	"\x10postgres_cluster\x18\x01 \x01(\v2#.database.Postgres.Cluster.TemplateH\x00R\x0fpostgresClusterB\x0f\n" +
+	"\btemplate\x12\x03\xf8B\x01B\x0f\n" +
+	"\bdatabase\x12\x03\xf8B\x01B@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/databaseb\x06proto3"
 
 var (
 	file_database_database_proto_rawDescOnce sync.Once
@@ -128,20 +221,26 @@ func file_database_database_proto_rawDescGZIP() []byte {
 	return file_database_database_proto_rawDescData
 }
 
-var file_database_database_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_database_database_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_database_database_proto_goTypes = []any{
-	(*Database)(nil), // 0: database.Database
-	(*Instance)(nil), // 1: database.Instance
-	(*Cluster)(nil),  // 2: database.Cluster
+	(*Database)(nil),                   // 0: database.Database
+	(*Database_Template)(nil),          // 1: database.Database.Template
+	(*Postgres_Instance)(nil),          // 2: database.Postgres.Instance
+	(*Postgres_Cluster)(nil),           // 3: database.Postgres.Cluster
+	(*Postgres_Instance_Template)(nil), // 4: database.Postgres.Instance.Template
+	(*Postgres_Cluster_Template)(nil),  // 5: database.Postgres.Cluster.Template
 }
 var file_database_database_proto_depIdxs = []int32{
-	1, // 0: database.Database.standalone:type_name -> database.Instance
-	2, // 1: database.Database.cluster:type_name -> database.Cluster
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	1, // 0: database.Database.template:type_name -> database.Database.Template
+	2, // 1: database.Database.postgres_instance:type_name -> database.Postgres.Instance
+	3, // 2: database.Database.postgres_cluster:type_name -> database.Postgres.Cluster
+	4, // 3: database.Database.Template.postgres_instance:type_name -> database.Postgres.Instance.Template
+	5, // 4: database.Database.Template.postgres_cluster:type_name -> database.Postgres.Cluster.Template
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_database_database_proto_init() }
@@ -149,11 +248,14 @@ func file_database_database_proto_init() {
 	if File_database_database_proto != nil {
 		return
 	}
-	file_database_cluster_proto_init()
-	file_database_instance_proto_init()
+	file_database_postgres_proto_init()
 	file_database_database_proto_msgTypes[0].OneofWrappers = []any{
-		(*Database_Standalone)(nil),
-		(*Database_Cluster)(nil),
+		(*Database_PostgresInstance)(nil),
+		(*Database_PostgresCluster)(nil),
+	}
+	file_database_database_proto_msgTypes[1].OneofWrappers = []any{
+		(*Database_Template_PostgresInstance)(nil),
+		(*Database_Template_PostgresCluster)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -161,7 +263,7 @@ func file_database_database_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_database_database_proto_rawDesc), len(file_database_database_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

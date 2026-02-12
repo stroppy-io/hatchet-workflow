@@ -8,8 +8,9 @@ package stroppy
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
-	crossplane "github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
 	database "github.com/stroppy-io/hatchet-workflow/internal/proto/database"
+	deployment "github.com/stroppy-io/hatchet-workflow/internal/proto/deployment"
+	settings "github.com/stroppy-io/hatchet-workflow/internal/proto/settings"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -162,10 +163,10 @@ type Test struct {
 	Name            string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Description     *string                `protobuf:"bytes,3,opt,name=description,proto3,oneof" json:"description,omitempty"`
 	StroppyCli      *StroppyCli            `protobuf:"bytes,4,opt,name=stroppy_cli,json=stroppyCli,proto3" json:"stroppy_cli,omitempty"`
-	StroppyHardware *crossplane.Hardware   `protobuf:"bytes,7,opt,name=stroppy_hardware,json=stroppyHardware,proto3" json:"stroppy_hardware,omitempty"`
+	StroppyHardware *deployment.Hardware   `protobuf:"bytes,7,opt,name=stroppy_hardware,json=stroppyHardware,proto3" json:"stroppy_hardware,omitempty"`
 	// Types that are valid to be assigned to DatabaseRef:
 	//
-	//	*Test_Database
+	//	*Test_DatabaseTemplate
 	//	*Test_ConnectionString
 	DatabaseRef   isTest_DatabaseRef `protobuf_oneof:"database_ref"`
 	unknownFields protoimpl.UnknownFields
@@ -223,7 +224,7 @@ func (x *Test) GetStroppyCli() *StroppyCli {
 	return nil
 }
 
-func (x *Test) GetStroppyHardware() *crossplane.Hardware {
+func (x *Test) GetStroppyHardware() *deployment.Hardware {
 	if x != nil {
 		return x.StroppyHardware
 	}
@@ -237,10 +238,10 @@ func (x *Test) GetDatabaseRef() isTest_DatabaseRef {
 	return nil
 }
 
-func (x *Test) GetDatabase() *database.Database {
+func (x *Test) GetDatabaseTemplate() *database.Database_Template {
 	if x != nil {
-		if x, ok := x.DatabaseRef.(*Test_Database); ok {
-			return x.Database
+		if x, ok := x.DatabaseRef.(*Test_DatabaseTemplate); ok {
+			return x.DatabaseTemplate
 		}
 	}
 	return nil
@@ -259,15 +260,15 @@ type isTest_DatabaseRef interface {
 	isTest_DatabaseRef()
 }
 
-type Test_Database struct {
-	Database *database.Database `protobuf:"bytes,101,opt,name=database,proto3,oneof"`
+type Test_DatabaseTemplate struct {
+	DatabaseTemplate *database.Database_Template `protobuf:"bytes,101,opt,name=database_template,json=databaseTemplate,proto3,oneof"`
 }
 
 type Test_ConnectionString struct {
 	ConnectionString string `protobuf:"bytes,102,opt,name=connection_string,json=connectionString,proto3,oneof"`
 }
 
-func (*Test_Database) isTest_DatabaseRef() {}
+func (*Test_DatabaseTemplate) isTest_DatabaseRef() {}
 
 func (*Test_ConnectionString) isTest_DatabaseRef() {}
 
@@ -332,10 +333,11 @@ func (x *TestResult) GetGrafanaUrl() string {
 }
 
 type TestSuite struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tests         []*Test                `protobuf:"bytes,1,rep,name=tests,proto3" json:"tests,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState   `protogen:"open.v1"`
+	Tests          []*Test                  `protobuf:"bytes,1,rep,name=tests,proto3" json:"tests,omitempty"`
+	SelectedTarget *settings.SelectedTarget `protobuf:"bytes,2,opt,name=selected_target,json=selectedTarget,proto3" json:"selected_target,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *TestSuite) Reset() {
@@ -375,10 +377,18 @@ func (x *TestSuite) GetTests() []*Test {
 	return nil
 }
 
+func (x *TestSuite) GetSelectedTarget() *settings.SelectedTarget {
+	if x != nil {
+		return x.SelectedTarget
+	}
+	return nil
+}
+
 type TestSuiteResult struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Map of test run_id to test result
-	Results       map[string]*TestResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RunId         string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	Suite         *TestSuite             `protobuf:"bytes,2,opt,name=suite,proto3" json:"suite,omitempty"`
+	Results       []*TestResult          `protobuf:"bytes,3,rep,name=results,proto3" json:"results,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -413,9 +423,83 @@ func (*TestSuiteResult) Descriptor() ([]byte, []int) {
 	return file_stroppy_test_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *TestSuiteResult) GetResults() map[string]*TestResult {
+func (x *TestSuiteResult) GetRunId() string {
+	if x != nil {
+		return x.RunId
+	}
+	return ""
+}
+
+func (x *TestSuiteResult) GetSuite() *TestSuite {
+	if x != nil {
+		return x.Suite
+	}
+	return nil
+}
+
+func (x *TestSuiteResult) GetResults() []*TestResult {
 	if x != nil {
 		return x.Results
+	}
+	return nil
+}
+
+type TestRunContext struct {
+	state          protoimpl.MessageState   `protogen:"open.v1"`
+	RunId          string                   `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	SelectedTarget *settings.SelectedTarget `protobuf:"bytes,2,opt,name=selected_target,json=selectedTarget,proto3" json:"selected_target,omitempty"`
+	Test           *Test                    `protobuf:"bytes,3,opt,name=test,proto3" json:"test,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *TestRunContext) Reset() {
+	*x = TestRunContext{}
+	mi := &file_stroppy_test_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TestRunContext) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestRunContext) ProtoMessage() {}
+
+func (x *TestRunContext) ProtoReflect() protoreflect.Message {
+	mi := &file_stroppy_test_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestRunContext.ProtoReflect.Descriptor instead.
+func (*TestRunContext) Descriptor() ([]byte, []int) {
+	return file_stroppy_test_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *TestRunContext) GetRunId() string {
+	if x != nil {
+		return x.RunId
+	}
+	return ""
+}
+
+func (x *TestRunContext) GetSelectedTarget() *settings.SelectedTarget {
+	if x != nil {
+		return x.SelectedTarget
+	}
+	return nil
+}
+
+func (x *TestRunContext) GetTest() *Test {
+	if x != nil {
+		return x.Test
 	}
 	return nil
 }
@@ -424,7 +508,7 @@ var File_stroppy_test_proto protoreflect.FileDescriptor
 
 const file_stroppy_test_proto_rawDesc = "" +
 	"\n" +
-	"\x12stroppy/test.proto\x12\astroppy\x1a\x1bcrossplane/deployment.proto\x1a\x17database/database.proto\x1a\x17validate/validate.proto\"\xc0\x03\n" +
+	"\x12stroppy/test.proto\x12\astroppy\x1a\x17database/database.proto\x1a\x1bdeployment/deployment.proto\x1a\x17settings/settings.proto\x1a\x17validate/validate.proto\"\xc0\x03\n" +
 	"\n" +
 	"StroppyCli\x12!\n" +
 	"\aversion\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aversion\x12$\n" +
@@ -444,14 +528,14 @@ const file_stroppy_test_proto_rawDesc = "" +
 	"\x04TPCB\x10\x02B\x0e\n" +
 	"\f_binary_pathB\n" +
 	"\n" +
-	"\b_workdir\"\xd6\x02\n" +
+	"\b_workdir\"\xf0\x02\n" +
 	"\x04Test\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12%\n" +
 	"\vdescription\x18\x03 \x01(\tH\x01R\vdescription\x88\x01\x01\x12>\n" +
 	"\vstroppy_cli\x18\x04 \x01(\v2\x13.stroppy.StroppyCliB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
 	"stroppyCli\x12I\n" +
-	"\x10stroppy_hardware\x18\a \x01(\v2\x14.crossplane.HardwareB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0fstroppyHardware\x120\n" +
-	"\bdatabase\x18e \x01(\v2\x12.database.DatabaseH\x00R\bdatabase\x126\n" +
+	"\x10stroppy_hardware\x18\a \x01(\v2\x14.deployment.HardwareB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0fstroppyHardware\x12J\n" +
+	"\x11database_template\x18e \x01(\v2\x1b.database.Database.TemplateH\x00R\x10databaseTemplate\x126\n" +
 	"\x11connection_string\x18f \x01(\tB\a\xfaB\x04r\x02\x10\x01H\x00R\x10connectionStringB\x0e\n" +
 	"\fdatabase_refB\x0e\n" +
 	"\f_description\"\x86\x01\n" +
@@ -461,14 +545,18 @@ const file_stroppy_test_proto_rawDesc = "" +
 	"\x04test\x18\x02 \x01(\v2\r.stroppy.TestB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04test\x12$\n" +
 	"\vgrafana_url\x18\x03 \x01(\tH\x00R\n" +
 	"grafanaUrl\x88\x01\x01B\x0e\n" +
-	"\f_grafana_url\"0\n" +
+	"\f_grafana_url\"}\n" +
 	"\tTestSuite\x12#\n" +
-	"\x05tests\x18\x01 \x03(\v2\r.stroppy.TestR\x05tests\"\xad\x01\n" +
-	"\x0fTestSuiteResult\x12I\n" +
-	"\aresults\x18\x01 \x03(\v2%.stroppy.TestSuiteResult.ResultsEntryB\b\xfaB\x05\x9a\x01\x02\b\x01R\aresults\x1aO\n" +
-	"\fResultsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12)\n" +
-	"\x05value\x18\x02 \x01(\v2\x13.stroppy.TestResultR\x05value:\x028\x01B?Z=github.com/stroppy-io/hatchet-workflow/internal/proto/stroppyb\x06proto3"
+	"\x05tests\x18\x01 \x03(\v2\r.stroppy.TestR\x05tests\x12K\n" +
+	"\x0fselected_target\x18\x02 \x01(\v2\x18.settings.SelectedTargetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0eselectedTarget\"\x95\x01\n" +
+	"\x0fTestSuiteResult\x12\x15\n" +
+	"\x06run_id\x18\x01 \x01(\tR\x05runId\x122\n" +
+	"\x05suite\x18\x02 \x01(\v2\x12.stroppy.TestSuiteB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05suite\x127\n" +
+	"\aresults\x18\x03 \x03(\v2\x13.stroppy.TestResultB\b\xfaB\x05\x92\x01\x02\b\x01R\aresults\"\xaa\x01\n" +
+	"\x0eTestRunContext\x12\x1e\n" +
+	"\x06run_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05runId\x12K\n" +
+	"\x0fselected_target\x18\x02 \x01(\v2\x18.settings.SelectedTargetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0eselectedTarget\x12+\n" +
+	"\x04test\x18\x03 \x01(\v2\r.stroppy.TestB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04testB?Z=github.com/stroppy-io/hatchet-workflow/internal/proto/stroppyb\x06proto3"
 
 var (
 	file_stroppy_test_proto_rawDescOnce sync.Once
@@ -485,32 +573,36 @@ func file_stroppy_test_proto_rawDescGZIP() []byte {
 var file_stroppy_test_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_stroppy_test_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_stroppy_test_proto_goTypes = []any{
-	(StroppyCli_Workload)(0),    // 0: stroppy.StroppyCli.Workload
-	(*StroppyCli)(nil),          // 1: stroppy.StroppyCli
-	(*Test)(nil),                // 2: stroppy.Test
-	(*TestResult)(nil),          // 3: stroppy.TestResult
-	(*TestSuite)(nil),           // 4: stroppy.TestSuite
-	(*TestSuiteResult)(nil),     // 5: stroppy.TestSuiteResult
-	nil,                         // 6: stroppy.StroppyCli.StroppyEnvEntry
-	nil,                         // 7: stroppy.TestSuiteResult.ResultsEntry
-	(*crossplane.Hardware)(nil), // 8: crossplane.Hardware
-	(*database.Database)(nil),   // 9: database.Database
+	(StroppyCli_Workload)(0),           // 0: stroppy.StroppyCli.Workload
+	(*StroppyCli)(nil),                 // 1: stroppy.StroppyCli
+	(*Test)(nil),                       // 2: stroppy.Test
+	(*TestResult)(nil),                 // 3: stroppy.TestResult
+	(*TestSuite)(nil),                  // 4: stroppy.TestSuite
+	(*TestSuiteResult)(nil),            // 5: stroppy.TestSuiteResult
+	(*TestRunContext)(nil),             // 6: stroppy.TestRunContext
+	nil,                                // 7: stroppy.StroppyCli.StroppyEnvEntry
+	(*deployment.Hardware)(nil),        // 8: deployment.Hardware
+	(*database.Database_Template)(nil), // 9: database.Database.Template
+	(*settings.SelectedTarget)(nil),    // 10: settings.SelectedTarget
 }
 var file_stroppy_test_proto_depIdxs = []int32{
-	0, // 0: stroppy.StroppyCli.workload:type_name -> stroppy.StroppyCli.Workload
-	6, // 1: stroppy.StroppyCli.stroppy_env:type_name -> stroppy.StroppyCli.StroppyEnvEntry
-	1, // 2: stroppy.Test.stroppy_cli:type_name -> stroppy.StroppyCli
-	8, // 3: stroppy.Test.stroppy_hardware:type_name -> crossplane.Hardware
-	9, // 4: stroppy.Test.database:type_name -> database.Database
-	2, // 5: stroppy.TestResult.test:type_name -> stroppy.Test
-	2, // 6: stroppy.TestSuite.tests:type_name -> stroppy.Test
-	7, // 7: stroppy.TestSuiteResult.results:type_name -> stroppy.TestSuiteResult.ResultsEntry
-	3, // 8: stroppy.TestSuiteResult.ResultsEntry.value:type_name -> stroppy.TestResult
-	9, // [9:9] is the sub-list for method output_type
-	9, // [9:9] is the sub-list for method input_type
-	9, // [9:9] is the sub-list for extension type_name
-	9, // [9:9] is the sub-list for extension extendee
-	0, // [0:9] is the sub-list for field type_name
+	0,  // 0: stroppy.StroppyCli.workload:type_name -> stroppy.StroppyCli.Workload
+	7,  // 1: stroppy.StroppyCli.stroppy_env:type_name -> stroppy.StroppyCli.StroppyEnvEntry
+	1,  // 2: stroppy.Test.stroppy_cli:type_name -> stroppy.StroppyCli
+	8,  // 3: stroppy.Test.stroppy_hardware:type_name -> deployment.Hardware
+	9,  // 4: stroppy.Test.database_template:type_name -> database.Database.Template
+	2,  // 5: stroppy.TestResult.test:type_name -> stroppy.Test
+	2,  // 6: stroppy.TestSuite.tests:type_name -> stroppy.Test
+	10, // 7: stroppy.TestSuite.selected_target:type_name -> settings.SelectedTarget
+	4,  // 8: stroppy.TestSuiteResult.suite:type_name -> stroppy.TestSuite
+	3,  // 9: stroppy.TestSuiteResult.results:type_name -> stroppy.TestResult
+	10, // 10: stroppy.TestRunContext.selected_target:type_name -> settings.SelectedTarget
+	2,  // 11: stroppy.TestRunContext.test:type_name -> stroppy.Test
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_stroppy_test_proto_init() }
@@ -520,7 +612,7 @@ func file_stroppy_test_proto_init() {
 	}
 	file_stroppy_test_proto_msgTypes[0].OneofWrappers = []any{}
 	file_stroppy_test_proto_msgTypes[1].OneofWrappers = []any{
-		(*Test_Database)(nil),
+		(*Test_DatabaseTemplate)(nil),
 		(*Test_ConnectionString)(nil),
 	}
 	file_stroppy_test_proto_msgTypes[2].OneofWrappers = []any{}

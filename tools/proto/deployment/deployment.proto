@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package deployment;
 
-import "common/common.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/deployment";
@@ -11,7 +10,8 @@ message VmUser {
     string name = 1 [(validate.rules).string.min_len = 1];
     repeated string groups = 2 [(validate.rules).repeated.min_items = 1];
     repeated string ssh_authorized_keys = 3 [(validate.rules).repeated.min_items = 1];
-    bool sudo = 4;
+    string sudo_rules = 4 [(validate.rules).string.min_len = 1];
+    string shell = 5 [(validate.rules).string.min_len = 1];
 }
 
 message Hardware {
@@ -52,7 +52,7 @@ message Vm {
         string base_image_id = 3 [(validate.rules).string.min_len = 1];
         bool has_public_ip = 4;
         VmUser vm_user = 5;
-        string internal_ip = 6 [(validate.rules).string.min_len = 1];
+        Ip internal_ip = 6 [(validate.rules).message.required = true];
         CloudInit cloud_init = 7 [(validate.rules).message.required = true];
         map<string, string> labels = 8;
     }

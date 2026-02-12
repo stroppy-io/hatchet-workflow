@@ -10,7 +10,7 @@ import (
 	"github.com/stroppy-io/hatchet-workflow/internal/core/build"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/logger"
 	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/provision"
-	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/stroppy"
+	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/test"
 )
 
 func main() {
@@ -31,8 +31,8 @@ func main() {
 		"master-worker",
 		hatchetLib.WithWorkflows(
 			provisionWorkflow,
-			stroppy.TestRunWorkflow(c),
-			stroppy.TestSuiteWorkflow(c),
+			test.TestRunWorkflow(c),
+			test.TestSuiteWorkflow(c),
 		),
 	)
 	if err != nil {

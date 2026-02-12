@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 
@@ -9,6 +10,7 @@ import (
 	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/build"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/logger"
+	edge2 "github.com/stroppy-io/hatchet-workflow/internal/domain/edge"
 	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/edge"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet"
 )
@@ -34,25 +36,30 @@ func main() {
 		log.Fatalf("Failed to create Hatchet client: %v", err)
 	}
 
-	workerName := os.Getenv(edge.WorkerNameEnvKey)
+	workerName := os.Getenv(edge2.WorkerNameEnvKey)
 	if workerName == "" {
 		log.Fatalf("HATCHET_EDGE_WORKER_NAME is not set")
 	}
-	acceptableTasks := os.Getenv(edge.WorkerAcceptableTasksEnvKey)
+	acceptableTasks := os.Getenv(edge2.WorkerAcceptableTasksEnvKey)
 	if acceptableTasks == "" {
 		log.Fatalf("HATCHET_EDGE_ACCEPTABLE_TASKS is not set")
 	}
 
-	parsedTasksIds, err := edge.ParseTaskIds(acceptableTasks)
+	parsedTasksIds, err := edge2.ParseTaskIds(acceptableTasks)
 	if err != nil {
 		log.Fatalf("Failed to parse acceptable tasks: %v", err)
+	}
+
+	tracker, err := edge.NewContainerTracker()
+	if err != nil {
+		log.Printf("Warning: failed to create container tracker: %v", err)
 	}
 
 	tasks := make([]hatchetLib.WorkflowBase, 0)
 	for _, task := range parsedTasksIds {
 		switch task.GetKind() {
 		case hatchet.EdgeTasks_SETUP_SOFTWARE:
-			tasks = append(tasks, edge.InstallSoftwareTask(c, task))
+			tasks = append(tasks, edge.InstallSoftwareTask(c, task, tracker))
 		case hatchet.EdgeTasks_RUN_STROPPY:
 			tasks = append(tasks, edge.RunStroppyTask(c, task))
 		default:
@@ -74,5 +81,10 @@ func main() {
 	err = worker.StartBlocking(interruptCtx)
 	if err != nil {
 		log.Fatalf("Failed to start Hatchet worker: %v", err)
+	}
+
+	if tracker != nil {
+		log.Printf("Cleaning up containers...")
+		tracker.Cleanup(context.Background())
 	}
 }

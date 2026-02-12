@@ -7,7 +7,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/defaults"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/ids"
-	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/edge"
+	"github.com/stroppy-io/hatchet-workflow/internal/domain/edge"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/database"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/stroppy"

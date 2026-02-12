@@ -14,7 +14,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/logger"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/protoyaml"
-	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/stroppy"
+	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/test"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet"
 )
 
@@ -35,7 +35,7 @@ func main() {
 	}
 	err = test.Validate()
 	if err != nil {
-		log.Fatalf("Failed to validate %s input: %v", stroppy.TestSuiteWorkflowName, err)
+		log.Fatalf("Failed to validate %s input: %v", test.TestSuiteWorkflowName, err)
 	}
 	logger.NewFromEnv()
 	var host string
@@ -70,15 +70,15 @@ func main() {
 	defer cancel()
 	result, err := c.Run(
 		interruptCtx,
-		stroppy.TestSuiteWorkflowName,
+		test.TestSuiteWorkflowName,
 		&test,
 	)
 	if err != nil {
 		log.Fatalf("Failed to run workflow: %v", err)
 	}
 	var output *hatchet.Workflows_StroppyTestSuite_Output
-	if err := result.TaskOutput(stroppy.TestSuiteTaskName).Into(output); err != nil {
-		log.Fatalf("Failed to get %s output: %v", stroppy.TestSuiteTaskName, err)
+	if err := result.TaskOutput(test.TestSuiteTaskName).Into(output); err != nil {
+		log.Fatalf("Failed to get %s output: %v", test.TestSuiteTaskName, err)
 	}
 	resultYaml, err := protoyaml.MarshalPretty(output)
 	if err != nil {

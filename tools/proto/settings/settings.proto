@@ -24,7 +24,7 @@ message YandexCloudSettings {
     message VmSettings {
         string base_image_id = 6 [(validate.rules).string.min_len = 1];
         // If vm_users is empty, default user will be created without SSH keys
-        repeated deployment.VmUser vm_users = 7;
+        deployment.VmUser vm_user = 7;
         // Crate VMs with public IP always. May fail with quota of cloud resources
         bool enable_public_ips = 4;
         optional string platform_id = 8; // default is standard-v2

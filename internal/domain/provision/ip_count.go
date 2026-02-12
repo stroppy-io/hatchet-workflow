@@ -1,0 +1,51 @@
+package provision
+
+import (
+	"github.com/stroppy-io/hatchet-workflow/internal/proto/database"
+)
+
+// RequiredIPCount calculates the number of IP addresses (and VMs) needed
+// to deploy the database described by the given template.
+// The count follows the DSL semantics:
+//   - postgres instance: 1 VM
+//   - postgres cluster: master + replicas_count + dedicated addon instances
+func RequiredIPCount(tmpl *database.Database_Template) int {
+	if tmpl == nil {
+		return 0
+	}
+
+	switch t := tmpl.GetTemplate().(type) {
+	case *database.Database_Template_PostgresInstance:
+		if t.PostgresInstance == nil {
+			return 0
+		}
+		return 1
+
+	case *database.Database_Template_PostgresCluster:
+		cluster := t.PostgresCluster
+		if cluster == nil || cluster.GetTopology() == nil {
+			return 0
+		}
+
+		total := 1 + int(cluster.GetTopology().GetReplicasCount())
+
+		addons := cluster.GetAddons()
+		if addons != nil {
+			if etcd := addons.GetDcs().GetEtcd(); etcd != nil {
+				if mode, ok := etcd.GetPlacement().GetMode().(*database.Postgres_Placement_Dedicated_); ok && mode.Dedicated != nil {
+					total += int(mode.Dedicated.GetInstancesCount())
+				}
+			}
+
+			if pgb := addons.GetPooling().GetPgbouncer(); pgb != nil && pgb.GetEnabled() {
+				if mode, ok := pgb.GetPlacement().GetMode().(*database.Postgres_Placement_Dedicated_); ok && mode.Dedicated != nil {
+					total += int(mode.Dedicated.GetInstancesCount())
+				}
+			}
+		}
+
+		return total
+	default:
+		return 0
+	}
+}

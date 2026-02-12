@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package edge;
 
-import "database/database.proto";
-import "stroppy/test.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/edge";
@@ -30,7 +28,7 @@ message HatchetConnection {
 message Task {
     enum Kind {
         KIND_UNSPECIFIED = 0;
-        KIND_SETUP_DATABASE_INSTANCE = 1;
+        KIND_SETUP_CONTAINERS = 1;
         KIND_INSTALL_STROPPY = 2;
         KIND_RUN_STROPPY = 3;
     }

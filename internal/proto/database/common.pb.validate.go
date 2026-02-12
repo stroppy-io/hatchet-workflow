@@ -35,305 +35,22 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on Placement with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
+// Validate checks the field values on CommonSidecar with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *Placement) Validate() error {
+func (m *CommonSidecar) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Placement with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in PlacementMultiError, or nil
-// if none found.
-func (m *Placement) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Placement) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	oneofTargetPresent := false
-	switch v := m.Target.(type) {
-	case *Placement_Master_:
-		if v == nil {
-			err := PlacementValidationError{
-				field:  "Target",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofTargetPresent = true
-
-		if all {
-			switch v := interface{}(m.GetMaster()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, PlacementValidationError{
-						field:  "Master",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, PlacementValidationError{
-						field:  "Master",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetMaster()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return PlacementValidationError{
-					field:  "Master",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	case *Placement_AllNodes_:
-		if v == nil {
-			err := PlacementValidationError{
-				field:  "Target",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofTargetPresent = true
-
-		if all {
-			switch v := interface{}(m.GetAllNodes()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, PlacementValidationError{
-						field:  "AllNodes",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, PlacementValidationError{
-						field:  "AllNodes",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetAllNodes()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return PlacementValidationError{
-					field:  "AllNodes",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	case *Placement_Replica_:
-		if v == nil {
-			err := PlacementValidationError{
-				field:  "Target",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofTargetPresent = true
-
-		if all {
-			switch v := interface{}(m.GetReplica()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, PlacementValidationError{
-						field:  "Replica",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, PlacementValidationError{
-						field:  "Replica",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetReplica()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return PlacementValidationError{
-					field:  "Replica",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	case *Placement_Dedicated:
-		if v == nil {
-			err := PlacementValidationError{
-				field:  "Target",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofTargetPresent = true
-
-		if all {
-			switch v := interface{}(m.GetDedicated()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, PlacementValidationError{
-						field:  "Dedicated",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, PlacementValidationError{
-						field:  "Dedicated",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetDedicated()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return PlacementValidationError{
-					field:  "Dedicated",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	default:
-		_ = v // ensures v is used
-	}
-	if !oneofTargetPresent {
-		err := PlacementValidationError{
-			field:  "Target",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return PlacementMultiError(errors)
-	}
-
-	return nil
-}
-
-// PlacementMultiError is an error wrapping multiple validation errors returned
-// by Placement.ValidateAll() if the designated constraints aren't met.
-type PlacementMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m PlacementMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m PlacementMultiError) AllErrors() []error { return m }
-
-// PlacementValidationError is the validation error returned by
-// Placement.Validate if the designated constraints aren't met.
-type PlacementValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e PlacementValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e PlacementValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e PlacementValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e PlacementValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e PlacementValidationError) ErrorName() string { return "PlacementValidationError" }
-
-// Error satisfies the builtin error interface
-func (e PlacementValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPlacement.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = PlacementValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = PlacementValidationError{}
-
-// Validate checks the field values on Placement_Master with the rules defined
+// ValidateAll checks the field values on CommonSidecar with the rules defined
 // in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *Placement_Master) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Placement_Master with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Placement_MasterMultiError, or nil if none found.
-func (m *Placement_Master) ValidateAll() error {
+// result is a list of violation errors wrapped in CommonSidecarMultiError, or
+// nil if none found.
+func (m *CommonSidecar) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Placement_Master) validate(all bool) error {
+func (m *CommonSidecar) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -341,19 +58,19 @@ func (m *Placement_Master) validate(all bool) error {
 	var errors []error
 
 	if len(errors) > 0 {
-		return Placement_MasterMultiError(errors)
+		return CommonSidecarMultiError(errors)
 	}
 
 	return nil
 }
 
-// Placement_MasterMultiError is an error wrapping multiple validation errors
-// returned by Placement_Master.ValidateAll() if the designated constraints
+// CommonSidecarMultiError is an error wrapping multiple validation errors
+// returned by CommonSidecar.ValidateAll() if the designated constraints
 // aren't met.
-type Placement_MasterMultiError []error
+type CommonSidecarMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Placement_MasterMultiError) Error() string {
+func (m CommonSidecarMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -362,11 +79,11 @@ func (m Placement_MasterMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Placement_MasterMultiError) AllErrors() []error { return m }
+func (m CommonSidecarMultiError) AllErrors() []error { return m }
 
-// Placement_MasterValidationError is the validation error returned by
-// Placement_Master.Validate if the designated constraints aren't met.
-type Placement_MasterValidationError struct {
+// CommonSidecarValidationError is the validation error returned by
+// CommonSidecar.Validate if the designated constraints aren't met.
+type CommonSidecarValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -374,22 +91,22 @@ type Placement_MasterValidationError struct {
 }
 
 // Field function returns field value.
-func (e Placement_MasterValidationError) Field() string { return e.field }
+func (e CommonSidecarValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Placement_MasterValidationError) Reason() string { return e.reason }
+func (e CommonSidecarValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Placement_MasterValidationError) Cause() error { return e.cause }
+func (e CommonSidecarValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Placement_MasterValidationError) Key() bool { return e.key }
+func (e CommonSidecarValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Placement_MasterValidationError) ErrorName() string { return "Placement_MasterValidationError" }
+func (e CommonSidecarValidationError) ErrorName() string { return "CommonSidecarValidationError" }
 
 // Error satisfies the builtin error interface
-func (e Placement_MasterValidationError) Error() string {
+func (e CommonSidecarValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -401,14 +118,14 @@ func (e Placement_MasterValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPlacement_Master.%s: %s%s",
+		"invalid %sCommonSidecar.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Placement_MasterValidationError{}
+var _ error = CommonSidecarValidationError{}
 
 var _ interface {
 	Field() string
@@ -416,44 +133,48 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Placement_MasterValidationError{}
+} = CommonSidecarValidationError{}
 
-// Validate checks the field values on Placement_AllNodes with the rules
-// defined in the proto definition for this message. If any rules are
+// Validate checks the field values on CommonSidecar_NodeExporter with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Placement_AllNodes) Validate() error {
+func (m *CommonSidecar_NodeExporter) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Placement_AllNodes with the rules
-// defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on CommonSidecar_NodeExporter with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// Placement_AllNodesMultiError, or nil if none found.
-func (m *Placement_AllNodes) ValidateAll() error {
+// CommonSidecar_NodeExporterMultiError, or nil if none found.
+func (m *CommonSidecar_NodeExporter) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Placement_AllNodes) validate(all bool) error {
+func (m *CommonSidecar_NodeExporter) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
+	// no validation rules for Enabled
+
+	// no validation rules for Port
+
 	if len(errors) > 0 {
-		return Placement_AllNodesMultiError(errors)
+		return CommonSidecar_NodeExporterMultiError(errors)
 	}
 
 	return nil
 }
 
-// Placement_AllNodesMultiError is an error wrapping multiple validation errors
-// returned by Placement_AllNodes.ValidateAll() if the designated constraints
-// aren't met.
-type Placement_AllNodesMultiError []error
+// CommonSidecar_NodeExporterMultiError is an error wrapping multiple
+// validation errors returned by CommonSidecar_NodeExporter.ValidateAll() if
+// the designated constraints aren't met.
+type CommonSidecar_NodeExporterMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Placement_AllNodesMultiError) Error() string {
+func (m CommonSidecar_NodeExporterMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -462,11 +183,11 @@ func (m Placement_AllNodesMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Placement_AllNodesMultiError) AllErrors() []error { return m }
+func (m CommonSidecar_NodeExporterMultiError) AllErrors() []error { return m }
 
-// Placement_AllNodesValidationError is the validation error returned by
-// Placement_AllNodes.Validate if the designated constraints aren't met.
-type Placement_AllNodesValidationError struct {
+// CommonSidecar_NodeExporterValidationError is the validation error returned
+// by CommonSidecar_NodeExporter.Validate if the designated constraints aren't met.
+type CommonSidecar_NodeExporterValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -474,24 +195,24 @@ type Placement_AllNodesValidationError struct {
 }
 
 // Field function returns field value.
-func (e Placement_AllNodesValidationError) Field() string { return e.field }
+func (e CommonSidecar_NodeExporterValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Placement_AllNodesValidationError) Reason() string { return e.reason }
+func (e CommonSidecar_NodeExporterValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Placement_AllNodesValidationError) Cause() error { return e.cause }
+func (e CommonSidecar_NodeExporterValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Placement_AllNodesValidationError) Key() bool { return e.key }
+func (e CommonSidecar_NodeExporterValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Placement_AllNodesValidationError) ErrorName() string {
-	return "Placement_AllNodesValidationError"
+func (e CommonSidecar_NodeExporterValidationError) ErrorName() string {
+	return "CommonSidecar_NodeExporterValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e Placement_AllNodesValidationError) Error() string {
+func (e CommonSidecar_NodeExporterValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -503,14 +224,14 @@ func (e Placement_AllNodesValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPlacement_AllNodes.%s: %s%s",
+		"invalid %sCommonSidecar_NodeExporter.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Placement_AllNodesValidationError{}
+var _ error = CommonSidecar_NodeExporterValidationError{}
 
 var _ interface {
 	Field() string
@@ -518,250 +239,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Placement_AllNodesValidationError{}
-
-// Validate checks the field values on Placement_Replica with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *Placement_Replica) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Placement_Replica with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Placement_ReplicaMultiError, or nil if none found.
-func (m *Placement_Replica) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Placement_Replica) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for ReplicaIndex
-
-	if len(errors) > 0 {
-		return Placement_ReplicaMultiError(errors)
-	}
-
-	return nil
-}
-
-// Placement_ReplicaMultiError is an error wrapping multiple validation errors
-// returned by Placement_Replica.ValidateAll() if the designated constraints
-// aren't met.
-type Placement_ReplicaMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Placement_ReplicaMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Placement_ReplicaMultiError) AllErrors() []error { return m }
-
-// Placement_ReplicaValidationError is the validation error returned by
-// Placement_Replica.Validate if the designated constraints aren't met.
-type Placement_ReplicaValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Placement_ReplicaValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Placement_ReplicaValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Placement_ReplicaValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Placement_ReplicaValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Placement_ReplicaValidationError) ErrorName() string {
-	return "Placement_ReplicaValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Placement_ReplicaValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPlacement_Replica.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Placement_ReplicaValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Placement_ReplicaValidationError{}
-
-// Validate checks the field values on Placement_DedicatedVm with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Placement_DedicatedVm) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Placement_DedicatedVm with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Placement_DedicatedVmMultiError, or nil if none found.
-func (m *Placement_DedicatedVm) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Placement_DedicatedVm) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if m.GetHardware() == nil {
-		err := Placement_DedicatedVmValidationError{
-			field:  "Hardware",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetHardware()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Placement_DedicatedVmValidationError{
-					field:  "Hardware",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Placement_DedicatedVmValidationError{
-					field:  "Hardware",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetHardware()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Placement_DedicatedVmValidationError{
-				field:  "Hardware",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return Placement_DedicatedVmMultiError(errors)
-	}
-
-	return nil
-}
-
-// Placement_DedicatedVmMultiError is an error wrapping multiple validation
-// errors returned by Placement_DedicatedVm.ValidateAll() if the designated
-// constraints aren't met.
-type Placement_DedicatedVmMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Placement_DedicatedVmMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Placement_DedicatedVmMultiError) AllErrors() []error { return m }
-
-// Placement_DedicatedVmValidationError is the validation error returned by
-// Placement_DedicatedVm.Validate if the designated constraints aren't met.
-type Placement_DedicatedVmValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Placement_DedicatedVmValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Placement_DedicatedVmValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Placement_DedicatedVmValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Placement_DedicatedVmValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Placement_DedicatedVmValidationError) ErrorName() string {
-	return "Placement_DedicatedVmValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Placement_DedicatedVmValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPlacement_DedicatedVm.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Placement_DedicatedVmValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Placement_DedicatedVmValidationError{}
+} = CommonSidecar_NodeExporterValidationError{}

@@ -7,11 +7,10 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	crossplaneLib "github.com/stroppy-io/hatchet-workflow/internal/cloud/crossplane"
-	"github.com/stroppy-io/hatchet-workflow/internal/cloud/crossplane/k8s"
 	"github.com/stroppy-io/hatchet-workflow/internal/cloud/deployment"
 	"github.com/stroppy-io/hatchet-workflow/internal/cloud/provider/docker"
 	"github.com/stroppy-io/hatchet-workflow/internal/cloud/provider/yandex"
+	"github.com/stroppy-io/hatchet-workflow/internal/cloud/terraform"
 	"github.com/stroppy-io/hatchet-workflow/internal/domain/managers"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
 	valkeygo "github.com/valkey-io/valkey-go"
@@ -20,6 +19,7 @@ import (
 const (
 	K8SConfigPath = "K8S_CONFIG_PATH"
 	ValkeyUrl     = "VALKEY_URL"
+	YcToken       = "YC_TOKEN"
 )
 
 type DeploymentSvcMap map[crossplane.SupportedCloud]deployment.DeploymentService
@@ -69,18 +69,22 @@ func NewProvisionDeps() (*Deps, error) {
 	svcMap := DeploymentSvcMap{}
 	allQuotas := &managers.QuotasConfig{}
 
-	// Register Yandex Cloud provider (optional — requires K8S_CONFIG_PATH)
-	if k8sConfigPath := os.Getenv(K8SConfigPath); k8sConfigPath != "" {
-		k8sSvc, err := k8s.NewClient(k8sConfigPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create k8s client: %w", err)
-		}
-		builders[crossplane.SupportedCloud_SUPPORTED_CLOUD_YANDEX] = yandex.NewCloudBuilder(&yandex.ProviderConfig{
-			K8sNamespace:        DefaultCrossplaneNamespace,
+	// Register Yandex Cloud provider (Terraform based)
+	// We check for YC_TOKEN to enable Yandex Cloud support
+	if os.Getenv(YcToken) != "" {
+		builders[crossplane.SupportedCloud_SUPPORTED_CLOUD_YANDEX] = yandex.NewTerraformBuilder(&yandex.ProviderConfig{
+			K8sNamespace:        DefaultCrossplaneNamespace, // Still used for naming/namespaces in internal logic if needed
 			DefaultVmZone:       DefaultVmZone,
 			DefaultVmPlatformId: DefaultVmPlatformId,
 		})
-		svcMap[crossplane.SupportedCloud_SUPPORTED_CLOUD_YANDEX] = crossplaneLib.NewService(k8sSvc, 2*time.Minute)
+
+		// Use a dedicated directory for Terraform state and configs
+		terraformDir := os.Getenv("TERRAFORM_DIR")
+		if terraformDir == "" {
+			terraformDir = "/tmp/hatchet-terraform"
+		}
+
+		svcMap[crossplane.SupportedCloud_SUPPORTED_CLOUD_YANDEX] = terraform.NewService(terraformDir)
 		allQuotas.AvailableQuotas = append(allQuotas.AvailableQuotas, managers.DefaultQuotasConfig().AvailableQuotas...)
 	}
 

@@ -9,38 +9,21 @@ import "validate/validate.proto";
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/database";
 
 message Postgres {
+    // Reused sidecar definitions for colocated containers near postgres nodes.
     message Sidecar {
         message PostgresExporter {
             bool enabled = 1;
             uint32 port = 2;  // default 9187
             repeated string custom_queries_paths = 3;
         }
-        message PgbouncerExporter {
-            bool enabled = 1;
-            uint32 port = 2;  // default 9127
-        }
-        message Pgbouncer {
-            enum PoolMode {
-                POOL_MODE_UNSPECIFIED = 0;
-                SESSION = 1;
-                TRANSACTION = 2;
-                STATEMENT = 3;
-            }
-            uint32 pool_size = 1;
-            PoolMode pool_mode = 2;
-            uint32 max_client_conn = 3;
-            optional uint32 port = 4 [(validate.rules).uint32 = {gte: 1, lte: 65535}];  // host port, default 6432
-        }
-        message Etcd {
-            uint32 cluster_size = 1 [(validate.rules).uint32 = {in: [1, 3, 5]}];
-            optional uint32 base_client_port = 2 [(validate.rules).uint32 = {gte: 1, lte: 65535}];  // host port base, default 2379
-        }
+
         message Backup {
             enum Tool {
                 TOOL_UNSPECIFIED = 0;
                 WAL_G = 1;
                 PG_DUMP = 2;
             }
+
             message S3Storage {
                 string bucket = 1 [(validate.rules).string.min_len = 1];
                 string region = 2 [(validate.rules).string.min_len = 1];
@@ -48,57 +31,53 @@ message Postgres {
                 string access_key_id = 4 [(validate.rules).string.min_len = 1];
                 string secret_access_key = 5 [(validate.rules).string.min_len = 1];
             }
+
             message LocalStorage {
                 string path = 1 [(validate.rules).string.min_len = 1];
             }
+
             string schedule = 1 [(validate.rules).string.min_len = 1];
             string retention = 2;
-            Tool tool = 3;
+            Tool tool = 3 [(validate.rules).enum.defined_only = true];
             oneof storage {
                 option (validate.required) = true;
                 S3Storage s3 = 10;
                 LocalStorage local = 12;
             }
         }
+
         oneof sidecar {
             option (validate.required) = true;
             CommonSidecar.NodeExporter node_exporter = 10;
             PostgresExporter postgres_exporter = 50;
-            PgbouncerExporter pgbouncer_exporter = 51;
-            Pgbouncer pgbouncer = 52;
-            Etcd etcd = 54;
             Backup backup = 55;
         }
-        message Placement {
-            message Master {}
-            message AllNodes {}
-            message Replica {
-                uint32 replica_index = 1;  // 0-based индекс реплики
-            }
-            message DedicatedVm {
-                deployment.Hardware hardware = 1 [(validate.rules).message.required = true];
-            }
-            oneof target {
-                option (validate.required) = true;
-                Master master = 1;
-                AllNodes all_nodes = 2;
-                Replica replica = 3;
-                DedicatedVm dedicated_vm = 4;
-            }
+    }
+
+    // Placement intent. No network targets are provided by user.
+    message Placement {
+        enum Scope {
+            SCOPE_UNSPECIFIED = 0;
+            SCOPE_MASTER = 1;
+            SCOPE_REPLICAS = 2;
+            SCOPE_ALL_NODES = 3;
+            SCOPE_REPLICA = 4;
         }
-        message NeededPlacement {
-            Sidecar.Placement placement = 1 [(validate.rules).message.required = true];
-            Sidecar sidecar = 2 [(validate.rules).message.required = true];
+
+        message Colocate {
+            Scope scope = 1 [(validate.rules).enum.defined_only = true];
+            optional uint32 replica_index = 2;  // used only when scope == SCOPE_REPLICA
         }
-        message NeededSinglePlacement {
-            Sidecar sidecar = 1 [(validate.rules).message.required = true];
+
+        message Dedicated {
+            uint32 instances_count = 1 [(validate.rules).uint32 = {gte: 1, lte: 5}];
+            deployment.Hardware hardware = 2 [(validate.rules).message.required = true];
         }
-        message Placed {
-            Sidecar.Placement placement = 1 [(validate.rules).message.required = true];
-            Sidecar sidecar = 2 [(validate.rules).message.required = true];
-        }
-        message PlacedGroup {
-            repeated Sidecar.Placed sidecars = 1 [(validate.rules).repeated.min_items = 1];
+
+        oneof mode {
+            option (validate.required) = true;
+            Colocate colocate = 1;
+            Dedicated dedicated = 2;
         }
     }
 
@@ -108,47 +87,110 @@ message Postgres {
             STORAGE_ENGINE_HEAP = 1;
             STORAGE_ENGINE_ORIOLEDB = 2;
         }
+
         enum Version {
             VERSION_UNSPECIFIED = 0;
             VERSION_18 = 1;
             VERSION_17 = 2; // enable orioledb
             VERSION_16 = 3; // enable orioledb needed validation on setup
         }
+
+        // Patroni wraps postgres runtime and is not modeled as a sidecar.
         message Patroni {
-            uint32 ttl = 1;
-            uint32 loop_wait = 2;
-            uint32 retry_timeout = 3;
-            uint64 maximum_lag_on_failover = 4;  // bytes, default 1048576
-            bool synchronous_mode = 5;
-            uint32 synchronous_node_count = 6;   // default 1 when sync mode on
+            bool enabled = 1;
+            uint32 ttl = 2;
+            uint32 loop_wait = 3;
+            uint32 retry_timeout = 4;
+            uint64 maximum_lag_on_failover = 5;  // bytes, default 1048576
+            bool synchronous_mode = 6;
+            uint32 synchronous_node_count = 7;   // default 1 when sync mode on
         }
+
         Version version = 1 [(validate.rules).enum.defined_only = true];
         StorageEngine storage_engine = 2 [(validate.rules).enum.defined_only = true];
-        optional Patroni patroni = 3;
+        Patroni patroni = 3;
         map<string, string> postgresql_conf = 4;
     }
+
+    // User-facing DSL for addons. Internal ids/dependencies are generated later.
+    message Addons {
+        message Dcs {
+            message Etcd {
+                uint32 size = 1 [(validate.rules).uint32 = {in: [1, 3, 5]}];
+                optional uint32 base_client_port = 2 [(validate.rules).uint32 = {gte: 1, lte: 65535}];  // default 2379
+                Placement placement = 3 [(validate.rules).message.required = true];
+                bool monitor = 4;
+            }
+
+            Etcd etcd = 1;
+        }
+
+        message Pooling {
+            message Pgbouncer {
+                enum PoolMode {
+                    POOL_MODE_UNSPECIFIED = 0;
+                    SESSION = 1;
+                    TRANSACTION = 2;
+                    STATEMENT = 3;
+                }
+
+                bool enabled = 1;
+                uint32 pool_size = 2;
+                PoolMode pool_mode = 3 [(validate.rules).enum.defined_only = true];
+                uint32 max_client_conn = 4;
+                optional uint32 port = 5 [(validate.rules).uint32 = {gte: 1, lte: 65535}];  // default 6432
+                Placement placement = 6 [(validate.rules).message.required = true];
+                bool monitor = 7;
+            }
+
+            Pgbouncer pgbouncer = 1;
+        }
+
+        message Backup {
+            bool enabled = 1;
+            Placement.Scope scope = 2 [(validate.rules).enum.defined_only = true];
+            Sidecar.Backup config = 3;
+        }
+
+        Dcs dcs = 1;
+        Pooling pooling = 2;
+        Backup backup = 3;
+    }
+
     message Instance {
         message Template {
             Settings settings = 1 [(validate.rules).message.required = true];
             deployment.Hardware hardware = 2 [(validate.rules).message.required = true];
-            repeated Sidecar.NeededSinglePlacement sidecars_placements = 3;
+            repeated Sidecar sidecars = 3;
         }
+
         Template template = 1 [(validate.rules).message.required = true];
-        repeated Sidecar.Placed sidecars = 3;
+        repeated Sidecar sidecars = 3;
     }
+
     message Cluster {
         message Template {
-            Instance.Template master_template = 1 [(validate.rules).message.required = true];
-            repeated Instance.Template replica_templates = 2 [(validate.rules).repeated.min_items = 1];
-            repeated Sidecar.NeededPlacement sidecars_placements = 3;
+            message Topology {
+                Settings settings = 1 [(validate.rules).message.required = true];
+                deployment.Hardware master_hardware = 2 [(validate.rules).message.required = true];
+                deployment.Hardware replica_hardware = 3 [(validate.rules).message.required = true];
+                uint32 replicas_count = 4 [(validate.rules).uint32 = {gte: 1}];
+                bool monitor = 5;
+            }
+
+            message ReplicaOverride {
+                uint32 replica_index = 1;
+                Settings settings = 2;
+                deployment.Hardware hardware = 3;
+            }
+
+            Topology topology = 1 [(validate.rules).message.required = true];
+            Addons addons = 2;
+            repeated ReplicaOverride replica_overrides = 3;
         }
+
         Template template = 1 [(validate.rules).message.required = true];
         Instance master = 2 [(validate.rules).message.required = true];
         repeated Instance replicas = 3 [(validate.rules).repeated.min_items = 1];
-        /*
-            Standalone sidecars are placed on dedicated VMs.
-            For example, pgbouncer or etcd in dedicated VMs.
-        */
-        repeated Sidecar.PlacedGroup standalone_sidecars_groups = 4;
     }
 }

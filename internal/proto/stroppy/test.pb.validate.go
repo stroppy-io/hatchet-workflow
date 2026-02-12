@@ -272,7 +272,7 @@ func (m *Test) validate(all bool) error {
 	}
 
 	switch v := m.DatabaseRef.(type) {
-	case *Test_Database:
+	case *Test_DatabaseTemplate:
 		if v == nil {
 			err := TestValidationError{
 				field:  "DatabaseRef",
@@ -285,11 +285,11 @@ func (m *Test) validate(all bool) error {
 		}
 
 		if all {
-			switch v := interface{}(m.GetDatabase()).(type) {
+			switch v := interface{}(m.GetDatabaseTemplate()).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, TestValidationError{
-						field:  "Database",
+						field:  "DatabaseTemplate",
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -297,16 +297,16 @@ func (m *Test) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, TestValidationError{
-						field:  "Database",
+						field:  "DatabaseTemplate",
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
 				}
 			}
-		} else if v, ok := interface{}(m.GetDatabase()).(interface{ Validate() error }); ok {
+		} else if v, ok := interface{}(m.GetDatabaseTemplate()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return TestValidationError{
-					field:  "Database",
+					field:  "DatabaseTemplate",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -622,6 +622,46 @@ func (m *TestSuite) validate(all bool) error {
 
 	}
 
+	if m.GetSelectedTarget() == nil {
+		err := TestSuiteValidationError{
+			field:  "SelectedTarget",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetSelectedTarget()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestSuiteValidationError{
+					field:  "SelectedTarget",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestSuiteValidationError{
+					field:  "SelectedTarget",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSelectedTarget()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestSuiteValidationError{
+				field:  "SelectedTarget",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return TestSuiteMultiError(errors)
 	}
@@ -721,10 +761,12 @@ func (m *TestSuiteResult) validate(all bool) error {
 
 	var errors []error
 
-	if len(m.GetResults()) < 1 {
+	// no validation rules for RunId
+
+	if m.GetSuite() == nil {
 		err := TestSuiteResultValidationError{
-			field:  "Results",
-			reason: "value must contain at least 1 pair(s)",
+			field:  "Suite",
+			reason: "value is required",
 		}
 		if !all {
 			return err
@@ -732,50 +774,78 @@ func (m *TestSuiteResult) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	{
-		sorted_keys := make([]string, len(m.GetResults()))
-		i := 0
-		for key := range m.GetResults() {
-			sorted_keys[i] = key
-			i++
+	if all {
+		switch v := interface{}(m.GetSuite()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestSuiteResultValidationError{
+					field:  "Suite",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestSuiteResultValidationError{
+					field:  "Suite",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
 		}
-		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
-		for _, key := range sorted_keys {
-			val := m.GetResults()[key]
-			_ = val
+	} else if v, ok := interface{}(m.GetSuite()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestSuiteResultValidationError{
+				field:  "Suite",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
-			// no validation rules for Results[key]
+	if len(m.GetResults()) < 1 {
+		err := TestSuiteResultValidationError{
+			field:  "Results",
+			reason: "value must contain at least 1 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-			if all {
-				switch v := interface{}(val).(type) {
-				case interface{ ValidateAll() error }:
-					if err := v.ValidateAll(); err != nil {
-						errors = append(errors, TestSuiteResultValidationError{
-							field:  fmt.Sprintf("Results[%v]", key),
-							reason: "embedded message failed validation",
-							cause:  err,
-						})
-					}
-				case interface{ Validate() error }:
-					if err := v.Validate(); err != nil {
-						errors = append(errors, TestSuiteResultValidationError{
-							field:  fmt.Sprintf("Results[%v]", key),
-							reason: "embedded message failed validation",
-							cause:  err,
-						})
-					}
-				}
-			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-				if err := v.Validate(); err != nil {
-					return TestSuiteResultValidationError{
-						field:  fmt.Sprintf("Results[%v]", key),
+	for idx, item := range m.GetResults() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, TestSuiteResultValidationError{
+						field:  fmt.Sprintf("Results[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
-					}
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, TestSuiteResultValidationError{
+						field:  fmt.Sprintf("Results[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
 				}
 			}
-
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TestSuiteResultValidationError{
+					field:  fmt.Sprintf("Results[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
 		}
+
 	}
 
 	if len(errors) > 0 {
@@ -855,3 +925,194 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = TestSuiteResultValidationError{}
+
+// Validate checks the field values on TestRunContext with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *TestRunContext) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TestRunContext with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in TestRunContextMultiError,
+// or nil if none found.
+func (m *TestRunContext) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TestRunContext) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetRunId()) < 1 {
+		err := TestRunContextValidationError{
+			field:  "RunId",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetSelectedTarget() == nil {
+		err := TestRunContextValidationError{
+			field:  "SelectedTarget",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetSelectedTarget()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestRunContextValidationError{
+					field:  "SelectedTarget",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestRunContextValidationError{
+					field:  "SelectedTarget",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSelectedTarget()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestRunContextValidationError{
+				field:  "SelectedTarget",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetTest() == nil {
+		err := TestRunContextValidationError{
+			field:  "Test",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTest()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestRunContextValidationError{
+					field:  "Test",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestRunContextValidationError{
+					field:  "Test",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTest()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestRunContextValidationError{
+				field:  "Test",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return TestRunContextMultiError(errors)
+	}
+
+	return nil
+}
+
+// TestRunContextMultiError is an error wrapping multiple validation errors
+// returned by TestRunContext.ValidateAll() if the designated constraints
+// aren't met.
+type TestRunContextMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TestRunContextMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TestRunContextMultiError) AllErrors() []error { return m }
+
+// TestRunContextValidationError is the validation error returned by
+// TestRunContext.Validate if the designated constraints aren't met.
+type TestRunContextValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TestRunContextValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TestRunContextValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TestRunContextValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TestRunContextValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TestRunContextValidationError) ErrorName() string { return "TestRunContextValidationError" }
+
+// Error satisfies the builtin error interface
+func (e TestRunContextValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTestRunContext.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TestRunContextValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TestRunContextValidationError{}

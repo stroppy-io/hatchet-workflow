@@ -56,11 +56,5 @@ message TestRunContext {
     string run_id = 1 [(validate.rules).string.min_len = 1];
     settings.SelectedTarget selected_target = 2 [(validate.rules).message.required = true];
     Test test = 3 [(validate.rules).message.required = true];
-    message WithNetwork {
-        string run_id = 1 [(validate.rules).string.min_len = 1];
-        settings.SelectedTarget selected_target = 2 [(validate.rules).message.required = true];
-        Test test = 3 [(validate.rules).message.required = true];
-        deployment.Network network = 4 [(validate.rules).message.required = true];
-    }
 }
 

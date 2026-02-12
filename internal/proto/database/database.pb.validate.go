@@ -57,12 +57,52 @@ func (m *Database) validate(all bool) error {
 
 	var errors []error
 
-	oneofTopologyPresent := false
-	switch v := m.Topology.(type) {
-	case *Database_Standalone:
+	if m.GetTemplate() == nil {
+		err := DatabaseValidationError{
+			field:  "Template",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTemplate()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DatabaseValidationError{
+					field:  "Template",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DatabaseValidationError{
+					field:  "Template",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTemplate()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DatabaseValidationError{
+				field:  "Template",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	oneofDatabasePresent := false
+	switch v := m.Database.(type) {
+	case *Database_PostgresInstance:
 		if v == nil {
 			err := DatabaseValidationError{
-				field:  "Topology",
+				field:  "Database",
 				reason: "oneof value cannot be a typed-nil",
 			}
 			if !all {
@@ -70,14 +110,14 @@ func (m *Database) validate(all bool) error {
 			}
 			errors = append(errors, err)
 		}
-		oneofTopologyPresent = true
+		oneofDatabasePresent = true
 
 		if all {
-			switch v := interface{}(m.GetStandalone()).(type) {
+			switch v := interface{}(m.GetPostgresInstance()).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, DatabaseValidationError{
-						field:  "Standalone",
+						field:  "PostgresInstance",
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -85,26 +125,26 @@ func (m *Database) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, DatabaseValidationError{
-						field:  "Standalone",
+						field:  "PostgresInstance",
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
 				}
 			}
-		} else if v, ok := interface{}(m.GetStandalone()).(interface{ Validate() error }); ok {
+		} else if v, ok := interface{}(m.GetPostgresInstance()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return DatabaseValidationError{
-					field:  "Standalone",
+					field:  "PostgresInstance",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
 			}
 		}
 
-	case *Database_Cluster:
+	case *Database_PostgresCluster:
 		if v == nil {
 			err := DatabaseValidationError{
-				field:  "Topology",
+				field:  "Database",
 				reason: "oneof value cannot be a typed-nil",
 			}
 			if !all {
@@ -112,14 +152,14 @@ func (m *Database) validate(all bool) error {
 			}
 			errors = append(errors, err)
 		}
-		oneofTopologyPresent = true
+		oneofDatabasePresent = true
 
 		if all {
-			switch v := interface{}(m.GetCluster()).(type) {
+			switch v := interface{}(m.GetPostgresCluster()).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, DatabaseValidationError{
-						field:  "Cluster",
+						field:  "PostgresCluster",
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -127,16 +167,16 @@ func (m *Database) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, DatabaseValidationError{
-						field:  "Cluster",
+						field:  "PostgresCluster",
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
 				}
 			}
-		} else if v, ok := interface{}(m.GetCluster()).(interface{ Validate() error }); ok {
+		} else if v, ok := interface{}(m.GetPostgresCluster()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return DatabaseValidationError{
-					field:  "Cluster",
+					field:  "PostgresCluster",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -146,9 +186,9 @@ func (m *Database) validate(all bool) error {
 	default:
 		_ = v // ensures v is used
 	}
-	if !oneofTopologyPresent {
+	if !oneofDatabasePresent {
 		err := DatabaseValidationError{
-			field:  "Topology",
+			field:  "Database",
 			reason: "value is required",
 		}
 		if !all {
@@ -233,3 +273,205 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = DatabaseValidationError{}
+
+// Validate checks the field values on Database_Template with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Database_Template) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Database_Template with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Database_TemplateMultiError, or nil if none found.
+func (m *Database_Template) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Database_Template) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	oneofTemplatePresent := false
+	switch v := m.Template.(type) {
+	case *Database_Template_PostgresInstance:
+		if v == nil {
+			err := Database_TemplateValidationError{
+				field:  "Template",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofTemplatePresent = true
+
+		if all {
+			switch v := interface{}(m.GetPostgresInstance()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Database_TemplateValidationError{
+						field:  "PostgresInstance",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Database_TemplateValidationError{
+						field:  "PostgresInstance",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPostgresInstance()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Database_TemplateValidationError{
+					field:  "PostgresInstance",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Database_Template_PostgresCluster:
+		if v == nil {
+			err := Database_TemplateValidationError{
+				field:  "Template",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofTemplatePresent = true
+
+		if all {
+			switch v := interface{}(m.GetPostgresCluster()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Database_TemplateValidationError{
+						field:  "PostgresCluster",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Database_TemplateValidationError{
+						field:  "PostgresCluster",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPostgresCluster()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Database_TemplateValidationError{
+					field:  "PostgresCluster",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	default:
+		_ = v // ensures v is used
+	}
+	if !oneofTemplatePresent {
+		err := Database_TemplateValidationError{
+			field:  "Template",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return Database_TemplateMultiError(errors)
+	}
+
+	return nil
+}
+
+// Database_TemplateMultiError is an error wrapping multiple validation errors
+// returned by Database_Template.ValidateAll() if the designated constraints
+// aren't met.
+type Database_TemplateMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Database_TemplateMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Database_TemplateMultiError) AllErrors() []error { return m }
+
+// Database_TemplateValidationError is the validation error returned by
+// Database_Template.Validate if the designated constraints aren't met.
+type Database_TemplateValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Database_TemplateValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Database_TemplateValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Database_TemplateValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Database_TemplateValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Database_TemplateValidationError) ErrorName() string {
+	return "Database_TemplateValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Database_TemplateValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDatabase_Template.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Database_TemplateValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Database_TemplateValidationError{}

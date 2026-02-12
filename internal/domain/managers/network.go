@@ -7,7 +7,7 @@ import (
 
 	"github.com/stroppy-io/hatchet-workflow/internal/core/ips"
 	"github.com/stroppy-io/hatchet-workflow/internal/infrastructure/valkey"
-	"github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
+	"github.com/stroppy-io/hatchet-workflow/internal/proto/deployment"
 	valkeygo "github.com/valkey-io/valkey-go"
 	"github.com/valkey-io/valkey-go/valkeylock"
 )
@@ -36,33 +36,43 @@ func NewNetworkManager(valkeyClient valkeygo.Client) (*NetworkManager, error) {
 
 func (n NetworkManager) ReserveNetwork(
 	ctx context.Context,
-	networkIdentifier *crossplane.Identifier,
-	subnetIdentifier *crossplane.Identifier,
+	networkIdentifier *deployment.Identifier,
 	baseCidr string,
 	basePrefix int,
 	ipCount int,
-) (*crossplane.Subnet_Template, error) {
+) (*deployment.Network, error) {
+	if ipCount <= 0 {
+		return nil, fmt.Errorf("ip count must be greater than 0")
+	}
+	if baseCidr == "" {
+		return nil, fmt.Errorf("base cidr must be specified")
+	}
+	if basePrefix <= 0 || basePrefix > 32 {
+		return nil, fmt.Errorf("base prefix must be between 1 and 32")
+	}
 	if networkIdentifier == nil {
 		return nil, fmt.Errorf("network identifier is nil")
 	}
 
 	// Acquire lock to prevent race conditions
-	lockKey := fmt.Sprintf("%s:%s:%s", networkLockKey, networkIdentifier.GetSupportedCloud().String(), networkIdentifier.GetName())
-	_, unlock, err := n.locker.WithContext(ctx, lockKey)
+	networkKey := fmt.Sprintf(
+		"%s:%s:%s",
+		networkLockKey,
+		networkIdentifier.GetTarget().String(),
+		networkIdentifier.GetName(),
+	)
+	_, unlock, err := n.locker.WithContext(ctx, networkKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to acquire network lock: %w", err)
 	}
 	defer unlock()
 
 	// Get existing networks
-	storageKey := fmt.Sprintf("%s:%s:%s", networksKey, networkIdentifier.GetSupportedCloud().String(), networkIdentifier.GetName())
-	existingNetworks, err := n.valkeyClient.Do(ctx, n.valkeyClient.B().Smembers().Key(storageKey).Build()).AsStrSlice()
+	existingNetworks, err := n.valkeyClient.Do(ctx, n.valkeyClient.B().
+		Smembers().Key(networkKey).
+		Build()).AsStrSlice()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get existing networks: %w", err)
-	}
-
-	if ipCount <= 0 {
-		ipCount = 3 // Default to 3 IPs if not specified
 	}
 
 	subnet, ipsList, err := ips.NextSubnetWithIPs(baseCidr, basePrefix, existingNetworks, ipCount)
@@ -71,24 +81,23 @@ func (n NetworkManager) ReserveNetwork(
 	}
 
 	// Create the subnet template object
-	subnetTemplate := &crossplane.Subnet_Template{
-		Identifier: subnetIdentifier,
-		Cidr: &crossplane.Cidr{
+	subnetTemplate := &deployment.Network{
+		Identifier: networkIdentifier,
+		Cidr: &deployment.Cidr{
 			Value: subnet.String(),
 		},
-		Ips: make([]*crossplane.Ip, len(ipsList)),
+		Ips: make([]*deployment.Ip, len(ipsList)),
 	}
 
 	for i, ip := range ipsList {
-		subnetTemplate.Ips[i] = &crossplane.Ip{
+		subnetTemplate.Ips[i] = &deployment.Ip{
 			Value: ip.String(),
 		}
 	}
 
 	// Save the new subnet to the set of reserved networks
 	added, err := n.valkeyClient.Do(ctx, n.valkeyClient.B().
-		Sadd().
-		Key(storageKey).
+		Sadd().Key(networkKey).
 		Member(subnet.String()).
 		Build()).AsInt64()
 	if err != nil {
@@ -103,55 +112,24 @@ func (n NetworkManager) ReserveNetwork(
 
 func (n NetworkManager) FreeNetwork(
 	ctx context.Context,
-	networkIdentifier *crossplane.Identifier,
-	subnet *crossplane.Subnet_Template,
+	network *deployment.Network,
 ) error {
-	if networkIdentifier == nil {
-		return fmt.Errorf("network identifier is nil")
+	if err := network.Validate(); err != nil {
+		return fmt.Errorf("invalid network: %w", err)
 	}
-	if subnet == nil || subnet.Cidr == nil || subnet.Cidr.Value == "" {
-		return nil // Nothing to free
-	}
-
-	storageKey := fmt.Sprintf("%s:%s:%s", networksKey, networkIdentifier.GetSupportedCloud().String(), networkIdentifier.GetName())
+	storageKey := fmt.Sprintf(
+		"%s:%s:%s",
+		networksKey,
+		network.GetIdentifier().GetTarget().String(),
+		network.GetIdentifier().GetName(),
+	)
 	// Remove from reserved networks
-	err := n.valkeyClient.Do(ctx, n.valkeyClient.B().Srem().Key(storageKey).Member(subnet.Cidr.Value).Build()).Error()
+	err := n.valkeyClient.Do(ctx, n.valkeyClient.B().
+		Srem().Key(storageKey).
+		Member(network.GetCidr().GetValue()).
+		Build()).Error()
 	if err != nil {
 		return fmt.Errorf("failed to free network: %w", err)
-	}
-
-	return nil
-}
-
-func (n NetworkManager) FreeNetworkMany(
-	ctx context.Context,
-	networkIdentifier *crossplane.Identifier,
-	subnets []*crossplane.Subnet_Template,
-) error {
-	if networkIdentifier == nil {
-		return fmt.Errorf("network identifier is nil")
-	}
-	if len(subnets) == 0 {
-		return nil
-	}
-
-	storageKey := fmt.Sprintf("%s:%s:%s", networksKey, networkIdentifier.GetSupportedCloud().String(), networkIdentifier.GetName())
-
-	members := make([]string, 0, len(subnets))
-	for _, subnet := range subnets {
-		if subnet != nil && subnet.Cidr != nil && subnet.Cidr.Value != "" {
-			members = append(members, subnet.Cidr.Value)
-		}
-	}
-
-	if len(members) == 0 {
-		return nil
-	}
-
-	// Remove from reserved networks in one go
-	err := n.valkeyClient.Do(ctx, n.valkeyClient.B().Srem().Key(storageKey).Member(members...).Build()).Error()
-	if err != nil {
-		return fmt.Errorf("failed to free networks: %w", err)
 	}
 
 	return nil

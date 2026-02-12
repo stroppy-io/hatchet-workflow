@@ -7,8 +7,6 @@
 package database
 
 import (
-	_ "github.com/envoyproxy/protoc-gen-validate/validate"
-	crossplane "github.com/stroppy-io/hatchet-workflow/internal/proto/crossplane"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -23,33 +21,26 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Placement struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Target:
-	//
-	//	*Placement_Master_
-	//	*Placement_AllNodes_
-	//	*Placement_Replica_
-	//	*Placement_Dedicated
-	Target        isPlacement_Target `protobuf_oneof:"target"`
+type CommonSidecar struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Placement) Reset() {
-	*x = Placement{}
+func (x *CommonSidecar) Reset() {
+	*x = CommonSidecar{}
 	mi := &file_database_common_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Placement) String() string {
+func (x *CommonSidecar) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Placement) ProtoMessage() {}
+func (*CommonSidecar) ProtoMessage() {}
 
-func (x *Placement) ProtoReflect() protoreflect.Message {
+func (x *CommonSidecar) ProtoReflect() protoreflect.Message {
 	mi := &file_database_common_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -61,102 +52,34 @@ func (x *Placement) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Placement.ProtoReflect.Descriptor instead.
-func (*Placement) Descriptor() ([]byte, []int) {
+// Deprecated: Use CommonSidecar.ProtoReflect.Descriptor instead.
+func (*CommonSidecar) Descriptor() ([]byte, []int) {
 	return file_database_common_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Placement) GetTarget() isPlacement_Target {
-	if x != nil {
-		return x.Target
-	}
-	return nil
-}
-
-func (x *Placement) GetMaster() *Placement_Master {
-	if x != nil {
-		if x, ok := x.Target.(*Placement_Master_); ok {
-			return x.Master
-		}
-	}
-	return nil
-}
-
-func (x *Placement) GetAllNodes() *Placement_AllNodes {
-	if x != nil {
-		if x, ok := x.Target.(*Placement_AllNodes_); ok {
-			return x.AllNodes
-		}
-	}
-	return nil
-}
-
-func (x *Placement) GetReplica() *Placement_Replica {
-	if x != nil {
-		if x, ok := x.Target.(*Placement_Replica_); ok {
-			return x.Replica
-		}
-	}
-	return nil
-}
-
-func (x *Placement) GetDedicated() *Placement_DedicatedVm {
-	if x != nil {
-		if x, ok := x.Target.(*Placement_Dedicated); ok {
-			return x.Dedicated
-		}
-	}
-	return nil
-}
-
-type isPlacement_Target interface {
-	isPlacement_Target()
-}
-
-type Placement_Master_ struct {
-	Master *Placement_Master `protobuf:"bytes,1,opt,name=master,proto3,oneof"`
-}
-
-type Placement_AllNodes_ struct {
-	AllNodes *Placement_AllNodes `protobuf:"bytes,2,opt,name=all_nodes,json=allNodes,proto3,oneof"`
-}
-
-type Placement_Replica_ struct {
-	Replica *Placement_Replica `protobuf:"bytes,3,opt,name=replica,proto3,oneof"`
-}
-
-type Placement_Dedicated struct {
-	Dedicated *Placement_DedicatedVm `protobuf:"bytes,4,opt,name=dedicated,proto3,oneof"`
-}
-
-func (*Placement_Master_) isPlacement_Target() {}
-
-func (*Placement_AllNodes_) isPlacement_Target() {}
-
-func (*Placement_Replica_) isPlacement_Target() {}
-
-func (*Placement_Dedicated) isPlacement_Target() {}
-
-type Placement_Master struct {
+type CommonSidecar_NodeExporter struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Enabled       bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`            // default 9100
+	Collectors    []string               `protobuf:"bytes,3,rep,name=collectors,proto3" json:"collectors,omitempty"` // ["cpu", "memory", "disk"]
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Placement_Master) Reset() {
-	*x = Placement_Master{}
+func (x *CommonSidecar_NodeExporter) Reset() {
+	*x = CommonSidecar_NodeExporter{}
 	mi := &file_database_common_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Placement_Master) String() string {
+func (x *CommonSidecar_NodeExporter) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Placement_Master) ProtoMessage() {}
+func (*CommonSidecar_NodeExporter) ProtoMessage() {}
 
-func (x *Placement_Master) ProtoReflect() protoreflect.Message {
+func (x *CommonSidecar_NodeExporter) ProtoReflect() protoreflect.Message {
 	mi := &file_database_common_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -168,131 +91,28 @@ func (x *Placement_Master) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Placement_Master.ProtoReflect.Descriptor instead.
-func (*Placement_Master) Descriptor() ([]byte, []int) {
+// Deprecated: Use CommonSidecar_NodeExporter.ProtoReflect.Descriptor instead.
+func (*CommonSidecar_NodeExporter) Descriptor() ([]byte, []int) {
 	return file_database_common_proto_rawDescGZIP(), []int{0, 0}
 }
 
-type Placement_AllNodes struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Placement_AllNodes) Reset() {
-	*x = Placement_AllNodes{}
-	mi := &file_database_common_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Placement_AllNodes) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Placement_AllNodes) ProtoMessage() {}
-
-func (x *Placement_AllNodes) ProtoReflect() protoreflect.Message {
-	mi := &file_database_common_proto_msgTypes[2]
+func (x *CommonSidecar_NodeExporter) GetEnabled() bool {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
+		return x.Enabled
 	}
-	return mi.MessageOf(x)
+	return false
 }
 
-// Deprecated: Use Placement_AllNodes.ProtoReflect.Descriptor instead.
-func (*Placement_AllNodes) Descriptor() ([]byte, []int) {
-	return file_database_common_proto_rawDescGZIP(), []int{0, 1}
-}
-
-type Placement_Replica struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ReplicaIndex  uint32                 `protobuf:"varint,1,opt,name=replica_index,json=replicaIndex,proto3" json:"replica_index,omitempty"` // 0-based индекс реплики
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Placement_Replica) Reset() {
-	*x = Placement_Replica{}
-	mi := &file_database_common_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Placement_Replica) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Placement_Replica) ProtoMessage() {}
-
-func (x *Placement_Replica) ProtoReflect() protoreflect.Message {
-	mi := &file_database_common_proto_msgTypes[3]
+func (x *CommonSidecar_NodeExporter) GetPort() uint32 {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Placement_Replica.ProtoReflect.Descriptor instead.
-func (*Placement_Replica) Descriptor() ([]byte, []int) {
-	return file_database_common_proto_rawDescGZIP(), []int{0, 2}
-}
-
-func (x *Placement_Replica) GetReplicaIndex() uint32 {
-	if x != nil {
-		return x.ReplicaIndex
+		return x.Port
 	}
 	return 0
 }
 
-type Placement_DedicatedVm struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Hardware      *crossplane.Hardware   `protobuf:"bytes,1,opt,name=hardware,proto3" json:"hardware,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Placement_DedicatedVm) Reset() {
-	*x = Placement_DedicatedVm{}
-	mi := &file_database_common_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Placement_DedicatedVm) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Placement_DedicatedVm) ProtoMessage() {}
-
-func (x *Placement_DedicatedVm) ProtoReflect() protoreflect.Message {
-	mi := &file_database_common_proto_msgTypes[4]
+func (x *CommonSidecar_NodeExporter) GetCollectors() []string {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Placement_DedicatedVm.ProtoReflect.Descriptor instead.
-func (*Placement_DedicatedVm) Descriptor() ([]byte, []int) {
-	return file_database_common_proto_rawDescGZIP(), []int{0, 3}
-}
-
-func (x *Placement_DedicatedVm) GetHardware() *crossplane.Hardware {
-	if x != nil {
-		return x.Hardware
+		return x.Collectors
 	}
 	return nil
 }
@@ -301,20 +121,14 @@ var File_database_common_proto protoreflect.FileDescriptor
 
 const file_database_common_proto_rawDesc = "" +
 	"\n" +
-	"\x15database/common.proto\x12\bdatabase\x1a\x1bcrossplane/deployment.proto\x1a\x17validate/validate.proto\"\x98\x03\n" +
-	"\tPlacement\x124\n" +
-	"\x06master\x18\x01 \x01(\v2\x1a.database.Placement.MasterH\x00R\x06master\x12;\n" +
-	"\tall_nodes\x18\x02 \x01(\v2\x1c.database.Placement.AllNodesH\x00R\ballNodes\x127\n" +
-	"\areplica\x18\x03 \x01(\v2\x1b.database.Placement.ReplicaH\x00R\areplica\x12?\n" +
-	"\tdedicated\x18\x04 \x01(\v2\x1f.database.Placement.DedicatedVmH\x00R\tdedicated\x1a\b\n" +
-	"\x06Master\x1a\n" +
+	"\x15database/common.proto\x12\bdatabase\"m\n" +
+	"\rCommonSidecar\x1a\\\n" +
+	"\fNodeExporter\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x12\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12\x1e\n" +
 	"\n" +
-	"\bAllNodes\x1a.\n" +
-	"\aReplica\x12#\n" +
-	"\rreplica_index\x18\x01 \x01(\rR\freplicaIndex\x1aI\n" +
-	"\vDedicatedVm\x12:\n" +
-	"\bhardware\x18\x01 \x01(\v2\x14.crossplane.HardwareB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bhardwareB\r\n" +
-	"\x06target\x12\x03\xf8B\x01B@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/databaseb\x06proto3"
+	"collectors\x18\x03 \x03(\tR\n" +
+	"collectorsB@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/databaseb\x06proto3"
 
 var (
 	file_database_common_proto_rawDescOnce sync.Once
@@ -328,26 +142,17 @@ func file_database_common_proto_rawDescGZIP() []byte {
 	return file_database_common_proto_rawDescData
 }
 
-var file_database_common_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_database_common_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_database_common_proto_goTypes = []any{
-	(*Placement)(nil),             // 0: database.Placement
-	(*Placement_Master)(nil),      // 1: database.Placement.Master
-	(*Placement_AllNodes)(nil),    // 2: database.Placement.AllNodes
-	(*Placement_Replica)(nil),     // 3: database.Placement.Replica
-	(*Placement_DedicatedVm)(nil), // 4: database.Placement.DedicatedVm
-	(*crossplane.Hardware)(nil),   // 5: crossplane.Hardware
+	(*CommonSidecar)(nil),              // 0: database.CommonSidecar
+	(*CommonSidecar_NodeExporter)(nil), // 1: database.CommonSidecar.NodeExporter
 }
 var file_database_common_proto_depIdxs = []int32{
-	1, // 0: database.Placement.master:type_name -> database.Placement.Master
-	2, // 1: database.Placement.all_nodes:type_name -> database.Placement.AllNodes
-	3, // 2: database.Placement.replica:type_name -> database.Placement.Replica
-	4, // 3: database.Placement.dedicated:type_name -> database.Placement.DedicatedVm
-	5, // 4: database.Placement.DedicatedVm.hardware:type_name -> crossplane.Hardware
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	0, // [0:0] is the sub-list for method output_type
+	0, // [0:0] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_database_common_proto_init() }
@@ -355,19 +160,13 @@ func file_database_common_proto_init() {
 	if File_database_common_proto != nil {
 		return
 	}
-	file_database_common_proto_msgTypes[0].OneofWrappers = []any{
-		(*Placement_Master_)(nil),
-		(*Placement_AllNodes_)(nil),
-		(*Placement_Replica_)(nil),
-		(*Placement_Dedicated)(nil),
-	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_database_common_proto_rawDesc), len(file_database_common_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
