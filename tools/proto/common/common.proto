@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package common;
+
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/common";
+
+
+message ValidationErrors {
+    repeated string errors = 1 [(validate.rules).repeated.min_items = 1];
+}

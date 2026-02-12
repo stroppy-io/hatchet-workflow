@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package provision;
+
+import "database/database.proto";
+import "database/postgres.proto";
+import "deployment/deployment.proto";
+import "edge/edge.proto";
+import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/provision";
+
+message Dependency {
+    string from = 1 [(validate.rules).string.min_len = 1];  // ServiceNode.name
+    string to = 2 [(validate.rules).string.min_len = 1];    // ServiceNode.name
+    string purpose = 3 [(validate.rules).string.min_len = 1]; // "dcs", "pooling", "monitoring", "backup"
+}
+
+message Endpoint {
+    string ip = 1 [(validate.rules).string.min_len = 1];
+    uint32 port = 2 [(validate.rules).uint32 = {gte: 1, lte: 65535}];
+}
+
+message Container {
+    oneof container {
+        database.Postgres.Instance standalone_postgres = 1;
+        database.Postgres.Sidecar postgres_sidecar = 2;
+    }
+}
+
+message Service {
+    string name = 1 [(validate.rules).string.min_len = 1];     // unique: "patroni-1", "etcd-2", "pgbouncer"
+    map<string, uint32> ports = 3;
+    /*
+        Name of the ServiceNode this service is co-located on.
+        Empty = independent host (gets its own IP and worker).
+        Non-empty = shares IP and worker/compose with the referenced node.
+        In Docker: co-located services use network_mode: "service:<host>".
+        In VM: co-located services run on the same machine.
+    */
+    string colocated_on = 4;
+    map<string, string> config = 5;
+    map<string, string> metadata = 6;
+    oneof container {
+        database.Postgres.Instance standalone_postgres = 101;
+        database.Postgres.Sidecar postgres_sidecar = 102;
+    }
+}
+
+message ServicesGraph {
+    repeated Service services = 1 [(validate.rules).repeated.min_items = 1];
+    repeated Dependency dependencies = 2;
+}
+
+message PlacementGraph {
+    message Node {
+        Service service = 1 [(validate.rules).message.required = true];
+        deployment.Vm.Template vm_template = 2 [(validate.rules).message.required = true];
+        edge.Worker worker = 3 [(validate.rules).message.required = true];
+        map<string, string> metadata = 4;
+    }
+    deployment.Deployment.Template deployment_template = 3 [(validate.rules).message.required = true];
+    repeated Node nodes = 1 [(validate.rules).repeated.min_items = 1];
+    repeated Dependency dependencies = 2;
+}
+
+message DeployedPlacementGraph {
+    message Node {
+        Service service = 1 [(validate.rules).message.required = true];
+        deployment.Vm vm = 2 [(validate.rules).message.required = true];
+        edge.Worker worker = 3 [(validate.rules).message.required = true];
+        map<string, string> metadata = 4;
+    }
+    PlacementGraph placement_graph = 2 [(validate.rules).message.required = true];
+    deployment.Deployment deployment = 1 [(validate.rules).message.required = true];
+}
+
