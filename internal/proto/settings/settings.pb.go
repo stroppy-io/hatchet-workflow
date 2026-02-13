@@ -147,8 +147,14 @@ type DockerSettings struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	NetworkName     string                 `protobuf:"bytes,1,opt,name=network_name,json=networkName,proto3" json:"network_name,omitempty"`
 	EdgeWorkerImage string                 `protobuf:"bytes,2,opt,name=edge_worker_image,json=edgeWorkerImage,proto3" json:"edge_worker_image,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Base CIDR block for Docker bridge networks (e.g. "172.28.0.0/16").
+	// If empty, defaults to 172.28.0.0/16.
+	NetworkCidr *string `protobuf:"bytes,3,opt,name=network_cidr,json=networkCidr,proto3,oneof" json:"network_cidr,omitempty"`
+	// Subnet prefix length carved from the base CIDR (e.g. 24 → /24 subnets).
+	// If zero, defaults to 24.
+	NetworkPrefix *uint32 `protobuf:"varint,4,opt,name=network_prefix,json=networkPrefix,proto3,oneof" json:"network_prefix,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DockerSettings) Reset() {
@@ -193,6 +199,20 @@ func (x *DockerSettings) GetEdgeWorkerImage() string {
 		return x.EdgeWorkerImage
 	}
 	return ""
+}
+
+func (x *DockerSettings) GetNetworkCidr() string {
+	if x != nil && x.NetworkCidr != nil {
+		return *x.NetworkCidr
+	}
+	return ""
+}
+
+func (x *DockerSettings) GetNetworkPrefix() uint32 {
+	if x != nil && x.NetworkPrefix != nil {
+		return *x.NetworkPrefix
+	}
+	return 0
 }
 
 type Settings struct {
@@ -490,10 +510,14 @@ const file_settings_settings_proto_rawDesc = "" +
 	"\bcloud_id\x18\n" +
 	" \x01(\tB\a\xfaB\x04r\x02\x10\x01R\acloudId\x12$\n" +
 	"\tfolder_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bfolderId\x12\x1b\n" +
-	"\x04zone\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04zone\"q\n" +
+	"\x04zone\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04zone\"\xe9\x01\n" +
 	"\x0eDockerSettings\x12*\n" +
 	"\fnetwork_name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\vnetworkName\x123\n" +
-	"\x11edge_worker_image\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x0fedgeWorkerImage\"\xbd\x02\n" +
+	"\x11edge_worker_image\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x0fedgeWorkerImage\x12&\n" +
+	"\fnetwork_cidr\x18\x03 \x01(\tH\x00R\vnetworkCidr\x88\x01\x01\x12*\n" +
+	"\x0enetwork_prefix\x18\x04 \x01(\rH\x01R\rnetworkPrefix\x88\x01\x01B\x0f\n" +
+	"\r_network_cidrB\x11\n" +
+	"\x0f_network_prefix\"\xbd\x02\n" +
 	"\bSettings\x12G\n" +
 	"\x10preferred_target\x18\x01 \x01(\x0e2\x12.deployment.TargetB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0fpreferredTarget\x12T\n" +
 	"\x12hatchet_connection\x18\x02 \x01(\v2\x1b.settings.HatchetConnectionB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x11hatchetConnection\x12:\n" +
@@ -546,6 +570,7 @@ func file_settings_settings_proto_init() {
 	if File_settings_settings_proto != nil {
 		return
 	}
+	file_settings_settings_proto_msgTypes[2].OneofWrappers = []any{}
 	file_settings_settings_proto_msgTypes[3].OneofWrappers = []any{}
 	file_settings_settings_proto_msgTypes[5].OneofWrappers = []any{}
 	type x struct{}

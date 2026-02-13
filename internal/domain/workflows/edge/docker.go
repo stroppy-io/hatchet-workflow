@@ -46,6 +46,7 @@ type ContainerRunner struct {
 	client      *dockerClient.Client
 	networkName string
 	networkID   string
+	subnet      string
 	logger      hatchetLogger
 	mu          sync.Mutex
 	containers  map[string]string
@@ -61,10 +62,11 @@ type hatchetLogger interface {
 }
 
 type runContainerOptions struct {
-	dockerTarget   bool
-	runID          string
-	workerInternal string
-	publishPorts   bool
+	dockerTarget       bool
+	runID              string
+	workerInternal     string
+	publishPorts       bool
+	primaryContainerID string // when set, share this container's network namespace
 }
 
 func NewContainerRunner(networkName string, logger hatchetLogger) (*ContainerRunner, error) {
@@ -88,6 +90,7 @@ func (r *ContainerRunner) DeployContainersForTarget(
 	ctx context.Context,
 	runSettings *stroppy.RunSettings,
 	workerInternalIP string,
+	workerInternalCidr string,
 	containers []*provision.Container,
 ) error {
 	opts := runContainerOptions{publishPorts: true}
@@ -95,6 +98,7 @@ func (r *ContainerRunner) DeployContainersForTarget(
 		if err := r.setNetworkName(runSettings.GetSettings().GetDocker().GetNetworkName()); err != nil {
 			return err
 		}
+		r.setSubnet(workerInternalCidr)
 		opts = runContainerOptions{
 			dockerTarget:   true,
 			runID:          runSettings.GetRunId(),
@@ -112,21 +116,26 @@ func (r *ContainerRunner) deployContainers(
 ) error {
 	started := make([]startedContainer, 0, len(containers))
 
-	for _, c := range containers {
+	for i, c := range containers {
 		if c == nil {
 			return fmt.Errorf("container spec is nil")
 		}
 
-		startedContainer, err := r.runContainer(ctx, c, opts)
+		runOpts := opts
+		if i > 0 && opts.dockerTarget && len(started) > 0 {
+			runOpts.primaryContainerID = started[0].id
+		}
+
+		sc, err := r.runContainer(ctx, c, runOpts)
 		if err != nil {
 			r.rollbackBatch(ctx, started)
 			return fmt.Errorf("failed to run container %q: %w", c.GetName(), err)
 		}
 
 		r.mu.Lock()
-		r.containers[startedContainer.name] = startedContainer.id
+		r.containers[sc.name] = sc.id
 		r.mu.Unlock()
-		started = append(started, startedContainer)
+		started = append(started, sc)
 	}
 
 	return nil
@@ -175,7 +184,13 @@ func (r *ContainerRunner) runContainer(
 		return startedContainer{}, fmt.Errorf("failed to map host config for container %q: %w", c.GetName(), err)
 	}
 	containerName := containerRuntimeName(c, opts)
-	networkCfg := toNetworkConfig(r.getNetworkName(), r.getNetworkID(), c, opts)
+
+	// When sharing a primary container's network namespace, skip network config
+	// entirely — Docker rejects EndpointsConfig for container-mode networking.
+	var networkCfg *network.NetworkingConfig
+	if opts.primaryContainerID == "" {
+		networkCfg = toNetworkConfig(r.getNetworkName(), r.getNetworkID(), c, opts)
+	}
 
 	resp, err := r.client.ContainerCreate(
 		ctx,
@@ -204,6 +219,7 @@ func (r *ContainerRunner) ensureNetwork(ctx context.Context) error {
 		return nil
 	}
 	networkName := r.networkName
+	subnet := r.subnet
 	r.mu.Unlock()
 
 	inspect, err := r.client.NetworkInspect(ctx, networkName, network.InspectOptions{})
@@ -212,7 +228,16 @@ func (r *ContainerRunner) ensureNetwork(ctx context.Context) error {
 		return nil
 	}
 
-	resp, createErr := r.client.NetworkCreate(ctx, networkName, network.CreateOptions{Driver: bridgeDriver})
+	createOpts := network.CreateOptions{Driver: bridgeDriver}
+	if subnet != "" {
+		createOpts.IPAM = &network.IPAM{
+			Config: []network.IPAMConfig{
+				{Subnet: subnet},
+			},
+		}
+	}
+
+	resp, createErr := r.client.NetworkCreate(ctx, networkName, createOpts)
 	if createErr != nil {
 		inspect, inspectErr := r.client.NetworkInspect(ctx, networkName, network.InspectOptions{})
 		if inspectErr == nil {
@@ -498,6 +523,12 @@ func (r *ContainerRunner) getNetworkName() string {
 func (r *ContainerRunner) setNetworkID(networkID string) {
 	r.mu.Lock()
 	r.networkID = networkID
+	r.mu.Unlock()
+}
+
+func (r *ContainerRunner) setSubnet(subnet string) {
+	r.mu.Lock()
+	r.subnet = subnet
 	r.mu.Unlock()
 }
 

@@ -43,6 +43,7 @@ func SetupContainersTask(c *hatchetLib.Client, identifier *edge.Task_Identifier)
 				ctx.GetContext(),
 				input.GetRunSettings(),
 				input.GetWorkerInternalIp().GetValue(),
+				input.GetWorkerInternalCidr().GetValue(),
 				input.GetContainers(),
 			); err != nil {
 				return nil, err

@@ -221,6 +221,8 @@ func TestRunWorkflow(
 			}
 			return parentOutput, wp.Wait()
 		}),
+		hatchetLib.WithExecutionTimeout(30*time.Minute),
+		hatchetLib.WithRetries(3),
 		hatchetLib.WithParents(waitWorkersInHatchetTask),
 	)
 	/*
@@ -256,6 +258,8 @@ func TestRunWorkflow(
 			}
 			return parentOutput, wp.Wait()
 		}),
+		hatchetLib.WithExecutionTimeout(30*time.Minute),
+		hatchetLib.WithRetries(3),
 		hatchetLib.WithParents(runDatabaseContainers),
 	)
 	/*

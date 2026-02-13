@@ -121,6 +121,14 @@ func NewProvisionerService(
 	}
 }
 
+const (
+	defaultDockerNetworkCidr   = "172.28.0.0/16"
+	defaultDockerNetworkPrefix = 24
+
+	defaultCloudNetworkCidr   = "10.2.0.0/16"
+	defaultCloudNetworkPrefix = 24
+)
+
 func (p ProvisionerService) AcquireNetwork(
 	ctx context.Context,
 	target deployment.Target,
@@ -135,11 +143,9 @@ func (p ProvisionerService) AcquireNetwork(
 		count = 1
 	}
 	count += 1 // for stroppy deployment
-	networkName := settings.GetDocker().GetNetworkName()
-	switch target {
-	case deployment.Target_TARGET_YANDEX_CLOUD:
-		networkName = settings.GetYandexCloud().GetNetworkSettings().GetName()
-	}
+
+	networkName, baseCidr, basePrefix := resolveNetworkSettings(target, settings)
+
 	return p.networkManager.ReserveNetwork(
 		ctx,
 		&deployment.Identifier{
@@ -147,10 +153,33 @@ func (p ProvisionerService) AcquireNetwork(
 			Name:   networkName,
 			Target: target,
 		},
-		"10.2.0.0/16", // now hardcoded for yandex cloud need get from settings
-		24,            // now hardcoded for yandex cloud need get from settings
+		baseCidr,
+		basePrefix,
 		count,
 	)
+}
+
+func resolveNetworkSettings(
+	target deployment.Target,
+	s *settings.Settings,
+) (networkName string, baseCidr string, basePrefix int) {
+	switch target {
+	case deployment.Target_TARGET_YANDEX_CLOUD:
+		return s.GetYandexCloud().GetNetworkSettings().GetName(),
+			defaultCloudNetworkCidr,
+			defaultCloudNetworkPrefix
+	default:
+		docker := s.GetDocker()
+		cidr := docker.GetNetworkCidr()
+		if cidr == "" {
+			cidr = defaultDockerNetworkCidr
+		}
+		prefix := int(docker.GetNetworkPrefix())
+		if prefix == 0 {
+			prefix = defaultDockerNetworkPrefix
+		}
+		return docker.GetNetworkName(), cidr, prefix
+	}
 }
 
 func (p ProvisionerService) FreeNetwork(

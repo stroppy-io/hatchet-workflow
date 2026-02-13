@@ -440,6 +440,14 @@ func (m *DockerSettings) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if m.NetworkCidr != nil {
+		// no validation rules for NetworkCidr
+	}
+
+	if m.NetworkPrefix != nil {
+		// no validation rules for NetworkPrefix
+	}
+
 	if len(errors) > 0 {
 		return DockerSettingsMultiError(errors)
 	}

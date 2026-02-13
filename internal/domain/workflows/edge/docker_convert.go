@@ -74,6 +74,10 @@ func toHostConfig(c *provision.Container, opts runContainerOptions) (*container.
 		},
 	}
 
+	if opts.primaryContainerID != "" {
+		hostCfg.NetworkMode = container.NetworkMode("container:" + opts.primaryContainerID)
+	}
+
 	if opts.publishPorts {
 		if ports := c.GetPorts(); len(ports) > 0 {
 			bindings := nat.PortMap{}
