@@ -23,6 +23,66 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type HatchetConnection struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	Host          string                 `protobuf:"bytes,2,opt,name=host,proto3" json:"host,omitempty"`
+	Port          uint32                 `protobuf:"varint,3,opt,name=port,proto3" json:"port,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HatchetConnection) Reset() {
+	*x = HatchetConnection{}
+	mi := &file_settings_settings_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HatchetConnection) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HatchetConnection) ProtoMessage() {}
+
+func (x *HatchetConnection) ProtoReflect() protoreflect.Message {
+	mi := &file_settings_settings_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HatchetConnection.ProtoReflect.Descriptor instead.
+func (*HatchetConnection) Descriptor() ([]byte, []int) {
+	return file_settings_settings_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *HatchetConnection) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *HatchetConnection) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *HatchetConnection) GetPort() uint32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
 type YandexCloudSettings struct {
 	state            protoimpl.MessageState                `protogen:"open.v1"`
 	ProviderSettings *YandexCloudSettings_ProviderSettings `protobuf:"bytes,4,opt,name=provider_settings,json=providerSettings,proto3" json:"provider_settings,omitempty"`
@@ -34,7 +94,7 @@ type YandexCloudSettings struct {
 
 func (x *YandexCloudSettings) Reset() {
 	*x = YandexCloudSettings{}
-	mi := &file_settings_settings_proto_msgTypes[0]
+	mi := &file_settings_settings_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -46,7 +106,7 @@ func (x *YandexCloudSettings) String() string {
 func (*YandexCloudSettings) ProtoMessage() {}
 
 func (x *YandexCloudSettings) ProtoReflect() protoreflect.Message {
-	mi := &file_settings_settings_proto_msgTypes[0]
+	mi := &file_settings_settings_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,7 +119,7 @@ func (x *YandexCloudSettings) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use YandexCloudSettings.ProtoReflect.Descriptor instead.
 func (*YandexCloudSettings) Descriptor() ([]byte, []int) {
-	return file_settings_settings_proto_rawDescGZIP(), []int{0}
+	return file_settings_settings_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *YandexCloudSettings) GetProviderSettings() *YandexCloudSettings_ProviderSettings {
@@ -93,7 +153,7 @@ type DockerSettings struct {
 
 func (x *DockerSettings) Reset() {
 	*x = DockerSettings{}
-	mi := &file_settings_settings_proto_msgTypes[1]
+	mi := &file_settings_settings_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -105,7 +165,7 @@ func (x *DockerSettings) String() string {
 func (*DockerSettings) ProtoMessage() {}
 
 func (x *DockerSettings) ProtoReflect() protoreflect.Message {
-	mi := &file_settings_settings_proto_msgTypes[1]
+	mi := &file_settings_settings_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -118,7 +178,7 @@ func (x *DockerSettings) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DockerSettings.ProtoReflect.Descriptor instead.
 func (*DockerSettings) Descriptor() ([]byte, []int) {
-	return file_settings_settings_proto_rawDescGZIP(), []int{1}
+	return file_settings_settings_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *DockerSettings) GetNetworkName() string {
@@ -136,17 +196,18 @@ func (x *DockerSettings) GetEdgeWorkerImage() string {
 }
 
 type Settings struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	PreferredTarget deployment.Target      `protobuf:"varint,1,opt,name=preferred_target,json=preferredTarget,proto3,enum=deployment.Target" json:"preferred_target,omitempty"`
-	Docker          *DockerSettings        `protobuf:"bytes,2,opt,name=docker,proto3" json:"docker,omitempty"`
-	YandexCloud     *YandexCloudSettings   `protobuf:"bytes,4,opt,name=yandex_cloud,json=yandexCloud,proto3,oneof" json:"yandex_cloud,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	PreferredTarget   deployment.Target      `protobuf:"varint,1,opt,name=preferred_target,json=preferredTarget,proto3,enum=deployment.Target" json:"preferred_target,omitempty"`
+	HatchetConnection *HatchetConnection     `protobuf:"bytes,2,opt,name=hatchet_connection,json=hatchetConnection,proto3" json:"hatchet_connection,omitempty"`
+	Docker            *DockerSettings        `protobuf:"bytes,3,opt,name=docker,proto3" json:"docker,omitempty"`
+	YandexCloud       *YandexCloudSettings   `protobuf:"bytes,4,opt,name=yandex_cloud,json=yandexCloud,proto3,oneof" json:"yandex_cloud,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *Settings) Reset() {
 	*x = Settings{}
-	mi := &file_settings_settings_proto_msgTypes[2]
+	mi := &file_settings_settings_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -158,7 +219,7 @@ func (x *Settings) String() string {
 func (*Settings) ProtoMessage() {}
 
 func (x *Settings) ProtoReflect() protoreflect.Message {
-	mi := &file_settings_settings_proto_msgTypes[2]
+	mi := &file_settings_settings_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -171,7 +232,7 @@ func (x *Settings) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Settings.ProtoReflect.Descriptor instead.
 func (*Settings) Descriptor() ([]byte, []int) {
-	return file_settings_settings_proto_rawDescGZIP(), []int{2}
+	return file_settings_settings_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Settings) GetPreferredTarget() deployment.Target {
@@ -179,6 +240,13 @@ func (x *Settings) GetPreferredTarget() deployment.Target {
 		return x.PreferredTarget
 	}
 	return deployment.Target(0)
+}
+
+func (x *Settings) GetHatchetConnection() *HatchetConnection {
+	if x != nil {
+		return x.HatchetConnection
+	}
+	return nil
 }
 
 func (x *Settings) GetDocker() *DockerSettings {
@@ -194,88 +262,6 @@ func (x *Settings) GetYandexCloud() *YandexCloudSettings {
 	}
 	return nil
 }
-
-type SelectedTarget struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Target:
-	//
-	//	*SelectedTarget_DockerSettings
-	//	*SelectedTarget_YandexCloudSettings
-	Target        isSelectedTarget_Target `protobuf_oneof:"target"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SelectedTarget) Reset() {
-	*x = SelectedTarget{}
-	mi := &file_settings_settings_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SelectedTarget) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SelectedTarget) ProtoMessage() {}
-
-func (x *SelectedTarget) ProtoReflect() protoreflect.Message {
-	mi := &file_settings_settings_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SelectedTarget.ProtoReflect.Descriptor instead.
-func (*SelectedTarget) Descriptor() ([]byte, []int) {
-	return file_settings_settings_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *SelectedTarget) GetTarget() isSelectedTarget_Target {
-	if x != nil {
-		return x.Target
-	}
-	return nil
-}
-
-func (x *SelectedTarget) GetDockerSettings() *DockerSettings {
-	if x != nil {
-		if x, ok := x.Target.(*SelectedTarget_DockerSettings); ok {
-			return x.DockerSettings
-		}
-	}
-	return nil
-}
-
-func (x *SelectedTarget) GetYandexCloudSettings() *YandexCloudSettings {
-	if x != nil {
-		if x, ok := x.Target.(*SelectedTarget_YandexCloudSettings); ok {
-			return x.YandexCloudSettings
-		}
-	}
-	return nil
-}
-
-type isSelectedTarget_Target interface {
-	isSelectedTarget_Target()
-}
-
-type SelectedTarget_DockerSettings struct {
-	DockerSettings *DockerSettings `protobuf:"bytes,3,opt,name=docker_settings,json=dockerSettings,proto3,oneof"`
-}
-
-type SelectedTarget_YandexCloudSettings struct {
-	YandexCloudSettings *YandexCloudSettings `protobuf:"bytes,4,opt,name=yandex_cloud_settings,json=yandexCloudSettings,proto3,oneof"`
-}
-
-func (*SelectedTarget_DockerSettings) isSelectedTarget_Target() {}
-
-func (*SelectedTarget_YandexCloudSettings) isSelectedTarget_Target() {}
 
 // This structure used for create network (and subnet after) in cloud
 // You must specify it to use cloud deployment
@@ -314,7 +300,7 @@ func (x *YandexCloudSettings_NetworkSettings) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use YandexCloudSettings_NetworkSettings.ProtoReflect.Descriptor instead.
 func (*YandexCloudSettings_NetworkSettings) Descriptor() ([]byte, []int) {
-	return file_settings_settings_proto_rawDescGZIP(), []int{0, 0}
+	return file_settings_settings_proto_rawDescGZIP(), []int{1, 0}
 }
 
 func (x *YandexCloudSettings_NetworkSettings) GetName() string {
@@ -372,7 +358,7 @@ func (x *YandexCloudSettings_VmSettings) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use YandexCloudSettings_VmSettings.ProtoReflect.Descriptor instead.
 func (*YandexCloudSettings_VmSettings) Descriptor() ([]byte, []int) {
-	return file_settings_settings_proto_rawDescGZIP(), []int{0, 1}
+	return file_settings_settings_proto_rawDescGZIP(), []int{1, 1}
 }
 
 func (x *YandexCloudSettings_VmSettings) GetBaseImageId() string {
@@ -442,7 +428,7 @@ func (x *YandexCloudSettings_ProviderSettings) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use YandexCloudSettings_ProviderSettings.ProtoReflect.Descriptor instead.
 func (*YandexCloudSettings_ProviderSettings) Descriptor() ([]byte, []int) {
-	return file_settings_settings_proto_rawDescGZIP(), []int{0, 2}
+	return file_settings_settings_proto_rawDescGZIP(), []int{1, 2}
 }
 
 func (x *YandexCloudSettings_ProviderSettings) GetToken() string {
@@ -477,7 +463,11 @@ var File_settings_settings_proto protoreflect.FileDescriptor
 
 const file_settings_settings_proto_rawDesc = "" +
 	"\n" +
-	"\x17settings/settings.proto\x12\bsettings\x1a\x1bdeployment/deployment.proto\x1a\x17validate/validate.proto\"\xf5\x05\n" +
+	"\x17settings/settings.proto\x12\bsettings\x1a\x1bdeployment/deployment.proto\x1a\x17validate/validate.proto\"p\n" +
+	"\x11HatchetConnection\x12\x1d\n" +
+	"\x05token\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05token\x12\x1b\n" +
+	"\x04host\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04host\x12\x1f\n" +
+	"\x04port\x18\x03 \x01(\rB\v\xfaB\b*\x06\x18\xff\xff\x03(\x01R\x04port\"\xf5\x05\n" +
 	"\x13YandexCloudSettings\x12e\n" +
 	"\x11provider_settings\x18\x04 \x01(\v2..settings.YandexCloudSettings.ProviderSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x10providerSettings\x12b\n" +
 	"\x10network_settings\x18\x05 \x01(\v2-.settings.YandexCloudSettings.NetworkSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0fnetworkSettings\x12S\n" +
@@ -503,16 +493,13 @@ const file_settings_settings_proto_rawDesc = "" +
 	"\x04zone\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04zone\"q\n" +
 	"\x0eDockerSettings\x12*\n" +
 	"\fnetwork_name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\vnetworkName\x123\n" +
-	"\x11edge_worker_image\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x0fedgeWorkerImage\"\xe7\x01\n" +
+	"\x11edge_worker_image\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x0fedgeWorkerImage\"\xbd\x02\n" +
 	"\bSettings\x12G\n" +
-	"\x10preferred_target\x18\x01 \x01(\x0e2\x12.deployment.TargetB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0fpreferredTarget\x12:\n" +
-	"\x06docker\x18\x02 \x01(\v2\x18.settings.DockerSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06docker\x12E\n" +
+	"\x10preferred_target\x18\x01 \x01(\x0e2\x12.deployment.TargetB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0fpreferredTarget\x12T\n" +
+	"\x12hatchet_connection\x18\x02 \x01(\v2\x1b.settings.HatchetConnectionB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x11hatchetConnection\x12:\n" +
+	"\x06docker\x18\x03 \x01(\v2\x18.settings.DockerSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06docker\x12E\n" +
 	"\fyandex_cloud\x18\x04 \x01(\v2\x1d.settings.YandexCloudSettingsH\x00R\vyandexCloud\x88\x01\x01B\x0f\n" +
-	"\r_yandex_cloud\"\xb4\x01\n" +
-	"\x0eSelectedTarget\x12C\n" +
-	"\x0fdocker_settings\x18\x03 \x01(\v2\x18.settings.DockerSettingsH\x00R\x0edockerSettings\x12S\n" +
-	"\x15yandex_cloud_settings\x18\x04 \x01(\v2\x1d.settings.YandexCloudSettingsH\x00R\x13yandexCloudSettingsB\b\n" +
-	"\x06targetB@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/settingsb\x06proto3"
+	"\r_yandex_cloudB@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/settingsb\x06proto3"
 
 var (
 	file_settings_settings_proto_rawDescOnce sync.Once
@@ -528,10 +515,10 @@ func file_settings_settings_proto_rawDescGZIP() []byte {
 
 var file_settings_settings_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_settings_settings_proto_goTypes = []any{
-	(*YandexCloudSettings)(nil),                  // 0: settings.YandexCloudSettings
-	(*DockerSettings)(nil),                       // 1: settings.DockerSettings
-	(*Settings)(nil),                             // 2: settings.Settings
-	(*SelectedTarget)(nil),                       // 3: settings.SelectedTarget
+	(*HatchetConnection)(nil),                    // 0: settings.HatchetConnection
+	(*YandexCloudSettings)(nil),                  // 1: settings.YandexCloudSettings
+	(*DockerSettings)(nil),                       // 2: settings.DockerSettings
+	(*Settings)(nil),                             // 3: settings.Settings
 	(*YandexCloudSettings_NetworkSettings)(nil),  // 4: settings.YandexCloudSettings.NetworkSettings
 	(*YandexCloudSettings_VmSettings)(nil),       // 5: settings.YandexCloudSettings.VmSettings
 	(*YandexCloudSettings_ProviderSettings)(nil), // 6: settings.YandexCloudSettings.ProviderSettings
@@ -543,16 +530,15 @@ var file_settings_settings_proto_depIdxs = []int32{
 	4, // 1: settings.YandexCloudSettings.network_settings:type_name -> settings.YandexCloudSettings.NetworkSettings
 	5, // 2: settings.YandexCloudSettings.vm_settings:type_name -> settings.YandexCloudSettings.VmSettings
 	7, // 3: settings.Settings.preferred_target:type_name -> deployment.Target
-	1, // 4: settings.Settings.docker:type_name -> settings.DockerSettings
-	0, // 5: settings.Settings.yandex_cloud:type_name -> settings.YandexCloudSettings
-	1, // 6: settings.SelectedTarget.docker_settings:type_name -> settings.DockerSettings
-	0, // 7: settings.SelectedTarget.yandex_cloud_settings:type_name -> settings.YandexCloudSettings
-	8, // 8: settings.YandexCloudSettings.VmSettings.vm_user:type_name -> deployment.VmUser
-	9, // [9:9] is the sub-list for method output_type
-	9, // [9:9] is the sub-list for method input_type
-	9, // [9:9] is the sub-list for extension type_name
-	9, // [9:9] is the sub-list for extension extendee
-	0, // [0:9] is the sub-list for field type_name
+	0, // 4: settings.Settings.hatchet_connection:type_name -> settings.HatchetConnection
+	2, // 5: settings.Settings.docker:type_name -> settings.DockerSettings
+	1, // 6: settings.Settings.yandex_cloud:type_name -> settings.YandexCloudSettings
+	8, // 7: settings.YandexCloudSettings.VmSettings.vm_user:type_name -> deployment.VmUser
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_settings_settings_proto_init() }
@@ -560,11 +546,7 @@ func file_settings_settings_proto_init() {
 	if File_settings_settings_proto != nil {
 		return
 	}
-	file_settings_settings_proto_msgTypes[2].OneofWrappers = []any{}
-	file_settings_settings_proto_msgTypes[3].OneofWrappers = []any{
-		(*SelectedTarget_DockerSettings)(nil),
-		(*SelectedTarget_YandexCloudSettings)(nil),
-	}
+	file_settings_settings_proto_msgTypes[3].OneofWrappers = []any{}
 	file_settings_settings_proto_msgTypes[5].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

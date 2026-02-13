@@ -111,7 +111,6 @@ func (s *TerraformDeploymentService) CreateDeployment(
 
 	return &deployment.Deployment{
 		Template: depl,
-		Target:   deployment.Target_TARGET_YANDEX_CLOUD,
 		Vms:      createVms,
 	}, nil
 }

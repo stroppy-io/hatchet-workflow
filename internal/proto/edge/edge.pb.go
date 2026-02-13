@@ -71,7 +71,7 @@ func (x Task_Kind) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Task_Kind.Descriptor instead.
 func (Task_Kind) EnumDescriptor() ([]byte, []int) {
-	return file_edge_edge_proto_rawDescGZIP(), []int{2, 0}
+	return file_edge_edge_proto_rawDescGZIP(), []int{1, 0}
 }
 
 type Worker struct {
@@ -134,96 +134,6 @@ func (x *Worker) GetMetadata() map[string]string {
 	return nil
 }
 
-type HatchetConnection struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Token string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
-	// Types that are valid to be assigned to Connection:
-	//
-	//	*HatchetConnection_Url
-	//	*HatchetConnection_HostPort_
-	Connection    isHatchetConnection_Connection `protobuf_oneof:"connection"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *HatchetConnection) Reset() {
-	*x = HatchetConnection{}
-	mi := &file_edge_edge_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *HatchetConnection) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*HatchetConnection) ProtoMessage() {}
-
-func (x *HatchetConnection) ProtoReflect() protoreflect.Message {
-	mi := &file_edge_edge_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use HatchetConnection.ProtoReflect.Descriptor instead.
-func (*HatchetConnection) Descriptor() ([]byte, []int) {
-	return file_edge_edge_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *HatchetConnection) GetToken() string {
-	if x != nil {
-		return x.Token
-	}
-	return ""
-}
-
-func (x *HatchetConnection) GetConnection() isHatchetConnection_Connection {
-	if x != nil {
-		return x.Connection
-	}
-	return nil
-}
-
-func (x *HatchetConnection) GetUrl() string {
-	if x != nil {
-		if x, ok := x.Connection.(*HatchetConnection_Url); ok {
-			return x.Url
-		}
-	}
-	return ""
-}
-
-func (x *HatchetConnection) GetHostPort() *HatchetConnection_HostPort {
-	if x != nil {
-		if x, ok := x.Connection.(*HatchetConnection_HostPort_); ok {
-			return x.HostPort
-		}
-	}
-	return nil
-}
-
-type isHatchetConnection_Connection interface {
-	isHatchetConnection_Connection()
-}
-
-type HatchetConnection_Url struct {
-	Url string `protobuf:"bytes,2,opt,name=url,proto3,oneof"`
-}
-
-type HatchetConnection_HostPort_ struct {
-	HostPort *HatchetConnection_HostPort `protobuf:"bytes,3,opt,name=host_port,json=hostPort,proto3,oneof"`
-}
-
-func (*HatchetConnection_Url) isHatchetConnection_Connection() {}
-
-func (*HatchetConnection_HostPort_) isHatchetConnection_Connection() {}
-
 type Task struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -232,7 +142,7 @@ type Task struct {
 
 func (x *Task) Reset() {
 	*x = Task{}
-	mi := &file_edge_edge_proto_msgTypes[2]
+	mi := &file_edge_edge_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -244,7 +154,7 @@ func (x *Task) String() string {
 func (*Task) ProtoMessage() {}
 
 func (x *Task) ProtoReflect() protoreflect.Message {
-	mi := &file_edge_edge_proto_msgTypes[2]
+	mi := &file_edge_edge_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -257,59 +167,7 @@ func (x *Task) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Task.ProtoReflect.Descriptor instead.
 func (*Task) Descriptor() ([]byte, []int) {
-	return file_edge_edge_proto_rawDescGZIP(), []int{2}
-}
-
-type HatchetConnection_HostPort struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	Port          string                 `protobuf:"bytes,2,opt,name=port,proto3" json:"port,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *HatchetConnection_HostPort) Reset() {
-	*x = HatchetConnection_HostPort{}
-	mi := &file_edge_edge_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *HatchetConnection_HostPort) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*HatchetConnection_HostPort) ProtoMessage() {}
-
-func (x *HatchetConnection_HostPort) ProtoReflect() protoreflect.Message {
-	mi := &file_edge_edge_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use HatchetConnection_HostPort.ProtoReflect.Descriptor instead.
-func (*HatchetConnection_HostPort) Descriptor() ([]byte, []int) {
-	return file_edge_edge_proto_rawDescGZIP(), []int{1, 0}
-}
-
-func (x *HatchetConnection_HostPort) GetHost() string {
-	if x != nil {
-		return x.Host
-	}
-	return ""
-}
-
-func (x *HatchetConnection_HostPort) GetPort() string {
-	if x != nil {
-		return x.Port
-	}
-	return ""
+	return file_edge_edge_proto_rawDescGZIP(), []int{1}
 }
 
 type Task_Identifier struct {
@@ -323,7 +181,7 @@ type Task_Identifier struct {
 
 func (x *Task_Identifier) Reset() {
 	*x = Task_Identifier{}
-	mi := &file_edge_edge_proto_msgTypes[5]
+	mi := &file_edge_edge_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -335,7 +193,7 @@ func (x *Task_Identifier) String() string {
 func (*Task_Identifier) ProtoMessage() {}
 
 func (x *Task_Identifier) ProtoReflect() protoreflect.Message {
-	mi := &file_edge_edge_proto_msgTypes[5]
+	mi := &file_edge_edge_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -348,7 +206,7 @@ func (x *Task_Identifier) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Task_Identifier.ProtoReflect.Descriptor instead.
 func (*Task_Identifier) Descriptor() ([]byte, []int) {
-	return file_edge_edge_proto_rawDescGZIP(), []int{2, 0}
+	return file_edge_edge_proto_rawDescGZIP(), []int{1, 0}
 }
 
 func (x *Task_Identifier) GetRunId() string {
@@ -384,16 +242,7 @@ const file_edge_edge_proto_rawDesc = "" +
 	"\bmetadata\x18\x06 \x03(\v2\x1a.edge.Worker.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xf3\x01\n" +
-	"\x11HatchetConnection\x12\x1d\n" +
-	"\x05token\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05token\x12\x1b\n" +
-	"\x03url\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01H\x00R\x03url\x12I\n" +
-	"\thost_port\x18\x03 \x01(\v2 .edge.HatchetConnection.HostPortB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\bhostPort\x1aD\n" +
-	"\bHostPort\x12\x1b\n" +
-	"\x04host\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04host\x12\x1b\n" +
-	"\x04port\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04portB\x11\n" +
-	"\n" +
-	"connection\x12\x03\xf8B\x01\"\xee\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xee\x01\n" +
 	"\x04Task\x1a}\n" +
 	"\n" +
 	"Identifier\x12\x1e\n" +
@@ -419,26 +268,23 @@ func file_edge_edge_proto_rawDescGZIP() []byte {
 }
 
 var file_edge_edge_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_edge_edge_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_edge_edge_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_edge_edge_proto_goTypes = []any{
-	(Task_Kind)(0),                     // 0: edge.Task.Kind
-	(*Worker)(nil),                     // 1: edge.Worker
-	(*HatchetConnection)(nil),          // 2: edge.HatchetConnection
-	(*Task)(nil),                       // 3: edge.Task
-	nil,                                // 4: edge.Worker.MetadataEntry
-	(*HatchetConnection_HostPort)(nil), // 5: edge.HatchetConnection.HostPort
-	(*Task_Identifier)(nil),            // 6: edge.Task.Identifier
+	(Task_Kind)(0),          // 0: edge.Task.Kind
+	(*Worker)(nil),          // 1: edge.Worker
+	(*Task)(nil),            // 2: edge.Task
+	nil,                     // 3: edge.Worker.MetadataEntry
+	(*Task_Identifier)(nil), // 4: edge.Task.Identifier
 }
 var file_edge_edge_proto_depIdxs = []int32{
-	6, // 0: edge.Worker.acceptable_tasks:type_name -> edge.Task.Identifier
-	4, // 1: edge.Worker.metadata:type_name -> edge.Worker.MetadataEntry
-	5, // 2: edge.HatchetConnection.host_port:type_name -> edge.HatchetConnection.HostPort
-	0, // 3: edge.Task.Identifier.kind:type_name -> edge.Task.Kind
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	4, // 0: edge.Worker.acceptable_tasks:type_name -> edge.Task.Identifier
+	3, // 1: edge.Worker.metadata:type_name -> edge.Worker.MetadataEntry
+	0, // 2: edge.Task.Identifier.kind:type_name -> edge.Task.Kind
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_edge_edge_proto_init() }
@@ -446,17 +292,13 @@ func file_edge_edge_proto_init() {
 	if File_edge_edge_proto != nil {
 		return
 	}
-	file_edge_edge_proto_msgTypes[1].OneofWrappers = []any{
-		(*HatchetConnection_Url)(nil),
-		(*HatchetConnection_HostPort_)(nil),
-	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edge_edge_proto_rawDesc), len(file_edge_edge_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -216,7 +216,7 @@ func (p *postgresPlacementBuilder) addEtcdAddons(
 			},
 		})
 		if etcd.GetMonitor() {
-			item.Containers = append(item.Containers, p.newNodeExporterContainer("etcd-"+strconv.Itoa(i+1), true))
+			item.Containers = append(item.Containers, NewNodeExporterContainer("etcd-"+strconv.Itoa(i+1), true))
 		}
 		names = append(names, name)
 	}
@@ -298,7 +298,7 @@ func (p *postgresPlacementBuilder) addBackupAddons(
 }
 
 func (p *postgresPlacementBuilder) addPostgresMonitoring(item *provision.PlacementIntent_Item, suffix string) {
-	item.Containers = append(item.Containers, p.newNodeExporterContainer(suffix, true))
+	item.Containers = append(item.Containers, NewNodeExporterContainer(suffix, true))
 	item.Containers = append(item.Containers, &provision.Container{
 		Id:      "postgres-exporter-" + suffix,
 		Name:    "postgres-exporter-" + suffix,
@@ -394,7 +394,7 @@ func (p *postgresPlacementBuilder) newPostgresContainer(
 	}
 }
 
-func (p *postgresPlacementBuilder) newNodeExporterContainer(suffix string, monitor bool) *provision.Container {
+func NewNodeExporterContainer(suffix string, monitor bool) *provision.Container {
 	return &provision.Container{
 		Id:      "node-exporter-" + suffix,
 		Name:    "node-exporter-" + suffix,
@@ -595,9 +595,7 @@ func (p *postgresPlacementBuilder) resolveRuntimeConfig(items []*provision.Place
 				c.Env["ETCD_ADVERTISE_CLIENT_URLS"] = fmt.Sprintf("http://%s:%d", itemIP, clientPort)
 
 			case c.GetPostgres() != nil:
-				pg := c.GetPostgres()
-				patroni := pg.GetSettings().GetPatroni()
-				if patroni != nil && patroni.GetEnabled() {
+				if c.GetPostgres().GetSettings().GetPatroni().GetEnabled() {
 					if len(etcdHosts) == 0 {
 						return "", fmt.Errorf("patroni is enabled but etcd endpoints are empty")
 					}

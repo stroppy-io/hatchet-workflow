@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	deployment "github.com/stroppy-io/hatchet-workflow/internal/proto/deployment"
 )
 
 // ensure the imports are used
@@ -33,6 +35,8 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = deployment.Target(0)
 )
 
 // Validate checks the field values on Workflows with the rules defined in the
@@ -401,6 +405,57 @@ func (m *Workflows_StroppyTestSuite_Input) validate(all bool) error {
 		}
 	}
 
+	if m.GetSettings() == nil {
+		err := Workflows_StroppyTestSuite_InputValidationError{
+			field:  "Settings",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetSettings()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Workflows_StroppyTestSuite_InputValidationError{
+					field:  "Settings",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Workflows_StroppyTestSuite_InputValidationError{
+					field:  "Settings",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSettings()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Workflows_StroppyTestSuite_InputValidationError{
+				field:  "Settings",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if _, ok := deployment.Target_name[int32(m.GetTarget())]; !ok {
+		err := Workflows_StroppyTestSuite_InputValidationError{
+			field:  "Target",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return Workflows_StroppyTestSuite_InputMultiError(errors)
 	}
@@ -650,9 +705,9 @@ func (m *Workflows_StroppyTest_Input) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetContext() == nil {
+	if m.GetRunSettings() == nil {
 		err := Workflows_StroppyTest_InputValidationError{
-			field:  "Context",
+			field:  "RunSettings",
 			reason: "value is required",
 		}
 		if !all {
@@ -662,11 +717,11 @@ func (m *Workflows_StroppyTest_Input) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetContext()).(type) {
+		switch v := interface{}(m.GetRunSettings()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, Workflows_StroppyTest_InputValidationError{
-					field:  "Context",
+					field:  "RunSettings",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -674,16 +729,16 @@ func (m *Workflows_StroppyTest_Input) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, Workflows_StroppyTest_InputValidationError{
-					field:  "Context",
+					field:  "RunSettings",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetContext()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetRunSettings()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return Workflows_StroppyTest_InputValidationError{
-				field:  "Context",
+				field:  "RunSettings",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -793,10 +848,10 @@ func (m *Workflows_StroppyTest_Output) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetResult() == nil {
+	if len(m.GetResult()) < 1 {
 		err := Workflows_StroppyTest_OutputValidationError{
 			field:  "Result",
-			reason: "value is required",
+			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err
@@ -804,33 +859,38 @@ func (m *Workflows_StroppyTest_Output) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if all {
-		switch v := interface{}(m.GetResult()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Workflows_StroppyTest_OutputValidationError{
-					field:  "Result",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
+	for idx, item := range m.GetResult() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Workflows_StroppyTest_OutputValidationError{
+						field:  fmt.Sprintf("Result[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Workflows_StroppyTest_OutputValidationError{
+						field:  fmt.Sprintf("Result[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
 			}
-		case interface{ Validate() error }:
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				errors = append(errors, Workflows_StroppyTest_OutputValidationError{
-					field:  "Result",
+				return Workflows_StroppyTest_OutputValidationError{
+					field:  fmt.Sprintf("Result[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
-				})
+				}
 			}
 		}
-	} else if v, ok := interface{}(m.GetResult()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Workflows_StroppyTest_OutputValidationError{
-				field:  "Result",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
+
 	}
 
 	if len(errors) > 0 {

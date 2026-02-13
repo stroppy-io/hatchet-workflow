@@ -31,8 +31,7 @@ const (
 )
 
 const (
-	HatchetServerUrlKey         consts.EnvKey = "HATCHET_CLIENT_SERVER_URL"
-	HatchetServerHostPortKey    consts.EnvKey = "HATCHET_CLIENT_HOST_PORT"
+	HatchetClientHostPortKey    consts.EnvKey = "HATCHET_CLIENT_HOST_PORT"
 	HatchetClientTokenKey       consts.EnvKey = "HATCHET_CLIENT_TOKEN"
 	HatchetClientTlsStrategyKey consts.EnvKey = "HATCHET_CLIENT_TLS_STRATEGY"
 
@@ -56,6 +55,30 @@ func databaseMetadata(runId string) map[string]string {
 		metadataRoleKey:  metadataDatabaseValue,
 		metadataRunIdKey: runId,
 	}
+}
+
+func SearchDatabasePlacementItem(
+	placement *provision.DeployedPlacement,
+) []*provision.Placement_Item {
+	var items []*provision.Placement_Item
+	for _, item := range placement.GetItems() {
+		if item.GetPlacementItem().GetMetadata()[metadataRoleKey] == metadataDatabaseValue {
+			items = append(items, item.GetPlacementItem())
+		}
+	}
+	return items
+}
+
+func SearchStroppyPlacementItem(
+	placement *provision.DeployedPlacement,
+) []*provision.Placement_Item {
+	var items []*provision.Placement_Item
+	for _, item := range placement.GetItems() {
+		if item.GetPlacementItem().GetMetadata()[metadataRoleKey] == metadataRoleStroppyValue {
+			items = append(items, item.GetPlacementItem())
+		}
+	}
+	return items
 }
 
 type NetworkManager interface {
@@ -98,35 +121,31 @@ func NewProvisionerService(
 	}
 }
 
-func getDeploymentTarget(target *settings.SelectedTarget) deployment.Target {
-	switch target.GetTarget().(type) {
-	case *settings.SelectedTarget_DockerSettings:
-		return deployment.Target_TARGET_DOCKER
-	case *settings.SelectedTarget_YandexCloudSettings:
-		return deployment.Target_TARGET_YANDEX_CLOUD
-	default:
-		return deployment.Target_TARGET_UNSPECIFIED
-	}
-}
-
 func (p ProvisionerService) AcquireNetwork(
 	ctx context.Context,
-	testRunCtx *stroppy.TestRunContext,
+	target deployment.Target,
+	test *stroppy.Test,
+	settings *settings.Settings,
 ) (*deployment.Network, error) {
 	var count int
-	switch testRunCtx.GetTest().GetDatabaseRef().(type) {
+	switch test.GetDatabaseRef().(type) {
 	case *stroppy.Test_DatabaseTemplate:
-		count = RequiredIPCount(testRunCtx.GetTest().GetDatabaseTemplate())
+		count = RequiredIPCount(test.GetDatabaseTemplate())
 	case *stroppy.Test_ConnectionString:
 		count = 1
 	}
 	count += 1 // for stroppy deployment
+	networkName := settings.GetDocker().GetNetworkName()
+	switch target {
+	case deployment.Target_TARGET_YANDEX_CLOUD:
+		networkName = settings.GetYandexCloud().GetNetworkSettings().GetName()
+	}
 	return p.networkManager.ReserveNetwork(
 		ctx,
 		&deployment.Identifier{
 			Id:     ids.NewUlid().Lower().String(),
-			Name:   fmt.Sprintf("stroppy-network-%s", testRunCtx.GetRunId()),
-			Target: getDeploymentTarget(testRunCtx.GetSelectedTarget()),
+			Name:   networkName,
+			Target: target,
 		},
 		"10.2.0.0/16", // now hardcoded for yandex cloud need get from settings
 		24,            // now hardcoded for yandex cloud need get from settings
@@ -179,15 +198,15 @@ func (p ProvisionerService) getCloudInitForEdgeWorker(
 	workerName string,
 	vmUser *deployment.VmUser,
 	acceptableTasks []*edge.Task_Identifier,
+	settings *settings.HatchetConnection,
 ) (*deployment.CloudInit, error) {
 	return scripting.InstallEdgeWorkerCloudInit(
 		scripting.WithUser(vmUser),
 		scripting.WithEnv(map[string]string{
 			edgeDomain.WorkerNameEnvKey:            workerName,
 			edgeDomain.WorkerAcceptableTasksEnvKey: edgeDomain.TaskIdListToString(acceptableTasks),
-			HatchetServerUrlKey:                    os.Getenv(HatchetServerUrlKey),
-			HatchetServerHostPortKey:               os.Getenv(HatchetServerHostPortKey),
-			HatchetClientTokenKey:                  os.Getenv(HatchetClientTokenKey),
+			HatchetClientHostPortKey:               net.JoinHostPort(settings.GetHost(), fmt.Sprintf("%d", settings.GetPort())),
+			HatchetClientTokenKey:                  settings.GetToken(),
 			HatchetClientTlsStrategyKey:            HatchetClientTlsStrategyNone,
 			logger.LevelEnvKey: defaults.StringOrDefault(
 				os.Getenv(logger.LevelEnvKey),
@@ -208,20 +227,24 @@ func (p ProvisionerService) getCloudInitForEdgeWorker(
 
 func (p ProvisionerService) BuildPlacement(
 	_ context.Context,
-	testRunCtx *stroppy.TestRunContext,
+	runId string,
+	target deployment.Target,
+	settings *settings.Settings,
+	test *stroppy.Test,
 	intent *provision.PlacementIntent,
 ) (*provision.Placement, error) {
 	var items []*provision.Placement_Item
-	runId := ids.ParseRunId(testRunCtx.GetRunId())
+	runIdParsed := ids.ParseRunId(runId)
+	vmTemplates := make([]*deployment.Vm_Template, 0)
 	for _, item := range intent.GetItems() {
-		workerName := edgeDomain.NewWorkerName(runId, item.GetName())
+		workerName := edgeDomain.NewWorkerName(runIdParsed, item.GetName())
 		workerAcceptableTasks := []*edge.Task_Identifier{
-			edgeDomain.NewTaskId(runId, edge.Task_KIND_SETUP_CONTAINERS),
-			edgeDomain.NewTaskId(runId, edge.Task_KIND_RUN_STROPPY),
+			edgeDomain.NewTaskId(runIdParsed, edge.Task_KIND_SETUP_CONTAINERS),
+			edgeDomain.NewTaskId(runIdParsed, edge.Task_KIND_RUN_STROPPY),
 		}
 		metadata := lo.Assign(
 			item.GetMetadata(),
-			databaseMetadata(testRunCtx.GetRunId()),
+			databaseMetadata(runId),
 		)
 		worker := &edge.Worker{
 			WorkerName:      workerName,
@@ -231,55 +254,87 @@ func (p ProvisionerService) BuildPlacement(
 		workerCloudInit, err := p.getCloudInitForEdgeWorker(
 			workerName,
 			// TODO: dispatch by cloud
-			testRunCtx.GetSelectedTarget().GetYandexCloudSettings().GetVmSettings().GetVmUser(),
+			settings.GetYandexCloud().GetVmSettings().GetVmUser(),
 			workerAcceptableTasks,
+			settings.GetHatchetConnection(),
 		)
 		if err != nil {
 			return nil, err
 		}
+		vmTemplate := &deployment.Vm_Template{
+			Identifier: &deployment.Identifier{
+				Id:     ids.NewUlid().Lower().String(),
+				Name:   workerName,
+				Target: target,
+			},
+			Hardware: item.GetHardware(),
+			// TODO: dispatch by cloud
+			BaseImageId: settings.GetYandexCloud().GetVmSettings().GetBaseImageId(),
+			HasPublicIp: settings.GetYandexCloud().GetVmSettings().GetEnablePublicIps(),
+			VmUser:      settings.GetYandexCloud().GetVmSettings().GetVmUser(),
+			InternalIp:  item.GetInternalIp(),
+			CloudInit:   workerCloudInit,
+			Labels:      metadata,
+		}
+		vmTemplates = append(vmTemplates, vmTemplate)
 		items = append(items, &provision.Placement_Item{
 			Name:       item.GetName(),
 			Containers: item.GetContainers(),
-			VmTemplate: &deployment.Vm_Template{
-				Identifier: &deployment.Identifier{
-					Id:     ids.NewUlid().Lower().String(),
-					Name:   workerName,
-					Target: getDeploymentTarget(testRunCtx.GetSelectedTarget()),
-				},
-				Hardware: item.GetHardware(),
-				// TODO: dispatch by cloud
-				BaseImageId: testRunCtx.GetSelectedTarget().GetYandexCloudSettings().GetVmSettings().GetBaseImageId(),
-				HasPublicIp: testRunCtx.GetSelectedTarget().GetYandexCloudSettings().GetVmSettings().GetEnablePublicIps(),
-				VmUser:      testRunCtx.GetSelectedTarget().GetYandexCloudSettings().GetVmSettings().GetVmUser(),
-				InternalIp:  item.GetInternalIp(),
-				CloudInit:   workerCloudInit,
-				Labels:      metadata,
-			},
-			Worker:   worker,
-			Metadata: metadata,
+			VmTemplate: vmTemplate,
+			Worker:     worker,
+			Metadata:   metadata,
 		})
 	}
 
-	stroppyWorkerName := edgeDomain.NewWorkerName(runId, metadataRoleStroppyValue)
+	stroppyWorkerName := edgeDomain.NewWorkerName(runIdParsed, metadataRoleStroppyValue)
 	stroppyWorkerIp, err := p.getStroppyWorkerIp(intent.GetNetwork())
 	if err != nil {
 		return nil, err
 	}
 	stroppyWorkerAcceptableTasks := []*edge.Task_Identifier{
-		edgeDomain.NewTaskId(runId, edge.Task_KIND_SETUP_CONTAINERS),
-		edgeDomain.NewTaskId(runId, edge.Task_KIND_INSTALL_STROPPY),
-		edgeDomain.NewTaskId(runId, edge.Task_KIND_RUN_STROPPY),
+		edgeDomain.NewTaskId(runIdParsed, edge.Task_KIND_SETUP_CONTAINERS),
+		edgeDomain.NewTaskId(runIdParsed, edge.Task_KIND_INSTALL_STROPPY),
+		edgeDomain.NewTaskId(runIdParsed, edge.Task_KIND_RUN_STROPPY),
 	}
 	stroppyCloudInit, err := p.getCloudInitForEdgeWorker(
 		stroppyWorkerName,
 		// TODO: dispatch by cloud
-		testRunCtx.GetSelectedTarget().GetYandexCloudSettings().GetVmSettings().GetVmUser(),
+		settings.GetYandexCloud().GetVmSettings().GetVmUser(),
 		stroppyWorkerAcceptableTasks,
+		settings.GetHatchetConnection(),
 	)
 	if err != nil {
 		return nil, err
 	}
-	stroppyMd := stroppyMetadata(testRunCtx.GetRunId())
+	stroppyMd := stroppyMetadata(runId)
+
+	stroppyPlacementItem := &provision.Placement_Item{
+		Name: metadataRoleStroppyValue,
+		Containers: []*provision.Container{
+			NewNodeExporterContainer(metadataRoleStroppyValue, true),
+		},
+		VmTemplate: &deployment.Vm_Template{
+			Identifier: &deployment.Identifier{
+				Id:     ids.NewUlid().Lower().String(),
+				Name:   stroppyWorkerName,
+				Target: target,
+			},
+			Hardware: test.GetStroppyHardware(),
+			// TODO: dispatch by cloud
+			BaseImageId: settings.GetYandexCloud().GetVmSettings().GetBaseImageId(),
+			HasPublicIp: settings.GetYandexCloud().GetVmSettings().GetEnablePublicIps(),
+			VmUser:      settings.GetYandexCloud().GetVmSettings().GetVmUser(),
+			InternalIp:  stroppyWorkerIp,
+			CloudInit:   stroppyCloudInit,
+			Labels:      stroppyMd,
+		},
+		Worker: &edge.Worker{
+			WorkerName:      stroppyWorkerName,
+			AcceptableTasks: stroppyWorkerAcceptableTasks,
+			Metadata:        stroppyMd,
+		},
+		Metadata: stroppyMd,
+	}
 	return &provision.Placement{
 		Network:          intent.GetNetwork(),
 		ConnectionString: intent.GetConnectionString(),
@@ -287,37 +342,13 @@ func (p ProvisionerService) BuildPlacement(
 			Identifier: &deployment.Identifier{
 				Id:     ids.NewUlid().Lower().String(),
 				Name:   globalDeploymentName,
-				Target: getDeploymentTarget(testRunCtx.GetSelectedTarget()),
+				Target: target,
 			},
 			Network:     intent.GetNetwork(),
-			VmTemplates: make([]*deployment.Vm_Template, 0),
+			VmTemplates: append(vmTemplates, stroppyPlacementItem.GetVmTemplate()),
 			Metadata:    stroppyMd,
 		},
-		Items: append(items, &provision.Placement_Item{
-			Name:       metadataRoleStroppyValue,
-			Containers: []*provision.Container{},
-			VmTemplate: &deployment.Vm_Template{
-				Identifier: &deployment.Identifier{
-					Id:     ids.NewUlid().Lower().String(),
-					Name:   stroppyWorkerName,
-					Target: getDeploymentTarget(testRunCtx.GetSelectedTarget()),
-				},
-				Hardware: testRunCtx.GetTest().GetStroppyHardware(),
-				// TODO: dispatch by cloud
-				BaseImageId: testRunCtx.GetSelectedTarget().GetYandexCloudSettings().GetVmSettings().GetBaseImageId(),
-				HasPublicIp: testRunCtx.GetSelectedTarget().GetYandexCloudSettings().GetVmSettings().GetEnablePublicIps(),
-				VmUser:      testRunCtx.GetSelectedTarget().GetYandexCloudSettings().GetVmSettings().GetVmUser(),
-				InternalIp:  stroppyWorkerIp,
-				CloudInit:   stroppyCloudInit,
-				Labels:      stroppyMd,
-			},
-			Worker: &edge.Worker{
-				WorkerName:      stroppyWorkerName,
-				AcceptableTasks: stroppyWorkerAcceptableTasks,
-				Metadata:        stroppyMd,
-			},
-			Metadata: stroppyMd,
-		}),
+		Items: append(items, stroppyPlacementItem),
 	}, nil
 }
 
@@ -357,8 +388,12 @@ func (p ProvisionerService) DestroyPlan(
 	ctx context.Context,
 	deployedPlacement *provision.DeployedPlacement,
 ) error {
-	if err := p.deploymentService.DestroyDeployment(ctx, deployedPlacement.GetDeployment()); err != nil {
-		return err
-	}
-	return p.networkManager.FreeNetwork(ctx, deployedPlacement.GetNetwork())
+	return p.deploymentService.DestroyDeployment(ctx, deployedPlacement.GetDeployment())
+}
+
+func (p ProvisionerService) DestroyNetwork(
+	ctx context.Context,
+	network *deployment.Network,
+) error {
+	return p.networkManager.FreeNetwork(ctx, network)
 }

@@ -461,9 +461,9 @@ func (m *Tasks_StartDockerContainers_Input) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetContext() == nil {
+	if m.GetRunSettings() == nil {
 		err := Tasks_StartDockerContainers_InputValidationError{
-			field:  "Context",
+			field:  "RunSettings",
 			reason: "value is required",
 		}
 		if !all {
@@ -473,11 +473,11 @@ func (m *Tasks_StartDockerContainers_Input) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetContext()).(type) {
+		switch v := interface{}(m.GetRunSettings()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, Tasks_StartDockerContainers_InputValidationError{
-					field:  "Context",
+					field:  "RunSettings",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -485,31 +485,20 @@ func (m *Tasks_StartDockerContainers_Input) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, Tasks_StartDockerContainers_InputValidationError{
-					field:  "Context",
+					field:  "RunSettings",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetContext()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetRunSettings()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return Tasks_StartDockerContainers_InputValidationError{
-				field:  "Context",
+				field:  "RunSettings",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
 		}
-	}
-
-	if utf8.RuneCountInString(m.GetComposeFileContent()) < 1 {
-		err := Tasks_StartDockerContainers_InputValidationError{
-			field:  "ComposeFileContent",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
 	}
 
 	if len(m.GetContainers()) < 1 {
@@ -846,9 +835,9 @@ func (m *Tasks_InstallStroppy_Input) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetContext() == nil {
+	if m.GetRunSettings() == nil {
 		err := Tasks_InstallStroppy_InputValidationError{
-			field:  "Context",
+			field:  "RunSettings",
 			reason: "value is required",
 		}
 		if !all {
@@ -858,11 +847,11 @@ func (m *Tasks_InstallStroppy_Input) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetContext()).(type) {
+		switch v := interface{}(m.GetRunSettings()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, Tasks_InstallStroppy_InputValidationError{
-					field:  "Context",
+					field:  "RunSettings",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -870,16 +859,16 @@ func (m *Tasks_InstallStroppy_Input) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, Tasks_InstallStroppy_InputValidationError{
-					field:  "Context",
+					field:  "RunSettings",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetContext()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetRunSettings()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return Tasks_InstallStroppy_InputValidationError{
-				field:  "Context",
+				field:  "RunSettings",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -1131,9 +1120,9 @@ func (m *Tasks_RunStroppy_Input) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetContext() == nil {
+	if m.GetRunSettings() == nil {
 		err := Tasks_RunStroppy_InputValidationError{
-			field:  "Context",
+			field:  "RunSettings",
 			reason: "value is required",
 		}
 		if !all {
@@ -1143,11 +1132,11 @@ func (m *Tasks_RunStroppy_Input) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetContext()).(type) {
+		switch v := interface{}(m.GetRunSettings()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, Tasks_RunStroppy_InputValidationError{
-					field:  "Context",
+					field:  "RunSettings",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -1155,16 +1144,16 @@ func (m *Tasks_RunStroppy_Input) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, Tasks_RunStroppy_InputValidationError{
-					field:  "Context",
+					field:  "RunSettings",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetContext()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetRunSettings()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return Tasks_RunStroppy_InputValidationError{
-				field:  "Context",
+				field:  "RunSettings",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -1209,6 +1198,17 @@ func (m *Tasks_RunStroppy_Input) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	if utf8.RuneCountInString(m.GetConnectionString()) < 1 {
+		err := Tasks_RunStroppy_InputValidationError{
+			field:  "ConnectionString",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	if len(errors) > 0 {
@@ -1313,9 +1313,54 @@ func (m *Tasks_RunStroppy_Output) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetResult() == nil {
+	if len(m.GetResult()) < 1 {
 		err := Tasks_RunStroppy_OutputValidationError{
 			field:  "Result",
+			reason: "value must contain at least 1 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetResult() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Tasks_RunStroppy_OutputValidationError{
+						field:  fmt.Sprintf("Result[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Tasks_RunStroppy_OutputValidationError{
+						field:  fmt.Sprintf("Result[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Tasks_RunStroppy_OutputValidationError{
+					field:  fmt.Sprintf("Result[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if m.GetPlacement() == nil {
+		err := Tasks_RunStroppy_OutputValidationError{
+			field:  "Placement",
 			reason: "value is required",
 		}
 		if !all {
@@ -1325,11 +1370,11 @@ func (m *Tasks_RunStroppy_Output) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetResult()).(type) {
+		switch v := interface{}(m.GetPlacement()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, Tasks_RunStroppy_OutputValidationError{
-					field:  "Result",
+					field:  "Placement",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -1337,16 +1382,16 @@ func (m *Tasks_RunStroppy_Output) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, Tasks_RunStroppy_OutputValidationError{
-					field:  "Result",
+					field:  "Placement",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetResult()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetPlacement()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return Tasks_RunStroppy_OutputValidationError{
-				field:  "Result",
+				field:  "Placement",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

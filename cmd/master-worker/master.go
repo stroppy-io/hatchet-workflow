@@ -9,7 +9,6 @@ import (
 	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/build"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/logger"
-	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/provision"
 	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/test"
 )
 
@@ -23,14 +22,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create Hatchet client: %v", err)
 	}
-	provisionWorkflow, err := provision.ProvisionWorkflow(c)
-	if err != nil {
-		log.Fatalf("Failed to create provision workflow: %v", err)
-	}
 	worker, err := c.NewWorker(
 		"master-worker",
 		hatchetLib.WithWorkflows(
-			provisionWorkflow,
 			test.TestRunWorkflow(c),
 			test.TestSuiteWorkflow(c),
 		),

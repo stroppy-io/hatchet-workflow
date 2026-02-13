@@ -3,32 +3,59 @@ package test
 import (
 	"context"
 	"fmt"
-	"path/filepath"
+	"os"
 	"time"
 
 	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
-	"github.com/samber/lo"
 	"github.com/sourcegraph/conc/pool"
-	"github.com/stroppy-io/hatchet-workflow/internal/core/defaults"
 	hatchet_ext "github.com/stroppy-io/hatchet-workflow/internal/core/hatchet-ext"
-	"github.com/stroppy-io/hatchet-workflow/internal/core/ids"
-	"github.com/stroppy-io/hatchet-workflow/internal/domain/install"
-	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/edge"
-	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/provision"
-	stroppy2 "github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/stroppy"
+	edgeDomain "github.com/stroppy-io/hatchet-workflow/internal/domain/edge"
+	provisionSvc "github.com/stroppy-io/hatchet-workflow/internal/domain/provision"
+	edgeWorkflow "github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/edge"
+	"github.com/stroppy-io/hatchet-workflow/internal/proto/deployment"
+	"github.com/stroppy-io/hatchet-workflow/internal/proto/edge"
+	"github.com/stroppy-io/hatchet-workflow/internal/proto/provision"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/stroppy"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/workflows"
+	valkeygo "github.com/valkey-io/valkey-go"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 const (
 	RunWorkflowName hatchet_ext.WorkflowName = "stroppy-test-run"
 
-	ValidateInputTaskName    hatchet_ext.TaskName = "validate-input"
-	BuildWorkersTaskName     hatchet_ext.TaskName = "build-workers"
-	ProvisionWorkersTaskName hatchet_ext.TaskName = "provision-workers"
-	InstallSoftwareTaskName  hatchet_ext.TaskName = "install-software"
-	RunStroppyTaskName       hatchet_ext.TaskName = "run-stroppy"
+	ValidateInputTaskName         hatchet_ext.TaskName = "validate-input"
+	AcquireNetworkTaskName        hatchet_ext.TaskName = "acquire-network"
+	PlanPlacementIntentTaskName   hatchet_ext.TaskName = "plan-placement-intent"
+	BuildPlacementTaskName        hatchet_ext.TaskName = "build-placement"
+	DeployPlanTaskName            hatchet_ext.TaskName = "deploy-plan"
+	WaitWorkersInHatchetTaskName  hatchet_ext.TaskName = "wait-workers-in-hatchet"
+	RunDatabaseContainersTaskName hatchet_ext.TaskName = "run-database-containers"
+	RunStroppyContainersTaskName  hatchet_ext.TaskName = "run-stroppy-containers"
+	InstallStroppyTaskName        hatchet_ext.TaskName = "install-stroppy"
+	RunStroppyTestTaskName        hatchet_ext.TaskName = "run-stroppy-test"
+	DestroyPlanTaskName           hatchet_ext.TaskName = "destroy-plan"
 )
+
+const (
+	ValkeyUrl = "VALKEY_URL"
+)
+
+func valkeyFromEnv() (valkeygo.Client, error) {
+	urlStr := os.Getenv(ValkeyUrl)
+	if urlStr == "" {
+		return nil, fmt.Errorf("environment variable %s is not set", ValkeyUrl)
+	}
+	valkeyUrl, err := valkeygo.ParseURL(urlStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse Valkey URL: %w", err)
+	}
+	valkeyClient, err := valkeygo.NewClient(valkeyUrl)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Valkey client: %w", err)
+	}
+	return valkeyClient, nil
+}
 
 func TestRunWorkflow(
 	c *hatchetLib.Client,
@@ -45,7 +72,7 @@ func TestRunWorkflow(
 		hatchet_ext.WTask(func(
 			ctx hatchetLib.Context,
 			input *workflows.Workflows_StroppyTest_Input,
-		) (*hatchet.Workflows_StroppyTest_Input, error) {
+		) (*workflows.Workflows_StroppyTest_Input, error) {
 			err := input.Validate()
 			if err != nil {
 				return nil, err
@@ -55,221 +82,320 @@ func TestRunWorkflow(
 	)
 
 	/*
-		Build workers by requested test
+		Acquire network for test
 	*/
-	buildWorkersTask := workflow.NewTask(
-		BuildWorkersTaskName,
-		hatchet_ext.WTask(func(
+	acquireNetworkTask := workflow.NewTask(
+		AcquireNetworkTaskName,
+		hatchet_ext.PTask(validateInputTask, func(
 			ctx hatchetLib.Context,
 			input *workflows.Workflows_StroppyTest_Input,
-		) (*hatchet.EdgeWorkersSet, error) {
-			return stroppy2.NewTestWorkers(
-				ids.ParseRunId(input.GetCommon().GetRunId()),
-				input.GetTest(),
+			parentOutput *workflows.Workflows_StroppyTest_Input,
+		) (*deployment.Network, error) {
+			deps, err := NewDeps(input.GetRunSettings().GetSettings())
+			if err != nil {
+				return nil, err
+			}
+			return deps.ProvisionerService.AcquireNetwork(
+				ctx,
+				input.GetRunSettings().GetTarget(),
+				input.GetRunSettings().GetTest(),
+				input.GetRunSettings().GetSettings(),
 			)
 		}),
 		hatchetLib.WithParents(validateInputTask),
 	)
 
 	/*
-		Provision workers
+		Plan placement intent for test
 	*/
-	provisionWorkersTask := workflow.NewTask(
-		ProvisionWorkersTaskName,
-		hatchet_ext.PTask(buildWorkersTask, func(
+	planPlacementIntentTask := workflow.NewTask(
+		PlanPlacementIntentTaskName,
+		hatchet_ext.PTask(acquireNetworkTask, func(
 			ctx hatchetLib.Context,
 			input *workflows.Workflows_StroppyTest_Input,
-			parentOutput *hatchet.EdgeWorkersSet,
-		) (*hatchet.DeployedEdgeWorkersSet, error) {
-			wf, err := provision.ProvisionWorkflow(c)
+			parentOutput *deployment.Network,
+		) (*provision.PlacementIntent, error) {
+			deps, err := NewDeps(input.GetRunSettings().GetSettings())
 			if err != nil {
 				return nil, err
 			}
-			wfResult, err := wf.Run(ctx, &workflows.Workflows_Provision_Input{
-				Common:         input.GetCommon(),
-				EdgeWorkersSet: parentOutput,
-			})
-			if err != nil {
-				return nil, err
-			}
-			var provisionOutput *workflows.Workflows_Provision_Output
-			if err := wfResult.TaskOutput(provision.WaitWorkerInHatchet).Into(&provisionOutput); err != nil {
-				return nil, fmt.Errorf("failed to get %s output: %w", provision.WaitWorkerInHatchet, err)
-			}
-			return provisionOutput.GetDeployedEdgeWorkers(), nil
+			return deps.ProvisionerService.PlanPlacementIntent(
+				ctx,
+				input.GetRunSettings().GetTest().GetDatabaseTemplate(),
+				parentOutput,
+			)
 		}),
-		hatchetLib.WithParents(buildWorkersTask),
+		hatchetLib.WithParents(acquireNetworkTask),
 	)
-
 	/*
-		Install software on edge workers
+		Build placement for test
 	*/
-	installSoftwareTask := workflow.NewTask(
-		InstallSoftwareTaskName,
-		hatchet_ext.PTask(provisionWorkersTask, func(
+	buildPlacementTask := workflow.NewTask(
+		BuildPlacementTaskName,
+		hatchet_ext.PTask(planPlacementIntentTask, func(
 			ctx hatchetLib.Context,
 			input *workflows.Workflows_StroppyTest_Input,
-			parentOutput *hatchet.DeployedEdgeWorkersSet,
-		) (*hatchet.DeployedEdgeWorkersSet, error) {
-			// Filter workers with software to skip workers without software
-			workersWithSoftware := lo.Filter(parentOutput.GetDeployedEdgeWorkers(),
-				func(w *hatchet.DeployedEdgeWorker, _ int) bool {
-					return len(w.GetWorker().GetSoftware()) > 0
-				})
-			installPool := pool.New().
-				WithContext(ctx.GetContext()).WithFailFast().
-				WithCancelOnError().
-				WithFirstError()
-			for _, worker := range workersWithSoftware {
-				installSoftwareTasks := lo.Filter(worker.GetWorker().GetAcceptableTasks(),
-					func(t *hatchet.EdgeTasks_Identifier, _ int) bool {
-						return t.GetKind() == hatchet.EdgeTasks_SETUP_SOFTWARE
-					})
-				installPool.Go(func(ctx context.Context) error {
-					for _, task := range installSoftwareTasks {
-						_, err := edge.InstallSoftwareTask(c, task).
-							Run(ctx,
-								hatchet.EdgeTasks_InstallSoftware_Input{
-									Common:   input.GetCommon(),
-									Software: worker.GetWorker().GetSoftware(),
-								},
-							)
-						if err != nil {
-							return fmt.Errorf("failed to run install software task: %w", err)
-						}
-
-					}
-					return nil
-				})
-
+			parentOutput *provision.PlacementIntent,
+		) (*provision.Placement, error) {
+			deps, err := NewDeps(input.GetRunSettings().GetSettings())
+			if err != nil {
+				return nil, err
 			}
-			return parentOutput, installPool.Wait()
+			return deps.ProvisionerService.BuildPlacement(
+				ctx,
+				input.GetRunSettings().GetRunId(),
+				input.GetRunSettings().GetTarget(),
+				input.GetRunSettings().GetSettings(),
+				input.GetRunSettings().GetTest(),
+				parentOutput,
+			)
+		}),
+		hatchetLib.WithParents(planPlacementIntentTask),
+	)
+	/*
+		Deploy placement for test
+	*/
+	deployPlanTask := workflow.NewTask(
+		DeployPlanTaskName,
+		hatchet_ext.PTask(buildPlacementTask, func(
+			ctx hatchetLib.Context,
+			input *workflows.Workflows_StroppyTest_Input,
+			parentOutput *provision.Placement,
+		) (*provision.DeployedPlacement, error) {
+			deps, err := NewDeps(input.GetRunSettings().GetSettings())
+			if err != nil {
+				return nil, err
+			}
+			return deps.ProvisionerService.DeployPlan(ctx, parentOutput)
 		}),
 		hatchetLib.WithExecutionTimeout(10*time.Minute),
-		hatchetLib.WithParents(provisionWorkersTask),
+		hatchetLib.WithParents(buildPlacementTask),
 	)
-
+	/*
+		Wait for workers to be up in Hatchet
+	*/
+	waitWorkersInHatchetTask := workflow.NewTask(
+		WaitWorkersInHatchetTaskName,
+		hatchet_ext.PTask(deployPlanTask,
+			func(
+				ctx hatchetLib.Context,
+				input *workflows.Workflows_StroppyTest_Input,
+				parentOutput *provision.DeployedPlacement,
+			) (*provision.DeployedPlacement, error) {
+				return parentOutput, waitMultipleWorkersUp(ctx, c, parentOutput)
+			},
+		),
+		hatchetLib.WithExecutionTimeout(2*time.Minute),
+		hatchetLib.WithParents(deployPlanTask),
+	)
+	/*
+		Run database containers
+	*/
+	runDatabaseContainers := workflow.NewTask(
+		RunDatabaseContainersTaskName,
+		hatchet_ext.PTask(waitWorkersInHatchetTask, func(
+			ctx hatchetLib.Context,
+			input *workflows.Workflows_StroppyTest_Input,
+			parentOutput *provision.DeployedPlacement,
+		) (*provision.DeployedPlacement, error) {
+			dbItems := provisionSvc.SearchDatabasePlacementItem(parentOutput)
+			wp := pool.New().WithErrors().WithContext(ctx.GetContext()).WithFirstError()
+			for _, item := range dbItems {
+				task, err := edgeDomain.FoundTaskKind(
+					item.GetWorker().GetAcceptableTasks(),
+					edge.Task_KIND_SETUP_CONTAINERS,
+				)
+				if err != nil {
+					return nil, err
+				}
+				wp.Go(func(ctx context.Context) error {
+					_, err := edgeWorkflow.SetupContainersTask(c, task).
+						Run(ctx, workflows.Tasks_StartDockerContainers_Input{
+							RunSettings:        input.GetRunSettings(),
+							Containers:         item.GetContainers(),
+							WorkerInternalIp:   item.GetVmTemplate().GetInternalIp(),
+							WorkerInternalCidr: parentOutput.GetNetwork().GetCidr(),
+						})
+					return err
+				})
+			}
+			return parentOutput, wp.Wait()
+		}),
+		hatchetLib.WithParents(waitWorkersInHatchetTask),
+	)
+	/*
+		Run Stroppy containers
+	*/
+	runStroppyContainers := workflow.NewTask(
+		RunStroppyContainersTaskName,
+		hatchet_ext.PTask(runDatabaseContainers, func(
+			ctx hatchetLib.Context,
+			input *workflows.Workflows_StroppyTest_Input,
+			parentOutput *provision.DeployedPlacement,
+		) (*provision.DeployedPlacement, error) {
+			stroppyItems := provisionSvc.SearchStroppyPlacementItem(parentOutput)
+			wp := pool.New().WithErrors().WithContext(ctx.GetContext()).WithFirstError()
+			for _, item := range stroppyItems {
+				task, err := edgeDomain.FoundTaskKind(
+					item.GetWorker().GetAcceptableTasks(),
+					edge.Task_KIND_SETUP_CONTAINERS,
+				)
+				if err != nil {
+					return nil, err
+				}
+				wp.Go(func(ctx context.Context) error {
+					_, err := edgeWorkflow.SetupContainersTask(c, task).
+						Run(ctx, workflows.Tasks_StartDockerContainers_Input{
+							RunSettings:        input.GetRunSettings(),
+							Containers:         item.GetContainers(),
+							WorkerInternalIp:   item.GetVmTemplate().GetInternalIp(),
+							WorkerInternalCidr: parentOutput.GetNetwork().GetCidr(),
+						})
+					return err
+				})
+			}
+			return parentOutput, wp.Wait()
+		}),
+		hatchetLib.WithParents(runDatabaseContainers),
+	)
+	/*
+		Install Stroppy on edge workers
+	*/
+	installStroppyTask := workflow.NewTask(
+		InstallStroppyTaskName,
+		hatchet_ext.PTask(runStroppyContainers, func(
+			ctx hatchetLib.Context,
+			input *workflows.Workflows_StroppyTest_Input,
+			parentOutput *provision.DeployedPlacement,
+		) (*provision.DeployedPlacement, error) {
+			stroppyItems := provisionSvc.SearchStroppyPlacementItem(parentOutput)
+			wp := pool.New().WithErrors().WithContext(ctx.GetContext()).WithFirstError()
+			for _, item := range stroppyItems {
+				task, err := edgeDomain.FoundTaskKind(
+					item.GetWorker().GetAcceptableTasks(),
+					edge.Task_KIND_INSTALL_STROPPY,
+				)
+				if err != nil {
+					return nil, err
+				}
+				wp.Go(func(ctx context.Context) error {
+					_, err := edgeWorkflow.InstallStroppy(c, task).
+						Run(ctx, workflows.Tasks_InstallStroppy_Input{
+							RunSettings: input.GetRunSettings(),
+							StroppyCli:  input.GetRunSettings().GetTest().GetStroppyCli(),
+						})
+					return err
+				})
+			}
+			return parentOutput, wp.Wait()
+		}),
+		// TODO: add if default timeout is set too low
+		//hatchetLib.WithExecutionTimeout(10*time.Minute),
+		hatchetLib.WithParents(runStroppyContainers),
+	)
 	/*
 		Run Stroppy Test
 	*/
-	_ = workflow.NewTask(
-		RunStroppyTaskName,
-		hatchet_ext.PTask(installSoftwareTask, func(
+	runStroppyTestTask := workflow.NewTask(
+		RunStroppyTestTaskName,
+		hatchet_ext.PTask(installStroppyTask, func(
 			ctx hatchetLib.Context,
-			input *hatchet.Workflows_StroppyTest_Input,
-			parentOutput *hatchet.DeployedEdgeWorkersSet,
-		) (*hatchet.Workflows_StroppyTest_Output, error) {
-			postgresWorker, err := stroppy2.SelectDeployedEdgeWorker(parentOutput.GetDeployedEdgeWorkers(), map[string]string{
-				stroppy2.MetadataRoleKey: stroppy2.WorkerRoleDatabase,
-				stroppy2.MetadataTypeKey: stroppy2.WorkerTypePostgresMaster,
-			})
-			if err != nil {
-				return nil, err
-			}
-			masterIp := postgresWorker.Deployment.Template.GetInternalIp()
-			if masterIp == nil || masterIp.GetValue() == "" {
-				return nil, fmt.Errorf("postgres worker internal ip is empty")
-			}
-
-			stroppyWorker, err := stroppy2.SelectDeployedEdgeWorker(parentOutput.GetDeployedEdgeWorkers(), map[string]string{
-				stroppy2.MetadataRoleKey: stroppy2.WorkerRoleStroppy,
-			})
-			if err != nil {
-				return nil, err
-			}
-			stroppyTask, err := stroppy2.GetWorkerTask(stroppyWorker, hatchet.EdgeTasks_RUN_STROPPY)
-			if err != nil {
-				return nil, err
-			}
-			runStroppyResult, err := edge.RunStroppyTask(c, stroppyTask).
-				Run(ctx,
-					hatchet.EdgeTasks_RunStroppy_Input{
-						Common: input.GetCommon(),
-						StroppyCliCall: &stroppy.StroppyCli{
-							Version: input.GetTest().GetStroppyCli().GetVersion(),
-							BinaryPath: defaults.StringPtrOrDefaultPtr(
-								input.GetTest().GetStroppyCli().BinaryPath,
-								stroppy2.DefaultStroppyInstallPath,
-							),
-							Workdir: defaults.StringPtrOrDefaultPtr(
-								input.GetTest().GetStroppyCli().Workdir,
-								filepath.Join(stroppy2.DefaultOptStroppyWorkdir, input.GetCommon().GetRunId()),
-							),
-							Workload:   input.GetTest().GetStroppyCli().GetWorkload(),
-							StroppyEnv: input.GetTest().GetStroppyCli().GetStroppyEnv(),
-							ConnectionString: install.PostgresConnectionString(
-								input.GetTest().GetDatabase().GetStandalone().GetPostgres(),
-								masterIp.GetValue(),
-							),
-						},
-					},
+			input *workflows.Workflows_StroppyTest_Input,
+			parentOutput *provision.DeployedPlacement,
+		) (*workflows.Tasks_RunStroppy_Output, error) {
+			stroppyItems := provisionSvc.SearchStroppyPlacementItem(parentOutput)
+			results := make([]*stroppy.TestResult, 0)
+			wp := pool.New().WithErrors().WithContext(ctx.GetContext()).WithFirstError()
+			for _, item := range stroppyItems {
+				task, err := edgeDomain.FoundTaskKind(
+					item.GetWorker().GetAcceptableTasks(),
+					edge.Task_KIND_INSTALL_STROPPY,
 				)
+				if err != nil {
+					return nil, err
+				}
+				wp.Go(func(ctx context.Context) error {
+					taskResult, err := edgeWorkflow.RunStroppyTask(c, task).
+						Run(ctx, workflows.Tasks_InstallStroppy_Input{
+							RunSettings: input.GetRunSettings(),
+							StroppyCli:  input.GetRunSettings().GetTest().GetStroppyCli(),
+						})
+					if err != nil {
+						return err
+					}
+					var testOutput *stroppy.TestResult
+					if err := taskResult.Into(testOutput); err != nil {
+						return err
+					}
+					results = append(results, testOutput)
+					return nil
+				})
+			}
+			err := wp.Wait()
 			if err != nil {
-				return nil, fmt.Errorf("failed to run stroppy task: %w", err)
+				return nil, err
 			}
-			var runStroppyOutput *hatchet.EdgeTasks_RunStroppy_Output
-			if err := runStroppyResult.Into(&runStroppyOutput); err != nil {
-				return nil, fmt.Errorf("failed to get stroppy output: %w", err)
-			}
-			// how we do not use runStroppyOutput for simplification
-			return &hatchet.Workflows_StroppyTest_Output{
-				Result: &stroppy.TestResult{
-					RunId: input.GetCommon().GetRunId(),
-					Test:  input.GetTest(),
-					GrafanaUrl: lo.ToPtr(fmt.Sprintf(
-						"http://some-grafana-url?runId=%s",
-						input.GetCommon().GetRunId(),
-					)),
-				},
+			return &workflows.Tasks_RunStroppy_Output{
+				Result:    results,
+				Placement: parentOutput,
 			}, nil
 		}),
-		hatchetLib.WithParents(installSoftwareTask),
-		hatchetLib.WithExecutionTimeout(1*time.Hour),
+		hatchetLib.WithParents(installStroppyTask),
 	)
-
 	/*
-		Destroy deployments on failure (if provision succeeded)
+		Destroy placement on end
 	*/
-	workflow.OnFailure(func(
-		ctx hatchetLib.Context,
-		input hatchet.Workflows_StroppyTest_Input,
-	) (provision.FailureHandlerOutput, error) {
-		stepErrors := ctx.StepRunErrors()
-		var errorDetails string
-		for stepName, errorMsg := range stepErrors {
-			ctx.Log(fmt.Sprintf("Multi-step: Step '%s' failed with error: %s", stepName, errorMsg))
-			errorDetails += stepName + ": " + errorMsg + "; "
-		}
-		retErr := func(handled bool, err error) (provision.FailureHandlerOutput, error) {
-			return provision.FailureHandlerOutput{
-				FailureHandled: handled,
-				ErrorDetails:   "Failed to handle deployments: " + err.Error(),
+	_ = workflow.NewTask(
+		DestroyPlanTaskName,
+		hatchet_ext.PTask(runStroppyTestTask, func(
+			ctx hatchetLib.Context,
+			input *workflows.Workflows_StroppyTest_Input,
+			parentOutput *workflows.Tasks_RunStroppy_Output,
+		) (*workflows.Workflows_StroppyTest_Output, error) {
+			deps, err := NewDeps(input.GetRunSettings().GetSettings())
+			if err != nil {
+				return nil, err
+			}
+			err = deps.ProvisionerService.DestroyPlan(ctx, parentOutput.GetPlacement())
+			if err != nil {
+				return nil, err
+			}
+			err = deps.ProvisionerService.DestroyNetwork(ctx, parentOutput.GetPlacement().GetNetwork())
+			if err != nil {
+				return nil, err
+			}
+			return &workflows.Workflows_StroppyTest_Output{
+				Result: parentOutput.GetResult(),
 			}, nil
-		}
-
-		var provisionOutput *hatchet.DeployedEdgeWorkersSet
-		if err := ctx.StepOutput(ProvisionWorkersTaskName, &provisionOutput); err != nil {
-			return retErr(false, fmt.Errorf("failed to get %s output: %w", ProvisionWorkersTaskName, err))
-		}
-		if provisionOutput == nil || provisionOutput.GetDeployment() == nil {
-			return retErr(false, fmt.Errorf("provision output is empty"))
-		}
-
-		deps, err := provision.NewProvisionDeps()
-		if err != nil {
-			return retErr(false, err)
-		}
-		if err := deps.FallbackDestroyDeployment(ctx, input.GetCommon().GetSupportedCloud(), provisionOutput.GetDeployment()); err != nil {
-			return retErr(false, err)
-		}
-		if errorDetails != "" {
-			return retErr(true, fmt.Errorf("original failure: %s", errorDetails))
-		}
-		return provision.FailureHandlerOutput{
-			FailureHandled: true,
-			ErrorDetails:   "",
-		}, nil
-	})
-
+		}),
+		hatchetLib.WithParents(runStroppyTestTask),
+	)
+	/*
+		Destroy deployments on failure
+	*/
+	workflow.OnFailure(
+		func(ctx hatchetLib.Context, input workflows.Workflows_StroppyTest_Input) (emptypb.Empty, error) {
+			ctx.Log("Workflow failed")
+			deps, err := NewDeps(input.GetRunSettings().GetSettings())
+			if err != nil {
+				return emptypb.Empty{}, err
+			}
+			var network deployment.Network
+			if err := ctx.ParentOutput(acquireNetworkTask, &network); err != nil {
+				return emptypb.Empty{}, err
+			}
+			if err := deps.ProvisionerService.DestroyNetwork(ctx.GetContext(), &network); err != nil {
+				return emptypb.Empty{}, err
+			}
+			var placement provision.DeployedPlacement
+			if err := ctx.ParentOutput(deployPlanTask, &placement); err != nil {
+				return emptypb.Empty{}, err
+			}
+			if err := deps.ProvisionerService.DestroyPlan(ctx.GetContext(), &placement); err != nil {
+				return emptypb.Empty{}, err
+			}
+			return emptypb.Empty{}, nil
+		},
+	)
 	return workflow
 }

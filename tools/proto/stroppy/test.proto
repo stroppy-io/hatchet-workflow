@@ -19,7 +19,6 @@ message StroppyCli {
     optional string binary_path = 2;
     optional string workdir = 3;
     Workload workload = 4 [(validate.rules).enum.defined_only = true];
-    string connection_string = 5;
     map<string, string> stroppy_env = 6;
 }
 
@@ -43,18 +42,16 @@ message TestResult {
 
 message TestSuite {
     repeated Test tests = 1;
-    settings.SelectedTarget selected_target = 2 [(validate.rules).message.required = true];
 }
 
 message TestSuiteResult {
-    string run_id = 1;
     TestSuite suite = 2 [(validate.rules).message.required = true];
     repeated TestResult results = 3 [(validate.rules).repeated.min_items = 1];
 }
 
-message TestRunContext {
+message RunSettings {
     string run_id = 1 [(validate.rules).string.min_len = 1];
-    settings.SelectedTarget selected_target = 2 [(validate.rules).message.required = true];
-    Test test = 3 [(validate.rules).message.required = true];
+    deployment.Target target = 2 [(validate.rules).enum.defined_only = true];
+    settings.Settings settings = 3 [(validate.rules).message.required = true];
+    Test test = 4 [(validate.rules).message.required = true];
 }
-

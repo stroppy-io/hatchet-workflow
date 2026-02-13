@@ -12,19 +12,6 @@ message Worker {
     map<string, string> metadata = 6;
 }
 
-message HatchetConnection {
-    message HostPort {
-        string host = 1 [(validate.rules).string.min_len = 1];
-        string port = 2 [(validate.rules).string.min_len = 1];
-    }
-    string token = 1 [(validate.rules).string.min_len = 1];
-    oneof connection {
-        option (validate.required) = true;
-        string url = 2 [(validate.rules).string.min_len = 1];
-        HostPort host_port = 3 [(validate.rules).message.required = true];
-    }
-}
-
 message Task {
     enum Kind {
         KIND_UNSPECIFIED = 0;

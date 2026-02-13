@@ -8,6 +8,12 @@ import "validate/validate.proto";
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/settings";
 
 
+message HatchetConnection {
+    string token = 1 [(validate.rules).string.min_len = 1];
+    string host = 2 [(validate.rules).string.min_len = 1];
+    uint32 port = 3 [(validate.rules).uint32 = {gte: 1, lte: 65535}];
+}
+
 message YandexCloudSettings {
     /*
         This structure used for create network (and subnet after) in cloud
@@ -51,13 +57,8 @@ message DockerSettings {
 
 message Settings {
     deployment.Target preferred_target = 1 [(validate.rules).enum.defined_only = true];
-    DockerSettings docker = 2 [(validate.rules).message.required = true];
+    HatchetConnection hatchet_connection = 2 [(validate.rules).message.required = true];
+    DockerSettings docker = 3 [(validate.rules).message.required = true];
     optional YandexCloudSettings yandex_cloud = 4;
 }
 
-message SelectedTarget {
-    oneof target {
-        settings.DockerSettings docker_settings = 3;
-        settings.YandexCloudSettings yandex_cloud_settings = 4;
-    }
-}

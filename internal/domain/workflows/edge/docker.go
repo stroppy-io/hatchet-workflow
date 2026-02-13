@@ -1,17 +1,26 @@
 package edge
 
 import (
+	"bufio"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/registry"
 	dockerClient "github.com/docker/docker/client"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/logger"
+	"github.com/stroppy-io/hatchet-workflow/internal/proto/deployment"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/provision"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/stroppy"
 )
@@ -28,12 +37,16 @@ const (
 	containerLabelRunIDKey     = "run_id"
 	containerLabelWorkerIPKey  = "worker_ip"
 	containerLabelLogicalKey   = "logical_name"
+
+	dockerConfigDirEnvName = "DOCKER_CONFIG"
+	dockerConfigFileName   = "config.json"
 )
 
 type ContainerRunner struct {
 	client      *dockerClient.Client
 	networkName string
 	networkID   string
+	logger      hatchetLogger
 	mu          sync.Mutex
 	containers  map[string]string
 }
@@ -43,6 +56,10 @@ type startedContainer struct {
 	id   string
 }
 
+type hatchetLogger interface {
+	Log(message string)
+}
+
 type runContainerOptions struct {
 	dockerTarget   bool
 	runID          string
@@ -50,7 +67,7 @@ type runContainerOptions struct {
 	publishPorts   bool
 }
 
-func NewContainerRunner(networkName string) (*ContainerRunner, error) {
+func NewContainerRunner(networkName string, logger hatchetLogger) (*ContainerRunner, error) {
 	cli, err := dockerClient.NewClientWithOpts(
 		dockerClient.FromEnv,
 		dockerClient.WithAPIVersionNegotiation(),
@@ -62,24 +79,25 @@ func NewContainerRunner(networkName string) (*ContainerRunner, error) {
 	return &ContainerRunner{
 		client:      cli,
 		networkName: networkName,
+		logger:      logger,
 		containers:  make(map[string]string),
 	}, nil
 }
 
 func (r *ContainerRunner) DeployContainersForTarget(
 	ctx context.Context,
-	testRunCtx *stroppy.TestRunContext,
+	runSettings *stroppy.RunSettings,
 	workerInternalIP string,
 	containers []*provision.Container,
 ) error {
 	opts := runContainerOptions{publishPorts: true}
-	if dockerSettings := testRunCtx.GetSelectedTarget().GetDockerSettings(); dockerSettings != nil {
-		if err := r.setNetworkName(dockerSettings.GetNetworkName()); err != nil {
+	if runSettings.GetTarget() == deployment.Target_TARGET_DOCKER {
+		if err := r.setNetworkName(runSettings.GetSettings().GetDocker().GetNetworkName()); err != nil {
 			return err
 		}
 		opts = runContainerOptions{
 			dockerTarget:   true,
-			runID:          testRunCtx.GetRunId(),
+			runID:          runSettings.GetRunId(),
 			workerInternal: workerInternalIP,
 			publishPorts:   false,
 		}
@@ -124,7 +142,7 @@ func (r *ContainerRunner) Cleanup(ctx context.Context) {
 
 	for name, id := range tracked {
 		if err := r.stopContainer(ctx, id); err != nil {
-			log.Printf("failed to cleanup container %s (%s): %v", name, id, err)
+			r.logf("failed to cleanup container %s (%s): %v", name, id, err)
 			continue
 		}
 
@@ -209,14 +227,213 @@ func (r *ContainerRunner) ensureNetwork(ctx context.Context) error {
 }
 
 func (r *ContainerRunner) pullImage(ctx context.Context, imageName string) error {
-	reader, err := r.client.ImagePull(ctx, imageName, image.PullOptions{})
-	if err != nil {
-		return err
+	pullOptions := image.PullOptions{}
+	if registryAuth, ok := registryAuthForImage(imageName); ok {
+		pullOptions.RegistryAuth = registryAuth
+		r.logf("docker image pull %q: registry auth enabled", imageName)
+	} else {
+		r.logf("docker image pull %q: registry auth not found, using anonymous pull", imageName)
 	}
-	defer reader.Close()
 
-	_, err = io.Copy(io.Discard, reader)
-	return err
+	b := backoff.NewExponentialBackOff()
+	b.InitialInterval = 1 * time.Second
+	b.MaxInterval = 30 * time.Second
+	b.MaxElapsedTime = 5 * time.Minute
+
+	return backoff.Retry(func() error {
+		reader, err := r.client.ImagePull(ctx, imageName, pullOptions)
+		if err != nil {
+			r.logf("docker image pull %q failed: %v", imageName, err)
+			return err
+		}
+		defer reader.Close()
+
+		if err := r.logDockerStream(fmt.Sprintf("docker image pull %q", imageName), reader); err != nil {
+			r.logf("docker image pull %q stream error: %v", imageName, err)
+			return err
+		}
+		return nil
+	}, backoff.WithContext(b, ctx))
+}
+
+type dockerConfig struct {
+	Auths map[string]dockerAuthEntry `json:"auths"`
+}
+
+type dockerAuthEntry struct {
+	Auth          string `json:"auth"`
+	Username      string `json:"username"`
+	Password      string `json:"password"`
+	IdentityToken string `json:"identitytoken"`
+}
+
+func registryAuthForImage(imageName string) (string, bool) {
+	configPath, ok := resolveDockerConfigPath()
+	if !ok {
+		return "", false
+	}
+
+	rawConfig, err := os.ReadFile(configPath)
+	if err != nil {
+		return "", false
+	}
+
+	var cfg dockerConfig
+	if err := json.Unmarshal(rawConfig, &cfg); err != nil {
+		return "", false
+	}
+
+	entry, ok := findAuthEntry(cfg.Auths, imageName)
+	if !ok {
+		return "", false
+	}
+
+	authCfg, ok := toRegistryAuthConfig(entry)
+	if !ok {
+		return "", false
+	}
+
+	encoded, err := encodeAuthConfig(authCfg)
+	if err != nil {
+		return "", false
+	}
+	return encoded, true
+}
+
+func resolveDockerConfigPath() (string, bool) {
+	configDir := os.Getenv(dockerConfigDirEnvName)
+	if configDir == "" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", false
+		}
+		configDir = filepath.Join(homeDir, ".docker")
+	}
+
+	configPath := filepath.Join(configDir, dockerConfigFileName)
+	if _, err := os.Stat(configPath); err != nil {
+		return "", false
+	}
+	return configPath, true
+}
+
+func findAuthEntry(auths map[string]dockerAuthEntry, imageName string) (dockerAuthEntry, bool) {
+	if len(auths) == 0 {
+		return dockerAuthEntry{}, false
+	}
+
+	registryHost := normalizeRegistryHost(registryHostForImage(imageName))
+	for key, entry := range auths {
+		if normalizeRegistryHost(key) == registryHost {
+			return entry, true
+		}
+	}
+
+	if registryHost == "docker.io" {
+		if entry, ok := auths["https://index.docker.io/v1/"]; ok {
+			return entry, true
+		}
+	}
+
+	return dockerAuthEntry{}, false
+}
+
+func registryHostForImage(imageName string) string {
+	parts := strings.Split(imageName, "/")
+	if len(parts) == 0 {
+		return "docker.io"
+	}
+
+	first := parts[0]
+	if !strings.Contains(first, ".") && !strings.Contains(first, ":") && first != "localhost" {
+		return "docker.io"
+	}
+	return first
+}
+
+func normalizeRegistryHost(host string) string {
+	normalized := strings.TrimSpace(strings.ToLower(host))
+	normalized = strings.TrimPrefix(normalized, "https://")
+	normalized = strings.TrimPrefix(normalized, "http://")
+	normalized = strings.TrimSuffix(normalized, "/")
+	if idx := strings.IndexByte(normalized, '/'); idx >= 0 {
+		normalized = normalized[:idx]
+	}
+	if normalized == "index.docker.io" || normalized == "registry-1.docker.io" {
+		return "docker.io"
+	}
+	return normalized
+}
+
+func toRegistryAuthConfig(entry dockerAuthEntry) (registry.AuthConfig, bool) {
+	authCfg := registry.AuthConfig{
+		Username:      entry.Username,
+		Password:      entry.Password,
+		IdentityToken: entry.IdentityToken,
+	}
+	if authCfg.Username != "" || authCfg.Password != "" || authCfg.IdentityToken != "" {
+		return authCfg, true
+	}
+
+	if entry.Auth == "" {
+		return registry.AuthConfig{}, false
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(entry.Auth)
+	if err != nil {
+		decoded, err = base64.RawStdEncoding.DecodeString(entry.Auth)
+		if err != nil {
+			return registry.AuthConfig{}, false
+		}
+	}
+	credentials := strings.SplitN(string(decoded), ":", 2)
+	if len(credentials) != 2 {
+		return registry.AuthConfig{}, false
+	}
+	return registry.AuthConfig{
+		Username: credentials[0],
+		Password: credentials[1],
+	}, true
+}
+
+func encodeAuthConfig(cfg registry.AuthConfig) (string, error) {
+	raw, err := json.Marshal(cfg)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(raw), nil
+}
+
+type dockerStreamMessage struct {
+	Error       string `json:"error"`
+	ErrorDetail struct {
+		Message string `json:"message"`
+	} `json:"errorDetail"`
+}
+
+func (r *ContainerRunner) logDockerStream(prefix string, stream io.Reader) error {
+	scanner := bufio.NewScanner(stream)
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+
+		r.logf("%s: %s", prefix, line)
+
+		var msg dockerStreamMessage
+		if err := json.Unmarshal([]byte(line), &msg); err != nil {
+			continue
+		}
+		if msg.ErrorDetail.Message != "" {
+			return fmt.Errorf("%s", msg.ErrorDetail.Message)
+		}
+		if msg.Error != "" {
+			return fmt.Errorf("%s", msg.Error)
+		}
+	}
+	return scanner.Err()
 }
 
 func (r *ContainerRunner) stopContainer(ctx context.Context, containerID string) error {
@@ -248,7 +465,7 @@ func (r *ContainerRunner) rollbackBatch(ctx context.Context, started []startedCo
 		containerID := started[i].id
 
 		if err := r.stopContainer(ctx, containerID); err != nil {
-			log.Printf("failed to rollback container %s (%s): %v", name, containerID, err)
+			r.logf("failed to rollback container %s (%s): %v", name, containerID, err)
 			continue
 		}
 
@@ -256,6 +473,14 @@ func (r *ContainerRunner) rollbackBatch(ctx context.Context, started []startedCo
 		delete(r.containers, name)
 		r.mu.Unlock()
 	}
+}
+
+func (r *ContainerRunner) logf(format string, args ...any) {
+	msg := fmt.Sprintf(format, args...)
+	if r.logger != nil {
+		r.logger.Log(msg)
+	}
+	logger.StdLog().Printf(format, args...)
 }
 
 func (r *ContainerRunner) getNetworkID() string {

@@ -75,15 +75,14 @@ func (StroppyCli_Workload) EnumDescriptor() ([]byte, []int) {
 }
 
 type StroppyCli struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Version          string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
-	BinaryPath       *string                `protobuf:"bytes,2,opt,name=binary_path,json=binaryPath,proto3,oneof" json:"binary_path,omitempty"`
-	Workdir          *string                `protobuf:"bytes,3,opt,name=workdir,proto3,oneof" json:"workdir,omitempty"`
-	Workload         StroppyCli_Workload    `protobuf:"varint,4,opt,name=workload,proto3,enum=stroppy.StroppyCli_Workload" json:"workload,omitempty"`
-	ConnectionString string                 `protobuf:"bytes,5,opt,name=connection_string,json=connectionString,proto3" json:"connection_string,omitempty"`
-	StroppyEnv       map[string]string      `protobuf:"bytes,6,rep,name=stroppy_env,json=stroppyEnv,proto3" json:"stroppy_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Version       string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	BinaryPath    *string                `protobuf:"bytes,2,opt,name=binary_path,json=binaryPath,proto3,oneof" json:"binary_path,omitempty"`
+	Workdir       *string                `protobuf:"bytes,3,opt,name=workdir,proto3,oneof" json:"workdir,omitempty"`
+	Workload      StroppyCli_Workload    `protobuf:"varint,4,opt,name=workload,proto3,enum=stroppy.StroppyCli_Workload" json:"workload,omitempty"`
+	StroppyEnv    map[string]string      `protobuf:"bytes,6,rep,name=stroppy_env,json=stroppyEnv,proto3" json:"stroppy_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StroppyCli) Reset() {
@@ -142,13 +141,6 @@ func (x *StroppyCli) GetWorkload() StroppyCli_Workload {
 		return x.Workload
 	}
 	return StroppyCli_WORKLOAD_UNSPECIFIED
-}
-
-func (x *StroppyCli) GetConnectionString() string {
-	if x != nil {
-		return x.ConnectionString
-	}
-	return ""
 }
 
 func (x *StroppyCli) GetStroppyEnv() map[string]string {
@@ -333,11 +325,10 @@ func (x *TestResult) GetGrafanaUrl() string {
 }
 
 type TestSuite struct {
-	state          protoimpl.MessageState   `protogen:"open.v1"`
-	Tests          []*Test                  `protobuf:"bytes,1,rep,name=tests,proto3" json:"tests,omitempty"`
-	SelectedTarget *settings.SelectedTarget `protobuf:"bytes,2,opt,name=selected_target,json=selectedTarget,proto3" json:"selected_target,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tests         []*Test                `protobuf:"bytes,1,rep,name=tests,proto3" json:"tests,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *TestSuite) Reset() {
@@ -377,16 +368,8 @@ func (x *TestSuite) GetTests() []*Test {
 	return nil
 }
 
-func (x *TestSuite) GetSelectedTarget() *settings.SelectedTarget {
-	if x != nil {
-		return x.SelectedTarget
-	}
-	return nil
-}
-
 type TestSuiteResult struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	RunId         string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	Suite         *TestSuite             `protobuf:"bytes,2,opt,name=suite,proto3" json:"suite,omitempty"`
 	Results       []*TestResult          `protobuf:"bytes,3,rep,name=results,proto3" json:"results,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -423,13 +406,6 @@ func (*TestSuiteResult) Descriptor() ([]byte, []int) {
 	return file_stroppy_test_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *TestSuiteResult) GetRunId() string {
-	if x != nil {
-		return x.RunId
-	}
-	return ""
-}
-
 func (x *TestSuiteResult) GetSuite() *TestSuite {
 	if x != nil {
 		return x.Suite
@@ -444,29 +420,30 @@ func (x *TestSuiteResult) GetResults() []*TestResult {
 	return nil
 }
 
-type TestRunContext struct {
-	state          protoimpl.MessageState   `protogen:"open.v1"`
-	RunId          string                   `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	SelectedTarget *settings.SelectedTarget `protobuf:"bytes,2,opt,name=selected_target,json=selectedTarget,proto3" json:"selected_target,omitempty"`
-	Test           *Test                    `protobuf:"bytes,3,opt,name=test,proto3" json:"test,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+type RunSettings struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RunId         string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	Target        deployment.Target      `protobuf:"varint,2,opt,name=target,proto3,enum=deployment.Target" json:"target,omitempty"`
+	Settings      *settings.Settings     `protobuf:"bytes,3,opt,name=settings,proto3" json:"settings,omitempty"`
+	Test          *Test                  `protobuf:"bytes,4,opt,name=test,proto3" json:"test,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *TestRunContext) Reset() {
-	*x = TestRunContext{}
+func (x *RunSettings) Reset() {
+	*x = RunSettings{}
 	mi := &file_stroppy_test_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TestRunContext) String() string {
+func (x *RunSettings) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TestRunContext) ProtoMessage() {}
+func (*RunSettings) ProtoMessage() {}
 
-func (x *TestRunContext) ProtoReflect() protoreflect.Message {
+func (x *RunSettings) ProtoReflect() protoreflect.Message {
 	mi := &file_stroppy_test_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -478,26 +455,33 @@ func (x *TestRunContext) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TestRunContext.ProtoReflect.Descriptor instead.
-func (*TestRunContext) Descriptor() ([]byte, []int) {
+// Deprecated: Use RunSettings.ProtoReflect.Descriptor instead.
+func (*RunSettings) Descriptor() ([]byte, []int) {
 	return file_stroppy_test_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *TestRunContext) GetRunId() string {
+func (x *RunSettings) GetRunId() string {
 	if x != nil {
 		return x.RunId
 	}
 	return ""
 }
 
-func (x *TestRunContext) GetSelectedTarget() *settings.SelectedTarget {
+func (x *RunSettings) GetTarget() deployment.Target {
 	if x != nil {
-		return x.SelectedTarget
+		return x.Target
+	}
+	return deployment.Target(0)
+}
+
+func (x *RunSettings) GetSettings() *settings.Settings {
+	if x != nil {
+		return x.Settings
 	}
 	return nil
 }
 
-func (x *TestRunContext) GetTest() *Test {
+func (x *RunSettings) GetTest() *Test {
 	if x != nil {
 		return x.Test
 	}
@@ -508,15 +492,14 @@ var File_stroppy_test_proto protoreflect.FileDescriptor
 
 const file_stroppy_test_proto_rawDesc = "" +
 	"\n" +
-	"\x12stroppy/test.proto\x12\astroppy\x1a\x17database/database.proto\x1a\x1bdeployment/deployment.proto\x1a\x17settings/settings.proto\x1a\x17validate/validate.proto\"\xc0\x03\n" +
+	"\x12stroppy/test.proto\x12\astroppy\x1a\x17database/database.proto\x1a\x1bdeployment/deployment.proto\x1a\x17settings/settings.proto\x1a\x17validate/validate.proto\"\x93\x03\n" +
 	"\n" +
 	"StroppyCli\x12!\n" +
 	"\aversion\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aversion\x12$\n" +
 	"\vbinary_path\x18\x02 \x01(\tH\x00R\n" +
 	"binaryPath\x88\x01\x01\x12\x1d\n" +
 	"\aworkdir\x18\x03 \x01(\tH\x01R\aworkdir\x88\x01\x01\x12B\n" +
-	"\bworkload\x18\x04 \x01(\x0e2\x1c.stroppy.StroppyCli.WorkloadB\b\xfaB\x05\x82\x01\x02\x10\x01R\bworkload\x12+\n" +
-	"\x11connection_string\x18\x05 \x01(\tR\x10connectionString\x12D\n" +
+	"\bworkload\x18\x04 \x01(\x0e2\x1c.stroppy.StroppyCli.WorkloadB\b\xfaB\x05\x82\x01\x02\x10\x01R\bworkload\x12D\n" +
 	"\vstroppy_env\x18\x06 \x03(\v2#.stroppy.StroppyCli.StroppyEnvEntryR\n" +
 	"stroppyEnv\x1a=\n" +
 	"\x0fStroppyEnvEntry\x12\x10\n" +
@@ -545,18 +528,17 @@ const file_stroppy_test_proto_rawDesc = "" +
 	"\x04test\x18\x02 \x01(\v2\r.stroppy.TestB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04test\x12$\n" +
 	"\vgrafana_url\x18\x03 \x01(\tH\x00R\n" +
 	"grafanaUrl\x88\x01\x01B\x0e\n" +
-	"\f_grafana_url\"}\n" +
+	"\f_grafana_url\"0\n" +
 	"\tTestSuite\x12#\n" +
-	"\x05tests\x18\x01 \x03(\v2\r.stroppy.TestR\x05tests\x12K\n" +
-	"\x0fselected_target\x18\x02 \x01(\v2\x18.settings.SelectedTargetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0eselectedTarget\"\x95\x01\n" +
-	"\x0fTestSuiteResult\x12\x15\n" +
-	"\x06run_id\x18\x01 \x01(\tR\x05runId\x122\n" +
+	"\x05tests\x18\x01 \x03(\v2\r.stroppy.TestR\x05tests\"~\n" +
+	"\x0fTestSuiteResult\x122\n" +
 	"\x05suite\x18\x02 \x01(\v2\x12.stroppy.TestSuiteB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05suite\x127\n" +
-	"\aresults\x18\x03 \x03(\v2\x13.stroppy.TestResultB\b\xfaB\x05\x92\x01\x02\b\x01R\aresults\"\xaa\x01\n" +
-	"\x0eTestRunContext\x12\x1e\n" +
-	"\x06run_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05runId\x12K\n" +
-	"\x0fselected_target\x18\x02 \x01(\v2\x18.settings.SelectedTargetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0eselectedTarget\x12+\n" +
-	"\x04test\x18\x03 \x01(\v2\r.stroppy.TestB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04testB?Z=github.com/stroppy-io/hatchet-workflow/internal/proto/stroppyb\x06proto3"
+	"\aresults\x18\x03 \x03(\v2\x13.stroppy.TestResultB\b\xfaB\x05\x92\x01\x02\b\x01R\aresults\"\xca\x01\n" +
+	"\vRunSettings\x12\x1e\n" +
+	"\x06run_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05runId\x124\n" +
+	"\x06target\x18\x02 \x01(\x0e2\x12.deployment.TargetB\b\xfaB\x05\x82\x01\x02\x10\x01R\x06target\x128\n" +
+	"\bsettings\x18\x03 \x01(\v2\x12.settings.SettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsettings\x12+\n" +
+	"\x04test\x18\x04 \x01(\v2\r.stroppy.TestB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04testB?Z=github.com/stroppy-io/hatchet-workflow/internal/proto/stroppyb\x06proto3"
 
 var (
 	file_stroppy_test_proto_rawDescOnce sync.Once
@@ -579,11 +561,12 @@ var file_stroppy_test_proto_goTypes = []any{
 	(*TestResult)(nil),                 // 3: stroppy.TestResult
 	(*TestSuite)(nil),                  // 4: stroppy.TestSuite
 	(*TestSuiteResult)(nil),            // 5: stroppy.TestSuiteResult
-	(*TestRunContext)(nil),             // 6: stroppy.TestRunContext
+	(*RunSettings)(nil),                // 6: stroppy.RunSettings
 	nil,                                // 7: stroppy.StroppyCli.StroppyEnvEntry
 	(*deployment.Hardware)(nil),        // 8: deployment.Hardware
 	(*database.Database_Template)(nil), // 9: database.Database.Template
-	(*settings.SelectedTarget)(nil),    // 10: settings.SelectedTarget
+	(deployment.Target)(0),             // 10: deployment.Target
+	(*settings.Settings)(nil),          // 11: settings.Settings
 }
 var file_stroppy_test_proto_depIdxs = []int32{
 	0,  // 0: stroppy.StroppyCli.workload:type_name -> stroppy.StroppyCli.Workload
@@ -593,11 +576,11 @@ var file_stroppy_test_proto_depIdxs = []int32{
 	9,  // 4: stroppy.Test.database_template:type_name -> database.Database.Template
 	2,  // 5: stroppy.TestResult.test:type_name -> stroppy.Test
 	2,  // 6: stroppy.TestSuite.tests:type_name -> stroppy.Test
-	10, // 7: stroppy.TestSuite.selected_target:type_name -> settings.SelectedTarget
-	4,  // 8: stroppy.TestSuiteResult.suite:type_name -> stroppy.TestSuite
-	3,  // 9: stroppy.TestSuiteResult.results:type_name -> stroppy.TestResult
-	10, // 10: stroppy.TestRunContext.selected_target:type_name -> settings.SelectedTarget
-	2,  // 11: stroppy.TestRunContext.test:type_name -> stroppy.Test
+	4,  // 7: stroppy.TestSuiteResult.suite:type_name -> stroppy.TestSuite
+	3,  // 8: stroppy.TestSuiteResult.results:type_name -> stroppy.TestResult
+	10, // 9: stroppy.RunSettings.target:type_name -> deployment.Target
+	11, // 10: stroppy.RunSettings.settings:type_name -> settings.Settings
+	2,  // 11: stroppy.RunSettings.test:type_name -> stroppy.Test
 	12, // [12:12] is the sub-list for method output_type
 	12, // [12:12] is the sub-list for method input_type
 	12, // [12:12] is the sub-list for extension type_name

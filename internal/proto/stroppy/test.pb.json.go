@@ -88,7 +88,7 @@ func (msg *TestSuiteResult) UnmarshalJSON(b []byte) error {
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *TestRunContext) MarshalJSON() ([]byte, error) {
+func (msg *RunSettings) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -97,7 +97,7 @@ func (msg *TestRunContext) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *TestRunContext) UnmarshalJSON(b []byte) error {
+func (msg *RunSettings) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)

@@ -13,8 +13,7 @@ import (
 )
 
 const (
-	networkLockKey = "network_manager_lock"
-	networksKey    = "reserved_networks"
+	networkPrefix = "network"
 )
 
 type NetworkManager struct {
@@ -32,6 +31,15 @@ func NewNetworkManager(valkeyClient valkeygo.Client) (*NetworkManager, error) {
 		valkeyClient: valkeyClient,
 		locker:       locker,
 	}, nil
+}
+
+func networkStorageKey(identifier *deployment.Identifier) string {
+	return fmt.Sprintf(
+		"%s:%s:%s",
+		networkPrefix,
+		identifier.GetTarget().String(),
+		identifier.GetName(),
+	)
 }
 
 func (n NetworkManager) ReserveNetwork(
@@ -55,18 +63,7 @@ func (n NetworkManager) ReserveNetwork(
 	}
 
 	// Acquire lock to prevent race conditions
-	networkKey := fmt.Sprintf(
-		"%s:%s:%s",
-		networkLockKey,
-		networkIdentifier.GetTarget().String(),
-		networkIdentifier.GetName(),
-	)
-	_, unlock, err := n.locker.WithContext(ctx, networkKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to acquire network lock: %w", err)
-	}
-	defer unlock()
-
+	networkKey := networkStorageKey(networkIdentifier)
 	// Get existing networks
 	existingNetworks, err := n.valkeyClient.Do(ctx, n.valkeyClient.B().
 		Smembers().Key(networkKey).
@@ -81,7 +78,7 @@ func (n NetworkManager) ReserveNetwork(
 	}
 
 	// Create the subnet template object
-	subnetTemplate := &deployment.Network{
+	network := &deployment.Network{
 		Identifier: networkIdentifier,
 		Cidr: &deployment.Cidr{
 			Value: subnet.String(),
@@ -90,7 +87,7 @@ func (n NetworkManager) ReserveNetwork(
 	}
 
 	for i, ip := range ipsList {
-		subnetTemplate.Ips[i] = &deployment.Ip{
+		network.Ips[i] = &deployment.Ip{
 			Value: ip.String(),
 		}
 	}
@@ -107,7 +104,7 @@ func (n NetworkManager) ReserveNetwork(
 		return nil, fmt.Errorf("failed to reserve network: subnet %s already reserved", subnet.String())
 	}
 
-	return subnetTemplate, nil
+	return network, nil
 }
 
 func (n NetworkManager) FreeNetwork(
@@ -117,12 +114,7 @@ func (n NetworkManager) FreeNetwork(
 	if err := network.Validate(); err != nil {
 		return fmt.Errorf("invalid network: %w", err)
 	}
-	storageKey := fmt.Sprintf(
-		"%s:%s:%s",
-		networksKey,
-		network.GetIdentifier().GetTarget().String(),
-		network.GetIdentifier().GetName(),
-	)
+	storageKey := networkStorageKey(network.GetIdentifier())
 	// Remove from reserved networks
 	err := n.valkeyClient.Do(ctx, n.valkeyClient.B().
 		Srem().Key(storageKey).

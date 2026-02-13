@@ -113,6 +113,10 @@ func NewActor() (*Actor, error) {
 		return nil, fmt.Errorf("error installing Terraform: %s", err)
 	}
 
+	err = os.MkdirAll(WorkingDir, os.ModePerm)
+	if err != nil {
+		return nil, fmt.Errorf("error creating working directory: %s", err)
+	}
 	err = os.WriteFile(
 		path.Join(WorkingDir, ConfigFileName),
 		[]byte(tfrcTemplate),

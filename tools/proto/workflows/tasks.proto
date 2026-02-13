@@ -18,8 +18,7 @@ message Tasks {
     */
     message StartDockerContainers {
         message Input {
-            stroppy.TestRunContext context = 1 [(validate.rules).message.required = true];
-            string compose_file_content = 2 [(validate.rules).string.min_len = 1];
+            stroppy.RunSettings run_settings = 1 [(validate.rules).message.required = true];
             repeated provision.Container containers = 3 [(validate.rules).repeated.min_items = 1];
             /*
                 Need to docker containers for IPAM.Config
@@ -34,7 +33,7 @@ message Tasks {
     */
     message InstallStroppy {
         message Input {
-            stroppy.TestRunContext context = 1 [(validate.rules).message.required = true];
+            stroppy.RunSettings run_settings = 1 [(validate.rules).message.required = true];
             stroppy.StroppyCli stroppy_cli = 2 [(validate.rules).message.required = true];
         }
         message Output {}
@@ -44,11 +43,13 @@ message Tasks {
     */
     message RunStroppy {
         message Input {
-            stroppy.TestRunContext context = 1 [(validate.rules).message.required = true];
+            stroppy.RunSettings run_settings = 1 [(validate.rules).message.required = true];
             stroppy.StroppyCli stroppy_cli_call = 2 [(validate.rules).message.required = true];
+            string connection_string = 3 [(validate.rules).string.min_len = 1];
         }
         message Output {
-            stroppy.TestResult result = 1 [(validate.rules).message.required = true];
+            repeated stroppy.TestResult result = 1 [(validate.rules).repeated.min_items = 1];
+            provision.DeployedPlacement placement = 2 [(validate.rules).message.required = true];
         }
     }
 }

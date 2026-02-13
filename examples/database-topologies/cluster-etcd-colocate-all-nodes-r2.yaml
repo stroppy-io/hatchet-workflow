@@ -1,0 +1,21 @@
+postgresCluster:
+  topology:
+    settings:
+      version: VERSION_17
+      storageEngine: STORAGE_ENGINE_HEAP
+    masterHardware:
+      cores: 4
+      memory: 8
+      disk: 100
+    replicaHardware:
+      cores: 2
+      memory: 4
+      disk: 50
+    replicasCount: 2
+  addons:
+    dcs:
+      etcd:
+        size: 3
+        placement:
+          colocate:
+            scope: SCOPE_ALL_NODES

@@ -8,8 +8,9 @@ package workflows
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	deployment "github.com/stroppy-io/hatchet-workflow/internal/proto/deployment"
 	_ "github.com/stroppy-io/hatchet-workflow/internal/proto/edge"
-	_ "github.com/stroppy-io/hatchet-workflow/internal/proto/settings"
+	settings "github.com/stroppy-io/hatchet-workflow/internal/proto/settings"
 	stroppy "github.com/stroppy-io/hatchet-workflow/internal/proto/stroppy"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -139,7 +140,9 @@ func (*Workflows_StroppyTest) Descriptor() ([]byte, []int) {
 
 type Workflows_StroppyTestSuite_Input struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Suite         *stroppy.TestSuite     `protobuf:"bytes,4,opt,name=suite,proto3" json:"suite,omitempty"`
+	Suite         *stroppy.TestSuite     `protobuf:"bytes,1,opt,name=suite,proto3" json:"suite,omitempty"`
+	Settings      *settings.Settings     `protobuf:"bytes,2,opt,name=settings,proto3" json:"settings,omitempty"`
+	Target        deployment.Target      `protobuf:"varint,3,opt,name=target,proto3,enum=deployment.Target" json:"target,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -179,6 +182,20 @@ func (x *Workflows_StroppyTestSuite_Input) GetSuite() *stroppy.TestSuite {
 		return x.Suite
 	}
 	return nil
+}
+
+func (x *Workflows_StroppyTestSuite_Input) GetSettings() *settings.Settings {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
+}
+
+func (x *Workflows_StroppyTestSuite_Input) GetTarget() deployment.Target {
+	if x != nil {
+		return x.Target
+	}
+	return deployment.Target(0)
 }
 
 type Workflows_StroppyTestSuite_Output struct {
@@ -226,8 +243,8 @@ func (x *Workflows_StroppyTestSuite_Output) GetResults() *stroppy.TestSuiteResul
 }
 
 type Workflows_StroppyTest_Input struct {
-	state         protoimpl.MessageState  `protogen:"open.v1"`
-	Context       *stroppy.TestRunContext `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RunSettings   *stroppy.RunSettings   `protobuf:"bytes,1,opt,name=run_settings,json=runSettings,proto3" json:"run_settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -262,16 +279,16 @@ func (*Workflows_StroppyTest_Input) Descriptor() ([]byte, []int) {
 	return file_workflows_workflows_proto_rawDescGZIP(), []int{0, 1, 0}
 }
 
-func (x *Workflows_StroppyTest_Input) GetContext() *stroppy.TestRunContext {
+func (x *Workflows_StroppyTest_Input) GetRunSettings() *stroppy.RunSettings {
 	if x != nil {
-		return x.Context
+		return x.RunSettings
 	}
 	return nil
 }
 
 type Workflows_StroppyTest_Output struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Result        *stroppy.TestResult    `protobuf:"bytes,1,opt,name=result,proto3" json:"result,omitempty"`
+	Result        []*stroppy.TestResult  `protobuf:"bytes,1,rep,name=result,proto3" json:"result,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -306,7 +323,7 @@ func (*Workflows_StroppyTest_Output) Descriptor() ([]byte, []int) {
 	return file_workflows_workflows_proto_rawDescGZIP(), []int{0, 1, 1}
 }
 
-func (x *Workflows_StroppyTest_Output) GetResult() *stroppy.TestResult {
+func (x *Workflows_StroppyTest_Output) GetResult() []*stroppy.TestResult {
 	if x != nil {
 		return x.Result
 	}
@@ -317,18 +334,20 @@ var File_workflows_workflows_proto protoreflect.FileDescriptor
 
 const file_workflows_workflows_proto_rawDesc = "" +
 	"\n" +
-	"\x19workflows/workflows.proto\x12\tworkflows\x1a\x0fedge/edge.proto\x1a\x17settings/settings.proto\x1a\x12stroppy/test.proto\x1a\x17validate/validate.proto\"\xbc\x02\n" +
-	"\tWorkflows\x1a\x97\x01\n" +
-	"\x10StroppyTestSuite\x1a;\n" +
+	"\x19workflows/workflows.proto\x12\tworkflows\x1a\x0fedge/edge.proto\x1a\x17settings/settings.proto\x1a\x12stroppy/test.proto\x1a\x17validate/validate.proto\x1a\x1bdeployment/deployment.proto\"\xb3\x03\n" +
+	"\tWorkflows\x1a\x88\x02\n" +
+	"\x10StroppyTestSuite\x1a\xab\x01\n" +
 	"\x05Input\x122\n" +
-	"\x05suite\x18\x04 \x01(\v2\x12.stroppy.TestSuiteB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05suite\x1aF\n" +
+	"\x05suite\x18\x01 \x01(\v2\x12.stroppy.TestSuiteB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05suite\x128\n" +
+	"\bsettings\x18\x02 \x01(\v2\x12.settings.SettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsettings\x124\n" +
+	"\x06target\x18\x03 \x01(\x0e2\x12.deployment.TargetB\b\xfaB\x05\x82\x01\x02\x10\x01R\x06target\x1aF\n" +
 	"\x06Output\x12<\n" +
-	"\aresults\x18\x01 \x01(\v2\x18.stroppy.TestSuiteResultB\b\xfaB\x05\x8a\x01\x02\x10\x01R\aresults\x1a\x94\x01\n" +
-	"\vStroppyTest\x1aD\n" +
-	"\x05Input\x12;\n" +
-	"\acontext\x18\x01 \x01(\v2\x17.stroppy.TestRunContextB\b\xfaB\x05\x8a\x01\x02\x10\x01R\acontext\x1a?\n" +
+	"\aresults\x18\x01 \x01(\v2\x18.stroppy.TestSuiteResultB\b\xfaB\x05\x8a\x01\x02\x10\x01R\aresults\x1a\x9a\x01\n" +
+	"\vStroppyTest\x1aJ\n" +
+	"\x05Input\x12A\n" +
+	"\frun_settings\x18\x01 \x01(\v2\x14.stroppy.RunSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\vrunSettings\x1a?\n" +
 	"\x06Output\x125\n" +
-	"\x06result\x18\x01 \x01(\v2\x13.stroppy.TestResultB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06resultBAZ?github.com/stroppy-io/hatchet-workflow/internal/proto/workflowsb\x06proto3"
+	"\x06result\x18\x01 \x03(\v2\x13.stroppy.TestResultB\b\xfaB\x05\x92\x01\x02\b\x01R\x06resultBAZ?github.com/stroppy-io/hatchet-workflow/internal/proto/workflowsb\x06proto3"
 
 var (
 	file_workflows_workflows_proto_rawDescOnce sync.Once
@@ -352,20 +371,24 @@ var file_workflows_workflows_proto_goTypes = []any{
 	(*Workflows_StroppyTest_Input)(nil),       // 5: workflows.Workflows.StroppyTest.Input
 	(*Workflows_StroppyTest_Output)(nil),      // 6: workflows.Workflows.StroppyTest.Output
 	(*stroppy.TestSuite)(nil),                 // 7: stroppy.TestSuite
-	(*stroppy.TestSuiteResult)(nil),           // 8: stroppy.TestSuiteResult
-	(*stroppy.TestRunContext)(nil),            // 9: stroppy.TestRunContext
-	(*stroppy.TestResult)(nil),                // 10: stroppy.TestResult
+	(*settings.Settings)(nil),                 // 8: settings.Settings
+	(deployment.Target)(0),                    // 9: deployment.Target
+	(*stroppy.TestSuiteResult)(nil),           // 10: stroppy.TestSuiteResult
+	(*stroppy.RunSettings)(nil),               // 11: stroppy.RunSettings
+	(*stroppy.TestResult)(nil),                // 12: stroppy.TestResult
 }
 var file_workflows_workflows_proto_depIdxs = []int32{
 	7,  // 0: workflows.Workflows.StroppyTestSuite.Input.suite:type_name -> stroppy.TestSuite
-	8,  // 1: workflows.Workflows.StroppyTestSuite.Output.results:type_name -> stroppy.TestSuiteResult
-	9,  // 2: workflows.Workflows.StroppyTest.Input.context:type_name -> stroppy.TestRunContext
-	10, // 3: workflows.Workflows.StroppyTest.Output.result:type_name -> stroppy.TestResult
-	4,  // [4:4] is the sub-list for method output_type
-	4,  // [4:4] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	8,  // 1: workflows.Workflows.StroppyTestSuite.Input.settings:type_name -> settings.Settings
+	9,  // 2: workflows.Workflows.StroppyTestSuite.Input.target:type_name -> deployment.Target
+	10, // 3: workflows.Workflows.StroppyTestSuite.Output.results:type_name -> stroppy.TestSuiteResult
+	11, // 4: workflows.Workflows.StroppyTest.Input.run_settings:type_name -> stroppy.RunSettings
+	12, // 5: workflows.Workflows.StroppyTest.Output.result:type_name -> stroppy.TestResult
+	6,  // [6:6] is the sub-list for method output_type
+	6,  // [6:6] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_workflows_workflows_proto_init() }

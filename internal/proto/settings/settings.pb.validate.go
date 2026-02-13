@@ -39,6 +39,141 @@ var (
 	_ = deployment.Target(0)
 )
 
+// Validate checks the field values on HatchetConnection with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *HatchetConnection) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on HatchetConnection with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// HatchetConnectionMultiError, or nil if none found.
+func (m *HatchetConnection) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *HatchetConnection) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetToken()) < 1 {
+		err := HatchetConnectionValidationError{
+			field:  "Token",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetHost()) < 1 {
+		err := HatchetConnectionValidationError{
+			field:  "Host",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if val := m.GetPort(); val < 1 || val > 65535 {
+		err := HatchetConnectionValidationError{
+			field:  "Port",
+			reason: "value must be inside range [1, 65535]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return HatchetConnectionMultiError(errors)
+	}
+
+	return nil
+}
+
+// HatchetConnectionMultiError is an error wrapping multiple validation errors
+// returned by HatchetConnection.ValidateAll() if the designated constraints
+// aren't met.
+type HatchetConnectionMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m HatchetConnectionMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m HatchetConnectionMultiError) AllErrors() []error { return m }
+
+// HatchetConnectionValidationError is the validation error returned by
+// HatchetConnection.Validate if the designated constraints aren't met.
+type HatchetConnectionValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e HatchetConnectionValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e HatchetConnectionValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e HatchetConnectionValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e HatchetConnectionValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e HatchetConnectionValidationError) ErrorName() string {
+	return "HatchetConnectionValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e HatchetConnectionValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sHatchetConnection.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = HatchetConnectionValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = HatchetConnectionValidationError{}
+
 // Validate checks the field values on YandexCloudSettings with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -416,6 +551,46 @@ func (m *Settings) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if m.GetHatchetConnection() == nil {
+		err := SettingsValidationError{
+			field:  "HatchetConnection",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetHatchetConnection()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SettingsValidationError{
+					field:  "HatchetConnection",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SettingsValidationError{
+					field:  "HatchetConnection",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetHatchetConnection()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SettingsValidationError{
+				field:  "HatchetConnection",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if m.GetDocker() == nil {
 		err := SettingsValidationError{
 			field:  "Docker",
@@ -565,193 +740,6 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = SettingsValidationError{}
-
-// Validate checks the field values on SelectedTarget with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *SelectedTarget) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on SelectedTarget with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in SelectedTargetMultiError,
-// or nil if none found.
-func (m *SelectedTarget) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *SelectedTarget) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	switch v := m.Target.(type) {
-	case *SelectedTarget_DockerSettings:
-		if v == nil {
-			err := SelectedTargetValidationError{
-				field:  "Target",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-
-		if all {
-			switch v := interface{}(m.GetDockerSettings()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, SelectedTargetValidationError{
-						field:  "DockerSettings",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, SelectedTargetValidationError{
-						field:  "DockerSettings",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetDockerSettings()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return SelectedTargetValidationError{
-					field:  "DockerSettings",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	case *SelectedTarget_YandexCloudSettings:
-		if v == nil {
-			err := SelectedTargetValidationError{
-				field:  "Target",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-
-		if all {
-			switch v := interface{}(m.GetYandexCloudSettings()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, SelectedTargetValidationError{
-						field:  "YandexCloudSettings",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, SelectedTargetValidationError{
-						field:  "YandexCloudSettings",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetYandexCloudSettings()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return SelectedTargetValidationError{
-					field:  "YandexCloudSettings",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	default:
-		_ = v // ensures v is used
-	}
-
-	if len(errors) > 0 {
-		return SelectedTargetMultiError(errors)
-	}
-
-	return nil
-}
-
-// SelectedTargetMultiError is an error wrapping multiple validation errors
-// returned by SelectedTarget.ValidateAll() if the designated constraints
-// aren't met.
-type SelectedTargetMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m SelectedTargetMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m SelectedTargetMultiError) AllErrors() []error { return m }
-
-// SelectedTargetValidationError is the validation error returned by
-// SelectedTarget.Validate if the designated constraints aren't met.
-type SelectedTargetValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e SelectedTargetValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e SelectedTargetValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e SelectedTargetValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e SelectedTargetValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e SelectedTargetValidationError) ErrorName() string { return "SelectedTargetValidationError" }
-
-// Error satisfies the builtin error interface
-func (e SelectedTargetValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sSelectedTarget.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = SelectedTargetValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = SelectedTargetValidationError{}
 
 // Validate checks the field values on YandexCloudSettings_NetworkSettings with
 // the rules defined in the proto definition for this message. If any rules

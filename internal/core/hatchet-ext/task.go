@@ -37,3 +37,25 @@ func PTask[PO, WI, O any](parent create.NamedTask, f pTask[*PO, *WI, *O]) Task[W
 		return *res, nil
 	}
 }
+
+type pTask2[PO, PO2, I, O any] = func(ctx hatchet.Context, input I, parentOutput PO, parent2Output PO2) (O, error)
+
+func PTask2[PO, PO2, WI, O any](parent, parent2 create.NamedTask, f pTask2[*PO, *PO2, *WI, *O]) Task[WI, O] {
+	return func(ctx hatchet.Context, input WI) (out O, err error) {
+		var parentOutput PO
+		err = ctx.ParentOutput(parent, &parentOutput)
+		if err != nil {
+			return out, err
+		}
+		var parent2Output PO2
+		err = ctx.ParentOutput(parent2, &parent2Output)
+		if err != nil {
+			return out, err
+		}
+		res, err := f(ctx, &input, &parentOutput, &parent2Output)
+		if err != nil {
+			return out, err
+		}
+		return *res, nil
+	}
+}

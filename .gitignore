@@ -4,3 +4,5 @@ deployments/.kubectl.config.yaml
 .env
 bin
 examples/test.yaml
+examples/test.json
+examples/dump_test.go

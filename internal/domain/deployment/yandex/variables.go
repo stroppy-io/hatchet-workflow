@@ -46,7 +46,7 @@ func VariablesFromTemplate(
 		Networking: networking{
 			Name:       settings.GetYandexCloud().GetNetworkSettings().GetName(),
 			ExternalId: settings.GetYandexCloud().GetNetworkSettings().GetExternalId(),
-			Cidr:       depl.GetSubnetCidr().GetValue(),
+			Cidr:       depl.GetNetwork().GetCidr().GetValue(),
 		},
 		Compute: compute{
 			PlatformId: defaults.StringOrDefault(
@@ -62,9 +62,9 @@ func VariablesFromTemplate(
 			Cores:       int(vmTemplate.GetHardware().GetCores()),
 			Memory:      int(vmTemplate.GetHardware().GetMemory()),
 			DiskSize:    int(vmTemplate.GetHardware().GetDisk()),
-			HasPublicIp: vmTemplate.GetPublicIp(),
+			HasPublicIp: vmTemplate.GetHasPublicIp(),
 			UserData:    vmTemplate.GetCloudInit().GetContent(),
-			InternalIp:  vmTemplate.GetInternalIp(),
+			InternalIp:  vmTemplate.GetInternalIp().GetValue(),
 		}
 	}
 	return vars

@@ -97,15 +97,20 @@ const (
 
 	K6RunIdTagName    = "run_id"
 	K6WorkloadTagName = "workload"
+
+	DriverUrlEnvVar = "DRIVER_URL"
 )
 
-func RunStroppyTask(c *hatchetLib.Client, identifier *edge.Task_Identifier) *hatchetLib.StandaloneTask {
+func RunStroppyTask(
+	c *hatchetLib.Client,
+	identifier *edge.Task_Identifier,
+) *hatchetLib.StandaloneTask {
 	return c.NewStandaloneTask(
 		edgeDomain.TaskIdToString(identifier),
 		hatchet_ext.WTask(func(
 			ctx hatchetLib.Context,
 			input *workflows.Tasks_RunStroppy_Input,
-		) (*workflows.Tasks_RunStroppy_Output, error) {
+		) (*stroppy.TestResult, error) {
 			runcmd := func(cmd *exec.Cmd) error {
 				stdout, _ := cmd.StdoutPipe()
 				stderr, _ := cmd.StderrPipe()
@@ -123,7 +128,14 @@ func RunStroppyTask(c *hatchetLib.Client, identifier *edge.Task_Identifier) *hat
 
 			ctx.Log("Running Stroppy Gen")
 			workloadName := strings.ToLower(input.GetStroppyCliCall().GetWorkload().String())
-			envsCmd := append(os.Environ(), envs.ToSlice(input.GetStroppyCliCall().GetStroppyEnv())...)
+			envsCmd := append(
+				os.Environ(),
+				envs.ToSlice(
+					lo.Assign(input.GetStroppyCliCall().GetStroppyEnv(), map[string]string{
+						DriverUrlEnvVar: input.GetConnectionString(),
+					}),
+				)...,
+			)
 			genCmd := exec.Command(
 				StroppyBinaryName,
 				StroppyCommandGen,
@@ -144,7 +156,7 @@ func RunStroppyTask(c *hatchetLib.Client, identifier *edge.Task_Identifier) *hat
 				fmt.Sprintf("%s.ts", workloadName),
 				fmt.Sprintf("%s.sql", workloadName),
 				TagFlag,
-				fmt.Sprintf("%s=%s", K6RunIdTagName, input.GetContext().GetRunId()),
+				fmt.Sprintf("%s=%s", K6RunIdTagName, input.GetRunSettings().GetRunId()),
 				TagFlag,
 				fmt.Sprintf("%s=%s", K6WorkloadTagName, workloadName),
 			)
@@ -154,15 +166,13 @@ func RunStroppyTask(c *hatchetLib.Client, identifier *edge.Task_Identifier) *hat
 			if err != nil {
 				return nil, fmt.Errorf("failed to run stroppy: %w", err)
 			}
-			return &workflows.Tasks_RunStroppy_Output{
-				Result: &stroppy.TestResult{
-					RunId: input.GetContext().GetRunId(),
-					Test:  input.GetContext().GetTest(),
-					GrafanaUrl: lo.ToPtr(fmt.Sprintf(
-						"http://some-grafana-url?runId=%s",
-						input.GetContext().GetRunId(),
-					)),
-				},
+			return &stroppy.TestResult{
+				RunId: input.GetRunSettings().GetRunId(),
+				Test:  input.GetRunSettings().GetTest(),
+				GrafanaUrl: lo.ToPtr(fmt.Sprintf(
+					"http://some-grafana-url?runId=%s",
+					input.GetRunSettings().GetRunId(),
+				)),
 			}, nil
 		}),
 	)

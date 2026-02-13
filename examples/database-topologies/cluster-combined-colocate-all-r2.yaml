@@ -1,0 +1,44 @@
+postgresCluster:
+  topology:
+    settings:
+      version: VERSION_17
+      storageEngine: STORAGE_ENGINE_HEAP
+      patroni:
+        enabled: true
+    masterHardware:
+      cores: 4
+      memory: 8
+      disk: 100
+    replicaHardware:
+      cores: 2
+      memory: 4
+      disk: 50
+    replicasCount: 2
+    monitor: true
+  addons:
+    dcs:
+      etcd:
+        size: 3
+        monitor: true
+        placement:
+          colocate:
+            scope: SCOPE_ALL_NODES
+    pooling:
+      pgbouncer:
+        enabled: true
+        poolSize: 200
+        poolMode: TRANSACTION
+        maxClientConn: 2000
+        monitor: true
+        placement:
+          colocate:
+            scope: SCOPE_MASTER
+    backup:
+      enabled: true
+      scope: SCOPE_ALL_NODES
+      config:
+        schedule: "0 1 * * *"
+        retention: 14d
+        tool: WAL_G
+        local:
+          path: /var/backups/postgres

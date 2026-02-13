@@ -1,0 +1,25 @@
+postgresCluster:
+  topology:
+    settings:
+      version: VERSION_17
+      storageEngine: STORAGE_ENGINE_HEAP
+    masterHardware:
+      cores: 4
+      memory: 8
+      disk: 100
+    replicaHardware:
+      cores: 2
+      memory: 4
+      disk: 50
+    replicasCount: 5
+  addons:
+    pooling:
+      pgbouncer:
+        enabled: true
+        poolSize: 100
+        poolMode: TRANSACTION
+        maxClientConn: 1000
+        placement:
+          colocate:
+            scope: SCOPE_REPLICA
+            replicaIndex: 0

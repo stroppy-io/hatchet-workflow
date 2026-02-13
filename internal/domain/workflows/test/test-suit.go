@@ -17,15 +17,15 @@ import (
 )
 
 const (
-	TestSuiteWorkflowName = "stroppy-test-suite"
-	TestSuiteTaskName     = "run-test-suite"
+	SuiteWorkflowName = "stroppy-test-suite"
+	SuiteTaskName     = "run-test-suite"
 )
 
 func TestSuiteWorkflow(
 	c *hatchetLib.Client,
 ) *hatchetLib.StandaloneTask {
 	return c.NewStandaloneTask(
-		TestSuiteWorkflowName,
+		SuiteWorkflowName,
 		hatchet_ext.WTask(func(
 			ctx hatchetLib.Context,
 			input *workflows.Workflows_StroppyTestSuite_Input,
@@ -39,11 +39,12 @@ func TestSuiteWorkflow(
 				inputs[i] = hatchetLib.RunManyOpt{
 					Opts: []hatchetLib.RunOptFunc{},
 					Input: &workflows.Workflows_StroppyTest_Input{
-						Context: &stroppy.TestRunContext{
+						RunSettings: &stroppy.RunSettings{
 							RunId:    ids.NewUlid().Lower().String(),
 							Settings: input.GetSettings(),
+							Target:   input.GetTarget(),
+							Test:     testData,
 						},
-						Test: testData,
 					},
 				}
 			}
@@ -71,13 +72,10 @@ func TestSuiteWorkflow(
 			if err != nil {
 				return nil, err
 			}
-			ret := make(map[string]*stroppy.TestResult, len(results))
-			for _, result := range results {
-				ret[result.RunId] = result
-			}
 			return &workflows.Workflows_StroppyTestSuite_Output{
 				Results: &stroppy.TestSuiteResult{
-					Results: ret,
+					Suite:   input.GetSuite(),
+					Results: results,
 				},
 			}, nil
 		}),

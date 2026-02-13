@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	deployment "github.com/stroppy-io/hatchet-workflow/internal/proto/deployment"
 )
 
 // ensure the imports are used
@@ -33,6 +35,8 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = deployment.Target(0)
 )
 
 // Validate checks the field values on StroppyCli with the rules defined in the
@@ -78,8 +82,6 @@ func (m *StroppyCli) validate(all bool) error {
 		}
 		errors = append(errors, err)
 	}
-
-	// no validation rules for ConnectionString
 
 	// no validation rules for StroppyEnv
 
@@ -622,46 +624,6 @@ func (m *TestSuite) validate(all bool) error {
 
 	}
 
-	if m.GetSelectedTarget() == nil {
-		err := TestSuiteValidationError{
-			field:  "SelectedTarget",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetSelectedTarget()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, TestSuiteValidationError{
-					field:  "SelectedTarget",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, TestSuiteValidationError{
-					field:  "SelectedTarget",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetSelectedTarget()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return TestSuiteValidationError{
-				field:  "SelectedTarget",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if len(errors) > 0 {
 		return TestSuiteMultiError(errors)
 	}
@@ -760,8 +722,6 @@ func (m *TestSuiteResult) validate(all bool) error {
 	}
 
 	var errors []error
-
-	// no validation rules for RunId
 
 	if m.GetSuite() == nil {
 		err := TestSuiteResultValidationError{
@@ -926,22 +886,22 @@ var _ interface {
 	ErrorName() string
 } = TestSuiteResultValidationError{}
 
-// Validate checks the field values on TestRunContext with the rules defined in
+// Validate checks the field values on RunSettings with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *TestRunContext) Validate() error {
+func (m *RunSettings) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on TestRunContext with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in TestRunContextMultiError,
-// or nil if none found.
-func (m *TestRunContext) ValidateAll() error {
+// ValidateAll checks the field values on RunSettings with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in RunSettingsMultiError, or
+// nil if none found.
+func (m *RunSettings) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *TestRunContext) validate(all bool) error {
+func (m *RunSettings) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -949,7 +909,7 @@ func (m *TestRunContext) validate(all bool) error {
 	var errors []error
 
 	if utf8.RuneCountInString(m.GetRunId()) < 1 {
-		err := TestRunContextValidationError{
+		err := RunSettingsValidationError{
 			field:  "RunId",
 			reason: "value length must be at least 1 runes",
 		}
@@ -959,9 +919,20 @@ func (m *TestRunContext) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if m.GetSelectedTarget() == nil {
-		err := TestRunContextValidationError{
-			field:  "SelectedTarget",
+	if _, ok := deployment.Target_name[int32(m.GetTarget())]; !ok {
+		err := RunSettingsValidationError{
+			field:  "Target",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetSettings() == nil {
+		err := RunSettingsValidationError{
+			field:  "Settings",
 			reason: "value is required",
 		}
 		if !all {
@@ -971,28 +942,28 @@ func (m *TestRunContext) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetSelectedTarget()).(type) {
+		switch v := interface{}(m.GetSettings()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, TestRunContextValidationError{
-					field:  "SelectedTarget",
+				errors = append(errors, RunSettingsValidationError{
+					field:  "Settings",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, TestRunContextValidationError{
-					field:  "SelectedTarget",
+				errors = append(errors, RunSettingsValidationError{
+					field:  "Settings",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetSelectedTarget()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetSettings()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return TestRunContextValidationError{
-				field:  "SelectedTarget",
+			return RunSettingsValidationError{
+				field:  "Settings",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -1000,7 +971,7 @@ func (m *TestRunContext) validate(all bool) error {
 	}
 
 	if m.GetTest() == nil {
-		err := TestRunContextValidationError{
+		err := RunSettingsValidationError{
 			field:  "Test",
 			reason: "value is required",
 		}
@@ -1014,7 +985,7 @@ func (m *TestRunContext) validate(all bool) error {
 		switch v := interface{}(m.GetTest()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, TestRunContextValidationError{
+				errors = append(errors, RunSettingsValidationError{
 					field:  "Test",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1022,7 +993,7 @@ func (m *TestRunContext) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, TestRunContextValidationError{
+				errors = append(errors, RunSettingsValidationError{
 					field:  "Test",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1031,7 +1002,7 @@ func (m *TestRunContext) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetTest()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return TestRunContextValidationError{
+			return RunSettingsValidationError{
 				field:  "Test",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -1040,19 +1011,18 @@ func (m *TestRunContext) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return TestRunContextMultiError(errors)
+		return RunSettingsMultiError(errors)
 	}
 
 	return nil
 }
 
-// TestRunContextMultiError is an error wrapping multiple validation errors
-// returned by TestRunContext.ValidateAll() if the designated constraints
-// aren't met.
-type TestRunContextMultiError []error
+// RunSettingsMultiError is an error wrapping multiple validation errors
+// returned by RunSettings.ValidateAll() if the designated constraints aren't met.
+type RunSettingsMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m TestRunContextMultiError) Error() string {
+func (m RunSettingsMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1061,11 +1031,11 @@ func (m TestRunContextMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m TestRunContextMultiError) AllErrors() []error { return m }
+func (m RunSettingsMultiError) AllErrors() []error { return m }
 
-// TestRunContextValidationError is the validation error returned by
-// TestRunContext.Validate if the designated constraints aren't met.
-type TestRunContextValidationError struct {
+// RunSettingsValidationError is the validation error returned by
+// RunSettings.Validate if the designated constraints aren't met.
+type RunSettingsValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1073,22 +1043,22 @@ type TestRunContextValidationError struct {
 }
 
 // Field function returns field value.
-func (e TestRunContextValidationError) Field() string { return e.field }
+func (e RunSettingsValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e TestRunContextValidationError) Reason() string { return e.reason }
+func (e RunSettingsValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e TestRunContextValidationError) Cause() error { return e.cause }
+func (e RunSettingsValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e TestRunContextValidationError) Key() bool { return e.key }
+func (e RunSettingsValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e TestRunContextValidationError) ErrorName() string { return "TestRunContextValidationError" }
+func (e RunSettingsValidationError) ErrorName() string { return "RunSettingsValidationError" }
 
 // Error satisfies the builtin error interface
-func (e TestRunContextValidationError) Error() string {
+func (e RunSettingsValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1100,14 +1070,14 @@ func (e TestRunContextValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sTestRunContext.%s: %s%s",
+		"invalid %sRunSettings.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = TestRunContextValidationError{}
+var _ error = RunSettingsValidationError{}
 
 var _ interface {
 	Field() string
@@ -1115,4 +1085,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = TestRunContextValidationError{}
+} = RunSettingsValidationError{}

@@ -6,11 +6,13 @@ import (
 	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
 	hatchet_ext "github.com/stroppy-io/hatchet-workflow/internal/core/hatchet-ext"
 	edgeDomain "github.com/stroppy-io/hatchet-workflow/internal/domain/edge"
+	"github.com/stroppy-io/hatchet-workflow/internal/proto/deployment"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/edge"
+	"github.com/stroppy-io/hatchet-workflow/internal/proto/settings"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/workflows"
 )
 
-func StartContainersTask(c *hatchetLib.Client, identifier *edge.Task_Identifier) *hatchetLib.StandaloneTask {
+func SetupContainersTask(c *hatchetLib.Client, identifier *edge.Task_Identifier) *hatchetLib.StandaloneTask {
 	return c.NewStandaloneTask(
 		edgeDomain.TaskIdToString(identifier),
 		hatchet_ext.WTask(func(
@@ -21,12 +23,17 @@ func StartContainersTask(c *hatchetLib.Client, identifier *edge.Task_Identifier)
 				return nil, err
 			}
 
-			networkName, err := resolveContainerNetworkName(input)
+			networkName, err := resolveContainerNetworkName(
+				input.GetRunSettings().GetRunId(),
+				input.GetRunSettings().GetTarget(),
+				input.GetRunSettings().GetSettings(),
+				input,
+			)
 			if err != nil {
 				return nil, err
 			}
 
-			runner, err := NewContainerRunner(networkName)
+			runner, err := NewContainerRunner(networkName, ctx)
 			if err != nil {
 				return nil, err
 			}
@@ -34,7 +41,7 @@ func StartContainersTask(c *hatchetLib.Client, identifier *edge.Task_Identifier)
 
 			if err := runner.DeployContainersForTarget(
 				ctx.GetContext(),
-				input.GetContext(),
+				input.GetRunSettings(),
 				input.GetWorkerInternalIp().GetValue(),
 				input.GetContainers(),
 			); err != nil {
@@ -46,18 +53,19 @@ func StartContainersTask(c *hatchetLib.Client, identifier *edge.Task_Identifier)
 	)
 }
 
-func resolveContainerNetworkName(input *workflows.Tasks_StartDockerContainers_Input) (string, error) {
-	if dockerSettings := input.GetContext().GetSelectedTarget().GetDockerSettings(); dockerSettings != nil {
-		if dockerSettings.GetNetworkName() != "" {
-			return dockerSettings.GetNetworkName(), nil
-		}
-		return "", fmt.Errorf("docker target selected but docker network name is empty")
+func resolveContainerNetworkName(
+	runId string,
+	target deployment.Target,
+	settings *settings.Settings,
+	input *workflows.Tasks_StartDockerContainers_Input,
+) (string, error) {
+	if target == deployment.Target_TARGET_DOCKER {
+		return settings.GetDocker().GetNetworkName(), nil
 	}
-
 	cidr := input.GetWorkerInternalCidr().GetValue()
 	if cidr == "" {
 		return "", fmt.Errorf("worker internal cidr is empty")
 	}
-	runID := sanitizeDockerNamePart(input.GetContext().GetRunId())
+	runID := sanitizeDockerNamePart(runId)
 	return fmt.Sprintf("edge-%s-%s", runID, sanitizeDockerNamePart(cidr)), nil
 }

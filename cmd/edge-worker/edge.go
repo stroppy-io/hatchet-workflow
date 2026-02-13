@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log"
 	"os"
 
@@ -10,10 +9,12 @@ import (
 	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/build"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/logger"
-	edge2 "github.com/stroppy-io/hatchet-workflow/internal/domain/edge"
-	"github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/edge"
-	"github.com/stroppy-io/hatchet-workflow/internal/proto/hatchet"
+	domainEdge "github.com/stroppy-io/hatchet-workflow/internal/domain/edge"
+	workflowsEdge "github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/edge"
+	"github.com/stroppy-io/hatchet-workflow/internal/proto/edge"
 )
+
+// TODO: Add health check endpoint to validate container health
 
 func main() {
 	token := os.Getenv("HATCHET_CLIENT_TOKEN")
@@ -36,32 +37,31 @@ func main() {
 		log.Fatalf("Failed to create Hatchet client: %v", err)
 	}
 
-	workerName := os.Getenv(edge2.WorkerNameEnvKey)
+	workerName := os.Getenv(domainEdge.WorkerNameEnvKey)
 	if workerName == "" {
 		log.Fatalf("HATCHET_EDGE_WORKER_NAME is not set")
 	}
-	acceptableTasks := os.Getenv(edge2.WorkerAcceptableTasksEnvKey)
+	acceptableTasks := os.Getenv(domainEdge.WorkerAcceptableTasksEnvKey)
 	if acceptableTasks == "" {
 		log.Fatalf("HATCHET_EDGE_ACCEPTABLE_TASKS is not set")
 	}
-
-	parsedTasksIds, err := edge2.ParseTaskIds(acceptableTasks)
+	parsedTasksIds, err := domainEdge.ParseTaskIds(acceptableTasks)
 	if err != nil {
 		log.Fatalf("Failed to parse acceptable tasks: %v", err)
 	}
-
-	tracker, err := edge.NewContainerTracker()
-	if err != nil {
-		log.Printf("Warning: failed to create container tracker: %v", err)
+	for _, task := range parsedTasksIds {
+		log.Printf("Acceptable task: %s", domainEdge.TaskIdToString(task))
 	}
 
 	tasks := make([]hatchetLib.WorkflowBase, 0)
 	for _, task := range parsedTasksIds {
 		switch task.GetKind() {
-		case hatchet.EdgeTasks_SETUP_SOFTWARE:
-			tasks = append(tasks, edge.InstallSoftwareTask(c, task, tracker))
-		case hatchet.EdgeTasks_RUN_STROPPY:
-			tasks = append(tasks, edge.RunStroppyTask(c, task))
+		case edge.Task_KIND_INSTALL_STROPPY:
+			tasks = append(tasks, workflowsEdge.InstallStroppy(c, task))
+		case edge.Task_KIND_RUN_STROPPY:
+			tasks = append(tasks, workflowsEdge.RunStroppyTask(c, task))
+		case edge.Task_KIND_SETUP_CONTAINERS:
+			tasks = append(tasks, workflowsEdge.SetupContainersTask(c, task))
 		default:
 			log.Fatalf("Unexpected task kind: %s", task.GetKind().String())
 		}
@@ -81,10 +81,5 @@ func main() {
 	err = worker.StartBlocking(interruptCtx)
 	if err != nil {
 		log.Fatalf("Failed to start Hatchet worker: %v", err)
-	}
-
-	if tracker != nil {
-		log.Printf("Cleaning up containers...")
-		tracker.Cleanup(context.Background())
 	}
 }

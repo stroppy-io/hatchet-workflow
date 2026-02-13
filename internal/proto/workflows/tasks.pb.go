@@ -174,10 +174,9 @@ func (*Tasks_RunStroppy) Descriptor() ([]byte, []int) {
 }
 
 type Tasks_StartDockerContainers_Input struct {
-	state              protoimpl.MessageState  `protogen:"open.v1"`
-	Context            *stroppy.TestRunContext `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
-	ComposeFileContent string                  `protobuf:"bytes,2,opt,name=compose_file_content,json=composeFileContent,proto3" json:"compose_file_content,omitempty"`
-	Containers         []*provision.Container  `protobuf:"bytes,3,rep,name=containers,proto3" json:"containers,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	RunSettings *stroppy.RunSettings   `protobuf:"bytes,1,opt,name=run_settings,json=runSettings,proto3" json:"run_settings,omitempty"`
+	Containers  []*provision.Container `protobuf:"bytes,3,rep,name=containers,proto3" json:"containers,omitempty"`
 	// Need to docker containers for IPAM.Config
 	WorkerInternalIp   *deployment.Ip   `protobuf:"bytes,4,opt,name=worker_internal_ip,json=workerInternalIp,proto3" json:"worker_internal_ip,omitempty"`
 	WorkerInternalCidr *deployment.Cidr `protobuf:"bytes,5,opt,name=worker_internal_cidr,json=workerInternalCidr,proto3" json:"worker_internal_cidr,omitempty"`
@@ -215,18 +214,11 @@ func (*Tasks_StartDockerContainers_Input) Descriptor() ([]byte, []int) {
 	return file_workflows_tasks_proto_rawDescGZIP(), []int{0, 0, 0}
 }
 
-func (x *Tasks_StartDockerContainers_Input) GetContext() *stroppy.TestRunContext {
+func (x *Tasks_StartDockerContainers_Input) GetRunSettings() *stroppy.RunSettings {
 	if x != nil {
-		return x.Context
+		return x.RunSettings
 	}
 	return nil
-}
-
-func (x *Tasks_StartDockerContainers_Input) GetComposeFileContent() string {
-	if x != nil {
-		return x.ComposeFileContent
-	}
-	return ""
 }
 
 func (x *Tasks_StartDockerContainers_Input) GetContainers() []*provision.Container {
@@ -287,9 +279,9 @@ func (*Tasks_StartDockerContainers_Output) Descriptor() ([]byte, []int) {
 }
 
 type Tasks_InstallStroppy_Input struct {
-	state         protoimpl.MessageState  `protogen:"open.v1"`
-	Context       *stroppy.TestRunContext `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
-	StroppyCli    *stroppy.StroppyCli     `protobuf:"bytes,2,opt,name=stroppy_cli,json=stroppyCli,proto3" json:"stroppy_cli,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RunSettings   *stroppy.RunSettings   `protobuf:"bytes,1,opt,name=run_settings,json=runSettings,proto3" json:"run_settings,omitempty"`
+	StroppyCli    *stroppy.StroppyCli    `protobuf:"bytes,2,opt,name=stroppy_cli,json=stroppyCli,proto3" json:"stroppy_cli,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -324,9 +316,9 @@ func (*Tasks_InstallStroppy_Input) Descriptor() ([]byte, []int) {
 	return file_workflows_tasks_proto_rawDescGZIP(), []int{0, 1, 0}
 }
 
-func (x *Tasks_InstallStroppy_Input) GetContext() *stroppy.TestRunContext {
+func (x *Tasks_InstallStroppy_Input) GetRunSettings() *stroppy.RunSettings {
 	if x != nil {
-		return x.Context
+		return x.RunSettings
 	}
 	return nil
 }
@@ -375,11 +367,12 @@ func (*Tasks_InstallStroppy_Output) Descriptor() ([]byte, []int) {
 }
 
 type Tasks_RunStroppy_Input struct {
-	state          protoimpl.MessageState  `protogen:"open.v1"`
-	Context        *stroppy.TestRunContext `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
-	StroppyCliCall *stroppy.StroppyCli     `protobuf:"bytes,2,opt,name=stroppy_cli_call,json=stroppyCliCall,proto3" json:"stroppy_cli_call,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	RunSettings      *stroppy.RunSettings   `protobuf:"bytes,1,opt,name=run_settings,json=runSettings,proto3" json:"run_settings,omitempty"`
+	StroppyCliCall   *stroppy.StroppyCli    `protobuf:"bytes,2,opt,name=stroppy_cli_call,json=stroppyCliCall,proto3" json:"stroppy_cli_call,omitempty"`
+	ConnectionString string                 `protobuf:"bytes,3,opt,name=connection_string,json=connectionString,proto3" json:"connection_string,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *Tasks_RunStroppy_Input) Reset() {
@@ -412,9 +405,9 @@ func (*Tasks_RunStroppy_Input) Descriptor() ([]byte, []int) {
 	return file_workflows_tasks_proto_rawDescGZIP(), []int{0, 2, 0}
 }
 
-func (x *Tasks_RunStroppy_Input) GetContext() *stroppy.TestRunContext {
+func (x *Tasks_RunStroppy_Input) GetRunSettings() *stroppy.RunSettings {
 	if x != nil {
-		return x.Context
+		return x.RunSettings
 	}
 	return nil
 }
@@ -426,9 +419,17 @@ func (x *Tasks_RunStroppy_Input) GetStroppyCliCall() *stroppy.StroppyCli {
 	return nil
 }
 
+func (x *Tasks_RunStroppy_Input) GetConnectionString() string {
+	if x != nil {
+		return x.ConnectionString
+	}
+	return ""
+}
+
 type Tasks_RunStroppy_Output struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Result        *stroppy.TestResult    `protobuf:"bytes,1,opt,name=result,proto3" json:"result,omitempty"`
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	Result        []*stroppy.TestResult        `protobuf:"bytes,1,rep,name=result,proto3" json:"result,omitempty"`
+	Placement     *provision.DeployedPlacement `protobuf:"bytes,2,opt,name=placement,proto3" json:"placement,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -463,9 +464,16 @@ func (*Tasks_RunStroppy_Output) Descriptor() ([]byte, []int) {
 	return file_workflows_tasks_proto_rawDescGZIP(), []int{0, 2, 1}
 }
 
-func (x *Tasks_RunStroppy_Output) GetResult() *stroppy.TestResult {
+func (x *Tasks_RunStroppy_Output) GetResult() []*stroppy.TestResult {
 	if x != nil {
 		return x.Result
+	}
+	return nil
+}
+
+func (x *Tasks_RunStroppy_Output) GetPlacement() *provision.DeployedPlacement {
+	if x != nil {
+		return x.Placement
 	}
 	return nil
 }
@@ -474,31 +482,32 @@ var File_workflows_tasks_proto protoreflect.FileDescriptor
 
 const file_workflows_tasks_proto_rawDesc = "" +
 	"\n" +
-	"\x15workflows/tasks.proto\x12\tworkflows\x1a\x12stroppy/test.proto\x1a\x17validate/validate.proto\x1a\x19provision/provision.proto\x1a\x1bdeployment/deployment.proto\"\x87\x06\n" +
-	"\x05Tasks\x1a\xf9\x02\n" +
-	"\x15StartDockerContainers\x1a\xd5\x02\n" +
-	"\x05Input\x12;\n" +
-	"\acontext\x18\x01 \x01(\v2\x17.stroppy.TestRunContextB\b\xfaB\x05\x8a\x01\x02\x10\x01R\acontext\x129\n" +
-	"\x14compose_file_content\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x12composeFileContent\x12>\n" +
+	"\x15workflows/tasks.proto\x12\tworkflows\x1a\x12stroppy/test.proto\x1a\x17validate/validate.proto\x1a\x19provision/provision.proto\x1a\x1bdeployment/deployment.proto\"\xdb\x06\n" +
+	"\x05Tasks\x1a\xc4\x02\n" +
+	"\x15StartDockerContainers\x1a\xa0\x02\n" +
+	"\x05Input\x12A\n" +
+	"\frun_settings\x18\x01 \x01(\v2\x14.stroppy.RunSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\vrunSettings\x12>\n" +
 	"\n" +
 	"containers\x18\x03 \x03(\v2\x14.provision.ContainerB\b\xfaB\x05\x92\x01\x02\b\x01R\n" +
 	"containers\x12F\n" +
 	"\x12worker_internal_ip\x18\x04 \x01(\v2\x0e.deployment.IpB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x10workerInternalIp\x12L\n" +
 	"\x14worker_internal_cidr\x18\x05 \x01(\v2\x10.deployment.CidrB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x12workerInternalCidr\x1a\b\n" +
-	"\x06Output\x1a\xa1\x01\n" +
-	"\x0eInstallStroppy\x1a\x84\x01\n" +
-	"\x05Input\x12;\n" +
-	"\acontext\x18\x01 \x01(\v2\x17.stroppy.TestRunContextB\b\xfaB\x05\x8a\x01\x02\x10\x01R\acontext\x12>\n" +
+	"\x06Output\x1a\xa7\x01\n" +
+	"\x0eInstallStroppy\x1a\x8a\x01\n" +
+	"\x05Input\x12A\n" +
+	"\frun_settings\x18\x01 \x01(\v2\x14.stroppy.RunSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\vrunSettings\x12>\n" +
 	"\vstroppy_cli\x18\x02 \x01(\v2\x13.stroppy.StroppyCliB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
 	"stroppyCli\x1a\b\n" +
-	"\x06Output\x1a\xdd\x01\n" +
+	"\x06Output\x1a\xe0\x02\n" +
 	"\n" +
-	"RunStroppy\x1a\x8d\x01\n" +
-	"\x05Input\x12;\n" +
-	"\acontext\x18\x01 \x01(\v2\x17.stroppy.TestRunContextB\b\xfaB\x05\x8a\x01\x02\x10\x01R\acontext\x12G\n" +
-	"\x10stroppy_cli_call\x18\x02 \x01(\v2\x13.stroppy.StroppyCliB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0estroppyCliCall\x1a?\n" +
+	"RunStroppy\x1a\xc9\x01\n" +
+	"\x05Input\x12A\n" +
+	"\frun_settings\x18\x01 \x01(\v2\x14.stroppy.RunSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\vrunSettings\x12G\n" +
+	"\x10stroppy_cli_call\x18\x02 \x01(\v2\x13.stroppy.StroppyCliB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0estroppyCliCall\x124\n" +
+	"\x11connection_string\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x10connectionString\x1a\x85\x01\n" +
 	"\x06Output\x125\n" +
-	"\x06result\x18\x01 \x01(\v2\x13.stroppy.TestResultB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06resultBAZ?github.com/stroppy-io/hatchet-workflow/internal/proto/workflowsb\x06proto3"
+	"\x06result\x18\x01 \x03(\v2\x13.stroppy.TestResultB\b\xfaB\x05\x92\x01\x02\b\x01R\x06result\x12D\n" +
+	"\tplacement\x18\x02 \x01(\v2\x1c.provision.DeployedPlacementB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tplacementBAZ?github.com/stroppy-io/hatchet-workflow/internal/proto/workflowsb\x06proto3"
 
 var (
 	file_workflows_tasks_proto_rawDescOnce sync.Once
@@ -524,28 +533,30 @@ var file_workflows_tasks_proto_goTypes = []any{
 	(*Tasks_InstallStroppy_Output)(nil),        // 7: workflows.Tasks.InstallStroppy.Output
 	(*Tasks_RunStroppy_Input)(nil),             // 8: workflows.Tasks.RunStroppy.Input
 	(*Tasks_RunStroppy_Output)(nil),            // 9: workflows.Tasks.RunStroppy.Output
-	(*stroppy.TestRunContext)(nil),             // 10: stroppy.TestRunContext
+	(*stroppy.RunSettings)(nil),                // 10: stroppy.RunSettings
 	(*provision.Container)(nil),                // 11: provision.Container
 	(*deployment.Ip)(nil),                      // 12: deployment.Ip
 	(*deployment.Cidr)(nil),                    // 13: deployment.Cidr
 	(*stroppy.StroppyCli)(nil),                 // 14: stroppy.StroppyCli
 	(*stroppy.TestResult)(nil),                 // 15: stroppy.TestResult
+	(*provision.DeployedPlacement)(nil),        // 16: provision.DeployedPlacement
 }
 var file_workflows_tasks_proto_depIdxs = []int32{
-	10, // 0: workflows.Tasks.StartDockerContainers.Input.context:type_name -> stroppy.TestRunContext
+	10, // 0: workflows.Tasks.StartDockerContainers.Input.run_settings:type_name -> stroppy.RunSettings
 	11, // 1: workflows.Tasks.StartDockerContainers.Input.containers:type_name -> provision.Container
 	12, // 2: workflows.Tasks.StartDockerContainers.Input.worker_internal_ip:type_name -> deployment.Ip
 	13, // 3: workflows.Tasks.StartDockerContainers.Input.worker_internal_cidr:type_name -> deployment.Cidr
-	10, // 4: workflows.Tasks.InstallStroppy.Input.context:type_name -> stroppy.TestRunContext
+	10, // 4: workflows.Tasks.InstallStroppy.Input.run_settings:type_name -> stroppy.RunSettings
 	14, // 5: workflows.Tasks.InstallStroppy.Input.stroppy_cli:type_name -> stroppy.StroppyCli
-	10, // 6: workflows.Tasks.RunStroppy.Input.context:type_name -> stroppy.TestRunContext
+	10, // 6: workflows.Tasks.RunStroppy.Input.run_settings:type_name -> stroppy.RunSettings
 	14, // 7: workflows.Tasks.RunStroppy.Input.stroppy_cli_call:type_name -> stroppy.StroppyCli
 	15, // 8: workflows.Tasks.RunStroppy.Output.result:type_name -> stroppy.TestResult
-	9,  // [9:9] is the sub-list for method output_type
-	9,  // [9:9] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	16, // 9: workflows.Tasks.RunStroppy.Output.placement:type_name -> provision.DeployedPlacement
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_workflows_tasks_proto_init() }

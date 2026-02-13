@@ -1,0 +1,24 @@
+postgresCluster:
+  topology:
+    settings:
+      version: VERSION_17
+      storageEngine: STORAGE_ENGINE_HEAP
+    masterHardware:
+      cores: 4
+      memory: 8
+      disk: 100
+    replicaHardware:
+      cores: 2
+      memory: 4
+      disk: 50
+    replicasCount: 3
+  replicaOverrides:
+    - replicaIndex: 1
+      hardware:
+        cores: 8
+        memory: 16
+        disk: 200
+    - replicaIndex: 2
+      settings:
+        version: VERSION_16
+        storageEngine: STORAGE_ENGINE_ORIOLEDB

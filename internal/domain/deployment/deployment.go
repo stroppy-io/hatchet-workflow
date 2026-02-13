@@ -25,11 +25,17 @@ type Service interface {
 type Registry map[deployment.Target]Service
 
 func NewRegistry(settings *settings.Settings) (Registry, error) {
-	terraformActor, err := terraform.NewActor()
+	dockerService, err := docker.NewService(settings)
 	if err != nil {
 		return nil, err
 	}
-	dockerService, err := docker.NewService(settings)
+	if settings.GetPreferredTarget() == deployment.Target_TARGET_DOCKER {
+		return Registry{
+			deployment.Target_TARGET_DOCKER: dockerService,
+		}, nil
+	}
+	// TODO: Think about setup terraform only if we need it
+	terraformActor, err := terraform.NewActor()
 	if err != nil {
 		return nil, err
 	}
