@@ -595,11 +595,14 @@ func (p *postgresPlacementBuilder) resolveRuntimeConfig(items []*provision.Place
 				c.Env["ETCD_ADVERTISE_CLIENT_URLS"] = fmt.Sprintf("http://%s:%d", itemIP, clientPort)
 
 			case c.GetPostgres() != nil:
+				ensureEnv(c)
+				c.Env["POSTGRES_USER"] = defaultPostgresUser
+				c.Env["POSTGRES_PASSWORD"] = defaultPostgresPassword
+				c.Env["POSTGRES_DB"] = defaultPostgresDatabase
 				if c.GetPostgres().GetSettings().GetPatroni().GetEnabled() {
 					if len(etcdHosts) == 0 {
 						return "", fmt.Errorf("patroni is enabled but etcd endpoints are empty")
 					}
-					ensureEnv(c)
 					c.Env["PATRONI_NAME"] = c.GetName()
 					c.Env["PATRONI_ETCD3_HOSTS"] = etcdHostsValue
 					c.Env["PATRONI_POSTGRESQL_CONNECT_ADDRESS"] = fmt.Sprintf("%s:%d", itemIP, defaultPortPostgres)
