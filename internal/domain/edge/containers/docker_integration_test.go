@@ -1,6 +1,6 @@
 //go:build integration
 
-package edge
+package containers
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	dockerClient "github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
+	"github.com/stroppy-io/hatchet-workflow/internal/proto/deployment"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/provision"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/settings"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/stroppy"
@@ -48,23 +49,17 @@ func TestContainerRunnerDockerTargetIntegration(t *testing.T) {
 		_ = cli.NetworkRemove(context.Background(), networkName)
 	})
 
-	runner, err := NewContainerRunner(networkName)
-	if err != nil {
-		t.Fatalf("failed to create runner: %v", err)
-	}
 	t.Cleanup(func() {
-		runner.Cleanup(context.Background())
-		_ = runner.Close()
+		_ = Cleanup(context.Background())
 	})
 
-	testRunCtx := &stroppy.TestRunContext{
-		RunId: "run-" + runSuffix,
-		SelectedTarget: &settings.SelectedTarget{
-			Target: &settings.SelectedTarget_DockerSettings{
-				DockerSettings: &settings.DockerSettings{
-					NetworkName:     networkName,
-					EdgeWorkerImage: "unused-in-test",
-				},
+	runSettings := &stroppy.RunSettings{
+		RunId:  "run-" + runSuffix,
+		Target: deployment.Target_TARGET_DOCKER,
+		Settings: &settings.Settings{
+			Docker: &settings.DockerSettings{
+				NetworkName:     networkName,
+				EdgeWorkerImage: "unused-in-test",
 			},
 		},
 	}
@@ -101,17 +96,17 @@ func TestContainerRunnerDockerTargetIntegration(t *testing.T) {
 		},
 	}
 
-	if err := runner.DeployContainersForTarget(ctx, testRunCtx, workerIP, containers); err != nil {
+	if err := DeployContainersForTarget(ctx, nil, runSettings, networkName, workerIP, subnet, containers); err != nil {
 		t.Fatalf("deploy failed: %v", err)
 	}
 
 	serverOpts := runContainerOptions{
 		dockerTarget:   true,
-		runID:          testRunCtx.GetRunId(),
+		runID:          runSettings.GetRunId(),
 		workerInternal: workerIP,
 	}
 	serverName := containerRuntimeName(containers[0], serverOpts)
-	serverID := getTrackedContainerID(t, runner, serverName)
+	serverID := getTrackedContainerID(t, runSettings.GetRunId(), serverName)
 
 	serverInspect, err := cli.ContainerInspect(ctx, serverID)
 	if err != nil {
@@ -124,7 +119,7 @@ func TestContainerRunnerDockerTargetIntegration(t *testing.T) {
 	if networkInfo.IPAddress != serverIP {
 		t.Fatalf("unexpected server IP: got=%q want=%q", networkInfo.IPAddress, serverIP)
 	}
-	if got := serverInspect.Config.Labels[containerLabelRunIDKey]; got != testRunCtx.GetRunId() {
+	if got := serverInspect.Config.Labels[containerLabelRunIDKey]; got != runSettings.GetRunId() {
 		t.Fatalf("unexpected run_id label: got=%q", got)
 	}
 	if got := serverInspect.Config.Labels[containerLabelWorkerIPKey]; got != workerIP {
@@ -138,7 +133,7 @@ func TestContainerRunnerDockerTargetIntegration(t *testing.T) {
 	}
 
 	clientName := containerRuntimeName(containers[1], serverOpts)
-	clientID := getTrackedContainerID(t, runner, clientName)
+	clientID := getTrackedContainerID(t, runSettings.GetRunId(), clientName)
 
 	clientLogs, waitErr := waitForContainerExitAndLogs(ctx, cli, clientID, 45*time.Second)
 	if waitErr != nil {
@@ -148,7 +143,9 @@ func TestContainerRunnerDockerTargetIntegration(t *testing.T) {
 		t.Fatalf("expected client logs to contain pong, logs=%s", clientLogs)
 	}
 
-	runner.Cleanup(ctx)
+	if err := Cleanup(ctx); err != nil {
+		t.Fatalf("cleanup failed: %v", err)
+	}
 
 	assertContainerRemoved(t, ctx, cli, serverID)
 	assertContainerRemoved(t, ctx, cli, clientID)
@@ -172,12 +169,14 @@ func dockerDaemonOrSkip(t *testing.T, ctx context.Context) *dockerClient.Client 
 	return cli
 }
 
-func getTrackedContainerID(t *testing.T, runner *ContainerRunner, name string) string {
+func getTrackedContainerID(t *testing.T, runID string, name string) string {
 	t.Helper()
-	runner.mu.Lock()
-	defer runner.mu.Unlock()
 
-	id, ok := runner.containers[name]
+	run, ok := globalMapping.Get(runID)
+	if !ok {
+		t.Fatalf("run %q is not tracked", runID)
+	}
+	id, ok := run.containers.Get(name)
 	if !ok || id == "" {
 		t.Fatalf("container %q is not tracked", name)
 	}

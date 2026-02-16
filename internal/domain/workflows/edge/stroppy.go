@@ -120,24 +120,26 @@ func RunStroppyTask(
 				}
 				var wg sync.WaitGroup
 				wg.Add(2)
-				go streamLogsWithPrefix(ctx, stdout, "[OUT]: ", ctx.Log, &wg)
-				go streamLogsWithPrefix(ctx, stderr, "[ERR]: ", ctx.Log, &wg)
+				go streamLogsWithPrefix(ctx, stdout, "", ctx.Log, &wg)
+				go streamLogsWithPrefix(ctx, stderr, "", ctx.Log, &wg)
 				wg.Wait()
 				return cmd.Wait()
 			}
 
-			ctx.Log("Running Stroppy Gen")
 			workloadName := strings.ToLower(input.GetStroppyCliCall().GetWorkload().String())
 			envsCmd := append(
 				os.Environ(),
 				envs.ToSlice(
-					lo.Assign(input.GetStroppyCliCall().GetStroppyEnv(), map[string]string{
-						DriverUrlEnvVar: input.GetConnectionString(),
-					}),
+					lo.Assign(
+						input.GetStroppyCliCall().GetStroppyEnv(),
+						map[string]string{
+							DriverUrlEnvVar: input.GetConnectionString(),
+						},
+					),
 				)...,
 			)
 			genCmd := exec.Command(
-				StroppyBinaryName,
+				input.GetStroppyCliCall().GetBinaryPath(),
 				StroppyCommandGen,
 				StroppyWorkdirFlag,
 				input.GetStroppyCliCall().GetWorkdir(),
@@ -145,23 +147,29 @@ func RunStroppyTask(
 				workloadName,
 			)
 			genCmd.Env = envsCmd
+			ctx.Log(fmt.Sprintf(
+				"Running Stroppy generation with command: %s in workdir: %s",
+				genCmd.String(),
+				input.GetStroppyCliCall().GetWorkdir(),
+			))
 			err := runcmd(genCmd)
 			if err != nil {
 				return nil, fmt.Errorf("failed to run stroppy gen: %w", err)
 			}
-			ctx.Log("Running Stroppy Run")
 			runCmd := exec.Command(
-				StroppyBinaryName,
+				input.GetStroppyCliCall().GetBinaryPath(),
 				StroppyCommandRun,
 				fmt.Sprintf("%s.ts", workloadName),
 				fmt.Sprintf("%s.sql", workloadName),
-				TagFlag,
-				fmt.Sprintf("%s=%s", K6RunIdTagName, input.GetRunSettings().GetRunId()),
-				TagFlag,
-				fmt.Sprintf("%s=%s", K6WorkloadTagName, workloadName),
+				// TODO: Add tags after stroppy release
+				//TagFlag,
+				//fmt.Sprintf("%s=%s", K6RunIdTagName, input.GetRunSettings().GetRunId()),
+				//TagFlag,
+				//fmt.Sprintf("%s=%s", K6WorkloadTagName, workloadName),
 			)
-			runCmd.Dir = filepath.Dir(input.GetStroppyCliCall().GetWorkdir())
 			runCmd.Env = envsCmd
+			runCmd.Dir = input.GetStroppyCliCall().GetWorkdir()
+			ctx.Log(fmt.Sprintf("Running Stroppy test with command: %s in dir: %s", runCmd.String(), runCmd.Dir))
 			err = runcmd(runCmd)
 			if err != nil {
 				return nil, fmt.Errorf("failed to run stroppy: %w", err)

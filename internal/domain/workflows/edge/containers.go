@@ -6,6 +6,7 @@ import (
 	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
 	hatchet_ext "github.com/stroppy-io/hatchet-workflow/internal/core/hatchet-ext"
 	edgeDomain "github.com/stroppy-io/hatchet-workflow/internal/domain/edge"
+	"github.com/stroppy-io/hatchet-workflow/internal/domain/edge/containers"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/deployment"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/edge"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/settings"
@@ -13,7 +14,7 @@ import (
 )
 
 func SetupContainersTask(c *hatchetLib.Client, identifier *edge.Task_Identifier) *hatchetLib.StandaloneTask {
-	return c.NewStandaloneTask(
+	task := c.NewStandaloneTask(
 		edgeDomain.TaskIdToString(identifier),
 		hatchet_ext.WTask(func(
 			ctx hatchetLib.Context,
@@ -33,15 +34,11 @@ func SetupContainersTask(c *hatchetLib.Client, identifier *edge.Task_Identifier)
 				return nil, err
 			}
 
-			runner, err := NewContainerRunner(networkName, ctx)
-			if err != nil {
-				return nil, err
-			}
-			defer runner.Close()
-
-			if err := runner.DeployContainersForTarget(
+			if err := containers.DeployContainersForTarget(
 				ctx.GetContext(),
+				ctx,
 				input.GetRunSettings(),
+				networkName,
 				input.GetWorkerInternalIp().GetValue(),
 				input.GetWorkerInternalCidr().GetValue(),
 				input.GetContainers(),
@@ -52,6 +49,13 @@ func SetupContainersTask(c *hatchetLib.Client, identifier *edge.Task_Identifier)
 			return &workflows.Tasks_StartDockerContainers_Output{}, nil
 		}),
 	)
+	//task.OnFailure(func(ctx hatchetLib.Context, input workflows.Tasks_StartDockerContainers_Input) (emptypb.Empty, error) {
+	//	if err := Cleanup(ctx.GetContext()); err != nil {
+	//		return emptypb.Empty{}, err
+	//	}
+	//	return emptypb.Empty{}, fmt.Errorf("failed to start docker containers")
+	//})
+	return task
 }
 
 func resolveContainerNetworkName(
@@ -67,6 +71,6 @@ func resolveContainerNetworkName(
 	if cidr == "" {
 		return "", fmt.Errorf("worker internal cidr is empty")
 	}
-	runID := sanitizeDockerNamePart(runId)
-	return fmt.Sprintf("edge-%s-%s", runID, sanitizeDockerNamePart(cidr)), nil
+	runID := containers.SanitizeDockerNamePart(runId)
+	return fmt.Sprintf("edge-%s-%s", runID, containers.SanitizeDockerNamePart(cidr)), nil
 }

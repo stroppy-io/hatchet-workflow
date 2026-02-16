@@ -1,4 +1,4 @@
-package edge
+package containers
 
 import (
 	"fmt"
@@ -50,17 +50,15 @@ func toContainerConfig(c *provision.Container, opts runContainerOptions) *contai
 		cfg.ExposedPorts = exposed
 	}
 
-	if opts.dockerTarget {
-		logicalName := c.GetMetadata()[containerMetadataLogicalNameKey]
-		if logicalName == "" {
-			logicalName = containerLogicalName(c)
-		}
-		cfg.Labels = map[string]string{
-			containerLabelManagedByKey: containerLabelManagedByVal,
-			containerLabelRunIDKey:     opts.runID,
-			containerLabelWorkerIPKey:  opts.workerInternal,
-			containerLabelLogicalKey:   logicalName,
-		}
+	logicalName := c.GetMetadata()[containerMetadataLogicalNameKey]
+	if logicalName == "" {
+		logicalName = containerLogicalName(c)
+	}
+	cfg.Labels = map[string]string{
+		containerLabelManagedByKey: containerLabelManagedByVal,
+		containerLabelRunIDKey:     opts.runID,
+		containerLabelWorkerIPKey:  opts.workerInternal,
+		containerLabelLogicalKey:   logicalName,
 	}
 
 	return cfg

@@ -72,6 +72,28 @@ func (m *StroppyCli) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if !_StroppyCli_BinaryPath_Pattern.MatchString(m.GetBinaryPath()) {
+		err := StroppyCliValidationError{
+			field:  "BinaryPath",
+			reason: "value does not match regex pattern \"^/(?:[^/\\x00]+/)*[^/\\x00]*$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !_StroppyCli_Workdir_Pattern.MatchString(m.GetWorkdir()) {
+		err := StroppyCliValidationError{
+			field:  "Workdir",
+			reason: "value does not match regex pattern \"^/(?:[^/\\x00]+/)*[^/\\x00]*$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if _, ok := StroppyCli_Workload_name[int32(m.GetWorkload())]; !ok {
 		err := StroppyCliValidationError{
 			field:  "Workload",
@@ -84,14 +106,6 @@ func (m *StroppyCli) validate(all bool) error {
 	}
 
 	// no validation rules for StroppyEnv
-
-	if m.BinaryPath != nil {
-		// no validation rules for BinaryPath
-	}
-
-	if m.Workdir != nil {
-		// no validation rules for Workdir
-	}
 
 	if len(errors) > 0 {
 		return StroppyCliMultiError(errors)
@@ -169,6 +183,10 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = StroppyCliValidationError{}
+
+var _StroppyCli_BinaryPath_Pattern = regexp.MustCompile("^/(?:[^/\x00]+/)*[^/\x00]*$")
+
+var _StroppyCli_Workdir_Pattern = regexp.MustCompile("^/(?:[^/\x00]+/)*[^/\x00]*$")
 
 // Validate checks the field values on Test with the rules defined in the proto
 // definition for this message. If any rules are violated, the first error

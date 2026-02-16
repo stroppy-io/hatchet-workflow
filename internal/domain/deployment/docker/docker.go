@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	dockerClient "github.com/docker/docker/client"
 	"github.com/samber/lo"
+	"github.com/sourcegraph/conc/pool"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/consts"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/deployment"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/settings"
@@ -123,19 +124,25 @@ func (s *Service) DestroyDeployment(
 	ctx context.Context,
 	depl *deployment.Deployment,
 ) error {
+	errPool := pool.New().WithErrors().WithContext(ctx)
 	for _, vm := range depl.GetVms() {
-		err := s.client.ContainerStop(ctx, vm.GetAssignedInternalIp().GetValue(), container.StopOptions{
-			Timeout: lo.ToPtr(-1),
+		errPool.Go(func(ctx context.Context) error {
+			err := s.client.ContainerStop(ctx, vm.GetAssignedInternalIp().GetValue(), container.StopOptions{
+				Timeout: lo.ToPtr(10),
+			})
+			if err != nil {
+				return fmt.Errorf("failed to stop container %s: %w", vm.GetAssignedInternalIp().GetValue(), err)
+			}
+			err = s.client.ContainerRemove(ctx, vm.GetAssignedInternalIp().GetValue(), container.RemoveOptions{
+				Force: true,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to remove container %s: %w", vm.GetAssignedInternalIp().GetValue(), err)
+			}
+			return nil
 		})
-		if err != nil {
-			return fmt.Errorf("failed to stop container %s: %w", vm.GetAssignedInternalIp().GetValue(), err)
-		}
-		err = s.client.ContainerRemove(ctx, vm.GetAssignedInternalIp().GetValue(), container.RemoveOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to remove container %s: %w", vm.GetAssignedInternalIp().GetValue(), err)
-		}
 	}
-	return nil
+	return errPool.Wait()
 }
 
 func (s *Service) ensureNetwork(ctx context.Context, networkName string) (network.CreateResponse, error) {

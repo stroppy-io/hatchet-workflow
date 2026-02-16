@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -313,25 +314,26 @@ func TestRunWorkflow(
 			for _, item := range stroppyItems {
 				task, err := edgeDomain.FoundTaskKind(
 					item.GetWorker().GetAcceptableTasks(),
-					edge.Task_KIND_INSTALL_STROPPY,
+					edge.Task_KIND_RUN_STROPPY,
 				)
 				if err != nil {
 					return nil, err
 				}
 				wp.Go(func(ctx context.Context) error {
 					taskResult, err := edgeWorkflow.RunStroppyTask(c, task).
-						Run(ctx, workflows.Tasks_InstallStroppy_Input{
-							RunSettings: input.GetRunSettings(),
-							StroppyCli:  input.GetRunSettings().GetTest().GetStroppyCli(),
+						Run(ctx, workflows.Tasks_RunStroppy_Input{
+							RunSettings:      input.GetRunSettings(),
+							StroppyCliCall:   input.GetRunSettings().GetTest().GetStroppyCli(),
+							ConnectionString: parentOutput.GetConnectionString(),
 						})
 					if err != nil {
 						return err
 					}
-					var testOutput *stroppy.TestResult
-					if err := taskResult.Into(testOutput); err != nil {
+					var testOutput stroppy.TestResult
+					if err := taskResult.Into(&testOutput); err != nil {
 						return err
 					}
-					results = append(results, testOutput)
+					results = append(results, &testOutput)
 					return nil
 				})
 			}
@@ -384,21 +386,23 @@ func TestRunWorkflow(
 			if err != nil {
 				return emptypb.Empty{}, err
 			}
-			var network deployment.Network
-			if err := ctx.ParentOutput(acquireNetworkTask, &network); err != nil {
-				return emptypb.Empty{}, err
-			}
-			if err := deps.ProvisionerService.DestroyNetwork(ctx.GetContext(), &network); err != nil {
-				return emptypb.Empty{}, err
-			}
+			var errs []error
+
 			var placement provision.DeployedPlacement
 			if err := ctx.ParentOutput(deployPlanTask, &placement); err != nil {
 				return emptypb.Empty{}, err
 			}
 			if err := deps.ProvisionerService.DestroyPlan(ctx.GetContext(), &placement); err != nil {
+				errs = append(errs, err)
+			}
+			var network deployment.Network
+			if err := ctx.ParentOutput(acquireNetworkTask, &network); err != nil {
 				return emptypb.Empty{}, err
 			}
-			return emptypb.Empty{}, nil
+			if err := deps.ProvisionerService.DestroyNetwork(ctx.GetContext(), &network); err != nil {
+				errs = append(errs, err)
+			}
+			return emptypb.Empty{}, errors.Join(errs...)
 		},
 	)
 	return workflow

@@ -77,8 +77,8 @@ func (StroppyCli_Workload) EnumDescriptor() ([]byte, []int) {
 type StroppyCli struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Version       string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
-	BinaryPath    *string                `protobuf:"bytes,2,opt,name=binary_path,json=binaryPath,proto3,oneof" json:"binary_path,omitempty"`
-	Workdir       *string                `protobuf:"bytes,3,opt,name=workdir,proto3,oneof" json:"workdir,omitempty"`
+	BinaryPath    string                 `protobuf:"bytes,2,opt,name=binary_path,json=binaryPath,proto3" json:"binary_path,omitempty"`
+	Workdir       string                 `protobuf:"bytes,3,opt,name=workdir,proto3" json:"workdir,omitempty"`
 	Workload      StroppyCli_Workload    `protobuf:"varint,4,opt,name=workload,proto3,enum=stroppy.StroppyCli_Workload" json:"workload,omitempty"`
 	StroppyEnv    map[string]string      `protobuf:"bytes,6,rep,name=stroppy_env,json=stroppyEnv,proto3" json:"stroppy_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
@@ -123,15 +123,15 @@ func (x *StroppyCli) GetVersion() string {
 }
 
 func (x *StroppyCli) GetBinaryPath() string {
-	if x != nil && x.BinaryPath != nil {
-		return *x.BinaryPath
+	if x != nil {
+		return x.BinaryPath
 	}
 	return ""
 }
 
 func (x *StroppyCli) GetWorkdir() string {
-	if x != nil && x.Workdir != nil {
-		return *x.Workdir
+	if x != nil {
+		return x.Workdir
 	}
 	return ""
 }
@@ -492,13 +492,13 @@ var File_stroppy_test_proto protoreflect.FileDescriptor
 
 const file_stroppy_test_proto_rawDesc = "" +
 	"\n" +
-	"\x12stroppy/test.proto\x12\astroppy\x1a\x17database/database.proto\x1a\x1bdeployment/deployment.proto\x1a\x17settings/settings.proto\x1a\x17validate/validate.proto\"\x93\x03\n" +
+	"\x12stroppy/test.proto\x12\astroppy\x1a\x17database/database.proto\x1a\x1bdeployment/deployment.proto\x1a\x17settings/settings.proto\x1a\x17validate/validate.proto\"\xa9\x03\n" +
 	"\n" +
 	"StroppyCli\x12!\n" +
-	"\aversion\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aversion\x12$\n" +
-	"\vbinary_path\x18\x02 \x01(\tH\x00R\n" +
-	"binaryPath\x88\x01\x01\x12\x1d\n" +
-	"\aworkdir\x18\x03 \x01(\tH\x01R\aworkdir\x88\x01\x01\x12B\n" +
+	"\aversion\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aversion\x12=\n" +
+	"\vbinary_path\x18\x02 \x01(\tB\x1c\xfaB\x19r\x172\x15^/(?:[^/\x00]+/)*[^/\x00]*$R\n" +
+	"binaryPath\x126\n" +
+	"\aworkdir\x18\x03 \x01(\tB\x1c\xfaB\x19r\x172\x15^/(?:[^/\x00]+/)*[^/\x00]*$R\aworkdir\x12B\n" +
 	"\bworkload\x18\x04 \x01(\x0e2\x1c.stroppy.StroppyCli.WorkloadB\b\xfaB\x05\x82\x01\x02\x10\x01R\bworkload\x12D\n" +
 	"\vstroppy_env\x18\x06 \x03(\v2#.stroppy.StroppyCli.StroppyEnvEntryR\n" +
 	"stroppyEnv\x1a=\n" +
@@ -508,10 +508,7 @@ const file_stroppy_test_proto_rawDesc = "" +
 	"\bWorkload\x12\x18\n" +
 	"\x14WORKLOAD_UNSPECIFIED\x10\x00\x12\b\n" +
 	"\x04TPCC\x10\x01\x12\b\n" +
-	"\x04TPCB\x10\x02B\x0e\n" +
-	"\f_binary_pathB\n" +
-	"\n" +
-	"\b_workdir\"\xf0\x02\n" +
+	"\x04TPCB\x10\x02\"\xf0\x02\n" +
 	"\x04Test\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12%\n" +
 	"\vdescription\x18\x03 \x01(\tH\x01R\vdescription\x88\x01\x01\x12>\n" +
@@ -593,7 +590,6 @@ func file_stroppy_test_proto_init() {
 	if File_stroppy_test_proto != nil {
 		return
 	}
-	file_stroppy_test_proto_msgTypes[0].OneofWrappers = []any{}
 	file_stroppy_test_proto_msgTypes[1].OneofWrappers = []any{
 		(*Test_DatabaseTemplate)(nil),
 		(*Test_ConnectionString)(nil),

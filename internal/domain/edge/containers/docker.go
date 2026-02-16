@@ -1,10 +1,11 @@
-package edge
+package containers
 
 import (
 	"bufio"
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -19,6 +20,8 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/registry"
 	dockerClient "github.com/docker/docker/client"
+	cmap "github.com/orcaman/concurrent-map/v2"
+	"github.com/samber/lo"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/logger"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/deployment"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/provision"
@@ -42,14 +45,93 @@ const (
 	dockerConfigFileName   = "config.json"
 )
 
-type ContainerRunner struct {
-	client      *dockerClient.Client
+type containerRun struct {
 	networkName string
 	networkID   string
 	subnet      string
 	logger      hatchetLogger
 	mu          sync.Mutex
-	containers  map[string]string
+	containers  cmap.ConcurrentMap[string, string] // container name -> container ID
+}
+
+var (
+	globalMapping  = cmap.New[*containerRun]() // run ID -> containerRun
+	client         *dockerClient.Client
+	clientInitOnce sync.Once
+	clientInitErr  error
+)
+
+func cleanupContainerRun(ctx context.Context, run *containerRun) error {
+	if run == nil {
+		return nil
+	}
+
+	cli, err := getDockerClient()
+	if err != nil {
+		return err
+	}
+
+	run.mu.Lock()
+	defer run.mu.Unlock()
+	cleanupTrackedContainers(ctx, cli, run)
+	return nil
+}
+
+func Cleanup(ctx context.Context) error {
+	var errs []error
+	globalMapping.IterCb(func(runID string, run *containerRun) {
+		if err := cleanupContainerRun(ctx, run); err != nil {
+			errs = append(errs, fmt.Errorf("run %s cleanup failed: %w", runID, err))
+		}
+		globalMapping.Remove(runID)
+	})
+	err := errors.Join(errs...)
+	if err != nil {
+		return err
+	}
+	err = client.Close()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func DeployContainersForTarget(
+	ctx context.Context,
+	taskLogger hatchetLogger,
+	runSettings *stroppy.RunSettings,
+	networkName string,
+	workerInternalIP string,
+	workerInternalCidr string,
+	containers []*provision.Container,
+) error {
+	if runSettings == nil {
+		return fmt.Errorf("run settings are nil")
+	}
+	runID := runSettings.GetRunId()
+	if runID == "" {
+		return fmt.Errorf("run id is empty")
+	}
+
+	cli, err := getDockerClient()
+	if err != nil {
+		return err
+	}
+
+	run, err := getOrCreateGlobalRun(runID, networkName, taskLogger)
+	if err != nil {
+		return err
+	}
+
+	run.mu.Lock()
+	defer run.mu.Unlock()
+
+	opts, err := runOptionsFromSettings(run, runSettings, workerInternalIP, workerInternalCidr)
+	if err != nil {
+		return err
+	}
+
+	return deployContainers(ctx, cli, run, containers, opts)
 }
 
 type startedContainer struct {
@@ -69,36 +151,22 @@ type runContainerOptions struct {
 	primaryContainerID string // when set, share this container's network namespace
 }
 
-func NewContainerRunner(networkName string, logger hatchetLogger) (*ContainerRunner, error) {
-	cli, err := dockerClient.NewClientWithOpts(
-		dockerClient.FromEnv,
-		dockerClient.WithAPIVersionNegotiation(),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Docker client: %w", err)
-	}
-
-	return &ContainerRunner{
-		client:      cli,
-		networkName: networkName,
-		logger:      logger,
-		containers:  make(map[string]string),
-	}, nil
-}
-
-func (r *ContainerRunner) DeployContainersForTarget(
-	ctx context.Context,
+func runOptionsFromSettings(
+	run *containerRun,
 	runSettings *stroppy.RunSettings,
 	workerInternalIP string,
 	workerInternalCidr string,
-	containers []*provision.Container,
-) error {
-	opts := runContainerOptions{publishPorts: true}
+) (runContainerOptions, error) {
+	opts := runContainerOptions{
+		publishPorts:   true,
+		runID:          runSettings.GetRunId(),
+		workerInternal: workerInternalIP,
+	}
 	if runSettings.GetTarget() == deployment.Target_TARGET_DOCKER {
-		if err := r.setNetworkName(runSettings.GetSettings().GetDocker().GetNetworkName()); err != nil {
-			return err
+		if err := setNetworkName(run, runSettings.GetSettings().GetDocker().GetNetworkName()); err != nil {
+			return runContainerOptions{}, err
 		}
-		r.setSubnet(workerInternalCidr)
+		run.subnet = workerInternalCidr
 		opts = runContainerOptions{
 			dockerTarget:   true,
 			runID:          runSettings.GetRunId(),
@@ -106,11 +174,13 @@ func (r *ContainerRunner) DeployContainersForTarget(
 			publishPorts:   false,
 		}
 	}
-	return r.deployContainers(ctx, containers, opts)
+	return opts, nil
 }
 
-func (r *ContainerRunner) deployContainers(
+func deployContainers(
 	ctx context.Context,
+	cli *dockerClient.Client,
+	run *containerRun,
 	containers []*provision.Container,
 	opts runContainerOptions,
 ) error {
@@ -126,55 +196,53 @@ func (r *ContainerRunner) deployContainers(
 			runOpts.primaryContainerID = started[0].id
 		}
 
-		sc, err := r.runContainer(ctx, c, runOpts)
+		sc, err := runContainer(
+			ctx,
+			cli,
+			run,
+			c,
+			runOpts,
+		)
 		if err != nil {
-			r.rollbackBatch(ctx, started)
+			rollbackBatch(ctx, cli, run, started)
 			return fmt.Errorf("failed to run container %q: %w", c.GetName(), err)
 		}
 
-		r.mu.Lock()
-		r.containers[sc.name] = sc.id
-		r.mu.Unlock()
+		run.containers.Set(sc.name, sc.id)
 		started = append(started, sc)
 	}
 
 	return nil
 }
 
-func (r *ContainerRunner) Cleanup(ctx context.Context) {
-	r.mu.Lock()
-	tracked := make(map[string]string, len(r.containers))
-	for name, id := range r.containers {
+func cleanupTrackedContainers(ctx context.Context, cli *dockerClient.Client, run *containerRun) {
+	tracked := make(map[string]string)
+	run.containers.IterCb(func(name, id string) {
 		tracked[name] = id
-	}
-	r.mu.Unlock()
+	})
 
 	for name, id := range tracked {
-		if err := r.stopContainer(ctx, id); err != nil {
-			r.logf("failed to cleanup container %s (%s): %v", name, id, err)
+		if err := stopContainer(ctx, cli, id); err != nil {
+			logf(run, "failed to cleanup container %s (%s): %v", name, id, err)
 			continue
 		}
 
-		r.mu.Lock()
-		delete(r.containers, name)
-		r.mu.Unlock()
+		run.containers.Remove(name)
 	}
 }
 
-func (r *ContainerRunner) Close() error {
-	return r.client.Close()
-}
-
-func (r *ContainerRunner) runContainer(
+func runContainer(
 	ctx context.Context,
+	cli *dockerClient.Client,
+	run *containerRun,
 	c *provision.Container,
 	opts runContainerOptions,
 ) (startedContainer, error) {
-	if err := r.ensureNetwork(ctx); err != nil {
+	if err := ensureNetwork(ctx, cli, run); err != nil {
 		return startedContainer{}, err
 	}
 
-	if err := r.pullImage(ctx, c.GetImage()); err != nil {
+	if err := pullImage(ctx, cli, run, c.GetImage()); err != nil {
 		return startedContainer{}, fmt.Errorf("failed to pull image %q: %w", c.GetImage(), err)
 	}
 
@@ -186,13 +254,13 @@ func (r *ContainerRunner) runContainer(
 	containerName := containerRuntimeName(c, opts)
 
 	// When sharing a primary container's network namespace, skip network config
-	// entirely — Docker rejects EndpointsConfig for container-mode networking.
+	// entirely - Docker rejects EndpointsConfig for container-mode networking.
 	var networkCfg *network.NetworkingConfig
 	if opts.primaryContainerID == "" {
-		networkCfg = toNetworkConfig(r.getNetworkName(), r.getNetworkID(), c, opts)
+		networkCfg = toNetworkConfig(run.networkName, run.networkID, c, opts)
 	}
 
-	resp, err := r.client.ContainerCreate(
+	resp, err := cli.ContainerCreate(
 		ctx,
 		containerCfg,
 		hostCfg,
@@ -204,27 +272,24 @@ func (r *ContainerRunner) runContainer(
 		return startedContainer{}, fmt.Errorf("failed to create container %q: %w", containerName, err)
 	}
 
-	if err := r.client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
-		_ = r.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+	if err := cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		_ = cli.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
 		return startedContainer{}, fmt.Errorf("failed to start container %q: %w", containerName, err)
 	}
 
 	return startedContainer{name: containerName, id: resp.ID}, nil
 }
 
-func (r *ContainerRunner) ensureNetwork(ctx context.Context) error {
-	r.mu.Lock()
-	if r.networkID != "" {
-		r.mu.Unlock()
+func ensureNetwork(ctx context.Context, cli *dockerClient.Client, run *containerRun) error {
+	if run.networkID != "" {
 		return nil
 	}
-	networkName := r.networkName
-	subnet := r.subnet
-	r.mu.Unlock()
+	networkName := run.networkName
+	subnet := run.subnet
 
-	inspect, err := r.client.NetworkInspect(ctx, networkName, network.InspectOptions{})
+	inspect, err := cli.NetworkInspect(ctx, networkName, network.InspectOptions{})
 	if err == nil {
-		r.setNetworkID(inspect.ID)
+		run.networkID = inspect.ID
 		return nil
 	}
 
@@ -237,27 +302,27 @@ func (r *ContainerRunner) ensureNetwork(ctx context.Context) error {
 		}
 	}
 
-	resp, createErr := r.client.NetworkCreate(ctx, networkName, createOpts)
+	resp, createErr := cli.NetworkCreate(ctx, networkName, createOpts)
 	if createErr != nil {
-		inspect, inspectErr := r.client.NetworkInspect(ctx, networkName, network.InspectOptions{})
+		inspect, inspectErr := cli.NetworkInspect(ctx, networkName, network.InspectOptions{})
 		if inspectErr == nil {
-			r.setNetworkID(inspect.ID)
+			run.networkID = inspect.ID
 			return nil
 		}
 		return fmt.Errorf("failed to create docker network %s: %w", networkName, createErr)
 	}
 
-	r.setNetworkID(resp.ID)
+	run.networkID = resp.ID
 	return nil
 }
 
-func (r *ContainerRunner) pullImage(ctx context.Context, imageName string) error {
+func pullImage(ctx context.Context, cli *dockerClient.Client, run *containerRun, imageName string) error {
 	pullOptions := image.PullOptions{}
 	if registryAuth, ok := registryAuthForImage(imageName); ok {
 		pullOptions.RegistryAuth = registryAuth
-		r.logf("docker image pull %q: registry auth enabled", imageName)
+		logf(run, "docker image pull %q: registry auth enabled", imageName)
 	} else {
-		r.logf("docker image pull %q: registry auth not found, using anonymous pull", imageName)
+		logf(run, "docker image pull %q: registry auth not found, using anonymous pull", imageName)
 	}
 
 	b := backoff.NewExponentialBackOff()
@@ -266,19 +331,66 @@ func (r *ContainerRunner) pullImage(ctx context.Context, imageName string) error
 	b.MaxElapsedTime = 5 * time.Minute
 
 	return backoff.Retry(func() error {
-		reader, err := r.client.ImagePull(ctx, imageName, pullOptions)
+		reader, err := cli.ImagePull(ctx, imageName, pullOptions)
 		if err != nil {
-			r.logf("docker image pull %q failed: %v", imageName, err)
+			logf(run, "docker image pull %q failed: %v", imageName, err)
 			return err
 		}
 		defer reader.Close()
 
-		if err := r.logDockerStream(fmt.Sprintf("docker image pull %q", imageName), reader); err != nil {
-			r.logf("docker image pull %q stream error: %v", imageName, err)
+		if err := logDockerStream(run, fmt.Sprintf("docker image pull %q", imageName), reader); err != nil {
+			logf(run, "docker image pull %q stream error: %v", imageName, err)
 			return err
 		}
 		return nil
 	}, backoff.WithContext(b, ctx))
+}
+
+func getDockerClient() (*dockerClient.Client, error) {
+	clientInitOnce.Do(func() {
+		client, clientInitErr = dockerClient.NewClientWithOpts(
+			dockerClient.FromEnv,
+			dockerClient.WithAPIVersionNegotiation(),
+		)
+		if clientInitErr != nil {
+			clientInitErr = fmt.Errorf("failed to create Docker client: %w", clientInitErr)
+		}
+	})
+	return client, clientInitErr
+}
+
+func getOrCreateGlobalRun(runID, networkName string, taskLogger hatchetLogger) (*containerRun, error) {
+	if runID == "" {
+		return nil, fmt.Errorf("run id is empty")
+	}
+
+	run, ok := globalMapping.Get(runID)
+	if !ok {
+		run = &containerRun{
+			networkName: networkName,
+			logger:      taskLogger,
+			containers:  cmap.New[string](),
+		}
+		globalMapping.Set(runID, run)
+		return run, nil
+	}
+
+	run.mu.Lock()
+	defer run.mu.Unlock()
+
+	if run.logger == nil && taskLogger != nil {
+		run.logger = taskLogger
+	}
+	if networkName == "" {
+		return run, nil
+	}
+	if run.networkID != "" && run.networkName != networkName {
+		return nil, fmt.Errorf("docker network is already initialized as %q", run.networkName)
+	}
+	if run.networkName == "" {
+		run.networkName = networkName
+	}
+	return run, nil
 }
 
 type dockerConfig struct {
@@ -436,7 +548,7 @@ type dockerStreamMessage struct {
 	} `json:"errorDetail"`
 }
 
-func (r *ContainerRunner) logDockerStream(prefix string, stream io.Reader) error {
+func logDockerStream(run *containerRun, prefix string, stream io.Reader) error {
 	scanner := bufio.NewScanner(stream)
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	for scanner.Scan() {
@@ -445,7 +557,7 @@ func (r *ContainerRunner) logDockerStream(prefix string, stream io.Reader) error
 			continue
 		}
 
-		r.logf("%s: %s", prefix, line)
+		logf(run, "%s: %s", prefix, line)
 
 		var msg dockerStreamMessage
 		if err := json.Unmarshal([]byte(line), &msg); err != nil {
@@ -461,10 +573,9 @@ func (r *ContainerRunner) logDockerStream(prefix string, stream io.Reader) error
 	return scanner.Err()
 }
 
-func (r *ContainerRunner) stopContainer(ctx context.Context, containerID string) error {
-	timeoutSeconds := 10
-	stopErr := r.client.ContainerStop(ctx, containerID, container.StopOptions{Timeout: &timeoutSeconds})
-	removeErr := r.client.ContainerRemove(ctx, containerID, container.RemoveOptions{Force: true})
+func stopContainer(ctx context.Context, cli *dockerClient.Client, containerID string) error {
+	stopErr := cli.ContainerStop(ctx, containerID, container.StopOptions{Timeout: lo.ToPtr(30)})
+	removeErr := cli.ContainerRemove(ctx, containerID, container.RemoveOptions{Force: true})
 
 	if stopErr != nil && removeErr != nil {
 		return fmt.Errorf(
@@ -484,65 +595,37 @@ func (r *ContainerRunner) stopContainer(ctx context.Context, containerID string)
 	return nil
 }
 
-func (r *ContainerRunner) rollbackBatch(ctx context.Context, started []startedContainer) {
+func rollbackBatch(ctx context.Context, cli *dockerClient.Client, run *containerRun, started []startedContainer) {
 	for i := len(started) - 1; i >= 0; i-- {
 		name := started[i].name
 		containerID := started[i].id
 
-		if err := r.stopContainer(ctx, containerID); err != nil {
-			r.logf("failed to rollback container %s (%s): %v", name, containerID, err)
+		if err := stopContainer(ctx, cli, containerID); err != nil {
+			logf(run, "failed to rollback container %s (%s): %v", name, containerID, err)
 			continue
 		}
 
-		r.mu.Lock()
-		delete(r.containers, name)
-		r.mu.Unlock()
+		run.containers.Remove(name)
 	}
 }
 
-func (r *ContainerRunner) logf(format string, args ...any) {
+func logf(run *containerRun, format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
-	if r.logger != nil {
-		r.logger.Log(msg)
+	if run != nil && run.logger != nil {
+		run.logger.Log(msg)
 	}
 	logger.StdLog().Printf(format, args...)
 }
 
-func (r *ContainerRunner) getNetworkID() string {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return r.networkID
-}
-
-func (r *ContainerRunner) getNetworkName() string {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return r.networkName
-}
-
-func (r *ContainerRunner) setNetworkID(networkID string) {
-	r.mu.Lock()
-	r.networkID = networkID
-	r.mu.Unlock()
-}
-
-func (r *ContainerRunner) setSubnet(subnet string) {
-	r.mu.Lock()
-	r.subnet = subnet
-	r.mu.Unlock()
-}
-
-func (r *ContainerRunner) setNetworkName(networkName string) error {
+func setNetworkName(run *containerRun, networkName string) error {
 	if networkName == "" {
 		return nil
 	}
 
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if r.networkID != "" && r.networkName != networkName {
-		return fmt.Errorf("docker network is already initialized as %q", r.networkName)
+	if run.networkID != "" && run.networkName != networkName {
+		return fmt.Errorf("docker network is already initialized as %q", run.networkName)
 	}
-	r.networkName = networkName
+	run.networkName = networkName
 	return nil
 }
 
@@ -552,7 +635,7 @@ func containerRuntimeName(c *provision.Container, opts runContainerOptions) stri
 		return base
 	}
 
-	parts := []string{sanitizeDockerNamePart(opts.runID), sanitizeDockerNamePart(opts.workerInternal), sanitizeDockerNamePart(base)}
+	parts := []string{SanitizeDockerNamePart(opts.runID), SanitizeDockerNamePart(opts.workerInternal), SanitizeDockerNamePart(base)}
 	return strings.Trim(strings.Join(parts, "-"), "-")
 }
 
@@ -566,7 +649,7 @@ func containerLogicalName(c *provision.Container) string {
 	return "container"
 }
 
-func sanitizeDockerNamePart(s string) string {
+func SanitizeDockerNamePart(s string) string {
 	if s == "" {
 		return ""
 	}

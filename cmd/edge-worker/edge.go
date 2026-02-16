@@ -1,20 +1,32 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	v0Client "github.com/hatchet-dev/hatchet/pkg/client"
-	"github.com/hatchet-dev/hatchet/pkg/cmdutils"
 	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/build"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/logger"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/shutdown"
 	domainEdge "github.com/stroppy-io/hatchet-workflow/internal/domain/edge"
+	"github.com/stroppy-io/hatchet-workflow/internal/domain/edge/containers"
 	workflowsEdge "github.com/stroppy-io/hatchet-workflow/internal/domain/workflows/edge"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/edge"
 )
 
 // TODO: Add health check endpoint to validate container health
+
+func makeQuitSignal() chan os.Signal {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	return quit
+}
 
 func main() {
 	token := os.Getenv("HATCHET_CLIENT_TOKEN")
@@ -52,6 +64,19 @@ func main() {
 	for _, task := range parsedTasksIds {
 		log.Printf("Acceptable task: %s", domainEdge.TaskIdToString(task))
 	}
+	runIDs := make([]string, 0, len(parsedTasksIds))
+	seenRunIDs := make(map[string]struct{}, len(parsedTasksIds))
+	for _, task := range parsedTasksIds {
+		runID := task.GetRunId()
+		if runID == "" {
+			continue
+		}
+		if _, ok := seenRunIDs[runID]; ok {
+			continue
+		}
+		seenRunIDs[runID] = struct{}{}
+		runIDs = append(runIDs, runID)
+	}
 
 	tasks := make([]hatchetLib.WorkflowBase, 0)
 	for _, task := range parsedTasksIds {
@@ -74,12 +99,21 @@ func main() {
 		log.Fatalf("Failed to create Hatchet worker: %v", err)
 	}
 
-	interruptCtx, cancel := cmdutils.NewInterruptContext()
-	defer cancel()
-
 	log.Printf("Starting edge worker %s with ID %s", build.ServiceName, build.GlobalInstanceId)
-	err = worker.StartBlocking(interruptCtx)
+	cancelWrk, err := worker.Start()
 	if err != nil {
 		log.Fatalf("Failed to start Hatchet worker: %v", err)
 	}
+	shutdown.RegisterFn(func() {
+		log.Printf("Stopping edge worker %s with ID %s", build.ServiceName, build.GlobalInstanceId)
+		if err := cancelWrk(); err != nil {
+			log.Printf("Failed to stop Hatchet worker: %v", err)
+		}
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cleanupCancel()
+		if cleanupErr := containers.Cleanup(cleanupCtx); cleanupErr != nil {
+			log.Printf("Failed to cleanup tracked containers: %v", cleanupErr)
+		}
+	})
+	shutdown.WaitSignal(makeQuitSignal())
 }
