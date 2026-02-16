@@ -26,8 +26,9 @@ import (
 const (
 	DefaultUserGroupName consts.DefaultValue = "stroppy-edge-worker"
 	DefaultUserSudo      bool                = true
+	DefaultUserName      consts.DefaultValue = "stroppy"
 	DefaultUserSudoRules consts.DefaultValue = "ALL=(ALL) NOPASSWD:ALL"
-	DefautltUserShell    consts.DefaultValue = "/bin/bash"
+	DefaultUserShell     consts.DefaultValue = "/bin/bash"
 )
 
 const (
@@ -230,7 +231,13 @@ func (p ProvisionerService) getCloudInitForEdgeWorker(
 	settings *settings.HatchetConnection,
 ) (*deployment.CloudInit, error) {
 	return scripting.InstallEdgeWorkerCloudInit(
-		scripting.WithUser(vmUser),
+		scripting.WithUser(&deployment.VmUser{
+			Name:              defaults.StringOrDefault(vmUser.GetName(), DefaultUserName),
+			SudoRules:         defaults.StringOrDefault(vmUser.GetSudoRules(), DefaultUserSudoRules),
+			Shell:             defaults.StringOrDefault(vmUser.GetShell(), DefaultUserShell),
+			Groups:            defaults.ArrayOrDefault(vmUser.GetGroups(), []string{DefaultUserGroupName}),
+			SshAuthorizedKeys: vmUser.GetSshAuthorizedKeys(),
+		}),
 		scripting.WithEnv(map[string]string{
 			edgeDomain.WorkerNameEnvKey:            workerName,
 			edgeDomain.WorkerAcceptableTasksEnvKey: edgeDomain.TaskIdListToString(acceptableTasks),

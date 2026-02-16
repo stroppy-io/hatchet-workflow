@@ -58,8 +58,8 @@ func main() {
 		log.Fatalf("Failed to run workflow: %v", err)
 	}
 	var output workflows.Workflows_StroppyTestSuite_Output
-	if err := result.TaskOutput(workflowTest.SuiteTaskName).Into(&output); err != nil {
-		log.Fatalf("Failed to get %s output: %v", workflowTest.SuiteTaskName, err)
+	if err := result.TaskOutput(workflowTest.SuiteWorkflowName).Into(&output); err != nil {
+		log.Fatalf("Failed to get %s output: %v", workflowTest.SuiteWorkflowName, err)
 	}
 	resultYaml, err := protoyaml.MarshalPretty(&output)
 	if err != nil {

@@ -18,7 +18,6 @@ import (
 
 const (
 	SuiteWorkflowName = "stroppy-test-suite"
-	SuiteTaskName     = "run-test-suite"
 )
 
 func TestSuiteWorkflow(

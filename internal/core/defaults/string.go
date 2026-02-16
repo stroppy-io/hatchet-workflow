@@ -7,6 +7,13 @@ func StringOrDefault(s string, defaultValue string) string {
 	return s
 }
 
+func ArrayOrDefault[T any](s []T, defaultValue []T) []T {
+	if s == nil || len(s) == 0 {
+		return defaultValue
+	}
+	return s
+}
+
 func StringPtrOrDefault(s *string, defaultValue string) string {
 	if s == nil {
 		return defaultValue
