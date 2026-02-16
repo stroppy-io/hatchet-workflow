@@ -1,6 +1,8 @@
 package provision
 
 import (
+	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/database"
@@ -610,6 +612,100 @@ func TestResolveRuntimeConfig_PatroniEnv(t *testing.T) {
 			}
 			if c.Env["PATRONI_POSTGRESQL_CONNECT_ADDRESS"] == "" {
 				t.Errorf("PATRONI_POSTGRESQL_CONNECT_ADDRESS not set on %s/%s", item.GetName(), c.GetId())
+			}
+		}
+	}
+}
+
+func TestBuildForPostgresInstance_PostgresqlConfToArgs(t *testing.T) {
+	network := networkWithIPs("10.0.0.1")
+	b := newPostgresPlacementBuilder(network)
+
+	settings := pgSettings()
+	settings.PostgresqlConf = map[string]string{
+		"shared_buffers":  "256MB",
+		"max_connections": "1000",
+	}
+
+	intent, err := b.BuildForPostgresInstance(&database.Database_Template_PostgresInstance{
+		PostgresInstance: &database.Postgres_Instance_Template{
+			Settings: settings,
+			Hardware: hw(4, 8, 100),
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	pg := findContainer(intent.GetItems(), "postgres-master", "postgres-master-container")
+	if pg == nil {
+		t.Fatal("postgres container not found")
+	}
+
+	expectedArgs := []string{
+		"-c", "max_connections=1000",
+		"-c", "shared_buffers=256MB",
+	}
+	if !reflect.DeepEqual(pg.GetArgs(), expectedArgs) {
+		t.Fatalf("unexpected postgres args, got=%v expected=%v", pg.GetArgs(), expectedArgs)
+	}
+}
+
+func TestResolveRuntimeConfig_PatroniPostgresqlConfToEnv(t *testing.T) {
+	network := networkWithIPs("10.0.0.1", "10.0.0.2", "10.0.0.3")
+	b := newPostgresPlacementBuilder(network)
+
+	settings := patroniSettings()
+	settings.PostgresqlConf = map[string]string{
+		"max_connections": "1000",
+		"wal_level":       "logical",
+	}
+
+	intent, err := b.BuildForPostgresCluster(&database.Database_Template_PostgresCluster{
+		PostgresCluster: &database.Postgres_Cluster_Template{
+			Topology: &database.Postgres_Cluster_Template_Topology{
+				Settings:        settings,
+				MasterHardware:  hw(4, 8, 100),
+				ReplicaHardware: hw(4, 8, 100),
+				ReplicasCount:   2,
+			},
+			Addons: &database.Postgres_Addons{
+				Dcs: &database.Postgres_Addons_Dcs{
+					Etcd: &database.Postgres_Addons_Dcs_Etcd{
+						Size: 3,
+						Placement: &database.Postgres_Placement{
+							Mode: &database.Postgres_Placement_Colocate_{
+								Colocate: &database.Postgres_Placement_Colocate{
+									Scope: database.Postgres_Placement_SCOPE_ALL_NODES,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, item := range intent.GetItems() {
+		for _, c := range item.GetContainers() {
+			pg := c.GetPostgres()
+			if pg == nil {
+				continue
+			}
+			raw := c.GetEnv()["PATRONI_POSTGRESQL_PARAMETERS"]
+			if raw == "" {
+				t.Fatalf("PATRONI_POSTGRESQL_PARAMETERS is not set on %s/%s", item.GetName(), c.GetId())
+			}
+
+			got := map[string]string{}
+			if err := json.Unmarshal([]byte(raw), &got); err != nil {
+				t.Fatalf("invalid PATRONI_POSTGRESQL_PARAMETERS json on %s/%s: %v", item.GetName(), c.GetId(), err)
+			}
+			if !reflect.DeepEqual(got, settings.GetPostgresqlConf()) {
+				t.Fatalf("unexpected PATRONI_POSTGRESQL_PARAMETERS on %s/%s: got=%v expected=%v", item.GetName(), c.GetId(), got, settings.GetPostgresqlConf())
 			}
 		}
 	}

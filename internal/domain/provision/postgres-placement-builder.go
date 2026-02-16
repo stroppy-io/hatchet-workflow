@@ -1,7 +1,9 @@
 package provision
 
 import (
+	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -599,7 +601,8 @@ func (p *postgresPlacementBuilder) resolveRuntimeConfig(items []*provision.Place
 				c.Env["POSTGRES_USER"] = defaultPostgresUser
 				c.Env["POSTGRES_PASSWORD"] = defaultPostgresPassword
 				c.Env["POSTGRES_DB"] = defaultPostgresDatabase
-				if c.GetPostgres().GetSettings().GetPatroni().GetEnabled() {
+				postgresSettings := c.GetPostgres().GetSettings()
+				if postgresSettings.GetPatroni().GetEnabled() {
 					if len(etcdHosts) == 0 {
 						return "", fmt.Errorf("patroni is enabled but etcd endpoints are empty")
 					}
@@ -607,6 +610,9 @@ func (p *postgresPlacementBuilder) resolveRuntimeConfig(items []*provision.Place
 					c.Env["PATRONI_ETCD3_HOSTS"] = etcdHostsValue
 					c.Env["PATRONI_POSTGRESQL_CONNECT_ADDRESS"] = fmt.Sprintf("%s:%d", itemIP, defaultPortPostgres)
 					c.Env["PATRONI_RESTAPI_CONNECT_ADDRESS"] = fmt.Sprintf("%s:%d", itemIP, defaultPortPatroniAPI)
+				}
+				if err := applyPostgresqlConf(c, postgresSettings); err != nil {
+					return "", err
 				}
 
 			case c.GetPgbouncer() != nil:
@@ -645,7 +651,7 @@ func (p *postgresPlacementBuilder) resolveRuntimeConfig(items []*provision.Place
 		connHost = pgbouncerConnIP
 		connPort = pgbouncerConnPort
 	}
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%d/%s",
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
 		defaultPostgresUser, defaultPostgresPassword,
 		connHost, connPort,
 		defaultPostgresDatabase)
@@ -673,4 +679,37 @@ func containerLogicalName(c *provision.Container) string {
 		return c.GetId()
 	}
 	return "container"
+}
+
+func applyPostgresqlConf(c *provision.Container, settings *database.Postgres_Settings) error {
+	if c == nil || settings == nil || len(settings.GetPostgresqlConf()) == 0 {
+		return nil
+	}
+
+	if settings.GetPatroni().GetEnabled() {
+		ensureEnv(c)
+		encoded, err := json.Marshal(settings.GetPostgresqlConf())
+		if err != nil {
+			return fmt.Errorf("encode postgresql_conf for %q: %w", c.GetName(), err)
+		}
+		c.Env["PATRONI_POSTGRESQL_PARAMETERS"] = string(encoded)
+		return nil
+	}
+
+	c.Args = append(c.Args, postgresqlConfArgs(settings.GetPostgresqlConf())...)
+	return nil
+}
+
+func postgresqlConfArgs(conf map[string]string) []string {
+	keys := make([]string, 0, len(conf))
+	for k := range conf {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	args := make([]string, 0, len(conf)*2)
+	for _, k := range keys {
+		args = append(args, "-c", fmt.Sprintf("%s=%s", k, conf[k]))
+	}
+	return args
 }
