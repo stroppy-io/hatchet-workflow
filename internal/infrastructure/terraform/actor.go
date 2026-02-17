@@ -7,15 +7,20 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/hc-install/product"
 	"github.com/hashicorp/hc-install/releases"
 	"github.com/hashicorp/terraform-exec/tfexec"
+	cmap "github.com/orcaman/concurrent-map/v2"
 	"github.com/samber/lo"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/consts"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/logger"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/uow"
+	"go.uber.org/zap"
 )
 
 const (
@@ -81,6 +86,10 @@ func GetTfOutputVal[T any](output TfOutput, key string) (T, error) {
 
 type WdId string
 
+func (w WdId) String() string {
+	return string(w)
+}
+
 func NewWdId(str string) WdId {
 	return WdId(str)
 }
@@ -96,23 +105,108 @@ provider_installation {
     }
 }`
 
+type WorkdirWithParams struct {
+	wd          WdId
+	tfFiles     []TfFile
+	varFile     TfVarFile
+	env         TfEnv
+	workdirPath workdirPath
+}
+
+func (w *WorkdirWithParams) String() string {
+	return fmt.Sprintf("WdId: %s, WorkdirPath: %s", w.wd, w.workdirPath)
+}
+func NewWorkdirWithParams(wd WdId, opts ...Options) *WorkdirWithParams {
+	w := &WorkdirWithParams{
+		wd:          wd,
+		env:         make(TfEnv),
+		workdirPath: workdirPath(path.Join(WorkingDir, string(wd))),
+	}
+	for _, opt := range opts {
+		opt(w)
+	}
+	return w
+}
+
+type Options func(*WorkdirWithParams)
+
+func WithTfFiles(files []TfFile) Options {
+	return func(w *WorkdirWithParams) {
+		w.tfFiles = files
+	}
+}
+
+func WithVarFile(file TfVarFile) Options {
+	return func(w *WorkdirWithParams) {
+		w.varFile = file
+	}
+}
+
+func WithEnv(env TfEnv) Options {
+	return func(w *WorkdirWithParams) {
+		if env == nil {
+			return
+		}
+		w.env = env
+	}
+}
+
+func (w *WorkdirWithParams) CreateDir() error {
+	err := os.RemoveAll(string(w.workdirPath))
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("error cleaning up working directory: %s", err)
+	}
+	err = os.MkdirAll(string(w.workdirPath), os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("error creating working directory: %s", err)
+	}
+	return nil
+}
+
+func (w *WorkdirWithParams) WriteFiles() error {
+	for _, file := range w.tfFiles {
+		err := os.WriteFile(path.Join(string(w.workdirPath), file.Name()), file.Content(), os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("error writing tf file: %s", err)
+		}
+	}
+	err := os.WriteFile(path.Join(string(w.workdirPath), VarFileName), w.varFile, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("error writing var file: %s", err)
+	}
+	return nil
+}
+
 type Actor struct {
-	execPath string
-	workdirs map[WdId]string
+	workdirs cmap.ConcurrentMap[WdId, *WorkdirWithParams]
+}
+
+var (
+	installedTerraformExecPath  string
+	onceEnsureTerraformExecPath sync.Once
+)
+
+func ensureTerraformExecPath() error {
+	var err error
+	onceEnsureTerraformExecPath.Do(func() {
+		logger.Info("Installing Terraform")
+		installer := &releases.ExactVersion{
+			Product: product.Terraform,
+			Version: version.Must(version.NewVersion(Version)),
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+		installedTerraformExecPath, err = installer.Install(ctx)
+	})
+	logger.Info("Terraform installed", zap.String("path", installedTerraformExecPath))
+	return err
 }
 
 func NewActor() (*Actor, error) {
-	installer := &releases.ExactVersion{
-		Product: product.Terraform,
-		Version: version.Must(version.NewVersion(Version)),
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-	execPath, err := installer.Install(ctx)
+	err := ensureTerraformExecPath()
 	if err != nil {
-		return nil, fmt.Errorf("error installing Terraform: %s", err)
+		return nil, fmt.Errorf("error ensuring Terraform exec path: %s", err)
 	}
-
 	err = os.MkdirAll(WorkingDir, os.ModePerm)
 	if err != nil {
 		return nil, fmt.Errorf("error creating working directory: %s", err)
@@ -126,55 +220,38 @@ func NewActor() (*Actor, error) {
 		return nil, fmt.Errorf("error writing config file: %s", err)
 	}
 	return &Actor{
-		execPath: execPath,
+		workdirs: cmap.NewStringer[WdId, *WorkdirWithParams](),
 	}, nil
 }
 
 var ErrWdAlreadyExists = errors.New("working directory already exists")
 
-func (a *Actor) ApplyTerraform(
-	ctx context.Context,
-	wd WdId,
-	tfFiles []TfFile,
-	varFile TfVarFile,
-	env TfEnv,
-) (TfOutput, error) {
-	if env == nil {
-		env = make(TfEnv)
-	}
-	_, ok := a.workdirs[wd]
-	if ok {
-		return nil, ErrWdAlreadyExists
-	}
-	newWd := path.Join(WorkingDir, string(wd))
-	err := os.RemoveAll(newWd)
-	if err != nil && !os.IsNotExist(err) {
-		return nil, fmt.Errorf("error cleaning up working directory: %s", err)
-	}
-	err = os.MkdirAll(newWd, os.ModePerm)
-	if err != nil {
-		return nil, fmt.Errorf("error creating working directory: %s", err)
-	}
-	a.workdirs[wd] = newWd
-	for _, file := range tfFiles {
-		err = os.WriteFile(path.Join(newWd, file.Name()), file.Content(), os.ModePerm)
-		if err != nil {
-			return nil, fmt.Errorf("error writing tf file: %s", err)
+func envSliceToMap(env []string) map[string]string {
+	m := make(map[string]string, len(env))
+	for _, kv := range env {
+		if i := strings.IndexByte(kv, '='); i > 0 {
+			m[kv[:i]] = kv[i+1:]
 		}
 	}
-	err = os.WriteFile(path.Join(newWd, VarFileName), varFile, os.ModePerm)
-	if err != nil {
-		return nil, fmt.Errorf("error writing var file: %s", err)
-	}
-	tf, err := tfexec.NewTerraform(newWd, a.execPath)
+	return m
+}
+
+type workdirPath string
+
+func (a *Actor) newTerraform(ctx context.Context, params *WorkdirWithParams) (*tfexec.Terraform, error) {
+	tf, err := tfexec.NewTerraform(string(params.workdirPath), installedTerraformExecPath)
 	if err != nil {
 		return nil, fmt.Errorf("error running NewTerraform: %s", err)
 	}
 	tf.SetStdout(os.Stdout)
 	tf.SetStderr(os.Stderr)
-	err = tf.SetEnv(lo.Assign(env, map[string]string{
-		TfCliConfigFileEnvKey: path.Join(WorkingDir, ConfigFileName),
-	}))
+	err = tf.SetEnv(lo.Assign(
+		envSliceToMap(os.Environ()),
+		params.env,
+		map[string]string{
+			TfCliConfigFileEnvKey: path.Join(WorkingDir, ConfigFileName),
+		},
+	))
 	if err != nil {
 		return nil, fmt.Errorf("error setting env: %s", err)
 	}
@@ -195,30 +272,64 @@ func (a *Actor) ApplyTerraform(
 	if err != nil {
 		return nil, fmt.Errorf("error running init: %s", err)
 	}
+	return tf, nil
+}
+
+func (a *Actor) ApplyTerraform(
+	ctx context.Context,
+	w *WorkdirWithParams,
+) (TfOutput, error) {
+	unitWork := uow.UnitOfWork()
+	_, ok := a.workdirs.Get(w.wd)
+	if ok {
+		return nil, ErrWdAlreadyExists
+	}
+	a.workdirs.Set(w.wd, w)
+	err := w.CreateDir()
+	if err != nil {
+		return nil, fmt.Errorf("error creating working directory: %s", err)
+	}
+	err = w.WriteFiles()
+	if err != nil {
+		return nil, fmt.Errorf("error writing files: %s", err)
+	}
+	tf, err := a.newTerraform(ctx, w)
+	if err != nil {
+		return nil, fmt.Errorf("error creating terraform instance: %s", err)
+	}
+	unitWork.Add("terraform destroy", func() error {
+		defer a.workdirs.Remove(w.wd)
+		return tf.Destroy(ctx, tfexec.Parallelism(10))
+	})
 	err = tf.Apply(
 		ctx,
 		tfexec.Parallelism(10),
 		tfexec.VarFile(VarFileName),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error running apply: %s", err)
+		return nil, unitWork.Rollback(fmt.Errorf("error running apply: %s", err))
 	}
 	out, err := tf.Output(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error running output: %s", err)
+		return nil, unitWork.Rollback(fmt.Errorf("error running output: %s", err))
 	}
 	output := make(TfOutput)
 	for k, v := range out {
 		output[k] = v.Value
 	}
+	unitWork.Commit()
 	return output, nil
 }
 
 func (a *Actor) DestroyTerraform(ctx context.Context, wd WdId) error {
-	newWd := path.Join(WorkingDir, string(wd))
-	tf, err := tfexec.NewTerraform(newWd, a.execPath)
+	w, ok := a.workdirs.Get(wd)
+	if !ok {
+		return fmt.Errorf("working directory %s not found. Available directories: %+v", wd, a.workdirs.Items())
+	}
+	tf, err := a.newTerraform(ctx, w)
 	if err != nil {
 		return fmt.Errorf("error running NewTerraform: %s", err)
 	}
+	defer a.workdirs.Remove(wd)
 	return tf.Destroy(ctx, tfexec.Parallelism(10))
 }

@@ -210,12 +210,18 @@ func (p ProvisionerService) PlanPlacementIntent(
 	}
 }
 
-func (p ProvisionerService) getStroppyWorkerIp(network *deployment.Network) (*deployment.Ip, error) {
+func (p ProvisionerService) newStroppyWorkerIp(
+	network *deployment.Network,
+	reservedIps []*provision.PlacementIntent_Item,
+) (*deployment.Ip, error) {
 	_, cidr, err := net.ParseCIDR(network.GetCidr().GetValue())
 	if err != nil {
 		return nil, err
 	}
-	ip, err := ips.FirstFreeIP(cidr, nil)
+	ip, err := ips.FirstFreeIP(cidr, lo.Map(
+		reservedIps,
+		func(i *provision.PlacementIntent_Item, _ int) string { return i.GetInternalIp().GetValue() },
+	))
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +329,7 @@ func (p ProvisionerService) BuildPlacement(
 	}
 
 	stroppyWorkerName := edgeDomain.NewWorkerName(runIdParsed, metadataRoleStroppyValue)
-	stroppyWorkerIp, err := p.getStroppyWorkerIp(intent.GetNetwork())
+	stroppyWorkerIp, err := p.newStroppyWorkerIp(intent.GetNetwork(), intent.GetItems())
 	if err != nil {
 		return nil, err
 	}

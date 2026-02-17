@@ -22,10 +22,7 @@ const (
 type TerraformActor interface {
 	ApplyTerraform(
 		ctx context.Context,
-		wd terraform.WdId,
-		tfFiles []terraform.TfFile,
-		varFile terraform.TfVarFile,
-		env terraform.TfEnv,
+		params *terraform.WorkdirWithParams,
 	) (terraform.TfOutput, error)
 	DestroyTerraform(ctx context.Context, wd terraform.WdId) error
 }
@@ -76,21 +73,24 @@ func (s *TerraformDeploymentService) CreateDeployment(
 	if err != nil {
 		return nil, err
 	}
-	vars, err := terraform.NewTfVarFile(VariablesFromTemplate(s.settings, depl))
+	vars, err := terraform.NewTfVarFile(CreateVariablesFromTemplate(s.settings, depl))
 	if err != nil {
 		return nil, err
 	}
+
 	output, err := s.actor.ApplyTerraform(
 		ctx,
-		terraform.NewWdId(depl.GetIdentifier().GetId()),
-		tfFiles,
-		vars,
-		map[string]string{
-			YcTokenEnvKey:    s.settings.GetYandexCloud().GetProviderSettings().GetToken(),
-			YcCloudIdEnvKey:  s.settings.GetYandexCloud().GetProviderSettings().GetCloudId(),
-			YcFolderIdEnvKey: s.settings.GetYandexCloud().GetProviderSettings().GetFolderId(),
-			YcZoneEnvKey:     s.settings.GetYandexCloud().GetProviderSettings().GetZone(),
-		},
+		terraform.NewWorkdirWithParams(
+			terraform.NewWdId(depl.GetIdentifier().GetId()),
+			terraform.WithTfFiles(tfFiles),
+			terraform.WithVarFile(vars),
+			terraform.WithEnv(map[string]string{
+				YcTokenEnvKey:    s.settings.GetYandexCloud().GetProviderSettings().GetToken(),
+				YcCloudIdEnvKey:  s.settings.GetYandexCloud().GetProviderSettings().GetCloudId(),
+				YcFolderIdEnvKey: s.settings.GetYandexCloud().GetProviderSettings().GetFolderId(),
+				YcZoneEnvKey:     s.settings.GetYandexCloud().GetProviderSettings().GetZone(),
+			}),
+		),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error applying Terraform: %s", err)

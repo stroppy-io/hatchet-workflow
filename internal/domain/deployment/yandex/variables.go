@@ -1,6 +1,8 @@
 package yandex
 
 import (
+	"fmt"
+
 	"github.com/stroppy-io/hatchet-workflow/internal/core/consts"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/defaults"
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/deployment"
@@ -38,13 +40,17 @@ type Variables struct {
 	Compute    compute    `json:"compute"`
 }
 
-func VariablesFromTemplate(
+func CreateVariablesFromTemplate(
 	settings *settings.Settings,
 	depl *deployment.Deployment_Template,
 ) Variables {
 	vars := Variables{
 		Networking: networking{
-			Name:       settings.GetYandexCloud().GetNetworkSettings().GetName(),
+			Name: fmt.Sprintf(
+				"%s-%s",
+				depl.GetNetwork().GetIdentifier().GetName(),
+				depl.GetNetwork().GetIdentifier().GetId(),
+			),
 			ExternalId: settings.GetYandexCloud().GetNetworkSettings().GetExternalId(),
 			Cidr:       depl.GetNetwork().GetCidr().GetValue(),
 		},
@@ -55,6 +61,7 @@ func VariablesFromTemplate(
 			),
 			ImageId:          settings.GetYandexCloud().GetVmSettings().GetBaseImageId(),
 			SerialPortEnable: settings.GetYandexCloud().GetVmSettings().GetEnablePublicIps(),
+			Vms:              make(map[string]vm),
 		},
 	}
 	for _, vmTemplate := range depl.GetVmTemplates() {

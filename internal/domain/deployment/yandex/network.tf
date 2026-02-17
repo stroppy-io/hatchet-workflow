@@ -1,15 +1,15 @@
 
 
 resource "yandex_vpc_subnet" "subnet" {
-  name       = "${var.networking.name}-subnet"
+  name       = var.networking.name
   v4_cidr_blocks = [var.networking.cidr]
-  network_id = var.networking.name
+  network_id = var.networking.external_id
 }
 
-resource "yandex_vpc_security_group" "public-services" {
-  name        = "public-services"
+resource "yandex_vpc_security_group" "security-group" {
+  name        = "${var.networking.name}-sec-grp"
   description = "Правила группы разрешают подключение к сервисам из интернета. Примените правила только для групп узлов."
-  network_id  = yandex_vpc_network.network.id
+  network_id  = var.networking.external_id
   ingress {
     protocol          = "TCP"
     description       = "Правило разрешает проверки доступности с диапазона адресов балансировщика нагрузки. Нужно для работы отказоустойчивого кластера Managed Service for Kubernetes и сервисов балансировщика."

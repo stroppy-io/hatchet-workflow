@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// multiErr накапливает ошибки при cleanup операциях
+// multiErr accumulates errors during cleanup operations
 type multiErr struct {
 	primary error
 	cleanup []error
@@ -27,7 +27,7 @@ func (m *multiErr) error() error {
 	return errors.Join(append([]error{m.primary}, m.cleanup...)...)
 }
 
-// Uow управляет откатом ресурсов при ошибках
+// Uow manages resource rollback on errors
 type Uow struct {
 	cleanups []func() error
 }
@@ -47,7 +47,7 @@ func (r *Uow) Add(name string, fn func() error) {
 
 func (r *Uow) Rollback(primary error) error {
 	me := &multiErr{primary: primary}
-	// откатываем в обратном порядке (LIFO)
+	// rollback in LIFO order
 	for i := len(r.cleanups) - 1; i >= 0; i-- {
 		me.addCleanup(r.cleanups[i]())
 	}
@@ -55,5 +55,5 @@ func (r *Uow) Rollback(primary error) error {
 }
 
 func (r *Uow) Commit() {
-	r.cleanups = nil // ресурсы успешно созданы, cleanup не нужен
+	r.cleanups = nil // resources successfully created, cleanup not needed
 }

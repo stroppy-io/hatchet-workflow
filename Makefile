@@ -47,6 +47,10 @@ build-all:
 	mkdir -p bin
 	go build -o ./bin/ ./cmd/...
 
+.PHONY: run-master-worker
+run-master-worker: build-all
+	./bin/master-worker 2>&1 | zap-pretty
+
 .PHONY: run-test
 run-test: build-all
 	./bin/run --file ./examples/test.yaml

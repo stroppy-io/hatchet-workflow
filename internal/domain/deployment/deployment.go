@@ -3,6 +3,7 @@ package deployment
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/stroppy-io/hatchet-workflow/internal/domain/deployment/docker"
 	"github.com/stroppy-io/hatchet-workflow/internal/domain/deployment/yandex"
@@ -24,6 +25,19 @@ type Service interface {
 
 type Registry map[deployment.Target]Service
 
+type TerraformActor interface {
+	ApplyTerraform(
+		ctx context.Context,
+		params *terraform.WorkdirWithParams,
+	) (terraform.TfOutput, error)
+	DestroyTerraform(ctx context.Context, wd terraform.WdId) error
+}
+
+var (
+	terraformActor     TerraformActor
+	onceTerraformActor sync.Once
+)
+
 func NewRegistry(settings *settings.Settings) (Registry, error) {
 	dockerService, err := docker.NewService(settings)
 	if err != nil {
@@ -35,9 +49,11 @@ func NewRegistry(settings *settings.Settings) (Registry, error) {
 		}, nil
 	}
 	// TODO: Think about setup terraform only if we need it
-	terraformActor, err := terraform.NewActor()
+	onceTerraformActor.Do(func() {
+		terraformActor, err = terraform.NewActor()
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating Terraform actor: %s", err)
 	}
 	return Registry{
 		deployment.Target_TARGET_DOCKER:       dockerService,

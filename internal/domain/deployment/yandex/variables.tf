@@ -1,8 +1,9 @@
 variable "networking" {
   description = "Network to create"
   type = object({
-    name = string
-    cidr = string
+    name        = string
+    external_id = string
+    cidr        = string
   })
   default = {
     name        = ""
