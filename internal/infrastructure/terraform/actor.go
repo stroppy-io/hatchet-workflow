@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	Version        consts.ConstValue = "1.0.6"
+	Version        consts.ConstValue = "1.14.5"
 	WorkingDir     consts.ConstValue = "/tmp/stroppy-terraform"
 	VarFileName    consts.ConstValue = "terraform.tfvars.json"
 	ConfigFileName consts.ConstValue = "custom.tfrc"
