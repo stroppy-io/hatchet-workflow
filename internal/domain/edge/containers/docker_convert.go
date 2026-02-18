@@ -74,6 +74,8 @@ func toHostConfig(c *provision.Container, opts runContainerOptions) (*container.
 
 	if opts.primaryContainerID != "" {
 		hostCfg.NetworkMode = container.NetworkMode("container:" + opts.primaryContainerID)
+	} else if opts.publishPorts {
+		hostCfg.NetworkMode = "host"
 	}
 
 	if opts.publishPorts {
@@ -111,6 +113,10 @@ func toHostConfig(c *provision.Container, opts runContainerOptions) (*container.
 }
 
 func toNetworkConfig(networkName, networkID string, c *provision.Container, opts runContainerOptions) *network.NetworkingConfig {
+	if opts.publishPorts {
+		return nil
+	}
+
 	endpoint := &network.EndpointSettings{NetworkID: networkID}
 	if opts.dockerTarget {
 		if ip := strings.TrimSpace(c.GetMetadata()[containerMetadataDockerIPKey]); ip != "" {
