@@ -387,7 +387,13 @@ func TestRunWorkflow(
 	*/
 	workflow.OnFailure(
 		func(ctx hatchetLib.Context, input workflows.Workflows_StroppyTest_Input) (emptypb.Empty, error) {
-			ctx.Log("Workflow failed")
+			ctx.Log("Workflow failed, start cleanup")
+			delay := input.GetRunSettings().GetSettings().GetCleanupDelay()
+			if delay != nil {
+				// Sleep for cleanup delay if user wants it for diagnostics purposes
+				ctx.Log(fmt.Sprintf("Wait for delay %s", delay.AsDuration().String()))
+				time.Sleep(delay.AsDuration())
+			}
 			deps, err := NewDeps(input.GetRunSettings().GetSettings())
 			if err != nil {
 				return emptypb.Empty{}, err

@@ -548,17 +548,6 @@ func (m *Settings) validate(all bool) error {
 
 	var errors []error
 
-	if _, ok := deployment.Target_name[int32(m.GetPreferredTarget())]; !ok {
-		err := SettingsValidationError{
-			field:  "PreferredTarget",
-			reason: "value must be one of the defined enum values",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	if m.GetHatchetConnection() == nil {
 		err := SettingsValidationError{
 			field:  "HatchetConnection",
@@ -639,6 +628,17 @@ func (m *Settings) validate(all bool) error {
 		}
 	}
 
+	if _, ok := deployment.Target_name[int32(m.GetPreferredTarget())]; !ok {
+		err := SettingsValidationError{
+			field:  "PreferredTarget",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if m.YandexCloud != nil {
 
 		if all {
@@ -664,6 +664,39 @@ func (m *Settings) validate(all bool) error {
 			if err := v.Validate(); err != nil {
 				return SettingsValidationError{
 					field:  "YandexCloud",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if m.CleanupDelay != nil {
+
+		if all {
+			switch v := interface{}(m.GetCleanupDelay()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SettingsValidationError{
+						field:  "CleanupDelay",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SettingsValidationError{
+						field:  "CleanupDelay",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetCleanupDelay()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SettingsValidationError{
+					field:  "CleanupDelay",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}

@@ -6,6 +6,8 @@ import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Target, TargetJson, VmUser, VmUserJson } from "../deployment/deployment_pb.ts";
 import { file_deployment_deployment } from "../deployment/deployment_pb.ts";
+import type { Duration, DurationJson } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_duration } from "@bufbuild/protobuf/wkt";
 import { file_validate_validate } from "../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -13,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file settings/settings.proto.
  */
 export const file_settings_settings: GenFile = /*@__PURE__*/
-  fileDesc("ChdzZXR0aW5ncy9zZXR0aW5ncy5wcm90bxIIc2V0dGluZ3MiXQoRSGF0Y2hldENvbm5lY3Rpb24SFgoFdG9rZW4YASABKAlCB/pCBHICEAESFQoEaG9zdBgCIAEoCUIH+kIEcgIQARIZCgRwb3J0GAMgASgNQgv6QggqBigBGP//AyLhBAoTWWFuZGV4Q2xvdWRTZXR0aW5ncxJTChFwcm92aWRlcl9zZXR0aW5ncxgEIAEoCzIuLnNldHRpbmdzLllhbmRleENsb3VkU2V0dGluZ3MuUHJvdmlkZXJTZXR0aW5nc0II+kIFigECEAESUQoQbmV0d29ya19zZXR0aW5ncxgFIAEoCzItLnNldHRpbmdzLllhbmRleENsb3VkU2V0dGluZ3MuTmV0d29ya1NldHRpbmdzQgj6QgWKAQIQARJHCgt2bV9zZXR0aW5ncxgGIAEoCzIoLnNldHRpbmdzLllhbmRleENsb3VkU2V0dGluZ3MuVm1TZXR0aW5nc0II+kIFigECEAEaRgoPTmV0d29ya1NldHRpbmdzEhUKBG5hbWUYASABKAlCB/pCBHICEAESHAoLZXh0ZXJuYWxfaWQYAiABKAlCB/pCBHICEAEalgEKClZtU2V0dGluZ3MSHgoNYmFzZV9pbWFnZV9pZBgGIAEoCUIH+kIEcgIQARIjCgd2bV91c2VyGAcgASgLMhIuZGVwbG95bWVudC5WbVVzZXISGQoRZW5hYmxlX3B1YmxpY19pcHMYBCABKAgSGAoLcGxhdGZvcm1faWQYCCABKAlIAIgBAUIOCgxfcGxhdGZvcm1faWQaeAoQUHJvdmlkZXJTZXR0aW5ncxIWCgV0b2tlbhgBIAEoCUIH+kIEcgIQARIZCghjbG91ZF9pZBgKIAEoCUIH+kIEcgIQARIaCglmb2xkZXJfaWQYAiABKAlCB/pCBHICEAESFQoEem9uZRgDIAEoCUIH+kIEcgIQASKvAQoORG9ja2VyU2V0dGluZ3MSHQoMbmV0d29ya19uYW1lGAEgASgJQgf6QgRyAhABEiIKEWVkZ2Vfd29ya2VyX2ltYWdlGAIgASgJQgf6QgRyAhABEhkKDG5ldHdvcmtfY2lkchgDIAEoCUgAiAEBEhsKDm5ldHdvcmtfcHJlZml4GAQgASgNSAGIAQFCDwoNX25ldHdvcmtfY2lkckIRCg9fbmV0d29ya19wcmVmaXgihAIKCFNldHRpbmdzEjYKEHByZWZlcnJlZF90YXJnZXQYASABKA4yEi5kZXBsb3ltZW50LlRhcmdldEII+kIFggECEAESQQoSaGF0Y2hldF9jb25uZWN0aW9uGAIgASgLMhsuc2V0dGluZ3MuSGF0Y2hldENvbm5lY3Rpb25CCPpCBYoBAhABEjIKBmRvY2tlchgDIAEoCzIYLnNldHRpbmdzLkRvY2tlclNldHRpbmdzQgj6QgWKAQIQARI4Cgx5YW5kZXhfY2xvdWQYBCABKAsyHS5zZXR0aW5ncy5ZYW5kZXhDbG91ZFNldHRpbmdzSACIAQFCDwoNX3lhbmRleF9jbG91ZEJAWj5naXRodWIuY29tL3N0cm9wcHktaW8vaGF0Y2hldC13b3JrZmxvdy9pbnRlcm5hbC9wcm90by9zZXR0aW5nc2IGcHJvdG8z", [file_deployment_deployment, file_validate_validate]);
+  fileDesc("ChdzZXR0aW5ncy9zZXR0aW5ncy5wcm90bxIIc2V0dGluZ3MiXQoRSGF0Y2hldENvbm5lY3Rpb24SFgoFdG9rZW4YASABKAlCB/pCBHICEAESFQoEaG9zdBgCIAEoCUIH+kIEcgIQARIZCgRwb3J0GAMgASgNQgv6QggqBigBGP//AyLhBAoTWWFuZGV4Q2xvdWRTZXR0aW5ncxJTChFwcm92aWRlcl9zZXR0aW5ncxgEIAEoCzIuLnNldHRpbmdzLllhbmRleENsb3VkU2V0dGluZ3MuUHJvdmlkZXJTZXR0aW5nc0II+kIFigECEAESUQoQbmV0d29ya19zZXR0aW5ncxgFIAEoCzItLnNldHRpbmdzLllhbmRleENsb3VkU2V0dGluZ3MuTmV0d29ya1NldHRpbmdzQgj6QgWKAQIQARJHCgt2bV9zZXR0aW5ncxgGIAEoCzIoLnNldHRpbmdzLllhbmRleENsb3VkU2V0dGluZ3MuVm1TZXR0aW5nc0II+kIFigECEAEaRgoPTmV0d29ya1NldHRpbmdzEhUKBG5hbWUYASABKAlCB/pCBHICEAESHAoLZXh0ZXJuYWxfaWQYAiABKAlCB/pCBHICEAEalgEKClZtU2V0dGluZ3MSHgoNYmFzZV9pbWFnZV9pZBgGIAEoCUIH+kIEcgIQARIjCgd2bV91c2VyGAcgASgLMhIuZGVwbG95bWVudC5WbVVzZXISGQoRZW5hYmxlX3B1YmxpY19pcHMYBCABKAgSGAoLcGxhdGZvcm1faWQYCCABKAlIAIgBAUIOCgxfcGxhdGZvcm1faWQaeAoQUHJvdmlkZXJTZXR0aW5ncxIWCgV0b2tlbhgBIAEoCUIH+kIEcgIQARIZCghjbG91ZF9pZBgKIAEoCUIH+kIEcgIQARIaCglmb2xkZXJfaWQYAiABKAlCB/pCBHICEAESFQoEem9uZRgDIAEoCUIH+kIEcgIQASKvAQoORG9ja2VyU2V0dGluZ3MSHQoMbmV0d29ya19uYW1lGAEgASgJQgf6QgRyAhABEiIKEWVkZ2Vfd29ya2VyX2ltYWdlGAIgASgJQgf6QgRyAhABEhkKDG5ldHdvcmtfY2lkchgDIAEoCUgAiAEBEhsKDm5ldHdvcmtfcHJlZml4GAQgASgNSAGIAQFCDwoNX25ldHdvcmtfY2lkckIRCg9fbmV0d29ya19wcmVmaXgizQIKCFNldHRpbmdzEkEKEmhhdGNoZXRfY29ubmVjdGlvbhgBIAEoCzIbLnNldHRpbmdzLkhhdGNoZXRDb25uZWN0aW9uQgj6QgWKAQIQARIyCgZkb2NrZXIYAiABKAsyGC5zZXR0aW5ncy5Eb2NrZXJTZXR0aW5nc0II+kIFigECEAESOAoMeWFuZGV4X2Nsb3VkGAMgASgLMh0uc2V0dGluZ3MuWWFuZGV4Q2xvdWRTZXR0aW5nc0gAiAEBEjYKEHByZWZlcnJlZF90YXJnZXQYBCABKA4yEi5kZXBsb3ltZW50LlRhcmdldEII+kIFggECEAESNQoNY2xlYW51cF9kZWxheRgFIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkgBiAEBQg8KDV95YW5kZXhfY2xvdWRCEAoOX2NsZWFudXBfZGVsYXlCQFo+Z2l0aHViLmNvbS9zdHJvcHB5LWlvL2hhdGNoZXQtd29ya2Zsb3cvaW50ZXJuYWwvcHJvdG8vc2V0dGluZ3NiBnByb3RvMw", [file_deployment_deployment, file_google_protobuf_duration, file_validate_validate]);
 
 /**
  * @generated from message settings.HatchetConnection
@@ -382,24 +384,29 @@ export const DockerSettingsSchema: GenMessage<DockerSettings, {jsonType: DockerS
  */
 export type Settings = Message<"settings.Settings"> & {
   /**
-   * @generated from field: deployment.Target preferred_target = 1;
-   */
-  preferredTarget: Target;
-
-  /**
-   * @generated from field: settings.HatchetConnection hatchet_connection = 2;
+   * @generated from field: settings.HatchetConnection hatchet_connection = 1;
    */
   hatchetConnection?: HatchetConnection;
 
   /**
-   * @generated from field: settings.DockerSettings docker = 3;
+   * @generated from field: settings.DockerSettings docker = 2;
    */
   docker?: DockerSettings;
 
   /**
-   * @generated from field: optional settings.YandexCloudSettings yandex_cloud = 4;
+   * @generated from field: optional settings.YandexCloudSettings yandex_cloud = 3;
    */
   yandexCloud?: YandexCloudSettings;
+
+  /**
+   * @generated from field: deployment.Target preferred_target = 4;
+   */
+  preferredTarget: Target;
+
+  /**
+   * @generated from field: optional google.protobuf.Duration cleanup_delay = 5;
+   */
+  cleanupDelay?: Duration;
 };
 
 /**
@@ -407,24 +414,29 @@ export type Settings = Message<"settings.Settings"> & {
  */
 export type SettingsJson = {
   /**
-   * @generated from field: deployment.Target preferred_target = 1;
-   */
-  preferredTarget?: TargetJson;
-
-  /**
-   * @generated from field: settings.HatchetConnection hatchet_connection = 2;
+   * @generated from field: settings.HatchetConnection hatchet_connection = 1;
    */
   hatchetConnection?: HatchetConnectionJson;
 
   /**
-   * @generated from field: settings.DockerSettings docker = 3;
+   * @generated from field: settings.DockerSettings docker = 2;
    */
   docker?: DockerSettingsJson;
 
   /**
-   * @generated from field: optional settings.YandexCloudSettings yandex_cloud = 4;
+   * @generated from field: optional settings.YandexCloudSettings yandex_cloud = 3;
    */
   yandexCloud?: YandexCloudSettingsJson;
+
+  /**
+   * @generated from field: deployment.Target preferred_target = 4;
+   */
+  preferredTarget?: TargetJson;
+
+  /**
+   * @generated from field: optional google.protobuf.Duration cleanup_delay = 5;
+   */
+  cleanupDelay?: DurationJson;
 };
 
 export type SettingsValid = Settings;

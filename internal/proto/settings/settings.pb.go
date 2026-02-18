@@ -11,6 +11,7 @@ import (
 	deployment "github.com/stroppy-io/hatchet-workflow/internal/proto/deployment"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -217,10 +218,11 @@ func (x *DockerSettings) GetNetworkPrefix() uint32 {
 
 type Settings struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	PreferredTarget   deployment.Target      `protobuf:"varint,1,opt,name=preferred_target,json=preferredTarget,proto3,enum=deployment.Target" json:"preferred_target,omitempty"`
-	HatchetConnection *HatchetConnection     `protobuf:"bytes,2,opt,name=hatchet_connection,json=hatchetConnection,proto3" json:"hatchet_connection,omitempty"`
-	Docker            *DockerSettings        `protobuf:"bytes,3,opt,name=docker,proto3" json:"docker,omitempty"`
-	YandexCloud       *YandexCloudSettings   `protobuf:"bytes,4,opt,name=yandex_cloud,json=yandexCloud,proto3,oneof" json:"yandex_cloud,omitempty"`
+	HatchetConnection *HatchetConnection     `protobuf:"bytes,1,opt,name=hatchet_connection,json=hatchetConnection,proto3" json:"hatchet_connection,omitempty"`
+	Docker            *DockerSettings        `protobuf:"bytes,2,opt,name=docker,proto3" json:"docker,omitempty"`
+	YandexCloud       *YandexCloudSettings   `protobuf:"bytes,3,opt,name=yandex_cloud,json=yandexCloud,proto3,oneof" json:"yandex_cloud,omitempty"`
+	PreferredTarget   deployment.Target      `protobuf:"varint,4,opt,name=preferred_target,json=preferredTarget,proto3,enum=deployment.Target" json:"preferred_target,omitempty"`
+	CleanupDelay      *durationpb.Duration   `protobuf:"bytes,5,opt,name=cleanup_delay,json=cleanupDelay,proto3,oneof" json:"cleanup_delay,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -255,13 +257,6 @@ func (*Settings) Descriptor() ([]byte, []int) {
 	return file_settings_settings_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *Settings) GetPreferredTarget() deployment.Target {
-	if x != nil {
-		return x.PreferredTarget
-	}
-	return deployment.Target(0)
-}
-
 func (x *Settings) GetHatchetConnection() *HatchetConnection {
 	if x != nil {
 		return x.HatchetConnection
@@ -279,6 +274,20 @@ func (x *Settings) GetDocker() *DockerSettings {
 func (x *Settings) GetYandexCloud() *YandexCloudSettings {
 	if x != nil {
 		return x.YandexCloud
+	}
+	return nil
+}
+
+func (x *Settings) GetPreferredTarget() deployment.Target {
+	if x != nil {
+		return x.PreferredTarget
+	}
+	return deployment.Target(0)
+}
+
+func (x *Settings) GetCleanupDelay() *durationpb.Duration {
+	if x != nil {
+		return x.CleanupDelay
 	}
 	return nil
 }
@@ -483,7 +492,7 @@ var File_settings_settings_proto protoreflect.FileDescriptor
 
 const file_settings_settings_proto_rawDesc = "" +
 	"\n" +
-	"\x17settings/settings.proto\x12\bsettings\x1a\x1bdeployment/deployment.proto\x1a\x17validate/validate.proto\"p\n" +
+	"\x17settings/settings.proto\x12\bsettings\x1a\x1bdeployment/deployment.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x17validate/validate.proto\"p\n" +
 	"\x11HatchetConnection\x12\x1d\n" +
 	"\x05token\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05token\x12\x1b\n" +
 	"\x04host\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04host\x12\x1f\n" +
@@ -517,13 +526,15 @@ const file_settings_settings_proto_rawDesc = "" +
 	"\fnetwork_cidr\x18\x03 \x01(\tH\x00R\vnetworkCidr\x88\x01\x01\x12*\n" +
 	"\x0enetwork_prefix\x18\x04 \x01(\rH\x01R\rnetworkPrefix\x88\x01\x01B\x0f\n" +
 	"\r_network_cidrB\x11\n" +
-	"\x0f_network_prefix\"\xbd\x02\n" +
-	"\bSettings\x12G\n" +
-	"\x10preferred_target\x18\x01 \x01(\x0e2\x12.deployment.TargetB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0fpreferredTarget\x12T\n" +
-	"\x12hatchet_connection\x18\x02 \x01(\v2\x1b.settings.HatchetConnectionB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x11hatchetConnection\x12:\n" +
-	"\x06docker\x18\x03 \x01(\v2\x18.settings.DockerSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06docker\x12E\n" +
-	"\fyandex_cloud\x18\x04 \x01(\v2\x1d.settings.YandexCloudSettingsH\x00R\vyandexCloud\x88\x01\x01B\x0f\n" +
-	"\r_yandex_cloudB@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/settingsb\x06proto3"
+	"\x0f_network_prefix\"\x94\x03\n" +
+	"\bSettings\x12T\n" +
+	"\x12hatchet_connection\x18\x01 \x01(\v2\x1b.settings.HatchetConnectionB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x11hatchetConnection\x12:\n" +
+	"\x06docker\x18\x02 \x01(\v2\x18.settings.DockerSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06docker\x12E\n" +
+	"\fyandex_cloud\x18\x03 \x01(\v2\x1d.settings.YandexCloudSettingsH\x00R\vyandexCloud\x88\x01\x01\x12G\n" +
+	"\x10preferred_target\x18\x04 \x01(\x0e2\x12.deployment.TargetB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0fpreferredTarget\x12C\n" +
+	"\rcleanup_delay\x18\x05 \x01(\v2\x19.google.protobuf.DurationH\x01R\fcleanupDelay\x88\x01\x01B\x0f\n" +
+	"\r_yandex_cloudB\x10\n" +
+	"\x0e_cleanup_delayB@Z>github.com/stroppy-io/hatchet-workflow/internal/proto/settingsb\x06proto3"
 
 var (
 	file_settings_settings_proto_rawDescOnce sync.Once
@@ -547,22 +558,24 @@ var file_settings_settings_proto_goTypes = []any{
 	(*YandexCloudSettings_VmSettings)(nil),       // 5: settings.YandexCloudSettings.VmSettings
 	(*YandexCloudSettings_ProviderSettings)(nil), // 6: settings.YandexCloudSettings.ProviderSettings
 	(deployment.Target)(0),                       // 7: deployment.Target
-	(*deployment.VmUser)(nil),                    // 8: deployment.VmUser
+	(*durationpb.Duration)(nil),                  // 8: google.protobuf.Duration
+	(*deployment.VmUser)(nil),                    // 9: deployment.VmUser
 }
 var file_settings_settings_proto_depIdxs = []int32{
 	6, // 0: settings.YandexCloudSettings.provider_settings:type_name -> settings.YandexCloudSettings.ProviderSettings
 	4, // 1: settings.YandexCloudSettings.network_settings:type_name -> settings.YandexCloudSettings.NetworkSettings
 	5, // 2: settings.YandexCloudSettings.vm_settings:type_name -> settings.YandexCloudSettings.VmSettings
-	7, // 3: settings.Settings.preferred_target:type_name -> deployment.Target
-	0, // 4: settings.Settings.hatchet_connection:type_name -> settings.HatchetConnection
-	2, // 5: settings.Settings.docker:type_name -> settings.DockerSettings
-	1, // 6: settings.Settings.yandex_cloud:type_name -> settings.YandexCloudSettings
-	8, // 7: settings.YandexCloudSettings.VmSettings.vm_user:type_name -> deployment.VmUser
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	0, // 3: settings.Settings.hatchet_connection:type_name -> settings.HatchetConnection
+	2, // 4: settings.Settings.docker:type_name -> settings.DockerSettings
+	1, // 5: settings.Settings.yandex_cloud:type_name -> settings.YandexCloudSettings
+	7, // 6: settings.Settings.preferred_target:type_name -> deployment.Target
+	8, // 7: settings.Settings.cleanup_delay:type_name -> google.protobuf.Duration
+	9, // 8: settings.YandexCloudSettings.VmSettings.vm_user:type_name -> deployment.VmUser
+	9, // [9:9] is the sub-list for method output_type
+	9, // [9:9] is the sub-list for method input_type
+	9, // [9:9] is the sub-list for extension type_name
+	9, // [9:9] is the sub-list for extension extendee
+	0, // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_settings_settings_proto_init() }
