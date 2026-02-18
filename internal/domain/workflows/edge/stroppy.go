@@ -107,6 +107,7 @@ const (
 	DurationEnvVar    consts.EnvKey = "DURATION"
 
 	defaultScaleFactor uint32 = 1
+	doubleDashFlag     string = "--"
 )
 
 func RunStroppyTask(
@@ -179,10 +180,11 @@ func RunStroppyTask(
 				fmt.Sprintf("%s.ts", workloadName),
 				fmt.Sprintf("%s.sql", workloadName),
 				// TODO: Add tags after stroppy release
-				//TagFlag,
-				//fmt.Sprintf("%s=%s", K6RunIdTagName, input.GetRunSettings().GetRunId()),
-				//TagFlag,
-				//fmt.Sprintf("%s=%s", K6WorkloadTagName, workloadName),
+				doubleDashFlag,
+				TagFlag,
+				fmt.Sprintf("%s=%s", K6RunIdTagName, input.GetRunSettings().GetRunId()),
+				TagFlag,
+				fmt.Sprintf("%s=%s", K6WorkloadTagName, workloadName),
 			)
 			runCmd.Env = envsCmd
 			runCmd.Dir = input.GetStroppyCliCall().GetWorkdir()
@@ -207,7 +209,7 @@ const defaultStroppyDuration = time.Hour
 
 func GetStroppyDuration(input *stroppy.StroppyCli) time.Duration {
 	if input.GetDuration() != nil {
-		return input.GetDuration().AsDuration()
+		return input.GetDuration().AsDuration() * 3 / 2
 	}
 	return defaultStroppyDuration
 }
