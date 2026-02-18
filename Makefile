@@ -65,3 +65,4 @@ release-dev-edge:
 	go build -ldflags "-X github.com/stroppy-io/hatchet-workflow/internal/core/build.Version=$(DEV_VERSION) -X github.com/stroppy-io/hatchet-workflow/internal/core/build.ServiceName=edge-worker" -o ./bin/ ./cmd/edge-worker
 	@echo "Built version: $(DEV_VERSION)"
 	gh release create "$(DEV_VERSION)" ./bin/edge-worker#edge-worker --title "$(DEV_VERSION)" --notes "dev release" --prerelease
+	git fetch --tags

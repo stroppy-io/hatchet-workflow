@@ -309,7 +309,7 @@ func TestRunWorkflow(
 			parentOutput *provision.DeployedPlacement,
 		) (*workflows.Tasks_RunStroppy_Output, error) {
 			err := ctx.RefreshTimeout(
-				edgeWorkflow.GetStroppyDuration(input.GetRunSettings().GetTest().GetStroppyCli()).String(),
+				(edgeWorkflow.GetStroppyDuration(input.GetRunSettings().GetTest().GetStroppyCli()) * 3 / 2).String(),
 			)
 			if err != nil {
 				return nil, err

@@ -120,7 +120,7 @@ func RunStroppyTask(
 			ctx hatchetLib.Context,
 			input *workflows.Tasks_RunStroppy_Input,
 		) (*stroppy.TestResult, error) {
-			err := ctx.RefreshTimeout(GetStroppyDuration(input.GetStroppyCliCall()).String())
+			err := ctx.RefreshTimeout((GetStroppyDuration(input.GetStroppyCliCall()) * 3 / 2).String())
 			if err != nil {
 				return nil, err
 			}
@@ -202,14 +202,15 @@ func RunStroppyTask(
 				)),
 			}, nil
 		}),
+		hatchetLib.WithExecutionTimeout(24*time.Hour),
 	)
 }
 
-const defaultStroppyDuration = time.Hour
+const defaultStroppyDuration = 24 * time.Hour
 
 func GetStroppyDuration(input *stroppy.StroppyCli) time.Duration {
 	if input.GetDuration() != nil {
-		return input.GetDuration().AsDuration() * 3 / 2
+		return input.GetDuration().AsDuration()
 	}
 	return defaultStroppyDuration
 }
