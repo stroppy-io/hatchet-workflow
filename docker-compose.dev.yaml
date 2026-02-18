@@ -11,7 +11,6 @@ services:
         VERSION: "${VERSION}"
     restart: always
     volumes:
-      - ./deployments/.kubectl.config.yaml:/k8s/config:ro
       - /var/run/docker.sock:/var/run/docker.sock
     network_mode: "host"
     environment:

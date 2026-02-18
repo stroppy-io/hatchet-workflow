@@ -308,6 +308,12 @@ func TestRunWorkflow(
 			input *workflows.Workflows_StroppyTest_Input,
 			parentOutput *provision.DeployedPlacement,
 		) (*workflows.Tasks_RunStroppy_Output, error) {
+			err := ctx.RefreshTimeout(
+				edgeWorkflow.GetStroppyDuration(input.GetRunSettings().GetTest().GetStroppyCli()).String(),
+			)
+			if err != nil {
+				return nil, err
+			}
 			stroppyItems := provisionSvc.SearchStroppyPlacementItem(parentOutput)
 			results := make([]*stroppy.TestResult, 0)
 			wp := pool.New().WithErrors().WithContext(ctx.GetContext()).WithFirstError()
@@ -337,7 +343,7 @@ func TestRunWorkflow(
 					return nil
 				})
 			}
-			err := wp.Wait()
+			err = wp.Wait()
 			if err != nil {
 				return nil, err
 			}

@@ -13,6 +13,7 @@ import (
 	settings "github.com/stroppy-io/hatchet-workflow/internal/proto/settings"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -80,7 +81,9 @@ type StroppyCli struct {
 	BinaryPath    string                 `protobuf:"bytes,2,opt,name=binary_path,json=binaryPath,proto3" json:"binary_path,omitempty"`
 	Workdir       string                 `protobuf:"bytes,3,opt,name=workdir,proto3" json:"workdir,omitempty"`
 	Workload      StroppyCli_Workload    `protobuf:"varint,4,opt,name=workload,proto3,enum=stroppy.StroppyCli_Workload" json:"workload,omitempty"`
-	StroppyEnv    map[string]string      `protobuf:"bytes,6,rep,name=stroppy_env,json=stroppyEnv,proto3" json:"stroppy_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ScaleFactor   *uint32                `protobuf:"varint,5,opt,name=scale_factor,json=scaleFactor,proto3,oneof" json:"scale_factor,omitempty"`
+	Duration      *durationpb.Duration   `protobuf:"bytes,6,opt,name=duration,proto3,oneof" json:"duration,omitempty"`
+	StroppyEnv    map[string]string      `protobuf:"bytes,7,rep,name=stroppy_env,json=stroppyEnv,proto3" json:"stroppy_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -141,6 +144,20 @@ func (x *StroppyCli) GetWorkload() StroppyCli_Workload {
 		return x.Workload
 	}
 	return StroppyCli_WORKLOAD_UNSPECIFIED
+}
+
+func (x *StroppyCli) GetScaleFactor() uint32 {
+	if x != nil && x.ScaleFactor != nil {
+		return *x.ScaleFactor
+	}
+	return 0
+}
+
+func (x *StroppyCli) GetDuration() *durationpb.Duration {
+	if x != nil {
+		return x.Duration
+	}
+	return nil
 }
 
 func (x *StroppyCli) GetStroppyEnv() map[string]string {
@@ -492,15 +509,17 @@ var File_stroppy_test_proto protoreflect.FileDescriptor
 
 const file_stroppy_test_proto_rawDesc = "" +
 	"\n" +
-	"\x12stroppy/test.proto\x12\astroppy\x1a\x17database/database.proto\x1a\x1bdeployment/deployment.proto\x1a\x17settings/settings.proto\x1a\x17validate/validate.proto\"\xa9\x03\n" +
+	"\x12stroppy/test.proto\x12\astroppy\x1a\x17database/database.proto\x1a\x1bdeployment/deployment.proto\x1a\x17settings/settings.proto\x1a\x17validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\"\xab\x04\n" +
 	"\n" +
 	"StroppyCli\x12!\n" +
 	"\aversion\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aversion\x12=\n" +
 	"\vbinary_path\x18\x02 \x01(\tB\x1c\xfaB\x19r\x172\x15^/(?:[^/\x00]+/)*[^/\x00]*$R\n" +
 	"binaryPath\x126\n" +
 	"\aworkdir\x18\x03 \x01(\tB\x1c\xfaB\x19r\x172\x15^/(?:[^/\x00]+/)*[^/\x00]*$R\aworkdir\x12B\n" +
-	"\bworkload\x18\x04 \x01(\x0e2\x1c.stroppy.StroppyCli.WorkloadB\b\xfaB\x05\x82\x01\x02\x10\x01R\bworkload\x12D\n" +
-	"\vstroppy_env\x18\x06 \x03(\v2#.stroppy.StroppyCli.StroppyEnvEntryR\n" +
+	"\bworkload\x18\x04 \x01(\x0e2\x1c.stroppy.StroppyCli.WorkloadB\b\xfaB\x05\x82\x01\x02\x10\x01R\bworkload\x12&\n" +
+	"\fscale_factor\x18\x05 \x01(\rH\x00R\vscaleFactor\x88\x01\x01\x12:\n" +
+	"\bduration\x18\x06 \x01(\v2\x19.google.protobuf.DurationH\x01R\bduration\x88\x01\x01\x12D\n" +
+	"\vstroppy_env\x18\a \x03(\v2#.stroppy.StroppyCli.StroppyEnvEntryR\n" +
 	"stroppyEnv\x1a=\n" +
 	"\x0fStroppyEnvEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -508,7 +527,9 @@ const file_stroppy_test_proto_rawDesc = "" +
 	"\bWorkload\x12\x18\n" +
 	"\x14WORKLOAD_UNSPECIFIED\x10\x00\x12\b\n" +
 	"\x04TPCC\x10\x01\x12\b\n" +
-	"\x04TPCB\x10\x02\"\xf0\x02\n" +
+	"\x04TPCB\x10\x02B\x0f\n" +
+	"\r_scale_factorB\v\n" +
+	"\t_duration\"\xf0\x02\n" +
 	"\x04Test\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12%\n" +
 	"\vdescription\x18\x03 \x01(\tH\x01R\vdescription\x88\x01\x01\x12>\n" +
@@ -560,29 +581,31 @@ var file_stroppy_test_proto_goTypes = []any{
 	(*TestSuiteResult)(nil),            // 5: stroppy.TestSuiteResult
 	(*RunSettings)(nil),                // 6: stroppy.RunSettings
 	nil,                                // 7: stroppy.StroppyCli.StroppyEnvEntry
-	(*deployment.Hardware)(nil),        // 8: deployment.Hardware
-	(*database.Database_Template)(nil), // 9: database.Database.Template
-	(deployment.Target)(0),             // 10: deployment.Target
-	(*settings.Settings)(nil),          // 11: settings.Settings
+	(*durationpb.Duration)(nil),        // 8: google.protobuf.Duration
+	(*deployment.Hardware)(nil),        // 9: deployment.Hardware
+	(*database.Database_Template)(nil), // 10: database.Database.Template
+	(deployment.Target)(0),             // 11: deployment.Target
+	(*settings.Settings)(nil),          // 12: settings.Settings
 }
 var file_stroppy_test_proto_depIdxs = []int32{
 	0,  // 0: stroppy.StroppyCli.workload:type_name -> stroppy.StroppyCli.Workload
-	7,  // 1: stroppy.StroppyCli.stroppy_env:type_name -> stroppy.StroppyCli.StroppyEnvEntry
-	1,  // 2: stroppy.Test.stroppy_cli:type_name -> stroppy.StroppyCli
-	8,  // 3: stroppy.Test.stroppy_hardware:type_name -> deployment.Hardware
-	9,  // 4: stroppy.Test.database_template:type_name -> database.Database.Template
-	2,  // 5: stroppy.TestResult.test:type_name -> stroppy.Test
-	2,  // 6: stroppy.TestSuite.tests:type_name -> stroppy.Test
-	4,  // 7: stroppy.TestSuiteResult.suite:type_name -> stroppy.TestSuite
-	3,  // 8: stroppy.TestSuiteResult.results:type_name -> stroppy.TestResult
-	10, // 9: stroppy.RunSettings.target:type_name -> deployment.Target
-	11, // 10: stroppy.RunSettings.settings:type_name -> settings.Settings
-	2,  // 11: stroppy.RunSettings.test:type_name -> stroppy.Test
-	12, // [12:12] is the sub-list for method output_type
-	12, // [12:12] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	8,  // 1: stroppy.StroppyCli.duration:type_name -> google.protobuf.Duration
+	7,  // 2: stroppy.StroppyCli.stroppy_env:type_name -> stroppy.StroppyCli.StroppyEnvEntry
+	1,  // 3: stroppy.Test.stroppy_cli:type_name -> stroppy.StroppyCli
+	9,  // 4: stroppy.Test.stroppy_hardware:type_name -> deployment.Hardware
+	10, // 5: stroppy.Test.database_template:type_name -> database.Database.Template
+	2,  // 6: stroppy.TestResult.test:type_name -> stroppy.Test
+	2,  // 7: stroppy.TestSuite.tests:type_name -> stroppy.Test
+	4,  // 8: stroppy.TestSuiteResult.suite:type_name -> stroppy.TestSuite
+	3,  // 9: stroppy.TestSuiteResult.results:type_name -> stroppy.TestResult
+	11, // 10: stroppy.RunSettings.target:type_name -> deployment.Target
+	12, // 11: stroppy.RunSettings.settings:type_name -> settings.Settings
+	2,  // 12: stroppy.RunSettings.test:type_name -> stroppy.Test
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_stroppy_test_proto_init() }
@@ -590,6 +613,7 @@ func file_stroppy_test_proto_init() {
 	if File_stroppy_test_proto != nil {
 		return
 	}
+	file_stroppy_test_proto_msgTypes[0].OneofWrappers = []any{}
 	file_stroppy_test_proto_msgTypes[1].OneofWrappers = []any{
 		(*Test_DatabaseTemplate)(nil),
 		(*Test_ConnectionString)(nil),

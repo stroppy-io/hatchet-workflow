@@ -9,11 +9,15 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	hatchetLib "github.com/hatchet-dev/hatchet/sdks/go"
 	"github.com/samber/lo"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/consts"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/defaults"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/envs"
 	hatchet_ext "github.com/stroppy-io/hatchet-workflow/internal/core/hatchet-ext"
 	edgeDomain "github.com/stroppy-io/hatchet-workflow/internal/domain/edge"
@@ -98,7 +102,11 @@ const (
 	K6RunIdTagName    = "run_id"
 	K6WorkloadTagName = "workload"
 
-	DriverUrlEnvVar = "DRIVER_URL"
+	DriverUrlEnvVar   consts.EnvKey = "DRIVER_URL"
+	ScaleFactorEnvVar consts.EnvKey = "SCALE_FACTOR"
+	DurationEnvVar    consts.EnvKey = "DURATION"
+
+	defaultScaleFactor uint32 = 1
 )
 
 func RunStroppyTask(
@@ -111,6 +119,10 @@ func RunStroppyTask(
 			ctx hatchetLib.Context,
 			input *workflows.Tasks_RunStroppy_Input,
 		) (*stroppy.TestResult, error) {
+			err := ctx.RefreshTimeout(GetStroppyDuration(input.GetStroppyCliCall()).String())
+			if err != nil {
+				return nil, err
+			}
 			runcmd := func(cmd *exec.Cmd) error {
 				stdout, _ := cmd.StdoutPipe()
 				stderr, _ := cmd.StderrPipe()
@@ -134,6 +146,11 @@ func RunStroppyTask(
 						input.GetStroppyCliCall().GetStroppyEnv(),
 						map[string]string{
 							DriverUrlEnvVar: input.GetConnectionString(),
+							ScaleFactorEnvVar: strconv.Itoa(int(defaults.Uint32PtrOrDefault(
+								input.GetStroppyCliCall().ScaleFactor,
+								defaultScaleFactor,
+							))),
+							DurationEnvVar: GetStroppyDuration(input.GetStroppyCliCall()).String(),
 						},
 					),
 				)...,
@@ -152,7 +169,7 @@ func RunStroppyTask(
 				genCmd.String(),
 				input.GetStroppyCliCall().GetWorkdir(),
 			))
-			err := runcmd(genCmd)
+			err = runcmd(genCmd)
 			if err != nil {
 				return nil, fmt.Errorf("failed to run stroppy gen: %w", err)
 			}
@@ -184,4 +201,13 @@ func RunStroppyTask(
 			}, nil
 		}),
 	)
+}
+
+const defaultStroppyDuration = time.Hour
+
+func GetStroppyDuration(input *stroppy.StroppyCli) time.Duration {
+	if input.GetDuration() != nil {
+		return input.GetDuration().AsDuration()
+	}
+	return defaultStroppyDuration
 }

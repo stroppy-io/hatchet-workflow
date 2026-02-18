@@ -6,6 +6,7 @@ import "database/database.proto";
 import "deployment/deployment.proto";
 import "settings/settings.proto";
 import "validate/validate.proto";
+import "google/protobuf/duration.proto";
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/stroppy";
 
@@ -19,7 +20,9 @@ message StroppyCli {
     string binary_path = 2 [(validate.rules).string.pattern = "^/(?:[^/\0]+/)*[^/\0]*$"];
     string workdir = 3 [(validate.rules).string.pattern = "^/(?:[^/\0]+/)*[^/\0]*$"];
     Workload workload = 4 [(validate.rules).enum.defined_only = true];
-    map<string, string> stroppy_env = 6;
+    optional uint32 scale_factor = 5;
+    optional google.protobuf.Duration duration = 6;
+    map<string, string> stroppy_env = 7;
 }
 
 message Test {

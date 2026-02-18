@@ -107,6 +107,43 @@ func (m *StroppyCli) validate(all bool) error {
 
 	// no validation rules for StroppyEnv
 
+	if m.ScaleFactor != nil {
+		// no validation rules for ScaleFactor
+	}
+
+	if m.Duration != nil {
+
+		if all {
+			switch v := interface{}(m.GetDuration()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, StroppyCliValidationError{
+						field:  "Duration",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, StroppyCliValidationError{
+						field:  "Duration",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetDuration()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return StroppyCliValidationError{
+					field:  "Duration",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return StroppyCliMultiError(errors)
 	}

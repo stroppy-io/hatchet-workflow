@@ -11,13 +11,15 @@ import { file_deployment_deployment } from "../deployment/deployment_pb.ts";
 import type { Settings, SettingsJson } from "../settings/settings_pb.ts";
 import { file_settings_settings } from "../settings/settings_pb.ts";
 import { file_validate_validate } from "../validate/validate_pb.ts";
+import type { Duration, DurationJson } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_duration } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file stroppy/test.proto.
  */
 export const file_stroppy_test: GenFile = /*@__PURE__*/
-  fileDesc("ChJzdHJvcHB5L3Rlc3QucHJvdG8SB3N0cm9wcHki6QIKClN0cm9wcHlDbGkSGAoHdmVyc2lvbhgBIAEoCUIH+kIEcgIQARIxCgtiaW5hcnlfcGF0aBgCIAEoCUIc+kIZchcyFV4vKD86W14vAF0rLykqW14vAF0qJBItCgd3b3JrZGlyGAMgASgJQhz6QhlyFzIVXi8oPzpbXi8AXSsvKSpbXi8AXSokEjgKCHdvcmtsb2FkGAQgASgOMhwuc3Ryb3BweS5TdHJvcHB5Q2xpLldvcmtsb2FkQgj6QgWCAQIQARI4CgtzdHJvcHB5X2VudhgGIAMoCzIjLnN0cm9wcHkuU3Ryb3BweUNsaS5TdHJvcHB5RW52RW50cnkaMQoPU3Ryb3BweUVudkVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiOAoIV29ya2xvYWQSGAoUV09SS0xPQURfVU5TUEVDSUZJRUQQABIICgRUUENDEAESCAoEVFBDQhACIpwCCgRUZXN0EgwKBG5hbWUYAiABKAkSGAoLZGVzY3JpcHRpb24YAyABKAlIAYgBARIyCgtzdHJvcHB5X2NsaRgEIAEoCzITLnN0cm9wcHkuU3Ryb3BweUNsaUII+kIFigECEAESOAoQc3Ryb3BweV9oYXJkd2FyZRgHIAEoCzIULmRlcGxveW1lbnQuSGFyZHdhcmVCCPpCBYoBAhABEjgKEWRhdGFiYXNlX3RlbXBsYXRlGGUgASgLMhsuZGF0YWJhc2UuRGF0YWJhc2UuVGVtcGxhdGVIABIkChFjb25uZWN0aW9uX3N0cmluZxhmIAEoCUIH+kIEcgIQAUgAQg4KDGRhdGFiYXNlX3JlZkIOCgxfZGVzY3JpcHRpb24ibQoKVGVzdFJlc3VsdBIOCgZydW5faWQYASABKAkSJQoEdGVzdBgCIAEoCzINLnN0cm9wcHkuVGVzdEII+kIFigECEAESGAoLZ3JhZmFuYV91cmwYAyABKAlIAIgBAUIOCgxfZ3JhZmFuYV91cmwiKQoJVGVzdFN1aXRlEhwKBXRlc3RzGAEgAygLMg0uc3Ryb3BweS5UZXN0Im4KD1Rlc3RTdWl0ZVJlc3VsdBIrCgVzdWl0ZRgCIAEoCzISLnN0cm9wcHkuVGVzdFN1aXRlQgj6QgWKAQIQARIuCgdyZXN1bHRzGAMgAygLMhMuc3Ryb3BweS5UZXN0UmVzdWx0Qgj6QgWSAQIIASKrAQoLUnVuU2V0dGluZ3MSFwoGcnVuX2lkGAEgASgJQgf6QgRyAhABEiwKBnRhcmdldBgCIAEoDjISLmRlcGxveW1lbnQuVGFyZ2V0Qgj6QgWCAQIQARIuCghzZXR0aW5ncxgDIAEoCzISLnNldHRpbmdzLlNldHRpbmdzQgj6QgWKAQIQARIlCgR0ZXN0GAQgASgLMg0uc3Ryb3BweS5UZXN0Qgj6QgWKAQIQAUI/Wj1naXRodWIuY29tL3N0cm9wcHktaW8vaGF0Y2hldC13b3JrZmxvdy9pbnRlcm5hbC9wcm90by9zdHJvcHB5YgZwcm90bzM", [file_database_database, file_deployment_deployment, file_settings_settings, file_validate_validate]);
+  fileDesc("ChJzdHJvcHB5L3Rlc3QucHJvdG8SB3N0cm9wcHki1AMKClN0cm9wcHlDbGkSGAoHdmVyc2lvbhgBIAEoCUIH+kIEcgIQARIxCgtiaW5hcnlfcGF0aBgCIAEoCUIc+kIZchcyFV4vKD86W14vAF0rLykqW14vAF0qJBItCgd3b3JrZGlyGAMgASgJQhz6QhlyFzIVXi8oPzpbXi8AXSsvKSpbXi8AXSokEjgKCHdvcmtsb2FkGAQgASgOMhwuc3Ryb3BweS5TdHJvcHB5Q2xpLldvcmtsb2FkQgj6QgWCAQIQARIZCgxzY2FsZV9mYWN0b3IYBSABKA1IAIgBARIwCghkdXJhdGlvbhgGIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkgBiAEBEjgKC3N0cm9wcHlfZW52GAcgAygLMiMuc3Ryb3BweS5TdHJvcHB5Q2xpLlN0cm9wcHlFbnZFbnRyeRoxCg9TdHJvcHB5RW52RW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASI4CghXb3JrbG9hZBIYChRXT1JLTE9BRF9VTlNQRUNJRklFRBAAEggKBFRQQ0MQARIICgRUUENCEAJCDwoNX3NjYWxlX2ZhY3RvckILCglfZHVyYXRpb24inAIKBFRlc3QSDAoEbmFtZRgCIAEoCRIYCgtkZXNjcmlwdGlvbhgDIAEoCUgBiAEBEjIKC3N0cm9wcHlfY2xpGAQgASgLMhMuc3Ryb3BweS5TdHJvcHB5Q2xpQgj6QgWKAQIQARI4ChBzdHJvcHB5X2hhcmR3YXJlGAcgASgLMhQuZGVwbG95bWVudC5IYXJkd2FyZUII+kIFigECEAESOAoRZGF0YWJhc2VfdGVtcGxhdGUYZSABKAsyGy5kYXRhYmFzZS5EYXRhYmFzZS5UZW1wbGF0ZUgAEiQKEWNvbm5lY3Rpb25fc3RyaW5nGGYgASgJQgf6QgRyAhABSABCDgoMZGF0YWJhc2VfcmVmQg4KDF9kZXNjcmlwdGlvbiJtCgpUZXN0UmVzdWx0Eg4KBnJ1bl9pZBgBIAEoCRIlCgR0ZXN0GAIgASgLMg0uc3Ryb3BweS5UZXN0Qgj6QgWKAQIQARIYCgtncmFmYW5hX3VybBgDIAEoCUgAiAEBQg4KDF9ncmFmYW5hX3VybCIpCglUZXN0U3VpdGUSHAoFdGVzdHMYASADKAsyDS5zdHJvcHB5LlRlc3QibgoPVGVzdFN1aXRlUmVzdWx0EisKBXN1aXRlGAIgASgLMhIuc3Ryb3BweS5UZXN0U3VpdGVCCPpCBYoBAhABEi4KB3Jlc3VsdHMYAyADKAsyEy5zdHJvcHB5LlRlc3RSZXN1bHRCCPpCBZIBAggBIqsBCgtSdW5TZXR0aW5ncxIXCgZydW5faWQYASABKAlCB/pCBHICEAESLAoGdGFyZ2V0GAIgASgOMhIuZGVwbG95bWVudC5UYXJnZXRCCPpCBYIBAhABEi4KCHNldHRpbmdzGAMgASgLMhIuc2V0dGluZ3MuU2V0dGluZ3NCCPpCBYoBAhABEiUKBHRlc3QYBCABKAsyDS5zdHJvcHB5LlRlc3RCCPpCBYoBAhABQj9aPWdpdGh1Yi5jb20vc3Ryb3BweS1pby9oYXRjaGV0LXdvcmtmbG93L2ludGVybmFsL3Byb3RvL3N0cm9wcHliBnByb3RvMw", [file_database_database, file_deployment_deployment, file_settings_settings, file_validate_validate, file_google_protobuf_duration]);
 
 /**
  * @generated from message stroppy.StroppyCli
@@ -44,7 +46,17 @@ export type StroppyCli = Message<"stroppy.StroppyCli"> & {
   workload: StroppyCli_Workload;
 
   /**
-   * @generated from field: map<string, string> stroppy_env = 6;
+   * @generated from field: optional uint32 scale_factor = 5;
+   */
+  scaleFactor?: number;
+
+  /**
+   * @generated from field: optional google.protobuf.Duration duration = 6;
+   */
+  duration?: Duration;
+
+  /**
+   * @generated from field: map<string, string> stroppy_env = 7;
    */
   stroppyEnv: { [key: string]: string };
 };
@@ -74,7 +86,17 @@ export type StroppyCliJson = {
   workload?: StroppyCli_WorkloadJson;
 
   /**
-   * @generated from field: map<string, string> stroppy_env = 6;
+   * @generated from field: optional uint32 scale_factor = 5;
+   */
+  scaleFactor?: number;
+
+  /**
+   * @generated from field: optional google.protobuf.Duration duration = 6;
+   */
+  duration?: DurationJson;
+
+  /**
+   * @generated from field: map<string, string> stroppy_env = 7;
    */
   stroppyEnv?: { [key: string]: string };
 };
