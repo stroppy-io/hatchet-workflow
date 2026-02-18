@@ -8,19 +8,14 @@ import (
 	"os"
 	"path"
 	"strings"
-	"sync"
-	"time"
 
-	"github.com/hashicorp/go-version"
-	"github.com/hashicorp/hc-install/product"
-	"github.com/hashicorp/hc-install/releases"
 	"github.com/hashicorp/terraform-exec/tfexec"
 	cmap "github.com/orcaman/concurrent-map/v2"
 	"github.com/samber/lo"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/consts"
+	"github.com/stroppy-io/hatchet-workflow/internal/core/defaults"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/logger"
 	"github.com/stroppy-io/hatchet-workflow/internal/core/uow"
-	"go.uber.org/zap"
 )
 
 const (
@@ -182,32 +177,14 @@ type Actor struct {
 }
 
 var (
-	installedTerraformExecPath  string
-	onceEnsureTerraformExecPath sync.Once
+	installedTerraformExecPath = defaults.StringOrDefault(os.Getenv("TERRAFORM_EXEC_PATH"), "/usr/local/bin/terraform")
 )
 
-func ensureTerraformExecPath() error {
-	var err error
-	onceEnsureTerraformExecPath.Do(func() {
-		logger.Info("Installing Terraform")
-		installer := &releases.ExactVersion{
-			Product: product.Terraform,
-			Version: version.Must(version.NewVersion(Version)),
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-		defer cancel()
-		installedTerraformExecPath, err = installer.Install(ctx)
-	})
-	logger.Info("Terraform installed", zap.String("path", installedTerraformExecPath))
-	return err
-}
-
 func NewActor() (*Actor, error) {
-	err := ensureTerraformExecPath()
-	if err != nil {
-		return nil, fmt.Errorf("error ensuring Terraform exec path: %s", err)
+	if installedTerraformExecPath == "" {
+		return nil, fmt.Errorf("TERRAFORM_EXEC_PATH is not set")
 	}
-	err = os.MkdirAll(WorkingDir, os.ModePerm)
+	err := os.MkdirAll(WorkingDir, os.ModePerm)
 	if err != nil {
 		return nil, fmt.Errorf("error creating working directory: %s", err)
 	}
