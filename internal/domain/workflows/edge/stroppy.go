@@ -91,7 +91,6 @@ func streamLogsWithPrefix(ctx context.Context, r io.Reader, prefix string, log f
 }
 
 const (
-	StroppyBinaryName = "stroppy"
 	StroppyCommandGen = "gen"
 	StroppyCommandRun = "run"
 
@@ -120,10 +119,6 @@ func RunStroppyTask(
 			ctx hatchetLib.Context,
 			input *workflows.Tasks_RunStroppy_Input,
 		) (*stroppy.TestResult, error) {
-			err := ctx.RefreshTimeout((GetStroppyDuration(input.GetStroppyCliCall()) * 2).String())
-			if err != nil {
-				return nil, err
-			}
 			runcmd := func(cmd *exec.Cmd) error {
 				stdout, _ := cmd.StdoutPipe()
 				stderr, _ := cmd.StderrPipe()
@@ -151,7 +146,10 @@ func RunStroppyTask(
 								input.GetStroppyCliCall().ScaleFactor,
 								defaultScaleFactor,
 							))),
-							DurationEnvVar: GetStroppyDuration(input.GetStroppyCliCall()).String(),
+							DurationEnvVar: defaults.DurationOrDefault(
+								input.GetStroppyCliCall().GetDuration().AsDuration(),
+								time.Hour,
+							).String(),
 						},
 					),
 				)...,
@@ -170,7 +168,7 @@ func RunStroppyTask(
 				genCmd.String(),
 				input.GetStroppyCliCall().GetWorkdir(),
 			))
-			err = runcmd(genCmd)
+			err := runcmd(genCmd)
 			if err != nil {
 				return nil, fmt.Errorf("failed to run stroppy gen: %w", err)
 			}
@@ -204,13 +202,4 @@ func RunStroppyTask(
 		}),
 		hatchetLib.WithExecutionTimeout(24*time.Hour),
 	)
-}
-
-const defaultStroppyDuration = time.Hour
-
-func GetStroppyDuration(input *stroppy.StroppyCli) time.Duration {
-	if input.GetDuration() != nil {
-		return input.GetDuration().AsDuration()
-	}
-	return defaultStroppyDuration
 }

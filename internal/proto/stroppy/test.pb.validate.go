@@ -113,32 +113,34 @@ func (m *StroppyCli) validate(all bool) error {
 
 	if m.Duration != nil {
 
-		if all {
-			switch v := interface{}(m.GetDuration()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, StroppyCliValidationError{
-						field:  "Duration",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, StroppyCliValidationError{
-						field:  "Duration",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetDuration()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return StroppyCliValidationError{
+		if d := m.GetDuration(); d != nil {
+			dur, err := d.AsDuration(), d.CheckValid()
+			if err != nil {
+				err = StroppyCliValidationError{
 					field:  "Duration",
-					reason: "embedded message failed validation",
+					reason: "value is not a valid duration",
 					cause:  err,
 				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			} else {
+
+				lte := time.Duration(86400*time.Second + 0*time.Nanosecond)
+				gte := time.Duration(1*time.Second + 0*time.Nanosecond)
+
+				if dur < gte || dur > lte {
+					err := StroppyCliValidationError{
+						field:  "Duration",
+						reason: "value must be inside range [1s, 24h0m0s]",
+					}
+					if !all {
+						return err
+					}
+					errors = append(errors, err)
+				}
+
 			}
 		}
 

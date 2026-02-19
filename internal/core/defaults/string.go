@@ -1,5 +1,7 @@
 package defaults
 
+import "time"
+
 func StringOrDefault(s string, defaultValue string) string {
 	if s == "" {
 		return defaultValue
@@ -47,4 +49,11 @@ func Uint32PtrOrDefault(u *uint32, defaultValue uint32) uint32 {
 		return defaultValue
 	}
 	return *u
+}
+
+func DurationOrDefault(d time.Duration, defaultValue time.Duration) time.Duration {
+	if d == 0 {
+		return defaultValue
+	}
+	return d
 }

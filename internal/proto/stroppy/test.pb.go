@@ -509,7 +509,7 @@ var File_stroppy_test_proto protoreflect.FileDescriptor
 
 const file_stroppy_test_proto_rawDesc = "" +
 	"\n" +
-	"\x12stroppy/test.proto\x12\astroppy\x1a\x17database/database.proto\x1a\x1bdeployment/deployment.proto\x1a\x17settings/settings.proto\x1a\x17validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\"\xab\x04\n" +
+	"\x12stroppy/test.proto\x12\astroppy\x1a\x17database/database.proto\x1a\x1bdeployment/deployment.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x17settings/settings.proto\x1a\x17validate/validate.proto\"\xbd\x04\n" +
 	"\n" +
 	"StroppyCli\x12!\n" +
 	"\aversion\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aversion\x12=\n" +
@@ -517,8 +517,9 @@ const file_stroppy_test_proto_rawDesc = "" +
 	"binaryPath\x126\n" +
 	"\aworkdir\x18\x03 \x01(\tB\x1c\xfaB\x19r\x172\x15^/(?:[^/\x00]+/)*[^/\x00]*$R\aworkdir\x12B\n" +
 	"\bworkload\x18\x04 \x01(\x0e2\x1c.stroppy.StroppyCli.WorkloadB\b\xfaB\x05\x82\x01\x02\x10\x01R\bworkload\x12&\n" +
-	"\fscale_factor\x18\x05 \x01(\rH\x00R\vscaleFactor\x88\x01\x01\x12:\n" +
-	"\bduration\x18\x06 \x01(\v2\x19.google.protobuf.DurationH\x01R\bduration\x88\x01\x01\x12D\n" +
+	"\fscale_factor\x18\x05 \x01(\rH\x00R\vscaleFactor\x88\x01\x01\x12L\n" +
+	"\bduration\x18\x06 \x01(\v2\x19.google.protobuf.DurationB\x10\xfaB\r\xaa\x01\n" +
+	"\"\x04\b\x80\xa3\x052\x02\b\x01H\x01R\bduration\x88\x01\x01\x12D\n" +
 	"\vstroppy_env\x18\a \x03(\v2#.stroppy.StroppyCli.StroppyEnvEntryR\n" +
 	"stroppyEnv\x1a=\n" +
 	"\x0fStroppyEnvEntry\x12\x10\n" +
