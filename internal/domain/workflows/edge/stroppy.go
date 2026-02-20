@@ -97,6 +97,7 @@ const (
 	StroppyWorkdirFlag = "--workdir"
 	StroppyPresetFlag  = "--preset"
 	TagFlag            = "--tag"
+	OutputFlag         = "--out"
 
 	K6RunIdTagName    = "run_id"
 	K6WorkloadTagName = "workload"
@@ -107,6 +108,7 @@ const (
 
 	defaultScaleFactor uint32 = 1
 	doubleDashFlag     string = "--"
+	opentelemetryOut   string = "opentelemetry"
 )
 
 func RunStroppyTask(
@@ -183,6 +185,8 @@ func RunStroppyTask(
 				fmt.Sprintf("%s=%s", K6RunIdTagName, input.GetRunSettings().GetRunId()),
 				TagFlag,
 				fmt.Sprintf("%s=%s", K6WorkloadTagName, workloadName),
+				OutputFlag,
+				opentelemetryOut,
 			)
 			runCmd.Env = envsCmd
 			runCmd.Dir = input.GetStroppyCliCall().GetWorkdir()
