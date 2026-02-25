@@ -1,24 +1,51 @@
 postgresCluster:
-  topology:
-    settings:
-      version: VERSION_17
-      storageEngine: STORAGE_ENGINE_HEAP
-    masterHardware:
-      cores: 4
-      memory: 8
-      disk: 100
-    replicaHardware:
-      cores: 2
-      memory: 4
-      disk: 50
-    replicasCount: 3
-  addons:
-    pooling:
+  defaults:
+    version: VERSION_17
+    storageEngine: STORAGE_ENGINE_HEAP
+  nodes:
+    - name: pg-master
+      hardware:
+        cores: 4
+        memory: 8
+        disk: 100
+      postgres:
+        role: ROLE_MASTER
+    - name: pg-replica-0
+      hardware:
+        cores: 2
+        memory: 4
+        disk: 50
+      postgres:
+        role: ROLE_REPLICA
       pgbouncer:
-        enabled: true
-        poolSize: 100
-        poolMode: TRANSACTION
-        maxClientConn: 1000
-        placement:
-          colocate:
-            scope: SCOPE_REPLICAS
+        config:
+          poolSize: 100
+          poolMode: TRANSACTION
+          maxClientConn: 1000
+        monitor: false
+    - name: pg-replica-1
+      hardware:
+        cores: 2
+        memory: 4
+        disk: 50
+      postgres:
+        role: ROLE_REPLICA
+      pgbouncer:
+        config:
+          poolSize: 100
+          poolMode: TRANSACTION
+          maxClientConn: 1000
+        monitor: false
+    - name: pg-replica-2
+      hardware:
+        cores: 2
+        memory: 4
+        disk: 50
+      postgres:
+        role: ROLE_REPLICA
+      pgbouncer:
+        config:
+          poolSize: 100
+          poolMode: TRANSACTION
+          maxClientConn: 1000
+        monitor: false

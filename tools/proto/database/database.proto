@@ -5,21 +5,15 @@ package database;
 import "database/postgres.proto";
 import "validate/validate.proto";
 
-
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/database";
 
 message Database {
     message Template {
         oneof template {
             option (validate.required) = true;
-            Postgres.Instance.Template postgres_instance = 2;
-            Postgres.Cluster.Template postgres_cluster = 1;
+            Postgres.Instance postgres_instance = 1;
+            Postgres.Cluster postgres_cluster = 2;
         }
     }
     Template template = 1 [(validate.rules).message.required = true];
-    oneof database {
-        option (validate.required) = true;
-        Postgres.Instance postgres_instance = 2;
-        Postgres.Cluster postgres_cluster = 3;
-    }
 }

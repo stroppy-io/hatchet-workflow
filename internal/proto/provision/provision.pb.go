@@ -702,8 +702,8 @@ func (x *Container_EtcdRuntime) GetPeerPort() uint32 {
 }
 
 type Container_PgbouncerRuntime struct {
-	state         protoimpl.MessageState                      `protogen:"open.v1"`
-	Config        *database.Postgres_Addons_Pooling_Pgbouncer `protobuf:"bytes,1,opt,name=config,proto3" json:"config,omitempty"`
+	state         protoimpl.MessageState             `protogen:"open.v1"`
+	Config        *database.Postgres_PgbouncerConfig `protobuf:"bytes,1,opt,name=config,proto3" json:"config,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -738,7 +738,7 @@ func (*Container_PgbouncerRuntime) Descriptor() ([]byte, []int) {
 	return file_provision_provision_proto_rawDescGZIP(), []int{1, 2}
 }
 
-func (x *Container_PgbouncerRuntime) GetConfig() *database.Postgres_Addons_Pooling_Pgbouncer {
+func (x *Container_PgbouncerRuntime) GetConfig() *database.Postgres_PgbouncerConfig {
 	if x != nil {
 		return x.Config
 	}
@@ -910,8 +910,8 @@ func (x *Container_PgbouncerExporterRuntime) GetPort() uint32 {
 }
 
 type Container_BackupRuntime struct {
-	state         protoimpl.MessageState            `protogen:"open.v1"`
-	Config        *database.Postgres_Sidecar_Backup `protobuf:"bytes,1,opt,name=config,proto3" json:"config,omitempty"`
+	state         protoimpl.MessageState          `protogen:"open.v1"`
+	Config        *database.Postgres_BackupConfig `protobuf:"bytes,1,opt,name=config,proto3" json:"config,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -946,7 +946,7 @@ func (*Container_BackupRuntime) Descriptor() ([]byte, []int) {
 	return file_provision_provision_proto_rawDescGZIP(), []int{1, 6}
 }
 
-func (x *Container_BackupRuntime) GetConfig() *database.Postgres_Sidecar_Backup {
+func (x *Container_BackupRuntime) GetConfig() *database.Postgres_BackupConfig {
 	if x != nil {
 		return x.Config
 	}
@@ -1167,7 +1167,7 @@ const file_provision_provision_proto_rawDesc = "" +
 	"\x0econtainer_port\x18\x02 \x01(\rB\v\xfaB\b*\x06\x18\xff\xff\x03(\x01R\rcontainerPort\x12-\n" +
 	"\thost_port\x18\x03 \x01(\rB\v\xfaB\b*\x06\x18\xff\xff\x03(\x01H\x00R\bhostPort\x88\x01\x01B\f\n" +
 	"\n" +
-	"_host_port\"\xb8\x0f\n" +
+	"_host_port\"\xad\x0f\n" +
 	"\tContainer\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x12\x1d\n" +
@@ -1203,9 +1203,9 @@ const file_provision_provision_proto_rawDesc = "" +
 	"\tpeer_port\x18\x04 \x01(\rB\v\xfaB\b*\x06\x18\xff\xff\x03(\x01H\x01R\bpeerPort\x88\x01\x01B\x13\n" +
 	"\x11_base_client_portB\f\n" +
 	"\n" +
-	"_peer_port\x1aa\n" +
-	"\x10PgbouncerRuntime\x12M\n" +
-	"\x06config\x18\x01 \x01(\v2+.database.Postgres.Addons.Pooling.PgbouncerB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06config\x1aC\n" +
+	"_peer_port\x1aX\n" +
+	"\x10PgbouncerRuntime\x12D\n" +
+	"\x06config\x18\x01 \x01(\v2\".database.Postgres.PgbouncerConfigB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06config\x1aC\n" +
 	"\x13NodeExporterRuntime\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x12\n" +
 	"\x04port\x18\x02 \x01(\rR\x04port\x1ay\n" +
@@ -1215,9 +1215,9 @@ const file_provision_provision_proto_rawDesc = "" +
 	"\x14custom_queries_paths\x18\x03 \x03(\tR\x12customQueriesPaths\x1aH\n" +
 	"\x18PgbouncerExporterRuntime\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x12\n" +
-	"\x04port\x18\x02 \x01(\rR\x04port\x1aT\n" +
-	"\rBackupRuntime\x12C\n" +
-	"\x06config\x18\x01 \x01(\v2!.database.Postgres.Sidecar.BackupB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06config\x1a6\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x1aR\n" +
+	"\rBackupRuntime\x12A\n" +
+	"\x06config\x18\x01 \x01(\v2\x1f.database.Postgres.BackupConfigB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06config\x1a6\n" +
 	"\bEnvEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a;\n" +
@@ -1308,13 +1308,13 @@ var file_provision_provision_proto_goTypes = []any{
 	(*deployment.Deployment_Template)(nil),     // 21: deployment.Deployment.Template
 	(*deployment.Deployment)(nil),              // 22: deployment.Deployment
 	(*database.Postgres_Settings)(nil),         // 23: database.Postgres.Settings
-	(*database.Postgres_Addons_Pooling_Pgbouncer)(nil), // 24: database.Postgres.Addons.Pooling.Pgbouncer
-	(*database.Postgres_Sidecar_Backup)(nil),           // 25: database.Postgres.Sidecar.Backup
-	(*deployment.Hardware)(nil),                        // 26: deployment.Hardware
-	(*deployment.Ip)(nil),                              // 27: deployment.Ip
-	(*deployment.Vm_Template)(nil),                     // 28: deployment.Vm.Template
-	(*edge.Worker)(nil),                                // 29: edge.Worker
-	(*deployment.Vm)(nil),                              // 30: deployment.Vm
+	(*database.Postgres_PgbouncerConfig)(nil),  // 24: database.Postgres.PgbouncerConfig
+	(*database.Postgres_BackupConfig)(nil),     // 25: database.Postgres.BackupConfig
+	(*deployment.Hardware)(nil),                // 26: deployment.Hardware
+	(*deployment.Ip)(nil),                      // 27: deployment.Ip
+	(*deployment.Vm_Template)(nil),             // 28: deployment.Vm.Template
+	(*edge.Worker)(nil),                        // 29: edge.Worker
+	(*deployment.Vm)(nil),                      // 30: deployment.Vm
 }
 var file_provision_provision_proto_depIdxs = []int32{
 	13, // 0: provision.Container.env:type_name -> provision.Container.EnvEntry
@@ -1337,8 +1337,8 @@ var file_provision_provision_proto_depIdxs = []int32{
 	20, // 17: provision.DeployedPlacement.network:type_name -> deployment.Network
 	0,  // 18: provision.Container.PostgresRuntime.role:type_name -> provision.Container.PostgresRuntime.Role
 	23, // 19: provision.Container.PostgresRuntime.settings:type_name -> database.Postgres.Settings
-	24, // 20: provision.Container.PgbouncerRuntime.config:type_name -> database.Postgres.Addons.Pooling.Pgbouncer
-	25, // 21: provision.Container.BackupRuntime.config:type_name -> database.Postgres.Sidecar.Backup
+	24, // 20: provision.Container.PgbouncerRuntime.config:type_name -> database.Postgres.PgbouncerConfig
+	25, // 21: provision.Container.BackupRuntime.config:type_name -> database.Postgres.BackupConfig
 	26, // 22: provision.PlacementIntent.Item.hardware:type_name -> deployment.Hardware
 	2,  // 23: provision.PlacementIntent.Item.containers:type_name -> provision.Container
 	16, // 24: provision.PlacementIntent.Item.metadata:type_name -> provision.PlacementIntent.Item.MetadataEntry

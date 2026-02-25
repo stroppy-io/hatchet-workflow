@@ -1,15 +1,35 @@
 postgresCluster:
-  topology:
-    settings:
-      version: VERSION_17
-      storageEngine: STORAGE_ENGINE_HEAP
-    masterHardware:
-      cores: 4
-      memory: 8
-      disk: 100
-    replicaHardware:
-      cores: 2
-      memory: 4
-      disk: 50
-    replicasCount: 2
-    monitor: true
+  defaults:
+    version: VERSION_17
+    storageEngine: STORAGE_ENGINE_HEAP
+  nodes:
+    - name: pg-master
+      hardware:
+        cores: 4
+        memory: 8
+        disk: 100
+      postgres:
+        role: ROLE_MASTER
+      monitoring:
+        nodeExporter: {}
+        postgresExporter: {}
+    - name: pg-replica-0
+      hardware:
+        cores: 2
+        memory: 4
+        disk: 50
+      postgres:
+        role: ROLE_REPLICA
+      monitoring:
+        nodeExporter: {}
+        postgresExporter: {}
+    - name: pg-replica-1
+      hardware:
+        cores: 2
+        memory: 4
+        disk: 50
+      postgres:
+        role: ROLE_REPLICA
+      monitoring:
+        nodeExporter: {}
+        postgresExporter: {}

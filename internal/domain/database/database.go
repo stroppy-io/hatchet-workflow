@@ -3,9 +3,12 @@ package database
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/stroppy-io/hatchet-workflow/internal/proto/database"
 )
+
+var nodeNameRegexp = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 
 func ValidateDatabaseTemplate(ctx context.Context, template *database.Database_Template) error {
 	_ = ctx
@@ -18,9 +21,9 @@ func ValidateDatabaseTemplate(ctx context.Context, template *database.Database_T
 
 	switch t := template.Template.(type) {
 	case *database.Database_Template_PostgresInstance:
-		return validatePostgresInstanceTemplate(t.PostgresInstance)
+		return validatePostgresInstance(t.PostgresInstance)
 	case *database.Database_Template_PostgresCluster:
-		return validatePostgresClusterTemplate(t.PostgresCluster)
+		return validatePostgresCluster(t.PostgresCluster)
 	case nil:
 		return fmt.Errorf("database template content is nil")
 	default:
@@ -28,70 +31,139 @@ func ValidateDatabaseTemplate(ctx context.Context, template *database.Database_T
 	}
 }
 
-func validatePostgresInstanceTemplate(tmpl *database.Postgres_Instance_Template) error {
-	if tmpl == nil {
-		return fmt.Errorf("postgres instance template is nil")
+func validatePostgresInstance(inst *database.Postgres_Instance) error {
+	if inst == nil {
+		return fmt.Errorf("postgres instance is nil")
 	}
-	if err := validateSettings(tmpl.GetSettings()); err != nil {
+	if err := validateSettings(inst.GetDefaults()); err != nil {
+		return err
+	}
+	if patroni := inst.GetDefaults().GetPatroni(); patroni != nil && patroni.GetEnabled() {
+		return fmt.Errorf("patroni is only supported for postgres cluster")
+	}
+
+	node := inst.GetNode()
+	if node == nil {
+		return fmt.Errorf("instance node is nil")
+	}
+	if err := validateNode(node); err != nil {
+		return fmt.Errorf("instance node: %w", err)
+	}
+	if node.GetPostgres() == nil {
+		return fmt.Errorf("instance node must have a postgres service")
+	}
+	if node.GetPostgres().GetRole() != database.Postgres_PostgresService_ROLE_MASTER {
+		return fmt.Errorf("instance node postgres role must be ROLE_MASTER")
+	}
+	if node.GetEtcd() != nil {
+		return fmt.Errorf("etcd is not supported on a standalone instance")
+	}
+	if node.GetPostgres().GetSettings() != nil {
+		if err := validateSettings(node.GetPostgres().GetSettings()); err != nil {
+			return fmt.Errorf("instance node postgres settings: %w", err)
+		}
+	}
+	return nil
+}
+
+func validatePostgresCluster(cluster *database.Postgres_Cluster) error {
+	if cluster == nil {
+		return fmt.Errorf("postgres cluster is nil")
+	}
+	if err := validateSettings(cluster.GetDefaults()); err != nil {
 		return err
 	}
 
-	if patroni := tmpl.GetSettings().GetPatroni(); patroni != nil && patroni.GetEnabled() {
-		return fmt.Errorf("patroni is only supported for postgres cluster template")
+	nodes := cluster.GetNodes()
+	if len(nodes) < 2 {
+		return fmt.Errorf("cluster must have at least 2 nodes")
+	}
+
+	seenNames := make(map[string]struct{})
+	masterCount := 0
+	replicaCount := 0
+	etcdCount := 0
+
+	for i, node := range nodes {
+		if node == nil {
+			return fmt.Errorf("node at index %d is nil", i)
+		}
+		if err := validateNode(node); err != nil {
+			return fmt.Errorf("node %q: %w", node.GetName(), err)
+		}
+		name := node.GetName()
+		if _, exists := seenNames[name]; exists {
+			return fmt.Errorf("duplicate node name %q", name)
+		}
+		seenNames[name] = struct{}{}
+
+		if pg := node.GetPostgres(); pg != nil {
+			switch pg.GetRole() {
+			case database.Postgres_PostgresService_ROLE_MASTER:
+				masterCount++
+			case database.Postgres_PostgresService_ROLE_REPLICA:
+				replicaCount++
+			}
+			if pg.GetSettings() != nil {
+				if err := validateSettings(pg.GetSettings()); err != nil {
+					return fmt.Errorf("node %q postgres settings: %w", name, err)
+				}
+			}
+		}
+
+		if node.GetEtcd() != nil {
+			etcdCount++
+		}
+	}
+
+	if masterCount != 1 {
+		return fmt.Errorf("cluster must have exactly 1 master node, got %d", masterCount)
+	}
+	if replicaCount < 1 {
+		return fmt.Errorf("cluster must have at least 1 replica node")
+	}
+
+	if etcdCount > 0 {
+		switch etcdCount {
+		case 1, 3, 5:
+			// valid quorum sizes
+		default:
+			return fmt.Errorf("etcd node count must be 1, 3, or 5, got %d", etcdCount)
+		}
+	}
+
+	patroni := cluster.GetDefaults().GetPatroni()
+	if patroni != nil && patroni.GetEnabled() {
+		if err := validatePatroni(patroni, replicaCount); err != nil {
+			return err
+		}
+		if etcdCount == 0 {
+			return fmt.Errorf("patroni is enabled but no nodes have etcd service configured")
+		}
 	}
 
 	return nil
 }
 
-func validatePostgresClusterTemplate(tmpl *database.Postgres_Cluster_Template) error {
-	if tmpl == nil {
-		return fmt.Errorf("postgres cluster template is nil")
+func validateNode(node *database.Postgres_Node) error {
+	if node == nil {
+		return fmt.Errorf("node is nil")
 	}
-	topology := tmpl.GetTopology()
-	if topology == nil {
-		return fmt.Errorf("cluster topology is required")
+	if !nodeNameRegexp.MatchString(node.GetName()) {
+		return fmt.Errorf("node name %q is invalid: must match ^[a-z][a-z0-9-]*$", node.GetName())
 	}
-	if err := validateSettings(topology.GetSettings()); err != nil {
-		return err
+	if !nodeHasAnyService(node) {
+		return fmt.Errorf("node %q must have at least one service", node.GetName())
 	}
-
-	replicaCount := int(topology.GetReplicasCount())
-
-	seenReplicaOverrides := make(map[uint32]struct{})
-	for _, override := range tmpl.GetReplicaOverrides() {
-		if override == nil {
-			continue
-		}
-		idx := override.GetReplicaIndex()
-		if int(idx) >= replicaCount {
-			return fmt.Errorf("replica override index %d out of bounds for replicas_count=%d", idx, replicaCount)
-		}
-		if _, exists := seenReplicaOverrides[idx]; exists {
-			return fmt.Errorf("replica override for index %d is duplicated", idx)
-		}
-		seenReplicaOverrides[idx] = struct{}{}
-		if override.GetSettings() != nil {
-			if err := validateSettings(override.GetSettings()); err != nil {
-				return fmt.Errorf("replica override %d settings error: %w", idx, err)
-			}
-		}
-	}
-
-	patroni := topology.GetSettings().GetPatroni()
-	if patroni != nil && patroni.GetEnabled() {
-		if err := validatePatroni(patroni, replicaCount); err != nil {
-			return err
-		}
-		if tmpl.GetAddons().GetDcs().GetEtcd() == nil {
-			return fmt.Errorf("patroni is enabled but addons.dcs.etcd is not configured")
-		}
-	}
-
-	if err := validateAddons(tmpl.GetAddons(), replicaCount); err != nil {
-		return err
-	}
-
 	return nil
+}
+
+func nodeHasAnyService(node *database.Postgres_Node) bool {
+	return node.GetPostgres() != nil ||
+		node.GetEtcd() != nil ||
+		node.GetPgbouncer() != nil ||
+		node.GetBackup() != nil ||
+		node.GetMonitoring() != nil
 }
 
 func validateSettings(s *database.Postgres_Settings) error {
@@ -121,111 +193,4 @@ func validatePatroni(patroni *database.Postgres_Settings_Patroni, replicaCount i
 		}
 	}
 	return nil
-}
-
-func validateAddons(addons *database.Postgres_Addons, replicaCount int) error {
-	if addons == nil {
-		return nil
-	}
-
-	etcd := addons.GetDcs().GetEtcd()
-	if etcd != nil {
-		if err := validatePlacement(etcd.GetPlacement(), replicaCount); err != nil {
-			return fmt.Errorf("addons.dcs.etcd placement error: %w", err)
-		}
-		if err := validateEtcdPlacementSize(etcd, replicaCount); err != nil {
-			return err
-		}
-	}
-
-	pgbouncer := addons.GetPooling().GetPgbouncer()
-	if pgbouncer != nil && pgbouncer.GetEnabled() {
-		if err := validatePlacement(pgbouncer.GetPlacement(), replicaCount); err != nil {
-			return fmt.Errorf("addons.pooling.pgbouncer placement error: %w", err)
-		}
-	}
-
-	if backup := addons.GetBackup(); backup != nil && backup.GetEnabled() {
-		if backup.GetScope() == database.Postgres_Placement_SCOPE_REPLICA {
-			return fmt.Errorf("addons.backup.scope=SCOPE_REPLICA is not supported without replica index selector")
-		}
-	}
-
-	return nil
-}
-
-func validateEtcdPlacementSize(etcd *database.Postgres_Addons_Dcs_Etcd, replicaCount int) error {
-	if etcd == nil {
-		return nil
-	}
-	placement := etcd.GetPlacement()
-	if placement == nil {
-		return nil
-	}
-
-	targetSize := int(etcd.GetSize())
-	switch mode := placement.GetMode().(type) {
-	case *database.Postgres_Placement_Dedicated_:
-		if int(mode.Dedicated.GetInstancesCount()) != targetSize {
-			return fmt.Errorf("addons.dcs.etcd.size=%d must equal dedicated.instances_count=%d", targetSize, mode.Dedicated.GetInstancesCount())
-		}
-	case *database.Postgres_Placement_Colocate_:
-		covered := colocateScopeSize(mode.Colocate, replicaCount)
-		if covered != targetSize {
-			return fmt.Errorf("addons.dcs.etcd.size=%d does not match placement coverage=%d", targetSize, covered)
-		}
-	}
-	return nil
-}
-
-func validatePlacement(placement *database.Postgres_Placement, replicaCount int) error {
-	if placement == nil {
-		return fmt.Errorf("placement is nil")
-	}
-	switch mode := placement.GetMode().(type) {
-	case *database.Postgres_Placement_Colocate_:
-		c := mode.Colocate
-		if c == nil {
-			return fmt.Errorf("colocate mode is nil")
-		}
-		scope := c.GetScope()
-		if scope == database.Postgres_Placement_SCOPE_UNSPECIFIED {
-			return fmt.Errorf("colocate scope must be specified")
-		}
-		if scope == database.Postgres_Placement_SCOPE_REPLICA {
-			if c.ReplicaIndex == nil {
-				return fmt.Errorf("colocate replica scope requires replica_index")
-			}
-			if int(c.GetReplicaIndex()) >= replicaCount {
-				return fmt.Errorf("colocate replica_index=%d out of bounds for replicas_count=%d", c.GetReplicaIndex(), replicaCount)
-			}
-		} else if c.ReplicaIndex != nil {
-			return fmt.Errorf("replica_index can be set only for colocate scope SCOPE_REPLICA")
-		}
-	case *database.Postgres_Placement_Dedicated_:
-		if mode.Dedicated == nil {
-			return fmt.Errorf("dedicated mode is nil")
-		}
-	default:
-		return fmt.Errorf("placement mode is not set")
-	}
-	return nil
-}
-
-func colocateScopeSize(colocate *database.Postgres_Placement_Colocate, replicaCount int) int {
-	if colocate == nil {
-		return 0
-	}
-	switch colocate.GetScope() {
-	case database.Postgres_Placement_SCOPE_MASTER:
-		return 1
-	case database.Postgres_Placement_SCOPE_REPLICAS:
-		return replicaCount
-	case database.Postgres_Placement_SCOPE_ALL_NODES:
-		return replicaCount + 1
-	case database.Postgres_Placement_SCOPE_REPLICA:
-		return 1
-	default:
-		return 0
-	}
 }

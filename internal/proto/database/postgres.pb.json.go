@@ -24,134 +24,6 @@ func (msg *Postgres) UnmarshalJSON(b []byte) error {
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *Postgres_Sidecar) MarshalJSON() ([]byte, error) {
-	return protojson.MarshalOptions{
-		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
-		UseProtoNames:   false,
-	}.Marshal(msg)
-}
-
-// UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Sidecar) UnmarshalJSON(b []byte) error {
-	return protojson.UnmarshalOptions{
-		DiscardUnknown: false,
-	}.Unmarshal(b, msg)
-}
-
-// MarshalJSON implements json.Marshaler
-func (msg *Postgres_Sidecar_PostgresExporter) MarshalJSON() ([]byte, error) {
-	return protojson.MarshalOptions{
-		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
-		UseProtoNames:   false,
-	}.Marshal(msg)
-}
-
-// UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Sidecar_PostgresExporter) UnmarshalJSON(b []byte) error {
-	return protojson.UnmarshalOptions{
-		DiscardUnknown: false,
-	}.Unmarshal(b, msg)
-}
-
-// MarshalJSON implements json.Marshaler
-func (msg *Postgres_Sidecar_Backup) MarshalJSON() ([]byte, error) {
-	return protojson.MarshalOptions{
-		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
-		UseProtoNames:   false,
-	}.Marshal(msg)
-}
-
-// UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Sidecar_Backup) UnmarshalJSON(b []byte) error {
-	return protojson.UnmarshalOptions{
-		DiscardUnknown: false,
-	}.Unmarshal(b, msg)
-}
-
-// MarshalJSON implements json.Marshaler
-func (msg *Postgres_Sidecar_Backup_S3Storage) MarshalJSON() ([]byte, error) {
-	return protojson.MarshalOptions{
-		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
-		UseProtoNames:   false,
-	}.Marshal(msg)
-}
-
-// UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Sidecar_Backup_S3Storage) UnmarshalJSON(b []byte) error {
-	return protojson.UnmarshalOptions{
-		DiscardUnknown: false,
-	}.Unmarshal(b, msg)
-}
-
-// MarshalJSON implements json.Marshaler
-func (msg *Postgres_Sidecar_Backup_LocalStorage) MarshalJSON() ([]byte, error) {
-	return protojson.MarshalOptions{
-		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
-		UseProtoNames:   false,
-	}.Marshal(msg)
-}
-
-// UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Sidecar_Backup_LocalStorage) UnmarshalJSON(b []byte) error {
-	return protojson.UnmarshalOptions{
-		DiscardUnknown: false,
-	}.Unmarshal(b, msg)
-}
-
-// MarshalJSON implements json.Marshaler
-func (msg *Postgres_Placement) MarshalJSON() ([]byte, error) {
-	return protojson.MarshalOptions{
-		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
-		UseProtoNames:   false,
-	}.Marshal(msg)
-}
-
-// UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Placement) UnmarshalJSON(b []byte) error {
-	return protojson.UnmarshalOptions{
-		DiscardUnknown: false,
-	}.Unmarshal(b, msg)
-}
-
-// MarshalJSON implements json.Marshaler
-func (msg *Postgres_Placement_Colocate) MarshalJSON() ([]byte, error) {
-	return protojson.MarshalOptions{
-		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
-		UseProtoNames:   false,
-	}.Marshal(msg)
-}
-
-// UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Placement_Colocate) UnmarshalJSON(b []byte) error {
-	return protojson.UnmarshalOptions{
-		DiscardUnknown: false,
-	}.Unmarshal(b, msg)
-}
-
-// MarshalJSON implements json.Marshaler
-func (msg *Postgres_Placement_Dedicated) MarshalJSON() ([]byte, error) {
-	return protojson.MarshalOptions{
-		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
-		UseProtoNames:   false,
-	}.Marshal(msg)
-}
-
-// UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Placement_Dedicated) UnmarshalJSON(b []byte) error {
-	return protojson.UnmarshalOptions{
-		DiscardUnknown: false,
-	}.Unmarshal(b, msg)
-}
-
-// MarshalJSON implements json.Marshaler
 func (msg *Postgres_Settings) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
@@ -184,7 +56,7 @@ func (msg *Postgres_Settings_Patroni) UnmarshalJSON(b []byte) error {
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *Postgres_Addons) MarshalJSON() ([]byte, error) {
+func (msg *Postgres_BackupConfig) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -193,14 +65,14 @@ func (msg *Postgres_Addons) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Addons) UnmarshalJSON(b []byte) error {
+func (msg *Postgres_BackupConfig) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *Postgres_Addons_Dcs) MarshalJSON() ([]byte, error) {
+func (msg *Postgres_BackupConfig_S3Storage) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -209,14 +81,14 @@ func (msg *Postgres_Addons_Dcs) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Addons_Dcs) UnmarshalJSON(b []byte) error {
+func (msg *Postgres_BackupConfig_S3Storage) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *Postgres_Addons_Dcs_Etcd) MarshalJSON() ([]byte, error) {
+func (msg *Postgres_BackupConfig_LocalStorage) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -225,14 +97,14 @@ func (msg *Postgres_Addons_Dcs_Etcd) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Addons_Dcs_Etcd) UnmarshalJSON(b []byte) error {
+func (msg *Postgres_BackupConfig_LocalStorage) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *Postgres_Addons_Pooling) MarshalJSON() ([]byte, error) {
+func (msg *Postgres_PgbouncerConfig) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -241,14 +113,14 @@ func (msg *Postgres_Addons_Pooling) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Addons_Pooling) UnmarshalJSON(b []byte) error {
+func (msg *Postgres_PgbouncerConfig) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *Postgres_Addons_Pooling_Pgbouncer) MarshalJSON() ([]byte, error) {
+func (msg *Postgres_EtcdConfig) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -257,14 +129,14 @@ func (msg *Postgres_Addons_Pooling_Pgbouncer) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Addons_Pooling_Pgbouncer) UnmarshalJSON(b []byte) error {
+func (msg *Postgres_EtcdConfig) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *Postgres_Addons_Backup) MarshalJSON() ([]byte, error) {
+func (msg *Postgres_NodeExporterConfig) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -273,7 +145,119 @@ func (msg *Postgres_Addons_Backup) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Addons_Backup) UnmarshalJSON(b []byte) error {
+func (msg *Postgres_NodeExporterConfig) UnmarshalJSON(b []byte) error {
+	return protojson.UnmarshalOptions{
+		DiscardUnknown: false,
+	}.Unmarshal(b, msg)
+}
+
+// MarshalJSON implements json.Marshaler
+func (msg *Postgres_PostgresExporterConfig) MarshalJSON() ([]byte, error) {
+	return protojson.MarshalOptions{
+		UseEnumNumbers:  false,
+		EmitUnpopulated: false,
+		UseProtoNames:   false,
+	}.Marshal(msg)
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (msg *Postgres_PostgresExporterConfig) UnmarshalJSON(b []byte) error {
+	return protojson.UnmarshalOptions{
+		DiscardUnknown: false,
+	}.Unmarshal(b, msg)
+}
+
+// MarshalJSON implements json.Marshaler
+func (msg *Postgres_PostgresService) MarshalJSON() ([]byte, error) {
+	return protojson.MarshalOptions{
+		UseEnumNumbers:  false,
+		EmitUnpopulated: false,
+		UseProtoNames:   false,
+	}.Marshal(msg)
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (msg *Postgres_PostgresService) UnmarshalJSON(b []byte) error {
+	return protojson.UnmarshalOptions{
+		DiscardUnknown: false,
+	}.Unmarshal(b, msg)
+}
+
+// MarshalJSON implements json.Marshaler
+func (msg *Postgres_EtcdService) MarshalJSON() ([]byte, error) {
+	return protojson.MarshalOptions{
+		UseEnumNumbers:  false,
+		EmitUnpopulated: false,
+		UseProtoNames:   false,
+	}.Marshal(msg)
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (msg *Postgres_EtcdService) UnmarshalJSON(b []byte) error {
+	return protojson.UnmarshalOptions{
+		DiscardUnknown: false,
+	}.Unmarshal(b, msg)
+}
+
+// MarshalJSON implements json.Marshaler
+func (msg *Postgres_PgbouncerService) MarshalJSON() ([]byte, error) {
+	return protojson.MarshalOptions{
+		UseEnumNumbers:  false,
+		EmitUnpopulated: false,
+		UseProtoNames:   false,
+	}.Marshal(msg)
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (msg *Postgres_PgbouncerService) UnmarshalJSON(b []byte) error {
+	return protojson.UnmarshalOptions{
+		DiscardUnknown: false,
+	}.Unmarshal(b, msg)
+}
+
+// MarshalJSON implements json.Marshaler
+func (msg *Postgres_BackupService) MarshalJSON() ([]byte, error) {
+	return protojson.MarshalOptions{
+		UseEnumNumbers:  false,
+		EmitUnpopulated: false,
+		UseProtoNames:   false,
+	}.Marshal(msg)
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (msg *Postgres_BackupService) UnmarshalJSON(b []byte) error {
+	return protojson.UnmarshalOptions{
+		DiscardUnknown: false,
+	}.Unmarshal(b, msg)
+}
+
+// MarshalJSON implements json.Marshaler
+func (msg *Postgres_MonitoringService) MarshalJSON() ([]byte, error) {
+	return protojson.MarshalOptions{
+		UseEnumNumbers:  false,
+		EmitUnpopulated: false,
+		UseProtoNames:   false,
+	}.Marshal(msg)
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (msg *Postgres_MonitoringService) UnmarshalJSON(b []byte) error {
+	return protojson.UnmarshalOptions{
+		DiscardUnknown: false,
+	}.Unmarshal(b, msg)
+}
+
+// MarshalJSON implements json.Marshaler
+func (msg *Postgres_Node) MarshalJSON() ([]byte, error) {
+	return protojson.MarshalOptions{
+		UseEnumNumbers:  false,
+		EmitUnpopulated: false,
+		UseProtoNames:   false,
+	}.Marshal(msg)
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (msg *Postgres_Node) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)
@@ -296,22 +280,6 @@ func (msg *Postgres_Instance) UnmarshalJSON(b []byte) error {
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *Postgres_Instance_Template) MarshalJSON() ([]byte, error) {
-	return protojson.MarshalOptions{
-		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
-		UseProtoNames:   false,
-	}.Marshal(msg)
-}
-
-// UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Instance_Template) UnmarshalJSON(b []byte) error {
-	return protojson.UnmarshalOptions{
-		DiscardUnknown: false,
-	}.Unmarshal(b, msg)
-}
-
-// MarshalJSON implements json.Marshaler
 func (msg *Postgres_Cluster) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
@@ -322,54 +290,6 @@ func (msg *Postgres_Cluster) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler
 func (msg *Postgres_Cluster) UnmarshalJSON(b []byte) error {
-	return protojson.UnmarshalOptions{
-		DiscardUnknown: false,
-	}.Unmarshal(b, msg)
-}
-
-// MarshalJSON implements json.Marshaler
-func (msg *Postgres_Cluster_Template) MarshalJSON() ([]byte, error) {
-	return protojson.MarshalOptions{
-		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
-		UseProtoNames:   false,
-	}.Marshal(msg)
-}
-
-// UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Cluster_Template) UnmarshalJSON(b []byte) error {
-	return protojson.UnmarshalOptions{
-		DiscardUnknown: false,
-	}.Unmarshal(b, msg)
-}
-
-// MarshalJSON implements json.Marshaler
-func (msg *Postgres_Cluster_Template_Topology) MarshalJSON() ([]byte, error) {
-	return protojson.MarshalOptions{
-		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
-		UseProtoNames:   false,
-	}.Marshal(msg)
-}
-
-// UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Cluster_Template_Topology) UnmarshalJSON(b []byte) error {
-	return protojson.UnmarshalOptions{
-		DiscardUnknown: false,
-	}.Unmarshal(b, msg)
-}
-
-// MarshalJSON implements json.Marshaler
-func (msg *Postgres_Cluster_Template_ReplicaOverride) MarshalJSON() ([]byte, error) {
-	return protojson.MarshalOptions{
-		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
-		UseProtoNames:   false,
-	}.Marshal(msg)
-}
-
-// UnmarshalJSON implements json.Unmarshaler
-func (msg *Postgres_Cluster_Template_ReplicaOverride) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)

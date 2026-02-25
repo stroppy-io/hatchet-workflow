@@ -38,7 +38,7 @@ message Container {
     }
 
     message PgbouncerRuntime {
-        database.Postgres.Addons.Pooling.Pgbouncer config = 1 [(validate.rules).message.required = true];
+        database.Postgres.PgbouncerConfig config = 1 [(validate.rules).message.required = true];
     }
 
     message NodeExporterRuntime {
@@ -58,7 +58,7 @@ message Container {
     }
 
     message BackupRuntime {
-        database.Postgres.Sidecar.Backup config = 1 [(validate.rules).message.required = true];
+        database.Postgres.BackupConfig config = 1 [(validate.rules).message.required = true];
     }
 
     string id = 1 [(validate.rules).string.min_len = 1];

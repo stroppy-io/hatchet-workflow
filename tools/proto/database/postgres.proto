@@ -2,84 +2,14 @@ syntax = "proto3";
 
 package database;
 
-import "database/common.proto";
 import "deployment/deployment.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/database";
 
 message Postgres {
-    // Reused sidecar definitions for colocated containers near postgres nodes.
-    message Sidecar {
-        message PostgresExporter {
-            bool enabled = 1;
-            uint32 port = 2;  // default 9187
-            repeated string custom_queries_paths = 3;
-        }
 
-        message Backup {
-            enum Tool {
-                TOOL_UNSPECIFIED = 0;
-                WAL_G = 1;
-                PG_DUMP = 2;
-            }
-
-            message S3Storage {
-                string bucket = 1 [(validate.rules).string.min_len = 1];
-                string region = 2 [(validate.rules).string.min_len = 1];
-                string endpoint = 3 [(validate.rules).string.min_len = 1];
-                string access_key_id = 4 [(validate.rules).string.min_len = 1];
-                string secret_access_key = 5 [(validate.rules).string.min_len = 1];
-            }
-
-            message LocalStorage {
-                string path = 1 [(validate.rules).string.min_len = 1];
-            }
-
-            string schedule = 1 [(validate.rules).string.min_len = 1];
-            string retention = 2;
-            Tool tool = 3 [(validate.rules).enum.defined_only = true];
-            oneof storage {
-                option (validate.required) = true;
-                S3Storage s3 = 10;
-                LocalStorage local = 12;
-            }
-        }
-
-        oneof sidecar {
-            option (validate.required) = true;
-            CommonSidecar.NodeExporter node_exporter = 10;
-            PostgresExporter postgres_exporter = 50;
-            Backup backup = 55;
-        }
-    }
-
-    // Placement intent. No network targets are provided by user.
-    message Placement {
-        enum Scope {
-            SCOPE_UNSPECIFIED = 0;
-            SCOPE_MASTER = 1;
-            SCOPE_REPLICAS = 2;
-            SCOPE_ALL_NODES = 3;
-            SCOPE_REPLICA = 4;
-        }
-
-        message Colocate {
-            Scope scope = 1 [(validate.rules).enum.defined_only = true];
-            optional uint32 replica_index = 2;  // used only when scope == SCOPE_REPLICA
-        }
-
-        message Dedicated {
-            uint32 instances_count = 1 [(validate.rules).uint32 = {gte: 1, lte: 5}];
-            deployment.Hardware hardware = 2 [(validate.rules).message.required = true];
-        }
-
-        oneof mode {
-            option (validate.required) = true;
-            Colocate colocate = 1;
-            Dedicated dedicated = 2;
-        }
-    }
+    // ── Shared configuration types ──────────────────────────────
 
     message Settings {
         enum StorageEngine {
@@ -112,85 +42,131 @@ message Postgres {
         map<string, string> postgresql_conf = 4;
     }
 
-    // User-facing DSL for addons. Internal ids/dependencies are generated later.
-    message Addons {
-        message Dcs {
-            message Etcd {
-                uint32 size = 1 [(validate.rules).uint32 = {in: [1, 3, 5]}];
-                optional uint32 base_client_port = 2 [(validate.rules).uint32 = {gte: 1, lte: 65535}];  // default 2379
-                Placement placement = 3 [(validate.rules).message.required = true];
-                bool monitor = 4;
-            }
-
-            Etcd etcd = 1;
+    message BackupConfig {
+        enum Tool {
+            TOOL_UNSPECIFIED = 0;
+            WAL_G = 1;
+            PG_DUMP = 2;
         }
 
-        message Pooling {
-            message Pgbouncer {
-                enum PoolMode {
-                    POOL_MODE_UNSPECIFIED = 0;
-                    SESSION = 1;
-                    TRANSACTION = 2;
-                    STATEMENT = 3;
-                }
-
-                bool enabled = 1;
-                uint32 pool_size = 2;
-                PoolMode pool_mode = 3 [(validate.rules).enum.defined_only = true];
-                uint32 max_client_conn = 4;
-                optional uint32 port = 5 [(validate.rules).uint32 = {gte: 1, lte: 65535}];  // default 6432
-                Placement placement = 6 [(validate.rules).message.required = true];
-                bool monitor = 7;
-            }
-
-            Pgbouncer pgbouncer = 1;
+        message S3Storage {
+            string bucket = 1 [(validate.rules).string.min_len = 1];
+            string region = 2 [(validate.rules).string.min_len = 1];
+            string endpoint = 3 [(validate.rules).string.min_len = 1];
+            string access_key_id = 4 [(validate.rules).string.min_len = 1];
+            string secret_access_key = 5 [(validate.rules).string.min_len = 1];
         }
 
-        message Backup {
-            bool enabled = 1;
-            Placement.Scope scope = 2 [(validate.rules).enum.defined_only = true];
-            Sidecar.Backup config = 3;
+        message LocalStorage {
+            string path = 1 [(validate.rules).string.min_len = 1];
         }
 
-        Dcs dcs = 1;
-        Pooling pooling = 2;
-        Backup backup = 3;
+        string schedule = 1 [(validate.rules).string.min_len = 1];
+        string retention = 2;
+        Tool tool = 3 [(validate.rules).enum.defined_only = true];
+        oneof storage {
+            option (validate.required) = true;
+            S3Storage s3 = 10;
+            LocalStorage local = 12;
+        }
     }
 
+    message PgbouncerConfig {
+        enum PoolMode {
+            POOL_MODE_UNSPECIFIED = 0;
+            SESSION = 1;
+            TRANSACTION = 2;
+            STATEMENT = 3;
+        }
+
+        uint32 pool_size = 1;
+        PoolMode pool_mode = 2 [(validate.rules).enum.defined_only = true];
+        uint32 max_client_conn = 3;
+        optional uint32 port = 4 [(validate.rules).uint32 = {gte: 1, lte: 65535}];  // default 6432
+    }
+
+    message EtcdConfig {
+        optional uint32 base_client_port = 1 [(validate.rules).uint32 = {gte: 1, lte: 65535}];  // default 2379
+    }
+
+    message NodeExporterConfig {
+        optional uint32 port = 1 [(validate.rules).uint32 = {gte: 1, lte: 65535}];  // default 9100
+        repeated string collectors = 2;
+    }
+
+    message PostgresExporterConfig {
+        optional uint32 port = 1 [(validate.rules).uint32 = {gte: 1, lte: 65535}];  // default 9187
+        repeated string custom_queries_paths = 2;
+    }
+
+    // ── Per-node service declarations ───────────────────────────
+
+    message PostgresService {
+        enum Role {
+            ROLE_UNSPECIFIED = 0;
+            ROLE_MASTER = 1;
+            ROLE_REPLICA = 2;
+        }
+
+        Role role = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        // Per-node settings override. If nil, cluster-level defaults apply.
+        Settings settings = 2;
+        // Merged on top of cluster defaults.postgresql_conf.
+        map<string, string> postgresql_conf = 3;
+    }
+
+    message EtcdService {
+        EtcdConfig config = 1;
+        bool monitor = 2;  // attach node-exporter sidecar
+    }
+
+    message PgbouncerService {
+        PgbouncerConfig config = 1 [(validate.rules).message.required = true];
+        bool monitor = 2;  // attach pgbouncer-exporter sidecar
+    }
+
+    message BackupService {
+        BackupConfig config = 1 [(validate.rules).message.required = true];
+    }
+
+    message MonitoringService {
+        NodeExporterConfig node_exporter = 1;
+        PostgresExporterConfig postgres_exporter = 2;
+    }
+
+    // ── Node: the central building block ────────────────────────
+
+    message Node {
+        // Unique name within the topology. Used as VM name suffix.
+        string name = 1 [(validate.rules).string = {min_len: 1, max_len: 63, pattern: "^[a-z][a-z0-9-]*$"}];
+
+        // Hardware for this node's VM.
+        deployment.Hardware hardware = 2 [(validate.rules).message.required = true];
+
+        // Services running on this node (all optional; at least one required — validated in Go).
+        PostgresService    postgres   = 10;
+        EtcdService        etcd       = 11;
+        PgbouncerService   pgbouncer  = 12;
+        BackupService      backup     = 13;
+        MonitoringService  monitoring = 14;
+    }
+
+    // ── Top-level topology types ────────────────────────────────
+
+    // Single standalone postgres instance (no cluster, no HA).
     message Instance {
-        message Template {
-            Settings settings = 1 [(validate.rules).message.required = true];
-            deployment.Hardware hardware = 2 [(validate.rules).message.required = true];
-            repeated Sidecar sidecars = 3;
-        }
-
-        Template template = 1 [(validate.rules).message.required = true];
-        repeated Sidecar sidecars = 3;
+        Settings defaults = 1 [(validate.rules).message.required = true];
+        Node node = 2 [(validate.rules).message.required = true];
     }
 
+    // Cluster: one master + N replicas + optional services on any node.
     message Cluster {
-        message Template {
-            message Topology {
-                Settings settings = 1 [(validate.rules).message.required = true];
-                deployment.Hardware master_hardware = 2 [(validate.rules).message.required = true];
-                deployment.Hardware replica_hardware = 3 [(validate.rules).message.required = true];
-                uint32 replicas_count = 4 [(validate.rules).uint32 = {gte: 1}];
-                bool monitor = 5;
-            }
+        // Cluster-wide default settings. Individual nodes can override
+        // via node.postgres.settings / node.postgres.postgresql_conf.
+        Settings defaults = 1 [(validate.rules).message.required = true];
 
-            message ReplicaOverride {
-                uint32 replica_index = 1;
-                Settings settings = 2;
-                deployment.Hardware hardware = 3;
-            }
-
-            Topology topology = 1 [(validate.rules).message.required = true];
-            Addons addons = 2;
-            repeated ReplicaOverride replica_overrides = 3;
-        }
-
-        Template template = 1 [(validate.rules).message.required = true];
-        Instance master = 2 [(validate.rules).message.required = true];
-        repeated Instance replicas = 3 [(validate.rules).repeated.min_items = 1];
+        // All nodes in the cluster. Order is preserved for IP assignment.
+        // System validates: exactly 1 master, etcd quorum, etc.
+        repeated Node nodes = 2 [(validate.rules).repeated.min_items = 2];
     }
 }

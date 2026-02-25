@@ -1,22 +1,49 @@
 postgresCluster:
-  topology:
-    settings:
-      version: VERSION_17
-      storageEngine: STORAGE_ENGINE_HEAP
-    masterHardware:
-      cores: 4
-      memory: 8
-      disk: 100
-    replicaHardware:
-      cores: 2
-      memory: 4
-      disk: 50
-    replicasCount: 5
-  addons:
-    dcs:
+  defaults:
+    version: VERSION_17
+    storageEngine: STORAGE_ENGINE_HEAP
+  nodes:
+    - name: pg-master
+      hardware:
+        cores: 4
+        memory: 8
+        disk: 100
+      postgres:
+        role: ROLE_MASTER
+    - name: pg-replica-0
+      hardware:
+        cores: 2
+        memory: 4
+        disk: 50
+      postgres:
+        role: ROLE_REPLICA
+    - name: pg-replica-1
+      hardware:
+        cores: 2
+        memory: 4
+        disk: 50
+      postgres:
+        role: ROLE_REPLICA
+    - name: pg-replica-2
+      hardware:
+        cores: 2
+        memory: 4
+        disk: 50
+      postgres:
+        role: ROLE_REPLICA
       etcd:
-        size: 1
-        placement:
-          colocate:
-            scope: SCOPE_REPLICA
-            replicaIndex: 2
+        monitor: false
+    - name: pg-replica-3
+      hardware:
+        cores: 2
+        memory: 4
+        disk: 50
+      postgres:
+        role: ROLE_REPLICA
+    - name: pg-replica-4
+      hardware:
+        cores: 2
+        memory: 4
+        disk: 50
+      postgres:
+        role: ROLE_REPLICA

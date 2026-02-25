@@ -6,9 +6,7 @@ import (
 
 // RequiredIPCount calculates the number of IP addresses (and VMs) needed
 // to deploy the database described by the given template.
-// The count follows the DSL semantics:
-//   - postgres instance: 1 VM
-//   - postgres cluster: master + replicas_count + dedicated addon instances
+// In the node-centric model this is simply the number of declared nodes.
 func RequiredIPCount(tmpl *database.Database_Template) int {
 	if tmpl == nil {
 		return 0
@@ -23,28 +21,11 @@ func RequiredIPCount(tmpl *database.Database_Template) int {
 
 	case *database.Database_Template_PostgresCluster:
 		cluster := t.PostgresCluster
-		if cluster == nil || cluster.GetTopology() == nil {
+		if cluster == nil {
 			return 0
 		}
+		return len(cluster.GetNodes())
 
-		total := 1 + int(cluster.GetTopology().GetReplicasCount())
-
-		addons := cluster.GetAddons()
-		if addons != nil {
-			if etcd := addons.GetDcs().GetEtcd(); etcd != nil {
-				if mode, ok := etcd.GetPlacement().GetMode().(*database.Postgres_Placement_Dedicated_); ok && mode.Dedicated != nil {
-					total += int(mode.Dedicated.GetInstancesCount())
-				}
-			}
-
-			if pgb := addons.GetPooling().GetPgbouncer(); pgb != nil && pgb.GetEnabled() {
-				if mode, ok := pgb.GetPlacement().GetMode().(*database.Postgres_Placement_Dedicated_); ok && mode.Dedicated != nil {
-					total += int(mode.Dedicated.GetInstancesCount())
-				}
-			}
-		}
-
-		return total
 	default:
 		return 0
 	}

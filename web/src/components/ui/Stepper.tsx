@@ -25,7 +25,6 @@ export const Stepper = ({ steps, currentStep, onStepClick }: StepperProps) => {
             {steps.map((step, index) => {
                 const isActive = index === currentStep
                 const isCompleted = index < currentStep
-                const isPending = index > currentStep
 
                 return (
                     <div key={index} className="flex flex-col items-center gap-2 cursor-pointer group" onClick={() => onStepClick(index)}>

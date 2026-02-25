@@ -1,21 +1,24 @@
 postgresInstance:
-  settings:
+  defaults:
     version: VERSION_17
     storageEngine: STORAGE_ENGINE_HEAP
-  hardware:
-    cores: 4
-    memory: 8
-    disk: 100
-  sidecars:
-    - nodeExporter:
-        enabled: true
+  node:
+    name: pg-standalone
+    hardware:
+      cores: 4
+      memory: 8
+      disk: 100
+    postgres:
+      role: ROLE_MASTER
+    monitoring:
+      nodeExporter:
         port: 9100
-    - postgresExporter:
-        enabled: true
+      postgresExporter:
         port: 9187
         customQueriesPaths:
           - /etc/postgres-exporter/queries.yaml
-    - backup:
+    backup:
+      config:
         schedule: "0 2 * * *"
         retention: 7d
         tool: WAL_G

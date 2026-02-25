@@ -1,147 +1,146 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { create } from '@bufbuild/protobuf'
 import {
     StroppyCli_Workload, StroppyCliSchema
 } from '../proto/stroppy/test_pb'
 import type { Test } from '../proto/stroppy/test_pb'
-import {
-    Postgres_Settings_Version,
-    Postgres_Settings_StorageEngine,
-    Postgres_Addons_Pooling_Pgbouncer_PoolMode
-} from '../proto/database/postgres_pb'
+import { create } from '@bufbuild/protobuf'
 
-import { Stepper } from './ui/Stepper'
 import { Input } from './ui/Input'
 import { Select } from './ui/Select'
 import { HardwareInputs } from './ui/HardwareInputs'
 import { TopologyCanvas } from './TopologyCanvas'
-import { ShieldCheck, Zap, Check } from 'lucide-react'
+import { ShieldCheck, Zap, Layers, Info } from 'lucide-react'
+import { cn } from '../App'
 
 interface TestWizardProps {
     test: Test
     onChange: (updates: Partial<Test>) => void
 }
 
-const STEPS = ["Context", "Client", "Database", "Verify"]
+const TABS = [
+    { id: 'database', label: 'Topology Designer', icon: Layers },
+    { id: 'context', label: 'Identity', icon: Info },
+    { id: 'client', label: 'Client Config', icon: Zap },
+]
 
 export const TestWizard = ({ test, onChange }: TestWizardProps) => {
-    const [currentStep, setCurrentStep] = useState(0)
+    const [activeTab, setActiveTab] = useState('database')
 
     const updateTest = (updates: any) => {
         onChange(updates)
     }
 
     return (
-        <div className="flex flex-col h-full">
-            <div className="p-8 border-b border-border bg-card/10">
-                <Stepper steps={STEPS} currentStep={currentStep} onStepClick={setCurrentStep} />
+        <div className="flex flex-col h-full bg-background/50">
+            {/* Contextual Tabs */}
+            <div className="h-12 border-b border-border bg-card/20 flex items-center px-4 justify-between shrink-0">
+                <div className="flex h-full">
+                    {TABS.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={cn(
+                                "px-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 h-full",
+                                activeTab === tab.id 
+                                    ? "border-primary text-primary bg-primary/5" 
+                                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-white/5"
+                            )}
+                        >
+                            <tab.icon className="w-3.5 h-3.5" />
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+                
+                <div className="flex items-center gap-4 text-[10px] font-mono text-muted-foreground uppercase pr-4">
+                    <span>Target: <span className="text-primary font-bold">Postgres_HA</span></span>
+                    <span className="w-px h-4 bg-border" />
+                    <span>State: <span className="text-green-500 font-bold">Valid</span></span>
+                </div>
             </div>
 
-            <div className="flex-1 overflow-hidden relative">
+            <div className="flex-1 relative overflow-hidden">
                 <AnimatePresence mode='wait'>
-                    {currentStep === 0 && (
-                        <motion.div key="step0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="p-12 max-w-3xl mx-auto space-y-8">
-                            <div className="flex items-center gap-3 mb-6 border-b border-primary/20 pb-4">
-                                <ShieldCheck className="w-6 h-6 text-primary" />
-                                <div>
-                                    <h2 className="text-2xl font-black uppercase italic tracking-tighter">Test Context</h2>
-                                    <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Define the identity and scope of the test scenario.</p>
+                    {activeTab === 'context' && (
+                        <motion.div 
+                            key="context" 
+                            initial={{ opacity: 0, y: 10 }} 
+                            animate={{ opacity: 1, y: 0 }} 
+                            exit={{ opacity: 0, y: -10 }} 
+                            className="absolute inset-0 p-12 max-w-3xl mx-auto space-y-12 overflow-y-auto custom-scrollbar"
+                        >
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-3 text-primary">
+                                    <ShieldCheck className="w-6 h-6" />
+                                    <h2 className="text-2xl font-black uppercase italic tracking-tighter">Test Identity</h2>
                                 </div>
+                                <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Define the unique signature of this test scenario.</p>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-6">
-                                <Input label="Name" fieldName="name" value={test.name} onChange={(e) => updateTest({ name: e.target.value })} className="text-lg py-6" autoFocus />
-                                <div className="space-y-1">
-                                    <div className="flex justify-between items-baseline px-1">
-                                        <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Description</label>
-                                        <span className="text-[9px] font-mono text-primary/50">description</span>
-                                    </div>
+                            <div className="grid grid-cols-1 gap-8">
+                                <Input label="System Name" fieldName="name" value={test.name} onChange={(e) => updateTest({ name: e.target.value })} className="text-xl py-8 font-black tracking-tighter" />
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground px-1">Detailed Description</label>
                                     <textarea
                                         value={test.description || ""}
                                         onChange={(e) => updateTest({ description: e.target.value })}
-                                        className="w-full bg-background border border-input p-4 text-xs font-mono h-32 outline-none focus:border-primary transition-all resize-none"
-                                        placeholder="Describe the test scenario, objectives, and expected outcomes..."
+                                        className="w-full bg-background border border-border p-6 text-xs font-mono h-48 outline-none focus:border-primary transition-all resize-none shadow-inner"
+                                        placeholder="Enter scenario objectives, expected metrics, and architecture notes..."
                                     />
                                 </div>
                             </div>
                         </motion.div>
                     )}
 
-                    {currentStep === 1 && (
-                        <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="p-12 max-w-4xl mx-auto space-y-8">
-                            <div className="flex items-center gap-3 mb-6 border-b border-primary/20 pb-4">
-                                <Zap className="w-6 h-6 text-primary" />
-                                <div>
-                                    <h2 className="text-2xl font-black uppercase italic tracking-tighter">Stroppy Client</h2>
-                                    <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Configure the workload generator and its resources.</p>
+                    {activeTab === 'client' && (
+                        <motion.div 
+                            key="client" 
+                            initial={{ opacity: 0, y: 10 }} 
+                            animate={{ opacity: 1, y: 0 }} 
+                            exit={{ opacity: 0, y: -10 }} 
+                            className="absolute inset-0 p-12 max-w-4xl mx-auto space-y-12 overflow-y-auto custom-scrollbar"
+                        >
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-3 text-primary">
+                                    <Zap className="w-6 h-6" />
+                                    <h2 className="text-2xl font-black uppercase italic tracking-tighter">Stroppy Core Config</h2>
                                 </div>
+                                <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Configure the high-performance workload generator.</p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-12">
-                                <div className="space-y-6">
-                                    <h3 className="text-sm font-black uppercase tracking-widest border-l-4 border-primary pl-4">Workload Config</h3>
-                                    <div className="space-y-4">
-                                        <Input label="Version" fieldName="active_test.stroppy_cli.version" value={test.stroppyCli?.version || ""} onChange={(e) => updateTest({ stroppyCli: create(StroppyCliSchema, { ...test.stroppyCli!, version: e.target.value }) })} />
-                                        <Select label="Workload" fieldName="active_test.stroppy_cli.workload" value={test.stroppyCli?.workload} onChange={(v) => updateTest({ stroppyCli: create(StroppyCliSchema, { ...test.stroppyCli!, workload: v }) })} options={[{ label: "TPC-C", value: StroppyCli_Workload.TPCC }, { label: "TPC-B", value: StroppyCli_Workload.TPCB }]} />
+                            <div className="grid grid-cols-2 gap-16">
+                                <div className="space-y-8">
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 flex items-center gap-2">
+                                        <div className="w-4 h-0.5 bg-primary" /> Logic Engine
+                                    </h3>
+                                    <div className="space-y-6">
+                                        <Input label="Engine Version" value={test.stroppyCli?.version || ""} onChange={(e) => updateTest({ stroppyCli: create(StroppyCliSchema, { ...test.stroppyCli!, version: e.target.value }) })} />
+                                        <Select label="Workload Model" value={test.stroppyCli?.workload} onChange={(v) => updateTest({ stroppyCli: create(StroppyCliSchema, { ...test.stroppyCli!, workload: v }) })} options={[{ label: "TPC-C (Complex Transactions)", value: StroppyCli_Workload.TPCC }, { label: "TPC-B (Simple Account Balance)", value: StroppyCli_Workload.TPCB }]} />
                                     </div>
                                 </div>
-                                <div className="space-y-6">
-                                    <h3 className="text-sm font-black uppercase tracking-widest border-l-4 border-accent pl-4">Resource Allocation</h3>
-                                    <HardwareInputs label="Client Resources" fieldName="stroppy_hardware" hardware={test.stroppyHardware} onChange={(h) => updateTest({ stroppyHardware: h })} />
+                                <div className="space-y-8">
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-accent/60 flex items-center gap-2">
+                                        <div className="w-4 h-0.5 bg-accent" /> Compute Resources
+                                    </h3>
+                                    <HardwareInputs label="Generator Resources" hardware={test.stroppyHardware} onChange={(h) => updateTest({ stroppyHardware: h })} />
                                 </div>
                             </div>
                         </motion.div>
                     )}
 
-                    {currentStep === 2 && (
-                        <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex h-full">
-                            {/* Full Screen Interactive Canvas */}
-                            <div className="flex-1 bg-black/20 relative">
-                                <TopologyCanvas databaseRef={test.databaseRef} onChange={(updates) => updateTest(updates)} />
-                            </div>
+                    {activeTab === 'database' && (
+                        <motion.div 
+                            key="database" 
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }} 
+                            exit={{ opacity: 0 }} 
+                            className="absolute inset-0"
+                        >
+                            <TopologyCanvas test={test} onChange={(updates) => updateTest(updates)} />
                         </motion.div>
                     )}
-
-                    {currentStep === 3 && (
-                        <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="p-12 max-w-2xl mx-auto text-center space-y-8">
-                            <div className="w-24 h-24 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-8 border-4 border-primary shadow-[0_0_50px_rgba(var(--primary),0.4)]">
-                                <Check className="w-12 h-12 text-primary" />
-                            </div>
-                            <h2 className="text-3xl font-black uppercase italic tracking-tighter">Configuration Ready</h2>
-                            <p className="text-muted-foreground font-mono">You can now review the source YAML or execute this test scenario.</p>
-
-                            <div className="p-6 bg-card border border-border text-left space-y-2 font-mono text-xs">
-                                <div className="flex justify-between"><span className="text-muted-foreground">Test Name:</span> <span className="text-primary font-bold">{test.name}</span></div>
-                                <div className="flex justify-between"><span className="text-muted-foreground">Client:</span> <span>Stroppy {test.stroppyCli?.version} ({test.stroppyCli?.workload === 1 ? 'TPC-C' : 'TPC-B'})</span></div>
-                                <div className="flex justify-between"><span className="text-muted-foreground">Database:</span> <span>
-                                    {test.databaseRef.case === 'connectionString' ? 'External' :
-                                        test.databaseRef.value?.template?.case === 'postgresInstance' ? 'Single Instance' : 'HA Cluster'}
-                                </span></div>
-                            </div>
-                        </motion.div>
-                    )}
-
                 </AnimatePresence>
-            </div>
-
-            {/* Footer Navigation */}
-            <div className="p-6 border-t border-border bg-card/20 flex justify-between items-center">
-                <button
-                    onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
-                    disabled={currentStep === 0}
-                    className="px-6 py-2 text-xs font-black uppercase tracking-widest text-muted-foreground disabled:opacity-30 hover:text-foreground transition-colors"
-                >
-                    Back
-                </button>
-
-                <button
-                    onClick={() => setCurrentStep(prev => Math.min(STEPS.length - 1, prev + 1))}
-                    disabled={currentStep === STEPS.length - 1}
-                    className="px-8 py-3 bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest disabled:opacity-30 disabled:grayscale hover:translate-x-1 transition-all"
-                >
-                    {currentStep === STEPS.length - 1 ? "Finish" : "Next Step"}
-                </button>
             </div>
         </div>
     )

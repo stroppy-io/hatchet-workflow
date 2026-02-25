@@ -1,8 +1,12 @@
 postgresInstance:
-  settings:
+  defaults:
     version: VERSION_17
     storageEngine: STORAGE_ENGINE_HEAP
-  hardware:
-    cores: 4
-    memory: 8
-    disk: 100
+  node:
+    name: pg-standalone
+    hardware:
+      cores: 4
+      memory: 8
+      disk: 100
+    postgres:
+      role: ROLE_MASTER

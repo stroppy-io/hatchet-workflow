@@ -134,450 +134,6 @@ var _ interface {
 	ErrorName() string
 } = PostgresValidationError{}
 
-// Validate checks the field values on Postgres_Sidecar with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *Postgres_Sidecar) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Postgres_Sidecar with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Postgres_SidecarMultiError, or nil if none found.
-func (m *Postgres_Sidecar) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_Sidecar) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	oneofSidecarPresent := false
-	switch v := m.Sidecar.(type) {
-	case *Postgres_Sidecar_NodeExporter:
-		if v == nil {
-			err := Postgres_SidecarValidationError{
-				field:  "Sidecar",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofSidecarPresent = true
-
-		if all {
-			switch v := interface{}(m.GetNodeExporter()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Postgres_SidecarValidationError{
-						field:  "NodeExporter",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Postgres_SidecarValidationError{
-						field:  "NodeExporter",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetNodeExporter()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Postgres_SidecarValidationError{
-					field:  "NodeExporter",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	case *Postgres_Sidecar_PostgresExporter_:
-		if v == nil {
-			err := Postgres_SidecarValidationError{
-				field:  "Sidecar",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofSidecarPresent = true
-
-		if all {
-			switch v := interface{}(m.GetPostgresExporter()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Postgres_SidecarValidationError{
-						field:  "PostgresExporter",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Postgres_SidecarValidationError{
-						field:  "PostgresExporter",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetPostgresExporter()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Postgres_SidecarValidationError{
-					field:  "PostgresExporter",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	case *Postgres_Sidecar_Backup_:
-		if v == nil {
-			err := Postgres_SidecarValidationError{
-				field:  "Sidecar",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofSidecarPresent = true
-
-		if all {
-			switch v := interface{}(m.GetBackup()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Postgres_SidecarValidationError{
-						field:  "Backup",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Postgres_SidecarValidationError{
-						field:  "Backup",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetBackup()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Postgres_SidecarValidationError{
-					field:  "Backup",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	default:
-		_ = v // ensures v is used
-	}
-	if !oneofSidecarPresent {
-		err := Postgres_SidecarValidationError{
-			field:  "Sidecar",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return Postgres_SidecarMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_SidecarMultiError is an error wrapping multiple validation errors
-// returned by Postgres_Sidecar.ValidateAll() if the designated constraints
-// aren't met.
-type Postgres_SidecarMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_SidecarMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_SidecarMultiError) AllErrors() []error { return m }
-
-// Postgres_SidecarValidationError is the validation error returned by
-// Postgres_Sidecar.Validate if the designated constraints aren't met.
-type Postgres_SidecarValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_SidecarValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_SidecarValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_SidecarValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_SidecarValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_SidecarValidationError) ErrorName() string { return "Postgres_SidecarValidationError" }
-
-// Error satisfies the builtin error interface
-func (e Postgres_SidecarValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_Sidecar.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_SidecarValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_SidecarValidationError{}
-
-// Validate checks the field values on Postgres_Placement with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Postgres_Placement) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Postgres_Placement with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Postgres_PlacementMultiError, or nil if none found.
-func (m *Postgres_Placement) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_Placement) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	oneofModePresent := false
-	switch v := m.Mode.(type) {
-	case *Postgres_Placement_Colocate_:
-		if v == nil {
-			err := Postgres_PlacementValidationError{
-				field:  "Mode",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofModePresent = true
-
-		if all {
-			switch v := interface{}(m.GetColocate()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Postgres_PlacementValidationError{
-						field:  "Colocate",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Postgres_PlacementValidationError{
-						field:  "Colocate",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetColocate()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Postgres_PlacementValidationError{
-					field:  "Colocate",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	case *Postgres_Placement_Dedicated_:
-		if v == nil {
-			err := Postgres_PlacementValidationError{
-				field:  "Mode",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofModePresent = true
-
-		if all {
-			switch v := interface{}(m.GetDedicated()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Postgres_PlacementValidationError{
-						field:  "Dedicated",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Postgres_PlacementValidationError{
-						field:  "Dedicated",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetDedicated()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Postgres_PlacementValidationError{
-					field:  "Dedicated",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	default:
-		_ = v // ensures v is used
-	}
-	if !oneofModePresent {
-		err := Postgres_PlacementValidationError{
-			field:  "Mode",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return Postgres_PlacementMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_PlacementMultiError is an error wrapping multiple validation errors
-// returned by Postgres_Placement.ValidateAll() if the designated constraints
-// aren't met.
-type Postgres_PlacementMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_PlacementMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_PlacementMultiError) AllErrors() []error { return m }
-
-// Postgres_PlacementValidationError is the validation error returned by
-// Postgres_Placement.Validate if the designated constraints aren't met.
-type Postgres_PlacementValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_PlacementValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_PlacementValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_PlacementValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_PlacementValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_PlacementValidationError) ErrorName() string {
-	return "Postgres_PlacementValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Postgres_PlacementValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_Placement.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_PlacementValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_PlacementValidationError{}
-
 // Validate checks the field values on Postgres_Settings with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -733,129 +289,166 @@ var _ interface {
 	ErrorName() string
 } = Postgres_SettingsValidationError{}
 
-// Validate checks the field values on Postgres_Addons with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *Postgres_Addons) Validate() error {
+// Validate checks the field values on Postgres_BackupConfig with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Postgres_BackupConfig) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Postgres_Addons with the rules
+// ValidateAll checks the field values on Postgres_BackupConfig with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// Postgres_AddonsMultiError, or nil if none found.
-func (m *Postgres_Addons) ValidateAll() error {
+// Postgres_BackupConfigMultiError, or nil if none found.
+func (m *Postgres_BackupConfig) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Postgres_Addons) validate(all bool) error {
+func (m *Postgres_BackupConfig) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetDcs()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_AddonsValidationError{
-					field:  "Dcs",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_AddonsValidationError{
-					field:  "Dcs",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
+	if utf8.RuneCountInString(m.GetSchedule()) < 1 {
+		err := Postgres_BackupConfigValidationError{
+			field:  "Schedule",
+			reason: "value length must be at least 1 runes",
 		}
-	} else if v, ok := interface{}(m.GetDcs()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_AddonsValidationError{
-				field:  "Dcs",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
+		if !all {
+			return err
 		}
+		errors = append(errors, err)
 	}
 
-	if all {
-		switch v := interface{}(m.GetPooling()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_AddonsValidationError{
-					field:  "Pooling",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_AddonsValidationError{
-					field:  "Pooling",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
+	// no validation rules for Retention
+
+	if _, ok := Postgres_BackupConfig_Tool_name[int32(m.GetTool())]; !ok {
+		err := Postgres_BackupConfigValidationError{
+			field:  "Tool",
+			reason: "value must be one of the defined enum values",
 		}
-	} else if v, ok := interface{}(m.GetPooling()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_AddonsValidationError{
-				field:  "Pooling",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
+		if !all {
+			return err
 		}
+		errors = append(errors, err)
 	}
 
-	if all {
-		switch v := interface{}(m.GetBackup()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_AddonsValidationError{
-					field:  "Backup",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
+	oneofStoragePresent := false
+	switch v := m.Storage.(type) {
+	case *Postgres_BackupConfig_S3:
+		if v == nil {
+			err := Postgres_BackupConfigValidationError{
+				field:  "Storage",
+				reason: "oneof value cannot be a typed-nil",
 			}
-		case interface{ Validate() error }:
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofStoragePresent = true
+
+		if all {
+			switch v := interface{}(m.GetS3()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Postgres_BackupConfigValidationError{
+						field:  "S3",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Postgres_BackupConfigValidationError{
+						field:  "S3",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetS3()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_AddonsValidationError{
-					field:  "Backup",
+				return Postgres_BackupConfigValidationError{
+					field:  "S3",
 					reason: "embedded message failed validation",
 					cause:  err,
-				})
+				}
 			}
 		}
-	} else if v, ok := interface{}(m.GetBackup()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_AddonsValidationError{
-				field:  "Backup",
-				reason: "embedded message failed validation",
-				cause:  err,
+
+	case *Postgres_BackupConfig_Local:
+		if v == nil {
+			err := Postgres_BackupConfigValidationError{
+				field:  "Storage",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofStoragePresent = true
+
+		if all {
+			switch v := interface{}(m.GetLocal()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Postgres_BackupConfigValidationError{
+						field:  "Local",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Postgres_BackupConfigValidationError{
+						field:  "Local",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetLocal()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Postgres_BackupConfigValidationError{
+					field:  "Local",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
 			}
 		}
+
+	default:
+		_ = v // ensures v is used
+	}
+	if !oneofStoragePresent {
+		err := Postgres_BackupConfigValidationError{
+			field:  "Storage",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	if len(errors) > 0 {
-		return Postgres_AddonsMultiError(errors)
+		return Postgres_BackupConfigMultiError(errors)
 	}
 
 	return nil
 }
 
-// Postgres_AddonsMultiError is an error wrapping multiple validation errors
-// returned by Postgres_Addons.ValidateAll() if the designated constraints
-// aren't met.
-type Postgres_AddonsMultiError []error
+// Postgres_BackupConfigMultiError is an error wrapping multiple validation
+// errors returned by Postgres_BackupConfig.ValidateAll() if the designated
+// constraints aren't met.
+type Postgres_BackupConfigMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_AddonsMultiError) Error() string {
+func (m Postgres_BackupConfigMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -864,11 +457,11 @@ func (m Postgres_AddonsMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Postgres_AddonsMultiError) AllErrors() []error { return m }
+func (m Postgres_BackupConfigMultiError) AllErrors() []error { return m }
 
-// Postgres_AddonsValidationError is the validation error returned by
-// Postgres_Addons.Validate if the designated constraints aren't met.
-type Postgres_AddonsValidationError struct {
+// Postgres_BackupConfigValidationError is the validation error returned by
+// Postgres_BackupConfig.Validate if the designated constraints aren't met.
+type Postgres_BackupConfigValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -876,22 +469,24 @@ type Postgres_AddonsValidationError struct {
 }
 
 // Field function returns field value.
-func (e Postgres_AddonsValidationError) Field() string { return e.field }
+func (e Postgres_BackupConfigValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Postgres_AddonsValidationError) Reason() string { return e.reason }
+func (e Postgres_BackupConfigValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Postgres_AddonsValidationError) Cause() error { return e.cause }
+func (e Postgres_BackupConfigValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Postgres_AddonsValidationError) Key() bool { return e.key }
+func (e Postgres_BackupConfigValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Postgres_AddonsValidationError) ErrorName() string { return "Postgres_AddonsValidationError" }
+func (e Postgres_BackupConfigValidationError) ErrorName() string {
+	return "Postgres_BackupConfigValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e Postgres_AddonsValidationError) Error() string {
+func (e Postgres_BackupConfigValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -903,14 +498,14 @@ func (e Postgres_AddonsValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPostgres_Addons.%s: %s%s",
+		"invalid %sPostgres_BackupConfig.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Postgres_AddonsValidationError{}
+var _ error = Postgres_BackupConfigValidationError{}
 
 var _ interface {
 	Field() string
@@ -918,7 +513,1539 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Postgres_AddonsValidationError{}
+} = Postgres_BackupConfigValidationError{}
+
+// Validate checks the field values on Postgres_PgbouncerConfig with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Postgres_PgbouncerConfig) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Postgres_PgbouncerConfig with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Postgres_PgbouncerConfigMultiError, or nil if none found.
+func (m *Postgres_PgbouncerConfig) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Postgres_PgbouncerConfig) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for PoolSize
+
+	if _, ok := Postgres_PgbouncerConfig_PoolMode_name[int32(m.GetPoolMode())]; !ok {
+		err := Postgres_PgbouncerConfigValidationError{
+			field:  "PoolMode",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for MaxClientConn
+
+	if m.Port != nil {
+
+		if val := m.GetPort(); val < 1 || val > 65535 {
+			err := Postgres_PgbouncerConfigValidationError{
+				field:  "Port",
+				reason: "value must be inside range [1, 65535]",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return Postgres_PgbouncerConfigMultiError(errors)
+	}
+
+	return nil
+}
+
+// Postgres_PgbouncerConfigMultiError is an error wrapping multiple validation
+// errors returned by Postgres_PgbouncerConfig.ValidateAll() if the designated
+// constraints aren't met.
+type Postgres_PgbouncerConfigMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Postgres_PgbouncerConfigMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Postgres_PgbouncerConfigMultiError) AllErrors() []error { return m }
+
+// Postgres_PgbouncerConfigValidationError is the validation error returned by
+// Postgres_PgbouncerConfig.Validate if the designated constraints aren't met.
+type Postgres_PgbouncerConfigValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Postgres_PgbouncerConfigValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Postgres_PgbouncerConfigValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Postgres_PgbouncerConfigValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Postgres_PgbouncerConfigValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Postgres_PgbouncerConfigValidationError) ErrorName() string {
+	return "Postgres_PgbouncerConfigValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Postgres_PgbouncerConfigValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPostgres_PgbouncerConfig.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Postgres_PgbouncerConfigValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Postgres_PgbouncerConfigValidationError{}
+
+// Validate checks the field values on Postgres_EtcdConfig with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Postgres_EtcdConfig) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Postgres_EtcdConfig with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Postgres_EtcdConfigMultiError, or nil if none found.
+func (m *Postgres_EtcdConfig) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Postgres_EtcdConfig) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.BaseClientPort != nil {
+
+		if val := m.GetBaseClientPort(); val < 1 || val > 65535 {
+			err := Postgres_EtcdConfigValidationError{
+				field:  "BaseClientPort",
+				reason: "value must be inside range [1, 65535]",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return Postgres_EtcdConfigMultiError(errors)
+	}
+
+	return nil
+}
+
+// Postgres_EtcdConfigMultiError is an error wrapping multiple validation
+// errors returned by Postgres_EtcdConfig.ValidateAll() if the designated
+// constraints aren't met.
+type Postgres_EtcdConfigMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Postgres_EtcdConfigMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Postgres_EtcdConfigMultiError) AllErrors() []error { return m }
+
+// Postgres_EtcdConfigValidationError is the validation error returned by
+// Postgres_EtcdConfig.Validate if the designated constraints aren't met.
+type Postgres_EtcdConfigValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Postgres_EtcdConfigValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Postgres_EtcdConfigValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Postgres_EtcdConfigValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Postgres_EtcdConfigValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Postgres_EtcdConfigValidationError) ErrorName() string {
+	return "Postgres_EtcdConfigValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Postgres_EtcdConfigValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPostgres_EtcdConfig.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Postgres_EtcdConfigValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Postgres_EtcdConfigValidationError{}
+
+// Validate checks the field values on Postgres_NodeExporterConfig with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Postgres_NodeExporterConfig) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Postgres_NodeExporterConfig with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Postgres_NodeExporterConfigMultiError, or nil if none found.
+func (m *Postgres_NodeExporterConfig) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Postgres_NodeExporterConfig) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.Port != nil {
+
+		if val := m.GetPort(); val < 1 || val > 65535 {
+			err := Postgres_NodeExporterConfigValidationError{
+				field:  "Port",
+				reason: "value must be inside range [1, 65535]",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return Postgres_NodeExporterConfigMultiError(errors)
+	}
+
+	return nil
+}
+
+// Postgres_NodeExporterConfigMultiError is an error wrapping multiple
+// validation errors returned by Postgres_NodeExporterConfig.ValidateAll() if
+// the designated constraints aren't met.
+type Postgres_NodeExporterConfigMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Postgres_NodeExporterConfigMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Postgres_NodeExporterConfigMultiError) AllErrors() []error { return m }
+
+// Postgres_NodeExporterConfigValidationError is the validation error returned
+// by Postgres_NodeExporterConfig.Validate if the designated constraints
+// aren't met.
+type Postgres_NodeExporterConfigValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Postgres_NodeExporterConfigValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Postgres_NodeExporterConfigValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Postgres_NodeExporterConfigValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Postgres_NodeExporterConfigValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Postgres_NodeExporterConfigValidationError) ErrorName() string {
+	return "Postgres_NodeExporterConfigValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Postgres_NodeExporterConfigValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPostgres_NodeExporterConfig.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Postgres_NodeExporterConfigValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Postgres_NodeExporterConfigValidationError{}
+
+// Validate checks the field values on Postgres_PostgresExporterConfig with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Postgres_PostgresExporterConfig) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Postgres_PostgresExporterConfig with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// Postgres_PostgresExporterConfigMultiError, or nil if none found.
+func (m *Postgres_PostgresExporterConfig) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Postgres_PostgresExporterConfig) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.Port != nil {
+
+		if val := m.GetPort(); val < 1 || val > 65535 {
+			err := Postgres_PostgresExporterConfigValidationError{
+				field:  "Port",
+				reason: "value must be inside range [1, 65535]",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return Postgres_PostgresExporterConfigMultiError(errors)
+	}
+
+	return nil
+}
+
+// Postgres_PostgresExporterConfigMultiError is an error wrapping multiple
+// validation errors returned by Postgres_PostgresExporterConfig.ValidateAll()
+// if the designated constraints aren't met.
+type Postgres_PostgresExporterConfigMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Postgres_PostgresExporterConfigMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Postgres_PostgresExporterConfigMultiError) AllErrors() []error { return m }
+
+// Postgres_PostgresExporterConfigValidationError is the validation error
+// returned by Postgres_PostgresExporterConfig.Validate if the designated
+// constraints aren't met.
+type Postgres_PostgresExporterConfigValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Postgres_PostgresExporterConfigValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Postgres_PostgresExporterConfigValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Postgres_PostgresExporterConfigValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Postgres_PostgresExporterConfigValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Postgres_PostgresExporterConfigValidationError) ErrorName() string {
+	return "Postgres_PostgresExporterConfigValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Postgres_PostgresExporterConfigValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPostgres_PostgresExporterConfig.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Postgres_PostgresExporterConfigValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Postgres_PostgresExporterConfigValidationError{}
+
+// Validate checks the field values on Postgres_PostgresService with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Postgres_PostgresService) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Postgres_PostgresService with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Postgres_PostgresServiceMultiError, or nil if none found.
+func (m *Postgres_PostgresService) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Postgres_PostgresService) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if _, ok := _Postgres_PostgresService_Role_NotInLookup[m.GetRole()]; ok {
+		err := Postgres_PostgresServiceValidationError{
+			field:  "Role",
+			reason: "value must not be in list [ROLE_UNSPECIFIED]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := Postgres_PostgresService_Role_name[int32(m.GetRole())]; !ok {
+		err := Postgres_PostgresServiceValidationError{
+			field:  "Role",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetSettings()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Postgres_PostgresServiceValidationError{
+					field:  "Settings",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Postgres_PostgresServiceValidationError{
+					field:  "Settings",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSettings()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Postgres_PostgresServiceValidationError{
+				field:  "Settings",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for PostgresqlConf
+
+	if len(errors) > 0 {
+		return Postgres_PostgresServiceMultiError(errors)
+	}
+
+	return nil
+}
+
+// Postgres_PostgresServiceMultiError is an error wrapping multiple validation
+// errors returned by Postgres_PostgresService.ValidateAll() if the designated
+// constraints aren't met.
+type Postgres_PostgresServiceMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Postgres_PostgresServiceMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Postgres_PostgresServiceMultiError) AllErrors() []error { return m }
+
+// Postgres_PostgresServiceValidationError is the validation error returned by
+// Postgres_PostgresService.Validate if the designated constraints aren't met.
+type Postgres_PostgresServiceValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Postgres_PostgresServiceValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Postgres_PostgresServiceValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Postgres_PostgresServiceValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Postgres_PostgresServiceValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Postgres_PostgresServiceValidationError) ErrorName() string {
+	return "Postgres_PostgresServiceValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Postgres_PostgresServiceValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPostgres_PostgresService.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Postgres_PostgresServiceValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Postgres_PostgresServiceValidationError{}
+
+var _Postgres_PostgresService_Role_NotInLookup = map[Postgres_PostgresService_Role]struct{}{
+	0: {},
+}
+
+// Validate checks the field values on Postgres_EtcdService with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Postgres_EtcdService) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Postgres_EtcdService with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Postgres_EtcdServiceMultiError, or nil if none found.
+func (m *Postgres_EtcdService) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Postgres_EtcdService) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetConfig()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Postgres_EtcdServiceValidationError{
+					field:  "Config",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Postgres_EtcdServiceValidationError{
+					field:  "Config",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetConfig()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Postgres_EtcdServiceValidationError{
+				field:  "Config",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Monitor
+
+	if len(errors) > 0 {
+		return Postgres_EtcdServiceMultiError(errors)
+	}
+
+	return nil
+}
+
+// Postgres_EtcdServiceMultiError is an error wrapping multiple validation
+// errors returned by Postgres_EtcdService.ValidateAll() if the designated
+// constraints aren't met.
+type Postgres_EtcdServiceMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Postgres_EtcdServiceMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Postgres_EtcdServiceMultiError) AllErrors() []error { return m }
+
+// Postgres_EtcdServiceValidationError is the validation error returned by
+// Postgres_EtcdService.Validate if the designated constraints aren't met.
+type Postgres_EtcdServiceValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Postgres_EtcdServiceValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Postgres_EtcdServiceValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Postgres_EtcdServiceValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Postgres_EtcdServiceValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Postgres_EtcdServiceValidationError) ErrorName() string {
+	return "Postgres_EtcdServiceValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Postgres_EtcdServiceValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPostgres_EtcdService.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Postgres_EtcdServiceValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Postgres_EtcdServiceValidationError{}
+
+// Validate checks the field values on Postgres_PgbouncerService with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Postgres_PgbouncerService) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Postgres_PgbouncerService with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Postgres_PgbouncerServiceMultiError, or nil if none found.
+func (m *Postgres_PgbouncerService) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Postgres_PgbouncerService) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetConfig() == nil {
+		err := Postgres_PgbouncerServiceValidationError{
+			field:  "Config",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetConfig()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Postgres_PgbouncerServiceValidationError{
+					field:  "Config",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Postgres_PgbouncerServiceValidationError{
+					field:  "Config",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetConfig()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Postgres_PgbouncerServiceValidationError{
+				field:  "Config",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Monitor
+
+	if len(errors) > 0 {
+		return Postgres_PgbouncerServiceMultiError(errors)
+	}
+
+	return nil
+}
+
+// Postgres_PgbouncerServiceMultiError is an error wrapping multiple validation
+// errors returned by Postgres_PgbouncerService.ValidateAll() if the
+// designated constraints aren't met.
+type Postgres_PgbouncerServiceMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Postgres_PgbouncerServiceMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Postgres_PgbouncerServiceMultiError) AllErrors() []error { return m }
+
+// Postgres_PgbouncerServiceValidationError is the validation error returned by
+// Postgres_PgbouncerService.Validate if the designated constraints aren't met.
+type Postgres_PgbouncerServiceValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Postgres_PgbouncerServiceValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Postgres_PgbouncerServiceValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Postgres_PgbouncerServiceValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Postgres_PgbouncerServiceValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Postgres_PgbouncerServiceValidationError) ErrorName() string {
+	return "Postgres_PgbouncerServiceValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Postgres_PgbouncerServiceValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPostgres_PgbouncerService.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Postgres_PgbouncerServiceValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Postgres_PgbouncerServiceValidationError{}
+
+// Validate checks the field values on Postgres_BackupService with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Postgres_BackupService) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Postgres_BackupService with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Postgres_BackupServiceMultiError, or nil if none found.
+func (m *Postgres_BackupService) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Postgres_BackupService) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetConfig() == nil {
+		err := Postgres_BackupServiceValidationError{
+			field:  "Config",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetConfig()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Postgres_BackupServiceValidationError{
+					field:  "Config",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Postgres_BackupServiceValidationError{
+					field:  "Config",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetConfig()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Postgres_BackupServiceValidationError{
+				field:  "Config",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Postgres_BackupServiceMultiError(errors)
+	}
+
+	return nil
+}
+
+// Postgres_BackupServiceMultiError is an error wrapping multiple validation
+// errors returned by Postgres_BackupService.ValidateAll() if the designated
+// constraints aren't met.
+type Postgres_BackupServiceMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Postgres_BackupServiceMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Postgres_BackupServiceMultiError) AllErrors() []error { return m }
+
+// Postgres_BackupServiceValidationError is the validation error returned by
+// Postgres_BackupService.Validate if the designated constraints aren't met.
+type Postgres_BackupServiceValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Postgres_BackupServiceValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Postgres_BackupServiceValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Postgres_BackupServiceValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Postgres_BackupServiceValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Postgres_BackupServiceValidationError) ErrorName() string {
+	return "Postgres_BackupServiceValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Postgres_BackupServiceValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPostgres_BackupService.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Postgres_BackupServiceValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Postgres_BackupServiceValidationError{}
+
+// Validate checks the field values on Postgres_MonitoringService with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Postgres_MonitoringService) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Postgres_MonitoringService with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Postgres_MonitoringServiceMultiError, or nil if none found.
+func (m *Postgres_MonitoringService) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Postgres_MonitoringService) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetNodeExporter()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Postgres_MonitoringServiceValidationError{
+					field:  "NodeExporter",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Postgres_MonitoringServiceValidationError{
+					field:  "NodeExporter",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetNodeExporter()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Postgres_MonitoringServiceValidationError{
+				field:  "NodeExporter",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetPostgresExporter()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Postgres_MonitoringServiceValidationError{
+					field:  "PostgresExporter",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Postgres_MonitoringServiceValidationError{
+					field:  "PostgresExporter",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPostgresExporter()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Postgres_MonitoringServiceValidationError{
+				field:  "PostgresExporter",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Postgres_MonitoringServiceMultiError(errors)
+	}
+
+	return nil
+}
+
+// Postgres_MonitoringServiceMultiError is an error wrapping multiple
+// validation errors returned by Postgres_MonitoringService.ValidateAll() if
+// the designated constraints aren't met.
+type Postgres_MonitoringServiceMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Postgres_MonitoringServiceMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Postgres_MonitoringServiceMultiError) AllErrors() []error { return m }
+
+// Postgres_MonitoringServiceValidationError is the validation error returned
+// by Postgres_MonitoringService.Validate if the designated constraints aren't met.
+type Postgres_MonitoringServiceValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Postgres_MonitoringServiceValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Postgres_MonitoringServiceValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Postgres_MonitoringServiceValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Postgres_MonitoringServiceValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Postgres_MonitoringServiceValidationError) ErrorName() string {
+	return "Postgres_MonitoringServiceValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Postgres_MonitoringServiceValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPostgres_MonitoringService.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Postgres_MonitoringServiceValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Postgres_MonitoringServiceValidationError{}
+
+// Validate checks the field values on Postgres_Node with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Postgres_Node) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Postgres_Node with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in Postgres_NodeMultiError, or
+// nil if none found.
+func (m *Postgres_Node) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Postgres_Node) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetName()); l < 1 || l > 63 {
+		err := Postgres_NodeValidationError{
+			field:  "Name",
+			reason: "value length must be between 1 and 63 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !_Postgres_Node_Name_Pattern.MatchString(m.GetName()) {
+		err := Postgres_NodeValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^[a-z][a-z0-9-]*$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetHardware() == nil {
+		err := Postgres_NodeValidationError{
+			field:  "Hardware",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetHardware()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Postgres_NodeValidationError{
+					field:  "Hardware",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Postgres_NodeValidationError{
+					field:  "Hardware",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetHardware()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Postgres_NodeValidationError{
+				field:  "Hardware",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetPostgres()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Postgres_NodeValidationError{
+					field:  "Postgres",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Postgres_NodeValidationError{
+					field:  "Postgres",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPostgres()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Postgres_NodeValidationError{
+				field:  "Postgres",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetEtcd()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Postgres_NodeValidationError{
+					field:  "Etcd",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Postgres_NodeValidationError{
+					field:  "Etcd",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetEtcd()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Postgres_NodeValidationError{
+				field:  "Etcd",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetPgbouncer()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Postgres_NodeValidationError{
+					field:  "Pgbouncer",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Postgres_NodeValidationError{
+					field:  "Pgbouncer",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPgbouncer()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Postgres_NodeValidationError{
+				field:  "Pgbouncer",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetBackup()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Postgres_NodeValidationError{
+					field:  "Backup",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Postgres_NodeValidationError{
+					field:  "Backup",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetBackup()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Postgres_NodeValidationError{
+				field:  "Backup",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetMonitoring()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Postgres_NodeValidationError{
+					field:  "Monitoring",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Postgres_NodeValidationError{
+					field:  "Monitoring",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetMonitoring()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Postgres_NodeValidationError{
+				field:  "Monitoring",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Postgres_NodeMultiError(errors)
+	}
+
+	return nil
+}
+
+// Postgres_NodeMultiError is an error wrapping multiple validation errors
+// returned by Postgres_Node.ValidateAll() if the designated constraints
+// aren't met.
+type Postgres_NodeMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Postgres_NodeMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Postgres_NodeMultiError) AllErrors() []error { return m }
+
+// Postgres_NodeValidationError is the validation error returned by
+// Postgres_Node.Validate if the designated constraints aren't met.
+type Postgres_NodeValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Postgres_NodeValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Postgres_NodeValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Postgres_NodeValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Postgres_NodeValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Postgres_NodeValidationError) ErrorName() string { return "Postgres_NodeValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Postgres_NodeValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPostgres_Node.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Postgres_NodeValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Postgres_NodeValidationError{}
+
+var _Postgres_Node_Name_Pattern = regexp.MustCompile("^[a-z][a-z0-9-]*$")
 
 // Validate checks the field values on Postgres_Instance with the rules defined
 // in the proto definition for this message. If any rules are violated, the
@@ -942,9 +2069,9 @@ func (m *Postgres_Instance) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetTemplate() == nil {
+	if m.GetDefaults() == nil {
 		err := Postgres_InstanceValidationError{
-			field:  "Template",
+			field:  "Defaults",
 			reason: "value is required",
 		}
 		if !all {
@@ -954,11 +2081,11 @@ func (m *Postgres_Instance) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetTemplate()).(type) {
+		switch v := interface{}(m.GetDefaults()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, Postgres_InstanceValidationError{
-					field:  "Template",
+					field:  "Defaults",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -966,54 +2093,60 @@ func (m *Postgres_Instance) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, Postgres_InstanceValidationError{
-					field:  "Template",
+					field:  "Defaults",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetTemplate()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetDefaults()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return Postgres_InstanceValidationError{
-				field:  "Template",
+				field:  "Defaults",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
 		}
 	}
 
-	for idx, item := range m.GetSidecars() {
-		_, _ = idx, item
+	if m.GetNode() == nil {
+		err := Postgres_InstanceValidationError{
+			field:  "Node",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Postgres_InstanceValidationError{
-						field:  fmt.Sprintf("Sidecars[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Postgres_InstanceValidationError{
-						field:  fmt.Sprintf("Sidecars[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Postgres_InstanceValidationError{
-					field:  fmt.Sprintf("Sidecars[%v]", idx),
+	if all {
+		switch v := interface{}(m.GetNode()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Postgres_InstanceValidationError{
+					field:  "Node",
 					reason: "embedded message failed validation",
 					cause:  err,
-				}
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Postgres_InstanceValidationError{
+					field:  "Node",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
 			}
 		}
-
+	} else if v, ok := interface{}(m.GetNode()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Postgres_InstanceValidationError{
+				field:  "Node",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	if len(errors) > 0 {
@@ -1118,9 +2251,9 @@ func (m *Postgres_Cluster) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetTemplate() == nil {
+	if m.GetDefaults() == nil {
 		err := Postgres_ClusterValidationError{
-			field:  "Template",
+			field:  "Defaults",
 			reason: "value is required",
 		}
 		if !all {
@@ -1130,11 +2263,11 @@ func (m *Postgres_Cluster) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetTemplate()).(type) {
+		switch v := interface{}(m.GetDefaults()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, Postgres_ClusterValidationError{
-					field:  "Template",
+					field:  "Defaults",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -1142,26 +2275,26 @@ func (m *Postgres_Cluster) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, Postgres_ClusterValidationError{
-					field:  "Template",
+					field:  "Defaults",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetTemplate()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetDefaults()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return Postgres_ClusterValidationError{
-				field:  "Template",
+				field:  "Defaults",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
 		}
 	}
 
-	if m.GetMaster() == nil {
+	if len(m.GetNodes()) < 2 {
 		err := Postgres_ClusterValidationError{
-			field:  "Master",
-			reason: "value is required",
+			field:  "Nodes",
+			reason: "value must contain at least 2 item(s)",
 		}
 		if !all {
 			return err
@@ -1169,47 +2302,7 @@ func (m *Postgres_Cluster) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if all {
-		switch v := interface{}(m.GetMaster()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_ClusterValidationError{
-					field:  "Master",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_ClusterValidationError{
-					field:  "Master",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetMaster()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_ClusterValidationError{
-				field:  "Master",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(m.GetReplicas()) < 1 {
-		err := Postgres_ClusterValidationError{
-			field:  "Replicas",
-			reason: "value must contain at least 1 item(s)",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	for idx, item := range m.GetReplicas() {
+	for idx, item := range m.GetNodes() {
 		_, _ = idx, item
 
 		if all {
@@ -1217,7 +2310,7 @@ func (m *Postgres_Cluster) validate(all bool) error {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, Postgres_ClusterValidationError{
-						field:  fmt.Sprintf("Replicas[%v]", idx),
+						field:  fmt.Sprintf("Nodes[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -1225,7 +2318,7 @@ func (m *Postgres_Cluster) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, Postgres_ClusterValidationError{
-						field:  fmt.Sprintf("Replicas[%v]", idx),
+						field:  fmt.Sprintf("Nodes[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -1234,7 +2327,7 @@ func (m *Postgres_Cluster) validate(all bool) error {
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return Postgres_ClusterValidationError{
-					field:  fmt.Sprintf("Replicas[%v]", idx),
+					field:  fmt.Sprintf("Nodes[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -1320,889 +2413,6 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = Postgres_ClusterValidationError{}
-
-// Validate checks the field values on Postgres_Sidecar_PostgresExporter with
-// the rules defined in the proto definition for this message. If any rules
-// are violated, the first error encountered is returned, or nil if there are
-// no violations.
-func (m *Postgres_Sidecar_PostgresExporter) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Postgres_Sidecar_PostgresExporter
-// with the rules defined in the proto definition for this message. If any
-// rules are violated, the result is a list of violation errors wrapped in
-// Postgres_Sidecar_PostgresExporterMultiError, or nil if none found.
-func (m *Postgres_Sidecar_PostgresExporter) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_Sidecar_PostgresExporter) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for Enabled
-
-	// no validation rules for Port
-
-	if len(errors) > 0 {
-		return Postgres_Sidecar_PostgresExporterMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_Sidecar_PostgresExporterMultiError is an error wrapping multiple
-// validation errors returned by
-// Postgres_Sidecar_PostgresExporter.ValidateAll() if the designated
-// constraints aren't met.
-type Postgres_Sidecar_PostgresExporterMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_Sidecar_PostgresExporterMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_Sidecar_PostgresExporterMultiError) AllErrors() []error { return m }
-
-// Postgres_Sidecar_PostgresExporterValidationError is the validation error
-// returned by Postgres_Sidecar_PostgresExporter.Validate if the designated
-// constraints aren't met.
-type Postgres_Sidecar_PostgresExporterValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_Sidecar_PostgresExporterValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_Sidecar_PostgresExporterValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_Sidecar_PostgresExporterValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_Sidecar_PostgresExporterValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_Sidecar_PostgresExporterValidationError) ErrorName() string {
-	return "Postgres_Sidecar_PostgresExporterValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Postgres_Sidecar_PostgresExporterValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_Sidecar_PostgresExporter.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_Sidecar_PostgresExporterValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_Sidecar_PostgresExporterValidationError{}
-
-// Validate checks the field values on Postgres_Sidecar_Backup with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Postgres_Sidecar_Backup) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Postgres_Sidecar_Backup with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Postgres_Sidecar_BackupMultiError, or nil if none found.
-func (m *Postgres_Sidecar_Backup) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_Sidecar_Backup) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if utf8.RuneCountInString(m.GetSchedule()) < 1 {
-		err := Postgres_Sidecar_BackupValidationError{
-			field:  "Schedule",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	// no validation rules for Retention
-
-	if _, ok := Postgres_Sidecar_Backup_Tool_name[int32(m.GetTool())]; !ok {
-		err := Postgres_Sidecar_BackupValidationError{
-			field:  "Tool",
-			reason: "value must be one of the defined enum values",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	oneofStoragePresent := false
-	switch v := m.Storage.(type) {
-	case *Postgres_Sidecar_Backup_S3:
-		if v == nil {
-			err := Postgres_Sidecar_BackupValidationError{
-				field:  "Storage",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofStoragePresent = true
-
-		if all {
-			switch v := interface{}(m.GetS3()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Postgres_Sidecar_BackupValidationError{
-						field:  "S3",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Postgres_Sidecar_BackupValidationError{
-						field:  "S3",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetS3()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Postgres_Sidecar_BackupValidationError{
-					field:  "S3",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	case *Postgres_Sidecar_Backup_Local:
-		if v == nil {
-			err := Postgres_Sidecar_BackupValidationError{
-				field:  "Storage",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofStoragePresent = true
-
-		if all {
-			switch v := interface{}(m.GetLocal()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Postgres_Sidecar_BackupValidationError{
-						field:  "Local",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Postgres_Sidecar_BackupValidationError{
-						field:  "Local",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetLocal()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Postgres_Sidecar_BackupValidationError{
-					field:  "Local",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	default:
-		_ = v // ensures v is used
-	}
-	if !oneofStoragePresent {
-		err := Postgres_Sidecar_BackupValidationError{
-			field:  "Storage",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return Postgres_Sidecar_BackupMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_Sidecar_BackupMultiError is an error wrapping multiple validation
-// errors returned by Postgres_Sidecar_Backup.ValidateAll() if the designated
-// constraints aren't met.
-type Postgres_Sidecar_BackupMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_Sidecar_BackupMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_Sidecar_BackupMultiError) AllErrors() []error { return m }
-
-// Postgres_Sidecar_BackupValidationError is the validation error returned by
-// Postgres_Sidecar_Backup.Validate if the designated constraints aren't met.
-type Postgres_Sidecar_BackupValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_Sidecar_BackupValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_Sidecar_BackupValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_Sidecar_BackupValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_Sidecar_BackupValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_Sidecar_BackupValidationError) ErrorName() string {
-	return "Postgres_Sidecar_BackupValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Postgres_Sidecar_BackupValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_Sidecar_Backup.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_Sidecar_BackupValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_Sidecar_BackupValidationError{}
-
-// Validate checks the field values on Postgres_Sidecar_Backup_S3Storage with
-// the rules defined in the proto definition for this message. If any rules
-// are violated, the first error encountered is returned, or nil if there are
-// no violations.
-func (m *Postgres_Sidecar_Backup_S3Storage) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Postgres_Sidecar_Backup_S3Storage
-// with the rules defined in the proto definition for this message. If any
-// rules are violated, the result is a list of violation errors wrapped in
-// Postgres_Sidecar_Backup_S3StorageMultiError, or nil if none found.
-func (m *Postgres_Sidecar_Backup_S3Storage) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_Sidecar_Backup_S3Storage) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if utf8.RuneCountInString(m.GetBucket()) < 1 {
-		err := Postgres_Sidecar_Backup_S3StorageValidationError{
-			field:  "Bucket",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetRegion()) < 1 {
-		err := Postgres_Sidecar_Backup_S3StorageValidationError{
-			field:  "Region",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetEndpoint()) < 1 {
-		err := Postgres_Sidecar_Backup_S3StorageValidationError{
-			field:  "Endpoint",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetAccessKeyId()) < 1 {
-		err := Postgres_Sidecar_Backup_S3StorageValidationError{
-			field:  "AccessKeyId",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetSecretAccessKey()) < 1 {
-		err := Postgres_Sidecar_Backup_S3StorageValidationError{
-			field:  "SecretAccessKey",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return Postgres_Sidecar_Backup_S3StorageMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_Sidecar_Backup_S3StorageMultiError is an error wrapping multiple
-// validation errors returned by
-// Postgres_Sidecar_Backup_S3Storage.ValidateAll() if the designated
-// constraints aren't met.
-type Postgres_Sidecar_Backup_S3StorageMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_Sidecar_Backup_S3StorageMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_Sidecar_Backup_S3StorageMultiError) AllErrors() []error { return m }
-
-// Postgres_Sidecar_Backup_S3StorageValidationError is the validation error
-// returned by Postgres_Sidecar_Backup_S3Storage.Validate if the designated
-// constraints aren't met.
-type Postgres_Sidecar_Backup_S3StorageValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_Sidecar_Backup_S3StorageValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_Sidecar_Backup_S3StorageValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_Sidecar_Backup_S3StorageValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_Sidecar_Backup_S3StorageValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_Sidecar_Backup_S3StorageValidationError) ErrorName() string {
-	return "Postgres_Sidecar_Backup_S3StorageValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Postgres_Sidecar_Backup_S3StorageValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_Sidecar_Backup_S3Storage.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_Sidecar_Backup_S3StorageValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_Sidecar_Backup_S3StorageValidationError{}
-
-// Validate checks the field values on Postgres_Sidecar_Backup_LocalStorage
-// with the rules defined in the proto definition for this message. If any
-// rules are violated, the first error encountered is returned, or nil if
-// there are no violations.
-func (m *Postgres_Sidecar_Backup_LocalStorage) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Postgres_Sidecar_Backup_LocalStorage
-// with the rules defined in the proto definition for this message. If any
-// rules are violated, the result is a list of violation errors wrapped in
-// Postgres_Sidecar_Backup_LocalStorageMultiError, or nil if none found.
-func (m *Postgres_Sidecar_Backup_LocalStorage) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_Sidecar_Backup_LocalStorage) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if utf8.RuneCountInString(m.GetPath()) < 1 {
-		err := Postgres_Sidecar_Backup_LocalStorageValidationError{
-			field:  "Path",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return Postgres_Sidecar_Backup_LocalStorageMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_Sidecar_Backup_LocalStorageMultiError is an error wrapping multiple
-// validation errors returned by
-// Postgres_Sidecar_Backup_LocalStorage.ValidateAll() if the designated
-// constraints aren't met.
-type Postgres_Sidecar_Backup_LocalStorageMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_Sidecar_Backup_LocalStorageMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_Sidecar_Backup_LocalStorageMultiError) AllErrors() []error { return m }
-
-// Postgres_Sidecar_Backup_LocalStorageValidationError is the validation error
-// returned by Postgres_Sidecar_Backup_LocalStorage.Validate if the designated
-// constraints aren't met.
-type Postgres_Sidecar_Backup_LocalStorageValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_Sidecar_Backup_LocalStorageValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_Sidecar_Backup_LocalStorageValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_Sidecar_Backup_LocalStorageValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_Sidecar_Backup_LocalStorageValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_Sidecar_Backup_LocalStorageValidationError) ErrorName() string {
-	return "Postgres_Sidecar_Backup_LocalStorageValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Postgres_Sidecar_Backup_LocalStorageValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_Sidecar_Backup_LocalStorage.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_Sidecar_Backup_LocalStorageValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_Sidecar_Backup_LocalStorageValidationError{}
-
-// Validate checks the field values on Postgres_Placement_Colocate with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Postgres_Placement_Colocate) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Postgres_Placement_Colocate with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Postgres_Placement_ColocateMultiError, or nil if none found.
-func (m *Postgres_Placement_Colocate) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_Placement_Colocate) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if _, ok := Postgres_Placement_Scope_name[int32(m.GetScope())]; !ok {
-		err := Postgres_Placement_ColocateValidationError{
-			field:  "Scope",
-			reason: "value must be one of the defined enum values",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if m.ReplicaIndex != nil {
-		// no validation rules for ReplicaIndex
-	}
-
-	if len(errors) > 0 {
-		return Postgres_Placement_ColocateMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_Placement_ColocateMultiError is an error wrapping multiple
-// validation errors returned by Postgres_Placement_Colocate.ValidateAll() if
-// the designated constraints aren't met.
-type Postgres_Placement_ColocateMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_Placement_ColocateMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_Placement_ColocateMultiError) AllErrors() []error { return m }
-
-// Postgres_Placement_ColocateValidationError is the validation error returned
-// by Postgres_Placement_Colocate.Validate if the designated constraints
-// aren't met.
-type Postgres_Placement_ColocateValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_Placement_ColocateValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_Placement_ColocateValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_Placement_ColocateValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_Placement_ColocateValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_Placement_ColocateValidationError) ErrorName() string {
-	return "Postgres_Placement_ColocateValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Postgres_Placement_ColocateValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_Placement_Colocate.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_Placement_ColocateValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_Placement_ColocateValidationError{}
-
-// Validate checks the field values on Postgres_Placement_Dedicated with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Postgres_Placement_Dedicated) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Postgres_Placement_Dedicated with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Postgres_Placement_DedicatedMultiError, or nil if none found.
-func (m *Postgres_Placement_Dedicated) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_Placement_Dedicated) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if val := m.GetInstancesCount(); val < 1 || val > 5 {
-		err := Postgres_Placement_DedicatedValidationError{
-			field:  "InstancesCount",
-			reason: "value must be inside range [1, 5]",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if m.GetHardware() == nil {
-		err := Postgres_Placement_DedicatedValidationError{
-			field:  "Hardware",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetHardware()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_Placement_DedicatedValidationError{
-					field:  "Hardware",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_Placement_DedicatedValidationError{
-					field:  "Hardware",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetHardware()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_Placement_DedicatedValidationError{
-				field:  "Hardware",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return Postgres_Placement_DedicatedMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_Placement_DedicatedMultiError is an error wrapping multiple
-// validation errors returned by Postgres_Placement_Dedicated.ValidateAll() if
-// the designated constraints aren't met.
-type Postgres_Placement_DedicatedMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_Placement_DedicatedMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_Placement_DedicatedMultiError) AllErrors() []error { return m }
-
-// Postgres_Placement_DedicatedValidationError is the validation error returned
-// by Postgres_Placement_Dedicated.Validate if the designated constraints
-// aren't met.
-type Postgres_Placement_DedicatedValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_Placement_DedicatedValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_Placement_DedicatedValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_Placement_DedicatedValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_Placement_DedicatedValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_Placement_DedicatedValidationError) ErrorName() string {
-	return "Postgres_Placement_DedicatedValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Postgres_Placement_DedicatedValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_Placement_Dedicated.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_Placement_DedicatedValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_Placement_DedicatedValidationError{}
 
 // Validate checks the field values on Postgres_Settings_Patroni with the rules
 // defined in the proto definition for this message. If any rules are
@@ -2320,296 +2530,32 @@ var _ interface {
 	ErrorName() string
 } = Postgres_Settings_PatroniValidationError{}
 
-// Validate checks the field values on Postgres_Addons_Dcs with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Postgres_Addons_Dcs) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Postgres_Addons_Dcs with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Postgres_Addons_DcsMultiError, or nil if none found.
-func (m *Postgres_Addons_Dcs) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_Addons_Dcs) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetEtcd()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_Addons_DcsValidationError{
-					field:  "Etcd",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_Addons_DcsValidationError{
-					field:  "Etcd",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetEtcd()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_Addons_DcsValidationError{
-				field:  "Etcd",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return Postgres_Addons_DcsMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_Addons_DcsMultiError is an error wrapping multiple validation
-// errors returned by Postgres_Addons_Dcs.ValidateAll() if the designated
-// constraints aren't met.
-type Postgres_Addons_DcsMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_Addons_DcsMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_Addons_DcsMultiError) AllErrors() []error { return m }
-
-// Postgres_Addons_DcsValidationError is the validation error returned by
-// Postgres_Addons_Dcs.Validate if the designated constraints aren't met.
-type Postgres_Addons_DcsValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_Addons_DcsValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_Addons_DcsValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_Addons_DcsValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_Addons_DcsValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_Addons_DcsValidationError) ErrorName() string {
-	return "Postgres_Addons_DcsValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Postgres_Addons_DcsValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_Addons_Dcs.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_Addons_DcsValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_Addons_DcsValidationError{}
-
-// Validate checks the field values on Postgres_Addons_Pooling with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Postgres_Addons_Pooling) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Postgres_Addons_Pooling with the
+// Validate checks the field values on Postgres_BackupConfig_S3Storage with the
 // rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Postgres_Addons_PoolingMultiError, or nil if none found.
-func (m *Postgres_Addons_Pooling) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_Addons_Pooling) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetPgbouncer()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_Addons_PoolingValidationError{
-					field:  "Pgbouncer",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_Addons_PoolingValidationError{
-					field:  "Pgbouncer",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetPgbouncer()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_Addons_PoolingValidationError{
-				field:  "Pgbouncer",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return Postgres_Addons_PoolingMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_Addons_PoolingMultiError is an error wrapping multiple validation
-// errors returned by Postgres_Addons_Pooling.ValidateAll() if the designated
-// constraints aren't met.
-type Postgres_Addons_PoolingMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_Addons_PoolingMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_Addons_PoolingMultiError) AllErrors() []error { return m }
-
-// Postgres_Addons_PoolingValidationError is the validation error returned by
-// Postgres_Addons_Pooling.Validate if the designated constraints aren't met.
-type Postgres_Addons_PoolingValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_Addons_PoolingValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_Addons_PoolingValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_Addons_PoolingValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_Addons_PoolingValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_Addons_PoolingValidationError) ErrorName() string {
-	return "Postgres_Addons_PoolingValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Postgres_Addons_PoolingValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_Addons_Pooling.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_Addons_PoolingValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_Addons_PoolingValidationError{}
-
-// Validate checks the field values on Postgres_Addons_Backup with the rules
-// defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Postgres_Addons_Backup) Validate() error {
+func (m *Postgres_BackupConfig_S3Storage) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Postgres_Addons_Backup with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Postgres_Addons_BackupMultiError, or nil if none found.
-func (m *Postgres_Addons_Backup) ValidateAll() error {
+// ValidateAll checks the field values on Postgres_BackupConfig_S3Storage with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// Postgres_BackupConfig_S3StorageMultiError, or nil if none found.
+func (m *Postgres_BackupConfig_S3Storage) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Postgres_Addons_Backup) validate(all bool) error {
+func (m *Postgres_BackupConfig_S3Storage) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	// no validation rules for Enabled
-
-	if _, ok := Postgres_Placement_Scope_name[int32(m.GetScope())]; !ok {
-		err := Postgres_Addons_BackupValidationError{
-			field:  "Scope",
-			reason: "value must be one of the defined enum values",
+	if utf8.RuneCountInString(m.GetBucket()) < 1 {
+		err := Postgres_BackupConfig_S3StorageValidationError{
+			field:  "Bucket",
+			reason: "value length must be at least 1 runes",
 		}
 		if !all {
 			return err
@@ -2617,49 +2563,64 @@ func (m *Postgres_Addons_Backup) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if all {
-		switch v := interface{}(m.GetConfig()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_Addons_BackupValidationError{
-					field:  "Config",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_Addons_BackupValidationError{
-					field:  "Config",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
+	if utf8.RuneCountInString(m.GetRegion()) < 1 {
+		err := Postgres_BackupConfig_S3StorageValidationError{
+			field:  "Region",
+			reason: "value length must be at least 1 runes",
 		}
-	} else if v, ok := interface{}(m.GetConfig()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_Addons_BackupValidationError{
-				field:  "Config",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
+		if !all {
+			return err
 		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetEndpoint()) < 1 {
+		err := Postgres_BackupConfig_S3StorageValidationError{
+			field:  "Endpoint",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetAccessKeyId()) < 1 {
+		err := Postgres_BackupConfig_S3StorageValidationError{
+			field:  "AccessKeyId",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetSecretAccessKey()) < 1 {
+		err := Postgres_BackupConfig_S3StorageValidationError{
+			field:  "SecretAccessKey",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	if len(errors) > 0 {
-		return Postgres_Addons_BackupMultiError(errors)
+		return Postgres_BackupConfig_S3StorageMultiError(errors)
 	}
 
 	return nil
 }
 
-// Postgres_Addons_BackupMultiError is an error wrapping multiple validation
-// errors returned by Postgres_Addons_Backup.ValidateAll() if the designated
-// constraints aren't met.
-type Postgres_Addons_BackupMultiError []error
+// Postgres_BackupConfig_S3StorageMultiError is an error wrapping multiple
+// validation errors returned by Postgres_BackupConfig_S3Storage.ValidateAll()
+// if the designated constraints aren't met.
+type Postgres_BackupConfig_S3StorageMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_Addons_BackupMultiError) Error() string {
+func (m Postgres_BackupConfig_S3StorageMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -2668,11 +2629,12 @@ func (m Postgres_Addons_BackupMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Postgres_Addons_BackupMultiError) AllErrors() []error { return m }
+func (m Postgres_BackupConfig_S3StorageMultiError) AllErrors() []error { return m }
 
-// Postgres_Addons_BackupValidationError is the validation error returned by
-// Postgres_Addons_Backup.Validate if the designated constraints aren't met.
-type Postgres_Addons_BackupValidationError struct {
+// Postgres_BackupConfig_S3StorageValidationError is the validation error
+// returned by Postgres_BackupConfig_S3Storage.Validate if the designated
+// constraints aren't met.
+type Postgres_BackupConfig_S3StorageValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -2680,24 +2642,24 @@ type Postgres_Addons_BackupValidationError struct {
 }
 
 // Field function returns field value.
-func (e Postgres_Addons_BackupValidationError) Field() string { return e.field }
+func (e Postgres_BackupConfig_S3StorageValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Postgres_Addons_BackupValidationError) Reason() string { return e.reason }
+func (e Postgres_BackupConfig_S3StorageValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Postgres_Addons_BackupValidationError) Cause() error { return e.cause }
+func (e Postgres_BackupConfig_S3StorageValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Postgres_Addons_BackupValidationError) Key() bool { return e.key }
+func (e Postgres_BackupConfig_S3StorageValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Postgres_Addons_BackupValidationError) ErrorName() string {
-	return "Postgres_Addons_BackupValidationError"
+func (e Postgres_BackupConfig_S3StorageValidationError) ErrorName() string {
+	return "Postgres_BackupConfig_S3StorageValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e Postgres_Addons_BackupValidationError) Error() string {
+func (e Postgres_BackupConfig_S3StorageValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -2709,14 +2671,14 @@ func (e Postgres_Addons_BackupValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPostgres_Addons_Backup.%s: %s%s",
+		"invalid %sPostgres_BackupConfig_S3Storage.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Postgres_Addons_BackupValidationError{}
+var _ error = Postgres_BackupConfig_S3StorageValidationError{}
 
 var _ interface {
 	Field() string
@@ -2724,296 +2686,57 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Postgres_Addons_BackupValidationError{}
+} = Postgres_BackupConfig_S3StorageValidationError{}
 
-// Validate checks the field values on Postgres_Addons_Dcs_Etcd with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Postgres_Addons_Dcs_Etcd) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Postgres_Addons_Dcs_Etcd with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Postgres_Addons_Dcs_EtcdMultiError, or nil if none found.
-func (m *Postgres_Addons_Dcs_Etcd) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_Addons_Dcs_Etcd) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if _, ok := _Postgres_Addons_Dcs_Etcd_Size_InLookup[m.GetSize()]; !ok {
-		err := Postgres_Addons_Dcs_EtcdValidationError{
-			field:  "Size",
-			reason: "value must be in list [1 3 5]",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if m.GetPlacement() == nil {
-		err := Postgres_Addons_Dcs_EtcdValidationError{
-			field:  "Placement",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetPlacement()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_Addons_Dcs_EtcdValidationError{
-					field:  "Placement",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_Addons_Dcs_EtcdValidationError{
-					field:  "Placement",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetPlacement()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_Addons_Dcs_EtcdValidationError{
-				field:  "Placement",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	// no validation rules for Monitor
-
-	if m.BaseClientPort != nil {
-
-		if val := m.GetBaseClientPort(); val < 1 || val > 65535 {
-			err := Postgres_Addons_Dcs_EtcdValidationError{
-				field:  "BaseClientPort",
-				reason: "value must be inside range [1, 65535]",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-
-	}
-
-	if len(errors) > 0 {
-		return Postgres_Addons_Dcs_EtcdMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_Addons_Dcs_EtcdMultiError is an error wrapping multiple validation
-// errors returned by Postgres_Addons_Dcs_Etcd.ValidateAll() if the designated
-// constraints aren't met.
-type Postgres_Addons_Dcs_EtcdMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_Addons_Dcs_EtcdMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_Addons_Dcs_EtcdMultiError) AllErrors() []error { return m }
-
-// Postgres_Addons_Dcs_EtcdValidationError is the validation error returned by
-// Postgres_Addons_Dcs_Etcd.Validate if the designated constraints aren't met.
-type Postgres_Addons_Dcs_EtcdValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_Addons_Dcs_EtcdValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_Addons_Dcs_EtcdValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_Addons_Dcs_EtcdValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_Addons_Dcs_EtcdValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_Addons_Dcs_EtcdValidationError) ErrorName() string {
-	return "Postgres_Addons_Dcs_EtcdValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Postgres_Addons_Dcs_EtcdValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_Addons_Dcs_Etcd.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_Addons_Dcs_EtcdValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_Addons_Dcs_EtcdValidationError{}
-
-var _Postgres_Addons_Dcs_Etcd_Size_InLookup = map[uint32]struct{}{
-	1: {},
-	3: {},
-	5: {},
-}
-
-// Validate checks the field values on Postgres_Addons_Pooling_Pgbouncer with
+// Validate checks the field values on Postgres_BackupConfig_LocalStorage with
 // the rules defined in the proto definition for this message. If any rules
 // are violated, the first error encountered is returned, or nil if there are
 // no violations.
-func (m *Postgres_Addons_Pooling_Pgbouncer) Validate() error {
+func (m *Postgres_BackupConfig_LocalStorage) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Postgres_Addons_Pooling_Pgbouncer
+// ValidateAll checks the field values on Postgres_BackupConfig_LocalStorage
 // with the rules defined in the proto definition for this message. If any
 // rules are violated, the result is a list of violation errors wrapped in
-// Postgres_Addons_Pooling_PgbouncerMultiError, or nil if none found.
-func (m *Postgres_Addons_Pooling_Pgbouncer) ValidateAll() error {
+// Postgres_BackupConfig_LocalStorageMultiError, or nil if none found.
+func (m *Postgres_BackupConfig_LocalStorage) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Postgres_Addons_Pooling_Pgbouncer) validate(all bool) error {
+func (m *Postgres_BackupConfig_LocalStorage) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	// no validation rules for Enabled
-
-	// no validation rules for PoolSize
-
-	if _, ok := Postgres_Addons_Pooling_Pgbouncer_PoolMode_name[int32(m.GetPoolMode())]; !ok {
-		err := Postgres_Addons_Pooling_PgbouncerValidationError{
-			field:  "PoolMode",
-			reason: "value must be one of the defined enum values",
+	if utf8.RuneCountInString(m.GetPath()) < 1 {
+		err := Postgres_BackupConfig_LocalStorageValidationError{
+			field:  "Path",
+			reason: "value length must be at least 1 runes",
 		}
 		if !all {
 			return err
 		}
 		errors = append(errors, err)
-	}
-
-	// no validation rules for MaxClientConn
-
-	if m.GetPlacement() == nil {
-		err := Postgres_Addons_Pooling_PgbouncerValidationError{
-			field:  "Placement",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetPlacement()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_Addons_Pooling_PgbouncerValidationError{
-					field:  "Placement",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_Addons_Pooling_PgbouncerValidationError{
-					field:  "Placement",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetPlacement()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_Addons_Pooling_PgbouncerValidationError{
-				field:  "Placement",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	// no validation rules for Monitor
-
-	if m.Port != nil {
-
-		if val := m.GetPort(); val < 1 || val > 65535 {
-			err := Postgres_Addons_Pooling_PgbouncerValidationError{
-				field:  "Port",
-				reason: "value must be inside range [1, 65535]",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-
 	}
 
 	if len(errors) > 0 {
-		return Postgres_Addons_Pooling_PgbouncerMultiError(errors)
+		return Postgres_BackupConfig_LocalStorageMultiError(errors)
 	}
 
 	return nil
 }
 
-// Postgres_Addons_Pooling_PgbouncerMultiError is an error wrapping multiple
+// Postgres_BackupConfig_LocalStorageMultiError is an error wrapping multiple
 // validation errors returned by
-// Postgres_Addons_Pooling_Pgbouncer.ValidateAll() if the designated
+// Postgres_BackupConfig_LocalStorage.ValidateAll() if the designated
 // constraints aren't met.
-type Postgres_Addons_Pooling_PgbouncerMultiError []error
+type Postgres_BackupConfig_LocalStorageMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_Addons_Pooling_PgbouncerMultiError) Error() string {
+func (m Postgres_BackupConfig_LocalStorageMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -3022,12 +2745,12 @@ func (m Postgres_Addons_Pooling_PgbouncerMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Postgres_Addons_Pooling_PgbouncerMultiError) AllErrors() []error { return m }
+func (m Postgres_BackupConfig_LocalStorageMultiError) AllErrors() []error { return m }
 
-// Postgres_Addons_Pooling_PgbouncerValidationError is the validation error
-// returned by Postgres_Addons_Pooling_Pgbouncer.Validate if the designated
+// Postgres_BackupConfig_LocalStorageValidationError is the validation error
+// returned by Postgres_BackupConfig_LocalStorage.Validate if the designated
 // constraints aren't met.
-type Postgres_Addons_Pooling_PgbouncerValidationError struct {
+type Postgres_BackupConfig_LocalStorageValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -3035,24 +2758,24 @@ type Postgres_Addons_Pooling_PgbouncerValidationError struct {
 }
 
 // Field function returns field value.
-func (e Postgres_Addons_Pooling_PgbouncerValidationError) Field() string { return e.field }
+func (e Postgres_BackupConfig_LocalStorageValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Postgres_Addons_Pooling_PgbouncerValidationError) Reason() string { return e.reason }
+func (e Postgres_BackupConfig_LocalStorageValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Postgres_Addons_Pooling_PgbouncerValidationError) Cause() error { return e.cause }
+func (e Postgres_BackupConfig_LocalStorageValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Postgres_Addons_Pooling_PgbouncerValidationError) Key() bool { return e.key }
+func (e Postgres_BackupConfig_LocalStorageValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Postgres_Addons_Pooling_PgbouncerValidationError) ErrorName() string {
-	return "Postgres_Addons_Pooling_PgbouncerValidationError"
+func (e Postgres_BackupConfig_LocalStorageValidationError) ErrorName() string {
+	return "Postgres_BackupConfig_LocalStorageValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e Postgres_Addons_Pooling_PgbouncerValidationError) Error() string {
+func (e Postgres_BackupConfig_LocalStorageValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -3064,14 +2787,14 @@ func (e Postgres_Addons_Pooling_PgbouncerValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPostgres_Addons_Pooling_Pgbouncer.%s: %s%s",
+		"invalid %sPostgres_BackupConfig_LocalStorage.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Postgres_Addons_Pooling_PgbouncerValidationError{}
+var _ error = Postgres_BackupConfig_LocalStorageValidationError{}
 
 var _ interface {
 	Field() string
@@ -3079,829 +2802,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Postgres_Addons_Pooling_PgbouncerValidationError{}
-
-// Validate checks the field values on Postgres_Instance_Template with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Postgres_Instance_Template) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Postgres_Instance_Template with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Postgres_Instance_TemplateMultiError, or nil if none found.
-func (m *Postgres_Instance_Template) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_Instance_Template) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if m.GetSettings() == nil {
-		err := Postgres_Instance_TemplateValidationError{
-			field:  "Settings",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetSettings()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_Instance_TemplateValidationError{
-					field:  "Settings",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_Instance_TemplateValidationError{
-					field:  "Settings",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetSettings()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_Instance_TemplateValidationError{
-				field:  "Settings",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if m.GetHardware() == nil {
-		err := Postgres_Instance_TemplateValidationError{
-			field:  "Hardware",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetHardware()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_Instance_TemplateValidationError{
-					field:  "Hardware",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_Instance_TemplateValidationError{
-					field:  "Hardware",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetHardware()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_Instance_TemplateValidationError{
-				field:  "Hardware",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	for idx, item := range m.GetSidecars() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Postgres_Instance_TemplateValidationError{
-						field:  fmt.Sprintf("Sidecars[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Postgres_Instance_TemplateValidationError{
-						field:  fmt.Sprintf("Sidecars[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Postgres_Instance_TemplateValidationError{
-					field:  fmt.Sprintf("Sidecars[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if len(errors) > 0 {
-		return Postgres_Instance_TemplateMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_Instance_TemplateMultiError is an error wrapping multiple
-// validation errors returned by Postgres_Instance_Template.ValidateAll() if
-// the designated constraints aren't met.
-type Postgres_Instance_TemplateMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_Instance_TemplateMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_Instance_TemplateMultiError) AllErrors() []error { return m }
-
-// Postgres_Instance_TemplateValidationError is the validation error returned
-// by Postgres_Instance_Template.Validate if the designated constraints aren't met.
-type Postgres_Instance_TemplateValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_Instance_TemplateValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_Instance_TemplateValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_Instance_TemplateValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_Instance_TemplateValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_Instance_TemplateValidationError) ErrorName() string {
-	return "Postgres_Instance_TemplateValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Postgres_Instance_TemplateValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_Instance_Template.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_Instance_TemplateValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_Instance_TemplateValidationError{}
-
-// Validate checks the field values on Postgres_Cluster_Template with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Postgres_Cluster_Template) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Postgres_Cluster_Template with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Postgres_Cluster_TemplateMultiError, or nil if none found.
-func (m *Postgres_Cluster_Template) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_Cluster_Template) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if m.GetTopology() == nil {
-		err := Postgres_Cluster_TemplateValidationError{
-			field:  "Topology",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetTopology()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_Cluster_TemplateValidationError{
-					field:  "Topology",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_Cluster_TemplateValidationError{
-					field:  "Topology",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetTopology()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_Cluster_TemplateValidationError{
-				field:  "Topology",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if all {
-		switch v := interface{}(m.GetAddons()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_Cluster_TemplateValidationError{
-					field:  "Addons",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_Cluster_TemplateValidationError{
-					field:  "Addons",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetAddons()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_Cluster_TemplateValidationError{
-				field:  "Addons",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	for idx, item := range m.GetReplicaOverrides() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Postgres_Cluster_TemplateValidationError{
-						field:  fmt.Sprintf("ReplicaOverrides[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Postgres_Cluster_TemplateValidationError{
-						field:  fmt.Sprintf("ReplicaOverrides[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Postgres_Cluster_TemplateValidationError{
-					field:  fmt.Sprintf("ReplicaOverrides[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if len(errors) > 0 {
-		return Postgres_Cluster_TemplateMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_Cluster_TemplateMultiError is an error wrapping multiple validation
-// errors returned by Postgres_Cluster_Template.ValidateAll() if the
-// designated constraints aren't met.
-type Postgres_Cluster_TemplateMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_Cluster_TemplateMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_Cluster_TemplateMultiError) AllErrors() []error { return m }
-
-// Postgres_Cluster_TemplateValidationError is the validation error returned by
-// Postgres_Cluster_Template.Validate if the designated constraints aren't met.
-type Postgres_Cluster_TemplateValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_Cluster_TemplateValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_Cluster_TemplateValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_Cluster_TemplateValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_Cluster_TemplateValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_Cluster_TemplateValidationError) ErrorName() string {
-	return "Postgres_Cluster_TemplateValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Postgres_Cluster_TemplateValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_Cluster_Template.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_Cluster_TemplateValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_Cluster_TemplateValidationError{}
-
-// Validate checks the field values on Postgres_Cluster_Template_Topology with
-// the rules defined in the proto definition for this message. If any rules
-// are violated, the first error encountered is returned, or nil if there are
-// no violations.
-func (m *Postgres_Cluster_Template_Topology) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Postgres_Cluster_Template_Topology
-// with the rules defined in the proto definition for this message. If any
-// rules are violated, the result is a list of violation errors wrapped in
-// Postgres_Cluster_Template_TopologyMultiError, or nil if none found.
-func (m *Postgres_Cluster_Template_Topology) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_Cluster_Template_Topology) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if m.GetSettings() == nil {
-		err := Postgres_Cluster_Template_TopologyValidationError{
-			field:  "Settings",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetSettings()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_Cluster_Template_TopologyValidationError{
-					field:  "Settings",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_Cluster_Template_TopologyValidationError{
-					field:  "Settings",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetSettings()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_Cluster_Template_TopologyValidationError{
-				field:  "Settings",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if m.GetMasterHardware() == nil {
-		err := Postgres_Cluster_Template_TopologyValidationError{
-			field:  "MasterHardware",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetMasterHardware()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_Cluster_Template_TopologyValidationError{
-					field:  "MasterHardware",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_Cluster_Template_TopologyValidationError{
-					field:  "MasterHardware",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetMasterHardware()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_Cluster_Template_TopologyValidationError{
-				field:  "MasterHardware",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if m.GetReplicaHardware() == nil {
-		err := Postgres_Cluster_Template_TopologyValidationError{
-			field:  "ReplicaHardware",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetReplicaHardware()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_Cluster_Template_TopologyValidationError{
-					field:  "ReplicaHardware",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_Cluster_Template_TopologyValidationError{
-					field:  "ReplicaHardware",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetReplicaHardware()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_Cluster_Template_TopologyValidationError{
-				field:  "ReplicaHardware",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if m.GetReplicasCount() < 1 {
-		err := Postgres_Cluster_Template_TopologyValidationError{
-			field:  "ReplicasCount",
-			reason: "value must be greater than or equal to 1",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	// no validation rules for Monitor
-
-	if len(errors) > 0 {
-		return Postgres_Cluster_Template_TopologyMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_Cluster_Template_TopologyMultiError is an error wrapping multiple
-// validation errors returned by
-// Postgres_Cluster_Template_Topology.ValidateAll() if the designated
-// constraints aren't met.
-type Postgres_Cluster_Template_TopologyMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_Cluster_Template_TopologyMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_Cluster_Template_TopologyMultiError) AllErrors() []error { return m }
-
-// Postgres_Cluster_Template_TopologyValidationError is the validation error
-// returned by Postgres_Cluster_Template_Topology.Validate if the designated
-// constraints aren't met.
-type Postgres_Cluster_Template_TopologyValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_Cluster_Template_TopologyValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_Cluster_Template_TopologyValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_Cluster_Template_TopologyValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_Cluster_Template_TopologyValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_Cluster_Template_TopologyValidationError) ErrorName() string {
-	return "Postgres_Cluster_Template_TopologyValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Postgres_Cluster_Template_TopologyValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_Cluster_Template_Topology.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_Cluster_Template_TopologyValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_Cluster_Template_TopologyValidationError{}
-
-// Validate checks the field values on
-// Postgres_Cluster_Template_ReplicaOverride with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *Postgres_Cluster_Template_ReplicaOverride) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on
-// Postgres_Cluster_Template_ReplicaOverride with the rules defined in the
-// proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in
-// Postgres_Cluster_Template_ReplicaOverrideMultiError, or nil if none found.
-func (m *Postgres_Cluster_Template_ReplicaOverride) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Postgres_Cluster_Template_ReplicaOverride) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for ReplicaIndex
-
-	if all {
-		switch v := interface{}(m.GetSettings()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_Cluster_Template_ReplicaOverrideValidationError{
-					field:  "Settings",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_Cluster_Template_ReplicaOverrideValidationError{
-					field:  "Settings",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetSettings()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_Cluster_Template_ReplicaOverrideValidationError{
-				field:  "Settings",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if all {
-		switch v := interface{}(m.GetHardware()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Postgres_Cluster_Template_ReplicaOverrideValidationError{
-					field:  "Hardware",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Postgres_Cluster_Template_ReplicaOverrideValidationError{
-					field:  "Hardware",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetHardware()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Postgres_Cluster_Template_ReplicaOverrideValidationError{
-				field:  "Hardware",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return Postgres_Cluster_Template_ReplicaOverrideMultiError(errors)
-	}
-
-	return nil
-}
-
-// Postgres_Cluster_Template_ReplicaOverrideMultiError is an error wrapping
-// multiple validation errors returned by
-// Postgres_Cluster_Template_ReplicaOverride.ValidateAll() if the designated
-// constraints aren't met.
-type Postgres_Cluster_Template_ReplicaOverrideMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Postgres_Cluster_Template_ReplicaOverrideMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Postgres_Cluster_Template_ReplicaOverrideMultiError) AllErrors() []error { return m }
-
-// Postgres_Cluster_Template_ReplicaOverrideValidationError is the validation
-// error returned by Postgres_Cluster_Template_ReplicaOverride.Validate if the
-// designated constraints aren't met.
-type Postgres_Cluster_Template_ReplicaOverrideValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Postgres_Cluster_Template_ReplicaOverrideValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Postgres_Cluster_Template_ReplicaOverrideValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Postgres_Cluster_Template_ReplicaOverrideValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Postgres_Cluster_Template_ReplicaOverrideValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Postgres_Cluster_Template_ReplicaOverrideValidationError) ErrorName() string {
-	return "Postgres_Cluster_Template_ReplicaOverrideValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Postgres_Cluster_Template_ReplicaOverrideValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPostgres_Cluster_Template_ReplicaOverride.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Postgres_Cluster_Template_ReplicaOverrideValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Postgres_Cluster_Template_ReplicaOverrideValidationError{}
+} = Postgres_BackupConfig_LocalStorageValidationError{}
