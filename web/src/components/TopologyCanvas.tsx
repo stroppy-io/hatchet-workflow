@@ -13,9 +13,7 @@ import {
   type Node,
   type Edge,
   type NodeProps,
-  type NodeTypes,
-  MiniMap,
-  Controls
+  type NodeTypes
 } from '@xyflow/react';
 import { 
   Database, 
@@ -23,7 +21,6 @@ import {
   Activity, 
   Cpu, 
   HardDrive, 
-  MousePointer2, 
   Trash2, 
   Plus, 
   Settings2, 
@@ -31,10 +28,10 @@ import {
   Monitor,
   Box,
   X,
-  Zap
+  Zap,
+  Layers
 } from 'lucide-react';
 import { create } from '@bufbuild/protobuf';
-import { motion } from 'framer-motion';
 import { cn } from '../App';
 
 import {
@@ -53,8 +50,8 @@ import {
 } from '../proto/database/postgres_pb';
 import { HardwareSchema } from '../proto/deployment/deployment_pb';
 import { StroppyCliSchema, StroppyCli_Workload } from '../proto/stroppy/test_pb';
-import { Select } from './ui/Select';
 import { HardwareInputs } from './ui/HardwareInputs';
+import { Select } from './ui/Select';
 import { Input } from './ui/Input';
 
 // --- Types ---
@@ -69,32 +66,32 @@ interface TopologyCanvasProps {
 const LoadNode = memo(({ data, selected }: NodeProps) => {
   const loadData = data as any;
   return (
-    <motion.div
-      initial={{ scale: 0.9, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
+    <div
       className={cn(
-        "group relative min-w-[200px] bg-accent/90 backdrop-blur-md border-2 transition-all duration-300 skew-x-[-6deg]",
+        "min-w-[200px] bg-[#2d2d2d] border transition-all duration-300 rounded shadow-xl",
         selected 
-          ? "border-primary shadow-[0_0_30px_rgba(var(--primary),0.3)]" 
-          : "border-primary/40 shadow-xl"
+          ? "border-primary ring-2 ring-primary/20 shadow-primary/10" 
+          : "border-[#454545]"
       )}
     >
-      <div className="px-4 py-3 skew-x-[6deg]">
-        <div className="flex items-center gap-3 mb-2">
-          <Zap className="w-5 h-5 text-primary fill-primary/20" />
-          <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase leading-none tracking-tighter text-primary">Load_Generator</span>
-            <span className="text-xs font-black italic tracking-tighter uppercase">{loadData.workload === StroppyCli_Workload.TPCC ? 'TPC-C' : 'TPC-B'} Core</span>
-          </div>
+      <div className="px-3 py-2 border-b border-[#454545] flex items-center justify-between bg-primary/5">
+        <div className="flex items-center gap-2">
+          <Zap className={cn("w-3.5 h-3.5 transition-colors", selected ? "text-primary" : "text-[#858585]")} />
+          <span className="text-[10px] font-bold uppercase tracking-tight text-[#e1e1e1]">Load Generator</span>
         </div>
-        
-        <div className="flex gap-3 text-[8px] font-mono text-accent-foreground/60 uppercase border-t border-primary/20 pt-2 mt-2">
-          <div className="flex items-center gap-1"><Cpu className="w-2.5 h-2.5" />{loadData.hardware?.cores}C</div>
-          <div className="flex items-center gap-1"><Monitor className="w-2.5 h-2.5" />{loadData.hardware?.memory}G</div>
+        <div className="px-1.5 py-0.5 bg-primary/10 border border-primary/20 text-primary text-[8px] font-black rounded-sm uppercase">
+          {loadData.workload === StroppyCli_Workload.TPCC ? 'TPC-C' : 'TPC-B'}
         </div>
       </div>
-      <Handle type="source" position={Position.Right} className="!bg-primary !w-2 !h-2 !border-none" />
-    </motion.div>
+      
+      <div className="p-3 space-y-2">
+        <div className="flex gap-3 text-[9px] font-mono text-[#858585] uppercase">
+          <div className="flex items-center gap-1.5"><Cpu className="w-3 h-3 text-primary/40" />{loadData.hardware?.cores}C</div>
+          <div className="flex items-center gap-1.5"><Monitor className="w-3 h-3 text-primary/40" />{loadData.hardware?.memory}G</div>
+        </div>
+      </div>
+      <Handle type="source" position={Position.Right} className="!bg-primary !w-2 !h-2 !border-none !rounded-full shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
+    </div>
   );
 });
 
@@ -103,72 +100,66 @@ const SmartNode = memo(({ data, selected }: NodeProps) => {
   const isMaster = node.postgres?.role === Postgres_PostgresService_Role.MASTER;
   
   return (
-    <motion.div
-      initial={{ scale: 0.9, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
+    <div
       className={cn(
-        "group relative min-w-[220px] bg-card/90 backdrop-blur-md border-2 transition-all duration-300",
+        "min-w-[220px] bg-[#252526] border transition-all duration-300 rounded shadow-2xl",
         selected 
-          ? "border-primary shadow-[0_0_30px_rgba(var(--primary),0.2)]" 
-          : "border-border hover:border-primary/40 shadow-xl",
-        isMaster && "ring-1 ring-primary/30"
+          ? "border-primary ring-2 ring-primary/20 shadow-primary/10 scale-[1.02]" 
+          : "border-[#454545] hover:border-[#606060]"
       )}
     >
       {/* Header */}
       <div className={cn(
-        "px-4 py-2 border-b flex items-center justify-between",
-        isMaster ? "bg-primary/10 border-primary/20" : "bg-background/50 border-border"
+        "px-3 py-2 border-b flex items-center justify-between transition-colors",
+        isMaster ? "bg-primary/[0.07] border-primary/20" : "bg-[#2d2d2d] border-[#454545]"
       )}>
         <div className="flex items-center gap-2">
-          <Box className={cn("w-3 h-3", isMaster ? "text-primary" : "text-muted-foreground")} />
-          <span className="text-[10px] font-black uppercase tracking-tighter truncate max-w-[120px]">
-            {node.name || "UNNAMED_NODE"}
+          <Box className={cn("w-3.5 h-3.5 transition-colors", isMaster ? "text-primary" : "text-[#858585]")} />
+          <span className="text-[10px] font-bold uppercase tracking-tight text-[#cccccc] truncate max-w-[120px]">
+            {node.name || "node_unnamed"}
           </span>
         </div>
         {isMaster && (
-          <span className="bg-primary text-primary-foreground text-[7px] font-black px-1.5 py-0.5 uppercase tracking-widest">
-            Leader
-          </span>
+          <div className="flex items-center gap-1">
+            <div className="w-1 h-1 rounded-full bg-primary animate-pulse" />
+            <span className="text-primary text-[8px] font-black uppercase tracking-widest">Leader</span>
+          </div>
         )}
       </div>
 
       {/* Services Grid */}
-      <div className="p-4 space-y-3">
-        {/* Hardware Mini-view */}
-        <div className="flex gap-3 text-[8px] font-mono text-muted-foreground uppercase border-b border-border/10 pb-2">
-          <div className="flex items-center gap-1"><Cpu className="w-2.5 h-2.5" />{node.hardware?.cores}C</div>
-          <div className="flex items-center gap-1"><Monitor className="w-2.5 h-2.5" />{node.hardware?.memory}G</div>
-          <div className="flex items-center gap-1"><HardDrive className="w-2.5 h-2.5" />{node.hardware?.disk}G</div>
+      <div className="p-3 space-y-3">
+        <div className="flex gap-3 text-[9px] font-mono text-[#858585] uppercase border-b border-[#333] pb-2">
+          <div className="flex items-center gap-1"><Cpu className="w-3 h-3 text-primary/30" />{node.hardware?.cores}C</div>
+          <div className="flex items-center gap-1"><Monitor className="w-3 h-3 text-primary/30" />{node.hardware?.memory}G</div>
+          <div className="flex items-center gap-1"><HardDrive className="w-3 h-3 text-primary/30" />{node.hardware?.disk}G</div>
         </div>
 
-        {/* Active Services List */}
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {node.postgres && (
-            <div className="flex items-center gap-2 text-[9px] font-bold uppercase text-primary">
-              <Database className="w-3 h-3" /> Postgres {node.postgres.role === Postgres_PostgresService_Role.MASTER ? 'Leader' : 'Replica'}
+            <div className="flex items-center justify-between p-1.5 rounded-sm bg-primary/5 border border-primary/10">
+              <div className="flex items-center gap-2 text-[10px] font-bold text-[#e1e1e1] uppercase tracking-tighter">
+                <Database className="w-3 h-3 text-primary" /> Postgres
+              </div>
+              <span className="text-[8px] font-bold text-primary/60 uppercase">{node.postgres.role === Postgres_PostgresService_Role.MASTER ? 'M' : 'R'}</span>
             </div>
           )}
           {node.etcd && (
-            <div className="flex items-center gap-2 text-[9px] font-bold uppercase text-accent">
-              <Shield className="w-3 h-3" /> Etcd Consensus
+            <div className="flex items-center gap-2 text-[10px] font-bold text-[#e1e1e1] uppercase tracking-tighter p-1.5 rounded-sm bg-[#007acc]/5 border border-[#007acc]/10">
+              <Shield className="w-3 h-3 text-[#007acc]" /> Etcd Cluster
             </div>
           )}
           {node.pgbouncer && (
-            <div className="flex items-center gap-2 text-[9px] font-bold uppercase text-accent">
-              <Activity className="w-3 h-3" /> Connection Pool
-            </div>
-          )}
-          {!node.postgres && !node.etcd && !node.pgbouncer && (
-            <div className="text-[9px] italic text-muted-foreground py-2 text-center border border-dashed border-border">
-              No active services
+            <div className="flex items-center gap-2 text-[10px] font-bold text-[#e1e1e1] uppercase tracking-tighter p-1.5 rounded-sm bg-[#4ec9b0]/5 border border-[#4ec9b0]/10">
+              <Activity className="w-3 h-3 text-[#4ec9b0]" /> Connection Pool
             </div>
           )}
         </div>
       </div>
 
-      <Handle type="target" position={Position.Left} className="!bg-primary/50 !w-2 !h-2 !border-none" />
-      <Handle type="source" position={Position.Right} className="!bg-primary/50 !w-2 !h-2 !border-none" />
-    </motion.div>
+      <Handle type="target" position={Position.Left} className="!bg-[#555] !w-1.5 !h-1.5 !border-none !rounded-none" />
+      <Handle type="source" position={Position.Right} className="!bg-[#555] !w-1.5 !h-1.5 !border-none !rounded-none" />
+    </div>
   );
 });
 
@@ -189,15 +180,15 @@ const Blueprint = ({ icon: Icon, title, type, description }: any) => {
     <div
       draggable
       onDragStart={onDragStart}
-      className="p-4 bg-background border-2 border-border hover:border-primary transition-all cursor-grab active:cursor-grabbing group"
+      className="p-3 bg-[#252526] border border-[#333333] hover:border-primary/40 hover:bg-[#2d2d2d] hover:shadow-lg transition-all cursor-grab active:cursor-grabbing group rounded shadow-sm"
     >
-      <div className="flex items-center gap-3 mb-2">
-        <div className="p-2 bg-primary/5 group-hover:bg-primary/10 transition-colors">
-          <Icon className="w-5 h-5 text-primary" />
+      <div className="flex items-center gap-2.5 mb-1.5">
+        <div className="p-1.5 bg-[#1e1e1e] rounded group-hover:bg-primary/10 transition-colors">
+          <Icon className="w-4 h-4 text-[#858585] group-hover:text-primary transition-colors" />
         </div>
-        <div className="text-[11px] font-black uppercase tracking-tight">{title}</div>
+        <div className="text-[11px] font-bold uppercase tracking-tight text-[#cccccc] group-hover:text-[#e1e1e1]">{title}</div>
       </div>
-      <p className="text-[8px] text-muted-foreground uppercase leading-relaxed font-mono">{description}</p>
+      <p className="text-[9px] text-[#606060] leading-tight font-medium uppercase tracking-tighter">{description}</p>
     </div>
   );
 };
@@ -205,16 +196,14 @@ const Blueprint = ({ icon: Icon, title, type, description }: any) => {
 // --- Main Designer Component ---
 
 const TopologyDesigner = ({ test, onChange }: TopologyCanvasProps) => {
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, fitView } = useReactFlow();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const databaseRef = test.databaseRef;
 
-  // 1. Sync React Flow state with databaseRef and test
   const elements = useMemo(() => {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
 
-    // Add Load Generator if present
     if (test.stroppyCli) {
       nodes.push({
         id: 'stroppy-node',
@@ -230,12 +219,8 @@ const TopologyDesigner = ({ test, onChange }: TopologyCanvasProps) => {
 
     if (databaseRef.case === 'databaseTemplate' && databaseRef.value.template.case === 'postgresCluster') {
       const cluster = databaseRef.value.template.value;
-      
-      // Master Discovery
       const masterNodeIdx = cluster.nodes.findIndex((n: any) => n.postgres?.role === Postgres_PostgresService_Role.MASTER);
       const masterId = masterNodeIdx !== -1 ? `node-${masterNodeIdx}` : null;
-
-      // Link Load Generator to Master or first Pgbouncer
       const firstPgbouncerIdx = cluster.nodes.findIndex((n: any) => n.pgbouncer);
       const entryId = firstPgbouncerIdx !== -1 ? `node-${firstPgbouncerIdx}` : masterId;
 
@@ -245,7 +230,7 @@ const TopologyDesigner = ({ test, onChange }: TopologyCanvasProps) => {
           source: 'stroppy-node',
           target: entryId,
           animated: true,
-          style: { stroke: 'var(--accent)', strokeWidth: 3 }
+          style: { stroke: 'rgba(var(--primary), 0.4)', strokeWidth: 2 }
         });
       }
 
@@ -264,7 +249,7 @@ const TopologyDesigner = ({ test, onChange }: TopologyCanvasProps) => {
             source: masterId,
             target: nodeId,
             animated: true,
-            style: { stroke: 'var(--primary)', strokeWidth: 2, opacity: 0.4 }
+            style: { stroke: '#454545', strokeWidth: 1.5, opacity: 0.6 }
           });
         }
       });
@@ -276,76 +261,7 @@ const TopologyDesigner = ({ test, onChange }: TopologyCanvasProps) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(elements.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(elements.edges);
 
-  useEffect(() => {
-    setNodes((nds) => {
-      return elements.nodes.map((newNo: Node) => {
-        const existingNode = nds.find((n) => n.id === newNo.id);
-        return existingNode ? { ...newNo, position: existingNode.position } : newNo;
-      });
-    });
-    setEdges(elements.edges);
-  }, [elements, setNodes, setEdges]);
-
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault();
-      const type = event.dataTransfer.getData('application/reactflow');
-      if (!type) return;
-
-      if (type === 'load') {
-        onChange({
-          stroppyCli: create(StroppyCliSchema, { version: "v1.0.0", workload: StroppyCli_Workload.TPCC }),
-          stroppyHardware: create(HardwareSchema, { cores: 2, memory: 4, disk: 20 })
-        });
-        return;
-      }
-
-      const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
-
-      if (databaseRef.case === 'databaseTemplate' && databaseRef.value.template.case === 'postgresCluster') {
-        const ref = JSON.parse(JSON.stringify(databaseRef.value));
-        const nodeCount = ref.template.value.nodes.length;
-
-        let newNode = create(Postgres_NodeSchema, {
-          hardware: create(HardwareSchema, { cores: 2, memory: 4, disk: 50 })
-        });
-
-        if (type === 'postgres') {
-          newNode.name = `pg-node-${nodeCount + 1}`;
-          newNode.postgres = create(Postgres_PostgresServiceSchema, { role: Postgres_PostgresService_Role.REPLICA });
-        } else if (type === 'etcd') {
-          newNode.name = `etcd-node-${nodeCount + 1}`;
-          newNode.etcd = create(Postgres_EtcdServiceSchema, { monitor: false });
-        } else if (type === 'pgbouncer') {
-          newNode.name = `pgb-node-${nodeCount + 1}`;
-          newNode.pgbouncer = create(Postgres_PgbouncerServiceSchema, { 
-            config: create(Postgres_PgbouncerConfigSchema, { poolMode: Postgres_PgbouncerConfig_PoolMode.TRANSACTION, poolSize: 20 }),
-            monitor: false,
-          });
-        }
-
-        ref.template.value.nodes.push(newNode);
-        onChange({ databaseRef: { case: "databaseTemplate", value: ref } });
-        
-        // Use position to place node precisely where it was dropped
-        setNodes((nds) => nds.concat({
-          id: `node-${nodeCount}`,
-          type: 'smart',
-          position,
-          data: newNode as any
-        }));
-      }
-    },
-    [screenToFlowPosition, databaseRef, onChange]
-  );
-
-  const updateNodeData = (nodeIdx: number, updates: any) => {
-    const ref = JSON.parse(JSON.stringify(databaseRef.value));
-    ref.template.value.nodes[nodeIdx] = { ...ref.template.value.nodes[nodeIdx], ...updates };
-    onChange({ databaseRef: { case: "databaseTemplate", value: ref } });
-  };
-
-  const deleteNode = (nodeId: string) => {
+  const deleteNode = useCallback((nodeId: string) => {
     if (nodeId === 'stroppy-node') {
       onChange({ stroppyCli: undefined, stroppyHardware: undefined });
       setSelectedNodeId(null);
@@ -356,218 +272,264 @@ const TopologyDesigner = ({ test, onChange }: TopologyCanvasProps) => {
     ref.template.value.nodes.splice(idx, 1);
     setSelectedNodeId(null);
     onChange({ databaseRef: { case: "databaseTemplate", value: ref } });
+  }, [databaseRef, onChange]);
+
+  // 1. Hotkeys support
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (e.key === 'f') {
+        e.preventDefault();
+        fitView({ duration: 400 });
+      }
+
+      if (e.key === 'C' && e.shiftKey) {
+        e.preventDefault();
+        if (confirm("Reset current topology blueprint?")) {
+          const ref = JSON.parse(JSON.stringify(databaseRef.value));
+          ref.template.value.nodes = [];
+          onChange({ databaseRef: { case: "databaseTemplate", value: ref }, stroppyCli: undefined, stroppyHardware: undefined });
+        }
+      }
+
+      if (e.key === 'Escape') {
+        setSelectedNodeId(null);
+        setNodes(nds => nds.map(n => ({ ...n, selected: false })));
+      }
+
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        const selectedNodes = nodes.filter(n => n.selected);
+        if (selectedNodes.length > 0) {
+          e.preventDefault();
+          selectedNodes.forEach(node => deleteNode(node.id));
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [fitView, databaseRef, onChange, setNodes, nodes, deleteNode]);
+
+  useEffect(() => {
+    setNodes((nds) => {
+      return elements.nodes.map((newNo: Node) => {
+        const existingNode = nds.find((n) => n.id === newNo.id);
+        return existingNode ? { ...newNo, position: existingNode.position } : newNo;
+      });
+    });
+    setEdges(elements.edges);
+  }, [elements, setNodes, setEdges]);
+
+  const updateNodeData = (nodeIdx: number, updates: any) => {
+    const ref = JSON.parse(JSON.stringify(databaseRef.value));
+    ref.template.value.nodes[nodeIdx] = { ...ref.template.value.nodes[nodeIdx], ...updates };
+    onChange({ databaseRef: { case: "databaseTemplate", value: ref } });
   };
+
+  const onNodesDelete = useCallback((deleted: Node[]) => {
+    deleted.forEach(node => {
+      deleteNode(node.id);
+    });
+  }, [deleteNode]);
+
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      const type = event.dataTransfer.getData('application/reactflow');
+      if (!type) return;
+
+      const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      
+      if (type === 'load') {
+        onChange({
+          stroppyCli: create(StroppyCliSchema, { version: "v1.0.0", workload: StroppyCli_Workload.TPCC }),
+          stroppyHardware: create(HardwareSchema, { cores: 2, memory: 4, disk: 20 })
+        });
+        return;
+      }
+
+      if (databaseRef.case === 'databaseTemplate' && databaseRef.value.template.case === 'postgresCluster') {
+        const ref = JSON.parse(JSON.stringify(databaseRef.value));
+        const nodeCount = ref.template.value.nodes.length;
+
+        let newNode = create(Postgres_NodeSchema, {
+          hardware: create(HardwareSchema, { cores: 2, memory: 4, disk: 50 })
+        });
+
+        if (type === 'postgres') {
+          newNode.name = `pg_node_${nodeCount + 1}`;
+          newNode.postgres = create(Postgres_PostgresServiceSchema, { role: Postgres_PostgresService_Role.REPLICA });
+        } else if (type === 'etcd') {
+          newNode.name = `etcd_node_${nodeCount + 1}`;
+          newNode.etcd = create(Postgres_EtcdServiceSchema, { monitor: false });
+        } else if (type === 'pgbouncer') {
+          newNode.name = `pgb_node_${nodeCount + 1}`;
+          newNode.pgbouncer = create(Postgres_PgbouncerServiceSchema, { 
+            config: create(Postgres_PgbouncerConfigSchema, { poolMode: Postgres_PgbouncerConfig_PoolMode.TRANSACTION, poolSize: 20 }),
+            monitor: false,
+          });
+        }
+
+        ref.template.value.nodes.push(newNode);
+        onChange({ databaseRef: { case: "databaseTemplate", value: ref } });
+        
+        setNodes((nds) => nds.concat({
+          id: `node-${nodeCount}`,
+          type: 'smart',
+          position,
+          data: newNode as any
+        }));
+      }
+    },
+    [screenToFlowPosition, databaseRef, onChange, setNodes]
+  );
 
   const renderProperties = () => {
     if (!selectedNodeId) return null;
 
+    let title = "Node Configuration";
+    let icon = <Settings2 className="w-4 h-4 text-primary" />;
+    let content = null;
+
     if (selectedNodeId === 'stroppy-node' && test.stroppyCli) {
-      return (
-        <Panel position="top-right" className="m-4">
-          <motion.div initial={{ x: 300, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="w-96 bg-card/95 backdrop-blur-2xl border-2 border-primary shadow-2xl overflow-hidden flex flex-col">
-            <div className="p-4 bg-primary/10 border-b border-primary/20 flex items-center justify-between">
-              <div className="flex items-center gap-2"><Zap className="w-4 h-4 text-primary" /><h3 className="text-xs font-black uppercase tracking-widest text-primary">Load Generator Config</h3></div>
-              <button onClick={() => setSelectedNodeId(null)}><X className="w-4 h-4 hover:text-primary transition-colors" /></button>
-            </div>
-            <div className="p-6 space-y-6">
-               <Input label="Version" value={test.stroppyCli.version} onChange={(e) => onChange({ stroppyCli: { ...test.stroppyCli, version: e.target.value } })} />
-               <Select label="Workload" value={test.stroppyCli.workload} onChange={(v) => onChange({ stroppyCli: { ...test.stroppyCli, workload: v } })} options={[{ label: "TPC-C", value: StroppyCli_Workload.TPCC }, { label: "TPC-B", value: StroppyCli_Workload.TPCB }]} />
-               <HardwareInputs label="Client Resources" hardware={test.stroppyHardware} onChange={(h) => onChange({ stroppyHardware: h })} />
-               <button onClick={() => deleteNode('stroppy-node')} className="w-full py-4 border-2 border-destructive text-destructive text-[10px] font-black uppercase hover:bg-destructive hover:text-white transition-all flex items-center justify-center gap-2 mt-4"><Trash2 className="w-4 h-4" /> Remove Generator</button>
-            </div>
-          </motion.div>
-        </Panel>
+      title = "Load Generator";
+      icon = <Zap className="w-4 h-4 text-primary" />;
+      content = (
+        <div className="space-y-6">
+          <Input label="Engine Version" value={test.stroppyCli.version} onChange={(e) => onChange({ stroppyCli: { ...test.stroppyCli, version: e.target.value } })} />
+          <Select label="Workload Model" value={test.stroppyCli.workload} onChange={(v) => onChange({ stroppyCli: { ...test.stroppyCli, workload: v } })} options={[{ label: "TPC-C", value: StroppyCli_Workload.TPCC }, { label: "TPC-B", value: StroppyCli_Workload.TPCB }]} />
+          <HardwareInputs label="Compute Resources" hardware={test.stroppyHardware} onChange={(h) => onChange({ stroppyHardware: h })} />
+          <button onClick={() => deleteNode('stroppy-node')} className="w-full h-10 bg-destructive/5 hover:bg-destructive hover:text-white text-destructive text-[10px] font-bold uppercase border border-destructive/20 transition-all rounded flex items-center justify-center gap-2 mt-6 shadow-sm"><Trash2 className="w-4 h-4" /> Decommission Generator</button>
+        </div>
       );
-    }
-
-    const idx = parseInt(selectedNodeId.replace('node-', ''));
-    const node = databaseRef.value.template.value.nodes[idx];
-    if (!node) return null;
-
-    return (
-      <Panel position="top-right" className="m-4">
-        <motion.div
-          initial={{ x: 300, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          className="w-96 bg-card/95 backdrop-blur-2xl border-2 border-primary shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
-        >
-          <div className="p-4 bg-primary/10 border-b border-primary/20 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Settings2 className="w-4 h-4 text-primary" />
-              <h3 className="text-xs font-black uppercase tracking-widest text-primary">Node Configuration</h3>
-            </div>
-            <button onClick={() => setSelectedNodeId(null)}><X className="w-4 h-4 hover:text-primary transition-colors" /></button>
+    } else {
+      const idx = parseInt(selectedNodeId.replace('node-', ''));
+      const node = databaseRef.value.template.value.nodes[idx];
+      if (!node) return null;
+      content = (
+        <div className="space-y-8">
+          <div className="space-y-4">
+            <Input label="Identity ID" value={node.name} onChange={(e) => updateNodeData(idx, { name: e.target.value })} />
+            <HardwareInputs label="Node Resources" hardware={node.hardware} onChange={(h) => updateNodeData(idx, { hardware: h })} />
           </div>
 
-          <div className="p-6 space-y-8 overflow-y-auto custom-scrollbar">
-            {/* Identity */}
-            <div className="space-y-4">
-              <Input label="System ID" value={node.name} onChange={(e) => updateNodeData(idx, { name: e.target.value })} />
-              <HardwareInputs label="Node Resources" hardware={node.hardware} onChange={(h) => updateNodeData(idx, { hardware: h })} />
-            </div>
+          <div className="space-y-4 pt-6 border-t border-[#333]">
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-[#858585] flex items-center gap-2">
+              <ChevronRight className="w-3 h-3 text-primary" /> Module Matrix
+            </h4>
 
-            {/* Service Modules */}
-            <div className="space-y-4 pt-4 border-t border-border">
-              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2">
-                <ChevronRight className="w-3 h-3 text-primary" /> Module Matrix
-              </h4>
-
-              <div className="space-y-3">
-                {/* Postgres Module */}
-                <div className={cn("p-4 border-2 transition-all", node.postgres ? "bg-primary/5 border-primary/50" : "bg-background border-border opacity-50")}>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Database className="w-4 h-4" />
-                      <span className="text-[11px] font-black uppercase">PostgreSQL</span>
-                    </div>
-                    <input 
-                      type="checkbox" 
-                      checked={!!node.postgres} 
-                      onChange={(e) => {
-                        const postgres = e.target.checked ? create(Postgres_PostgresServiceSchema, { role: Postgres_PostgresService_Role.REPLICA }) : undefined;
-                        updateNodeData(idx, { postgres });
-                      }} 
-                    />
+            <div className="space-y-3">
+              {/* Postgres Module */}
+              <div className={cn("p-4 border rounded shadow-sm transition-all", node.postgres ? "bg-primary/5 border-primary/30 shadow-primary/5" : "bg-[#1e1e1e] border-[#333] opacity-60")}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2.5">
+                    <Database className={cn("w-4 h-4", node.postgres ? "text-primary" : "text-[#454545]")} />
+                    <span className="text-[11px] font-bold uppercase text-[#e1e1e1]">PostgreSQL</span>
                   </div>
-                  {node.postgres && (
-                    <Select 
-                      label="Service Role" 
-                      value={node.postgres.role} 
-                      onChange={(v) => {
-                        const p = JSON.parse(JSON.stringify(node.postgres));
-                        p.role = v;
-                        updateNodeData(idx, { postgres: p });
-                      }}
-                      options={[
-                        { label: "Cluster Leader", value: Postgres_PostgresService_Role.MASTER },
-                        { label: "Active Replica", value: Postgres_PostgresService_Role.REPLICA }
-                      ]}
-                    />
-                  )}
+                  <input type="checkbox" checked={!!node.postgres} onChange={(e) => updateNodeData(idx, { postgres: e.target.checked ? create(Postgres_PostgresServiceSchema, { role: Postgres_PostgresService_Role.REPLICA }) : undefined })} className="accent-primary" />
                 </div>
+                {node.postgres && (
+                  <Select label="Role" value={node.postgres.role} onChange={(v) => {
+                    const p = JSON.parse(JSON.stringify(node.postgres)); p.role = v; updateNodeData(idx, { postgres: p });
+                  }} options={[{ label: "Master / Leader", value: Postgres_PostgresService_Role.MASTER }, { label: "Active Replica", value: Postgres_PostgresService_Role.REPLICA }]} />
+                )}
+              </div>
 
-                {/* Etcd Module */}
-                <div className={cn("p-4 border-2 transition-all", node.etcd ? "bg-accent/5 border-accent/50" : "bg-background border-border opacity-50")}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-4 h-4" />
-                      <span className="text-[11px] font-black uppercase">Etcd Consensus</span>
-                    </div>
-                    <input 
-                      type="checkbox" 
-                      checked={!!node.etcd} 
-                      onChange={(e) => {
-                        const etcd = e.target.checked ? create(Postgres_EtcdServiceSchema, { monitor: false }) : undefined;
-                        updateNodeData(idx, { etcd });
-                      }} 
-                    />
+              {/* Etcd Module */}
+              <div className={cn("p-4 border rounded shadow-sm transition-all", node.etcd ? "bg-[#007acc]/10 border-[#007acc]/30" : "bg-[#1e1e1e] border-[#333] opacity-60")}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Shield className={cn("w-4 h-4", node.etcd ? "text-[#007acc]" : "text-[#454545]")} />
+                    <span className="text-[11px] font-bold uppercase text-[#e1e1e1]">Etcd Consensus</span>
                   </div>
+                  <input type="checkbox" checked={!!node.etcd} onChange={(e) => updateNodeData(idx, { etcd: e.target.checked ? create(Postgres_EtcdServiceSchema, { monitor: false }) : undefined })} className="accent-[#007acc]" />
                 </div>
+              </div>
 
-                {/* Pgbouncer Module */}
-                <div className={cn("p-4 border-2 transition-all", node.pgbouncer ? "bg-accent/5 border-accent/50" : "bg-background border-border opacity-50")}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Activity className="w-4 h-4" />
-                      <span className="text-[11px] font-black uppercase">PgBouncer Pool</span>
-                    </div>
-                    <input 
-                      type="checkbox" 
-                      checked={!!node.pgbouncer} 
-                      onChange={(e) => {
-                        const pgbouncer = e.target.checked ? create(Postgres_PgbouncerServiceSchema, { 
-                          config: create(Postgres_PgbouncerConfigSchema, { poolMode: Postgres_PgbouncerConfig_PoolMode.TRANSACTION, poolSize: 20 }),
-                          monitor: false,
-                        }) : undefined;
-                        updateNodeData(idx, { pgbouncer });
-                      }} 
-                    />
+              {/* Pgbouncer Module */}
+              <div className={cn("p-4 border rounded shadow-sm transition-all", node.pgbouncer ? "bg-[#4ec9b0]/10 border-[#4ec9b0]/30" : "bg-[#1e1e1e] border-[#333] opacity-60")}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Activity className={cn("w-4 h-4", node.pgbouncer ? "text-[#4ec9b0]" : "text-[#454545]")} />
+                    <span className="text-[11px] font-bold uppercase text-[#e1e1e1]">PgBouncer Pool</span>
                   </div>
+                  <input type="checkbox" checked={!!node.pgbouncer} onChange={(e) => updateNodeData(idx, { pgbouncer: e.target.checked ? create(Postgres_PgbouncerServiceSchema, { config: create(Postgres_PgbouncerConfigSchema, { poolMode: Postgres_PgbouncerConfig_PoolMode.TRANSACTION, poolSize: 20 }), monitor: false }) : undefined })} className="accent-[#4ec9b0]" />
                 </div>
               </div>
             </div>
-
-            <button 
-              onClick={() => deleteNode(selectedNodeId!)}
-              className="w-full py-4 border-2 border-destructive text-destructive text-[10px] font-black uppercase hover:bg-destructive hover:text-white transition-all flex items-center justify-center gap-2 mt-8"
-            >
-              <Trash2 className="w-4 h-4" /> Decommission Node
-            </button>
           </div>
-        </motion.div>
+
+          <button onClick={() => deleteNode(selectedNodeId)} className="w-full h-10 bg-destructive/5 hover:bg-destructive hover:text-white text-destructive text-[10px] font-bold uppercase border border-destructive/20 transition-all rounded flex items-center justify-center gap-2 mt-6 shadow-sm"><Trash2 className="w-4 h-4" /> Decommission Node</button>
+        </div>
+      );
+    }
+
+    return (
+      <Panel position="top-right" className="m-0 h-full">
+        <div className="w-80 h-full bg-[#252526] border-l border-[#333] shadow-[-10px_0_30px_rgba(0,0,0,0.3)] flex flex-col">
+          <div className="h-10 px-4 border-b border-[#333] bg-[#2d2d2d] flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-2.5">
+              {icon}
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-[#cccccc]">{title}</h3>
+            </div>
+            <button onClick={() => setSelectedNodeId(null)} className="p-1 hover:bg-[#37373d] rounded transition-colors text-[#858585] hover:text-[#cccccc]"><X className="w-4 h-4" /></button>
+          </div>
+          <div className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-[#1e1e1e]/30 shadow-inner">
+            {content}
+          </div>
+        </div>
       </Panel>
     );
   };
 
   return (
-    <div className="w-full h-full flex bg-background overflow-hidden relative">
+    <div className="w-full h-full flex bg-[#1e1e1e] overflow-hidden relative shadow-inner">
       {/* Sidebar - Designer Tools */}
-      <div className="w-72 border-r-2 border-border bg-card/20 backdrop-blur-xl z-20 flex flex-col">
-        <div className="p-6 border-b border-border bg-background/50">
-          <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary">Architect Tools</h2>
-          <p className="text-[9px] text-muted-foreground uppercase mt-1">v4.8 Modular Designer</p>
+      <div className="w-60 border-r border-[#2b2b2b] bg-[#181818] z-20 flex flex-col shrink-0 shadow-2xl">
+        <div className="h-9 px-4 border-b border-[#2b2b2b] flex items-center bg-[#1e1e1e]/50">
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#858585] flex items-center gap-2">
+            <Layers className="w-3.5 h-3.5 text-primary/60" /> Blueprints
+          </span>
         </div>
         
-        <div className="p-6 space-y-6 overflow-y-auto">
-          <div className="space-y-3">
-            <h3 className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Base Blueprints</h3>
-            <Blueprint 
-              icon={Zap} 
-              type="load" 
-              title="Load Generator" 
-              description="Stroppy workload generator for performance testing." 
-            />
-            <Blueprint 
-              icon={Database} 
-              type="postgres" 
-              title="Database Node" 
-              description="PostgreSQL instance with customizable role and resources." 
-            />
-            <Blueprint 
-              icon={Shield} 
-              type="etcd" 
-              title="Consensus Node" 
-              description="Distributed key-value store for cluster high availability." 
-            />
-            <Blueprint 
-              icon={Activity} 
-              type="pgbouncer" 
-              title="Proxy Node" 
-              description="Lightweight connection pooler for PostgreSQL." 
-            />
-          </div>
+        <div className="p-3 space-y-3 overflow-y-auto custom-scrollbar flex-1 shadow-inner">
+          <Blueprint icon={Zap} type="load" title="Load Generator" description="Workload generation engine." />
+          <Blueprint icon={Database} type="postgres" title="Database Node" description="PostgreSQL instance module." />
+          <Blueprint icon={Shield} type="etcd" title="Consensus Node" description="HA consensus store module." />
+          <Blueprint icon={Activity} type="pgbouncer" title="Proxy Node" description="Connection pooler module." />
 
-          <div className="pt-6 border-t border-border space-y-4">
-            <h3 className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Global State</h3>
+          <div className="pt-4 border-t border-[#333] space-y-2">
             <button 
-              onClick={() => {
-                if (confirm("Reset current topology?")) {
-                  const ref = JSON.parse(JSON.stringify(databaseRef.value));
-                  ref.template.value.nodes = [];
-                  onChange({ databaseRef: { case: "databaseTemplate", value: ref }, stroppyCli: undefined, stroppyHardware: undefined });
-                }
-              }}
-              className="w-full p-3 border-2 border-border hover:border-destructive hover:text-destructive transition-all text-[9px] font-black uppercase flex items-center justify-center gap-2"
+              onClick={() => { if (confirm("Reset current topology blueprint?")) {
+                const ref = JSON.parse(JSON.stringify(databaseRef.value)); ref.template.value.nodes = [];
+                onChange({ databaseRef: { case: "databaseTemplate", value: ref }, stroppyCli: undefined, stroppyHardware: undefined });
+              }}}
+              className="w-full h-8 border border-[#454545] hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive text-[#858585] text-[9px] font-bold uppercase transition-all flex items-center justify-center gap-2 rounded shadow-sm"
             >
-              <Trash2 className="w-3 h-3" /> Clear Blueprint
+              <Trash2 className="w-3 h-3" /> Reset Canvas
             </button>
           </div>
         </div>
 
-        <div className="mt-auto p-6 bg-primary/5 border-t border-primary/20">
-          <div className="flex items-center gap-2 text-[9px] font-black uppercase text-primary animate-pulse">
-            <MousePointer2 className="w-3 h-3" /> Design Mode Active
+        <div className="p-3 bg-[#1e1e1e] border-t border-[#2b2b2b] shadow-2xl">
+          <div className="flex items-center gap-2.5 text-[9px] font-bold uppercase text-primary/60 tracking-wider">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-pulse shadow-[0_0_5px_rgba(var(--primary),0.3)]" />
+            Designer Engine Active
           </div>
         </div>
       </div>
 
       {/* Main Designer Canvas */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative bg-[#1e1e1e] shadow-inner">
         <ReactFlow
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onNodesDelete={onNodesDelete}
           nodeTypes={nodeTypes}
           onNodeClick={(_, n) => setSelectedNodeId(n.id)}
           onPaneClick={() => setSelectedNodeId(null)}
@@ -579,26 +541,28 @@ const TopologyDesigner = ({ test, onChange }: TopologyCanvasProps) => {
           snapToGrid={true}
           snapGrid={[20, 20]}
         >
-          <Background variant={BackgroundVariant.Lines} gap={20} color="#333" />
+          <Background variant={BackgroundVariant.Lines} gap={20} color="#252526" />
           
           {renderProperties()}
           
-          <Panel position="bottom-right">
-             <div className="p-2 bg-background/80 border border-border text-[8px] font-mono text-muted-foreground uppercase">
-                Nodes: {nodes.length} | Edges: {edges.length}
+          <Panel position="bottom-left" className="m-4">
+             <div className="px-3 py-1.5 bg-[#252526]/90 border border-[#454545] rounded shadow-xl text-[9px] font-mono text-[#858585] uppercase flex items-center gap-4 backdrop-blur-sm">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#858585]/30" />
+                  <span>Nodes: <span className="text-[#cccccc]">{nodes.length}</span></span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#858585]/30" />
+                  <span>Edges: <span className="text-[#cccccc]">{edges.length}</span></span>
+                </div>
+                <div className="flex items-center gap-4 ml-2 border-l border-[#454545] pl-4">
+                  <span className="opacity-40">[F] FIT</span>
+                  <span className="opacity-40">[ESC] DESELECT</span>
+                  <span className="opacity-40">[DEL] DELETE</span>
+                  <span className="opacity-40">[SHIFT+C] CLEAR</span>
+                </div>
              </div>
           </Panel>
-
-          <Controls className="!bg-card !border-2 !border-primary !shadow-none [&_button]:!border-border" />
-          <MiniMap 
-            className="!bg-card !border-2 !border-primary !m-4" 
-            nodeColor={(n) => {
-              const nodeData = n.data as unknown as Postgres_Node;
-              if (n.type === 'load') return 'var(--accent)';
-              return nodeData?.postgres?.role === Postgres_PostgresService_Role.MASTER ? 'var(--primary)' : '#333';
-            }}
-            maskColor="rgba(0,0,0,0.5)"
-          />
         </ReactFlow>
       </div>
     </div>
@@ -610,20 +574,26 @@ export const TopologyCanvas = (props: TopologyCanvasProps) => {
 
   if (!isCluster) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-background p-12 text-center space-y-6">
-        <div className="p-8 border-2 border-dashed border-border group hover:border-primary transition-all cursor-pointer" onClick={() => {
-           props.onChange({
-            databaseRef: {
-              case: "databaseTemplate", value: create(Postgres_ClusterSchema, {
-                defaults: create(Postgres_SettingsSchema, { version: Postgres_Settings_Version.VERSION_17, storageEngine: Postgres_Settings_StorageEngine.HEAP }),
-                nodes: []
-              })
-            }
-          });
-        }}>
-          <Plus className="w-12 h-12 text-muted-foreground group-hover:text-primary transition-colors mx-auto mb-4" />
-          <h3 className="text-xl font-black uppercase italic tracking-tighter">Initialize HA Cluster</h3>
-          <p className="text-xs text-muted-foreground uppercase font-mono max-w-xs mx-auto">Click to switch from external connection to local high-availability cluster design.</p>
+      <div className="w-full h-full flex flex-col items-center justify-center bg-[#1e1e1e] p-12 text-center space-y-8 shadow-inner">
+        <div 
+          className="p-12 border border-[#333] bg-[#252526] hover:border-primary/30 hover:shadow-[0_0_40px_rgba(var(--primary),0.05)] transition-all cursor-pointer rounded shadow-2xl group relative overflow-hidden" 
+          onClick={() => {
+            props.onChange({
+              databaseRef: {
+                case: "databaseTemplate", value: create(Postgres_ClusterSchema, {
+                  defaults: create(Postgres_SettingsSchema, { version: Postgres_Settings_Version.VERSION_17, storageEngine: Postgres_Settings_StorageEngine.HEAP }),
+                  nodes: []
+                })
+              }
+            });
+          }}
+        >
+          <div className="absolute inset-0 bg-primary/[0.02] group-hover:bg-primary/[0.04] transition-colors" />
+          <div className="relative z-10">
+            <Plus className="w-12 h-12 text-[#454545] group-hover:text-primary transition-all group-hover:scale-110 mx-auto mb-6" />
+            <h3 className="text-xl font-black uppercase tracking-widest text-[#e1e1e1]">Initialize Scenario</h3>
+            <p className="text-[10px] text-[#858585] uppercase font-bold tracking-widest max-w-[280px] mx-auto mt-3 opacity-60">Architect high-availability database cluster resources for performance profiling.</p>
+          </div>
         </div>
       </div>
     );
