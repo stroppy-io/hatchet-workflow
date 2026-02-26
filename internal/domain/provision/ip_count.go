@@ -9,6 +9,8 @@ import (
 // The count follows the DSL semantics:
 //   - postgres instance: 1 VM
 //   - postgres cluster: master + replicas_count + dedicated addon instances
+//   - picodata instance: 1 VM
+//   - picodata cluster: nodes_count
 func RequiredIPCount(tmpl *database.Database_Template) int {
 	if tmpl == nil {
 		return 0
@@ -45,6 +47,17 @@ func RequiredIPCount(tmpl *database.Database_Template) int {
 		}
 
 		return total
+	case *database.Database_Template_PicodataInstance:
+		if t.PicodataInstance == nil {
+			return 0
+		}
+		return 1
+	case *database.Database_Template_PicodataCluster:
+		cluster := t.PicodataCluster
+		if cluster == nil || cluster.GetTopology() == nil {
+			return 0
+		}
+		return int(cluster.GetTopology().GetNodesCount())
 	default:
 		return 0
 	}
