@@ -108,6 +108,28 @@ func TestRequiredIPCount(t *testing.T) {
 			},
 			want: 3, // 1 master + 2 replicas, etcd colocated
 		},
+		{
+			name: "picodata instance",
+			tmpl: &database.Database_Template{
+				Template: &database.Database_Template_PicodataInstance{
+					PicodataInstance: &database.Picodata_Instance_Template{},
+				},
+			},
+			want: 1,
+		},
+		{
+			name: "picodata cluster with 3 nodes",
+			tmpl: &database.Database_Template{
+				Template: &database.Database_Template_PicodataCluster{
+					PicodataCluster: &database.Picodata_Cluster_Template{
+						Topology: &database.Picodata_Cluster_Template_Topology{
+							NodesCount: 3,
+						},
+					},
+				},
+			},
+			want: 3,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

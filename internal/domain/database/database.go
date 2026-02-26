@@ -21,11 +21,32 @@ func ValidateDatabaseTemplate(ctx context.Context, template *database.Database_T
 		return validatePostgresInstanceTemplate(t.PostgresInstance)
 	case *database.Database_Template_PostgresCluster:
 		return validatePostgresClusterTemplate(t.PostgresCluster)
+	case *database.Database_Template_PicodataInstance:
+		return validatePicodataInstanceTemplate(t.PicodataInstance)
+	case *database.Database_Template_PicodataCluster:
+		return validatePicodataClusterTemplate(t.PicodataCluster)
 	case nil:
 		return fmt.Errorf("database template content is nil")
 	default:
 		return fmt.Errorf("unknown database template type")
 	}
+}
+
+func validatePicodataInstanceTemplate(tmpl *database.Picodata_Instance_Template) error {
+	if tmpl == nil {
+		return fmt.Errorf("picodata instance template is nil")
+	}
+	return nil
+}
+
+func validatePicodataClusterTemplate(tmpl *database.Picodata_Cluster_Template) error {
+	if tmpl == nil {
+		return fmt.Errorf("picodata cluster template is nil")
+	}
+	if tmpl.GetTopology() == nil {
+		return fmt.Errorf("picodata cluster topology is required")
+	}
+	return nil
 }
 
 func validatePostgresInstanceTemplate(tmpl *database.Postgres_Instance_Template) error {
