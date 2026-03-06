@@ -43,6 +43,10 @@ func NewServer(cfg *Config, hatchet *hatchetLib.Client) *http.Server {
 		w.Write([]byte("ok"))
 	})
 
+	// Embedded frontend (SPA)
+	staticHandler := NewStaticHandler()
+	mux.NotFound(staticHandler.ServeHTTP)
+
 	// Register ConnectRPC handlers
 	path, handler := apiv1connect.NewAuthAPIHandler(authHandler, interceptors)
 	mux.Handle(path+"*", handler)

@@ -6,3 +6,7 @@ bin
 examples/test.yaml
 examples/test.json
 examples/dump_test.go
+
+# Embedded frontend build artifacts (populated by Dockerfile)
+internal/domain/api/static/*
+!internal/domain/api/static/index.html
