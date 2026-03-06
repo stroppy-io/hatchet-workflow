@@ -163,9 +163,9 @@ func TestBuildForPostgresInstance_WithSidecars(t *testing.T) {
 	}
 
 	item := intent.GetItems()[0]
-	// 1 postgres + 1 node-exporter sidecar + 1 postgres-exporter sidecar = 3
-	if len(item.GetContainers()) != 3 {
-		t.Errorf("expected 3 containers, got %d", len(item.GetContainers()))
+	// 1 postgres + 1 node-exporter + 1 postgres-exporter + 1 otel-collector = 4
+	if len(item.GetContainers()) != 4 {
+		t.Errorf("expected 4 containers, got %d", len(item.GetContainers()))
 		for _, c := range item.GetContainers() {
 			t.Logf("  container: id=%s runtime=%T", c.GetId(), c.GetRuntime())
 		}
@@ -315,14 +315,14 @@ func TestBuildForPostgresCluster_WithMonitoring(t *testing.T) {
 	}
 
 	master := findItem(intent.GetItems(), "postgres-master")
-	// master: 1 postgres + 1 node-exporter + 1 postgres-exporter = 3
-	if len(master.GetContainers()) != 3 {
-		t.Errorf("master expected 3 containers (pg + ne + pge), got %d", len(master.GetContainers()))
+	// master: 1 postgres + 1 node-exporter + 1 postgres-exporter + 1 otel-collector = 4
+	if len(master.GetContainers()) != 4 {
+		t.Errorf("master expected 4 containers (pg + ne + pge + otel), got %d", len(master.GetContainers()))
 	}
 
 	replica := findItem(intent.GetItems(), "postgres-replica-0")
-	if len(replica.GetContainers()) != 3 {
-		t.Errorf("replica expected 3 containers, got %d", len(replica.GetContainers()))
+	if len(replica.GetContainers()) != 4 {
+		t.Errorf("replica expected 4 containers, got %d", len(replica.GetContainers()))
 	}
 }
 

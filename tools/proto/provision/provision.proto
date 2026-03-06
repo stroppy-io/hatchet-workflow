@@ -71,6 +71,12 @@ message Container {
         database.Picodata.Sidecar.Backup config = 1 [(validate.rules).message.required = true];
     }
 
+    message OtelCollectorRuntime {
+        bool enabled = 1;
+        string otlp_endpoint = 2; // OTLP HTTP endpoint to push metrics/traces
+        repeated string scrape_targets = 3; // Prometheus endpoints to scrape (e.g. "localhost:9100")
+    }
+
     string id = 1 [(validate.rules).string.min_len = 1];
     string name = 2 [(validate.rules).string.min_len = 1];
     string image = 3 [(validate.rules).string.min_len = 1];
@@ -93,6 +99,7 @@ message Container {
         BackupRuntime backup = 107;
         PicodataRuntime picodata = 108;
         PicodataBackupRuntime picodata_backup = 110;
+        OtelCollectorRuntime otel_collector = 111;
     }
 }
 

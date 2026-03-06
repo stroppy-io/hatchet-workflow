@@ -20,6 +20,7 @@ const (
 	imagePostgresExporter  = "prometheuscommunity/postgres-exporter:latest"
 	imagePgbouncerExporter = "quay.io/prometheuscommunity/pgbouncer-exporter:latest"
 	imageBackup            = "postgres:17-alpine"
+	imageOtelCollector     = "otel/opentelemetry-collector-contrib:latest"
 
 	defaultPortPostgres          uint32 = 5432
 	defaultPortPgbouncer         uint32 = 6432
@@ -370,6 +371,11 @@ func (p *postgresPlacementBuilder) resolveRuntimeConfig(items []*provision.Place
 				}
 				ensureEnv(c)
 				c.Env["PGBOUNCER_EXPORTER_TARGET"] = fmt.Sprintf("%s:%d", itemIP, pgbouncerPort)
+
+			case c.GetOtelCollector() != nil:
+				rt := c.GetOtelCollector()
+				ensureEnv(c)
+				c.Env["OTEL_CONFIG"] = buildOtelCollectorConfig(rt.GetScrapeTargets(), rt.GetOtlpEndpoint())
 			}
 		}
 	}
@@ -494,6 +500,12 @@ func addMonitoringContainers(item *provision.PlacementIntent_Item, monitoring *d
 			},
 		})
 	}
+	// Add OTel Collector to scrape all monitoring exporters and push to lgtm.
+	// Scrape targets are resolved later in resolveRuntimeConfig once all containers are finalized.
+	targets := collectScrapeTargets(item)
+	if len(targets) > 0 {
+		item.Containers = append(item.Containers, NewOtelCollectorContainer(suffix, targets, defaultOtelCollectorOTLPEndpoint))
+	}
 }
 
 func addBackupContainer(item *provision.PlacementIntent_Item, backup *database.Postgres_BackupService, index int) {
@@ -530,6 +542,78 @@ func NewNodeExporterContainer(suffix string, monitor bool) *provision.Container 
 			},
 		},
 	}
+}
+
+func NewOtelCollectorContainer(suffix string, scrapeTargets []string, otlpEndpoint string) *provision.Container {
+	return &provision.Container{
+		Id:      "otel-collector-" + suffix,
+		Name:    "otel-collector-" + suffix,
+		Image:   imageOtelCollector,
+		Monitor: false,
+		Args:    []string{"--config", "env:OTEL_CONFIG"},
+		Runtime: &provision.Container_OtelCollector{
+			OtelCollector: &provision.Container_OtelCollectorRuntime{
+				Enabled:       true,
+				OtlpEndpoint:  otlpEndpoint,
+				ScrapeTargets: scrapeTargets,
+			},
+		},
+	}
+}
+
+const defaultOtelCollectorOTLPEndpoint = "http://otel-lgtm:4318"
+
+func collectScrapeTargets(item *provision.PlacementIntent_Item) []string {
+	targets := make([]string, 0)
+	for _, c := range item.GetContainers() {
+		switch {
+		case c.GetNodeExporter() != nil:
+			port := c.GetNodeExporter().GetPort()
+			if port == 0 {
+				port = defaultPortNodeExporter
+			}
+			targets = append(targets, fmt.Sprintf("localhost:%d", port))
+		case c.GetPostgresExporter() != nil:
+			port := c.GetPostgresExporter().GetPort()
+			if port == 0 {
+				port = defaultPortPostgresExporter
+			}
+			targets = append(targets, fmt.Sprintf("localhost:%d", port))
+		case c.GetPgbouncerExporter() != nil:
+			port := c.GetPgbouncerExporter().GetPort()
+			if port == 0 {
+				port = defaultPortPgbouncerExporter
+			}
+			targets = append(targets, fmt.Sprintf("localhost:%d", port))
+		}
+	}
+	return targets
+}
+
+func buildOtelCollectorConfig(scrapeTargets []string, otlpEndpoint string) string {
+	var b strings.Builder
+	b.WriteString("receivers:\n")
+	b.WriteString("  prometheus:\n")
+	b.WriteString("    config:\n")
+	b.WriteString("      scrape_configs:\n")
+	for i, target := range scrapeTargets {
+		b.WriteString(fmt.Sprintf("        - job_name: 'target-%d'\n", i))
+		b.WriteString("          scrape_interval: 15s\n")
+		b.WriteString("          static_configs:\n")
+		b.WriteString(fmt.Sprintf("            - targets: ['%s']\n", target))
+	}
+	b.WriteString("exporters:\n")
+	b.WriteString("  otlphttp:\n")
+	b.WriteString(fmt.Sprintf("    endpoint: %s\n", otlpEndpoint))
+	b.WriteString("service:\n")
+	b.WriteString("  telemetry:\n")
+	b.WriteString("    metrics:\n")
+	b.WriteString("      level: none\n")
+	b.WriteString("  pipelines:\n")
+	b.WriteString("    metrics:\n")
+	b.WriteString("      receivers: [prometheus]\n")
+	b.WriteString("      exporters: [otlphttp]\n")
+	return b.String()
 }
 
 func ensureEnv(c *provision.Container) {

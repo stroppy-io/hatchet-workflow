@@ -92,10 +92,10 @@ func TestBuildForPicodataInstance_WithSidecars(t *testing.T) {
 	}
 
 	item := intent.GetItems()[0]
-	// picodata container + node-exporter sidecar = 2 containers
+	// picodata + node-exporter + otel-collector = 3 containers
 	// (HttpMetrics configures the picodata container itself, no extra container)
-	if len(item.GetContainers()) != 2 {
-		t.Errorf("expected 2 containers (picodata + node-exporter), got %d", len(item.GetContainers()))
+	if len(item.GetContainers()) != 3 {
+		t.Errorf("expected 3 containers (picodata + node-exporter + otel-collector), got %d", len(item.GetContainers()))
 		for _, c := range item.GetContainers() {
 			t.Logf("  container: id=%s runtime=%T", c.GetId(), c.GetRuntime())
 		}

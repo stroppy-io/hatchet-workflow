@@ -207,6 +207,11 @@ func (p *picodataPlacementBuilder) addSidecarsToItem(item *provision.PlacementIn
 			})
 		}
 	}
+	// Add OTel Collector if any monitoring exporters are present
+	targets := collectScrapeTargets(item)
+	if len(targets) > 0 {
+		item.Containers = append(item.Containers, NewOtelCollectorContainer(item.GetName(), targets, defaultOtelCollectorOTLPEndpoint))
+	}
 }
 
 func (p *picodataPlacementBuilder) newPicodataContainer(
@@ -346,6 +351,15 @@ func (p *picodataPlacementBuilder) resolveRuntimeConfig(items []*provision.Place
 					Name:          "http-metrics",
 					ContainerPort: defaultPortPicodataHTTP,
 				})
+			}
+		}
+	}
+	// Configure OTel Collector containers
+	for _, item := range items {
+		for _, c := range item.GetContainers() {
+			if rt := c.GetOtelCollector(); rt != nil {
+				ensureEnv(c)
+				c.Env["OTEL_CONFIG"] = buildOtelCollectorConfig(rt.GetScrapeTargets(), rt.GetOtlpEndpoint())
 			}
 		}
 	}

@@ -131,7 +131,17 @@ func DeployContainersForTarget(
 		return err
 	}
 
-	return deployContainers(ctx, cli, run, containers, opts)
+	if err := deployContainers(ctx, cli, run, containers, opts); err != nil {
+		return err
+	}
+
+	// For Docker target, connect the otel-lgtm container to the per-run network
+	// so the OTel Collector sidecar can push metrics to it.
+	if opts.dockerTarget && run.networkID != "" {
+		connectOtelLgtmToNetwork(ctx, cli, run)
+	}
+
+	return nil
 }
 
 type startedContainer struct {
@@ -615,6 +625,18 @@ func logf(run *containerRun, format string, args ...any) {
 		run.logger.Log(msg)
 	}
 	logger.StdLog().Printf(format, args...)
+}
+
+const otelLgtmContainerName = "otel-lgtm"
+
+func connectOtelLgtmToNetwork(ctx context.Context, cli *dockerClient.Client, run *containerRun) {
+	err := cli.NetworkConnect(ctx, run.networkID, otelLgtmContainerName, nil)
+	if err != nil {
+		// Not fatal — otel-lgtm may not be running or already connected
+		logf(run, "otel-lgtm network connect (non-fatal): %v", err)
+	} else {
+		logf(run, "connected %s to network %s", otelLgtmContainerName, run.networkName)
+	}
 }
 
 func setNetworkName(run *containerRun, networkName string) error {

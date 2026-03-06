@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { ValidateTopologyRequest, ValidateTopologyResponse } from "./topology_pb.ts";
+import { ValidateTopologyRequest, ValidateTopologyResponse } from "./topology_pbts";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**

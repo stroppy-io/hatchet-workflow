@@ -158,6 +158,7 @@ type Container struct {
 	//	*Container_Backup
 	//	*Container_Picodata
 	//	*Container_PicodataBackup
+	//	*Container_OtelCollector
 	Runtime       isContainer_Runtime `protobuf_oneof:"runtime"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -351,6 +352,15 @@ func (x *Container) GetPicodataBackup() *Container_PicodataBackupRuntime {
 	return nil
 }
 
+func (x *Container) GetOtelCollector() *Container_OtelCollectorRuntime {
+	if x != nil {
+		if x, ok := x.Runtime.(*Container_OtelCollector); ok {
+			return x.OtelCollector
+		}
+	}
+	return nil
+}
+
 type isContainer_Runtime interface {
 	isContainer_Runtime()
 }
@@ -391,6 +401,10 @@ type Container_PicodataBackup struct {
 	PicodataBackup *Container_PicodataBackupRuntime `protobuf:"bytes,110,opt,name=picodata_backup,json=picodataBackup,proto3,oneof"`
 }
 
+type Container_OtelCollector struct {
+	OtelCollector *Container_OtelCollectorRuntime `protobuf:"bytes,111,opt,name=otel_collector,json=otelCollector,proto3,oneof"`
+}
+
 func (*Container_Postgres) isContainer_Runtime() {}
 
 func (*Container_Etcd) isContainer_Runtime() {}
@@ -408,6 +422,8 @@ func (*Container_Backup) isContainer_Runtime() {}
 func (*Container_Picodata) isContainer_Runtime() {}
 
 func (*Container_PicodataBackup) isContainer_Runtime() {}
+
+func (*Container_OtelCollector) isContainer_Runtime() {}
 
 type PlacementIntent struct {
 	state            protoimpl.MessageState  `protogen:"open.v1"`
@@ -1081,6 +1097,66 @@ func (x *Container_PicodataBackupRuntime) GetConfig() *database.Picodata_Sidecar
 	return nil
 }
 
+type Container_OtelCollectorRuntime struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Enabled       bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	OtlpEndpoint  string                 `protobuf:"bytes,2,opt,name=otlp_endpoint,json=otlpEndpoint,proto3" json:"otlp_endpoint,omitempty"`    // OTLP HTTP endpoint to push metrics/traces
+	ScrapeTargets []string               `protobuf:"bytes,3,rep,name=scrape_targets,json=scrapeTargets,proto3" json:"scrape_targets,omitempty"` // Prometheus endpoints to scrape (e.g. "localhost:9100")
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Container_OtelCollectorRuntime) Reset() {
+	*x = Container_OtelCollectorRuntime{}
+	mi := &file_provision_provision_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Container_OtelCollectorRuntime) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Container_OtelCollectorRuntime) ProtoMessage() {}
+
+func (x *Container_OtelCollectorRuntime) ProtoReflect() protoreflect.Message {
+	mi := &file_provision_provision_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Container_OtelCollectorRuntime.ProtoReflect.Descriptor instead.
+func (*Container_OtelCollectorRuntime) Descriptor() ([]byte, []int) {
+	return file_provision_provision_proto_rawDescGZIP(), []int{1, 9}
+}
+
+func (x *Container_OtelCollectorRuntime) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *Container_OtelCollectorRuntime) GetOtlpEndpoint() string {
+	if x != nil {
+		return x.OtlpEndpoint
+	}
+	return ""
+}
+
+func (x *Container_OtelCollectorRuntime) GetScrapeTargets() []string {
+	if x != nil {
+		return x.ScrapeTargets
+	}
+	return nil
+}
+
 type PlacementIntent_Item struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
@@ -1094,7 +1170,7 @@ type PlacementIntent_Item struct {
 
 func (x *PlacementIntent_Item) Reset() {
 	*x = PlacementIntent_Item{}
-	mi := &file_provision_provision_proto_msgTypes[16]
+	mi := &file_provision_provision_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1106,7 +1182,7 @@ func (x *PlacementIntent_Item) String() string {
 func (*PlacementIntent_Item) ProtoMessage() {}
 
 func (x *PlacementIntent_Item) ProtoReflect() protoreflect.Message {
-	mi := &file_provision_provision_proto_msgTypes[16]
+	mi := &file_provision_provision_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1170,7 +1246,7 @@ type Placement_Item struct {
 
 func (x *Placement_Item) Reset() {
 	*x = Placement_Item{}
-	mi := &file_provision_provision_proto_msgTypes[18]
+	mi := &file_provision_provision_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1182,7 +1258,7 @@ func (x *Placement_Item) String() string {
 func (*Placement_Item) ProtoMessage() {}
 
 func (x *Placement_Item) ProtoReflect() protoreflect.Message {
-	mi := &file_provision_provision_proto_msgTypes[18]
+	mi := &file_provision_provision_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1243,7 +1319,7 @@ type DeployedPlacement_Item struct {
 
 func (x *DeployedPlacement_Item) Reset() {
 	*x = DeployedPlacement_Item{}
-	mi := &file_provision_provision_proto_msgTypes[20]
+	mi := &file_provision_provision_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1255,7 +1331,7 @@ func (x *DeployedPlacement_Item) String() string {
 func (*DeployedPlacement_Item) ProtoMessage() {}
 
 func (x *DeployedPlacement_Item) ProtoReflect() protoreflect.Message {
-	mi := &file_provision_provision_proto_msgTypes[20]
+	mi := &file_provision_provision_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1295,7 +1371,7 @@ const file_provision_provision_proto_rawDesc = "" +
 	"\x0econtainer_port\x18\x02 \x01(\rB\v\xfaB\b*\x06\x18\xff\xff\x03(\x01R\rcontainerPort\x12-\n" +
 	"\thost_port\x18\x03 \x01(\rB\v\xfaB\b*\x06\x18\xff\xff\x03(\x01H\x00R\bhostPort\x88\x01\x01B\f\n" +
 	"\n" +
-	"_host_port\"\x9b\x12\n" +
+	"_host_port\"\xed\x13\n" +
 	"\tContainer\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x12\x1d\n" +
@@ -1316,7 +1392,8 @@ const file_provision_provision_proto_rawDesc = "" +
 	"\x12pgbouncer_exporter\x18j \x01(\v2-.provision.Container.PgbouncerExporterRuntimeH\x00R\x11pgbouncerExporter\x12<\n" +
 	"\x06backup\x18k \x01(\v2\".provision.Container.BackupRuntimeH\x00R\x06backup\x12B\n" +
 	"\bpicodata\x18l \x01(\v2$.provision.Container.PicodataRuntimeH\x00R\bpicodata\x12U\n" +
-	"\x0fpicodata_backup\x18n \x01(\v2*.provision.Container.PicodataBackupRuntimeH\x00R\x0epicodataBackup\x1a\x83\x02\n" +
+	"\x0fpicodata_backup\x18n \x01(\v2*.provision.Container.PicodataBackupRuntimeH\x00R\x0epicodataBackup\x12R\n" +
+	"\x0eotel_collector\x18o \x01(\v2).provision.Container.OtelCollectorRuntimeH\x00R\rotelCollector\x1a\x83\x02\n" +
 	"\x0fPostgresRuntime\x12G\n" +
 	"\x04role\x18\x01 \x01(\x0e2).provision.Container.PostgresRuntime.RoleB\b\xfaB\x05\x82\x01\x02\x10\x01R\x04role\x12A\n" +
 	"\bsettings\x18\x02 \x01(\v2\x1b.database.Postgres.SettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsettings\x12#\n" +
@@ -1353,7 +1430,11 @@ const file_provision_provision_proto_rawDesc = "" +
 	"\rBackupRuntime\x12A\n" +
 	"\x06config\x18\x01 \x01(\v2\x1f.database.Postgres.BackupConfigB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06config\x1a\\\n" +
 	"\x15PicodataBackupRuntime\x12C\n" +
-	"\x06config\x18\x01 \x01(\v2!.database.Picodata.Sidecar.BackupB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06config\x1a6\n" +
+	"\x06config\x18\x01 \x01(\v2!.database.Picodata.Sidecar.BackupB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06config\x1a|\n" +
+	"\x14OtelCollectorRuntime\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12#\n" +
+	"\rotlp_endpoint\x18\x02 \x01(\tR\fotlpEndpoint\x12%\n" +
+	"\x0escrape_targets\x18\x03 \x03(\tR\rscrapeTargets\x1a6\n" +
 	"\bEnvEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a;\n" +
@@ -1418,7 +1499,7 @@ func file_provision_provision_proto_rawDescGZIP() []byte {
 }
 
 var file_provision_provision_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_provision_provision_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_provision_provision_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_provision_provision_proto_goTypes = []any{
 	(Container_PostgresRuntime_Role)(0),        // 0: provision.Container.PostgresRuntime.Role
 	(*ContainerPort)(nil),                      // 1: provision.ContainerPort
@@ -1435,31 +1516,32 @@ var file_provision_provision_proto_goTypes = []any{
 	(*Container_PgbouncerExporterRuntime)(nil), // 12: provision.Container.PgbouncerExporterRuntime
 	(*Container_BackupRuntime)(nil),            // 13: provision.Container.BackupRuntime
 	(*Container_PicodataBackupRuntime)(nil),    // 14: provision.Container.PicodataBackupRuntime
-	nil,                                        // 15: provision.Container.EnvEntry
-	nil,                                        // 16: provision.Container.MetadataEntry
-	(*PlacementIntent_Item)(nil),               // 17: provision.PlacementIntent.Item
-	nil,                                        // 18: provision.PlacementIntent.Item.MetadataEntry
-	(*Placement_Item)(nil),                     // 19: provision.Placement.Item
-	nil,                                        // 20: provision.Placement.Item.MetadataEntry
-	(*DeployedPlacement_Item)(nil),             // 21: provision.DeployedPlacement.Item
-	(*deployment.Network)(nil),                 // 22: deployment.Network
-	(*deployment.Deployment_Template)(nil),     // 23: deployment.Deployment.Template
-	(*deployment.Deployment)(nil),              // 24: deployment.Deployment
-	(*database.Postgres_Settings)(nil),         // 25: database.Postgres.Settings
-	(*database.Picodata_Settings)(nil),         // 26: database.Picodata.Settings
-	(*database.Postgres_PgbouncerConfig)(nil),  // 27: database.Postgres.PgbouncerConfig
-	(*database.Postgres_BackupConfig)(nil),     // 28: database.Postgres.BackupConfig
-	(*database.Picodata_Sidecar_Backup)(nil),   // 29: database.Picodata.Sidecar.Backup
-	(*deployment.Hardware)(nil),                // 30: deployment.Hardware
-	(*deployment.Ip)(nil),                      // 31: deployment.Ip
-	(*deployment.Vm_Template)(nil),             // 32: deployment.Vm.Template
-	(*edge.Worker)(nil),                        // 33: edge.Worker
-	(*deployment.Vm)(nil),                      // 34: deployment.Vm
+	(*Container_OtelCollectorRuntime)(nil),     // 15: provision.Container.OtelCollectorRuntime
+	nil,                                        // 16: provision.Container.EnvEntry
+	nil,                                        // 17: provision.Container.MetadataEntry
+	(*PlacementIntent_Item)(nil),               // 18: provision.PlacementIntent.Item
+	nil,                                        // 19: provision.PlacementIntent.Item.MetadataEntry
+	(*Placement_Item)(nil),                     // 20: provision.Placement.Item
+	nil,                                        // 21: provision.Placement.Item.MetadataEntry
+	(*DeployedPlacement_Item)(nil),             // 22: provision.DeployedPlacement.Item
+	(*deployment.Network)(nil),                 // 23: deployment.Network
+	(*deployment.Deployment_Template)(nil),     // 24: deployment.Deployment.Template
+	(*deployment.Deployment)(nil),              // 25: deployment.Deployment
+	(*database.Postgres_Settings)(nil),         // 26: database.Postgres.Settings
+	(*database.Picodata_Settings)(nil),         // 27: database.Picodata.Settings
+	(*database.Postgres_PgbouncerConfig)(nil),  // 28: database.Postgres.PgbouncerConfig
+	(*database.Postgres_BackupConfig)(nil),     // 29: database.Postgres.BackupConfig
+	(*database.Picodata_Sidecar_Backup)(nil),   // 30: database.Picodata.Sidecar.Backup
+	(*deployment.Hardware)(nil),                // 31: deployment.Hardware
+	(*deployment.Ip)(nil),                      // 32: deployment.Ip
+	(*deployment.Vm_Template)(nil),             // 33: deployment.Vm.Template
+	(*edge.Worker)(nil),                        // 34: edge.Worker
+	(*deployment.Vm)(nil),                      // 35: deployment.Vm
 }
 var file_provision_provision_proto_depIdxs = []int32{
-	15, // 0: provision.Container.env:type_name -> provision.Container.EnvEntry
+	16, // 0: provision.Container.env:type_name -> provision.Container.EnvEntry
 	1,  // 1: provision.Container.ports:type_name -> provision.ContainerPort
-	16, // 2: provision.Container.metadata:type_name -> provision.Container.MetadataEntry
+	17, // 2: provision.Container.metadata:type_name -> provision.Container.MetadataEntry
 	6,  // 3: provision.Container.postgres:type_name -> provision.Container.PostgresRuntime
 	8,  // 4: provision.Container.etcd:type_name -> provision.Container.EtcdRuntime
 	9,  // 5: provision.Container.pgbouncer:type_name -> provision.Container.PgbouncerRuntime
@@ -1469,35 +1551,36 @@ var file_provision_provision_proto_depIdxs = []int32{
 	13, // 9: provision.Container.backup:type_name -> provision.Container.BackupRuntime
 	7,  // 10: provision.Container.picodata:type_name -> provision.Container.PicodataRuntime
 	14, // 11: provision.Container.picodata_backup:type_name -> provision.Container.PicodataBackupRuntime
-	17, // 12: provision.PlacementIntent.items:type_name -> provision.PlacementIntent.Item
-	22, // 13: provision.PlacementIntent.network:type_name -> deployment.Network
-	23, // 14: provision.Placement.deployment_template:type_name -> deployment.Deployment.Template
-	19, // 15: provision.Placement.items:type_name -> provision.Placement.Item
-	22, // 16: provision.Placement.network:type_name -> deployment.Network
-	21, // 17: provision.DeployedPlacement.items:type_name -> provision.DeployedPlacement.Item
-	24, // 18: provision.DeployedPlacement.deployment:type_name -> deployment.Deployment
-	22, // 19: provision.DeployedPlacement.network:type_name -> deployment.Network
-	0,  // 20: provision.Container.PostgresRuntime.role:type_name -> provision.Container.PostgresRuntime.Role
-	25, // 21: provision.Container.PostgresRuntime.settings:type_name -> database.Postgres.Settings
-	26, // 22: provision.Container.PicodataRuntime.settings:type_name -> database.Picodata.Settings
-	27, // 23: provision.Container.PgbouncerRuntime.config:type_name -> database.Postgres.PgbouncerConfig
-	28, // 24: provision.Container.BackupRuntime.config:type_name -> database.Postgres.BackupConfig
-	29, // 25: provision.Container.PicodataBackupRuntime.config:type_name -> database.Picodata.Sidecar.Backup
-	30, // 26: provision.PlacementIntent.Item.hardware:type_name -> deployment.Hardware
-	2,  // 27: provision.PlacementIntent.Item.containers:type_name -> provision.Container
-	18, // 28: provision.PlacementIntent.Item.metadata:type_name -> provision.PlacementIntent.Item.MetadataEntry
-	31, // 29: provision.PlacementIntent.Item.internal_ip:type_name -> deployment.Ip
-	2,  // 30: provision.Placement.Item.containers:type_name -> provision.Container
-	32, // 31: provision.Placement.Item.vm_template:type_name -> deployment.Vm.Template
-	33, // 32: provision.Placement.Item.worker:type_name -> edge.Worker
-	20, // 33: provision.Placement.Item.metadata:type_name -> provision.Placement.Item.MetadataEntry
-	19, // 34: provision.DeployedPlacement.Item.placement_item:type_name -> provision.Placement.Item
-	34, // 35: provision.DeployedPlacement.Item.vm:type_name -> deployment.Vm
-	36, // [36:36] is the sub-list for method output_type
-	36, // [36:36] is the sub-list for method input_type
-	36, // [36:36] is the sub-list for extension type_name
-	36, // [36:36] is the sub-list for extension extendee
-	0,  // [0:36] is the sub-list for field type_name
+	15, // 12: provision.Container.otel_collector:type_name -> provision.Container.OtelCollectorRuntime
+	18, // 13: provision.PlacementIntent.items:type_name -> provision.PlacementIntent.Item
+	23, // 14: provision.PlacementIntent.network:type_name -> deployment.Network
+	24, // 15: provision.Placement.deployment_template:type_name -> deployment.Deployment.Template
+	20, // 16: provision.Placement.items:type_name -> provision.Placement.Item
+	23, // 17: provision.Placement.network:type_name -> deployment.Network
+	22, // 18: provision.DeployedPlacement.items:type_name -> provision.DeployedPlacement.Item
+	25, // 19: provision.DeployedPlacement.deployment:type_name -> deployment.Deployment
+	23, // 20: provision.DeployedPlacement.network:type_name -> deployment.Network
+	0,  // 21: provision.Container.PostgresRuntime.role:type_name -> provision.Container.PostgresRuntime.Role
+	26, // 22: provision.Container.PostgresRuntime.settings:type_name -> database.Postgres.Settings
+	27, // 23: provision.Container.PicodataRuntime.settings:type_name -> database.Picodata.Settings
+	28, // 24: provision.Container.PgbouncerRuntime.config:type_name -> database.Postgres.PgbouncerConfig
+	29, // 25: provision.Container.BackupRuntime.config:type_name -> database.Postgres.BackupConfig
+	30, // 26: provision.Container.PicodataBackupRuntime.config:type_name -> database.Picodata.Sidecar.Backup
+	31, // 27: provision.PlacementIntent.Item.hardware:type_name -> deployment.Hardware
+	2,  // 28: provision.PlacementIntent.Item.containers:type_name -> provision.Container
+	19, // 29: provision.PlacementIntent.Item.metadata:type_name -> provision.PlacementIntent.Item.MetadataEntry
+	32, // 30: provision.PlacementIntent.Item.internal_ip:type_name -> deployment.Ip
+	2,  // 31: provision.Placement.Item.containers:type_name -> provision.Container
+	33, // 32: provision.Placement.Item.vm_template:type_name -> deployment.Vm.Template
+	34, // 33: provision.Placement.Item.worker:type_name -> edge.Worker
+	21, // 34: provision.Placement.Item.metadata:type_name -> provision.Placement.Item.MetadataEntry
+	20, // 35: provision.DeployedPlacement.Item.placement_item:type_name -> provision.Placement.Item
+	35, // 36: provision.DeployedPlacement.Item.vm:type_name -> deployment.Vm
+	37, // [37:37] is the sub-list for method output_type
+	37, // [37:37] is the sub-list for method input_type
+	37, // [37:37] is the sub-list for extension type_name
+	37, // [37:37] is the sub-list for extension extendee
+	0,  // [0:37] is the sub-list for field type_name
 }
 
 func init() { file_provision_provision_proto_init() }
@@ -1516,6 +1599,7 @@ func file_provision_provision_proto_init() {
 		(*Container_Backup)(nil),
 		(*Container_Picodata)(nil),
 		(*Container_PicodataBackup)(nil),
+		(*Container_OtelCollector)(nil),
 	}
 	file_provision_provision_proto_msgTypes[7].OneofWrappers = []any{}
 	type x struct{}
@@ -1524,7 +1608,7 @@ func file_provision_provision_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_provision_provision_proto_rawDesc), len(file_provision_provision_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   21,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
