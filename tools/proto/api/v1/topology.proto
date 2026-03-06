@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "stroppy/test.proto";
+
+option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/api/v1;apiv1";
+
+service TopologyAPI {
+  rpc ValidateTopology(ValidateTopologyRequest) returns (ValidateTopologyResponse);
+}
+
+enum ValidationSeverity {
+  VALIDATION_SEVERITY_NONE = 0;
+  VALIDATION_SEVERITY_ERROR = 1;
+  VALIDATION_SEVERITY_WARNING = 2;
+  VALIDATION_SEVERITY_INFO = 3;
+}
+
+message ValidateTopologyRequest {
+  stroppy.TestSuite test_suite = 1;
+}
+
+message ValidateTopologyResponse {
+  repeated ValidationError errors = 1;
+}
+
+message ValidationError {
+  string field_path = 1;
+  ValidationSeverity severity = 2;
+  string message = 3;
+}

@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "settings/settings.proto";
+
+option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/api/v1;apiv1";
+
+service SettingsAPI {
+  rpc GetSettings(GetSettingsRequest) returns (GetSettingsResponse);
+  rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse);
+}
+
+message GetSettingsRequest {}
+
+message GetSettingsResponse {
+  settings.Settings settings = 1;
+}
+
+message UpdateSettingsRequest {
+  settings.Settings settings = 1;
+}
+
+message UpdateSettingsResponse {
+  settings.Settings settings = 1;
+}

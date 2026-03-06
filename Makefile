@@ -51,6 +51,10 @@ build-all:
 run-master-worker: build-all
 	./bin/master-worker 2>&1 | zap-pretty
 
+.PHONY: run-api-server
+run-api-server: build-all
+	./bin/api-server
+
 .PHONY: run-test
 run-test: build-all
 	./bin/run --file ./examples/test.yaml

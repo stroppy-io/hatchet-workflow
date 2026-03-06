@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "google/protobuf/timestamp.proto";
+import "stroppy/test.proto";
+
+option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/api/v1;apiv1";
+
+service TestAPI {
+  rpc RunTestSuite(RunTestSuiteRequest) returns (RunTestSuiteResponse);
+  rpc GetTestStatus(GetTestStatusRequest) returns (GetTestStatusResponse);
+  rpc GetTestResult(GetTestResultRequest) returns (GetTestResultResponse);
+  rpc ListTestRuns(ListTestRunsRequest) returns (ListTestRunsResponse);
+}
+
+enum TestRunStatus {
+  TEST_RUN_STATUS_NONE = 0;
+  TEST_RUN_STATUS_PENDING = 1;
+  TEST_RUN_STATUS_RUNNING = 2;
+  TEST_RUN_STATUS_COMPLETED = 3;
+  TEST_RUN_STATUS_FAILED = 4;
+  TEST_RUN_STATUS_CANCELLED = 5;
+}
+
+message RunTestSuiteRequest {
+  stroppy.TestSuite test_suite = 1;
+}
+
+message RunTestSuiteResponse {
+  string run_id = 1;
+}
+
+message GetTestStatusRequest {
+  string run_id = 1;
+}
+
+message GetTestStatusResponse {
+  TestRunStatus status = 1;
+  string current_step = 2;
+  float progress = 3;
+}
+
+message GetTestResultRequest {
+  string run_id = 1;
+}
+
+message GetTestResultResponse {
+  stroppy.TestSuiteResult result = 1;
+}
+
+message ListTestRunsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListTestRunsResponse {
+  repeated TestRunSummary runs = 1;
+  string next_page_token = 2;
+}
+
+message TestRunSummary {
+  string run_id = 1;
+  TestRunStatus status = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp completed_at = 4;
+  string test_suite_name = 5;
+}

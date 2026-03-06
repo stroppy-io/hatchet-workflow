@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/api/v1;apiv1";
+
+service ExecutionAPI {
+  rpc StreamWorkflowGraph(StreamWorkflowGraphRequest) returns (stream StreamWorkflowGraphResponse);
+}
+
+enum WorkflowNodeStatus {
+  WORKFLOW_NODE_STATUS_NONE = 0;
+  WORKFLOW_NODE_STATUS_PENDING = 1;
+  WORKFLOW_NODE_STATUS_RUNNING = 2;
+  WORKFLOW_NODE_STATUS_COMPLETED = 3;
+  WORKFLOW_NODE_STATUS_FAILED = 4;
+  WORKFLOW_NODE_STATUS_CANCELLED = 5;
+}
+
+enum WorkflowStatus {
+  WORKFLOW_STATUS_NONE = 0;
+  WORKFLOW_STATUS_PENDING = 1;
+  WORKFLOW_STATUS_RUNNING = 2;
+  WORKFLOW_STATUS_COMPLETED = 3;
+  WORKFLOW_STATUS_FAILED = 4;
+  WORKFLOW_STATUS_CANCELLED = 5;
+}
+
+message StreamWorkflowGraphRequest {
+  string run_id = 1;
+}
+
+message StreamWorkflowGraphResponse {
+  WorkflowGraph graph = 1;
+}
+
+message WorkflowGraph {
+  repeated WorkflowNode nodes = 1;
+  repeated WorkflowEdge edges = 2;
+  WorkflowStatus status = 3;
+}
+
+message WorkflowNode {
+  string id = 1;
+  string name = 2;
+  WorkflowNodeStatus status = 3;
+  google.protobuf.Timestamp started_at = 4;
+  google.protobuf.Timestamp completed_at = 5;
+  string error = 6;
+}
+
+message WorkflowEdge {
+  string from_node_id = 1;
+  string to_node_id = 2;
+}

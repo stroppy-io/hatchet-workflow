@@ -18,6 +18,7 @@ generate:
     - directory: deployment
     - directory: workflows
     - directory: provision
+    - directory: api/v1
     - git_repo:
         url: github.com/bufbuild/protoc-gen-validate
         sub_directory: validate
@@ -30,6 +31,10 @@ generate:
       opts:
         paths: source_relative
     - name: go-grpc
+      out: ../../internal/proto
+      opts:
+        paths: source_relative
+    - name: connect-go
       out: ../../internal/proto
       opts:
         paths: source_relative
@@ -49,6 +54,11 @@ generate:
         import_extension: ts
         json_types: true
         valid_types: legacy_required+protovalidate_required
+    - name: connect-es
+      out: ../../web/src/proto
+      opts:
+        target: ts
+        import_extension: ts
 breaking:
   ignore: []
   against_git_ref: master-worker
