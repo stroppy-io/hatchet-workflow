@@ -116,6 +116,28 @@ services:
       - hatchet_certs:/hatchet/certs
       - hatchet_config:/hatchet/config
 
+  otel-lgtm:
+    container_name: otel-lgtm
+    image: grafana/otel-lgtm:latest
+    restart: always
+    ports:
+      - "3000:3000"   # Grafana
+      - "${BIND_ADDR:-127.0.0.1}:4317:4317"   # OTLP gRPC
+      - "${BIND_ADDR:-127.0.0.1}:4318:4318"   # OTLP HTTP
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_AUTH_DISABLE_LOGIN_FORM: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: "/var/lib/grafana/dashboards/overview.json"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./deployments/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./deployments/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - default
+      - stroppy-net
+
   valkey:
     container_name: valkey
     image: valkey/valkey
@@ -169,6 +191,7 @@ volumes:
   hatchet_config:
   hatchet_certs:
   valkey_data:
+  grafana_data:
   minio:
 
 

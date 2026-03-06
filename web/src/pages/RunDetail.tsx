@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from "react"
 import { useParams, useNavigate } from "react-router"
 import { useStore } from "@nanostores/react"
-import { ArrowLeft, Loader2 } from "lucide-react"
+import { ArrowLeft, Loader2, GitBranch, BarChart3 } from "lucide-react"
 import { AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { RunStatusBadge } from "@/components/runs/RunStatusBadge"
 import { DagGraph } from "@/components/runs/DagGraph"
 import { StepDetail } from "@/components/runs/StepDetail"
@@ -12,6 +13,8 @@ import {
   startStreamingGraph,
   stopStreaming,
 } from "@/stores/runs"
+
+const GRAFANA_BASE_URL = window.location.protocol + "//" + window.location.hostname + ":3000"
 
 export function RunDetailPage() {
   const { runId } = useParams<{ runId: string }>()
@@ -39,6 +42,8 @@ export function RunDetailPage() {
   ).length ?? 0
   const totalCount = graph?.nodes.length ?? 0
   const progressPct = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
+
+  const grafanaUrl = `${GRAFANA_BASE_URL}/d/stroppy-overview?orgId=1&kiosk&theme=dark&var-node=All`
 
   return (
     <div className="flex flex-col h-full">
@@ -77,34 +82,55 @@ export function RunDetailPage() {
         />
       </div>
 
-      {/* Main content */}
-      {!graph ? (
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <div className="flex flex-1 overflow-hidden">
-          {/* DAG */}
-          <div className="flex-1">
-            <DagGraph
-              graph={graph}
-              onNodeClick={handleNodeClick}
-              selectedNodeId={selectedNodeId}
-            />
-          </div>
+      {/* Tabbed content: DAG + Monitoring */}
+      <Tabs defaultValue="dag" className="flex-1 flex flex-col min-h-0">
+        <TabsList>
+          <TabsTrigger value="dag" className="gap-1.5 text-[12px]">
+            <GitBranch className="h-3 w-3" />
+            Workflow
+          </TabsTrigger>
+          <TabsTrigger value="monitoring" className="gap-1.5 text-[12px]">
+            <BarChart3 className="h-3 w-3" />
+            Monitoring
+          </TabsTrigger>
+        </TabsList>
 
-          {/* Step detail panel */}
-          <AnimatePresence>
-            {selectedNode && (
-              <StepDetail
-                key={selectedNode.id}
-                node={selectedNode}
-                onClose={() => setSelectedNodeId(null)}
-              />
-            )}
-          </AnimatePresence>
-        </div>
-      )}
+        <TabsContent value="dag" className="flex-1 min-h-0">
+          {!graph ? (
+            <div className="flex-1 flex items-center justify-center h-full">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="flex h-full overflow-hidden">
+              <div className="flex-1">
+                <DagGraph
+                  graph={graph}
+                  onNodeClick={handleNodeClick}
+                  selectedNodeId={selectedNodeId}
+                />
+              </div>
+              <AnimatePresence>
+                {selectedNode && (
+                  <StepDetail
+                    key={selectedNode.id}
+                    node={selectedNode}
+                    onClose={() => setSelectedNodeId(null)}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="monitoring" className="flex-1 min-h-0">
+          <iframe
+            src={grafanaUrl}
+            className="w-full h-full border-0"
+            title="Grafana Monitoring"
+            allow="fullscreen"
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

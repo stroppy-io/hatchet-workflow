@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   FlaskConical,
   Play,
+  BarChart3,
   Settings,
   Sun,
   Moon,
@@ -24,6 +25,7 @@ const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/editor", icon: FlaskConical, label: "Test Editor" },
   { to: "/runs", icon: Play, label: "Runs" },
+  { to: "/monitoring", icon: BarChart3, label: "Monitoring" },
   { to: "/settings", icon: Settings, label: "Settings" },
 ]
 

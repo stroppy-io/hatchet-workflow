@@ -8,6 +8,7 @@ import { EditorPage } from "@/pages/Editor"
 import { RunsPage } from "@/pages/Runs"
 import { RunDetailPage } from "@/pages/RunDetail"
 import { SettingsPage } from "@/pages/SettingsPage"
+import { MonitoringPage } from "@/pages/Monitoring"
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useStore($isAuthenticated)
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
       { path: "editor", element: <EditorPage /> },
       { path: "runs", element: <RunsPage /> },
       { path: "runs/:runId", element: <RunDetailPage /> },
+      { path: "monitoring", element: <MonitoringPage /> },
       { path: "settings", element: <SettingsPage /> },
     ],
   },
