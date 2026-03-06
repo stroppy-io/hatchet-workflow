@@ -64,3 +64,18 @@ export function logout() {
   $accessToken.set("")
   $refreshToken.set("")
 }
+
+// Auto-refresh access token every 10 minutes while authenticated
+let refreshInterval: ReturnType<typeof setInterval> | null = null
+
+$accessToken.subscribe((token) => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+    refreshInterval = null
+  }
+  if (token) {
+    refreshInterval = setInterval(() => {
+      refreshAccessToken()
+    }, 10 * 60 * 1000)
+  }
+})
