@@ -161,6 +161,21 @@ func (p ProvisionerService) AcquireNetwork(
 	)
 }
 
+func resolveVmSettings(
+	target deployment.Target,
+	s *settings.Settings,
+) (vmUser *deployment.VmUser, baseImageId string, hasPublicIp bool, err error) {
+	switch target {
+	case deployment.Target_TARGET_YANDEX_CLOUD:
+		vm := s.GetYandexCloud().GetVmSettings()
+		return vm.GetVmUser(), vm.GetBaseImageId(), vm.GetEnablePublicIps(), nil
+	case deployment.Target_TARGET_DOCKER:
+		return nil, s.GetDocker().GetEdgeWorkerImage(), false, nil
+	default:
+		return nil, "", false, fmt.Errorf("unsupported target for VM settings: %v", target)
+	}
+}
+
 func resolveNetworkSettings(
 	target deployment.Target,
 	s *settings.Settings,
@@ -280,6 +295,11 @@ func (p ProvisionerService) BuildPlacement(
 	test *stroppy.Test,
 	intent *provision.PlacementIntent,
 ) (*provision.Placement, error) {
+	vmUser, baseImageId, hasPublicIp, err := resolveVmSettings(target, settings)
+	if err != nil {
+		return nil, err
+	}
+
 	var items []*provision.Placement_Item
 	runIdParsed := ids.ParseRunId(runId)
 	vmTemplates := make([]*deployment.Vm_Template, 0)
@@ -300,8 +320,7 @@ func (p ProvisionerService) BuildPlacement(
 		}
 		workerCloudInit, err := p.getCloudInitForEdgeWorker(
 			workerName,
-			// TODO: dispatch by cloud
-			settings.GetYandexCloud().GetVmSettings().GetVmUser(),
+			vmUser,
 			workerAcceptableTasks,
 			settings.GetHatchetConnection(),
 		)
@@ -314,11 +333,10 @@ func (p ProvisionerService) BuildPlacement(
 				Name:   workerName,
 				Target: target,
 			},
-			Hardware: item.GetHardware(),
-			// TODO: dispatch by cloud
-			BaseImageId: settings.GetYandexCloud().GetVmSettings().GetBaseImageId(),
-			HasPublicIp: settings.GetYandexCloud().GetVmSettings().GetEnablePublicIps(),
-			VmUser:      settings.GetYandexCloud().GetVmSettings().GetVmUser(),
+			Hardware:    item.GetHardware(),
+			BaseImageId: baseImageId,
+			HasPublicIp: hasPublicIp,
+			VmUser:      vmUser,
 			InternalIp:  item.GetInternalIp(),
 			CloudInit:   workerCloudInit,
 			Labels:      metadata,
@@ -345,8 +363,7 @@ func (p ProvisionerService) BuildPlacement(
 	}
 	stroppyCloudInit, err := p.getCloudInitForEdgeWorker(
 		stroppyWorkerName,
-		// TODO: dispatch by cloud
-		settings.GetYandexCloud().GetVmSettings().GetVmUser(),
+		vmUser,
 		stroppyWorkerAcceptableTasks,
 		settings.GetHatchetConnection(),
 	)
@@ -366,11 +383,10 @@ func (p ProvisionerService) BuildPlacement(
 				Name:   stroppyWorkerName,
 				Target: target,
 			},
-			Hardware: test.GetStroppyHardware(),
-			// TODO: dispatch by cloud
-			BaseImageId: settings.GetYandexCloud().GetVmSettings().GetBaseImageId(),
-			HasPublicIp: settings.GetYandexCloud().GetVmSettings().GetEnablePublicIps(),
-			VmUser:      settings.GetYandexCloud().GetVmSettings().GetVmUser(),
+			Hardware:    test.GetStroppyHardware(),
+			BaseImageId: baseImageId,
+			HasPublicIp: hasPublicIp,
+			VmUser:      vmUser,
 			InternalIp:  stroppyWorkerIp,
 			CloudInit:   stroppyCloudInit,
 			Labels:      stroppyMd,

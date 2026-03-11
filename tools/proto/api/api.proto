@@ -1,0 +1,450 @@
+syntax = "proto3";
+
+package api;
+
+import "deployment/deployment.proto";
+import "settings/settings.proto";
+import "stroppy/test.proto";
+import "proto/stroppy/config.proto";
+import "validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/stroppy-io/hatchet-workflow/internal/proto/api";
+
+// StroppyAPI is the main API service for the stroppy-cloud control panel.
+service StroppyAPI {
+    // Submit a test suite for execution. Returns immediately with a run ID.
+    rpc RunTestSuite(RunTestSuiteRequest) returns (RunTestSuiteResponse);
+
+    // Cancel a running workflow.
+    rpc CancelRun(CancelRunRequest) returns (CancelRunResponse);
+
+    // Get full run details including DAG shape and task statuses.
+    rpc GetRun(GetRunRequest) returns (GetRunResponse);
+
+    // List workflow runs with pagination and filtering.
+    rpc ListRuns(ListRunsRequest) returns (ListRunsResponse);
+
+    // List test suites with pagination and filtering.
+    rpc ListSuites(ListSuitesRequest) returns (ListSuitesResponse);
+
+    // Get suite details including its child runs.
+    rpc GetSuite(GetSuiteRequest) returns (GetSuiteResponse);
+
+    // Stream live run updates — task status changes and logs (server streaming).
+    rpc StreamRun(StreamRunRequest) returns (stream StreamRunUpdate);
+
+    // Get current settings.
+    rpc GetSettings(GetSettingsRequest) returns (GetSettingsResponse);
+
+    // Update settings.
+    rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse);
+
+    // Compare metrics of two runs via PromQL queries against Grafana/Prometheus.
+    rpc CompareRuns(CompareRunsRequest) returns (CompareRunsResponse);
+
+    // Validate a database topology template. Returns structural issues instantly.
+    rpc ValidateTopology(ValidateTopologyRequest) returns (ValidateTopologyResponse);
+
+    // Dry run — full pre-flight check including cloud quotas, image availability, etc.
+    rpc DryRun(DryRunRequest) returns (stream DryRunCheck);
+
+    // Authenticate with username and password. Returns JWT access + refresh tokens.
+    rpc Login(LoginRequest) returns (LoginResponse);
+
+    // Refresh an expired access token using a refresh token.
+    rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+
+    // Invalidate the current session.
+    rpc Logout(LogoutRequest) returns (LogoutResponse);
+
+    // Get the currently authenticated user.
+    rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse);
+
+    // --- Workload Registry ---
+
+    // Register a new workload (upload script + auto-probe).
+    rpc RegisterWorkload(RegisterWorkloadRequest) returns (RegisterWorkloadResponse);
+
+    // List registered workloads with metadata.
+    rpc ListWorkloads(ListWorkloadsRequest) returns (ListWorkloadsResponse);
+
+    // Get workload details including probe result.
+    rpc GetWorkload(GetWorkloadRequest) returns (GetWorkloadResponse);
+
+    // Delete a workload from the registry.
+    rpc DeleteWorkload(DeleteWorkloadRequest) returns (DeleteWorkloadResponse);
+
+    // Probe a script without saving — returns extracted metadata.
+    rpc ProbeScript(ProbeScriptRequest) returns (ProbeScriptResponse);
+
+}
+
+// --- Test execution ---
+
+message RunTestSuiteRequest {
+    stroppy.TestSuite suite = 1 [(validate.rules).message.required = true];
+    settings.Settings settings = 2 [(validate.rules).message.required = true];
+    deployment.Target target = 3 [(validate.rules).enum.defined_only = true];
+}
+
+message RunTestSuiteResponse {
+    string suite_id = 1;
+}
+
+message CancelRunRequest {
+    string run_id = 1 [(validate.rules).string.min_len = 1];
+}
+
+message CancelRunResponse {}
+
+// --- Run monitoring ---
+
+message GetRunRequest {
+    string run_id = 1 [(validate.rules).string.min_len = 1];
+}
+
+message GetRunResponse {
+    Run run = 1;
+}
+
+message ListRunsRequest {
+    int64 offset = 1;
+    int64 limit = 2;
+    repeated RunStatus statuses = 3;
+    optional google.protobuf.Timestamp since = 4;
+    optional google.protobuf.Timestamp until = 5;
+}
+
+message ListRunsResponse {
+    repeated Run runs = 1;
+    int64 total = 2;
+}
+
+// --- Suites ---
+
+message ListSuitesRequest {
+    int64 offset = 1;
+    int64 limit = 2;
+    repeated RunStatus statuses = 3;
+    optional google.protobuf.Timestamp since = 4;
+    optional google.protobuf.Timestamp until = 5;
+}
+
+message ListSuitesResponse {
+    repeated Suite suites = 1;
+    int64 total = 2;
+}
+
+message GetSuiteRequest {
+    string suite_id = 1 [(validate.rules).string.min_len = 1];
+}
+
+message GetSuiteResponse {
+    Suite suite = 1;
+}
+
+message Suite {
+    string suite_id = 1;
+    RunStatus status = 2;
+    stroppy.TestSuite test_suite = 3;
+    deployment.Target target = 4;
+    google.protobuf.Timestamp created_at = 5;
+    optional google.protobuf.Timestamp started_at = 6;
+    optional google.protobuf.Timestamp finished_at = 7;
+    optional int64 duration_ms = 8;
+    optional string error_message = 9;
+    repeated Run runs = 10;
+    optional stroppy.TestSuiteResult results = 11;
+}
+
+// --- Streaming ---
+
+message StreamRunRequest {
+    string run_id = 1 [(validate.rules).string.min_len = 1];
+}
+
+message StreamRunUpdate {
+    google.protobuf.Timestamp timestamp = 1;
+    oneof update {
+        TaskEvent task_event = 2;
+        LogEntry log_entry = 3;
+    }
+}
+
+message TaskEvent {
+    string task_id = 1;
+    string task_name = 2;
+    TaskEventType event_type = 3;
+    optional string error_message = 4;
+}
+
+enum TaskEventType {
+    TASK_EVENT_TYPE_NONE = 0;
+    TASK_EVENT_TYPE_STARTED = 1;
+    TASK_EVENT_TYPE_COMPLETED = 2;
+    TASK_EVENT_TYPE_FAILED = 3;
+    TASK_EVENT_TYPE_CANCELLED = 4;
+    TASK_EVENT_TYPE_RUN_COMPLETED = 5;
+    TASK_EVENT_TYPE_RUN_FAILED = 6;
+}
+
+message LogEntry {
+    string task_id = 1;
+    string task_name = 2;
+    string line = 3;
+}
+
+// --- Settings ---
+
+message GetSettingsRequest {}
+
+message GetSettingsResponse {
+    settings.Settings settings = 1;
+}
+
+message UpdateSettingsRequest {
+    settings.Settings settings = 1 [(validate.rules).message.required = true];
+}
+
+message UpdateSettingsResponse {
+    settings.Settings settings = 1;
+}
+
+// --- Run comparison ---
+
+message CompareRunsRequest {
+    string baseline_run_id = 1 [(validate.rules).string.min_len = 1];
+    string candidate_run_id = 2 [(validate.rules).string.min_len = 1];
+    // Optional list of PromQL metric names to compare.
+    // If empty, all known stroppy metrics are compared.
+    repeated string metrics = 3;
+}
+
+message CompareRunsResponse {
+    RunSummary baseline = 1;
+    RunSummary candidate = 2;
+    repeated MetricComparison comparisons = 3;
+}
+
+message RunSummary {
+    string run_id = 1;
+    string test_name = 2;
+    google.protobuf.Timestamp started_at = 3;
+    google.protobuf.Timestamp finished_at = 4;
+    int64 duration_ms = 5;
+}
+
+message MetricComparison {
+    string metric = 1;
+    string promql_query = 2;
+    double baseline_value = 3;
+    double candidate_value = 4;
+    double delta = 5;
+    double delta_percent = 6;
+    MetricVerdict verdict = 7;
+    string unit = 8;
+}
+
+enum MetricVerdict {
+    METRIC_VERDICT_NONE = 0;
+    METRIC_VERDICT_IMPROVED = 1;
+    METRIC_VERDICT_REGRESSED = 2;
+    METRIC_VERDICT_UNCHANGED = 3;
+}
+
+// --- Topology validation ---
+
+message ValidateTopologyRequest {
+    stroppy.Test test = 1 [(validate.rules).message.required = true];
+    deployment.Target target = 2 [(validate.rules).enum.defined_only = true];
+}
+
+message ValidateTopologyResponse {
+    bool valid = 1;
+    repeated ValidationIssue issues = 2;
+}
+
+message ValidationIssue {
+    ValidationSeverity severity = 1;
+    string field = 2;
+    string message = 3;
+}
+
+enum ValidationSeverity {
+    VALIDATION_SEVERITY_NONE = 0;
+    VALIDATION_SEVERITY_WARNING = 1;
+    VALIDATION_SEVERITY_ERROR = 2;
+}
+
+message DryRunRequest {
+    stroppy.TestSuite suite = 1 [(validate.rules).message.required = true];
+    settings.Settings settings = 2 [(validate.rules).message.required = true];
+    deployment.Target target = 3 [(validate.rules).enum.defined_only = true];
+}
+
+message DryRunCheck {
+    string check_name = 1;
+    DryRunCheckStatus status = 2;
+    string message = 3;
+    optional string detail = 4;
+}
+
+enum DryRunCheckStatus {
+    DRY_RUN_CHECK_STATUS_NONE = 0;
+    DRY_RUN_CHECK_STATUS_RUNNING = 1;
+    DRY_RUN_CHECK_STATUS_PASSED = 2;
+    DRY_RUN_CHECK_STATUS_FAILED = 3;
+    DRY_RUN_CHECK_STATUS_SKIPPED = 4;
+}
+
+// --- Auth ---
+
+message LoginRequest {
+    string username = 1 [(validate.rules).string.min_len = 1];
+    string password = 2 [(validate.rules).string.min_len = 1];
+}
+
+message LoginResponse {
+    string access_token = 1;
+    string refresh_token = 2;
+    User user = 3;
+}
+
+message RefreshTokenRequest {
+    string refresh_token = 1 [(validate.rules).string.min_len = 1];
+}
+
+message RefreshTokenResponse {
+    string access_token = 1;
+    string refresh_token = 2;
+}
+
+message LogoutRequest {}
+
+message LogoutResponse {}
+
+message GetCurrentUserRequest {}
+
+message GetCurrentUserResponse {
+    User user = 1;
+}
+
+message User {
+    string id = 1;
+    string username = 2;
+    string role = 3;
+}
+
+// --- Workload Registry ---
+
+message RegisterWorkloadRequest {
+    string name = 1 [(validate.rules).string.min_len = 1];
+    optional string description = 2;
+    bytes script = 3 [(validate.rules).bytes.min_len = 1];
+    optional bytes sql = 4;
+}
+
+message RegisterWorkloadResponse {
+    Workload workload = 1;
+}
+
+message ListWorkloadsRequest {
+    int64 offset = 1;
+    int64 limit = 2;
+}
+
+message ListWorkloadsResponse {
+    repeated Workload workloads = 1;
+    int64 total = 2;
+}
+
+message GetWorkloadRequest {
+    string workload_id = 1 [(validate.rules).string.min_len = 1];
+}
+
+message GetWorkloadResponse {
+    Workload workload = 1;
+}
+
+message DeleteWorkloadRequest {
+    string workload_id = 1 [(validate.rules).string.min_len = 1];
+}
+
+message DeleteWorkloadResponse {}
+
+message ProbeScriptRequest {
+    bytes script = 1 [(validate.rules).bytes.min_len = 1];
+    optional bytes sql = 2;
+}
+
+message ProbeScriptResponse {
+    ProbeResult probe = 1;
+}
+
+message Workload {
+    string id = 1;
+    string name = 2;
+    optional string description = 3;
+    bool builtin = 4;
+    bytes script = 5;
+    optional bytes sql = 6;
+    ProbeResult probe = 7;
+    google.protobuf.Timestamp created_at = 8;
+}
+
+message ProbeResult {
+    // Stroppy types from the probe
+    stroppy.DriverConfig driver_config = 1;
+    stroppy.GlobalConfig global_config = 2;
+    // k6 options as JSON struct
+    google.protobuf.Struct k6_options = 3;
+    // Our types for metadata not covered by stroppy protos
+    repeated string steps = 4;
+    repeated EnvParam env_params = 5;
+    repeated string sql_sections = 6;
+}
+
+message EnvParam {
+    string name = 1;
+    string default_value = 2;
+    string description = 3;
+}
+
+// --- Domain types ---
+
+enum RunStatus {
+    RUN_STATUS_NONE = 0;
+    RUN_STATUS_QUEUED = 1;
+    RUN_STATUS_RUNNING = 2;
+    RUN_STATUS_COMPLETED = 3;
+    RUN_STATUS_FAILED = 4;
+    RUN_STATUS_CANCELLED = 5;
+}
+
+message Run {
+    string run_id = 1;
+    RunStatus status = 2;
+    stroppy.TestSuite suite = 3;
+    deployment.Target target = 4;
+    google.protobuf.Timestamp created_at = 5;
+    optional google.protobuf.Timestamp started_at = 6;
+    optional google.protobuf.Timestamp finished_at = 7;
+    optional int64 duration_ms = 8;
+    optional string error_message = 9;
+    repeated TaskNode dag = 10;
+    repeated stroppy.TestResult results = 11;
+}
+
+message TaskNode {
+    string task_id = 1;
+    string name = 2;
+    RunStatus status = 3;
+    repeated string children_ids = 4;
+    optional google.protobuf.Timestamp started_at = 5;
+    optional google.protobuf.Timestamp finished_at = 6;
+    optional int64 duration_ms = 7;
+    optional string error_message = 8;
+    optional int32 retry_count = 9;
+}
