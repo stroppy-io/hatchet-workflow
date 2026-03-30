@@ -171,5 +171,3 @@ volumes:
   valkey_data:
   minio:
   api-postgres-data:
-
-
