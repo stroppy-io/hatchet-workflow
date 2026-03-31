@@ -75,4 +75,10 @@ type Storage interface {
 	List(ctx context.Context) ([]RunSummary, error)
 	// Delete removes a saved snapshot by ID.
 	Delete(ctx context.Context, id string) error
+	// SetBaseline marks a run as the baseline for a given name (e.g., "postgres-16").
+	SetBaseline(ctx context.Context, name string, runID string) error
+	// GetBaseline returns the run ID for a named baseline. Returns "" if not set.
+	GetBaseline(ctx context.Context, name string) (string, error)
+	// ListBaselines returns all named baselines.
+	ListBaselines(ctx context.Context) (map[string]string, error)
 }

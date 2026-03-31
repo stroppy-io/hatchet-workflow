@@ -25,7 +25,7 @@ func TestStroppyEnv_AllFieldsSet(t *testing.T) {
 		"K6_OTEL_HEADERS":                "Authorization=Basic abc",
 		"K6_OTEL_METRIC_PREFIX":          "stroppy_",
 		"K6_OTEL_SERVICE_NAME":           "stroppy-test",
-		"K6_OTEL_RESOURCE_ATTRIBUTES":    "stroppy_run_id=run-123",
+		"OTEL_RESOURCE_ATTRIBUTES":       "service.name=stroppy,stroppy.run.id=run-123",
 	}
 
 	for k, v := range expected {
@@ -39,9 +39,12 @@ func TestStroppyEnv_EmptyFields(t *testing.T) {
 	s := StroppySettings{}
 	env := s.StroppyEnv("")
 
-	// With all empty fields and empty runID, env should be empty.
-	if len(env) != 0 {
-		t.Errorf("expected empty env map, got %v", env)
+	// With all empty fields, only K6_OUT and OTEL_RESOURCE_ATTRIBUTES should be set.
+	if env["K6_OUT"] != "experimental-opentelemetry" {
+		t.Errorf("expected K6_OUT to be set, got %q", env["K6_OUT"])
+	}
+	if env["OTEL_RESOURCE_ATTRIBUTES"] != "service.name=stroppy,stroppy.run.id=" {
+		t.Errorf("expected OTEL_RESOURCE_ATTRIBUTES to be set, got %q", env["OTEL_RESOURCE_ATTRIBUTES"])
 	}
 }
 
@@ -73,9 +76,9 @@ func TestStroppyEnv_RunIDResourceAttribute(t *testing.T) {
 	s := StroppySettings{}
 	env := s.StroppyEnv("my-run")
 
-	expected := "stroppy_run_id=my-run"
-	if env["K6_OTEL_RESOURCE_ATTRIBUTES"] != expected {
-		t.Errorf("expected resource attributes %q, got %q", expected, env["K6_OTEL_RESOURCE_ATTRIBUTES"])
+	expected := "service.name=stroppy,stroppy.run.id=my-run"
+	if env["OTEL_RESOURCE_ATTRIBUTES"] != expected {
+		t.Errorf("expected resource attributes %q, got %q", expected, env["OTEL_RESOURCE_ATTRIBUTES"])
 	}
 }
 
@@ -85,8 +88,9 @@ func TestStroppyEnv_NoRunID(t *testing.T) {
 	}
 	env := s.StroppyEnv("")
 
-	if _, ok := env["K6_OTEL_RESOURCE_ATTRIBUTES"]; ok {
-		t.Error("resource attributes should not be set when runID is empty")
+	// OTEL_RESOURCE_ATTRIBUTES is always set (with empty run id).
+	if env["OTEL_RESOURCE_ATTRIBUTES"] != "service.name=stroppy,stroppy.run.id=" {
+		t.Errorf("expected OTEL_RESOURCE_ATTRIBUTES with empty run id, got %q", env["OTEL_RESOURCE_ATTRIBUTES"])
 	}
 }
 

@@ -704,7 +704,7 @@ func TestStroppyEnvGeneration(t *testing.T) {
 		"K6_OTEL_HEADERS":                "Authorization=Basic abc123",
 		"K6_OTEL_METRIC_PREFIX":          "test_",
 		"K6_OTEL_SERVICE_NAME":           "test_svc",
-		"K6_OTEL_RESOURCE_ATTRIBUTES":    "stroppy_run_id=run-42",
+		"OTEL_RESOURCE_ATTRIBUTES":       "service.name=stroppy,stroppy.run.id=run-42",
 	}
 
 	for k, want := range expected {
@@ -718,10 +718,10 @@ func TestStroppyEnvGeneration(t *testing.T) {
 		}
 	}
 
-	// Empty run ID should not produce RESOURCE_ATTRIBUTES.
+	// Empty run ID still produces OTEL_RESOURCE_ATTRIBUTES with service.name.
 	env2 := s.StroppyEnv("")
-	if _, ok := env2["K6_OTEL_RESOURCE_ATTRIBUTES"]; ok {
-		t.Error("expected no RESOURCE_ATTRIBUTES for empty run ID")
+	if env2["OTEL_RESOURCE_ATTRIBUTES"] != "service.name=stroppy,stroppy.run.id=" {
+		t.Errorf("expected OTEL_RESOURCE_ATTRIBUTES with empty run id, got %q", env2["OTEL_RESOURCE_ATTRIBUTES"])
 	}
 }
 

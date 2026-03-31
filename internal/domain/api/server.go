@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -136,6 +137,9 @@ func (s *Server) Router() http.Handler {
 			r.Get("/db-defaults/{kind}", s.getDBDefaults)
 			r.Get("/db-defaults/{kind}/{version}", s.getDBDefaultsVersion)
 			r.Get("/grafana", s.getGrafanaSettings)
+			r.Put("/baseline/{name}", s.setBaseline)
+			r.Get("/baseline/{name}", s.getBaseline)
+			r.Get("/baselines", s.listBaselines)
 		})
 	})
 
@@ -144,7 +148,8 @@ func (s *Server) Router() http.Handler {
 	r.Get("/ws/logs/{runID}", s.wsLogsRun)
 
 	// --- Upload & package serving ---
-	r.Post("/api/v1/upload/deb", s.uploadDeb)
+	r.Post("/api/v1/upload/deb", s.uploadPackage)
+	r.Post("/api/v1/upload/rpm", s.uploadPackage)
 	r.Get("/packages/*", http.StripPrefix("/packages/", http.FileServer(http.Dir(uploadDir))).ServeHTTP)
 
 	// --- Agent binary download ---
@@ -760,7 +765,12 @@ func (s *Server) compareRuns(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	threshold := 5.0 // 5% threshold for "same"
+	threshold := 5.0 // default
+	if t := r.URL.Query().Get("threshold"); t != "" {
+		if v, err := strconv.ParseFloat(t, 64); err == nil && v > 0 {
+			threshold = v
+		}
+	}
 	comp := metrics.Compare(metricsA, metricsB, threshold)
 	comp.Start = tr.Start
 	comp.End = tr.End
@@ -791,6 +801,49 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(v)
+}
+
+// ============================================================
+// Baseline management handlers
+// ============================================================
+
+func (s *Server) setBaseline(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	var body struct {
+		RunID string `json:"run_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.RunID == "" {
+		http.Error(w, "request body must contain run_id", http.StatusBadRequest)
+		return
+	}
+	if err := s.app.Storage().SetBaseline(r.Context(), name, body.RunID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok", "baseline": name, "run_id": body.RunID})
+}
+
+func (s *Server) getBaseline(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	runID, err := s.app.Storage().GetBaseline(r.Context(), name)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if runID == "" {
+		http.Error(w, "baseline not found", http.StatusNotFound)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"baseline": name, "run_id": runID})
+}
+
+func (s *Server) listBaselines(w http.ResponseWriter, r *http.Request) {
+	baselines, err := s.app.Storage().ListBaselines(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusOK, baselines)
 }
 
 // ============================================================

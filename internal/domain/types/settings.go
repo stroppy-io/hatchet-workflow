@@ -1,5 +1,11 @@
 package types
 
+import (
+	"fmt"
+
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/webhook"
+)
+
 // YandexCloudSettings holds Yandex Cloud-specific credentials and resource IDs.
 type YandexCloudSettings struct {
 	FolderID         string `json:"folder_id"`
@@ -69,10 +75,8 @@ func (s StroppySettings) StroppyEnv(runID string) map[string]string {
 		env["K6_OTEL_HTTP_EXPORTER_INSECURE"] = "false"
 	}
 
-	// Inject run_id as OTEL resource attribute for correlation.
-	if runID != "" {
-		env["K6_OTEL_RESOURCE_ATTRIBUTES"] = "stroppy_run_id=" + runID
-	}
+	// Inject service name and run_id as OTEL resource attributes for correlation.
+	env["OTEL_RESOURCE_ATTRIBUTES"] = fmt.Sprintf("service.name=stroppy,stroppy.run.id=%s", runID)
 
 	return env
 }
@@ -91,6 +95,7 @@ type ServerSettings struct {
 	Packages        PackageDefaults `json:"packages"`
 	StroppyDefaults StroppySettings `json:"stroppy_defaults"`
 	Grafana         GrafanaSettings `json:"grafana"`
+	Webhooks        webhook.Config  `json:"webhooks"`
 }
 
 // DefaultServerSettings returns ServerSettings populated with sensible defaults.

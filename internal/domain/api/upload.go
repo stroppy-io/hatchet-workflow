@@ -11,7 +11,7 @@ import (
 // uploadDir is where uploaded packages are stored. Served at /packages/
 const uploadDir = "/tmp/stroppy-packages"
 
-func (s *Server) uploadDeb(w http.ResponseWriter, r *http.Request) {
+func (s *Server) uploadPackage(w http.ResponseWriter, r *http.Request) {
 	// Parse multipart form (max 500MB)
 	if err := r.ParseMultipartForm(500 << 20); err != nil {
 		http.Error(w, "failed to parse multipart form: "+err.Error(), http.StatusBadRequest)
@@ -25,13 +25,12 @@ func (s *Server) uploadDeb(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Validate filename extension
-	if ext := filepath.Ext(header.Filename); ext != ".deb" {
-		http.Error(w, "only .deb files are accepted, got "+ext, http.StatusBadRequest)
+	ext := filepath.Ext(header.Filename)
+	if ext != ".deb" && ext != ".rpm" {
+		http.Error(w, "only .deb and .rpm files are accepted, got "+ext, http.StatusBadRequest)
 		return
 	}
 
-	// Save to uploadDir
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
 		http.Error(w, "create upload dir: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -57,4 +56,9 @@ func (s *Server) uploadDeb(w http.ResponseWriter, r *http.Request) {
 		"url":      url,
 		"size":     fmt.Sprintf("%d", written),
 	})
+}
+
+// uploadDeb is an alias for uploadPackage kept for backward compatibility.
+func (s *Server) uploadDeb(w http.ResponseWriter, r *http.Request) {
+	s.uploadPackage(w, r)
 }

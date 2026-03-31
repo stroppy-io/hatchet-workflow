@@ -117,3 +117,51 @@ func (s *DAGStorage) Delete(_ context.Context, id string) error {
 func key(id string) []byte {
 	return []byte(dagPrefix + id)
 }
+
+const baselinePrefix = "baseline:"
+
+func (s *DAGStorage) SetBaseline(_ context.Context, name string, runID string) error {
+	return s.db.Update(func(txn *badgerdb.Txn) error {
+		return txn.Set([]byte(baselinePrefix+name), []byte(runID))
+	})
+}
+
+func (s *DAGStorage) GetBaseline(_ context.Context, name string) (string, error) {
+	var runID string
+	err := s.db.View(func(txn *badgerdb.Txn) error {
+		item, err := txn.Get([]byte(baselinePrefix + name))
+		if err != nil {
+			return err
+		}
+		return item.Value(func(val []byte) error {
+			runID = string(val)
+			return nil
+		})
+	})
+	if err == badgerdb.ErrKeyNotFound {
+		return "", nil
+	}
+	return runID, err
+}
+
+func (s *DAGStorage) ListBaselines(_ context.Context) (map[string]string, error) {
+	result := make(map[string]string)
+	err := s.db.View(func(txn *badgerdb.Txn) error {
+		prefix := []byte(baselinePrefix)
+		it := txn.NewIterator(badgerdb.DefaultIteratorOptions)
+		defer it.Close()
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			item := it.Item()
+			name := string(item.Key()[len(prefix):])
+			err := item.Value(func(val []byte) error {
+				result[name] = string(val)
+				return nil
+			})
+			if err != nil {
+				continue
+			}
+		}
+		return nil
+	})
+	return result, err
+}

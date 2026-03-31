@@ -253,51 +253,158 @@ WORSE=$(echo "$C" | jq '.summary.worse')
 echo "OK: no regressions"
 ```
 
-## ROADMAP
+## PR Branch Comparison
 
-The following CI features are not yet implemented:
+The most powerful CI use case: compare the performance of a PR branch against the base branch. Each branch builds its own .deb package, and stroppy runs identical benchmarks on both.
 
-### `stroppy-cloud compare` CLI command
-**Status**: Not implemented
-**What**: A CLI command to compare two runs locally without the server API. Would allow `stroppy-cloud compare --run-a X --run-b Y --threshold 5 --format json|table`.
-**Workaround**: Use the `/api/v1/compare` HTTP endpoint via `curl`.
+### How it works
 
-### `stroppy-cloud upload` CLI command
-**Status**: Not implemented
-**What**: A CLI command to upload packages. Would allow `stroppy-cloud upload --file my.deb --server http://...`.
-**Workaround**: Use `curl -F file=@my.deb $URL/api/v1/upload/deb`.
+```
+┌─────────────┐    ┌─────────────┐
+│ Base branch  │    │ PR branch   │
+│ (main)       │    │ (feature/X) │
+└──────┬───────┘    └──────┬──────┘
+       │                   │
+   make build-deb      make build-deb
+       │                   │
+   base.deb            pr.deb
+       │                   │
+   upload to server    upload to server
+       │                   │
+   stroppy run         stroppy run
+   (run-base-123)      (run-pr-123)
+       │                   │
+       └─────────┬─────────┘
+                 │
+          compare API
+                 │
+          ┌──────┴──────┐
+          │ 3 better    │
+          │ 1 worse     │
+          │ 12 same     │
+          └─────────────┘
+```
 
-### `stroppy-cloud wait` CLI command
-**Status**: Not implemented
-**What**: A CLI command that polls a run until completion with configurable timeout. Would allow `stroppy-cloud wait --run-id X --timeout 30m`.
-**Workaround**: Poll `/api/v1/run/{id}/status` in a shell loop (see Step 5 above).
+### Shell script (manual)
 
-### Configurable comparison threshold
-**Status**: Hardcoded at 5%
-**What**: Allow passing `--threshold` to the compare API/CLI for custom regression sensitivity.
-**Workaround**: Post-process the JSON response and apply custom thresholds in CI script.
+```bash
+./examples/ci/compare-branches.sh main feature/optimize-vacuum
+```
 
-### JUnit/TAP output for CI
-**Status**: Not implemented
-**What**: Output comparison results in JUnit XML or TAP format for CI system integration (GitLab, Jenkins, GitHub Actions).
-**Workaround**: Parse JSON output with `jq` and generate the report in CI script.
+This script:
+1. Checks out each branch and runs `make build-deb`
+2. Uploads both .deb files to the server
+3. Runs identical stroppy benchmarks on each
+4. Uses `stroppy-cloud wait` to poll until completion
+5. Uses `stroppy-cloud compare` to diff the results
+6. Prints a table and exits non-zero on regression
+
+### Using stroppy-cloud CLI
+
+```bash
+# Upload packages
+stroppy-cloud upload --file base.deb --server http://localhost:8080
+stroppy-cloud upload --file pr.deb --server http://localhost:8080
+
+# Start runs (via curl or future `stroppy-cloud run` with --server flag)
+# ...
+
+# Wait for both
+stroppy-cloud wait --run-id ci-base-123 --server http://localhost:8080 --timeout 30m
+stroppy-cloud wait --run-id ci-pr-123 --server http://localhost:8080 --timeout 30m
+
+# Compare
+stroppy-cloud compare --run-a ci-base-123 --run-b ci-pr-123 --threshold 5 --format table
+stroppy-cloud compare --run-a ci-base-123 --run-b ci-pr-123 --format junit > report.xml
+```
+
+### GitHub Actions
+
+A full workflow is provided in [`examples/ci/github-actions.yml`](https://github.com/stroppy-io/stroppy-cloud/tree/main/examples/ci/github-actions.yml). It:
+
+1. **build-base** / **build-pr** — parallel jobs building .deb artifacts
+2. **benchmark** — sequential runs (to avoid resource contention), then compare
+3. **comment** — posts a PR comment with comparison link using `actions/github-script`
+
+Key features:
+- `mikepenz/action-junit-report` for test summary in PR checks
+- Outputs `compare_url` for shareable link
+- Uses GitHub Actions secrets for credentials
+
+### .deb package requirements
+
+Your project needs a `make build-deb` target (or equivalent) that produces a .deb file. Example using [fpm](https://fpm.readthedocs.io/):
+
+```makefile
+build-deb:
+	./configure --prefix=/usr/lib/postgresql/$(DB_VERSION)
+	make -j$$(nproc)
+	make DESTDIR=./pkg install
+	fpm -s dir -t deb \
+		-n postgresql-custom-$(DB_VERSION) \
+		-v "$(DB_VERSION).0-$$(git rev-parse --short HEAD)" \
+		-C ./pkg \
+		--deb-no-default-config-files \
+		usr/
+```
+
+Requirements:
+- Installs to standard paths (`/usr/lib/postgresql/`, `/usr/bin/`)
+- Does NOT start services on install (agents manage lifecycle)
+- Naming convention: `<name>_<version>_<arch>.deb`
+
+For RPM: same but `fpm -t rpm` and `.rpm` extension. Upload via `POST /api/v1/upload/rpm`.
 
 ### Baseline management
-**Status**: Not implemented
-**What**: Ability to mark a run as "baseline" and have the compare endpoint use it automatically. Would allow `stroppy-cloud baseline set --run-id X --name postgres-16`.
-**Workaround**: Store baseline run IDs in CI environment variables.
 
-### Webhook notifications
-**Status**: Not implemented
-**What**: Configure webhooks to notify external systems (Slack, CI) when a run completes or fails.
-**Workaround**: Poll the status endpoint.
+Instead of comparing two branches every time, you can save a "golden" baseline and compare PR runs against it:
 
-### RPM upload support
-**Status**: Only .deb is supported
-**What**: Extend upload endpoint to accept `.rpm` files.
-**Workaround**: Serve RPM files from an external HTTP server and reference them in `packages.rpm_files`.
+```bash
+# Save a run as the baseline
+curl -X PUT "$STROPPY_URL/api/v1/admin/baseline/postgres-16" \
+  -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{"run_id": "ci-base-12345"}'
 
-### Per-run stroppy_run_id in K6 OTEL metrics
-**Status**: Not implemented
-**What**: Stroppy K6 OTEL metrics currently use `service_name="stroppy"` without a per-run label. This means stroppy metrics in compare dashboards show the same data for both runs.
-**Workaround**: Use the API compare endpoint (which uses run timestamps to isolate data) instead of Grafana dashboards for stroppy-specific comparison.
+# Later, compare a new PR run against the saved baseline
+BASELINE_ID=$(curl -s "$STROPPY_URL/api/v1/admin/baseline/postgres-16" -H "$AUTH" | jq -r .run_id)
+stroppy-cloud compare --run-a "$BASELINE_ID" --run-b ci-pr-67890 --format table
+
+# List all baselines
+curl "$STROPPY_URL/api/v1/admin/baselines" -H "$AUTH" | jq
+```
+
+## ROADMAP
+
+### Implemented
+
+| Feature | CLI | API | Notes |
+|---|---|---|---|
+| `stroppy-cloud compare` | `--run-a`, `--run-b`, `--format table/json/junit`, `--threshold` | `GET /compare` | Exits non-zero if >2 metrics regress |
+| `stroppy-cloud upload` | `--file`, `--server` | `POST /upload/deb`, `POST /upload/rpm` | Supports .deb and .rpm |
+| `stroppy-cloud wait` | `--run-id`, `--timeout`, `--interval` | Polls `/run/{id}/status` | Live progress counter |
+| Configurable threshold | `--threshold 10` | `?threshold=10` query param | Default 5% |
+| JUnit XML output | `--format junit` | N/A | For GitLab/Jenkins/GitHub Actions |
+| Baseline management | N/A | `PUT/GET /admin/baseline/{name}` | Named baselines in BadgerDB |
+| RPM upload | `--file my.rpm` | `POST /upload/rpm` | Same handler as .deb |
+| Webhook notifications | N/A | `webhooks` in ServerSettings | Events: run.started/completed/failed, node.done/failed |
+| Per-run stroppy_run_id | N/A | Auto via OTEL_RESOURCE_ATTRIBUTES | `stroppy.run.id` label in K6 metrics |
+
+### Remaining
+
+#### `stroppy-cloud run --server` CLI command
+**Status**: Not implemented.
+Start a run on a remote server from CLI (currently requires `curl` or the SPA).
+Would allow: `stroppy-cloud run -c config.json --server http://stroppy:8080`.
+
+#### `stroppy-cloud baseline` CLI subcommand
+**Status**: Not implemented.
+Manage baselines from CLI. Would allow: `stroppy-cloud baseline set --name postgres-16 --run-id X --server http://...`.
+**Workaround**: Use `curl -X PUT /api/v1/admin/baseline/{name}`.
+
+#### Webhook retry with exponential backoff
+**Status**: Not implemented.
+Currently webhooks are fire-and-forget (one attempt per URL). Failed deliveries are logged but not retried.
+
+#### TAP output format
+**Status**: Not implemented.
+JUnit XML is supported. TAP (Test Anything Protocol) could be added as `--format tap` for Unix-native CI tools.
