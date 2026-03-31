@@ -722,10 +722,30 @@ func (s *Server) compareRuns(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Auto-resolve time range from run snapshots if not provided.
 	tr, err := parseTimeRange(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		// Try to derive from run snapshots.
+		snapA, _ := s.app.storage.Load(r.Context(), runA)
+		snapB, _ := s.app.storage.Load(r.Context(), runB)
+		if snapA == nil || snapB == nil {
+			http.Error(w, "runs not found and no explicit time range provided", http.StatusBadRequest)
+			return
+		}
+		start := snapA.StartedAt
+		if !snapB.StartedAt.IsZero() && snapB.StartedAt.Before(start) {
+			start = snapB.StartedAt
+		}
+		end := snapA.FinishedAt
+		if !snapB.FinishedAt.IsZero() && snapB.FinishedAt.After(end) {
+			end = snapB.FinishedAt
+		}
+		if start.IsZero() || end.IsZero() {
+			http.Error(w, "runs have no timestamps and no explicit time range provided", http.StatusBadRequest)
+			return
+		}
+		// Add padding to capture metrics at boundaries.
+		tr = metrics.TimeRange{Start: start.Add(-30 * time.Second), End: end.Add(30 * time.Second)}
 	}
 
 	metricsA, err := s.collector.Collect(r.Context(), runA, tr)
@@ -742,6 +762,8 @@ func (s *Server) compareRuns(w http.ResponseWriter, r *http.Request) {
 
 	threshold := 5.0 // 5% threshold for "same"
 	comp := metrics.Compare(metricsA, metricsB, threshold)
+	comp.Start = tr.Start
+	comp.End = tr.End
 	writeJSON(w, http.StatusOK, comp)
 }
 

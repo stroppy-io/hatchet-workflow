@@ -126,7 +126,9 @@ export function DBDefaultsPanel({ kind }: DBDefaultsPanelProps) {
                       </span>
                     </div>
                     <span className="text-xs font-mono text-zinc-400">
-                      {String(value)}
+                      {typeof value === "object" && value !== null
+                        ? JSON.stringify(value)
+                        : String(value)}
                     </span>
                   </div>
                 );

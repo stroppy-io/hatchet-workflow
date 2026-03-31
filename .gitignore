@@ -6,3 +6,5 @@ bin
 examples/test.yaml
 examples/test.json
 examples/dump_test.go
+web/node_modules
+web/dist

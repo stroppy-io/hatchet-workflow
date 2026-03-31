@@ -46,8 +46,8 @@ func DefaultMetrics() []MetricDef {
 		{
 			Name:  "DB Replication Lag",
 			Key:   "db_repl_lag",
-			Query: `pg_stat_replication_pg_wal_lsn_diff{%s}`,
-			Unit:  "bytes",
+			Query: `max(pg_replication_lag_seconds{%s})`,
+			Unit:  "s",
 		},
 
 		// --- System ---
@@ -121,10 +121,10 @@ func DefaultMetrics() []MetricDef {
 			Unit:  "ms",
 		},
 		{
-			Name:  "Stroppy Error Rate",
+			Name:  "Stroppy Error Count",
 			Key:   "stroppy_errors",
-			Query: `sum(rate(stroppy_run_query_error_rate_total{service_name="stroppy"}[30s]))`,
-			Unit:  "errors/s",
+			Query: `sum(stroppy_run_query_error_rate_total{service_name="stroppy"})`,
+			Unit:  "",
 		},
 	}
 }

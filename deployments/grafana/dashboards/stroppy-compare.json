@@ -4,7 +4,7 @@
   "tags": ["stroppy", "compare"],
   "timezone": "browser",
   "editable": true,
-  "time": { "from": "now-1h", "to": "now" },
+  "time": { "from": "now-6h", "to": "now" },
   "templating": {
     "list": [
       {
@@ -33,56 +33,56 @@
       "collapsed": false
     },
     {
-      "title": "QPS — Run A",
+      "title": "DB TPS — Run A",
       "type": "timeseries",
       "datasource": "VictoriaMetrics",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
       "targets": [
         {
-          "expr": "rate(pg_stat_statements_calls_total{stroppy_run_id=\"$run_a\"}[1m])",
-          "legendFormat": "Run A {{instance}}"
+          "expr": "sum(rate(pg_stat_database_xact_commit{stroppy_run_id=\"$run_a\"}[1m]) + rate(pg_stat_database_xact_rollback{stroppy_run_id=\"$run_a\"}[1m]))",
+          "legendFormat": "Run A TPS"
         }
       ],
       "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
     },
     {
-      "title": "QPS — Run B",
+      "title": "DB TPS — Run B",
       "type": "timeseries",
       "datasource": "VictoriaMetrics",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
       "targets": [
         {
-          "expr": "rate(pg_stat_statements_calls_total{stroppy_run_id=\"$run_b\"}[1m])",
-          "legendFormat": "Run B {{instance}}"
+          "expr": "sum(rate(pg_stat_database_xact_commit{stroppy_run_id=\"$run_b\"}[1m]) + rate(pg_stat_database_xact_rollback{stroppy_run_id=\"$run_b\"}[1m]))",
+          "legendFormat": "Run B TPS"
         }
       ],
       "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
     },
     {
-      "title": "Query Latency p99 — Run A",
+      "title": "DB Rows Fetched/s — Run A",
       "type": "timeseries",
       "datasource": "VictoriaMetrics",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, rate(pg_stat_statements_seconds_bucket{stroppy_run_id=\"$run_a\"}[5m]))",
-          "legendFormat": "Run A {{instance}}"
+          "expr": "sum(rate(pg_stat_database_tup_fetched{stroppy_run_id=\"$run_a\"}[1m]))",
+          "legendFormat": "Run A rows/s"
         }
       ],
-      "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
     },
     {
-      "title": "Query Latency p99 — Run B",
+      "title": "DB Rows Fetched/s — Run B",
       "type": "timeseries",
       "datasource": "VictoriaMetrics",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, rate(pg_stat_statements_seconds_bucket{stroppy_run_id=\"$run_b\"}[5m]))",
-          "legendFormat": "Run B {{instance}}"
+          "expr": "sum(rate(pg_stat_database_tup_fetched{stroppy_run_id=\"$run_b\"}[1m]))",
+          "legendFormat": "Run B rows/s"
         }
       ],
-      "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
     },
     {
       "title": "Active Connections — Run A",
@@ -91,8 +91,8 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 17 },
       "targets": [
         {
-          "expr": "pg_stat_activity_count{stroppy_run_id=\"$run_a\"}",
-          "legendFormat": "Run A {{instance}}"
+          "expr": "sum(pg_stat_activity_count{stroppy_run_id=\"$run_a\"})",
+          "legendFormat": "Run A connections"
         }
       ],
       "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
@@ -104,8 +104,8 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 17 },
       "targets": [
         {
-          "expr": "pg_stat_activity_count{stroppy_run_id=\"$run_b\"}",
-          "legendFormat": "Run B {{instance}}"
+          "expr": "sum(pg_stat_activity_count{stroppy_run_id=\"$run_b\"})",
+          "legendFormat": "Run B connections"
         }
       ],
       "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
@@ -149,7 +149,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 34 },
       "targets": [
         {
-          "expr": "(1 - node_memory_MemAvailable_bytes{stroppy_run_id=\"$run_a\"} / node_memory_MemTotal_bytes{stroppy_run_id=\"$run_a\"}) * 100",
+          "expr": "(1 - node_memory_MemAvailable_bytes{stroppy_run_id=\"$run_a\"} / node_memory_MemTotal_bytes) * 100",
           "legendFormat": "Run A {{instance}}"
         }
       ],
@@ -162,121 +162,129 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 34 },
       "targets": [
         {
-          "expr": "(1 - node_memory_MemAvailable_bytes{stroppy_run_id=\"$run_b\"} / node_memory_MemTotal_bytes{stroppy_run_id=\"$run_b\"}) * 100",
+          "expr": "(1 - node_memory_MemAvailable_bytes{stroppy_run_id=\"$run_b\"} / node_memory_MemTotal_bytes) * 100",
           "legendFormat": "Run B {{instance}}"
         }
       ],
       "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
     },
     {
-      "title": "Disk IO Read — Run A",
+      "title": "Disk IO — Run A",
       "type": "timeseries",
       "datasource": "VictoriaMetrics",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 42 },
       "targets": [
         {
           "expr": "rate(node_disk_read_bytes_total{stroppy_run_id=\"$run_a\"}[1m])",
-          "legendFormat": "Run A {{instance}}"
+          "legendFormat": "Read {{instance}}"
+        },
+        {
+          "expr": "rate(node_disk_written_bytes_total{stroppy_run_id=\"$run_a\"}[1m])",
+          "legendFormat": "Write {{instance}}"
         }
       ],
       "fieldConfig": { "defaults": { "unit": "Bps", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
     },
     {
-      "title": "Disk IO Read — Run B",
+      "title": "Disk IO — Run B",
       "type": "timeseries",
       "datasource": "VictoriaMetrics",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 42 },
       "targets": [
         {
           "expr": "rate(node_disk_read_bytes_total{stroppy_run_id=\"$run_b\"}[1m])",
-          "legendFormat": "Run B {{instance}}"
+          "legendFormat": "Read {{instance}}"
+        },
+        {
+          "expr": "rate(node_disk_written_bytes_total{stroppy_run_id=\"$run_b\"}[1m])",
+          "legendFormat": "Write {{instance}}"
         }
       ],
       "fieldConfig": { "defaults": { "unit": "Bps", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
     },
     {
-      "title": "Stroppy",
+      "title": "Stroppy (K6 OTEL)",
       "type": "row",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 50 },
       "collapsed": false
     },
     {
-      "title": "Operations/s — Run A",
+      "title": "Stroppy Iterations/s — Run A",
       "type": "timeseries",
       "datasource": "VictoriaMetrics",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 51 },
       "targets": [
         {
-          "expr": "rate(stroppy_operations_total{stroppy_run_id=\"$run_a\"}[1m])",
-          "legendFormat": "Run A {{instance}}"
+          "expr": "sum(rate(stroppy_iterations_total{service_name=\"stroppy\"}[30s]))",
+          "legendFormat": "Run A iter/s"
         }
       ],
       "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
     },
     {
-      "title": "Operations/s — Run B",
+      "title": "Stroppy Iterations/s — Run B",
       "type": "timeseries",
       "datasource": "VictoriaMetrics",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 51 },
       "targets": [
         {
-          "expr": "rate(stroppy_operations_total{stroppy_run_id=\"$run_b\"}[1m])",
-          "legendFormat": "Run B {{instance}}"
+          "expr": "sum(rate(stroppy_iterations_total{service_name=\"stroppy\"}[30s]))",
+          "legendFormat": "Run B iter/s"
         }
       ],
       "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
     },
     {
-      "title": "Latency p99 — Run A",
+      "title": "Stroppy Duration p99 — Run A",
       "type": "timeseries",
       "datasource": "VictoriaMetrics",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 59 },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, rate(stroppy_operation_duration_seconds_bucket{stroppy_run_id=\"$run_a\"}[5m]))",
-          "legendFormat": "Run A {{instance}}"
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(stroppy_iteration_duration_milliseconds_bucket{service_name=\"stroppy\"}[30s])))",
+          "legendFormat": "Run A p99"
         }
       ],
-      "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
     },
     {
-      "title": "Latency p99 — Run B",
+      "title": "Stroppy Duration p99 — Run B",
       "type": "timeseries",
       "datasource": "VictoriaMetrics",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 59 },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, rate(stroppy_operation_duration_seconds_bucket{stroppy_run_id=\"$run_b\"}[5m]))",
-          "legendFormat": "Run B {{instance}}"
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(stroppy_iteration_duration_milliseconds_bucket{service_name=\"stroppy\"}[30s])))",
+          "legendFormat": "Run B p99"
         }
       ],
-      "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
     },
     {
-      "title": "Error Rate — Run A",
+      "title": "Stroppy VUs",
       "type": "timeseries",
       "datasource": "VictoriaMetrics",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 67 },
       "targets": [
         {
-          "expr": "rate(stroppy_errors_total{stroppy_run_id=\"$run_a\"}[1m])",
-          "legendFormat": "Run A {{instance}}"
+          "expr": "sum(stroppy_vus{service_name=\"stroppy\"})",
+          "legendFormat": "Active VUs"
         }
       ],
-      "fieldConfig": { "defaults": { "unit": "errors/s", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
     },
     {
-      "title": "Error Rate — Run B",
+      "title": "Stroppy Query Rate",
       "type": "timeseries",
       "datasource": "VictoriaMetrics",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 67 },
       "targets": [
         {
-          "expr": "rate(stroppy_errors_total{stroppy_run_id=\"$run_b\"}[1m])",
-          "legendFormat": "Run B {{instance}}"
+          "expr": "sum(rate(stroppy_run_query_count_total{service_name=\"stroppy\"}[30s]))",
+          "legendFormat": "Query rate"
         }
       ],
-      "fieldConfig": { "defaults": { "unit": "errors/s", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } } }
     }
   ],
   "schemaVersion": 39

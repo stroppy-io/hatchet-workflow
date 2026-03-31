@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { startRun, validateRun, dryRun, getPresets } from "@/api/client";
 import type {
@@ -79,8 +79,10 @@ export function NewRun() {
     setPreset(PRESET_NAMES[kind][0]);
   }, [kind]);
 
+  const runIDRef = useRef(generateRunID());
+
   const config = useMemo((): RunConfig => {
-    const id = generateRunID();
+    const id = runIDRef.current;
 
     const buildTopology = () => {
       if (presets) {
@@ -156,6 +158,14 @@ export function NewRun() {
   }
 
   async function handleSubmit() {
+    if (!config.stroppy.duration.trim()) {
+      setError("Duration is required");
+      return;
+    }
+    if (!config.network.cidr.trim()) {
+      setError("Network CIDR is required");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -190,6 +200,7 @@ export function NewRun() {
               <div className="grid grid-cols-3 gap-3">
                 {DB_KINDS.map((k) => (
                   <button
+                    type="button"
                     key={k}
                     onClick={() => setKind(k)}
                     className={`border p-3 text-sm font-medium text-left transition-colors ${
@@ -250,6 +261,7 @@ export function NewRun() {
               <div className="grid grid-cols-3 gap-3">
                 {PRESET_NAMES[kind].map((p) => (
                   <button
+                    type="button"
                     key={p}
                     onClick={() => setPreset(p)}
                     className={`border p-4 text-left transition-colors ${
@@ -275,6 +287,7 @@ export function NewRun() {
               <div className="grid grid-cols-3 gap-3">
                 {WORKLOADS.map((w) => (
                   <button
+                    type="button"
                     key={w}
                     onClick={() => setWorkload(w)}
                     className={`border p-3 text-sm font-medium transition-colors ${
@@ -329,6 +342,7 @@ export function NewRun() {
           <Card>
             <CardHeader>
               <button
+                type="button"
                 className="flex items-center gap-2 w-full text-left"
                 onClick={() => setShowPackages(!showPackages)}
               >

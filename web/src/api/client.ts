@@ -5,7 +5,7 @@ import type {
   PresetsResponse,
   ServerSettings,
   PackageDefaults,
-  ComparisonRow,
+  ComparisonResponse,
   MetricValue,
   GrafanaSettings,
 } from "./types";
@@ -154,12 +154,13 @@ export async function getRunLogs(runID: string): Promise<string[]> {
 export async function compareRuns(
   a: string,
   b: string,
-  start: string,
-  end: string
-): Promise<ComparisonRow[]> {
-  return request(
-    `${API_BASE}/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
-  );
+  start?: string,
+  end?: string
+): Promise<ComparisonResponse> {
+  const params = new URLSearchParams({ a, b });
+  if (start) params.set("start", start);
+  if (end) params.set("end", end);
+  return request(`${API_BASE}/compare?${params.toString()}`);
 }
 
 // --- Admin ---

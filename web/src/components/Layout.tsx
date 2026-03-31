@@ -2,6 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import {
   List,
   Play,
+  GitCompare,
   Settings,
   Layers,
   Activity,
@@ -13,6 +14,7 @@ import {
 const navItems = [
   { to: "/", icon: List, label: "Runs" },
   { to: "/runs/new", icon: Play, label: "New Run" },
+  { to: "/compare", icon: GitCompare, label: "Compare" },
   { to: "/monitoring", icon: MonitorCheck, label: "Monitoring" },
   { to: "/presets", icon: Layers, label: "Presets" },
   { to: "/settings", icon: Settings, label: "Settings" },

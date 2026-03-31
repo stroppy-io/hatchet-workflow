@@ -3,6 +3,7 @@ import { Layout } from "@/components/Layout";
 import { Runs } from "@/pages/Runs";
 import { NewRun } from "@/pages/NewRun";
 import { RunDetail } from "@/pages/RunDetail";
+import { Compare } from "@/pages/Compare";
 import { SettingsPage } from "@/pages/Settings";
 import { Presets } from "@/pages/Presets";
 import { Monitoring } from "@/pages/Monitoring";
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="/runs" element={<Runs />} />
         <Route path="/runs/new" element={<NewRun />} />
         <Route path="/runs/:id" element={<RunDetail />} />
+        <Route path="/compare" element={<Compare />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/presets" element={<Presets />} />
         <Route path="/monitoring" element={<Monitoring />} />

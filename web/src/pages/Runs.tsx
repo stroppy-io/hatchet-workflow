@@ -12,8 +12,8 @@ import {
   type ColumnFiltersState,
   type RowSelectionState,
 } from "@tanstack/react-table";
-import { listRuns, deleteRun, compareRuns, getGrafanaSettings } from "@/api/client";
-import type { RunSummary, ComparisonRow, GrafanaSettings } from "@/api/types";
+import { listRuns, deleteRun } from "@/api/client";
+import type { RunSummary } from "@/api/types";
 import {
   Table,
   TableBody,
@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MetricsDiff } from "@/components/MetricsDiff";
 import {
   RefreshCw,
   Trash2,
@@ -280,14 +279,14 @@ function SortableHeader({
   column,
   label,
 }: {
-  column: { getIsSorted: () => false | "asc" | "desc"; toggleSorting: (desc?: boolean) => void };
+  column: { getIsSorted: () => false | "asc" | "desc"; toggleSorting: () => void };
   label: string;
 }) {
   const sorted = column.getIsSorted();
   return (
     <button
       className="flex items-center gap-1 hover:text-foreground transition-colors cursor-pointer"
-      onClick={() => column.toggleSorting(sorted === "asc")}
+      onClick={() => column.toggleSorting()}
     >
       {label}
       {sorted === "asc" ? (
@@ -317,11 +316,6 @@ export function Runs() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-  // Comparison
-  const [comparing, setComparing] = useState(false);
-  const [compareRows, setCompareRows] = useState<ComparisonRow[] | null>(null);
-  const [compareError, setCompareError] = useState<string | null>(null);
-  const [grafana, setGrafana] = useState<GrafanaSettings | null>(null);
 
   // Derive unique filter values
   const filterValues = useMemo(() => {
@@ -378,7 +372,6 @@ export function Runs() {
 
   useEffect(() => {
     fetchRuns();
-    getGrafanaSettings().then(setGrafana).catch(() => setGrafana(null));
   }, []);
 
   const columns = useMemo(() => makeColumns(handleDelete), []);
@@ -404,34 +397,16 @@ export function Runs() {
   const selectedRunIds = Object.keys(rowSelection).filter((k) => rowSelection[k]);
   const canCompare = selectedRunIds.length === 2;
 
-  async function handleCompare() {
+  function handleCompare() {
     if (!canCompare) return;
     const [a, b] = selectedRunIds;
-    const runA = runs.find((r) => r.id === a);
-    const runB = runs.find((r) => r.id === b);
-    // Use timestamps from both runs to derive time range
-    const starts = [runA?.started_at, runB?.started_at].filter(Boolean).map((t) => new Date(t!).getTime());
-    const ends = [runA?.finished_at, runB?.finished_at].filter(Boolean).map((t) => new Date(t!).getTime());
-    const start = starts.length > 0 ? new Date(Math.min(...starts)).toISOString() : new Date(Date.now() - 7200000).toISOString();
-    const end = ends.length > 0 ? new Date(Math.max(...ends)).toISOString() : new Date().toISOString();
-
-    setComparing(true);
-    setCompareError(null);
-    setCompareRows(null);
-    try {
-      const rows = await compareRuns(a, b, start, end);
-      setCompareRows(rows);
-    } catch (err) {
-      setCompareError(err instanceof Error ? err.message : "Comparison failed");
-    } finally {
-      setComparing(false);
-    }
+    navigate(`/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`);
   }
 
   const hasActiveFilters = activeStatus || activeDbKind || activeProvider;
 
   return (
-    <div className="p-5 space-y-4">
+    <div className="p-5 flex flex-col gap-4 min-h-full">
       {/* Header bar */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -453,11 +428,10 @@ export function Runs() {
                   size="sm"
                   variant="outline"
                   onClick={handleCompare}
-                  disabled={comparing}
                   className="border-primary/40 text-primary hover:bg-primary/10"
                 >
                   <GitCompare className="h-3.5 w-3.5" />
-                  {comparing ? "Comparing..." : "Compare"}
+                  Compare
                 </Button>
               )}
               <Button
@@ -554,7 +528,7 @@ export function Runs() {
       </div>
 
       {/* Table */}
-      <div className="border border-zinc-800/80 bg-[#080808]">
+      <div className="border border-zinc-800/80 bg-[#080808] flex-1 min-h-0 overflow-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -607,7 +581,7 @@ export function Runs() {
 
       {/* Pagination */}
       {runs.length > 0 && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-auto">
           {/* Page size selector */}
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-zinc-600 font-mono">Rows</span>
@@ -683,44 +657,6 @@ export function Runs() {
         </div>
       )}
 
-      {/* Comparison results panel */}
-      {(compareRows || compareError) && (
-        <div className="border border-zinc-800/80 bg-[#080808]">
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/50 bg-zinc-900/30">
-            <div className="flex items-center gap-2">
-              <GitCompare className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-mono text-zinc-300">
-                {selectedRunIds[0]} vs {selectedRunIds[1]}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              {grafana?.embed_enabled && grafana.dashboards?.compare && (
-                <a
-                  href={`${grafana.url}/d/${grafana.dashboards.compare}?var-run_a=${selectedRunIds[0]}&var-run_b=${selectedRunIds[1]}&kiosk&theme=dark`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[10px] font-mono text-primary hover:underline"
-                >
-                  Open in Grafana
-                </a>
-              )}
-              <button
-                onClick={() => { setCompareRows(null); setCompareError(null); }}
-                className="text-zinc-500 hover:text-zinc-300 cursor-pointer"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-          {compareError ? (
-            <div className="p-4 text-xs text-destructive font-mono">{compareError}</div>
-          ) : compareRows && compareRows.length > 0 ? (
-            <MetricsDiff rows={compareRows} />
-          ) : (
-            <div className="p-4 text-xs text-zinc-600 font-mono">No comparison data available.</div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

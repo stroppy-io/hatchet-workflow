@@ -1,11 +1,16 @@
 package metrics
 
-import "math"
+import (
+	"math"
+	"time"
+)
 
 // Comparison holds two runs side by side with per-metric diffs.
 type Comparison struct {
 	RunA    string            `json:"run_a"`
 	RunB    string            `json:"run_b"`
+	Start   time.Time         `json:"start"`
+	End     time.Time         `json:"end"`
 	Metrics []MetricDiff      `json:"metrics"`
 	Summary ComparisonVerdict `json:"summary"`
 }

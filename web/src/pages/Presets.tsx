@@ -20,10 +20,13 @@ function extractPresetInfo(data: PresetsResponse): PresetInfo[] {
   const result: PresetInfo[] = [];
 
   for (const [name, topo] of Object.entries(data.postgres)) {
+    // Count etcd nodes: if etcd is enabled, default to 3 nodes
+    const etcdCount = topo.etcd ? 3 : 0;
     const nodes =
       (topo.master?.count || 0) +
       (topo.replicas?.reduce((s: number, r) => s + r.count, 0) || 0) +
-      (topo.haproxy?.count || 0);
+      (topo.haproxy?.count || 0) +
+      etcdCount;
     const features: string[] = [];
     if (topo.patroni) features.push("Patroni");
     if (topo.pgbouncer) features.push("PgBouncer");

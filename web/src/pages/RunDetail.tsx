@@ -49,6 +49,7 @@ function DashboardSelector({ grafana, runID, dbKind }: { grafana: GrafanaSetting
         src={`${grafana.url}/d/${uid}?var-run_id=${runID}&kiosk&theme=dark`}
         className="w-full h-[600px] border-0"
         title="Run Metrics Dashboard"
+        sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
       />
     </>
   );

@@ -236,11 +236,25 @@ export interface MetricValue {
 }
 
 export interface ComparisonRow {
-  metric: string;
-  a: number;
-  b: number;
-  diff_pct: number;
+  key: string;
+  name: string;
+  unit: string;
+  avg_a: number;
+  avg_b: number;
+  max_a: number;
+  max_b: number;
+  diff_avg_pct: number;
+  diff_max_pct: number;
   verdict: "better" | "worse" | "same";
+}
+
+export interface ComparisonResponse {
+  run_a: string;
+  run_b: string;
+  start: string;
+  end: string;
+  metrics: ComparisonRow[];
+  summary: { better: number; worse: number; same: number };
 }
 
 // --- WebSocket messages ---

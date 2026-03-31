@@ -78,6 +78,7 @@ export function Monitoring() {
           <div className="flex gap-2 p-3 border-b border-border">
             {Object.keys(dashboards).filter(n => n !== "compare").map(name => (
               <button
+                type="button"
                 key={name}
                 onClick={() => setSelectedDashboard(name)}
                 className={`px-3 py-1 text-xs font-mono border ${
@@ -94,6 +95,7 @@ export function Monitoring() {
             src={dashboardURL}
             className="w-full h-[calc(100vh-280px)] border-0"
             title="Monitoring Dashboard"
+            sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
           />
         </CardContent>
       </Card>
