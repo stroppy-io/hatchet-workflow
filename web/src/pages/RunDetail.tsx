@@ -14,12 +14,13 @@ import { RefreshCw, AlertCircle, BarChart3, Trash2 } from "lucide-react";
 // DB-specific dashboards — only show the one matching the run's database kind.
 const DB_DASHBOARDS = ["postgres", "mysql", "picodata"];
 
-function DashboardSelector({ grafana, runID, dbKind }: { grafana: GrafanaSettings; runID: string; dbKind?: string }) {
+function DashboardSelector({ grafana, runID, dbKind, startedAt, finishedAt }: {
+  grafana: GrafanaSettings; runID: string; dbKind?: string; startedAt?: string; finishedAt?: string;
+}) {
   const [selectedDashboard, setSelectedDashboard] = useState("overview");
 
   const dashboards = grafana.dashboards || {};
 
-  // Filter: show overview, system, stroppy always. Show only the matching DB dashboard.
   const visibleDashboards = Object.keys(dashboards).filter(name => {
     if (name === "compare") return false;
     if (DB_DASHBOARDS.includes(name)) return name === dbKind;
@@ -28,11 +29,22 @@ function DashboardSelector({ grafana, runID, dbKind }: { grafana: GrafanaSetting
 
   const uid = dashboards[selectedDashboard] || dashboards["overview"] || "";
 
+  // Build time range from run timestamps so Grafana shows the correct window.
+  let timeParams = "";
+  if (startedAt && startedAt !== "0001-01-01T00:00:00Z") {
+    const from = new Date(startedAt).getTime() - 30000; // 30s before
+    const to = finishedAt && finishedAt !== "0001-01-01T00:00:00Z"
+      ? new Date(finishedAt).getTime() + 60000  // 1min after
+      : Date.now();
+    timeParams = `&from=${from}&to=${to}`;
+  }
+
   return (
     <>
       <div className="flex gap-2 p-3 border-b border-border">
         {visibleDashboards.map(name => (
           <button
+            type="button"
             key={name}
             onClick={() => setSelectedDashboard(name)}
             className={`px-3 py-1 text-xs font-mono border ${
@@ -46,7 +58,7 @@ function DashboardSelector({ grafana, runID, dbKind }: { grafana: GrafanaSetting
         ))}
       </div>
       <iframe
-        src={`${grafana.url}/d/${uid}?var-run_id=${runID}&kiosk&theme=dark`}
+        src={`${grafana.url}/d/${uid}?var-run_id=${runID}${timeParams}&kiosk&theme=dark`}
         className="w-full h-[600px] border-0"
         title="Run Metrics Dashboard"
         sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
@@ -299,6 +311,8 @@ export function RunDetail() {
                   grafana={grafana}
                   runID={id || ""}
                   dbKind={(() => { try { const rc = snapshot?.state?.run_config; if (!rc) return undefined; const cfg = typeof rc === "string" ? JSON.parse(rc) : rc; return cfg?.database?.kind; } catch { return undefined; } })()}
+                  startedAt={snapshot?.started_at}
+                  finishedAt={snapshot?.finished_at}
                 />
               </CardContent>
             </Card>

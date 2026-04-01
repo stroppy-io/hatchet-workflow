@@ -30,7 +30,7 @@ func mysqlCfg(id string, preset types.MySQLPreset, version string) types.RunConf
 		Database: types.DatabaseConfig{Kind: types.DatabaseMySQL, Version: version, MySQL: &topo},
 		Monitor:  types.MonitorConfig{},
 		// stroppy has no MySQL driver — run_stroppy will fail, that's expected
-		Stroppy: types.StroppyConfig{Version: "3.1.0", Workload: "simple", Duration: "5s", Workers: 1},
+		Stroppy: types.StroppyConfig{Version: "3.1.0", Workload: "tpcb", Duration: "5s", Workers: 1},
 	}
 }
 
@@ -60,7 +60,7 @@ func TestE2E_MySQL_Replica(t *testing.T) {
 		},
 		Database: types.DatabaseConfig{Kind: types.DatabaseMySQL, Version: "8.0", MySQL: &topo},
 		Monitor:  types.MonitorConfig{},
-		Stroppy:  types.StroppyConfig{Version: "3.1.0", Workload: "simple", Duration: "5s", Workers: 1},
+		Stroppy:  types.StroppyConfig{Version: "3.1.0", Workload: "tpcb", Duration: "5s", Workers: 1},
 	}
 	ts.run(t, cfg, true)
 }
@@ -81,7 +81,7 @@ func TestE2E_MySQL_Group(t *testing.T) {
 		},
 		Database: types.DatabaseConfig{Kind: types.DatabaseMySQL, Version: "8.0", MySQL: &topo},
 		Monitor:  types.MonitorConfig{},
-		Stroppy:  types.StroppyConfig{Version: "3.1.0", Workload: "simple", Duration: "5s", Workers: 1},
+		Stroppy:  types.StroppyConfig{Version: "3.1.0", Workload: "tpcb", Duration: "5s", Workers: 1},
 	}
 	ts.run(t, cfg, true)
 }

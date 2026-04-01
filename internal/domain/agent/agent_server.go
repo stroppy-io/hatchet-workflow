@@ -2,34 +2,33 @@ package agent
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
-	"os"
-
-	"github.com/go-chi/chi/v5"
+	"time"
 )
 
-// AgentServer is the HTTP server running on agent machines.
+// AgentServer polls the orchestration server for commands and executes them.
+// It does NOT listen for inbound connections — all communication is agent→server.
 type AgentServer struct {
 	executor   *Executor
 	serverAddr string
 	machineID  string
-	port       int
+	httpClient *http.Client
 }
 
-// NewAgentServer creates a new agent HTTP server.
-func NewAgentServer(serverAddr string, machineID string, port int) *AgentServer {
+// NewAgentServer creates a new polling-based agent.
+func NewAgentServer(serverAddr string, machineID string, _ int) *AgentServer {
 	s := &AgentServer{
 		executor:   NewExecutor(),
 		serverAddr: serverAddr,
 		machineID:  machineID,
-		port:       port,
+		httpClient: &http.Client{Timeout: 90 * time.Second},
 	}
 
-	// Wire real-time log streaming: every shell output line is POSTed to the
-	// orchestration server which forwards it to WebSocket clients and VictoriaLogs.
 	s.executor.SetLogCallback(func(commandID, line, stream string) {
 		s.sendLogLine(commandID, line, stream)
 	})
@@ -37,8 +36,101 @@ func NewAgentServer(serverAddr string, machineID string, port int) *AgentServer 
 	return s
 }
 
-// sendLogLine posts a single log line to the orchestration server.
-// It is fire-and-forget so shell execution is never blocked.
+// Run starts the poll loop. Blocks until ctx is cancelled.
+func (s *AgentServer) Run(ctx context.Context) error {
+	log.Printf("agent: starting poll loop (server=%s, machine=%s)", s.serverAddr, s.machineID)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+		}
+
+		cmd, err := s.poll(ctx)
+		if err != nil {
+			log.Printf("agent: poll error: %v (retrying in 2s)", err)
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-time.After(2 * time.Second):
+			}
+			continue
+		}
+
+		if cmd == nil {
+			// No pending command — long-poll returned empty. Loop immediately.
+			continue
+		}
+
+		// Execute command and report back.
+		report := s.executor.Run(ctx, *cmd)
+		report.CommandID = cmd.ID
+
+		if err := s.sendReport(ctx, report); err != nil {
+			log.Printf("agent: failed to send report: %v", err)
+		}
+	}
+}
+
+// poll calls POST /api/agent/poll on the server. Returns nil if no command pending.
+func (s *AgentServer) poll(ctx context.Context) (*Command, error) {
+	body := struct {
+		MachineID string `json:"machine_id"`
+	}{MachineID: s.machineID}
+
+	data, _ := json.Marshal(body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.serverAddr+"/api/agent/poll", bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNoContent {
+		return nil, nil // no command pending
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("poll: server returned %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var cmd Command
+	if err := json.NewDecoder(resp.Body).Decode(&cmd); err != nil {
+		return nil, fmt.Errorf("poll: decode command: %w", err)
+	}
+
+	return &cmd, nil
+}
+
+// sendReport posts the command result back to the server.
+func (s *AgentServer) sendReport(ctx context.Context, report Report) error {
+	data, err := json.Marshal(report)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.serverAddr+"/api/agent/report", bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	return nil
+}
+
+// sendLogLine posts a single log line to the server (fire-and-forget).
 func (s *AgentServer) sendLogLine(commandID, line, stream string) {
 	if s.serverAddr == "" {
 		return
@@ -61,79 +153,26 @@ func (s *AgentServer) sendLogLine(commandID, line, stream string) {
 	}()
 }
 
-// Router returns the chi router with agent endpoints.
-func (s *AgentServer) Router() http.Handler {
-	r := chi.NewRouter()
-	r.Get("/health", s.health)
-	r.Post("/execute", s.execute)
-	return r
-}
-
-func (s *AgentServer) health(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"status":     "ok",
-		"machine_id": s.machineID,
-	})
-}
-
-func (s *AgentServer) execute(w http.ResponseWriter, r *http.Request) {
-	var cmd Command
-	if err := json.NewDecoder(r.Body).Decode(&cmd); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	report := s.executor.Run(r.Context(), cmd)
-
-	w.Header().Set("Content-Type", "application/json")
-	if report.Status == ReportFailed {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-	json.NewEncoder(w).Encode(report)
-}
-
 // Register calls back to the orchestration server to announce this agent.
-// It posts a registration request with the machine ID, host, and port.
-// Executor returns the underlying executor for shutdown management.
-func (s *AgentServer) Executor() *Executor { return s.executor }
-
 func (s *AgentServer) Register() error {
 	if s.serverAddr == "" {
-		return nil // no server to register with
-	}
-
-	hostname, err := os.Hostname()
-	if err != nil {
-		return fmt.Errorf("agent register: get hostname: %w", err)
+		return nil
 	}
 
 	body := struct {
 		MachineID string `json:"machine_id"`
-		Host      string `json:"host"`
-		Port      int    `json:"port"`
-	}{
-		MachineID: s.machineID,
-		Host:      hostname,
-		Port:      s.port,
-	}
+	}{MachineID: s.machineID}
 
-	data, err := json.Marshal(body)
+	data, _ := json.Marshal(body)
+	resp, err := http.Post(s.serverAddr+"/api/agent/register", "application/json", bytes.NewReader(data))
 	if err != nil {
-		return fmt.Errorf("agent register: marshal: %w", err)
+		return fmt.Errorf("agent register: %w", err)
 	}
-
-	url := s.serverAddr + "/api/agent/register"
-	resp, err := http.Post(url, "application/json", bytes.NewReader(data))
-	if err != nil {
-		return fmt.Errorf("agent register: POST %s: %w", url, err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 300 {
-		return fmt.Errorf("agent register: server returned %s", resp.Status)
-	}
+	resp.Body.Close()
 
 	log.Printf("agent: registered with server %s (machine_id=%s)", s.serverAddr, s.machineID)
 	return nil
 }
+
+// Executor returns the underlying executor for shutdown management.
+func (s *AgentServer) Executor() *Executor { return s.executor }

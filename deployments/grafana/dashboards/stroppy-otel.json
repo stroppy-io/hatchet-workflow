@@ -1276,7 +1276,7 @@
         "multi": true,
         "name": "service_name",
         "options": [],
-        "query": "label_values({__name__=~\"${prefix}_.*\"}, service_name)",
+        "query": "label_values({__name__=~\"${prefix}.*\"}, service_name)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
@@ -1296,7 +1296,7 @@
         "multi": true,
         "name": "scenario",
         "options": [],
-        "query": "label_values({__name__=~\"${prefix}_.*\"}, scenario)",
+        "query": "label_values({__name__=~\"${prefix}.*\"}, scenario)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
@@ -1316,7 +1316,7 @@
         "multi": true,
         "name": "group",
         "options": [],
-        "query": "label_values({__name__=~\"${prefix}_.*\"}, group)",
+        "query": "label_values({__name__=~\"${prefix}.*\"}, group)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
@@ -1336,7 +1336,7 @@
         "multi": true,
         "name": "service_version",
         "options": [],
-        "query": "label_values({__name__=~\"${prefix}_.*\"}, service_version)",
+        "query": "label_values({__name__=~\"${prefix}.*\"}, service_version)",
         "refresh": 2,
         "sort": 1,
         "type": "query"

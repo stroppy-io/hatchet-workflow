@@ -126,7 +126,6 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 
 	ctx := context.Context(nc)
 	var dbTargets []agent.Target
-	var monitorTargets []agent.Target
 	var proxyTargets []agent.Target
 
 	// Deploy database machines.
@@ -146,20 +145,12 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 			}
 			t.state.AddContainerID(result.ContainerID)
 
-			// Use localhost + mapped port when running outside Docker (tests).
-			// Use container name when running inside Docker (compose).
-			host := result.ContainerName
-			agentPort := port
-			if result.MappedPort > 0 && isHostMode() {
-				host = "localhost"
-				agentPort = result.MappedPort
-			}
-
+			// Agent polls server for commands — no inbound port needed.
+			// InternalHost (container name) is used for inter-container communication
+			// (e.g., stroppy connecting to the DB container).
 			target := agent.Target{
 				ID:           machineID,
-				Host:         host,
-				InternalHost: result.ContainerName, // for container-to-container
-				AgentPort:    agentPort,
+				InternalHost: result.ContainerName,
 			}
 
 			switch spec.Role {
@@ -176,8 +167,6 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 					}
 					t.state.SetDBEndpoint(result.ContainerName, dbPort)
 				}
-			case types.RoleMonitor:
-				monitorTargets = append(monitorTargets, target)
 			case types.RoleProxy:
 				proxyTargets = append(proxyTargets, target)
 			case types.RoleStroppy:
@@ -192,12 +181,10 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 	}
 
 	t.state.SetDBTargets(dbTargets)
-	t.state.SetMonitorTargets(monitorTargets)
 	t.state.SetProxyTargets(proxyTargets)
 
 	nc.Log().Info("all machines provisioned",
 		zap.Int("db", len(dbTargets)),
-		zap.Int("monitor", len(monitorTargets)),
 	)
 	return nil
 }
@@ -347,7 +334,6 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 
 	// Populate state with targets from terraform output.
 	var dbTargets []agent.Target
-	var monitorTargets []agent.Target
 	var proxyTargets []agent.Target
 
 	for _, vm := range vms {
@@ -357,9 +343,8 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 		}
 
 		target := agent.Target{
-			ID:        vm.Name,
-			Host:      ip,
-			AgentPort: agent.DefaultAgentPort,
+			ID:           vm.Name,
+			InternalHost: ip,
 		}
 
 		role := types.MachineRole(vm.Role)
@@ -376,8 +361,6 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 				}
 				t.state.SetDBEndpoint(ip, dbPort)
 			}
-		case types.RoleMonitor:
-			monitorTargets = append(monitorTargets, target)
 		case types.RoleProxy:
 			proxyTargets = append(proxyTargets, target)
 		case types.RoleStroppy:
@@ -386,12 +369,10 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 	}
 
 	t.state.SetDBTargets(dbTargets)
-	t.state.SetMonitorTargets(monitorTargets)
 	t.state.SetProxyTargets(proxyTargets)
 
 	nc.Log().Info("Yandex Cloud VMs provisioned, waiting for agents to register",
 		zap.Int("db", len(dbTargets)),
-		zap.Int("monitor", len(monitorTargets)),
 		zap.Int("proxy", len(proxyTargets)),
 	)
 

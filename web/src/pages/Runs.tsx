@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   useReactTable,
@@ -311,6 +311,17 @@ export function Runs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Auto-refresh
+  const REFRESH_OPTIONS = [
+    { label: "Off", value: 0 },
+    { label: "3s", value: 3 },
+    { label: "5s", value: 5 },
+    { label: "10s", value: 10 },
+    { label: "30s", value: 30 },
+  ];
+  const [refreshInterval, setRefreshInterval] = useState(5); // default 5s
+  const refreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Table state
   const [sorting, setSorting] = useState<SortingState>([{ id: "started_at", desc: true }]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -370,9 +381,22 @@ export function Runs() {
     }
   }
 
+  // Initial fetch + auto-refresh interval
   useEffect(() => {
     fetchRuns();
   }, []);
+
+  useEffect(() => {
+    if (refreshRef.current) clearInterval(refreshRef.current);
+    if (refreshInterval > 0) {
+      refreshRef.current = setInterval(() => {
+        fetchRuns();
+      }, refreshInterval * 1000);
+    }
+    return () => {
+      if (refreshRef.current) clearInterval(refreshRef.current);
+    };
+  }, [refreshInterval]);
 
   const columns = useMemo(() => makeColumns(handleDelete), []);
 
@@ -445,18 +469,41 @@ export function Runs() {
             </div>
           )}
 
-          <Button
-            size="sm"
-            variant="outline"
+          <button
+            type="button"
             onClick={() => navigate("/runs/new")}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 transition-colors cursor-pointer"
           >
-            <Play className="h-3.5 w-3.5" />
+            <Play className="h-3 w-3" />
             New Run
-          </Button>
+          </button>
 
-          <Button size="sm" variant="outline" onClick={fetchRuns} disabled={loading}>
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-          </Button>
+          {/* Auto-refresh selector */}
+          <div className="flex items-center gap-0.5 border border-zinc-800 px-1 py-0.5">
+            <button
+              type="button"
+              onClick={fetchRuns}
+              disabled={loading}
+              className="p-1 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer disabled:opacity-50"
+              title="Refresh now"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loading || refreshInterval > 0 ? "animate-spin" : ""}`} />
+            </button>
+            {REFRESH_OPTIONS.map((opt) => (
+              <button
+                type="button"
+                key={opt.value}
+                onClick={() => setRefreshInterval(opt.value)}
+                className={`px-1.5 py-0.5 text-[10px] font-mono transition-colors cursor-pointer ${
+                  refreshInterval === opt.value
+                    ? "text-primary bg-primary/10"
+                    : "text-zinc-600 hover:text-zinc-400"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

@@ -25,16 +25,17 @@ func runFilter(runID string) string {
 func DefaultMetrics() []MetricDef {
 	return []MetricDef{
 		// --- Database (standard postgres_exporter metrics) ---
+		// Use 5m rate window to smooth out counter reset spikes at startup.
 		{
 			Name:  "DB Transactions Per Second",
 			Key:   "db_tps",
-			Query: `sum(rate(pg_stat_database_xact_commit{%s}[1m]) + rate(pg_stat_database_xact_rollback{%s}[1m]))`,
+			Query: `sum(rate(pg_stat_database_xact_commit{%s}[5m]) + rate(pg_stat_database_xact_rollback{%s}[5m]))`,
 			Unit:  "txn/s",
 		},
 		{
 			Name:  "DB Rows Fetched Per Second",
 			Key:   "db_qps",
-			Query: `sum(rate(pg_stat_database_tup_fetched{%s}[1m]))`,
+			Query: `sum(rate(pg_stat_database_tup_fetched{%s}[5m]))`,
 			Unit:  "rows/s",
 		},
 		{
@@ -51,79 +52,79 @@ func DefaultMetrics() []MetricDef {
 		},
 
 		// --- System ---
+		// clamp_min ensures no negative values from rate() anomalies.
 		{
 			Name:  "CPU Usage",
 			Key:   "cpu_usage",
-			Query: `100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle",%s}[1m])) * 100)`,
+			Query: `clamp_min(100 - (avg(rate(node_cpu_seconds_total{mode="idle",%s}[5m])) * 100), 0)`,
 			Unit:  "%",
 		},
 		{
 			Name:  "Memory Usage",
 			Key:   "memory_usage",
-			Query: `(1 - node_memory_MemAvailable_bytes{%s} / node_memory_MemTotal_bytes) * 100`,
+			Query: `avg((1 - node_memory_MemAvailable_bytes{%s} / node_memory_MemTotal_bytes) * 100)`,
 			Unit:  "%",
 		},
 		{
 			Name:  "Disk IO Read",
 			Key:   "disk_read",
-			Query: `rate(node_disk_read_bytes_total{%s}[1m])`,
+			Query: `sum(rate(node_disk_read_bytes_total{%s}[5m]))`,
 			Unit:  "bytes/s",
 		},
 		{
 			Name:  "Disk IO Write",
 			Key:   "disk_write",
-			Query: `rate(node_disk_written_bytes_total{%s}[1m])`,
+			Query: `sum(rate(node_disk_written_bytes_total{%s}[5m]))`,
 			Unit:  "bytes/s",
 		},
 		{
 			Name:  "Network Received",
 			Key:   "net_rx",
-			Query: `rate(node_network_receive_bytes_total{%s}[1m])`,
+			Query: `sum(rate(node_network_receive_bytes_total{%s}[5m]))`,
 			Unit:  "bytes/s",
 		},
 		{
 			Name:  "Network Transmitted",
 			Key:   "net_tx",
-			Query: `rate(node_network_transmit_bytes_total{%s}[1m])`,
+			Query: `sum(rate(node_network_transmit_bytes_total{%s}[5m]))`,
 			Unit:  "bytes/s",
 		},
 
-		// --- Stroppy (K6 OTEL metrics, matching stroppy-otel.json dashboard) ---
-		// Note: stroppy K6 OTEL metrics use service.name label, not stroppy_run_id.
+		// --- Stroppy (K6 OTEL metrics with per-run stroppy_run_id label) ---
 		{
 			Name:  "Stroppy Active VUs",
 			Key:   "stroppy_vus",
-			Query: `sum(stroppy_vus{service_name="stroppy"})`,
+			Query: `sum(stroppy_vus{%s})`,
 			Unit:  "",
 		},
 		{
 			Name:  "Stroppy Iterations/s",
 			Key:   "stroppy_ops",
-			Query: `sum(rate(stroppy_iterations_total{service_name="stroppy"}[30s]))`,
+			Query: `sum(rate(stroppy_iterations_total{%s}[30s]))`,
 			Unit:  "iter/s",
 		},
 		{
 			Name:  "Stroppy Iteration Duration p99",
 			Key:   "stroppy_iter_p99",
-			Query: `histogram_quantile(0.99, sum by (le) (rate(stroppy_iteration_duration_milliseconds_bucket{service_name="stroppy"}[30s])))`,
+			Query: `histogram_quantile(0.99, sum by (le) (rate(stroppy_iteration_duration_milliseconds_bucket{%s}[30s])))`,
 			Unit:  "ms",
 		},
 		{
 			Name:  "Stroppy Query Rate",
 			Key:   "stroppy_query_rate",
-			Query: `sum(rate(stroppy_run_query_count_total{service_name="stroppy"}[30s]))`,
+			Query: `sum(rate(stroppy_run_query_count_total{%s}[30s]))`,
 			Unit:  "q/s",
 		},
 		{
 			Name:  "Stroppy Query Duration p99",
 			Key:   "stroppy_latency_p99",
-			Query: `histogram_quantile(0.99, sum by (le) (rate(stroppy_run_query_duration_milliseconds_bucket{service_name="stroppy"}[30s])))`,
+			Query: `histogram_quantile(0.99, sum by (le) (rate(stroppy_run_query_duration_milliseconds_bucket{%s}[30s])))`,
 			Unit:  "ms",
 		},
 		{
 			Name:  "Stroppy Error Count",
 			Key:   "stroppy_errors",
-			Query: `sum(stroppy_run_query_error_rate_total{service_name="stroppy"})`,
+			Query: `sum(stroppy_run_query_error_rate_total{%s})`,
 			Unit:  "",
 		},
 	}

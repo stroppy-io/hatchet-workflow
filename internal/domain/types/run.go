@@ -220,11 +220,14 @@ type MonitorConfig struct {
 
 // StroppyConfig holds stroppy test runner settings.
 type StroppyConfig struct {
-	Version  string            `json:"version"`
-	Workload string            `json:"workload"`
-	Duration string            `json:"duration"`
-	Workers  int               `json:"workers"`
-	Options  map[string]string `json:"options,omitempty"`
+	Version     string            `json:"version"`
+	Workload    string            `json:"workload"`
+	Duration    string            `json:"duration"`
+	VUSScale    float64           `json:"vus_scale,omitempty"`    // VU scaling factor (1 = default VUs per scenario)
+	PoolSize    int               `json:"pool_size,omitempty"`    // DB connection pool size
+	ScaleFactor int               `json:"scale_factor,omitempty"` // Warehouses / scale factor for TPC-C
+	Workers     int               `json:"workers,omitempty"`      // Deprecated: use vus_scale
+	Options     map[string]string `json:"options,omitempty"`
 }
 
 // NetworkConfig holds network/subnet allocation settings.

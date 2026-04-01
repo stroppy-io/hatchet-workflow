@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -187,19 +186,11 @@ func dryRunCmd() *cobra.Command {
 }
 
 func agentCmd() *cobra.Command {
-	var port int
 	cmd := &cobra.Command{
 		Use:   "agent",
-		Short: "Run in agent mode on a target machine",
+		Short: "Run in agent mode on a target machine (polls server for commands)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Read configuration from env vars with flag overrides.
 			serverAddr := os.Getenv("STROPPY_SERVER_ADDR")
-
-			if envPort := os.Getenv("STROPPY_AGENT_PORT"); envPort != "" {
-				if p, err := strconv.Atoi(envPort); err == nil {
-					port = p
-				}
-			}
 
 			machineID := os.Getenv("STROPPY_MACHINE_ID")
 			if machineID == "" {
@@ -210,31 +201,28 @@ func agentCmd() *cobra.Command {
 				machineID = h
 			}
 
-			srv := agent.NewAgentServer(serverAddr, machineID, port)
+			srv := agent.NewAgentServer(serverAddr, machineID, 0)
 
-			// Best-effort registration with the orchestration server.
+			// Register with the server so it knows we exist.
 			if err := srv.Register(); err != nil {
 				log.Printf("WARNING: agent registration failed (will continue): %v", err)
 			}
 
-			addr := fmt.Sprintf(":%d", port)
-			httpSrv := &http.Server{Addr: addr, Handler: srv.Router()}
+			ctx := signalCtx()
 
+			// Run poll loop — blocks until ctx is cancelled.
 			go func() {
-				log.Printf("agent listening on %s (machine_id=%s)", addr, machineID)
-				if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-					log.Fatalf("agent server error: %v", err)
+				if err := srv.Run(ctx); err != nil {
+					log.Printf("agent poll loop error: %v", err)
 				}
 			}()
 
-			ctx := signalCtx()
 			<-ctx.Done()
 			log.Println("agent shutting down — killing managed processes")
 			srv.Executor().Shutdown()
-			return httpSrv.Shutdown(context.Background())
+			return nil
 		},
 	}
-	cmd.Flags().IntVar(&port, "port", agent.DefaultAgentPort, "agent listen port")
 	return cmd
 }
 

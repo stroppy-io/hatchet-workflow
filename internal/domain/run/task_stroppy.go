@@ -48,14 +48,17 @@ func (t *stroppyRunTask) Execute(nc *dag.NodeContext) error {
 	return t.client.Send(nc, *target, agent.Command{
 		Action: agent.ActionRunStroppy,
 		Config: agent.StroppyRunConfig{
-			DBHost:   dbHost,
-			DBPort:   dbPort,
-			DBKind:   string(t.dbKind),
-			Workload: t.stroppy.Workload,
-			Duration: t.stroppy.Duration,
-			Workers:  t.stroppy.Workers,
-			Options:  t.stroppy.Options,
-			OTLPEnv:  otlpEnv,
+			DBHost:      dbHost,
+			DBPort:      dbPort,
+			DBKind:      string(t.dbKind),
+			Workload:    t.stroppy.Workload,
+			Duration:    t.stroppy.Duration,
+			VUSScale:    t.stroppy.VUSScale,
+			PoolSize:    t.stroppy.PoolSize,
+			ScaleFactor: t.stroppy.ScaleFactor,
+			Workers:     t.stroppy.Workers, // backward compat
+			Options:     t.stroppy.Options,
+			OTLPEnv:     otlpEnv,
 		},
 	})
 }

@@ -30,7 +30,7 @@ func picodataCfg(id string, preset types.PicodataPreset, version string) types.R
 		Database: types.DatabaseConfig{Kind: types.DatabasePicodata, Version: version, Picodata: &topo},
 		Monitor:  types.MonitorConfig{},
 		// Picodata speaks pgproto — stroppy postgres driver should work via port 4327
-		Stroppy: types.StroppyConfig{Version: "3.1.0", Workload: "simple", Duration: "5s", Workers: 1},
+		Stroppy: types.StroppyConfig{Version: "3.1.0", Workload: "tpcb", Duration: "5s", Workers: 1},
 	}
 }
 

@@ -5,14 +5,11 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
-	"strings"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 )
 
 const (
@@ -42,44 +39,36 @@ func NewDockerDeployer(networkName string) (*DockerDeployer, error) {
 	return &DockerDeployer{cli: cli, networkName: networkName}, nil
 }
 
-// Deploy creates and starts a container running the agent binary.
-func (d *DockerDeployer) Deploy(ctx context.Context, machineID string, serverAddr string, agentPort int) (DeployResult, error) {
-	binPath := os.Getenv("STROPPY_BINARY_HOST_PATH")
-	if binPath == "" {
-		var err error
-		binPath, err = SelfBinaryPath()
-		if err != nil {
-			return DeployResult{}, err
-		}
-	}
-
-	if agentPort == 0 {
-		agentPort = DefaultAgentPort
-	}
-
+// Deploy creates and starts a container running the agent in poll mode.
+// The agent downloads its binary from the server, then polls for commands.
+// No inbound ports are needed — all communication is agent→server.
+func (d *DockerDeployer) Deploy(ctx context.Context, machineID string, serverAddr string, _ int) (DeployResult, error) {
 	if err := d.pullIfMissing(ctx, DockerBaseImage); err != nil {
 		return DeployResult{}, err
 	}
 
-	portStr := fmt.Sprintf("%d/tcp", agentPort)
+	// Agent downloads binary from server, installs curl first (ubuntu:22.04 is bare).
 	cfg := &container.Config{
 		Image: DockerBaseImage,
-		Cmd:   []string{RemoteBinPath, "agent"},
+		Entrypoint: []string{"sh", "-c",
+			fmt.Sprintf(
+				"set -ex && "+
+					"apt-get update && "+
+					"apt-get install -y curl && "+
+					"echo 'downloading agent binary from %s' && "+
+					"curl -fL --retry 5 --retry-delay 2 %s/agent/binary -o %s && "+
+					"chmod +x %s && "+
+					"echo 'starting agent' && "+
+					"exec %s agent",
+				serverAddr, serverAddr, RemoteBinPath, RemoteBinPath, RemoteBinPath),
+		},
 		Env: []string{
 			fmt.Sprintf("STROPPY_SERVER_ADDR=%s", serverAddr),
-			fmt.Sprintf("STROPPY_AGENT_PORT=%d", agentPort),
 			fmt.Sprintf("STROPPY_MACHINE_ID=%s", machineID),
 		},
-		ExposedPorts: nat.PortSet{nat.Port(portStr): struct{}{}},
 	}
-
 	hostCfg := &container.HostConfig{
-		Binds: []string{
-			fmt.Sprintf("%s:%s:ro", binPath, RemoteBinPath),
-		},
-		PortBindings: nat.PortMap{
-			nat.Port(portStr): []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "0"}},
-		},
+		DNS: []string{"8.8.8.8", "1.1.1.1"},
 	}
 
 	var netCfg *network.NetworkingConfig
@@ -103,35 +92,9 @@ func (d *DockerDeployer) Deploy(ctx context.Context, machineID string, serverAdd
 		return DeployResult{}, fmt.Errorf("agent: docker start %s: %w", name, err)
 	}
 
-	// Inspect to get mapped port.
-	inspect, err := d.cli.ContainerInspect(ctx, resp.ID)
-	if err != nil {
-		return DeployResult{}, fmt.Errorf("agent: docker inspect %s: %w", name, err)
-	}
-
-	mappedPort := 0
-	if bindings, ok := inspect.NetworkSettings.Ports[nat.Port(portStr)]; ok && len(bindings) > 0 {
-		if p, err := strconv.Atoi(bindings[0].HostPort); err == nil {
-			mappedPort = p
-		}
-	}
-
-	// Get container IP on the shared network for container-to-container communication.
-	containerIP := ""
-	if d.networkName != "" {
-		for netName, ep := range inspect.NetworkSettings.Networks {
-			if strings.Contains(netName, d.networkName) || netName == d.networkName {
-				containerIP = ep.IPAddress
-				break
-			}
-		}
-	}
-	_ = containerIP // used by caller if needed
-
 	return DeployResult{
 		ContainerID:   resp.ID,
 		ContainerName: name,
-		MappedPort:    mappedPort,
 	}, nil
 }
 

@@ -39,7 +39,7 @@ import {
 
 const DB_KINDS: DatabaseKind[] = ["postgres", "mysql", "picodata"];
 const PROVIDERS: Provider[] = ["docker", "yandex"];
-const WORKLOADS = ["simple", "tpcb", "tpcc"];
+const WORKLOADS = ["tpcb", "tpcc"];
 
 const DB_VERSIONS: Record<DatabaseKind, string[]> = {
   postgres: ["16", "17"],
@@ -68,7 +68,6 @@ const PROVIDER_META: Record<Provider, { icon: typeof Cloud; label: string }> = {
 };
 
 const WORKLOAD_DESC: Record<string, string> = {
-  simple: "Basic key-value insert/select",
   tpcb: "TPC-B banking benchmark",
   tpcc: "TPC-C order processing benchmark",
 };
@@ -102,9 +101,11 @@ export function NewRun() {
   const [preset, setPreset] = useState(searchParams.get("preset") || "single");
   const [provider, setProvider] = useState<Provider>("docker");
   const [version, setVersion] = useState(DB_VERSIONS[kind][0]);
-  const [workload, setWorkload] = useState("simple");
+  const [workload, setWorkload] = useState("tpcc");
   const [duration, setDuration] = useState("5m");
-  const [workers, setWorkers] = useState(4);
+  const [vusScale, setVusScale] = useState("1");
+  const [poolSize, setPoolSize] = useState("100");
+  const [scaleFactor, setScaleFactor] = useState("1");
   const [cidr, setCidr] = useState("10.0.0.0/24");
   const [showPackages, setShowPackages] = useState(false);
   const [customPackagesJSON, setCustomPackagesJSON] = useState("");
@@ -143,13 +144,20 @@ export function NewRun() {
       machines: [],
       database: { kind, version, ...topo } as RunConfig["database"],
       monitor: {},
-      stroppy: { version: "3.1.0", workload, duration, workers },
+      stroppy: {
+        version: "3.1.0",
+        workload,
+        duration,
+        vus_scale: parseFloat(vusScale) || 1,
+        pool_size: parseInt(poolSize) || 100,
+        scale_factor: parseInt(scaleFactor) || 1,
+      },
     };
     if (customPackagesJSON.trim()) {
       try { cfg.packages = JSON.parse(customPackagesJSON); } catch { /* ignore */ }
     }
     return cfg;
-  }, [kind, preset, provider, version, workload, duration, workers, cidr, presets, customPackagesJSON]);
+  }, [kind, preset, provider, version, workload, duration, vusScale, poolSize, scaleFactor, cidr, presets, customPackagesJSON]);
 
   const configJSON = useMemo(() => JSON.stringify(config, null, 2), [config]);
 
@@ -386,7 +394,7 @@ export function NewRun() {
                 })}
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3 mb-3">
                 <div className="space-y-1.5">
                   <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Duration</Label>
                   <Input
@@ -397,26 +405,36 @@ export function NewRun() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">
-                    Workers
-                    <span className="ml-2 text-primary tabular-nums">{workers}</span>
-                  </Label>
-                  <div className="pt-2">
-                    <input
-                      type="range"
-                      min={1}
-                      max={64}
-                      value={workers}
-                      onChange={(e) => setWorkers(Number(e.target.value))}
-                      className="w-full h-1 bg-zinc-800 appearance-none cursor-pointer accent-primary"
-                    />
-                    <div className="flex justify-between text-[9px] text-zinc-700 font-mono mt-1">
-                      <span>1</span>
-                      <span>16</span>
-                      <span>32</span>
-                      <span>64</span>
-                    </div>
-                  </div>
+                  <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Scale Factor</Label>
+                  <Input
+                    value={scaleFactor}
+                    onChange={(e) => setScaleFactor(e.target.value)}
+                    placeholder="1"
+                    className="font-mono text-xs h-9"
+                  />
+                  <span className="text-[9px] text-zinc-700 font-mono">TPC-C warehouses</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">VUS Scale</Label>
+                  <Input
+                    value={vusScale}
+                    onChange={(e) => setVusScale(e.target.value)}
+                    placeholder="1"
+                    className="font-mono text-xs h-9"
+                  />
+                  <span className="text-[9px] text-zinc-700 font-mono">1 = ~99 VUs for TPC-C</span>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Pool Size</Label>
+                  <Input
+                    value={poolSize}
+                    onChange={(e) => setPoolSize(e.target.value)}
+                    placeholder="100"
+                    className="font-mono text-xs h-9"
+                  />
+                  <span className="text-[9px] text-zinc-700 font-mono">DB connections</span>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Network CIDR</Label>

@@ -42,6 +42,9 @@ type Server struct {
 	agentsMu sync.RWMutex
 	agents   map[string]agent.Target
 
+	// pollClient is the command queue used for agent↔server communication.
+	pollClient *agent.PollClient
+
 	// settings holds admin-managed server settings, protected by settingsMu.
 	settingsMu   sync.RWMutex
 	settings     *types.ServerSettings
@@ -62,14 +65,16 @@ type Server struct {
 // settingsPath may be empty to disable settings persistence.
 func NewServer(app *App, logger *zap.Logger, victoriaURL, victoriaLogsURL, apiKey, settingsPath string) *Server {
 	defaults := types.DefaultServerSettings()
+	pc := agent.NewPollClient(logger)
 	s := &Server{
 		app:          app,
 		logger:       logger,
 		hub:          newWSHub(),
 		agents:       make(map[string]agent.Target),
+		pollClient:   pc,
 		settings:     &defaults,
 		apiKey:       apiKey,
-		users:        NewUserStore(), // always created for SPA login
+		users:        NewUserStore(),
 		settingsPath: settingsPath,
 	}
 	if victoriaURL != "" {
@@ -84,6 +89,8 @@ func NewServer(app *App, logger *zap.Logger, victoriaURL, victoriaLogsURL, apiKe
 	app.sink = s.hub
 	// Wire settings getter so buildDeps can access current cloud settings.
 	app.settingsFunc = s.currentSettings
+	// Wire PollClient as the agent client — all command dispatch goes through polling.
+	app.client = pc
 	return s
 }
 
@@ -103,6 +110,7 @@ func (s *Server) Router() http.Handler {
 	// --- Agent API ---
 	r.Route("/api/agent", func(r chi.Router) {
 		r.Post("/register", s.agentRegister)
+		r.Post("/poll", s.agentPoll)
 		r.Post("/report", s.agentReport)
 		r.Post("/log", s.agentLog)
 	})
@@ -199,24 +207,42 @@ type RegisterRequest struct {
 }
 
 func (s *Server) agentRegister(w http.ResponseWriter, r *http.Request) {
-	var req RegisterRequest
+	var req struct {
+		MachineID string `json:"machine_id"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	target := agent.Target{
-		ID:        req.MachineID,
-		Host:      req.Host,
-		AgentPort: req.Port,
-	}
+	// Pre-create the healthy channel so PollClient can detect this agent.
+	s.pollClient.MarkAgentReady(req.MachineID)
 
 	s.agentsMu.Lock()
-	s.agents[req.MachineID] = target
+	s.agents[req.MachineID] = agent.Target{ID: req.MachineID}
 	s.agentsMu.Unlock()
 
-	s.logger.Info("agent registered", zap.String("machine_id", req.MachineID), zap.String("host", req.Host))
+	s.logger.Info("agent registered", zap.String("machine_id", req.MachineID))
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func (s *Server) agentPoll(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		MachineID string `json:"machine_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Long-poll: block up to 60s waiting for a command.
+	cmd := s.pollClient.Poll(req.MachineID, 60*time.Second)
+	if cmd == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, cmd)
 }
 
 func (s *Server) agentReport(w http.ResponseWriter, r *http.Request) {
@@ -230,6 +256,9 @@ func (s *Server) agentReport(w http.ResponseWriter, r *http.Request) {
 		zap.String("command_id", report.CommandID),
 		zap.String("status", string(report.Status)),
 	)
+
+	// Route report to the waiting PollClient.Send() call.
+	s.pollClient.DeliverReport(report)
 
 	// Broadcast to WS clients.
 	s.hub.broadcast(wsMessage{Type: "report", Payload: report})
@@ -702,8 +731,18 @@ func (s *Server) runMetrics(w http.ResponseWriter, r *http.Request) {
 	runID := chi.URLParam(r, "runID")
 	tr, err := parseTimeRange(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		// Auto-resolve from run snapshot timestamps.
+		snap, _ := s.app.storage.Load(r.Context(), runID)
+		if snap != nil && !snap.StartedAt.IsZero() {
+			end := snap.FinishedAt
+			if end.IsZero() {
+				end = time.Now()
+			}
+			tr = metrics.TimeRange{Start: snap.StartedAt.Add(-30 * time.Second), End: end.Add(30 * time.Second)}
+		} else {
+			http.Error(w, "no time range provided and run has no timestamps", http.StatusBadRequest)
+			return
+		}
 	}
 
 	result, err := s.collector.Collect(r.Context(), runID, tr)

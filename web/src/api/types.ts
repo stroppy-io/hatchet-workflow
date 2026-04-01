@@ -93,7 +93,10 @@ export interface StroppyConfig {
   version: string;
   workload: string;
   duration: string;
-  workers: number;
+  vus_scale?: number;
+  pool_size?: number;
+  scale_factor?: number;
+  workers?: number; // deprecated
   options?: Record<string, string>;
 }
 

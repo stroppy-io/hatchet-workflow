@@ -3,6 +3,8 @@ package metrics
 import (
 	"context"
 	"fmt"
+	"math"
+	"sort"
 	"strconv"
 	"time"
 
@@ -80,7 +82,7 @@ func summarize(def MetricDef, qr *victoria.QueryResult) MetricSummary {
 	var vals []float64
 	for _, series := range qr.Data.Result {
 		for _, pair := range series.Values {
-			if v, err := strconv.ParseFloat(pair.Val(), 64); err == nil {
+			if v, err := strconv.ParseFloat(pair.Val(), 64); err == nil && !math.IsInf(v, 0) && !math.IsNaN(v) {
 				vals = append(vals, v)
 			}
 		}
@@ -90,19 +92,29 @@ func summarize(def MetricDef, qr *victoria.QueryResult) MetricSummary {
 		return s
 	}
 
-	s.Min = vals[0]
-	s.Max = vals[0]
-	var sum float64
-	for _, v := range vals {
-		sum += v
-		if v < s.Min {
-			s.Min = v
-		}
-		if v > s.Max {
-			s.Max = v
-		}
+	// Sort to compute percentiles and filter outliers.
+	sort.Float64s(vals)
+
+	// Use p5-p95 range to exclude counter reset spikes.
+	lo := len(vals) * 5 / 100
+	hi := len(vals) - lo
+	if hi <= lo {
+		lo = 0
+		hi = len(vals)
 	}
-	s.Avg = sum / float64(len(vals))
+	trimmed := vals[lo:hi]
+
+	if len(trimmed) == 0 {
+		trimmed = vals
+	}
+
+	s.Min = trimmed[0]
+	s.Max = trimmed[len(trimmed)-1]
+	var sum float64
+	for _, v := range trimmed {
+		sum += v
+	}
+	s.Avg = sum / float64(len(trimmed))
 	s.Last = vals[len(vals)-1]
 
 	return s

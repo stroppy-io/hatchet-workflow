@@ -164,15 +164,15 @@ func TestValidateAllTopologies(t *testing.T) {
 		{"pg-scale-16", baseRunConfig("v-pg-sc", pgConfig(types.PostgresScale, "16"), "tpcc", "30s", 8)},
 
 		// MySQL topologies
-		{"mysql-single-80", baseRunConfig("v-my-s", mysqlConfig(types.MySQLSingle, "8.0"), "simple", "10s", 2)},
-		{"mysql-single-84", baseRunConfig("v-my-s84", mysqlConfig(types.MySQLSingle, "8.4"), "simple", "10s", 2)},
-		{"mysql-replica", baseRunConfig("v-my-r", mysqlConfig(types.MySQLReplica, "8.0"), "simple", "10s", 4)},
-		{"mysql-group", baseRunConfig("v-my-g", mysqlConfig(types.MySQLGroup, "8.0"), "simple", "15s", 4)},
+		{"mysql-single-80", baseRunConfig("v-my-s", mysqlConfig(types.MySQLSingle, "8.0"), "tpcb", "10s", 2)},
+		{"mysql-single-84", baseRunConfig("v-my-s84", mysqlConfig(types.MySQLSingle, "8.4"), "tpcb", "10s", 2)},
+		{"mysql-replica", baseRunConfig("v-my-r", mysqlConfig(types.MySQLReplica, "8.0"), "tpcb", "10s", 4)},
+		{"mysql-group", baseRunConfig("v-my-g", mysqlConfig(types.MySQLGroup, "8.0"), "tpcb", "15s", 4)},
 
 		// Picodata topologies
-		{"pico-single", baseRunConfig("v-pi-s", picoConfig(types.PicodataSingle, "25.3"), "simple", "10s", 2)},
-		{"pico-cluster", baseRunConfig("v-pi-c", picoConfig(types.PicodataCluster, "25.3"), "simple", "10s", 4)},
-		{"pico-scale", baseRunConfig("v-pi-sc", picoConfig(types.PicodataScale, "25.3"), "simple", "30s", 8)},
+		{"pico-single", baseRunConfig("v-pi-s", picoConfig(types.PicodataSingle, "25.3"), "tpcb", "10s", 2)},
+		{"pico-cluster", baseRunConfig("v-pi-c", picoConfig(types.PicodataCluster, "25.3"), "tpcb", "10s", 4)},
+		{"pico-scale", baseRunConfig("v-pi-sc", picoConfig(types.PicodataScale, "25.3"), "tpcb", "30s", 8)},
 	}
 
 	for _, tt := range tests {
@@ -231,8 +231,8 @@ func TestDryRunAllTopologies(t *testing.T) {
 		cfg  types.RunConfig
 	}{
 		{"pg-single", baseRunConfig("dr-pg", pgConfig(types.PostgresSingle, "16"), "tpcb", "10s", 2)},
-		{"mysql-single", baseRunConfig("dr-my", mysqlConfig(types.MySQLSingle, "8.0"), "simple", "10s", 2)},
-		{"pico-single", baseRunConfig("dr-pi", picoConfig(types.PicodataSingle, "25.3"), "simple", "10s", 2)},
+		{"mysql-single", baseRunConfig("dr-my", mysqlConfig(types.MySQLSingle, "8.0"), "tpcb", "10s", 2)},
+		{"pico-single", baseRunConfig("dr-pi", picoConfig(types.PicodataSingle, "25.3"), "tpcb", "10s", 2)},
 	}
 
 	expectedNodes := []string{
@@ -295,7 +295,7 @@ func TestDryRunAllTopologies(t *testing.T) {
 func TestDryRunStroppyWorkloads(t *testing.T) {
 	ts := startTestServer(t)
 
-	workloads := []string{"simple", "tpcb", "tpcc", "tpcds", "execute_sql"}
+	workloads := []string{"tpcb", "tpcb", "tpcc", "tpcds", "execute_sql"}
 	durations := []string{"5s", "10s", "30s", "1m", "5m"}
 	workerCounts := []int{1, 2, 4, 8, 16, 32}
 

@@ -54,7 +54,7 @@ services:
     volumes:
       - server-data:/data
       - /var/run/docker.sock:/var/run/docker.sock
-      - /tmp/stroppy-cloud:/opt/stroppy-cloud:ro
+      - ./bin/stroppy-cloud:/usr/local/bin/stroppy-cloud:ro
     environment:
       LOG_MOD: development
       LOG_LEVEL: debug

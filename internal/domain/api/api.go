@@ -196,6 +196,7 @@ func (a *App) buildDeps(cfg types.RunConfig) (run.Deps, func(), error) {
 	state := run.NewState()
 	cl := a.client
 	if cl == nil {
+		// Fallback for CLI mode (no server) — direct HTTP push.
 		cl = agent.NewHTTPClient()
 	}
 	deps := run.Deps{Client: cl, State: state}
@@ -206,27 +207,23 @@ func (a *App) buildDeps(cfg types.RunConfig) (run.Deps, func(), error) {
 		deps.Settings = a.settingsFunc()
 	}
 
+	// Server address for agent→server communication.
+	serverAddr := os.Getenv("STROPPY_SERVER_ADDR")
+	if serverAddr == "" {
+		serverAddr = "http://172.17.0.1:8080" // docker0 bridge
+	}
+	if deps.Settings != nil && deps.Settings.Cloud.ServerAddr != "" {
+		serverAddr = deps.Settings.Cloud.ServerAddr
+	}
+	deps.ServerAddr = serverAddr
+
 	if cfg.Provider == types.ProviderDocker {
 		deployer, err := agent.NewDockerDeployer(fmt.Sprintf("stroppy-%s", cfg.ID))
 		if err != nil {
 			return deps, noop, fmt.Errorf("api: docker deployer: %w", err)
 		}
 		deps.Deployer = deployer
-		deps.Client = agent.NewHTTPClient()
-		// Server address for agent registration callbacks (best-effort).
-		// Agent→server communication is non-critical; server→agent is what matters.
-		serverAddr := os.Getenv("STROPPY_SERVER_ADDR")
-		if serverAddr == "" {
-			serverAddr = "http://172.17.0.1:8080" // docker0 bridge — host reachable from containers
-		}
-		deps.ServerAddr = serverAddr
 		return deps, func() { deployer.Close() }, nil
-	}
-
-	// For cloud providers, use settings-based server address and HTTP client.
-	if deps.Settings != nil && deps.Settings.Cloud.ServerAddr != "" {
-		deps.ServerAddr = deps.Settings.Cloud.ServerAddr
-		deps.Client = agent.NewHTTPClient()
 	}
 
 	return deps, noop, nil

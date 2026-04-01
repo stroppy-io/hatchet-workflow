@@ -210,7 +210,7 @@ func TestE2E_Postgres_Single_TPCB(t *testing.T) {
 
 func TestE2E_Postgres_Single_Simple(t *testing.T) {
 	ts := startE2E(t)
-	cfg := pgRunConfig("e2e-pg-s-simple", types.PostgresSingle, "16", "simple", "10s", 2)
+	cfg := pgRunConfig("e2e-pg-s-simple", types.PostgresSingle, "16", "tpcb", "10s", 2)
 	ts.run(t, cfg, true)
 }
 

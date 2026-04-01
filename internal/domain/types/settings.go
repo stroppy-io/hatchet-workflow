@@ -59,8 +59,9 @@ func (s StroppySettings) StroppyEnv(runID string) map[string]string {
 		}
 	}
 
-	// Enable k6 OTEL output extension.
-	env["K6_OUT"] = "experimental-opentelemetry"
+	// NOTE: Do NOT set K6_OUT env var — it activates K6 "cli mode" which
+	// overrides scenario-based execution in stroppy presets.
+	// OTEL output is enabled via --out opentelemetry CLI flag instead.
 
 	set("K6_OTEL_EXPORTER_TYPE", s.OTLPExporterType)
 	set("K6_OTEL_HTTP_EXPORTER_ENDPOINT", s.OTLPEndpoint)

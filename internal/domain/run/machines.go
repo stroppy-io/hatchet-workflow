@@ -44,9 +44,9 @@ func FillMachinesFromTopology(cfg *types.RunConfig) {
 		}
 	}
 
-	// Always add monitor and stroppy.
+	// Always add stroppy runner. Monitor is not needed as a separate container —
+	// each agent runs its own exporters and VictoriaMetrics scrapes them directly.
 	cfg.Machines = append(cfg.Machines,
-		types.MachineSpec{Role: types.RoleMonitor, Count: 1, CPUs: 1, MemoryMB: 2048, DiskGB: 20},
 		types.MachineSpec{Role: types.RoleStroppy, Count: 1, CPUs: 2, MemoryMB: 4096, DiskGB: 20},
 	)
 }

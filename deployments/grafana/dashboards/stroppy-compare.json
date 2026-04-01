@@ -215,7 +215,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 51 },
       "targets": [
         {
-          "expr": "sum(rate(stroppy_iterations_total{service_name=\"stroppy\"}[30s]))",
+          "expr": "sum(rate(stroppy_iterations_total{stroppy_run_id=~\"$run_a|$run_b\"}[30s]))",
           "legendFormat": "Run A iter/s"
         }
       ],
@@ -228,7 +228,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 51 },
       "targets": [
         {
-          "expr": "sum(rate(stroppy_iterations_total{service_name=\"stroppy\"}[30s]))",
+          "expr": "sum(rate(stroppy_iterations_total{stroppy_run_id=~\"$run_a|$run_b\"}[30s]))",
           "legendFormat": "Run B iter/s"
         }
       ],
@@ -241,7 +241,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 59 },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(stroppy_iteration_duration_milliseconds_bucket{service_name=\"stroppy\"}[30s])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(stroppy_iteration_duration_milliseconds_bucket{stroppy_run_id=~\"$run_a|$run_b\"}[30s])))",
           "legendFormat": "Run A p99"
         }
       ],
@@ -254,7 +254,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 59 },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(stroppy_iteration_duration_milliseconds_bucket{service_name=\"stroppy\"}[30s])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(stroppy_iteration_duration_milliseconds_bucket{stroppy_run_id=~\"$run_a|$run_b\"}[30s])))",
           "legendFormat": "Run B p99"
         }
       ],
@@ -267,7 +267,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 67 },
       "targets": [
         {
-          "expr": "sum(stroppy_vus{service_name=\"stroppy\"})",
+          "expr": "sum(stroppy_vus{stroppy_run_id=~\"$run_a|$run_b\"})",
           "legendFormat": "Active VUs"
         }
       ],
@@ -280,7 +280,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 67 },
       "targets": [
         {
-          "expr": "sum(rate(stroppy_run_query_count_total{service_name=\"stroppy\"}[30s]))",
+          "expr": "sum(rate(stroppy_run_query_count_total{stroppy_run_id=~\"$run_a|$run_b\"}[30s]))",
           "legendFormat": "Query rate"
         }
       ],

@@ -39,9 +39,9 @@ func TestStroppyEnv_EmptyFields(t *testing.T) {
 	s := StroppySettings{}
 	env := s.StroppyEnv("")
 
-	// With all empty fields, only K6_OUT and OTEL_RESOURCE_ATTRIBUTES should be set.
-	if env["K6_OUT"] != "experimental-opentelemetry" {
-		t.Errorf("expected K6_OUT to be set, got %q", env["K6_OUT"])
+	// K6_OUT is NOT set (it breaks K6 scenarios). OTEL output is via --out CLI flag.
+	if _, ok := env["K6_OUT"]; ok {
+		t.Errorf("K6_OUT should not be set, got %q", env["K6_OUT"])
 	}
 	if env["OTEL_RESOURCE_ATTRIBUTES"] != "service.name=stroppy,stroppy.run.id=" {
 		t.Errorf("expected OTEL_RESOURCE_ATTRIBUTES to be set, got %q", env["OTEL_RESOURCE_ATTRIBUTES"])
