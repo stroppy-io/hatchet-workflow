@@ -5,6 +5,7 @@ import (
 
 	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/terraform"
 )
 
 // State is the shared mutable state for a single run.
@@ -27,8 +28,9 @@ type State struct {
 	containerIDs []string
 	networkID    string
 
-	// Cloud-specific: terraform working directory ID for teardown.
-	terraformWdId string
+	// Cloud-specific: terraform working directory ID and actor for teardown.
+	terraformWdId  string
+	terraformActor *terraform.Actor
 }
 
 func NewState() *State { return &State{} }
@@ -132,6 +134,18 @@ func (s *State) TerraformWdId() string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.terraformWdId
+}
+
+func (s *State) SetTerraformActor(a *terraform.Actor) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.terraformActor = a
+}
+
+func (s *State) TerraformActor() *terraform.Actor {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.terraformActor
 }
 
 // AllTargets returns all known agent targets across all roles.

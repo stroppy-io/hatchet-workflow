@@ -3,9 +3,7 @@ package run
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
-	"time"
 
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
@@ -189,24 +187,52 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 	return nil
 }
 
-// yandexTfVars holds terraform variable values for Yandex Cloud VM provisioning.
+// runSubnetCIDR derives a unique /16 CIDR from the run ID.
+// Given a base like "10.0.0.0/8", it hashes the runID to pick the second octet (1-254),
+// producing e.g. "10.42.0.0/16". This avoids collisions between concurrent runs.
+func runSubnetCIDR(runID string, _ string) string {
+	var h byte
+	for _, b := range []byte(runID) {
+		h = h*31 + b
+	}
+	octet := int(h%254) + 1 // 1..254
+	return fmt.Sprintf("10.%d.0.0/16", octet)
+}
+
+// yandexTfVars matches the terraform variable structure from main branch.
 type yandexTfVars struct {
-	FolderID         string       `json:"folder_id"`
-	Zone             string       `json:"zone"`
-	SubnetID         string       `json:"subnet_id"`
-	ServiceAccountID string       `json:"service_account_id"`
-	SSHPublicKey     string       `json:"ssh_public_key"`
-	ImageID          string       `json:"image_id"`
-	Machines         []yandexTfVM `json:"machines"`
+	Networking yandexTfNetworking `json:"networking"`
+	Compute    yandexTfCompute    `json:"compute"`
+}
+
+type yandexTfNetworking struct {
+	Name       string `json:"name"`
+	ExternalID string `json:"external_id"`
+	CIDR       string `json:"cidr"`
+	Zone       string `json:"zone"`
+}
+
+type yandexTfCompute struct {
+	PlatformID       string                `json:"platform_id"`
+	ImageID          string                `json:"image_id"`
+	SerialPortEnable bool                  `json:"serial_port_enable"`
+	VMs              map[string]yandexTfVM `json:"vms"`
 }
 
 type yandexTfVM struct {
-	Name      string `json:"name"`
-	Role      string `json:"role"`
-	Cores     int    `json:"cores"`
-	MemoryMB  int    `json:"memory_mb"`
-	DiskGB    int    `json:"disk_gb"`
-	CloudInit string `json:"cloud_init"`
+	Cores       int    `json:"cores"`
+	Memory      int    `json:"memory"`
+	DiskSize    int    `json:"disk_size"`
+	InternalIP  string `json:"internal_ip"`
+	HasPublicIP bool   `json:"has_public_ip"`
+	UserData    string `json:"user_data"`
+}
+
+// yandexVmIPs is the terraform output structure for vm_ips.
+type yandexVmIPs map[string]struct {
+	ID         string `json:"id"`
+	NatIP      string `json:"nat_ip"`
+	InternalIP string `json:"internal_ip"`
 }
 
 func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
@@ -215,7 +241,13 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 	}
 
 	cloud := t.settings.Cloud
+	if err := cloud.ValidateCloud(); err != nil {
+		return fmt.Errorf("machines: %w", err)
+	}
 	yc := cloud.Yandex
+	if err := yc.Validate(); err != nil {
+		return fmt.Errorf("machines: %w", err)
+	}
 
 	// Determine binary URL for cloud-init.
 	binaryURL := cloud.BinaryURL
@@ -236,16 +268,21 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 	}
 
 	// Build cloud-init and VM specs for each machine.
-	var vms []yandexTfVM
+	vmSpecs := make(map[string]yandexTfVM)
+	// Track role per VM name for state population after apply.
+	vmRoles := make(map[string]types.MachineRole)
+
 	for _, spec := range t.runCfg.Machines {
 		for i := range spec.Count {
 			machineID := fmt.Sprintf("%s-%s-%d", t.runCfg.ID, spec.Role, i)
 
 			cloudInit, ciErr := agent.GenerateCloudInit(agent.CloudInitParams{
-				BinaryURL:  binaryURL,
-				ServerAddr: t.serverAddr,
-				AgentPort:  agent.DefaultAgentPort,
-				MachineID:  machineID,
+				BinaryURL:    binaryURL,
+				ServerAddr:   t.serverAddr,
+				AgentPort:    agent.DefaultAgentPort,
+				MachineID:    machineID,
+				SSHUser:      yc.SSHUser,
+				SSHPublicKey: yc.SSHPublicKey,
 			})
 			if ciErr != nil {
 				return fmt.Errorf("machines: generate cloud-init for %s: %w", machineID, ciErr)
@@ -255,9 +292,9 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 			if cores == 0 {
 				cores = 2
 			}
-			memMB := spec.MemoryMB
-			if memMB == 0 {
-				memMB = 4096
+			memGB := spec.MemoryMB / 1024
+			if memGB == 0 {
+				memGB = 4
 			}
 			diskGB := spec.DiskGB
 			if diskGB == 0 {
@@ -268,30 +305,44 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 				zap.String("machine_id", machineID),
 				zap.String("role", string(spec.Role)),
 				zap.Int("cores", cores),
-				zap.Int("memory_mb", memMB),
+				zap.Int("memory_gb", memGB),
 				zap.Int("disk_gb", diskGB),
 			)
 
-			vms = append(vms, yandexTfVM{
-				Name:      machineID,
-				Role:      string(spec.Role),
-				Cores:     cores,
-				MemoryMB:  memMB,
-				DiskGB:    diskGB,
-				CloudInit: cloudInit,
-			})
+			vmSpecs[machineID] = yandexTfVM{
+				Cores:       cores,
+				Memory:      memGB,
+				DiskSize:    diskGB,
+				HasPublicIP: yc.AssignPublicIP,
+				UserData:    cloudInit,
+			}
+			vmRoles[machineID] = spec.Role
 		}
 	}
 
-	// Build terraform variables.
+	platformID := yc.PlatformID
+	if platformID == "" {
+		platformID = "standard-v2"
+	}
+
+	// Generate unique subnet name and CIDR per run to avoid collisions.
+	subnetName := fmt.Sprintf("%s-%s", yc.NetworkName, t.runCfg.ID)
+	subnetCIDR := runSubnetCIDR(t.runCfg.ID, yc.SubnetCIDR)
+
+	// Build terraform variables matching main branch format.
 	vars := yandexTfVars{
-		FolderID:         yc.FolderID,
-		Zone:             yc.Zone,
-		SubnetID:         yc.SubnetID,
-		ServiceAccountID: yc.ServiceAccountID,
-		SSHPublicKey:     yc.SSHPublicKey,
-		ImageID:          yc.ImageID,
-		Machines:         vms,
+		Networking: yandexTfNetworking{
+			Name:       subnetName,
+			ExternalID: yc.NetworkID,
+			CIDR:       subnetCIDR,
+			Zone:       yc.Zone,
+		},
+		Compute: yandexTfCompute{
+			PlatformID:       platformID,
+			ImageID:          yc.ImageID,
+			SerialPortEnable: true,
+			VMs:              vmSpecs,
+		},
 	}
 
 	varFile, err := terraform.NewTfVarFile(vars)
@@ -309,11 +360,17 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 	wd := terraform.NewWorkdirWithParams(wdId,
 		terraform.WithTfFiles(tfFiles),
 		terraform.WithVarFile(varFile),
+		terraform.WithEnv(map[string]string{
+			"YC_TOKEN":     yc.Token,
+			"YC_CLOUD_ID":  yc.CloudID,
+			"YC_FOLDER_ID": yc.FolderID,
+			"YC_ZONE":      yc.Zone,
+		}),
 	)
 
 	nc.Log().Info("running terraform apply for Yandex Cloud",
 		zap.String("run_id", t.runCfg.ID),
-		zap.Int("vm_count", len(vms)),
+		zap.Int("vm_count", len(vmSpecs)),
 	)
 
 	ctx := context.Context(nc)
@@ -322,12 +379,12 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 		return fmt.Errorf("machines: terraform apply: %w", err)
 	}
 
-	// Store working directory ID for teardown.
+	// Store working directory ID and actor for teardown.
 	t.state.SetTerraformWdId(string(wdId))
+	t.state.SetTerraformActor(actor)
 
-	// Parse terraform output to get VM IPs.
-	// Expected output key: "vm_ips" -- a map of machine name to IP address.
-	vmIPs, err := terraform.GetTfOutputVal[map[string]string](output, "vm_ips")
+	// Parse terraform output — main branch format returns nat_ip + internal_ip.
+	vmIPs, err := terraform.GetTfOutputVal[yandexVmIPs](output, "vm_ips")
 	if err != nil {
 		return fmt.Errorf("machines: parse terraform output 'vm_ips': %w", err)
 	}
@@ -336,18 +393,23 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 	var dbTargets []agent.Target
 	var proxyTargets []agent.Target
 
-	for _, vm := range vms {
-		ip, ok := vmIPs[vm.Name]
+	for name, role := range vmRoles {
+		vmInfo, ok := vmIPs[name]
 		if !ok {
-			return fmt.Errorf("machines: terraform output missing IP for VM %q", vm.Name)
+			return fmt.Errorf("machines: terraform output missing IP for VM %q", name)
+		}
+
+		ip := vmInfo.NatIP
+		if ip == "" {
+			ip = vmInfo.InternalIP
 		}
 
 		target := agent.Target{
-			ID:           vm.Name,
-			InternalHost: ip,
+			ID:           name,
+			Host:         ip,
+			InternalHost: vmInfo.InternalIP,
 		}
 
-		role := types.MachineRole(vm.Role)
 		switch role {
 		case types.RoleDatabase:
 			dbTargets = append(dbTargets, target)
@@ -359,7 +421,7 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 				case types.DatabasePicodata:
 					dbPort = 4327
 				}
-				t.state.SetDBEndpoint(ip, dbPort)
+				t.state.SetDBEndpoint(vmInfo.InternalIP, dbPort)
 			}
 		case types.RoleProxy:
 			proxyTargets = append(proxyTargets, target)
@@ -371,71 +433,12 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 	t.state.SetDBTargets(dbTargets)
 	t.state.SetProxyTargets(proxyTargets)
 
-	nc.Log().Info("Yandex Cloud VMs provisioned, waiting for agents to register",
+	nc.Log().Info("Yandex Cloud VMs provisioned",
 		zap.Int("db", len(dbTargets)),
 		zap.Int("proxy", len(proxyTargets)),
 	)
 
-	// Wait for all agents to become healthy.
-	if err := waitForAgents(ctx, nc.Log(), vms, vmIPs); err != nil {
-		return fmt.Errorf("machines: %w", err)
-	}
-
-	nc.Log().Info("all Yandex Cloud agents healthy")
 	return nil
-}
-
-// waitForAgents polls the /health endpoint on each agent until all respond or timeout.
-func waitForAgents(ctx context.Context, log *zap.Logger, vms []yandexTfVM, ips map[string]string) error {
-	const (
-		pollInterval = 5 * time.Second
-		timeout      = 5 * time.Minute
-	)
-
-	deadline := time.Now().Add(timeout)
-	httpClient := &http.Client{Timeout: 3 * time.Second}
-
-	healthy := make(map[string]bool, len(vms))
-	for {
-		allHealthy := true
-		for _, vm := range vms {
-			if healthy[vm.Name] {
-				continue
-			}
-			ip := ips[vm.Name]
-			healthURL := fmt.Sprintf("http://%s:%d/health", ip, agent.DefaultAgentPort)
-			resp, err := httpClient.Get(healthURL) //nolint:gosec // URL built from trusted terraform output
-			if err == nil {
-				resp.Body.Close()
-				if resp.StatusCode == http.StatusOK {
-					healthy[vm.Name] = true
-					log.Info("agent healthy", zap.String("vm", vm.Name), zap.String("ip", ip))
-					continue
-				}
-			}
-			allHealthy = false
-		}
-
-		if allHealthy {
-			return nil
-		}
-
-		if time.Now().After(deadline) {
-			var unhealthy []string
-			for _, vm := range vms {
-				if !healthy[vm.Name] {
-					unhealthy = append(unhealthy, vm.Name)
-				}
-			}
-			return fmt.Errorf("agents did not become healthy within %v: %v", timeout, unhealthy)
-		}
-
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(pollInterval):
-		}
-	}
 }
 
 // teardownTask destroys containers and network.
@@ -492,12 +495,17 @@ func (t *teardownTask) yandexTeardown(nc *dag.NodeContext) error {
 		return nil
 	}
 
-	nc.Log().Info("running terraform destroy for Yandex Cloud", zap.String("wd_id", wdIdStr))
-
-	actor, err := terraform.NewActor()
-	if err != nil {
-		return fmt.Errorf("teardown: create terraform actor: %w", err)
+	actor := t.state.TerraformActor()
+	if actor == nil {
+		nc.Log().Warn("teardown: no terraform actor in state, creating new one")
+		var err error
+		actor, err = terraform.NewActor()
+		if err != nil {
+			return fmt.Errorf("teardown: create terraform actor: %w", err)
+		}
 	}
+
+	nc.Log().Info("running terraform destroy for Yandex Cloud", zap.String("wd_id", wdIdStr))
 
 	ctx := context.Context(nc)
 	if err := actor.DestroyTerraform(ctx, terraform.NewWdId(wdIdStr)); err != nil {

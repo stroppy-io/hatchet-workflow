@@ -38,14 +38,10 @@ func (t *monitorConfigTask) Execute(nc *dag.NodeContext) error {
 	allTargets := t.state.AllTargets()
 	nc.Log().Info("configuring monitoring on all machines", zap.Int("count", len(allTargets)))
 
-	// VictoriaMetrics remote_write endpoint -- accessible from agent containers.
+	// VictoriaMetrics remote_write endpoint -- must be reachable from agent VMs/containers.
 	metricsEndpoint := t.monitor.MetricsEndpoint
 	if metricsEndpoint == "" && t.settings != nil && t.settings.Monitoring.VictoriaMetricsURL != "" {
 		metricsEndpoint = t.settings.Monitoring.VictoriaMetricsURL + "/api/v1/write"
-	}
-	if metricsEndpoint == "" {
-		// Default: host's VictoriaMetrics via docker bridge.
-		metricsEndpoint = "http://172.17.0.1:8428/api/v1/write"
 	}
 
 	// Scrape targets -- use InternalHost (container names) for container-to-container scraping.

@@ -207,15 +207,10 @@ func (a *App) buildDeps(cfg types.RunConfig) (run.Deps, func(), error) {
 		deps.Settings = a.settingsFunc()
 	}
 
-	// Server address for agent→server communication.
-	serverAddr := os.Getenv("STROPPY_SERVER_ADDR")
-	if serverAddr == "" {
-		serverAddr = "http://172.17.0.1:8080" // docker0 bridge
+	// Server address for agent→server communication — comes from settings only.
+	if deps.Settings != nil {
+		deps.ServerAddr = deps.Settings.Cloud.ServerAddr
 	}
-	if deps.Settings != nil && deps.Settings.Cloud.ServerAddr != "" {
-		serverAddr = deps.Settings.Cloud.ServerAddr
-	}
-	deps.ServerAddr = serverAddr
 
 	if cfg.Provider == types.ProviderDocker {
 		deployer, err := agent.NewDockerDeployer(fmt.Sprintf("stroppy-%s", cfg.ID))

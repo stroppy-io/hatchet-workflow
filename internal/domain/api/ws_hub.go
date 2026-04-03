@@ -3,10 +3,15 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/victoria"
 )
 
 // wsMessage is the envelope sent to WebSocket clients.
@@ -33,6 +38,11 @@ func (c *wsClient) send(data []byte) {
 type wsHub struct {
 	mu      sync.RWMutex
 	clients []*wsClient
+
+	// victoriaLogs persists server/DAG logs alongside agent logs.
+	// nil when VictoriaLogs is not configured.
+	victoriaLogs *victoria.LogsClient
+	logger       *zap.Logger
 }
 
 func newWSHub() *wsHub {
@@ -88,16 +98,61 @@ func (h *wsHub) broadcast(msg wsMessage) {
 	}
 }
 
+// encodeFields serializes zap fields into a flat map for JSON transport.
+func encodeFields(fields []zapcore.Field) map[string]any {
+	if len(fields) == 0 {
+		return nil
+	}
+	enc := zapcore.NewMapObjectEncoder()
+	for _, f := range fields {
+		f.AddTo(enc)
+	}
+	return enc.Fields
+}
+
+// formatLogLine builds a human-readable log line including all zap fields.
+func formatLogLine(level, nodeID, message string, fields map[string]any) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "[%s] [%s] %s", level, nodeID, message)
+	for k, v := range fields {
+		if k == "node_id" {
+			continue // already in the prefix
+		}
+		fmt.Fprintf(&b, "  %s=%v", k, v)
+	}
+	return b.String()
+}
+
 // WriteLog implements dag.LogSink.
 func (h *wsHub) WriteLog(_ context.Context, executionID string, nodeID string, entry zapcore.Entry, fields []zapcore.Field) {
+	encoded := encodeFields(fields)
+
+	payload := map[string]any{
+		"level":   entry.Level.String(),
+		"message": entry.Message,
+		"time":    entry.Time,
+	}
+	// Merge fields into payload so the UI gets full details.
+	for k, v := range encoded {
+		payload[k] = v
+	}
+
 	h.broadcast(wsMessage{
-		Type:   "log",
-		RunID:  executionID,
-		NodeID: nodeID,
-		Payload: map[string]any{
-			"level":   entry.Level.String(),
-			"message": entry.Message,
-			"time":    entry.Time,
-		},
+		Type:    "log",
+		RunID:   executionID,
+		NodeID:  nodeID,
+		Payload: payload,
 	})
+
+	// Persist server log to VictoriaLogs so it appears in historical queries.
+	if h.victoriaLogs != nil {
+		line := formatLogLine(entry.Level.CapitalString(), nodeID, entry.Message, encoded)
+		go func() {
+			if err := h.victoriaLogs.Ingest("server", "", executionID, "server", line); err != nil {
+				if h.logger != nil {
+					h.logger.Debug("vlogs server log ingest failed", zap.Error(err))
+				}
+			}
+		}()
+	}
 }

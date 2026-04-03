@@ -17,16 +17,24 @@ type CloudInitParams struct {
 	AgentPort int
 	// MachineID is a unique identifier for this machine, used in agent registration.
 	MachineID string
+	// SSHUser is the login user created on the VM (default "stroppy").
+	SSHUser string
+	// SSHPublicKey is the SSH public key added to the user's authorized_keys.
+	SSHPublicKey string
 	// ExtraEnv is optional environment variables passed to the agent.
 	ExtraEnv map[string]string
 }
 
 var cloudInitTmpl = template.Must(template.New("cloudinit").Parse(`#cloud-config
 users:
-  - name: stroppy
+  - name: {{.SSHUser}}
     groups: sudo
     shell: /bin/bash
     sudo: ALL=(ALL) NOPASSWD:ALL
+{{- if .SSHPublicKey}}
+    ssh_authorized_keys:
+      - {{.SSHPublicKey}}
+{{- end}}
 
 write_files:
   - path: /etc/stroppy/agent.env
@@ -67,6 +75,9 @@ runcmd:
 func GenerateCloudInit(params CloudInitParams) (string, error) {
 	if params.AgentPort == 0 {
 		params.AgentPort = DefaultAgentPort
+	}
+	if params.SSHUser == "" {
+		params.SSHUser = "stroppy"
 	}
 
 	data := struct {

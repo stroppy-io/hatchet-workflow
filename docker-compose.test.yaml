@@ -50,16 +50,19 @@ services:
       - --addr=:8080
       - --victoria-url=http://127.0.0.1:8428
       - --victoria-logs-url=http://127.0.0.1:9428
+      - --settings-file=/data/settings.json
       - --data-dir=/data/badger
     volumes:
       - server-data:/data
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./bin/stroppy-cloud:/usr/local/bin/stroppy-cloud:ro
     environment:
       LOG_MOD: development
       LOG_LEVEL: debug
       STROPPY_BINARY_HOST_PATH: /tmp/stroppy-cloud
       STROPPY_HOST_MODE: "true"
+      YC_TOKEN: ${YC_TOKEN:-}
+      YC_CLOUD_ID: ${YC_CLOUD_ID:-}
+      YC_FOLDER_ID: ${YC_FOLDER_ID:-}
 
 volumes:
   victoria-data:

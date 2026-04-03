@@ -8,12 +8,52 @@ import (
 
 // YandexCloudSettings holds Yandex Cloud-specific credentials and resource IDs.
 type YandexCloudSettings struct {
-	FolderID         string `json:"folder_id"`
-	Zone             string `json:"zone"`
-	SubnetID         string `json:"subnet_id"`
-	ServiceAccountID string `json:"service_account_id"`
-	SSHPublicKey     string `json:"ssh_public_key"`
-	ImageID          string `json:"image_id"`
+	// Credentials — passed as env vars to terraform.
+	Token   string `json:"token"`    // YC_TOKEN (OAuth or IAM token)
+	CloudID string `json:"cloud_id"` // YC_CLOUD_ID
+	// Infrastructure.
+	FolderID       string `json:"folder_id"`
+	Zone           string `json:"zone"`
+	NetworkID      string `json:"network_id"`   // external VPC network ID
+	NetworkName    string `json:"network_name"` // subnet name prefix
+	SubnetCIDR     string `json:"subnet_cidr"`
+	PlatformID     string `json:"platform_id"` // e.g. standard-v2
+	ImageID        string `json:"image_id"`
+	AssignPublicIP bool   `json:"assign_public_ip"` // allocate external IP on VMs
+	SSHUser        string `json:"ssh_user"`         // login user on VMs (default "stroppy")
+	SSHPublicKey   string `json:"ssh_public_key"`
+}
+
+// Validate checks that all required fields for a Yandex Cloud run are set.
+func (y YandexCloudSettings) Validate() error {
+	missing := func(name, val string) error {
+		if val == "" {
+			return fmt.Errorf("yandex cloud: %s is required", name)
+		}
+		return nil
+	}
+	for _, check := range []struct{ name, val string }{
+		{"token", y.Token},
+		{"cloud_id", y.CloudID},
+		{"folder_id", y.FolderID},
+		{"network_id", y.NetworkID},
+		{"network_name", y.NetworkName},
+		{"subnet_cidr", y.SubnetCIDR},
+		{"image_id", y.ImageID},
+	} {
+		if err := missing(check.name, check.val); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ValidateCloud checks that cloud-level settings required for any cloud provider are set.
+func (c CloudSettings) ValidateCloud() error {
+	if c.ServerAddr == "" {
+		return fmt.Errorf("cloud: server_addr is required")
+	}
+	return nil
 }
 
 // CloudSettings holds cloud provider template settings used during provisioning.
@@ -104,7 +144,10 @@ func DefaultServerSettings() ServerSettings {
 	return ServerSettings{
 		Cloud: CloudSettings{
 			Yandex: YandexCloudSettings{
-				Zone: "ru-central1-b",
+				Zone:        "ru-central1-b",
+				NetworkName: "stroppy-net",
+				SubnetCIDR:  "10.1.0.0/16",
+				PlatformID:  "standard-v2",
 			},
 		},
 		Monitoring: MonitoringStack{
@@ -118,7 +161,7 @@ func DefaultServerSettings() ServerSettings {
 		StroppyDefaults: StroppySettings{
 			Version:          "3.1.0",
 			OTLPExporterType: "http",
-			OTLPEndpoint:     "172.17.0.1:8428",
+			OTLPEndpoint:     "",
 			OTLPInsecure:     true,
 			OTLPURLPath:      "/opentelemetry/v1/metrics",
 			OTLPMetricPrefix: "stroppy_",

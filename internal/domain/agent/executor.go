@@ -864,9 +864,6 @@ func (e *Executor) configMonitor(ctx context.Context, cmd Command) error {
 		}
 
 		remoteWrite := cfg.MetricsEndpoint
-		if remoteWrite == "" {
-			remoteWrite = "http://172.17.0.1:8428/api/v1/write"
-		}
 
 		e.shell(ctx, "mkdir -p /var/lib/vmagent")
 		if err := e.startDaemon("vmagent", "/usr/local/bin/vmagent",

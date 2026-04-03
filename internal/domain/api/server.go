@@ -85,7 +85,9 @@ func NewServer(app *App, logger *zap.Logger, victoriaURL, victoriaLogsURL, apiKe
 	}
 	// Load persisted settings from disk (if available).
 	s.loadSettingsFromDisk()
-	// Wire LogSink so executor logs stream to WebSocket clients.
+	// Wire LogSink so executor logs stream to WebSocket clients and VictoriaLogs.
+	s.hub.victoriaLogs = s.victoriaLogs
+	s.hub.logger = logger
 	app.sink = s.hub
 	// Wire settings getter so buildDeps can access current cloud settings.
 	app.settingsFunc = s.currentSettings

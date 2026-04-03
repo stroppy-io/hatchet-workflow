@@ -173,12 +173,18 @@ export interface PresetsResponse {
 // --- Settings ---
 
 export interface YandexCloudSettings {
+  token: string;
+  cloud_id: string;
   folder_id: string;
   zone: string;
-  subnet_id: string;
-  service_account_id: string;
-  ssh_public_key: string;
+  network_id: string;
+  network_name: string;
+  subnet_cidr: string;
+  platform_id: string;
   image_id: string;
+  assign_public_ip: boolean;
+  ssh_user: string;
+  ssh_public_key: string;
 }
 
 export interface CloudSettings {

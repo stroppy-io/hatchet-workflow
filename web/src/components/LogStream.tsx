@@ -67,7 +67,7 @@ export function LogStream({ runID }: LogStreamProps) {
         const historical: DisplayLine[] = rawLines.map((raw) => {
           try {
             const obj = JSON.parse(raw);
-            return { machineID: obj.machine_id || "system", text: obj.line || raw, ts: 0 };
+            return { machineID: obj.machine_id || "system", text: obj._msg || obj.line || raw, ts: 0 };
           } catch {
             return { machineID: "system", text: raw, ts: 0 };
           }
@@ -90,10 +90,17 @@ export function LogStream({ runID }: LogStreamProps) {
           return next.length > 5000 ? next.slice(-5000) : next;
         });
       } else if (msg.type === "log") {
-        const p = msg.payload as { message?: string };
+        const p = msg.payload as Record<string, unknown>;
         if (p.message) {
+          // Build a detailed line: message + all extra fields (skip meta keys).
+          const skip = new Set(["level", "message", "time", "node_id"]);
+          const extras = Object.entries(p)
+            .filter(([k]) => !skip.has(k))
+            .map(([k, v]) => `${k}=${v}`)
+            .join("  ");
+          const text = extras ? `${p.message}  ${extras}` : String(p.message);
           setLines((prev) => {
-            const next = [...prev, { machineID: msg.node_id || "system", text: p.message!, ts: Date.now() }];
+            const next = [...prev, { machineID: msg.node_id || "system", text, ts: Date.now() }];
             return next.length > 5000 ? next.slice(-5000) : next;
           });
         }

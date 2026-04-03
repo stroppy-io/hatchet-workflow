@@ -154,40 +154,182 @@ export function SettingsPage() {
           {settings && (
             <Card>
               <CardHeader>
-                <CardTitle>Yandex Cloud</CardTitle>
+                <CardTitle>Cloud / Server</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
+                {/* Server address — required for cloud runs */}
                 <div className="grid grid-cols-2 gap-4">
-                  {(
-                    [
-                      ["folder_id", "Folder ID"],
-                      ["zone", "Zone"],
-                      ["subnet_id", "Subnet ID"],
-                      ["service_account_id", "Service Account ID"],
-                      ["image_id", "Image ID"],
-                    ] as const
-                  ).map(([key, label]) => (
-                    <div key={key} className="space-y-2">
-                      <Label>{label}</Label>
+                  <div className="space-y-2">
+                    <Label>
+                      Server Address <Badge variant="destructive" className="text-[10px] ml-1">required</Badge>
+                    </Label>
+                    <Input
+                      value={settings.cloud.server_addr || ""}
+                      onChange={(e) =>
+                        updateField("cloud", "server_addr", e.target.value)
+                      }
+                      className="font-mono text-xs"
+                      placeholder="http://84.201.148.157:8080"
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      Public URL agents will use to reach this server
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Binary URL Override</Label>
+                    <Input
+                      value={settings.cloud.binary_url || ""}
+                      onChange={(e) =>
+                        updateField("cloud", "binary_url", e.target.value)
+                      }
+                      className="font-mono text-xs"
+                      placeholder="defaults to server_addr/agent/binary"
+                    />
+                  </div>
+                </div>
+
+                <hr className="border-border" />
+
+                {/* YC Credentials */}
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Yandex Cloud Credentials</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>
+                        Token (YC_TOKEN) <Badge variant="destructive" className="text-[10px] ml-1">required</Badge>
+                      </Label>
                       <Input
-                        value={(settings.cloud.yandex as any)[key] || ""}
+                        type="password"
+                        value={settings.cloud.yandex.token || ""}
                         onChange={(e) =>
                           setSettings({
                             ...settings,
                             cloud: {
                               ...settings.cloud,
-                              yandex: {
-                                ...settings.cloud.yandex,
-                                [key]: e.target.value,
-                              },
+                              yandex: { ...settings.cloud.yandex, token: e.target.value },
+                            },
+                          })
+                        }
+                        className="font-mono text-xs"
+                        placeholder="OAuth or IAM token"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>
+                        Cloud ID <Badge variant="destructive" className="text-[10px] ml-1">required</Badge>
+                      </Label>
+                      <Input
+                        value={settings.cloud.yandex.cloud_id || ""}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            cloud: {
+                              ...settings.cloud,
+                              yandex: { ...settings.cloud.yandex, cloud_id: e.target.value },
                             },
                           })
                         }
                         className="font-mono text-xs"
                       />
                     </div>
-                  ))}
+                  </div>
                 </div>
+
+                <hr className="border-border" />
+
+                {/* YC Infrastructure */}
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Yandex Cloud Infrastructure</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {(
+                      [
+                        ["folder_id", "Folder ID", true],
+                        ["zone", "Zone", false],
+                        ["network_id", "Network ID (VPC)", true],
+                        ["network_name", "Subnet Name", true],
+                        ["subnet_cidr", "Subnet CIDR", true],
+                        ["platform_id", "Platform ID", false],
+                        ["image_id", "Image ID", true],
+                      ] as const
+                    ).map(([key, label, required]) => (
+                      <div key={key} className="space-y-2">
+                        <Label>
+                          {label}
+                          {required && <Badge variant="destructive" className="text-[10px] ml-1">required</Badge>}
+                        </Label>
+                        <Input
+                          value={(settings.cloud.yandex as any)[key] || ""}
+                          onChange={(e) =>
+                            setSettings({
+                              ...settings,
+                              cloud: {
+                                ...settings.cloud,
+                                yandex: {
+                                  ...settings.cloud.yandex,
+                                  [key]: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                          className="font-mono text-xs"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Assign Public IP</Label>
+                  <div className="flex items-center gap-2 h-9">
+                    <input
+                      type="checkbox"
+                      checked={settings.cloud.yandex.assign_public_ip ?? false}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          cloud: {
+                            ...settings.cloud,
+                            yandex: {
+                              ...settings.cloud.yandex,
+                              assign_public_ip: e.target.checked,
+                            },
+                          },
+                        })
+                      }
+                      className="accent-primary"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      Allocate external IP addresses on VMs
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>SSH User</Label>
+                    <Input
+                      value={settings.cloud.yandex.ssh_user || ""}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          cloud: {
+                            ...settings.cloud,
+                            yandex: {
+                              ...settings.cloud.yandex,
+                              ssh_user: e.target.value,
+                            },
+                          },
+                        })
+                      }
+                      className="font-mono text-xs"
+                      placeholder="stroppy"
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      Login user created on VMs (default: stroppy)
+                    </p>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label>SSH Public Key</Label>
                   <textarea
@@ -207,29 +349,7 @@ export function SettingsPage() {
                     }
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Server Address</Label>
-                    <Input
-                      value={settings.cloud.server_addr || ""}
-                      onChange={(e) =>
-                        updateField("cloud", "server_addr", e.target.value)
-                      }
-                      className="font-mono text-xs"
-                      placeholder="http://my-server:8080"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Binary URL Override</Label>
-                    <Input
-                      value={settings.cloud.binary_url || ""}
-                      onChange={(e) =>
-                        updateField("cloud", "binary_url", e.target.value)
-                      }
-                      className="font-mono text-xs"
-                    />
-                  </div>
-                </div>
+
                 <Button onClick={handleSaveSettings} disabled={saving}>
                   <Save className="h-3.5 w-3.5" />
                   {saving ? "Saving..." : "Save Settings"}
