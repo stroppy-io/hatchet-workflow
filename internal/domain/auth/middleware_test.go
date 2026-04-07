@@ -51,7 +51,7 @@ func TestAuthMiddleware_PublicPaths(t *testing.T) {
 	issuer := issuerForTest()
 	mw := NewAuthMiddleware(issuer, nil)
 
-	paths := []string{"/health", "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/agent/register"}
+	paths := []string{"/health", "/api/v1/auth/login", "/api/v1/auth/refresh"}
 	for _, p := range paths {
 		req := httptest.NewRequest(http.MethodGet, p, nil)
 		rec := httptest.NewRecorder()

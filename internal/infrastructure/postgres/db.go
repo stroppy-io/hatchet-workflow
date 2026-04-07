@@ -144,5 +144,28 @@ func seed(ctx context.Context, pool *pgxpool.Pool) error {
 		return err
 	}
 
+	// Seed built-in packages for all tenants that don't have any.
+	var pkgCount int
+	_ = tx.QueryRow(ctx, "SELECT COUNT(*) FROM packages WHERE tenant_id = $1", tenantID).Scan(&pkgCount)
+	if pkgCount == 0 {
+		for _, bp := range types.BuiltinPackages() {
+			apt := bp.AptPackages
+			if apt == nil {
+				apt = []string{}
+			}
+			pre := bp.PreInstall
+			if pre == nil {
+				pre = []string{}
+			}
+			_, _ = tx.Exec(ctx,
+				`INSERT INTO packages (id, tenant_id, name, description, db_kind, db_version, is_builtin, apt_packages, pre_install, custom_repo, custom_repo_key, deb_filename)
+				 VALUES ($1, $2, $3, $4, $5, $6, TRUE, $7, $8, $9, $10, '')
+				 ON CONFLICT DO NOTHING`,
+				uuid.New().String(), tenantID, bp.Name, bp.Description,
+				bp.DbKind, bp.DbVersion, apt, pre, bp.CustomRepo, bp.CustomRepoKey,
+			)
+		}
+	}
+
 	return tx.Commit(ctx)
 }

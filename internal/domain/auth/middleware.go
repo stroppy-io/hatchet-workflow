@@ -116,10 +116,7 @@ func isPublicPath(path string) bool {
 	case "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout":
 		return true
 	}
-	// Agent machine-to-machine API.
-	if strings.HasPrefix(path, "/api/agent/") {
-		return true
-	}
+	// Agent API is now authenticated via JWT (agent tokens).
 	// Everything outside /api/ is public: health, SPA (index.html, JS, CSS), agent binary, packages.
 	if !strings.HasPrefix(path, "/api/") {
 		return true

@@ -8,8 +8,11 @@ import (
 	"github.com/docker/docker/client"
 	"go.uber.org/zap"
 
+	"time"
+
 	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/auth"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/terraform"
 
@@ -91,6 +94,8 @@ type machinesTask struct {
 	deployer   *agent.DockerDeployer
 	serverAddr string
 	settings   *types.ServerSettings
+	jwtIssuer  *auth.JWTIssuer
+	tenantID   string
 }
 
 func (t *machinesTask) Execute(nc *dag.NodeContext) error {
@@ -124,7 +129,21 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 				zap.String("role", string(spec.Role)),
 			)
 
-			result, err := t.deployer.Deploy(ctx, machineID, t.serverAddr, port)
+			// Generate agent JWT token (valid for 24h).
+			agentToken := ""
+			if t.jwtIssuer != nil {
+				token, err := t.jwtIssuer.Issue(auth.Claims{
+					UserID:   machineID,
+					Username: machineID,
+					TenantID: t.tenantID,
+					Role:     "operator",
+				}, 24*time.Hour)
+				if err == nil {
+					agentToken = token
+				}
+			}
+
+			result, err := t.deployer.Deploy(ctx, machineID, t.serverAddr, agentToken, port)
 			if err != nil {
 				return fmt.Errorf("machines: deploy %s: %w", machineID, err)
 			}

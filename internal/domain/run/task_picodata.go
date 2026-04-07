@@ -11,7 +11,7 @@ type picoInstallTask struct {
 	state    *State
 	version  string
 	topology *types.PicodataTopology
-	packages *types.PackageSet
+	pkg      *types.Package
 }
 
 func (t *picoInstallTask) Execute(nc *dag.NodeContext) error {
@@ -20,9 +20,9 @@ func (t *picoInstallTask) Execute(nc *dag.NodeContext) error {
 	return t.client.SendAll(nc, targets, agent.Command{
 		Action: agent.ActionInstallPicodata,
 		Config: agent.PicodataInstallConfig{
-			Version:  t.version,
-			DataDir:  "/var/lib/picodata",
-			Packages: t.packages,
+			Version: t.version,
+			DataDir: "/var/lib/picodata",
+			Package: t.pkg,
 		},
 	})
 }

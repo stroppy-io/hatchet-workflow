@@ -6,9 +6,9 @@ import (
 
 // PostgresInstallConfig is the agent payload for postgres installation.
 type PostgresInstallConfig struct {
-	Version  string            `json:"version"`
-	DataDir  string            `json:"data_dir"`
-	Packages *types.PackageSet `json:"packages,omitempty"` // custom packages override
+	Version string         `json:"version"`
+	DataDir string         `json:"data_dir"`
+	Package *types.Package `json:"package,omitempty"`
 }
 
 // PostgresClusterConfig is the agent payload for postgres cluster setup.

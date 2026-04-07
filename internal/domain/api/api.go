@@ -14,6 +14,7 @@ import (
 
 	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/auth"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/run"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
@@ -37,6 +38,9 @@ type App struct {
 	// accountIDFunc resolves tenantID → victoria accountID.
 	// Set by Server after construction.
 	accountIDFunc func(tenantID string) int32
+	// jwtIssuer generates JWT tokens for agent auth.
+	// Set by Server after construction.
+	jwtIssuer *auth.JWTIssuer
 }
 
 // Config holds application-level settings.
@@ -190,7 +194,7 @@ func (a *App) buildDeps(tenantID string, cfg types.RunConfig) (run.Deps, func(),
 		// Fallback for CLI mode (no server) — direct HTTP push.
 		cl = agent.NewHTTPClient()
 	}
-	deps := run.Deps{Client: cl, State: state, MonitoringURL: a.monitoringURL, MonitoringToken: a.monitoringToken}
+	deps := run.Deps{Client: cl, State: state, MonitoringURL: a.monitoringURL, MonitoringToken: a.monitoringToken, TenantID: tenantID, JWTIssuer: a.jwtIssuer}
 	noop := func() {}
 
 	// Resolve per-tenant victoria accountID.

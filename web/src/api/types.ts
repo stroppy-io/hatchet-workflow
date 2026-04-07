@@ -105,16 +105,22 @@ export interface NetworkConfig {
   zone?: string;
 }
 
-export interface PackageSet {
-  apt?: string[];
-  rpm?: string[];
-  pre_install_apt?: string[];
-  pre_install_rpm?: string[];
-  custom_repo_apt?: string;
+// Package is a first-class entity stored in the DB.
+export interface Package {
+  id: string;
+  name: string;
+  description: string;
+  db_kind: string;
+  db_version: string;
+  is_builtin: boolean;
+  apt_packages: string[];
+  pre_install: string[];
+  custom_repo?: string;
   custom_repo_key?: string;
-  custom_repo_rpm?: string;
-  deb_files?: string[];
-  rpm_files?: string[];
+  deb_filename?: string;
+  has_deb?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface RunConfig {
@@ -125,7 +131,7 @@ export interface RunConfig {
   database: DatabaseConfig;
   monitor: MonitorConfig;
   stroppy: StroppyConfig;
-  packages?: PackageSet;
+  package_id?: string;
 }
 
 // --- DAG / Snapshot ---
@@ -193,14 +199,6 @@ export interface CloudSettings {
   binary_url: string;
 }
 
-export interface PackageDefaults {
-  postgres: Record<string, PackageSet>;
-  mysql: Record<string, PackageSet>;
-  picodata: Record<string, PackageSet>;
-  monitoring: PackageSet;
-  stroppy: PackageSet;
-}
-
 export interface GrafanaSettings {
   url: string;
   embed_enabled: boolean;
@@ -209,7 +207,6 @@ export interface GrafanaSettings {
 
 export interface ServerSettings {
   cloud: CloudSettings;
-  packages: PackageDefaults;
   webhooks?: Record<string, unknown>;
 }
 

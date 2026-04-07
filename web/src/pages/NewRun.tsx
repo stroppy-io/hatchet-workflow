@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { startRun, validateRun, dryRun, getPresets } from "@/api/client";
+import { startRun, validateRun, dryRun, getPresets, listPackages } from "@/api/client";
 import type {
   RunConfig,
   DatabaseKind,
   Provider,
   PresetsResponse,
+  Package,
 } from "@/api/types";
 import { generateRunID } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -18,14 +19,11 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
 import {
   Eye,
   Check,
   AlertCircle,
-  ChevronDown,
-  ChevronRight,
   Database,
   Server,
   Cpu,
@@ -89,8 +87,8 @@ export function NewRun() {
   const [vusScale, setVusScale] = useState("1");
   const [poolSize, setPoolSize] = useState("100");
   const [scaleFactor, setScaleFactor] = useState("1");
-  const [showPackages, setShowPackages] = useState(false);
-  const [customPackagesJSON, setCustomPackagesJSON] = useState("");
+  const [packageId, setPackageId] = useState("");
+  const [availablePackages, setAvailablePackages] = useState<Package[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
   const [validating, setValidating] = useState(false);
@@ -102,6 +100,9 @@ export function NewRun() {
 
   useEffect(() => { getPresets().then(setPresets).catch(() => {}); }, []);
   useEffect(() => { setVersion(DB_VERSIONS[kind][0]); setPreset(PRESET_NAMES[kind][0]); }, [kind]);
+  useEffect(() => {
+    listPackages({ db_kind: kind, db_version: version }).then(setAvailablePackages).catch(() => {});
+  }, [kind, version]);
 
   const runIDRef = useRef(generateRunID());
 
@@ -136,11 +137,11 @@ export function NewRun() {
         scale_factor: parseInt(scaleFactor) || 1,
       },
     };
-    if (customPackagesJSON.trim()) {
-      try { cfg.packages = JSON.parse(customPackagesJSON); } catch { /* ignore */ }
+    if (packageId) {
+      cfg.package_id = packageId;
     }
     return cfg;
-  }, [kind, preset, provider, version, workload, duration, vusScale, poolSize, scaleFactor, presets, customPackagesJSON]);
+  }, [kind, preset, provider, version, workload, duration, vusScale, poolSize, scaleFactor, presets, packageId]);
 
   const configJSON = useMemo(() => JSON.stringify(config, null, 2), [config]);
 
@@ -243,6 +244,35 @@ export function NewRun() {
         <div className="flex-1 min-w-0 overflow-y-auto p-5">
           <div className="grid grid-cols-2 gap-x-6 gap-y-5 max-w-4xl">
 
+            {/* ── Provider ── */}
+            <div className="col-span-2">
+              <h2 className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-3">Provider</h2>
+              <div className="grid grid-cols-2 gap-2">
+                {PROVIDERS.map((p) => {
+                  const pm = PROVIDER_META[p];
+                  const PIcon = pm.icon;
+                  const active = provider === p;
+                  return (
+                    <button
+                      type="button"
+                      key={p}
+                      onClick={() => setProvider(p)}
+                      className={`flex items-center gap-2.5 border p-2.5 transition-all cursor-pointer ${
+                        active
+                          ? "border-primary/40 text-primary bg-primary/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                          : "border-zinc-800/60 bg-transparent hover:bg-zinc-900/50 hover:border-zinc-700"
+                      }`}
+                    >
+                      <PIcon className={`h-4 w-4 ${active ? "text-primary" : "text-zinc-600"}`} />
+                      <span className={`text-sm font-mono font-medium ${active ? "text-primary" : "text-zinc-500"}`}>
+                        {pm.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* ── Database ── */}
             <div className="col-span-2">
               <h2 className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-3">Database</h2>
@@ -273,7 +303,7 @@ export function NewRun() {
               </div>
             </div>
 
-            {/* Version + Provider */}
+            {/* Version + Package */}
             <div className="space-y-1.5">
               <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Version</Label>
               <Select value={version} onValueChange={setVersion}>
@@ -286,29 +316,21 @@ export function NewRun() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Provider</Label>
-              <div className="grid grid-cols-2 gap-1.5">
-                {PROVIDERS.map((p) => {
-                  const pm = PROVIDER_META[p];
-                  const PIcon = pm.icon;
-                  const active = provider === p;
-                  return (
-                    <button
-                      type="button"
-                      key={p}
-                      onClick={() => setProvider(p)}
-                      className={`flex items-center gap-1.5 border px-3 py-1.5 text-xs font-mono transition-colors cursor-pointer ${
-                        active
-                          ? "border-primary/40 text-primary bg-primary/[0.06]"
-                          : "border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700"
-                      }`}
-                    >
-                      <PIcon className="h-3 w-3" />
-                      {pm.label}
-                    </button>
-                  );
-                })}
-              </div>
+              <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Package</Label>
+              <Select value={packageId || "__default__"} onValueChange={(v) => setPackageId(v === "__default__" ? "" : v)}>
+                <SelectTrigger className="h-8 font-mono text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__default__">Default</SelectItem>
+                  {availablePackages.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}{p.has_deb ? " [.deb]" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-[9px] text-zinc-700 font-mono">
+                <a href="/packages" className="text-zinc-500 hover:text-zinc-300">manage</a>
+              </span>
             </div>
 
             {/* ── Topology ── */}
@@ -391,32 +413,6 @@ export function NewRun() {
               <span className="text-[9px] text-zinc-700 font-mono">DB connections</span>
             </div>
 
-            {/* ── Packages (collapsible) ── */}
-            <div className="col-span-2">
-              <button
-                type="button"
-                className="flex items-center gap-2 group cursor-pointer"
-                onClick={() => setShowPackages(!showPackages)}
-              >
-                <h2 className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider group-hover:text-zinc-300 transition-colors">
-                  Packages
-                </h2>
-                <Badge variant="secondary" className="text-[9px]">optional</Badge>
-                {showPackages ? <ChevronDown className="h-3 w-3 text-zinc-600" /> : <ChevronRight className="h-3 w-3 text-zinc-600" />}
-              </button>
-
-              {showPackages && (
-                <div className="mt-2">
-                  <textarea
-                    className="w-full h-24 bg-[#050505] border border-zinc-800 p-3 font-mono text-xs text-foreground resize-y focus:outline-none focus:ring-1 focus:ring-ring"
-                    value={customPackagesJSON}
-                    onChange={(e) => setCustomPackagesJSON(e.target.value)}
-                    placeholder='{"apt": ["custom-pkg"]}'
-                    spellCheck={false}
-                  />
-                </div>
-              )}
-            </div>
           </div>
         </div>
 

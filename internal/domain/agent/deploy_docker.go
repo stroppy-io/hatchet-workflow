@@ -42,7 +42,7 @@ func NewDockerDeployer(networkName string) (*DockerDeployer, error) {
 // Deploy creates and starts a container running the agent in poll mode.
 // The agent downloads its binary from the server, then polls for commands.
 // No inbound ports are needed — all communication is agent→server.
-func (d *DockerDeployer) Deploy(ctx context.Context, machineID string, serverAddr string, _ int) (DeployResult, error) {
+func (d *DockerDeployer) Deploy(ctx context.Context, machineID string, serverAddr string, agentToken string, _ int) (DeployResult, error) {
 	if err := d.pullIfMissing(ctx, DockerBaseImage); err != nil {
 		return DeployResult{}, err
 	}
@@ -65,6 +65,7 @@ func (d *DockerDeployer) Deploy(ctx context.Context, machineID string, serverAdd
 		Env: []string{
 			fmt.Sprintf("STROPPY_SERVER_ADDR=%s", serverAddr),
 			fmt.Sprintf("STROPPY_MACHINE_ID=%s", machineID),
+			fmt.Sprintf("STROPPY_AGENT_TOKEN=%s", agentToken),
 		},
 	}
 	hostCfg := &container.HostConfig{

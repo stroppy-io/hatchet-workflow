@@ -145,22 +145,18 @@ func (e *Executor) Run(ctx context.Context) error {
 	return nil
 }
 
-// runAlwaysRunNodes executes AlwaysRun nodes whose deps are all resolved (done or failed).
+// runAlwaysRunNodes executes AlwaysRun nodes after the main loop has stopped.
 // This ensures cleanup/teardown runs even when upstream nodes have failed.
 func (e *Executor) runAlwaysRunNodes(ctx context.Context) {
 	for {
 		e.mu.Lock()
-		failedSet := make(map[string]bool, len(e.failed))
-		for id := range e.failed {
-			failedSet[id] = true
-		}
 		doneCopy := make(map[string]bool, len(e.done))
 		for id := range e.done {
 			doneCopy[id] = true
 		}
 		e.mu.Unlock()
 
-		ready := e.graph.ReadyAlwaysRun(doneCopy, failedSet)
+		ready := e.graph.ReadyAlwaysRun(doneCopy)
 		if len(ready) == 0 {
 			return
 		}

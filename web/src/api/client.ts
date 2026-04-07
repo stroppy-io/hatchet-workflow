@@ -4,7 +4,7 @@ import type {
   RunSummary,
   PresetsResponse,
   ServerSettings,
-  PackageDefaults,
+  Package,
   ComparisonResponse,
   MetricValue,
   GrafanaSettings,
@@ -386,19 +386,6 @@ export async function updateSettings(
   });
 }
 
-export async function getPackages(): Promise<PackageDefaults> {
-  const s = await getSettings();
-  return s.packages;
-}
-
-export async function updatePackages(
-  packages: PackageDefaults
-): Promise<{ status: string }> {
-  const s = await getSettings();
-  s.packages = packages;
-  return updateSettings(s);
-}
-
 export async function getDBDefaults(
   kind: string
 ): Promise<Record<string, unknown>> {
@@ -412,11 +399,70 @@ export async function getGrafanaSettings(): Promise<GrafanaSettings> {
   return request(`${API_BASE}/grafana`);
 }
 
-// ---------- Upload ----------
+// ---------- Packages ----------
 
-export async function uploadDeb(
-  file: File
-): Promise<{ filename: string; url: string; size: string }> {
+export async function listPackages(params?: {
+  db_kind?: string;
+  db_version?: string;
+}): Promise<Package[]> {
+  const qs = new URLSearchParams();
+  if (params?.db_kind) qs.set("db_kind", params.db_kind);
+  if (params?.db_version) qs.set("db_version", params.db_version);
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return request(`${API_BASE}/packages${suffix}`);
+}
+
+export async function getPackage(id: string): Promise<Package> {
+  return request(`${API_BASE}/packages/${id}`);
+}
+
+export async function createPackage(data: {
+  name: string;
+  description?: string;
+  db_kind: string;
+  db_version?: string;
+  apt_packages?: string[];
+  pre_install?: string[];
+  custom_repo?: string;
+  custom_repo_key?: string;
+}): Promise<{ id: string }> {
+  return request(`${API_BASE}/packages`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updatePackage(
+  id: string,
+  data: {
+    name: string;
+    description?: string;
+    db_kind: string;
+    db_version?: string;
+    apt_packages?: string[];
+    pre_install?: string[];
+    custom_repo?: string;
+    custom_repo_key?: string;
+  },
+): Promise<{ status: string }> {
+  return request(`${API_BASE}/packages/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deletePackage(id: string): Promise<{ status: string }> {
+  return request(`${API_BASE}/packages/${id}`, { method: "DELETE" });
+}
+
+export async function clonePackage(id: string): Promise<{ id: string; name: string }> {
+  return request(`${API_BASE}/packages/${id}/clone`, { method: "POST" });
+}
+
+export async function uploadPackageDeb(
+  packageId: string,
+  file: File,
+): Promise<{ status: string; filename: string; size: string }> {
   const formData = new FormData();
   formData.append("file", file);
 
@@ -425,7 +471,7 @@ export async function uploadDeb(
     headers["Authorization"] = `Bearer ${_accessToken}`;
   }
 
-  const res = await fetch(`${API_BASE}/upload/deb`, {
+  const res = await fetch(`${API_BASE}/packages/${packageId}/deb`, {
     method: "POST",
     headers,
     body: formData,

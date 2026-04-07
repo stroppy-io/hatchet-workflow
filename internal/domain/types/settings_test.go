@@ -125,16 +125,7 @@ func TestDefaultStroppySettings(t *testing.T) {
 	}
 }
 
-func TestDefaultServerSettings_PackagesIncluded(t *testing.T) {
-	ss := DefaultServerSettings()
-
-	if len(ss.Packages.Postgres) == 0 {
-		t.Error("packages should include postgres defaults")
-	}
-	if len(ss.Packages.MySQL) == 0 {
-		t.Error("packages should include mysql defaults")
-	}
-	if len(ss.Packages.Picodata) == 0 {
-		t.Error("packages should include picodata defaults")
-	}
+func TestDefaultServerSettings_NoPackages(t *testing.T) {
+	// Packages are now managed as DB entities, not in ServerSettings.
+	_ = DefaultServerSettings()
 }

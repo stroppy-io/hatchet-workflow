@@ -138,9 +138,8 @@ func (s StroppySettings) StroppyEnv(runID string) map[string]string {
 
 // ServerSettings is the per-tenant settings (stored in DB).
 type ServerSettings struct {
-	Cloud    CloudSettings   `json:"cloud"`
-	Packages PackageDefaults `json:"packages"`
-	Webhooks webhook.Config  `json:"webhooks"`
+	Cloud    CloudSettings  `json:"cloud"`
+	Webhooks webhook.Config `json:"webhooks"`
 }
 
 // DefaultServerSettings returns ServerSettings populated with sensible defaults.
@@ -154,7 +153,6 @@ func DefaultServerSettings() ServerSettings {
 				PlatformID:  "standard-v2",
 			},
 		},
-		Packages: DefaultPackages(),
 	}
 }
 

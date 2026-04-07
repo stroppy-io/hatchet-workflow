@@ -246,7 +246,9 @@ type RunConfig struct {
 	Database DatabaseConfig `json:"database"`
 	Monitor  MonitorConfig  `json:"monitor"`
 	Stroppy  StroppyConfig  `json:"stroppy"`
-	// Packages overrides default apt/rpm packages for the database.
-	// If nil, DefaultPackages() is used. Set via admin API.
-	Packages *PackageSet `json:"packages,omitempty"`
+	// PackageID references a packages row. Resolved to ResolvedPackage at run start.
+	// If empty, the default built-in package for db_kind+version is used.
+	PackageID string `json:"package_id,omitempty"`
+	// ResolvedPackage is populated by the server before building the DAG. Not sent by clients.
+	ResolvedPackage *Package `json:"-"`
 }

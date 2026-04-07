@@ -113,6 +113,8 @@ func NewServer(app *App, logger *zap.Logger, pool *pgxpool.Pool, jwtSecret, moni
 	app.client = pc
 	// Wire listen address so Docker agents can reach the server.
 	app.listenAddr = listenAddr
+	// Wire JWT issuer for agent token generation.
+	app.jwtIssuer = s.jwtIssuer
 	return s
 }
 
@@ -155,6 +157,9 @@ func (s *Server) Router() http.Handler {
 		r.Use(auth.TenantRequired())
 
 		// Viewer+
+		r.Get("/packages", s.listPackages)
+		r.Get("/packages/{id}", s.getPackage)
+		r.Get("/packages/{id}/deb", s.downloadPackageDeb)
 		r.Get("/runs", s.listRuns)
 		r.Get("/run/{runID}/status", s.runStatus)
 		r.Get("/run/{runID}/logs", s.runLogs)
@@ -175,6 +180,11 @@ func (s *Server) Router() http.Handler {
 			r.Get("/baselines", s.listBaselines)
 			r.Post("/upload/deb", s.uploadPackage)
 			r.Post("/upload/rpm", s.uploadPackage)
+			r.Post("/packages", s.createPackage)
+			r.Put("/packages/{id}", s.updatePackage)
+			r.Delete("/packages/{id}", s.deletePackage)
+			r.Post("/packages/{id}/clone", s.clonePackage)
+			r.Post("/packages/{id}/deb", s.uploadPackageDeb)
 		})
 
 		// Owner+
@@ -212,7 +222,7 @@ func (s *Server) Router() http.Handler {
 	// --- Package serving ---
 	r.Get("/packages/*", http.StripPrefix("/packages/", http.FileServer(http.Dir(uploadDir))).ServeHTTP)
 
-	// --- Agent binary download ---
+	// --- Agent binary download (public — agent has no token yet at download time) ---
 	r.Get("/agent/binary", s.serveBinary)
 
 	// --- SPA (embedded frontend) ---
@@ -371,6 +381,12 @@ func (s *Server) runStart(w http.ResponseWriter, r *http.Request) {
 	// Auto-generate ID if empty.
 	if cfg.ID == "" {
 		cfg.ID = fmt.Sprintf("run-%d", time.Now().UnixMilli())
+	}
+
+	// Resolve package (from package_id or default built-in).
+	if err := s.resolveRunPackage(r.Context(), tenantID, &cfg); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
 	}
 
 	// Check for duplicate (run already exists in storage).

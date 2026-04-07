@@ -2,11 +2,8 @@ import { useEffect, useState } from "react";
 import {
   getSettings,
   updateSettings,
-  getPackages,
-  updatePackages,
-  uploadDeb,
 } from "@/api/client";
-import type { ServerSettings, PackageDefaults } from "@/api/types";
+import type { ServerSettings } from "@/api/types";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,28 +11,24 @@ import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Save, Upload, AlertCircle, Check } from "lucide-react";
+import { Save, AlertCircle, Check } from "lucide-react";
 
 export function SettingsPage() {
   const { user } = useAuth();
   const canEdit = !!user && (user.is_root || user.role === "owner");
   const [settings, setSettings] = useState<ServerSettings | null>(null);
-  const [packages, setPackages] = useState<PackageDefaults | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
-  const [uploadResult, setUploadResult] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     async function load() {
       try {
-        const [s, p] = await Promise.all([getSettings(), getPackages()]);
+        const s = await getSettings();
         setSettings(s);
-        setPackages(p);
       } catch (err) {
         setMessage({
           type: "error",
@@ -62,40 +55,6 @@ export function SettingsPage() {
       });
     }
     setSaving(false);
-  }
-
-  async function handleSavePackages() {
-    if (!packages) return;
-    setSaving(true);
-    setMessage(null);
-    try {
-      await updatePackages(packages);
-      setMessage({ type: "success", text: "Packages saved" });
-    } catch (err) {
-      setMessage({
-        type: "error",
-        text: err instanceof Error ? err.message : "Failed to save",
-      });
-    }
-    setSaving(false);
-  }
-
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    setUploadResult(null);
-    try {
-      const result = await uploadDeb(file);
-      setUploadResult(
-        `Uploaded ${result.filename} (${result.size} bytes) -> ${result.url}`
-      );
-    } catch (err) {
-      setUploadResult(
-        `Error: ${err instanceof Error ? err.message : "Upload failed"}`
-      );
-    }
-    setUploading(false);
   }
 
   function updateField<
@@ -146,8 +105,6 @@ export function SettingsPage() {
       <Tabs defaultValue="cloud">
         <TabsList>
           <TabsTrigger value="cloud">Cloud</TabsTrigger>
-          <TabsTrigger value="packages">Packages</TabsTrigger>
-          <TabsTrigger value="upload">Upload .deb</TabsTrigger>
         </TabsList>
 
         {/* Cloud settings */}
@@ -362,75 +319,6 @@ export function SettingsPage() {
           )}
         </TabsContent>
 
-        {/* Packages */}
-        <TabsContent value="packages">
-          {packages && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Package Defaults</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-xs text-muted-foreground">
-                  Edit the raw JSON for package defaults. Changes apply to all
-                  new runs.
-                </p>
-                <textarea
-                  className="w-full h-96 bg-[#050505] border border-input p-3 font-mono text-xs text-foreground resize-y focus:outline-none focus:ring-1 focus:ring-ring"
-                  value={JSON.stringify(packages, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      setPackages(JSON.parse(e.target.value));
-                    } catch {
-                      // let user keep typing
-                    }
-                  }}
-                />
-                {canEdit && (
-                  <Button onClick={handleSavePackages} disabled={saving}>
-                    <Save className="h-3.5 w-3.5" />
-                    {saving ? "Saving..." : "Save Packages"}
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* Upload */}
-        <TabsContent value="upload">
-          <Card>
-            <CardHeader>
-              <CardTitle>Upload .deb Package</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-xs text-muted-foreground">
-                Upload a .deb file. It will be served at /packages/ for agents
-                to download.
-              </p>
-              <div className="flex items-center gap-3">
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept=".deb"
-                    onChange={handleUpload}
-                    className="hidden"
-                  />
-                  <Button asChild disabled={uploading} variant="outline">
-                    <span>
-                      <Upload className="h-3.5 w-3.5" />
-                      {uploading ? "Uploading..." : "Choose .deb file"}
-                    </span>
-                  </Button>
-                </label>
-              </div>
-              {uploadResult && (
-                <div className="p-3 border text-xs font-mono">
-                  {uploadResult}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );

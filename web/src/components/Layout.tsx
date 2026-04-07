@@ -8,7 +8,7 @@ import {
   Activity,
   LogOut,
   User,
-
+  Package,
   Users,
   KeyRound,
   Building2,
@@ -36,6 +36,7 @@ const navItems: NavItem[] = [
   { to: "/", icon: List, label: "Runs", minLevel: 1 },
   { to: "/runs/new", icon: Play, label: "New Run", minLevel: 2 },
   { to: "/compare", icon: GitCompare, label: "Compare", minLevel: 1 },
+  { to: "/packages", icon: Package, label: "Packages", minLevel: 1 },
   { to: "/presets", icon: Layers, label: "Presets", minLevel: 1 },
   { to: "/settings", icon: Settings, label: "Settings", minLevel: 1 },
   { to: "/members", icon: Users, label: "Members", minLevel: 3 },

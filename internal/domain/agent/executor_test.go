@@ -6,102 +6,34 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 )
 
-func TestResolvePackages_DefaultPostgres(t *testing.T) {
-	ps := resolvePackages(nil, "postgres", "16")
-	if len(ps.Apt) == 0 {
-		t.Fatal("expected default apt packages for postgres 16, got none")
+func TestInstallPackage_FieldsAccessible(t *testing.T) {
+	pkg := types.Package{
+		Name:          "test-pkg",
+		AptPackages:   []string{"postgresql-16"},
+		PreInstall:    []string{"apt-get update"},
+		CustomRepo:    "deb https://repo apt main",
+		CustomRepoKey: "https://repo/key.gpg",
+		DebFilename:   "custom.deb",
 	}
-	found := false
-	for _, p := range ps.Apt {
-		if p == "postgresql-16" {
-			found = true
+
+	if len(pkg.AptPackages) != 1 {
+		t.Errorf("expected 1 apt package, got %d", len(pkg.AptPackages))
+	}
+	if pkg.DebFilename != "custom.deb" {
+		t.Errorf("expected deb_filename custom.deb, got %s", pkg.DebFilename)
+	}
+}
+
+func TestBuiltinPackages_ContainsPostgres16(t *testing.T) {
+	for _, p := range types.BuiltinPackages() {
+		if p.DbKind == "postgres" && p.DbVersion == "16" {
+			if len(p.AptPackages) == 0 {
+				t.Error("postgres 16 should have apt packages")
+			}
+			return
 		}
 	}
-	if !found {
-		t.Errorf("expected postgresql-16 in apt packages, got %v", ps.Apt)
-	}
-}
-
-func TestResolvePackages_DefaultPostgres17(t *testing.T) {
-	ps := resolvePackages(nil, "postgres", "17")
-	if len(ps.Apt) == 0 {
-		t.Fatal("expected default apt packages for postgres 17, got none")
-	}
-	found := false
-	for _, p := range ps.Apt {
-		if p == "postgresql-17" {
-			found = true
-		}
-	}
-	if !found {
-		t.Errorf("expected postgresql-17 in apt packages, got %v", ps.Apt)
-	}
-}
-
-func TestResolvePackages_DefaultMySQL(t *testing.T) {
-	ps := resolvePackages(nil, "mysql", "8.0")
-	if len(ps.Apt) == 0 {
-		t.Fatal("expected default apt packages for mysql 8.0, got none")
-	}
-}
-
-func TestResolvePackages_DefaultPicodata(t *testing.T) {
-	ps := resolvePackages(nil, "picodata", "25.3")
-	if len(ps.Apt) == 0 {
-		t.Fatal("expected default apt packages for picodata 25.3, got none")
-	}
-}
-
-func TestResolvePackages_UnknownVersionReturnsEmpty(t *testing.T) {
-	ps := resolvePackages(nil, "postgres", "99")
-	if len(ps.Apt) != 0 || len(ps.Rpm) != 0 {
-		t.Errorf("expected empty package set for unknown version, got apt=%v rpm=%v", ps.Apt, ps.Rpm)
-	}
-}
-
-func TestResolvePackages_UnknownKindReturnsEmpty(t *testing.T) {
-	ps := resolvePackages(nil, "unknown_db", "1.0")
-	if len(ps.Apt) != 0 {
-		t.Errorf("expected empty package set for unknown kind, got %v", ps.Apt)
-	}
-}
-
-func TestResolvePackages_CustomOverridesDefault(t *testing.T) {
-	custom := &types.PackageSet{
-		Apt: []string{"my-custom-pg"},
-	}
-	ps := resolvePackages(custom, "postgres", "16")
-	if len(ps.Apt) != 1 || ps.Apt[0] != "my-custom-pg" {
-		t.Errorf("expected custom package set, got %v", ps.Apt)
-	}
-}
-
-func TestResolvePackages_CustomDebFiles(t *testing.T) {
-	custom := &types.PackageSet{
-		DebFiles: []string{"https://example.com/foo.deb"},
-	}
-	ps := resolvePackages(custom, "postgres", "16")
-	if len(ps.DebFiles) != 1 {
-		t.Errorf("expected custom deb files, got %v", ps.DebFiles)
-	}
-}
-
-func TestResolvePackages_CustomRepoApt(t *testing.T) {
-	custom := &types.PackageSet{
-		CustomRepoApt: "deb https://custom.repo/apt jammy main",
-	}
-	ps := resolvePackages(custom, "postgres", "16")
-	if ps.CustomRepoApt != "deb https://custom.repo/apt jammy main" {
-		t.Errorf("expected custom repo apt, got %q", ps.CustomRepoApt)
-	}
-}
-
-func TestResolvePackages_EmptyCustomFallsBackToDefault(t *testing.T) {
-	custom := &types.PackageSet{} // all fields empty
-	ps := resolvePackages(custom, "postgres", "16")
-	if len(ps.Apt) == 0 {
-		t.Fatal("expected default packages when custom is empty struct")
-	}
+	t.Error("postgres 16 not found in builtins")
 }
 
 func TestResolveMemoryDefaults_Percentages(t *testing.T) {
@@ -112,14 +44,12 @@ func TestResolveMemoryDefaults_Percentages(t *testing.T) {
 	}
 	resolveMemoryDefaults(m)
 
-	// Percentage values should be resolved to concrete MB values.
 	if m["shared_buffers"] == "25%" {
 		t.Error("shared_buffers was not resolved from percentage")
 	}
 	if m["effective_cache_size"] == "75%" {
 		t.Error("effective_cache_size was not resolved from percentage")
 	}
-	// Non-percentage values should remain unchanged.
 	if m["max_connections"] != "200" {
 		t.Errorf("max_connections should remain 200, got %s", m["max_connections"])
 	}
@@ -140,14 +70,10 @@ func TestResolveMemoryDefaults_NoPercentage(t *testing.T) {
 }
 
 func TestResolveMemoryDefaults_MinimumFloor(t *testing.T) {
-	// With a very small percentage that would yield < 32 MB,
-	// the function should floor at 32 MB.
 	m := map[string]string{
 		"tiny_param": "1%",
 	}
 	resolveMemoryDefaults(m)
-	// Even 1% of typical systems is > 32MB, but the floor exists in code.
-	// At minimum, the value should no longer end in %.
 	if m["tiny_param"] == "1%" {
 		t.Error("tiny_param was not resolved from percentage")
 	}

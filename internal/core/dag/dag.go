@@ -124,25 +124,17 @@ func (r *Registry) Unmarshal(data []byte) (*Graph, error) {
 	return &g, nil
 }
 
-// ReadyAlwaysRun returns AlwaysRun nodes whose dependencies are all resolved
-// (either completed or failed). This is used after a failure to find cleanup nodes.
-func (g *Graph) ReadyAlwaysRun(done map[string]bool, failed map[string]bool) []*Node {
-	resolved := make(map[string]bool, len(done)+len(failed))
-	for id := range done {
-		resolved[id] = true
-	}
-	for id := range failed {
-		resolved[id] = true
-	}
-
+// ReadyAlwaysRun returns AlwaysRun nodes that haven't run yet.
+// Called after the main loop exits due to failure. At that point any node
+// not in done will never run, so ALL deps are treated as resolved
+// (done, failed, or unreachable — it doesn't matter).
+func (g *Graph) ReadyAlwaysRun(done map[string]bool) []*Node {
 	var ready []*Node
 	for _, n := range g.Nodes {
-		if done[n.ID] || failed[n.ID] || !n.AlwaysRun {
+		if done[n.ID] || !n.AlwaysRun {
 			continue
 		}
-		if g.depsComplete(n, resolved) {
-			ready = append(ready, n)
-		}
+		ready = append(ready, n)
 	}
 	return ready
 }

@@ -14,6 +14,24 @@ type Baseline struct {
 	RunID    string
 }
 
+type Package struct {
+	ID            string
+	TenantID      string
+	Name          string
+	Description   string
+	DbKind        string
+	DbVersion     string
+	IsBuiltin     bool
+	AptPackages   []string
+	PreInstall    []string
+	CustomRepo    string
+	CustomRepoKey string
+	DebData       []byte
+	DebFilename   string
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+}
+
 type RefreshToken struct {
 	ID        string
 	UserID    string

@@ -6,9 +6,9 @@ import (
 
 // MySQLInstallConfig is the agent payload for MySQL installation.
 type MySQLInstallConfig struct {
-	Version  string            `json:"version"`
-	DataDir  string            `json:"data_dir"`
-	Packages *types.PackageSet `json:"packages,omitempty"`
+	Version string         `json:"version"`
+	DataDir string         `json:"data_dir"`
+	Package *types.Package `json:"package,omitempty"`
 }
 
 // MySQLClusterConfig is the agent payload for MySQL cluster setup.

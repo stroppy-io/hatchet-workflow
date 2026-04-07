@@ -11,7 +11,7 @@ type mysqlInstallTask struct {
 	state    *State
 	version  string
 	topology *types.MySQLTopology
-	packages *types.PackageSet
+	pkg      *types.Package
 }
 
 func (t *mysqlInstallTask) Execute(nc *dag.NodeContext) error {
@@ -20,9 +20,9 @@ func (t *mysqlInstallTask) Execute(nc *dag.NodeContext) error {
 	return t.client.SendAll(nc, targets, agent.Command{
 		Action: agent.ActionInstallMySQL,
 		Config: agent.MySQLInstallConfig{
-			Version:  t.version,
-			DataDir:  "/var/lib/mysql",
-			Packages: t.packages,
+			Version: t.version,
+			DataDir: "/var/lib/mysql",
+			Package: t.pkg,
 		},
 	})
 }

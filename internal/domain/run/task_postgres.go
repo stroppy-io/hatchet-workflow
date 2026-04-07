@@ -11,7 +11,7 @@ type pgInstallTask struct {
 	state    *State
 	version  string
 	topology *types.PostgresTopology
-	packages *types.PackageSet
+	pkg      *types.Package
 }
 
 func (t *pgInstallTask) Execute(nc *dag.NodeContext) error {
@@ -20,9 +20,9 @@ func (t *pgInstallTask) Execute(nc *dag.NodeContext) error {
 	return t.client.SendAll(nc, targets, agent.Command{
 		Action: agent.ActionInstallPostgres,
 		Config: agent.PostgresInstallConfig{
-			Version:  t.version,
-			DataDir:  "/var/lib/postgresql/data",
-			Packages: t.packages,
+			Version: t.version,
+			DataDir: "/var/lib/postgresql/data",
+			Package: t.pkg,
 		},
 	})
 }

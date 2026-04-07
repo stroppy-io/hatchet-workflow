@@ -1,105 +1,68 @@
 package types
 
-// PackageManager is the system package manager type.
-type PackageManager string
-
-const (
-	PackageManagerApt PackageManager = "apt"
-	PackageManagerRpm PackageManager = "rpm"
-)
-
-// PackageSet defines packages to install for a component.
-type PackageSet struct {
-	Apt []string `json:"apt,omitempty"` // debian/ubuntu packages
-	Rpm []string `json:"rpm,omitempty"` // rhel/centos packages
-	// PreInstall are shell commands to run before package install (add repos, keys, etc.)
-	PreInstallApt []string `json:"pre_install_apt,omitempty"`
-	PreInstallRpm []string `json:"pre_install_rpm,omitempty"`
-	// CustomRepoApt is a full apt repo line (e.g. "deb https://my-registry.corp/apt jammy main")
-	CustomRepoApt string `json:"custom_repo_apt,omitempty"`
-	// CustomRepoKey is the URL to the GPG key for the custom repo
-	CustomRepoKey string `json:"custom_repo_key,omitempty"`
-	// CustomRepoRpm is a full yum/dnf repo baseurl
-	CustomRepoRpm string `json:"custom_repo_rpm,omitempty"`
-	// DebFiles are URLs to raw .deb files to download and install with dpkg
-	DebFiles []string `json:"deb_files,omitempty"`
-	// RpmFiles are URLs to raw .rpm files to download and install with rpm
-	RpmFiles []string `json:"rpm_files,omitempty"`
+// Package describes a database package that agents install on target machines.
+// Stored in the packages table; one row = one installable unit.
+type Package struct {
+	ID            string   `json:"id"`
+	TenantID      string   `json:"tenant_id,omitempty"`
+	Name          string   `json:"name"`
+	Description   string   `json:"description,omitempty"`
+	DbKind        string   `json:"db_kind"`
+	DbVersion     string   `json:"db_version,omitempty"`
+	IsBuiltin     bool     `json:"is_builtin"`
+	AptPackages   []string `json:"apt_packages"`
+	PreInstall    []string `json:"pre_install,omitempty"`
+	CustomRepo    string   `json:"custom_repo,omitempty"`
+	CustomRepoKey string   `json:"custom_repo_key,omitempty"`
+	DebFilename   string   `json:"deb_filename,omitempty"`
+	// DebToken is the auth token for downloading the .deb file. Injected at run start.
+	DebToken string `json:"deb_token,omitempty"`
+	// DebData is not serialized to JSON — served via a dedicated endpoint.
 }
 
-// PackageDefaults holds default package sets for all components.
-type PackageDefaults struct {
-	Postgres   map[string]PackageSet `json:"postgres"` // version -> packages
-	MySQL      map[string]PackageSet `json:"mysql"`    // version -> packages
-	Picodata   map[string]PackageSet `json:"picodata"` // version -> packages
-	Monitoring PackageSet            `json:"monitoring"`
-	Stroppy    PackageSet            `json:"stroppy"`
-}
-
-// DefaultPackages returns PackageDefaults with real-world defaults for all
-// supported databases and components.
-func DefaultPackages() PackageDefaults {
-	return PackageDefaults{
-		Postgres: map[string]PackageSet{
-			"16": {
-				Apt: []string{"postgresql-16", "postgresql-client-16"},
-				PreInstallApt: []string{
-					`sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
-					"wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -",
-					"apt-get update",
-				},
-				Rpm: []string{"postgresql16-server", "postgresql16"},
-				PreInstallRpm: []string{
-					"dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$(rpm -E %rhel)-x86_64/pgdg-redhat-repo-latest.noarch.rpm",
-				},
-			},
-			"17": {
-				Apt: []string{"postgresql-17", "postgresql-client-17"},
-				PreInstallApt: []string{
-					`sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
-					"wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -",
-					"apt-get update",
-				},
-				Rpm: []string{"postgresql17-server", "postgresql17"},
-				PreInstallRpm: []string{
-					"dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$(rpm -E %rhel)-x86_64/pgdg-redhat-repo-latest.noarch.rpm",
-				},
+// BuiltinPackages returns the default packages for all supported databases.
+// Used to seed new tenants.
+func BuiltinPackages() []Package {
+	return []Package{
+		{
+			Name: "PostgreSQL 16", Description: "Default PostgreSQL 16 from pgdg",
+			DbKind: "postgres", DbVersion: "16", IsBuiltin: true,
+			AptPackages: []string{"postgresql-16", "postgresql-client-16"},
+			PreInstall: []string{
+				`sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
+				"wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -",
+				"apt-get update",
 			},
 		},
-		MySQL: map[string]PackageSet{
-			"8.0": {
-				Apt: []string{"mysql-server-8.0", "mysql-client"},
-				Rpm: []string{"mysql-community-server", "mysql-community-client"},
-			},
-			"8.4": {
-				Apt: []string{"mysql-server-8.4", "mysql-client"},
-				Rpm: []string{"mysql-community-server", "mysql-community-client"},
-			},
-		},
-		Picodata: map[string]PackageSet{
-			"25.3": {
-				Apt: []string{"picodata"},
-				PreInstallApt: []string{
-					`curl -fsSL https://download.picodata.io/tarantool-picodata/picodata.gpg.key | gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/picodata.gpg --import && chmod 644 /etc/apt/trusted.gpg.d/picodata.gpg`,
-					`echo "deb https://download.picodata.io/tarantool-picodata/ubuntu/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/picodata.list`,
-					"apt-get update",
-				},
-				Rpm: []string{"picodata"},
-				PreInstallRpm: []string{
-					`sh -c 'cat > /etc/yum.repos.d/picodata.repo << REPO
-[picodata]
-name=Picodata
-baseurl=https://binary.picodata.io/repository/picodata-rpm/el$releasever
-gpgcheck=0
-enabled=1
-REPO'`,
-				},
+		{
+			Name: "PostgreSQL 17", Description: "Default PostgreSQL 17 from pgdg",
+			DbKind: "postgres", DbVersion: "17", IsBuiltin: true,
+			AptPackages: []string{"postgresql-17", "postgresql-client-17"},
+			PreInstall: []string{
+				`sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
+				"wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -",
+				"apt-get update",
 			},
 		},
-		// Monitoring is installed from binary tarballs, not packages
-		// (matching the metrics_runner.sh approach).
-		Monitoring: PackageSet{},
-		// Stroppy is installed from GitHub releases binary.
-		Stroppy: PackageSet{},
+		{
+			Name: "MySQL 8.0", Description: "Default MySQL 8.0",
+			DbKind: "mysql", DbVersion: "8.0", IsBuiltin: true,
+			AptPackages: []string{"mysql-server-8.0", "mysql-client"},
+		},
+		{
+			Name: "MySQL 8.4", Description: "Default MySQL 8.4",
+			DbKind: "mysql", DbVersion: "8.4", IsBuiltin: true,
+			AptPackages: []string{"mysql-server-8.4", "mysql-client"},
+		},
+		{
+			Name: "Picodata 25.3", Description: "Default Picodata 25.3",
+			DbKind: "picodata", DbVersion: "25.3", IsBuiltin: true,
+			AptPackages: []string{"picodata"},
+			PreInstall: []string{
+				`curl -fsSL https://download.picodata.io/tarantool-picodata/picodata.gpg.key | gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/picodata.gpg --import && chmod 644 /etc/apt/trusted.gpg.d/picodata.gpg`,
+				`echo "deb https://download.picodata.io/tarantool-picodata/ubuntu/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/picodata.list`,
+				"apt-get update",
+			},
+		},
 	}
 }

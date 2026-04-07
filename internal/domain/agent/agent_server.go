@@ -17,6 +17,7 @@ type AgentServer struct {
 	executor   *Executor
 	serverAddr string
 	machineID  string
+	token      string // JWT token for authenticating with the server
 	httpClient *http.Client
 }
 
@@ -34,6 +35,18 @@ func NewAgentServer(serverAddr string, machineID string, _ int) *AgentServer {
 	})
 
 	return s
+}
+
+// SetToken sets the JWT token for server authentication.
+func (s *AgentServer) SetToken(token string) {
+	s.token = token
+}
+
+// setAuth adds Authorization header if token is set.
+func (s *AgentServer) setAuth(req *http.Request) {
+	if s.token != "" {
+		req.Header.Set("Authorization", "Bearer "+s.token)
+	}
 }
 
 // Run starts the poll loop. Blocks until ctx is cancelled.
@@ -85,6 +98,7 @@ func (s *AgentServer) poll(ctx context.Context) (*Command, error) {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	s.setAuth(req)
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
@@ -121,6 +135,7 @@ func (s *AgentServer) sendReport(ctx context.Context, report Report) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	s.setAuth(req)
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
@@ -146,7 +161,13 @@ func (s *AgentServer) sendLogLine(commandID, line, stream string) {
 		return
 	}
 	go func() {
-		resp, err := http.Post(s.serverAddr+"/api/agent/log", "application/json", bytes.NewReader(data))
+		req, err := http.NewRequest(http.MethodPost, s.serverAddr+"/api/agent/log", bytes.NewReader(data))
+		if err != nil {
+			return
+		}
+		req.Header.Set("Content-Type", "application/json")
+		s.setAuth(req)
+		resp, err := s.httpClient.Do(req)
 		if err == nil {
 			resp.Body.Close()
 		}
@@ -164,7 +185,13 @@ func (s *AgentServer) Register() error {
 	}{MachineID: s.machineID}
 
 	data, _ := json.Marshal(body)
-	resp, err := http.Post(s.serverAddr+"/api/agent/register", "application/json", bytes.NewReader(data))
+	req, err := http.NewRequest(http.MethodPost, s.serverAddr+"/api/agent/register", bytes.NewReader(data))
+	if err != nil {
+		return fmt.Errorf("agent register: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	s.setAuth(req)
+	resp, err := s.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("agent register: %w", err)
 	}

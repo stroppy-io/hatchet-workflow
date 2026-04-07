@@ -8,6 +8,7 @@ import { RunDetail } from "@/pages/RunDetail";
 import { Compare } from "@/pages/Compare";
 import { SettingsPage } from "@/pages/Settings";
 import { Presets } from "@/pages/Presets";
+import { Packages } from "@/pages/Packages";
 
 import { Login } from "@/pages/Login";
 import { SelectTenant } from "@/pages/SelectTenant";
@@ -105,6 +106,7 @@ function AppRoutes() {
         <Route path="/runs" element={<Runs />} />
         <Route path="/runs/:id" element={<RunDetail />} />
         <Route path="/compare" element={<Compare />} />
+        <Route path="/packages" element={<Packages />} />
         <Route path="/presets" element={<Presets />} />
 
         <Route path="/settings" element={<SettingsPage />} />

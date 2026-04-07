@@ -6,9 +6,9 @@ import (
 
 // PicodataInstallConfig is the agent payload for Picodata installation.
 type PicodataInstallConfig struct {
-	Version  string            `json:"version"`
-	DataDir  string            `json:"data_dir"`
-	Packages *types.PackageSet `json:"packages,omitempty"`
+	Version string         `json:"version"`
+	DataDir string         `json:"data_dir"`
+	Package *types.Package `json:"package,omitempty"`
 }
 
 // PicodataClusterConfig is the agent payload for Picodata cluster setup.

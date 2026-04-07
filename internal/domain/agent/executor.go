@@ -173,46 +173,54 @@ func (e *Executor) aptPreInstall(ctx context.Context, cmds []string) error {
 	return nil
 }
 
-// installFromPackageSet handles all package installation modes:
-// 1. Custom repo (CustomRepoApt) — adds repo + optional GPG key, then apt-get update
-// 2. Raw .deb files (DebFiles) — downloads and dpkg -i, with apt-get install -f fallback
-// 3. Standard apt packages (PreInstallApt + Apt) — pre-install commands then apt install
-func (e *Executor) installFromPackageSet(ctx context.Context, ps types.PackageSet) error {
+// installPackage installs a Package on the target machine:
+// 1. Custom repo + GPG key (if set)
+// 2. Pre-install commands (shell)
+// 3. .deb file download + dpkg -i (if deb_url set)
+// 4. apt-get install (if apt_packages set)
+func (e *Executor) installPackage(ctx context.Context, pkg types.Package) error {
 	// 1. Add custom repo if specified
-	if ps.CustomRepoApt != "" {
-		if ps.CustomRepoKey != "" {
+	if pkg.CustomRepo != "" {
+		if pkg.CustomRepoKey != "" {
 			if _, err := e.shellWithAptLock(ctx, fmt.Sprintf(
 				`curl -fsSL "%s" | gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/custom.gpg --import && chmod 644 /etc/apt/trusted.gpg.d/custom.gpg`,
-				ps.CustomRepoKey)); err != nil {
+				pkg.CustomRepoKey)); err != nil {
 				return fmt.Errorf("add custom repo key: %w", err)
 			}
 		}
 		if _, err := e.shellWithAptLock(ctx, fmt.Sprintf(
 			`echo "%s" > /etc/apt/sources.list.d/custom.list && apt-get update`,
-			ps.CustomRepoApt)); err != nil {
+			pkg.CustomRepo)); err != nil {
 			return fmt.Errorf("add custom repo: %w", err)
 		}
 	}
 
-	// 2. Install raw .deb files
-	if len(ps.DebFiles) > 0 {
-		for i, url := range ps.DebFiles {
-			debPath := fmt.Sprintf("/tmp/custom_%d.deb", i)
-			script := fmt.Sprintf(`curl -fsSL "%s" -o %s && dpkg -i %s || apt-get install -f -y`, url, debPath, debPath)
-			if _, err := e.shellWithAptLock(ctx, script); err != nil {
-				return fmt.Errorf("install deb %s: %w", url, err)
-			}
-		}
-	}
-
-	// 3. Standard apt packages
-	if len(ps.PreInstallApt) > 0 {
-		if err := e.aptPreInstall(ctx, ps.PreInstallApt); err != nil {
+	// 2. Pre-install commands
+	if len(pkg.PreInstall) > 0 {
+		if err := e.aptPreInstall(ctx, pkg.PreInstall); err != nil {
 			return fmt.Errorf("pre-install: %w", err)
 		}
 	}
-	if len(ps.Apt) > 0 {
-		if err := e.aptInstall(ctx, strings.Join(ps.Apt, " ")); err != nil {
+
+	// 3. .deb file (downloaded via URL injected by server at run start)
+	if pkg.DebFilename != "" {
+		debURL := pkg.DebFilename // server has replaced filename with download URL
+		debPath := "/tmp/custom_package.deb"
+		// Build curl command with auth header if token is provided.
+		curlAuth := ""
+		if pkg.DebToken != "" {
+			curlAuth = fmt.Sprintf(` -H "Authorization: Bearer %s"`, pkg.DebToken)
+		}
+		// Use apt-get install (not dpkg -i) so dependencies are resolved automatically.
+		script := fmt.Sprintf(`curl -fsSL%s "%s" -o %s && DEBIAN_FRONTEND=noninteractive apt-get install -y %s`, curlAuth, debURL, debPath, debPath)
+		if _, err := e.shellWithAptLock(ctx, script); err != nil {
+			return fmt.Errorf("install deb %s: %w", debURL, err)
+		}
+	}
+
+	// 4. apt packages
+	if len(pkg.AptPackages) > 0 {
+		if err := e.aptInstall(ctx, strings.Join(pkg.AptPackages, " ")); err != nil {
 			return fmt.Errorf("apt install: %w", err)
 		}
 	}
@@ -382,31 +390,6 @@ func parseConfig(cmd Command, target any) error {
 	return nil
 }
 
-// resolvePackages returns custom packages if provided, otherwise falls back to defaults.
-func resolvePackages(custom *types.PackageSet, kind string, version string) types.PackageSet {
-	if custom != nil && (len(custom.Apt) > 0 || len(custom.Rpm) > 0 ||
-		custom.CustomRepoApt != "" || custom.CustomRepoRpm != "" ||
-		len(custom.DebFiles) > 0 || len(custom.RpmFiles) > 0) {
-		return *custom
-	}
-	defaults := types.DefaultPackages()
-	switch kind {
-	case "postgres":
-		if ps, ok := defaults.Postgres[version]; ok {
-			return ps
-		}
-	case "mysql":
-		if ps, ok := defaults.MySQL[version]; ok {
-			return ps
-		}
-	case "picodata":
-		if ps, ok := defaults.Picodata[version]; ok {
-			return ps
-		}
-	}
-	return types.PackageSet{}
-}
-
 // ---------------------------------------------------------------------------
 // installPostgres
 // ---------------------------------------------------------------------------
@@ -416,18 +399,10 @@ func (e *Executor) installPostgres(ctx context.Context, cmd Command) error {
 	if err := parseConfig(cmd, &cfg); err != nil {
 		return err
 	}
-
-	version := cfg.Version
-	if version == "" {
-		version = "16"
+	if cfg.Package == nil {
+		return fmt.Errorf("no package provided for postgres installation")
 	}
-
-	ps := resolvePackages(cfg.Packages, "postgres", version)
-	if len(ps.Apt) == 0 && len(ps.DebFiles) == 0 && ps.CustomRepoApt == "" {
-		return fmt.Errorf("no apt packages defined for postgres version %s", version)
-	}
-
-	if err := e.installFromPackageSet(ctx, ps); err != nil {
+	if err := e.installPackage(ctx, *cfg.Package); err != nil {
 		return fmt.Errorf("install postgres: %w", err)
 	}
 	return nil
@@ -522,20 +497,12 @@ func (e *Executor) installMySQL(ctx context.Context, cmd Command) error {
 	if err := parseConfig(cmd, &cfg); err != nil {
 		return err
 	}
-
-	version := cfg.Version
-	if version == "" {
-		version = "8.0"
+	if cfg.Package == nil {
+		return fmt.Errorf("no package provided for mysql installation")
 	}
-
-	ps := resolvePackages(cfg.Packages, "mysql", version)
-	if len(ps.Apt) == 0 && len(ps.DebFiles) == 0 && ps.CustomRepoApt == "" {
-		return fmt.Errorf("no apt packages defined for mysql version %s", version)
-	}
-
 	// MySQL postinst tries to start/stop mysqld which fails in Docker.
 	// Install with error tolerance, then verify binary exists.
-	if err := e.installFromPackageSet(ctx, ps); err != nil {
+	if err := e.installPackage(ctx, *cfg.Package); err != nil {
 		if _, verr := e.shell(ctx, "which mysqld"); verr != nil {
 			return fmt.Errorf("install mysql: %w", err)
 		}
@@ -631,18 +598,10 @@ func (e *Executor) installPicodata(ctx context.Context, cmd Command) error {
 	if err := parseConfig(cmd, &cfg); err != nil {
 		return err
 	}
-
-	version := cfg.Version
-	if version == "" {
-		version = "25.3"
+	if cfg.Package == nil {
+		return fmt.Errorf("no package provided for picodata installation")
 	}
-
-	ps := resolvePackages(cfg.Packages, "picodata", version)
-	if len(ps.Apt) == 0 && len(ps.DebFiles) == 0 && ps.CustomRepoApt == "" {
-		return fmt.Errorf("no apt packages defined for picodata version %s", version)
-	}
-
-	if err := e.installFromPackageSet(ctx, ps); err != nil {
+	if err := e.installPackage(ctx, *cfg.Package); err != nil {
 		return fmt.Errorf("install picodata: %w", err)
 	}
 	return nil

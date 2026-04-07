@@ -86,6 +86,9 @@ func (s *Server) createTenantAdmin(w http.ResponseWriter, r *http.Request) {
 		Settings: string(settingsJSON),
 	})
 
+	// Seed built-in packages for this tenant.
+	s.seedBuiltinPackages(r.Context(), id)
+
 	writeJSON(w, http.StatusCreated, map[string]string{"id": id, "name": req.Name})
 }
 

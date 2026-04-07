@@ -6,6 +6,7 @@ import (
 
 	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/auth"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 )
 
@@ -24,6 +25,10 @@ type Deps struct {
 	MonitoringToken string
 	// AccountID is the per-tenant VictoriaMetrics account ID for data isolation.
 	AccountID int32
+	// JWTIssuer issues tokens for agent authentication.
+	JWTIssuer *auth.JWTIssuer
+	// TenantID is the tenant running this job.
+	TenantID string
 }
 
 // Build constructs a dag.Graph and dag.Registry from a RunConfig.
@@ -70,7 +75,7 @@ func (b *builder) build() error {
 		&networkTask{cfg: b.cfg.Network, provider: b.cfg.Provider, deployer: b.deps.Deployer, state: b.deps.State, runID: b.cfg.ID})
 
 	b.add(b.ph(types.PhaseMachines), []string{b.ph(types.PhaseNetwork)},
-		&machinesTask{runCfg: b.cfg, state: b.deps.State, deployer: b.deps.Deployer, serverAddr: b.deps.ServerAddr, settings: b.deps.Settings})
+		&machinesTask{runCfg: b.cfg, state: b.deps.State, deployer: b.deps.Deployer, serverAddr: b.deps.ServerAddr, settings: b.deps.Settings, jwtIssuer: b.deps.JWTIssuer, tenantID: b.deps.TenantID})
 
 	// --- etcd (if Postgres HA with etcd) ---
 	configDBDeps := []string{b.ph(types.PhaseInstallDB)}
@@ -204,16 +209,16 @@ func (b *builder) addProxy(afterMachines []string) {
 
 func (b *builder) dbTasks() (install dag.Task, config dag.Task, err error) {
 	db := b.cfg.Database
-	pkgs := b.cfg.Packages // may be nil — agent will use defaults
+	pkg := b.cfg.ResolvedPackage // set by runStart before building DAG
 	switch db.Kind {
 	case types.DatabasePostgres:
-		return &pgInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.Postgres, packages: pkgs},
+		return &pgInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.Postgres, pkg: pkg},
 			&pgConfigTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.Postgres}, nil
 	case types.DatabaseMySQL:
-		return &mysqlInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.MySQL, packages: pkgs},
+		return &mysqlInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.MySQL, pkg: pkg},
 			&mysqlConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.MySQL}, nil
 	case types.DatabasePicodata:
-		return &picoInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.Picodata, packages: pkgs},
+		return &picoInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.Picodata, pkg: pkg},
 			&picoConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.Picodata}, nil
 	default:
 		return nil, nil, fmt.Errorf("unsupported database kind %q", db.Kind)

@@ -265,6 +265,28 @@ func TestExecutorAlwaysRunAfterFailure(t *testing.T) {
 	}
 }
 
+func TestExecutorAlwaysRunWithUnreachableDeps(t *testing.T) {
+	// Reproduces the real bug: configure_db fails → run_stroppy is unreachable → teardown must still run.
+	var teardownRan atomic.Bool
+
+	g := New()
+	must(t, g.Add(&Node{ID: "install", Type: "x", Task: noopTask{}}))
+	must(t, g.Add(&Node{ID: "configure", Type: "x", Task: &failTask{errors.New("postgresql.conf not found")}, Deps: []string{"install"}}))
+	must(t, g.Add(&Node{ID: "run", Type: "x", Task: noopTask{}, Deps: []string{"configure"}}))
+	must(t, g.Add(&Node{ID: "teardown", Type: "x", Task: &recordTask{ran: &teardownRan}, Deps: []string{"run"}, AlwaysRun: true}))
+
+	exec := NewExecutor("", "unreachable-1", g, nil, nil, nil)
+	exec.SetRetryPolicy(RetryPolicy{MaxRetries: 0, BaseDelay: time.Millisecond, MaxDelay: time.Millisecond})
+	err := exec.Run(context.Background())
+
+	if err == nil {
+		t.Fatal("expected error from failed node")
+	}
+	if !teardownRan.Load() {
+		t.Fatal("AlwaysRun teardown should run even when its dep (run) was never reached")
+	}
+}
+
 func TestExecutorAlwaysRunNotTriggeredOnSuccess(t *testing.T) {
 	var counter atomic.Int64
 
@@ -286,18 +308,22 @@ func TestReadyAlwaysRun(t *testing.T) {
 	must(t, g.Add(&Node{ID: "b", Type: "x", Deps: []string{"a"}}))
 	must(t, g.Add(&Node{ID: "c", Type: "x", Deps: []string{"b"}, AlwaysRun: true}))
 
-	// b failed, c should be ready (AlwaysRun treats failed deps as resolved)
-	ready := g.ReadyAlwaysRun(
-		map[string]bool{"a": true},
-		map[string]bool{"b": true},
-	)
+	// b not done, c should still be ready (AlwaysRun ignores dep status)
+	ready := g.ReadyAlwaysRun(map[string]bool{"a": true})
 	assertIDs(t, ready, "c")
 
-	// Neither done nor failed — c should not be ready
-	ready = g.ReadyAlwaysRun(
-		map[string]bool{"a": true},
-		map[string]bool{},
-	)
+	// c already done — should not appear
+	ready = g.ReadyAlwaysRun(map[string]bool{"a": true, "c": true})
+	assertIDs(t, ready)
+}
+
+func TestReadyAlwaysRunSkipsNonAlwaysRun(t *testing.T) {
+	g := New()
+	must(t, g.Add(&Node{ID: "a", Type: "x"}))
+	must(t, g.Add(&Node{ID: "b", Type: "x", Deps: []string{"a"}}))
+
+	// No AlwaysRun nodes — should return nothing
+	ready := g.ReadyAlwaysRun(map[string]bool{})
 	assertIDs(t, ready)
 }
 
