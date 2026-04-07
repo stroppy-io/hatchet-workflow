@@ -129,6 +129,7 @@ func pkgCreateCmd() *cobra.Command {
 		preInstall    []string
 		customRepo    string
 		customRepoKey string
+		debFile       string
 	)
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -176,6 +177,13 @@ func pkgCreateCmd() *cobra.Command {
 			}
 			json.Unmarshal(data, &result)
 			fmt.Printf("Created package: %s\n", result.ID)
+
+			if debFile != "" {
+				if err := uploadDebToPackage(c, result.ID, debFile); err != nil {
+					return err
+				}
+			}
+
 			return nil
 		},
 	}
@@ -187,6 +195,7 @@ func pkgCreateCmd() *cobra.Command {
 	cmd.Flags().StringSliceVar(&preInstall, "pre-install", nil, "pre-install commands")
 	cmd.Flags().StringVar(&customRepo, "custom-repo", "", "custom APT repository")
 	cmd.Flags().StringVar(&customRepoKey, "custom-repo-key", "", "custom repository GPG key URL")
+	cmd.Flags().StringVar(&debFile, "deb", "", "path to .deb file to upload after creation")
 	cmd.MarkFlagRequired("name")
 	cmd.MarkFlagRequired("db-kind")
 	return cmd
@@ -332,52 +341,91 @@ func pkgUploadDebCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			f, err := os.Open(filePath)
-			if err != nil {
-				return fmt.Errorf("open file: %w", err)
-			}
-			defer f.Close()
-
-			body := &bytes.Buffer{}
-			writer := multipart.NewWriter(body)
-			part, err := writer.CreateFormFile("file", filepath.Base(filePath))
-			if err != nil {
-				return err
-			}
-			if _, err := io.Copy(part, f); err != nil {
-				return err
-			}
-			writer.Close()
-
-			req, err := http.NewRequest("POST", c.url("/api/v1/packages/"+args[0]+"/deb"), body)
-			if err != nil {
-				return err
-			}
-			req.Header.Set("Content-Type", writer.FormDataContentType())
-
-			resp, err := c.do(req)
-			if err != nil {
-				return fmt.Errorf("upload request: %w", err)
-			}
-			defer resp.Body.Close()
-
-			respBody, _ := io.ReadAll(resp.Body)
-			if resp.StatusCode != 200 {
-				return fmt.Errorf("upload failed %d: %s", resp.StatusCode, string(respBody))
-			}
-
-			var result struct {
-				Status   string `json:"status"`
-				Filename string `json:"filename"`
-				Size     string `json:"size"`
-			}
-			json.Unmarshal(respBody, &result)
-			fmt.Printf("Upload %s: %s (%s bytes)\n", result.Status, result.Filename, result.Size)
-			return nil
+			return uploadDebToPackage(c, args[0], filePath)
 		},
 	}
 	cmd.Flags().StringVar(&filePath, "file", "", "path to .deb file (required)")
 	cmd.MarkFlagRequired("file")
 	return cmd
+}
+
+// uploadDebToPackage uploads a .deb file to an existing package. Shared by
+// pkgUploadDebCmd, pkgCreateCmd --deb, cloud run --deb, and cloud bench --*-deb.
+func uploadDebToPackage(c *cloudHTTPClient, packageID, debPath string) error {
+	f, err := os.Open(debPath)
+	if err != nil {
+		return fmt.Errorf("open deb file: %w", err)
+	}
+	defer f.Close()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("file", filepath.Base(debPath))
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(part, f); err != nil {
+		return err
+	}
+	writer.Close()
+
+	req, err := http.NewRequest("POST", c.url("/api/v1/packages/"+packageID+"/deb"), body)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	resp, err := c.do(req)
+	if err != nil {
+		return fmt.Errorf("upload deb: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("deb upload failed %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var result struct {
+		Filename string `json:"filename"`
+		Size     string `json:"size"`
+	}
+	json.Unmarshal(respBody, &result)
+	fmt.Printf("Uploaded deb: %s (%s bytes)\n", result.Filename, result.Size)
+	return nil
+}
+
+// createPackageWithDeb creates a package and optionally uploads a .deb to it.
+// Returns the package ID.
+func createPackageWithDeb(c *cloudHTTPClient, name, dbKind, dbVersion, debPath string) (string, error) {
+	body := map[string]any{
+		"name":    name,
+		"db_kind": dbKind,
+	}
+	if dbVersion != "" {
+		body["db_version"] = dbVersion
+	}
+
+	raw, _ := json.Marshal(body)
+	data, status, err := c.doJSON("POST", "/api/v1/packages", bytes.NewReader(raw))
+	if err != nil {
+		return "", fmt.Errorf("create package: %w", err)
+	}
+	if status != 201 {
+		return "", fmt.Errorf("create package failed %d: %s", status, string(data))
+	}
+
+	var result struct {
+		ID string `json:"id"`
+	}
+	json.Unmarshal(data, &result)
+	fmt.Printf("Created package: %s\n", result.ID)
+
+	if debPath != "" {
+		if err := uploadDebToPackage(c, result.ID, debPath); err != nil {
+			return "", err
+		}
+	}
+
+	return result.ID, nil
 }

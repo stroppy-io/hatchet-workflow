@@ -21,72 +21,7 @@ func cloudWaitCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			deadline := time.Now().Add(timeout)
-			path := fmt.Sprintf("/api/v1/run/%s/status", url.PathEscape(runID))
-
-			for {
-				if time.Now().After(deadline) {
-					return fmt.Errorf("timeout after %s", timeout)
-				}
-
-				data, status, err := c.doJSON("GET", path, nil)
-				if err != nil {
-					log.Printf("status check failed: %v (retrying)", err)
-					time.Sleep(interval)
-					continue
-				}
-				if status != 200 {
-					log.Printf("status check HTTP %d (retrying)", status)
-					time.Sleep(interval)
-					continue
-				}
-
-				var snap struct {
-					Nodes []struct {
-						ID     string `json:"id"`
-						Status string `json:"status"`
-						Error  string `json:"error,omitempty"`
-					} `json:"nodes"`
-				}
-				if err := json.Unmarshal(data, &snap); err != nil {
-					log.Printf("parse error: %v (retrying)", err)
-					time.Sleep(interval)
-					continue
-				}
-
-				pending, done, failed := 0, 0, 0
-				for _, n := range snap.Nodes {
-					switch n.Status {
-					case "done":
-						done++
-					case "failed":
-						failed++
-					default:
-						pending++
-					}
-				}
-
-				total := len(snap.Nodes)
-				fmt.Printf("\r[%d/%d] done=%d failed=%d pending=%d", done+failed, total, done, failed, pending)
-
-				if failed > 0 {
-					fmt.Println()
-					for _, n := range snap.Nodes {
-						if n.Status == "failed" {
-							fmt.Printf("  FAILED: %s: %s\n", n.ID, n.Error)
-						}
-					}
-					return fmt.Errorf("run failed: %d nodes failed", failed)
-				}
-
-				if pending == 0 && total > 0 {
-					fmt.Printf("\nRun %s completed successfully (%d nodes)\n", runID, total)
-					return nil
-				}
-
-				time.Sleep(interval)
-			}
+			return waitForRun(c, runID, timeout, interval)
 		},
 	}
 	cmd.Flags().StringVar(&runID, "run-id", "", "run ID to wait for")
@@ -94,4 +29,73 @@ func cloudWaitCmd() *cobra.Command {
 	cmd.Flags().DurationVar(&interval, "interval", 5*time.Second, "poll interval")
 	cmd.MarkFlagRequired("run-id")
 	return cmd
+}
+
+// waitForRun polls the server until the run completes or fails.
+func waitForRun(c *cloudHTTPClient, runID string, timeout, interval time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	path := fmt.Sprintf("/api/v1/run/%s/status", url.PathEscape(runID))
+
+	for {
+		if time.Now().After(deadline) {
+			return fmt.Errorf("timeout after %s waiting for run %s", timeout, runID)
+		}
+
+		data, status, err := c.doJSON("GET", path, nil)
+		if err != nil {
+			log.Printf("[%s] status check failed: %v (retrying)", runID, err)
+			time.Sleep(interval)
+			continue
+		}
+		if status != 200 {
+			log.Printf("[%s] status check HTTP %d (retrying)", runID, status)
+			time.Sleep(interval)
+			continue
+		}
+
+		var snap struct {
+			Nodes []struct {
+				ID     string `json:"id"`
+				Status string `json:"status"`
+				Error  string `json:"error,omitempty"`
+			} `json:"nodes"`
+		}
+		if err := json.Unmarshal(data, &snap); err != nil {
+			log.Printf("[%s] parse error: %v (retrying)", runID, err)
+			time.Sleep(interval)
+			continue
+		}
+
+		pending, done, failed := 0, 0, 0
+		for _, n := range snap.Nodes {
+			switch n.Status {
+			case "done":
+				done++
+			case "failed":
+				failed++
+			default:
+				pending++
+			}
+		}
+
+		total := len(snap.Nodes)
+		fmt.Printf("\r[%s] [%d/%d] done=%d failed=%d pending=%d  ", runID, done+failed, total, done, failed, pending)
+
+		if failed > 0 {
+			fmt.Println()
+			for _, n := range snap.Nodes {
+				if n.Status == "failed" {
+					fmt.Printf("  FAILED: %s: %s\n", n.ID, n.Error)
+				}
+			}
+			return fmt.Errorf("run %s failed: %d nodes failed", runID, failed)
+		}
+
+		if pending == 0 && total > 0 {
+			fmt.Printf("\nRun %s completed successfully (%d nodes)\n", runID, total)
+			return nil
+		}
+
+		time.Sleep(interval)
+	}
 }
