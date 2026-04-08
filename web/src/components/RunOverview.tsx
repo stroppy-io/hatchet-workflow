@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import type { NodeStatus, NodeStatusValue, RunConfig, MachineSpec } from "@/api/types";
+import type { NodeStatus, NodeStatusValue, RunConfig, MachineSpec, DatabaseKind } from "@/api/types";
+import { TopologyDiagram } from "@/components/TopologyDiagram";
 import {
   Check,
   X,
@@ -139,7 +140,7 @@ function ConfigPanel({ config }: { config: RunConfig | null }) {
   }
 
   const db = config.database;
-  const topo = db.postgres || db.mysql || db.picodata;
+  const topology = db.postgres || db.mysql || db.picodata;
   const s = config.stroppy;
 
   // Topology summary
@@ -175,6 +176,14 @@ function ConfigPanel({ config }: { config: RunConfig | null }) {
         )}
       </div>
 
+      {/* Topology card */}
+      {topology && (
+        <div className="px-3 py-2 border-b border-zinc-800/50">
+          <div className="text-[11px] text-zinc-500 uppercase tracking-wider mb-1.5">Topology</div>
+          <TopologyDiagram kind={db.kind as DatabaseKind} topology={topology} />
+        </div>
+      )}
+
       {/* Workload section */}
       <div className="px-3 py-2 border-b border-zinc-800/50">
         <div className="text-[11px] text-zinc-500 uppercase tracking-wider mb-1.5">Workload</div>
@@ -182,8 +191,8 @@ function ConfigPanel({ config }: { config: RunConfig | null }) {
           <ConfigLine label="type" value={s.workload?.toUpperCase()} icon={Play} />
           <ConfigLine label="duration" value={s.duration} icon={Clock} />
           {(s.vus_scale ?? 0) > 0 && <ConfigLine label="vus" value={`${s.vus_scale}x`} icon={Users} />}
-          {(s.pool_size ?? 0) > 0 && <ConfigLine label="pool" value={s.pool_size} icon={Network} />}
-          {(s.scale_factor ?? 0) > 0 && <ConfigLine label="scale" value={s.scale_factor} />}
+          {(s.pool_size ?? 0) > 0 && <ConfigLine label="pool" value={String(s.pool_size)} icon={Network} />}
+          {(s.scale_factor ?? 0) > 0 && <ConfigLine label="scale" value={String(s.scale_factor)} />}
         </div>
       </div>
 
@@ -207,17 +216,6 @@ function ConfigPanel({ config }: { config: RunConfig | null }) {
         </div>
       )}
 
-      {/* DB-specific options */}
-      {topo && "options" in topo && topo.options && Object.keys(topo.options).length > 0 && (
-        <div className="px-3 py-2 border-t border-zinc-800/50 overflow-y-auto max-h-24">
-          <div className="text-[11px] text-zinc-500 uppercase tracking-wider mb-1">Options</div>
-          {Object.entries(topo.options).map(([k, v]) => (
-            <div key={k} className="text-[11px] font-mono text-zinc-500">
-              <span className="text-zinc-400">{k}</span>={v}
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

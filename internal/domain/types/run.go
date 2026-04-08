@@ -35,6 +35,8 @@ const (
 	PhaseConfigureProxy     Phase = "configure_proxy"
 	PhaseInstallPgBouncer   Phase = "install_pgbouncer"
 	PhaseConfigurePgBouncer Phase = "configure_pgbouncer"
+	PhaseInstallPatroni     Phase = "install_patroni"
+	PhaseConfigurePatroni   Phase = "configure_patroni"
 	PhaseTeardown           Phase = "teardown" // infrastructure cleanup
 )
 
@@ -62,35 +64,47 @@ type MachineSpec struct {
 // --- Database topologies ---
 
 // PostgresTopology describes a Postgres cluster layout.
+// Each component has its own Options map for configuration tuning.
 type PostgresTopology struct {
-	Master       MachineSpec       `json:"master"`
-	Replicas     []MachineSpec     `json:"replicas,omitempty"`
-	HAProxy      *MachineSpec      `json:"haproxy,omitempty"`
-	PgBouncer    bool              `json:"pgbouncer"` // colocated on each PG node
-	Patroni      bool              `json:"patroni"`
-	Etcd         bool              `json:"etcd"` // colocated on PG nodes (up to 3)
-	SyncReplicas int               `json:"sync_replicas"`
-	Options      map[string]string `json:"options,omitempty"`
+	Master       MachineSpec   `json:"master"`
+	Replicas     []MachineSpec `json:"replicas,omitempty"`
+	HAProxy      *MachineSpec  `json:"haproxy,omitempty"`
+	PgBouncer    bool          `json:"pgbouncer"` // colocated on each PG node
+	Patroni      bool          `json:"patroni"`
+	Etcd         bool          `json:"etcd"` // colocated on PG nodes (up to 3)
+	SyncReplicas int           `json:"sync_replicas"`
+	// Per-component configuration options.
+	MasterOptions    map[string]string `json:"master_options,omitempty"`    // postgresql.conf for master
+	ReplicaOptions   map[string]string `json:"replica_options,omitempty"`   // postgresql.conf for replicas
+	HAProxyOptions   map[string]string `json:"haproxy_options,omitempty"`   // haproxy.cfg tuning
+	PgBouncerOptions map[string]string `json:"pgbouncer_options,omitempty"` // pgbouncer.ini tuning
+	PatroniOptions   map[string]string `json:"patroni_options,omitempty"`   // patroni.yml tuning
+	EtcdOptions      map[string]string `json:"etcd_options,omitempty"`      // etcd tuning
 }
 
 // MySQLTopology describes a MySQL cluster layout.
 type MySQLTopology struct {
-	Primary   MachineSpec       `json:"primary"`
-	Replicas  []MachineSpec     `json:"replicas,omitempty"`
-	ProxySQL  *MachineSpec      `json:"proxysql,omitempty"` // dedicated ProxySQL node(s)
-	GroupRepl bool              `json:"group_replication"`
-	SemiSync  bool              `json:"semi_sync"` // semi-synchronous replication (when no GR)
-	Options   map[string]string `json:"options,omitempty"`
+	Primary   MachineSpec   `json:"primary"`
+	Replicas  []MachineSpec `json:"replicas,omitempty"`
+	ProxySQL  *MachineSpec  `json:"proxysql,omitempty"` // dedicated ProxySQL node(s)
+	GroupRepl bool          `json:"group_replication"`
+	SemiSync  bool          `json:"semi_sync"` // semi-synchronous replication (when no GR)
+	// Per-component configuration options.
+	PrimaryOptions  map[string]string `json:"primary_options,omitempty"`  // my.cnf for primary
+	ReplicaOptions  map[string]string `json:"replica_options,omitempty"`  // my.cnf for replicas
+	ProxySQLOptions map[string]string `json:"proxysql_options,omitempty"` // proxysql.cnf tuning
 }
 
 // PicodataTopology describes a Picodata cluster layout.
 type PicodataTopology struct {
-	Instances   []MachineSpec     `json:"instances"`
-	HAProxy     *MachineSpec      `json:"haproxy,omitempty"` // LB for pgproto
-	Replication int               `json:"replication_factor"`
-	Shards      int               `json:"shards"`
-	Tiers       []PicodataTier    `json:"tiers,omitempty"` // for scale deployments
-	Options     map[string]string `json:"options,omitempty"`
+	Instances   []MachineSpec  `json:"instances"`
+	HAProxy     *MachineSpec   `json:"haproxy,omitempty"` // LB for pgproto
+	Replication int            `json:"replication_factor"`
+	Shards      int            `json:"shards"`
+	Tiers       []PicodataTier `json:"tiers,omitempty"` // for scale deployments
+	// Per-component configuration options.
+	InstanceOptions map[string]string `json:"instance_options,omitempty"` // picodata.yaml tuning
+	HAProxyOptions  map[string]string `json:"haproxy_options,omitempty"`  // haproxy.cfg tuning
 }
 
 // PicodataTier describes a tier in a multi-tier Picodata deployment.
@@ -146,22 +160,30 @@ var PostgresPresets = map[PostgresPreset]PostgresTopology{
 		Master: MachineSpec{Role: RoleDatabase, Count: 1, CPUs: 2, MemoryMB: 4096, DiskGB: 50},
 	},
 	PostgresHA: {
-		Master:       MachineSpec{Role: RoleDatabase, Count: 1, CPUs: 4, MemoryMB: 8192, DiskGB: 100},
-		Replicas:     []MachineSpec{{Role: RoleDatabase, Count: 2, CPUs: 4, MemoryMB: 8192, DiskGB: 100}},
-		HAProxy:      &MachineSpec{Role: RoleProxy, Count: 1, CPUs: 2, MemoryMB: 2048, DiskGB: 20},
-		PgBouncer:    true, // colocated on each PG node
-		Patroni:      true,
-		Etcd:         true, // colocated on PG nodes (3 nodes)
-		SyncReplicas: 1,
+		Master:           MachineSpec{Role: RoleDatabase, Count: 1, CPUs: 4, MemoryMB: 8192, DiskGB: 100},
+		Replicas:         []MachineSpec{{Role: RoleDatabase, Count: 2, CPUs: 4, MemoryMB: 8192, DiskGB: 100}},
+		HAProxy:          &MachineSpec{Role: RoleProxy, Count: 1, CPUs: 2, MemoryMB: 2048, DiskGB: 20},
+		PgBouncer:        true,
+		Patroni:          true,
+		Etcd:             true,
+		SyncReplicas:     1,
+		MasterOptions:    map[string]string{"shared_buffers": "25%", "max_connections": "200", "work_mem": "64MB"},
+		ReplicaOptions:   map[string]string{"shared_buffers": "25%", "max_connections": "200", "work_mem": "64MB"},
+		PgBouncerOptions: map[string]string{"pool_mode": "transaction", "max_client_conn": "1000", "default_pool_size": "25"},
+		PatroniOptions:   map[string]string{"ttl": "30", "loop_wait": "10", "retry_timeout": "10"},
 	},
 	PostgresScale: {
-		Master:       MachineSpec{Role: RoleDatabase, Count: 1, CPUs: 8, MemoryMB: 16384, DiskGB: 200},
-		Replicas:     []MachineSpec{{Role: RoleDatabase, Count: 4, CPUs: 8, MemoryMB: 16384, DiskGB: 200}},
-		HAProxy:      &MachineSpec{Role: RoleProxy, Count: 2, CPUs: 2, MemoryMB: 2048, DiskGB: 20},
-		PgBouncer:    true,
-		Patroni:      true,
-		Etcd:         true, // colocated on first 3 PG nodes
-		SyncReplicas: 2,
+		Master:           MachineSpec{Role: RoleDatabase, Count: 1, CPUs: 8, MemoryMB: 16384, DiskGB: 200},
+		Replicas:         []MachineSpec{{Role: RoleDatabase, Count: 4, CPUs: 8, MemoryMB: 16384, DiskGB: 200}},
+		HAProxy:          &MachineSpec{Role: RoleProxy, Count: 2, CPUs: 2, MemoryMB: 2048, DiskGB: 20},
+		PgBouncer:        true,
+		Patroni:          true,
+		Etcd:             true,
+		SyncReplicas:     2,
+		MasterOptions:    map[string]string{"shared_buffers": "25%", "max_connections": "500", "work_mem": "128MB", "effective_cache_size": "75%"},
+		ReplicaOptions:   map[string]string{"shared_buffers": "25%", "max_connections": "500", "work_mem": "128MB", "effective_cache_size": "75%"},
+		PgBouncerOptions: map[string]string{"pool_mode": "transaction", "max_client_conn": "2000", "default_pool_size": "50"},
+		PatroniOptions:   map[string]string{"ttl": "30", "loop_wait": "10", "retry_timeout": "10"},
 	},
 }
 
@@ -171,16 +193,22 @@ var MySQLPresets = map[MySQLPreset]MySQLTopology{
 		Primary: MachineSpec{Role: RoleDatabase, Count: 1, CPUs: 2, MemoryMB: 4096, DiskGB: 50},
 	},
 	MySQLReplica: {
-		Primary:  MachineSpec{Role: RoleDatabase, Count: 1, CPUs: 4, MemoryMB: 8192, DiskGB: 100},
-		Replicas: []MachineSpec{{Role: RoleDatabase, Count: 2, CPUs: 4, MemoryMB: 8192, DiskGB: 100}},
-		ProxySQL: &MachineSpec{Role: RoleProxy, Count: 1, CPUs: 2, MemoryMB: 2048, DiskGB: 20},
-		SemiSync: true,
+		Primary:         MachineSpec{Role: RoleDatabase, Count: 1, CPUs: 4, MemoryMB: 8192, DiskGB: 100},
+		Replicas:        []MachineSpec{{Role: RoleDatabase, Count: 2, CPUs: 4, MemoryMB: 8192, DiskGB: 100}},
+		ProxySQL:        &MachineSpec{Role: RoleProxy, Count: 1, CPUs: 2, MemoryMB: 2048, DiskGB: 20},
+		SemiSync:        true,
+		PrimaryOptions:  map[string]string{"innodb_buffer_pool_size": "25%", "max_connections": "200"},
+		ReplicaOptions:  map[string]string{"innodb_buffer_pool_size": "25%", "max_connections": "200"},
+		ProxySQLOptions: map[string]string{"threads": "4", "max_connections": "2048"},
 	},
 	MySQLGroup: {
-		Primary:   MachineSpec{Role: RoleDatabase, Count: 1, CPUs: 8, MemoryMB: 16384, DiskGB: 200},
-		Replicas:  []MachineSpec{{Role: RoleDatabase, Count: 2, CPUs: 8, MemoryMB: 16384, DiskGB: 200}},
-		ProxySQL:  &MachineSpec{Role: RoleProxy, Count: 2, CPUs: 2, MemoryMB: 2048, DiskGB: 20},
-		GroupRepl: true,
+		Primary:         MachineSpec{Role: RoleDatabase, Count: 1, CPUs: 8, MemoryMB: 16384, DiskGB: 200},
+		Replicas:        []MachineSpec{{Role: RoleDatabase, Count: 2, CPUs: 8, MemoryMB: 16384, DiskGB: 200}},
+		ProxySQL:        &MachineSpec{Role: RoleProxy, Count: 2, CPUs: 2, MemoryMB: 2048, DiskGB: 20},
+		GroupRepl:       true,
+		PrimaryOptions:  map[string]string{"innodb_buffer_pool_size": "25%", "max_connections": "500"},
+		ReplicaOptions:  map[string]string{"innodb_buffer_pool_size": "25%", "max_connections": "500"},
+		ProxySQLOptions: map[string]string{"threads": "4", "max_connections": "2048"},
 	},
 }
 

@@ -37,14 +37,20 @@ type pgConfigTask struct {
 func (t *pgConfigTask) Execute(nc *dag.NodeContext) error {
 	targets := t.state.DBTargets()
 	nc.Log().Info("configuring postgres cluster")
+
+	masterHost := targets[0].InternalHost
+	if masterHost == "" {
+		masterHost = targets[0].Host
+	}
+
 	for i, target := range targets {
 		role := "replica"
 		if i == 0 {
 			role = "master"
 		}
-		masterHost := targets[0].InternalHost
-		if masterHost == "" {
-			masterHost = targets[0].Host
+		opts := t.topology.MasterOptions
+		if role == "replica" {
+			opts = t.topology.ReplicaOptions
 		}
 		cfg := agent.PostgresClusterConfig{
 			Version:      t.version,
@@ -52,7 +58,7 @@ func (t *pgConfigTask) Execute(nc *dag.NodeContext) error {
 			MasterHost:   masterHost,
 			Patroni:      t.topology.Patroni,
 			SyncReplicas: t.topology.SyncReplicas,
-			Options:      t.topology.Options,
+			Options:      opts,
 		}
 		if err := t.client.Send(nc, target, agent.Command{Action: agent.ActionConfigPostgres, Config: cfg}); err != nil {
 			return err

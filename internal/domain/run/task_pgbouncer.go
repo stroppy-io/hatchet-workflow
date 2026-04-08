@@ -31,10 +31,10 @@ func (t *pgBouncerConfigTask) Execute(nc *dag.NodeContext) error {
 	targets := t.state.DBTargets()
 	nc.Log().Info("configuring pgbouncer")
 
-	// Default auth_type is "trust" for testing; topology Options can override it.
+	// Default auth_type is "trust" for testing; PgBouncerOptions can override it.
 	authType := "trust"
 	if t.topology != nil {
-		if v, ok := t.topology.Options["pgbouncer_auth_type"]; ok && v != "" {
+		if v, ok := t.topology.PgBouncerOptions["auth_type"]; ok && v != "" {
 			authType = v
 		}
 	}

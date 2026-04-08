@@ -90,7 +90,26 @@ func (b *builder) build() error {
 		return fmt.Errorf("run: %w", err)
 	}
 	b.add(b.ph(types.PhaseInstallDB), afterMachines, installDB)
-	b.add(b.ph(types.PhaseConfigureDB), configDBDeps, configDB)
+
+	// --- Patroni (if Postgres HA with Patroni) ---
+	if b.needsPatroni() {
+		// When Patroni is enabled, it manages postgresql.conf and cluster bootstrap.
+		// Patroni REPLACES the PG configure phase entirely.
+		b.add(b.ph(types.PhaseInstallPatroni), afterMachines,
+			&patroniInstallTask{client: b.deps.Client, state: b.deps.State})
+		patroniConfigDeps := append(append([]string{}, configDBDeps...), b.ph(types.PhaseInstallPatroni))
+		b.add(b.ph(types.PhaseConfigurePatroni), patroniConfigDeps,
+			&patroniConfigTask{
+				client:   b.deps.Client,
+				state:    b.deps.State,
+				version:  b.cfg.Database.Version,
+				topology: b.cfg.Database.Postgres,
+			})
+		// PhaseConfigureDB becomes a no-op that depends on Patroni configure.
+		b.add(b.ph(types.PhaseConfigureDB), []string{b.ph(types.PhaseConfigurePatroni)}, &noopTask{})
+	} else {
+		b.add(b.ph(types.PhaseConfigureDB), configDBDeps, configDB)
+	}
 
 	// --- monitoring ---
 	// Install exporters on ALL machines (node_exporter everywhere, DB exporter on DB nodes, vmagent on monitor).
@@ -154,7 +173,14 @@ func (b *builder) build() error {
 
 func (b *builder) needsEtcd() bool {
 	if b.cfg.Database.Kind == types.DatabasePostgres && b.cfg.Database.Postgres != nil {
-		return false // TODO: enable when etcd Docker support is ready
+		return b.cfg.Database.Postgres.Etcd
+	}
+	return false
+}
+
+func (b *builder) needsPatroni() bool {
+	if b.cfg.Database.Kind == types.DatabasePostgres && b.cfg.Database.Postgres != nil {
+		return b.cfg.Database.Postgres.Patroni
 	}
 	return false
 }

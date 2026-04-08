@@ -48,7 +48,12 @@ export interface PostgresTopology {
   patroni: boolean;
   etcd: boolean;
   sync_replicas: number;
-  options?: Record<string, string>;
+  master_options?: Record<string, string>;
+  replica_options?: Record<string, string>;
+  haproxy_options?: Record<string, string>;
+  pgbouncer_options?: Record<string, string>;
+  patroni_options?: Record<string, string>;
+  etcd_options?: Record<string, string>;
 }
 
 export interface MySQLTopology {
@@ -57,7 +62,9 @@ export interface MySQLTopology {
   proxysql?: MachineSpec;
   group_replication: boolean;
   semi_sync: boolean;
-  options?: Record<string, string>;
+  primary_options?: Record<string, string>;
+  replica_options?: Record<string, string>;
+  proxysql_options?: Record<string, string>;
 }
 
 export interface PicodataTier {
@@ -73,7 +80,8 @@ export interface PicodataTopology {
   replication_factor: number;
   shards: number;
   tiers?: PicodataTier[];
-  options?: Record<string, string>;
+  instance_options?: Record<string, string>;
+  haproxy_options?: Record<string, string>;
 }
 
 export interface DatabaseConfig {

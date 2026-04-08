@@ -48,7 +48,7 @@ func (t *picoConfigTask) Execute(nc *dag.NodeContext) error {
 			Peers:       peers,
 			Replication: t.topology.Replication,
 			Shards:      t.topology.Shards,
-			Options:     t.topology.Options,
+			Options:     t.topology.InstanceOptions,
 		}
 		if err := t.client.Send(nc, target, agent.Command{Action: agent.ActionConfigPicodata, Config: cfg}); err != nil {
 			return err

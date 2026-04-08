@@ -5,11 +5,13 @@ import type { Snapshot, NodeStatus, GrafanaSettings } from "@/api/types";
 import { RunOverview } from "@/components/RunOverview";
 import { LogStream } from "@/components/LogStream";
 import { MetricsPanel } from "@/components/MetricsPanel";
+import { TopologyFlow } from "@/components/TopologyFlow";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { RefreshCw, AlertCircle, BarChart3, Trash2 } from "lucide-react";
+import { RefreshCw, AlertCircle, Trash2 } from "lucide-react";
+import type { RunConfig } from "@/api/types";
 
 // DB-specific dashboards — only show the one matching the run's database kind.
 const DB_DASHBOARDS = ["postgres", "mysql", "picodata"];
@@ -151,6 +153,16 @@ export function RunDetail() {
   const pendingCount = nodes.filter((n) => n.status === "pending").length;
   const hasFailed = failedNodes.length > 0;
 
+  const runConfig = useMemo<RunConfig | null>(() => {
+    const rc = snapshot?.state?.run_config;
+    if (!rc) return null;
+    try {
+      return typeof rc === "string" ? JSON.parse(rc) : (rc as unknown as RunConfig);
+    } catch {
+      return null;
+    }
+  }, [snapshot]);
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -201,11 +213,10 @@ export function RunDetail() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="topology">Topology</TabsTrigger>
+          <div className="w-px h-4 bg-zinc-800 mx-1" />
           <TabsTrigger value="logs">Logs</TabsTrigger>
-          <TabsTrigger value="metrics">
-            <BarChart3 className="h-3 w-3 mr-1" />
-            Metrics
-          </TabsTrigger>
+          <TabsTrigger value="metrics">Metrics</TabsTrigger>
           {grafana?.embed_enabled && (
             <TabsTrigger value="grafana">Grafana</TabsTrigger>
           )}
@@ -215,6 +226,14 @@ export function RunDetail() {
           <Card className="h-[calc(100vh-11rem)]">
             <CardContent className="p-0 h-full">
               <RunOverview nodes={nodes} snapshot={snapshot} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="topology">
+          <Card className="h-[calc(100vh-11rem)]">
+            <CardContent className="p-0 h-full">
+              <TopologyFlow config={runConfig} />
             </CardContent>
           </Card>
         </TabsContent>

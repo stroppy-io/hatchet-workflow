@@ -425,6 +425,18 @@ func (e *Executor) configPostgres(ctx context.Context, cmd Command) error {
 
 	defaults := types.PostgresDefaults(version)
 	resolveMemoryDefaults(defaults)
+
+	// Mandatory streaming replication params (required for pg_basebackup when Patroni is disabled).
+	// Set before user Options so these act as non-overridable base values.
+	if !cfg.Patroni {
+		defaults["wal_level"] = "replica"
+		defaults["max_wal_senders"] = "10"
+		defaults["max_replication_slots"] = "10"
+		if cfg.Role == "replica" {
+			defaults["hot_standby"] = "on"
+		}
+	}
+
 	for k, v := range cfg.Options {
 		defaults[k] = v
 	}
@@ -523,7 +535,49 @@ func (e *Executor) configMySQL(ctx context.Context, cmd Command) error {
 	version := "8.0"
 	defaults := types.MySQLDefaults(version)
 	resolveMemoryDefaults(defaults)
+
+	// --- LOCKED params: server-id (unique per node) ---
+	defaults["server-id"] = fmt.Sprintf("%d", cfg.NodeIndex+1)
+
+	// --- Mandatory GTID replication params ---
+	defaults["gtid_mode"] = "ON"
+	defaults["enforce_gtid_consistency"] = "ON"
+	defaults["log_bin"] = "mysql-bin"
+
+	// --- Semi-Sync replication ---
+	if cfg.SemiSync {
+		if cfg.Role == "primary" {
+			defaults["plugin-load-add"] = "semisync_source.so"
+			defaults["rpl_semi_sync_source_enabled"] = "1"
+		} else {
+			defaults["plugin-load-add"] = "semisync_replica.so"
+			defaults["rpl_semi_sync_replica_enabled"] = "1"
+		}
+	}
+
+	// --- Group Replication ---
+	if cfg.GroupRepl {
+		defaults["binlog_format"] = "ROW"
+		defaults["binlog_checksum"] = "NONE"
+		defaults["transaction_write_set_extraction"] = "XXHASH64"
+		if cfg.GroupName != "" {
+			defaults["group_replication_group_name"] = cfg.GroupName
+		}
+		localHost := cfg.LocalHost
+		if localHost == "" {
+			localHost = cfg.PrimaryHost
+		}
+		defaults["group_replication_local_address"] = fmt.Sprintf("%s:33061", localHost)
+		defaults["group_replication_group_seeds"] = strings.Join(cfg.GroupSeeds, ",")
+		defaults["group_replication_single_primary_mode"] = "ON"
+		defaults["group_replication_start_on_boot"] = "OFF"
+	}
+
+	// User Options applied last (can override tunable params but not locked ones like server-id).
 	for k, v := range cfg.Options {
+		if k == "server-id" {
+			continue // locked
+		}
 		defaults[k] = v
 	}
 
@@ -570,9 +624,34 @@ fi`, dataDir, dataDir, dataDir)
 		if _, err := e.shell(ctx, replUserScript); err != nil {
 			return fmt.Errorf("create replication user: %w", err)
 		}
+		// Create ProxySQL monitor user on primary.
+		monitorUserScript := `mysql -h 127.0.0.1 -u root -e "CREATE USER IF NOT EXISTS 'monitor'@'%' IDENTIFIED BY 'monitor'; GRANT USAGE ON *.* TO 'monitor'@'%'; FLUSH PRIVILEGES;"`
+		if _, err := e.shell(ctx, monitorUserScript); err != nil {
+			return fmt.Errorf("create monitor user: %w", err)
+		}
 	}
 
-	if cfg.Role == "replica" && cfg.PrimaryHost != "" {
+	// Group Replication bootstrap/join.
+	if cfg.GroupRepl {
+		if cfg.Role == "primary" {
+			grBootstrap := `mysql -h 127.0.0.1 -u root -e "SET GLOBAL group_replication_bootstrap_group=ON; START GROUP_REPLICATION; SET GLOBAL group_replication_bootstrap_group=OFF;"`
+			if _, err := e.shell(ctx, grBootstrap); err != nil {
+				return fmt.Errorf("bootstrap group replication: %w", err)
+			}
+		} else {
+			// Wait for primary GR to be ready before joining.
+			waitPrimary := fmt.Sprintf(`for i in $(seq 1 30); do mysql -h %s -u repl -prepl_password -e "SELECT 1" 2>/dev/null && break; sleep 2; done`,
+				cfg.PrimaryHost)
+			if _, err := e.shell(ctx, waitPrimary); err != nil {
+				return fmt.Errorf("wait for mysql primary (GR): %w", err)
+			}
+			grJoin := `mysql -h 127.0.0.1 -u root -e "START GROUP_REPLICATION;"`
+			if _, err := e.shell(ctx, grJoin); err != nil {
+				return fmt.Errorf("join group replication: %w", err)
+			}
+		}
+	} else if cfg.Role == "replica" && cfg.PrimaryHost != "" {
+		// Standard async/semi-sync replication.
 		// Wait for primary to be reachable before configuring replication.
 		waitPrimary := fmt.Sprintf(`for i in $(seq 1 30); do mysql -h %s -u repl -prepl_password -e "SELECT 1" 2>/dev/null && break; sleep 2; done`,
 			cfg.PrimaryHost)
