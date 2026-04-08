@@ -39,7 +39,12 @@ func (t *picoConfigTask) Execute(nc *dag.NodeContext) error {
 
 	peers := make([]string, len(targets))
 	for i, tgt := range targets {
-		peers[i] = tgt.Host
+		// Use InternalHost (container name) for container-to-container communication.
+		h := tgt.InternalHost
+		if h == "" {
+			h = tgt.Host
+		}
+		peers[i] = h
 	}
 
 	for i, target := range targets {

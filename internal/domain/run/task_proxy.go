@@ -81,11 +81,11 @@ func (t *proxyConfigTask) configHAProxyPostgres(nc *dag.NodeContext, proxyTarget
 		backends = append(backends, fmt.Sprintf("%s:5432", host))
 	}
 
-	healthCheck := "patroni"
-	patroniPort := 8008
-	if t.pgTopology != nil && !t.pgTopology.Patroni {
-		healthCheck = "tcp"
-		patroniPort = 0
+	healthCheck := "tcp"
+	patroniPort := 0
+	if t.pgTopology != nil && t.pgTopology.Patroni {
+		healthCheck = "patroni"
+		patroniPort = 8008
 	}
 
 	cfg := agent.HAProxyConfig{

@@ -48,7 +48,7 @@ func (t *stroppyRunTask) Execute(nc *dag.NodeContext) error {
 		return fmt.Errorf("stroppy target not provisioned")
 	}
 	dbHost, dbPort := t.state.DBEndpoint()
-	nc.Log().Info("running stroppy test")
+	nc.Log().Info(fmt.Sprintf("running stroppy test, db_endpoint=%s:%d", dbHost, dbPort))
 
 	// Resolve script: new field takes priority, fall back to deprecated Workload.
 	script := t.stroppy.Script
@@ -69,7 +69,8 @@ func (t *stroppyRunTask) Execute(nc *dag.NodeContext) error {
 		driverURL = fmt.Sprintf("root@tcp(%s:%d)/", dbHost, dbPort)
 		driverType = "mysql"
 	case types.DatabasePicodata:
-		driverURL = fmt.Sprintf("postgresql://admin@%s:%d/admin?sslmode=disable", dbHost, dbPort)
+		// Picodata stroppy driver connects via PostgreSQL wire protocol (pg port).
+		driverURL = fmt.Sprintf("postgres://admin:T0psecret@%s:%d?sslmode=disable", dbHost, dbPort)
 		driverType = "picodata"
 	default:
 		driverURL = fmt.Sprintf("%s:%d", dbHost, dbPort)
@@ -125,7 +126,13 @@ func (t *stroppyRunTask) Execute(nc *dag.NodeContext) error {
 		NoSteps: t.stroppy.NoSteps,
 	}
 
-	// OTLP exporter — if monitoring is configured.
+	// Global config — logger + OTLP exporter.
+	rc.Global = &stroppypb.GlobalConfig{
+		Logger: &stroppypb.LoggerConfig{
+			LogLevel: stroppypb.LoggerConfig_LOG_LEVEL_INFO,
+		},
+	}
+
 	settings := t.stroppySettings
 	if settings.OTLPEndpoint == "" && t.monitoringURL != "" {
 		settings.SetFromMonitoringURL(t.monitoringURL, t.monitoringToken, t.accountID)
@@ -133,23 +140,27 @@ func (t *stroppyRunTask) Execute(nc *dag.NodeContext) error {
 	if settings.OTLPEndpoint != "" {
 		insecure := settings.OTLPInsecure
 		endpoint := settings.OTLPEndpoint
-		rc.Global = &stroppypb.GlobalConfig{
-			Exporter: &stroppypb.ExporterConfig{
-				OtlpExport: &stroppypb.OtlpExport{
-					OtlpGrpcEndpoint:     &endpoint,
-					OtlpEndpointInsecure: &insecure,
-				},
-			},
+		urlPath := settings.OTLPURLPath
+		metricPrefix := settings.OTLPMetricPrefix
+		otlpExport := &stroppypb.OtlpExport{
+			OtlpHttpEndpoint:        &endpoint,
+			OtlpHttpExporterUrlPath: &urlPath,
+			OtlpEndpointInsecure:    &insecure,
+			OtlpMetricsPrefix:       &metricPrefix,
 		}
-		// stroppy v4 auto-enables OTLP output when global.exporter is set.
-		// No need for --out opentelemetry in k6Args.
-
-		// Set OTEL resource attributes for run correlation.
-		runPrefix := t.runID
-		rc.Env["OTEL_RESOURCE_ATTRIBUTES"] = fmt.Sprintf("service.name=stroppy,stroppy.run.id=%s", runPrefix)
 		if settings.OTLPHeaders != "" {
-			rc.Env["K6_OTEL_HEADERS"] = settings.OTLPHeaders
+			otlpExport.OtlpHeaders = &settings.OTLPHeaders
 		}
+		rc.Global.Exporter = &stroppypb.ExporterConfig{
+			OtlpExport: otlpExport,
+		}
+
+		// OTEL resource attributes for run correlation in VictoriaMetrics.
+		svcName := settings.OTLPServiceName
+		if svcName == "" {
+			svcName = "stroppy"
+		}
+		rc.Env["OTEL_RESOURCE_ATTRIBUTES"] = fmt.Sprintf("service.name=%s,stroppy.run.id=%s", svcName, t.runID)
 	}
 
 	// Serialize to JSON via protojson (camelCase field names as stroppy expects).

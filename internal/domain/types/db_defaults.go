@@ -59,7 +59,7 @@ func PicodataDefaults(version string) map[string]string {
 	return map[string]string{
 		"replication_factor": "2",
 		"shards":             "3",
-		"memtx_memory":       "25%", // 25% of total RAM, resolved by agent
+		"memtx_memory":       "2048MB", // 2GB min — picodata default 64MB is too small for TPC-C
 		"vinyl_memory":       "25%",
 		"net_msg_max":        "1024",
 		"readahead":          "16384",

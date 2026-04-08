@@ -167,7 +167,7 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 					case types.DatabaseMySQL:
 						dbPort = 3306
 					case types.DatabasePicodata:
-						dbPort = 4327 // pgproto
+						dbPort = 5432 // picodata pg wire protocol // pgproto
 					}
 					t.state.SetDBEndpoint(result.ContainerName, dbPort)
 				}
@@ -186,6 +186,21 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 
 	t.state.SetDBTargets(dbTargets)
 	t.state.SetProxyTargets(proxyTargets)
+
+	// If proxy is present, stroppy connects through proxy instead of directly to DB.
+	// Exception: Picodata — picodata-go driver does topology discovery and needs direct connection.
+	if len(proxyTargets) > 0 && t.runCfg.Database.Kind != types.DatabasePicodata {
+		proxyHost := proxyTargets[0].InternalHost
+		if proxyHost == "" {
+			proxyHost = proxyTargets[0].Host
+		}
+		switch t.runCfg.Database.Kind {
+		case types.DatabasePostgres:
+			t.state.SetDBEndpoint(proxyHost, 5000) // HAProxy write port
+		case types.DatabaseMySQL:
+			t.state.SetDBEndpoint(proxyHost, 6033) // ProxySQL client port
+		}
+	}
 
 	nc.Log().Info("all machines provisioned",
 		zap.Int("db", len(dbTargets)),
@@ -425,7 +440,7 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 				case types.DatabaseMySQL:
 					dbPort = 3306
 				case types.DatabasePicodata:
-					dbPort = 4327
+					dbPort = 5432 // picodata pg wire protocol
 				}
 				t.state.SetDBEndpoint(vmInfo.InternalIP, dbPort)
 			}

@@ -49,6 +49,14 @@ func NewCollector(client *victoria.Client) *Collector {
 	}
 }
 
+// NewCollectorForDB creates a metrics collector with DB-specific queries.
+func NewCollectorForDB(client *victoria.Client, dbKind string) *Collector {
+	return &Collector{
+		client: client,
+		defs:   MetricsForDB(dbKind),
+	}
+}
+
 // Collect fetches all defined metrics for a run within the given time range.
 func (c *Collector) Collect(ctx context.Context, runID string, tr TimeRange) (*RunMetrics, error) {
 	step := inferStep(tr)

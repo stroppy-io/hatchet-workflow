@@ -26,11 +26,27 @@ func metricPrefix(runID string) string {
 	return strings.ReplaceAll(runID, "-", "_")
 }
 
-// DefaultMetrics returns the standard set of metrics collected per run.
+// MetricsForDB returns metrics with DB-specific queries based on database kind.
+func MetricsForDB(dbKind string) []MetricDef {
+	var dbMetrics []MetricDef
+	switch dbKind {
+	case "mysql":
+		dbMetrics = mysqlMetrics()
+	case "picodata":
+		dbMetrics = picodataMetrics()
+	default: // postgres
+		dbMetrics = postgresMetrics()
+	}
+	return append(dbMetrics, systemMetrics()...)
+}
+
+// DefaultMetrics returns postgres metrics (backward compat).
 func DefaultMetrics() []MetricDef {
+	return MetricsForDB("postgres")
+}
+
+func postgresMetrics() []MetricDef {
 	return []MetricDef{
-		// --- Database (standard postgres_exporter metrics) ---
-		// Filtered by stroppy_run_id label (set by vmagent external_labels).
 		{
 			Name:  "DB Transactions Per Second",
 			Key:   "db_tps",
@@ -55,6 +71,69 @@ func DefaultMetrics() []MetricDef {
 			Query: `max(pg_replication_lag_seconds{%s})`,
 			Unit:  "s",
 		},
+	}
+}
+
+func mysqlMetrics() []MetricDef {
+	return []MetricDef{
+		{
+			Name:  "DB Transactions Per Second",
+			Key:   "db_tps",
+			Query: `sum(rate(mysql_global_status_commands_total{command=~"commit|rollback",%s}[5m]))`,
+			Unit:  "txn/s",
+		},
+		{
+			Name:  "DB Queries Per Second",
+			Key:   "db_qps",
+			Query: `sum(rate(mysql_global_status_queries{%s}[5m]))`,
+			Unit:  "q/s",
+		},
+		{
+			Name:  "DB Active Connections",
+			Key:   "db_connections",
+			Query: `sum(mysql_global_status_threads_connected{%s})`,
+			Unit:  "",
+		},
+		{
+			Name:  "DB Replication Lag",
+			Key:   "db_repl_lag",
+			Query: `max(mysql_slave_status_seconds_behind_master{%s})`,
+			Unit:  "s",
+		},
+	}
+}
+
+func picodataMetrics() []MetricDef {
+	return []MetricDef{
+		{
+			Name:  "DB SQL Requests/s",
+			Key:   "db_qps",
+			Query: `sum(rate(picodata_sql_requests_total{%s}[5m]))`,
+			Unit:  "q/s",
+		},
+		{
+			Name:  "DB SQL Errors/s",
+			Key:   "db_errors",
+			Query: `sum(rate(picodata_sql_errors_total{%s}[5m]))`,
+			Unit:  "err/s",
+		},
+		{
+			Name:  "DB Raft Commit Index",
+			Key:   "db_raft_commit",
+			Query: `max(picodata_raft_commit_index{%s})`,
+			Unit:  "",
+		},
+		{
+			Name:  "DB Tables Count",
+			Key:   "db_tables",
+			Query: `max(picodata_storage_tables_count{%s})`,
+			Unit:  "",
+		},
+	}
+}
+
+func systemMetrics() []MetricDef {
+	return []MetricDef{
 
 		// --- System ---
 		// Filtered by stroppy_run_id label (set by vmagent external_labels).

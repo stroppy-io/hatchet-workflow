@@ -731,6 +731,29 @@ func (s *Server) cleanupOrphanedContainers(activeRunIDs map[string]bool) {
 
 // extractRunID gets the run ID from a machine ID.
 // Machine IDs follow the pattern "{runID}-{role}-{index}".
+// extractDBKind gets the database kind from a run snapshot.
+func extractDBKind(snap *dag.Snapshot) string {
+	if snap == nil || snap.State == nil {
+		return "postgres" // default
+	}
+	rcBytes := snap.State.RunConfig
+	if rcBytes == nil {
+		return "postgres"
+	}
+	var cfg struct {
+		Database struct {
+			Kind string `json:"kind"`
+		} `json:"database"`
+	}
+	if err := json.Unmarshal(rcBytes, &cfg); err != nil {
+		return "postgres"
+	}
+	if cfg.Database.Kind != "" {
+		return cfg.Database.Kind
+	}
+	return "postgres"
+}
+
 func extractRunID(machineID string) string {
 	// Find the last two "-" separated segments and strip them.
 	parts := strings.Split(machineID, "-")
@@ -881,10 +904,10 @@ func (s *Server) tenantAccountID(ctx context.Context, tenantID string) (int32, e
 	return t.AccountID.Int32, nil
 }
 
-// metricsCollector returns a metrics.Collector configured for the given accountID.
-func (s *Server) metricsCollector(accountID int32) *metrics.Collector {
+// metricsCollector returns a metrics.Collector configured for the given accountID and DB kind.
+func (s *Server) metricsCollector(accountID int32, dbKind string) *metrics.Collector {
 	prefix := fmt.Sprintf("%s/select/%d/prometheus", s.monitoringURL, accountID)
-	return metrics.NewCollector(victoria.NewClient(prefix, s.monitoringToken))
+	return metrics.NewCollectorForDB(victoria.NewClient(prefix, s.monitoringToken), dbKind)
 }
 
 // logsBaseURL returns the VictoriaLogs query base URL for the given accountID.
@@ -915,11 +938,13 @@ func (s *Server) runMetrics(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-	collector := s.metricsCollector(accountID)
+	// Load snapshot to get timestamps and db_kind.
+	snap, _ := s.app.storage.Load(r.Context(), tenantID, runID)
+	dbKind := extractDBKind(snap)
+
+	collector := s.metricsCollector(accountID, dbKind)
 	tr, err := parseTimeRange(r)
 	if err != nil {
-		// Auto-resolve from run snapshot timestamps.
-		snap, _ := s.app.storage.Load(r.Context(), tenantID, runID)
 		if snap != nil && !snap.StartedAt.IsZero() {
 			end := snap.FinishedAt
 			if end.IsZero() {
@@ -953,8 +978,6 @@ func (s *Server) compareRuns(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-	collector := s.metricsCollector(accountID)
-
 	runA := r.URL.Query().Get("a")
 	runB := r.URL.Query().Get("b")
 	if runA == "" || runB == "" {
@@ -987,6 +1010,10 @@ func (s *Server) compareRuns(w http.ResponseWriter, r *http.Request) {
 		// Add padding to capture metrics at boundaries.
 		tr = metrics.TimeRange{Start: start.Add(-30 * time.Second), End: end.Add(30 * time.Second)}
 	}
+
+	// Use dbKind from run A for metric queries.
+	snapA2, _ := s.app.storage.Load(r.Context(), tenantID, runA)
+	collector := s.metricsCollector(accountID, extractDBKind(snapA2))
 
 	metricsA, err := collector.Collect(r.Context(), runA, tr)
 	if err != nil {
