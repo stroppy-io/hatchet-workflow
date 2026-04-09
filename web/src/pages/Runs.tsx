@@ -444,12 +444,14 @@ export function Runs() {
   }
 
   async function handleCancel(runID: string) {
+    setCancellingIds((prev) => new Set(prev).add(runID));
     try {
-      setCancellingIds((prev) => new Set(prev).add(runID));
       await cancelRun(runID);
-      await fetchRuns();
+      // Don't fetchRuns immediately — let auto-refresh pick up the transition.
+      // This ensures "Cancelling" is visible before it becomes "Cancelled".
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to cancel run");
+      setCancellingIds((prev) => { const n = new Set(prev); n.delete(runID); return n; });
     }
   }
 
