@@ -17,6 +17,8 @@ type CloudInitParams struct {
 	AgentPort int
 	// MachineID is a unique identifier for this machine, used in agent registration.
 	MachineID string
+	// AgentToken is the JWT token for authenticating with the server.
+	AgentToken string
 	// SSHUser is the login user created on the VM (default "stroppy").
 	SSHUser string
 	// SSHPublicKey is the SSH public key added to the user's authorized_keys.
@@ -42,6 +44,9 @@ write_files:
       STROPPY_SERVER_ADDR={{.ServerAddr}}
       STROPPY_AGENT_PORT={{.AgentPort}}
       STROPPY_MACHINE_ID={{.MachineID}}
+{{- if .AgentToken}}
+      STROPPY_AGENT_TOKEN={{.AgentToken}}
+{{- end}}
 {{- range $k, $v := .ExtraEnv}}
       {{$k}}={{$v}}
 {{- end}}

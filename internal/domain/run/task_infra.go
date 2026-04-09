@@ -302,11 +302,26 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 		for i := range spec.Count {
 			machineID := fmt.Sprintf("%s-%s-%d", t.runCfg.ID, spec.Role, i)
 
+			// Generate agent JWT token (valid for 24h).
+			agentToken := ""
+			if t.jwtIssuer != nil {
+				token, err := t.jwtIssuer.Issue(auth.Claims{
+					UserID:   machineID,
+					Username: machineID,
+					TenantID: t.tenantID,
+					Role:     "operator",
+				}, 24*time.Hour)
+				if err == nil {
+					agentToken = token
+				}
+			}
+
 			cloudInit, ciErr := agent.GenerateCloudInit(agent.CloudInitParams{
 				BinaryURL:    binaryURL,
 				ServerAddr:   t.serverAddr,
 				AgentPort:    agent.DefaultAgentPort,
 				MachineID:    machineID,
+				AgentToken:   agentToken,
 				SSHUser:      yc.SSHUser,
 				SSHPublicKey: yc.SSHPublicKey,
 			})
