@@ -67,3 +67,11 @@ func PicodataDefaults(version string) map[string]string {
 		"log_level":          "info",
 	}
 }
+
+// YDBDefaults returns default YDB configuration options by version.
+func YDBDefaults(version string) map[string]string {
+	return map[string]string{
+		"fault_tolerance": "none",
+		"database_path":   "/Root/testdb",
+	}
+}

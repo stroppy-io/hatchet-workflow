@@ -14,6 +14,7 @@ import type {
   PostgresTopology,
   MySQLTopology,
   PicodataTopology,
+  YDBTopology,
 } from "@/api/types";
 import { DB_COLORS } from "@/lib/db-colors";
 
@@ -127,6 +128,29 @@ function buildPicodata(t: PicodataTopology): { nodes: TopoNode[]; edges: TopoEdg
   return { nodes, edges };
 }
 
+function buildYDB(t: YDBTopology): { nodes: TopoNode[]; edges: TopoEdge[] } {
+  const c = DB_COLORS.ydb;
+  const nodes: TopoNode[] = [];
+  const edges: TopoEdge[] = [];
+
+  const storageCount = t.storage?.count || 1;
+  nodes.push({ id: "storage", label: "Storage", count: storageCount, color: c.hex, group: "db" });
+
+  if (t.database) {
+    const dbCount = t.database.count || 1;
+    nodes.push({ id: "database", label: "Database", count: dbCount, color: c.hexSecondary, group: "db" });
+    edges.push({ from: "storage", to: "database", label: "tablets", animated: true });
+  }
+
+  if (t.haproxy) {
+    nodes.push({ id: "haproxy", label: "HAProxy", count: t.haproxy.count, color: INFRA_PROXY, group: "proxy" });
+    const target = t.database ? "database" : "storage";
+    edges.push({ from: "haproxy", to: target, label: "grpc" });
+  }
+
+  return { nodes, edges };
+}
+
 // Layout: position nodes in layers (proxy → db → coord/pool)
 function layoutNodes(topoNodes: TopoNode[], topoEdges: TopoEdge[]): { nodes: Node[]; edges: Edge[] } {
   const layers: Record<string, TopoNode[]> = { proxy: [], db: [], coord: [], pool: [] };
@@ -203,6 +227,7 @@ export function TopologyFlow({ config }: { config: RunConfig | null }) {
     if (db.kind === "postgres" && db.postgres) topo = buildPostgres(db.postgres);
     else if (db.kind === "mysql" && db.mysql) topo = buildMySQL(db.mysql);
     else if (db.kind === "picodata" && db.picodata) topo = buildPicodata(db.picodata);
+    else if (db.kind === "ydb" && db.ydb) topo = buildYDB(db.ydb);
 
     return layoutNodes(topo.nodes, topo.edges);
   }, [config]);

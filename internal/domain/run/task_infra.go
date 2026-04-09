@@ -168,6 +168,8 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 						dbPort = 3306
 					case types.DatabasePicodata:
 						dbPort = 5432 // picodata pg wire protocol // pgproto
+					case types.DatabaseYDB:
+						dbPort = 2136
 					}
 					t.state.SetDBEndpoint(result.ContainerName, dbPort)
 				}
@@ -199,6 +201,8 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 			t.state.SetDBEndpoint(proxyHost, 5000) // HAProxy write port
 		case types.DatabaseMySQL:
 			t.state.SetDBEndpoint(proxyHost, 6033) // ProxySQL client port
+		case types.DatabaseYDB:
+			t.state.SetDBEndpoint(proxyHost, 2136)
 		}
 	}
 
@@ -441,6 +445,8 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 					dbPort = 3306
 				case types.DatabasePicodata:
 					dbPort = 5432 // picodata pg wire protocol
+				case types.DatabaseYDB:
+					dbPort = 2136
 				}
 				t.state.SetDBEndpoint(vmInfo.InternalIP, dbPort)
 			}
@@ -466,6 +472,8 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 			t.state.SetDBEndpoint(proxyHost, 5000) // HAProxy write port
 		case types.DatabaseMySQL:
 			t.state.SetDBEndpoint(proxyHost, 6033) // ProxySQL client port
+		case types.DatabaseYDB:
+			t.state.SetDBEndpoint(proxyHost, 2136)
 		}
 	}
 

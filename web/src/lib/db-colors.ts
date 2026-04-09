@@ -33,4 +33,11 @@ export const DB_COLORS: Record<DatabaseKind, {
     accent: "border-[#E23956]/50 bg-[#E23956]/[0.08]",
     hexSecondary: "#C7304A",
   },
+  ydb: {
+    hex: "#5B9BD5",
+    hexLight: "#7FB3E8",
+    text: "text-[#7FB3E8]",
+    accent: "border-[#5B9BD5]/50 bg-[#5B9BD5]/[0.08]",
+    hexSecondary: "#4A8AC4",
+  },
 };

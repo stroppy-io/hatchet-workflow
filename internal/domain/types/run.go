@@ -15,6 +15,7 @@ const (
 	DatabasePostgres DatabaseKind = "postgres"
 	DatabaseMySQL    DatabaseKind = "mysql"
 	DatabasePicodata DatabaseKind = "picodata"
+	DatabaseYDB      DatabaseKind = "ydb"
 )
 
 // Phase is the DAG node type identifier for each run stage.
@@ -37,6 +38,8 @@ const (
 	PhaseConfigurePgBouncer Phase = "configure_pgbouncer"
 	PhaseInstallPatroni     Phase = "install_patroni"
 	PhaseConfigurePatroni   Phase = "configure_patroni"
+	PhaseInitYDBCluster     Phase = "init_ydb_cluster"
+	PhaseStartYDBDatabase   Phase = "start_ydb_database"
 	PhaseTeardown           Phase = "teardown" // infrastructure cleanup
 )
 
@@ -107,6 +110,18 @@ type PicodataTopology struct {
 	HAProxyOptions  map[string]string `json:"haproxy_options,omitempty"`  // haproxy.cfg tuning
 }
 
+// YDBTopology describes a YDB cluster layout.
+type YDBTopology struct {
+	Storage         MachineSpec       `json:"storage"`            // static (storage) nodes
+	Database        *MachineSpec      `json:"database,omitempty"` // dynamic (compute) nodes; nil = combined mode
+	HAProxy         *MachineSpec      `json:"haproxy,omitempty"`  // optional load balancer
+	FaultTolerance  string            `json:"fault_tolerance"`    // "none", "block-4-2", "mirror-3-dc"
+	DatabasePath    string            `json:"database_path"`      // default "/Root/testdb"
+	StorageOptions  map[string]string `json:"storage_options,omitempty"`
+	DatabaseOptions map[string]string `json:"database_options,omitempty"`
+	HAProxyOptions  map[string]string `json:"haproxy_options,omitempty"`
+}
+
 // PicodataTier describes a tier in a multi-tier Picodata deployment.
 type PicodataTier struct {
 	Name        string `json:"name"`
@@ -123,6 +138,7 @@ type DatabaseConfig struct {
 	Postgres *PostgresTopology `json:"postgres,omitempty"`
 	MySQL    *MySQLTopology    `json:"mysql,omitempty"`
 	Picodata *PicodataTopology `json:"picodata,omitempty"`
+	YDB      *YDBTopology      `json:"ydb,omitempty"`
 }
 
 // --- Database topology presets ---

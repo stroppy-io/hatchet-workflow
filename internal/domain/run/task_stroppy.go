@@ -72,6 +72,9 @@ func (t *stroppyRunTask) Execute(nc *dag.NodeContext) error {
 		// Picodata stroppy driver connects via PostgreSQL wire protocol (pg port).
 		driverURL = fmt.Sprintf("postgres://admin:T0psecret@%s:%d?sslmode=disable", dbHost, dbPort)
 		driverType = "picodata"
+	case types.DatabaseYDB:
+		driverURL = fmt.Sprintf("grpc://%s:%d/Root/testdb", dbHost, dbPort)
+		driverType = "ydb"
 	default:
 		driverURL = fmt.Sprintf("%s:%d", dbHost, dbPort)
 		driverType = string(t.dbKind)

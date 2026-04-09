@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { VList, type VListHandle } from "virtua";
 import { WSConnection } from "@/api/ws";
 import { getRunLogs } from "@/api/client";
 import type { WSMessage, Snapshot } from "@/api/types";
-import { ArrowDown, Server, Zap, Search, X } from "lucide-react";
+import { ArrowDown, Server, Zap, Search, X, WrapText, AlignLeft, Check } from "lucide-react";
 import { MultiFilter, type FilterOption } from "@/components/ui/multi-filter";
 
 /* ---------- types ---------- */
@@ -27,7 +27,7 @@ interface DisplayLine {
 
 const MAX_LINES = 10_000;
 const PAGE_SIZE = 500;
-const PREFETCH_PX = 50; // start loading older when within 50px of top
+const PREFETCH_PX = 50;
 
 const MACHINE_COLORS = [
   "text-cyan-400", "text-yellow-400", "text-green-400", "text-pink-400",
@@ -38,6 +38,9 @@ const ACTION_LABELS: Record<string, string> = {
   install_postgres: "Install PostgreSQL", config_postgres: "Configure PostgreSQL",
   install_mysql: "Install MySQL", config_mysql: "Configure MySQL",
   install_picodata: "Install Picodata", config_picodata: "Configure Picodata",
+  install_ydb: "Install YDB", config_ydb: "Configure YDB Static",
+  init_ydb: "Init YDB Cluster", start_ydb_db: "Start YDB Database",
+  init_ydb_cluster: "Init YDB Cluster", start_ydb_database: "Start YDB Database",
   install_monitor: "Install Monitoring", config_monitor: "Configure Monitoring",
   install_stroppy: "Install Stroppy", run_stroppy: "Run Stroppy",
   install_etcd: "Install etcd", config_etcd: "Configure etcd",
@@ -60,8 +63,8 @@ function phaseLabel(p: string): string {
 /* ---------- phase resolution ---------- */
 
 const PHASE_ACTIONS: Record<string, string[]> = {
-  install_db: ["install_postgres", "install_mysql", "install_picodata"],
-  configure_db: ["config_postgres", "config_mysql", "config_picodata"],
+  install_db: ["install_postgres", "install_mysql", "install_picodata", "install_ydb"],
+  configure_db: ["config_postgres", "config_mysql", "config_picodata", "config_ydb"],
   install_monitor: ["install_monitor"], configure_monitor: ["config_monitor"],
   install_stroppy: ["install_stroppy"], run_stroppy: ["run_stroppy"],
   install_etcd: ["install_etcd"], configure_etcd: ["config_etcd"],
@@ -69,6 +72,8 @@ const PHASE_ACTIONS: Record<string, string[]> = {
   install_pgbouncer: ["install_pgbouncer"], configure_pgbouncer: ["config_pgbouncer"],
   install_proxy: ["install_haproxy", "install_proxysql"],
   configure_proxy: ["config_haproxy", "config_proxysql"],
+  init_ydb_cluster: ["init_ydb"],
+  start_ydb_database: ["start_ydb_db"],
 };
 
 function buildA2P(phases: string[]): Record<string, string> {
@@ -139,9 +144,11 @@ export function LogStream({ runID, snapshot }: LogStreamProps) {
   const [filterMachines, setFilterMachines] = useState<Set<string>>(new Set());
   const [filterPhases, setFilterPhases] = useState<Set<string>>(new Set());
   const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState(""); // debounced
-  const [searchResults, setSearchResults] = useState<DisplayLine[] | null>(null); // null = not searching
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<DisplayLine[] | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [wrapLines, setWrapLines] = useState(true);
+  const [copiedLine, setCopiedLine] = useState<number | null>(null);
   const colorMapRef = useRef(new Map<string, string>());
   const vlistRef = useRef<VListHandle>(null);
   const [logError, setLogError] = useState<string | null>(null);
@@ -153,15 +160,24 @@ export function LogStream({ runID, snapshot }: LogStreamProps) {
   const scopes = useMemo(() => extractScopes(snapshot), [snapshot]);
   const a2p = scopes.a2p;
 
+  // --- Line highlight ---
+  // Read target line from URL hash once on mount (for initial load strategy + scroll).
+  const [initialTargetLine] = useState<number | null>(() => {
+    const hash = window.location.hash;
+    if (hash.startsWith("#L")) {
+      const n = parseInt(hash.slice(2));
+      return isNaN(n) ? null : n;
+    }
+    return null;
+  });
+  // Visual highlight — updated by click or URL, no scroll side effect.
+  const [highlightLine, setHighlightLine] = useState<number | null>(initialTargetLine);
+
   // --- Debounce search ---
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => {
     clearTimeout(searchTimer.current);
-    if (!searchInput.trim()) {
-      setSearchQuery("");
-      setSearchResults(null);
-      return;
-    }
+    if (!searchInput.trim()) { setSearchQuery(""); setSearchResults(null); return; }
     searchTimer.current = setTimeout(() => setSearchQuery(searchInput.trim()), 300);
     return () => clearTimeout(searchTimer.current);
   }, [searchInput]);
@@ -171,9 +187,7 @@ export function LogStream({ runID, snapshot }: LogStreamProps) {
     if (!searchQuery || !runID) { setSearchResults(null); return; }
     setSearchLoading(true);
     getRunLogs(runID, { search: searchQuery, limit: 200 })
-      .then((raw) => {
-        setSearchResults(raw.map(parseLine));
-      })
+      .then((raw) => setSearchResults(raw.map(parseLine)))
       .finally(() => setSearchLoading(false));
   }, [searchQuery, runID]);
 
@@ -200,7 +214,7 @@ export function LogStream({ runID, snapshot }: LogStreamProps) {
     };
   }, [lines, scopes, filterMachines, filterPhases, a2p]);
 
-  // --- Filtered rows (or search results) ---
+  // --- Filtered rows ---
   const rows = useMemo(() => {
     const src = searchResults ?? lines;
     const hasMF = filterMachines.size > 0, hasPF = filterPhases.size > 0;
@@ -216,24 +230,49 @@ export function LogStream({ runID, snapshot }: LogStreamProps) {
   useEffect(() => {
     if (!runID) return;
     noMoreOlderRef.current = false;
-    getRunLogs(runID, { desc: true, limit: PAGE_SIZE })
-      .then((raw) => {
-        const parsed = raw.map(parseLine).reverse();
-        if (parsed.length < PAGE_SIZE) noMoreOlderRef.current = true;
-        setLines(parsed);
-        setLogError(null);
-      })
-      .catch((err) => setLogError(err instanceof Error ? err.message : "Failed to load logs"));
-  }, [runID]);
 
-  // Scroll to bottom after initial render.
+    if (initialTargetLine !== null) {
+      // Load from start up to the highlighted line + buffer so we can scroll to it.
+      const loadCount = initialTargetLine + 200;
+      getRunLogs(runID, { desc: false, limit: loadCount })
+        .then((raw) => {
+          const parsed = raw.map(parseLine);
+          if (parsed.length < loadCount) noMoreOlderRef.current = true;
+          setLines(parsed);
+          setLogError(null);
+        })
+        .catch((err) => setLogError(err instanceof Error ? err.message : "Failed to load logs"));
+    } else {
+      // Normal: load newest 500, scroll to bottom.
+      getRunLogs(runID, { desc: true, limit: PAGE_SIZE })
+        .then((raw) => {
+          const parsed = raw.map(parseLine).reverse();
+          if (parsed.length < PAGE_SIZE) noMoreOlderRef.current = true;
+          setLines(parsed);
+          setLogError(null);
+        })
+        .catch((err) => setLogError(err instanceof Error ? err.message : "Failed to load logs"));
+    }
+  }, [runID, initialTargetLine]);
+
+  // Scroll to target after initial render (once). Double-rAF to ensure VList has measured all items.
   const didInitialScroll = useRef(false);
   useEffect(() => {
     if (!didInitialScroll.current && lines.length > 0 && vlistRef.current) {
-      vlistRef.current.scrollToIndex(lines.length - 1, { align: "end" });
       didInitialScroll.current = true;
+      const doScroll = () => {
+        if (!vlistRef.current) return;
+        if (initialTargetLine !== null && initialTargetLine <= lines.length) {
+          vlistRef.current.scrollToIndex(initialTargetLine - 1, { align: "center" });
+          setAutoScroll(false);
+        } else {
+          vlistRef.current.scrollToIndex(lines.length - 1, { align: "end" });
+        }
+      };
+      // Double rAF: first lets React commit, second lets VList measure.
+      requestAnimationFrame(() => requestAnimationFrame(doScroll));
     }
-  }, [lines.length]);
+  }, [lines.length, initialTargetLine]);
 
   // --- WebSocket ---
   useEffect(() => {
@@ -258,7 +297,6 @@ export function LogStream({ runID, snapshot }: LogStreamProps) {
 
   // --- Programmatic scroll guard ---
   const progScrollRef = useRef(false);
-
   function scrollToBottom() {
     if (vlistRef.current && rows.length > 0) {
       progScrollRef.current = true;
@@ -266,7 +304,6 @@ export function LogStream({ runID, snapshot }: LogStreamProps) {
     }
   }
 
-  // Auto-scroll on new data.
   useEffect(() => {
     if (autoScroll && !searchResults) scrollToBottom();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -298,26 +335,26 @@ export function LogStream({ runID, snapshot }: LogStreamProps) {
       });
   }
 
-  // --- Scroll handler: auto-scroll toggle + prefetch older ---
   const handleScroll = (offset: number) => {
     if (!vlistRef.current) return;
     const { scrollSize, viewportSize } = vlistRef.current;
-    const atBottom = scrollSize - offset - viewportSize < 40;
-    setAutoScroll(atBottom);
-
-    // Prefetch older logs when near top (skip if programmatic scroll).
-    if (!progScrollRef.current && offset < PREFETCH_PX) {
-      loadOlderLogs();
-    }
-    // Reset prog flag on any scroll event after our scrollToIndex.
-    if (progScrollRef.current && offset > PREFETCH_PX) {
-      progScrollRef.current = false;
-    }
+    setAutoScroll(scrollSize - offset - viewportSize < 40);
+    if (!progScrollRef.current && offset < PREFETCH_PX) loadOlderLogs();
+    if (progScrollRef.current && offset > PREFETCH_PX) progScrollRef.current = false;
   };
+  const handleScrollEnd = () => { progScrollRef.current = false; };
 
-  const handleScrollEnd = () => {
-    progScrollRef.current = false;
-  };
+  // --- Copy line link ---
+  const copyLineLink = useCallback((lineNum: number) => {
+    const url = `${window.location.origin}/runs/${runID}?tab=logs#L${lineNum}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedLine(lineNum);
+      // Update URL hash without reload.
+      window.history.replaceState(null, "", `#L${lineNum}`);
+      setHighlightLine(lineNum);
+      setTimeout(() => setCopiedLine(null), 1500);
+    });
+  }, [runID]);
 
   const isSearching = searchResults !== null;
   const hasFilters = filterMachines.size > 0 || filterPhases.size > 0;
@@ -351,6 +388,17 @@ export function LogStream({ runID, snapshot }: LogStreamProps) {
           {searchLoading && " ..."}
         </span>
 
+        {/* Wrap toggle */}
+        <button
+          onClick={() => setWrapLines(!wrapLines)}
+          className={`p-1 border transition-colors shrink-0 ${
+            wrapLines ? "border-primary/40 text-primary bg-primary/5" : "border-zinc-800 text-zinc-600 hover:text-zinc-400"
+          }`}
+          title={wrapLines ? "Wrap: ON (click for no-wrap)" : "Wrap: OFF (click to wrap)"}
+        >
+          {wrapLines ? <WrapText className="h-3 w-3" /> : <AlignLeft className="h-3 w-3" />}
+        </button>
+
         <button
           onClick={() => { scrollToBottom(); setAutoScroll(true); }}
           className={`flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono border transition-colors shrink-0 ${
@@ -379,13 +427,42 @@ export function LogStream({ runID, snapshot }: LogStreamProps) {
         ) : (
           <VList ref={vlistRef} style={{ flex: 1 }} shift={shifting} onScroll={handleScroll} onScrollEnd={handleScrollEnd}>
             {rows.map((dl, i) => {
+              const lineNum = i + 1;
               const color = machineColor(dl.machineID, colorMapRef.current);
+              const isHighlighted = highlightLine === lineNum;
+              const isCopied = copiedLine === lineNum;
               return (
-                <div key={i} className="flex hover:bg-white/[0.03] px-2 h-5">
-                  <span className={`${color} shrink-0 w-28 truncate select-none pr-2 text-right text-[11px] leading-5`}>
+                <div
+                  key={i}
+                  className={`flex group hover:bg-white/[0.03] px-1 ${
+                    wrapLines ? "py-px" : "h-5"
+                  } ${isHighlighted ? "bg-yellow-500/10 border-l-2 border-yellow-500" : ""}`}
+                >
+                  {/* Line number — blurred until hover, click to copy link */}
+                  <span
+                    className={`shrink-0 w-10 text-right pr-2 select-none text-[10px] leading-5 cursor-pointer transition-all ${
+                      isCopied
+                        ? "text-emerald-400"
+                        : "text-zinc-800 group-hover:text-zinc-500"
+                    }`}
+                    onClick={() => copyLineLink(lineNum)}
+                    title="Click to copy link to this line"
+                  >
+                    {isCopied ? <Check className="h-3 w-3 inline" /> : lineNum}
+                  </span>
+                  {/* Machine label */}
+                  <span className={`${color} shrink-0 w-24 truncate select-none pr-1 text-right text-[11px] leading-5`}>
                     [{shortMachine(dl.machineID)}]
                   </span>
-                  <span className="whitespace-pre-wrap break-all text-[11px] leading-5">
+                  {/* Log text */}
+                  <span
+                    className={`text-[11px] leading-5 ${
+                      wrapLines
+                        ? "whitespace-pre-wrap break-all"
+                        : "whitespace-nowrap overflow-hidden text-ellipsis"
+                    }`}
+                    title={wrapLines ? undefined : dl.text}
+                  >
                     <HighlightText text={dl.text} search={searchQuery} />
                   </span>
                 </div>

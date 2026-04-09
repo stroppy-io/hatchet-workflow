@@ -13,18 +13,21 @@ const kindIcons: Record<DatabaseKind, typeof Database> = {
   postgres: Database,
   mysql: Server,
   picodata: Cpu,
+  ydb: Database,
 };
 
 const kindLabels: Record<DatabaseKind, string> = {
   postgres: "PostgreSQL",
   mysql: "MySQL",
   picodata: "Picodata",
+  ydb: "YDB",
 };
 
 const highlightKeys: Record<DatabaseKind, string[]> = {
   postgres: ["shared_buffers", "max_connections", "max_wal_size", "listen_addresses"],
   mysql: ["innodb_buffer_pool_size", "max_connections", "innodb_flush_method", "bind_address"],
   picodata: ["replication_factor", "shards", "memtx_memory", "listen"],
+  ydb: ["fault_tolerance", "database_path"],
 };
 
 interface DBDefaultsPanelProps {

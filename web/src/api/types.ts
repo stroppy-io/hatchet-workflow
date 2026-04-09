@@ -1,7 +1,10 @@
 // --- Enums / constants ---
 
 export type Provider = "yandex" | "docker";
-export type DatabaseKind = "postgres" | "mysql" | "picodata";
+export type DatabaseKind = "postgres" | "mysql" | "picodata" | "ydb";
+
+/** All supported database kinds — single source of truth for UI iterations. */
+export const ALL_DB_KINDS: DatabaseKind[] = ["postgres", "mysql", "picodata", "ydb"];
 
 export type Phase =
   | "network"
@@ -84,12 +87,24 @@ export interface PicodataTopology {
   haproxy_options?: Record<string, string>;
 }
 
+export interface YDBTopology {
+  storage: MachineSpec;
+  database?: MachineSpec;
+  haproxy?: MachineSpec;
+  fault_tolerance: string;
+  database_path: string;
+  storage_options?: Record<string, string>;
+  database_options?: Record<string, string>;
+  haproxy_options?: Record<string, string>;
+}
+
 export interface DatabaseConfig {
   kind: DatabaseKind;
   version: string;
   postgres?: PostgresTopology;
   mysql?: MySQLTopology;
   picodata?: PicodataTopology;
+  ydb?: YDBTopology;
 }
 
 export interface MonitorConfig {
@@ -227,7 +242,7 @@ export interface Preset {
   description: string;
   db_kind: DatabaseKind;
   is_builtin: boolean;
-  topology: PostgresTopology | MySQLTopology | PicodataTopology;
+  topology: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology;
   created_at?: string;
 }
 

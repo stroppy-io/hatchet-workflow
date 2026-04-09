@@ -37,9 +37,18 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 # Stage 3: Runtime
 FROM ubuntu:22.04
 
+ARG STROPPY_VERSION=4.1.0
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	bash curl ca-certificates wget sudo gnupg lsb-release \
 	&& rm -rf /var/lib/apt/lists/*
+
+# Install stroppy CLI (needed for probe API).
+RUN curl -fsSL "https://github.com/stroppy-io/stroppy/releases/download/v${STROPPY_VERSION}/stroppy_linux_amd64.tar.gz" \
+    | tar -xz -C /tmp \
+    && cp /tmp/stroppy /usr/local/bin/stroppy \
+    && chmod +x /usr/local/bin/stroppy \
+    && rm -rf /tmp/*
 
 COPY --from=build /usr/local/bin/terraform /usr/local/bin/terraform
 COPY --from=build /app/bin/stroppy-cloud /usr/local/bin/stroppy-cloud

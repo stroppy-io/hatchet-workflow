@@ -31,6 +31,10 @@ const (
 	ActionConfigHAProxy    Action = "config_haproxy"
 	ActionInstallProxySQL  Action = "install_proxysql"
 	ActionConfigProxySQL   Action = "config_proxysql"
+	ActionInstallYDB       Action = "install_ydb"
+	ActionConfigYDB        Action = "config_ydb"
+	ActionInitYDB          Action = "init_ydb"
+	ActionStartYDBDB       Action = "start_ydb_db"
 	ActionShutdown         Action = "shutdown"
 )
 

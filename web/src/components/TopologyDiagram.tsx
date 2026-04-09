@@ -1,11 +1,11 @@
-import type { DatabaseKind, PostgresTopology, MySQLTopology, PicodataTopology } from "@/api/types";
+import type { DatabaseKind, PostgresTopology, MySQLTopology, PicodataTopology, YDBTopology } from "@/api/types";
 import { DB_COLORS } from "@/lib/db-colors";
 import { Database, Server, Cpu, Shield, Layers, Globe } from "lucide-react";
 
 interface TopologyDiagramProps {
   kind: DatabaseKind;
   preset?: string;
-  topology?: PostgresTopology | MySQLTopology | PicodataTopology;
+  topology?: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology;
 }
 
 interface RoleDef {
@@ -19,7 +19,7 @@ interface RoleDef {
 const INFRA_PROXY = "#A0860A";
 const INFRA_COORD = "#7C6CC8";
 
-function getRolesFromTopology(kind: DatabaseKind, topology: PostgresTopology | MySQLTopology | PicodataTopology): RoleDef[] {
+function getRolesFromTopology(kind: DatabaseKind, topology: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology): RoleDef[] {
   const c = DB_COLORS[kind];
 
   if (kind === "postgres") {
@@ -63,6 +63,15 @@ function getRolesFromTopology(kind: DatabaseKind, topology: PostgresTopology | M
       const total = t.instances.reduce((s, i) => s + i.count, 0);
       roles.push({ label: "Instance", count: total, color: c.hex, icon: Cpu });
     }
+    if (t.haproxy) roles.push({ label: "HAProxy", count: t.haproxy.count || 1, color: INFRA_PROXY, icon: Globe });
+    return roles;
+  }
+
+  if (kind === "ydb") {
+    const t = topology as YDBTopology;
+    const roles: RoleDef[] = [];
+    roles.push({ label: "Storage", count: t.storage.count || 1, color: c.hex, icon: Shield });
+    if (t.database) roles.push({ label: "Database", count: t.database.count || 1, color: c.hexSecondary, icon: Cpu });
     if (t.haproxy) roles.push({ label: "HAProxy", count: t.haproxy.count || 1, color: INFRA_PROXY, icon: Globe });
     return roles;
   }
@@ -127,6 +136,23 @@ function getRolesFromPresetName(kind: DatabaseKind, preset: string): RoleDef[] {
           { label: "Compute", count: 3, color: c.hex, icon: Cpu },
           { label: "Storage", count: 3, color: c.hexSecondary, icon: Shield },
           { label: "HAProxy", count: 2, color: INFRA_PROXY, icon: Globe },
+        ];
+    }
+  }
+
+  if (kind === "ydb") {
+    switch (preset) {
+      case "single":
+        return [{ label: "Storage", count: 1, color: c.hex, icon: Shield }];
+      case "cluster":
+        return [
+          { label: "Storage", count: 3, color: c.hex, icon: Shield },
+          { label: "Database", count: 3, color: c.hexSecondary, icon: Cpu },
+        ];
+      case "scale":
+        return [
+          { label: "Storage", count: 3, color: c.hex, icon: Shield },
+          { label: "Database", count: 6, color: c.hexSecondary, icon: Cpu },
         ];
     }
   }

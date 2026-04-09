@@ -5,7 +5,7 @@ import {
   deletePreset,
   clonePreset,
 } from "@/api/client";
-import type { Preset, DatabaseKind } from "@/api/types";
+import { ALL_DB_KINDS, type Preset, type DatabaseKind } from "@/api/types";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -70,14 +70,15 @@ export function Presets() {
   }
 
   // Group presets by db_kind for display.
-  const grouped: Record<DatabaseKind, Preset[]> = { postgres: [], mysql: [], picodata: [] };
+  const grouped: Record<string, Preset[]> = {};
+  for (const k of ALL_DB_KINDS) grouped[k] = [];
   for (const p of presets) {
     if (grouped[p.db_kind]) grouped[p.db_kind].push(p);
   }
 
   const kindsToShow = filterKind
     ? [filterKind as DatabaseKind]
-    : (["postgres", "mysql", "picodata"] as DatabaseKind[]);
+    : ALL_DB_KINDS;
 
   return (
     <div className="p-6 space-y-6">

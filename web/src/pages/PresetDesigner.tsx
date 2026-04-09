@@ -1,14 +1,16 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getPreset, createPreset, updatePreset } from "@/api/client";
-import type {
-  DatabaseKind,
-  Preset,
-  PostgresTopology,
-  MySQLTopology,
-  PicodataTopology,
-  PicodataTier,
-  MachineSpec,
+import {
+  ALL_DB_KINDS,
+  type DatabaseKind,
+  type Preset,
+  type PostgresTopology,
+  type MySQLTopology,
+  type PicodataTopology,
+  type PicodataTier,
+  type YDBTopology,
+  type MachineSpec,
 } from "@/api/types";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
 import { Button } from "@/components/ui/button";
@@ -204,6 +206,20 @@ function validatePicodata(t: PicodataTopology): ValidationError[] {
   return errs;
 }
 
+function validateYDB(t: YDBTopology): ValidationError[] {
+  const errs: ValidationError[] = [];
+  if (t.storage.count < 1) errs.push({ field: "storage.count", message: "At least 1 storage node required" });
+  if (t.database && t.database.count < 1) errs.push({ field: "database.count", message: "Database node count must be >= 1" });
+  if (t.storage.cpus < 1) errs.push({ field: "storage.cpus", message: "Storage CPUs must be >= 1" });
+  if (t.storage.memory_mb < 2048) errs.push({ field: "storage.memory_mb", message: "Storage RAM must be >= 2 GB" });
+  if (t.storage.disk_gb < 80) errs.push({ field: "storage.disk_gb", message: "Storage disk must be >= 80 GB" });
+  if (t.haproxy) {
+    if (t.haproxy.count < 1) errs.push({ field: "haproxy.count", message: "HAProxy count must be >= 1" });
+    errs.push(...validateMachine(t.haproxy, "HAProxy"));
+  }
+  return errs;
+}
+
 // ─── Default topologies ──────────────────────────────────────────
 
 function defaultMachine(role: string, cpus = 2, mem = 4096, disk = 50): MachineSpec {
@@ -235,6 +251,14 @@ function defaultPicodata(): PicodataTopology {
     instances: [defaultMachine("database")],
     replication_factor: 1,
     shards: 1,
+  };
+}
+
+function defaultYDB(): YDBTopology {
+  return {
+    storage: { role: "database", count: 1, cpus: 2, memory_mb: 4096, disk_gb: 80 },
+    fault_tolerance: "none",
+    database_path: "/Root/testdb",
   };
 }
 
@@ -843,12 +867,104 @@ function PicodataForm({ topology, onChange, disabled }: {
   );
 }
 
+// ─── YDB Form ────────────────────────────────────────────────────
+
+const YDB_STORAGE_DEFAULTS: Record<string, string> = { "--log-level": "WARN", "--grpc-port": "2135", "--mon-port": "8765", "--ic-port": "19001" };
+const YDB_DATABASE_DEFAULTS: Record<string, string> = { "--log-level": "WARN", "--grpc-port": "2135", "--mon-port": "8766" };
+const YDB_HAPROXY_DEFAULTS: Record<string, string> = { ...HAPROXY_DEFAULTS };
+
+function YDBForm({ topology, onChange, disabled }: {
+  topology: YDBTopology;
+  onChange: (t: YDBTopology) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="space-y-4">
+      {/* Storage nodes */}
+      <MachineEditor label="Storage Nodes" spec={topology.storage}
+        onChange={(s) => onChange({ ...topology, storage: s })} disabled={disabled}>
+        <OptionsEditor label="storage config" options={topology.storage_options}
+          locked={{}} lockedHints={{}} defaults={YDB_STORAGE_DEFAULTS} disabled={disabled}
+          onChange={(opts) => onChange({ ...topology, storage_options: opts })} />
+      </MachineEditor>
+
+      {/* Split mode (separate database/compute nodes) */}
+      <div>
+        <Toggle label="Separate database (compute) nodes"
+          checked={!!topology.database}
+          onChange={(v) => onChange({
+            ...topology,
+            database: v ? { role: "database" as const, count: 1, cpus: 2, memory_mb: 4096, disk_gb: 40 } : undefined,
+          })}
+          disabled={disabled} />
+        {topology.database && (
+          <div className="mt-2">
+            <MachineEditor label="Database (Compute) Nodes" spec={topology.database}
+              onChange={(s) => onChange({ ...topology, database: s })} disabled={disabled}>
+              <OptionsEditor label="database config" options={topology.database_options}
+                locked={{}} lockedHints={{}} defaults={YDB_DATABASE_DEFAULTS} disabled={disabled}
+                onChange={(opts) => onChange({ ...topology, database_options: opts })} />
+            </MachineEditor>
+          </div>
+        )}
+      </div>
+
+      {/* HAProxy */}
+      <div>
+        <Toggle label="HAProxy load balancer"
+          checked={!!topology.haproxy}
+          onChange={(v) => onChange({
+            ...topology,
+            haproxy: v ? { role: "proxy" as const, count: 1, cpus: 2, memory_mb: 2048, disk_gb: 20 } : undefined,
+          })}
+          disabled={disabled} />
+        {topology.haproxy && (
+          <div className="mt-2">
+            <MachineEditor label="HAProxy" spec={topology.haproxy}
+              onChange={(s) => onChange({ ...topology, haproxy: s })} disabled={disabled}>
+              <OptionsEditor label="haproxy.cfg" options={topology.haproxy_options}
+                locked={HAPROXY_LOCKED} lockedHints={HAPROXY_LOCKED_HINTS} defaults={YDB_HAPROXY_DEFAULTS} disabled={disabled}
+                onChange={(opts) => onChange({ ...topology, haproxy_options: opts })} />
+            </MachineEditor>
+          </div>
+        )}
+      </div>
+
+      {/* Fault Tolerance + Database Path */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">Fault Tolerance</Label>
+          <Select value={topology.fault_tolerance}
+            onValueChange={(v) => onChange({ ...topology, fault_tolerance: v })}
+            disabled={disabled}>
+            <SelectTrigger className="h-7 text-xs font-mono">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">none</SelectItem>
+              <SelectItem value="block-4-2">block-4-2</SelectItem>
+              <SelectItem value="mirror-3-dc">mirror-3-dc</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">Database Path</Label>
+          <Input value={topology.database_path}
+            onChange={(e) => onChange({ ...topology, database_path: e.target.value })}
+            className="h-7 text-xs font-mono" placeholder="/Root/testdb" disabled={disabled} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ───────────────────────────────────────────────────
 
 const DB_META: Record<DatabaseKind, { icon: typeof Database; label: string }> = {
   postgres: { icon: Database, label: "PostgreSQL" },
   mysql:    { icon: Server,   label: "MySQL" },
   picodata: { icon: Cpu,      label: "Picodata" },
+  ydb:      { icon: Database, label: "YDB" },
 };
 
 export function PresetDesigner() {
@@ -866,6 +982,7 @@ export function PresetDesigner() {
   const [pgTopology, setPgTopology] = useState<PostgresTopology>(defaultPostgres());
   const [myTopology, setMyTopology] = useState<MySQLTopology>(defaultMySQL());
   const [picoTopology, setPicoTopology] = useState<PicodataTopology>(defaultPicodata());
+  const [ydbTopology, setYdbTopology] = useState<YDBTopology>(defaultYDB());
 
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -881,6 +998,7 @@ export function PresetDesigner() {
         if (p.db_kind === "postgres") setPgTopology(p.topology as PostgresTopology);
         else if (p.db_kind === "mysql") setMyTopology(p.topology as MySQLTopology);
         else if (p.db_kind === "picodata") setPicoTopology(p.topology as PicodataTopology);
+        else if (p.db_kind === "ydb") setYdbTopology(p.topology as YDBTopology);
       })
       .catch(() => setMessage({ type: "error", text: "Failed to load preset" }))
       .finally(() => setLoading(false));
@@ -889,8 +1007,9 @@ export function PresetDesigner() {
   const currentTopology = useMemo(() => {
     if (dbKind === "postgres") return pgTopology;
     if (dbKind === "mysql") return myTopology;
+    if (dbKind === "ydb") return ydbTopology;
     return picoTopology;
-  }, [dbKind, pgTopology, myTopology, picoTopology]);
+  }, [dbKind, pgTopology, myTopology, picoTopology, ydbTopology]);
 
   const errors = useMemo((): ValidationError[] => {
     const errs: ValidationError[] = [];
@@ -898,8 +1017,9 @@ export function PresetDesigner() {
     if (dbKind === "postgres") errs.push(...validatePostgres(pgTopology));
     else if (dbKind === "mysql") errs.push(...validateMySQL(myTopology));
     else if (dbKind === "picodata") errs.push(...validatePicodata(picoTopology));
+    else if (dbKind === "ydb") errs.push(...validateYDB(ydbTopology));
     return errs;
-  }, [name, dbKind, pgTopology, myTopology, picoTopology]);
+  }, [name, dbKind, pgTopology, myTopology, picoTopology, ydbTopology]);
 
   const isValid = errors.length === 0;
 
@@ -966,8 +1086,8 @@ export function PresetDesigner() {
           {/* Database kind selector */}
           <div>
             <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-2 block">Database</Label>
-            <div className="grid grid-cols-3 gap-2">
-              {(["postgres", "mysql", "picodata"] as DatabaseKind[]).map((k) => {
+            <div className="grid grid-cols-4 gap-2">
+              {ALL_DB_KINDS.map((k) => {
                 const meta = DB_META[k];
                 const kColor = DB_COLORS[k];
                 const Icon = meta.icon;
@@ -1016,6 +1136,9 @@ export function PresetDesigner() {
             )}
             {dbKind === "picodata" && (
               <PicodataForm topology={picoTopology} onChange={setPicoTopology} disabled={isBuiltin} />
+            )}
+            {dbKind === "ydb" && (
+              <YDBForm topology={ydbTopology} onChange={setYdbTopology} disabled={isBuiltin} />
             )}
           </div>
         </div>

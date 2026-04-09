@@ -10,9 +10,9 @@ import (
 // Script → supported database kinds.
 var scriptDBSupport = map[string][]types.DatabaseKind{
 	"tpcc/procs": {types.DatabasePostgres, types.DatabaseMySQL},
-	"tpcc/tx":    {types.DatabasePostgres, types.DatabaseMySQL, types.DatabasePicodata},
+	"tpcc/tx":    {types.DatabasePostgres, types.DatabaseMySQL, types.DatabasePicodata, types.DatabaseYDB},
 	"tpcb/procs": {types.DatabasePostgres, types.DatabaseMySQL},
-	"tpcb/tx":    {types.DatabasePostgres, types.DatabaseMySQL, types.DatabasePicodata},
+	"tpcb/tx":    {types.DatabasePostgres, types.DatabaseMySQL, types.DatabasePicodata, types.DatabaseYDB},
 }
 
 // ValidateConfig checks RunConfig semantics before building the DAG.
@@ -23,7 +23,7 @@ func ValidateConfig(cfg types.RunConfig) error {
 	}
 
 	// At least one topology must be set (or preset_id).
-	if cfg.Database.Postgres == nil && cfg.Database.MySQL == nil && cfg.Database.Picodata == nil && cfg.PresetID == "" {
+	if cfg.Database.Postgres == nil && cfg.Database.MySQL == nil && cfg.Database.Picodata == nil && cfg.Database.YDB == nil && cfg.PresetID == "" {
 		return fmt.Errorf("database topology or preset_id is required")
 	}
 
@@ -40,6 +40,10 @@ func ValidateConfig(cfg types.RunConfig) error {
 	case types.DatabasePicodata:
 		if cfg.Database.Postgres != nil || cfg.Database.MySQL != nil {
 			return fmt.Errorf("database.kind is picodata but non-picodata topology is set")
+		}
+	case types.DatabaseYDB:
+		if cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.Picodata != nil {
+			return fmt.Errorf("database.kind is ydb but non-ydb topology is set")
 		}
 	}
 

@@ -140,7 +140,7 @@ function ConfigPanel({ config }: { config: RunConfig | null }) {
   }
 
   const db = config.database;
-  const topology = db.postgres || db.mysql || db.picodata;
+  const topology = db.postgres || db.mysql || db.picodata || db.ydb;
   const s = config.stroppy;
 
   // Topology summary
@@ -160,6 +160,12 @@ function ConfigPanel({ config }: { config: RunConfig | null }) {
     topoLabel = parts.join(" + ");
   } else if (db.picodata) {
     topoLabel = `${db.picodata.shards}sh rf=${db.picodata.replication_factor}`;
+  } else if (db.ydb) {
+    const parts: string[] = [`${db.ydb.storage.count} storage`];
+    if (db.ydb.database) parts.push(`${db.ydb.database.count} database`);
+    else parts.push("combined");
+    if (db.ydb.haproxy) parts.push("haproxy");
+    topoLabel = parts.join(" + ");
   }
 
   return (

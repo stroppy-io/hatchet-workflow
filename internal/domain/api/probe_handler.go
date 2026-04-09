@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -96,20 +97,23 @@ func (s *Server) stroppyProbe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Run stroppy probe.
+	// Run stroppy probe — capture stdout (JSON) separately from stderr (logs).
 	cmd := exec.CommandContext(r.Context(), "stroppy", "probe", "-f", configPath, "-o", "json")
-	output, err := cmd.CombinedOutput()
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err = cmd.Run()
 	if err != nil {
 		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{
 			"error":  "probe failed: " + err.Error(),
-			"output": string(output),
+			"output": stderr.String(),
 		})
 		return
 	}
 
-	// Return probe JSON output directly.
+	// Return probe JSON output directly (stdout only, no log noise).
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(output)
+	w.Write(stdout.Bytes())
 }
 
 func defaultDriverURL(driverType string) string {
@@ -120,6 +124,8 @@ func defaultDriverURL(driverType string) string {
 		return "root@tcp(localhost:3306)/"
 	case "picodata":
 		return "postgres://admin:T0psecret@localhost:1331"
+	case "ydb":
+		return "grpc://localhost:2136/Root/testdb"
 	default:
 		return "localhost"
 	}

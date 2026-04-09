@@ -64,5 +64,10 @@ func BuiltinPackages() []Package {
 				"apt-get update",
 			},
 		},
+		{
+			Name: "YDB 25.3", Description: "YDB — binary downloaded directly from binaries.ydb.tech",
+			DbKind: "ydb", DbVersion: "25.3", IsBuiltin: true,
+			AptPackages: []string{}, // no apt — ydbd binary downloaded in installYDB
+		},
 	}
 }

@@ -22,7 +22,7 @@ func (t *proxyInstallTask) Execute(nc *dag.NodeContext) error {
 	}
 
 	switch t.dbKind {
-	case types.DatabasePostgres, types.DatabasePicodata:
+	case types.DatabasePostgres, types.DatabasePicodata, types.DatabaseYDB:
 		nc.Log().Info("installing haproxy")
 		return t.client.SendAll(nc, targets, agent.Command{
 			Action: agent.ActionInstallHAProxy,
@@ -46,6 +46,7 @@ type proxyConfigTask struct {
 	pgTopology    *types.PostgresTopology
 	mysqlTopology *types.MySQLTopology
 	picoTopology  *types.PicodataTopology
+	ydbTopology   *types.YDBTopology
 }
 
 func (t *proxyConfigTask) Execute(nc *dag.NodeContext) error {
@@ -64,6 +65,8 @@ func (t *proxyConfigTask) Execute(nc *dag.NodeContext) error {
 		return t.configProxySQLMySQL(nc, targets, dbTargets)
 	case types.DatabasePicodata:
 		return t.configHAProxyPicodata(nc, targets, dbTargets)
+	case types.DatabaseYDB:
+		return t.configHAProxyYDB(nc, targets, dbTargets)
 	default:
 		return nil
 	}
@@ -151,6 +154,32 @@ func (t *proxyConfigTask) configHAProxyPicodata(nc *dag.NodeContext, proxyTarget
 		DBKind:      "picodata",
 		WritePort:   4327,
 		ReadPort:    4328,
+		Backends:    backends,
+		HealthCheck: "tcp",
+	}
+
+	return t.client.SendAll(nc, proxyTargets, agent.Command{
+		Action: agent.ActionConfigHAProxy,
+		Config: cfg,
+	})
+}
+
+func (t *proxyConfigTask) configHAProxyYDB(nc *dag.NodeContext, proxyTargets, dbTargets []agent.Target) error {
+	nc.Log().Info("configuring haproxy for YDB (gRPC)")
+
+	var backends []string
+	for _, tgt := range dbTargets {
+		host := tgt.InternalHost
+		if host == "" {
+			host = tgt.Host
+		}
+		backends = append(backends, fmt.Sprintf("%s:2136", host))
+	}
+
+	cfg := agent.HAProxyConfig{
+		DBKind:      "ydb",
+		WritePort:   2136,
+		ReadPort:    2137,
 		Backends:    backends,
 		HealthCheck: "tcp",
 	}

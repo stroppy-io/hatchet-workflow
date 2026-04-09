@@ -118,6 +118,9 @@ func (d *DockerDeployer) Deploy(ctx context.Context, machineID string, serverAdd
 	}
 
 	name := fmt.Sprintf("stroppy-agent-%s", machineID)
+	// Set hostname = container name so os.Hostname() matches Docker DNS name.
+	// Required by YDB which matches hosts config by hostname.
+	cfg.Hostname = name
 	d.cli.ContainerRemove(ctx, name, container.RemoveOptions{Force: true})
 
 	resp, err := d.cli.ContainerCreate(ctx, cfg, hostCfg, netCfg, nil, name)

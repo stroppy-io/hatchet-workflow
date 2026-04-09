@@ -53,7 +53,7 @@ function metricIcon(key: string, value: number) {
 }
 
 const metricCategories: Record<string, string[]> = {
-  "Database": ["db_qps", "db_latency_p99", "db_connections", "db_repl_lag"],
+  "Database": ["db_qps", "db_tps", "db_latency_p99", "db_connections", "db_repl_lag", "db_errors", "db_sessions", "db_tablets", "db_raft_commit", "db_tables"],
   "System": ["cpu_usage", "memory_usage", "disk_read", "disk_write", "net_rx", "net_tx"],
   "Stroppy": ["stroppy_vus", "stroppy_ops", "stroppy_iter_p99", "stroppy_query_rate", "stroppy_latency_p99", "stroppy_errors"],
 };

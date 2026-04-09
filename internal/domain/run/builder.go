@@ -116,7 +116,11 @@ func (b *builder) build() error {
 	b.add(b.ph(types.PhaseInstallMonitor), afterMachines,
 		&monitorInstallTask{client: b.deps.Client, state: b.deps.State, dbKind: b.cfg.Database.Kind})
 	// Configure/start daemons after install AND after DB is configured (so postgres_exporter can connect).
-	b.add(b.ph(types.PhaseConfigureMonitor), []string{b.ph(types.PhaseInstallMonitor), b.ph(types.PhaseConfigureDB)},
+	monitorConfigDeps := []string{b.ph(types.PhaseInstallMonitor), b.ph(types.PhaseConfigureDB)}
+	if b.needsYDBInit() {
+		monitorConfigDeps = append(monitorConfigDeps, b.ph(types.PhaseStartYDBDatabase))
+	}
+	b.add(b.ph(types.PhaseConfigureMonitor), monitorConfigDeps,
 		&monitorConfigTask{client: b.deps.Client, state: b.deps.State, monitor: b.cfg.Monitor, runID: b.cfg.ID, dbKind: b.cfg.Database.Kind, monitoringURL: b.deps.MonitoringURL, monitoringToken: b.deps.MonitoringToken, accountID: b.deps.AccountID})
 
 	// --- pgbouncer (if Postgres HA with pgbouncer, colocated on DB nodes) ---
@@ -127,6 +131,11 @@ func (b *builder) build() error {
 	// --- proxy (HAProxy for PG/Picodata, ProxySQL for MySQL) ---
 	if b.needsProxy() {
 		b.addProxy(afterMachines)
+	}
+
+	// --- YDB cluster init + database start ---
+	if b.needsYDBInit() {
+		b.addYDBPhases()
 	}
 
 	// --- stroppy ---
@@ -201,8 +210,22 @@ func (b *builder) needsProxy() bool {
 		return db.MySQL != nil && db.MySQL.ProxySQL != nil
 	case types.DatabasePicodata:
 		return db.Picodata != nil && db.Picodata.HAProxy != nil
+	case types.DatabaseYDB:
+		return db.YDB != nil && db.YDB.HAProxy != nil
 	}
 	return false
+}
+
+func (b *builder) needsYDBInit() bool {
+	return b.cfg.Database.Kind == types.DatabaseYDB && b.cfg.Database.YDB != nil
+}
+
+func (b *builder) addYDBPhases() {
+	b.add(b.ph(types.PhaseInitYDBCluster), []string{b.ph(types.PhaseConfigureDB)},
+		&ydbInitTask{client: b.deps.Client, state: b.deps.State, topology: b.cfg.Database.YDB})
+	b.add(b.ph(types.PhaseStartYDBDatabase), []string{b.ph(types.PhaseInitYDBCluster)},
+		&ydbStartDBTask{client: b.deps.Client, state: b.deps.State, topology: b.cfg.Database.YDB})
+	b.runStroppyDeps = append(b.runStroppyDeps, b.ph(types.PhaseStartYDBDatabase))
 }
 
 func (b *builder) addEtcd(afterMachines []string) {
@@ -227,7 +250,7 @@ func (b *builder) addProxy(afterMachines []string) {
 		&proxyInstallTask{client: b.deps.Client, state: b.deps.State, dbKind: b.cfg.Database.Kind})
 	b.add(b.ph(types.PhaseConfigureProxy), []string{b.ph(types.PhaseInstallProxy), b.ph(types.PhaseConfigureDB)},
 		&proxyConfigTask{client: b.deps.Client, state: b.deps.State, dbKind: b.cfg.Database.Kind,
-			pgTopology: b.cfg.Database.Postgres, mysqlTopology: b.cfg.Database.MySQL, picoTopology: b.cfg.Database.Picodata})
+			pgTopology: b.cfg.Database.Postgres, mysqlTopology: b.cfg.Database.MySQL, picoTopology: b.cfg.Database.Picodata, ydbTopology: b.cfg.Database.YDB})
 	b.runStroppyDeps = append(b.runStroppyDeps, b.ph(types.PhaseConfigureProxy))
 }
 
@@ -246,6 +269,9 @@ func (b *builder) dbTasks() (install dag.Task, config dag.Task, err error) {
 	case types.DatabasePicodata:
 		return &picoInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.Picodata, pkg: pkg},
 			&picoConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.Picodata}, nil
+	case types.DatabaseYDB:
+		return &ydbInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.YDB, pkg: pkg},
+			&ydbConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.YDB}, nil
 	default:
 		return nil, nil, fmt.Errorf("unsupported database kind %q", db.Kind)
 	}

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getRunStatus, getGrafanaSettings, deleteRun } from "@/api/client";
-import type { Snapshot, NodeStatus, GrafanaSettings } from "@/api/types";
+import { ALL_DB_KINDS, type Snapshot, type NodeStatus, type GrafanaSettings, type RunConfig } from "@/api/types";
 import { RunOverview } from "@/components/RunOverview";
 import { LogStream } from "@/components/LogStream";
 import { MetricsPanel } from "@/components/MetricsPanel";
@@ -11,10 +11,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RefreshCw, AlertCircle, Trash2 } from "lucide-react";
-import type { RunConfig } from "@/api/types";
 
 // DB-specific dashboards — only show the one matching the run's database kind.
-const DB_DASHBOARDS = ["postgres", "mysql", "picodata"];
+const DB_DASHBOARDS = ALL_DB_KINDS;
 
 function DashboardSelector({ grafana, runID, dbKind, startedAt, finishedAt }: {
   grafana: GrafanaSettings; runID: string; dbKind?: string; startedAt?: string; finishedAt?: string;
@@ -23,7 +22,7 @@ function DashboardSelector({ grafana, runID, dbKind, startedAt, finishedAt }: {
 
   const visibleDashboards = Object.keys(dashboards).filter(name => {
     if (name === "compare" || name === "overview") return false;
-    if (DB_DASHBOARDS.includes(name)) return name === dbKind;
+    if ((DB_DASHBOARDS as string[]).includes(name)) return name === dbKind;
     return true;
   });
 
@@ -210,7 +209,12 @@ export function RunDetail() {
         </div>
       )}
 
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue={(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("tab")) return params.get("tab")!;
+        if (window.location.hash.startsWith("#L")) return "logs";
+        return "overview";
+      })()}>
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="topology">Topology</TabsTrigger>

@@ -16,6 +16,7 @@ type Preset struct {
 	Postgres *PostgresTopology `json:"postgres,omitempty"`
 	MySQL    *MySQLTopology    `json:"mysql,omitempty"`
 	Picodata *PicodataTopology `json:"picodata,omitempty"`
+	YDB      *YDBTopology      `json:"ydb,omitempty"`
 }
 
 // TopologyJSON serializes the active topology field to JSON for DB storage.
@@ -29,6 +30,9 @@ func (p *Preset) TopologyJSON() (string, error) {
 		return string(b), err
 	case DatabasePicodata:
 		b, err := json.Marshal(p.Picodata)
+		return string(b), err
+	case DatabaseYDB:
+		b, err := json.Marshal(p.YDB)
 		return string(b), err
 	default:
 		return "", nil
@@ -56,6 +60,12 @@ func (p *Preset) ParseTopology(raw string) error {
 			return err
 		}
 		p.Picodata = &t
+	case DatabaseYDB:
+		var t YDBTopology
+		if err := json.Unmarshal([]byte(raw), &t); err != nil {
+			return err
+		}
+		p.YDB = &t
 	}
 	return nil
 }
@@ -84,6 +94,13 @@ func BuiltinPresets() []Preset {
 		out = append(out, Preset{
 			Name: "Picodata " + string(name), Description: describePicodataPreset(name),
 			DbKind: string(DatabasePicodata), IsBuiltin: true, Picodata: &t,
+		})
+	}
+	for name, topo := range YDBPresets {
+		t := topo
+		out = append(out, Preset{
+			Name: "YDB " + string(name), Description: describeYDBPreset(name),
+			DbKind: string(DatabaseYDB), IsBuiltin: true, YDB: &t,
 		})
 	}
 
@@ -126,5 +143,46 @@ func describePicodataPreset(p PicodataPreset) string {
 		return "Picodata with 6 instances, multi-tier deployment"
 	default:
 		return ""
+	}
+}
+
+type YDBPreset string
+
+const (
+	YDBSingle  YDBPreset = "single"
+	YDBCluster YDBPreset = "cluster"
+	YDBScale   YDBPreset = "scale"
+)
+
+var YDBPresets = map[YDBPreset]YDBTopology{
+	YDBSingle: {
+		Storage:        MachineSpec{Role: RoleDatabase, Count: 1, CPUs: 2, MemoryMB: 4096, DiskGB: 80},
+		FaultTolerance: "none",
+		DatabasePath:   "/Root/testdb",
+	},
+	YDBCluster: {
+		Storage:        MachineSpec{Role: RoleDatabase, Count: 3, CPUs: 4, MemoryMB: 8192, DiskGB: 100},
+		Database:       &MachineSpec{Role: RoleDatabase, Count: 3, CPUs: 4, MemoryMB: 8192, DiskGB: 50},
+		FaultTolerance: "none",
+		DatabasePath:   "/Root/testdb",
+	},
+	YDBScale: {
+		Storage:        MachineSpec{Role: RoleDatabase, Count: 3, CPUs: 8, MemoryMB: 16384, DiskGB: 200},
+		Database:       &MachineSpec{Role: RoleDatabase, Count: 6, CPUs: 8, MemoryMB: 16384, DiskGB: 50},
+		FaultTolerance: "none",
+		DatabasePath:   "/Root/testdb",
+	},
+}
+
+func describeYDBPreset(p YDBPreset) string {
+	switch p {
+	case YDBSingle:
+		return "Single-node YDB (combined storage+compute)"
+	case YDBCluster:
+		return "YDB cluster with 3 storage + 3 database nodes"
+	case YDBScale:
+		return "YDB scale cluster with 3 storage + 6 database nodes"
+	default:
+		return string(p)
 	}
 }

@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { startRun, validateRun, dryRun, listPresets, listPackages, probeScript } from "@/api/client";
-import type {
-  RunConfig,
-  DatabaseKind,
-  Provider,
-  Preset,
-  Package,
-  ProbeResponse,
+import {
+  ALL_DB_KINDS,
+  type RunConfig,
+  type DatabaseKind,
+  type Provider,
+  type Preset,
+  type Package,
+  type ProbeResponse,
 } from "@/api/types";
 import { generateRunID } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -40,25 +41,27 @@ import { NumericSlider, DurationSlider, SliderField, CPU_STEPS, DISK_STEPS, ramS
 
 // --- Constants ---
 
-const DB_KINDS: DatabaseKind[] = ["postgres", "mysql", "picodata"];
+const DB_KINDS = ALL_DB_KINDS;
 const PROVIDERS: Provider[] = ["docker", "yandex"];
 const SCRIPTS: { id: string; label: string; desc: string; dbs: DatabaseKind[] }[] = [
   { id: "tpcc/procs", label: "TPC-C Procs", desc: "Stored procedures", dbs: ["postgres", "mysql"] },
-  { id: "tpcc/tx", label: "TPC-C Tx", desc: "Raw transactions", dbs: ["postgres", "mysql", "picodata"] },
+  { id: "tpcc/tx", label: "TPC-C Tx", desc: "Raw transactions", dbs: ["postgres", "mysql", "picodata", "ydb"] },
   { id: "tpcb/procs", label: "TPC-B Procs", desc: "Stored procedures", dbs: ["postgres", "mysql"] },
-  { id: "tpcb/tx", label: "TPC-B Tx", desc: "Raw transactions", dbs: ["postgres", "mysql", "picodata"] },
+  { id: "tpcb/tx", label: "TPC-B Tx", desc: "Raw transactions", dbs: ["postgres", "mysql", "picodata", "ydb"] },
 ];
 
 const DB_VERSIONS: Record<DatabaseKind, string[]> = {
   postgres: ["16", "17"],
   mysql: ["8.0", "8.4"],
   picodata: ["25.3"],
+  ydb: ["25.3"],
 };
 
 const DB_META: Record<DatabaseKind, { icon: typeof Database; label: string }> = {
   postgres: { icon: Database, label: "PostgreSQL" },
   mysql:    { icon: Server,   label: "MySQL" },
   picodata: { icon: Cpu,      label: "Picodata" },
+  ydb:      { icon: Database, label: "YDB" },
 };
 
 const PROVIDER_META: Record<Provider, { icon: typeof Cloud; label: string }> = {
@@ -686,23 +689,46 @@ function StepStroppy({
         })()}
       </div>
 
-      {/* Env declarations from probe */}
-      {probeData?.env_declarations && probeData.env_declarations.length > 0 && (
-        <details className="group">
-          <summary className="text-[10px] font-mono text-zinc-600 cursor-pointer hover:text-zinc-400 select-none">
-            Script environment variables ({probeData.env_declarations.length})
-          </summary>
-          <div className="mt-2 space-y-1">
-            {probeData.env_declarations.map((e, i) => (
-              <div key={i} className="flex items-center gap-2 text-[10px] font-mono">
-                <span className="text-zinc-400">{e.names.join(" | ")}</span>
-                {e.default && <span className="text-zinc-700">= {e.default}</span>}
-                {e.description && <span className="text-zinc-600 text-[9px]">— {e.description}</span>}
-              </div>
-            ))}
+      {/* Env parameters from probe — editable */}
+      {probeData?.env_declarations && probeData.env_declarations.length > 0 && (() => {
+        // Filter out env vars already covered by dedicated UI controls.
+        const covered = new Set(["POOL_SIZE", "SCALE_FACTOR", "WAREHOUSES", "STROPPY_STEPS", "STROPPY_NO_STEPS", "STROPPY_ERROR_MODE"]);
+        const envDecls = probeData.env_declarations.filter(
+          (e) => !e.names.every((n) => covered.has(n))
+        );
+        if (envDecls.length === 0) return null;
+        return (
+          <div>
+            <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-2 block">
+              Script Parameters
+            </span>
+            <div className="space-y-2">
+              {envDecls.map((e, i) => {
+                const name = e.names[0];
+                return (
+                  <div key={i} className="flex items-center gap-3">
+                    <label className="text-[10px] font-mono text-zinc-400 w-36 shrink-0 truncate" title={e.names.join(", ")}>
+                      {name}
+                    </label>
+                    <input
+                      type="text"
+                      defaultValue={e.default || ""}
+                      placeholder={e.default || ""}
+                      className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-[11px] font-mono text-zinc-300 outline-none focus:border-zinc-600"
+                      data-env-name={name}
+                    />
+                    {e.description && (
+                      <span className="text-[9px] text-zinc-600 truncate max-w-[200px]" title={e.description}>
+                        {e.description}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </details>
-      )}
+        );
+      })()}
     </div>
   );
 }

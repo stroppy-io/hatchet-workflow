@@ -34,6 +34,8 @@ func MetricsForDB(dbKind string) []MetricDef {
 		dbMetrics = mysqlMetrics()
 	case "picodata":
 		dbMetrics = picodataMetrics()
+	case "ydb":
+		dbMetrics = ydbMetrics()
 	default: // postgres
 		dbMetrics = postgresMetrics()
 	}
@@ -99,6 +101,41 @@ func mysqlMetrics() []MetricDef {
 			Key:   "db_repl_lag",
 			Query: `max(mysql_slave_status_seconds_behind_master{%s})`,
 			Unit:  "s",
+		},
+	}
+}
+
+func ydbMetrics() []MetricDef {
+	return []MetricDef{
+		{
+			Name:  "DB gRPC Requests/s",
+			Key:   "db_qps",
+			Query: `sum(rate(total{%s}[5m]))`,
+			Unit:  "req/s",
+		},
+		{
+			Name:  "DB gRPC Errors/s",
+			Key:   "db_errors",
+			Query: `sum(rate(notOkRequest{%s}[5m]))`,
+			Unit:  "err/s",
+		},
+		{
+			Name:  "DB gRPC Inflight",
+			Key:   "db_sessions",
+			Query: `sum(infly{%s})`,
+			Unit:  "",
+		},
+		{
+			Name:  "DB gRPC Latency p99",
+			Key:   "db_latency_p99",
+			Query: `histogram_quantile(0.99, sum by (le) (rate(LatencyMs_bucket{%s}[5m])))`,
+			Unit:  "ms",
+		},
+		{
+			Name:  "DB Tablet Count",
+			Key:   "db_tablets",
+			Query: `sum(ydb_tablets_count{%s})`,
+			Unit:  "",
 		},
 	}
 }
