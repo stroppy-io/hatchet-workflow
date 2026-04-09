@@ -362,7 +362,7 @@ func (s *Server) agentLog(w http.ResponseWriter, r *http.Request) {
 		}
 		go func() {
 			vlClient := victoria.NewLogsClient(s.monitoringURL, s.monitoringToken)
-			if err := vlClient.IngestWithAccount(accountID, line.MachineID, line.CommandID, runID, line.Stream, line.Line); err != nil {
+			if err := vlClient.IngestWithAccount(accountID, line.MachineID, line.CommandID, line.Action, runID, line.Stream, line.Line); err != nil {
 				s.logger.Debug("vlogs ingest failed", zap.Error(err))
 			}
 		}()
@@ -834,10 +834,28 @@ func (s *Server) runLogs(w http.ResponseWriter, r *http.Request) {
 
 	runID := chi.URLParam(r, "runID")
 
-	// Pass through optional query params to VictoriaLogs.
+	// Build VictoriaLogs LogsQL query with optional pipes.
 	query := fmt.Sprintf(`run_id:"%s"`, runID)
 	start := r.URL.Query().Get("start")
 	end := r.URL.Query().Get("end")
+	limit := r.URL.Query().Get("limit")
+	search := r.URL.Query().Get("search")
+
+	// Text search: simple substring match on _msg field.
+	if search != "" {
+		query += fmt.Sprintf(` _msg:"%s"`, strings.ReplaceAll(search, `"`, `\"`))
+	}
+
+	// Sort direction: "desc" returns newest first (for chat-like UI), default is "asc".
+	dir := r.URL.Query().Get("dir")
+	if dir == "desc" {
+		query += " | sort by (_time) desc"
+	} else {
+		query += " | sort by (_time)"
+	}
+	if limit != "" {
+		query += " | limit " + limit
+	}
 
 	vlURL := fmt.Sprintf("%s/select/logsql/query?query=%s",
 		s.monitoringURL, url.QueryEscape(query))

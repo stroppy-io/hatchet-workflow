@@ -384,11 +384,22 @@ export async function getRunMetrics(
   );
 }
 
-export async function getRunLogs(runID: string): Promise<string[]> {
+export async function getRunLogs(
+  runID: string,
+  opts?: { end?: string; start?: string; limit?: number; desc?: boolean; search?: string },
+): Promise<string[]> {
   const headers: Record<string, string> = {};
   if (_accessToken) headers["Authorization"] = `Bearer ${_accessToken}`;
 
-  const res = await fetch(`${API_BASE}/run/${runID}/logs`, { headers });
+  const params = new URLSearchParams();
+  if (opts?.end) params.set("end", opts.end);
+  if (opts?.start) params.set("start", opts.start);
+  if (opts?.desc) params.set("dir", "desc");
+  if (opts?.search) params.set("search", opts.search);
+  params.set("limit", String(opts?.limit ?? 500));
+  const url = `${API_BASE}/run/${runID}/logs?${params.toString()}`;
+
+  const res = await fetch(url, { headers });
   if (res.status === 503) return []; // monitoring not configured — no logs, not an error
   if (!res.ok) {
     const text = await res.text();
@@ -398,20 +409,8 @@ export async function getRunLogs(runID: string): Promise<string[]> {
   const text = await res.text();
   if (!text.trim()) return [];
 
-  return text
-    .trim()
-    .split("\n")
-    .filter(Boolean)
-    .map((line) => {
-      try {
-        const obj = JSON.parse(line);
-        const mid = obj.machine_id || "system";
-        const msg = obj._msg || obj.message || "";
-        return JSON.stringify({ machine_id: mid, line: msg });
-      } catch {
-        return line;
-      }
-    });
+  // Return raw JSON lines — LogStream parses all fields (action, _time, etc.).
+  return text.trim().split("\n").filter(Boolean);
 }
 
 export async function compareRuns(

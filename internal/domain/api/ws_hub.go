@@ -156,7 +156,7 @@ func (h *wsHub) WriteLog(_ context.Context, executionID string, nodeID string, e
 			accountID = h.accountIDResolver(executionID)
 		}
 		go func() {
-			if err := h.victoriaLogs.IngestWithAccount(accountID, "server", "", executionID, "server", line); err != nil {
+			if err := h.victoriaLogs.IngestWithAccount(accountID, "server", "", nodeID, executionID, "server", line); err != nil {
 				if h.logger != nil {
 					h.logger.Debug("vlogs server log ingest failed", zap.Error(err))
 				}

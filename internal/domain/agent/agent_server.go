@@ -30,8 +30,8 @@ func NewAgentServer(serverAddr string, machineID string, _ int) *AgentServer {
 		httpClient: &http.Client{Timeout: 90 * time.Second},
 	}
 
-	s.executor.SetLogCallback(func(commandID, line, stream string) {
-		s.sendLogLine(commandID, line, stream)
+	s.executor.SetLogCallback(func(commandID, action, line, stream string) {
+		s.sendLogLine(commandID, action, line, stream)
 	})
 
 	return s
@@ -146,13 +146,14 @@ func (s *AgentServer) sendReport(ctx context.Context, report Report) error {
 }
 
 // sendLogLine posts a single log line to the server (fire-and-forget).
-func (s *AgentServer) sendLogLine(commandID, line, stream string) {
+func (s *AgentServer) sendLogLine(commandID, action, line, stream string) {
 	if s.serverAddr == "" {
 		return
 	}
 	ll := LogLine{
 		CommandID: commandID,
 		MachineID: s.machineID,
+		Action:    action,
 		Line:      line,
 		Stream:    stream,
 	}

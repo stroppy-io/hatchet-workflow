@@ -176,6 +176,13 @@ export interface NodeStatus {
   error?: string;
 }
 
+export interface SnapshotTarget {
+  id: string;
+  host: string;
+  internal_host: string;
+  role: string;
+}
+
 export interface Snapshot {
   graph: string; // JSON-encoded graph
   nodes: NodeStatus[];
@@ -184,6 +191,8 @@ export interface Snapshot {
   state?: {
     provider?: string;
     run_config?: Record<string, unknown> | string; // object or JSON string
+    targets?: SnapshotTarget[];
+    [key: string]: unknown;
   };
 }
 

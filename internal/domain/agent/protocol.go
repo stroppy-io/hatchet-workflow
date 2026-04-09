@@ -55,6 +55,7 @@ const (
 type LogLine struct {
 	CommandID string `json:"command_id"`
 	MachineID string `json:"machine_id,omitempty"`
+	Action    string `json:"action,omitempty"` // e.g. "install_postgres", "config_mysql"
 	Line      string `json:"line"`
 	Stream    string `json:"stream"` // "stdout" or "stderr"
 }

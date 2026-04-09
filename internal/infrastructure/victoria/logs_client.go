@@ -31,6 +31,7 @@ type logEntry struct {
 	Time      string `json:"_time"`
 	MachineID string `json:"machine_id,omitempty"`
 	CommandID string `json:"command_id,omitempty"`
+	Action    string `json:"action,omitempty"`
 	RunID     string `json:"run_id,omitempty"`
 	Stream    string `json:"stream,omitempty"`
 }
@@ -39,22 +40,23 @@ type logEntry struct {
 func (c *LogsClient) BaseURL() string { return c.baseURL }
 
 // IngestWithAccount sends a single log line to VictoriaLogs for a specific tenant account.
-func (c *LogsClient) IngestWithAccount(accountID int32, machineID, commandID, runID, stream, line string) error {
-	return c.ingest(accountID, machineID, commandID, runID, stream, line)
+func (c *LogsClient) IngestWithAccount(accountID int32, machineID, commandID, action, runID, stream, line string) error {
+	return c.ingest(accountID, machineID, commandID, action, runID, stream, line)
 }
 
 // Ingest sends a single log line to VictoriaLogs (default account 0).
 // It is safe to call from multiple goroutines.
-func (c *LogsClient) Ingest(machineID, commandID, runID, stream, line string) error {
-	return c.ingest(0, machineID, commandID, runID, stream, line)
+func (c *LogsClient) Ingest(machineID, commandID, action, runID, stream, line string) error {
+	return c.ingest(0, machineID, commandID, action, runID, stream, line)
 }
 
-func (c *LogsClient) ingest(accountID int32, machineID, commandID, runID, stream, line string) error {
+func (c *LogsClient) ingest(accountID int32, machineID, commandID, action, runID, stream, line string) error {
 	entry := logEntry{
 		Msg:       line,
 		Time:      time.Now().UTC().Format(time.RFC3339Nano),
 		MachineID: machineID,
 		CommandID: commandID,
+		Action:    action,
 		RunID:     runID,
 		Stream:    stream,
 	}

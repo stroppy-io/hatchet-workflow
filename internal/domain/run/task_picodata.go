@@ -48,12 +48,19 @@ func (t *picoConfigTask) Execute(nc *dag.NodeContext) error {
 	}
 
 	for i, target := range targets {
+		// Use InternalHost as advertise address so other nodes can resolve it.
+		// On Docker this is the container name; on YC VMs this is the internal IP.
+		advHost := target.InternalHost
+		if advHost == "" {
+			advHost = target.Host
+		}
 		cfg := agent.PicodataClusterConfig{
-			InstanceID:  i,
-			Peers:       peers,
-			Replication: t.topology.Replication,
-			Shards:      t.topology.Shards,
-			Options:     t.topology.InstanceOptions,
+			InstanceID:    i,
+			AdvertiseHost: advHost,
+			Peers:         peers,
+			Replication:   t.topology.Replication,
+			Shards:        t.topology.Shards,
+			Options:       t.topology.InstanceOptions,
 		}
 		if err := t.client.Send(nc, target, agent.Command{Action: agent.ActionConfigPicodata, Config: cfg}); err != nil {
 			return err

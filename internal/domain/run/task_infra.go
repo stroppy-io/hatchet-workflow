@@ -454,6 +454,21 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 	t.state.SetDBTargets(dbTargets)
 	t.state.SetProxyTargets(proxyTargets)
 
+	// If proxy is present, stroppy connects through proxy instead of directly to DB.
+	// Exception: Picodata — picodata-go driver does topology discovery and needs direct connection.
+	if len(proxyTargets) > 0 && t.runCfg.Database.Kind != types.DatabasePicodata {
+		proxyHost := proxyTargets[0].InternalHost
+		if proxyHost == "" {
+			proxyHost = proxyTargets[0].Host
+		}
+		switch t.runCfg.Database.Kind {
+		case types.DatabasePostgres:
+			t.state.SetDBEndpoint(proxyHost, 5000) // HAProxy write port
+		case types.DatabaseMySQL:
+			t.state.SetDBEndpoint(proxyHost, 6033) // ProxySQL client port
+		}
+	}
+
 	nc.Log().Info("Yandex Cloud VMs provisioned",
 		zap.Int("db", len(dbTargets)),
 		zap.Int("proxy", len(proxyTargets)),

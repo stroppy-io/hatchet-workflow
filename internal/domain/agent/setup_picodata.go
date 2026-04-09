@@ -13,9 +13,10 @@ type PicodataInstallConfig struct {
 
 // PicodataClusterConfig is the agent payload for Picodata cluster setup.
 type PicodataClusterConfig struct {
-	InstanceID  int               `json:"instance_id"`
-	Peers       []string          `json:"peers"` // addresses of all instances
-	Replication int               `json:"replication_factor"`
-	Shards      int               `json:"shards"`
-	Options     map[string]string `json:"options,omitempty"`
+	InstanceID    int               `json:"instance_id"`
+	Peers         []string          `json:"peers"`                    // addresses of all instances
+	AdvertiseHost string            `json:"advertise_host,omitempty"` // IP/hostname for advertise; falls back to os.Hostname()
+	Replication   int               `json:"replication_factor"`
+	Shards        int               `json:"shards"`
+	Options       map[string]string `json:"options,omitempty"`
 }

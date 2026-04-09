@@ -241,7 +241,7 @@ export function RunDetail() {
         <TabsContent value="logs">
           <Card className="h-[calc(100vh-11rem)]">
             <CardContent className="p-0 h-full relative">
-              <LogStream runID={id} />
+              <LogStream runID={id} snapshot={snapshot} />
             </CardContent>
           </Card>
         </TabsContent>

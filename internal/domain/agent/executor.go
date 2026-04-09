@@ -17,9 +17,9 @@ import (
 )
 
 // LogCallback is invoked for every output line produced by shell commands.
-// commandID identifies the originating command; line is the raw text;
-// stream is "stdout" (combined stdout+stderr).
-type LogCallback func(commandID, line, stream string)
+// commandID identifies the originating command; action is the command type
+// (e.g. "install_postgres"); line is the raw text; stream is "stdout" (combined stdout+stderr).
+type LogCallback func(commandID, action, line, stream string)
 
 // Executor runs agent commands on the local machine.
 // Long-running processes (DB servers, exporters, vmagent) are tracked in a
@@ -29,9 +29,10 @@ type Executor struct {
 	bootstrapMu  sync.Once
 	bootstrapErr error
 
-	logMu       sync.RWMutex
-	logCallback LogCallback
-	currentCmd  string
+	logMu         sync.RWMutex
+	logCallback   LogCallback
+	currentCmd    string
+	currentAction string
 
 	// Process pool — tracked background processes killed on shutdown.
 	procMu sync.Mutex
@@ -112,11 +113,12 @@ func (e *Executor) SetLogCallback(cb LogCallback) {
 	e.logCallback = cb
 }
 
-// setCurrentCommand stores the currently executing command ID for log correlation.
-func (e *Executor) setCurrentCommand(id string) {
+// setCurrentCommand stores the currently executing command ID and action for log correlation.
+func (e *Executor) setCurrentCommand(id string, action Action) {
 	e.logMu.Lock()
 	defer e.logMu.Unlock()
 	e.currentCmd = id
+	e.currentAction = string(action)
 }
 
 // emitLine sends a single output line to the registered callback (if any).
@@ -127,9 +129,24 @@ func (e *Executor) emitLine(line string) {
 	e.logMu.RLock()
 	cb := e.logCallback
 	cmdID := e.currentCmd
+	action := e.currentAction
 	e.logMu.RUnlock()
 	if cb != nil {
-		cb(cmdID, line, "stdout")
+		cb(cmdID, action, line, "stdout")
+	}
+}
+
+// emitLineWithAction sends a line with a fixed action (for long-lived daemons whose
+// parent command has already completed and reset currentAction).
+func (e *Executor) emitLineWithAction(action, line string) {
+	fmt.Fprintln(os.Stderr, line)
+
+	e.logMu.RLock()
+	cb := e.logCallback
+	cmdID := e.currentCmd
+	e.logMu.RUnlock()
+	if cb != nil {
+		cb(cmdID, action, line, "stdout")
 	}
 }
 
@@ -232,9 +249,9 @@ func (e *Executor) installPackage(ctx context.Context, pkg types.Package) error 
 func (e *Executor) Run(ctx context.Context, cmd Command) Report {
 	report := Report{CommandID: cmd.ID, Status: ReportCompleted}
 
-	// Store command ID so streamed log lines are correlated.
-	e.setCurrentCommand(cmd.ID)
-	defer e.setCurrentCommand("")
+	// Store command ID and action so streamed log lines are correlated.
+	e.setCurrentCommand(cmd.ID, cmd.Action)
+	defer e.setCurrentCommand("", "")
 
 	if err := e.bootstrap(ctx); err != nil {
 		report.Status = ReportFailed
@@ -747,8 +764,13 @@ func (e *Executor) configPicodata(ctx context.Context, cmd Command) error {
 	fmt.Fprintf(&confBuf, "      replication_factor: %d\n", replication)
 	confBuf.WriteString("      can_vote: true\n")
 	confBuf.WriteString("\n")
-	// Use machine hostname for advertise addresses so picodata-go discovery works.
-	hostname := os.Getenv("HOSTNAME")
+	// Use explicit advertise host (internal IP / container name) passed from the orchestrator.
+	// Falls back to os.Hostname() for backward compat, but on YC VMs the hostname
+	// is auto-assigned and unresolvable by other nodes — always prefer AdvertiseHost.
+	hostname := cfg.AdvertiseHost
+	if hostname == "" {
+		hostname = os.Getenv("HOSTNAME")
+	}
 	if hostname == "" {
 		hostname, _ = os.Hostname()
 	}
