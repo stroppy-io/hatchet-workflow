@@ -61,6 +61,9 @@ type Server struct {
 	runCancelsMu sync.Mutex
 	runCancels   map[string]context.CancelFunc
 
+	// cancelledRuns tracks runs that were explicitly cancelled by the user.
+	cancelledRuns map[string]bool
+
 	// pollClient is the command queue used for agent<->server communication.
 	pollClient *agent.PollClient
 
@@ -79,6 +82,7 @@ func NewServer(app *App, logger *zap.Logger, pool *pgxpool.Pool, jwtSecret, moni
 		hub:             newWSHub(),
 		agents:          make(map[string]agent.Target),
 		runCancels:      make(map[string]context.CancelFunc),
+		cancelledRuns:   make(map[string]bool),
 		pollClient:      pc,
 		pool:            pool,
 		jwtIssuer:       auth.NewJWTIssuer(jwtSecret),
@@ -492,6 +496,11 @@ func (s *Server) listRuns(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
+	for i := range runs {
+		if s.cancelledRuns[runs[i].ID] {
+			runs[i].Cancelled = true
+		}
+	}
 	writeJSON(w, http.StatusOK, runs)
 }
 
@@ -509,6 +518,7 @@ func (s *Server) cancelRun(w http.ResponseWriter, r *http.Request) {
 
 	s.logger.Info("cancelling run", zap.String("run_id", runID))
 	cancel()
+	s.cancelledRuns[runID] = true
 
 	writeJSON(w, http.StatusOK, map[string]string{"status": "cancelling", "run_id": runID})
 }

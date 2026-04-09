@@ -224,6 +224,12 @@ export interface RunSummary {
   finished_at?: string;
   db_kind?: string;
   provider?: string;
+  script?: string;
+  duration?: string;
+  vus?: number;
+  db_version?: string;
+  node_count?: number;
+  cancelled?: boolean;
 }
 
 // --- Presets ---

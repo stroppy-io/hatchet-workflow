@@ -72,15 +72,18 @@ function humanPhase(id: string): string {
 const statusStyles = {
   done: { border: "border-emerald-500/25", bg: "bg-emerald-500/[0.03]", text: "text-emerald-400", connector: "bg-emerald-500/30" },
   failed: { border: "border-red-500/25", bg: "bg-red-500/[0.03]", text: "text-red-400", connector: "bg-red-500/30" },
+  cancelled: { border: "border-zinc-600/25", bg: "bg-zinc-500/[0.03]", text: "text-zinc-400", connector: "bg-zinc-600/30" },
   running: { border: "border-amber-500/25", bg: "bg-amber-500/[0.03]", text: "text-amber-400", connector: "bg-amber-500/30" },
   pending: { border: "border-zinc-800/60", bg: "bg-transparent", text: "text-zinc-600", connector: "bg-zinc-800" },
 } as const;
 
 // ─── Tiny components ─────────────────────────────────────────────
 
-function StepDot({ status, active }: { status: NodeStatusValue; active?: boolean }) {
+function StepDot({ status, active, cancelled }: { status: NodeStatusValue; active?: boolean; cancelled?: boolean }) {
   if (status === "done")
     return <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0"><Check className="w-2 h-2 text-white" strokeWidth={3} /></div>;
+  if (status === "failed" && cancelled)
+    return <div className="w-3.5 h-3.5 rounded-full bg-zinc-500 flex items-center justify-center shrink-0"><X className="w-2 h-2 text-white" strokeWidth={3} /></div>;
   if (status === "failed")
     return <div className="w-3.5 h-3.5 rounded-full bg-red-500 flex items-center justify-center shrink-0"><X className="w-2 h-2 text-white" strokeWidth={3} /></div>;
   if (active)
@@ -228,7 +231,7 @@ function ConfigPanel({ config }: { config: RunConfig | null }) {
 
 // ─── DAG pipeline (vertical) ─────────────────────────────────────
 
-function DagPipeline({ nodes }: { nodes: NodeStatus[] }) {
+function DagPipeline({ nodes, cancelled }: { nodes: NodeStatus[]; cancelled?: boolean }) {
   const allPhaseIds = useMemo(() => phaseGroups.flatMap((g) => g.phases), []);
 
   if (nodes.length === 0) {
@@ -256,22 +259,23 @@ function DagPipeline({ nodes }: { nodes: NodeStatus[] }) {
         <div className="flex-1 h-1 bg-zinc-800/80 rounded-full overflow-hidden">
           <div
             className={`h-full transition-all duration-700 ease-out rounded-full ${
-              failedPhases > 0 ? "bg-red-500" : donePhases === totalPhases ? "bg-emerald-500" : "bg-amber-500"
+              failedPhases > 0 ? (cancelled ? "bg-zinc-500" : "bg-red-500") : donePhases === totalPhases ? "bg-emerald-500" : "bg-amber-500"
             }`}
             style={{ width: `${totalPhases > 0 ? (donePhases / totalPhases) * 100 : 0}%` }}
           />
         </div>
         <span className="text-[11px] font-mono text-zinc-500 tabular-nums shrink-0">
           {donePhases}/{totalPhases}
-          {failedPhases > 0 && <span className="text-red-500 ml-1">{failedPhases} err</span>}
+          {failedPhases > 0 && <span className={`ml-1 ${cancelled ? "text-zinc-500" : "text-red-500"}`}>{cancelled ? `${failedPhases} cancelled` : `${failedPhases} err`}</span>}
         </span>
       </div>
 
       {/* Scrollable pipeline */}
       <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2">
         {activeGroups.map((group, gi) => {
-          const gStatus = groupStatus(group.phases, nodeMap);
-          const colors = statusStyles[gStatus];
+          const rawGStatus = groupStatus(group.phases, nodeMap);
+          const gStatus = cancelled && rawGStatus === "failed" ? "cancelled" : rawGStatus;
+          const colors = statusStyles[gStatus as keyof typeof statusStyles] || statusStyles.pending;
           const doneInGroup = group.phases.filter((p) => nodeMap.get(p)?.status === "done").length;
           const GroupIcon = group.icon;
           const isLast = gi === activeGroups.length - 1;
@@ -308,11 +312,11 @@ function DagPipeline({ nodes }: { nodes: NodeStatus[] }) {
                     return (
                       <div key={phaseId}>
                         <div className={`flex items-center gap-2 py-0.5 px-0.5 rounded-sm ${active ? "bg-amber-500/[0.06]" : ""}`}>
-                          <StepDot status={node.status} active={active} />
+                          <StepDot status={node.status} active={active} cancelled={cancelled} />
                           <span
                             className={`text-[11px] font-mono leading-tight truncate ${
                               node.status === "done" ? "text-zinc-400"
-                                : node.status === "failed" ? "text-red-400"
+                                : node.status === "failed" ? (cancelled ? "text-zinc-400" : "text-red-400")
                                   : active ? "text-amber-300" : "text-zinc-600"
                             }`}
                             title={humanPhase(phaseId)}
@@ -324,7 +328,11 @@ function DagPipeline({ nodes }: { nodes: NodeStatus[] }) {
                         {/* Error — scrollable, copyable */}
                         {node.status === "failed" && node.error && (
                           <div className="mt-0.5 mb-1 ml-5 flex items-start gap-1">
-                            <div className="flex-1 min-w-0 p-1.5 bg-red-500/5 border border-red-500/20 text-[11px] font-mono text-red-400/80 leading-relaxed max-h-20 overflow-auto select-text whitespace-pre-wrap break-all">
+                            <div className={`flex-1 min-w-0 p-1.5 text-[11px] font-mono leading-relaxed max-h-20 overflow-auto select-text whitespace-pre-wrap break-all ${
+                              cancelled
+                                ? "bg-zinc-500/5 border border-zinc-500/20 text-zinc-400/80"
+                                : "bg-red-500/5 border border-red-500/20 text-red-400/80"
+                            }`}>
                               {node.error}
                             </div>
                             <CopyButton text={node.error} />
@@ -339,7 +347,7 @@ function DagPipeline({ nodes }: { nodes: NodeStatus[] }) {
               {/* Bottom connector */}
               {!isLast && (
                 <div className="flex justify-start pl-[7px]">
-                  <div className={`w-px h-1.5 ${gStatus === "done" ? "bg-emerald-500/30" : gStatus === "running" ? "bg-amber-500/30" : "bg-zinc-800"} transition-colors duration-500`} />
+                  <div className={`w-px h-1.5 ${gStatus === "done" ? "bg-emerald-500/30" : gStatus === "running" ? "bg-amber-500/30" : gStatus === "cancelled" ? "bg-zinc-600/30" : "bg-zinc-800"} transition-colors duration-500`} />
                 </div>
               )}
             </div>
@@ -352,8 +360,11 @@ function DagPipeline({ nodes }: { nodes: NodeStatus[] }) {
 
 // ─── Main export ─────────────────────────────────────────────────
 
+type RunStatusValue = "running" | "cancelling" | "cancelled" | "failed" | "completed" | "pending";
+
 interface RunOverviewProps {
   nodes: NodeStatus[];
+  runStatus?: RunStatusValue;
   snapshot?: {
     started_at?: string;
     finished_at?: string;
@@ -364,7 +375,7 @@ interface RunOverviewProps {
   } | null;
 }
 
-export function RunOverview({ nodes, snapshot }: RunOverviewProps) {
+export function RunOverview({ nodes, snapshot, runStatus }: RunOverviewProps) {
   const config = useMemo<RunConfig | null>(() => {
     const rc = snapshot?.state?.run_config;
     if (!rc) return null;
@@ -378,13 +389,56 @@ export function RunOverview({ nodes, snapshot }: RunOverviewProps) {
   return (
     <div className="h-full flex overflow-hidden">
       {/* Left — Config panel */}
-      <div className="w-60 shrink-0 border-r border-zinc-800/50 overflow-hidden">
+      <div className="w-60 shrink-0 border-r border-zinc-800/50 overflow-auto">
+        {/* Run status + phase counters */}
+        {runStatus && (
+          <div className="px-3 py-2 border-b border-zinc-800/50 space-y-1">
+            <div className={`text-xs font-mono font-semibold flex items-center gap-1.5 ${
+              runStatus === "running" ? "text-blue-400" :
+              runStatus === "cancelling" ? "text-amber-400" :
+              runStatus === "cancelled" ? "text-zinc-400" :
+              runStatus === "failed" ? "text-red-400" :
+              runStatus === "completed" ? "text-emerald-400" :
+              "text-zinc-500"
+            }`}>
+              <span className={`inline-block w-2 h-2 rounded-full ${
+                runStatus === "running" ? "bg-blue-400 animate-pulse" :
+                runStatus === "cancelling" ? "bg-amber-400 animate-pulse" :
+                runStatus === "cancelled" ? "bg-zinc-500" :
+                runStatus === "failed" ? "bg-red-500" :
+                runStatus === "completed" ? "bg-emerald-500" :
+                "bg-zinc-600"
+              }`} />
+              {runStatus === "running" ? "Running" :
+               runStatus === "cancelling" ? "Cancelling..." :
+               runStatus === "cancelled" ? "Cancelled" :
+               runStatus === "failed" ? "Failed" :
+               runStatus === "completed" ? "Completed" :
+               "Pending"}
+            </div>
+            <div className="flex items-center gap-2.5 text-[10px] font-mono text-zinc-500">
+              {(() => {
+                const done = nodes.filter(n => n.status === "done").length;
+                const failed = nodes.filter(n => n.status === "failed").length;
+                const pending = nodes.filter(n => n.status === "pending").length;
+                const isCancelled = runStatus === "cancelled";
+                return (
+                  <>
+                    {done > 0 && <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />{done}</span>}
+                    {failed > 0 && <span className="flex items-center gap-1"><span className={`w-1.5 h-1.5 rounded-full inline-block ${isCancelled ? "bg-zinc-500" : "bg-red-500"}`} />{failed}</span>}
+                    {pending > 0 && <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-zinc-700 inline-block" />{pending}</span>}
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        )}
         <ConfigPanel config={config} />
       </div>
 
       {/* Right — DAG pipeline */}
       <div className="flex-1 min-w-0">
-        <DagPipeline nodes={nodes} />
+        <DagPipeline nodes={nodes} cancelled={runStatus === "cancelled"} />
       </div>
     </div>
   );

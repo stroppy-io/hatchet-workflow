@@ -63,6 +63,12 @@ type RunSummary struct {
 	FinishedAt time.Time    `json:"finished_at,omitempty"`
 	DBKind     string       `json:"db_kind,omitempty"`
 	Provider   string       `json:"provider,omitempty"`
+	Script     string       `json:"script,omitempty"`
+	Duration   string       `json:"duration,omitempty"`
+	VUs        int          `json:"vus,omitempty"`
+	DBVersion  string       `json:"db_version,omitempty"`
+	NodeCount  int          `json:"node_count,omitempty"`
+	Cancelled  bool         `json:"cancelled,omitempty"`
 }
 
 // Storage is the interface for persisting executor state.

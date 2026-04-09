@@ -164,15 +164,18 @@ export function RunDetail() {
     }
   }
 
-  const isFinished = snapshot
-    ? snapshot.nodes.length > 0 && !snapshot.nodes.some((n) => n.status === "pending")
-    : false;
-
   const nodes: NodeStatus[] = snapshot?.nodes || [];
   const failedNodes = nodes.filter((n) => n.status === "failed");
-  const doneCount = nodes.filter((n) => n.status === "done").length;
-  const pendingCount = nodes.filter((n) => n.status === "pending").length;
   const hasFailed = failedNodes.length > 0;
+
+  // Run is finished if: no pending nodes, OR has failed nodes (executor stopped, pending won't run).
+  const isFinished = snapshot
+    ? snapshot.nodes.length > 0 && (hasFailed || !snapshot.nodes.some((n) => n.status === "pending"))
+    : false;
+
+  const isCancelled = isFinished && failedNodes.some(
+    (n) => n.error?.includes("context canceled") || n.error?.includes("_cancelled")
+  );
 
   const runConfig = useMemo<RunConfig | null>(() => {
     const rc = snapshot?.state?.run_config;
@@ -195,7 +198,9 @@ export function RunDetail() {
           </div>
           {/* Run status badge */}
           {snapshot && (
-            cancelling ? (
+            isCancelled ? (
+              <Badge className="bg-zinc-500/20 text-zinc-400 border-zinc-500/30">Cancelled</Badge>
+            ) : cancelling ? (
               <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 animate-pulse">Cancelling...</Badge>
             ) : !isFinished ? (
               <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 animate-pulse">Running</Badge>
@@ -207,14 +212,6 @@ export function RunDetail() {
           )}
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex gap-2 text-xs">
-            <Badge variant="success">{doneCount} done</Badge>
-            <Badge variant="pending">{pendingCount} pending</Badge>
-            {hasFailed && (
-              <Badge variant="destructive">{failedNodes.length} failed</Badge>
-            )}
-          </div>
-
           <Button variant="outline" size="sm" onClick={fetchStatus}>
             <RefreshCw className="h-3.5 w-3.5" />
             Refresh
@@ -278,7 +275,7 @@ export function RunDetail() {
         <TabsContent value="overview">
           <Card className="h-[calc(100vh-11rem)]">
             <CardContent className="p-0 h-full">
-              <RunOverview nodes={nodes} snapshot={snapshot} />
+              <RunOverview nodes={nodes} snapshot={snapshot} runStatus={isCancelled ? "cancelled" : cancelling ? "cancelling" : !isFinished ? "running" : hasFailed ? "failed" : "completed"} />
             </CardContent>
           </Card>
         </TabsContent>

@@ -12,7 +12,7 @@ import {
   type ColumnFiltersState,
   type RowSelectionState,
 } from "@tanstack/react-table";
-import { listRuns, deleteRun } from "@/api/client";
+import { listRuns, deleteRun, cancelRun } from "@/api/client";
 import type { RunSummary } from "@/api/types";
 import {
   Table,
@@ -38,24 +38,33 @@ import {
   X,
   Play,
   AlertCircle,
+  StopCircle,
 } from "lucide-react";
 
 // --- Helpers ---
 
-type RunStatus = "done" | "failed" | "running" | "pending";
+type RunStatus = "done" | "failed" | "running" | "pending" | "cancelled" | "cancelling";
 
-function deriveStatus(r: RunSummary): RunStatus {
+function deriveStatus(r: RunSummary, cancellingIds?: Set<string>): RunStatus {
+  if (cancellingIds?.has(r.id)) {
+    // Still cancelling — check if teardown finished yet.
+    if (r.cancelled || (r.failed > 0 && r.done === r.total - r.failed - r.pending)) return "cancelled";
+    return "cancelling";
+  }
+  if (r.cancelled) return "cancelled";
   if (r.failed > 0) return "failed";
   if (r.done === r.total && r.total > 0) return "done";
   if (r.done > 0) return "running";
   return "pending";
 }
 
-const STATUS_CONFIG: Record<RunStatus, { label: string; variant: "success" | "destructive" | "warning" | "pending" }> = {
+const STATUS_CONFIG: Record<RunStatus, { label: string; variant: "success" | "destructive" | "warning" | "pending" | "secondary" }> = {
   done: { label: "Done", variant: "success" },
   failed: { label: "Failed", variant: "destructive" },
+  cancelling: { label: "Cancelling", variant: "warning" },
   running: { label: "Running", variant: "warning" },
   pending: { label: "Pending", variant: "pending" },
+  cancelled: { label: "Cancelled", variant: "secondary" },
 };
 
 function formatTimestamp(ts?: string): string {
@@ -115,7 +124,7 @@ function FilterChip({
 
 // --- Column definitions ---
 
-function makeColumns(onDelete: (id: string) => void): ColumnDef<RunSummary>[] {
+function makeColumns(onDelete: (id: string) => void, onCancel: (id: string) => void, cancellingIds: Set<string>): ColumnDef<RunSummary>[] {
   return [
     // Checkbox
     {
@@ -139,53 +148,84 @@ function makeColumns(onDelete: (id: string) => void): ColumnDef<RunSummary>[] {
       enableSorting: false,
       size: 36,
     },
-    // ID
+    // ID (truncated to last 8 chars)
     {
       accessorKey: "id",
       header: ({ column }) => (
         <SortableHeader column={column} label="Run ID" />
       ),
-      cell: ({ row }) => (
-        <Link
-          to={`/runs/${row.original.id}`}
-          className="font-mono text-xs text-primary hover:underline"
-        >
-          {row.original.id}
-        </Link>
-      ),
+      cell: ({ row }) => {
+        const id = row.original.id;
+        const short = id.length > 8 ? id.slice(-8) : id;
+        return (
+          <Link
+            to={`/runs/${id}`}
+            className="font-mono text-xs text-primary hover:underline"
+            title={id}
+          >
+            {short}
+          </Link>
+        );
+      },
     },
     // Status
     {
       id: "status",
-      accessorFn: (row) => deriveStatus(row),
+      accessorFn: (row) => deriveStatus(row, cancellingIds),
       header: ({ column }) => (
         <SortableHeader column={column} label="Status" />
       ),
       cell: ({ row }) => {
-        const status = deriveStatus(row.original);
+        const status = deriveStatus(row.original, cancellingIds);
         const cfg = STATUS_CONFIG[status];
         return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
       },
       filterFn: (row, _id, value) => {
         if (!value || value === "all") return true;
-        return deriveStatus(row.original) === value;
+        return deriveStatus(row.original, cancellingIds) === value;
       },
     },
-    // DB Kind
+    // Database (kind + version + node count)
     {
       accessorKey: "db_kind",
       header: ({ column }) => (
         <SortableHeader column={column} label="Database" />
       ),
-      cell: ({ row }) => (
-        <span className="font-mono text-xs text-zinc-400">
-          {row.original.db_kind || "\u2014"}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const r = row.original;
+        if (!r.db_kind) return <span className="font-mono text-xs text-zinc-600">{"\u2014"}</span>;
+        const parts = [r.db_kind];
+        if (r.db_version) parts.push(r.db_version);
+        const label = parts.join(" ");
+        const nodes = r.node_count ? `${r.node_count} node${r.node_count > 1 ? "s" : ""}` : null;
+        return (
+          <span className="font-mono text-xs text-zinc-400">
+            {label}{nodes && <span className="text-zinc-600"> &middot; {nodes}</span>}
+          </span>
+        );
+      },
       filterFn: (row, _id, value) => {
         if (!value || value === "all") return true;
         return row.original.db_kind === value;
       },
+    },
+    // Workload (script + duration + VUs)
+    {
+      id: "workload",
+      header: "Workload",
+      cell: ({ row }) => {
+        const r = row.original;
+        if (!r.script) return <span className="font-mono text-xs text-zinc-600">{"\u2014"}</span>;
+        const parts = [r.script];
+        if (r.duration) parts.push(r.duration);
+        if (r.vus) parts.push(`${r.vus} VUs`);
+        return (
+          <span className="font-mono text-xs text-zinc-400">
+            {parts.join(" \u00b7 ")}
+          </span>
+        );
+      },
+      enableSorting: false,
     },
     // Provider
     {
@@ -203,20 +243,23 @@ function makeColumns(onDelete: (id: string) => void): ColumnDef<RunSummary>[] {
         return row.original.provider === value;
       },
     },
-    // Progress
+    // Progress (amber bar for cancelled)
     {
       id: "progress",
       header: "Progress",
       cell: ({ row }) => {
         const r = row.original;
         const pct = r.total > 0 ? (r.done / r.total) * 100 : 0;
+        const barColor = r.cancelled
+          ? "bg-zinc-500"
+          : r.failed > 0
+            ? "bg-destructive"
+            : "bg-emerald-500";
         return (
           <div className="flex items-center gap-2 min-w-[120px]">
             <div className="flex-1 bg-zinc-900 h-1.5 overflow-hidden">
               <div
-                className={`h-full transition-all duration-500 ${
-                  r.failed > 0 ? "bg-destructive" : "bg-emerald-500"
-                }`}
+                className={`h-full transition-all duration-500 ${barColor}`}
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -227,18 +270,6 @@ function makeColumns(onDelete: (id: string) => void): ColumnDef<RunSummary>[] {
         );
       },
       enableSorting: false,
-    },
-    // Started
-    {
-      accessorKey: "started_at",
-      header: ({ column }) => (
-        <SortableHeader column={column} label="Started" />
-      ),
-      cell: ({ row }) => (
-        <span className="text-xs text-zinc-500 font-mono tabular-nums">
-          {formatTimestamp(row.original.started_at)}
-        </span>
-      ),
     },
     // Duration
     {
@@ -251,26 +282,47 @@ function makeColumns(onDelete: (id: string) => void): ColumnDef<RunSummary>[] {
       ),
       enableSorting: false,
     },
-    // Delete
+    // Actions: cancel (for running) + delete
     {
       id: "actions",
       header: "",
-      cell: ({ row }) => (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-7 w-7 p-0 text-zinc-600 hover:text-destructive cursor-pointer"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onDelete(row.original.id);
-          }}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      ),
+      cell: ({ row }) => {
+        const status = deriveStatus(row.original, cancellingIds);
+        return (
+          <div className="flex items-center gap-0.5">
+            {status === "running" && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0 text-amber-600 hover:text-amber-400 cursor-pointer"
+                title="Cancel run"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onCancel(row.original.id);
+                }}
+              >
+                <StopCircle className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0 text-zinc-600 hover:text-destructive cursor-pointer"
+              title="Delete run"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete(row.original.id);
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        );
+      },
       enableSorting: false,
-      size: 40,
+      size: 72,
     },
   ];
 }
@@ -310,6 +362,7 @@ export function Runs() {
   const [runs, setRuns] = useState<RunSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancellingIds, setCancellingIds] = useState<Set<string>>(new Set());
 
   // Auto-refresh
   const REFRESH_OPTIONS = [
@@ -334,7 +387,7 @@ export function Runs() {
     const dbKinds = new Set<string>();
     const providers = new Set<string>();
     for (const r of runs) {
-      statuses.add(deriveStatus(r));
+      statuses.add(deriveStatus(r, cancellingIds));
       if (r.db_kind) dbKinds.add(r.db_kind);
       if (r.provider) providers.add(r.provider);
     }
@@ -364,6 +417,15 @@ export function Runs() {
     try {
       const result = await listRuns();
       setRuns(result ?? []);
+      // Clear cancellingIds for runs that reached cancelled state.
+      setCancellingIds((prev) => {
+        if (prev.size === 0) return prev;
+        const next = new Set(prev);
+        for (const r of result ?? []) {
+          if (next.has(r.id) && r.cancelled) next.delete(r.id);
+        }
+        return next.size === prev.size ? prev : next;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load runs");
     } finally {
@@ -378,6 +440,16 @@ export function Runs() {
       await fetchRuns();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete run");
+    }
+  }
+
+  async function handleCancel(runID: string) {
+    try {
+      setCancellingIds((prev) => new Set(prev).add(runID));
+      await cancelRun(runID);
+      await fetchRuns();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to cancel run");
     }
   }
 
@@ -398,7 +470,8 @@ export function Runs() {
     };
   }, [refreshInterval]);
 
-  const columns = useMemo(() => makeColumns(handleDelete), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const columns = useMemo(() => makeColumns(handleDelete, handleCancel, cancellingIds), [cancellingIds]);
 
   const table = useReactTable({
     data: runs,

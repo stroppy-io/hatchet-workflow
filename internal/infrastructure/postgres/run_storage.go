@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -80,11 +81,30 @@ func (s *RunStorage) List(ctx context.Context, tenantID string) ([]dag.RunSummar
 			if len(snap.State.RunConfig) > 0 {
 				var rc struct {
 					Database struct {
-						Kind string `json:"kind"`
+						Kind    string `json:"kind"`
+						Version string `json:"version"`
 					} `json:"database"`
+					Stroppy struct {
+						Script   string `json:"script"`
+						Duration string `json:"duration"`
+						VUs      int    `json:"vus"`
+					} `json:"stroppy"`
+					Machines []struct {
+						Role  string `json:"role"`
+						Count int    `json:"count"`
+					} `json:"machines"`
 				}
 				if json.Unmarshal(snap.State.RunConfig, &rc) == nil {
 					summary.DBKind = rc.Database.Kind
+					summary.DBVersion = rc.Database.Version
+					summary.Script = rc.Stroppy.Script
+					summary.Duration = rc.Stroppy.Duration
+					summary.VUs = rc.Stroppy.VUs
+					for _, m := range rc.Machines {
+						if m.Role == "database" {
+							summary.NodeCount += m.Count
+						}
+					}
 				}
 			}
 		}
@@ -94,6 +114,9 @@ func (s *RunStorage) List(ctx context.Context, tenantID string) ([]dag.RunSummar
 				summary.Done++
 			case dag.StatusFailed:
 				summary.Failed++
+				if strings.Contains(n.Error, "context canceled") || strings.Contains(n.Error, "_cancelled") {
+					summary.Cancelled = true
+				}
 			default:
 				summary.Pending++
 			}
