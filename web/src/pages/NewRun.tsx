@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { startRun, validateRun, dryRun, listPresets, listPackages, probeScript } from "@/api/client";
+import { startRun, validateRun, dryRun, listPresets, listPackages, probeScript, getStroppyVersions } from "@/api/client";
 import {
   ALL_DB_KINDS,
   type RunConfig,
@@ -97,6 +97,10 @@ export function NewRun() {
   const [vus, setVus] = useState(10);
   const [poolSize, setPoolSize] = useState(100);
   const [scaleFactor, setScaleFactor] = useState(1);
+  const [stroppyVersion, setStroppyVersion] = useState("4.1.0");
+  const [stroppyVersions, setStroppyVersions] = useState<string[]>(["4.1.0"]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+  const versionsLoaded = useRef(false);
   const [probeData, setProbeData] = useState<ProbeResponse | null>(null);
   const [availableSteps, setAvailableSteps] = useState<string[]>([]);
   const [selectedSteps, setSelectedSteps] = useState<string[]>([]);
@@ -154,7 +158,7 @@ export function NewRun() {
       database: { kind, version },
       monitor: {},
       stroppy: {
-        version: "4.1.0",
+        version: stroppyVersion,
         script,
         duration,
         vus,
@@ -168,7 +172,7 @@ export function NewRun() {
     if (selectedPresetId) cfg.preset_id = selectedPresetId;
     if (packageId) cfg.package_id = packageId;
     return cfg;
-  }, [kind, selectedPresetId, provider, version, script, duration, vus, poolSize, scaleFactor, packageId, selectedSteps, noSteps, stroppyCpus, stroppyMemory, stroppyDisk, stroppyDiskType]);
+  }, [kind, selectedPresetId, provider, version, script, duration, vus, poolSize, scaleFactor, packageId, selectedSteps, noSteps, stroppyCpus, stroppyMemory, stroppyDisk, stroppyDiskType, stroppyVersion]);
 
   const configJSON = useMemo(() => JSON.stringify(config, null, 2), [config]);
 
@@ -283,6 +287,10 @@ export function NewRun() {
               stroppyMemory={stroppyMemory} setStroppyMemory={setStroppyMemory}
               stroppyDisk={stroppyDisk} setStroppyDisk={setStroppyDisk}
               stroppyDiskType={stroppyDiskType} setStroppyDiskType={setStroppyDiskType}
+              stroppyVersion={stroppyVersion} setStroppyVersion={setStroppyVersion}
+              stroppyVersions={stroppyVersions} setStroppyVersions={setStroppyVersions}
+              versionsLoading={versionsLoading} setVersionsLoading={setVersionsLoading}
+              versionsLoaded={versionsLoaded}
             />
           )}
           {step === 3 && (
@@ -547,6 +555,10 @@ function StepStroppy({
   stroppyMemory, setStroppyMemory,
   stroppyDisk, setStroppyDisk,
   stroppyDiskType, setStroppyDiskType,
+  stroppyVersion, setStroppyVersion,
+  stroppyVersions, setStroppyVersions,
+  versionsLoading, setVersionsLoading,
+  versionsLoaded,
 }: {
   script: string; setScript: (v: string) => void;
   duration: string; setDuration: (v: string) => void;
@@ -563,6 +575,10 @@ function StepStroppy({
   stroppyMemory: number; setStroppyMemory: (v: number) => void;
   stroppyDisk: number; setStroppyDisk: (v: number) => void;
   stroppyDiskType: string; setStroppyDiskType: (v: string) => void;
+  stroppyVersion: string; setStroppyVersion: (v: string) => void;
+  stroppyVersions: string[]; setStroppyVersions: (v: string[]) => void;
+  versionsLoading: boolean; setVersionsLoading: (v: boolean) => void;
+  versionsLoaded: React.MutableRefObject<boolean>;
 }) {
   // Probe on script change to get steps/env.
   useEffect(() => {
@@ -583,9 +599,35 @@ function StepStroppy({
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-sm font-semibold mb-1">Workload Settings</h2>
-        <p className="text-xs text-zinc-500">Choose the benchmark script and tune execution parameters.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold mb-1">Workload Settings</h2>
+          <p className="text-xs text-zinc-500">Choose the benchmark script and tune execution parameters.</p>
+        </div>
+        {/* Stroppy version selector — lazy loads from GitHub */}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono text-zinc-600">stroppy</span>
+          <select
+            value={stroppyVersion}
+            onChange={(e) => setStroppyVersion(e.target.value)}
+            onFocus={() => {
+              if (!versionsLoaded.current) {
+                versionsLoaded.current = true;
+                setVersionsLoading(true);
+                getStroppyVersions()
+                  .then((v) => { if (v.length > 0) setStroppyVersions(v); })
+                  .catch(() => {})
+                  .finally(() => setVersionsLoading(false));
+              }
+            }}
+            className="bg-zinc-900 border border-zinc-800 rounded px-2 py-0.5 text-[11px] font-mono text-zinc-300 outline-none focus:border-zinc-600"
+          >
+            {stroppyVersions.map((v) => (
+              <option key={v} value={v}>v{v}</option>
+            ))}
+            {versionsLoading && <option disabled>loading...</option>}
+          </select>
+        </div>
       </div>
 
       {/* Script selector */}

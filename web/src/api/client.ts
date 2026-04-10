@@ -294,6 +294,10 @@ export async function deleteRun(
   return request(`${API_BASE}/run/${runID}`, { method: "DELETE" });
 }
 
+export async function getStroppyVersions(): Promise<string[]> {
+  return request(`${API_BASE}/stroppy-versions`);
+}
+
 export async function cancelRun(
   runID: string
 ): Promise<{ status: string }> {

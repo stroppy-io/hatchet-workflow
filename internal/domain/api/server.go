@@ -61,6 +61,11 @@ type Server struct {
 	runCancelsMu sync.Mutex
 	runCancels   map[string]context.CancelFunc
 
+	// stroppyVersionsCache caches GitHub releases to avoid rate limits.
+	stroppyVersionsMu    sync.Mutex
+	stroppyVersionsCache []string
+	stroppyVersionsAt    time.Time
+
 	// cancelledRuns tracks runs that were explicitly cancelled by the user.
 	cancelledRuns map[string]bool
 
@@ -175,6 +180,7 @@ func (s *Server) Router() http.Handler {
 		r.Get("/run/{runID}/logs", s.runLogs)
 		r.Get("/run/{runID}/metrics", s.runMetrics)
 		r.Get("/compare", s.compareRuns)
+		r.Get("/stroppy-versions", s.stroppyVersions)
 		r.Get("/presets", s.listPresetsTenant)
 		r.Get("/presets/{id}", s.getPreset)
 		r.Get("/settings", s.getSettings)
@@ -812,6 +818,80 @@ func extractRunID(machineID string) string {
 // ============================================================
 // Agent binary download
 // ============================================================
+
+// stroppyVersions returns available stroppy versions from GitHub releases (cached 5min).
+func (s *Server) stroppyVersions(w http.ResponseWriter, r *http.Request) {
+	s.stroppyVersionsMu.Lock()
+	if time.Since(s.stroppyVersionsAt) < 5*time.Minute && len(s.stroppyVersionsCache) > 0 {
+		cached := s.stroppyVersionsCache
+		s.stroppyVersionsMu.Unlock()
+		writeJSON(w, http.StatusOK, cached)
+		return
+	}
+	s.stroppyVersionsMu.Unlock()
+
+	// Fetch from GitHub API.
+	req, _ := http.NewRequestWithContext(r.Context(), http.MethodGet,
+		"https://api.github.com/repos/stroppy-io/stroppy/releases?per_page=50", nil)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "github: " + err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	var releases []struct {
+		TagName string `json:"tag_name"`
+		Draft   bool   `json:"draft"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "github parse: " + err.Error()})
+		return
+	}
+
+	// Filter: non-draft, version >= 4.1.0.
+	var versions []string
+	for _, rel := range releases {
+		if rel.Draft {
+			continue
+		}
+		v := strings.TrimPrefix(rel.TagName, "v")
+		if compareVersions(v, "4.1.0") >= 0 {
+			versions = append(versions, v)
+		}
+	}
+
+	// Cache.
+	s.stroppyVersionsMu.Lock()
+	s.stroppyVersionsCache = versions
+	s.stroppyVersionsAt = time.Now()
+	s.stroppyVersionsMu.Unlock()
+
+	writeJSON(w, http.StatusOK, versions)
+}
+
+// compareVersions compares two semver strings. Returns -1, 0, or 1.
+func compareVersions(a, b string) int {
+	pa := strings.Split(a, ".")
+	pb := strings.Split(b, ".")
+	for i := 0; i < 3; i++ {
+		var va, vb int
+		if i < len(pa) {
+			fmt.Sscanf(pa[i], "%d", &va)
+		}
+		if i < len(pb) {
+			fmt.Sscanf(pb[i], "%d", &vb)
+		}
+		if va < vb {
+			return -1
+		}
+		if va > vb {
+			return 1
+		}
+	}
+	return 0
+}
 
 func (s *Server) serveBinary(w http.ResponseWriter, r *http.Request) {
 	binPath, err := agent.SelfBinaryPath()
