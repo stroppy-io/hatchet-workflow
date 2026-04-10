@@ -59,6 +59,7 @@ func (h *wsHub) addClient(conn *websocket.Conn, filterRunID string) {
 	h.mu.Lock()
 	h.clients = append(h.clients, client)
 	h.mu.Unlock()
+	wsConnections.Inc()
 
 	// Read pump: drain client messages and detect disconnect.
 	go func() {
@@ -78,6 +79,7 @@ func (h *wsHub) removeClient(c *wsClient) {
 		if cl == c {
 			h.clients = append(h.clients[:i], h.clients[i+1:]...)
 			c.conn.Close()
+			wsConnections.Dec()
 			return
 		}
 	}

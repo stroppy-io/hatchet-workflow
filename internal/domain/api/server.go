@@ -141,6 +141,9 @@ func (s *Server) Router() http.Handler {
 
 	r.Use(auth.NewAuthMiddleware(s.jwtIssuer, s.pool))
 
+	// --- Prometheus metrics ---
+	r.Get("/metrics", metricsHandler().ServeHTTP)
+
 	// --- Health ---
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -261,7 +264,7 @@ func (s *Server) Router() http.Handler {
 		})
 	}
 
-	return r
+	return metricsMiddleware(r)
 }
 
 // SetSPA configures the embedded SPA filesystem.
@@ -311,8 +314,12 @@ func (s *Server) agentRegister(w http.ResponseWriter, r *http.Request) {
 	s.pollClient.MarkAgentReady(req.MachineID)
 
 	s.agentsMu.Lock()
+	_, existed := s.agents[req.MachineID]
 	s.agents[req.MachineID] = agent.Target{ID: req.MachineID}
 	s.agentsMu.Unlock()
+	if !existed {
+		agentCount.Inc()
+	}
 
 	s.logger.Info("agent registered", zap.String("machine_id", req.MachineID))
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -432,8 +439,10 @@ func (s *Server) runStart(w http.ResponseWriter, r *http.Request) {
 	s.runCancels[cfg.ID] = cancel
 	s.runCancelsMu.Unlock()
 
+	activeRuns.Inc()
 	go func() {
 		defer func() {
+			activeRuns.Dec()
 			s.runCancelsMu.Lock()
 			delete(s.runCancels, cfg.ID)
 			s.runCancelsMu.Unlock()

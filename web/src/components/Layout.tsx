@@ -13,6 +13,7 @@ import {
   KeyRound,
   Building2,
   ShieldCheck,
+  HeartPulse,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { TenantSwitcher } from "@/components/TenantSwitcher";
@@ -43,6 +44,7 @@ const navItems: NavItem[] = [
   { to: "/tokens", icon: KeyRound, label: "API Tokens", minLevel: 3 },
   { to: "/admin/tenants", icon: Building2, label: "Admin (Tenants)", minLevel: 99 },
   { to: "/admin/users", icon: ShieldCheck, label: "Admin (Users)", minLevel: 99 },
+  { to: "/admin/server", icon: HeartPulse, label: "Server Health", minLevel: 99 },
 ];
 
 export function Layout() {

@@ -10,6 +10,7 @@ import { SettingsPage } from "@/pages/Settings";
 import { Presets } from "@/pages/Presets";
 import { Packages } from "@/pages/Packages";
 import { PresetDesigner } from "@/pages/PresetDesigner";
+import { ServerHealth } from "@/pages/ServerHealth";
 
 import { Login } from "@/pages/Login";
 import { SelectTenant } from "@/pages/SelectTenant";
@@ -85,6 +86,7 @@ function AppRoutes() {
           <Route element={<ProtectedRoute requireRoot />}>
             <Route path="/admin/tenants" element={<AdminTenants />} />
             <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/server" element={<ServerHealth />} />
           </Route>
         </Route>
         <Route path="/login" element={<Navigate to="/" replace />} />
@@ -129,6 +131,7 @@ function AppRoutes() {
         <Route element={<ProtectedRoute requireRoot />}>
           <Route path="/admin/tenants" element={<AdminTenants />} />
           <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/server" element={<ServerHealth />} />
         </Route>
       </Route>
 

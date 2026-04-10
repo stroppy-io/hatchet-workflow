@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { NodeStatus, NodeStatusValue, RunConfig, MachineSpec, DatabaseKind } from "@/api/types";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
 import {
@@ -20,6 +20,9 @@ import {
   Users,
   Network,
   Container,
+  Tag,
+  Timer,
+  FileCode,
 } from "lucide-react";
 
 // ─── Phase groups ────────────────────────────────────────────────
@@ -119,22 +122,51 @@ function ConfigLine({ label, value, icon: Icon }: { label: string; value: React.
 }
 
 function MachineRow({ spec }: { spec: MachineSpec }) {
+  const diskLabel = spec.disk_type === "network-ssd-io-m3" ? "io-m3" : spec.disk_type === "network-ssd" ? "ssd" : "";
   return (
-    <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-400">
+    <div className="flex items-center gap-1.5 text-[11px] font-mono text-zinc-400 flex-wrap">
       <span className="text-zinc-500 w-16 shrink-0">{spec.role}</span>
       <span>{spec.count}x</span>
-      <span className="text-zinc-600">|</span>
-      <Cpu className="w-3 h-3 text-zinc-600" />
-      <span>{spec.cpus}</span>
-      <MemoryStick className="w-3 h-3 text-zinc-600" />
-      <span>{spec.memory_mb}M</span>
-      <HardDrive className="w-3 h-3 text-zinc-600" />
-      <span>{spec.disk_gb}G</span>
+      <span className="text-zinc-700">·</span>
+      <Cpu className="w-3 h-3 text-zinc-600" /><span>{spec.cpus}</span>
+      <MemoryStick className="w-3 h-3 text-zinc-600" /><span>{spec.memory_mb >= 1024 ? `${(spec.memory_mb/1024).toFixed(0)}G` : `${spec.memory_mb}M`}</span>
+      <HardDrive className="w-3 h-3 text-zinc-600" /><span>{spec.disk_gb}G</span>
+      {diskLabel && <span className="text-zinc-600 text-[9px]">{diskLabel}</span>}
     </div>
   );
 }
 
-function ConfigPanel({ config }: { config: RunConfig | null }) {
+function ElapsedTimer({ startedAt }: { startedAt: string }) {
+  const [elapsed, setElapsed] = useState("");
+  useEffect(() => {
+    const start = new Date(startedAt).getTime();
+    if (isNaN(start) || start < 946684800000) return; // invalid or year < 2000
+    const tick = () => {
+      const sec = Math.max(0, Math.round((Date.now() - start) / 1000));
+      if (sec < 60) setElapsed(`${sec}s`);
+      else if (sec < 3600) setElapsed(`${Math.floor(sec / 60)}m ${sec % 60}s`);
+      else { const h = Math.floor(sec / 3600); setElapsed(`${h}h ${Math.floor((sec % 3600) / 60)}m`); }
+    };
+    tick();
+    const iv = setInterval(tick, 1000);
+    return () => clearInterval(iv);
+  }, [startedAt]);
+  return <>{elapsed}</>;
+}
+
+function formatTs(ts?: string): string {
+  if (!ts) return "";
+  const d = new Date(ts);
+  if (isNaN(d.getTime()) || d.getFullYear() < 2000) return "";
+  return d.toLocaleString("en-GB", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+}
+
+function ConfigPanel({ config, startedAt, finishedAt, isRunning }: {
+  config: RunConfig | null;
+  startedAt?: string;
+  finishedAt?: string;
+  isRunning?: boolean;
+}) {
   if (!config) {
     return (
       <div className="flex items-center justify-center h-full text-zinc-600 text-xs font-mono">
@@ -146,6 +178,8 @@ function ConfigPanel({ config }: { config: RunConfig | null }) {
   const db = config.database;
   const topology = db.postgres || db.mysql || db.picodata || db.ydb;
   const s = config.stroppy;
+  const script = s.script || s.workload || "";
+  const vus = s.vus || s.vus_scale || 0;
 
   // Topology summary
   let topoLabel = "";
@@ -174,6 +208,36 @@ function ConfigPanel({ config }: { config: RunConfig | null }) {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Run ID + timing */}
+      <div className="px-3 py-2 border-b border-zinc-800/50">
+        <div className="text-[10px] font-mono text-zinc-600 truncate" title={config.id}>{config.id}</div>
+        <div className="flex items-center gap-2 mt-1 text-[10px] font-mono text-zinc-500">
+          {startedAt && formatTs(startedAt) && (
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3 text-zinc-600" />
+              {formatTs(startedAt)}
+            </span>
+          )}
+        </div>
+        {startedAt && (
+          <div className="flex items-center gap-1 mt-0.5 text-[10px] font-mono text-zinc-500">
+            <Timer className="w-3 h-3 text-zinc-600" />
+            {isRunning ? (
+              <ElapsedTimer startedAt={startedAt} />
+            ) : finishedAt && formatTs(finishedAt) ? (
+              (() => {
+                const s = new Date(startedAt).getTime();
+                const e = new Date(finishedAt).getTime();
+                const sec = Math.max(0, Math.round((e - s) / 1000));
+                if (sec < 60) return `${sec}s`;
+                if (sec < 3600) return `${Math.floor(sec / 60)}m ${sec % 60}s`;
+                return `${Math.floor(sec / 3600)}h ${Math.floor((sec % 3600) / 60)}m`;
+              })()
+            ) : "—"}
+          </div>
+        )}
+      </div>
+
       {/* Database section */}
       <div className="px-3 py-2 border-b border-zinc-800/50">
         <div className="text-[11px] text-zinc-500 uppercase tracking-wider mb-1.5">Database</div>
@@ -198,11 +262,22 @@ function ConfigPanel({ config }: { config: RunConfig | null }) {
       <div className="px-3 py-2 border-b border-zinc-800/50">
         <div className="text-[11px] text-zinc-500 uppercase tracking-wider mb-1.5">Workload</div>
         <div className="space-y-0">
-          <ConfigLine label="type" value={s.workload?.toUpperCase()} icon={Play} />
+          <ConfigLine label="script" value={script} icon={FileCode} />
+          {s.version && <ConfigLine label="stroppy" value={`v${s.version}`} icon={Tag} />}
           <ConfigLine label="duration" value={s.duration} icon={Clock} />
-          {(s.vus_scale ?? 0) > 0 && <ConfigLine label="vus" value={`${s.vus_scale}x`} icon={Users} />}
+          {vus > 0 && <ConfigLine label="VUs" value={String(vus)} icon={Users} />}
           {(s.pool_size ?? 0) > 0 && <ConfigLine label="pool" value={String(s.pool_size)} icon={Network} />}
           {(s.scale_factor ?? 0) > 0 && <ConfigLine label="scale" value={String(s.scale_factor)} />}
+          {s.steps && s.steps.length > 0 && (
+            <div className="text-[10px] font-mono text-zinc-600 mt-1">
+              steps: {s.steps.join(", ")}
+            </div>
+          )}
+          {s.no_steps && s.no_steps.length > 0 && (
+            <div className="text-[10px] font-mono text-zinc-600 mt-0.5">
+              skip: {s.no_steps.join(", ")}
+            </div>
+          )}
         </div>
       </div>
 
@@ -225,7 +300,6 @@ function ConfigPanel({ config }: { config: RunConfig | null }) {
           </div>
         </div>
       )}
-
     </div>
   );
 }
@@ -439,7 +513,12 @@ export function RunOverview({ nodes, snapshot, runStatus }: RunOverviewProps) {
             </div>
           </div>
         )}
-        <ConfigPanel config={config} />
+        <ConfigPanel
+          config={config}
+          startedAt={snapshot?.started_at}
+          finishedAt={snapshot?.finished_at}
+          isRunning={runStatus === "running" || runStatus === "cancelling"}
+        />
       </div>
 
       {/* Right — DAG pipeline */}
