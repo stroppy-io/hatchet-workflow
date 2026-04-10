@@ -3,9 +3,10 @@ resource "yandex_compute_instance" "vms" {
   name        = each.key
   platform_id = var.compute.platform_id
   network_interface {
-    subnet_id  = yandex_vpc_subnet.subnet.id
-    nat        = each.value.has_public_ip
-    ip_address = each.value.internal_ip
+    subnet_id          = yandex_vpc_subnet.subnet.id
+    nat                = each.value.has_public_ip
+    ip_address         = each.value.internal_ip
+    security_group_ids = [yandex_vpc_security_group.security-group.id]
   }
   resources {
     cores  = each.value.cores
