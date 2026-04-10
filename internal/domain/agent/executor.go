@@ -154,10 +154,12 @@ func (e *Executor) emitLineWithAction(action, line string) {
 func (e *Executor) bootstrap(ctx context.Context) error {
 	e.bootstrapMu.Do(func() {
 		// Prevent services from auto-starting during apt install (Docker has no systemd).
-		// Best-effort: failure here is non-fatal (e.g. read-only filesystem), but worth logging.
 		if _, err := e.shell(ctx, `printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d && chmod +x /usr/sbin/policy-rc.d`); err != nil {
 			log.Printf("bootstrap: policy-rc.d setup failed (non-fatal): %v", err)
 		}
+		// Kill unattended-upgrades and wait for dpkg lock (Ubuntu auto-updates hold the lock on fresh VMs).
+		e.shell(ctx, `systemctl stop unattended-upgrades 2>/dev/null; systemctl disable unattended-upgrades 2>/dev/null; killall -9 unattended-upgr 2>/dev/null; for i in $(seq 1 60); do fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break; sleep 2; done`)
+
 		_, err := e.shellWithAptLock(ctx, "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "+
 			"curl wget ca-certificates gnupg lsb-release sudo tar gzip python3-pip")
 		if err != nil {
