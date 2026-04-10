@@ -1,5 +1,7 @@
 {
-  "annotations": { "list": [] },
+  "annotations": {
+    "list": []
+  },
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -10,124 +12,315 @@
     {
       "title": "gRPC Requests/s",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "${DS_VICTORIAMETRICS}" },
-      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
-      "options": { "legend": { "displayMode": "list" }, "tooltip": { "mode": "multi" } },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": "VictoriaMetrics",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
       "targets": [
-        { "expr": "sum(rate(total{stroppy_run_id=\"$run_id\"}[5m]))", "legendFormat": "total req/s" }
+        {
+          "expr": "sum(rate(total{stroppy_run_id=\"$run_id\"}[5m]))",
+          "legendFormat": "total req/s"
+        }
       ]
     },
     {
       "title": "gRPC Errors/s",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "${DS_VICTORIAMETRICS}" },
-      "fieldConfig": { "defaults": { "unit": "reqps", "color": { "mode": "fixed", "fixedColor": "red" } }, "overrides": [] },
-      "options": { "legend": { "displayMode": "list" }, "tooltip": { "mode": "multi" } },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": "VictoriaMetrics",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
       "targets": [
-        { "expr": "sum(rate(notOkRequest{stroppy_run_id=\"$run_id\"}[5m]))", "legendFormat": "errors/s" },
-        { "expr": "sum(rate(notOkResponse{stroppy_run_id=\"$run_id\"}[5m]))", "legendFormat": "bad responses/s" }
+        {
+          "expr": "sum(rate(notOkRequest{stroppy_run_id=\"$run_id\"}[5m]))",
+          "legendFormat": "errors/s"
+        },
+        {
+          "expr": "sum(rate(notOkResponse{stroppy_run_id=\"$run_id\"}[5m]))",
+          "legendFormat": "bad responses/s"
+        }
       ]
     },
     {
       "title": "gRPC Latency p50 / p99 (ms)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_VICTORIAMETRICS}" },
-      "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] },
-      "options": { "legend": { "displayMode": "list" }, "tooltip": { "mode": "multi" } },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "datasource": "VictoriaMetrics",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
       "targets": [
-        { "expr": "histogram_quantile(0.5, sum by (le) (rate(LatencyMs_bucket{stroppy_run_id=\"$run_id\"}[5m])))", "legendFormat": "p50" },
-        { "expr": "histogram_quantile(0.99, sum by (le) (rate(LatencyMs_bucket{stroppy_run_id=\"$run_id\"}[5m])))", "legendFormat": "p99" }
+        {
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(LatencyMs_bucket{stroppy_run_id=\"$run_id\"}[5m])))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(LatencyMs_bucket{stroppy_run_id=\"$run_id\"}[5m])))",
+          "legendFormat": "p99"
+        }
       ]
     },
     {
       "title": "gRPC Inflight",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_VICTORIAMETRICS}" },
-      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
-      "options": { "legend": { "displayMode": "list" }, "tooltip": { "mode": "multi" } },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "datasource": "VictoriaMetrics",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
       "targets": [
-        { "expr": "sum(infly{stroppy_run_id=\"$run_id\"})", "legendFormat": "inflight requests" }
+        {
+          "expr": "sum(infly{stroppy_run_id=\"$run_id\"})",
+          "legendFormat": "inflight requests"
+        }
       ]
     },
     {
       "title": "gRPC Throughput",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
-      "datasource": { "type": "prometheus", "uid": "${DS_VICTORIAMETRICS}" },
-      "fieldConfig": { "defaults": { "unit": "Bps" }, "overrides": [] },
-      "options": { "legend": { "displayMode": "list" }, "tooltip": { "mode": "multi" } },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "datasource": "VictoriaMetrics",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
       "targets": [
-        { "expr": "sum(rate(requestBytes{stroppy_run_id=\"$run_id\"}[5m]))", "legendFormat": "request bytes/s" },
-        { "expr": "sum(rate(responseBytes{stroppy_run_id=\"$run_id\"}[5m]))", "legendFormat": "response bytes/s" }
+        {
+          "expr": "sum(rate(requestBytes{stroppy_run_id=\"$run_id\"}[5m]))",
+          "legendFormat": "request bytes/s"
+        },
+        {
+          "expr": "sum(rate(responseBytes{stroppy_run_id=\"$run_id\"}[5m]))",
+          "legendFormat": "response bytes/s"
+        }
       ]
     },
     {
       "title": "KQP Query Execution/s",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
-      "datasource": { "type": "prometheus", "uid": "${DS_VICTORIAMETRICS}" },
-      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
-      "options": { "legend": { "displayMode": "list" }, "tooltip": { "mode": "multi" } },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "datasource": "VictoriaMetrics",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
       "targets": [
-        { "expr": "sum(rate(Requests_QueryExecute{stroppy_run_id=\"$run_id\"}[5m]))", "legendFormat": "execute" },
-        { "expr": "sum(rate(Requests_QueryExecPrepared{stroppy_run_id=\"$run_id\"}[5m]))", "legendFormat": "exec prepared" },
-        { "expr": "sum(rate(Requests_QueryPrepare{stroppy_run_id=\"$run_id\"}[5m]))", "legendFormat": "prepare" }
+        {
+          "expr": "sum(rate(Requests_QueryExecute{stroppy_run_id=\"$run_id\"}[5m]))",
+          "legendFormat": "execute"
+        },
+        {
+          "expr": "sum(rate(Requests_QueryExecPrepared{stroppy_run_id=\"$run_id\"}[5m]))",
+          "legendFormat": "exec prepared"
+        },
+        {
+          "expr": "sum(rate(Requests_QueryPrepare{stroppy_run_id=\"$run_id\"}[5m]))",
+          "legendFormat": "prepare"
+        }
       ]
     },
     {
       "title": "KQP Sessions",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
-      "datasource": { "type": "prometheus", "uid": "${DS_VICTORIAMETRICS}" },
-      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
-      "options": { "legend": { "displayMode": "list" }, "tooltip": { "mode": "multi" } },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "datasource": "VictoriaMetrics",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
       "targets": [
-        { "expr": "sum(rate(Requests_CreateSession{stroppy_run_id=\"$run_id\"}[5m]))", "legendFormat": "create session/s" },
-        { "expr": "sum(rate(Requests_CloseSession{stroppy_run_id=\"$run_id\"}[5m]))", "legendFormat": "close session/s" }
+        {
+          "expr": "sum(rate(Requests_CreateSession{stroppy_run_id=\"$run_id\"}[5m]))",
+          "legendFormat": "create session/s"
+        },
+        {
+          "expr": "sum(rate(Requests_CloseSession{stroppy_run_id=\"$run_id\"}[5m]))",
+          "legendFormat": "close session/s"
+        }
       ]
     },
     {
       "title": "KQP Transactions/s",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
-      "datasource": { "type": "prometheus", "uid": "${DS_VICTORIAMETRICS}" },
-      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
-      "options": { "legend": { "displayMode": "list" }, "tooltip": { "mode": "multi" } },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "datasource": "VictoriaMetrics",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
       "targets": [
-        { "expr": "sum(rate(Requests_QueryBeginTx{stroppy_run_id=\"$run_id\"}[5m]))", "legendFormat": "begin tx" },
-        { "expr": "sum(rate(Requests_QueryCommitTx{stroppy_run_id=\"$run_id\"}[5m]))", "legendFormat": "commit tx" },
-        { "expr": "sum(rate(Requests_QueryRollbackTx{stroppy_run_id=\"$run_id\"}[5m]))", "legendFormat": "rollback tx" }
+        {
+          "expr": "sum(rate(Requests_QueryBeginTx{stroppy_run_id=\"$run_id\"}[5m]))",
+          "legendFormat": "begin tx"
+        },
+        {
+          "expr": "sum(rate(Requests_QueryCommitTx{stroppy_run_id=\"$run_id\"}[5m]))",
+          "legendFormat": "commit tx"
+        },
+        {
+          "expr": "sum(rate(Requests_QueryRollbackTx{stroppy_run_id=\"$run_id\"}[5m]))",
+          "legendFormat": "rollback tx"
+        }
       ]
     }
   ],
   "schemaVersion": 39,
-  "tags": ["ydb", "stroppy"],
+  "tags": [
+    "ydb",
+    "stroppy"
+  ],
   "templating": {
     "list": [
       {
-        "current": { "selected": false, "text": "", "value": "" },
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
         "hide": 0,
         "label": "Run ID",
         "name": "run_id",
         "options": [],
         "query": "",
         "type": "textbox"
-      },
-      {
-        "current": { "selected": false, "text": "VictoriaMetrics", "value": "VictoriaMetrics" },
-        "hide": 2,
-        "name": "DS_VICTORIAMETRICS",
-        "type": "datasource",
-        "query": "prometheus"
       }
     ]
   },
-  "time": { "from": "now-30m", "to": "now" },
-  "title": "YDB — Stroppy",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "title": "YDB \u2014 Stroppy",
   "uid": "stroppy-ydb",
   "version": 1
 }

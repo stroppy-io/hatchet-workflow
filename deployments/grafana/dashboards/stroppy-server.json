@@ -14,7 +14,7 @@
       "title": "HTTP Requests / s",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
-      "datasource": { "uid": "${DS_VICTORIAMETRICS}" },
+      "datasource": "VictoriaMetrics",
       "targets": [
         {
           "expr": "sum(rate(stroppy_http_requests_total[5m])) by (method)",
@@ -35,7 +35,7 @@
       "title": "HTTP Errors / s (5xx)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
-      "datasource": { "uid": "${DS_VICTORIAMETRICS}" },
+      "datasource": "VictoriaMetrics",
       "targets": [
         {
           "expr": "sum(rate(stroppy_http_requests_total{status=~\"5..\"}[5m]))",
@@ -57,7 +57,7 @@
       "title": "HTTP Latency p99",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
-      "datasource": { "uid": "${DS_VICTORIAMETRICS}" },
+      "datasource": "VictoriaMetrics",
       "targets": [
         {
           "expr": "histogram_quantile(0.99, sum by (le) (rate(stroppy_http_request_duration_seconds_bucket[5m])))",
@@ -78,7 +78,7 @@
       "title": "Active Runs",
       "type": "stat",
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
-      "datasource": { "uid": "${DS_VICTORIAMETRICS}" },
+      "datasource": "VictoriaMetrics",
       "targets": [
         {
           "expr": "stroppy_active_runs",
@@ -105,7 +105,7 @@
       "title": "WebSocket Connections",
       "type": "stat",
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 },
-      "datasource": { "uid": "${DS_VICTORIAMETRICS}" },
+      "datasource": "VictoriaMetrics",
       "targets": [
         {
           "expr": "stroppy_ws_connections",
@@ -131,7 +131,7 @@
       "title": "Connected Agents",
       "type": "stat",
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 8 },
-      "datasource": { "uid": "${DS_VICTORIAMETRICS}" },
+      "datasource": "VictoriaMetrics",
       "targets": [
         {
           "expr": "stroppy_agents_connected",
@@ -157,7 +157,7 @@
       "title": "Goroutines",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
-      "datasource": { "uid": "${DS_VICTORIAMETRICS}" },
+      "datasource": "VictoriaMetrics",
       "targets": [
         {
           "expr": "stroppy_goroutines",
@@ -178,7 +178,7 @@
       "title": "Memory Allocated",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
-      "datasource": { "uid": "${DS_VICTORIAMETRICS}" },
+      "datasource": "VictoriaMetrics",
       "targets": [
         {
           "expr": "stroppy_memory_alloc_bytes",

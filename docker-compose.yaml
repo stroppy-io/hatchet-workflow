@@ -88,6 +88,18 @@ services:
       - ./deployments/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./deployments/grafana/dashboards:/var/lib/grafana/dashboards:ro
 
+  # --- vmagent (scrapes server /metrics, pushes to vminsert) ---
+  vmagent:
+    image: victoriametrics/vmagent:v1.139.0
+    restart: always
+    command:
+      - "-promscrape.config=/etc/vmagent/scrape.yml"
+      - "-remoteWrite.url=http://vminsert:8480/insert/0/prometheus/api/v1/write"
+    volumes:
+      - ./deployments/vmagent/scrape.yml:/etc/vmagent/scrape.yml:ro
+    depends_on:
+      - vminsert
+
   # --- Stroppy Cloud server ---
   # Runs with host networking so it can reach Docker agent containers directly.
   server:
