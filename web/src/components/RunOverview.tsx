@@ -23,6 +23,7 @@ import {
   Tag,
   Timer,
   FileCode,
+  ChevronDown,
 } from "lucide-react";
 
 // ─── Phase groups ────────────────────────────────────────────────
@@ -305,10 +306,120 @@ function ConfigPanel({ config, startedAt, finishedAt, isRunning }: {
   );
 }
 
+// ─── Effective config per group ──────────────────────────────────
+
+function fmtBytes(mb: number | undefined): string {
+  if (!mb) return "—";
+  if (mb >= 1024) return `${(mb / 1024).toFixed(mb % 1024 ? 1 : 0)} GB`;
+  return `${mb} MB`;
+}
+
+function GroupConfigDetail({ groupLabel, config }: { groupLabel: string; config: RunConfig | null }) {
+  if (!config) return null;
+  const db = config.database;
+  const s = config.stroppy;
+
+  if (groupLabel === "Infrastructure") {
+    return (
+      <div className="space-y-0.5">
+        <CfgRow k="provider" v={config.provider} />
+        {config.platform_id && <CfgRow k="platform" v={config.platform_id} />}
+        <CfgRow k="network" v={config.network?.cidr} />
+        {config.machines?.map((m, i) => (
+          <CfgRow key={i} k={m.role} v={`${m.count}× ${m.cpus} vCPU / ${fmtBytes(m.memory_mb)} / ${m.disk_gb} GB`} />
+        ))}
+      </div>
+    );
+  }
+
+  if (groupLabel === "Database") {
+    const lines: [string, string][] = [["kind", `${db.kind} v${db.version}`]];
+    if (db.ydb) {
+      const st = db.ydb.storage;
+      const diskGB = config.machine_override?.disk_gb || st.disk_gb || 80;
+      const memMB = config.machine_override?.memory_mb || st.memory_mb || 4096;
+      const cpus = config.machine_override?.cpus || st.cpus || 2;
+      const pdiskGB = Math.max(10, diskGB - 2);
+      const hardMB = Math.floor(memMB * 85 / 100);
+      const softMB = Math.floor(hardMB * 90 / 100);
+      lines.push(["nodes", `${st.count} storage${db.ydb.database ? ` + ${db.ydb.database.count} compute` : " (combined)"}`]);
+      lines.push(["per node", `${cpus} vCPU / ${fmtBytes(memMB)} / ${diskGB} GB`]);
+      lines.push(["pdisk", `${pdiskGB} GB SSD`]);
+      lines.push(["mem hard", fmtBytes(hardMB)]);
+      lines.push(["mem soft", fmtBytes(softMB)]);
+      lines.push(["cpu_count", String(cpus)]);
+      lines.push(["erasure", db.ydb.fault_tolerance || "none"]);
+      lines.push(["db_path", db.ydb.database_path || "/Root/testdb"]);
+      if (db.ydb.storage_options) for (const [k, v] of Object.entries(db.ydb.storage_options)) lines.push([k, v]);
+    } else if (db.postgres) {
+      const m = db.postgres.master;
+      lines.push(["master", `${m.count}× ${m.cpus} vCPU / ${fmtBytes(m.memory_mb)}`]);
+      if (db.postgres.replicas?.length) lines.push(["replicas", `${db.postgres.replicas.length}× ${db.postgres.replicas[0]?.cpus || "?"} vCPU`]);
+      if (db.postgres.patroni) lines.push(["HA", "Patroni + etcd"]);
+      if (db.postgres.pgbouncer) lines.push(["pooler", "PgBouncer"]);
+      if (db.postgres.master_options) for (const [k, v] of Object.entries(db.postgres.master_options)) lines.push([k, v]);
+    } else if (db.mysql) {
+      const m = db.mysql.primary;
+      lines.push(["primary", `${m.count}× ${m.cpus} vCPU / ${fmtBytes(m.memory_mb)}`]);
+      if (db.mysql.replicas?.length) lines.push(["replicas", String(db.mysql.replicas.length)]);
+      if (db.mysql.group_replication) lines.push(["repl", "Group Replication"]);
+      if (db.mysql.primary_options) for (const [k, v] of Object.entries(db.mysql.primary_options)) lines.push([k, v]);
+    } else if (db.picodata) {
+      lines.push(["instances", String(db.picodata.instances?.length || 0)]);
+      lines.push(["shards", String(db.picodata.shards)]);
+      lines.push(["rf", String(db.picodata.replication_factor)]);
+      if (db.picodata.instance_options) for (const [k, v] of Object.entries(db.picodata.instance_options)) lines.push([k, v]);
+    }
+    return <div className="space-y-0.5">{lines.map(([k, v], i) => <CfgRow key={i} k={k} v={v} />)}</div>;
+  }
+
+  if (groupLabel === "Monitoring") {
+    return (
+      <div className="space-y-0.5">
+        <CfgRow k="metrics" v={config.monitor?.metrics_endpoint || "built-in"} />
+        {config.monitor?.logs_endpoint && <CfgRow k="logs" v={config.monitor.logs_endpoint} />}
+      </div>
+    );
+  }
+
+  if (groupLabel === "Benchmark") {
+    return (
+      <div className="space-y-0.5">
+        <CfgRow k="script" v={s?.script || s?.workload || ""} />
+        {s?.version && <CfgRow k="stroppy" v={`v${s.version}`} />}
+        <CfgRow k="duration" v={s?.duration || ""} />
+        {(s?.vus || 0) > 0 && <CfgRow k="VUs" v={String(s.vus)} />}
+        {(s?.pool_size || 0) > 0 && <CfgRow k="pool" v={String(s.pool_size)} />}
+        {(s?.scale_factor || 0) > 0 && <CfgRow k="scale" v={String(s.scale_factor)} />}
+        {s?.machine && <CfgRow k="runner" v={`${s.machine.cpus} vCPU / ${fmtBytes(s.machine.memory_mb)}`} />}
+      </div>
+    );
+  }
+
+  return null;
+}
+
+function CfgRow({ k, v }: { k: string; v?: string | null }) {
+  if (!v) return null;
+  return (
+    <div className="flex gap-2 text-[10px] font-mono leading-relaxed">
+      <span className="text-zinc-600 shrink-0 w-20 text-right">{k}</span>
+      <span className="text-zinc-400 truncate" title={v}>{v}</span>
+    </div>
+  );
+}
+
 // ─── DAG pipeline (vertical) ─────────────────────────────────────
 
-function DagPipeline({ nodes, cancelled }: { nodes: NodeStatus[]; cancelled?: boolean }) {
+function DagPipeline({ nodes, cancelled, config }: { nodes: NodeStatus[]; cancelled?: boolean; config?: RunConfig | null }) {
   const allPhaseIds = useMemo(() => phaseGroups.flatMap((g) => g.phases), []);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggle = (label: string) => setExpanded((prev) => {
+    const next = new Set(prev);
+    next.has(label) ? next.delete(label) : next.add(label);
+    return next;
+  });
 
   if (nodes.length === 0) {
     return (
@@ -355,6 +466,7 @@ function DagPipeline({ nodes, cancelled }: { nodes: NodeStatus[]; cancelled?: bo
           const doneInGroup = group.phases.filter((p) => nodeMap.get(p)?.status === "done").length;
           const GroupIcon = group.icon;
           const isLast = gi === activeGroups.length - 1;
+          const isExpanded = expanded.has(group.label);
 
           return (
             <div key={group.label}>
@@ -367,8 +479,12 @@ function DagPipeline({ nodes, cancelled }: { nodes: NodeStatus[]; cancelled?: bo
 
               {/* Group */}
               <div className={`border ${colors.border} ${colors.bg} transition-all duration-300`}>
-                {/* Group header */}
-                <div className="flex items-center gap-2 px-2.5 py-1.5">
+                {/* Group header — clickable */}
+                <button
+                  type="button"
+                  onClick={() => toggle(group.label)}
+                  className="flex items-center gap-2 px-2.5 py-1.5 w-full text-left cursor-pointer hover:bg-white/[0.02] transition-colors"
+                >
                   <GroupIcon className={`w-3.5 h-3.5 ${colors.text} shrink-0`} />
                   <span className="text-xs font-semibold font-mono text-zinc-200 flex-1 truncate">
                     {group.label}
@@ -376,50 +492,63 @@ function DagPipeline({ nodes, cancelled }: { nodes: NodeStatus[]; cancelled?: bo
                   <span className="text-[10px] font-mono text-zinc-600 tabular-nums">
                     {doneInGroup}/{group.phases.length}
                   </span>
-                </div>
+                  <ChevronDown className={`w-3 h-3 text-zinc-600 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
+                </button>
 
-                {/* Steps */}
-                <div className="border-t border-zinc-800/30 px-2.5 py-1 space-y-px">
-                  {group.phases.map((phaseId) => {
-                    const node = nodeMap.get(phaseId);
-                    if (!node) return null;
-                    const active = isStepActive(phaseId, allPhaseIds, nodeMap);
+                {/* Expanded content: steps + config */}
+                {isExpanded && (
+                  <>
+                    {/* Steps */}
+                    <div className="border-t border-zinc-800/30 px-2.5 py-1 space-y-px">
+                      {group.phases.map((phaseId) => {
+                        const node = nodeMap.get(phaseId);
+                        if (!node) return null;
+                        const active = isStepActive(phaseId, allPhaseIds, nodeMap);
 
-                    return (
-                      <div key={phaseId}>
-                        <div className={`flex items-center gap-2 py-0.5 px-0.5 rounded-sm ${node.status === "running" ? "bg-blue-500/[0.06]" : active ? "bg-amber-500/[0.06]" : ""}`}>
-                          <StepDot status={node.status} />
-                          <span
-                            className={`text-[11px] font-mono leading-tight truncate ${
-                              node.status === "done" ? "text-zinc-400"
-                                : node.status === "running" ? "text-blue-300"
-                                : node.status === "failed" ? "text-red-400"
-                                : node.status === "cancelled" ? "text-zinc-400"
-                                : active ? "text-amber-300" : "text-zinc-600"
-                            }`}
-                            title={humanPhase(phaseId)}
-                          >
-                            {humanPhase(phaseId)}
-                          </span>
-                        </div>
-
-                        {/* Error — scrollable, copyable */}
-                        {(node.status === "failed" || node.status === "cancelled") && node.error && (
-                          <div className="mt-0.5 mb-1 ml-5 flex items-start gap-1">
-                            <div className={`flex-1 min-w-0 p-1.5 text-[11px] font-mono leading-relaxed max-h-20 overflow-auto select-text whitespace-pre-wrap break-all ${
-                              node.status === "cancelled"
-                                ? "bg-zinc-500/5 border border-zinc-500/20 text-zinc-400/80"
-                                : "bg-red-500/5 border border-red-500/20 text-red-400/80"
-                            }`}>
-                              {node.error}
+                        return (
+                          <div key={phaseId}>
+                            <div className={`flex items-center gap-2 py-0.5 px-0.5 rounded-sm ${node.status === "running" ? "bg-blue-500/[0.06]" : active ? "bg-amber-500/[0.06]" : ""}`}>
+                              <StepDot status={node.status} />
+                              <span
+                                className={`text-[11px] font-mono leading-tight truncate ${
+                                  node.status === "done" ? "text-zinc-400"
+                                    : node.status === "running" ? "text-blue-300"
+                                    : node.status === "failed" ? "text-red-400"
+                                    : node.status === "cancelled" ? "text-zinc-400"
+                                    : active ? "text-amber-300" : "text-zinc-600"
+                                }`}
+                                title={humanPhase(phaseId)}
+                              >
+                                {humanPhase(phaseId)}
+                              </span>
                             </div>
-                            <CopyButton text={node.error} />
+
+                            {/* Error — scrollable, copyable */}
+                            {(node.status === "failed" || node.status === "cancelled") && node.error && (
+                              <div className="mt-0.5 mb-1 ml-5 flex items-start gap-1">
+                                <div className={`flex-1 min-w-0 p-1.5 text-[11px] font-mono leading-relaxed max-h-20 overflow-auto select-text whitespace-pre-wrap break-all ${
+                                  node.status === "cancelled"
+                                    ? "bg-zinc-500/5 border border-zinc-500/20 text-zinc-400/80"
+                                    : "bg-red-500/5 border border-red-500/20 text-red-400/80"
+                                }`}>
+                                  {node.error}
+                                </div>
+                                <CopyButton text={node.error} />
+                              </div>
+                            )}
                           </div>
-                        )}
+                        );
+                      })}
+                    </div>
+
+                    {/* Effective config for this group */}
+                    {config && (
+                      <div className="border-t border-zinc-800/20 px-2.5 py-1.5 bg-zinc-900/30">
+                        <GroupConfigDetail groupLabel={group.label} config={config} />
                       </div>
-                    );
-                  })}
-                </div>
+                    )}
+                  </>
+                )}
               </div>
 
               {/* Bottom connector */}
@@ -524,7 +653,7 @@ export function RunOverview({ nodes, snapshot, runStatus }: RunOverviewProps) {
 
       {/* Right — DAG pipeline */}
       <div className="flex-1 min-w-0">
-        <DagPipeline nodes={nodes} cancelled={runStatus === "cancelled"} />
+        <DagPipeline nodes={nodes} cancelled={runStatus === "cancelled"} config={config} />
       </div>
     </div>
   );
