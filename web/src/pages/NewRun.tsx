@@ -38,7 +38,7 @@ import {
 } from "lucide-react";
 
 import { DB_COLORS } from "@/lib/db-colors";
-import { NumericSlider, DurationSlider, SliderField, DISK_STEPS, ramSteps, DiskTypeSelect, PlatformSelect, cpuStepsForPlatform, platformLimits } from "@/components/ui/sliders";
+import { NumericSlider, DurationSlider, SliderField, CPU_STEPS, DISK_STEPS, ramSteps, DiskTypeSelect, PlatformSelect, cpuStepsForPlatform, platformLimits, closestStep } from "@/components/ui/sliders";
 
 // --- Constants ---
 
@@ -555,8 +555,9 @@ function suggestDiskGb(script: string, scaleFactor: number): { diskGb: number; r
 
 // Suggest optimal stroppy machine based on VUs and pool size.
 function suggestStroppyMachine(vus: number, poolSize: number): { cpus: number; memory: number; disk: number; reason: string } {
-  // Rule of thumb: 1 vCPU per ~20 VUs, min 2. Memory = cpus * 2GB. Pool adds memory overhead.
-  const cpus = Math.max(2, Math.min(256, Math.ceil(vus / 20) * 2));
+  // Rule of thumb: 1 vCPU per ~20 VUs, min 2. Snap to valid platform steps.
+  const rawCpus = Math.max(2, Math.min(96, Math.ceil(vus / 20) * 2));
+  const cpus = closestStep(rawCpus, CPU_STEPS);
   const memBase = cpus * 2048;
   const memPool = Math.ceil(poolSize / 100) * 512;
   const memory = Math.max(2048, memBase + memPool);
