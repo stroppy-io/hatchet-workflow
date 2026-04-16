@@ -289,7 +289,7 @@ export function RunDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="logs">
+        <TabsContent value="logs" forceMount className="data-[state=inactive]:hidden">
           <Card className="h-[calc(100vh-11rem)]">
             <CardContent className="p-0 h-full relative">
               <LogStream runID={id} snapshot={snapshot} />

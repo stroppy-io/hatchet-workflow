@@ -307,7 +307,7 @@ export function LogStream({ runID, snapshot }: LogStreamProps) {
   useEffect(() => {
     if (autoScroll && !searchResults) scrollToBottom();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows.length]);
+  }, [lines.length, rows.length]);
 
   // --- Load older ---
   function loadOlderLogs() {
