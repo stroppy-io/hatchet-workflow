@@ -169,6 +169,7 @@ export function RunDetail() {
   const hasCancelled = nodes.some((n) => n.status === "cancelled");
   const hasRunning = nodes.some((n) => n.status === "running");
   const hasPending = nodes.some((n) => n.status === "pending");
+  const inTeardown = nodes.some((n) => n.id === "teardown" && (n.status === "running" || n.status === "done"));
 
   // Run is finished when no nodes are pending or running.
   const isFinished = snapshot
@@ -218,7 +219,7 @@ export function RunDetail() {
             Refresh
           </Button>
 
-          {!isFinished && snapshot && (
+          {!isFinished && snapshot && !inTeardown && (
             <Button
               variant="outline"
               size="sm"
