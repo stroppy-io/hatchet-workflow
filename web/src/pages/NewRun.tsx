@@ -542,13 +542,13 @@ function StepDatabase({
 // ─── Step 3: Stroppy ─────────────────────────────────────────────
 
 // Suggest minimum disk size (GB) based on script type and scale factor.
-// TPC-C: ~100 MB per warehouse. TPC-B: ~15 MB per scale unit. 2x headroom for WAL/indexes.
+// TPC-C: ~100 MB per warehouse (data + indexes). TPC-B: ~15 MB per scale unit. 2x headroom for WAL/bloat.
 function suggestDiskGb(script: string, scaleFactor: number): { diskGb: number; reason: string } {
   const isTpcc = script.startsWith("tpcc");
-  const dataPerUnit = isTpcc ? 1000 : 150; // MB — realistic with indexes, WAL, bloat
+  const dataPerUnit = isTpcc ? 100 : 15; // MB
   const rawMb = dataPerUnit * Math.max(1, scaleFactor);
   const withHeadroom = rawMb * 2;
-  const diskGb = Math.max(25, Math.ceil(withHeadroom / 1024) * 25); // round up to nearest 25 GB
+  const diskGb = Math.max(25, Math.ceil(withHeadroom / 1024));
   const reason = `${isTpcc ? "TPC-C" : "TPC-B"} × ${scaleFactor} ≈ ${Math.ceil(rawMb / 1024)} GB data → ${diskGb} GB with headroom`;
   return { diskGb, reason };
 }
