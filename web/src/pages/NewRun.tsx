@@ -308,7 +308,6 @@ export function NewRun() {
               error={error}
               submitting={submitting}
               onSubmit={handleSubmit}
-              config={config}
             />
           )}
 
@@ -824,81 +823,6 @@ interface DryRunNode {
   deps?: string[];
 }
 
-function fmtMemReview(mb: number): string {
-  if (mb >= 1024) return `${(mb / 1024).toFixed(mb % 1024 ? 1 : 0)} GB`;
-  return `${mb} MB`;
-}
-
-function buildReviewConfigs(config: RunConfig): Record<string, Record<string, string>> {
-  const out: Record<string, Record<string, string>> = {};
-  const db = config.database;
-  const s = config.stroppy;
-
-  // Infrastructure
-  const infra: Record<string, string> = { provider: config.provider };
-  if (config.platform_id) infra.platform = config.platform_id;
-  if (config.network?.cidr) infra.network = config.network.cidr;
-  if (config.machines?.length) {
-    for (const m of config.machines) {
-      infra[m.role] = `${m.count}× ${m.cpus} vCPU / ${fmtMemReview(m.memory_mb)} / ${m.disk_gb} GB`;
-    }
-  }
-  out.infrastructure = infra;
-
-  // Database
-  const dbc: Record<string, string> = { kind: `${db.kind} v${db.version}` };
-  if (db.ydb) {
-    const st = db.ydb.storage;
-    const diskGB = config.machine_override?.disk_gb || st.disk_gb || 80;
-    const memMB = config.machine_override?.memory_mb || st.memory_mb || 4096;
-    const cpus = config.machine_override?.cpus || st.cpus || 2;
-    const pdiskGB = Math.max(10, diskGB - 2);
-    const hardMB = Math.floor(memMB * 85 / 100);
-    const softMB = Math.floor(hardMB * 90 / 100);
-    dbc.nodes = `${st.count} storage${db.ydb.database ? ` + ${db.ydb.database.count} compute` : " (combined)"}`;
-    dbc.per_node = `${cpus} vCPU / ${fmtMemReview(memMB)} / ${diskGB} GB`;
-    dbc.pdisk_gb = `${pdiskGB}`;
-    dbc.mem_hard = `${fmtMemReview(hardMB)}`;
-    dbc.mem_soft = `${fmtMemReview(softMB)}`;
-    dbc.cpu_count = `${cpus}`;
-    dbc.erasure = db.ydb.fault_tolerance || "none";
-    dbc.db_path = db.ydb.database_path || "/Root/testdb";
-    if (db.ydb.storage_options) Object.assign(dbc, db.ydb.storage_options);
-  } else if (db.postgres) {
-    const m = db.postgres.master;
-    dbc.master = `${m.count}× ${m.cpus} vCPU / ${fmtMemReview(m.memory_mb)}`;
-    if (db.postgres.replicas?.length) dbc.replicas = `${db.postgres.replicas.length}× ${db.postgres.replicas[0]?.cpus || "?"} vCPU`;
-    if (db.postgres.patroni) dbc.ha = "patroni + etcd";
-    if (db.postgres.pgbouncer) dbc.pooler = "pgbouncer";
-    if (db.postgres.master_options) Object.assign(dbc, db.postgres.master_options);
-  } else if (db.mysql) {
-    const m = db.mysql.primary;
-    dbc.primary = `${m.count}× ${m.cpus} vCPU / ${fmtMemReview(m.memory_mb)}`;
-    if (db.mysql.replicas?.length) dbc.replicas = `${db.mysql.replicas.length}`;
-    if (db.mysql.group_replication) dbc.replication = "group";
-    if (db.mysql.primary_options) Object.assign(dbc, db.mysql.primary_options);
-  } else if (db.picodata) {
-    dbc.instances = `${db.picodata.instances?.length || 0}`;
-    dbc.shards = `${db.picodata.shards}`;
-    dbc.rf = `${db.picodata.replication_factor}`;
-    if (db.picodata.instance_options) Object.assign(dbc, db.picodata.instance_options);
-  }
-  out.database = dbc;
-
-  // Benchmark
-  const bench: Record<string, string> = {};
-  if (s?.script) bench.script = s.script;
-  if (s?.version) bench.stroppy = `v${s.version}`;
-  if (s?.duration) bench.duration = s.duration;
-  if (s?.vus) bench.VUs = `${s.vus}`;
-  if (s?.pool_size) bench.pool = `${s.pool_size}`;
-  if (s?.scale_factor) bench.scale = `${s.scale_factor}`;
-  if (s?.machine) bench.runner = `${s.machine.cpus} vCPU / ${fmtMemReview(s.machine.memory_mb)}`;
-  out.benchmark = bench;
-
-  return out;
-}
-
 function StepReview({
   dryRunResult,
   dryRunLoading,
@@ -906,7 +830,6 @@ function StepReview({
   error,
   submitting,
   onSubmit,
-  config,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dryRunResult: any;
@@ -915,7 +838,6 @@ function StepReview({
   error: string | null;
   submitting: boolean;
   onSubmit: () => void;
-  config: RunConfig;
 }) {
   const canLaunch = validationResult?.ok && !dryRunLoading && !error;
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -935,7 +857,7 @@ function StepReview({
     .filter((g) => g.phases.length > 0);
 
   const totalPhases = dagNodes.length;
-  const reviewConfigs = useMemo(() => buildReviewConfigs(config), [config]);
+  const reviewConfigs: Record<string, Record<string, string>> = dryRunResult?.effective_config || {};
 
   return (
     <div className="space-y-5">

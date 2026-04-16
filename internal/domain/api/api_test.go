@@ -86,7 +86,7 @@ func TestDryRun_ReturnsJSON(t *testing.T) {
 	app := newTestApp(t)
 	cfg := postgresSingleConfig()
 
-	data, err := app.DryRun(cfg)
+	data, _, err := app.DryRun(cfg)
 	if err != nil {
 		t.Fatalf("DryRun() error: %v", err)
 	}
@@ -108,7 +108,7 @@ func TestDryRun_UnsupportedKindErrors(t *testing.T) {
 	cfg.Database.Kind = "cockroach"
 	cfg.Database.Postgres = nil
 
-	_, err := app.DryRun(cfg)
+	_, _, err := app.DryRun(cfg)
 	if err == nil {
 		t.Fatal("expected error for unsupported kind, got nil")
 	}

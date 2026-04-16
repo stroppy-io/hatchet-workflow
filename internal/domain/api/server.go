@@ -26,6 +26,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/auth"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/metrics"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/run"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 	pgdb "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/generated"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/victoria"
@@ -465,20 +466,43 @@ func (s *Server) runValidate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) runDryRun(w http.ResponseWriter, r *http.Request) {
+	tenantID := auth.TenantID(r.Context())
 	var cfg types.RunConfig
 	if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	data, err := s.app.DryRun(cfg)
+	// Resolve preset so dry-run sees the full topology.
+	if err := s.resolveRunPreset(r.Context(), tenantID, &cfg); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+
+	graphJSON, resolvedCfg, err := s.app.DryRun(cfg)
 	if err != nil {
 		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(data)
+	// Wrap graph + resolved config into a single response.
+	var graph json.RawMessage = graphJSON
+	cfgJSON, _ := json.Marshal(resolvedCfg)
+	resp := struct {
+		Graph           json.RawMessage            `json:"graph"`
+		Nodes           json.RawMessage            `json:"nodes"`
+		ResolvedConfig  json.RawMessage            `json:"resolved_config,omitempty"`
+		EffectiveConfig map[string]map[string]string `json:"effective_config,omitempty"`
+	}{}
+	// The graph JSON is the full graph object — extract nodes from it.
+	var graphObj map[string]json.RawMessage
+	if json.Unmarshal(graph, &graphObj) == nil {
+		resp.Nodes = graphObj["nodes"]
+	}
+	resp.Graph = graph
+	resp.ResolvedConfig = cfgJSON
+	resp.EffectiveConfig = run.ComputeEffectiveConfigs(&cfg)
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func (s *Server) runStatus(w http.ResponseWriter, r *http.Request) {

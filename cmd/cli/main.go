@@ -209,7 +209,7 @@ func dryRunCmd() *cobra.Command {
 			logger, _ := zap.NewDevelopment()
 			app := api.New(api.Config{Pool: pool, Logger: logger})
 
-			data, err := app.DryRun(cfg)
+			data, _, err := app.DryRun(cfg)
 			if err != nil {
 				return err
 			}

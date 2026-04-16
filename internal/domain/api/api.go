@@ -105,16 +105,17 @@ func (a *App) Validate(cfg types.RunConfig) error {
 	return err
 }
 
-// DryRun builds the DAG and returns its structure as JSON.
-func (a *App) DryRun(cfg types.RunConfig) ([]byte, error) {
+// DryRun builds the DAG and returns graph JSON + the resolved RunConfig.
+func (a *App) DryRun(cfg types.RunConfig) ([]byte, *types.RunConfig, error) {
 	run.FillMachinesFromTopology(&cfg)
 	state := run.NewState()
 	deps := run.Deps{Client: a.client, State: state}
 	graph, _, err := run.Build(cfg, deps)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return json.MarshalIndent(graph, "", "  ")
+	data, err := json.MarshalIndent(graph, "", "  ")
+	return data, &cfg, err
 }
 
 // RecoverRun resumes execution of an incomplete run from a saved snapshot.
