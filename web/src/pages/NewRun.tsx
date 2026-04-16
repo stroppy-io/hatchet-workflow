@@ -33,6 +33,7 @@ import {
   Rocket,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   Loader2,
 } from "lucide-react";
 
@@ -307,6 +308,7 @@ export function NewRun() {
               error={error}
               submitting={submitting}
               onSubmit={handleSubmit}
+              config={config}
             />
           )}
 
@@ -821,6 +823,81 @@ interface DryRunNode {
   deps?: string[];
 }
 
+function fmtMemReview(mb: number): string {
+  if (mb >= 1024) return `${(mb / 1024).toFixed(mb % 1024 ? 1 : 0)} GB`;
+  return `${mb} MB`;
+}
+
+function buildReviewConfigs(config: RunConfig): Record<string, Record<string, string>> {
+  const out: Record<string, Record<string, string>> = {};
+  const db = config.database;
+  const s = config.stroppy;
+
+  // Infrastructure
+  const infra: Record<string, string> = { provider: config.provider };
+  if (config.platform_id) infra.platform = config.platform_id;
+  if (config.network?.cidr) infra.network = config.network.cidr;
+  if (config.machines?.length) {
+    for (const m of config.machines) {
+      infra[m.role] = `${m.count}× ${m.cpus} vCPU / ${fmtMemReview(m.memory_mb)} / ${m.disk_gb} GB`;
+    }
+  }
+  out.infrastructure = infra;
+
+  // Database
+  const dbc: Record<string, string> = { kind: `${db.kind} v${db.version}` };
+  if (db.ydb) {
+    const st = db.ydb.storage;
+    const diskGB = config.machine_override?.disk_gb || st.disk_gb || 80;
+    const memMB = config.machine_override?.memory_mb || st.memory_mb || 4096;
+    const cpus = config.machine_override?.cpus || st.cpus || 2;
+    const pdiskGB = Math.max(10, diskGB - 2);
+    const hardMB = Math.floor(memMB * 85 / 100);
+    const softMB = Math.floor(hardMB * 90 / 100);
+    dbc.nodes = `${st.count} storage${db.ydb.database ? ` + ${db.ydb.database.count} compute` : " (combined)"}`;
+    dbc.per_node = `${cpus} vCPU / ${fmtMemReview(memMB)} / ${diskGB} GB`;
+    dbc.pdisk_gb = `${pdiskGB}`;
+    dbc.mem_hard = `${fmtMemReview(hardMB)}`;
+    dbc.mem_soft = `${fmtMemReview(softMB)}`;
+    dbc.cpu_count = `${cpus}`;
+    dbc.erasure = db.ydb.fault_tolerance || "none";
+    dbc.db_path = db.ydb.database_path || "/Root/testdb";
+    if (db.ydb.storage_options) Object.assign(dbc, db.ydb.storage_options);
+  } else if (db.postgres) {
+    const m = db.postgres.master;
+    dbc.master = `${m.count}× ${m.cpus} vCPU / ${fmtMemReview(m.memory_mb)}`;
+    if (db.postgres.replicas?.length) dbc.replicas = `${db.postgres.replicas.length}× ${db.postgres.replicas[0]?.cpus || "?"} vCPU`;
+    if (db.postgres.patroni) dbc.ha = "patroni + etcd";
+    if (db.postgres.pgbouncer) dbc.pooler = "pgbouncer";
+    if (db.postgres.master_options) Object.assign(dbc, db.postgres.master_options);
+  } else if (db.mysql) {
+    const m = db.mysql.primary;
+    dbc.primary = `${m.count}× ${m.cpus} vCPU / ${fmtMemReview(m.memory_mb)}`;
+    if (db.mysql.replicas?.length) dbc.replicas = `${db.mysql.replicas.length}`;
+    if (db.mysql.group_replication) dbc.replication = "group";
+    if (db.mysql.primary_options) Object.assign(dbc, db.mysql.primary_options);
+  } else if (db.picodata) {
+    dbc.instances = `${db.picodata.instances?.length || 0}`;
+    dbc.shards = `${db.picodata.shards}`;
+    dbc.rf = `${db.picodata.replication_factor}`;
+    if (db.picodata.instance_options) Object.assign(dbc, db.picodata.instance_options);
+  }
+  out.database = dbc;
+
+  // Benchmark
+  const bench: Record<string, string> = {};
+  if (s?.script) bench.script = s.script;
+  if (s?.version) bench.stroppy = `v${s.version}`;
+  if (s?.duration) bench.duration = s.duration;
+  if (s?.vus) bench.VUs = `${s.vus}`;
+  if (s?.pool_size) bench.pool = `${s.pool_size}`;
+  if (s?.scale_factor) bench.scale = `${s.scale_factor}`;
+  if (s?.machine) bench.runner = `${s.machine.cpus} vCPU / ${fmtMemReview(s.machine.memory_mb)}`;
+  out.benchmark = bench;
+
+  return out;
+}
+
 function StepReview({
   dryRunResult,
   dryRunLoading,
@@ -828,6 +905,7 @@ function StepReview({
   error,
   submitting,
   onSubmit,
+  config,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dryRunResult: any;
@@ -836,8 +914,15 @@ function StepReview({
   error: string | null;
   submitting: boolean;
   onSubmit: () => void;
+  config: RunConfig;
 }) {
   const canLaunch = validationResult?.ok && !dryRunLoading && !error;
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const toggle = (label: string) => setExpanded((prev) => {
+    const next = new Set(prev);
+    next.has(label) ? next.delete(label) : next.add(label);
+    return next;
+  });
 
   // Parse dry-run nodes
   const dagNodes: DryRunNode[] = dryRunResult?.nodes || [];
@@ -849,6 +934,7 @@ function StepReview({
     .filter((g) => g.phases.length > 0);
 
   const totalPhases = dagNodes.length;
+  const reviewConfigs = useMemo(() => buildReviewConfigs(config), [config]);
 
   return (
     <div className="space-y-5">
@@ -884,12 +970,15 @@ function StepReview({
         </div>
       )}
 
-      {/* Execution plan — compact DAG */}
+      {/* Execution plan — accordion groups */}
       {activeGroups.length > 0 && (
         <div className="select-none max-w-xl">
           {activeGroups.map((group, gi) => {
             const isLast = gi === activeGroups.length - 1;
             const GroupIcon = group.icon;
+            const isExpanded = expanded.has(group.label);
+            const groupKey = group.label.toLowerCase();
+            const cfgEntries = reviewConfigs[groupKey];
 
             return (
               <div key={group.label} className="relative">
@@ -900,39 +989,59 @@ function StepReview({
                 )}
 
                 <div className="border border-zinc-800/80 bg-zinc-900/30">
-                  <div className="flex items-center gap-2 px-3 py-2">
+                  <button
+                    type="button"
+                    onClick={() => toggle(group.label)}
+                    className="flex items-center gap-2 px-3 py-2 w-full text-left cursor-pointer hover:bg-white/[0.02] transition-colors"
+                  >
                     <div className="w-6 h-6 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center shrink-0">
                       <GroupIcon className="w-3 h-3 text-zinc-500" />
                     </div>
                     <span className="text-[11px] font-semibold text-zinc-300 font-mono flex-1">{group.label}</span>
                     <span className="text-[10px] text-zinc-600 font-mono tabular-nums">{group.phases.length}</span>
-                  </div>
+                    <ChevronDown className={`w-3 h-3 text-zinc-600 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
+                  </button>
 
-                  <div className="border-t border-zinc-800/50">
-                    {group.phases.map((phaseId, pi) => {
-                      const node = dagNodes.find((n: DryRunNode) => n.id === phaseId);
-                      const isLastStep = pi === group.phases.length - 1;
-                      const deps = node?.deps?.filter((d: string) => nodeIds.has(d)) || [];
+                  {isExpanded && (
+                    <>
+                      <div className="border-t border-zinc-800/50">
+                        {group.phases.map((phaseId, pi) => {
+                          const node = dagNodes.find((n: DryRunNode) => n.id === phaseId);
+                          const isLastStep = pi === group.phases.length - 1;
+                          const deps = node?.deps?.filter((d: string) => nodeIds.has(d)) || [];
 
-                      return (
-                        <div key={phaseId}>
-                          <div className="flex items-center gap-2 px-3 py-1.5 relative">
-                            {!isLastStep && (
-                              <div className="absolute left-[17px] top-[22px] w-px h-[calc(100%-10px)] bg-zinc-800" />
-                            )}
-                            <div className="w-[14px] h-[14px] rounded-full border border-zinc-700 bg-zinc-900 flex items-center justify-center shrink-0">
-                              <div className="w-1 h-1 rounded-full bg-zinc-600" />
+                          return (
+                            <div key={phaseId}>
+                              <div className="flex items-center gap-2 px-3 py-1.5 relative">
+                                {!isLastStep && (
+                                  <div className="absolute left-[17px] top-[22px] w-px h-[calc(100%-10px)] bg-zinc-800" />
+                                )}
+                                <div className="w-[14px] h-[14px] rounded-full border border-zinc-700 bg-zinc-900 flex items-center justify-center shrink-0">
+                                  <div className="w-1 h-1 rounded-full bg-zinc-600" />
+                                </div>
+                                <span className="text-[11px] font-mono text-zinc-400 flex-1">{humanPhase(phaseId)}</span>
+                                {deps.length > 0 && (
+                                  <span className="text-[9px] text-zinc-700 font-mono shrink-0">← {deps.map(humanPhase).join(", ")}</span>
+                                )}
+                              </div>
+                              {!isLastStep && <div className="mx-3 border-b border-zinc-800/20" />}
                             </div>
-                            <span className="text-[11px] font-mono text-zinc-400 flex-1">{humanPhase(phaseId)}</span>
-                            {deps.length > 0 && (
-                              <span className="text-[9px] text-zinc-700 font-mono shrink-0">← {deps.map(humanPhase).join(", ")}</span>
-                            )}
-                          </div>
-                          {!isLastStep && <div className="mx-3 border-b border-zinc-800/20" />}
+                          );
+                        })}
+                      </div>
+
+                      {cfgEntries && Object.keys(cfgEntries).length > 0 && (
+                        <div className="border-t border-zinc-800/20 px-3 py-1.5 bg-zinc-900/50 space-y-0.5">
+                          {Object.entries(cfgEntries).map(([k, v]) => (
+                            <div key={k} className="flex gap-2 text-[10px] font-mono leading-relaxed">
+                              <span className="text-zinc-600 shrink-0 w-20 text-right">{k}</span>
+                              <span className="text-zinc-400 truncate" title={v}>{v}</span>
+                            </div>
+                          ))}
                         </div>
-                      );
-                    })}
-                  </div>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 {!isLast && (
