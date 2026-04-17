@@ -337,6 +337,10 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 			if memGB == 0 {
 				memGB = 4
 			}
+			// Yandex Cloud requires memory to be a multiple of the core count.
+			if cores > 0 && memGB%cores != 0 {
+				memGB = ((memGB + cores - 1) / cores) * cores
+			}
 			diskGB := spec.DiskGB
 			if diskGB == 0 {
 				diskGB = 50
