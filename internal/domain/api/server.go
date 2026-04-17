@@ -114,6 +114,9 @@ func NewServer(app *App, logger *zap.Logger, pool *pgxpool.Pool, jwtSecret, moni
 		id, _ := s.accountIDFromRunID(context.Background(), runID)
 		return id
 	}
+	s.hub.tenantIDResolver = func(runID string) string {
+		return s.tenantIDFromRunID(context.Background(), runID)
+	}
 	app.sink = s.hub
 	// Wire settings getter so buildDeps can access current cloud settings from DB.
 	app.settingsFunc = s.settingsForTenant
@@ -379,7 +382,8 @@ func (s *Server) agentLogBatch(w http.ResponseWriter, r *http.Request) {
 	for i := range lines {
 		line := &lines[i]
 		runID := extractRunID(line.MachineID)
-		s.hub.broadcast(wsMessage{Type: "agent_log", RunID: runID, Payload: *line})
+		tenantID := s.tenantIDFromRunID(r.Context(), runID)
+		s.hub.broadcast(wsMessage{Type: "agent_log", RunID: runID, TenantID: tenantID, Payload: *line})
 
 		if s.monitoringURL != "" {
 			accountID, _ := s.accountIDFromRunID(r.Context(), runID)
@@ -542,7 +546,14 @@ func (s *Server) listRuns(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) cancelRun(w http.ResponseWriter, r *http.Request) {
+	tenantID := auth.TenantID(r.Context())
 	runID := chi.URLParam(r, "runID")
+
+	// Verify run belongs to this tenant.
+	if _, err := s.app.Storage().Load(r.Context(), tenantID, runID); err != nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "run not found"})
+		return
+	}
 
 	s.runCancelsMu.Lock()
 	cancel, ok := s.runCancels[runID]
@@ -958,7 +969,8 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request, filterRunID st
 		s.logger.Error("ws upgrade failed", zap.Error(err))
 		return
 	}
-	s.hub.addClient(conn, filterRunID)
+	tenantID := auth.TenantID(r.Context())
+	s.hub.addClient(conn, filterRunID, tenantID)
 }
 
 // Agents returns currently registered agent targets.
@@ -1056,12 +1068,18 @@ type MetricsRequest struct {
 	End   string `json:"end"`   // RFC3339
 }
 
+// tenantIDFromRunID resolves tenantID by looking up the run's tenant.
+func (s *Server) tenantIDFromRunID(ctx context.Context, runID string) string {
+	var tenantID string
+	s.pool.QueryRow(ctx, "SELECT tenant_id FROM runs WHERE id = $1 LIMIT 1", runID).Scan(&tenantID)
+	return tenantID
+}
+
 // accountIDFromRunID resolves accountID by looking up the run's tenant, then the tenant's account_id.
 func (s *Server) accountIDFromRunID(ctx context.Context, runID string) (int32, error) {
-	var tenantID string
-	err := s.pool.QueryRow(ctx, "SELECT tenant_id FROM runs WHERE id = $1 LIMIT 1", runID).Scan(&tenantID)
-	if err != nil {
-		return 0, fmt.Errorf("lookup tenant for run %s: %w", runID, err)
+	tenantID := s.tenantIDFromRunID(ctx, runID)
+	if tenantID == "" {
+		return 0, fmt.Errorf("lookup tenant for run %s: not found", runID)
 	}
 	return s.tenantAccountID(ctx, tenantID)
 }

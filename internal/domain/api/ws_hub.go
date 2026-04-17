@@ -16,16 +16,18 @@ import (
 
 // wsMessage is the envelope sent to WebSocket clients.
 type wsMessage struct {
-	Type    string `json:"type"` // "log", "report", "agent_log"
-	RunID   string `json:"run_id,omitempty"`
-	NodeID  string `json:"node_id,omitempty"`
-	Payload any    `json:"payload"`
+	Type     string `json:"type"` // "log", "report", "agent_log"
+	RunID    string `json:"run_id,omitempty"`
+	NodeID   string `json:"node_id,omitempty"`
+	TenantID string `json:"-"` // not serialized — used for filtering only
+	Payload  any    `json:"payload"`
 }
 
 type wsClient struct {
 	conn        *websocket.Conn
 	writeMu     sync.Mutex // gorilla/websocket is not safe for concurrent writes
 	filterRunID string
+	tenantID    string
 }
 
 func (c *wsClient) send(data []byte) {
@@ -47,14 +49,16 @@ type wsHub struct {
 	// accountIDResolver resolves runID → tenant accountID for per-tenant log ingestion.
 	// Set by Server after construction.
 	accountIDResolver func(runID string) int32
+	// tenantIDResolver resolves runID → tenantID for WS broadcast filtering.
+	tenantIDResolver func(runID string) string
 }
 
 func newWSHub() *wsHub {
 	return &wsHub{}
 }
 
-func (h *wsHub) addClient(conn *websocket.Conn, filterRunID string) {
-	client := &wsClient{conn: conn, filterRunID: filterRunID}
+func (h *wsHub) addClient(conn *websocket.Conn, filterRunID, tenantID string) {
+	client := &wsClient{conn: conn, filterRunID: filterRunID, tenantID: tenantID}
 
 	h.mu.Lock()
 	h.clients = append(h.clients, client)
@@ -97,6 +101,10 @@ func (h *wsHub) broadcast(msg wsMessage) {
 	h.mu.RUnlock()
 
 	for _, c := range snapshot {
+		// Tenant isolation: only deliver to clients in the same tenant.
+		if c.tenantID != "" && msg.TenantID != "" && c.tenantID != msg.TenantID {
+			continue
+		}
 		if c.filterRunID != "" && msg.RunID != "" && c.filterRunID != msg.RunID {
 			continue
 		}
@@ -143,11 +151,16 @@ func (h *wsHub) WriteLog(_ context.Context, executionID string, nodeID string, e
 		payload[k] = v
 	}
 
+	var tenantID string
+	if h.tenantIDResolver != nil {
+		tenantID = h.tenantIDResolver(executionID)
+	}
 	h.broadcast(wsMessage{
-		Type:    "log",
-		RunID:   executionID,
-		NodeID:  nodeID,
-		Payload: payload,
+		Type:     "log",
+		RunID:    executionID,
+		NodeID:   nodeID,
+		TenantID: tenantID,
+		Payload:  payload,
 	})
 
 	// Persist server log to VictoriaLogs so it appears in historical queries.
