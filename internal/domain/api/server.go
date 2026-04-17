@@ -59,8 +59,9 @@ type Server struct {
 	agents   map[string]agent.Target
 
 	// runCancels tracks cancel functions for running DAG executions.
-	runCancelsMu sync.Mutex
-	runCancels   map[string]context.CancelFunc
+	runCancelsMu  sync.Mutex
+	runCancels    map[string]context.CancelFunc
+	runTenants    map[string]string // runID → tenantID for concurrent run counting
 
 	// stroppyVersionsCache caches GitHub releases to avoid rate limits.
 	stroppyVersionsMu    sync.Mutex
@@ -88,6 +89,7 @@ func NewServer(app *App, logger *zap.Logger, pool *pgxpool.Pool, jwtSecret, moni
 		hub:             newWSHub(),
 		agents:          make(map[string]agent.Target),
 		runCancels:      make(map[string]context.CancelFunc),
+		runTenants:      make(map[string]string),
 		cancelledRuns:   make(map[string]bool),
 		pollClient:      pc,
 		pool:            pool,
@@ -446,10 +448,29 @@ func (s *Server) runStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check concurrent run limit.
+	if settings.Quotas.MaxConcurrentRuns > 0 {
+		s.runCancelsMu.Lock()
+		count := 0
+		for _, tid := range s.runTenants {
+			if tid == tenantID {
+				count++
+			}
+		}
+		s.runCancelsMu.Unlock()
+		if count >= settings.Quotas.MaxConcurrentRuns {
+			writeJSON(w, http.StatusForbidden, map[string]string{
+				"error": fmt.Sprintf("concurrent run limit reached (%d/%d)", count, settings.Quotas.MaxConcurrentRuns),
+			})
+			return
+		}
+	}
+
 	// Run asynchronously with cancellable context.
 	ctx, cancel := context.WithCancel(context.Background())
 	s.runCancelsMu.Lock()
 	s.runCancels[cfg.ID] = cancel
+	s.runTenants[cfg.ID] = tenantID
 	s.runCancelsMu.Unlock()
 
 	activeRuns.Inc()
@@ -458,6 +479,7 @@ func (s *Server) runStart(w http.ResponseWriter, r *http.Request) {
 			activeRuns.Dec()
 			s.runCancelsMu.Lock()
 			delete(s.runCancels, cfg.ID)
+			delete(s.runTenants, cfg.ID)
 			s.runCancelsMu.Unlock()
 			cancel()
 		}()
