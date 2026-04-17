@@ -428,6 +428,16 @@ func (s *Server) runStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Fill machines from topology so quota checks see actual node specs.
+	run.FillMachinesFromTopology(&cfg)
+
+	// Enforce tenant quotas.
+	settings := s.settingsForTenant(tenantID)
+	if err := settings.Quotas.ValidateQuotas(&cfg); err != nil {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "quota exceeded: " + err.Error()})
+		return
+	}
+
 	// Check for duplicate (run already exists in storage).
 	if snap, _ := s.app.Storage().Load(r.Context(), tenantID, cfg.ID); snap != nil {
 		writeJSON(w, http.StatusConflict, map[string]string{

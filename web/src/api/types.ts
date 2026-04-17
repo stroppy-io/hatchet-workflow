@@ -285,9 +285,20 @@ export interface GrafanaSettings {
   dashboards: Record<string, string>;
 }
 
+export interface TenantQuotas {
+  allowed_db_kinds?: string[];
+  allowed_providers?: string[];
+  max_nodes?: number;
+  max_cpus_per_node?: number;
+  max_memory_mb_per_node?: number;
+  max_disk_gb_per_node?: number;
+  max_concurrent_runs?: number;
+}
+
 export interface ServerSettings {
   cloud: CloudSettings;
   webhooks?: Record<string, unknown>;
+  quotas: TenantQuotas;
 }
 
 // --- Metrics / Compare ---

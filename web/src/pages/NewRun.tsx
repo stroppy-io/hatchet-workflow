@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { startRun, validateRun, dryRun, listPresets, listPackages, probeScript, getStroppyVersions } from "@/api/client";
+import { startRun, validateRun, dryRun, listPresets, listPackages, probeScript, getStroppyVersions, getSettings } from "@/api/client";
 import {
   ALL_DB_KINDS,
   type RunConfig,
@@ -9,6 +9,7 @@ import {
   type Preset,
   type Package,
   type ProbeResponse,
+  type TenantQuotas,
 } from "@/api/types";
 import { generateRunID } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -130,6 +131,14 @@ export function NewRun() {
   const [dbDiskType, setDbDiskType] = useState(rcOv?.disk_type || "network-ssd");
   const [packageId, setPackageId] = useState(rc?.package_id || "");
   const [availablePackages, setAvailablePackages] = useState<Package[]>([]);
+  const [quotas, setQuotas] = useState<TenantQuotas>({});
+
+  const allowedKinds = useMemo(() =>
+    quotas.allowed_db_kinds?.length ? DB_KINDS.filter((k) => quotas.allowed_db_kinds!.includes(k)) : DB_KINDS,
+    [quotas]);
+  const allowedProviders = useMemo(() =>
+    quotas.allowed_providers?.length ? PROVIDERS.filter((p) => quotas.allowed_providers!.includes(p)) : PROVIDERS,
+    [quotas]);
 
   const [submitting, setSubmitting] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -142,6 +151,7 @@ export function NewRun() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => { listPresets().then(setAllPresets).catch(() => {}); }, []);
+  useEffect(() => { getSettings().then((s) => setQuotas(s.quotas || {})).catch(() => {}); }, []);
   useEffect(() => {
     const matching = allPresets.filter((p) => p.db_kind === kind);
     if (matching.length > 0 && !matching.find((p) => p.id === selectedPresetId)) {
@@ -301,7 +311,7 @@ export function NewRun() {
         {/* Left — step content */}
         <div className="flex-1 min-w-0 overflow-y-auto p-5">
           {step === 0 && (
-            <StepInfra provider={provider} setProvider={setProvider} platformId={platformId} setPlatformId={setPlatformId} />
+            <StepInfra provider={provider} setProvider={setProvider} platformId={platformId} setPlatformId={setPlatformId} providers={allowedProviders} />
           )}
           {step === 1 && (
             <StepDatabase
@@ -312,6 +322,7 @@ export function NewRun() {
               presetsForKind={presetsForKind}
               selectedPresetId={selectedPresetId} setSelectedPresetId={setSelectedPresetId}
               dbMeta={dbMeta} dbColor={dbColor}
+              allowedKinds={allowedKinds}
             />
           )}
           {step === 2 && (
@@ -324,6 +335,7 @@ export function NewRun() {
               dbKind={kind}
               provider={provider}
               platformId={platformId}
+              quotas={quotas}
               availableSteps={availableSteps} setAvailableSteps={setAvailableSteps}
               selectedSteps={selectedSteps} setSelectedSteps={setSelectedSteps}
               noSteps={noSteps} setNoSteps={setNoSteps}
@@ -439,11 +451,12 @@ function SummaryRow({ icon: Icon, label, value, color }: {
 
 // ─── Step 1: Infrastructure ──────────────────────────────────────
 
-function StepInfra({ provider, setProvider, platformId, setPlatformId }: {
+function StepInfra({ provider, setProvider, platformId, setPlatformId, providers }: {
   provider: Provider;
   setProvider: (p: Provider) => void;
   platformId: string;
   setPlatformId: (p: string) => void;
+  providers: Provider[];
 }) {
   return (
     <div className="space-y-5 max-w-lg">
@@ -452,7 +465,7 @@ function StepInfra({ provider, setProvider, platformId, setPlatformId }: {
         <p className="text-xs text-zinc-500">Choose the infrastructure provider for provisioning machines.</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        {PROVIDERS.map((p) => {
+        {providers.map((p) => {
           const pm = PROVIDER_META[p];
           const PIcon = pm.icon;
           const active = provider === p;
@@ -492,8 +505,10 @@ function StepDatabase({
   presetsForKind,
   selectedPresetId, setSelectedPresetId,
   dbMeta, dbColor,
+  allowedKinds,
 }: {
   kind: DatabaseKind; setKind: (k: DatabaseKind) => void;
+  allowedKinds: DatabaseKind[];
   version: string; setVersion: (v: string) => void;
   packageId: string; setPackageId: (v: string) => void;
   availablePackages: Package[];
@@ -511,7 +526,7 @@ function StepDatabase({
 
       {/* DB Kind */}
       <div className="grid grid-cols-3 gap-2">
-        {DB_KINDS.map((k) => {
+        {allowedKinds.map((k) => {
           const meta = DB_META[k];
           const kColor = DB_COLORS[k];
           const Icon = meta.icon;
@@ -633,6 +648,7 @@ function StepStroppy({
   dbKind,
   provider,
   platformId,
+  quotas,
   availableSteps, setAvailableSteps,
   selectedSteps, setSelectedSteps,
   noSteps, setNoSteps,
@@ -654,6 +670,7 @@ function StepStroppy({
   dbKind: DatabaseKind;
   provider: Provider;
   platformId: string;
+  quotas: TenantQuotas;
   availableSteps: string[]; setAvailableSteps: (v: string[]) => void;
   selectedSteps: string[]; setSelectedSteps: (v: string[]) => void;
   noSteps: string[]; setNoSteps: (v: string[]) => void;
@@ -788,13 +805,14 @@ function StepStroppy({
       <div>
         <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-2 block">Database Machine</span>
         <div className="grid grid-cols-3 gap-3">
-          <SliderField label="CPUs" value={dbCpus} steps={cpuStepsForPlatform(platformId)}
+          <SliderField label="CPUs" value={dbCpus}
+            steps={cpuStepsForPlatform(platformId).filter((s) => !quotas.max_cpus_per_node || s <= quotas.max_cpus_per_node)}
             onChange={setDbCpus} format={(v) => `${v} vCPU`} />
           <SliderField label="Memory" value={dbMemory}
-            steps={ramSteps(dbCpus, platformLimits(platformId).maxRamMb)}
+            steps={ramSteps(dbCpus, Math.min(platformLimits(platformId).maxRamMb, (quotas.max_memory_mb_per_node || Infinity)))}
             onChange={setDbMemory}
             format={(v) => v >= 1024 ? `${(v/1024).toFixed(v%1024?1:0)} GB` : `${v} MB`} />
-          <SliderField label="Disk" value={dbDisk} steps={DISK_STEPS}
+          <SliderField label="Disk" value={dbDisk} steps={DISK_STEPS.filter((s) => !quotas.max_disk_gb_per_node || s <= quotas.max_disk_gb_per_node)}
             onChange={setDbDisk} format={(v) => `${v} GB`} />
         </div>
         <DiskTypeSelect

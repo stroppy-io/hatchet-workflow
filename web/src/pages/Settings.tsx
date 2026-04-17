@@ -68,6 +68,11 @@ export function SettingsPage() {
     });
   }
 
+  function update<S extends keyof ServerSettings>(section: S, value: ServerSettings[S]) {
+    if (!settings) return;
+    setSettings({ ...settings, [section]: value });
+  }
+
   if (loading) {
     return (
       <div className="p-6 text-sm text-muted-foreground">
@@ -105,6 +110,7 @@ export function SettingsPage() {
       <Tabs defaultValue="cloud">
         <TabsList>
           <TabsTrigger value="cloud">Cloud</TabsTrigger>
+          <TabsTrigger value="quotas">Quotas</TabsTrigger>
         </TabsList>
 
         {/* Cloud settings */}
@@ -316,6 +322,119 @@ export function SettingsPage() {
 
                 {canEdit && (
                   <Button onClick={handleSaveSettings} disabled={saving}>
+                    <Save className="h-3.5 w-3.5" />
+                    {saving ? "Saving..." : "Save Settings"}
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Quotas tab */}
+        <TabsContent value="quotas">
+          {settings && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Tenant Quotas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <p className="text-xs text-zinc-500">
+                  Resource limits for this tenant. Empty or 0 means no restriction.
+                </p>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Allowed Databases</Label>
+                    <Input
+                      value={(settings.quotas?.allowed_db_kinds || []).join(", ")}
+                      onChange={(e) => update("quotas", {
+                        ...settings.quotas,
+                        allowed_db_kinds: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                      })}
+                      disabled={!canEdit}
+                      placeholder="all (e.g. ydb, postgres)"
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Allowed Providers</Label>
+                    <Input
+                      value={(settings.quotas?.allowed_providers || []).join(", ")}
+                      onChange={(e) => update("quotas", {
+                        ...settings.quotas,
+                        allowed_providers: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                      })}
+                      disabled={!canEdit}
+                      placeholder="all (e.g. yandex, docker)"
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Max Nodes</Label>
+                    <Input
+                      type="number" min={0}
+                      value={settings.quotas?.max_nodes || ""}
+                      onChange={(e) => update("quotas", { ...settings.quotas, max_nodes: parseInt(e.target.value) || 0 })}
+                      disabled={!canEdit}
+                      placeholder="unlimited"
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Max CPUs/Node</Label>
+                    <Input
+                      type="number" min={0}
+                      value={settings.quotas?.max_cpus_per_node || ""}
+                      onChange={(e) => update("quotas", { ...settings.quotas, max_cpus_per_node: parseInt(e.target.value) || 0 })}
+                      disabled={!canEdit}
+                      placeholder="unlimited"
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Max RAM/Node (MB)</Label>
+                    <Input
+                      type="number" min={0}
+                      value={settings.quotas?.max_memory_mb_per_node || ""}
+                      onChange={(e) => update("quotas", { ...settings.quotas, max_memory_mb_per_node: parseInt(e.target.value) || 0 })}
+                      disabled={!canEdit}
+                      placeholder="unlimited"
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Max Disk/Node (GB)</Label>
+                    <Input
+                      type="number" min={0}
+                      value={settings.quotas?.max_disk_gb_per_node || ""}
+                      onChange={(e) => update("quotas", { ...settings.quotas, max_disk_gb_per_node: parseInt(e.target.value) || 0 })}
+                      disabled={!canEdit}
+                      placeholder="unlimited"
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Max Concurrent Runs</Label>
+                    <Input
+                      type="number" min={0}
+                      value={settings.quotas?.max_concurrent_runs || ""}
+                      onChange={(e) => update("quotas", { ...settings.quotas, max_concurrent_runs: parseInt(e.target.value) || 0 })}
+                      disabled={!canEdit}
+                      placeholder="unlimited"
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                </div>
+
+                {canEdit && (
+                  <Button onClick={handleSaveSettings} disabled={saving} size="sm">
                     <Save className="h-3.5 w-3.5" />
                     {saving ? "Saving..." : "Save Settings"}
                   </Button>

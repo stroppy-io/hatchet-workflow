@@ -136,10 +136,70 @@ func (s StroppySettings) StroppyEnv(runID string) map[string]string {
 	return env
 }
 
+// TenantQuotas defines resource limits and allowed options for a tenant.
+// Zero/empty values mean no restriction.
+type TenantQuotas struct {
+	AllowedDBKinds     []string `json:"allowed_db_kinds,omitempty"`      // e.g. ["ydb", "postgres"]
+	AllowedProviders   []string `json:"allowed_providers,omitempty"`     // e.g. ["yandex"]
+	MaxNodes           int      `json:"max_nodes,omitempty"`             // max DB nodes per run
+	MaxCPUsPerNode     int      `json:"max_cpus_per_node,omitempty"`     // max vCPUs per node
+	MaxMemoryMBPerNode int      `json:"max_memory_mb_per_node,omitempty"`
+	MaxDiskGBPerNode   int      `json:"max_disk_gb_per_node,omitempty"`
+	MaxConcurrentRuns  int      `json:"max_concurrent_runs,omitempty"`
+}
+
 // ServerSettings is the per-tenant settings (stored in DB).
 type ServerSettings struct {
 	Cloud    CloudSettings  `json:"cloud"`
 	Webhooks webhook.Config `json:"webhooks"`
+	Quotas   TenantQuotas   `json:"quotas"`
+}
+
+// ValidateQuotas checks that a RunConfig is within the tenant's quotas.
+// Returns nil if all checks pass or quotas are unrestricted.
+func (q TenantQuotas) ValidateQuotas(cfg *RunConfig) error {
+	if len(q.AllowedDBKinds) > 0 {
+		allowed := false
+		for _, k := range q.AllowedDBKinds {
+			if DatabaseKind(k) == cfg.Database.Kind {
+				allowed = true
+				break
+			}
+		}
+		if !allowed {
+			return fmt.Errorf("database kind %q not allowed (permitted: %v)", cfg.Database.Kind, q.AllowedDBKinds)
+		}
+	}
+	if len(q.AllowedProviders) > 0 {
+		allowed := false
+		for _, p := range q.AllowedProviders {
+			if Provider(p) == cfg.Provider {
+				allowed = true
+				break
+			}
+		}
+		if !allowed {
+			return fmt.Errorf("provider %q not allowed (permitted: %v)", cfg.Provider, q.AllowedProviders)
+		}
+	}
+	for _, m := range cfg.Machines {
+		if m.Role != RoleDatabase {
+			continue
+		}
+		if q.MaxNodes > 0 && m.Count > q.MaxNodes {
+			return fmt.Errorf("node count %d exceeds limit %d", m.Count, q.MaxNodes)
+		}
+		if q.MaxCPUsPerNode > 0 && m.CPUs > q.MaxCPUsPerNode {
+			return fmt.Errorf("CPUs %d exceeds limit %d per node", m.CPUs, q.MaxCPUsPerNode)
+		}
+		if q.MaxMemoryMBPerNode > 0 && m.MemoryMB > q.MaxMemoryMBPerNode {
+			return fmt.Errorf("memory %d MB exceeds limit %d MB per node", m.MemoryMB, q.MaxMemoryMBPerNode)
+		}
+		if q.MaxDiskGBPerNode > 0 && m.DiskGB > q.MaxDiskGBPerNode {
+			return fmt.Errorf("disk %d GB exceeds limit %d GB per node", m.DiskGB, q.MaxDiskGBPerNode)
+		}
+	}
+	return nil
 }
 
 // DefaultServerSettings returns ServerSettings populated with sensible defaults.
