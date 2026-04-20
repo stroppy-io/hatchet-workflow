@@ -107,7 +107,7 @@ export function DurationSlider({ label, value, onChange, disabled }: {
 }
 
 export const CPU_STEPS = [2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256];
-export const DISK_STEPS = [25, 50, 100, 200, 300, 500, 750, 1024];
+export const DISK_STEPS = [25, 50, 100, 200, 300, 500, 750, 1024, 2048, 4096, 8192];
 
 // ─── Yandex Cloud Platforms ──────────────────────────────────────
 
