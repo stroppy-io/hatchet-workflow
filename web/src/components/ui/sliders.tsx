@@ -107,7 +107,12 @@ export function DurationSlider({ label, value, onChange, disabled }: {
 }
 
 export const CPU_STEPS = [2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256];
-export const DISK_STEPS = [25, 50, 100, 200, 300, 500, 750, 1024, 2048, 4096, 8192];
+export const DISK_STEPS = [25, 50, 100, 200, 300, 500, 750, 1024, 2048, 4096, 8192, 16384, 32768, 65536];
+
+export function diskStepsForType(diskType: string): number[] {
+  const maxGb = DISK_SPECS[diskType]?.maxSizeGb ?? 8192;
+  return DISK_STEPS.filter((s) => s <= maxGb);
+}
 
 // ─── Yandex Cloud Platforms ──────────────────────────────────────
 
@@ -170,6 +175,7 @@ export function PlatformSelect({ value, onChange }: { value: string; onChange: (
 const DISK_SPECS: Record<string, {
   label: string;
   unitGb: number;
+  maxSizeGb: number;
   readIopsPerUnit: number; maxReadIops: number;
   writeIopsPerUnit: number; maxWriteIops: number;
   readMbPerUnit: number; maxReadMb: number;
@@ -178,6 +184,7 @@ const DISK_SPECS: Record<string, {
   "network-ssd": {
     label: "SSD",
     unitGb: 32,
+    maxSizeGb: 8192,
     readIopsPerUnit: 1000, maxReadIops: 20000,
     writeIopsPerUnit: 1000, maxWriteIops: 40000,
     readMbPerUnit: 15, maxReadMb: 450,
@@ -186,6 +193,7 @@ const DISK_SPECS: Record<string, {
   "network-ssd-io-m3": {
     label: "SSD io-m3",
     unitGb: 32,
+    maxSizeGb: 65536,  // 64 TB
     readIopsPerUnit: 28000, maxReadIops: 75000,
     writeIopsPerUnit: 5600, maxWriteIops: 40000,
     readMbPerUnit: 110, maxReadMb: 1024,

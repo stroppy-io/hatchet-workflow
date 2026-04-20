@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 
 import { DB_COLORS } from "@/lib/db-colors";
-import { NumericSlider, DurationSlider, SliderField, CPU_STEPS, DISK_STEPS, ramSteps, DiskTypeSelect, PlatformSelect, cpuStepsForPlatform, platformLimits, closestStep } from "@/components/ui/sliders";
+import { NumericSlider, DurationSlider, SliderField, CPU_STEPS, ramSteps, DiskTypeSelect, PlatformSelect, cpuStepsForPlatform, platformLimits, closestStep, diskStepsForType } from "@/components/ui/sliders";
 
 // --- Constants ---
 
@@ -812,7 +812,7 @@ function StepStroppy({
             steps={ramSteps(dbCpus, Math.min(platformLimits(platformId).maxRamMb, (quotas.max_memory_mb_per_node || Infinity)))}
             onChange={setDbMemory}
             format={(v) => v >= 1024 ? `${(v/1024).toFixed(v%1024?1:0)} GB` : `${v} MB`} />
-          <SliderField label="Disk" value={dbDisk} steps={DISK_STEPS.filter((s) => !quotas.max_disk_gb_per_node || s <= quotas.max_disk_gb_per_node)}
+          <SliderField label="Disk" value={dbDisk} steps={diskStepsForType(dbDiskType).filter((s) => !quotas.max_disk_gb_per_node || s <= quotas.max_disk_gb_per_node)}
             onChange={setDbDisk} format={(v) => `${v} GB`} />
         </div>
         <DiskTypeSelect
