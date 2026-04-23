@@ -293,7 +293,7 @@ function ConfigPanel({ config, startedAt, finishedAt, isRunning }: {
 
       {/* Machines */}
       {config.machines && config.machines.length > 0 && (
-        <div className="px-3 py-2 flex-1 min-h-0 overflow-y-auto">
+        <div className="px-3 py-2 border-b border-zinc-800/50">
           <div className="text-[11px] text-zinc-500 uppercase tracking-wider mb-1.5">Machines</div>
           <div className="space-y-1">
             {config.machines.map((m, i) => (
