@@ -529,10 +529,11 @@ func (s *Server) runDryRun(w http.ResponseWriter, r *http.Request) {
 	var graph json.RawMessage = graphJSON
 	cfgJSON, _ := json.Marshal(resolvedCfg)
 	resp := struct {
-		Graph           json.RawMessage            `json:"graph"`
-		Nodes           json.RawMessage            `json:"nodes"`
-		ResolvedConfig  json.RawMessage            `json:"resolved_config,omitempty"`
+		Graph           json.RawMessage              `json:"graph"`
+		Nodes           json.RawMessage              `json:"nodes"`
+		ResolvedConfig  json.RawMessage              `json:"resolved_config,omitempty"`
 		EffectiveConfig map[string]map[string]string `json:"effective_config,omitempty"`
+		StroppyConfig   string                       `json:"stroppy_config,omitempty"`
 	}{}
 	// The graph JSON is the full graph object — extract nodes from it.
 	var graphObj map[string]json.RawMessage
@@ -542,6 +543,19 @@ func (s *Server) runDryRun(w http.ResponseWriter, r *http.Request) {
 	resp.Graph = graph
 	resp.ResolvedConfig = cfgJSON
 	resp.EffectiveConfig = run.ComputeEffectiveConfigs(&cfg)
+
+	// Build stroppy config preview — use placeholder host/port (resolved at run time).
+	if cfg.Stroppy.ConfigOverrideJSON != "" {
+		resp.StroppyConfig = cfg.Stroppy.ConfigOverrideJSON
+	} else {
+		settings := s.settingsForTenant(tenantID).Cloud.Yandex
+		_ = settings
+		stroppySettings := types.DefaultStroppySettings()
+		if b, err := run.BuildStroppyConfigJSON(cfg.Stroppy, cfg.Database.Kind, "<db-host>", 0, stroppySettings, cfg.ID); err == nil {
+			resp.StroppyConfig = string(b)
+		}
+	}
+
 	writeJSON(w, http.StatusOK, resp)
 }
 

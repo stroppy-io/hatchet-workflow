@@ -146,6 +146,7 @@ export function NewRun() {
   const [dryRunLoading, setDryRunLoading] = useState(false);
   const [resolvedConfig, setResolvedConfig] = useState<RunConfig | null>(null);
   const [dbConfigDraft, setDbConfigDraft] = useState<string | null>(null);
+  const [stroppyConfigDraft, setStroppyConfigDraft] = useState<string | null>(null);
   const [validationResult, setValidationResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -236,6 +237,9 @@ export function NewRun() {
             setResolvedConfig(rc);
             setDbConfigDraft(JSON.stringify(rc.database, null, 2));
           }
+          if (typeof drObj.stroppy_config === "string") {
+            setStroppyConfigDraft(drObj.stroppy_config);
+          }
         }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Dry run failed");
@@ -260,13 +264,24 @@ export function NewRun() {
           return;
         }
       }
+      // If the stroppy config was edited in review, send as override.
+      if (stroppyConfigDraft) {
+        try {
+          JSON.parse(stroppyConfigDraft); // validate
+          launchConfig.stroppy = { ...launchConfig.stroppy, config_override_json: stroppyConfigDraft };
+        } catch {
+          setError("Invalid JSON in stroppy config");
+          setSubmitting(false);
+          return;
+        }
+      }
       const result = await startRun(launchConfig);
       navigate(`/runs/${result.run_id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start run");
       setSubmitting(false);
     }
-  }, [config, navigate]);
+  }, [config, navigate, dbConfigDraft, resolvedConfig, stroppyConfigDraft]);
 
   function handleCopy() {
     navigator.clipboard.writeText(configJSON);
@@ -375,6 +390,8 @@ export function NewRun() {
               }}
               dbConfigDraft={dbConfigDraft}
               setDbConfigDraft={setDbConfigDraft}
+              stroppyConfigDraft={stroppyConfigDraft}
+              setStroppyConfigDraft={setStroppyConfigDraft}
             />
           )}
 
@@ -970,6 +987,8 @@ function StepReview({
   onEdit,
   dbConfigDraft,
   setDbConfigDraft,
+  stroppyConfigDraft,
+  setStroppyConfigDraft,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dryRunResult: any;
@@ -981,6 +1000,8 @@ function StepReview({
   onEdit?: (group: string, key: string, value: string) => void;
   dbConfigDraft: string | null;
   setDbConfigDraft: (v: string) => void;
+  stroppyConfigDraft: string | null;
+  setStroppyConfigDraft: (v: string) => void;
 }) {
   const canLaunch = validationResult?.ok && !dryRunLoading && !error;
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -1110,6 +1131,26 @@ function StepReview({
                           {cfgEntries && Object.keys(cfgEntries).length > 0 && (
                             <div className="mt-2 space-y-0.5">
                               <span className="text-[9px] font-mono text-zinc-600 uppercase">Effective Config</span>
+                              {Object.entries(cfgEntries).map(([k, v]) => (
+                                <EditableCfgRow key={k} k={k} v={v} groupKey={groupKey} onEdit={onEdit} />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : groupKey === "benchmark" && stroppyConfigDraft !== null ? (
+                        <div className="border-t border-zinc-800/20 px-3 py-1.5 bg-zinc-900/50">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[9px] font-mono text-zinc-600 uppercase">Stroppy Config (editable protojson — overrides field-level settings)</span>
+                          </div>
+                          <textarea
+                            value={stroppyConfigDraft}
+                            onChange={(e) => setStroppyConfigDraft(e.target.value)}
+                            spellCheck={false}
+                            className="w-full h-72 bg-[#0a0a0a] text-[11px] font-mono text-zinc-300 border border-zinc-800 p-2 outline-none focus:border-zinc-600 resize-y"
+                          />
+                          {cfgEntries && Object.keys(cfgEntries).length > 0 && (
+                            <div className="mt-2 space-y-0.5">
+                              <span className="text-[9px] font-mono text-zinc-600 uppercase">Summary</span>
                               {Object.entries(cfgEntries).map(([k, v]) => (
                                 <EditableCfgRow key={k} k={k} v={v} groupKey={groupKey} onEdit={onEdit} />
                               ))}

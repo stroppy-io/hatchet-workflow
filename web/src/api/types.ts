@@ -123,6 +123,7 @@ export interface StroppyConfig {
   steps?: string[];             // step allowlist
   no_steps?: string[];          // step blocklist
   machine?: MachineSpec;        // stroppy runner machine spec
+  config_override_json?: string; // raw stroppy protojson override
   // Deprecated — kept for backward compat with existing runs.
   workload?: string;
   vus_scale?: number;

@@ -273,6 +273,10 @@ type StroppyConfig struct {
 	ScaleFactor int      `json:"scale_factor,omitempty"` // Warehouses → env SCALE_FACTOR
 	Steps       []string `json:"steps,omitempty"`        // step allowlist (e.g. ["create_schema","load_data","workload"])
 	NoSteps     []string `json:"no_steps,omitempty"`     // step blocklist (e.g. ["drop_schema"])
+	// ConfigOverrideJSON, if set, is sent verbatim to the stroppy binary instead of the
+	// config built from the other fields. Allows advanced users to edit the full stroppy
+	// RunConfig protojson (drivers, k6_args, env, exporter, etc.) before launching a run.
+	ConfigOverrideJSON string `json:"config_override_json,omitempty"`
 	// Machine spec for the stroppy runner node. If nil, defaults to 2 vCPU / 4 GB / 20 GB.
 	Machine *MachineSpec `json:"machine,omitempty"`
 	// Deprecated fields kept for backward compatibility with existing runs.
