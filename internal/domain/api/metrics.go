@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -49,9 +50,12 @@ func init() {
 // metricsMiddleware records HTTP request metrics.
 func metricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Skip metrics/health/ws paths to reduce cardinality.
+		// Skip metrics/health/ws paths. /ws/ in particular must bypass the
+		// statusWriter wrapper: WebSocket upgrades need http.Hijacker on the
+		// response writer, and statusWriter doesn't implement it — the upgrade
+		// fails with "websocket: hijack: feature not supported".
 		path := r.URL.Path
-		if path == "/metrics" || path == "/health" {
+		if path == "/metrics" || path == "/health" || strings.HasPrefix(path, "/ws/") {
 			next.ServeHTTP(w, r)
 			return
 		}
