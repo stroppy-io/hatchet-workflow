@@ -396,6 +396,8 @@ export function NewRun() {
               setStroppyConfigDraft={setStroppyConfigDraft}
               script={script}
               scaleFactor={scaleFactor}
+              stroppyVersion={stroppyVersion}
+              setStroppyVersion={setStroppyVersion}
             />
           )}
 
@@ -1090,6 +1092,8 @@ function StepReview({
   setStroppyConfigDraft,
   script,
   scaleFactor,
+  stroppyVersion,
+  setStroppyVersion,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dryRunResult: any;
@@ -1105,6 +1109,8 @@ function StepReview({
   setStroppyConfigDraft: (v: string) => void;
   script: string;
   scaleFactor: number;
+  stroppyVersion: string;
+  setStroppyVersion: (v: string) => void;
 }) {
   const canLaunch = validationResult?.ok && !dryRunLoading && !error;
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -1247,6 +1253,17 @@ function StepReview({
                         </div>
                       ) : groupKey === "benchmark" && stroppyConfigDraft !== null ? (
                         <div className="border-t border-zinc-800/20 px-3 py-1.5 bg-zinc-900/50">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-[10px] font-mono text-zinc-500 shrink-0">Stroppy Version</span>
+                            <input
+                              type="text"
+                              value={stroppyVersion}
+                              onChange={(e) => setStroppyVersion(e.target.value)}
+                              spellCheck={false}
+                              placeholder="5.0.0rc3"
+                              className="flex-1 bg-[#0a0a0a] text-[11px] font-mono text-zinc-300 border border-zinc-800 px-2 py-1 outline-none focus:border-zinc-600"
+                            />
+                          </div>
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-[9px] font-mono text-zinc-600 uppercase">Stroppy Config (editable protojson — overrides field-level settings)</span>
                           </div>
