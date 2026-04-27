@@ -12,6 +12,63 @@ func applyOverride(orig int, override *types.MachineSpec, field func(*types.Mach
 	return orig
 }
 
+// BakeMachineOverrideIntoTopology folds cfg.MachineOverride into the database
+// topology's per-component MachineSpec fields and clears MachineOverride.
+// After this runs, the topology alone reflects the final database-node sizing,
+// which lets the dry-run preview (and the review-step textarea) show the
+// effective values without any hidden override left behind.
+func BakeMachineOverrideIntoTopology(cfg *types.RunConfig) {
+	ov := cfg.MachineOverride
+	if ov == nil {
+		return
+	}
+	apply := func(m *types.MachineSpec) {
+		if ov.CPUs > 0 {
+			m.CPUs = ov.CPUs
+		}
+		if ov.MemoryMB > 0 {
+			m.MemoryMB = ov.MemoryMB
+		}
+		if ov.DiskGB > 0 {
+			m.DiskGB = ov.DiskGB
+		}
+		if ov.DiskType != "" {
+			m.DiskType = ov.DiskType
+		}
+	}
+	db := &cfg.Database
+	switch db.Kind {
+	case types.DatabasePostgres:
+		if db.Postgres != nil {
+			apply(&db.Postgres.Master)
+			for i := range db.Postgres.Replicas {
+				apply(&db.Postgres.Replicas[i])
+			}
+		}
+	case types.DatabaseMySQL:
+		if db.MySQL != nil {
+			apply(&db.MySQL.Primary)
+			for i := range db.MySQL.Replicas {
+				apply(&db.MySQL.Replicas[i])
+			}
+		}
+	case types.DatabasePicodata:
+		if db.Picodata != nil {
+			for i := range db.Picodata.Instances {
+				apply(&db.Picodata.Instances[i])
+			}
+		}
+	case types.DatabaseYDB:
+		if db.YDB != nil {
+			apply(&db.YDB.Storage)
+			if db.YDB.Database != nil {
+				apply(db.YDB.Database)
+			}
+		}
+	}
+	cfg.MachineOverride = nil
+}
+
 // fillMachinesFromTopology populates cfg.Machines from the database topology
 // when the caller (e.g. SPA) did not specify machines explicitly.
 // If MachineOverride is set, its CPU/memory/disk values override the preset's

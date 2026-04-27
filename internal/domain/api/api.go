@@ -107,6 +107,10 @@ func (a *App) Validate(cfg types.RunConfig) error {
 
 // DryRun builds the DAG and returns graph JSON + the resolved RunConfig.
 func (a *App) DryRun(cfg types.RunConfig) ([]byte, *types.RunConfig, error) {
+	// Fold MachineOverride into the topology so the resolved config returned
+	// to the client (and rendered in the review-step textarea) reflects the
+	// final database-node sizing without any hidden override.
+	run.BakeMachineOverrideIntoTopology(&cfg)
 	run.FillMachinesFromTopology(&cfg)
 	state := run.NewState()
 	deps := run.Deps{Client: a.client, State: state}

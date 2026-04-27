@@ -100,7 +100,7 @@ export function NewRun() {
 
   const rc = rerunConfig; // shorthand
   const rcS = rc?.stroppy;
-  const rcOv = rc?.machine_override;
+  const rcSM = rc?.stroppy?.machine;
 
   const [step, setStep] = useState(0);
 
@@ -125,10 +125,13 @@ export function NewRun() {
   const [availableSteps, setAvailableSteps] = useState<string[]>([]);
   const [selectedSteps, setSelectedSteps] = useState<string[]>(rcS?.steps || []);
   const [noSteps, setNoSteps] = useState<string[]>(rcS?.no_steps || []);
-  const [dbCpus, setDbCpus] = useState(rcOv?.cpus || 2);
-  const [dbMemory, setDbMemory] = useState(rcOv?.memory_mb || 4096);
-  const [dbDisk, setDbDisk] = useState(rcOv?.disk_gb || 25);
-  const [dbDiskType, setDbDiskType] = useState(rcOv?.disk_type || "network-ssd");
+  // Stroppy runner sizing — preset-derived defaults from suggestStroppyMachine()
+  // for the rerun's vus/pool, or rerun's stroppy.machine if explicitly set.
+  const stroppyDefault = suggestStroppyMachine(rcS?.vus || rcS?.vus_scale || 10, rcS?.pool_size || 100);
+  const [stroppyCpus, setStroppyCpus] = useState(rcSM?.cpus || stroppyDefault.cpus);
+  const [stroppyMemory, setStroppyMemory] = useState(rcSM?.memory_mb || stroppyDefault.memory);
+  const [stroppyDisk, setStroppyDisk] = useState(rcSM?.disk_gb || stroppyDefault.disk);
+  const [stroppyDiskType, setStroppyDiskType] = useState(rcSM?.disk_type || "network-ssd");
   const [packageId, setPackageId] = useState(rc?.package_id || "");
   const [availablePackages, setAvailablePackages] = useState<Package[]>([]);
   const [quotas, setQuotas] = useState<TenantQuotas>({});
@@ -199,17 +202,16 @@ export function NewRun() {
         scale_factor: scaleFactor,
         ...(selectedSteps.length > 0 ? { steps: selectedSteps } : {}),
         ...(noSteps.length > 0 ? { no_steps: noSteps } : {}),
-        ...(provider === "yandex" ? (() => { const s = suggestStroppyMachine(vus, poolSize); return { machine: { role: "stroppy" as const, count: 1, cpus: s.cpus, memory_mb: s.memory, disk_gb: s.disk } }; })() : {}),
+        ...(provider === "yandex" ? { machine: { role: "stroppy" as const, count: 1, cpus: stroppyCpus, memory_mb: stroppyMemory, disk_gb: stroppyDisk, disk_type: stroppyDiskType } } : {}),
       },
     };
     if (selectedPresetId) cfg.preset_id = selectedPresetId;
     if (packageId) cfg.package_id = packageId;
     if (provider === "yandex") {
       cfg.platform_id = platformId;
-      cfg.machine_override = { role: "database", count: 1, cpus: dbCpus, memory_mb: dbMemory, disk_gb: dbDisk, disk_type: dbDiskType };
     }
     return cfg;
-  }, [kind, selectedPresetId, provider, platformId, version, script, duration, vus, poolSize, scaleFactor, packageId, selectedSteps, noSteps, dbCpus, dbMemory, dbDisk, dbDiskType, stroppyVersion]);
+  }, [kind, selectedPresetId, provider, platformId, version, script, duration, vus, poolSize, scaleFactor, packageId, selectedSteps, noSteps, stroppyCpus, stroppyMemory, stroppyDisk, stroppyDiskType, stroppyVersion]);
 
   const configJSON = useMemo(() => JSON.stringify(config, null, 2), [config]);
 
@@ -255,13 +257,13 @@ export function NewRun() {
     if (!config.stroppy.duration.trim()) { setError("Duration is required"); return; }
     setSubmitting(true); setError(null);
     try {
-      // Merge edited database config from review textarea if available.
+      // The review-step textarea is the source of truth for the database config.
       const launchConfig = { ...config };
       if (dbConfigDraft && resolvedConfig) {
         try {
           launchConfig.database = JSON.parse(dbConfigDraft);
-        } catch {
-          setError("Invalid JSON in database config");
+        } catch (e) {
+          setError(`Invalid JSON in database config: ${e instanceof Error ? e.message : String(e)}`);
           setSubmitting(false);
           return;
         }
@@ -273,8 +275,8 @@ export function NewRun() {
         try {
           JSON.parse(stroppyConfigDraft); // validate
           launchConfig.stroppy = { ...launchConfig.stroppy, config_override_json: stroppyConfigDraft };
-        } catch {
-          setError("Invalid JSON in stroppy config");
+        } catch (e) {
+          setError(`Invalid JSON in stroppy config: ${e instanceof Error ? e.message : String(e)}`);
           setSubmitting(false);
           return;
         }
@@ -359,10 +361,10 @@ export function NewRun() {
               selectedSteps={selectedSteps} setSelectedSteps={setSelectedSteps}
               noSteps={noSteps} setNoSteps={setNoSteps}
               probeData={probeData} setProbeData={setProbeData}
-              dbCpus={dbCpus} setDbCpus={setDbCpus}
-              dbMemory={dbMemory} setDbMemory={setDbMemory}
-              dbDisk={dbDisk} setDbDisk={setDbDisk}
-              dbDiskType={dbDiskType} setDbDiskType={setDbDiskType}
+              stroppyCpus={stroppyCpus} setStroppyCpus={setStroppyCpus}
+              stroppyMemory={stroppyMemory} setStroppyMemory={setStroppyMemory}
+              stroppyDisk={stroppyDisk} setStroppyDisk={setStroppyDisk}
+              stroppyDiskType={stroppyDiskType} setStroppyDiskType={setStroppyDiskType}
               stroppyVersion={stroppyVersion} setStroppyVersion={setStroppyVersion}
               stroppyVersions={stroppyVersions} setStroppyVersions={setStroppyVersions}
               versionsLoading={versionsLoading} setVersionsLoading={setVersionsLoading}
@@ -379,11 +381,7 @@ export function NewRun() {
               onSubmit={handleSubmit}
               onEdit={(group, key, value) => {
                 const n = parseInt(value);
-                if (group === "database") {
-                  if (key === "cpu_count" && !isNaN(n)) setDbCpus(closestStep(n, cpuStepsForPlatform(platformId)));
-                  else if (key === "mem_limit" && !isNaN(n)) setDbMemory(Math.round(n * 100 / 85)); // reverse 85%
-                  else if (key === "pdisk_gb" && !isNaN(n)) setDbDisk(n + 2); // reverse disk-2
-                } else if (group === "benchmark") {
+                if (group === "benchmark") {
                   if (key === "VUs" && !isNaN(n)) setVus(n);
                   else if (key === "duration") setDuration(value);
                   else if (key === "pool" && !isNaN(n)) setPoolSize(n);
@@ -396,6 +394,8 @@ export function NewRun() {
               setDbConfigDraft={setDbConfigDraft}
               stroppyConfigDraft={stroppyConfigDraft}
               setStroppyConfigDraft={setStroppyConfigDraft}
+              script={script}
+              scaleFactor={scaleFactor}
             />
           )}
 
@@ -645,7 +645,7 @@ function StepDatabase({
 
 // ─── Step 3: Stroppy ─────────────────────────────────────────────
 
-// Suggest minimum disk size (GB) based on script type and scale factor.
+// Suggest minimum DB-node disk (GB) for a script × scale combo.
 // TPC-C: ~100 MB per warehouse (data + indexes). TPC-B: ~15 MB per scale unit. 2x headroom for WAL/bloat.
 function suggestDiskGb(script: string, scaleFactor: number): { diskGb: number; reason: string } {
   const isTpcc = script.startsWith("tpcc");
@@ -655,6 +655,28 @@ function suggestDiskGb(script: string, scaleFactor: number): { diskGb: number; r
   const diskGb = Math.max(25, Math.ceil(withHeadroom / 1024));
   const reason = `${isTpcc ? "TPC-C" : "TPC-B"} × ${scaleFactor} ≈ ${Math.ceil(rawMb / 1024)} GB data → ${diskGb} GB with headroom`;
   return { diskGb, reason };
+}
+
+// Extract the DB-node data-volume disk size from a DatabaseConfig JSON string.
+// Returns null if the JSON is invalid or the topology shape doesn't match the kind.
+function extractDbDiskGb(dbCfgJSON: string): number | null {
+  try {
+    const c = JSON.parse(dbCfgJSON) as { kind?: string; postgres?: { master?: { disk_gb?: number } }; mysql?: { primary?: { disk_gb?: number } }; picodata?: { instances?: Array<{ disk_gb?: number }> }; ydb?: { storage?: { disk_gb?: number } } };
+    switch (c.kind) {
+      case "postgres": return c.postgres?.master?.disk_gb ?? null;
+      case "mysql": return c.mysql?.primary?.disk_gb ?? null;
+      case "picodata": {
+        const insts = c.picodata?.instances;
+        if (!insts || insts.length === 0) return null;
+        const sizes = insts.map((i) => i.disk_gb ?? 0).filter((n) => n > 0);
+        return sizes.length ? Math.min(...sizes) : null;
+      }
+      case "ydb": return c.ydb?.storage?.disk_gb ?? null;
+      default: return null;
+    }
+  } catch {
+    return null;
+  }
 }
 
 // Suggest optimal stroppy machine based on VUs and pool size.
@@ -684,10 +706,10 @@ function StepStroppy({
   selectedSteps, setSelectedSteps,
   noSteps, setNoSteps,
   probeData, setProbeData,
-  dbCpus, setDbCpus,
-  dbMemory, setDbMemory,
-  dbDisk, setDbDisk,
-  dbDiskType, setDbDiskType,
+  stroppyCpus, setStroppyCpus,
+  stroppyMemory, setStroppyMemory,
+  stroppyDisk, setStroppyDisk,
+  stroppyDiskType, setStroppyDiskType,
   stroppyVersion, setStroppyVersion,
   stroppyVersions, setStroppyVersions,
   versionsLoading, setVersionsLoading,
@@ -706,10 +728,10 @@ function StepStroppy({
   selectedSteps: string[]; setSelectedSteps: (v: string[]) => void;
   noSteps: string[]; setNoSteps: (v: string[]) => void;
   probeData: ProbeResponse | null; setProbeData: (v: ProbeResponse | null) => void;
-  dbCpus: number; setDbCpus: (v: number) => void;
-  dbMemory: number; setDbMemory: (v: number) => void;
-  dbDisk: number; setDbDisk: (v: number) => void;
-  dbDiskType: string; setDbDiskType: (v: string) => void;
+  stroppyCpus: number; setStroppyCpus: (v: number) => void;
+  stroppyMemory: number; setStroppyMemory: (v: number) => void;
+  stroppyDisk: number; setStroppyDisk: (v: number) => void;
+  stroppyDiskType: string; setStroppyDiskType: (v: string) => void;
   stroppyVersion: string; setStroppyVersion: (v: string) => void;
   stroppyVersions: string[]; setStroppyVersions: (v: string[]) => void;
   versionsLoading: boolean; setVersionsLoading: (v: boolean) => void;
@@ -905,34 +927,33 @@ function StepStroppy({
         </div>
       )}
 
-      {/* Database machine override — only for cloud providers */}
+      {/* Stroppy runner machine — only for cloud providers.
+          Database hardware comes from the topology preset and is editable on
+          the Review step textarea, not here. */}
       {provider === "yandex" && (
       <div>
-        <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-2 block">Database Machine</span>
+        <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-2 block">Stroppy Runner</span>
         <div className="grid grid-cols-3 gap-3">
-          <SliderField label="CPUs" value={dbCpus}
+          <SliderField label="CPUs" value={stroppyCpus}
             steps={cpuStepsForPlatform(platformId).filter((s) => !quotas.max_cpus_per_node || s <= quotas.max_cpus_per_node)}
-            onChange={setDbCpus} format={(v) => `${v} vCPU`} />
-          <SliderField label="Memory" value={dbMemory}
-            steps={ramSteps(dbCpus, Math.min(platformLimits(platformId).maxRamMb, (quotas.max_memory_mb_per_node || Infinity)))}
-            onChange={setDbMemory}
+            onChange={setStroppyCpus} format={(v) => `${v} vCPU`} />
+          <SliderField label="Memory" value={stroppyMemory}
+            steps={ramSteps(stroppyCpus, Math.min(platformLimits(platformId).maxRamMb, (quotas.max_memory_mb_per_node || Infinity)))}
+            onChange={setStroppyMemory}
             format={(v) => v >= 1024 ? `${(v/1024).toFixed(v%1024?1:0)} GB` : `${v} MB`} />
-          <SliderField label="Disk" value={dbDisk} steps={diskStepsForType(dbDiskType).filter((s) => !quotas.max_disk_gb_per_node || s <= quotas.max_disk_gb_per_node)}
-            onChange={setDbDisk} format={(v) => `${v} GB`} />
+          <SliderField label="Disk" value={stroppyDisk} steps={diskStepsForType(stroppyDiskType).filter((s) => !quotas.max_disk_gb_per_node || s <= quotas.max_disk_gb_per_node)}
+            onChange={setStroppyDisk} format={(v) => `${v} GB`} />
         </div>
         <DiskTypeSelect
-          value={dbDiskType}
-          onChange={setDbDiskType}
-          diskSizeGb={dbDisk}
+          value={stroppyDiskType}
+          onChange={setStroppyDiskType}
+          diskSizeGb={stroppyDisk}
         />
         {(() => {
-          const ds = suggestDiskGb(script, scaleFactor);
-          const undersized = dbDisk < ds.diskGb;
+          const s = suggestStroppyMachine(vus, poolSize);
           return (
-            <div className={`mt-2 text-[9px] font-mono ${undersized ? "text-amber-500" : "text-zinc-600"}`}>
-              {undersized
-                ? `Disk may be undersized: ${ds.reason}. Consider ${ds.diskGb} GB+.`
-                : ds.reason}
+            <div className="mt-2 text-[9px] font-mono text-zinc-600">
+              Suggested for current VUs/pool: {s.cpus} vCPU / {(s.memory/1024).toFixed(0)} GB RAM
             </div>
           );
         })()}
@@ -1000,8 +1021,8 @@ function humanPhase(id: string): string {
 }
 
 // Keys that can be edited in the review step — mapped back to state via onEdit.
+// Database rows are display-only here: the textarea above them is the source of truth.
 const EDITABLE_KEYS: Record<string, Set<string>> = {
-  database: new Set(["cpu_count", "pdisk_gb", "mem_limit"]),
   benchmark: new Set(["VUs", "duration", "pool", "scale"]),
   infrastructure: new Set(["platform"]),
 };
@@ -1067,6 +1088,8 @@ function StepReview({
   setDbConfigDraft,
   stroppyConfigDraft,
   setStroppyConfigDraft,
+  script,
+  scaleFactor,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dryRunResult: any;
@@ -1080,6 +1103,8 @@ function StepReview({
   setDbConfigDraft: (v: string) => void;
   stroppyConfigDraft: string | null;
   setStroppyConfigDraft: (v: string) => void;
+  script: string;
+  scaleFactor: number;
 }) {
   const canLaunch = validationResult?.ok && !dryRunLoading && !error;
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -1198,17 +1223,30 @@ function StepReview({
                       {groupKey === "database" && dbConfigDraft !== null ? (
                         <div className="border-t border-zinc-800/20 px-3 py-1.5 bg-zinc-900/50">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-[9px] font-mono text-zinc-600 uppercase">Database Config (editable JSON)</span>
+                            <span className="text-[9px] font-mono text-zinc-600 uppercase">Database Config (editable JSON — overrides field-level settings)</span>
                           </div>
                           <textarea
                             value={dbConfigDraft}
                             onChange={(e) => setDbConfigDraft(e.target.value)}
                             spellCheck={false}
-                            className="w-full h-64 bg-[#0a0a0a] text-[11px] font-mono text-zinc-300 border border-zinc-800 p-2 outline-none focus:border-zinc-600 resize-y"
+                            className="w-full h-72 bg-[#0a0a0a] text-[11px] font-mono text-zinc-300 border border-zinc-800 p-2 outline-none focus:border-zinc-600 resize-y"
                           />
+                          {(() => {
+                            const ds = suggestDiskGb(script, scaleFactor);
+                            const actual = extractDbDiskGb(dbConfigDraft);
+                            if (actual === null) return null;
+                            const undersized = actual < ds.diskGb;
+                            return (
+                              <div className={`mt-2 text-[10px] font-mono ${undersized ? "text-amber-500" : "text-zinc-600"}`}>
+                                {undersized
+                                  ? `Preset DB disk ${actual} GB may be too small: ${ds.reason}. Bump disk_gb in the JSON above.`
+                                  : `DB disk ${actual} GB >= recommended ${ds.diskGb} GB (${ds.reason})`}
+                              </div>
+                            );
+                          })()}
                           {cfgEntries && Object.keys(cfgEntries).length > 0 && (
                             <div className="mt-2 space-y-0.5">
-                              <span className="text-[9px] font-mono text-zinc-600 uppercase">Effective Config</span>
+                              <span className="text-[9px] font-mono text-zinc-600 uppercase">Summary</span>
                               {Object.entries(cfgEntries).map(([k, v]) => (
                                 <EditableCfgRow key={k} k={k} v={v} groupKey={groupKey} onEdit={onEdit} />
                               ))}
