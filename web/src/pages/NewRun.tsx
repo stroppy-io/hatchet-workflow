@@ -1244,14 +1244,6 @@ function StepReview({
                               </div>
                             );
                           })()}
-                          {cfgEntries && Object.keys(cfgEntries).length > 0 && (
-                            <div className="mt-2 space-y-0.5">
-                              <span className="text-[9px] font-mono text-zinc-600 uppercase">Summary</span>
-                              {Object.entries(cfgEntries).map(([k, v]) => (
-                                <EditableCfgRow key={k} k={k} v={v} groupKey={groupKey} onEdit={onEdit} />
-                              ))}
-                            </div>
-                          )}
                         </div>
                       ) : groupKey === "benchmark" && stroppyConfigDraft !== null ? (
                         <div className="border-t border-zinc-800/20 px-3 py-1.5 bg-zinc-900/50">
