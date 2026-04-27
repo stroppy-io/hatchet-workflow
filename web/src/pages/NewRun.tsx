@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { startRun, validateRun, dryRun, listPresets, listPackages, probeScript, getStroppyVersions, getSettings } from "@/api/client";
+import { startRun, validateRun, dryRun, listPresets, listPackages, probeScript, getStroppyVersions, getStroppyCommits, getSettings, type StroppyCommit } from "@/api/client";
 import {
   ALL_DB_KINDS,
   type RunConfig,
@@ -732,6 +732,37 @@ function StepStroppy({
     setNoSteps(noSteps.includes(step) ? noSteps.filter((s) => s !== step) : [...noSteps, step]);
   };
 
+  // Mode is derived from current stroppyVersion value: commit:<sha> => "commit", else "release".
+  const isCommit = stroppyVersion.startsWith("commit:");
+  const [stroppyMode, setStroppyMode] = useState<"release" | "commit">(isCommit ? "commit" : "release");
+  const [stroppyCommits, setStroppyCommits] = useState<StroppyCommit[]>([]);
+  const [commitsLoading, setCommitsLoading] = useState(false);
+  const [commitsError, setCommitsError] = useState<string | null>(null);
+  const commitsLoaded = useRef(false);
+
+  const loadCommits = () => {
+    if (commitsLoaded.current) return;
+    commitsLoaded.current = true;
+    setCommitsLoading(true);
+    setCommitsError(null);
+    getStroppyCommits()
+      .then((cs) => setStroppyCommits(cs || []))
+      .catch((e) => setCommitsError(e?.message || "fetch failed"))
+      .finally(() => setCommitsLoading(false));
+  };
+
+  const switchMode = (m: "release" | "commit") => {
+    setStroppyMode(m);
+    if (m === "release" && isCommit) {
+      setStroppyVersion(stroppyVersions[0] || "4.1.0");
+    } else if (m === "commit" && !isCommit) {
+      loadCommits();
+      // value set when user picks a commit; keep current to avoid empty submit
+    }
+  };
+
+  const currentCommitSha = isCommit ? stroppyVersion.slice("commit:".length) : "";
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -739,29 +770,72 @@ function StepStroppy({
           <h2 className="text-sm font-semibold mb-1">Workload Settings</h2>
           <p className="text-xs text-zinc-500">Choose the benchmark script and tune execution parameters.</p>
         </div>
-        {/* Stroppy version selector — lazy loads from GitHub */}
+        {/* Stroppy binary source: release tag OR per-commit CI artifact */}
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-mono text-zinc-600">stroppy</span>
-          <select
-            value={stroppyVersion}
-            onChange={(e) => setStroppyVersion(e.target.value)}
-            onFocus={() => {
-              if (!versionsLoaded.current) {
-                versionsLoaded.current = true;
-                setVersionsLoading(true);
-                getStroppyVersions()
-                  .then((v) => { if (v.length > 0) setStroppyVersions(v); })
-                  .catch(() => {})
-                  .finally(() => setVersionsLoading(false));
-              }
-            }}
-            className="bg-zinc-900 border border-zinc-800 rounded px-2 py-0.5 text-[11px] font-mono text-zinc-300 outline-none focus:border-zinc-600"
-          >
-            {stroppyVersions.map((v) => (
-              <option key={v} value={v}>v{v}</option>
-            ))}
-            {versionsLoading && <option disabled>loading...</option>}
-          </select>
+          <div className="inline-flex border border-zinc-800 rounded overflow-hidden text-[10px] font-mono">
+            <button
+              type="button"
+              onClick={() => switchMode("release")}
+              className={`px-2 py-0.5 ${stroppyMode === "release" ? "bg-zinc-700 text-zinc-100" : "bg-zinc-900 text-zinc-500 hover:text-zinc-300"}`}
+            >release</button>
+            <button
+              type="button"
+              onClick={() => switchMode("commit")}
+              className={`px-2 py-0.5 border-l border-zinc-800 ${stroppyMode === "commit" ? "bg-zinc-700 text-zinc-100" : "bg-zinc-900 text-zinc-500 hover:text-zinc-300"}`}
+            >commit</button>
+          </div>
+          {stroppyMode === "release" ? (
+            <select
+              value={isCommit ? "" : stroppyVersion}
+              onChange={(e) => setStroppyVersion(e.target.value)}
+              onFocus={() => {
+                if (!versionsLoaded.current) {
+                  versionsLoaded.current = true;
+                  setVersionsLoading(true);
+                  getStroppyVersions()
+                    .then((v) => { if (v.length > 0) setStroppyVersions(v); })
+                    .catch(() => {})
+                    .finally(() => setVersionsLoading(false));
+                }
+              }}
+              className="bg-zinc-900 border border-zinc-800 rounded px-2 py-0.5 text-[11px] font-mono text-zinc-300 outline-none focus:border-zinc-600"
+            >
+              {stroppyVersions.map((v) => (
+                <option key={v} value={v}>v{v}</option>
+              ))}
+              {versionsLoading && <option disabled>loading...</option>}
+            </select>
+          ) : (
+            <>
+              <input
+                list="stroppy-commits-list"
+                value={currentCommitSha}
+                placeholder={commitsLoading ? "loading…" : "short SHA (7+ hex)"}
+                onChange={(e) => {
+                  // Accept full or short SHA; trim to 7 chars (matches `nightly-<short>` tag).
+                  const raw = e.target.value.trim().toLowerCase();
+                  const sha = raw.slice(0, 40).replace(/[^0-9a-f]/g, "");
+                  setStroppyVersion(sha ? `commit:${sha.slice(0, 7)}` : "");
+                }}
+                onFocus={loadCommits}
+                spellCheck={false}
+                className="bg-zinc-900 border border-zinc-800 rounded px-2 py-0.5 text-[11px] font-mono text-zinc-300 outline-none focus:border-zinc-600 w-[280px]"
+                title={commitsError || "Enter commit SHA or pick from recent builds"}
+              />
+              <datalist id="stroppy-commits-list">
+                {stroppyCommits.map((c) => {
+                  const label = c.name && c.name !== c.tag ? c.name : c.tag;
+                  return (
+                    <option key={c.short} value={c.short}>{label.slice(0, 60)}</option>
+                  );
+                })}
+              </datalist>
+              {commitsError && (
+                <span className="text-[10px] font-mono text-red-400" title={commitsError}>err</span>
+              )}
+            </>
+          )}
         </div>
       </div>
 

@@ -1042,11 +1042,6 @@ func (e *Executor) configMonitor(ctx context.Context, cmd Command) error {
 // ---------------------------------------------------------------------------
 
 func (e *Executor) installStroppy(ctx context.Context, cmd Command) error {
-	// Skip if pre-installed in agent image.
-	if _, err := e.shell(ctx, "which stroppy"); err == nil {
-		return nil
-	}
-
 	var cfg StroppyInstallConfig
 	if err := parseConfig(cmd, &cfg); err != nil {
 		return err
@@ -1057,8 +1052,37 @@ func (e *Executor) installStroppy(ctx context.Context, cmd Command) error {
 		version = types.DefaultStroppySettings().Version
 	}
 
-	dlURL := fmt.Sprintf("https://github.com/stroppy-io/stroppy/releases/download/v%s/stroppy_linux_amd64.tar.gz", version)
+	// For released versions the pre-installed image binary is acceptable.
+	// Commit-pinned requests must always reinstall to honour the exact SHA.
+	if !strings.HasPrefix(version, "commit:") {
+		if _, err := e.shell(ctx, "which stroppy"); err == nil {
+			return nil
+		}
+	}
 
+	// Commit-pinned: download raw binary directly from the per-commit pre-release
+	// (tag `nightly-<short_sha>` published by stroppy-io/stroppy CI).
+	if sha, ok := strings.CutPrefix(version, "commit:"); ok {
+		short := sha
+		if len(short) > 7 {
+			short = short[:7]
+		}
+		dlURL := fmt.Sprintf(
+			"https://github.com/stroppy-io/stroppy/releases/download/nightly-%s/stroppy",
+			short,
+		)
+		script := fmt.Sprintf(
+			`curl -fsSL "%s" -o /usr/local/bin/stroppy && chmod +x /usr/local/bin/stroppy`,
+			dlURL,
+		)
+		if _, err := e.shell(ctx, script); err != nil {
+			return fmt.Errorf("install stroppy commit %s: %w", short, err)
+		}
+		return nil
+	}
+
+	// Released version: tarball from GitHub releases.
+	dlURL := fmt.Sprintf("https://github.com/stroppy-io/stroppy/releases/download/v%s/stroppy_linux_amd64.tar.gz", version)
 	script := fmt.Sprintf(
 		`curl -fsSL "%s" -o /tmp/stroppy.tar.gz && `+
 			`tar xzf /tmp/stroppy.tar.gz -C /tmp && `+

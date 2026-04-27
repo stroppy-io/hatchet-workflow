@@ -298,6 +298,18 @@ export async function getStroppyVersions(): Promise<string[]> {
   return request(`${API_BASE}/stroppy-versions`);
 }
 
+export interface StroppyCommit {
+  short: string;
+  tag: string;
+  name?: string;
+  download_url: string;
+  published_at: string;
+}
+
+export async function getStroppyCommits(): Promise<StroppyCommit[]> {
+  return request(`${API_BASE}/stroppy-commits`);
+}
+
 export async function cancelRun(
   runID: string
 ): Promise<{ status: string }> {

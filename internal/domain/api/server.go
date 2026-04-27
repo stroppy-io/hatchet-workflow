@@ -59,14 +59,19 @@ type Server struct {
 	agents   map[string]agent.Target
 
 	// runCancels tracks cancel functions for running DAG executions.
-	runCancelsMu  sync.Mutex
-	runCancels    map[string]context.CancelFunc
-	runTenants    map[string]string // runID → tenantID for concurrent run counting
+	runCancelsMu sync.Mutex
+	runCancels   map[string]context.CancelFunc
+	runTenants   map[string]string // runID → tenantID for concurrent run counting
 
 	// stroppyVersionsCache caches GitHub releases to avoid rate limits.
 	stroppyVersionsMu    sync.Mutex
 	stroppyVersionsCache []string
 	stroppyVersionsAt    time.Time
+
+	// stroppyCommitsCache caches per-commit pre-releases (5min).
+	stroppyCommitsMu    sync.Mutex
+	stroppyCommitsCache []StroppyCommit
+	stroppyCommitsAt    time.Time
 
 	// cancelledRuns tracks runs that were explicitly cancelled by the user.
 	cancelledRuns map[string]bool
@@ -193,6 +198,7 @@ func (s *Server) Router() http.Handler {
 		r.Get("/run/{runID}/metrics", s.runMetrics)
 		r.Get("/compare", s.compareRuns)
 		r.Get("/stroppy-versions", s.stroppyVersions)
+		r.Get("/stroppy-commits", s.stroppyCommits)
 		r.Get("/presets", s.listPresetsTenant)
 		r.Get("/presets/{id}", s.getPreset)
 		r.Get("/settings", s.getSettings)
@@ -1006,6 +1012,121 @@ func (s *Server) serveBinary(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", "attachment; filename=stroppy-agent")
 	http.ServeFile(w, r, binPath)
+}
+
+// ============================================================
+// Stroppy commit binaries via per-commit pre-releases (nightly-{short_sha})
+// ============================================================
+//
+// Workflow on stroppy-io/stroppy CI publishes a pre-release tagged
+// `nightly-<short_sha>` with a single asset `stroppy` (raw linux/amd64 binary)
+// per push to main. Anonymous downloads work directly from
+// https://github.com/stroppy-io/stroppy/releases/download/nightly-<short>/stroppy
+// so the agent fetches them without going through this server.
+
+const (
+	stroppyRepoOwner  = "stroppy-io"
+	stroppyRepoName   = "stroppy"
+	stroppyNightlyPfx = "nightly-"
+	stroppyNightlyBin = "stroppy"
+)
+
+// StroppyCommit describes a per-commit pre-release available for download.
+type StroppyCommit struct {
+	Short       string    `json:"short"`          // 7-char SHA (the suffix after "nightly-")
+	Tag         string    `json:"tag"`            // full release tag (e.g. "nightly-abc1234")
+	Name        string    `json:"name,omitempty"` // release name if set
+	DownloadURL string    `json:"download_url"`   // anonymous direct asset URL
+	PublishedAt time.Time `json:"published_at"`
+}
+
+// stroppyCommits returns recent per-commit pre-releases (cached 5min).
+func (s *Server) stroppyCommits(w http.ResponseWriter, r *http.Request) {
+	s.stroppyCommitsMu.Lock()
+	if time.Since(s.stroppyCommitsAt) < 5*time.Minute && len(s.stroppyCommitsCache) > 0 {
+		cached := s.stroppyCommitsCache
+		s.stroppyCommitsMu.Unlock()
+		writeJSON(w, http.StatusOK, cached)
+		return
+	}
+	s.stroppyCommitsMu.Unlock()
+
+	commits, err := s.fetchStroppyCommits(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error()})
+		return
+	}
+
+	s.stroppyCommitsMu.Lock()
+	s.stroppyCommitsCache = commits
+	s.stroppyCommitsAt = time.Now()
+	s.stroppyCommitsMu.Unlock()
+
+	writeJSON(w, http.StatusOK, commits)
+}
+
+// fetchStroppyCommits queries the public releases endpoint and filters
+// pre-releases tagged `nightly-<short_sha>`.
+func (s *Server) fetchStroppyCommits(ctx context.Context) ([]StroppyCommit, error) {
+	listURL := fmt.Sprintf(
+		"https://api.github.com/repos/%s/%s/releases?per_page=50",
+		stroppyRepoOwner, stroppyRepoName,
+	)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, listURL, nil)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("github releases: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("github releases %d: %s", resp.StatusCode, string(body))
+	}
+
+	var releases []struct {
+		TagName     string    `json:"tag_name"`
+		Name        string    `json:"name"`
+		Draft       bool      `json:"draft"`
+		Prerelease  bool      `json:"prerelease"`
+		PublishedAt time.Time `json:"published_at"`
+		Assets      []struct {
+			Name               string `json:"name"`
+			BrowserDownloadURL string `json:"browser_download_url"`
+		} `json:"assets"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
+		return nil, fmt.Errorf("github releases parse: %w", err)
+	}
+
+	out := make([]StroppyCommit, 0, len(releases))
+	for _, rel := range releases {
+		if rel.Draft || !rel.Prerelease {
+			continue
+		}
+		if !strings.HasPrefix(rel.TagName, stroppyNightlyPfx) {
+			continue
+		}
+		short := strings.TrimPrefix(rel.TagName, stroppyNightlyPfx)
+		var dlURL string
+		for _, a := range rel.Assets {
+			if a.Name == stroppyNightlyBin {
+				dlURL = a.BrowserDownloadURL
+				break
+			}
+		}
+		if dlURL == "" {
+			continue
+		}
+		out = append(out, StroppyCommit{
+			Short:       short,
+			Tag:         rel.TagName,
+			Name:        rel.Name,
+			DownloadURL: dlURL,
+			PublishedAt: rel.PublishedAt,
+		})
+	}
+	return out, nil
 }
 
 // ============================================================
