@@ -149,26 +149,69 @@ func describePicodataPreset(p PicodataPreset) string {
 type YDBPreset string
 
 const (
-	YDBSingle  YDBPreset = "single"
-	YDBCluster YDBPreset = "cluster"
-	YDBScale   YDBPreset = "scale"
+	YDBSingle     YDBPreset = "single"
+	YDBUniversal3 YDBPreset = "universal-3"
+	YDBSplit33    YDBPreset = "split-3-3"
+	YDBSplit63    YDBPreset = "split-6-3"
+	YDBSplit36    YDBPreset = "split-3-6"
 )
+
+// All YDB nodes share the same flavor for now: 64 vCPU / 128 GB RAM, 50 GB
+// boot disk, plus a 500 GB raw block device on storage-role nodes that
+// becomes the YDB pdisk. Compute-only nodes don't get the secondary device.
+const (
+	ydbNodeCPUs       = 64
+	ydbNodeMemoryMB   = 131072 // 128 GiB
+	ydbNodeBootDiskGB = 50
+	ydbStoragePdiskGB = 500
+	ydbStorageDevice  = "ydb-data" // virtio device_name → /dev/disk/by-id/virtio-ydb-data
+)
+
+func ydbStorageNodes(count int) MachineSpec {
+	return MachineSpec{
+		Role: RoleDatabase, Count: count,
+		CPUs: ydbNodeCPUs, MemoryMB: ydbNodeMemoryMB, DiskGB: ydbNodeBootDiskGB,
+		SecondaryDisks: []SecondaryDisk{{
+			DeviceName: ydbStorageDevice,
+			SizeGB:     ydbStoragePdiskGB,
+			Type:       "network-ssd",
+		}},
+	}
+}
+
+func ydbDatabaseNodes(count int) *MachineSpec {
+	return &MachineSpec{
+		Role: RoleDatabase, Count: count,
+		CPUs: ydbNodeCPUs, MemoryMB: ydbNodeMemoryMB, DiskGB: ydbNodeBootDiskGB,
+	}
+}
 
 var YDBPresets = map[YDBPreset]YDBTopology{
 	YDBSingle: {
-		Storage:        MachineSpec{Role: RoleDatabase, Count: 1, CPUs: 2, MemoryMB: 4096, DiskGB: 80},
+		Storage:        ydbStorageNodes(1),
 		FaultTolerance: "none",
 		DatabasePath:   "/Root/testdb",
 	},
-	YDBCluster: {
-		Storage:        MachineSpec{Role: RoleDatabase, Count: 3, CPUs: 4, MemoryMB: 8192, DiskGB: 100},
-		Database:       &MachineSpec{Role: RoleDatabase, Count: 3, CPUs: 4, MemoryMB: 8192, DiskGB: 50},
+	YDBUniversal3: {
+		Storage:        ydbStorageNodes(3),
 		FaultTolerance: "none",
 		DatabasePath:   "/Root/testdb",
 	},
-	YDBScale: {
-		Storage:        MachineSpec{Role: RoleDatabase, Count: 3, CPUs: 8, MemoryMB: 16384, DiskGB: 200},
-		Database:       &MachineSpec{Role: RoleDatabase, Count: 6, CPUs: 8, MemoryMB: 16384, DiskGB: 50},
+	YDBSplit33: {
+		Storage:        ydbStorageNodes(3),
+		Database:       ydbDatabaseNodes(3),
+		FaultTolerance: "none",
+		DatabasePath:   "/Root/testdb",
+	},
+	YDBSplit63: {
+		Storage:        ydbStorageNodes(6),
+		Database:       ydbDatabaseNodes(3),
+		FaultTolerance: "none",
+		DatabasePath:   "/Root/testdb",
+	},
+	YDBSplit36: {
+		Storage:        ydbStorageNodes(3),
+		Database:       ydbDatabaseNodes(6),
 		FaultTolerance: "none",
 		DatabasePath:   "/Root/testdb",
 	},
@@ -177,11 +220,15 @@ var YDBPresets = map[YDBPreset]YDBTopology{
 func describeYDBPreset(p YDBPreset) string {
 	switch p {
 	case YDBSingle:
-		return "Single-node YDB (combined storage+compute)"
-	case YDBCluster:
-		return "YDB cluster with 3 storage + 3 database nodes"
-	case YDBScale:
-		return "YDB scale cluster with 3 storage + 6 database nodes"
+		return "1 universal node (storage + compute on one box)"
+	case YDBUniversal3:
+		return "3 universal nodes (storage + compute on each)"
+	case YDBSplit33:
+		return "Split: 3 storage + 3 database nodes (6 total)"
+	case YDBSplit63:
+		return "Split: 6 storage + 3 database nodes — storage-heavy (9 total)"
+	case YDBSplit36:
+		return "Split: 3 storage + 6 database nodes — compute-heavy (9 total)"
 	default:
 		return string(p)
 	}
