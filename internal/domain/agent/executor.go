@@ -158,8 +158,15 @@ func (e *Executor) bootstrap(ctx context.Context) error {
 		if _, err := e.shell(ctx, `printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d && chmod +x /usr/sbin/policy-rc.d`); err != nil {
 			log.Printf("bootstrap: policy-rc.d setup failed (non-fatal): %v", err)
 		}
-		// Kill unattended-upgrades and wait for dpkg lock (Ubuntu auto-updates hold the lock on fresh VMs).
-		e.shell(ctx, `systemctl stop unattended-upgrades 2>/dev/null; systemctl disable unattended-upgrades 2>/dev/null; killall -9 unattended-upgr 2>/dev/null; for i in $(seq 1 60); do fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break; sleep 2; done`)
+		// Make apt itself wait for the lock — fixes the unattended-upgrades
+		// race on fresh Ubuntu VMs where killing the launcher process leaves
+		// its apt-get child holding /var/lib/dpkg/lock-frontend. Available
+		// in apt >= 1.9.11 (Ubuntu 20.04+); ignored on older releases.
+		e.shell(ctx, `printf 'DPkg::Lock::Timeout "600";\n' > /etc/apt/apt.conf.d/99stroppy-lock-timeout`)
+		// Best-effort: stop & mask unattended-upgrades, then kill anything
+		// holding apt/dpkg locks (fuser -k matches the actual lock holder,
+		// unlike killall which only sees the launcher process name).
+		e.shell(ctx, `systemctl stop unattended-upgrades 2>/dev/null; systemctl mask unattended-upgrades 2>/dev/null; for f in /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock; do fuser -k "$f" 2>/dev/null; done; for i in $(seq 1 30); do fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break; sleep 2; done`)
 
 		_, err := e.shellWithAptLock(ctx, "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "+
 			"curl wget ca-certificates gnupg lsb-release sudo tar gzip python3-pip")
