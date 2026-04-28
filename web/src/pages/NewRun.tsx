@@ -21,6 +21,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
 import {
   Check,
@@ -718,6 +719,80 @@ function extractDbDiskGb(dbCfgJSON: string): number | null {
 }
 
 // Suggest optimal stroppy machine based on VUs and pool size.
+// StroppyVersionCombo is a free-text input + chevron-button popover.
+// HTML's <datalist> filters its options against the input value, which makes
+// the dropdown disappear the moment the field has any prefilled text — wrong
+// UX for "pick a release or type your own". This always shows everything.
+function StroppyVersionCombo({
+  value,
+  onChange,
+  versions,
+  setVersions,
+  loading,
+  setLoading,
+  versionsLoaded,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  versions: string[];
+  setVersions: (v: string[]) => void;
+  loading: boolean;
+  setLoading: (v: boolean) => void;
+  versionsLoaded: React.MutableRefObject<boolean>;
+}) {
+  const [open, setOpen] = useState(false);
+  const ensureLoaded = () => {
+    if (!versionsLoaded.current) {
+      versionsLoaded.current = true;
+      setLoading(true);
+      getStroppyVersions()
+        .then((v) => { if (v.length > 0) setVersions(v); })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    }
+  };
+  return (
+    <div className="flex items-stretch border border-zinc-800 rounded bg-zinc-900 focus-within:border-zinc-600 overflow-hidden">
+      <input
+        type="text"
+        autoComplete="off"
+        value={value}
+        placeholder={loading ? "loading…" : "5.0.0rc3"}
+        onChange={(e) => onChange(e.target.value.trim())}
+        spellCheck={false}
+        className="bg-transparent px-2 py-0.5 text-[11px] font-mono text-zinc-300 outline-none w-[120px]"
+        title="Pick a known release or type a version tag"
+      />
+      <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) ensureLoaded(); }}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="px-1.5 border-l border-zinc-800 text-zinc-500 hover:text-zinc-300 flex items-center"
+            aria-label="Show known releases"
+          >
+            <ChevronDown className="h-3 w-3" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-44 p-0 bg-zinc-950 border-zinc-800 max-h-[280px] overflow-y-auto">
+          {loading && versions.length === 0 && (
+            <div className="px-3 py-2 text-[11px] font-mono text-zinc-500">loading…</div>
+          )}
+          {versions.map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => { onChange(v); setOpen(false); }}
+              className={`w-full text-left px-3 py-1.5 text-[11px] font-mono hover:bg-zinc-900 transition-colors ${v === value ? "text-primary" : "text-zinc-300"}`}
+            >
+              v{v}
+            </button>
+          ))}
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
 function suggestStroppyMachine(vus: number, poolSize: number): { cpus: number; memory: number; disk: number; reason: string } {
   // Rule of thumb: 1 vCPU per ~20 VUs, min 2. Snap to valid platform steps.
   const rawCpus = Math.max(2, Math.min(96, Math.ceil(vus / 20) * 2));
@@ -846,34 +921,20 @@ function StepStroppy({
             >commit</button>
           </div>
           {stroppyMode === "release" ? (
-            // Combo input: pick from known releases or type a version not in
-            // the list (e.g. a freshly-cut tag the cache hasn't picked up).
-            <>
-              <input
-                list="stroppy-versions-list"
-                value={isCommit ? "" : stroppyVersion}
-                placeholder={versionsLoading ? "loading…" : "5.0.0rc3"}
-                onChange={(e) => setStroppyVersion(e.target.value.trim())}
-                onFocus={() => {
-                  if (!versionsLoaded.current) {
-                    versionsLoaded.current = true;
-                    setVersionsLoading(true);
-                    getStroppyVersions()
-                      .then((v) => { if (v.length > 0) setStroppyVersions(v); })
-                      .catch(() => {})
-                      .finally(() => setVersionsLoading(false));
-                  }
-                }}
-                spellCheck={false}
-                className="bg-zinc-900 border border-zinc-800 rounded px-2 py-0.5 text-[11px] font-mono text-zinc-300 outline-none focus:border-zinc-600 w-[140px]"
-                title="Pick a known release or type a version tag"
-              />
-              <datalist id="stroppy-versions-list">
-                {stroppyVersions.map((v) => (
-                  <option key={v} value={v}>v{v}</option>
-                ))}
-              </datalist>
-            </>
+            // Free-text input + chevron button that opens a popover with the
+            // full version list. Built from scratch instead of a <datalist>
+            // because <datalist> filters its options against the current
+            // input value — a prefilled "4.1.0" would hide every release
+            // that doesn't match. The popover always shows everything.
+            <StroppyVersionCombo
+              value={isCommit ? "" : stroppyVersion}
+              onChange={setStroppyVersion}
+              versions={stroppyVersions}
+              setVersions={setStroppyVersions}
+              loading={versionsLoading}
+              setLoading={setVersionsLoading}
+              versionsLoaded={versionsLoaded}
+            />
           ) : (
             <>
               <input
