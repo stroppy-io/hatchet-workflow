@@ -114,9 +114,13 @@ export function NewRun() {
   const [version, setVersion] = useState(rc?.database?.version || DB_VERSIONS[kind][0]);
   const [script, setScript] = useState(rcS?.script || rcS?.workload || "tpcc/procs");
   const [duration, setDuration] = useState(rcS?.duration || "5m");
-  const [vus, setVus] = useState(rcS?.vus || rcS?.vus_scale || 10);
-  const [poolSize, setPoolSize] = useState(rcS?.pool_size || 100);
-  const [scaleFactor, setScaleFactor] = useState(rcS?.scale_factor || 1);
+  // TPC-C-tuned defaults: scale 500 warehouses, 300 VUs, 200-conn pool. The
+  // workload is OLTP-heavy enough that the smaller previous defaults
+  // (10/100/1) produced runs that finished before any meaningful state was
+  // built up. Overridden by rcS.* on rerun.
+  const [vus, setVus] = useState(rcS?.vus || rcS?.vus_scale || 300);
+  const [poolSize, setPoolSize] = useState(rcS?.pool_size || 200);
+  const [scaleFactor, setScaleFactor] = useState(rcS?.scale_factor || 500);
   const [stroppyVersion, setStroppyVersion] = useState(rcS?.version || "4.1.0");
   const [stroppyVersions, setStroppyVersions] = useState<string[]>([rcS?.version || "4.1.0"]);
   const [versionsLoading, setVersionsLoading] = useState(false);
@@ -125,12 +129,13 @@ export function NewRun() {
   const [availableSteps, setAvailableSteps] = useState<string[]>([]);
   const [selectedSteps, setSelectedSteps] = useState<string[]>(rcS?.steps || []);
   const [noSteps, setNoSteps] = useState<string[]>(rcS?.no_steps || []);
-  // Stroppy runner sizing — preset-derived defaults from suggestStroppyMachine()
-  // for the rerun's vus/pool, or rerun's stroppy.machine if explicitly set.
-  const stroppyDefault = suggestStroppyMachine(rcS?.vus || rcS?.vus_scale || 10, rcS?.pool_size || 100);
-  const [stroppyCpus, setStroppyCpus] = useState(rcSM?.cpus || stroppyDefault.cpus);
-  const [stroppyMemory, setStroppyMemory] = useState(rcSM?.memory_mb || stroppyDefault.memory);
-  const [stroppyDisk, setStroppyDisk] = useState(rcSM?.disk_gb || stroppyDefault.disk);
+  // Stroppy runner sizing — defaults to 32 vCPU / 64 GB / 100 GB, sized for
+  // the new TPC-C defaults (300 VUs, pool 200). Overridden by rcSM.* on
+  // rerun. The suggestStroppyMachine() helper is still used as a live hint
+  // in StepStroppy when the user adjusts VUs/pool.
+  const [stroppyCpus, setStroppyCpus] = useState(rcSM?.cpus || 32);
+  const [stroppyMemory, setStroppyMemory] = useState(rcSM?.memory_mb || 65536);
+  const [stroppyDisk, setStroppyDisk] = useState(rcSM?.disk_gb || 100);
   const [stroppyDiskType, setStroppyDiskType] = useState(rcSM?.disk_type || "network-ssd");
   const [packageId, setPackageId] = useState(rc?.package_id || "");
   const [availablePackages, setAvailablePackages] = useState<Package[]>([]);
