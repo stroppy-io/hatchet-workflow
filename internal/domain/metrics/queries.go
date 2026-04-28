@@ -106,36 +106,44 @@ func mysqlMetrics() []MetricDef {
 }
 
 func ydbMetrics() []MetricDef {
+	// Metric names use the `<counter-group>_` prefix added by the vmagent
+	// metric_relabel_config that mirrors the official ydb-platform Helm chart.
 	return []MetricDef{
 		{
 			Name:  "DB gRPC Requests/s",
 			Key:   "db_qps",
-			Query: `sum(rate(total{%s}[5m]))`,
+			Query: `sum(rate(ydb_api_grpc_request_count{%s}[5m]))`,
 			Unit:  "req/s",
 		},
 		{
 			Name:  "DB gRPC Errors/s",
 			Key:   "db_errors",
-			Query: `sum(rate(notOkRequest{%s}[5m]))`,
+			Query: `sum(rate(ydb_api_grpc_response_count{status!="SUCCESS",%s}[5m]))`,
 			Unit:  "err/s",
 		},
 		{
-			Name:  "DB gRPC Inflight",
+			Name:  "DB Active Sessions",
 			Key:   "db_sessions",
-			Query: `sum(infly{%s})`,
+			Query: `sum(kqp_SessionActors_Active{%s})`,
 			Unit:  "",
 		},
 		{
-			Name:  "DB gRPC Latency p99",
+			Name:  "DB Query Latency p99",
 			Key:   "db_latency_p99",
-			Query: `histogram_quantile(0.99, sum by (le) (rate(LatencyMs_bucket{%s}[5m])))`,
+			Query: `histogram_quantile(0.99, sum by (le) (rate(ydb_table_query_execution_latency_milliseconds_bucket{%s}[5m])))`,
 			Unit:  "ms",
 		},
 		{
-			Name:  "DB Tablet Count",
-			Key:   "db_tablets",
-			Query: `sum(ydb_tablets_count{%s})`,
-			Unit:  "",
+			Name:  "DB CPU Used (cores %)",
+			Key:   "db_cpu",
+			Query: `sum(ydb_resources_cpu_used_core_percents{%s})`,
+			Unit:  "%",
+		},
+		{
+			Name:  "DB Storage Used",
+			Key:   "db_storage",
+			Query: `sum(ydb_resources_storage_used_bytes{%s})`,
+			Unit:  "bytes",
 		},
 	}
 }

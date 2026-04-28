@@ -945,21 +945,66 @@ func (e *Executor) configMonitor(ctx context.Context, cmd Command) error {
 			case "picodata":
 				confBuf.WriteString("  - job_name: picodata\n    static_configs:\n      - targets: ['localhost:8081']\n    metrics_path: /metrics\n")
 			case "ydb":
-				// YDB metrics are split by service group. Scrape grpc (request stats) + tablets from both
-				// static (:8765) and dynamic (:8766) nodes.
-				for _, group := range []struct{ name, port string }{
-					{"ydb_grpc_static", "8765"},
-					{"ydb_grpc_dynamic", "8766"},
-					{"ydb_tablets_static", "8765"},
-					{"ydb_kqp_dynamic", "8766"},
+				// YDB exposes counters at /counters/counters=<group>/prometheus. Metric names are
+				// returned WITHOUT a group prefix (e.g. `DataShard_RowReads`), but the official
+				// ydb-platform Grafana dashboards expect them prefixed (`tablets_DataShard_RowReads`).
+				// Mirror the upstream Helm chart behaviour: scrape every counter group from both
+				// static (:8765) and dynamic (:8766) nodes and prepend `<group>_` to __name__ via
+				// metric_relabel_configs.
+				type ydbCounter struct {
+					name string // counter group identifier and metric prefix
+					path string // optional custom metrics_path (default /counters/counters=<name>/prometheus)
+					role string // "static", "dynamic", or "" for both
+				}
+				ydbCounters := []ydbCounter{
+					{name: "ydb", path: "/counters/counters=ydb/name_label=name/prometheus"},
+					{name: "auth"},
+					{name: "coordinator"},
+					{name: "dsproxy"},
+					{name: "dsproxy_queue"},
+					{name: "dsproxy_percentile"},
+					{name: "dsproxy_mon"},
+					{name: "dsproxynode"},
+					{name: "followers"},
+					{name: "grpc"},
+					{name: "interconnect"},
+					{name: "kqp", role: "dynamic"},
+					{name: "pdisks", role: "static"},
+					{name: "processing"},
+					{name: "proxy"},
+					{name: "storage_pool_stat"},
+					{name: "tablets"},
+					{name: "utils"},
+					{name: "vdisks", role: "static"},
+				}
+				for _, role := range []struct{ name, port, container string }{
+					{"static", "8765", "ydb-static"},
+					{"dynamic", "8766", "ydb-dynamic"},
 				} {
-					metricsPath := "/counters/counters=grpc/prometheus"
-					if strings.Contains(group.name, "tablets") {
-						metricsPath = "/counters/counters=tablets/prometheus"
-					} else if strings.Contains(group.name, "kqp") {
-						metricsPath = "/counters/counters=kqp/prometheus"
+					for _, c := range ydbCounters {
+						if c.role != "" && c.role != role.name {
+							continue
+						}
+						path := c.path
+						if path == "" {
+							path = fmt.Sprintf("/counters/counters=%s/prometheus", c.name)
+						}
+						fmt.Fprintf(&confBuf,
+							"  - job_name: ydb_%s_%s\n"+
+								"    metrics_path: %s\n"+
+								"    static_configs:\n"+
+								"    - targets: ['localhost:%s']\n"+
+								"      labels:\n"+
+								"        container: %s\n"+
+								"        counter: %s\n"+
+								"    metric_relabel_configs:\n"+
+								"    - source_labels: [__name__]\n"+
+								"      regex: (.*)\n"+
+								"      target_label: __name__\n"+
+								"      replacement: %s_$1\n",
+							c.name, role.name, path, role.port, role.container, c.name, c.name,
+						)
 					}
-					fmt.Fprintf(&confBuf, "  - job_name: %s\n    metrics_path: %s\n    static_configs:\n    - targets: ['localhost:%s']\n", group.name, metricsPath, group.port)
 				}
 			}
 		}

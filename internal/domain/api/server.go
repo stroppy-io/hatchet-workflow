@@ -107,7 +107,7 @@ func NewServer(app *App, logger *zap.Logger, pool *pgxpool.Pool, jwtSecret, moni
 			"postgres": "stroppy-postgres",
 			"mysql":    "stroppy-mysql",
 			"picodata": "stroppy-picodata",
-			"ydb":      "stroppy-ydb",
+			"ydb":      "ydb-essentials",
 			"stroppy":  "stroppy-metrics-v1",
 			"compare":  "stroppy-compare",
 		},
