@@ -91,7 +91,11 @@ func FillMachinesFromTopology(cfg *types.RunConfig) {
 			for _, r := range db.Postgres.Replicas {
 				dbCount += r.Count
 			}
-			cfg.Machines = append(cfg.Machines, types.MachineSpec{Role: types.RoleDatabase, Count: dbCount, CPUs: ovCPU(db.Postgres.Master.CPUs), MemoryMB: ovMem(db.Postgres.Master.MemoryMB), DiskGB: ovDisk(db.Postgres.Master.DiskGB)})
+			cfg.Machines = append(cfg.Machines, types.MachineSpec{
+				Role: types.RoleDatabase, Count: dbCount,
+				CPUs: ovCPU(db.Postgres.Master.CPUs), MemoryMB: ovMem(db.Postgres.Master.MemoryMB), DiskGB: ovDisk(db.Postgres.Master.DiskGB),
+				DiskType: db.Postgres.Master.DiskType, SecondaryDisks: db.Postgres.Master.SecondaryDisks,
+			})
 			if db.Postgres.HAProxy != nil {
 				cfg.Machines = append(cfg.Machines, *db.Postgres.HAProxy)
 			}
@@ -102,7 +106,11 @@ func FillMachinesFromTopology(cfg *types.RunConfig) {
 			for _, r := range db.MySQL.Replicas {
 				dbCount += r.Count
 			}
-			cfg.Machines = append(cfg.Machines, types.MachineSpec{Role: types.RoleDatabase, Count: dbCount, CPUs: ovCPU(db.MySQL.Primary.CPUs), MemoryMB: ovMem(db.MySQL.Primary.MemoryMB), DiskGB: ovDisk(db.MySQL.Primary.DiskGB)})
+			cfg.Machines = append(cfg.Machines, types.MachineSpec{
+				Role: types.RoleDatabase, Count: dbCount,
+				CPUs: ovCPU(db.MySQL.Primary.CPUs), MemoryMB: ovMem(db.MySQL.Primary.MemoryMB), DiskGB: ovDisk(db.MySQL.Primary.DiskGB),
+				DiskType: db.MySQL.Primary.DiskType, SecondaryDisks: db.MySQL.Primary.SecondaryDisks,
+			})
 			if db.MySQL.ProxySQL != nil {
 				cfg.Machines = append(cfg.Machines, *db.MySQL.ProxySQL)
 			}
@@ -110,7 +118,11 @@ func FillMachinesFromTopology(cfg *types.RunConfig) {
 	case types.DatabasePicodata:
 		if db.Picodata != nil {
 			for _, inst := range db.Picodata.Instances {
-				cfg.Machines = append(cfg.Machines, types.MachineSpec{Role: types.RoleDatabase, Count: inst.Count, CPUs: ovCPU(inst.CPUs), MemoryMB: ovMem(inst.MemoryMB), DiskGB: ovDisk(inst.DiskGB)})
+				cfg.Machines = append(cfg.Machines, types.MachineSpec{
+					Role: types.RoleDatabase, Count: inst.Count,
+					CPUs: ovCPU(inst.CPUs), MemoryMB: ovMem(inst.MemoryMB), DiskGB: ovDisk(inst.DiskGB),
+					DiskType: inst.DiskType, SecondaryDisks: inst.SecondaryDisks,
+				})
 			}
 			if db.Picodata.HAProxy != nil {
 				cfg.Machines = append(cfg.Machines, *db.Picodata.HAProxy)
@@ -139,6 +151,7 @@ func FillMachinesFromTopology(cfg *types.RunConfig) {
 			cfg.Machines = append(cfg.Machines, types.MachineSpec{
 				Role: types.RoleDatabase, Count: count,
 				CPUs: ovCPU(cpus), MemoryMB: ovMem(mem), DiskGB: ovDisk(disk),
+				DiskType: db.YDB.Storage.DiskType, SecondaryDisks: db.YDB.Storage.SecondaryDisks,
 			})
 			if db.YDB.HAProxy != nil {
 				cfg.Machines = append(cfg.Machines, *db.YDB.HAProxy)

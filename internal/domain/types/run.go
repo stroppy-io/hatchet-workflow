@@ -63,6 +63,19 @@ type MachineSpec struct {
 	MemoryMB int         `json:"memory_mb"`
 	DiskGB   int         `json:"disk_gb"`
 	DiskType string      `json:"disk_type,omitempty"`
+	// SecondaryDisks are extra block devices attached raw alongside the boot
+	// disk. Today only consumed by YDB (storage nodes point pdisk at the raw
+	// device when one is present). Other engines ignore the field.
+	SecondaryDisks []SecondaryDisk `json:"secondary_disks,omitempty"`
+}
+
+// SecondaryDisk is a raw block device attached to a VM in addition to its
+// boot disk. The agent identifies it by /dev/disk/by-id/virtio-<DeviceName>
+// inside the guest, so DeviceName must be unique per VM.
+type SecondaryDisk struct {
+	DeviceName string `json:"device_name"`     // stable name, surfaces as virtio-<name> in the guest
+	SizeGB     int    `json:"size_gb"`
+	Type       string `json:"type,omitempty"`  // network-ssd / network-ssd-nonreplicated / etc; defaults to network-ssd
 }
 
 // --- Database topologies ---

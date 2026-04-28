@@ -245,13 +245,22 @@ type yandexTfCompute struct {
 }
 
 type yandexTfVM struct {
-	Cores       int    `json:"cores"`
-	Memory      int    `json:"memory"`
-	DiskSize    int    `json:"disk_size"`
-	DiskType    string `json:"disk_type"`
-	InternalIP  string `json:"internal_ip"`
-	HasPublicIP bool   `json:"has_public_ip"`
-	UserData    string `json:"user_data"`
+	Cores          int                     `json:"cores"`
+	Memory         int                     `json:"memory"`
+	DiskSize       int                     `json:"disk_size"`
+	DiskType       string                  `json:"disk_type"`
+	InternalIP     string                  `json:"internal_ip"`
+	HasPublicIP    bool                    `json:"has_public_ip"`
+	UserData       string                  `json:"user_data"`
+	SecondaryDisks []yandexTfSecondaryDisk `json:"secondary_disks"`
+}
+
+// yandexTfSecondaryDisk mirrors the secondary_disks list element in the TF
+// compute schema. DeviceName surfaces in-guest as virtio-<DeviceName>.
+type yandexTfSecondaryDisk struct {
+	DeviceName string `json:"device_name"`
+	SizeGB     int    `json:"size_gb"`
+	Type       string `json:"type"`
 }
 
 // yandexVmIPs is the terraform output structure for vm_ips.
@@ -359,13 +368,30 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 				diskType = "network-ssd"
 			}
 
+			secondary := make([]yandexTfSecondaryDisk, 0, len(spec.SecondaryDisks))
+			for _, d := range spec.SecondaryDisks {
+				if d.DeviceName == "" || d.SizeGB <= 0 {
+					continue
+				}
+				dt := d.Type
+				if dt == "" {
+					dt = "network-ssd"
+				}
+				secondary = append(secondary, yandexTfSecondaryDisk{
+					DeviceName: d.DeviceName,
+					SizeGB:     d.SizeGB,
+					Type:       dt,
+				})
+			}
+
 			vmSpecs[machineID] = yandexTfVM{
-				Cores:       cores,
-				Memory:      memGB,
-				DiskSize:    diskGB,
-				DiskType:    diskType,
-				HasPublicIP: yc.AssignPublicIP,
-				UserData:    cloudInit,
+				Cores:          cores,
+				Memory:         memGB,
+				DiskSize:       diskGB,
+				DiskType:       diskType,
+				HasPublicIP:    yc.AssignPublicIP,
+				UserData:       cloudInit,
+				SecondaryDisks: secondary,
 			}
 			vmRoles[machineID] = spec.Role
 		}

@@ -51,6 +51,11 @@ func (t *ydbConfigTask) Execute(nc *dag.NodeContext) error {
 		ft = "none"
 	}
 
+	// When the storage spec attaches a secondary disk, point YDB's pdisk at
+	// the raw device. Yandex Cloud surfaces secondary disks at
+	// /dev/disk/by-id/virtio-<DeviceName>; we pick the first one.
+	blockDevicePath := firstBlockDevicePath(t.topology.Storage.SecondaryDisks)
+
 	// Start all static nodes in parallel — YDB needs all nodes up to form a cluster.
 	var wg sync.WaitGroup
 	errs := make([]error, len(targets))
@@ -60,16 +65,17 @@ func (t *ydbConfigTask) Execute(nc *dag.NodeContext) error {
 			advHost = target.Host
 		}
 		cfg := agent.YDBStaticConfig{
-			Hosts:          hosts,
-			InstanceID:     i,
-			AdvertiseHost:  advHost,
-			DiskPath:       "/ydb_data",
-			DiskGB:         t.topology.Storage.DiskGB,
-			MemoryMB:       t.topology.Storage.MemoryMB,
-			CPUs:           t.topology.Storage.CPUs,
-			FaultTolerance: ft,
-			Options:        t.topology.StorageOptions,
-			ConfOverride:   t.overrides["ydb.yaml:storage"],
+			Hosts:           hosts,
+			InstanceID:      i,
+			AdvertiseHost:   advHost,
+			DiskPath:        "/ydb_data",
+			BlockDevicePath: blockDevicePath,
+			DiskGB:          t.topology.Storage.DiskGB,
+			MemoryMB:        t.topology.Storage.MemoryMB,
+			CPUs:            t.topology.Storage.CPUs,
+			FaultTolerance:  ft,
+			Options:         t.topology.StorageOptions,
+			ConfOverride:    t.overrides["ydb.yaml:storage"],
 		}
 		wg.Add(1)
 		go func(idx int, tgt agent.Target, c agent.YDBStaticConfig) {
@@ -211,6 +217,7 @@ func (t *ydbStartDBTask) Execute(nc *dag.NodeContext) error {
 			CPUs:            cpus,
 			FaultTolerance:  ft,
 			StorageHosts:    staticHosts,
+			BlockDevicePath: firstBlockDevicePath(t.topology.Storage.SecondaryDisks),
 			Options:         t.topology.DatabaseOptions,
 			ConfOverride:    t.overrides["ydb.yaml:database"],
 		}
@@ -229,4 +236,16 @@ func (t *ydbStartDBTask) Execute(nc *dag.NodeContext) error {
 		}
 	}
 	return nil
+}
+
+// firstBlockDevicePath returns the in-guest device path for the first secondary
+// disk on a spec, or "" when there are none. Yandex Cloud surfaces secondary
+// disks at /dev/disk/by-id/virtio-<DeviceName>, so DeviceName must be set.
+func firstBlockDevicePath(disks []types.SecondaryDisk) string {
+	for _, d := range disks {
+		if d.DeviceName != "" {
+			return "/dev/disk/by-id/virtio-" + d.DeviceName
+		}
+	}
+	return ""
 }

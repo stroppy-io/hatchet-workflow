@@ -64,6 +64,29 @@ func TestRenderYDBDatabaseConf_NodeTypeCompute(t *testing.T) {
 	}
 }
 
+func TestRenderYDBStorageConf_RawBlockDevicePath(t *testing.T) {
+	out := RenderYDBStorageConf(RenderYDBConfOpts{
+		HostCount:       3,
+		MemoryMB:        4096,
+		BlockDevicePath: "/dev/disk/by-id/virtio-ydb-data",
+	})
+	// host_configs entry should reference the raw device, not the file-backed
+	// pdisk.data fallback.
+	if !strings.Contains(out, "path: /dev/disk/by-id/virtio-ydb-data\n") {
+		t.Errorf("expected raw-device path in host_configs:\n%s", out)
+	}
+	if strings.Contains(out, "pdisk.data") {
+		t.Errorf("file-backed pdisk path should not appear when BlockDevicePath is set:\n%s", out)
+	}
+}
+
+func TestRenderYDBStorageConf_FileBackedFallback(t *testing.T) {
+	out := RenderYDBStorageConf(RenderYDBConfOpts{HostCount: 1, MemoryMB: 1024})
+	if !strings.Contains(out, "path: /ydb_data/pdisk.data\n") {
+		t.Errorf("file-backed pdisk path expected when BlockDevicePath is empty:\n%s", out)
+	}
+}
+
 func TestSubstituteYDBHostPlaceholders(t *testing.T) {
 	body := RenderYDBStorageConf(RenderYDBConfOpts{HostCount: 2, MemoryMB: 1024})
 	got := SubstituteYDBHostPlaceholders(body, []string{"node-a.local", "node-b.local"})

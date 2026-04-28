@@ -131,12 +131,22 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 		if db.YDB == nil {
 			return out
 		}
+		// When the storage spec attaches a secondary disk, the agent will
+		// point YDB's pdisk at the raw device — render the preview to match.
+		ydbBlockDevice := ""
+		for _, d := range db.YDB.Storage.SecondaryDisks {
+			if d.DeviceName != "" {
+				ydbBlockDevice = "/dev/disk/by-id/virtio-" + d.DeviceName
+				break
+			}
+		}
 		put("ydb.yaml:storage", dbconfig.RenderYDBStorageConf(dbconfig.RenderYDBConfOpts{
-			HostCount:      db.YDB.Storage.Count,
-			DiskPath:       "/ydb_data",
-			CPUs:           db.YDB.Storage.CPUs,
-			MemoryMB:       db.YDB.Storage.MemoryMB,
-			FaultTolerance: db.YDB.FaultTolerance,
+			HostCount:       db.YDB.Storage.Count,
+			DiskPath:        "/ydb_data",
+			BlockDevicePath: ydbBlockDevice,
+			CPUs:            db.YDB.Storage.CPUs,
+			MemoryMB:        db.YDB.Storage.MemoryMB,
+			FaultTolerance:  db.YDB.FaultTolerance,
 		}))
 		// Database (dynamic) node config: separate file the agent writes to
 		// /opt/ydb/cfg/database.yaml. Same cluster topology as the storage
@@ -149,11 +159,12 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 			dbMem = db.YDB.Database.MemoryMB
 		}
 		put("ydb.yaml:database", dbconfig.RenderYDBDatabaseConf(dbconfig.RenderYDBDatabaseConfOpts{
-			HostCount:      db.YDB.Storage.Count,
-			DiskPath:       "/ydb_data",
-			CPUs:           dbCPUs,
-			MemoryMB:       dbMem,
-			FaultTolerance: db.YDB.FaultTolerance,
+			HostCount:       db.YDB.Storage.Count,
+			DiskPath:        "/ydb_data",
+			BlockDevicePath: ydbBlockDevice,
+			CPUs:            dbCPUs,
+			MemoryMB:        dbMem,
+			FaultTolerance:  db.YDB.FaultTolerance,
 		}))
 		if db.YDB.HAProxy != nil {
 			put("haproxy.cfg", dbconfig.RenderHAProxyConf(dbconfig.RenderHAProxyConfOpts{

@@ -1548,11 +1548,12 @@ func (e *Executor) configYDB(ctx context.Context, cmd Command) error {
 	body := cfg.ConfOverride
 	if body == "" {
 		body = dbconfig.RenderYDBStorageConf(dbconfig.RenderYDBConfOpts{
-			HostCount:      len(cfg.Hosts),
-			DiskPath:       diskPath,
-			CPUs:           cfg.CPUs,
-			MemoryMB:       memMB,
-			FaultTolerance: cfg.FaultTolerance,
+			HostCount:       len(cfg.Hosts),
+			DiskPath:        diskPath,
+			BlockDevicePath: cfg.BlockDevicePath,
+			CPUs:            cfg.CPUs,
+			MemoryMB:        memMB,
+			FaultTolerance:  cfg.FaultTolerance,
 		})
 	}
 	body = dbconfig.SubstituteYDBHostPlaceholders(body, cfg.Hosts)
@@ -1563,14 +1564,20 @@ func (e *Executor) configYDB(ctx context.Context, cmd Command) error {
 		return fmt.Errorf("write ydb config: %w", err)
 	}
 
-	// Prepare disk — size to actual allocation.
-	e.shell(ctx, fmt.Sprintf("mkdir -p %s && chown -R ydb:ydb %s", diskPath, diskPath))
-	e.shell(ctx, fmt.Sprintf(`test -f %s/pdisk.data || truncate -s %dG %s/pdisk.data`, diskPath, pdiskGB, diskPath))
-	e.shell(ctx, fmt.Sprintf("chown ydb:ydb %s/pdisk.data", diskPath))
+	// Prepare pdisk. With a raw block device we point YDB at the device
+	// directly — no filesystem, no /ydb_data dir. Without one, fall back to
+	// the file-backed pdisk that's used in dev/Docker.
+	pdiskTarget := cfg.BlockDevicePath
+	if pdiskTarget == "" {
+		e.shell(ctx, fmt.Sprintf("mkdir -p %s && chown -R ydb:ydb %s", diskPath, diskPath))
+		e.shell(ctx, fmt.Sprintf(`test -f %s/pdisk.data || truncate -s %dG %s/pdisk.data`, diskPath, pdiskGB, diskPath))
+		e.shell(ctx, fmt.Sprintf("chown ydb:ydb %s/pdisk.data", diskPath))
+		pdiskTarget = diskPath + "/pdisk.data"
+	}
 
 	e.emitLine("preparing YDB disk...")
 	if _, err := e.shell(ctx, fmt.Sprintf(
-		"LD_LIBRARY_PATH=/opt/ydb/lib /opt/ydb/bin/ydbd admin bs disk obliterate %s/pdisk.data", diskPath)); err != nil {
+		"LD_LIBRARY_PATH=/opt/ydb/lib /opt/ydb/bin/ydbd admin bs disk obliterate %s", pdiskTarget)); err != nil {
 		return fmt.Errorf("obliterate disk: %w", err)
 	}
 
@@ -1667,11 +1674,12 @@ func (e *Executor) startYDBDB(ctx context.Context, cmd Command) error {
 	body := cfg.ConfOverride
 	if body == "" {
 		body = dbconfig.RenderYDBDatabaseConf(dbconfig.RenderYDBDatabaseConfOpts{
-			HostCount:      len(cfg.StorageHosts),
-			DiskPath:       "/ydb_data",
-			CPUs:           cfg.CPUs,
-			MemoryMB:       memMB,
-			FaultTolerance: cfg.FaultTolerance,
+			HostCount:       len(cfg.StorageHosts),
+			DiskPath:        "/ydb_data",
+			BlockDevicePath: cfg.BlockDevicePath,
+			CPUs:            cfg.CPUs,
+			MemoryMB:        memMB,
+			FaultTolerance:  cfg.FaultTolerance,
 		})
 	}
 	body = dbconfig.SubstituteYDBHostPlaceholders(body, cfg.StorageHosts)

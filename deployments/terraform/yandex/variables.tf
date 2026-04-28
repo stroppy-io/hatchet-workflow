@@ -40,6 +40,14 @@ variable "compute" {
       internal_ip   = string
       has_public_ip = bool
       user_data     = string
+      # Optional raw block devices attached alongside the boot disk. Each
+      # appears in-guest at /dev/disk/by-id/virtio-<device_name>. YDB storage
+      # uses this to put pdisk on a dedicated, unformatted device.
+      secondary_disks = optional(list(object({
+        device_name = string
+        size_gb     = number
+        type        = string
+      })), [])
     }))
   })
   default = {
