@@ -75,6 +75,20 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 				TotalMemoryMB: r.MemoryMB,
 			}))
 		}
+
+	case types.DatabasePicodata:
+		if db.Picodata == nil {
+			return out
+		}
+		spec := types.MachineSpec{}
+		if len(db.Picodata.Instances) > 0 {
+			spec = db.Picodata.Instances[0]
+		}
+		put("picodata.yaml", dbconfig.RenderPicodataConf(dbconfig.RenderPicodataConfOpts{
+			Replication:   db.Picodata.Replication,
+			Options:       db.Picodata.InstanceOptions,
+			TotalMemoryMB: spec.MemoryMB,
+		}))
 	}
 
 	return out

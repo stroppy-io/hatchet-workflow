@@ -273,7 +273,7 @@ func (b *builder) dbTasks() (install dag.Task, config dag.Task, err error) {
 			&mysqlConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.MySQL, overrides: db.RenderedConfigOverrides}, nil
 	case types.DatabasePicodata:
 		return &picoInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.Picodata, pkg: pkg},
-			&picoConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.Picodata}, nil
+			&picoConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.Picodata, overrides: db.RenderedConfigOverrides}, nil
 	case types.DatabaseYDB:
 		return &ydbInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.YDB, pkg: pkg},
 			&ydbConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.YDB}, nil

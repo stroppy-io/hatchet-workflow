@@ -30,9 +30,10 @@ func (t *picoInstallTask) Execute(nc *dag.NodeContext) error {
 }
 
 type picoConfigTask struct {
-	client   agent.Client
-	state    *State
-	topology *types.PicodataTopology
+	client    agent.Client
+	state     *State
+	topology  *types.PicodataTopology
+	overrides map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "picodata.yaml"
 }
 
 func (t *picoConfigTask) Execute(nc *dag.NodeContext) error {
@@ -56,13 +57,19 @@ func (t *picoConfigTask) Execute(nc *dag.NodeContext) error {
 		if advHost == "" {
 			advHost = target.Host
 		}
+		spec := types.MachineSpec{}
+		if len(t.topology.Instances) > 0 {
+			spec = t.topology.Instances[0]
+		}
 		cfg := agent.PicodataClusterConfig{
 			InstanceID:    i,
 			AdvertiseHost: advHost,
 			Peers:         peers,
 			Replication:   t.topology.Replication,
 			Shards:        t.topology.Shards,
+			MemoryMB:      spec.MemoryMB,
 			Options:       t.topology.InstanceOptions,
+			ConfOverride:  t.overrides["picodata.yaml"],
 		}
 		if err := t.client.Send(nc, target, agent.Command{Action: agent.ActionConfigPicodata, Config: cfg}); err != nil {
 			return err
