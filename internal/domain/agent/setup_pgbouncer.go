@@ -12,4 +12,5 @@ type PgBouncerConfig struct {
 	PGHost          string `json:"pg_host"`           // localhost (colocated)
 	PGPort          int    `json:"pg_port"`           // 5432
 	AuthType        string `json:"auth_type"`         // "trust" for testing
+	ConfOverride    string `json:"conf_override,omitempty"`
 }

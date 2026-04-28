@@ -32,10 +32,11 @@ func (t *patroniInstallTask) Execute(nc *dag.NodeContext) error {
 
 // patroniConfigTask configures Patroni on all DB nodes.
 type patroniConfigTask struct {
-	client   agent.Client
-	state    *State
-	version  string
-	topology *types.PostgresTopology
+	client    agent.Client
+	state     *State
+	version   string
+	topology  *types.PostgresTopology
+	overrides map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "patroni.yml"
 }
 
 func (t *patroniConfigTask) Execute(nc *dag.NodeContext) error {
@@ -70,14 +71,15 @@ func (t *patroniConfigTask) Execute(nc *dag.NodeContext) error {
 			host = target.Host
 		}
 		cfg := agent.PatroniClusterConfig{
-			Name:        "stroppy-pg",
-			NodeName:    fmt.Sprintf("pg%d", i),
-			PGVersion:   pgVersion,
-			ConnectAddr: host,
-			EtcdHosts:   etcdHosts,
-			SyncMode:    syncMode,
-			SyncCount:   t.topology.SyncReplicas,
-			PGOptions:   t.topology.MasterOptions,
+			Name:         "stroppy-pg",
+			NodeName:     fmt.Sprintf("pg%d", i),
+			PGVersion:    pgVersion,
+			ConnectAddr:  host,
+			EtcdHosts:    etcdHosts,
+			SyncMode:     syncMode,
+			SyncCount:    t.topology.SyncReplicas,
+			PGOptions:    t.topology.MasterOptions,
+			ConfOverride: t.overrides["patroni.yml"],
 		}
 		if err := t.client.Send(nc, target, agent.Command{
 			Action: agent.ActionConfigPatroni,

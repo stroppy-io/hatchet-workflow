@@ -47,6 +47,7 @@ type proxyConfigTask struct {
 	mysqlTopology *types.MySQLTopology
 	picoTopology  *types.PicodataTopology
 	ydbTopology   *types.YDBTopology
+	overrides     map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "haproxy.cfg"
 }
 
 func (t *proxyConfigTask) Execute(nc *dag.NodeContext) error {
@@ -92,12 +93,13 @@ func (t *proxyConfigTask) configHAProxyPostgres(nc *dag.NodeContext, proxyTarget
 	}
 
 	cfg := agent.HAProxyConfig{
-		DBKind:      "postgres",
-		WritePort:   5000,
-		ReadPort:    5001,
-		Backends:    backends,
-		HealthCheck: healthCheck,
-		PatroniPort: patroniPort,
+		DBKind:       "postgres",
+		WritePort:    5000,
+		ReadPort:     5001,
+		Backends:     backends,
+		HealthCheck:  healthCheck,
+		PatroniPort:  patroniPort,
+		ConfOverride: t.overrides["haproxy.cfg"],
 	}
 
 	return t.client.SendAll(nc, proxyTargets, agent.Command{
@@ -151,11 +153,12 @@ func (t *proxyConfigTask) configHAProxyPicodata(nc *dag.NodeContext, proxyTarget
 	}
 
 	cfg := agent.HAProxyConfig{
-		DBKind:      "picodata",
-		WritePort:   4327,
-		ReadPort:    4328,
-		Backends:    backends,
-		HealthCheck: "tcp",
+		DBKind:       "picodata",
+		WritePort:    4327,
+		ReadPort:     4328,
+		Backends:     backends,
+		HealthCheck:  "tcp",
+		ConfOverride: t.overrides["haproxy.cfg"],
 	}
 
 	return t.client.SendAll(nc, proxyTargets, agent.Command{
@@ -177,11 +180,12 @@ func (t *proxyConfigTask) configHAProxyYDB(nc *dag.NodeContext, proxyTargets, db
 	}
 
 	cfg := agent.HAProxyConfig{
-		DBKind:      "ydb",
-		WritePort:   2136,
-		ReadPort:    2137,
-		Backends:    backends,
-		HealthCheck: "tcp",
+		DBKind:       "ydb",
+		WritePort:    2136,
+		ReadPort:     2137,
+		Backends:     backends,
+		HealthCheck:  "tcp",
+		ConfOverride: t.overrides["haproxy.cfg"],
 	}
 
 	return t.client.SendAll(nc, proxyTargets, agent.Command{

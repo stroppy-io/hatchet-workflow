@@ -52,6 +52,36 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 		}
 		put("pg_hba.conf", dbconfig.PostgresPgHbaConf())
 
+		if db.Postgres.Patroni {
+			put("patroni.yml", dbconfig.RenderPatroniConf(dbconfig.RenderPatroniConfOpts{
+				PGVersion: db.Version,
+				SyncMode:  db.Postgres.SyncReplicas > 0,
+				SyncCount: db.Postgres.SyncReplicas,
+				PGOptions: db.Postgres.MasterOptions,
+			}))
+		}
+		if db.Postgres.PgBouncer {
+			put("pgbouncer.ini", dbconfig.RenderPgBouncerConf(dbconfig.RenderPgBouncerConfOpts{}))
+		}
+		if db.Postgres.HAProxy != nil {
+			healthCheck := "tcp"
+			patroniPort := 0
+			if db.Postgres.Patroni {
+				healthCheck = "patroni"
+				patroniPort = 8008
+			}
+			put("haproxy.cfg", dbconfig.RenderHAProxyConf(dbconfig.RenderHAProxyConfOpts{
+				WritePort:   5000,
+				ReadPort:    5001,
+				HealthCheck: healthCheck,
+				PatroniPort: patroniPort,
+				// Backends are zero-length here; the real list isn't known
+				// until provisioning. The user can still see and edit
+				// global/defaults/frontend sections; the backend lines come
+				// in once the run is live and submission re-enters dry-run.
+			}))
+		}
+
 	case types.DatabaseMySQL:
 		if db.MySQL == nil {
 			return out
@@ -89,6 +119,13 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 			Options:       db.Picodata.InstanceOptions,
 			TotalMemoryMB: spec.MemoryMB,
 		}))
+		if db.Picodata.HAProxy != nil {
+			put("haproxy.cfg", dbconfig.RenderHAProxyConf(dbconfig.RenderHAProxyConfOpts{
+				WritePort:   4327,
+				ReadPort:    4328,
+				HealthCheck: "tcp",
+			}))
+		}
 
 	case types.DatabaseYDB:
 		if db.YDB == nil {
@@ -101,6 +138,13 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 			MemoryMB:       db.YDB.Storage.MemoryMB,
 			FaultTolerance: db.YDB.FaultTolerance,
 		}))
+		if db.YDB.HAProxy != nil {
+			put("haproxy.cfg", dbconfig.RenderHAProxyConf(dbconfig.RenderHAProxyConfOpts{
+				WritePort:   2136,
+				ReadPort:    2137,
+				HealthCheck: "tcp",
+			}))
+		}
 	}
 
 	return out

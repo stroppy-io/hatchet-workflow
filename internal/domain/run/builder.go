@@ -105,10 +105,11 @@ func (b *builder) build() error {
 		patroniConfigDeps := append(append([]string{}, configDBDeps...), b.ph(types.PhaseInstallPatroni))
 		b.add(b.ph(types.PhaseConfigurePatroni), patroniConfigDeps,
 			&patroniConfigTask{
-				client:   b.deps.Client,
-				state:    b.deps.State,
-				version:  b.cfg.Database.Version,
-				topology: b.cfg.Database.Postgres,
+				client:    b.deps.Client,
+				state:     b.deps.State,
+				version:   b.cfg.Database.Version,
+				topology:  b.cfg.Database.Postgres,
+				overrides: b.cfg.Database.RenderedConfigOverrides,
 			})
 		// PhaseConfigureDB becomes a no-op that depends on Patroni configure.
 		b.add(b.ph(types.PhaseConfigureDB), []string{b.ph(types.PhaseConfigurePatroni)}, &noopTask{})
@@ -245,7 +246,7 @@ func (b *builder) addPgBouncer(afterMachines []string) {
 	b.add(b.ph(types.PhaseInstallPgBouncer), afterMachines,
 		&pgBouncerInstallTask{client: b.deps.Client, state: b.deps.State})
 	b.add(b.ph(types.PhaseConfigurePgBouncer), []string{b.ph(types.PhaseInstallPgBouncer), b.ph(types.PhaseConfigureDB)},
-		&pgBouncerConfigTask{client: b.deps.Client, state: b.deps.State, topology: b.cfg.Database.Postgres})
+		&pgBouncerConfigTask{client: b.deps.Client, state: b.deps.State, topology: b.cfg.Database.Postgres, overrides: b.cfg.Database.RenderedConfigOverrides})
 	b.runStroppyDeps = append(b.runStroppyDeps, b.ph(types.PhaseConfigurePgBouncer))
 }
 
@@ -255,7 +256,8 @@ func (b *builder) addProxy(afterMachines []string) {
 		&proxyInstallTask{client: b.deps.Client, state: b.deps.State, dbKind: b.cfg.Database.Kind})
 	b.add(b.ph(types.PhaseConfigureProxy), []string{b.ph(types.PhaseInstallProxy), b.ph(types.PhaseConfigureDB)},
 		&proxyConfigTask{client: b.deps.Client, state: b.deps.State, dbKind: b.cfg.Database.Kind,
-			pgTopology: b.cfg.Database.Postgres, mysqlTopology: b.cfg.Database.MySQL, picoTopology: b.cfg.Database.Picodata, ydbTopology: b.cfg.Database.YDB})
+			pgTopology: b.cfg.Database.Postgres, mysqlTopology: b.cfg.Database.MySQL, picoTopology: b.cfg.Database.Picodata, ydbTopology: b.cfg.Database.YDB,
+			overrides: b.cfg.Database.RenderedConfigOverrides})
 	b.runStroppyDeps = append(b.runStroppyDeps, b.ph(types.PhaseConfigureProxy))
 }
 

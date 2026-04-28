@@ -22,9 +22,10 @@ func (t *pgBouncerInstallTask) Execute(nc *dag.NodeContext) error {
 }
 
 type pgBouncerConfigTask struct {
-	client   agent.Client
-	state    *State
-	topology *types.PostgresTopology
+	client    agent.Client
+	state     *State
+	topology  *types.PostgresTopology
+	overrides map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "pgbouncer.ini"
 }
 
 func (t *pgBouncerConfigTask) Execute(nc *dag.NodeContext) error {
@@ -47,6 +48,7 @@ func (t *pgBouncerConfigTask) Execute(nc *dag.NodeContext) error {
 		PGHost:          "127.0.0.1",
 		PGPort:          5432,
 		AuthType:        authType,
+		ConfOverride:    t.overrides["pgbouncer.ini"],
 	}
 	return t.client.SendAll(nc, targets, agent.Command{
 		Action: agent.ActionConfigPgBouncer,
