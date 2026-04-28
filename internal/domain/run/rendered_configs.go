@@ -89,6 +89,18 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 			Options:       db.Picodata.InstanceOptions,
 			TotalMemoryMB: spec.MemoryMB,
 		}))
+
+	case types.DatabaseYDB:
+		if db.YDB == nil {
+			return out
+		}
+		put("ydb.yaml:storage", dbconfig.RenderYDBStorageConf(dbconfig.RenderYDBConfOpts{
+			HostCount:      db.YDB.Storage.Count,
+			DiskPath:       "/ydb_data",
+			CPUs:           db.YDB.Storage.CPUs,
+			MemoryMB:       db.YDB.Storage.MemoryMB,
+			FaultTolerance: db.YDB.FaultTolerance,
+		}))
 	}
 
 	return out

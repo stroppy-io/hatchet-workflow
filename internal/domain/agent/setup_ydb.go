@@ -16,6 +16,10 @@ type YDBStaticConfig struct {
 	CPUs           int               `json:"cpus"`      // vCPUs for actor system tuning
 	FaultTolerance string            `json:"fault_tolerance"`
 	Options        map[string]string `json:"options,omitempty"`
+	// ConfOverride, when non-empty, replaces the rendered YDB config.yaml
+	// body. The agent still substitutes __YDB_HOST_<i>__ placeholders with
+	// the entries of Hosts before writing the file.
+	ConfOverride string `json:"conf_override,omitempty"`
 }
 
 // YDBInitConfig is the agent payload for cluster initialization (runs on one static node).

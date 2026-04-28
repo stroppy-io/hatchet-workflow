@@ -276,7 +276,7 @@ func (b *builder) dbTasks() (install dag.Task, config dag.Task, err error) {
 			&picoConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.Picodata, overrides: db.RenderedConfigOverrides}, nil
 	case types.DatabaseYDB:
 		return &ydbInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.YDB, pkg: pkg},
-			&ydbConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.YDB}, nil
+			&ydbConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.YDB, overrides: db.RenderedConfigOverrides}, nil
 	default:
 		return nil, nil, fmt.Errorf("unsupported database kind %q", db.Kind)
 	}

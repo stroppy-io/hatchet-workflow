@@ -27,9 +27,10 @@ func (t *ydbInstallTask) Execute(nc *dag.NodeContext) error {
 }
 
 type ydbConfigTask struct {
-	client   agent.Client
-	state    *State
-	topology *types.YDBTopology
+	client    agent.Client
+	state     *State
+	topology  *types.YDBTopology
+	overrides map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "ydb.yaml:storage"
 }
 
 func (t *ydbConfigTask) Execute(nc *dag.NodeContext) error {
@@ -68,6 +69,7 @@ func (t *ydbConfigTask) Execute(nc *dag.NodeContext) error {
 			CPUs:           t.topology.Storage.CPUs,
 			FaultTolerance: ft,
 			Options:        t.topology.StorageOptions,
+			ConfOverride:   t.overrides["ydb.yaml:storage"],
 		}
 		wg.Add(1)
 		go func(idx int, tgt agent.Target, c agent.YDBStaticConfig) {
