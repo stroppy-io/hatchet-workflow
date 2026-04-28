@@ -196,23 +196,39 @@ func seedBuiltins(ctx context.Context, pool *pgxpool.Pool) error {
 			}
 		}
 
-		// Seed presets.
-		var presetCount int
-		_ = pool.QueryRow(ctx, "SELECT COUNT(*) FROM presets WHERE tenant_id = $1", tenantID).Scan(&presetCount)
-		if presetCount == 0 {
-			for _, bp := range types.BuiltinPresets() {
-				topoJSON, err := bp.TopologyJSON()
-				if err != nil {
-					continue
-				}
-				_, _ = pool.Exec(ctx,
-					`INSERT INTO presets (id, tenant_id, name, description, db_kind, topology, is_builtin)
-					 VALUES ($1, $2, $3, $4, $5, $6, TRUE)
-					 ON CONFLICT DO NOTHING`,
-					uuid.New().String(), tenantID, bp.Name, bp.Description,
-					bp.DbKind, topoJSON,
-				)
+		// Sync built-in presets every startup so renamed / reshaped presets
+		// from BuiltinPresets() show up without manual DB surgery.
+		//   - Insert new ones (ON CONFLICT refreshes existing builtins).
+		//   - User-created (is_builtin = FALSE) rows are never touched.
+		//   - Builtins that no longer exist in code are removed.
+		builtinsByKind := map[string][]string{}
+		for _, bp := range types.BuiltinPresets() {
+			topoJSON, err := bp.TopologyJSON()
+			if err != nil {
+				continue
 			}
+			builtinsByKind[bp.DbKind] = append(builtinsByKind[bp.DbKind], bp.Name)
+			_, _ = pool.Exec(ctx,
+				`INSERT INTO presets (id, tenant_id, name, description, db_kind, topology, is_builtin)
+				 VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+				 ON CONFLICT (tenant_id, name) DO UPDATE
+				   SET description = EXCLUDED.description,
+				       topology    = EXCLUDED.topology
+				 WHERE presets.is_builtin = TRUE`,
+				uuid.New().String(), tenantID, bp.Name, bp.Description,
+				bp.DbKind, topoJSON,
+			)
+		}
+		for kind, names := range builtinsByKind {
+			if len(names) == 0 {
+				continue // safety: never wipe everything for a kind on a bug
+			}
+			_, _ = pool.Exec(ctx,
+				`DELETE FROM presets
+				 WHERE tenant_id = $1 AND db_kind = $2 AND is_builtin = TRUE
+				   AND name <> ALL ($3::text[])`,
+				tenantID, kind, names,
+			)
 		}
 	}
 
