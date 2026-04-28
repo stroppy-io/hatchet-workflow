@@ -540,6 +540,7 @@ func (s *Server) runDryRun(w http.ResponseWriter, r *http.Request) {
 		ResolvedConfig  json.RawMessage              `json:"resolved_config,omitempty"`
 		EffectiveConfig map[string]map[string]string `json:"effective_config,omitempty"`
 		StroppyConfig   string                       `json:"stroppy_config,omitempty"`
+		RenderedConfigs map[string]string            `json:"rendered_configs,omitempty"`
 	}{}
 	// The graph JSON is the full graph object — extract nodes from it.
 	var graphObj map[string]json.RawMessage
@@ -549,6 +550,7 @@ func (s *Server) runDryRun(w http.ResponseWriter, r *http.Request) {
 	resp.Graph = graph
 	resp.ResolvedConfig = cfgJSON
 	resp.EffectiveConfig = run.ComputeEffectiveConfigs(&cfg)
+	resp.RenderedConfigs = run.BuildRenderedConfigs(resolvedCfg)
 
 	// Build stroppy config preview. dbHost="" + dbPort=0 asks BuildStroppyConfigJSON
 	// to emit sentinel tokens (substituted at run time) — the real DB endpoint is
