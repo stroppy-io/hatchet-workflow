@@ -140,6 +140,15 @@ type DatabaseConfig struct {
 	MySQL    *MySQLTopology    `json:"mysql,omitempty"`
 	Picodata *PicodataTopology `json:"picodata,omitempty"`
 	YDB      *YDBTopology      `json:"ydb,omitempty"`
+	// RenderedConfigOverrides lets the SPA submit raw config-file contents
+	// that replace the per-component generators on the agent. Keys identify
+	// the file by its on-host purpose (e.g. "postgresql.conf:master",
+	// "postgresql.conf:replica", "pg_hba.conf", "my.cnf:primary",
+	// "ydb.yaml:storage"). When set for a key, the agent writes the value
+	// verbatim instead of rendering from defaults+options. The dry-run
+	// preview ships baseline contents under the same keys so the SPA can
+	// show diffable starting points.
+	RenderedConfigOverrides map[string]string `json:"rendered_config_overrides,omitempty"`
 }
 
 // --- Database topology presets ---

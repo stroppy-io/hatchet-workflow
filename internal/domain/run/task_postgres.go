@@ -30,10 +30,11 @@ func (t *pgInstallTask) Execute(nc *dag.NodeContext) error {
 }
 
 type pgConfigTask struct {
-	client   agent.Client
-	state    *State
-	version  string
-	topology *types.PostgresTopology
+	client    agent.Client
+	state     *State
+	version   string
+	topology  *types.PostgresTopology
+	overrides map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "postgresql.conf:<role>", "pg_hba.conf"
 }
 
 func (t *pgConfigTask) Execute(nc *dag.NodeContext) error {
@@ -46,12 +47,16 @@ func (t *pgConfigTask) Execute(nc *dag.NodeContext) error {
 	}
 
 	for i, target := range targets {
-		role := "replica"
+		var role string
+		spec := t.topology.Master
+		opts := t.topology.MasterOptions
 		if i == 0 {
 			role = "master"
-		}
-		opts := t.topology.MasterOptions
-		if role == "replica" {
+		} else {
+			role = "replica"
+			if len(t.topology.Replicas) > 0 {
+				spec = t.topology.Replicas[0]
+			}
 			opts = t.topology.ReplicaOptions
 		}
 		cfg := agent.PostgresClusterConfig{
@@ -60,7 +65,10 @@ func (t *pgConfigTask) Execute(nc *dag.NodeContext) error {
 			MasterHost:   masterHost,
 			Patroni:      t.topology.Patroni,
 			SyncReplicas: t.topology.SyncReplicas,
+			MemoryMB:     spec.MemoryMB,
 			Options:      opts,
+			ConfOverride: t.overrides["postgresql.conf:"+role],
+			HBAOverride:  t.overrides["pg_hba.conf"],
 		}
 		if err := t.client.Send(nc, target, agent.Command{Action: agent.ActionConfigPostgres, Config: cfg}); err != nil {
 			return err

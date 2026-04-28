@@ -267,7 +267,7 @@ func (b *builder) dbTasks() (install dag.Task, config dag.Task, err error) {
 	switch db.Kind {
 	case types.DatabasePostgres:
 		return &pgInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.Postgres, pkg: pkg},
-			&pgConfigTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.Postgres}, nil
+			&pgConfigTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.Postgres, overrides: db.RenderedConfigOverrides}, nil
 	case types.DatabaseMySQL:
 		return &mysqlInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.MySQL, pkg: pkg},
 			&mysqlConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.MySQL}, nil
