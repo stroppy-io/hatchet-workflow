@@ -840,26 +840,34 @@ function StepStroppy({
             >commit</button>
           </div>
           {stroppyMode === "release" ? (
-            <select
-              value={isCommit ? "" : stroppyVersion}
-              onChange={(e) => setStroppyVersion(e.target.value)}
-              onFocus={() => {
-                if (!versionsLoaded.current) {
-                  versionsLoaded.current = true;
-                  setVersionsLoading(true);
-                  getStroppyVersions()
-                    .then((v) => { if (v.length > 0) setStroppyVersions(v); })
-                    .catch(() => {})
-                    .finally(() => setVersionsLoading(false));
-                }
-              }}
-              className="bg-zinc-900 border border-zinc-800 rounded px-2 py-0.5 text-[11px] font-mono text-zinc-300 outline-none focus:border-zinc-600"
-            >
-              {stroppyVersions.map((v) => (
-                <option key={v} value={v}>v{v}</option>
-              ))}
-              {versionsLoading && <option disabled>loading...</option>}
-            </select>
+            // Combo input: pick from known releases or type a version not in
+            // the list (e.g. a freshly-cut tag the cache hasn't picked up).
+            <>
+              <input
+                list="stroppy-versions-list"
+                value={isCommit ? "" : stroppyVersion}
+                placeholder={versionsLoading ? "loading…" : "5.0.0rc3"}
+                onChange={(e) => setStroppyVersion(e.target.value.trim())}
+                onFocus={() => {
+                  if (!versionsLoaded.current) {
+                    versionsLoaded.current = true;
+                    setVersionsLoading(true);
+                    getStroppyVersions()
+                      .then((v) => { if (v.length > 0) setStroppyVersions(v); })
+                      .catch(() => {})
+                      .finally(() => setVersionsLoading(false));
+                  }
+                }}
+                spellCheck={false}
+                className="bg-zinc-900 border border-zinc-800 rounded px-2 py-0.5 text-[11px] font-mono text-zinc-300 outline-none focus:border-zinc-600 w-[140px]"
+                title="Pick a known release or type a version tag"
+              />
+              <datalist id="stroppy-versions-list">
+                {stroppyVersions.map((v) => (
+                  <option key={v} value={v}>v{v}</option>
+                ))}
+              </datalist>
+            </>
           ) : (
             <>
               <input
