@@ -37,6 +37,15 @@ resource "yandex_vpc_security_group" "security-group" {
     from_port      = 30000
     to_port        = 32767
   }
+  # SSH from anywhere. Stroppy VMs are short-lived and accept key-based auth
+  # only (cloud-init seeds authorized_keys; password login is disabled by the
+  # default sshd config), so opening port 22 to the world is acceptable here.
+  ingress {
+    protocol       = "TCP"
+    v4_cidr_blocks = ["0.0.0.0/0"]
+    from_port      = 22
+    to_port        = 22
+  }
   egress {
     protocol       = "ANY"
     v4_cidr_blocks = ["0.0.0.0/0"]
