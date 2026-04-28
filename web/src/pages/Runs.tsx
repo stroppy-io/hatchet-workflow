@@ -12,8 +12,8 @@ import {
   type ColumnFiltersState,
   type RowSelectionState,
 } from "@tanstack/react-table";
-import { listRuns, deleteRun, cancelRun } from "@/api/client";
-import type { RunSummary } from "@/api/types";
+import { listRuns, deleteRun, cancelRun, getRunStatus } from "@/api/client";
+import type { RunSummary, RunConfig } from "@/api/types";
 import {
   Table,
   TableBody,
@@ -39,6 +39,7 @@ import {
   Play,
   AlertCircle,
   StopCircle,
+  RotateCcw,
 } from "lucide-react";
 
 // --- Helpers ---
@@ -124,7 +125,7 @@ function FilterChip({
 
 // --- Column definitions ---
 
-function makeColumns(onDelete: (id: string) => void, onCancel: (id: string) => void, cancellingIds: Set<string>): ColumnDef<RunSummary>[] {
+function makeColumns(onDelete: (id: string) => void, onCancel: (id: string) => void, onRerun: (id: string) => void, cancellingIds: Set<string>): ColumnDef<RunSummary>[] {
   return [
     // Checkbox
     {
@@ -288,6 +289,7 @@ function makeColumns(onDelete: (id: string) => void, onCancel: (id: string) => v
       header: "",
       cell: ({ row }) => {
         const status = deriveStatus(row.original, cancellingIds);
+        const isFinished = status === "done" || status === "failed" || status === "cancelled";
         return (
           <div className="flex items-center gap-0.5">
             {status === "running" && (
@@ -303,6 +305,21 @@ function makeColumns(onDelete: (id: string) => void, onCancel: (id: string) => v
                 }}
               >
                 <StopCircle className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            {isFinished && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0 text-zinc-500 hover:text-primary cursor-pointer"
+                title="Rerun with same config"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onRerun(row.original.id);
+                }}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
               </Button>
             )}
             <Button
@@ -322,7 +339,7 @@ function makeColumns(onDelete: (id: string) => void, onCancel: (id: string) => v
         );
       },
       enableSorting: false,
-      size: 72,
+      size: 100,
     },
   ];
 }
@@ -455,6 +472,30 @@ export function Runs() {
     }
   }
 
+  // Rerun: fetch the run snapshot to extract its RunConfig, drop it into
+  // sessionStorage under the same key NewRun reads on mount, then navigate
+  // to /runs/new. Same shape as the per-run-detail Rerun button.
+  async function handleRerun(runID: string) {
+    try {
+      const snap = await getRunStatus(runID);
+      const rc = snap?.state?.run_config;
+      let cfg: RunConfig | null = null;
+      if (typeof rc === "string") {
+        cfg = JSON.parse(rc) as RunConfig;
+      } else if (rc && typeof rc === "object") {
+        cfg = rc as unknown as RunConfig;
+      }
+      if (!cfg) {
+        setError(`Run ${runID} has no saved config to rerun`);
+        return;
+      }
+      sessionStorage.setItem("rerun_config", JSON.stringify(cfg));
+      navigate(`/runs/new?kind=${cfg.database?.kind || "postgres"}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load run for rerun");
+    }
+  }
+
   // Initial fetch + auto-refresh interval
   useEffect(() => {
     fetchRuns();
@@ -473,7 +514,7 @@ export function Runs() {
   }, [refreshInterval]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const columns = useMemo(() => makeColumns(handleDelete, handleCancel, cancellingIds), [cancellingIds]);
+  const columns = useMemo(() => makeColumns(handleDelete, handleCancel, handleRerun, cancellingIds), [cancellingIds]);
 
   const table = useReactTable({
     data: runs,
