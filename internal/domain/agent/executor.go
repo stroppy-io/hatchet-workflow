@@ -943,14 +943,27 @@ func (e *Executor) configMonitor(ctx context.Context, cmd Command) error {
 		confBuf.WriteString("  - job_name: node\n    static_configs:\n      - targets: ['localhost:9100']\n")
 
 		// DB exporter on localhost (only on database machines).
-		if strings.Contains(machineID, "-database-") {
+		// Role detection covers Docker single-node ("-database-") and Yandex split-role
+		// YDB topologies ("-ydb-storage-" for static / "-ydb-database-" for dynamic).
+		isYDBStorage := strings.Contains(machineID, "-ydb-storage-")
+		isYDBDatabase := strings.Contains(machineID, "-ydb-database-")
+		// "Combined" = a single VM hosting the database role (docker single-node, or
+		// non-YDB databases that always run on a "-database-" machine).
+		isCombinedDB := strings.Contains(machineID, "-database-") && !isYDBStorage && !isYDBDatabase
+		if isCombinedDB || isYDBStorage || isYDBDatabase {
 			switch cfg.DatabaseKind {
 			case "postgres":
-				confBuf.WriteString("  - job_name: postgres\n    static_configs:\n      - targets: ['localhost:9187']\n")
+				if isCombinedDB {
+					confBuf.WriteString("  - job_name: postgres\n    static_configs:\n      - targets: ['localhost:9187']\n")
+				}
 			case "mysql":
-				confBuf.WriteString("  - job_name: mysql\n    static_configs:\n      - targets: ['localhost:9104']\n")
+				if isCombinedDB {
+					confBuf.WriteString("  - job_name: mysql\n    static_configs:\n      - targets: ['localhost:9104']\n")
+				}
 			case "picodata":
-				confBuf.WriteString("  - job_name: picodata\n    static_configs:\n      - targets: ['localhost:8081']\n    metrics_path: /metrics\n")
+				if isCombinedDB {
+					confBuf.WriteString("  - job_name: picodata\n    static_configs:\n      - targets: ['localhost:8081']\n    metrics_path: /metrics\n")
+				}
 			case "ydb":
 				// YDB exposes counters at /counters/counters=<group>/prometheus. Metric names are
 				// returned WITHOUT a group prefix (e.g. `DataShard_RowReads`), but the official
@@ -984,10 +997,24 @@ func (e *Executor) configMonitor(ctx context.Context, cmd Command) error {
 					{name: "utils"},
 					{name: "vdisks", role: "static"},
 				}
-				for _, role := range []struct{ name, port, container string }{
+				type ydbRole struct{ name, port, container string }
+				allRoles := []ydbRole{
 					{"static", "8765", "ydb-static"},
 					{"dynamic", "8766", "ydb-dynamic"},
-				} {
+				}
+				// Pick which YDB nodes actually run on this machine.
+				// Yandex split topology: storage VMs run static only, database VMs run dynamic only.
+				// Docker / single-node combined: both nodes share the VM.
+				var roles []ydbRole
+				switch {
+				case isYDBStorage:
+					roles = allRoles[:1] // static only
+				case isYDBDatabase:
+					roles = allRoles[1:] // dynamic only
+				default:
+					roles = allRoles // combined
+				}
+				for _, role := range roles {
 					for _, c := range ydbCounters {
 						if c.role != "" && c.role != role.name {
 							continue
