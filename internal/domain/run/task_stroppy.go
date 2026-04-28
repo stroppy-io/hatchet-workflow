@@ -219,10 +219,20 @@ func BuildStroppyConfigJSON(s types.StroppyConfig, dbKind types.DatabaseKind, db
 				},
 			},
 		},
-		Env: map[string]string{
-			"SCALE_FACTOR": fmt.Sprintf("%d", scaleFactor),
-			"POOL_SIZE":    fmt.Sprintf("%d", poolSize),
-		},
+		Env: func() map[string]string {
+			env := map[string]string{
+				"SCALE_FACTOR": fmt.Sprintf("%d", scaleFactor),
+				"POOL_SIZE":    fmt.Sprintf("%d", poolSize),
+			}
+			// Tell stroppy how many parallel loaders to use during the seed
+			// phase — sized to the runner's vCPU count. With LOAD_WORKERS
+			// unset stroppy falls back to a small builtin default that
+			// dramatically under-utilises a beefy runner.
+			if s.Machine != nil && s.Machine.CPUs > 0 {
+				env["LOAD_WORKERS"] = fmt.Sprintf("%d", s.Machine.CPUs)
+			}
+			return env
+		}(),
 		K6Args:  []string{"--vus", fmt.Sprintf("%d", vus), "--duration", duration},
 		Steps:   s.Steps,
 		NoSteps: s.NoSteps,
