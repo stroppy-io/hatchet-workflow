@@ -130,28 +130,24 @@ func FillMachinesFromTopology(cfg *types.RunConfig) {
 		}
 	case types.DatabaseYDB:
 		if db.YDB != nil {
-			count := db.YDB.Storage.Count
-			cpus := db.YDB.Storage.CPUs
-			mem := db.YDB.Storage.MemoryMB
-			disk := db.YDB.Storage.DiskGB
+			// In split mode emit the dynamic (compute) nodes first so the
+			// downstream "first dbTarget" plumbing — used to set the SQL
+			// endpoint stroppy connects to — picks a compute node, not a
+			// storage one. In combined mode (Database == nil) only storage
+			// nodes exist; the database daemon runs co-located on them.
 			if db.YDB.Database != nil {
-				if db.YDB.Database.Count > count {
-					count = db.YDB.Database.Count
-				}
-				if db.YDB.Database.CPUs > cpus {
-					cpus = db.YDB.Database.CPUs
-				}
-				if db.YDB.Database.MemoryMB > mem {
-					mem = db.YDB.Database.MemoryMB
-				}
-				if db.YDB.Database.DiskGB > disk {
-					disk = db.YDB.Database.DiskGB
-				}
+				d := *db.YDB.Database
+				cfg.Machines = append(cfg.Machines, types.MachineSpec{
+					Role: types.RoleYDBDatabase, Count: d.Count,
+					CPUs: ovCPU(d.CPUs), MemoryMB: ovMem(d.MemoryMB), DiskGB: ovDisk(d.DiskGB),
+					DiskType: d.DiskType, SecondaryDisks: d.SecondaryDisks,
+				})
 			}
+			s := db.YDB.Storage
 			cfg.Machines = append(cfg.Machines, types.MachineSpec{
-				Role: types.RoleDatabase, Count: count,
-				CPUs: ovCPU(cpus), MemoryMB: ovMem(mem), DiskGB: ovDisk(disk),
-				DiskType: db.YDB.Storage.DiskType, SecondaryDisks: db.YDB.Storage.SecondaryDisks,
+				Role: types.RoleYDBStorage, Count: s.Count,
+				CPUs: ovCPU(s.CPUs), MemoryMB: ovMem(s.MemoryMB), DiskGB: ovDisk(s.DiskGB),
+				DiskType: s.DiskType, SecondaryDisks: s.SecondaryDisks,
 			})
 			if db.YDB.HAProxy != nil {
 				cfg.Machines = append(cfg.Machines, *db.YDB.HAProxy)

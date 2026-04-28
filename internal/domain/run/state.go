@@ -15,10 +15,12 @@ type State struct {
 	mu sync.RWMutex
 
 	// Populated by the "machines" phase.
-	dbTargets      []agent.Target
-	monitorTargets []agent.Target
-	proxyTargets   []agent.Target
-	stroppyTarget  *agent.Target
+	dbTargets          []agent.Target
+	monitorTargets     []agent.Target
+	proxyTargets       []agent.Target
+	stroppyTarget      *agent.Target
+	ydbStorageTargets  []agent.Target // YDB static (storage) nodes — subset of dbTargets
+	ydbDatabaseTargets []agent.Target // YDB dynamic (compute) nodes — subset of dbTargets, empty in combined mode
 
 	// Populated by the "configure_db" phase.
 	dbHost string
@@ -64,6 +66,18 @@ func (s *State) SetStroppyTarget(target agent.Target) {
 	s.stroppyTarget = &target
 }
 
+func (s *State) SetYDBStorageTargets(targets []agent.Target) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ydbStorageTargets = targets
+}
+
+func (s *State) SetYDBDatabaseTargets(targets []agent.Target) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ydbDatabaseTargets = targets
+}
+
 func (s *State) SetDBEndpoint(host string, port int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -95,6 +109,23 @@ func (s *State) StroppyTarget() *agent.Target {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.stroppyTarget
+}
+
+// YDBStorageTargets returns the static (storage) YDB nodes. In combined mode
+// this is also the full set of YDB nodes — the database daemon runs on the
+// same boxes and YDBDatabaseTargets() is empty.
+func (s *State) YDBStorageTargets() []agent.Target {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.ydbStorageTargets
+}
+
+// YDBDatabaseTargets returns the dynamic (compute) YDB nodes. Empty when the
+// topology runs combined storage+compute on the same machines.
+func (s *State) YDBDatabaseTargets() []agent.Target {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.ydbDatabaseTargets
 }
 
 func (s *State) DBEndpoint() (string, int) {

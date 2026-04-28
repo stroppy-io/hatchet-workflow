@@ -18,6 +18,7 @@ type ydbInstallTask struct {
 }
 
 func (t *ydbInstallTask) Execute(nc *dag.NodeContext) error {
+	// Install ydbd binaries on every YDB node (storage + compute alike).
 	targets := t.state.DBTargets()
 	nc.Log().Info("installing YDB on targets")
 	return t.client.SendAll(nc, targets, agent.Command{
@@ -34,7 +35,9 @@ type ydbConfigTask struct {
 }
 
 func (t *ydbConfigTask) Execute(nc *dag.NodeContext) error {
-	targets := t.state.DBTargets()
+	// Static (storage) daemon runs on storage nodes only. In combined mode
+	// these are also the only YDB nodes, so this matches DBTargets().
+	targets := t.state.YDBStorageTargets()
 	nc.Log().Info("configuring YDB static nodes")
 
 	hosts := make([]string, len(targets))
@@ -138,9 +141,10 @@ type ydbInitTask struct {
 }
 
 func (t *ydbInitTask) Execute(nc *dag.NodeContext) error {
-	targets := t.state.DBTargets()
+	// Cluster init runs once against the static endpoint — first storage node.
+	targets := t.state.YDBStorageTargets()
 	if len(targets) == 0 {
-		return fmt.Errorf("no DB targets for YDB init")
+		return fmt.Errorf("no YDB storage targets for cluster init")
 	}
 
 	first := targets[0]
@@ -173,11 +177,20 @@ type ydbStartDBTask struct {
 }
 
 func (t *ydbStartDBTask) Execute(nc *dag.NodeContext) error {
-	targets := t.state.DBTargets()
+	// Dynamic (database) daemon: in split mode it runs on dedicated compute
+	// nodes; in combined mode the storage nodes themselves host it co-located.
+	targets := t.state.YDBDatabaseTargets()
+	if len(targets) == 0 {
+		targets = t.state.YDBStorageTargets()
+	}
 	nc.Log().Info("starting YDB database nodes")
 
-	staticHosts := make([]string, len(targets))
-	for i, tgt := range targets {
+	// staticHosts is always the full storage host list — that's what the
+	// database daemon uses as its --node-broker list, regardless of which
+	// node it's running on.
+	storageTargets := t.state.YDBStorageTargets()
+	staticHosts := make([]string, len(storageTargets))
+	for i, tgt := range storageTargets {
 		h := tgt.InternalHost
 		if h == "" {
 			h = tgt.Host

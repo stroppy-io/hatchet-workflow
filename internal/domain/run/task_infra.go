@@ -117,6 +117,8 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 	ctx := context.Context(nc)
 	var dbTargets []agent.Target
 	var proxyTargets []agent.Target
+	var ydbStorageTargets []agent.Target
+	var ydbDatabaseTargets []agent.Target
 
 	// Deploy database machines.
 	for _, spec := range t.runCfg.Machines {
@@ -158,8 +160,14 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 			}
 
 			switch spec.Role {
-			case types.RoleDatabase:
+			case types.RoleDatabase, types.RoleYDBStorage, types.RoleYDBDatabase:
 				dbTargets = append(dbTargets, target)
+				if spec.Role == types.RoleYDBStorage {
+					ydbStorageTargets = append(ydbStorageTargets, target)
+				}
+				if spec.Role == types.RoleYDBDatabase {
+					ydbDatabaseTargets = append(ydbDatabaseTargets, target)
+				}
 				if len(dbTargets) == 1 {
 					// First DB target is master -- store for stroppy to connect.
 					dbPort := 5432 // postgres default
@@ -188,6 +196,8 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 
 	t.state.SetDBTargets(dbTargets)
 	t.state.SetProxyTargets(proxyTargets)
+	t.state.SetYDBStorageTargets(ydbStorageTargets)
+	t.state.SetYDBDatabaseTargets(ydbDatabaseTargets)
 
 	// If proxy is present, stroppy connects through proxy instead of directly to DB.
 	// Exception: Picodata — picodata-go driver does topology discovery and needs direct connection.
@@ -473,6 +483,8 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 	// Populate state with targets from terraform output.
 	var dbTargets []agent.Target
 	var proxyTargets []agent.Target
+	var ydbStorageTargets []agent.Target
+	var ydbDatabaseTargets []agent.Target
 
 	for name, role := range vmRoles {
 		vmInfo, ok := vmIPs[name]
@@ -492,19 +504,13 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 		}
 
 		switch role {
-		case types.RoleDatabase:
+		case types.RoleDatabase, types.RoleYDBStorage, types.RoleYDBDatabase:
 			dbTargets = append(dbTargets, target)
-			if len(dbTargets) == 1 {
-				dbPort := 5432
-				switch t.runCfg.Database.Kind {
-				case types.DatabaseMySQL:
-					dbPort = 3306
-				case types.DatabasePicodata:
-					dbPort = 5432 // picodata pg wire protocol
-				case types.DatabaseYDB:
-					dbPort = 2136
-				}
-				t.state.SetDBEndpoint(vmInfo.InternalIP, dbPort)
+			if role == types.RoleYDBStorage {
+				ydbStorageTargets = append(ydbStorageTargets, target)
+			}
+			if role == types.RoleYDBDatabase {
+				ydbDatabaseTargets = append(ydbDatabaseTargets, target)
 			}
 		case types.RoleProxy:
 			proxyTargets = append(proxyTargets, target)
@@ -513,8 +519,35 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 		}
 	}
 
+	// Set the SQL endpoint stroppy will hit. For YDB split mode prefer a
+	// compute node; otherwise just take the first DB target. Map iteration
+	// over vmRoles is non-deterministic, so this needs to happen after the
+	// loop — picking inside the loop would race on iteration order.
+	if len(dbTargets) > 0 {
+		dbPort := 5432
+		switch t.runCfg.Database.Kind {
+		case types.DatabaseMySQL:
+			dbPort = 3306
+		case types.DatabasePicodata:
+			dbPort = 5432 // picodata pg wire protocol
+		case types.DatabaseYDB:
+			dbPort = 2136
+		}
+		endpoint := dbTargets[0]
+		if t.runCfg.Database.Kind == types.DatabaseYDB && len(ydbDatabaseTargets) > 0 {
+			endpoint = ydbDatabaseTargets[0]
+		}
+		host := endpoint.InternalHost
+		if host == "" {
+			host = endpoint.Host
+		}
+		t.state.SetDBEndpoint(host, dbPort)
+	}
+
 	t.state.SetDBTargets(dbTargets)
 	t.state.SetProxyTargets(proxyTargets)
+	t.state.SetYDBStorageTargets(ydbStorageTargets)
+	t.state.SetYDBDatabaseTargets(ydbDatabaseTargets)
 
 	// If proxy is present, stroppy connects through proxy instead of directly to DB.
 	// Exception: Picodata — picodata-go driver does topology discovery and needs direct connection.

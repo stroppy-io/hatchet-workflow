@@ -47,12 +47,14 @@ const (
 type MachineRole string
 
 const (
-	RoleDatabase  MachineRole = "database"
-	RoleMonitor   MachineRole = "monitor"
-	RoleStroppy   MachineRole = "stroppy"
-	RoleEtcd      MachineRole = "etcd"
-	RoleProxy     MachineRole = "proxy" // HAProxy / ProxySQL / LB
-	RolePgBouncer MachineRole = "pgbouncer"
+	RoleDatabase    MachineRole = "database"
+	RoleMonitor     MachineRole = "monitor"
+	RoleStroppy     MachineRole = "stroppy"
+	RoleEtcd        MachineRole = "etcd"
+	RoleProxy       MachineRole = "proxy" // HAProxy / ProxySQL / LB
+	RolePgBouncer   MachineRole = "pgbouncer"
+	RoleYDBStorage  MachineRole = "ydb-storage"  // static (storage) YDB node
+	RoleYDBDatabase MachineRole = "ydb-database" // dynamic (compute) YDB node
 )
 
 // MachineSpec describes a single machine to provision.
