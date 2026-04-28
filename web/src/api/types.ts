@@ -106,6 +106,7 @@ export interface DatabaseConfig {
   mysql?: MySQLTopology;
   picodata?: PicodataTopology;
   ydb?: YDBTopology;
+  rendered_config_overrides?: Record<string, string>;
 }
 
 export interface MonitorConfig {

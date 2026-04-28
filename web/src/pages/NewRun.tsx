@@ -151,6 +151,8 @@ export function NewRun() {
   const [dbConfigDraft, setDbConfigDraft] = useState<string | null>(null);
   const [stroppyConfigDraft, setStroppyConfigDraft] = useState<string | null>(null);
   const [stroppyConfigPristine, setStroppyConfigPristine] = useState<string | null>(null);
+  const [renderedConfigsPristine, setRenderedConfigsPristine] = useState<Record<string, string>>({});
+  const [renderedConfigDrafts, setRenderedConfigDrafts] = useState<Record<string, string>>({});
   const [validationResult, setValidationResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -244,6 +246,13 @@ export function NewRun() {
             setStroppyConfigDraft(drObj.stroppy_config);
             setStroppyConfigPristine(drObj.stroppy_config);
           }
+          // Seed rendered config files. Pristine map keeps a baseline so we
+          // only ship overrides for entries the user actually edited.
+          if (drObj.rendered_configs && typeof drObj.rendered_configs === "object") {
+            const next = drObj.rendered_configs as Record<string, string>;
+            setRenderedConfigsPristine(next);
+            setRenderedConfigDrafts({ ...next });
+          }
         }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Dry run failed");
@@ -268,6 +277,19 @@ export function NewRun() {
           return;
         }
       }
+      // Ship rendered_config_overrides only for files the user actually edited
+      // away from the dry-run baseline. Avoids round-tripping pristine bodies
+      // (which would still match server output but inflate the request).
+      const renderedOverrides: Record<string, string> = {};
+      for (const [k, v] of Object.entries(renderedConfigDrafts)) {
+        if (renderedConfigsPristine[k] !== v) renderedOverrides[k] = v;
+      }
+      if (Object.keys(renderedOverrides).length > 0) {
+        launchConfig.database = {
+          ...launchConfig.database,
+          rendered_config_overrides: { ...(launchConfig.database.rendered_config_overrides || {}), ...renderedOverrides },
+        };
+      }
       // Only send override when the user actually edited the preview — the server
       // builds the preview with placeholder db host/port (resolved at run time), so
       // sending it back verbatim would ship those placeholders to the stroppy binary.
@@ -287,7 +309,7 @@ export function NewRun() {
       setError(err instanceof Error ? err.message : "Failed to start run");
       setSubmitting(false);
     }
-  }, [config, navigate, dbConfigDraft, resolvedConfig, stroppyConfigDraft, stroppyConfigPristine]);
+  }, [config, navigate, dbConfigDraft, resolvedConfig, stroppyConfigDraft, stroppyConfigPristine, renderedConfigDrafts, renderedConfigsPristine]);
 
   function handleCopy() {
     navigator.clipboard.writeText(configJSON);
@@ -398,6 +420,9 @@ export function NewRun() {
               scaleFactor={scaleFactor}
               stroppyVersion={stroppyVersion}
               setStroppyVersion={setStroppyVersion}
+              renderedConfigDrafts={renderedConfigDrafts}
+              setRenderedConfigDrafts={setRenderedConfigDrafts}
+              renderedConfigsPristine={renderedConfigsPristine}
             />
           )}
 
@@ -1094,6 +1119,9 @@ function StepReview({
   scaleFactor,
   stroppyVersion,
   setStroppyVersion,
+  renderedConfigDrafts,
+  setRenderedConfigDrafts,
+  renderedConfigsPristine,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dryRunResult: any;
@@ -1111,6 +1139,9 @@ function StepReview({
   scaleFactor: number;
   stroppyVersion: string;
   setStroppyVersion: (v: string) => void;
+  renderedConfigDrafts: Record<string, string>;
+  setRenderedConfigDrafts: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  renderedConfigsPristine: Record<string, string>;
 }) {
   const canLaunch = validationResult?.ok && !dryRunLoading && !error;
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -1250,6 +1281,36 @@ function StepReview({
                               </div>
                             );
                           })()}
+                          {Object.keys(renderedConfigDrafts).length > 0 && (
+                            <div className="mt-3 space-y-3">
+                              {Object.entries(renderedConfigDrafts).map(([key, body]) => {
+                                const dirty = renderedConfigsPristine[key] !== body;
+                                return (
+                                  <div key={key}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-[9px] font-mono text-zinc-600 uppercase">{key}</span>
+                                      {dirty && <span className="text-[9px] font-mono text-amber-500">edited</span>}
+                                      {dirty && (
+                                        <button
+                                          type="button"
+                                          onClick={() => setRenderedConfigDrafts((prev) => ({ ...prev, [key]: renderedConfigsPristine[key] }))}
+                                          className="text-[9px] font-mono text-zinc-500 hover:text-zinc-300 ml-auto"
+                                        >
+                                          revert
+                                        </button>
+                                      )}
+                                    </div>
+                                    <textarea
+                                      value={body}
+                                      onChange={(e) => setRenderedConfigDrafts((prev) => ({ ...prev, [key]: e.target.value }))}
+                                      spellCheck={false}
+                                      className="w-full h-56 bg-[#0a0a0a] text-[11px] font-mono text-zinc-300 border border-zinc-800 p-2 outline-none focus:border-zinc-600 resize-y"
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       ) : groupKey === "benchmark" && stroppyConfigDraft !== null ? (
                         <div className="border-t border-zinc-800/20 px-3 py-1.5 bg-zinc-900/50">
