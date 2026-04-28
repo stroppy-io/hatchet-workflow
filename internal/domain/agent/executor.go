@@ -1618,6 +1618,12 @@ func (e *Executor) configYDB(ctx context.Context, cmd Command) error {
 		e.shell(ctx, fmt.Sprintf(`test -f %s/pdisk.data || truncate -s %dG %s/pdisk.data`, diskPath, pdiskGB, diskPath))
 		e.shell(ctx, fmt.Sprintf("chown ydb:ydb %s/pdisk.data", diskPath))
 		pdiskTarget = diskPath + "/pdisk.data"
+	} else {
+		// Raw block device: ydbd runs as user "ydb" via systemd-run, but
+		// /dev/vdX is root:disk by default. chown the device so the daemon
+		// can open it. chown follows the symlink in /dev/disk/by-id, so we
+		// can target the friendly path here.
+		e.shell(ctx, fmt.Sprintf("chown ydb:ydb %s", pdiskTarget))
 	}
 
 	e.emitLine("preparing YDB disk...")
