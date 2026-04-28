@@ -157,18 +157,21 @@ const (
 )
 
 // All YDB nodes share the same flavor for now: 64 vCPU / 128 GB RAM, 50 GB
-// boot disk, plus a raw block device on storage-role nodes that becomes the
-// YDB pdisk. Compute-only nodes don't get the secondary device. io-m3 is
-// the higher-IOPS replicated SSD class — closer to what YDB benchmarks need
-// than the default network-ssd.
+// boot disk on plain network-ssd (cheap, just OS + binaries), plus a raw
+// block device on storage-role nodes that becomes the YDB pdisk. io-m3 is
+// the higher-IOPS replicated SSD class — only used for the pdisk where
+// throughput matters. Compute-only nodes don't get the secondary device.
 //
-// io-m3 sizes must be multiples of 93 GiB (Yandex Cloud constraint).
-// 558 = 6 × 93, the smallest valid size at or above the previous 500 GB.
+// Boot disk type is set explicitly so the topology JSON shows it next to
+// disk_gb; that keeps "I'll bump disk_type to io-m3 for performance" from
+// silently turning the boot disk into a 50 GB io-m3 (invalid: io-m3 sizes
+// must be multiples of 93 GiB).
 const (
 	ydbNodeCPUs         = 64
 	ydbNodeMemoryMB     = 131072 // 128 GiB
 	ydbNodeBootDiskGB   = 50
-	ydbStoragePdiskGB   = 558
+	ydbNodeBootDiskType = "network-ssd"
+	ydbStoragePdiskGB   = 558 // 6 × 93 GiB — smallest valid io-m3 size at or above 500 GB
 	ydbStorageDevice    = "ydb-data" // virtio device_name → /dev/disk/by-id/virtio-ydb-data
 	ydbStoragePdiskType = "network-ssd-io-m3"
 )
@@ -176,7 +179,9 @@ const (
 func ydbStorageNodes(count int) MachineSpec {
 	return MachineSpec{
 		Role: RoleDatabase, Count: count,
-		CPUs: ydbNodeCPUs, MemoryMB: ydbNodeMemoryMB, DiskGB: ydbNodeBootDiskGB,
+		CPUs: ydbNodeCPUs, MemoryMB: ydbNodeMemoryMB,
+		DiskGB:   ydbNodeBootDiskGB,
+		DiskType: ydbNodeBootDiskType,
 		SecondaryDisks: []SecondaryDisk{{
 			DeviceName: ydbStorageDevice,
 			SizeGB:     ydbStoragePdiskGB,
@@ -188,7 +193,9 @@ func ydbStorageNodes(count int) MachineSpec {
 func ydbDatabaseNodes(count int) *MachineSpec {
 	return &MachineSpec{
 		Role: RoleDatabase, Count: count,
-		CPUs: ydbNodeCPUs, MemoryMB: ydbNodeMemoryMB, DiskGB: ydbNodeBootDiskGB,
+		CPUs: ydbNodeCPUs, MemoryMB: ydbNodeMemoryMB,
+		DiskGB:   ydbNodeBootDiskGB,
+		DiskType: ydbNodeBootDiskType,
 	}
 }
 
