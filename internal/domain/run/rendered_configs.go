@@ -51,6 +51,30 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 			}))
 		}
 		put("pg_hba.conf", dbconfig.PostgresPgHbaConf())
+
+	case types.DatabaseMySQL:
+		if db.MySQL == nil {
+			return out
+		}
+		put("my.cnf:primary", dbconfig.RenderMySQLConf(dbconfig.RenderMySQLConfOpts{
+			Version:       db.Version,
+			Role:          "primary",
+			SemiSync:      db.MySQL.SemiSync,
+			GroupRepl:     db.MySQL.GroupRepl,
+			Options:       db.MySQL.PrimaryOptions,
+			TotalMemoryMB: db.MySQL.Primary.MemoryMB,
+		}))
+		if len(db.MySQL.Replicas) > 0 {
+			r := db.MySQL.Replicas[0]
+			put("my.cnf:replica", dbconfig.RenderMySQLConf(dbconfig.RenderMySQLConfOpts{
+				Version:       db.Version,
+				Role:          "replica",
+				SemiSync:      db.MySQL.SemiSync,
+				GroupRepl:     db.MySQL.GroupRepl,
+				Options:       db.MySQL.ReplicaOptions,
+				TotalMemoryMB: r.MemoryMB,
+			}))
+		}
 	}
 
 	return out

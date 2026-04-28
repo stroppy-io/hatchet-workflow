@@ -30,9 +30,10 @@ func (t *mysqlInstallTask) Execute(nc *dag.NodeContext) error {
 }
 
 type mysqlConfigTask struct {
-	client   agent.Client
-	state    *State
-	topology *types.MySQLTopology
+	client    agent.Client
+	state     *State
+	topology  *types.MySQLTopology
+	overrides map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "my.cnf:<role>"
 }
 
 func (t *mysqlConfigTask) Execute(nc *dag.NodeContext) error {
@@ -67,20 +68,26 @@ func (t *mysqlConfigTask) Execute(nc *dag.NodeContext) error {
 		if primaryHost == "" {
 			primaryHost = targets[0].Host
 		}
+		spec := t.topology.Primary
 		opts := t.topology.PrimaryOptions
 		if role == "replica" {
 			opts = t.topology.ReplicaOptions
+			if len(t.topology.Replicas) > 0 {
+				spec = t.topology.Replicas[0]
+			}
 		}
 		cfg := agent.MySQLClusterConfig{
-			Role:        role,
-			PrimaryHost: primaryHost,
-			LocalHost:   localHost,
-			NodeIndex:   i,
-			SemiSync:    t.topology.SemiSync,
-			GroupRepl:   t.topology.GroupRepl,
-			GroupSeeds:  groupSeeds,
-			GroupName:   groupName,
-			Options:     opts,
+			Role:         role,
+			PrimaryHost:  primaryHost,
+			LocalHost:    localHost,
+			NodeIndex:    i,
+			SemiSync:     t.topology.SemiSync,
+			GroupRepl:    t.topology.GroupRepl,
+			GroupSeeds:   groupSeeds,
+			GroupName:    groupName,
+			MemoryMB:     spec.MemoryMB,
+			Options:      opts,
+			ConfOverride: t.overrides["my.cnf:"+role],
 		}
 		if err := t.client.Send(nc, target, agent.Command{Action: agent.ActionConfigMySQL, Config: cfg}); err != nil {
 			return err
