@@ -196,6 +196,7 @@ func (s *Server) Router() http.Handler {
 		r.Get("/run/{runID}/status", s.runStatus)
 		r.Get("/run/{runID}/logs", s.runLogs)
 		r.Get("/run/{runID}/metrics", s.runMetrics)
+		r.Get("/run/{runID}/rendered-configs", s.runRenderedConfigs)
 		r.Get("/compare", s.compareRuns)
 		r.Get("/stroppy-versions", s.stroppyVersions)
 		r.Get("/stroppy-commits", s.stroppyCommits)
@@ -581,6 +582,35 @@ func (s *Server) runStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, snap)
+}
+
+// runRenderedConfigs returns the per-component config files that the agent
+// rendered (or will render) for a given run — postgresql.conf, ydb.yaml,
+// pgbouncer.ini, etc. Same shape as the dry-run preview, derived from the
+// run's saved RunConfig so it works while a run is in progress.
+func (s *Server) runRenderedConfigs(w http.ResponseWriter, r *http.Request) {
+	tenantID := auth.TenantID(r.Context())
+	runID := chi.URLParam(r, "runID")
+
+	snap, err := s.app.storage.Load(r.Context(), tenantID, runID)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	if snap == nil || snap.State == nil || len(snap.State.RunConfig) == 0 {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	var cfg types.RunConfig
+	if err := json.Unmarshal(snap.State.RunConfig, &cfg); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "decode run config: " + err.Error()})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"rendered_configs": run.BuildRenderedConfigs(&cfg),
+	})
 }
 
 func (s *Server) listRuns(w http.ResponseWriter, r *http.Request) {

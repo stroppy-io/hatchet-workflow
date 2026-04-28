@@ -336,6 +336,13 @@ export async function getRunStatus(runID: string): Promise<Snapshot> {
   return request(`${API_BASE}/run/${runID}/status`);
 }
 
+export async function getRunRenderedConfigs(runID: string): Promise<Record<string, string>> {
+  const resp = await request<{ rendered_configs?: Record<string, string> }>(
+    `${API_BASE}/run/${runID}/rendered-configs`,
+  );
+  return resp.rendered_configs || {};
+}
+
 // ---------- Presets ----------
 
 export async function listPresets(params?: {

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getRunStatus, getGrafanaSettings, deleteRun, cancelRun, createShareLink } from "@/api/client";
+import { getRunStatus, getGrafanaSettings, deleteRun, cancelRun, createShareLink, getRunRenderedConfigs } from "@/api/client";
 import { ALL_DB_KINDS, type Snapshot, type NodeStatus, type GrafanaSettings, type RunConfig } from "@/api/types";
 import { RunOverview } from "@/components/RunOverview";
 import { LogStream } from "@/components/LogStream";
@@ -97,6 +97,7 @@ export function RunDetail() {
   const [, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [grafana, setGrafana] = useState<GrafanaSettings | null>(null);
+  const [renderedConfigs, setRenderedConfigs] = useState<Record<string, string>>({});
   const snapshotRef = useRef(snapshot);
   snapshotRef.current = snapshot;
 
@@ -145,6 +146,19 @@ export function RunDetail() {
       .then(setGrafana)
       .catch(() => setGrafana(null));
   }, []);
+
+  // Fetch the rendered config files (postgresql.conf, ydb.yaml, …) once the
+  // run snapshot lands. Server derives them from the run's saved RunConfig,
+  // so they're available the moment a run is created — no waiting on the
+  // agent to push effective_configs back.
+  useEffect(() => {
+    if (!id || !snapshot?.state?.run_config) return;
+    let cancelled = false;
+    getRunRenderedConfigs(id)
+      .then((m) => { if (!cancelled) setRenderedConfigs(m || {}); })
+      .catch(() => { if (!cancelled) setRenderedConfigs({}); });
+    return () => { cancelled = true; };
+  }, [id, snapshot?.state?.run_config]);
 
   const [cancelling, setCancelling] = useState(false);
 
@@ -338,6 +352,7 @@ export function RunDetail() {
                 snapshot={snapshot}
                 runStatus={isCancelled ? "cancelled" : cancelling ? "cancelling" : !isFinished ? "running" : hasFailed ? "failed" : "completed"}
                 onViewLogs={(phase) => { setLogFocusPhase(phase); setActiveTab("logs"); }}
+                renderedConfigs={renderedConfigs}
               />
             </CardContent>
           </Card>

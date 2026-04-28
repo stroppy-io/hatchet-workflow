@@ -320,9 +320,53 @@ function CfgRow({ k, v }: { k: string; v?: string | null }) {
   );
 }
 
+// groupOwnsRenderedKey decides which accordion group should display a given
+// rendered-configs key. Keys are shaped as "<file>" or "<file>:<role>" — see
+// internal/domain/run/rendered_configs.go.
+function groupOwnsRenderedKey(groupKey: string, renderedKey: string): boolean {
+  switch (groupKey) {
+    case "database":
+      return renderedKey.startsWith("postgresql.conf") ||
+        renderedKey === "pg_hba.conf" ||
+        renderedKey.startsWith("my.cnf") ||
+        renderedKey === "picodata.yaml" ||
+        renderedKey.startsWith("ydb.yaml") ||
+        renderedKey === "patroni.yml" ||
+        renderedKey === "pgbouncer.ini";
+    case "proxy":
+      return renderedKey === "haproxy.cfg" || renderedKey === "proxysql.cnf";
+    default:
+      return false;
+  }
+}
+
+// RenderedConfigBlock is a collapsible read-only view of a generated config
+// file. Closed by default so a long postgresql.conf doesn't dominate the
+// accordion; the user clicks the header to expand.
+function RenderedConfigBlock({ name, body }: { name: string; body: string }) {
+  const [open, setOpen] = useState(false);
+  const lineCount = useMemo(() => (body ? body.split("\n").length : 0), [body]);
+  return (
+    <div className="border border-zinc-800/60 rounded">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-2 px-2 py-1 text-[10px] font-mono text-zinc-300 hover:bg-zinc-900/50"
+      >
+        <span className="text-zinc-500">{open ? "▾" : "▸"}</span>
+        <span className="flex-1 text-left">{name}</span>
+        <span className="text-zinc-600 tabular-nums">{lineCount} lines</span>
+      </button>
+      {open && (
+        <pre className="px-2 py-1.5 text-[10px] font-mono text-zinc-300 bg-[#0a0a0a] border-t border-zinc-800/40 overflow-x-auto whitespace-pre">{body}</pre>
+      )}
+    </div>
+  );
+}
+
 // ─── DAG pipeline (vertical) ─────────────────────────────────────
 
-function DagPipeline({ nodes, cancelled, effectiveConfigs, onViewLogs }: { nodes: NodeStatus[]; cancelled?: boolean; effectiveConfigs?: Record<string, Record<string, string>>; onViewLogs?: (phase: string) => void }) {
+function DagPipeline({ nodes, cancelled, effectiveConfigs, renderedConfigs, onViewLogs }: { nodes: NodeStatus[]; cancelled?: boolean; effectiveConfigs?: Record<string, Record<string, string>>; renderedConfigs?: Record<string, string>; onViewLogs?: (phase: string) => void }) {
   const allPhaseIds = useMemo(() => phaseGroups.flatMap((g) => g.phases), []);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -463,22 +507,31 @@ function DagPipeline({ nodes, cancelled, effectiveConfigs, onViewLogs }: { nodes
                       })}
                     </div>
 
-                    {/* Effective config for this group */}
+                    {/* Effective config + rendered config files for this group. */}
                     {(() => {
                       const groupKey = group.label.toLowerCase();
                       const stored = effectiveConfigs?.[groupKey];
-                      if (stored) {
+                      const renderedKeys = renderedConfigs
+                        ? Object.keys(renderedConfigs).filter((k) => groupOwnsRenderedKey(groupKey, k))
+                        : [];
+                      const hasAnything = stored || renderedKeys.length > 0;
+                      if (!hasAnything) {
                         return (
                           <div className="border-t border-zinc-800/20 px-2.5 py-1.5 bg-zinc-900/30">
-                            <div className="space-y-0.5">
-                              {Object.entries(stored).map(([k, v]) => <CfgRow key={k} k={k} v={v} />)}
-                            </div>
+                            <span className="text-[10px] font-mono text-zinc-700">config not available for this run</span>
                           </div>
                         );
                       }
                       return (
-                        <div className="border-t border-zinc-800/20 px-2.5 py-1.5 bg-zinc-900/30">
-                          <span className="text-[10px] font-mono text-zinc-700">config not available for this run</span>
+                        <div className="border-t border-zinc-800/20 px-2.5 py-1.5 bg-zinc-900/30 space-y-2">
+                          {stored && (
+                            <div className="space-y-0.5">
+                              {Object.entries(stored).map(([k, v]) => <CfgRow key={k} k={k} v={v} />)}
+                            </div>
+                          )}
+                          {renderedKeys.map((key) => (
+                            <RenderedConfigBlock key={key} name={key} body={renderedConfigs![key]} />
+                          ))}
                         </div>
                       );
                     })()}
@@ -517,9 +570,15 @@ interface RunOverviewProps {
       effective_configs?: Record<string, Record<string, string>>;
     };
   } | null;
+  // Rendered config files (postgresql.conf, ydb.yaml, …) keyed like
+  // BuildRenderedConfigs ships them: "postgresql.conf:master", "my.cnf:primary",
+  // "ydb.yaml:storage", "pgbouncer.ini", "haproxy.cfg", etc. Shown read-only
+  // in the database accordion so the user can verify what landed on the box
+  // even mid-run, before the agent has reported back its effective_configs.
+  renderedConfigs?: Record<string, string>;
 }
 
-export function RunOverview({ nodes, snapshot, runStatus, onViewLogs }: RunOverviewProps) {
+export function RunOverview({ nodes, snapshot, runStatus, onViewLogs, renderedConfigs }: RunOverviewProps) {
   const config = useMemo<RunConfig | null>(() => {
     const rc = snapshot?.state?.run_config;
     if (!rc) return null;
@@ -590,7 +649,7 @@ export function RunOverview({ nodes, snapshot, runStatus, onViewLogs }: RunOverv
 
       {/* Right — DAG pipeline */}
       <div className="flex-1 min-w-0">
-        <DagPipeline nodes={nodes} cancelled={runStatus === "cancelled"} effectiveConfigs={snapshot?.state?.effective_configs} onViewLogs={onViewLogs} />
+        <DagPipeline nodes={nodes} cancelled={runStatus === "cancelled"} effectiveConfigs={snapshot?.state?.effective_configs} renderedConfigs={renderedConfigs} onViewLogs={onViewLogs} />
       </div>
     </div>
   );
