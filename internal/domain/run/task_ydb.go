@@ -59,6 +59,18 @@ func (t *ydbConfigTask) Execute(nc *dag.NodeContext) error {
 	// /dev/disk/by-id/virtio-<DeviceName>; we pick the first one.
 	blockDevicePath := firstBlockDevicePath(t.topology.Storage.SecondaryDisks)
 
+	// Memory budget for the storage daemon. In combined mode (no separate
+	// Database spec) the same node also runs ydbd-database, and each daemon
+	// claims hard_limit_bytes = memMB × 0.85. With both reading the full
+	// machine memory, the combined hard limit can exceed physical RAM and
+	// Linux OOM-kills one of them mid-run — which surfaces to clients as
+	// BAD_SESSION storms. Halve the budget so both fit.
+	storageMemMB := t.topology.Storage.MemoryMB
+	combined := t.topology.Database == nil
+	if combined && storageMemMB > 0 {
+		storageMemMB /= 2
+	}
+
 	// Start all static nodes in parallel — YDB needs all nodes up to form a cluster.
 	var wg sync.WaitGroup
 	errs := make([]error, len(targets))
@@ -74,7 +86,7 @@ func (t *ydbConfigTask) Execute(nc *dag.NodeContext) error {
 			DiskPath:        "/ydb_data",
 			BlockDevicePath: blockDevicePath,
 			DiskGB:          t.topology.Storage.DiskGB,
-			MemoryMB:        t.topology.Storage.MemoryMB,
+			MemoryMB:        storageMemMB,
 			CPUs:            t.topology.Storage.CPUs,
 			FaultTolerance:  ft,
 			Options:         t.topology.StorageOptions,
@@ -212,11 +224,19 @@ func (t *ydbStartDBTask) Execute(nc *dag.NodeContext) error {
 			advHost = target.Host
 		}
 		// Use database node specs if split mode, otherwise storage specs.
+		// In combined mode (Database == nil) the same node also runs
+		// ydbd-storage, and each daemon claims hard_limit_bytes = memMB ×
+		// 0.85 independently. Halve the budget here so the two daemons
+		// together fit in RAM (the storage side does the same in
+		// ydbConfigTask). In split mode each daemon runs on its own node,
+		// so the database-spec memory is used as-is.
 		memMB := t.topology.Storage.MemoryMB
 		cpus := t.topology.Storage.CPUs
 		if t.topology.Database != nil {
 			memMB = t.topology.Database.MemoryMB
 			cpus = t.topology.Database.CPUs
+		} else if memMB > 0 {
+			memMB /= 2
 		}
 		ft := t.topology.FaultTolerance
 		if ft == "" {

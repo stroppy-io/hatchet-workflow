@@ -140,20 +140,31 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 				break
 			}
 		}
+		// In combined mode (Database == nil) both ydbd-storage and
+		// ydbd-database run on the same box. Each daemon takes 85% of its
+		// configured MemoryMB as its hard limit, so passing the full
+		// machine memory to both means a combined hard limit of 1.7×
+		// physical RAM and a near-certain OOM. Halve the budget so the
+		// two together fit; the agent does the same on the live path.
+		storageMem := db.YDB.Storage.MemoryMB
+		combined := db.YDB.Database == nil
+		if combined && storageMem > 0 {
+			storageMem /= 2
+		}
 		put("ydb.yaml:storage", dbconfig.RenderYDBStorageConf(dbconfig.RenderYDBConfOpts{
 			HostCount:       db.YDB.Storage.Count,
 			DiskPath:        "/ydb_data",
 			BlockDevicePath: ydbBlockDevice,
 			CPUs:            db.YDB.Storage.CPUs,
-			MemoryMB:        db.YDB.Storage.MemoryMB,
+			MemoryMB:        storageMem,
 			FaultTolerance:  db.YDB.FaultTolerance,
 		}))
 		// Database (dynamic) node config: separate file the agent writes to
 		// /opt/ydb/cfg/database.yaml. Same cluster topology as the storage
 		// yaml but actor-system / memory hints come from the database spec
-		// when the topology is split, otherwise mirror the storage spec.
+		// when the topology is split, otherwise mirror the (halved) storage spec.
 		dbCPUs := db.YDB.Storage.CPUs
-		dbMem := db.YDB.Storage.MemoryMB
+		dbMem := storageMem
 		if db.YDB.Database != nil {
 			dbCPUs = db.YDB.Database.CPUs
 			dbMem = db.YDB.Database.MemoryMB
