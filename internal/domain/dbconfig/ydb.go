@@ -23,31 +23,84 @@ type RenderYDBConfOpts struct {
 	FaultTolerance string // "none" | "block-4-2" | "mirror-3-dc"
 }
 
-// RenderYDBStorageConf returns the YDB static-node config.yaml body. Host
-// addresses are emitted as __YDB_HOST_<i>__ placeholders; the agent calls
-// SubstituteYDBPlaceholders with the actual host list before writing.
+// RenderYDBDatabaseConfOpts collects the inputs RenderYDBDatabaseConf needs.
+// Database (dynamic) nodes carry the cluster topology too — they need to know
+// the storage hosts to register against, plus their own CPU/memory budget.
+type RenderYDBDatabaseConfOpts struct {
+	HostCount      int    // storage host count — same placeholder shape as the storage config
+	DiskPath       string // mostly cosmetic on database nodes; kept for parity with the storage yaml so users see one consistent template
+	CPUs           int    // vCPUs hint for actor_system_config (COMPUTE)
+	MemoryMB       int    // total RAM for memory_controller_config (85% mark)
+	FaultTolerance string // mirrored from cluster setting
+}
+
+// RenderYDBStorageConf returns the YDB static-node config.yaml body with
+// node_type: STORAGE. Host addresses are emitted as __YDB_HOST_<i>__
+// placeholders; the agent calls SubstituteYDBHostPlaceholders with the actual
+// host list before writing.
 func RenderYDBStorageConf(opts RenderYDBConfOpts) string {
-	diskPath := opts.DiskPath
+	return renderYDBYAML(yDBYAMLOpts{
+		nodeType:       "STORAGE",
+		hostCount:      opts.HostCount,
+		diskPath:       opts.DiskPath,
+		cpus:           opts.CPUs,
+		memoryMB:       opts.MemoryMB,
+		faultTolerance: opts.FaultTolerance,
+	})
+}
+
+// RenderYDBDatabaseConf returns the YDB dynamic-node config.yaml body with
+// node_type: COMPUTE. Same cluster topology and placeholders as the storage
+// config — it has to know the static hosts to talk to — but the actor system
+// hint and memory budget reflect the database node's resources, not the
+// storage node's.
+func RenderYDBDatabaseConf(opts RenderYDBDatabaseConfOpts) string {
+	return renderYDBYAML(yDBYAMLOpts{
+		nodeType:       "COMPUTE",
+		hostCount:      opts.HostCount,
+		diskPath:       opts.DiskPath,
+		cpus:           opts.CPUs,
+		memoryMB:       opts.MemoryMB,
+		faultTolerance: opts.FaultTolerance,
+	})
+}
+
+type yDBYAMLOpts struct {
+	nodeType       string // "STORAGE" or "COMPUTE"
+	hostCount      int
+	diskPath       string
+	cpus           int
+	memoryMB       int
+	faultTolerance string
+}
+
+func renderYDBYAML(opts yDBYAMLOpts) string {
+	diskPath := opts.diskPath
 	if diskPath == "" {
 		diskPath = "/ydb_data"
 	}
 
-	hostCount := opts.HostCount
+	hostCount := opts.hostCount
 	if hostCount < 1 {
 		hostCount = 1
 	}
 
 	erasure := "none"
-	if opts.FaultTolerance != "" {
-		erasure = opts.FaultTolerance
+	if opts.faultTolerance != "" {
+		erasure = opts.faultTolerance
 	}
 
 	zones := []string{"zone-a", "zone-b", "zone-c"}
 
-	memMB := opts.MemoryMB
+	memMB := opts.memoryMB
 	hardMB := 0
 	if memMB > 0 {
 		hardMB = memMB * 85 / 100
+	}
+
+	nodeType := opts.nodeType
+	if nodeType == "" {
+		nodeType = "STORAGE"
 	}
 
 	var b strings.Builder
@@ -112,9 +165,9 @@ func RenderYDBStorageConf(opts RenderYDBConfOpts) string {
 	// actor_system_config — auto-tune threads from CPU count, hint node type.
 	b.WriteString("actor_system_config:\n")
 	b.WriteString("  use_auto_config: true\n")
-	b.WriteString("  node_type: STORAGE\n")
-	if opts.CPUs > 0 {
-		fmt.Fprintf(&b, "  cpu_count: %d\n", opts.CPUs)
+	fmt.Fprintf(&b, "  node_type: %s\n", nodeType)
+	if opts.cpus > 0 {
+		fmt.Fprintf(&b, "  cpu_count: %d\n", opts.cpus)
 	}
 
 	// memory_controller_config — 85% of total RAM as the hard limit.

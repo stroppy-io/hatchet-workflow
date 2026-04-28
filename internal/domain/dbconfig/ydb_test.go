@@ -40,6 +40,30 @@ func TestRenderYDBStorageConf_Mirror3DCGeometry(t *testing.T) {
 	}
 }
 
+func TestRenderYDBStorageConf_NodeTypeStorage(t *testing.T) {
+	out := RenderYDBStorageConf(RenderYDBConfOpts{HostCount: 1, MemoryMB: 1024})
+	if !strings.Contains(out, "node_type: STORAGE") {
+		t.Errorf("storage role missing STORAGE node_type:\n%s", out)
+	}
+	if strings.Contains(out, "node_type: COMPUTE") {
+		t.Errorf("storage role should not emit COMPUTE node_type:\n%s", out)
+	}
+}
+
+func TestRenderYDBDatabaseConf_NodeTypeCompute(t *testing.T) {
+	out := RenderYDBDatabaseConf(RenderYDBDatabaseConfOpts{HostCount: 3, MemoryMB: 8192, CPUs: 4})
+	if !strings.Contains(out, "node_type: COMPUTE") {
+		t.Errorf("database role missing COMPUTE node_type:\n%s", out)
+	}
+	if strings.Contains(out, "node_type: STORAGE") {
+		t.Errorf("database role should not emit STORAGE node_type:\n%s", out)
+	}
+	// Same placeholder shape as storage so the SPA template stays consistent.
+	if !strings.Contains(out, "host: "+ydbHostPlaceholder(2)) {
+		t.Errorf("database role missing host placeholder:\n%s", out)
+	}
+}
+
 func TestSubstituteYDBHostPlaceholders(t *testing.T) {
 	body := RenderYDBStorageConf(RenderYDBConfOpts{HostCount: 2, MemoryMB: 1024})
 	got := SubstituteYDBHostPlaceholders(body, []string{"node-a.local", "node-b.local"})

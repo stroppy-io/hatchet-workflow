@@ -36,5 +36,11 @@ type YDBDatabaseConfig struct {
 	DatabasePath    string            `json:"database_path"` // /Root/testdb
 	MemoryMB        int               `json:"memory_mb"`     // total machine RAM for memory limits
 	CPUs            int               `json:"cpus"`          // vCPUs for actor system tuning
+	FaultTolerance  string            `json:"fault_tolerance,omitempty"`
+	StorageHosts    []string          `json:"storage_hosts,omitempty"` // mirrors YDBStaticConfig.Hosts; needed to substitute placeholders in the database yaml
 	Options         map[string]string `json:"options,omitempty"`
+	// ConfOverride, when non-empty, replaces the rendered ydb-database.yaml
+	// body for this node. The agent still substitutes __YDB_HOST_<i>__
+	// placeholders from StorageHosts.
+	ConfOverride string `json:"conf_override,omitempty"`
 }

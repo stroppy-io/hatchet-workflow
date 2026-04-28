@@ -1655,6 +1655,33 @@ func (e *Executor) startYDBDB(ctx context.Context, cmd Command) error {
 		dbPath = "/Root/testdb"
 	}
 
+	memMB := cfg.MemoryMB
+	if memMB <= 0 {
+		memMB = getTotalMemoryMB()
+	}
+
+	// Render (or accept) the database-node yaml. Falls back to the storage
+	// hosts list for placeholder substitution; if the run task didn't pass
+	// StorageHosts (older client) we leave placeholders in — YDB will refuse
+	// to start, which is louder than silently producing a bad config.
+	body := cfg.ConfOverride
+	if body == "" {
+		body = dbconfig.RenderYDBDatabaseConf(dbconfig.RenderYDBDatabaseConfOpts{
+			HostCount:      len(cfg.StorageHosts),
+			DiskPath:       "/ydb_data",
+			CPUs:           cfg.CPUs,
+			MemoryMB:       memMB,
+			FaultTolerance: cfg.FaultTolerance,
+		})
+	}
+	body = dbconfig.SubstituteYDBHostPlaceholders(body, cfg.StorageHosts)
+
+	dbConfPath := "/opt/ydb/cfg/database.yaml"
+	writeScript := fmt.Sprintf("mkdir -p /opt/ydb/cfg && cat > %s << 'YDBDBCONF'\n%sYDBDBCONF", dbConfPath, body)
+	if _, err := e.shell(ctx, writeScript); err != nil {
+		return fmt.Errorf("write ydb database config: %w", err)
+	}
+
 	var brokerFlags strings.Builder
 	for _, ep := range cfg.StaticEndpoints {
 		fmt.Fprintf(&brokerFlags, " --node-broker grpc://%s:2136", ep)
@@ -1666,10 +1693,10 @@ func (e *Executor) startYDBDB(ctx context.Context, cmd Command) error {
 		`systemd-run --unit=ydbd-database --uid=ydb --gid=ydb `+
 			`--setenv=LD_LIBRARY_PATH=/opt/ydb/lib `+
 			`/opt/ydb/bin/ydbd server `+
-			`--yaml-config /opt/ydb/cfg/config.yaml `+
+			`--yaml-config %s `+
 			`--grpc-port 2136 --ic-port 19002 --mon-port 8766 `+
 			`--tenant %s%s`,
-		dbPath, brokerFlags.String())
+		dbConfPath, dbPath, brokerFlags.String())
 	if _, err := e.shell(ctx, startCmd); err != nil {
 		return fmt.Errorf("start ydbd-database: %w", err)
 	}

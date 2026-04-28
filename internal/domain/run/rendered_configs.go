@@ -138,6 +138,23 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 			MemoryMB:       db.YDB.Storage.MemoryMB,
 			FaultTolerance: db.YDB.FaultTolerance,
 		}))
+		// Database (dynamic) node config: separate file the agent writes to
+		// /opt/ydb/cfg/database.yaml. Same cluster topology as the storage
+		// yaml but actor-system / memory hints come from the database spec
+		// when the topology is split, otherwise mirror the storage spec.
+		dbCPUs := db.YDB.Storage.CPUs
+		dbMem := db.YDB.Storage.MemoryMB
+		if db.YDB.Database != nil {
+			dbCPUs = db.YDB.Database.CPUs
+			dbMem = db.YDB.Database.MemoryMB
+		}
+		put("ydb.yaml:database", dbconfig.RenderYDBDatabaseConf(dbconfig.RenderYDBDatabaseConfOpts{
+			HostCount:      db.YDB.Storage.Count,
+			DiskPath:       "/ydb_data",
+			CPUs:           dbCPUs,
+			MemoryMB:       dbMem,
+			FaultTolerance: db.YDB.FaultTolerance,
+		}))
 		if db.YDB.HAProxy != nil {
 			put("haproxy.cfg", dbconfig.RenderHAProxyConf(dbconfig.RenderHAProxyConfOpts{
 				WritePort:   2136,

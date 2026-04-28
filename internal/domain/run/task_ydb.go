@@ -160,9 +160,10 @@ func (t *ydbInitTask) Execute(nc *dag.NodeContext) error {
 }
 
 type ydbStartDBTask struct {
-	client   agent.Client
-	state    *State
-	topology *types.YDBTopology
+	client    agent.Client
+	state     *State
+	topology  *types.YDBTopology
+	overrides map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "ydb.yaml:database"
 }
 
 func (t *ydbStartDBTask) Execute(nc *dag.NodeContext) error {
@@ -198,13 +199,20 @@ func (t *ydbStartDBTask) Execute(nc *dag.NodeContext) error {
 			memMB = t.topology.Database.MemoryMB
 			cpus = t.topology.Database.CPUs
 		}
+		ft := t.topology.FaultTolerance
+		if ft == "" {
+			ft = "none"
+		}
 		cfg := agent.YDBDatabaseConfig{
 			StaticEndpoints: staticHosts,
 			AdvertiseHost:   advHost,
 			DatabasePath:    dbPath,
 			MemoryMB:        memMB,
 			CPUs:            cpus,
+			FaultTolerance:  ft,
+			StorageHosts:    staticHosts,
 			Options:         t.topology.DatabaseOptions,
+			ConfOverride:    t.overrides["ydb.yaml:database"],
 		}
 		wg.Add(1)
 		go func(idx int, tgt agent.Target, c agent.YDBDatabaseConfig) {

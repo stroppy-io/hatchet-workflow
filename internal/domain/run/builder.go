@@ -230,7 +230,7 @@ func (b *builder) addYDBPhases() {
 	b.add(b.ph(types.PhaseInitYDBCluster), []string{b.ph(types.PhaseConfigureDB)},
 		&ydbInitTask{client: b.deps.Client, state: b.deps.State, topology: b.cfg.Database.YDB})
 	b.add(b.ph(types.PhaseStartYDBDatabase), []string{b.ph(types.PhaseInitYDBCluster)},
-		&ydbStartDBTask{client: b.deps.Client, state: b.deps.State, topology: b.cfg.Database.YDB})
+		&ydbStartDBTask{client: b.deps.Client, state: b.deps.State, topology: b.cfg.Database.YDB, overrides: b.cfg.Database.RenderedConfigOverrides})
 	b.runStroppyDeps = append(b.runStroppyDeps, b.ph(types.PhaseStartYDBDatabase))
 }
 
