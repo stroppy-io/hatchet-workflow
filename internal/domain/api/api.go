@@ -111,6 +111,11 @@ func (a *App) DryRun(cfg types.RunConfig) ([]byte, *types.RunConfig, error) {
 	// to the client (and rendered in the review-step textarea) reflects the
 	// final database-node sizing without any hidden override.
 	run.BakeMachineOverrideIntoTopology(&cfg)
+	// Auto-size the YDB storage pdisk against the script + scale factor so
+	// the review-step textarea shows a sensible default (rounded to a
+	// valid 93 GiB io-m3 chunk). Skipped on Start — once the user submits,
+	// whatever size they sent through wins.
+	run.AdjustYDBStorageDisk(&cfg)
 	run.FillMachinesFromTopology(&cfg)
 	state := run.NewState()
 	deps := run.Deps{Client: a.client, State: state}
