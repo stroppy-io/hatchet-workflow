@@ -165,12 +165,18 @@ export function NewRun() {
   useEffect(() => { listPresets().then(setAllPresets).catch(() => {}); }, []);
   useEffect(() => { getSettings().then((s) => setQuotas(s.quotas || {})).catch(() => {}); }, []);
   useEffect(() => {
+    // Reconcile dependent state when kind / allPresets change. Each branch
+    // is conditional — unconditional setters here run again every time
+    // allPresets resolves async (~100 ms after mount) and would clobber
+    // values the user just edited (or restored from a rerun config). That's
+    // the bug behind "I edit version and the old value pops back".
     const matching = allPresets.filter((p) => p.db_kind === kind);
     if (matching.length > 0 && !matching.find((p) => p.id === selectedPresetId)) {
       setSelectedPresetId(matching[0].id);
     }
-    setVersion(DB_VERSIONS[kind][0]);
-    // Reset script if incompatible with new db kind.
+    if (!DB_VERSIONS[kind].includes(version)) {
+      setVersion(DB_VERSIONS[kind][0]);
+    }
     const compatible = SCRIPTS.filter((s) => s.dbs.includes(kind));
     if (!compatible.find((s) => s.id === script)) {
       setScript(compatible[0]?.id || "tpcb/tx");
