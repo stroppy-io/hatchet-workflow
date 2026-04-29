@@ -16,24 +16,24 @@ func ydbHostPlaceholder(i int) string {
 
 // RenderYDBConfOpts collects the inputs RenderYDBStorageConf needs.
 type RenderYDBConfOpts struct {
-	HostCount       int    // number of static (storage) nodes — drives placeholder list
-	DiskPath        string // "/ydb_data" in Docker, real disk on VM (used when BlockDevicePath is empty)
-	BlockDevicePath string // when set, pdisk path: emits this device verbatim instead of <DiskPath>/pdisk.data
-	CPUs            int    // vCPUs hint for actor_system_config
-	MemoryMB        int    // total RAM for memory_controller_config (85% mark)
-	FaultTolerance  string // "none" | "block-4-2" | "mirror-3-dc"
+	HostCount        int      // number of static (storage) nodes — drives placeholder list
+	DiskPath         string   // "/ydb_data" in Docker, real disk on VM (used when BlockDevicePaths is empty)
+	BlockDevicePaths []string // when set, pdisk paths: emits each device verbatim instead of <DiskPath>/pdisk.data; one drive per entry, one fail_domain per (node × pdisk)
+	CPUs             int      // vCPUs hint for actor_system_config
+	MemoryMB         int      // total RAM for memory_controller_config (85% mark)
+	FaultTolerance   string   // "none" | "block-4-2" | "mirror-3-dc"
 }
 
 // RenderYDBDatabaseConfOpts collects the inputs RenderYDBDatabaseConf needs.
 // Database (dynamic) nodes carry the cluster topology too — they need to know
 // the storage hosts to register against, plus their own CPU/memory budget.
 type RenderYDBDatabaseConfOpts struct {
-	HostCount       int    // storage host count — same placeholder shape as the storage config
-	DiskPath        string // mostly cosmetic on database nodes; kept for parity with the storage yaml so users see one consistent template
-	BlockDevicePath string // mirrors the storage knob so the pdisk path: lines match across both yamls
-	CPUs            int    // vCPUs hint for actor_system_config (COMPUTE)
-	MemoryMB        int    // total RAM for memory_controller_config (85% mark)
-	FaultTolerance  string // mirrored from cluster setting
+	HostCount        int      // storage host count — same placeholder shape as the storage config
+	DiskPath         string   // mostly cosmetic on database nodes; kept for parity with the storage yaml so users see one consistent template
+	BlockDevicePaths []string // mirrors the storage knob so the pdisk path: lines match across both yamls
+	CPUs             int      // vCPUs hint for actor_system_config (COMPUTE)
+	MemoryMB         int      // total RAM for memory_controller_config (85% mark)
+	FaultTolerance   string   // mirrored from cluster setting
 }
 
 // RenderYDBStorageConf returns the YDB static-node config.yaml body with
@@ -42,13 +42,13 @@ type RenderYDBDatabaseConfOpts struct {
 // host list before writing.
 func RenderYDBStorageConf(opts RenderYDBConfOpts) string {
 	return renderYDBYAML(yDBYAMLOpts{
-		nodeType:        "STORAGE",
-		hostCount:       opts.HostCount,
-		diskPath:        opts.DiskPath,
-		blockDevicePath: opts.BlockDevicePath,
-		cpus:            opts.CPUs,
-		memoryMB:        opts.MemoryMB,
-		faultTolerance:  opts.FaultTolerance,
+		nodeType:         "STORAGE",
+		hostCount:        opts.HostCount,
+		diskPath:         opts.DiskPath,
+		blockDevicePaths: opts.BlockDevicePaths,
+		cpus:             opts.CPUs,
+		memoryMB:         opts.MemoryMB,
+		faultTolerance:   opts.FaultTolerance,
 	})
 }
 
@@ -59,24 +59,24 @@ func RenderYDBStorageConf(opts RenderYDBConfOpts) string {
 // storage node's.
 func RenderYDBDatabaseConf(opts RenderYDBDatabaseConfOpts) string {
 	return renderYDBYAML(yDBYAMLOpts{
-		nodeType:        "COMPUTE",
-		hostCount:       opts.HostCount,
-		diskPath:        opts.DiskPath,
-		blockDevicePath: opts.BlockDevicePath,
-		cpus:            opts.CPUs,
-		memoryMB:        opts.MemoryMB,
-		faultTolerance:  opts.FaultTolerance,
+		nodeType:         "COMPUTE",
+		hostCount:        opts.HostCount,
+		diskPath:         opts.DiskPath,
+		blockDevicePaths: opts.BlockDevicePaths,
+		cpus:             opts.CPUs,
+		memoryMB:         opts.MemoryMB,
+		faultTolerance:   opts.FaultTolerance,
 	})
 }
 
 type yDBYAMLOpts struct {
-	nodeType        string // "STORAGE" or "COMPUTE"
-	hostCount       int
-	diskPath        string
-	blockDevicePath string
-	cpus            int
-	memoryMB        int
-	faultTolerance  string
+	nodeType         string // "STORAGE" or "COMPUTE"
+	hostCount        int
+	diskPath         string
+	blockDevicePaths []string
+	cpus             int
+	memoryMB         int
+	faultTolerance   string
 }
 
 func renderYDBYAML(opts yDBYAMLOpts) string {
@@ -85,12 +85,14 @@ func renderYDBYAML(opts yDBYAMLOpts) string {
 		diskPath = "/ydb_data"
 	}
 
-	// pdiskPath is what shows up in the yaml's path: lines. With a raw block
-	// device it's the device itself (e.g. /dev/disk/by-id/virtio-ydb-data);
-	// without one we fall back to the file-backed pdisk used in dev/Docker.
-	pdiskPath := opts.blockDevicePath
-	if pdiskPath == "" {
-		pdiskPath = diskPath + "/pdisk.data"
+	// pdiskPaths is the per-node list of paths YDB will mount as pdisks.
+	// One entry → single-disk node (file-backed in dev, raw block device on
+	// VMs). Multiple entries → multi-disk node, each disk becomes its own
+	// pdisk and contributes a separate fail_domain in the storage group so
+	// YDB can write blobs in parallel across them.
+	pdiskPaths := opts.blockDevicePaths
+	if len(pdiskPaths) == 0 {
+		pdiskPaths = []string{diskPath + "/pdisk.data"}
 	}
 
 	hostCount := opts.hostCount
@@ -120,11 +122,14 @@ func renderYDBYAML(opts yDBYAMLOpts) string {
 	b.WriteString("# Generated by stroppy-agent\n")
 	fmt.Fprintf(&b, "static_erasure: %s\n", erasure)
 
-	// host_configs
+	// host_configs — one drive entry per pdisk on each host. All hosts share
+	// the same host_config_id (= 1), so the drive list applies cluster-wide.
 	b.WriteString("host_configs:\n")
 	b.WriteString("- drive:\n")
-	fmt.Fprintf(&b, "  - path: %s\n", pdiskPath)
-	b.WriteString("    type: SSD\n")
+	for _, p := range pdiskPaths {
+		fmt.Fprintf(&b, "  - path: %s\n", p)
+		b.WriteString("    type: SSD\n")
+	}
 	b.WriteString("  host_config_id: 1\n")
 
 	// hosts
@@ -195,21 +200,32 @@ func renderYDBYAML(opts yDBYAMLOpts) string {
 	b.WriteString("    groups:\n")
 	fmt.Fprintf(&b, "    - erasure_species: %s\n", erasure)
 	b.WriteString("      rings:\n")
+	// blob_storage_config — one fail_domain per (node × pdisk) tuple. Each
+	// fail_domain holds a single vdisk_location pointing at one pdisk on one
+	// node, addressed by raw path. With N nodes × K pdisks/node, YDB sees
+	// N×K fail_domains and can place vdisks across them for parallelism.
 	if erasure == "mirror-3-dc" {
+		// mirror-3-dc lays out one ring per DC. We map host index → DC by
+		// repeating the same ring shape; preserves the existing single-disk
+		// behaviour while extending to multiple pdisks per host.
 		for i := 0; i < hostCount; i++ {
 			b.WriteString("      - fail_domains:\n")
-			b.WriteString("        - vdisk_locations:\n")
-			fmt.Fprintf(&b, "          - node_id: %d\n", i+1)
-			b.WriteString("            pdisk_category: SSD\n")
-			fmt.Fprintf(&b, "            path: %s\n", pdiskPath)
+			for _, p := range pdiskPaths {
+				b.WriteString("        - vdisk_locations:\n")
+				fmt.Fprintf(&b, "          - node_id: %d\n", i+1)
+				b.WriteString("            pdisk_category: SSD\n")
+				fmt.Fprintf(&b, "            path: %s\n", p)
+			}
 		}
 	} else {
 		b.WriteString("      - fail_domains:\n")
 		for i := 0; i < hostCount; i++ {
-			b.WriteString("        - vdisk_locations:\n")
-			fmt.Fprintf(&b, "          - node_id: %d\n", i+1)
-			b.WriteString("            pdisk_category: SSD\n")
-			fmt.Fprintf(&b, "            path: %s\n", pdiskPath)
+			for _, p := range pdiskPaths {
+				b.WriteString("        - vdisk_locations:\n")
+				fmt.Fprintf(&b, "          - node_id: %d\n", i+1)
+				b.WriteString("            pdisk_category: SSD\n")
+				fmt.Fprintf(&b, "            path: %s\n", p)
+			}
 		}
 	}
 

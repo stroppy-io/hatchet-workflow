@@ -1580,12 +1580,12 @@ func (e *Executor) configYDB(ctx context.Context, cmd Command) error {
 	body := cfg.ConfOverride
 	if body == "" {
 		body = dbconfig.RenderYDBStorageConf(dbconfig.RenderYDBConfOpts{
-			HostCount:       len(cfg.Hosts),
-			DiskPath:        diskPath,
-			BlockDevicePath: cfg.BlockDevicePath,
-			CPUs:            cfg.CPUs,
-			MemoryMB:        memMB,
-			FaultTolerance:  cfg.FaultTolerance,
+			HostCount:        len(cfg.Hosts),
+			DiskPath:         diskPath,
+			BlockDevicePaths: cfg.BlockDevicePaths,
+			CPUs:             cfg.CPUs,
+			MemoryMB:         memMB,
+			FaultTolerance:   cfg.FaultTolerance,
 		})
 	}
 	body = dbconfig.SubstituteYDBHostPlaceholders(body, cfg.Hosts)
@@ -1596,27 +1596,31 @@ func (e *Executor) configYDB(ctx context.Context, cmd Command) error {
 		return fmt.Errorf("write ydb config: %w", err)
 	}
 
-	// Prepare pdisk. With a raw block device we point YDB at the device
-	// directly — no filesystem, no /ydb_data dir. Without one, fall back to
-	// the file-backed pdisk that's used in dev/Docker.
-	pdiskTarget := cfg.BlockDevicePath
-	if pdiskTarget == "" {
+	// Prepare pdisks. With raw block devices we point YDB at each device
+	// directly — no filesystem, no /ydb_data dir. Without any, fall back to
+	// the file-backed pdisk that's used in dev/Docker (single pdisk only).
+	pdiskTargets := cfg.BlockDevicePaths
+	if len(pdiskTargets) == 0 {
 		e.shell(ctx, fmt.Sprintf("mkdir -p %s && chown -R ydb:ydb %s", diskPath, diskPath))
 		e.shell(ctx, fmt.Sprintf(`test -f %s/pdisk.data || truncate -s %dG %s/pdisk.data`, diskPath, pdiskGB, diskPath))
 		e.shell(ctx, fmt.Sprintf("chown ydb:ydb %s/pdisk.data", diskPath))
-		pdiskTarget = diskPath + "/pdisk.data"
+		pdiskTargets = []string{diskPath + "/pdisk.data"}
 	} else {
-		// Raw block device: ydbd runs as user "ydb" via systemd-run, but
-		// /dev/vdX is root:disk by default. chown the device so the daemon
+		// Raw block devices: ydbd runs as user "ydb" via systemd-run, but
+		// /dev/vdX is root:disk by default. chown each device so the daemon
 		// can open it. chown follows the symlink in /dev/disk/by-id, so we
-		// can target the friendly path here.
-		e.shell(ctx, fmt.Sprintf("chown ydb:ydb %s", pdiskTarget))
+		// can target the friendly paths.
+		for _, p := range pdiskTargets {
+			e.shell(ctx, fmt.Sprintf("chown ydb:ydb %s", p))
+		}
 	}
 
-	e.emitLine("preparing YDB disk...")
-	if _, err := e.shell(ctx, fmt.Sprintf(
-		"LD_LIBRARY_PATH=/opt/ydb/lib /opt/ydb/bin/ydbd admin bs disk obliterate %s", pdiskTarget)); err != nil {
-		return fmt.Errorf("obliterate disk: %w", err)
+	e.emitLine(fmt.Sprintf("preparing %d YDB pdisk(s)...", len(pdiskTargets)))
+	for _, p := range pdiskTargets {
+		if _, err := e.shell(ctx, fmt.Sprintf(
+			"LD_LIBRARY_PATH=/opt/ydb/lib /opt/ydb/bin/ydbd admin bs disk obliterate %s", p)); err != nil {
+			return fmt.Errorf("obliterate %s: %w", p, err)
+		}
 	}
 
 	// Ensure hostname matches hosts[].host so YDB can detect its node ID.
@@ -1712,12 +1716,12 @@ func (e *Executor) startYDBDB(ctx context.Context, cmd Command) error {
 	body := cfg.ConfOverride
 	if body == "" {
 		body = dbconfig.RenderYDBDatabaseConf(dbconfig.RenderYDBDatabaseConfOpts{
-			HostCount:       len(cfg.StorageHosts),
-			DiskPath:        "/ydb_data",
-			BlockDevicePath: cfg.BlockDevicePath,
-			CPUs:            cfg.CPUs,
-			MemoryMB:        memMB,
-			FaultTolerance:  cfg.FaultTolerance,
+			HostCount:        len(cfg.StorageHosts),
+			DiskPath:         "/ydb_data",
+			BlockDevicePaths: cfg.BlockDevicePaths,
+			CPUs:             cfg.CPUs,
+			MemoryMB:         memMB,
+			FaultTolerance:   cfg.FaultTolerance,
 		})
 	}
 	body = dbconfig.SubstituteYDBHostPlaceholders(body, cfg.StorageHosts)

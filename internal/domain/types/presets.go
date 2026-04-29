@@ -1,6 +1,9 @@
 package types
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // Preset describes a database topology preset.
 // Stored in the presets table; one row = one topology template.
@@ -149,11 +152,12 @@ func describePicodataPreset(p PicodataPreset) string {
 type YDBPreset string
 
 const (
-	YDBSingle     YDBPreset = "single"
-	YDBUniversal3 YDBPreset = "universal-3"
-	YDBSplit33    YDBPreset = "split-3-3"
-	YDBSplit63    YDBPreset = "split-6-3"
-	YDBSplit36    YDBPreset = "split-3-6"
+	YDBSingle          YDBPreset = "single"
+	YDBUniversal3      YDBPreset = "universal-3"
+	YDBSplit33         YDBPreset = "split-3-3"
+	YDBSplit63         YDBPreset = "split-6-3"
+	YDBSplit36         YDBPreset = "split-3-6"
+	YDBSplit33MultiSSD YDBPreset = "split-3-3-3pdisks"
 )
 
 // All YDB nodes share the same flavor for now: 64 vCPU / 128 GB RAM, 50 GB
@@ -187,6 +191,28 @@ func ydbStorageNodes(count int) MachineSpec {
 			SizeGB:     ydbStoragePdiskGB,
 			Type:       ydbStoragePdiskType,
 		}},
+	}
+}
+
+// ydbStorageNodesMultiDisk is the same flavor as ydbStorageNodes but with
+// `pdisks` raw block devices attached (named ydb-data-0, ydb-data-1, …).
+// Each becomes an independent YDB pdisk so the cluster can spread blob I/O
+// across more spindles in parallel; total cluster pdisk count = nodes × pdisks.
+func ydbStorageNodesMultiDisk(count, pdisks int) MachineSpec {
+	disks := make([]SecondaryDisk, 0, pdisks)
+	for i := 0; i < pdisks; i++ {
+		disks = append(disks, SecondaryDisk{
+			DeviceName: fmt.Sprintf("%s-%d", ydbStorageDevice, i),
+			SizeGB:     ydbStoragePdiskGB,
+			Type:       ydbStoragePdiskType,
+		})
+	}
+	return MachineSpec{
+		Role: RoleDatabase, Count: count,
+		CPUs: ydbNodeCPUs, MemoryMB: ydbNodeMemoryMB,
+		DiskGB:         ydbNodeBootDiskGB,
+		DiskType:       ydbNodeBootDiskType,
+		SecondaryDisks: disks,
 	}
 }
 
@@ -228,6 +254,12 @@ var YDBPresets = map[YDBPreset]YDBTopology{
 		FaultTolerance: "none",
 		DatabasePath:   "/Root/testdb",
 	},
+	YDBSplit33MultiSSD: {
+		Storage:        ydbStorageNodesMultiDisk(3, 3), // 3 storage × 3 pdisks = 9 raw block devices total
+		Database:       ydbDatabaseNodes(3),
+		FaultTolerance: "none",
+		DatabasePath:   "/Root/testdb",
+	},
 }
 
 func describeYDBPreset(p YDBPreset) string {
@@ -242,6 +274,8 @@ func describeYDBPreset(p YDBPreset) string {
 		return "Split: 6 storage + 3 database nodes — storage-heavy (9 total)"
 	case YDBSplit36:
 		return "Split: 3 storage + 6 database nodes — compute-heavy (9 total)"
+	case YDBSplit33MultiSSD:
+		return "Split: 3 storage × 3 pdisks (9 raw devices) + 3 database nodes"
 	default:
 		return string(p)
 	}

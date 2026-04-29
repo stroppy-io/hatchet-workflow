@@ -143,13 +143,14 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 		if db.YDB == nil {
 			return out
 		}
-		// When the storage spec attaches a secondary disk, the agent will
-		// point YDB's pdisk at the raw device — render the preview to match.
-		ydbBlockDevice := ""
+		// When the storage spec attaches secondary disks, the agent will
+		// point YDB's pdisks at the raw devices — render the preview to
+		// match. One pdisk per attached disk; multi-disk topologies fan
+		// these out into multiple drives + fail_domains.
+		var ydbBlockDevices []string
 		for _, d := range db.YDB.Storage.SecondaryDisks {
 			if d.DeviceName != "" {
-				ydbBlockDevice = "/dev/disk/by-id/virtio-" + d.DeviceName
-				break
+				ydbBlockDevices = append(ydbBlockDevices, "/dev/disk/by-id/virtio-"+d.DeviceName)
 			}
 		}
 		// In combined mode (Database == nil) both ydbd-storage and
@@ -166,7 +167,7 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 		put("ydb.yaml:storage", dbconfig.RenderYDBStorageConf(dbconfig.RenderYDBConfOpts{
 			HostCount:       db.YDB.Storage.Count,
 			DiskPath:        "/ydb_data",
-			BlockDevicePath: ydbBlockDevice,
+			BlockDevicePaths: ydbBlockDevices,
 			CPUs:            db.YDB.Storage.CPUs,
 			MemoryMB:        storageMem,
 			FaultTolerance:  db.YDB.FaultTolerance,
@@ -184,7 +185,7 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 		put("ydb.yaml:database", dbconfig.RenderYDBDatabaseConf(dbconfig.RenderYDBDatabaseConfOpts{
 			HostCount:       db.YDB.Storage.Count,
 			DiskPath:        "/ydb_data",
-			BlockDevicePath: ydbBlockDevice,
+			BlockDevicePaths: ydbBlockDevices,
 			CPUs:            dbCPUs,
 			MemoryMB:        dbMem,
 			FaultTolerance:  db.YDB.FaultTolerance,

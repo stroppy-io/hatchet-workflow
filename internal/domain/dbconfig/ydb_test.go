@@ -66,9 +66,9 @@ func TestRenderYDBDatabaseConf_NodeTypeCompute(t *testing.T) {
 
 func TestRenderYDBStorageConf_RawBlockDevicePath(t *testing.T) {
 	out := RenderYDBStorageConf(RenderYDBConfOpts{
-		HostCount:       3,
-		MemoryMB:        4096,
-		BlockDevicePath: "/dev/disk/by-id/virtio-ydb-data",
+		HostCount:        3,
+		MemoryMB:         4096,
+		BlockDevicePaths: []string{"/dev/disk/by-id/virtio-ydb-data"},
 	})
 	// host_configs entry should reference the raw device, not the file-backed
 	// pdisk.data fallback.
@@ -76,7 +76,30 @@ func TestRenderYDBStorageConf_RawBlockDevicePath(t *testing.T) {
 		t.Errorf("expected raw-device path in host_configs:\n%s", out)
 	}
 	if strings.Contains(out, "pdisk.data") {
-		t.Errorf("file-backed pdisk path should not appear when BlockDevicePath is set:\n%s", out)
+		t.Errorf("file-backed pdisk path should not appear when BlockDevicePaths is set:\n%s", out)
+	}
+}
+
+func TestRenderYDBStorageConf_MultiDiskPerHost(t *testing.T) {
+	paths := []string{
+		"/dev/disk/by-id/virtio-ydb-data-0",
+		"/dev/disk/by-id/virtio-ydb-data-1",
+		"/dev/disk/by-id/virtio-ydb-data-2",
+	}
+	out := RenderYDBStorageConf(RenderYDBConfOpts{
+		HostCount:        3,
+		MemoryMB:         4096,
+		BlockDevicePaths: paths,
+	})
+	// host_configs should list one drive entry per pdisk (3 paths × "type: SSD").
+	for _, p := range paths {
+		if !strings.Contains(out, "  - path: "+p+"\n") {
+			t.Errorf("host_configs missing drive %q:\n%s", p, out)
+		}
+	}
+	// blob_storage_config: 3 hosts × 3 pdisks = 9 fail_domains × 1 vdisk_location each.
+	if c := strings.Count(out, "vdisk_locations:"); c != 9 {
+		t.Errorf("expected 9 vdisk_locations (3 hosts × 3 pdisks), got %d", c)
 	}
 }
 

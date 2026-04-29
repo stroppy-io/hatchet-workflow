@@ -45,10 +45,11 @@ func CalculateYDBStoragePdiskGB(script string, scaleFactor int) int {
 	return chunks * ydbStorageChunkGB * 2
 }
 
-// AdjustYDBStorageDisk rewrites the YDB storage pdisk size based on the
-// stroppy script + scale factor. Only the first secondary disk is touched
-// (that's the YDB pdisk by convention; anything else added by the user is
-// left alone).
+// AdjustYDBStorageDisk rewrites the YDB storage pdisk size on every secondary
+// disk based on the stroppy script + scale factor. With multi-disk topologies
+// (e.g. 3 pdisks per node), each disk gets the same chunk-aligned size — they
+// each become an independent pdisk in YDB and capacity divides naturally
+// across them.
 //
 // Called from the dry-run path so the size lands in the review-step
 // textarea before the user gets a chance to edit it. Not called from
@@ -61,7 +62,8 @@ func AdjustYDBStorageDisk(cfg *types.RunConfig) {
 	if len(sd) == 0 {
 		return
 	}
-	cfg.Database.YDB.Storage.SecondaryDisks[0].SizeGB = CalculateYDBStoragePdiskGB(
-		cfg.Stroppy.Script, cfg.Stroppy.ScaleFactor,
-	)
+	size := CalculateYDBStoragePdiskGB(cfg.Stroppy.Script, cfg.Stroppy.ScaleFactor)
+	for i := range cfg.Database.YDB.Storage.SecondaryDisks {
+		cfg.Database.YDB.Storage.SecondaryDisks[i].SizeGB = size
+	}
 }
