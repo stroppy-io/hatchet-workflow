@@ -3,8 +3,11 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { startRun, validateRun, dryRun, listPresets, listPackages, probeScript, getStroppyVersions, getStroppyCommits, getSettings, type StroppyCommit } from "@/api/client";
 import {
   ALL_DB_KINDS,
+  KIND_PROTOCOLS,
+  SCRIPT_COMPAT,
   type RunConfig,
   type DatabaseKind,
+  type Protocol,
   type Provider,
   type Preset,
   type Package,
@@ -47,12 +50,19 @@ import { NumericSlider, DurationSlider, SliderField, CPU_STEPS, ramSteps, DiskTy
 
 const DB_KINDS = ALL_DB_KINDS;
 const PROVIDERS: Provider[] = ["docker", "yandex"];
-const SCRIPTS: { id: string; label: string; desc: string; dbs: DatabaseKind[] }[] = [
-  { id: "tpcc/procs", label: "TPC-C Procs", desc: "Stored procedures", dbs: ["postgres", "mysql", "mariadb"] },
-  { id: "tpcc/tx", label: "TPC-C Tx", desc: "Raw transactions", dbs: ["postgres", "mysql", "mariadb", "picodata", "ydb"] },
-  { id: "tpcb/procs", label: "TPC-B Procs", desc: "Stored procedures", dbs: ["postgres", "mysql", "mariadb"] },
-  { id: "tpcb/tx", label: "TPC-B Tx", desc: "Raw transactions", dbs: ["postgres", "mysql", "mariadb", "picodata", "ydb"] },
-];
+// SCRIPT_META is a label/description lookup for known stroppy scripts.
+// SCRIPT_COMPAT (in api/types.ts) is the source of truth for which scripts
+// run on which (kind, protocol); this map only adds presentation. Anything
+// not listed here renders with its raw ID and an empty description — useful
+// for engine-specific variants we add later without touching this file.
+const SCRIPT_META: Record<string, { label: string; desc: string }> = {
+  "tpcc/procs":          { label: "TPC-C Procs", desc: "Stored procedures" },
+  "tpcc/tx":             { label: "TPC-C Tx",    desc: "Raw transactions" },
+  "tpcb/procs":          { label: "TPC-B Procs", desc: "Stored procedures" },
+  "tpcb/tx":             { label: "TPC-B Tx",    desc: "Raw transactions" },
+  "tpcc/tx-ydb-pgwire":  { label: "TPC-C Tx (YDB pgwire)", desc: "Subset that fits YDB's pg-wire feature ceiling" },
+  "tpcb/tx-ydb-pgwire":  { label: "TPC-B Tx (YDB pgwire)", desc: "Subset that fits YDB's pg-wire feature ceiling" },
+};
 
 const DB_VERSIONS: Record<DatabaseKind, string[]> = {
   postgres: ["17", "16", "15"],
@@ -115,6 +125,13 @@ export function NewRun() {
   const [provider, setProvider] = useState<Provider>(rc?.provider || "docker");
   const [platformId, setPlatformId] = useState(rc?.platform_id || "standard-v3");
   const [version, setVersion] = useState(rc?.database?.version || DB_VERSIONS[kind][0]);
+  // Protocol axis: how stroppy talks to the picked engine. Defaults to the
+  // first protocol KIND_PROTOCOLS lists for the kind (preserves behaviour
+  // for runs that never set this field). Toggling resets the script if the
+  // current one isn't supported by the new (kind, protocol) combo.
+  const [protocol, setProtocol] = useState<Protocol>(
+    (rcS?.protocol as Protocol) || KIND_PROTOCOLS[(rc?.database?.kind as DatabaseKind) || "postgres"][0],
+  );
   const [script, setScript] = useState(rcS?.script || rcS?.workload || "tpcc/procs");
   const [duration, setDuration] = useState(rcS?.duration || "5m");
   // TPC-C-tuned defaults: scale 500 warehouses, 300 VUs, 200-conn pool. The
@@ -180,11 +197,21 @@ export function NewRun() {
     if (!DB_VERSIONS[kind].includes(version)) {
       setVersion(DB_VERSIONS[kind][0]);
     }
-    const compatible = SCRIPTS.filter((s) => s.dbs.includes(kind));
-    if (!compatible.find((s) => s.id === script)) {
-      setScript(compatible[0]?.id || "tpcb/tx");
+    // Protocol must be one the new kind speaks — switching kinds resets
+    // anything stale to the kind's default (first entry).
+    if (!KIND_PROTOCOLS[kind].includes(protocol)) {
+      setProtocol(KIND_PROTOCOLS[kind][0]);
     }
   }, [kind, allPresets]);
+  // Script compatibility now keys on (kind, protocol). Reset to the first
+  // valid entry whenever the current pick falls off the matrix — both kind
+  // changes and protocol toggles can break compatibility.
+  useEffect(() => {
+    const compat = SCRIPT_COMPAT[`${kind}:${protocol}`] || [];
+    if (compat.length > 0 && !compat.includes(script)) {
+      setScript(compat[0]);
+    }
+  }, [kind, protocol]);
   useEffect(() => {
     listPackages({ db_kind: kind, db_version: version }).then(setAvailablePackages).catch(() => {});
   }, [kind, version]);
@@ -211,6 +238,7 @@ export function NewRun() {
       monitor: {},
       stroppy: {
         version: stroppyVersion,
+        protocol,
         script,
         duration,
         vus,
@@ -227,7 +255,7 @@ export function NewRun() {
       cfg.platform_id = platformId;
     }
     return cfg;
-  }, [kind, selectedPresetId, provider, platformId, version, script, duration, vus, poolSize, scaleFactor, packageId, selectedSteps, noSteps, stroppyCpus, stroppyMemory, stroppyDisk, stroppyDiskType, stroppyVersion]);
+  }, [kind, protocol, selectedPresetId, provider, platformId, version, script, duration, vus, poolSize, scaleFactor, packageId, selectedSteps, noSteps, stroppyCpus, stroppyMemory, stroppyDisk, stroppyDiskType, stroppyVersion]);
 
   const configJSON = useMemo(() => JSON.stringify(config, null, 2), [config]);
 
@@ -373,6 +401,7 @@ export function NewRun() {
           {step === 1 && (
             <StepDatabase
               kind={kind} setKind={setKind}
+              protocol={protocol} setProtocol={setProtocol}
               version={version} setVersion={setVersion}
               packageId={packageId} setPackageId={setPackageId}
               availablePackages={availablePackages}
@@ -390,6 +419,7 @@ export function NewRun() {
               vus={vus} setVus={setVus}
               poolSize={poolSize} setPoolSize={setPoolSize}
               dbKind={kind}
+              protocol={protocol}
               provider={provider}
               platformId={platformId}
               quotas={quotas}
@@ -561,6 +591,7 @@ function StepInfra({ provider, setProvider, platformId, setPlatformId, providers
 
 function StepDatabase({
   kind, setKind,
+  protocol, setProtocol,
   version, setVersion,
   packageId, setPackageId,
   availablePackages,
@@ -570,6 +601,7 @@ function StepDatabase({
   allowedKinds,
 }: {
   kind: DatabaseKind; setKind: (k: DatabaseKind) => void;
+  protocol: Protocol; setProtocol: (p: Protocol) => void;
   allowedKinds: DatabaseKind[];
   version: string; setVersion: (v: string) => void;
   packageId: string; setPackageId: (v: string) => void;
@@ -579,6 +611,7 @@ function StepDatabase({
   dbMeta: { icon: typeof Database; label: string };
   dbColor: { hex: string; text: string; accent: string };
 }) {
+  const protocolsForKind = KIND_PROTOCOLS[kind];
   return (
     <div className="space-y-5">
       <div>
@@ -605,6 +638,35 @@ function StepDatabase({
           );
         })}
       </div>
+
+      {/* Protocol toggle — hidden for engines that speak only one protocol.
+          Selecting a different protocol re-filters the script picker on
+          step 2, since SCRIPT_COMPAT keys on (kind, protocol). */}
+      {protocolsForKind.length > 1 && (
+        <div className="space-y-1.5">
+          <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Protocol</Label>
+          <div className="inline-flex border border-zinc-800 overflow-hidden text-[11px] font-mono">
+            {protocolsForKind.map((p) => {
+              const active = protocol === p;
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setProtocol(p)}
+                  className={`px-3 py-1 transition-colors cursor-pointer ${
+                    active ? `${dbColor.text} ${dbColor.accent}` : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
+                  }`}
+                >
+                  {p}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[10px] font-mono text-zinc-600">
+            Wire format stroppy uses to talk to {dbMeta.label}. Different protocols expose different SQL feature ceilings — the script list on step 2 narrows accordingly.
+          </p>
+        </div>
+      )}
 
       {/* Version + Package */}
       <div className="grid grid-cols-2 gap-3">
@@ -814,6 +876,7 @@ function StepStroppy({
   vus, setVus,
   poolSize, setPoolSize,
   dbKind,
+  protocol,
   provider,
   platformId,
   quotas,
@@ -836,6 +899,7 @@ function StepStroppy({
   vus: number; setVus: (v: number) => void;
   poolSize: number; setPoolSize: (v: number) => void;
   dbKind: DatabaseKind;
+  protocol: Protocol;
   provider: Provider;
   platformId: string;
   quotas: TenantQuotas;
@@ -970,30 +1034,28 @@ function StepStroppy({
         </div>
       </div>
 
-      {/* Script selector */}
+      {/* Script selector. Source-of-truth is SCRIPT_COMPAT[<kind>:<proto>]
+          on the SPA, which mirrors types.ScriptCompat on the server.
+          SCRIPT_META just decorates IDs with labels/descriptions. */}
       <div>
         <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-2 block">Script</span>
         <div className="grid grid-cols-2 gap-2">
-          {SCRIPTS.map((s) => {
-            const supported = s.dbs.includes(dbKind);
-            const active = script === s.id;
+          {(SCRIPT_COMPAT[`${dbKind}:${protocol}`] || []).map((id) => {
+            const meta = SCRIPT_META[id] || { label: id, desc: "" };
+            const active = script === id;
             return (
-              <button type="button" key={s.id}
-                onClick={() => supported && setScript(s.id)}
-                disabled={!supported}
-                className={`border p-3 text-left transition-all ${
-                  !supported
-                    ? "border-zinc-800/40 opacity-40 cursor-not-allowed"
-                    : active
-                      ? "border-primary/40 bg-primary/[0.06] cursor-pointer"
-                      : "border-zinc-800/60 hover:bg-zinc-900/50 hover:border-zinc-700 cursor-pointer"
+              <button type="button" key={id}
+                onClick={() => setScript(id)}
+                className={`border p-3 text-left transition-all cursor-pointer ${
+                  active
+                    ? "border-primary/40 bg-primary/[0.06]"
+                    : "border-zinc-800/60 hover:bg-zinc-900/50 hover:border-zinc-700"
                 }`}
               >
-                <div className={`text-xs font-mono font-semibold ${!supported ? "text-zinc-600" : active ? "text-primary" : "text-zinc-400"}`}>{s.label}</div>
-                <div className="text-[10px] text-zinc-600 mt-0.5">
-                  {s.desc}
-                  {!supported && <span className="text-zinc-700"> — not available for {dbKind}</span>}
-                </div>
+                <div className={`text-xs font-mono font-semibold ${active ? "text-primary" : "text-zinc-400"}`}>{meta.label}</div>
+                {meta.desc && (
+                  <div className="text-[10px] text-zinc-600 mt-0.5">{meta.desc}</div>
+                )}
               </button>
             );
           })}
