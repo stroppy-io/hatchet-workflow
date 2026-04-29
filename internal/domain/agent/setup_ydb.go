@@ -15,6 +15,7 @@ type YDBStaticConfig struct {
 	DiskGB           int               `json:"disk_gb"`                      // allocated disk size; pdisk is sized to this when file-backed
 	MemoryMB         int               `json:"memory_mb"`                    // total machine RAM for memory limits
 	CPUs             int               `json:"cpus"`                         // vCPUs for actor system tuning
+	PgwirePort       int               `json:"pgwire_port,omitempty"`        // when > 0, agent passes --pgwire-port <N> to ydbd so the postgres-wire surface is reachable
 	FaultTolerance   string            `json:"fault_tolerance"`
 	Options          map[string]string `json:"options,omitempty"`
 	// ConfOverride, when non-empty, replaces the rendered YDB config.yaml
@@ -40,6 +41,7 @@ type YDBDatabaseConfig struct {
 	FaultTolerance  string            `json:"fault_tolerance,omitempty"`
 	StorageHosts     []string          `json:"storage_hosts,omitempty"`      // mirrors YDBStaticConfig.Hosts; needed to substitute placeholders in the database yaml
 	BlockDevicePaths []string          `json:"block_device_paths,omitempty"` // mirrors the storage value so the database yaml's path: lines stay consistent with the cluster's
+	PgwirePort       int               `json:"pgwire_port,omitempty"`        // when > 0, agent passes --pgwire-port <N> to the dynamic ydbd process so clients can use the postgres-wire surface
 	Options          map[string]string `json:"options,omitempty"`
 	// ConfOverride, when non-empty, replaces the rendered ydb-database.yaml
 	// body for this node. The agent still substitutes __YDB_HOST_<i>__

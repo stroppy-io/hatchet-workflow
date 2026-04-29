@@ -1630,7 +1630,13 @@ func (e *Executor) configYDB(ctx context.Context, cmd Command) error {
 		e.shell(ctx, fmt.Sprintf("hostnamectl set-hostname %s 2>/dev/null || hostname %s", cfg.AdvertiseHost, cfg.AdvertiseHost))
 	}
 
-	// Start static node.
+	// Start static node. When the run picked the ydb-pgwire protocol the
+	// run task sets PgwirePort > 0 and we add --pgwire-port to expose the
+	// experimental postgres-wire surface alongside the gRPC one.
+	pgwireFlag := ""
+	if cfg.PgwirePort > 0 {
+		pgwireFlag = fmt.Sprintf("--pgwire-port %d ", cfg.PgwirePort)
+	}
 	e.shell(ctx, "systemctl stop ydbd-storage 2>/dev/null; systemctl reset-failed ydbd-storage 2>/dev/null")
 	e.emitLine("starting YDB static (storage) node...")
 	startCmd := fmt.Sprintf(
@@ -1639,8 +1645,9 @@ func (e *Executor) configYDB(ctx context.Context, cmd Command) error {
 			`/opt/ydb/bin/ydbd server `+
 			`--yaml-config %s `+
 			`--grpc-port 2136 --ic-port 19001 --mon-port 8765 `+
+			`%s`+
 			`--node static`,
-		confPath)
+		confPath, pgwireFlag)
 	if _, err := e.shell(ctx, startCmd); err != nil {
 		return fmt.Errorf("start ydbd-storage: %w", err)
 	}
@@ -1737,6 +1744,13 @@ func (e *Executor) startYDBDB(ctx context.Context, cmd Command) error {
 		fmt.Fprintf(&brokerFlags, " --node-broker grpc://%s:2136", ep)
 	}
 
+	// When the run picked ydb-pgwire, expose the postgres-wire surface on
+	// the dynamic node so clients can hit it directly rather than via the
+	// static node's gRPC port.
+	pgwireFlag := ""
+	if cfg.PgwirePort > 0 {
+		pgwireFlag = fmt.Sprintf("--pgwire-port %d ", cfg.PgwirePort)
+	}
 	e.shell(ctx, "systemctl stop ydbd-database 2>/dev/null; systemctl reset-failed ydbd-database 2>/dev/null")
 	e.emitLine("starting YDB dynamic (database) node...")
 	startCmd := fmt.Sprintf(
@@ -1745,8 +1759,9 @@ func (e *Executor) startYDBDB(ctx context.Context, cmd Command) error {
 			`/opt/ydb/bin/ydbd server `+
 			`--yaml-config %s `+
 			`--grpc-port 2136 --ic-port 19002 --mon-port 8766 `+
+			`%s`+
 			`--tenant %s%s`,
-		dbConfPath, dbPath, brokerFlags.String())
+		dbConfPath, pgwireFlag, dbPath, brokerFlags.String())
 	if _, err := e.shell(ctx, startCmd); err != nil {
 		return fmt.Errorf("start ydbd-database: %w", err)
 	}

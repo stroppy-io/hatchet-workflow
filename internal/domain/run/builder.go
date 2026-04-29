@@ -224,6 +224,17 @@ func (b *builder) needsProxy() bool {
 	return false
 }
 
+// ydbPgwirePort returns the port ydbd should expose its postgres-wire
+// surface on, or 0 when the run isn't using the ydb-pgwire protocol. Both
+// the storage and database tasks consult it so the static and dynamic
+// daemons enable pgwire consistently.
+func ydbPgwirePort(cfg types.RunConfig) int {
+	if cfg.Stroppy.Protocol != types.ProtocolYDBPgwire {
+		return 0
+	}
+	return types.Protocols[types.ProtocolYDBPgwire].Port
+}
+
 func (b *builder) needsYDBInit() bool {
 	return b.cfg.Database.Kind == types.DatabaseYDB && b.cfg.Database.YDB != nil
 }
@@ -232,7 +243,13 @@ func (b *builder) addYDBPhases() {
 	b.add(b.ph(types.PhaseInitYDBCluster), []string{b.ph(types.PhaseConfigureDB)},
 		&ydbInitTask{client: b.deps.Client, state: b.deps.State, topology: b.cfg.Database.YDB})
 	b.add(b.ph(types.PhaseStartYDBDatabase), []string{b.ph(types.PhaseInitYDBCluster)},
-		&ydbStartDBTask{client: b.deps.Client, state: b.deps.State, topology: b.cfg.Database.YDB, overrides: b.cfg.Database.RenderedConfigOverrides})
+		&ydbStartDBTask{
+			client:     b.deps.Client,
+			state:      b.deps.State,
+			topology:   b.cfg.Database.YDB,
+			overrides:  b.cfg.Database.RenderedConfigOverrides,
+			pgwirePort: ydbPgwirePort(b.cfg),
+		})
 	b.runStroppyDeps = append(b.runStroppyDeps, b.ph(types.PhaseStartYDBDatabase))
 }
 
@@ -294,7 +311,7 @@ func (b *builder) dbTasks() (install dag.Task, config dag.Task, err error) {
 			&picoConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.Picodata, overrides: db.RenderedConfigOverrides}, nil
 	case types.DatabaseYDB:
 		return &ydbInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.YDB, pkg: pkg},
-			&ydbConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.YDB, overrides: db.RenderedConfigOverrides}, nil
+			&ydbConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.YDB, overrides: db.RenderedConfigOverrides, pgwirePort: ydbPgwirePort(b.cfg)}, nil
 	default:
 		return nil, nil, fmt.Errorf("unsupported database kind %q", db.Kind)
 	}

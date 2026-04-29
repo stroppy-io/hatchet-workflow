@@ -28,10 +28,11 @@ func (t *ydbInstallTask) Execute(nc *dag.NodeContext) error {
 }
 
 type ydbConfigTask struct {
-	client    agent.Client
-	state     *State
-	topology  *types.YDBTopology
-	overrides map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "ydb.yaml:storage"
+	client      agent.Client
+	state       *State
+	topology    *types.YDBTopology
+	overrides   map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "ydb.yaml:storage"
+	pgwirePort  int               // > 0 → ydbd starts with --pgwire-port (set when run uses ydb-pgwire protocol)
 }
 
 func (t *ydbConfigTask) Execute(nc *dag.NodeContext) error {
@@ -88,6 +89,7 @@ func (t *ydbConfigTask) Execute(nc *dag.NodeContext) error {
 			DiskGB:           t.topology.Storage.DiskGB,
 			MemoryMB:         storageMemMB,
 			CPUs:             t.topology.Storage.CPUs,
+			PgwirePort:       t.pgwirePort,
 			FaultTolerance:   ft,
 			Options:          t.topology.StorageOptions,
 			ConfOverride:     t.overrides["ydb.yaml:storage"],
@@ -182,10 +184,11 @@ func (t *ydbInitTask) Execute(nc *dag.NodeContext) error {
 }
 
 type ydbStartDBTask struct {
-	client    agent.Client
-	state     *State
-	topology  *types.YDBTopology
-	overrides map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "ydb.yaml:database"
+	client      agent.Client
+	state       *State
+	topology    *types.YDBTopology
+	overrides   map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "ydb.yaml:database"
+	pgwirePort  int               // > 0 → ydbd starts with --pgwire-port (set when run uses ydb-pgwire protocol)
 }
 
 func (t *ydbStartDBTask) Execute(nc *dag.NodeContext) error {
@@ -251,6 +254,7 @@ func (t *ydbStartDBTask) Execute(nc *dag.NodeContext) error {
 			FaultTolerance:   ft,
 			StorageHosts:     staticHosts,
 			BlockDevicePaths: allBlockDevicePaths(t.topology.Storage.SecondaryDisks),
+			PgwirePort:       t.pgwirePort,
 			Options:          t.topology.DatabaseOptions,
 			ConfOverride:     t.overrides["ydb.yaml:database"],
 		}

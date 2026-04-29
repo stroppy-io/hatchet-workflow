@@ -7,15 +7,11 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 )
 
-// Script → supported database kinds.
-// MariaDB is wire-compatible with MySQL — stroppy's mysql driver speaks to it
-// without any changes — so anywhere MySQL is supported MariaDB is too.
-var scriptDBSupport = map[string][]types.DatabaseKind{
-	"tpcc/procs": {types.DatabasePostgres, types.DatabaseMySQL, types.DatabaseMariaDB},
-	"tpcc/tx":    {types.DatabasePostgres, types.DatabaseMySQL, types.DatabaseMariaDB, types.DatabasePicodata, types.DatabaseYDB},
-	"tpcb/procs": {types.DatabasePostgres, types.DatabaseMySQL, types.DatabaseMariaDB},
-	"tpcb/tx":    {types.DatabasePostgres, types.DatabaseMySQL, types.DatabaseMariaDB, types.DatabasePicodata, types.DatabaseYDB},
-}
+// Script compatibility now lives in types.ScriptCompat, keyed by
+// (DatabaseKind, Protocol). The old scriptDBSupport map keyed only on kind
+// and assumed scripts were portable across protocols — which broke the
+// moment we wanted to differentiate native YDB from YDB pgwire (different
+// SQL feature ceilings, different stroppy script variants).
 
 // ValidateConfig checks RunConfig semantics before building the DAG.
 func ValidateConfig(cfg types.RunConfig) error {
@@ -53,28 +49,32 @@ func ValidateConfig(cfg types.RunConfig) error {
 		}
 	}
 
-	// Script vs DB kind compatibility.
+	// Script vs (DB kind, protocol) compatibility. Protocol defaults to the
+	// kind's first supported entry when the run config didn't set one.
 	script := cfg.Stroppy.Script
 	if script == "" {
 		script = cfg.Stroppy.Workload // backward compat
 	}
+	protocol := cfg.Stroppy.Protocol
+	if protocol == "" {
+		protocol = types.DefaultProtocol(cfg.Database.Kind)
+	}
+	if protocol != "" && !types.KindSupportsProtocol(cfg.Database.Kind, protocol) {
+		return fmt.Errorf("protocol %q is not supported by database %q", protocol, cfg.Database.Kind)
+	}
 	if script != "" {
-		supported, known := scriptDBSupport[script]
-		if known {
+		supported := types.ScriptCompat[types.KindProtocolKey{Kind: cfg.Database.Kind, Protocol: protocol}]
+		if len(supported) > 0 {
 			found := false
-			for _, k := range supported {
-				if k == cfg.Database.Kind {
+			for _, s := range supported {
+				if s == script {
 					found = true
 					break
 				}
 			}
 			if !found {
-				supportedNames := make([]string, len(supported))
-				for i, k := range supported {
-					supportedNames[i] = string(k)
-				}
-				return fmt.Errorf("script %q is not compatible with database %q (supported: %s)",
-					script, cfg.Database.Kind, strings.Join(supportedNames, ", "))
+				return fmt.Errorf("script %q is not compatible with database %q on protocol %q (supported: %s)",
+					script, cfg.Database.Kind, protocol, strings.Join(supported, ", "))
 			}
 		}
 	}

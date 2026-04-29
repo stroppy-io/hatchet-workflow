@@ -19,6 +19,19 @@ import (
 	yctf "github.com/stroppy-io/stroppy-cloud/deployments/terraform/yandex"
 )
 
+// dbConnectPort returns the port stroppy connects to for a given (kind,
+// protocol). Single source of truth — the protocol registry decides. When
+// the run config didn't pin a protocol, falls back to the kind's default.
+func dbConnectPort(kind types.DatabaseKind, protocol types.Protocol) int {
+	if protocol == "" {
+		protocol = types.DefaultProtocol(kind)
+	}
+	if meta, ok := types.Protocols[protocol]; ok {
+		return meta.Port
+	}
+	return 0
+}
+
 // networkTask creates a Docker network (for docker provider).
 type networkTask struct {
 	cfg      types.NetworkConfig
@@ -169,16 +182,11 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 					ydbDatabaseTargets = append(ydbDatabaseTargets, target)
 				}
 				if len(dbTargets) == 1 {
-					// First DB target is master -- store for stroppy to connect.
-					dbPort := 5432 // postgres default
-					switch t.runCfg.Database.Kind {
-					case types.DatabaseMySQL, types.DatabaseMariaDB:
-						dbPort = 3306
-					case types.DatabasePicodata:
-						dbPort = 5432 // picodata pg wire protocol // pgproto
-					case types.DatabaseYDB:
-						dbPort = 2136
-					}
+					// First DB target is master -- store for stroppy to
+					// connect. Port comes from the protocol registry so
+					// switching protocols (e.g. ydb-grpc → ydb-pgwire)
+					// flips the port automatically.
+					dbPort := dbConnectPort(t.runCfg.Database.Kind, t.runCfg.Stroppy.Protocol)
 					t.state.SetDBEndpoint(result.ContainerName, dbPort)
 				}
 			case types.RoleProxy:
@@ -524,15 +532,7 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 	// over vmRoles is non-deterministic, so this needs to happen after the
 	// loop — picking inside the loop would race on iteration order.
 	if len(dbTargets) > 0 {
-		dbPort := 5432
-		switch t.runCfg.Database.Kind {
-		case types.DatabaseMySQL, types.DatabaseMariaDB:
-			dbPort = 3306
-		case types.DatabasePicodata:
-			dbPort = 5432 // picodata pg wire protocol
-		case types.DatabaseYDB:
-			dbPort = 2136
-		}
+		dbPort := dbConnectPort(t.runCfg.Database.Kind, t.runCfg.Stroppy.Protocol)
 		endpoint := dbTargets[0]
 		if t.runCfg.Database.Kind == types.DatabaseYDB && len(ydbDatabaseTargets) > 0 {
 			endpoint = ydbDatabaseTargets[0]

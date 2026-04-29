@@ -292,6 +292,12 @@ type MonitorConfig struct {
 // StroppyConfig holds stroppy test runner settings.
 type StroppyConfig struct {
 	Version     string   `json:"version"`                // stroppy binary version (e.g. "4.1.0")
+	// Protocol selects the wire format stroppy uses to talk to the database.
+	// When unset, defaults to types.DefaultProtocol(database.kind) — preserves
+	// behaviour of pre-protocol-aware run configs. For engines that speak
+	// only one protocol (postgres / mysql / mariadb / picodata) leaving this
+	// blank is fine; for YDB the choice matters (ydb-grpc vs ydb-pgwire).
+	Protocol    Protocol `json:"protocol,omitempty"`
 	Script      string   `json:"script"`                 // e.g. "tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx"
 	Duration    string   `json:"duration"`               // k6 --duration flag
 	VUs         int      `json:"vus,omitempty"`          // k6 --vus flag

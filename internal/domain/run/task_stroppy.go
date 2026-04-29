@@ -145,23 +145,34 @@ func injectOTLP(rc *stroppypb.RunConfig, settings types.StroppySettings, runID s
 	}
 }
 
-// dbDriverURL formats the per-kind connection URL used by the stroppy driver.
-// host/port are strings so dry-run can pass sentinel tokens.
-func dbDriverURL(dbKind types.DatabaseKind, host, port string) (string, string) {
-	switch dbKind {
-	case types.DatabasePostgres:
-		return fmt.Sprintf("postgresql://postgres@%s:%s/postgres?sslmode=disable", host, port), "postgres"
-	case types.DatabaseMySQL, types.DatabaseMariaDB:
-		// MariaDB uses the MySQL wire protocol, so stroppy's mysql driver
-		// connects to it without changes.
-		return fmt.Sprintf("root@tcp(%s:%s)/", host, port), "mysql"
-	case types.DatabasePicodata:
-		return fmt.Sprintf("postgres://admin:T0psecret@%s:%s?sslmode=disable", host, port), "picodata"
-	case types.DatabaseYDB:
-		return fmt.Sprintf("grpc://%s:%s/Root/testdb", host, port), "ydb"
-	default:
+// dbDriverURL formats the connection URL and stroppy driver type for a given
+// (kind, protocol). host/port are strings so dry-run can pass sentinel tokens.
+//
+// All routing flows through the types.Protocols registry: adding a new wire
+// format means a one-line entry there, not a new branch here. For protocols
+// that need credentials baked into the URL (postgres' "postgres@", picodata's
+// "admin:T0psecret@") we splice those in around the metadata's URL prefix.
+func dbDriverURL(dbKind types.DatabaseKind, protocol types.Protocol, host, port string) (string, string) {
+	if protocol == "" {
+		protocol = types.DefaultProtocol(dbKind)
+	}
+	meta, ok := types.Protocols[protocol]
+	if !ok {
+		// Unknown protocol — fall back to a generic host:port and the kind
+		// as the driver type. Keeps validate.go responsible for rejecting
+		// nonsense before we get here.
 		return fmt.Sprintf("%s:%s", host, port), string(dbKind)
 	}
+	url := meta.FormatURL(host, port)
+	// A couple of historical URLs carry credentials in the userinfo slot.
+	// Splice them in here so the Protocols registry stays simple.
+	switch protocol {
+	case types.ProtocolPG:
+		url = fmt.Sprintf("postgresql://postgres@%s:%s/postgres?sslmode=disable", host, port)
+	case types.ProtocolPicodata:
+		url = fmt.Sprintf("postgres://admin:T0psecret@%s:%s?sslmode=disable", host, port)
+	}
+	return url, meta.DriverType
 }
 
 // BuildStroppyConfigJSON generates the protojson config sent to the stroppy binary.
@@ -177,11 +188,19 @@ func BuildStroppyConfigJSON(s types.StroppyConfig, dbKind types.DatabaseKind, db
 		script = "tpcc/procs"
 	}
 
+	// Default the protocol from the kind when the run config didn't pin
+	// one — preserves behaviour for runs created before the protocol axis
+	// landed.
+	protocol := s.Protocol
+	if protocol == "" {
+		protocol = types.DefaultProtocol(dbKind)
+	}
+
 	hostTok, portTok := dbHost, strconv.Itoa(dbPort)
 	if dbHost == "" && dbPort == 0 {
 		hostTok, portTok = DBHostPlaceholder, DBPortPlaceholder
 	}
-	driverURL, driverType := dbDriverURL(dbKind, hostTok, portTok)
+	driverURL, driverType := dbDriverURL(dbKind, protocol, hostTok, portTok)
 
 	vus := s.VUs
 	if vus == 0 && s.VUSScale > 0 {

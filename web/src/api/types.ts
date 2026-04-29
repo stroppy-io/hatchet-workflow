@@ -3,6 +3,38 @@
 export type Provider = "yandex" | "docker";
 export type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb";
 
+// Protocol is the wire format stroppy uses to talk to a database. Decoupled
+// from DatabaseKind because YDB and Picodata speak more than one. See
+// internal/domain/types/protocol.go for the source of truth.
+export type Protocol =
+  | "pg"
+  | "mysql"
+  | "picodata"
+  | "ydb-grpc"
+  | "ydb-pgwire";
+
+// KindProtocols mirrors the Go-side registry. First entry is the default
+// when the user hasn't picked one explicitly. Single-protocol kinds don't
+// need a UI picker.
+export const KIND_PROTOCOLS: Record<DatabaseKind, Protocol[]> = {
+  postgres: ["pg"],
+  mysql: ["mysql"],
+  mariadb: ["mysql"],
+  picodata: ["picodata"],
+  ydb: ["ydb-grpc", "ydb-pgwire"],
+};
+
+// SCRIPT_COMPAT keys (kind, protocol) and lists which scripts the wizard
+// should offer. Mirrors types.ScriptCompat on the server.
+export const SCRIPT_COMPAT: Record<string, string[]> = {
+  "postgres:pg":      ["tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx"],
+  "mysql:mysql":      ["tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx"],
+  "mariadb:mysql":    ["tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx"],
+  "picodata:picodata": ["tpcc/tx", "tpcb/tx"],
+  "ydb:ydb-grpc":     ["tpcc/tx", "tpcb/tx"],
+  "ydb:ydb-pgwire":   ["tpcc/tx-ydb-pgwire", "tpcb/tx-ydb-pgwire"],
+};
+
 /** All supported database kinds — single source of truth for UI iterations. */
 export const ALL_DB_KINDS: DatabaseKind[] = ["postgres", "mysql", "mariadb", "picodata", "ydb"];
 
@@ -124,6 +156,7 @@ export interface MonitorConfig {
 
 export interface StroppyConfig {
   version: string;
+  protocol?: Protocol;          // unset → default for the database kind (see KIND_PROTOCOLS)
   script: string;               // e.g. "tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx"
   duration: string;
   vus: number;
