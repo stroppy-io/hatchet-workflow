@@ -42,6 +42,13 @@ export interface MachineSpec {
   memory_mb: number;
   disk_gb: number;
   disk_type?: string;
+  secondary_disks?: SecondaryDisk[];
+}
+
+export interface SecondaryDisk {
+  device_name: string;
+  size_gb: number;
+  type?: string;
 }
 
 export interface PostgresTopology {
