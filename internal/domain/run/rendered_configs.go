@@ -82,35 +82,39 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 			}))
 		}
 
-	case types.DatabaseMySQL:
-		if db.MySQL == nil {
+	case types.DatabaseMySQL, types.DatabaseMariaDB:
+		t := db.MySQL
+		if db.Kind == types.DatabaseMariaDB {
+			t = db.MariaDB
+		}
+		if t == nil {
 			return out
 		}
 		put("my.cnf:primary", dbconfig.RenderMySQLConf(dbconfig.RenderMySQLConfOpts{
 			Version:       db.Version,
 			Role:          "primary",
-			SemiSync:      db.MySQL.SemiSync,
-			GroupRepl:     db.MySQL.GroupRepl,
-			Options:       db.MySQL.PrimaryOptions,
-			TotalMemoryMB: db.MySQL.Primary.MemoryMB,
+			SemiSync:      t.SemiSync,
+			GroupRepl:     t.GroupRepl,
+			Options:       t.PrimaryOptions,
+			TotalMemoryMB: t.Primary.MemoryMB,
 		}))
-		if len(db.MySQL.Replicas) > 0 {
-			r := db.MySQL.Replicas[0]
+		if len(t.Replicas) > 0 {
+			r := t.Replicas[0]
 			put("my.cnf:replica", dbconfig.RenderMySQLConf(dbconfig.RenderMySQLConfOpts{
 				Version:       db.Version,
 				Role:          "replica",
-				SemiSync:      db.MySQL.SemiSync,
-				GroupRepl:     db.MySQL.GroupRepl,
-				Options:       db.MySQL.ReplicaOptions,
+				SemiSync:      t.SemiSync,
+				GroupRepl:     t.GroupRepl,
+				Options:       t.ReplicaOptions,
 				TotalMemoryMB: r.MemoryMB,
 			}))
 		}
-		if db.MySQL.ProxySQL != nil {
+		if t.ProxySQL != nil {
 			// Backend count = primary + (count of each replica spec). The
 			// preview placeholder list has to match what task_proxy.go ships
 			// at run time — primary first, replicas after.
-			backendCount := db.MySQL.Primary.Count
-			for _, r := range db.MySQL.Replicas {
+			backendCount := t.Primary.Count
+			for _, r := range t.Replicas {
 				backendCount += r.Count
 			}
 			put("proxysql.cnf", dbconfig.RenderProxySQLConf(dbconfig.RenderProxySQLConfOpts{

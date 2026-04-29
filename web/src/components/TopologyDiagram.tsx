@@ -57,7 +57,7 @@ function getRolesFromTopology(kind: DatabaseKind, topology: PostgresTopology | M
     return roles;
   }
 
-  if (kind === "mysql") {
+  if (kind === "mysql" || kind === "mariadb") {
     const t = topology as MySQLTopology;
     const roles: RoleDef[] = [];
     if (t.primary) roles.push({ label: "Primary", count: t.primary.count || 1, color: c.hex, icon: Server, spec: formatSpec(t.primary) });
@@ -130,7 +130,7 @@ function getRolesFromPresetName(kind: DatabaseKind, preset: string): RoleDef[] {
     }
   }
 
-  if (kind === "mysql") {
+  if (kind === "mysql" || kind === "mariadb") {
     switch (preset) {
       case "single":
         return [{ label: "Primary", count: 1, color: c.hex, icon: Server }];

@@ -172,7 +172,7 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 					// First DB target is master -- store for stroppy to connect.
 					dbPort := 5432 // postgres default
 					switch t.runCfg.Database.Kind {
-					case types.DatabaseMySQL:
+					case types.DatabaseMySQL, types.DatabaseMariaDB:
 						dbPort = 3306
 					case types.DatabasePicodata:
 						dbPort = 5432 // picodata pg wire protocol // pgproto
@@ -209,7 +209,7 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 		switch t.runCfg.Database.Kind {
 		case types.DatabasePostgres:
 			t.state.SetDBEndpoint(proxyHost, 5000) // HAProxy write port
-		case types.DatabaseMySQL:
+		case types.DatabaseMySQL, types.DatabaseMariaDB:
 			t.state.SetDBEndpoint(proxyHost, 6033) // ProxySQL client port
 		case types.DatabaseYDB:
 			t.state.SetDBEndpoint(proxyHost, 2136)
@@ -526,7 +526,7 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 	if len(dbTargets) > 0 {
 		dbPort := 5432
 		switch t.runCfg.Database.Kind {
-		case types.DatabaseMySQL:
+		case types.DatabaseMySQL, types.DatabaseMariaDB:
 			dbPort = 3306
 		case types.DatabasePicodata:
 			dbPort = 5432 // picodata pg wire protocol
@@ -559,7 +559,7 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 		switch t.runCfg.Database.Kind {
 		case types.DatabasePostgres:
 			t.state.SetDBEndpoint(proxyHost, 5000) // HAProxy write port
-		case types.DatabaseMySQL:
+		case types.DatabaseMySQL, types.DatabaseMariaDB:
 			t.state.SetDBEndpoint(proxyHost, 6033) // ProxySQL client port
 		case types.DatabaseYDB:
 			t.state.SetDBEndpoint(proxyHost, 2136)

@@ -45,11 +45,15 @@ func BakeMachineOverrideIntoTopology(cfg *types.RunConfig) {
 				apply(&db.Postgres.Replicas[i])
 			}
 		}
-	case types.DatabaseMySQL:
-		if db.MySQL != nil {
-			apply(&db.MySQL.Primary)
-			for i := range db.MySQL.Replicas {
-				apply(&db.MySQL.Replicas[i])
+	case types.DatabaseMySQL, types.DatabaseMariaDB:
+		t := db.MySQL
+		if db.Kind == types.DatabaseMariaDB {
+			t = db.MariaDB
+		}
+		if t != nil {
+			apply(&t.Primary)
+			for i := range t.Replicas {
+				apply(&t.Replicas[i])
 			}
 		}
 	case types.DatabasePicodata:
@@ -100,19 +104,24 @@ func FillMachinesFromTopology(cfg *types.RunConfig) {
 				cfg.Machines = append(cfg.Machines, *db.Postgres.HAProxy)
 			}
 		}
-	case types.DatabaseMySQL:
-		if db.MySQL != nil {
-			dbCount := db.MySQL.Primary.Count
-			for _, r := range db.MySQL.Replicas {
+	case types.DatabaseMySQL, types.DatabaseMariaDB:
+		// MariaDB shares MySQL's topology shape; pick whichever pointer is set.
+		t := db.MySQL
+		if db.Kind == types.DatabaseMariaDB {
+			t = db.MariaDB
+		}
+		if t != nil {
+			dbCount := t.Primary.Count
+			for _, r := range t.Replicas {
 				dbCount += r.Count
 			}
 			cfg.Machines = append(cfg.Machines, types.MachineSpec{
 				Role: types.RoleDatabase, Count: dbCount,
-				CPUs: ovCPU(db.MySQL.Primary.CPUs), MemoryMB: ovMem(db.MySQL.Primary.MemoryMB), DiskGB: ovDisk(db.MySQL.Primary.DiskGB),
-				DiskType: db.MySQL.Primary.DiskType, SecondaryDisks: db.MySQL.Primary.SecondaryDisks,
+				CPUs: ovCPU(t.Primary.CPUs), MemoryMB: ovMem(t.Primary.MemoryMB), DiskGB: ovDisk(t.Primary.DiskGB),
+				DiskType: t.Primary.DiskType, SecondaryDisks: t.Primary.SecondaryDisks,
 			})
-			if db.MySQL.ProxySQL != nil {
-				cfg.Machines = append(cfg.Machines, *db.MySQL.ProxySQL)
+			if t.ProxySQL != nil {
+				cfg.Machines = append(cfg.Machines, *t.ProxySQL)
 			}
 		}
 	case types.DatabasePicodata:

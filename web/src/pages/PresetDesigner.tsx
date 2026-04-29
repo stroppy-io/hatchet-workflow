@@ -968,6 +968,7 @@ function YDBForm({ topology, onChange, disabled }: {
 const DB_META: Record<DatabaseKind, { icon: typeof Database; label: string }> = {
   postgres: { icon: Database, label: "PostgreSQL" },
   mysql:    { icon: Server,   label: "MySQL" },
+  mariadb:  { icon: Server,   label: "MariaDB" },
   picodata: { icon: Cpu,      label: "Picodata" },
   ydb:      { icon: Database, label: "YDB" },
 };

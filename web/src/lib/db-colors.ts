@@ -26,6 +26,15 @@ export const DB_COLORS: Record<DatabaseKind, {
     accent: "border-[#F29111]/50 bg-[#F29111]/[0.08]",
     hexSecondary: "#E8A030",
   },
+  mariadb: {
+    // MariaDB seal teal — #4D6E84 — close enough to brand without colliding
+    // with PostgreSQL elephant blue.
+    hex: "#4D6E84",
+    hexLight: "#6E91A8",
+    text: "text-[#6E91A8]",
+    accent: "border-[#4D6E84]/50 bg-[#4D6E84]/[0.08]",
+    hexSecondary: "#3F5B6D",
+  },
   picodata: {
     hex: "#E23956",
     hexLight: "#F06580",

@@ -18,6 +18,7 @@ type Preset struct {
 	// Exactly one topology field is set, matching DbKind.
 	Postgres *PostgresTopology `json:"postgres,omitempty"`
 	MySQL    *MySQLTopology    `json:"mysql,omitempty"`
+	MariaDB  *MySQLTopology    `json:"mariadb,omitempty"` // shape mirrors MySQL
 	Picodata *PicodataTopology `json:"picodata,omitempty"`
 	YDB      *YDBTopology      `json:"ydb,omitempty"`
 }
@@ -30,6 +31,9 @@ func (p *Preset) TopologyJSON() (string, error) {
 		return string(b), err
 	case DatabaseMySQL:
 		b, err := json.Marshal(p.MySQL)
+		return string(b), err
+	case DatabaseMariaDB:
+		b, err := json.Marshal(p.MariaDB)
 		return string(b), err
 	case DatabasePicodata:
 		b, err := json.Marshal(p.Picodata)
@@ -57,6 +61,12 @@ func (p *Preset) ParseTopology(raw string) error {
 			return err
 		}
 		p.MySQL = &t
+	case DatabaseMariaDB:
+		var t MySQLTopology
+		if err := json.Unmarshal([]byte(raw), &t); err != nil {
+			return err
+		}
+		p.MariaDB = &t
 	case DatabasePicodata:
 		var t PicodataTopology
 		if err := json.Unmarshal([]byte(raw), &t); err != nil {
@@ -90,6 +100,17 @@ func BuiltinPresets() []Preset {
 		out = append(out, Preset{
 			Name: "MySQL " + string(name), Description: describeMySQLPreset(name),
 			DbKind: string(DatabaseMySQL), IsBuiltin: true, MySQL: &t,
+		})
+	}
+	// MariaDB reuses the MySQL topology shape — same set of presets, same
+	// per-component options. The DbKind switches the install package; the
+	// agent's configMySQL writer produces a my.cnf that mariadb-server reads
+	// without modification.
+	for name, topo := range MySQLPresets {
+		t := topo
+		out = append(out, Preset{
+			Name: "MariaDB " + string(name), Description: describeMySQLPreset(name),
+			DbKind: string(DatabaseMariaDB), IsBuiltin: true, MariaDB: &t,
 		})
 	}
 	for name, topo := range PicodataPresets {

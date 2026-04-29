@@ -28,7 +28,7 @@ func (t *proxyInstallTask) Execute(nc *dag.NodeContext) error {
 			Action: agent.ActionInstallHAProxy,
 			Config: agent.HAProxyInstallConfig{},
 		})
-	case types.DatabaseMySQL:
+	case types.DatabaseMySQL, types.DatabaseMariaDB:
 		nc.Log().Info("installing proxysql")
 		return t.client.SendAll(nc, targets, agent.Command{
 			Action: agent.ActionInstallProxySQL,
@@ -62,7 +62,7 @@ func (t *proxyConfigTask) Execute(nc *dag.NodeContext) error {
 	switch t.dbKind {
 	case types.DatabasePostgres:
 		return t.configHAProxyPostgres(nc, targets, dbTargets)
-	case types.DatabaseMySQL:
+	case types.DatabaseMySQL, types.DatabaseMariaDB:
 		return t.configProxySQLMySQL(nc, targets, dbTargets)
 	case types.DatabasePicodata:
 		return t.configHAProxyPicodata(nc, targets, dbTargets)

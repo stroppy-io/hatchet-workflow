@@ -48,15 +48,16 @@ import { NumericSlider, DurationSlider, SliderField, CPU_STEPS, ramSteps, DiskTy
 const DB_KINDS = ALL_DB_KINDS;
 const PROVIDERS: Provider[] = ["docker", "yandex"];
 const SCRIPTS: { id: string; label: string; desc: string; dbs: DatabaseKind[] }[] = [
-  { id: "tpcc/procs", label: "TPC-C Procs", desc: "Stored procedures", dbs: ["postgres", "mysql"] },
-  { id: "tpcc/tx", label: "TPC-C Tx", desc: "Raw transactions", dbs: ["postgres", "mysql", "picodata", "ydb"] },
-  { id: "tpcb/procs", label: "TPC-B Procs", desc: "Stored procedures", dbs: ["postgres", "mysql"] },
-  { id: "tpcb/tx", label: "TPC-B Tx", desc: "Raw transactions", dbs: ["postgres", "mysql", "picodata", "ydb"] },
+  { id: "tpcc/procs", label: "TPC-C Procs", desc: "Stored procedures", dbs: ["postgres", "mysql", "mariadb"] },
+  { id: "tpcc/tx", label: "TPC-C Tx", desc: "Raw transactions", dbs: ["postgres", "mysql", "mariadb", "picodata", "ydb"] },
+  { id: "tpcb/procs", label: "TPC-B Procs", desc: "Stored procedures", dbs: ["postgres", "mysql", "mariadb"] },
+  { id: "tpcb/tx", label: "TPC-B Tx", desc: "Raw transactions", dbs: ["postgres", "mysql", "mariadb", "picodata", "ydb"] },
 ];
 
 const DB_VERSIONS: Record<DatabaseKind, string[]> = {
   postgres: ["17", "16", "15"],
   mysql: ["8.4", "8.0"],
+  mariadb: ["11.4", "10.11"], // both LTS releases — 11.4 is current, 10.11 supported until 2028-02
   picodata: ["25.3"],
   ydb: ["25.2", "25.1", "24.4", "24.3"],
 };
@@ -64,6 +65,7 @@ const DB_VERSIONS: Record<DatabaseKind, string[]> = {
 const DB_META: Record<DatabaseKind, { icon: typeof Database; label: string }> = {
   postgres: { icon: Database, label: "PostgreSQL" },
   mysql:    { icon: Server,   label: "MySQL" },
+  mariadb:  { icon: Server,   label: "MariaDB" },
   picodata: { icon: Cpu,      label: "Picodata" },
   ydb:      { icon: Database, label: "YDB" },
 };

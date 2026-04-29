@@ -265,6 +265,8 @@ func (s *Server) resolveRunPreset(ctx context.Context, tenantID string, cfg *typ
 		cfg.Database.Postgres = preset.Postgres
 	case types.DatabaseMySQL:
 		cfg.Database.MySQL = preset.MySQL
+	case types.DatabaseMariaDB:
+		cfg.Database.MariaDB = preset.MariaDB
 	case types.DatabasePicodata:
 		cfg.Database.Picodata = preset.Picodata
 	case types.DatabaseYDB:

@@ -8,11 +8,13 @@ import (
 )
 
 // Script → supported database kinds.
+// MariaDB is wire-compatible with MySQL — stroppy's mysql driver speaks to it
+// without any changes — so anywhere MySQL is supported MariaDB is too.
 var scriptDBSupport = map[string][]types.DatabaseKind{
-	"tpcc/procs": {types.DatabasePostgres, types.DatabaseMySQL},
-	"tpcc/tx":    {types.DatabasePostgres, types.DatabaseMySQL, types.DatabasePicodata, types.DatabaseYDB},
-	"tpcb/procs": {types.DatabasePostgres, types.DatabaseMySQL},
-	"tpcb/tx":    {types.DatabasePostgres, types.DatabaseMySQL, types.DatabasePicodata, types.DatabaseYDB},
+	"tpcc/procs": {types.DatabasePostgres, types.DatabaseMySQL, types.DatabaseMariaDB},
+	"tpcc/tx":    {types.DatabasePostgres, types.DatabaseMySQL, types.DatabaseMariaDB, types.DatabasePicodata, types.DatabaseYDB},
+	"tpcb/procs": {types.DatabasePostgres, types.DatabaseMySQL, types.DatabaseMariaDB},
+	"tpcb/tx":    {types.DatabasePostgres, types.DatabaseMySQL, types.DatabaseMariaDB, types.DatabasePicodata, types.DatabaseYDB},
 }
 
 // ValidateConfig checks RunConfig semantics before building the DAG.
@@ -23,26 +25,30 @@ func ValidateConfig(cfg types.RunConfig) error {
 	}
 
 	// At least one topology must be set (or preset_id).
-	if cfg.Database.Postgres == nil && cfg.Database.MySQL == nil && cfg.Database.Picodata == nil && cfg.Database.YDB == nil && cfg.PresetID == "" {
+	if cfg.Database.Postgres == nil && cfg.Database.MySQL == nil && cfg.Database.MariaDB == nil && cfg.Database.Picodata == nil && cfg.Database.YDB == nil && cfg.PresetID == "" {
 		return fmt.Errorf("database topology or preset_id is required")
 	}
 
 	// Topology must match database kind.
 	switch cfg.Database.Kind {
 	case types.DatabasePostgres:
-		if cfg.Database.MySQL != nil || cfg.Database.Picodata != nil {
+		if cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil {
 			return fmt.Errorf("database.kind is postgres but non-postgres topology is set")
 		}
 	case types.DatabaseMySQL:
-		if cfg.Database.Postgres != nil || cfg.Database.Picodata != nil {
+		if cfg.Database.Postgres != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil {
 			return fmt.Errorf("database.kind is mysql but non-mysql topology is set")
 		}
+	case types.DatabaseMariaDB:
+		if cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.Picodata != nil {
+			return fmt.Errorf("database.kind is mariadb but non-mariadb topology is set")
+		}
 	case types.DatabasePicodata:
-		if cfg.Database.Postgres != nil || cfg.Database.MySQL != nil {
+		if cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil {
 			return fmt.Errorf("database.kind is picodata but non-picodata topology is set")
 		}
 	case types.DatabaseYDB:
-		if cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.Picodata != nil {
+		if cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil {
 			return fmt.Errorf("database.kind is ydb but non-ydb topology is set")
 		}
 	}

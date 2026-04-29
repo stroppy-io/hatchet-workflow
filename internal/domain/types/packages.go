@@ -55,6 +55,28 @@ func BuiltinPackages() []Package {
 			AptPackages: []string{"mysql-server-8.4", "mysql-client"},
 		},
 		{
+			// MariaDB 10.11 LTS — last release supported until 2028-02.
+			Name: "MariaDB 10.11", Description: "MariaDB 10.11 LTS from MariaDB Foundation repos",
+			DbKind: "mariadb", DbVersion: "10.11", IsBuiltin: true,
+			AptPackages: []string{"mariadb-server", "mariadb-client"},
+			PreInstall: []string{
+				`curl -fsSL https://r.mariadb.com/downloads/mariadb_repo_setup -o /tmp/mariadb_repo_setup`,
+				`bash /tmp/mariadb_repo_setup --mariadb-server-version=10.11`,
+				`apt-get update`,
+			},
+		},
+		{
+			// MariaDB 11.4 LTS — current LTS, supported until 2029-05.
+			Name: "MariaDB 11.4", Description: "MariaDB 11.4 LTS from MariaDB Foundation repos",
+			DbKind: "mariadb", DbVersion: "11.4", IsBuiltin: true,
+			AptPackages: []string{"mariadb-server", "mariadb-client"},
+			PreInstall: []string{
+				`curl -fsSL https://r.mariadb.com/downloads/mariadb_repo_setup -o /tmp/mariadb_repo_setup`,
+				`bash /tmp/mariadb_repo_setup --mariadb-server-version=11.4`,
+				`apt-get update`,
+			},
+		},
+		{
 			Name: "Picodata 25.3", Description: "Default Picodata 25.3",
 			DbKind: "picodata", DbVersion: "25.3", IsBuiltin: true,
 			AptPackages: []string{"picodata"},

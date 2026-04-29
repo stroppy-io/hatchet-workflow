@@ -214,6 +214,8 @@ func (b *builder) needsProxy() bool {
 		return db.Postgres != nil && db.Postgres.HAProxy != nil
 	case types.DatabaseMySQL:
 		return db.MySQL != nil && db.MySQL.ProxySQL != nil
+	case types.DatabaseMariaDB:
+		return db.MariaDB != nil && db.MariaDB.ProxySQL != nil
 	case types.DatabasePicodata:
 		return db.Picodata != nil && db.Picodata.HAProxy != nil
 	case types.DatabaseYDB:
@@ -254,9 +256,16 @@ func (b *builder) addProxy(afterMachines []string) {
 	// Proxy depends on DB being configured (needs backends list).
 	b.add(b.ph(types.PhaseInstallProxy), afterMachines,
 		&proxyInstallTask{client: b.deps.Client, state: b.deps.State, dbKind: b.cfg.Database.Kind})
+	// MySQL and MariaDB share the same proxy topology shape; route MariaDB's
+	// pointer through mysqlTopology so the proxy task doesn't need a third
+	// kind branch.
+	mysqlT := b.cfg.Database.MySQL
+	if b.cfg.Database.Kind == types.DatabaseMariaDB {
+		mysqlT = b.cfg.Database.MariaDB
+	}
 	b.add(b.ph(types.PhaseConfigureProxy), []string{b.ph(types.PhaseInstallProxy), b.ph(types.PhaseConfigureDB)},
 		&proxyConfigTask{client: b.deps.Client, state: b.deps.State, dbKind: b.cfg.Database.Kind,
-			pgTopology: b.cfg.Database.Postgres, mysqlTopology: b.cfg.Database.MySQL, picoTopology: b.cfg.Database.Picodata, ydbTopology: b.cfg.Database.YDB,
+			pgTopology: b.cfg.Database.Postgres, mysqlTopology: mysqlT, picoTopology: b.cfg.Database.Picodata, ydbTopology: b.cfg.Database.YDB,
 			overrides: b.cfg.Database.RenderedConfigOverrides})
 	b.runStroppyDeps = append(b.runStroppyDeps, b.ph(types.PhaseConfigureProxy))
 }
@@ -273,6 +282,13 @@ func (b *builder) dbTasks() (install dag.Task, config dag.Task, err error) {
 	case types.DatabaseMySQL:
 		return &mysqlInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.MySQL, pkg: pkg},
 			&mysqlConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.MySQL, overrides: db.RenderedConfigOverrides}, nil
+	case types.DatabaseMariaDB:
+		// MariaDB rides the MySQL install / config tasks — same wire
+		// protocol, same my.cnf format. The Package selected by the user
+		// has DbKind=mariadb and apt_packages=[mariadb-server …], so
+		// installPackage on the agent installs the right binary.
+		return &mysqlInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.MariaDB, pkg: pkg},
+			&mysqlConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.MariaDB, overrides: db.RenderedConfigOverrides}, nil
 	case types.DatabasePicodata:
 		return &picoInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.Picodata, pkg: pkg},
 			&picoConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.Picodata, overrides: db.RenderedConfigOverrides}, nil

@@ -1,10 +1,10 @@
 // --- Enums / constants ---
 
 export type Provider = "yandex" | "docker";
-export type DatabaseKind = "postgres" | "mysql" | "picodata" | "ydb";
+export type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb";
 
 /** All supported database kinds — single source of truth for UI iterations. */
-export const ALL_DB_KINDS: DatabaseKind[] = ["postgres", "mysql", "picodata", "ydb"];
+export const ALL_DB_KINDS: DatabaseKind[] = ["postgres", "mysql", "mariadb", "picodata", "ydb"];
 
 export type Phase =
   | "network"
@@ -111,6 +111,7 @@ export interface DatabaseConfig {
   version: string;
   postgres?: PostgresTopology;
   mysql?: MySQLTopology;
+  mariadb?: MySQLTopology;
   picodata?: PicodataTopology;
   ydb?: YDBTopology;
   rendered_config_overrides?: Record<string, string>;

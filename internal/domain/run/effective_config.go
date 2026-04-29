@@ -92,24 +92,30 @@ func ComputeEffectiveConfigs(cfg *types.RunConfig) map[string]map[string]string 
 			out["database"] = ec
 		}
 
-	case types.DatabaseMySQL:
-		if db.MySQL != nil {
-			p := db.MySQL.Primary
+	case types.DatabaseMySQL, types.DatabaseMariaDB:
+		t := db.MySQL
+		kindLabel := "mysql"
+		if db.Kind == types.DatabaseMariaDB {
+			t = db.MariaDB
+			kindLabel = "mariadb"
+		}
+		if t != nil {
+			p := t.Primary
 			ec := map[string]string{
-				"kind":    "mysql",
+				"kind":    kindLabel,
 				"version": string(db.Version),
 				"primary": fmt.Sprintf("%d× %d vCPU / %d MB / %d GB", p.Count, p.CPUs, p.MemoryMB, p.DiskGB),
 			}
-			if len(db.MySQL.Replicas) > 0 {
-				r := db.MySQL.Replicas[0]
+			if len(t.Replicas) > 0 {
+				r := t.Replicas[0]
 				ec["replicas"] = fmt.Sprintf("%d× %d vCPU / %d MB", r.Count, r.CPUs, r.MemoryMB)
 			}
-			if db.MySQL.GroupRepl {
+			if t.GroupRepl {
 				ec["replication"] = "group"
-			} else if db.MySQL.SemiSync {
+			} else if t.SemiSync {
 				ec["replication"] = "semi-sync"
 			}
-			for k, v := range db.MySQL.PrimaryOptions {
+			for k, v := range t.PrimaryOptions {
 				ec[k] = v
 			}
 			out["database"] = ec

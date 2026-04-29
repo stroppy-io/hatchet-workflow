@@ -151,7 +151,9 @@ func dbDriverURL(dbKind types.DatabaseKind, host, port string) (string, string) 
 	switch dbKind {
 	case types.DatabasePostgres:
 		return fmt.Sprintf("postgresql://postgres@%s:%s/postgres?sslmode=disable", host, port), "postgres"
-	case types.DatabaseMySQL:
+	case types.DatabaseMySQL, types.DatabaseMariaDB:
+		// MariaDB uses the MySQL wire protocol, so stroppy's mysql driver
+		// connects to it without changes.
 		return fmt.Sprintf("root@tcp(%s:%s)/", host, port), "mysql"
 	case types.DatabasePicodata:
 		return fmt.Sprintf("postgres://admin:T0psecret@%s:%s?sslmode=disable", host, port), "picodata"

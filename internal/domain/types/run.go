@@ -14,6 +14,7 @@ type DatabaseKind string
 const (
 	DatabasePostgres DatabaseKind = "postgres"
 	DatabaseMySQL    DatabaseKind = "mysql"
+	DatabaseMariaDB  DatabaseKind = "mariadb"
 	DatabasePicodata DatabaseKind = "picodata"
 	DatabaseYDB      DatabaseKind = "ydb"
 )
@@ -153,6 +154,7 @@ type DatabaseConfig struct {
 	Version  string            `json:"version"`
 	Postgres *PostgresTopology `json:"postgres,omitempty"`
 	MySQL    *MySQLTopology    `json:"mysql,omitempty"`
+	MariaDB  *MySQLTopology    `json:"mariadb,omitempty"` // MariaDB is wire- and config-compatible with MySQL; reuse the topology shape
 	Picodata *PicodataTopology `json:"picodata,omitempty"`
 	YDB      *YDBTopology      `json:"ydb,omitempty"`
 	// RenderedConfigOverrides lets the SPA submit raw config-file contents
