@@ -21,31 +21,28 @@ func ValidateConfig(cfg types.RunConfig) error {
 	}
 
 	// At least one topology must be set (or preset_id).
-	if cfg.Database.Postgres == nil && cfg.Database.MySQL == nil && cfg.Database.MariaDB == nil && cfg.Database.Picodata == nil && cfg.Database.YDB == nil && cfg.PresetID == "" {
+	if cfg.Database.Postgres == nil && cfg.Database.MySQL == nil && cfg.Database.MariaDB == nil && cfg.Database.Picodata == nil && cfg.Database.YDB == nil && cfg.Database.Cockroach == nil && cfg.PresetID == "" {
 		return fmt.Errorf("database topology or preset_id is required")
 	}
 
-	// Topology must match database kind.
-	switch cfg.Database.Kind {
-	case types.DatabasePostgres:
-		if cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil {
-			return fmt.Errorf("database.kind is postgres but non-postgres topology is set")
-		}
-	case types.DatabaseMySQL:
-		if cfg.Database.Postgres != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil {
-			return fmt.Errorf("database.kind is mysql but non-mysql topology is set")
-		}
-	case types.DatabaseMariaDB:
-		if cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.Picodata != nil {
-			return fmt.Errorf("database.kind is mariadb but non-mariadb topology is set")
-		}
-	case types.DatabasePicodata:
-		if cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil {
-			return fmt.Errorf("database.kind is picodata but non-picodata topology is set")
-		}
-	case types.DatabaseYDB:
-		if cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil {
-			return fmt.Errorf("database.kind is ydb but non-ydb topology is set")
+	// Topology must match database kind. The check is symmetric — flag any
+	// non-matching topology pointer that's set; saves a 6-way switch.
+	type topoCheck struct {
+		ownKind  types.DatabaseKind
+		otherSet bool
+		label    string
+	}
+	checks := []topoCheck{
+		{types.DatabasePostgres, cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.Cockroach != nil, "postgres"},
+		{types.DatabaseMySQL, cfg.Database.Postgres != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.Cockroach != nil, "mysql"},
+		{types.DatabaseMariaDB, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.Cockroach != nil, "mariadb"},
+		{types.DatabasePicodata, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.YDB != nil || cfg.Database.Cockroach != nil, "picodata"},
+		{types.DatabaseYDB, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.Cockroach != nil, "ydb"},
+		{types.DatabaseCockroach, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil, "cockroach"},
+	}
+	for _, c := range checks {
+		if cfg.Database.Kind == c.ownKind && c.otherSet {
+			return fmt.Errorf("database.kind is %s but non-%s topology is set", c.label, c.label)
 		}
 	}
 

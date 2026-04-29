@@ -319,6 +319,12 @@ func (e *Executor) Run(ctx context.Context, cmd Command) Report {
 		err = e.initYDB(ctx, cmd)
 	case ActionStartYDBDB:
 		err = e.startYDBDB(ctx, cmd)
+	case ActionInstallCockroach:
+		err = e.installCockroach(ctx, cmd)
+	case ActionConfigCockroach:
+		err = e.configCockroach(ctx, cmd)
+	case ActionInitCockroach:
+		err = e.initCockroach(ctx, cmd)
 	default:
 		err = fmt.Errorf("unknown action: %s", cmd.Action)
 	}
@@ -1771,5 +1777,149 @@ func (e *Executor) startYDBDB(ctx context.Context, cmd Command) error {
 	}
 
 	e.emitLine("YDB database node started")
+	return nil
+}
+
+// ---------------------------------------------------------------------------
+// CockroachDB handlers
+// ---------------------------------------------------------------------------
+
+// resolveCockroachVersion maps a short version like "24.2" to the full patch
+// release available at binaries.cockroachdb.com. Updated as new releases ship.
+var cockroachVersionMap = map[string]string{
+	"24.2": "24.2.4",
+	"24.1": "24.1.5",
+	"23.2": "23.2.10",
+}
+
+func resolveCockroachVersion(v string) string {
+	if v == "" {
+		return "24.2.4"
+	}
+	if full, ok := cockroachVersionMap[v]; ok {
+		return full
+	}
+	return v
+}
+
+func (e *Executor) installCockroach(ctx context.Context, cmd Command) error {
+	var cfg CockroachInstallConfig
+	if err := parseConfig(cmd, &cfg); err != nil {
+		return err
+	}
+	if _, err := exec.LookPath("/opt/cockroach/cockroach"); err == nil {
+		e.emitLine("cockroach already installed, skipping download")
+		return nil
+	}
+	version := resolveCockroachVersion(cfg.Version)
+	url := fmt.Sprintf("https://binaries.cockroachdb.com/cockroach-v%s.linux-amd64.tgz", version)
+	e.emitLine(fmt.Sprintf("downloading cockroach v%s from %s...", version, url))
+	if _, err := e.shell(ctx, fmt.Sprintf(
+		`mkdir -p /opt/cockroach && curl -fSL %s | tar -xz --strip-components=1 -C /opt/cockroach && `+
+			`ln -sf /opt/cockroach/cockroach /usr/local/bin/cockroach`, url)); err != nil {
+		return fmt.Errorf("download cockroach: %w", err)
+	}
+	// Dedicated cockroach user — daemon shouldn't run as root.
+	e.shell(ctx, "groupadd -f cockroach && (id -u cockroach &>/dev/null || useradd cockroach -g cockroach -d /var/lib/cockroach -m)")
+	e.shell(ctx, "mkdir -p /var/lib/cockroach && chown -R cockroach:cockroach /var/lib/cockroach")
+	return nil
+}
+
+func (e *Executor) configCockroach(ctx context.Context, cmd Command) error {
+	var cfg CockroachClusterConfig
+	if err := parseConfig(cmd, &cfg); err != nil {
+		return err
+	}
+	advHost := cfg.AdvertiseHost
+	if advHost == "" {
+		var err error
+		advHost, err = os.Hostname()
+		if err != nil {
+			return fmt.Errorf("resolve advertise host: %w", err)
+		}
+	}
+	memMB := cfg.MemoryMB
+	if memMB <= 0 {
+		memMB = getTotalMemoryMB()
+	}
+	cacheMB := cfg.CacheMB
+	if cacheMB <= 0 {
+		cacheMB = memMB / 4 // 25% of RAM, matching CockroachLabs' standard recommendation
+	}
+	sqlMB := cfg.SQLMemoryMB
+	if sqlMB <= 0 {
+		sqlMB = memMB / 4
+	}
+
+	join := ""
+	if len(cfg.Peers) > 0 {
+		// Strip our own host so cockroach doesn't list itself in --join (which
+		// it tolerates but log-spams about). Trim any port suffix on peers.
+		peers := make([]string, 0, len(cfg.Peers))
+		for _, p := range cfg.Peers {
+			if p == advHost {
+				continue
+			}
+			peers = append(peers, p)
+		}
+		if len(peers) > 0 {
+			join = fmt.Sprintf("--join=%s ", strings.Join(peers, ","))
+		}
+	}
+
+	e.shell(ctx, "systemctl stop cockroach 2>/dev/null; systemctl reset-failed cockroach 2>/dev/null")
+	e.emitLine(fmt.Sprintf("starting cockroach node #%d (cache=%dMB, sql-memory=%dMB)...", cfg.NodeIndex, cacheMB, sqlMB))
+	startCmd := fmt.Sprintf(
+		`systemd-run --unit=cockroach --uid=cockroach --gid=cockroach `+
+			`/usr/local/bin/cockroach start --insecure `+
+			`--advertise-addr=%s:26257 `+
+			`--listen-addr=0.0.0.0:26257 `+
+			`--http-addr=0.0.0.0:8080 `+
+			`--store=/var/lib/cockroach `+
+			`--cache=%dMiB --max-sql-memory=%dMiB `+
+			`%s`+
+			`--background`,
+		advHost, cacheMB, sqlMB, join)
+	if _, err := e.shell(ctx, startCmd); err != nil {
+		return fmt.Errorf("start cockroach: %w", err)
+	}
+	// Wait for the SQL port to accept connections.
+	if _, err := e.shell(ctx, `for i in $(seq 1 30); do (echo > /dev/tcp/localhost/26257) 2>/dev/null && exit 0; sleep 1; done; exit 1`); err != nil {
+		e.shell(ctx, "journalctl -u cockroach --no-pager -n 50 2>/dev/null || true")
+		return fmt.Errorf("cockroach did not start: %w", err)
+	}
+	e.emitLine("cockroach node ready")
+	return nil
+}
+
+func (e *Executor) initCockroach(ctx context.Context, cmd Command) error {
+	var cfg CockroachInitConfig
+	if err := parseConfig(cmd, &cfg); err != nil {
+		return err
+	}
+	port := cfg.Port
+	if port == 0 {
+		port = 26257
+	}
+	host := cfg.Host
+	if host == "" {
+		host = "localhost"
+	}
+	e.emitLine(fmt.Sprintf("initialising cockroach cluster via %s:%d...", host, port))
+	// `cockroach init` is idempotent — reports "cluster has already been initialised" on rerun.
+	if _, err := e.shell(ctx, fmt.Sprintf(
+		`/usr/local/bin/cockroach init --insecure --host=%s:%d 2>&1 | tee /tmp/crdb-init.log; grep -q "already been initialized" /tmp/crdb-init.log && exit 0 || exit ${PIPESTATUS[0]}`,
+		host, port)); err != nil {
+		return fmt.Errorf("cockroach init: %w", err)
+	}
+	for k, v := range cfg.ClusterSettings {
+		stmt := fmt.Sprintf("SET CLUSTER SETTING %s = '%s';", k, v)
+		if _, err := e.shell(ctx, fmt.Sprintf(
+			`/usr/local/bin/cockroach sql --insecure --host=%s:%d --execute="%s"`,
+			host, port, stmt)); err != nil {
+			return fmt.Errorf("apply cluster setting %s: %w", k, err)
+		}
+	}
+	e.emitLine("cockroach cluster initialised")
 	return nil
 }

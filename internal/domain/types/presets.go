@@ -16,11 +16,12 @@ type Preset struct {
 	IsBuiltin   bool   `json:"is_builtin"`
 
 	// Exactly one topology field is set, matching DbKind.
-	Postgres *PostgresTopology `json:"postgres,omitempty"`
-	MySQL    *MySQLTopology    `json:"mysql,omitempty"`
-	MariaDB  *MySQLTopology    `json:"mariadb,omitempty"` // shape mirrors MySQL
-	Picodata *PicodataTopology `json:"picodata,omitempty"`
-	YDB      *YDBTopology      `json:"ydb,omitempty"`
+	Postgres  *PostgresTopology  `json:"postgres,omitempty"`
+	MySQL     *MySQLTopology     `json:"mysql,omitempty"`
+	MariaDB   *MySQLTopology     `json:"mariadb,omitempty"` // shape mirrors MySQL
+	Picodata  *PicodataTopology  `json:"picodata,omitempty"`
+	YDB       *YDBTopology       `json:"ydb,omitempty"`
+	Cockroach *CockroachTopology `json:"cockroach,omitempty"`
 }
 
 // TopologyJSON serializes the active topology field to JSON for DB storage.
@@ -40,6 +41,9 @@ func (p *Preset) TopologyJSON() (string, error) {
 		return string(b), err
 	case DatabaseYDB:
 		b, err := json.Marshal(p.YDB)
+		return string(b), err
+	case DatabaseCockroach:
+		b, err := json.Marshal(p.Cockroach)
 		return string(b), err
 	default:
 		return "", nil
@@ -79,6 +83,12 @@ func (p *Preset) ParseTopology(raw string) error {
 			return err
 		}
 		p.YDB = &t
+	case DatabaseCockroach:
+		var t CockroachTopology
+		if err := json.Unmarshal([]byte(raw), &t); err != nil {
+			return err
+		}
+		p.Cockroach = &t
 	}
 	return nil
 }
@@ -125,6 +135,13 @@ func BuiltinPresets() []Preset {
 		out = append(out, Preset{
 			Name: "YDB " + string(name), Description: describeYDBPreset(name),
 			DbKind: string(DatabaseYDB), IsBuiltin: true, YDB: &t,
+		})
+	}
+	for name, topo := range CockroachPresets {
+		t := topo
+		out = append(out, Preset{
+			Name: "CockroachDB " + string(name), Description: describeCockroachPreset(name),
+			DbKind: string(DatabaseCockroach), IsBuiltin: true, Cockroach: &t,
 		})
 	}
 
@@ -297,6 +314,19 @@ func describeYDBPreset(p YDBPreset) string {
 		return "Split: 3 storage + 6 database nodes — compute-heavy (9 total)"
 	case YDBSplit33MultiSSD:
 		return "Split: 3 storage × 3 pdisks (9 raw devices) + 3 database nodes"
+	default:
+		return string(p)
+	}
+}
+
+func describeCockroachPreset(p CockroachPreset) string {
+	switch p {
+	case CockroachSingle:
+		return "Single CockroachDB node — dev / smoke runs"
+	case CockroachCluster3:
+		return "3-node CockroachDB cluster"
+	case CockroachCluster6:
+		return "6-node CockroachDB cluster (more parallel ranges)"
 	default:
 		return string(p)
 	}

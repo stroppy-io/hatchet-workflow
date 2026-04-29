@@ -271,6 +271,8 @@ func (s *Server) resolveRunPreset(ctx context.Context, tenantID string, cfg *typ
 		cfg.Database.Picodata = preset.Picodata
 	case types.DatabaseYDB:
 		cfg.Database.YDB = preset.YDB
+	case types.DatabaseCockroach:
+		cfg.Database.Cockroach = preset.Cockroach
 	}
 
 	return nil

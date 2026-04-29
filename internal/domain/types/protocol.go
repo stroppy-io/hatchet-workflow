@@ -27,6 +27,11 @@ const (
 	// Stroppy uses its postgres driver against it; benchmark scripts have
 	// to be authored to fit the subset (see ScriptCompat).
 	ProtocolYDBPgwire Protocol = "ydb-pgwire"
+	// ProtocolCockroach is CockroachDB's pg-wire surface on port 26257
+	// (NB: not 5432). Stroppy talks to it via the postgres driver — TPC-C
+	// works, stored procedures don't (CRDB has limited PL/pgSQL support
+	// since v23 but the standard tpcc/procs script doesn't fit).
+	ProtocolCockroach Protocol = "cockroach"
 )
 
 // ProtocolMeta describes how to connect over a protocol — driver type for
@@ -59,6 +64,7 @@ var Protocols = map[Protocol]ProtocolMeta{
 	ProtocolPicodata:  {DriverType: "picodata", Port: 5432, URLScheme: "postgres", URLTail: "?sslmode=disable"},
 	ProtocolYDBGRPC:   {DriverType: "ydb", Port: 2136, URLScheme: "grpc", URLTail: "/Root/testdb"},
 	ProtocolYDBPgwire: {DriverType: "postgres", Port: 5432, URLScheme: "postgresql", URLTail: "/local?sslmode=disable"},
+	ProtocolCockroach: {DriverType: "postgres", Port: 26257, URLScheme: "postgresql", URLTail: "/defaultdb?sslmode=disable"},
 }
 
 // KindProtocols lists the protocols each engine supports, in preference
@@ -70,6 +76,7 @@ var KindProtocols = map[DatabaseKind][]Protocol{
 	DatabaseMariaDB:  {ProtocolMySQL},
 	DatabasePicodata: {ProtocolPicodata},
 	DatabaseYDB:      {ProtocolYDBGRPC, ProtocolYDBPgwire},
+	DatabaseCockroach: {ProtocolCockroach},
 }
 
 // DefaultProtocol returns the first protocol for a kind, or "" if the kind
@@ -114,6 +121,7 @@ var ScriptCompat = map[KindProtocolKey][]string{
 	{DatabasePicodata, ProtocolPicodata}:   {"tpcc/tx", "tpcb/tx"},
 	{DatabaseYDB, ProtocolYDBGRPC}:         {"tpcc/tx", "tpcb/tx"},
 	{DatabaseYDB, ProtocolYDBPgwire}:       {"tpcc/tx-ydb-pgwire", "tpcb/tx-ydb-pgwire"},
+	{DatabaseCockroach, ProtocolCockroach}: {"tpcc/tx", "tpcb/tx"},
 }
 
 // ScriptSupported returns true if (kind, protocol) is registered in

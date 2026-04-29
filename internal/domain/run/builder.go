@@ -126,6 +126,9 @@ func (b *builder) build() error {
 	if b.needsYDBInit() {
 		monitorConfigDeps = append(monitorConfigDeps, b.ph(types.PhaseStartYDBDatabase))
 	}
+	if b.needsCockroachInit() {
+		monitorConfigDeps = append(monitorConfigDeps, b.ph(types.PhaseInitCockroach))
+	}
 	b.add(b.ph(types.PhaseConfigureMonitor), monitorConfigDeps,
 		&monitorConfigTask{client: b.deps.Client, state: b.deps.State, monitor: b.cfg.Monitor, runID: b.cfg.ID, dbKind: b.cfg.Database.Kind, monitoringURL: b.deps.MonitoringURL, monitoringToken: b.deps.MonitoringToken, accountID: b.deps.AccountID})
 
@@ -142,6 +145,11 @@ func (b *builder) build() error {
 	// --- YDB cluster init + database start ---
 	if b.needsYDBInit() {
 		b.addYDBPhases()
+	}
+
+	// --- CockroachDB cluster init ---
+	if b.needsCockroachInit() {
+		b.addCockroachInitPhase()
 	}
 
 	// --- stroppy ---
@@ -253,6 +261,19 @@ func (b *builder) addYDBPhases() {
 	b.runStroppyDeps = append(b.runStroppyDeps, b.ph(types.PhaseStartYDBDatabase))
 }
 
+func (b *builder) needsCockroachInit() bool {
+	return b.cfg.Database.Kind == types.DatabaseCockroach && b.cfg.Database.Cockroach != nil
+}
+
+func (b *builder) addCockroachInitPhase() {
+	// `cockroach init` is the one-shot bootstrap step that turns a set of
+	// running nodes into a working cluster. Runs once on the first node
+	// after every node has finished cockroachConfigTask.
+	b.add(b.ph(types.PhaseInitCockroach), []string{b.ph(types.PhaseConfigureDB)},
+		&cockroachInitTask{client: b.deps.Client, state: b.deps.State, topology: b.cfg.Database.Cockroach})
+	b.runStroppyDeps = append(b.runStroppyDeps, b.ph(types.PhaseInitCockroach))
+}
+
 func (b *builder) addEtcd(afterMachines []string) {
 	b.add(b.ph(types.PhaseInstallEtcd), afterMachines,
 		&etcdInstallTask{client: b.deps.Client, state: b.deps.State})
@@ -312,6 +333,9 @@ func (b *builder) dbTasks() (install dag.Task, config dag.Task, err error) {
 	case types.DatabaseYDB:
 		return &ydbInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.YDB, pkg: pkg},
 			&ydbConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.YDB, overrides: db.RenderedConfigOverrides, pgwirePort: ydbPgwirePort(b.cfg)}, nil
+	case types.DatabaseCockroach:
+		return &cockroachInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version},
+			&cockroachConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.Cockroach}, nil
 	default:
 		return nil, nil, fmt.Errorf("unsupported database kind %q", db.Kind)
 	}

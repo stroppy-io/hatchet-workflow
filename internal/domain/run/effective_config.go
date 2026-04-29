@@ -138,6 +138,20 @@ func ComputeEffectiveConfigs(cfg *types.RunConfig) map[string]map[string]string 
 			}
 			out["database"] = ec
 		}
+
+	case types.DatabaseCockroach:
+		if db.Cockroach != nil {
+			n := db.Cockroach.Nodes
+			ec := map[string]string{
+				"kind":     "cockroach",
+				"version":  string(db.Version),
+				"nodes":    fmt.Sprintf("%d× %d vCPU / %d MB / %d GB", n.Count, n.CPUs, n.MemoryMB, n.DiskGB),
+			}
+			for k, v := range db.Cockroach.Options {
+				ec[k] = v
+			}
+			out["database"] = ec
+		}
 	}
 
 	// Benchmark

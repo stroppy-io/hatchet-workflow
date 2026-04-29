@@ -113,7 +113,7 @@ func TestBuild_PostgresScale(t *testing.T) {
 
 func TestBuild_UnsupportedKindErrors(t *testing.T) {
 	cfg := postgresSingleCfg()
-	cfg.Database.Kind = "cockroach"
+	cfg.Database.Kind = "definitely-not-a-real-db"
 	cfg.Database.Postgres = nil
 
 	_, _, err := Build(cfg, baseDeps())

@@ -69,6 +69,10 @@ func BakeMachineOverrideIntoTopology(cfg *types.RunConfig) {
 				apply(db.YDB.Database)
 			}
 		}
+	case types.DatabaseCockroach:
+		if db.Cockroach != nil {
+			apply(&db.Cockroach.Nodes)
+		}
 	}
 	cfg.MachineOverride = nil
 }
@@ -161,6 +165,15 @@ func FillMachinesFromTopology(cfg *types.RunConfig) {
 			if db.YDB.HAProxy != nil {
 				cfg.Machines = append(cfg.Machines, *db.YDB.HAProxy)
 			}
+		}
+	case types.DatabaseCockroach:
+		if db.Cockroach != nil {
+			n := db.Cockroach.Nodes
+			cfg.Machines = append(cfg.Machines, types.MachineSpec{
+				Role: types.RoleDatabase, Count: n.Count,
+				CPUs: ovCPU(n.CPUs), MemoryMB: ovMem(n.MemoryMB), DiskGB: ovDisk(n.DiskGB),
+				DiskType: n.DiskType, SecondaryDisks: n.SecondaryDisks,
+			})
 		}
 	}
 

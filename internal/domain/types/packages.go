@@ -91,5 +91,10 @@ func BuiltinPackages() []Package {
 			DbKind: "ydb", DbVersion: "25.3", IsBuiltin: true,
 			AptPackages: []string{}, // no apt — ydbd binary downloaded in installYDB
 		},
+		{
+			Name: "CockroachDB 24.2", Description: "CockroachDB v24.2 — single binary downloaded from binaries.cockroachdb.com",
+			DbKind: "cockroach", DbVersion: "24.2", IsBuiltin: true,
+			AptPackages: []string{}, // no apt — tarball pulled in installCockroach
+		},
 	}
 }

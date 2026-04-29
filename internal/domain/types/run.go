@@ -12,11 +12,12 @@ const (
 type DatabaseKind string
 
 const (
-	DatabasePostgres DatabaseKind = "postgres"
-	DatabaseMySQL    DatabaseKind = "mysql"
-	DatabaseMariaDB  DatabaseKind = "mariadb"
-	DatabasePicodata DatabaseKind = "picodata"
-	DatabaseYDB      DatabaseKind = "ydb"
+	DatabasePostgres  DatabaseKind = "postgres"
+	DatabaseMySQL     DatabaseKind = "mysql"
+	DatabaseMariaDB   DatabaseKind = "mariadb"
+	DatabasePicodata  DatabaseKind = "picodata"
+	DatabaseYDB       DatabaseKind = "ydb"
+	DatabaseCockroach DatabaseKind = "cockroach"
 )
 
 // Phase is the DAG node type identifier for each run stage.
@@ -41,7 +42,8 @@ const (
 	PhaseConfigurePatroni   Phase = "configure_patroni"
 	PhaseInitYDBCluster     Phase = "init_ydb_cluster"
 	PhaseStartYDBDatabase   Phase = "start_ydb_database"
-	PhaseTeardown           Phase = "teardown" // infrastructure cleanup
+	PhaseInitCockroach      Phase = "init_cockroach" // one-shot `cockroach init` after every node is up
+	PhaseTeardown           Phase = "teardown"       // infrastructure cleanup
 )
 
 // MachineRole distinguishes machines by purpose within a run.
@@ -127,6 +129,18 @@ type PicodataTopology struct {
 	HAProxyOptions  map[string]string `json:"haproxy_options,omitempty"`  // haproxy.cfg tuning
 }
 
+// CockroachTopology describes a CockroachDB cluster — homogeneous N-node
+// deployment, no master/replica split. Each node runs the same `cockroach`
+// binary with --join flags pointing at the others; one node runs the
+// one-shot `cockroach init` to bootstrap. CockroachDB takes most config
+// via CLI flags rather than a config file, so Options here applies as
+// `SET CLUSTER SETTING <key> = <value>` post-init (or as additional
+// startup flags if prefixed with "flag:").
+type CockroachTopology struct {
+	Nodes   MachineSpec       `json:"nodes"`
+	Options map[string]string `json:"options,omitempty"`
+}
+
 // YDBTopology describes a YDB cluster layout.
 type YDBTopology struct {
 	Storage         MachineSpec       `json:"storage"`            // static (storage) nodes
@@ -156,7 +170,8 @@ type DatabaseConfig struct {
 	MySQL    *MySQLTopology    `json:"mysql,omitempty"`
 	MariaDB  *MySQLTopology    `json:"mariadb,omitempty"` // MariaDB is wire- and config-compatible with MySQL; reuse the topology shape
 	Picodata *PicodataTopology `json:"picodata,omitempty"`
-	YDB      *YDBTopology      `json:"ydb,omitempty"`
+	YDB       *YDBTopology       `json:"ydb,omitempty"`
+	Cockroach *CockroachTopology `json:"cockroach,omitempty"`
 	// RenderedConfigOverrides lets the SPA submit raw config-file contents
 	// that replace the per-component generators on the agent. Keys identify
 	// the file by its on-host purpose (e.g. "postgresql.conf:master",
@@ -169,6 +184,15 @@ type DatabaseConfig struct {
 }
 
 // --- Database topology presets ---
+
+// CockroachPreset identifies a CockroachDB topology preset.
+type CockroachPreset string
+
+const (
+	CockroachSingle   CockroachPreset = "single"
+	CockroachCluster3 CockroachPreset = "cluster-3"
+	CockroachCluster6 CockroachPreset = "cluster-6"
+)
 
 // PostgresPreset identifies a Postgres topology preset.
 type PostgresPreset string
@@ -277,6 +301,22 @@ var PicodataPresets = map[PicodataPreset]PicodataTopology{
 			{Name: "compute", Replication: 1, CanVote: true, Count: 3},
 			{Name: "storage", Replication: 2, CanVote: false, Count: 3},
 		},
+	},
+}
+
+// CockroachPresets contains all built-in CockroachDB topology presets. Every
+// node is the same flavor — CockroachDB doesn't have a master/replica split,
+// so the only knob is node count. 4 vCPU / 8 GB / 100 GB matches the official
+// "starter cluster" sizing in CockroachLabs' docs.
+var CockroachPresets = map[CockroachPreset]CockroachTopology{
+	CockroachSingle: {
+		Nodes: MachineSpec{Role: RoleDatabase, Count: 1, CPUs: 2, MemoryMB: 4096, DiskGB: 50},
+	},
+	CockroachCluster3: {
+		Nodes: MachineSpec{Role: RoleDatabase, Count: 3, CPUs: 4, MemoryMB: 8192, DiskGB: 100},
+	},
+	CockroachCluster6: {
+		Nodes: MachineSpec{Role: RoleDatabase, Count: 6, CPUs: 8, MemoryMB: 16384, DiskGB: 200},
 	},
 }
 

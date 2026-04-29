@@ -35,6 +35,9 @@ const (
 	ActionConfigYDB        Action = "config_ydb"
 	ActionInitYDB          Action = "init_ydb"
 	ActionStartYDBDB       Action = "start_ydb_db"
+	ActionInstallCockroach Action = "install_cockroach"
+	ActionConfigCockroach  Action = "config_cockroach"
+	ActionInitCockroach    Action = "init_cockroach"
 	ActionShutdown         Action = "shutdown"
 )
 
