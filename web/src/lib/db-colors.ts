@@ -49,4 +49,13 @@ export const DB_COLORS: Record<DatabaseKind, {
     accent: "border-[#5B9BD5]/50 bg-[#5B9BD5]/[0.08]",
     hexSecondary: "#4A8AC4",
   },
+  cockroach: {
+    // CockroachLabs brand teal — distinct from postgres elephant blue and
+    // YDB sky blue.
+    hex: "#0E8C8C",
+    hexLight: "#3FAEAE",
+    text: "text-[#3FAEAE]",
+    accent: "border-[#0E8C8C]/50 bg-[#0E8C8C]/[0.08]",
+    hexSecondary: "#0B7575",
+  },
 };

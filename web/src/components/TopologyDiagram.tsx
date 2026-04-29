@@ -1,11 +1,11 @@
-import type { DatabaseKind, MachineSpec, PostgresTopology, MySQLTopology, PicodataTopology, YDBTopology } from "@/api/types";
+import type { DatabaseKind, MachineSpec, PostgresTopology, MySQLTopology, PicodataTopology, YDBTopology, CockroachTopology } from "@/api/types";
 import { DB_COLORS } from "@/lib/db-colors";
 import { Database, Server, Cpu, Shield, Layers, Globe } from "lucide-react";
 
 interface TopologyDiagramProps {
   kind: DatabaseKind;
   preset?: string;
-  topology?: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology;
+  topology?: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | CockroachTopology;
 }
 
 interface RoleDef {
@@ -41,7 +41,7 @@ function formatSpec(s: Partial<MachineSpec> | undefined): string {
 const INFRA_PROXY = "#A0860A";
 const INFRA_COORD = "#7C6CC8";
 
-function getRolesFromTopology(kind: DatabaseKind, topology: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology): RoleDef[] {
+function getRolesFromTopology(kind: DatabaseKind, topology: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | CockroachTopology): RoleDef[] {
   const c = DB_COLORS[kind];
 
   if (kind === "postgres") {
@@ -101,6 +101,11 @@ function getRolesFromTopology(kind: DatabaseKind, topology: PostgresTopology | M
     if (t.database) roles.push({ label: "Database", count: t.database.count || 1, color: c.hexSecondary, icon: Cpu, spec: formatSpec(t.database) });
     if (t.haproxy) roles.push({ label: "HAProxy", count: t.haproxy.count || 1, color: INFRA_PROXY, icon: Globe, spec: formatSpec(t.haproxy) });
     return roles;
+  }
+
+  if (kind === "cockroach") {
+    const t = topology as unknown as CockroachTopology;
+    return [{ label: "Node", count: t.nodes.count || 1, color: c.hex, icon: Database, spec: formatSpec(t.nodes) }];
   }
 
   return [{ label: "Node", count: 1, color: "#6b7280", icon: Server }];
@@ -181,6 +186,17 @@ function getRolesFromPresetName(kind: DatabaseKind, preset: string): RoleDef[] {
           { label: "Storage", count: 3, color: c.hex, icon: Shield },
           { label: "Database", count: 6, color: c.hexSecondary, icon: Cpu },
         ];
+    }
+  }
+
+  if (kind === "cockroach") {
+    switch (preset) {
+      case "single":
+        return [{ label: "Node", count: 1, color: c.hex, icon: Database }];
+      case "cluster-3":
+        return [{ label: "Node", count: 3, color: c.hex, icon: Database }];
+      case "cluster-6":
+        return [{ label: "Node", count: 6, color: c.hex, icon: Database }];
     }
   }
 

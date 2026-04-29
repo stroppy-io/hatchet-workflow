@@ -966,11 +966,12 @@ function YDBForm({ topology, onChange, disabled }: {
 // ─── Main Page ───────────────────────────────────────────────────
 
 const DB_META: Record<DatabaseKind, { icon: typeof Database; label: string }> = {
-  postgres: { icon: Database, label: "PostgreSQL" },
-  mysql:    { icon: Server,   label: "MySQL" },
-  mariadb:  { icon: Server,   label: "MariaDB" },
-  picodata: { icon: Cpu,      label: "Picodata" },
-  ydb:      { icon: Database, label: "YDB" },
+  postgres:  { icon: Database, label: "PostgreSQL" },
+  mysql:     { icon: Server,   label: "MySQL" },
+  mariadb:   { icon: Server,   label: "MariaDB" },
+  picodata:  { icon: Cpu,      label: "Picodata" },
+  ydb:       { icon: Database, label: "YDB" },
+  cockroach: { icon: Database, label: "CockroachDB" },
 };
 
 export function PresetDesigner() {

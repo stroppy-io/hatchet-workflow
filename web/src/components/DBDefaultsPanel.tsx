@@ -15,6 +15,7 @@ const kindIcons: Record<DatabaseKind, typeof Database> = {
   mariadb: Server,
   picodata: Cpu,
   ydb: Database,
+  cockroach: Database,
 };
 
 const kindLabels: Record<DatabaseKind, string> = {
@@ -23,6 +24,7 @@ const kindLabels: Record<DatabaseKind, string> = {
   mariadb: "MariaDB",
   picodata: "Picodata",
   ydb: "YDB",
+  cockroach: "CockroachDB",
 };
 
 const highlightKeys: Record<DatabaseKind, string[]> = {
@@ -31,6 +33,9 @@ const highlightKeys: Record<DatabaseKind, string[]> = {
   mariadb: ["innodb_buffer_pool_size", "max_connections", "innodb_flush_method", "bind_address"],
   picodata: ["replication_factor", "shards", "memtx_memory", "listen"],
   ydb: ["fault_tolerance", "database_path"],
+  // CRDB takes nearly all config via CLI flags or SQL CLUSTER SETTINGs;
+  // these are the SQL settings most worth surfacing in the wizard.
+  cockroach: ["kv.transaction.write_pipelining_enabled", "sql.defaults.statement_timeout", "kv.range_split.load_qps_threshold"],
 };
 
 interface DBDefaultsPanelProps {

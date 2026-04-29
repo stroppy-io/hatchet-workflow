@@ -1,7 +1,7 @@
 // --- Enums / constants ---
 
 export type Provider = "yandex" | "docker";
-export type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb";
+export type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb" | "cockroach";
 
 // Protocol is the wire format stroppy uses to talk to a database. Decoupled
 // from DatabaseKind because YDB and Picodata speak more than one. See
@@ -11,7 +11,8 @@ export type Protocol =
   | "mysql"
   | "picodata"
   | "ydb-grpc"
-  | "ydb-pgwire";
+  | "ydb-pgwire"
+  | "cockroach";
 
 // KindProtocols mirrors the Go-side registry. First entry is the default
 // when the user hasn't picked one explicitly. Single-protocol kinds don't
@@ -22,6 +23,7 @@ export const KIND_PROTOCOLS: Record<DatabaseKind, Protocol[]> = {
   mariadb: ["mysql"],
   picodata: ["picodata"],
   ydb: ["ydb-grpc", "ydb-pgwire"],
+  cockroach: ["cockroach"],
 };
 
 // SCRIPT_COMPAT keys (kind, protocol) and lists which scripts the wizard
@@ -33,10 +35,11 @@ export const SCRIPT_COMPAT: Record<string, string[]> = {
   "picodata:picodata": ["tpcc/tx", "tpcb/tx"],
   "ydb:ydb-grpc":     ["tpcc/tx", "tpcb/tx"],
   "ydb:ydb-pgwire":   ["tpcc/tx-ydb-pgwire", "tpcb/tx-ydb-pgwire"],
+  "cockroach:cockroach": ["tpcc/tx", "tpcb/tx"],
 };
 
 /** All supported database kinds — single source of truth for UI iterations. */
-export const ALL_DB_KINDS: DatabaseKind[] = ["postgres", "mysql", "mariadb", "picodata", "ydb"];
+export const ALL_DB_KINDS: DatabaseKind[] = ["postgres", "mysql", "mariadb", "picodata", "ydb", "cockroach"];
 
 export type Phase =
   | "network"
@@ -138,6 +141,11 @@ export interface YDBTopology {
   haproxy_options?: Record<string, string>;
 }
 
+export interface CockroachTopology {
+  nodes: MachineSpec;
+  options?: Record<string, string>;
+}
+
 export interface DatabaseConfig {
   kind: DatabaseKind;
   version: string;
@@ -146,6 +154,7 @@ export interface DatabaseConfig {
   mariadb?: MySQLTopology;
   picodata?: PicodataTopology;
   ydb?: YDBTopology;
+  cockroach?: CockroachTopology;
   rendered_config_overrides?: Record<string, string>;
 }
 
@@ -295,7 +304,7 @@ export interface Preset {
   description: string;
   db_kind: DatabaseKind;
   is_builtin: boolean;
-  topology: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology;
+  topology: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | CockroachTopology;
   created_at?: string;
 }
 

@@ -70,14 +70,16 @@ const DB_VERSIONS: Record<DatabaseKind, string[]> = {
   mariadb: ["11.4", "10.11"], // both LTS releases — 11.4 is current, 10.11 supported until 2028-02
   picodata: ["25.3"],
   ydb: ["25.2", "25.1", "24.4", "24.3"],
+  cockroach: ["24.2", "24.1", "23.2"],
 };
 
 const DB_META: Record<DatabaseKind, { icon: typeof Database; label: string }> = {
-  postgres: { icon: Database, label: "PostgreSQL" },
-  mysql:    { icon: Server,   label: "MySQL" },
-  mariadb:  { icon: Server,   label: "MariaDB" },
-  picodata: { icon: Cpu,      label: "Picodata" },
-  ydb:      { icon: Database, label: "YDB" },
+  postgres:  { icon: Database, label: "PostgreSQL" },
+  mysql:     { icon: Server,   label: "MySQL" },
+  mariadb:   { icon: Server,   label: "MariaDB" },
+  picodata:  { icon: Cpu,      label: "Picodata" },
+  ydb:       { icon: Database, label: "YDB" },
+  cockroach: { icon: Database, label: "CockroachDB" },
 };
 
 const PROVIDER_META: Record<Provider, { icon: typeof Cloud; label: string }> = {
