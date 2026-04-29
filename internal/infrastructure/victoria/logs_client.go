@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -51,6 +52,11 @@ func (c *LogsClient) Ingest(machineID, commandID, action, runID, stream, line st
 }
 
 func (c *LogsClient) ingest(accountID int32, machineID, commandID, action, runID, stream, line string) error {
+	// VictoriaLogs rejects entries whose `_msg` is empty (warning:
+	// "missing _msg field"). Skip blank/whitespace-only lines silently.
+	if strings.TrimSpace(line) == "" {
+		return nil
+	}
 	entry := logEntry{
 		Msg:       line,
 		Time:      time.Now().UTC().Format(time.RFC3339Nano),
