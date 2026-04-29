@@ -132,6 +132,7 @@ func (t *proxyConfigTask) configProxySQLMySQL(nc *dag.NodeContext, proxyTargets,
 		GroupReplication: gr,
 		WriterHostgroup:  10,
 		ReaderHostgroup:  20,
+		ConfOverride:     t.overrides["proxysql.cnf"],
 	}
 
 	return t.client.SendAll(nc, proxyTargets, agent.Command{

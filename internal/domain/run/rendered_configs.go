@@ -105,6 +105,18 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 				TotalMemoryMB: r.MemoryMB,
 			}))
 		}
+		if db.MySQL.ProxySQL != nil {
+			// Backend count = primary + (count of each replica spec). The
+			// preview placeholder list has to match what task_proxy.go ships
+			// at run time — primary first, replicas after.
+			backendCount := db.MySQL.Primary.Count
+			for _, r := range db.MySQL.Replicas {
+				backendCount += r.Count
+			}
+			put("proxysql.cnf", dbconfig.RenderProxySQLConf(dbconfig.RenderProxySQLConfOpts{
+				BackendCount: backendCount,
+			}))
+		}
 
 	case types.DatabasePicodata:
 		if db.Picodata == nil {
