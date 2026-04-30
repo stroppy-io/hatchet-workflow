@@ -29,7 +29,10 @@ resource "yandex_ydb_database_dedicated" "this" {
   location_id = var.managed.location_id
 
   network_id = var.networking.external_id
-  subnet_ids = [yandex_vpc_subnet.subnet.id]
+  # Dedicated YDB requires a subnet per availability zone — the API rejects
+  # creates that don't cover every zone in the region with at least one
+  # subnet (validated server-side, not by the provider).
+  subnet_ids = [for s in yandex_vpc_subnet.zone : s.id]
 
   resource_preset_id = var.managed.resource_preset_id
 

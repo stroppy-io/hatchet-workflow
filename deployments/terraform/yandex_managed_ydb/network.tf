@@ -1,7 +1,21 @@
-resource "yandex_vpc_subnet" "subnet" {
-  name           = var.networking.name
-  zone           = var.networking.zone
-  v4_cidr_blocks = [var.networking.cidr]
+locals {
+  # Yandex Cloud Managed YDB (dedicated mode) requires at least one subnet
+  # per availability zone, even though the database internally picks where
+  # to place its nodes. Carve var.networking.cidr (a /16) into a /20 per
+  # zone using cidrsubnet — gives ~4k IPs per zone, plenty for the static
+  # Database/Storage layout YC schedules.
+  zones = ["ru-central1-a", "ru-central1-b", "ru-central1-d"]
+  zone_subnets = {
+    for idx, zone in local.zones :
+    zone => cidrsubnet(var.networking.cidr, 4, idx)
+  }
+}
+
+resource "yandex_vpc_subnet" "zone" {
+  for_each       = local.zone_subnets
+  name           = "${var.networking.name}-${each.key}"
+  zone           = each.key
+  v4_cidr_blocks = [each.value]
   network_id     = var.networking.external_id
 }
 
@@ -17,7 +31,7 @@ resource "yandex_vpc_security_group" "security-group" {
   }
   ingress {
     protocol       = "ANY"
-    v4_cidr_blocks = concat(yandex_vpc_subnet.subnet.v4_cidr_blocks)
+    v4_cidr_blocks = [for s in yandex_vpc_subnet.zone : s.v4_cidr_blocks[0]]
     from_port      = 0
     to_port        = 65535
   }

@@ -21,7 +21,7 @@ func ValidateConfig(cfg types.RunConfig) error {
 	}
 
 	// At least one topology must be set (or preset_id).
-	if cfg.Database.Postgres == nil && cfg.Database.MySQL == nil && cfg.Database.MariaDB == nil && cfg.Database.Picodata == nil && cfg.Database.YDB == nil && cfg.Database.Cockroach == nil && cfg.PresetID == "" {
+	if cfg.Database.Postgres == nil && cfg.Database.MySQL == nil && cfg.Database.MariaDB == nil && cfg.Database.Picodata == nil && cfg.Database.YDB == nil && cfg.Database.YDBManaged == nil && cfg.Database.Cockroach == nil && cfg.PresetID == "" {
 		return fmt.Errorf("database topology or preset_id is required")
 	}
 
@@ -33,12 +33,13 @@ func ValidateConfig(cfg types.RunConfig) error {
 		label    string
 	}
 	checks := []topoCheck{
-		{types.DatabasePostgres, cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.Cockroach != nil, "postgres"},
-		{types.DatabaseMySQL, cfg.Database.Postgres != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.Cockroach != nil, "mysql"},
-		{types.DatabaseMariaDB, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.Cockroach != nil, "mariadb"},
-		{types.DatabasePicodata, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.YDB != nil || cfg.Database.Cockroach != nil, "picodata"},
-		{types.DatabaseYDB, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.Cockroach != nil, "ydb"},
-		{types.DatabaseCockroach, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil, "cockroach"},
+		{types.DatabasePostgres, cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil, "postgres"},
+		{types.DatabaseMySQL, cfg.Database.Postgres != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil, "mysql"},
+		{types.DatabaseMariaDB, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil, "mariadb"},
+		{types.DatabasePicodata, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil, "picodata"},
+		{types.DatabaseYDB, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil, "ydb"},
+		{types.DatabaseYDBManaged, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.Cockroach != nil, "ydb-managed"},
+		{types.DatabaseCockroach, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil, "cockroach"},
 	}
 	for _, c := range checks {
 		if cfg.Database.Kind == c.ownKind && c.otherSet {

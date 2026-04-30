@@ -31,7 +31,10 @@ resource "yandex_compute_instance" "vms" {
   service_account_id = yandex_iam_service_account.stroppy.id
 
   network_interface {
-    subnet_id          = yandex_vpc_subnet.subnet.id
+    # Place the client VM in the subnet matching var.networking.zone — the
+    # zone that the user picked for the run. Falls back to ru-central1-b
+    # (legacy default) if the picked zone has no matching subnet.
+    subnet_id          = yandex_vpc_subnet.zone[var.networking.zone].id
     nat                = each.value.has_public_ip
     ip_address         = each.value.internal_ip
     security_group_ids = [yandex_vpc_security_group.security-group.id]
