@@ -321,6 +321,7 @@ export interface YandexCloudSettings {
   platform_id: string;
   image_id: string;
   assign_public_ip: boolean;
+  software_accelerated_network: boolean;
   ssh_user: string;
   ssh_public_key: string;
 }

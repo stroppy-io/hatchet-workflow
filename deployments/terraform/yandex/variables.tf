@@ -40,6 +40,10 @@ variable "compute" {
       internal_ip   = string
       has_public_ip = bool
       user_data     = string
+      # Network acceleration type: "standard" or "software_accelerated" (SAN).
+      # SAN offloads packet processing to dedicated cores, lowering latency
+      # and jitter. Requires a compatible platform_id.
+      network_acceleration_type = optional(string, "standard")
       # Optional raw block devices attached alongside the boot disk. Each
       # appears in-guest at /dev/disk/by-id/virtio-<device_name>. YDB storage
       # uses this to put pdisk on a dedicated, unformatted device.
@@ -67,5 +71,12 @@ variable "compute" {
   validation {
     condition     = var.compute.platform_id != ""
     error_message = "Platform ID should be specified"
+  }
+  validation {
+    condition = alltrue([
+      for vm in var.compute.vms :
+      contains(["standard", "software_accelerated"], vm.network_acceleration_type)
+    ])
+    error_message = "network_acceleration_type must be 'standard' or 'software_accelerated'"
   }
 }

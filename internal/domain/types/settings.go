@@ -21,8 +21,12 @@ type YandexCloudSettings struct {
 	PlatformID     string `json:"platform_id"` // e.g. standard-v2
 	ImageID        string `json:"image_id"`
 	AssignPublicIP bool   `json:"assign_public_ip"` // allocate external IP on VMs
-	SSHUser        string `json:"ssh_user"`         // login user on VMs (default "stroppy")
-	SSHPublicKey   string `json:"ssh_public_key"`
+	// SoftwareAcceleratedNetwork enables Yandex Cloud SAN: dedicated cores for
+	// packet processing on the host, lower latency/jitter for VM traffic.
+	// Requires a compatible platform_id (standard-v2 / v3).
+	SoftwareAcceleratedNetwork bool   `json:"software_accelerated_network"`
+	SSHUser                    string `json:"ssh_user"` // login user on VMs (default "stroppy")
+	SSHPublicKey               string `json:"ssh_public_key"`
 }
 
 // Validate checks that all required fields for a Yandex Cloud run are set.
@@ -139,10 +143,10 @@ func (s StroppySettings) StroppyEnv(runID string) map[string]string {
 // TenantQuotas defines resource limits and allowed options for a tenant.
 // Zero/empty values mean no restriction.
 type TenantQuotas struct {
-	AllowedDBKinds     []string `json:"allowed_db_kinds,omitempty"`      // e.g. ["ydb", "postgres"]
-	AllowedProviders   []string `json:"allowed_providers,omitempty"`     // e.g. ["yandex"]
-	MaxNodes           int      `json:"max_nodes,omitempty"`             // max DB nodes per run
-	MaxCPUsPerNode     int      `json:"max_cpus_per_node,omitempty"`     // max vCPUs per node
+	AllowedDBKinds     []string `json:"allowed_db_kinds,omitempty"`  // e.g. ["ydb", "postgres"]
+	AllowedProviders   []string `json:"allowed_providers,omitempty"` // e.g. ["yandex"]
+	MaxNodes           int      `json:"max_nodes,omitempty"`         // max DB nodes per run
+	MaxCPUsPerNode     int      `json:"max_cpus_per_node,omitempty"` // max vCPUs per node
 	MaxMemoryMBPerNode int      `json:"max_memory_mb_per_node,omitempty"`
 	MaxDiskGBPerNode   int      `json:"max_disk_gb_per_node,omitempty"`
 	MaxConcurrentRuns  int      `json:"max_concurrent_runs,omitempty"`

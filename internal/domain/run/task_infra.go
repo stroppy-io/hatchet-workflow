@@ -263,14 +263,15 @@ type yandexTfCompute struct {
 }
 
 type yandexTfVM struct {
-	Cores          int                     `json:"cores"`
-	Memory         int                     `json:"memory"`
-	DiskSize       int                     `json:"disk_size"`
-	DiskType       string                  `json:"disk_type"`
-	InternalIP     string                  `json:"internal_ip"`
-	HasPublicIP    bool                    `json:"has_public_ip"`
-	UserData       string                  `json:"user_data"`
-	SecondaryDisks []yandexTfSecondaryDisk `json:"secondary_disks"`
+	Cores                   int                     `json:"cores"`
+	Memory                  int                     `json:"memory"`
+	DiskSize                int                     `json:"disk_size"`
+	DiskType                string                  `json:"disk_type"`
+	InternalIP              string                  `json:"internal_ip"`
+	HasPublicIP             bool                    `json:"has_public_ip"`
+	UserData                string                  `json:"user_data"`
+	SecondaryDisks          []yandexTfSecondaryDisk `json:"secondary_disks"`
+	NetworkAccelerationType string                  `json:"network_acceleration_type"`
 }
 
 // yandexTfSecondaryDisk mirrors the secondary_disks list element in the TF
@@ -402,14 +403,20 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 				})
 			}
 
+			netAccel := "standard"
+			if yc.SoftwareAcceleratedNetwork {
+				netAccel = "software_accelerated"
+			}
+
 			vmSpecs[machineID] = yandexTfVM{
-				Cores:          cores,
-				Memory:         memGB,
-				DiskSize:       diskGB,
-				DiskType:       diskType,
-				HasPublicIP:    yc.AssignPublicIP,
-				UserData:       cloudInit,
-				SecondaryDisks: secondary,
+				Cores:                   cores,
+				Memory:                  memGB,
+				DiskSize:                diskGB,
+				DiskType:                diskType,
+				HasPublicIP:             yc.AssignPublicIP,
+				UserData:                cloudInit,
+				SecondaryDisks:          secondary,
+				NetworkAccelerationType: netAccel,
 			}
 			vmRoles[machineID] = spec.Role
 		}

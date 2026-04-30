@@ -274,6 +274,32 @@ export function SettingsPage() {
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <Label>Software Accelerated Network (SAN)</Label>
+                  <div className="flex items-center gap-2 h-9">
+                    <input
+                      type="checkbox"
+                      checked={settings.cloud.yandex.software_accelerated_network ?? false}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          cloud: {
+                            ...settings.cloud,
+                            yandex: {
+                              ...settings.cloud.yandex,
+                              software_accelerated_network: e.target.checked,
+                            },
+                          },
+                        })
+                      }
+                      className="accent-primary"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      Offload packet processing to dedicated host cores (lower latency/jitter; requires compatible platform_id)
+                    </span>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>SSH User</Label>
