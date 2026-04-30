@@ -31,6 +31,7 @@ import {
   Database,
   Server,
   Cpu,
+  Cloud,
   Plus,
   Trash2,
   Lock,
@@ -971,6 +972,7 @@ const DB_META: Record<DatabaseKind, { icon: typeof Database; label: string }> = 
   mariadb:   { icon: Server,   label: "MariaDB" },
   picodata:  { icon: Cpu,      label: "Picodata" },
   ydb:       { icon: Database, label: "YDB" },
+  "ydb-managed": { icon: Cloud, label: "YDB Managed" },
   cockroach: { icon: Database, label: "CockroachDB" },
 };
 

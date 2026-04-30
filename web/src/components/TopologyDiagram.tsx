@@ -1,11 +1,11 @@
-import type { DatabaseKind, MachineSpec, PostgresTopology, MySQLTopology, PicodataTopology, YDBTopology, CockroachTopology } from "@/api/types";
+import type { DatabaseKind, MachineSpec, PostgresTopology, MySQLTopology, PicodataTopology, YDBTopology, YDBManagedTopology, CockroachTopology } from "@/api/types";
 import { DB_COLORS } from "@/lib/db-colors";
-import { Database, Server, Cpu, Shield, Layers, Globe } from "lucide-react";
+import { Database, Server, Cpu, Shield, Layers, Globe, Cloud } from "lucide-react";
 
 interface TopologyDiagramProps {
   kind: DatabaseKind;
   preset?: string;
-  topology?: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | CockroachTopology;
+  topology?: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | YDBManagedTopology | CockroachTopology;
 }
 
 interface RoleDef {
@@ -41,7 +41,7 @@ function formatSpec(s: Partial<MachineSpec> | undefined): string {
 const INFRA_PROXY = "#A0860A";
 const INFRA_COORD = "#7C6CC8";
 
-function getRolesFromTopology(kind: DatabaseKind, topology: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | CockroachTopology): RoleDef[] {
+function getRolesFromTopology(kind: DatabaseKind, topology: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | YDBManagedTopology | CockroachTopology): RoleDef[] {
   const c = DB_COLORS[kind];
 
   if (kind === "postgres") {
@@ -100,6 +100,25 @@ function getRolesFromTopology(kind: DatabaseKind, topology: PostgresTopology | M
     roles.push({ label: "Storage", count: t.storage.count || 1, color: c.hex, icon: Shield, spec: formatSpec(t.storage) });
     if (t.database) roles.push({ label: "Database", count: t.database.count || 1, color: c.hexSecondary, icon: Cpu, spec: formatSpec(t.database) });
     if (t.haproxy) roles.push({ label: "HAProxy", count: t.haproxy.count || 1, color: INFRA_PROXY, icon: Globe, spec: formatSpec(t.haproxy) });
+    return roles;
+  }
+
+  if (kind === "ydb-managed") {
+    // Managed YDB has no DB-side machines we own — surface the YC-managed
+    // database as a single logical role plus the client VM the user runs
+    // stroppy on.
+    const t = topology as YDBManagedTopology;
+    const roles: RoleDef[] = [];
+    roles.push({
+      label: t.type === "dedicated" ? "Managed (dedicated)" : "Managed (serverless)",
+      count: 1,
+      color: c.hex,
+      icon: Cloud,
+      spec: t.type === "dedicated" ? `${t.resource_preset_id ?? "preset"} / ${t.storage_groups ?? 1}× ${t.storage_type ?? "ssd"}` : "pay-per-request",
+    });
+    if (t.client) {
+      roles.push({ label: "Client", count: t.client.count || 1, color: c.hexSecondary, icon: Server, spec: formatSpec(t.client) });
+    }
     return roles;
   }
 

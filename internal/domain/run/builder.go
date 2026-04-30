@@ -176,6 +176,7 @@ func (b *builder) build() error {
 			stroppy:         b.cfg.Stroppy,
 			stroppySettings: stroppySettings,
 			dbKind:          b.cfg.Database.Kind,
+			dbCfg:           b.cfg.Database,
 			runID:           b.cfg.ID,
 			monitoringURL:   b.deps.MonitoringURL,
 			monitoringToken: b.deps.MonitoringToken,
@@ -333,6 +334,12 @@ func (b *builder) dbTasks() (install dag.Task, config dag.Task, err error) {
 	case types.DatabaseYDB:
 		return &ydbInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.YDB, pkg: pkg},
 			&ydbConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.YDB, overrides: db.RenderedConfigOverrides, pgwirePort: ydbPgwirePort(b.cfg)}, nil
+	case types.DatabaseYDBManaged:
+		// Managed YDB: YC manages the database. Install / configure phases
+		// are noops — the only thing we provision in the run is the client
+		// VM (handled by the machines phase, which routes to the
+		// yandex_managed_ydb terraform module when Kind is YDBManaged).
+		return &noopTask{}, &noopTask{}, nil
 	case types.DatabaseCockroach:
 		return &cockroachInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version},
 			&cockroachConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.Cockroach}, nil

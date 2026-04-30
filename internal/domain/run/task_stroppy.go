@@ -21,6 +21,7 @@ import (
 const (
 	DBHostPlaceholder = "__STROPPY_DB_HOST__"
 	DBPortPlaceholder = "__STROPPY_DB_PORT__"
+	DBPathPlaceholder = "__STROPPY_DB_PATH__"
 )
 
 type stroppyInstallTask struct {
@@ -47,6 +48,7 @@ type stroppyRunTask struct {
 	stroppy         types.StroppyConfig
 	stroppySettings types.StroppySettings
 	dbKind          types.DatabaseKind
+	dbCfg           types.DatabaseConfig // needed for managed YDB to pull DatabasePath into the URL
 	runID           string
 	monitoringURL   string
 	monitoringToken string
@@ -92,7 +94,7 @@ func (t *stroppyRunTask) Execute(nc *dag.NodeContext) error {
 		})
 	}
 
-	jsonBytes, err := BuildStroppyConfigJSON(t.stroppy, t.dbKind, dbHost, dbPort, settings, t.runID)
+	jsonBytes, err := BuildStroppyConfigJSON(t.stroppy, t.dbKind, dbHost, dbPort, settings, t.runID, t.dbCfg)
 	if err != nil {
 		return fmt.Errorf("marshal stroppy config: %w", err)
 	}
@@ -152,7 +154,7 @@ func injectOTLP(rc *stroppypb.RunConfig, settings types.StroppySettings, runID s
 // format means a one-line entry there, not a new branch here. For protocols
 // that need credentials baked into the URL (postgres' "postgres@", picodata's
 // "admin:T0psecret@") we splice those in around the metadata's URL prefix.
-func dbDriverURL(dbKind types.DatabaseKind, protocol types.Protocol, host, port string) (string, string) {
+func dbDriverURL(dbKind types.DatabaseKind, protocol types.Protocol, host, port string, dbCfg types.DatabaseConfig) (string, string) {
 	if protocol == "" {
 		protocol = types.DefaultProtocol(dbKind)
 	}
@@ -171,6 +173,15 @@ func dbDriverURL(dbKind types.DatabaseKind, protocol types.Protocol, host, port 
 		url = fmt.Sprintf("postgresql://postgres@%s:%s/postgres?sslmode=disable", host, port)
 	case types.ProtocolPicodata:
 		url = fmt.Sprintf("postgres://admin:T0psecret@%s:%s?sslmode=disable", host, port)
+	case types.ProtocolYDBGRPCS:
+		// Managed YDB needs the database path as a query parameter; the
+		// path is dynamic (filled by terraform output) and lives in the
+		// topology, not the protocol registry.
+		dbPath := DBPathPlaceholder
+		if dbCfg.YDBManaged != nil && dbCfg.YDBManaged.DatabasePath != "" {
+			dbPath = dbCfg.YDBManaged.DatabasePath
+		}
+		url = fmt.Sprintf("grpcs://%s:%s/?database=%s", host, port, dbPath)
 	}
 	return url, meta.DriverType
 }
@@ -179,7 +190,7 @@ func dbDriverURL(dbKind types.DatabaseKind, protocol types.Protocol, host, port 
 // Exported so dry-run can show users what config will be applied.
 // When dbHost=="" and dbPort==0, the generated config embeds sentinel tokens
 // (DBHostPlaceholder/DBPortPlaceholder) that stroppyRunTask substitutes at run time.
-func BuildStroppyConfigJSON(s types.StroppyConfig, dbKind types.DatabaseKind, dbHost string, dbPort int, settings types.StroppySettings, runID string) ([]byte, error) {
+func BuildStroppyConfigJSON(s types.StroppyConfig, dbKind types.DatabaseKind, dbHost string, dbPort int, settings types.StroppySettings, runID string, dbCfg types.DatabaseConfig) ([]byte, error) {
 	script := s.Script
 	if script == "" {
 		script = s.Workload
@@ -200,7 +211,7 @@ func BuildStroppyConfigJSON(s types.StroppyConfig, dbKind types.DatabaseKind, db
 	if dbHost == "" && dbPort == 0 {
 		hostTok, portTok = DBHostPlaceholder, DBPortPlaceholder
 	}
-	driverURL, driverType := dbDriverURL(dbKind, protocol, hostTok, portTok)
+	driverURL, driverType := dbDriverURL(dbKind, protocol, hostTok, portTok, dbCfg)
 
 	vus := s.VUs
 	if vus == 0 && s.VUSScale > 0 {

@@ -49,6 +49,15 @@ export const DB_COLORS: Record<DatabaseKind, {
     accent: "border-[#5B9BD5]/50 bg-[#5B9BD5]/[0.08]",
     hexSecondary: "#4A8AC4",
   },
+  "ydb-managed": {
+    // Managed YDB — same family as YDB but biased toward Yandex Cloud
+    // primary red so the wizard can tell at-a-glance "this run uses YC managed".
+    hex: "#FF3333",
+    hexLight: "#FF6666",
+    text: "text-[#FF6666]",
+    accent: "border-[#FF3333]/50 bg-[#FF3333]/[0.08]",
+    hexSecondary: "#CC2929",
+  },
   cockroach: {
     // CockroachLabs brand teal — distinct from postgres elephant blue and
     // YDB sky blue.

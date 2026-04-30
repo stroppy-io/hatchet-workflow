@@ -1,7 +1,7 @@
 // --- Enums / constants ---
 
 export type Provider = "yandex" | "docker";
-export type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb" | "cockroach";
+export type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb" | "ydb-managed" | "cockroach";
 
 // Protocol is the wire format stroppy uses to talk to a database. Decoupled
 // from DatabaseKind because YDB and Picodata speak more than one. See
@@ -12,6 +12,7 @@ export type Protocol =
   | "picodata"
   | "ydb-grpc"
   | "ydb-pgwire"
+  | "ydb-grpcs"
   | "cockroach";
 
 // KindProtocols mirrors the Go-side registry. First entry is the default
@@ -23,6 +24,7 @@ export const KIND_PROTOCOLS: Record<DatabaseKind, Protocol[]> = {
   mariadb: ["mysql"],
   picodata: ["picodata"],
   ydb: ["ydb-grpc", "ydb-pgwire"],
+  "ydb-managed": ["ydb-grpcs"],
   cockroach: ["cockroach"],
 };
 
@@ -35,11 +37,12 @@ export const SCRIPT_COMPAT: Record<string, string[]> = {
   "picodata:picodata": ["tpcc/tx", "tpcb/tx"],
   "ydb:ydb-grpc":     ["tpcc/tx", "tpcb/tx"],
   "ydb:ydb-pgwire":   ["tpcc/tx-ydb-pgwire", "tpcb/tx-ydb-pgwire"],
+  "ydb-managed:ydb-grpcs": ["tpcc/tx", "tpcb/tx"],
   "cockroach:cockroach": ["tpcc/tx", "tpcb/tx"],
 };
 
 /** All supported database kinds — single source of truth for UI iterations. */
-export const ALL_DB_KINDS: DatabaseKind[] = ["postgres", "mysql", "mariadb", "picodata", "ydb", "cockroach"];
+export const ALL_DB_KINDS: DatabaseKind[] = ["postgres", "mysql", "mariadb", "picodata", "ydb", "ydb-managed", "cockroach"];
 
 export type Phase =
   | "network"
@@ -141,6 +144,22 @@ export interface YDBTopology {
   haproxy_options?: Record<string, string>;
 }
 
+// Yandex Cloud Managed YDB topology. Mirrors types.YDBManagedTopology in
+// internal/domain/types/run.go. The patched stroppy ydb driver pulls SA
+// token + CA from the YC metadata service, so the only extra surface the
+// user sees is `client` (the runner VM, which the terraform module attaches
+// the stroppy SA to).
+export interface YDBManagedTopology {
+  type: "serverless" | "dedicated";
+  resource_preset_id?: string;       // dedicated only
+  storage_groups?: number;           // dedicated only
+  storage_type?: string;             // dedicated only
+  throttling_rcus?: number;          // serverless only
+  client: MachineSpec;
+  database_path?: string;            // populated by terraform output at run time
+  endpoint?: string;                 // populated by terraform output at run time
+}
+
 export interface CockroachTopology {
   nodes: MachineSpec;
   options?: Record<string, string>;
@@ -154,6 +173,7 @@ export interface DatabaseConfig {
   mariadb?: MySQLTopology;
   picodata?: PicodataTopology;
   ydb?: YDBTopology;
+  ydb_managed?: YDBManagedTopology;
   cockroach?: CockroachTopology;
   rendered_config_overrides?: Record<string, string>;
 }
@@ -304,7 +324,7 @@ export interface Preset {
   description: string;
   db_kind: DatabaseKind;
   is_builtin: boolean;
-  topology: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | CockroachTopology;
+  topology: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | YDBManagedTopology | CockroachTopology;
   created_at?: string;
 }
 

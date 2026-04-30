@@ -3,7 +3,7 @@ import { getDBDefaults } from "@/api/client";
 import type { DatabaseKind } from "@/api/types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Database, Server, Cpu } from "lucide-react";
+import { Database, Server, Cpu, Cloud } from "lucide-react";
 
 interface DBDefaultsData {
   [version: string]: Record<string, string>;
@@ -15,6 +15,7 @@ const kindIcons: Record<DatabaseKind, typeof Database> = {
   mariadb: Server,
   picodata: Cpu,
   ydb: Database,
+  "ydb-managed": Cloud,
   cockroach: Database,
 };
 
@@ -24,6 +25,7 @@ const kindLabels: Record<DatabaseKind, string> = {
   mariadb: "MariaDB",
   picodata: "Picodata",
   ydb: "YDB",
+  "ydb-managed": "YDB Managed",
   cockroach: "CockroachDB",
 };
 
@@ -33,6 +35,7 @@ const highlightKeys: Record<DatabaseKind, string[]> = {
   mariadb: ["innodb_buffer_pool_size", "max_connections", "innodb_flush_method", "bind_address"],
   picodata: ["replication_factor", "shards", "memtx_memory", "listen"],
   ydb: ["fault_tolerance", "database_path"],
+  "ydb-managed": ["type", "endpoint", "database_path"],
   // CRDB takes nearly all config via CLI flags or SQL CLUSTER SETTINGs;
   // these are the SQL settings most worth surfacing in the wizard.
   cockroach: ["kv.transaction.write_pipelining_enabled", "sql.defaults.statement_timeout", "kv.range_split.load_qps_threshold"],

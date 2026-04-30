@@ -3,6 +3,8 @@ package run
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
@@ -17,6 +19,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/terraform"
 
 	yctf "github.com/stroppy-io/stroppy-cloud/deployments/terraform/yandex"
+	yctfmanaged "github.com/stroppy-io/stroppy-cloud/deployments/terraform/yandex_managed_ydb"
 )
 
 // dbConnectPort returns the port stroppy connects to for a given (kind,
@@ -290,6 +293,9 @@ type yandexVmIPs map[string]struct {
 }
 
 func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
+	if t.runCfg.Database.Kind == types.DatabaseYDBManaged {
+		return t.yandexManagedYDBMachines(nc)
+	}
 	if t.settings == nil {
 		return fmt.Errorf("machines: server settings not configured for Yandex Cloud provider")
 	}
@@ -578,6 +584,306 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 		zap.Int("proxy", len(proxyTargets)),
 	)
 
+	return nil
+}
+
+// --- Managed YDB (Yandex Cloud) ---
+
+// yandexManagedTfVars matches the yandex_managed_ydb terraform module schema.
+type yandexManagedTfVars struct {
+	Networking yandexTfNetworking     `json:"networking"`
+	Compute    yandexTfCompute        `json:"compute"`
+	Managed    yandexManagedTfManaged `json:"managed"`
+}
+
+type yandexManagedTfManaged struct {
+	Name               string `json:"name"`
+	Type               string `json:"type"`
+	FolderID           string `json:"folder_id"`
+	LocationID         string `json:"location_id"`
+	ResourcePresetID   string `json:"resource_preset_id,omitempty"`
+	StorageGroups      int    `json:"storage_groups,omitempty"`
+	StorageTypeID      string `json:"storage_type_id,omitempty"`
+	ThrottlingRcuLimit int    `json:"throttling_rcu_limit,omitempty"`
+}
+
+// parseYDBEndpoint splits a YC ydb_api_endpoint URL into host and port.
+// Returns ("", 0) on parse failure so callers can fall back to defaults.
+// Examples of inputs we expect:
+//
+//	grpcs://ydb.serverless.yandexcloud.net:2135/?database=/ru-central1/...
+//	grpcs://ydb.api.cloud.yandex.net:2135/...
+func parseYDBEndpoint(raw string) (string, int) {
+	s := strings.TrimPrefix(raw, "grpcs://")
+	s = strings.TrimPrefix(s, "grpc://")
+	if i := strings.IndexAny(s, "/?"); i >= 0 {
+		s = s[:i]
+	}
+	host, portStr, ok := strings.Cut(s, ":")
+	if !ok {
+		return "", 0
+	}
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return "", 0
+	}
+	return host, port
+}
+
+func (t *machinesTask) yandexManagedYDBMachines(nc *dag.NodeContext) error {
+	if t.settings == nil {
+		return fmt.Errorf("machines: server settings not configured for Yandex Cloud provider")
+	}
+	cloud := t.settings.Cloud
+	if err := cloud.ValidateCloud(); err != nil {
+		return fmt.Errorf("machines: %w", err)
+	}
+	yc := cloud.Yandex
+	if err := yc.Validate(); err != nil {
+		return fmt.Errorf("machines: %w", err)
+	}
+	managed := t.runCfg.Database.YDBManaged
+	if managed == nil {
+		return fmt.Errorf("machines: ydb_managed topology missing")
+	}
+
+	binaryURL := cloud.BinaryURL
+	if binaryURL == "" && t.serverAddr != "" {
+		binaryURL = t.serverAddr + "/agent/binary"
+	}
+	if binaryURL == "" {
+		return fmt.Errorf("machines: binary_url or server_addr must be configured for cloud provider")
+	}
+
+	tfFiles, err := yctfmanaged.EmbeddedTfFiles()
+	if err != nil {
+		return fmt.Errorf("machines: load managed-ydb terraform templates: %w", err)
+	}
+	if len(tfFiles) == 0 {
+		return fmt.Errorf("machines: no managed-ydb terraform templates found")
+	}
+
+	vmSpecs := make(map[string]yandexTfVM)
+	vmRoles := make(map[string]types.MachineRole)
+
+	for _, spec := range t.runCfg.Machines {
+		if spec.Role != types.RoleStroppy {
+			// Managed YDB has no DB-side machines; skip anything else
+			// that may have leaked through (defensive).
+			continue
+		}
+		for i := range spec.Count {
+			machineID := fmt.Sprintf("%s-%s-%d", t.runCfg.ID, spec.Role, i)
+
+			agentToken := ""
+			if t.jwtIssuer != nil {
+				token, err := t.jwtIssuer.Issue(auth.Claims{
+					UserID: machineID, Username: machineID, TenantID: t.tenantID, Role: "operator",
+				}, 24*time.Hour)
+				if err == nil {
+					agentToken = token
+				}
+			}
+
+			cloudInit, ciErr := agent.GenerateCloudInit(agent.CloudInitParams{
+				BinaryURL:    binaryURL,
+				ServerAddr:   t.serverAddr,
+				AgentPort:    agent.DefaultAgentPort,
+				MachineID:    machineID,
+				AgentToken:   agentToken,
+				SSHUser:      yc.SSHUser,
+				SSHPublicKey: yc.SSHPublicKey,
+			})
+			if ciErr != nil {
+				return fmt.Errorf("machines: generate cloud-init for %s: %w", machineID, ciErr)
+			}
+
+			cores := spec.CPUs
+			if cores == 0 {
+				cores = 2
+			}
+			memGB := spec.MemoryMB / 1024
+			if memGB == 0 {
+				memGB = 4
+			}
+			if cores > 0 && memGB%cores != 0 {
+				memGB = ((memGB + cores - 1) / cores) * cores
+			}
+			diskGB := spec.DiskGB
+			if diskGB == 0 {
+				diskGB = 50
+			}
+			diskType := spec.DiskType
+			if diskType == "" {
+				diskType = "network-ssd"
+			}
+			netAccel := "standard"
+			if yc.SoftwareAcceleratedNetwork {
+				netAccel = "software_accelerated"
+			}
+
+			vmSpecs[machineID] = yandexTfVM{
+				Cores:                   cores,
+				Memory:                  memGB,
+				DiskSize:                diskGB,
+				DiskType:                diskType,
+				HasPublicIP:             yc.AssignPublicIP,
+				UserData:                cloudInit,
+				NetworkAccelerationType: netAccel,
+			}
+			vmRoles[machineID] = spec.Role
+		}
+	}
+
+	if len(vmSpecs) == 0 {
+		return fmt.Errorf("machines: managed YDB run has no client VM (RoleStroppy) machines")
+	}
+
+	platformID := t.runCfg.PlatformID
+	if platformID == "" {
+		platformID = yc.PlatformID
+	}
+	if platformID == "" {
+		platformID = "standard-v2"
+	}
+
+	subnetName := fmt.Sprintf("%s-%s", yc.NetworkName, t.runCfg.ID)
+	subnetCIDR := runSubnetCIDR(t.runCfg.ID, yc.SubnetCIDR)
+
+	// Managed YDB DB name has to be unique within the folder. Use a stable
+	// runID-derived suffix so tear-down/re-apply stays idempotent.
+	dbName := fmt.Sprintf("stroppy-%s", strings.ReplaceAll(t.runCfg.ID, "_", "-"))
+	if len(dbName) > 63 {
+		dbName = dbName[:63]
+	}
+
+	mgType := string(managed.Type)
+	if mgType == "" {
+		mgType = string(types.YDBManagedKindServerless)
+	}
+	locationID := yc.Zone
+	// Yandex Cloud expects a zone-less location ("ru-central1") for the
+	// managed YDB resources; the YandexCloudSettings.Zone is the per-VM
+	// zone (e.g. "ru-central1-b"), so trim the trailing zone suffix.
+	if i := strings.LastIndex(locationID, "-"); i > 0 {
+		head := locationID[:i]
+		// "ru-central1-b" → "ru-central1"; only trim when the suffix is
+		// a single short token (zone letter).
+		if len(locationID)-i <= 3 {
+			locationID = head
+		}
+	}
+
+	vars := yandexManagedTfVars{
+		Networking: yandexTfNetworking{
+			Name: subnetName, ExternalID: yc.NetworkID, CIDR: subnetCIDR, Zone: yc.Zone,
+		},
+		Compute: yandexTfCompute{
+			PlatformID: platformID, ImageID: yc.ImageID, SerialPortEnable: true, VMs: vmSpecs,
+		},
+		Managed: yandexManagedTfManaged{
+			Name:               dbName,
+			Type:               mgType,
+			FolderID:           yc.FolderID,
+			LocationID:         locationID,
+			ResourcePresetID:   managed.ResourcePresetID,
+			StorageGroups:      managed.StorageGroups,
+			StorageTypeID:      managed.StorageType,
+			ThrottlingRcuLimit: managed.ThrottlingRCUs,
+		},
+	}
+
+	varFile, err := terraform.NewTfVarFile(vars)
+	if err != nil {
+		return fmt.Errorf("machines: marshal managed-ydb terraform vars: %w", err)
+	}
+
+	actor, err := terraform.NewActor()
+	if err != nil {
+		return fmt.Errorf("machines: create terraform actor: %w", err)
+	}
+
+	wdId := terraform.NewWdId(t.runCfg.ID)
+	wd := terraform.NewWorkdirWithParams(wdId,
+		terraform.WithTfFiles(tfFiles),
+		terraform.WithVarFile(varFile),
+		terraform.WithEnv(map[string]string{
+			"YC_TOKEN":     yc.Token,
+			"YC_CLOUD_ID":  yc.CloudID,
+			"YC_FOLDER_ID": yc.FolderID,
+			"YC_ZONE":      yc.Zone,
+		}),
+	)
+
+	nc.Log().Info("running terraform apply for Yandex Cloud Managed YDB",
+		zap.String("run_id", t.runCfg.ID),
+		zap.String("managed_type", mgType),
+		zap.Int("client_vm_count", len(vmSpecs)),
+	)
+
+	ctx := context.Context(nc)
+	output, err := actor.ApplyTerraform(ctx, wd)
+	if err != nil {
+		return fmt.Errorf("machines: terraform apply (managed ydb): %w", err)
+	}
+
+	t.state.SetTerraformWdId(string(wdId))
+	t.state.SetTerraformActor(actor)
+
+	vmIPs, err := terraform.GetTfOutputVal[yandexVmIPs](output, "vm_ips")
+	if err != nil {
+		return fmt.Errorf("machines: parse terraform output 'vm_ips': %w", err)
+	}
+	endpoint, err := terraform.GetTfOutputVal[string](output, "ydb_endpoint")
+	if err != nil {
+		return fmt.Errorf("machines: parse terraform output 'ydb_endpoint': %w", err)
+	}
+	dbPath, err := terraform.GetTfOutputVal[string](output, "ydb_database_path")
+	if err != nil {
+		return fmt.Errorf("machines: parse terraform output 'ydb_database_path': %w", err)
+	}
+
+	host, port := parseYDBEndpoint(endpoint)
+	if host == "" {
+		return fmt.Errorf("machines: cannot parse managed YDB endpoint %q", endpoint)
+	}
+	if port == 0 {
+		port = types.Protocols[types.ProtocolYDBGRPCS].Port
+	}
+
+	// Mutate the topology in place so dbDriverURL — which receives a copy
+	// of DatabaseConfig but shares the *YDBManagedTopology pointer — picks
+	// up the path when it builds the stroppy URL.
+	managed.Endpoint = endpoint
+	managed.DatabasePath = dbPath
+
+	for name, role := range vmRoles {
+		vmInfo, ok := vmIPs[name]
+		if !ok {
+			return fmt.Errorf("machines: terraform output missing IP for VM %q", name)
+		}
+		ip := vmInfo.NatIP
+		if ip == "" {
+			ip = vmInfo.InternalIP
+		}
+		target := agent.Target{ID: name, Host: ip, InternalHost: vmInfo.InternalIP}
+		if role == types.RoleStroppy {
+			t.state.SetStroppyTarget(target)
+		}
+	}
+
+	t.state.SetDBEndpoint(host, port)
+	t.state.SetEffectiveConfig("database", map[string]string{
+		"kind":     "ydb-managed",
+		"type":     mgType,
+		"endpoint": endpoint,
+		"db_path":  dbPath,
+	})
+
+	nc.Log().Info("managed YDB provisioned",
+		zap.String("endpoint", endpoint),
+		zap.String("database_path", dbPath),
+	)
 	return nil
 }
 

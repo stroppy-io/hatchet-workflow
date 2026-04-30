@@ -16,12 +16,13 @@ type Preset struct {
 	IsBuiltin   bool   `json:"is_builtin"`
 
 	// Exactly one topology field is set, matching DbKind.
-	Postgres  *PostgresTopology  `json:"postgres,omitempty"`
-	MySQL     *MySQLTopology     `json:"mysql,omitempty"`
-	MariaDB   *MySQLTopology     `json:"mariadb,omitempty"` // shape mirrors MySQL
-	Picodata  *PicodataTopology  `json:"picodata,omitempty"`
-	YDB       *YDBTopology       `json:"ydb,omitempty"`
-	Cockroach *CockroachTopology `json:"cockroach,omitempty"`
+	Postgres   *PostgresTopology   `json:"postgres,omitempty"`
+	MySQL      *MySQLTopology      `json:"mysql,omitempty"`
+	MariaDB    *MySQLTopology      `json:"mariadb,omitempty"` // shape mirrors MySQL
+	Picodata   *PicodataTopology   `json:"picodata,omitempty"`
+	YDB        *YDBTopology        `json:"ydb,omitempty"`
+	YDBManaged *YDBManagedTopology `json:"ydb_managed,omitempty"`
+	Cockroach  *CockroachTopology  `json:"cockroach,omitempty"`
 }
 
 // TopologyJSON serializes the active topology field to JSON for DB storage.
@@ -41,6 +42,9 @@ func (p *Preset) TopologyJSON() (string, error) {
 		return string(b), err
 	case DatabaseYDB:
 		b, err := json.Marshal(p.YDB)
+		return string(b), err
+	case DatabaseYDBManaged:
+		b, err := json.Marshal(p.YDBManaged)
 		return string(b), err
 	case DatabaseCockroach:
 		b, err := json.Marshal(p.Cockroach)
@@ -83,6 +87,12 @@ func (p *Preset) ParseTopology(raw string) error {
 			return err
 		}
 		p.YDB = &t
+	case DatabaseYDBManaged:
+		var t YDBManagedTopology
+		if err := json.Unmarshal([]byte(raw), &t); err != nil {
+			return err
+		}
+		p.YDBManaged = &t
 	case DatabaseCockroach:
 		var t CockroachTopology
 		if err := json.Unmarshal([]byte(raw), &t); err != nil {
@@ -135,6 +145,13 @@ func BuiltinPresets() []Preset {
 		out = append(out, Preset{
 			Name: "YDB " + string(name), Description: describeYDBPreset(name),
 			DbKind: string(DatabaseYDB), IsBuiltin: true, YDB: &t,
+		})
+	}
+	for name, topo := range YDBManagedPresets {
+		t := topo
+		out = append(out, Preset{
+			Name: "YDB Managed " + string(name), Description: describeYDBManagedPreset(name),
+			DbKind: string(DatabaseYDBManaged), IsBuiltin: true, YDBManaged: &t,
 		})
 	}
 	for name, topo := range CockroachPresets {
@@ -213,7 +230,7 @@ const (
 	ydbNodeMemoryMB     = 131072 // 128 GiB
 	ydbNodeBootDiskGB   = 50
 	ydbNodeBootDiskType = "network-ssd"
-	ydbStoragePdiskGB   = 558 // 6 × 93 GiB — smallest valid io-m3 size at or above 500 GB
+	ydbStoragePdiskGB   = 558        // 6 × 93 GiB — smallest valid io-m3 size at or above 500 GB
 	ydbStorageDevice    = "ydb-data" // virtio device_name → /dev/disk/by-id/virtio-ydb-data
 	ydbStoragePdiskType = "network-ssd-io-m3"
 )
@@ -314,6 +331,57 @@ func describeYDBPreset(p YDBPreset) string {
 		return "Split: 3 storage + 6 database nodes — compute-heavy (9 total)"
 	case YDBSplit33MultiSSD:
 		return "Split: 3 storage × 3 pdisks (9 raw devices) + 3 database nodes"
+	default:
+		return string(p)
+	}
+}
+
+// YDBManagedPreset identifies a Yandex Cloud Managed YDB topology preset.
+type YDBManagedPreset string
+
+const (
+	YDBManagedServerless YDBManagedPreset = "serverless"
+	YDBManagedDedicated  YDBManagedPreset = "dedicated"
+)
+
+// ydbManagedClient is the default stroppy-runner spec for managed YDB
+// presets. The VM gets an attached service account with ydb.editor by the
+// terraform module so the patched stroppy ydb driver can pull SA token + CA
+// from the YC metadata service.
+func ydbManagedClient() MachineSpec {
+	return MachineSpec{
+		Role:     RoleStroppy,
+		Count:    1,
+		CPUs:     8,
+		MemoryMB: 16384,
+		DiskGB:   50,
+		DiskType: "network-ssd",
+	}
+}
+
+// YDBManagedPresets contains the built-in Managed YDB topology presets.
+// Endpoint and DatabasePath are populated from terraform output at run
+// time, not stored in the preset.
+var YDBManagedPresets = map[YDBManagedPreset]YDBManagedTopology{
+	YDBManagedServerless: {
+		Type:   YDBManagedKindServerless,
+		Client: ydbManagedClient(),
+	},
+	YDBManagedDedicated: {
+		Type:             YDBManagedKindDedicated,
+		ResourcePresetID: "medium",
+		StorageGroups:    1,
+		StorageType:      "ssd",
+		Client:           ydbManagedClient(),
+	},
+}
+
+func describeYDBManagedPreset(p YDBManagedPreset) string {
+	switch p {
+	case YDBManagedServerless:
+		return "Yandex Cloud Managed YDB — serverless (pay-per-request, grpcs only)"
+	case YDBManagedDedicated:
+		return "Yandex Cloud Managed YDB — dedicated medium (1 storage group, ssd)"
 	default:
 		return string(p)
 	}

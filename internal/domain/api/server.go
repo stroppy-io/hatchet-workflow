@@ -560,7 +560,7 @@ func (s *Server) runDryRun(w http.ResponseWriter, r *http.Request) {
 		resp.StroppyConfig = cfg.Stroppy.ConfigOverrideJSON
 	} else {
 		stroppySettings := types.DefaultStroppySettings()
-		if b, err := run.BuildStroppyConfigJSON(cfg.Stroppy, cfg.Database.Kind, "", 0, stroppySettings, cfg.ID); err == nil {
+		if b, err := run.BuildStroppyConfigJSON(cfg.Stroppy, cfg.Database.Kind, "", 0, stroppySettings, cfg.ID, cfg.Database); err == nil {
 			resp.StroppyConfig = string(b)
 		}
 	}

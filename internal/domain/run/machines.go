@@ -88,7 +88,9 @@ func FillMachinesFromTopology(cfg *types.RunConfig) {
 
 	ov := cfg.MachineOverride
 	ovCPU := func(orig int) int { return applyOverride(orig, ov, func(m *types.MachineSpec) int { return m.CPUs }) }
-	ovMem := func(orig int) int { return applyOverride(orig, ov, func(m *types.MachineSpec) int { return m.MemoryMB }) }
+	ovMem := func(orig int) int {
+		return applyOverride(orig, ov, func(m *types.MachineSpec) int { return m.MemoryMB })
+	}
 	ovDisk := func(orig int) int { return applyOverride(orig, ov, func(m *types.MachineSpec) int { return m.DiskGB }) }
 
 	db := cfg.Database
@@ -174,6 +176,20 @@ func FillMachinesFromTopology(cfg *types.RunConfig) {
 				CPUs: ovCPU(n.CPUs), MemoryMB: ovMem(n.MemoryMB), DiskGB: ovDisk(n.DiskGB),
 				DiskType: n.DiskType, SecondaryDisks: n.SecondaryDisks,
 			})
+		}
+	case types.DatabaseYDBManaged:
+		// Managed YDB has no DB-side machines — YC manages the database
+		// itself. The runner VM is added below as the stroppy machine, but
+		// we override its spec from the topology so the user can size the
+		// client (the typical knob for managed loads is "how big a client
+		// to drive load from").
+		if db.YDBManaged != nil && db.YDBManaged.Client.CPUs > 0 && cfg.Stroppy.Machine == nil {
+			c := db.YDBManaged.Client
+			cfg.Stroppy.Machine = &types.MachineSpec{
+				Role: types.RoleStroppy, Count: 1,
+				CPUs: ovCPU(c.CPUs), MemoryMB: ovMem(c.MemoryMB), DiskGB: ovDisk(c.DiskGB),
+				DiskType: c.DiskType,
+			}
 		}
 	}
 

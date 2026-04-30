@@ -22,6 +22,13 @@ const (
 	// ProtocolYDBGRPC is YDB's native gRPC protocol — full feature set,
 	// stroppy uses its ydb driver.
 	ProtocolYDBGRPC Protocol = "ydb-grpc"
+	// ProtocolYDBGRPCS is YDB's native gRPC protocol over TLS, the only
+	// surface Yandex Cloud Managed YDB exposes (port 2135). The patched
+	// stroppy driver (pkg/driver/ydb/driver.go) falls back to YC metadata
+	// for SA token + internal CA, so as long as the client VM has an
+	// attached service account with ydb.editor the run authenticates
+	// without explicit credentials.
+	ProtocolYDBGRPCS Protocol = "ydb-grpcs"
 	// ProtocolYDBPgwire is YDB's experimental pg-wire surface. Strict subset
 	// of pg-wire — no stored procedures, limited DDL, weaker txn semantics.
 	// Stroppy uses its postgres driver against it; benchmark scripts have
@@ -59,10 +66,15 @@ func (p ProtocolMeta) FormatURL(host, port string) string {
 // configure. Adding a new entry here is the first step when teaching the
 // system about a new engine that speaks an unfamiliar wire format.
 var Protocols = map[Protocol]ProtocolMeta{
-	ProtocolPG:        {DriverType: "postgres", Port: 5432, URLScheme: "postgresql", URLTail: "/postgres?sslmode=disable"},
-	ProtocolMySQL:     {DriverType: "mysql", Port: 3306, URLTail: "/"},
-	ProtocolPicodata:  {DriverType: "picodata", Port: 5432, URLScheme: "postgres", URLTail: "?sslmode=disable"},
-	ProtocolYDBGRPC:   {DriverType: "ydb", Port: 2136, URLScheme: "grpc", URLTail: "/Root/testdb"},
+	ProtocolPG:       {DriverType: "postgres", Port: 5432, URLScheme: "postgresql", URLTail: "/postgres?sslmode=disable"},
+	ProtocolMySQL:    {DriverType: "mysql", Port: 3306, URLTail: "/"},
+	ProtocolPicodata: {DriverType: "picodata", Port: 5432, URLScheme: "postgres", URLTail: "?sslmode=disable"},
+	ProtocolYDBGRPC:  {DriverType: "ydb", Port: 2136, URLScheme: "grpc", URLTail: "/Root/testdb"},
+	// Managed YDB endpoints terminate TLS and require the database path as a
+	// query parameter. URLTail is left blank because the path is dynamic
+	// (only known after terraform apply); task_stroppy splices it in via
+	// dbDriverURL.
+	ProtocolYDBGRPCS:  {DriverType: "ydb", Port: 2135, URLScheme: "grpcs", URLTail: ""},
 	ProtocolYDBPgwire: {DriverType: "postgres", Port: 5432, URLScheme: "postgresql", URLTail: "/local?sslmode=disable"},
 	ProtocolCockroach: {DriverType: "postgres", Port: 26257, URLScheme: "postgresql", URLTail: "/defaultdb?sslmode=disable"},
 }
@@ -71,12 +83,13 @@ var Protocols = map[Protocol]ProtocolMeta{
 // order. The first entry is the default when StroppyConfig.Protocol is
 // unset — that preserves existing-run behaviour after this lands.
 var KindProtocols = map[DatabaseKind][]Protocol{
-	DatabasePostgres: {ProtocolPG},
-	DatabaseMySQL:    {ProtocolMySQL},
-	DatabaseMariaDB:  {ProtocolMySQL},
-	DatabasePicodata: {ProtocolPicodata},
-	DatabaseYDB:      {ProtocolYDBGRPC, ProtocolYDBPgwire},
-	DatabaseCockroach: {ProtocolCockroach},
+	DatabasePostgres:   {ProtocolPG},
+	DatabaseMySQL:      {ProtocolMySQL},
+	DatabaseMariaDB:    {ProtocolMySQL},
+	DatabasePicodata:   {ProtocolPicodata},
+	DatabaseYDB:        {ProtocolYDBGRPC, ProtocolYDBPgwire},
+	DatabaseYDBManaged: {ProtocolYDBGRPCS},
+	DatabaseCockroach:  {ProtocolCockroach},
 }
 
 // DefaultProtocol returns the first protocol for a kind, or "" if the kind
@@ -121,6 +134,7 @@ var ScriptCompat = map[KindProtocolKey][]string{
 	{DatabasePicodata, ProtocolPicodata}:   {"tpcc/tx", "tpcb/tx"},
 	{DatabaseYDB, ProtocolYDBGRPC}:         {"tpcc/tx", "tpcb/tx"},
 	{DatabaseYDB, ProtocolYDBPgwire}:       {"tpcc/tx-ydb-pgwire", "tpcb/tx-ydb-pgwire"},
+	{DatabaseYDBManaged, ProtocolYDBGRPCS}: {"tpcc/tx", "tpcb/tx"},
 	{DatabaseCockroach, ProtocolCockroach}: {"tpcc/tx", "tpcb/tx"},
 }
 

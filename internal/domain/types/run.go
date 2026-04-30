@@ -12,12 +12,13 @@ const (
 type DatabaseKind string
 
 const (
-	DatabasePostgres  DatabaseKind = "postgres"
-	DatabaseMySQL     DatabaseKind = "mysql"
-	DatabaseMariaDB   DatabaseKind = "mariadb"
-	DatabasePicodata  DatabaseKind = "picodata"
-	DatabaseYDB       DatabaseKind = "ydb"
-	DatabaseCockroach DatabaseKind = "cockroach"
+	DatabasePostgres   DatabaseKind = "postgres"
+	DatabaseMySQL      DatabaseKind = "mysql"
+	DatabaseMariaDB    DatabaseKind = "mariadb"
+	DatabasePicodata   DatabaseKind = "picodata"
+	DatabaseYDB        DatabaseKind = "ydb"
+	DatabaseYDBManaged DatabaseKind = "ydb-managed" // Yandex Cloud Managed YDB (serverless or dedicated)
+	DatabaseCockroach  DatabaseKind = "cockroach"
 )
 
 // Phase is the DAG node type identifier for each run stage.
@@ -78,9 +79,9 @@ type MachineSpec struct {
 // boot disk. The agent identifies it by /dev/disk/by-id/virtio-<DeviceName>
 // inside the guest, so DeviceName must be unique per VM.
 type SecondaryDisk struct {
-	DeviceName string `json:"device_name"`     // stable name, surfaces as virtio-<name> in the guest
+	DeviceName string `json:"device_name"` // stable name, surfaces as virtio-<name> in the guest
 	SizeGB     int    `json:"size_gb"`
-	Type       string `json:"type,omitempty"`  // network-ssd / network-ssd-nonreplicated / etc; defaults to network-ssd
+	Type       string `json:"type,omitempty"` // network-ssd / network-ssd-nonreplicated / etc; defaults to network-ssd
 }
 
 // --- Database topologies ---
@@ -153,6 +154,45 @@ type YDBTopology struct {
 	HAProxyOptions  map[string]string `json:"haproxy_options,omitempty"`
 }
 
+// YDBManagedKind selects the Yandex Cloud Managed YDB flavor.
+type YDBManagedKind string
+
+const (
+	YDBManagedKindServerless YDBManagedKind = "serverless"
+	YDBManagedKindDedicated  YDBManagedKind = "dedicated"
+)
+
+// YDBManagedTopology describes a Yandex Cloud Managed YDB deployment plus
+// the client VM that runs stroppy. There are no storage / compute nodes —
+// YC manages the database. The client VM is provisioned with an attached
+// service account so the patched stroppy driver can pull SA token + CA from
+// the YC metadata service (see pkg/driver/ydb/driver.go fallback path).
+type YDBManagedTopology struct {
+	// Type selects serverless (pay-per-request, grpc only) vs dedicated
+	// (fixed cluster, grpc + pgwire). Required.
+	Type YDBManagedKind `json:"type"`
+	// ResourcePresetID is the dedicated DB resource preset (e.g.
+	// "medium"). Ignored for serverless.
+	ResourcePresetID string `json:"resource_preset_id,omitempty"`
+	// StorageGroups is the dedicated DB number of storage groups. Ignored
+	// for serverless.
+	StorageGroups int `json:"storage_groups,omitempty"`
+	// StorageType is the dedicated DB disk type ID (e.g. "ssd"). Ignored
+	// for serverless.
+	StorageType string `json:"storage_type,omitempty"`
+	// Throttling for serverless. Optional; YC defaults applied when zero.
+	ThrottlingRCUs int `json:"throttling_rcus,omitempty"`
+	// Client is the stroppy runner VM spec. Provisioned with an attached
+	// service account that has the ydb.editor role.
+	Client MachineSpec `json:"client"`
+	// DatabasePath is filled in by the machines task from terraform output
+	// after apply (e.g. "/ru-central1/<cloud>/<db>"). Not set by users.
+	DatabasePath string `json:"database_path,omitempty"`
+	// Endpoint is filled in by the machines task from terraform output
+	// (e.g. "ydb.serverless.yandexcloud.net:2135"). Not set by users.
+	Endpoint string `json:"endpoint,omitempty"`
+}
+
 // PicodataTier describes a tier in a multi-tier Picodata deployment.
 type PicodataTier struct {
 	Name        string `json:"name"`
@@ -164,14 +204,15 @@ type PicodataTier struct {
 // DatabaseConfig holds the database specification.
 // Exactly one topology field must be set, matching Kind.
 type DatabaseConfig struct {
-	Kind     DatabaseKind      `json:"kind"`
-	Version  string            `json:"version"`
-	Postgres *PostgresTopology `json:"postgres,omitempty"`
-	MySQL    *MySQLTopology    `json:"mysql,omitempty"`
-	MariaDB  *MySQLTopology    `json:"mariadb,omitempty"` // MariaDB is wire- and config-compatible with MySQL; reuse the topology shape
-	Picodata *PicodataTopology `json:"picodata,omitempty"`
-	YDB       *YDBTopology       `json:"ydb,omitempty"`
-	Cockroach *CockroachTopology `json:"cockroach,omitempty"`
+	Kind       DatabaseKind        `json:"kind"`
+	Version    string              `json:"version"`
+	Postgres   *PostgresTopology   `json:"postgres,omitempty"`
+	MySQL      *MySQLTopology      `json:"mysql,omitempty"`
+	MariaDB    *MySQLTopology      `json:"mariadb,omitempty"` // MariaDB is wire- and config-compatible with MySQL; reuse the topology shape
+	Picodata   *PicodataTopology   `json:"picodata,omitempty"`
+	YDB        *YDBTopology        `json:"ydb,omitempty"`
+	YDBManaged *YDBManagedTopology `json:"ydb_managed,omitempty"`
+	Cockroach  *CockroachTopology  `json:"cockroach,omitempty"`
 	// RenderedConfigOverrides lets the SPA submit raw config-file contents
 	// that replace the per-component generators on the agent. Keys identify
 	// the file by its on-host purpose (e.g. "postgresql.conf:master",
@@ -331,7 +372,7 @@ type MonitorConfig struct {
 
 // StroppyConfig holds stroppy test runner settings.
 type StroppyConfig struct {
-	Version     string   `json:"version"`                // stroppy binary version (e.g. "4.1.0")
+	Version string `json:"version"` // stroppy binary version (e.g. "4.1.0")
 	// Protocol selects the wire format stroppy uses to talk to the database.
 	// When unset, defaults to types.DefaultProtocol(database.kind) — preserves
 	// behaviour of pre-protocol-aware run configs. For engines that speak
