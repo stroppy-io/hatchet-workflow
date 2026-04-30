@@ -15,4 +15,9 @@ type MonitorSetupConfig struct {
 	RunID           string   `json:"run_id"`         // added as external label to all metrics
 	DatabaseKind    string   `json:"database_kind,omitempty"`
 	BearerToken     string   `json:"bearer_token,omitempty"` // auth token for vmauth
+	// IsYDBCombined signals YDB combined topology: every storage VM also runs
+	// ydbd-database, so the agent must scrape both 8765 (static) and 8766
+	// (dynamic) on the same host. Without this the dashboard's
+	// container="ydb-dynamic" panels stay empty.
+	IsYDBCombined bool `json:"is_ydb_combined,omitempty"`
 }

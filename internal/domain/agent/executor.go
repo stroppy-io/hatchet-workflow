@@ -982,6 +982,8 @@ func (e *Executor) configMonitor(ctx context.Context, cmd Command) error {
 					path string // optional custom metrics_path (default /counters/counters=<name>/prometheus)
 					role string // "static", "dynamic", or "" for both
 				}
+				// Phantom groups (`followers`, `dsproxy_mon`) removed — YDB does
+				// not expose those endpoints, vmagent was scraping 404s every 15s.
 				ydbCounters := []ydbCounter{
 					{name: "ydb", path: "/counters/counters=ydb/name_label=name/prometheus"},
 					{name: "auth"},
@@ -989,9 +991,7 @@ func (e *Executor) configMonitor(ctx context.Context, cmd Command) error {
 					{name: "dsproxy"},
 					{name: "dsproxy_queue"},
 					{name: "dsproxy_percentile"},
-					{name: "dsproxy_mon"},
 					{name: "dsproxynode"},
-					{name: "followers"},
 					{name: "grpc"},
 					{name: "interconnect"},
 					{name: "kqp", role: "dynamic"},
@@ -1010,15 +1010,20 @@ func (e *Executor) configMonitor(ctx context.Context, cmd Command) error {
 				}
 				// Pick which YDB nodes actually run on this machine.
 				// Yandex split topology: storage VMs run static only, database VMs run dynamic only.
+				// Yandex combined topology (IsYDBCombined): storage VMs run BOTH ydbd-storage
+				// and ydbd-database — must scrape both ports so kqp / database-scoped
+				// metrics are populated.
 				// Docker / single-node combined: both nodes share the VM.
 				var roles []ydbRole
 				switch {
+				case isYDBStorage && cfg.IsYDBCombined:
+					roles = allRoles // combined on YC: both daemons on storage VM
 				case isYDBStorage:
 					roles = allRoles[:1] // static only
 				case isYDBDatabase:
 					roles = allRoles[1:] // dynamic only
 				default:
-					roles = allRoles // combined
+					roles = allRoles // docker combined
 				}
 				for _, role := range roles {
 					for _, c := range ydbCounters {

@@ -10,6 +10,12 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 )
 
+// isYDBCombined reports whether the run is a YDB combined topology
+// (storage VMs also host dynamic nodes — `topology.YDB.Database == nil`).
+func isYDBCombined(db types.DatabaseConfig) bool {
+	return db.Kind == types.DatabaseYDB && db.YDB != nil && db.YDB.Database == nil
+}
+
 type monitorInstallTask struct {
 	client agent.Client
 	state  *State
@@ -33,6 +39,7 @@ type monitorConfigTask struct {
 	monitor         types.MonitorConfig
 	runID           string
 	dbKind          types.DatabaseKind
+	ydbCombined     bool
 	monitoringURL   string
 	monitoringToken string
 	accountID       int32
@@ -65,6 +72,7 @@ func (t *monitorConfigTask) Execute(nc *dag.NodeContext) error {
 		RunID:           t.runID,
 		DatabaseKind:    string(t.dbKind),
 		BearerToken:     t.monitoringToken,
+		IsYDBCombined:   t.ydbCombined,
 	}
 	return t.client.SendAll(nc, allTargets, agent.Command{
 		Action: agent.ActionConfigMonitor,

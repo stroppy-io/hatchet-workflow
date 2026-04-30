@@ -130,7 +130,7 @@ func (b *builder) build() error {
 		monitorConfigDeps = append(monitorConfigDeps, b.ph(types.PhaseInitCockroach))
 	}
 	b.add(b.ph(types.PhaseConfigureMonitor), monitorConfigDeps,
-		&monitorConfigTask{client: b.deps.Client, state: b.deps.State, monitor: b.cfg.Monitor, runID: b.cfg.ID, dbKind: b.cfg.Database.Kind, monitoringURL: b.deps.MonitoringURL, monitoringToken: b.deps.MonitoringToken, accountID: b.deps.AccountID})
+		&monitorConfigTask{client: b.deps.Client, state: b.deps.State, monitor: b.cfg.Monitor, runID: b.cfg.ID, dbKind: b.cfg.Database.Kind, ydbCombined: isYDBCombined(b.cfg.Database), monitoringURL: b.deps.MonitoringURL, monitoringToken: b.deps.MonitoringToken, accountID: b.deps.AccountID})
 
 	// --- pgbouncer (if Postgres HA with pgbouncer, colocated on DB nodes) ---
 	if b.needsPgBouncer() {
