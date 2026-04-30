@@ -250,7 +250,9 @@ func (s *Server) resolveRunPreset(ctx context.Context, tenantID string, cfg *typ
 	}
 
 	// Topology from request takes priority over preset.
-	if cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil {
+	if cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil ||
+		cfg.Database.Picodata != nil || cfg.Database.YDB != nil ||
+		cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil {
 		return nil
 	}
 
@@ -271,6 +273,8 @@ func (s *Server) resolveRunPreset(ctx context.Context, tenantID string, cfg *typ
 		cfg.Database.Picodata = preset.Picodata
 	case types.DatabaseYDB:
 		cfg.Database.YDB = preset.YDB
+	case types.DatabaseYDBManaged:
+		cfg.Database.YDBManaged = preset.YDBManaged
 	case types.DatabaseCockroach:
 		cfg.Database.Cockroach = preset.Cockroach
 	}
