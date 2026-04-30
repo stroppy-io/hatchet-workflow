@@ -321,7 +321,10 @@ func (s *Server) seedBuiltinPackages(ctx context.Context, tenantID string) {
 // It sets the DebFilename to the download URL so the agent can curl it.
 func (s *Server) resolveRunPackage(ctx context.Context, tenantID string, cfg *types.RunConfig) error {
 	// YDB doesn't use apt packages — it downloads the ydbd binary directly.
-	if cfg.Database.Kind == types.DatabaseYDB {
+	// Managed YDB skips the package layer entirely: YC manages the database
+	// and the run only provisions a client VM, which doesn't need a DB
+	// package installed.
+	if cfg.Database.Kind == types.DatabaseYDB || cfg.Database.Kind == types.DatabaseYDBManaged {
 		return nil
 	}
 
