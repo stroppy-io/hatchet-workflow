@@ -12,7 +12,7 @@ import {
   type ColumnFiltersState,
   type RowSelectionState,
 } from "@tanstack/react-table";
-import { listRuns, deleteRun, cancelRun, getRunStatus } from "@/api/client";
+import { listRuns, deleteRun, cancelRun, getRunStatus, listPresets } from "@/api/client";
 import type { RunSummary, RunConfig } from "@/api/types";
 import {
   Table,
@@ -125,7 +125,7 @@ function FilterChip({
 
 // --- Column definitions ---
 
-function makeColumns(onDelete: (id: string) => void, onCancel: (id: string) => void, onRerun: (id: string) => void, cancellingIds: Set<string>): ColumnDef<RunSummary>[] {
+function makeColumns(onDelete: (id: string) => void, onCancel: (id: string) => void, onRerun: (id: string) => void, cancellingIds: Set<string>, presetNames: Map<string, string>): ColumnDef<RunSummary>[] {
   return [
     // Checkbox
     {
@@ -209,6 +209,24 @@ function makeColumns(onDelete: (id: string) => void, onCancel: (id: string) => v
         if (!value || value === "all") return true;
         return row.original.db_kind === value;
       },
+    },
+    // Preset (resolved from preset_id)
+    {
+      accessorKey: "preset_id",
+      header: ({ column }) => (
+        <SortableHeader column={column} label="Preset" />
+      ),
+      cell: ({ row }) => {
+        const id = row.original.preset_id;
+        if (!id) return <span className="font-mono text-xs text-zinc-600">{"—"}</span>;
+        const name = presetNames.get(id);
+        return (
+          <span className="font-mono text-xs text-zinc-400" title={id}>
+            {name ?? id.slice(0, 8)}
+          </span>
+        );
+      },
+      enableSorting: false,
     },
     // Workload (script + duration + VUs)
     {
@@ -377,9 +395,21 @@ const PAGE_SIZES = [10, 25, 50, 100];
 export function Runs() {
   const navigate = useNavigate();
   const [runs, setRuns] = useState<RunSummary[]>([]);
+  const [presetNames, setPresetNames] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancellingIds, setCancellingIds] = useState<Set<string>>(new Set());
+
+  // Load presets once for id→name lookup in the table.
+  useEffect(() => {
+    listPresets()
+      .then((ps) => {
+        const m = new Map<string, string>();
+        for (const p of ps ?? []) m.set(p.id, p.name);
+        setPresetNames(m);
+      })
+      .catch(() => {/* preset list optional — column falls back to id slice */});
+  }, []);
 
   // Auto-refresh
   const REFRESH_OPTIONS = [
@@ -514,7 +544,7 @@ export function Runs() {
   }, [refreshInterval]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const columns = useMemo(() => makeColumns(handleDelete, handleCancel, handleRerun, cancellingIds), [cancellingIds]);
+  const columns = useMemo(() => makeColumns(handleDelete, handleCancel, handleRerun, cancellingIds, presetNames), [cancellingIds, presetNames]);
 
   const table = useReactTable({
     data: runs,

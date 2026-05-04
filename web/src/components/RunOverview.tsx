@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import type { NodeStatus, NodeStatusValue, RunConfig, MachineSpec, DatabaseKind } from "@/api/types";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
+import { listPresets } from "@/api/client";
 import {
   Check,
   X,
@@ -168,6 +169,25 @@ function ConfigPanel({ config, startedAt, finishedAt, isRunning }: {
   finishedAt?: string;
   isRunning?: boolean;
 }) {
+  // Resolve preset_id → name. Single fetch per panel mount; preset list is small.
+  const [presetName, setPresetName] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    const id = config?.preset_id;
+    if (!id) {
+      setPresetName(undefined);
+      return;
+    }
+    let cancelled = false;
+    listPresets()
+      .then((ps) => {
+        if (cancelled) return;
+        const found = (ps ?? []).find((p) => p.id === id);
+        setPresetName(found?.name);
+      })
+      .catch(() => {/* ignore — column will fall back to id */});
+    return () => { cancelled = true; };
+  }, [config?.preset_id]);
+
   if (!config) {
     return (
       <div className="flex items-center justify-center h-full text-zinc-600 text-xs font-mono">
@@ -177,7 +197,7 @@ function ConfigPanel({ config, startedAt, finishedAt, isRunning }: {
   }
 
   const db = config.database;
-  const topology = db.postgres || db.mysql || db.picodata || db.ydb;
+  const topology = db.postgres || db.mysql || db.picodata || db.ydb || db.ydb_managed;
   const s = config.stroppy;
   const script = s.script || s.workload || "";
   const vus = s.vus || s.vus_scale || 0;
@@ -204,6 +224,11 @@ function ConfigPanel({ config, startedAt, finishedAt, isRunning }: {
     if (db.ydb.database) parts.push(`${db.ydb.database.count} database`);
     else parts.push("combined");
     if (db.ydb.haproxy) parts.push("haproxy");
+    topoLabel = parts.join(" + ");
+  } else if (db.ydb_managed) {
+    const m = db.ydb_managed;
+    const parts: string[] = [`managed (${m.type})`];
+    if (m.type === "dedicated" && m.resource_preset_id) parts.push(m.resource_preset_id);
     topoLabel = parts.join(" + ");
   }
 
@@ -249,7 +274,40 @@ function ConfigPanel({ config, startedAt, finishedAt, isRunning }: {
         {topoLabel && (
           <div className="text-[11px] font-mono text-zinc-500 mt-0.5">{topoLabel}</div>
         )}
+        {config.preset_id && (
+          <div className="text-[11px] font-mono text-zinc-500 mt-0.5" title={config.preset_id}>
+            preset: {presetName ?? config.preset_id.slice(0, 8)}
+          </div>
+        )}
       </div>
+
+      {/* Managed YDB params (only when YC-managed) */}
+      {db.ydb_managed && (
+        <div className="px-3 py-2 border-b border-zinc-800/50">
+          <div className="text-[11px] text-zinc-500 uppercase tracking-wider mb-1.5">Managed YDB</div>
+          <div className="space-y-0">
+            <ConfigLine label="type" value={db.ydb_managed.type} icon={Tag} />
+            {db.ydb_managed.type === "dedicated" && db.ydb_managed.resource_preset_id && (
+              <ConfigLine label="preset" value={db.ydb_managed.resource_preset_id} icon={Cpu} />
+            )}
+            {db.ydb_managed.type === "dedicated" && db.ydb_managed.storage_groups != null && (
+              <ConfigLine label="storage groups" value={String(db.ydb_managed.storage_groups)} icon={HardDrive} />
+            )}
+            {db.ydb_managed.type === "dedicated" && db.ydb_managed.storage_type && (
+              <ConfigLine label="storage type" value={db.ydb_managed.storage_type} icon={HardDrive} />
+            )}
+            {db.ydb_managed.type === "serverless" && db.ydb_managed.throttling_rcus != null && (
+              <ConfigLine label="throttling" value={`${db.ydb_managed.throttling_rcus} RCU`} icon={Zap} />
+            )}
+            {db.ydb_managed.endpoint && (
+              <ConfigLine label="endpoint" value={db.ydb_managed.endpoint} icon={Network} />
+            )}
+            {db.ydb_managed.database_path && (
+              <ConfigLine label="db path" value={db.ydb_managed.database_path} icon={Database} />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Topology card */}
       {topology && (

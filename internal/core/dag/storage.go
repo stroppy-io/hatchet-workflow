@@ -73,6 +73,7 @@ type RunSummary struct {
 	VUs        int          `json:"vus,omitempty"`
 	DBVersion  string       `json:"db_version,omitempty"`
 	NodeCount  int          `json:"node_count,omitempty"`
+	PresetID   string       `json:"preset_id,omitempty"` // ID of preset used (when run was started from one); frontend resolves name via /presets
 	Cancelled  bool         `json:"cancelled,omitempty"`
 }
 

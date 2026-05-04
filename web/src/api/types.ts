@@ -305,6 +305,7 @@ export interface RunSummary {
   vus?: number;
   db_version?: string;
   node_count?: number;
+  preset_id?: string;
   cancelled?: boolean;
 }
 
