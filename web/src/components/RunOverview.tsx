@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import type { NodeStatus, NodeStatusValue, RunConfig, MachineSpec, DatabaseKind } from "@/api/types";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
 import { listPresets } from "@/api/client";
@@ -113,12 +113,31 @@ function CopyButton({ text }: { text: string }) {
 // ─── Config panel ────────────────────────────────────────────────
 
 function ConfigLine({ label, value, icon: Icon }: { label: string; value: React.ReactNode; icon?: typeof Cpu }) {
+  const [copied, setCopied] = useState(false);
   if (!value) return null;
+  const text = typeof value === "string" || typeof value === "number" ? String(value) : "";
+  const onCopy = async () => {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch { /* ignore */ }
+  };
   return (
-    <div className="flex items-center gap-2 py-[3px]">
-      {Icon && <Icon className="w-3 h-3 text-zinc-600 shrink-0" />}
-      <span className="text-[11px] text-zinc-500 shrink-0 w-16">{label}</span>
-      <span className="text-xs text-zinc-300 font-mono truncate">{value}</span>
+    <div className="group flex items-start gap-2 py-[3px]">
+      {Icon && <Icon className="w-3 h-3 text-zinc-600 shrink-0 mt-[3px]" />}
+      <span className="text-[11px] text-zinc-500 shrink-0 w-16 mt-[1px]">{label}</span>
+      <span className="text-xs text-zinc-300 font-mono break-all flex-1 min-w-0">{value}</span>
+      {text && (
+        <button
+          onClick={onCopy}
+          title={copied ? "copied" : "copy"}
+          className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-zinc-600 hover:text-zinc-300 p-0.5"
+        >
+          {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+        </button>
+      )}
     </div>
   );
 }
@@ -674,10 +693,41 @@ export function RunOverview({ nodes, snapshot, runStatus, onViewLogs, renderedCo
     }
   }, [snapshot]);
 
+  // Resizable config panel — width persisted in localStorage so the user's
+  // preference survives page reloads. Range 200..640px.
+  const [configWidth, setConfigWidth] = useState<number>(() => {
+    const stored = parseInt(localStorage.getItem("stroppy.runOverview.configWidth") ?? "");
+    return Number.isFinite(stored) && stored >= 200 && stored <= 640 ? stored : 240;
+  });
+  useEffect(() => {
+    localStorage.setItem("stroppy.runOverview.configWidth", String(configWidth));
+  }, [configWidth]);
+  const dragStateRef = useRef<{ startX: number; startW: number } | null>(null);
+  const onDragStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    dragStateRef.current = { startX: e.clientX, startW: configWidth };
+    const onMove = (ev: MouseEvent) => {
+      const ds = dragStateRef.current;
+      if (!ds) return;
+      const next = Math.min(640, Math.max(200, ds.startW + (ev.clientX - ds.startX)));
+      setConfigWidth(next);
+    };
+    const onUp = () => {
+      dragStateRef.current = null;
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
   return (
     <div className="h-full flex overflow-hidden">
-      {/* Left — Config panel */}
-      <div className="w-60 shrink-0 border-r border-zinc-800/50 overflow-auto">
+      {/* Left — Config panel (resizable) */}
+      <div
+        className="shrink-0 border-r border-zinc-800/50 overflow-auto"
+        style={{ width: configWidth }}
+      >
         {/* Run status + phase counters */}
         {runStatus && (
           <div className="px-3 py-2 border-b border-zinc-800/50 space-y-1">
@@ -731,6 +781,13 @@ export function RunOverview({ nodes, snapshot, runStatus, onViewLogs, renderedCo
           isRunning={runStatus === "running" || runStatus === "cancelling"}
         />
       </div>
+
+      {/* Drag handle — resize config panel horizontally. */}
+      <div
+        onMouseDown={onDragStart}
+        title="Drag to resize"
+        className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-zinc-700/40 active:bg-zinc-600/60 transition-colors"
+      />
 
       {/* Right — DAG pipeline */}
       <div className="flex-1 min-w-0">
