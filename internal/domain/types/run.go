@@ -191,6 +191,36 @@ type YDBManagedTopology struct {
 	// Endpoint is filled in by the machines task from terraform output
 	// (e.g. "ydb.serverless.yandexcloud.net:2135"). Not set by users.
 	Endpoint string `json:"endpoint,omitempty"`
+	// TerraformOutput is the full attribute snapshot of the managed YDB
+	// resource as returned by terraform (id, status, full endpoints,
+	// labels, etc.). Filled by the machines task after apply; surfaced in
+	// the run overview so users see the deployment as it actually landed.
+	TerraformOutput *YDBManagedTerraformOutput `json:"terraform_output,omitempty"`
+}
+
+// YDBManagedTerraformOutput mirrors the `ydb_managed` terraform output of
+// deployments/terraform/yandex_managed_ydb. Pointer-typed fields apply only
+// to one of the two flavours (serverless vs dedicated).
+type YDBManagedTerraformOutput struct {
+	ID                  string            `json:"id"`
+	Name                string            `json:"name"`
+	Type                string            `json:"type"` // "serverless" | "dedicated"
+	FolderID            string            `json:"folder_id"`
+	LocationID          string            `json:"location_id"`
+	DatabasePath        string            `json:"database_path"`
+	YDBAPIEndpoint      string            `json:"ydb_api_endpoint"`
+	YDBFullEndpoint     string            `json:"ydb_full_endpoint"`
+	DocumentAPIEndpoint string            `json:"document_api_endpoint"`
+	TLSEnabled          bool              `json:"tls_enabled"`
+	Status              string            `json:"status"`
+	CreatedAt           string            `json:"created_at"`
+	Labels              map[string]string `json:"labels,omitempty"`
+	ResourcePresetID    string            `json:"resource_preset_id,omitempty"`   // dedicated
+	NetworkID           string            `json:"network_id,omitempty"`           // dedicated
+	SubnetIDs           []string          `json:"subnet_ids,omitempty"`           // dedicated
+	StorageGroups       int               `json:"storage_groups,omitempty"`       // dedicated
+	StorageTypeID       string            `json:"storage_type_id,omitempty"`      // dedicated
+	ThrottlingRCULimit  int               `json:"throttling_rcu_limit,omitempty"` // serverless
 }
 
 // PicodataTier describes a tier in a multi-tier Picodata deployment.

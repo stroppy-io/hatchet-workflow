@@ -857,6 +857,15 @@ func (t *machinesTask) yandexManagedYDBMachines(nc *dag.NodeContext) error {
 	managed.Endpoint = endpoint
 	managed.DatabasePath = dbPath
 
+	// Capture the full terraform attribute snapshot. Best-effort: log on
+	// parse failure but don't abort — endpoint/database_path are already
+	// set, the snapshot is for UI display only.
+	if tfOut, tfErr := terraform.GetTfOutputVal[types.YDBManagedTerraformOutput](output, "ydb_managed"); tfErr == nil {
+		managed.TerraformOutput = &tfOut
+	} else {
+		nc.Log().Warn("machines: failed to parse ydb_managed terraform output", zap.Error(tfErr))
+	}
+
 	for name, role := range vmRoles {
 		vmInfo, ok := vmIPs[name]
 		if !ok {

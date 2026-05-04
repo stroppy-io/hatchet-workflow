@@ -306,6 +306,33 @@ function ConfigPanel({ config, startedAt, finishedAt, isRunning }: {
               <ConfigLine label="db path" value={db.ydb_managed.database_path} icon={Database} />
             )}
           </div>
+          {/* Terraform snapshot — what actually landed in the cloud. */}
+          {db.ydb_managed.terraform_output && (
+            <div className="mt-2 pt-2 border-t border-zinc-800/50 space-y-0">
+              <div className="text-[10px] text-zinc-600 uppercase tracking-wider mb-1">Terraform</div>
+              <ConfigLine label="db id" value={db.ydb_managed.terraform_output.id} icon={Tag} />
+              <ConfigLine label="name" value={db.ydb_managed.terraform_output.name} icon={Tag} />
+              <ConfigLine label="status" value={db.ydb_managed.terraform_output.status} icon={Zap} />
+              <ConfigLine label="folder" value={db.ydb_managed.terraform_output.folder_id} icon={Server} />
+              <ConfigLine label="location" value={db.ydb_managed.terraform_output.location_id} icon={Server} />
+              {db.ydb_managed.terraform_output.ydb_full_endpoint && (
+                <ConfigLine label="full endpoint" value={db.ydb_managed.terraform_output.ydb_full_endpoint} icon={Network} />
+              )}
+              {db.ydb_managed.terraform_output.document_api_endpoint && (
+                <ConfigLine label="doc api" value={db.ydb_managed.terraform_output.document_api_endpoint} icon={Network} />
+              )}
+              <ConfigLine label="tls" value={db.ydb_managed.terraform_output.tls_enabled ? "yes" : "no"} icon={Tag} />
+              {db.ydb_managed.terraform_output.created_at && (
+                <ConfigLine label="created" value={db.ydb_managed.terraform_output.created_at} icon={Clock} />
+              )}
+              {db.ydb_managed.terraform_output.network_id && (
+                <ConfigLine label="network" value={db.ydb_managed.terraform_output.network_id} icon={Network} />
+              )}
+              {db.ydb_managed.terraform_output.subnet_ids && db.ydb_managed.terraform_output.subnet_ids.length > 0 && (
+                <ConfigLine label="subnets" value={db.ydb_managed.terraform_output.subnet_ids.join(", ")} icon={Network} />
+              )}
+            </div>
+          )}
         </div>
       )}
 

@@ -158,6 +158,29 @@ export interface YDBManagedTopology {
   client: MachineSpec;
   database_path?: string;            // populated by terraform output at run time
   endpoint?: string;                 // populated by terraform output at run time
+  terraform_output?: YDBManagedTerraformOutput;
+}
+
+export interface YDBManagedTerraformOutput {
+  id: string;
+  name: string;
+  type: "serverless" | "dedicated";
+  folder_id: string;
+  location_id: string;
+  database_path: string;
+  ydb_api_endpoint: string;
+  ydb_full_endpoint: string;
+  document_api_endpoint: string;
+  tls_enabled: boolean;
+  status: string;
+  created_at: string;
+  labels?: Record<string, string>;
+  resource_preset_id?: string;
+  network_id?: string;
+  subnet_ids?: string[];
+  storage_groups?: number;
+  storage_type_id?: string;
+  throttling_rcu_limit?: number;
 }
 
 export interface CockroachTopology {
