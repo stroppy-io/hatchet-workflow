@@ -19,6 +19,8 @@ interface AgentLogLine {
 interface DisplayLine {
   machineID: string;
   action: string;
+  role: string;
+  unit: string;
   text: string;
   ts: number;
 }
@@ -114,8 +116,15 @@ function shortMachine(id: string): string {
 function parseLine(raw: string): DisplayLine {
   try {
     const o = JSON.parse(raw);
-    return { machineID: o.machine_id || "server", action: o.action || o.node_id || "", text: o._msg || o.line || raw, ts: o._time ? new Date(o._time).getTime() : 0 };
-  } catch { return { machineID: "server", action: "", text: raw, ts: 0 }; }
+    return {
+      machineID: o.machine_id || "server",
+      action: o.action || o.node_id || "",
+      role: o.role || "",
+      unit: o.unit || o.SYSTEMD_UNIT || "",
+      text: o._msg || o.line || o.message || raw,
+      ts: o._time ? new Date(o._time).getTime() : 0,
+    };
+  } catch { return { machineID: "server", action: "", role: "", unit: "", text: raw, ts: 0 }; }
 }
 
 function extractScopes(snap: Snapshot | null | undefined) {
@@ -153,6 +162,8 @@ export function LogStream({ runID, snapshot, focusPhase }: LogStreamProps) {
   const [autoScroll, setAutoScroll] = useState(true);
   const [filterMachines, setFilterMachines] = useState<Set<string>>(new Set());
   const [filterPhases, setFilterPhases] = useState<Set<string>>(new Set());
+  const [filterRoles, setFilterRoles] = useState<Set<string>>(new Set());
+  const [filterUnits, setFilterUnits] = useState<Set<string>>(new Set());
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<DisplayLine[] | null>(null);
@@ -234,31 +245,40 @@ export function LogStream({ runID, snapshot, focusPhase }: LogStreamProps) {
   };
 
   // --- Cross-filtered counts ---
-  const { machineOptions, phaseOptions } = useMemo(() => {
+  const { machineOptions, phaseOptions, roleOptions, unitOptions } = useMemo(() => {
     const hasMF = filterMachines.size > 0, hasPF = filterPhases.size > 0;
+    const hasRF = filterRoles.size > 0, hasUF = filterUnits.size > 0;
     const mc: Record<string, number> = {}, pc: Record<string, number> = {};
+    const rc: Record<string, number> = {}, uc: Record<string, number> = {};
     for (const l of lines) {
       const ph = resolvePhase(l.action, a2p);
       if (!hasPF || filterPhases.has(ph)) mc[l.machineID] = (mc[l.machineID] || 0) + 1;
       if ((!hasMF || filterMachines.has(l.machineID)) && ph) pc[ph] = (pc[ph] || 0) + 1;
+      if (l.role && (!hasUF || filterUnits.has(l.unit))) rc[l.role] = (rc[l.role] || 0) + 1;
+      if (l.unit && (!hasRF || filterRoles.has(l.role))) uc[l.unit] = (uc[l.unit] || 0) + 1;
     }
     return {
       machineOptions: scopes.machines.map((m): FilterOption => ({ value: m, label: shortMachine(m), count: mc[m] || 0, color: machineColor(m, colorMapRef.current) })),
       phaseOptions: scopes.phases.map((ph): FilterOption => ({ value: ph, label: phaseLabel(ph), count: pc[ph] || 0 })),
+      roleOptions: Object.keys(rc).sort().map((r): FilterOption => ({ value: r, label: r, count: rc[r] })),
+      unitOptions: Object.keys(uc).sort().map((u): FilterOption => ({ value: u, label: u.replace(/\.service$/, ""), count: uc[u] })),
     };
-  }, [lines, scopes, filterMachines, filterPhases, a2p]);
+  }, [lines, scopes, filterMachines, filterPhases, filterRoles, filterUnits, a2p]);
 
   // --- Filtered rows ---
   const rows = useMemo(() => {
     const src = searchResults ?? lines;
     const hasMF = filterMachines.size > 0, hasPF = filterPhases.size > 0;
-    if (!hasMF && !hasPF) return src;
+    const hasRF = filterRoles.size > 0, hasUF = filterUnits.size > 0;
+    if (!hasMF && !hasPF && !hasRF && !hasUF) return src;
     return src.filter((l) => {
       if (hasMF && !filterMachines.has(l.machineID)) return false;
       if (hasPF && !filterPhases.has(resolvePhase(l.action, a2p))) return false;
+      if (hasRF && !filterRoles.has(l.role)) return false;
+      if (hasUF && !filterUnits.has(l.unit)) return false;
       return true;
     });
-  }, [lines, searchResults, filterMachines, filterPhases, a2p]);
+  }, [lines, searchResults, filterMachines, filterPhases, filterRoles, filterUnits, a2p]);
 
   // --- Initial load ---
   const [initialLoadDone, setInitialLoadDone] = useState(false);
@@ -325,13 +345,13 @@ export function LogStream({ runID, snapshot, focusPhase }: LogStreamProps) {
     const unsub = ws.onMessage((msg: WSMessage) => {
       if (msg.type === "agent_log") {
         const p = msg.payload as AgentLogLine;
-        appendLine({ machineID: p.machine_id || "unknown", action: p.action || "", text: p.line, ts: Date.now() });
+        appendLine({ machineID: p.machine_id || "unknown", action: p.action || "", role: "", unit: "", text: p.line, ts: Date.now() });
       } else if (msg.type === "log") {
         const p = msg.payload as Record<string, unknown>;
         if (p.message) {
           const skip = new Set(["level", "message", "time", "node_id"]);
           const extras = Object.entries(p).filter(([k]) => !skip.has(k)).map(([k, v]) => `${k}=${v}`).join("  ");
-          appendLine({ machineID: "server", action: String(msg.node_id || ""), text: extras ? `${p.message}  ${extras}` : String(p.message), ts: Date.now() });
+          appendLine({ machineID: "server", action: String(msg.node_id || ""), role: "", unit: "", text: extras ? `${p.message}  ${extras}` : String(p.message), ts: Date.now() });
         }
       }
     });
@@ -402,7 +422,7 @@ export function LogStream({ runID, snapshot, focusPhase }: LogStreamProps) {
   }, [runID]);
 
   const isSearching = searchResults !== null;
-  const hasFilters = filterMachines.size > 0 || filterPhases.size > 0;
+  const hasFilters = filterMachines.size > 0 || filterPhases.size > 0 || filterRoles.size > 0 || filterUnits.size > 0;
 
   return (
     <div className="flex flex-col h-full relative">
@@ -410,6 +430,12 @@ export function LogStream({ runID, snapshot, focusPhase }: LogStreamProps) {
       <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border bg-[#060606]">
         <MultiFilter icon={<Server className="h-3 w-3" />} label="Machine" options={machineOptions} selected={filterMachines} onChange={setFilterMachines} />
         <MultiFilter icon={<Zap className="h-3 w-3" />} label="Phase" options={phaseOptions} selected={filterPhases} onChange={setFilterPhases} />
+        {roleOptions.length > 0 && (
+          <MultiFilter icon={<Server className="h-3 w-3" />} label="Source" options={roleOptions} selected={filterRoles} onChange={setFilterRoles} />
+        )}
+        {unitOptions.length > 0 && (
+          <MultiFilter icon={<Zap className="h-3 w-3" />} label="Unit" options={unitOptions} selected={filterUnits} onChange={setFilterUnits} />
+        )}
 
         {/* Search */}
         <div className="flex items-center gap-1 px-2 py-0.5 border border-zinc-800 rounded text-[11px] font-mono focus-within:border-zinc-600 transition-colors">
