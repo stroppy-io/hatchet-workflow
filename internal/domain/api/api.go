@@ -82,11 +82,14 @@ func (a *App) Start(ctx context.Context, tenantID string, cfg types.RunConfig) e
 	exec := dag.NewExecutor(tenantID, cfg.ID, graph, a.storage, a.logger, a.sink)
 
 	// Wire state exporter so snapshots include recoverable run state.
-	cfgJSON, _ := json.Marshal(cfg)
+	// Re-marshal cfg on every snapshot — tasks mutate topology in place
+	// (e.g. managed YDB endpoint/database_path filled from terraform output
+	// after machines apply), and the UI overview reads those fields from
+	// the persisted RunConfig.
 	exec.SetStateExporter(func() *dag.RunState {
 		rs := deps.State.ExportRunState()
 		rs.Provider = string(cfg.Provider)
-		rs.RunConfig = cfgJSON
+		rs.RunConfig, _ = json.Marshal(cfg)
 		return rs
 	})
 
@@ -174,11 +177,12 @@ func (a *App) RecoverRun(ctx context.Context, tenantID string, snap *dag.Snapsho
 	}
 
 	// Wire state exporter for continued snapshots.
-	cfgJSON, _ := json.Marshal(cfg)
+	// Re-marshal cfg every snapshot so post-apply mutations (managed YDB
+	// endpoint/database_path) land in the persisted state.
 	exec.SetStateExporter(func() *dag.RunState {
 		rs := deps.State.ExportRunState()
 		rs.Provider = string(cfg.Provider)
-		rs.RunConfig = cfgJSON
+		rs.RunConfig, _ = json.Marshal(cfg)
 		return rs
 	})
 
