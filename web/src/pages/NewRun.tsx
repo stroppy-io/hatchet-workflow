@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { startRun, validateRun, dryRun, listPresets, listPackages, probeScript, getStroppyVersions, getStroppyCommits, getSettings, type StroppyCommit } from "@/api/client";
+import { startRun, validateRun, dryRun, listPresets, listPackages, probeScript, getStroppyVersions, getStroppyCommits, getSettings, previewStroppyConfig, type StroppyCommit } from "@/api/client";
 import {
   ALL_DB_KINDS,
   KIND_PROTOCOLS,
@@ -13,6 +13,7 @@ import {
   type Package,
   type ProbeResponse,
   type TenantQuotas,
+  type WorkloadFile,
 } from "@/api/types";
 import { generateRunID } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,9 @@ import {
   ChevronDown,
   Loader2,
   Pencil,
+  Upload,
+  X,
+  RotateCcw,
 } from "lucide-react";
 
 import { DB_COLORS } from "@/lib/db-colors";
@@ -91,6 +95,19 @@ const PROVIDER_META: Record<Provider, { icon: typeof Cloud; label: string }> = {
   yandex: { icon: Cloud,     label: "Yandex Cloud" },
 };
 
+function redactRunConfigForDisplay(cfg: RunConfig): RunConfig {
+  if (!cfg.stroppy.files?.length) return cfg;
+  return {
+    ...cfg,
+    stroppy: {
+      ...cfg.stroppy,
+      files: cfg.stroppy.files.map((f) => ({
+        ...f,
+        content: `<${f.content.length} chars redacted>`,
+      })),
+    },
+  };
+}
 
 const STEPS = [
   { key: "infra", label: "Infrastructure" },
@@ -139,6 +156,9 @@ export function NewRun() {
     (rcS?.protocol as Protocol) || KIND_PROTOCOLS[(rc?.database?.kind as DatabaseKind) || "postgres"][0],
   );
   const [script, setScript] = useState(rcS?.script || rcS?.workload || "tpcc/procs");
+  const [sql, setSql] = useState(rcS?.sql || "");
+  const [stroppyEnv, setStroppyEnv] = useState<Record<string, string>>(rcS?.env || {});
+  const [workloadFiles, setWorkloadFiles] = useState<WorkloadFile[]>(rcS?.files || []);
   const [duration, setDuration] = useState(rcS?.duration || "5m");
   // TPC-C-tuned defaults: scale 500 warehouses, 300 VUs, 200-conn pool. The
   // workload is OLTP-heavy enough that the smaller previous defaults
@@ -147,11 +167,12 @@ export function NewRun() {
   const [vus, setVus] = useState(rcS?.vus || rcS?.vus_scale || 300);
   const [poolSize, setPoolSize] = useState(rcS?.pool_size || 200);
   const [scaleFactor, setScaleFactor] = useState(rcS?.scale_factor || 500);
-  const [stroppyVersion, setStroppyVersion] = useState(rcS?.version || "4.1.0");
-  const [stroppyVersions, setStroppyVersions] = useState<string[]>([rcS?.version || "4.1.0"]);
+  const [stroppyVersion, setStroppyVersion] = useState(rcS?.version || "");
+  const [stroppyVersions, setStroppyVersions] = useState<string[]>(rcS?.version ? [rcS.version] : []);
   const [versionsLoading, setVersionsLoading] = useState(false);
   const versionsLoaded = useRef(false);
   const [probeData, setProbeData] = useState<ProbeResponse | null>(null);
+  const [workloadProbeOK, setWorkloadProbeOK] = useState(false);
   const [availableSteps, setAvailableSteps] = useState<string[]>([]);
   const [selectedSteps, setSelectedSteps] = useState<string[]>(rcS?.steps || []);
   const [noSteps, setNoSteps] = useState<string[]>(rcS?.no_steps || []);
@@ -180,8 +201,9 @@ export function NewRun() {
   const [dryRunLoading, setDryRunLoading] = useState(false);
   const [resolvedConfig, setResolvedConfig] = useState<RunConfig | null>(null);
   const [dbConfigDraft, setDbConfigDraft] = useState<string | null>(null);
-  const [stroppyConfigDraft, setStroppyConfigDraft] = useState<string | null>(null);
+  const [stroppyConfigDraft, setStroppyConfigDraft] = useState<string | null>(rcS?.config_override_json || null);
   const [stroppyConfigPristine, setStroppyConfigPristine] = useState<string | null>(null);
+  const [stroppyConfigUserEdited, setStroppyConfigUserEdited] = useState(!!rcS?.config_override_json);
   const [renderedConfigsPristine, setRenderedConfigsPristine] = useState<Record<string, string>>({});
   const [renderedConfigDrafts, setRenderedConfigDrafts] = useState<Record<string, string>>({});
   const [validationResult, setValidationResult] = useState<{ ok: boolean; message: string } | null>(null);
@@ -190,6 +212,23 @@ export function NewRun() {
 
   useEffect(() => { listPresets().then(setAllPresets).catch(() => {}); }, []);
   useEffect(() => { getSettings().then((s) => setQuotas(s.quotas || {})).catch(() => {}); }, []);
+  useEffect(() => {
+    versionsLoaded.current = true;
+    setVersionsLoading(true);
+    getStroppyVersions()
+      .then((versions) => {
+        if (versions.length === 0) return;
+        setStroppyVersions((prev) => {
+          const pinned = rcS?.version && !versions.includes(rcS.version) ? [rcS.version] : [];
+          return [...pinned, ...versions];
+        });
+        if (!rcS?.version) setStroppyVersion(versions[0]);
+      })
+      .catch(() => {})
+      .finally(() => setVersionsLoading(false));
+    // rcS is an initial rerun snapshot; this effect should run once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     // Reconcile dependent state when kind / allPresets change. Each branch
     // is conditional — unconditional setters here run again every time
@@ -214,7 +253,8 @@ export function NewRun() {
   // changes and protocol toggles can break compatibility.
   useEffect(() => {
     const compat = SCRIPT_COMPAT[`${kind}:${protocol}`] || [];
-    if (compat.length > 0 && !compat.includes(script)) {
+    const known = Object.values(SCRIPT_COMPAT).some((scripts) => scripts.includes(script));
+    if (known && compat.length > 0 && !compat.includes(script)) {
       setScript(compat[0]);
     }
   }, [kind, protocol]);
@@ -246,10 +286,13 @@ export function NewRun() {
         version: stroppyVersion,
         protocol,
         script,
+        ...(sql.trim() ? { sql: sql.trim() } : {}),
         duration,
         vus,
         pool_size: poolSize,
         scale_factor: scaleFactor,
+        ...(Object.keys(stroppyEnv).length > 0 ? { env: stroppyEnv } : {}),
+        ...(workloadFiles.length > 0 ? { files: workloadFiles } : {}),
         ...(selectedSteps.length > 0 ? { steps: selectedSteps } : {}),
         ...(noSteps.length > 0 ? { no_steps: noSteps } : {}),
         ...(provider === "yandex" ? { machine: { role: "stroppy" as const, count: 1, cpus: stroppyCpus, memory_mb: stroppyMemory, disk_gb: stroppyDisk, disk_type: stroppyDiskType } } : {}),
@@ -261,9 +304,29 @@ export function NewRun() {
       cfg.platform_id = platformId;
     }
     return cfg;
-  }, [kind, protocol, selectedPresetId, provider, platformId, version, script, duration, vus, poolSize, scaleFactor, packageId, selectedSteps, noSteps, stroppyCpus, stroppyMemory, stroppyDisk, stroppyDiskType, stroppyVersion]);
+  }, [kind, protocol, selectedPresetId, provider, platformId, version, script, sql, duration, vus, poolSize, scaleFactor, packageId, stroppyEnv, workloadFiles, selectedSteps, noSteps, stroppyCpus, stroppyMemory, stroppyDisk, stroppyDiskType, stroppyVersion]);
 
-  const configJSON = useMemo(() => JSON.stringify(config, null, 2), [config]);
+  const configJSON = useMemo(() => JSON.stringify(redactRunConfigForDisplay(config), null, 2), [config]);
+
+  useEffect(() => {
+    if (step !== 2 || stroppyConfigUserEdited) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      previewStroppyConfig(config)
+        .then((resp) => {
+          if (cancelled) return;
+          setStroppyConfigDraft(resp.stroppy_config);
+          setStroppyConfigPristine(resp.stroppy_config);
+        })
+        .catch(() => {
+          if (!cancelled && stroppyConfigDraft === null) {
+            setStroppyConfigDraft("");
+            setStroppyConfigPristine("");
+          }
+        });
+    }, 250);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [step, config, stroppyConfigUserEdited]);
 
   // Auto-validate on step change
   useEffect(() => {
@@ -290,7 +353,7 @@ export function NewRun() {
             setResolvedConfig(rc);
             setDbConfigDraft(JSON.stringify(rc.database, null, 2));
           }
-          if (typeof drObj.stroppy_config === "string") {
+          if (typeof drObj.stroppy_config === "string" && !stroppyConfigUserEdited) {
             setStroppyConfigDraft(drObj.stroppy_config);
             setStroppyConfigPristine(drObj.stroppy_config);
           }
@@ -308,7 +371,7 @@ export function NewRun() {
       if (!cancelled) setDryRunLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [step, config]);
+  }, [step, config, stroppyConfigUserEdited]);
 
   const handleSubmit = useCallback(async () => {
     if (!config.stroppy.duration.trim()) { setError("Duration is required"); return; }
@@ -341,10 +404,10 @@ export function NewRun() {
       // Only send override when the user actually edited the preview — the server
       // builds the preview with placeholder db host/port (resolved at run time), so
       // sending it back verbatim would ship those placeholders to the stroppy binary.
-      if (stroppyConfigDraft && stroppyConfigDraft !== stroppyConfigPristine) {
+      if (stroppyConfigUserEdited) {
         try {
-          JSON.parse(stroppyConfigDraft); // validate
-          launchConfig.stroppy = { ...launchConfig.stroppy, config_override_json: stroppyConfigDraft };
+          JSON.parse(stroppyConfigDraft || ""); // validate
+          launchConfig.stroppy = { ...launchConfig.stroppy, config_override_json: stroppyConfigDraft || "" };
         } catch (e) {
           setError(`Invalid JSON in stroppy config: ${e instanceof Error ? e.message : String(e)}`);
           setSubmitting(false);
@@ -357,7 +420,7 @@ export function NewRun() {
       setError(err instanceof Error ? err.message : "Failed to start run");
       setSubmitting(false);
     }
-  }, [config, navigate, dbConfigDraft, resolvedConfig, stroppyConfigDraft, stroppyConfigPristine, renderedConfigDrafts, renderedConfigsPristine]);
+  }, [config, navigate, dbConfigDraft, resolvedConfig, stroppyConfigDraft, stroppyConfigUserEdited, renderedConfigDrafts, renderedConfigsPristine]);
 
   function handleCopy() {
     navigator.clipboard.writeText(configJSON);
@@ -420,6 +483,9 @@ export function NewRun() {
           {step === 2 && (
             <StepStroppy
               script={script} setScript={setScript}
+              sql={sql} setSql={setSql}
+              stroppyEnv={stroppyEnv} setStroppyEnv={setStroppyEnv}
+              workloadFiles={workloadFiles} setWorkloadFiles={setWorkloadFiles}
               duration={duration} setDuration={setDuration}
               scaleFactor={scaleFactor} setScaleFactor={setScaleFactor}
               vus={vus} setVus={setVus}
@@ -433,6 +499,7 @@ export function NewRun() {
               selectedSteps={selectedSteps} setSelectedSteps={setSelectedSteps}
               noSteps={noSteps} setNoSteps={setNoSteps}
               probeData={probeData} setProbeData={setProbeData}
+              setWorkloadProbeOK={setWorkloadProbeOK}
               stroppyCpus={stroppyCpus} setStroppyCpus={setStroppyCpus}
               stroppyMemory={stroppyMemory} setStroppyMemory={setStroppyMemory}
               stroppyDisk={stroppyDisk} setStroppyDisk={setStroppyDisk}
@@ -441,6 +508,12 @@ export function NewRun() {
               stroppyVersions={stroppyVersions} setStroppyVersions={setStroppyVersions}
               versionsLoading={versionsLoading} setVersionsLoading={setVersionsLoading}
               versionsLoaded={versionsLoaded}
+              stroppyConfigDraft={stroppyConfigDraft}
+              setStroppyConfigDraft={setStroppyConfigDraft}
+              stroppyConfigPristine={stroppyConfigPristine}
+              setStroppyConfigPristine={setStroppyConfigPristine}
+              stroppyConfigUserEdited={stroppyConfigUserEdited}
+              setStroppyConfigUserEdited={setStroppyConfigUserEdited}
             />
           )}
           {step === 3 && (
@@ -465,7 +538,7 @@ export function NewRun() {
               dbConfigDraft={dbConfigDraft}
               setDbConfigDraft={setDbConfigDraft}
               stroppyConfigDraft={stroppyConfigDraft}
-              setStroppyConfigDraft={setStroppyConfigDraft}
+              setStroppyConfigDraft={(v) => { setStroppyConfigDraft(v); setStroppyConfigUserEdited(v !== stroppyConfigPristine); }}
               script={script}
               scaleFactor={scaleFactor}
               stroppyVersion={stroppyVersion}
@@ -482,7 +555,7 @@ export function NewRun() {
               <Button variant="outline" size="sm" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>
                 <ChevronLeft className="h-3 w-3" /> Back
               </Button>
-              <Button size="sm" onClick={() => setStep(step + 1)} className="gap-1.5">
+              <Button size="sm" onClick={() => setStep(step + 1)} className="gap-1.5" disabled={step === 2 && !workloadProbeOK}>
                 Next <ChevronRight className="h-3 w-3" />
               </Button>
             </div>
@@ -502,6 +575,7 @@ export function NewRun() {
                 <SummaryRow label="Topology" value={selectedPreset.name} />
               )}
               <SummaryRow label="Script" value={script} />
+              {sql && <SummaryRow label="SQL" value={sql} />}
               <SummaryRow label="Duration" value={duration} />
               <SummaryRow label="VUs" value={String(vus)} />
               <SummaryRow label="Pool" value={String(poolSize)} />
@@ -812,7 +886,7 @@ function StroppyVersionCombo({
 }) {
   const [open, setOpen] = useState(false);
   const ensureLoaded = () => {
-    if (!versionsLoaded.current) {
+    if (!versionsLoaded.current || versions.length === 0) {
       versionsLoaded.current = true;
       setLoading(true);
       getStroppyVersions()
@@ -875,8 +949,43 @@ function suggestStroppyMachine(vus: number, poolSize: number): { cpus: number; m
   return { cpus, memory, disk, reason };
 }
 
+function probeDriverType(protocol: Protocol, dbKind: DatabaseKind): string {
+  switch (protocol) {
+    case "mysql": return "mysql";
+    case "picodata": return "picodata";
+    case "ydb-grpc":
+    case "ydb-grpcs": return "ydb";
+    case "pg":
+    case "ydb-pgwire":
+    case "cockroach": return "postgres";
+    default: return dbKind;
+  }
+}
+
+function safeUploadedFileName(name: string): string {
+  const base = name.split(/[\\/]/).pop() || "workload.sql";
+  const safe = base.replace(/[^A-Za-z0-9._-]/g, "_");
+  return safe.endsWith(".sql") ? safe : `${safe}.sql`;
+}
+
+function setEnvOverride(
+  setStroppyEnv: React.Dispatch<React.SetStateAction<Record<string, string>>>,
+  name: string,
+  value: string,
+) {
+  setStroppyEnv((prev) => {
+    const next = { ...prev };
+    if (value === "") delete next[name];
+    else next[name] = value;
+    return next;
+  });
+}
+
 function StepStroppy({
   script, setScript,
+  sql, setSql,
+  stroppyEnv, setStroppyEnv,
+  workloadFiles, setWorkloadFiles,
   duration, setDuration,
   scaleFactor, setScaleFactor,
   vus, setVus,
@@ -890,6 +999,7 @@ function StepStroppy({
   selectedSteps, setSelectedSteps,
   noSteps, setNoSteps,
   probeData, setProbeData,
+  setWorkloadProbeOK,
   stroppyCpus, setStroppyCpus,
   stroppyMemory, setStroppyMemory,
   stroppyDisk, setStroppyDisk,
@@ -898,8 +1008,17 @@ function StepStroppy({
   stroppyVersions, setStroppyVersions,
   versionsLoading, setVersionsLoading,
   versionsLoaded,
+  stroppyConfigDraft,
+  setStroppyConfigDraft,
+  stroppyConfigPristine,
+  setStroppyConfigPristine,
+  stroppyConfigUserEdited,
+  setStroppyConfigUserEdited,
 }: {
   script: string; setScript: (v: string) => void;
+  sql: string; setSql: (v: string) => void;
+  stroppyEnv: Record<string, string>; setStroppyEnv: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  workloadFiles: WorkloadFile[]; setWorkloadFiles: React.Dispatch<React.SetStateAction<WorkloadFile[]>>;
   duration: string; setDuration: (v: string) => void;
   scaleFactor: number; setScaleFactor: (v: number) => void;
   vus: number; setVus: (v: number) => void;
@@ -913,6 +1032,7 @@ function StepStroppy({
   selectedSteps: string[]; setSelectedSteps: (v: string[]) => void;
   noSteps: string[]; setNoSteps: (v: string[]) => void;
   probeData: ProbeResponse | null; setProbeData: (v: ProbeResponse | null) => void;
+  setWorkloadProbeOK: (v: boolean) => void;
   stroppyCpus: number; setStroppyCpus: (v: number) => void;
   stroppyMemory: number; setStroppyMemory: (v: number) => void;
   stroppyDisk: number; setStroppyDisk: (v: number) => void;
@@ -921,19 +1041,54 @@ function StepStroppy({
   stroppyVersions: string[]; setStroppyVersions: (v: string[]) => void;
   versionsLoading: boolean; setVersionsLoading: (v: boolean) => void;
   versionsLoaded: React.MutableRefObject<boolean>;
+  stroppyConfigDraft: string | null;
+  setStroppyConfigDraft: (v: string) => void;
+  stroppyConfigPristine: string | null;
+  setStroppyConfigPristine: (v: string) => void;
+  stroppyConfigUserEdited: boolean;
+  setStroppyConfigUserEdited: (v: boolean) => void;
 }) {
+  const [probeLoading, setProbeLoading] = useState(false);
+  const [probeError, setProbeError] = useState<string | null>(null);
+
   // Probe on script change to get steps/env.
   useEffect(() => {
-    probeScript({ script, driver_type: dbKind, pool_size: poolSize, scale_factor: scaleFactor })
-      .then((data) => {
-        setProbeData(data);
-        setAvailableSteps(data.steps || []);
+    if (!script.trim() || !stroppyVersion.trim()) {
+      setWorkloadProbeOK(false);
+      return;
+    }
+    let cancelled = false;
+    setProbeLoading(true);
+    setWorkloadProbeOK(false);
+    const timer = window.setTimeout(() => {
+      probeScript({
+        version: stroppyVersion,
+        script: script.trim(),
+        sql: sql.trim() || undefined,
+        driver_type: probeDriverType(protocol, dbKind),
+        pool_size: poolSize,
+        scale_factor: scaleFactor,
+        env: stroppyEnv,
+        files: workloadFiles,
       })
-      .catch(() => {
-        setProbeData(null);
-        setAvailableSteps([]);
-      });
-  }, [script, dbKind]);
+        .then((data) => {
+          if (cancelled) return;
+          setProbeData(data);
+          setAvailableSteps(data.steps || []);
+          setProbeError(null);
+          setWorkloadProbeOK(true);
+        })
+        .catch((e) => {
+          if (cancelled) return;
+          setProbeData(null);
+          setAvailableSteps([]);
+          setProbeError(e instanceof Error ? e.message : "Probe failed");
+          setWorkloadProbeOK(false);
+        })
+        .finally(() => { if (!cancelled) setProbeLoading(false); });
+    }, 350);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [script, sql, dbKind, protocol, poolSize, scaleFactor, stroppyVersion, stroppyEnv, workloadFiles]);
 
   const toggleNoStep = (step: string) => {
     setNoSteps(noSteps.includes(step) ? noSteps.filter((s) => s !== step) : [...noSteps, step]);
@@ -961,14 +1116,41 @@ function StepStroppy({
   const switchMode = (m: "release" | "commit") => {
     setStroppyMode(m);
     if (m === "release" && isCommit) {
-      setStroppyVersion(stroppyVersions[0] || "4.1.0");
+      setStroppyVersion(stroppyVersions[0] || "");
     } else if (m === "commit" && !isCommit) {
       loadCommits();
-      // value set when user picks a commit; keep current to avoid empty submit
+      setStroppyVersion("");
     }
   };
 
   const currentCommitSha = isCommit ? stroppyVersion.slice("commit:".length) : "";
+  const knownScripts = SCRIPT_COMPAT[`${dbKind}:${protocol}`] || [];
+  const uploadedSQL = workloadFiles.find((f) => f.kind === "sql" || f.name.endsWith(".sql"));
+
+  const handleSQLUpload = async (file: File | null) => {
+    if (!file) return;
+    const name = safeUploadedFileName(file.name);
+    const content = await file.text();
+    setWorkloadFiles([{ name, kind: "sql", content }]);
+    setSql(name);
+  };
+
+  const clearUploadedSQL = () => {
+    if (uploadedSQL && sql === uploadedSQL.name) setSql("");
+    setWorkloadFiles((prev) => prev.filter((f) => f.name !== uploadedSQL?.name));
+  };
+
+  const updateStroppyConfigDraft = (value: string) => {
+    setStroppyConfigDraft(value);
+    setStroppyConfigUserEdited(value !== (stroppyConfigPristine || ""));
+  };
+
+  const resetStroppyConfigDraft = () => {
+    if (stroppyConfigPristine !== null) {
+      setStroppyConfigDraft(stroppyConfigPristine);
+      setStroppyConfigUserEdited(false);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -996,7 +1178,7 @@ function StepStroppy({
             // Free-text input + chevron button that opens a popover with the
             // full version list. Built from scratch instead of a <datalist>
             // because <datalist> filters its options against the current
-            // input value — a prefilled "4.1.0" would hide every release
+            // input value — a prefilled release would hide every non-matching release
             // that doesn't match. The popover always shows everything.
             <StroppyVersionCombo
               value={isCommit ? "" : stroppyVersion}
@@ -1040,32 +1222,90 @@ function StepStroppy({
         </div>
       </div>
 
-      {/* Script selector. Source-of-truth is SCRIPT_COMPAT[<kind>:<proto>]
-          on the SPA, which mirrors types.ScriptCompat on the server.
-          SCRIPT_META just decorates IDs with labels/descriptions. */}
-      <div>
-        <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-2 block">Script</span>
-        <div className="grid grid-cols-2 gap-2">
-          {(SCRIPT_COMPAT[`${dbKind}:${protocol}`] || []).map((id) => {
-            const meta = SCRIPT_META[id] || { label: id, desc: "" };
-            const active = script === id;
-            return (
-              <button type="button" key={id}
-                onClick={() => setScript(id)}
-                className={`border p-3 text-left transition-all cursor-pointer ${
-                  active
-                    ? "border-primary/40 bg-primary/[0.06]"
-                    : "border-zinc-800/60 hover:bg-zinc-900/50 hover:border-zinc-700"
-                }`}
-              >
-                <div className={`text-xs font-mono font-semibold ${active ? "text-primary" : "text-zinc-400"}`}>{meta.label}</div>
-                {meta.desc && (
-                  <div className="text-[10px] text-zinc-600 mt-0.5">{meta.desc}</div>
-                )}
-              </button>
-            );
-          })}
+      <div className="space-y-3">
+        <div>
+          <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-2 block">Known Scripts</span>
+          <div className="grid grid-cols-2 gap-2">
+            {knownScripts.map((id) => {
+              const meta = SCRIPT_META[id] || { label: id, desc: "" };
+              const active = script === id;
+              return (
+                <button type="button" key={id}
+                  onClick={() => setScript(id)}
+                  className={`border p-3 text-left transition-all cursor-pointer ${
+                    active
+                      ? "border-primary/40 bg-primary/[0.06]"
+                      : "border-zinc-800/60 hover:bg-zinc-900/50 hover:border-zinc-700"
+                  }`}
+                >
+                  <div className={`text-xs font-mono font-semibold ${active ? "text-primary" : "text-zinc-400"}`}>{meta.label}</div>
+                  {meta.desc && (
+                    <div className="text-[10px] text-zinc-600 mt-0.5">{meta.desc}</div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Script</Label>
+            <input
+              value={script}
+              onChange={(e) => setScript(e.target.value)}
+              placeholder="tpcc/tx or ./bench.ts or queries.sql"
+              spellCheck={false}
+              className="h-8 w-full px-2 font-mono text-xs bg-zinc-900 border border-zinc-800 text-zinc-300 outline-none focus:border-zinc-600"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">SQL</Label>
+            <div className="flex gap-2">
+              <input
+                value={sql}
+                onChange={(e) => setSql(e.target.value)}
+                placeholder="optional SQL file/name"
+                spellCheck={false}
+                className="h-8 min-w-0 flex-1 px-2 font-mono text-xs bg-zinc-900 border border-zinc-800 text-zinc-300 outline-none focus:border-zinc-600"
+              />
+              <label className="h-8 px-2 border border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300 flex items-center gap-1 text-[10px] font-mono cursor-pointer">
+                <Upload className="h-3 w-3" />
+                SQL
+                <input
+                  type="file"
+                  accept=".sql,text/sql,text/plain"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0] || null;
+                    void handleSQLUpload(f);
+                    e.currentTarget.value = "";
+                  }}
+                />
+              </label>
+            </div>
+            {uploadedSQL && (
+              <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-500">
+                <span className="truncate">{uploadedSQL.name}</span>
+                <span className="text-zinc-700">{uploadedSQL.content.length} chars</span>
+                <button type="button" onClick={clearUploadedSQL} className="ml-auto text-zinc-600 hover:text-zinc-300">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {(probeLoading || probeError || probeData) && (
+          <div className={`flex items-center gap-2 text-xs p-2 border font-mono ${
+            probeError ? "border-red-500/30 text-red-400" : probeLoading ? "border-zinc-800/60 text-zinc-500" : "border-emerald-500/30 text-emerald-400"
+          }`}>
+            {probeLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : probeError ? <AlertCircle className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+            <span className="truncate">
+              {probeLoading ? "Probing workload..." : probeError ? probeError : `Probe OK: ${availableSteps.length} steps, ${probeData?.env_declarations?.length || 0} parameters`}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Parameters */}
@@ -1153,23 +1393,52 @@ function StepStroppy({
             <div className="space-y-2">
               {envDecls.map((e, i) => {
                 const name = e.names[0];
+                const value = stroppyEnv[name] ?? "";
+                const defaultValue = e.default || "";
+                const isBool = /^(true|false)$/i.test(defaultValue);
+                const isNumber = defaultValue !== "" && /^-?\d+(\.\d+)?$/.test(defaultValue);
                 return (
-                  <div key={i} className="flex items-center gap-3">
-                    <label className="text-[10px] font-mono text-zinc-400 w-36 shrink-0 truncate" title={e.names.join(", ")}>
-                      {name}
-                    </label>
-                    <input
-                      type="text"
-                      defaultValue={e.default || ""}
-                      placeholder={e.default || ""}
-                      className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-[11px] font-mono text-zinc-300 outline-none focus:border-zinc-600"
-                      data-env-name={name}
-                    />
-                    {e.description && (
-                      <span className="text-[9px] text-zinc-600 truncate max-w-[200px]" title={e.description}>
-                        {e.description}
-                      </span>
+                  <div key={`${name}-${i}`} className="grid grid-cols-[160px_minmax(0,1fr)_auto] gap-3 items-center">
+                    <div className="min-w-0">
+                      <label className="text-[10px] font-mono text-zinc-400 truncate block" title={e.names.join(", ")}>
+                        {name}
+                      </label>
+                      {e.names.length > 1 && (
+                        <div className="text-[9px] font-mono text-zinc-700 truncate">{e.names.slice(1).join(", ")}</div>
+                      )}
+                    </div>
+                    {isBool ? (
+                      <button
+                        type="button"
+                        onClick={() => setEnvOverride(setStroppyEnv, name, (value || defaultValue).toLowerCase() === "true" ? "false" : "true")}
+                        className={`h-7 w-14 border text-[11px] font-mono ${
+                          (value || defaultValue).toLowerCase() === "true"
+                            ? "border-primary/40 bg-primary/[0.08] text-primary"
+                            : "border-zinc-800 text-zinc-500 bg-zinc-900"
+                        }`}
+                      >
+                        {(value || defaultValue).toLowerCase() === "true" ? "true" : "false"}
+                      </button>
+                    ) : (
+                      <input
+                        type={isNumber ? "number" : "text"}
+                        value={value}
+                        placeholder={defaultValue || "<unset>"}
+                        onChange={(ev) => setEnvOverride(setStroppyEnv, name, ev.target.value)}
+                        className="h-7 min-w-0 bg-zinc-900 border border-zinc-800 px-2 text-[11px] font-mono text-zinc-300 outline-none focus:border-zinc-600"
+                      />
                     )}
+                    <button
+                      type="button"
+                      onClick={() => setEnvOverride(setStroppyEnv, name, "")}
+                      className="text-[10px] font-mono text-zinc-600 hover:text-zinc-300 disabled:opacity-30"
+                      disabled={value === ""}
+                    >
+                      default
+                    </button>
+                    <div className="col-start-2 col-span-2 text-[9px] text-zinc-600 truncate -mt-2" title={e.description}>
+                      {e.description || "No description"}{defaultValue && <span className="text-zinc-700"> · default {defaultValue}</span>}
+                    </div>
                   </div>
                 );
               })}
@@ -1177,6 +1446,32 @@ function StepStroppy({
           </div>
         );
       })()}
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">
+            stroppy-config.json
+          </span>
+          <div className="flex items-center gap-2">
+            {stroppyConfigUserEdited && <span className="text-[10px] font-mono text-amber-500">edited</span>}
+            <button
+              type="button"
+              onClick={resetStroppyConfigDraft}
+              disabled={!stroppyConfigUserEdited || stroppyConfigPristine === null}
+              className="text-[10px] font-mono text-zinc-600 hover:text-zinc-300 disabled:opacity-30 flex items-center gap-1"
+            >
+              <RotateCcw className="h-3 w-3" />
+              reset
+            </button>
+          </div>
+        </div>
+        <textarea
+          value={stroppyConfigDraft ?? ""}
+          onChange={(e) => updateStroppyConfigDraft(e.target.value)}
+          spellCheck={false}
+          className="w-full h-80 bg-[#0a0a0a] text-[11px] font-mono text-zinc-300 border border-zinc-800 p-2 outline-none focus:border-zinc-600 resize-y"
+        />
+      </div>
     </div>
   );
 }

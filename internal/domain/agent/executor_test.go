@@ -79,6 +79,17 @@ func TestResolveMemoryDefaults_MinimumFloor(t *testing.T) {
 	}
 }
 
+func TestSafeWorkloadFileName(t *testing.T) {
+	if got, err := safeWorkloadFileName("custom.sql"); err != nil || got != "custom.sql" {
+		t.Fatalf("safeWorkloadFileName(custom.sql) = %q, %v", got, err)
+	}
+	for _, name := range []string{"", "../custom.sql", "dir/custom.sql"} {
+		if _, err := safeWorkloadFileName(name); err == nil {
+			t.Fatalf("safeWorkloadFileName(%q) expected error", name)
+		}
+	}
+}
+
 func TestParseConfig_Success(t *testing.T) {
 	type testCfg struct {
 		Version string `json:"version"`

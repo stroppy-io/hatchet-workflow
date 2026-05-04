@@ -90,7 +90,7 @@ func (t *stroppyRunTask) Execute(nc *dag.NodeContext) error {
 
 		return t.client.Send(nc, *target, agent.Command{
 			Action: agent.ActionRunStroppy,
-			Config: agent.StroppyRunConfig{ConfigJSON: string(patched)},
+			Config: agent.StroppyRunConfig{ConfigJSON: string(patched), Files: stroppyRunFiles(t.stroppy.Files)},
 		})
 	}
 
@@ -103,8 +103,24 @@ func (t *stroppyRunTask) Execute(nc *dag.NodeContext) error {
 		Action: agent.ActionRunStroppy,
 		Config: agent.StroppyRunConfig{
 			ConfigJSON: string(jsonBytes),
+			Files:      stroppyRunFiles(t.stroppy.Files),
 		},
 	})
+}
+
+func stroppyRunFiles(files []types.WorkloadFile) []agent.StroppyRunFile {
+	if len(files) == 0 {
+		return nil
+	}
+	out := make([]agent.StroppyRunFile, 0, len(files))
+	for _, f := range files {
+		out = append(out, agent.StroppyRunFile{
+			Name:    f.Name,
+			Kind:    f.Kind,
+			Content: f.Content,
+		})
+	}
+	return out
 }
 
 // injectOTLP populates the stroppy global exporter + OTEL_RESOURCE_ATTRIBUTES
@@ -237,10 +253,17 @@ func BuildStroppyConfigJSON(s types.StroppyConfig, dbKind types.DatabaseKind, db
 		duration = "60s"
 	}
 
+	var sqlPtr *string
+	if s.SQL != "" {
+		sql := s.SQL
+		sqlPtr = &sql
+	}
+
 	maxConns := int32(poolSize)
 	rc := &stroppypb.RunConfig{
 		Version: "1",
 		Script:  &script,
+		Sql:     sqlPtr,
 		Drivers: map[uint32]*stroppypb.DriverRunConfig{
 			0: {
 				DriverType: driverType,
@@ -262,6 +285,12 @@ func BuildStroppyConfigJSON(s types.StroppyConfig, dbKind types.DatabaseKind, db
 			// dramatically under-utilises a beefy runner.
 			if s.Machine != nil && s.Machine.CPUs > 0 {
 				env["LOAD_WORKERS"] = fmt.Sprintf("%d", s.Machine.CPUs)
+			}
+			for k, v := range s.Env {
+				key := strings.ToUpper(strings.TrimSpace(k))
+				if key != "" {
+					env[key] = v
+				}
 			}
 			return env
 		}(),

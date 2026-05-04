@@ -60,20 +60,18 @@ func ValidateConfig(cfg types.RunConfig) error {
 	if protocol != "" && !types.KindSupportsProtocol(cfg.Database.Kind, protocol) {
 		return fmt.Errorf("protocol %q is not supported by database %q", protocol, cfg.Database.Kind)
 	}
-	if script != "" {
+	if script != "" && knownScript(script) {
 		supported := types.ScriptCompat[types.KindProtocolKey{Kind: cfg.Database.Kind, Protocol: protocol}]
-		if len(supported) > 0 {
-			found := false
-			for _, s := range supported {
-				if s == script {
-					found = true
-					break
-				}
+		found := false
+		for _, s := range supported {
+			if s == script {
+				found = true
+				break
 			}
-			if !found {
-				return fmt.Errorf("script %q is not compatible with database %q on protocol %q (supported: %s)",
-					script, cfg.Database.Kind, protocol, strings.Join(supported, ", "))
-			}
+		}
+		if !found {
+			return fmt.Errorf("script %q is not compatible with database %q on protocol %q (supported: %s)",
+				script, cfg.Database.Kind, protocol, strings.Join(supported, ", "))
 		}
 	}
 
@@ -115,4 +113,15 @@ func ValidateConfig(cfg types.RunConfig) error {
 	}
 
 	return nil
+}
+
+func knownScript(script string) bool {
+	for _, scripts := range types.ScriptCompat {
+		for _, s := range scripts {
+			if s == script {
+				return true
+			}
+		}
+	}
+	return false
 }

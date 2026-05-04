@@ -143,9 +143,9 @@ func ComputeEffectiveConfigs(cfg *types.RunConfig) map[string]map[string]string 
 		if db.Cockroach != nil {
 			n := db.Cockroach.Nodes
 			ec := map[string]string{
-				"kind":     "cockroach",
-				"version":  string(db.Version),
-				"nodes":    fmt.Sprintf("%d× %d vCPU / %d MB / %d GB", n.Count, n.CPUs, n.MemoryMB, n.DiskGB),
+				"kind":    "cockroach",
+				"version": string(db.Version),
+				"nodes":   fmt.Sprintf("%d× %d vCPU / %d MB / %d GB", n.Count, n.CPUs, n.MemoryMB, n.DiskGB),
 			}
 			for k, v := range db.Cockroach.Options {
 				ec[k] = v
@@ -159,6 +159,9 @@ func ComputeEffectiveConfigs(cfg *types.RunConfig) map[string]map[string]string 
 	bench := map[string]string{}
 	if s.Script != "" {
 		bench["script"] = s.Script
+	}
+	if s.SQL != "" {
+		bench["sql"] = s.SQL
 	}
 	if s.Version != "" {
 		bench["stroppy"] = "v" + s.Version

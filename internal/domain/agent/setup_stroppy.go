@@ -10,4 +10,13 @@ type StroppyInstallConfig struct {
 type StroppyRunConfig struct {
 	// ConfigJSON is the full stroppy-config.json content.
 	ConfigJSON string `json:"config_json"`
+	// Files are written beside stroppy-config.json before execution so
+	// config.script/config.sql can reference uploaded run-scoped workload files.
+	Files []StroppyRunFile `json:"files,omitempty"`
+}
+
+type StroppyRunFile struct {
+	Name    string `json:"name"`
+	Kind    string `json:"kind,omitempty"`
+	Content string `json:"content"`
 }

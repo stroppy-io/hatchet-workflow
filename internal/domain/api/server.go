@@ -210,6 +210,7 @@ func (s *Server) Router() http.Handler {
 			r.Post("/run", s.runStart)
 			r.Post("/validate", s.runValidate)
 			r.Post("/dry-run", s.runDryRun)
+			r.Post("/stroppy-config-preview", s.stroppyConfigPreview)
 			r.Post("/probe", s.stroppyProbe)
 			r.Delete("/run/{runID}", s.deleteRun)
 			r.Post("/run/{runID}/cancel", s.cancelRun)
@@ -434,6 +435,11 @@ func (s *Server) runStart(w http.ResponseWriter, r *http.Request) {
 	// Resolve package (from package_id or default built-in).
 	if err := s.resolveRunPackage(r.Context(), tenantID, &cfg); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+
+	if err := s.probeRunWorkload(r.Context(), cfg); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "workload probe failed: " + err.Error()})
 		return
 	}
 
@@ -982,27 +988,40 @@ func (s *Server) stroppyVersions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": fmt.Sprintf("github releases %d: %s", resp.StatusCode, string(body))})
+		return
+	}
 
 	var releases []struct {
-		TagName string `json:"tag_name"`
-		Draft   bool   `json:"draft"`
+		TagName    string `json:"tag_name"`
+		Draft      bool   `json:"draft"`
+		Prerelease bool   `json:"prerelease"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
 		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "github parse: " + err.Error()})
 		return
 	}
 
-	// Filter: non-draft, version >= 4.1.0.
-	var versions []string
+	// Filter: non-draft release tags >= 4.1.0. Stable releases are returned
+	// first so the wizard can default to the latest stable while still letting
+	// users pick RCs/prereleases from the same list.
+	var stable, prerelease []string
 	for _, rel := range releases {
-		if rel.Draft {
+		if rel.Draft || strings.HasPrefix(rel.TagName, stroppyNightlyPfx) {
 			continue
 		}
 		v := strings.TrimPrefix(rel.TagName, "v")
 		if compareVersions(v, "4.1.0") >= 0 {
-			versions = append(versions, v)
+			if rel.Prerelease {
+				prerelease = append(prerelease, v)
+			} else {
+				stable = append(stable, v)
+			}
 		}
 	}
+	versions := append(stable, prerelease...)
 
 	// Cache.
 	s.stroppyVersionsMu.Lock()

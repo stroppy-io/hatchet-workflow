@@ -332,6 +332,13 @@ export async function dryRun(config: RunConfig): Promise<unknown> {
   });
 }
 
+export async function previewStroppyConfig(config: RunConfig): Promise<{ stroppy_config: string }> {
+  return request(`${API_BASE}/stroppy-config-preview`, {
+    method: "POST",
+    body: JSON.stringify(config),
+  });
+}
+
 export async function getRunStatus(runID: string): Promise<Snapshot> {
   return request(`${API_BASE}/run/${runID}/status`);
 }

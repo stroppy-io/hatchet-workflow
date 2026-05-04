@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -1308,18 +1309,47 @@ func (e *Executor) runStroppy(ctx context.Context, cmd Command) error {
 		return err
 	}
 
-	// Write stroppy-config.json and run via -f flag.
-	configPath := "/tmp/stroppy-config.json"
+	workDir, err := os.MkdirTemp("", "stroppy-run-*")
+	if err != nil {
+		return fmt.Errorf("create stroppy workdir: %w", err)
+	}
+	defer os.RemoveAll(workDir)
+
+	for _, f := range cfg.Files {
+		name, err := safeWorkloadFileName(f.Name)
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(filepath.Join(workDir, name), []byte(f.Content), 0644); err != nil {
+			return fmt.Errorf("write workload file %q: %w", name, err)
+		}
+	}
+
+	// Write stroppy-config.json and run via -f flag from the same directory
+	// so uploaded SQL file names resolve through stroppy's normal cwd lookup.
+	configPath := filepath.Join(workDir, "stroppy-config.json")
 	if err := os.WriteFile(configPath, []byte(cfg.ConfigJSON), 0644); err != nil {
 		return fmt.Errorf("write stroppy config: %w", err)
 	}
 
-	script := fmt.Sprintf("stroppy run -f %s", configPath)
+	script := fmt.Sprintf("cd %q && stroppy run -f stroppy-config.json", workDir)
 	if _, err := e.shell(ctx, script); err != nil {
 		return fmt.Errorf("run stroppy: %w", err)
 	}
 
 	return nil
+}
+
+func safeWorkloadFileName(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "", fmt.Errorf("workload file name is required")
+	}
+	clean := filepath.Clean(name)
+	if clean != name || filepath.Base(name) != name || strings.Contains(name, "\x00") {
+		return "", fmt.Errorf("invalid workload file name %q", name)
+	}
+	return name, nil
 }
 
 // ---------------------------------------------------------------------------

@@ -210,10 +210,13 @@ export interface StroppyConfig {
   version: string;
   protocol?: Protocol;          // unset → default for the database kind (see KIND_PROTOCOLS)
   script: string;               // e.g. "tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx"
+  sql?: string;                  // optional second stroppy positional arg / RunConfig.sql
   duration: string;
   vus: number;
   pool_size?: number;
   scale_factor?: number;
+  env?: Record<string, string>;  // script-specific env overrides from probe metadata
+  files?: WorkloadFile[];        // run-scoped files materialized beside stroppy-config.json
   steps?: string[];             // step allowlist
   no_steps?: string[];          // step blocklist
   machine?: MachineSpec;        // stroppy runner machine spec
@@ -224,11 +227,21 @@ export interface StroppyConfig {
   workers?: number;
 }
 
+export interface WorkloadFile {
+  name: string;
+  kind?: "sql" | string;
+  content: string;
+}
+
 export interface ProbeRequest {
   script: string;
+  version?: string;
+  sql?: string;
   driver_type?: string;
   pool_size?: number;
   scale_factor?: number;
+  env?: Record<string, string>;
+  files?: WorkloadFile[];
 }
 
 export interface EnvDeclaration {
