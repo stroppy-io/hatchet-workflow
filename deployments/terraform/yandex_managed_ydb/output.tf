@@ -16,7 +16,7 @@ output "vm_ips" {
 output "ydb_endpoint" {
   value = local.is_serverless ? (
     length(yandex_ydb_database_serverless.this) > 0 ? yandex_ydb_database_serverless.this[0].ydb_api_endpoint : ""
-  ) : (
+    ) : (
     length(yandex_ydb_database_dedicated.this) > 0 ? yandex_ydb_database_dedicated.this[0].ydb_api_endpoint : ""
   )
 }
@@ -24,7 +24,7 @@ output "ydb_endpoint" {
 output "ydb_database_path" {
   value = local.is_serverless ? (
     length(yandex_ydb_database_serverless.this) > 0 ? yandex_ydb_database_serverless.this[0].database_path : ""
-  ) : (
+    ) : (
     length(yandex_ydb_database_dedicated.this) > 0 ? yandex_ydb_database_dedicated.this[0].database_path : ""
   )
 }
@@ -60,17 +60,19 @@ output "ydb_managed" {
       storage_type_id       = null
       throttling_rcu_limit  = var.managed.throttling_rcu_limit
     } : null
-  ) : (
+    ) : (
     length(yandex_ydb_database_dedicated.this) > 0 ? {
-      id                    = yandex_ydb_database_dedicated.this[0].id
-      name                  = yandex_ydb_database_dedicated.this[0].name
-      type                  = "dedicated"
-      folder_id             = yandex_ydb_database_dedicated.this[0].folder_id
-      location_id           = yandex_ydb_database_dedicated.this[0].location_id
-      database_path         = yandex_ydb_database_dedicated.this[0].database_path
-      ydb_api_endpoint      = yandex_ydb_database_dedicated.this[0].ydb_api_endpoint
-      ydb_full_endpoint     = yandex_ydb_database_dedicated.this[0].ydb_full_endpoint
-      document_api_endpoint = yandex_ydb_database_dedicated.this[0].document_api_endpoint
+      id                = yandex_ydb_database_dedicated.this[0].id
+      name              = yandex_ydb_database_dedicated.this[0].name
+      type              = "dedicated"
+      folder_id         = yandex_ydb_database_dedicated.this[0].folder_id
+      location_id       = yandex_ydb_database_dedicated.this[0].location_id
+      database_path     = yandex_ydb_database_dedicated.this[0].database_path
+      ydb_api_endpoint  = yandex_ydb_database_dedicated.this[0].ydb_api_endpoint
+      ydb_full_endpoint = yandex_ydb_database_dedicated.this[0].ydb_full_endpoint
+      # document_api_endpoint exists only on serverless YDB; dedicated
+      # does not expose Document API. Emit null for schema parity.
+      document_api_endpoint = null
       tls_enabled           = yandex_ydb_database_dedicated.this[0].tls_enabled
       status                = yandex_ydb_database_dedicated.this[0].status
       created_at            = yandex_ydb_database_dedicated.this[0].created_at
