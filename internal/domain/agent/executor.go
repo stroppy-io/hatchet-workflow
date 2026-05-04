@@ -1094,11 +1094,21 @@ func (e *Executor) installStroppy(ctx context.Context, cmd Command) error {
 		version = types.DefaultStroppySettings().Version
 	}
 
-	// For released versions the pre-installed image binary is acceptable.
+	// For released versions, accept the pre-installed image binary only if
+	// its version matches what the run requested. The agent image ships a
+	// pinned stroppy binary (e.g. v4.1.0); skipping install unconditionally
+	// makes the run silently use the stale binary, missing metrics that
+	// newer releases introduced (tx_count, tpcc_new_order_total, …).
 	// Commit-pinned requests must always reinstall to honour the exact SHA.
 	if !strings.HasPrefix(version, "commit:") {
 		if _, err := e.shell(ctx, "which stroppy"); err == nil {
-			return nil
+			out, vErr := e.shell(ctx, `stroppy version 2>&1 | head -1 | awk '{print $2}' | sed 's/^v//'`)
+			installed := strings.TrimSpace(out)
+			if vErr == nil && installed != "" && installed == strings.TrimPrefix(version, "v") {
+				return nil
+			}
+			// Version mismatch (or version probe failed) — fall through to reinstall.
+			e.emitLine(fmt.Sprintf("stroppy %q installed but run requested %q, reinstalling", installed, version))
 		}
 	}
 

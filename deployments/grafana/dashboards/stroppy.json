@@ -22,7 +22,10 @@
   "links": [],
   "panels": [
     {
-      "datasource": "VictoriaMetrics",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -36,29 +39,25 @@
                 "color": "green"
               },
               {
-                "color": "yellow",
-                "value": 50
-              },
-              {
                 "color": "red",
-                "value": 100
+                "value": 80
               }
             ]
           },
-          "unit": "short"
+          "unit": "ops"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
+        "w": 3,
         "x": 0,
         "y": 0
       },
       "id": 1,
       "options": {
         "colorMode": "background",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
         "percentChangeColorMode": "standard",
@@ -76,16 +75,26 @@
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "expr": "sum(${prefix}vus{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"})",
-          "legendFormat": "VUs",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__range])) / $__range_s",
+          "instant": true,
+          "legendFormat": "tx/s",
+          "range": false,
           "refId": "A"
         }
       ],
-      "title": "Active VUs",
+      "title": "Avg TPS",
       "type": "stat"
     },
     {
-      "datasource": "VictoriaMetrics",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -96,7 +105,11 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "blue"
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
           },
@@ -106,8 +119,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 4,
+        "w": 3,
+        "x": 3,
         "y": 0
       },
       "id": 2,
@@ -131,16 +144,26 @@
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "expr": "sum(${prefix}vus_max{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"})",
-          "legendFormat": "Max VUs",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__range]))",
+          "instant": true,
+          "legendFormat": "tx",
+          "range": false,
           "refId": "A"
         }
       ],
-      "title": "Max VUs",
+      "title": "Transactions",
       "type": "stat"
     },
     {
-      "datasource": "VictoriaMetrics",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -152,17 +175,21 @@
             "steps": [
               {
                 "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
           },
-          "unit": "short"
+          "unit": "ops"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 8,
+        "w": 3,
+        "x": 6,
         "y": 0
       },
       "id": 3,
@@ -186,24 +213,32 @@
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "expr": "sum(${prefix}iterations{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"})",
-          "legendFormat": "Iterations",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(${prefix}run_query_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__range])) / $__range_s",
+          "instant": true,
+          "legendFormat": "queries/s",
+          "range": false,
           "refId": "A"
         }
       ],
-      "title": "Total Iterations",
+      "title": "Avg QPS",
       "type": "stat"
     },
     {
-      "datasource": "VictoriaMetrics",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "mappings": [],
-          "max": 1,
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -211,23 +246,19 @@
                 "color": "green"
               },
               {
-                "color": "yellow",
-                "value": 0.01
-              },
-              {
                 "color": "red",
-                "value": 0.05
+                "value": 80
               }
             ]
           },
-          "unit": "percentunit"
+          "unit": "ms"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 12,
+        "w": 3,
+        "x": 9,
         "y": 0
       },
       "id": 4,
@@ -251,18 +282,26 @@
       "pluginVersion": "12.0.2",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "editorMode": "code",
-          "expr": "(\n  sum(\n    {__name__=\"${prefix}run_query_error_rate.total\", condition=\"nonzero\", service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}\n  ) or vector(0)\n)\n/\nsum(\n  {__name__=\"${prefix}run_query_error_rate.total\", service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}\n)",
-          "legendFormat": "Error rate",
-          "range": true,
+          "expr": "histogram_quantile(0.95, sum by (le) (increase(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__range])))",
+          "instant": true,
+          "legendFormat": "p95",
+          "range": false,
           "refId": "A"
         }
       ],
-      "title": "Query Error Rate",
+      "title": "Query p95",
       "type": "stat"
     },
     {
-      "datasource": "VictoriaMetrics",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -273,18 +312,22 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "blue"
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
           },
-          "unit": "bytes"
+          "unit": "ms"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 16,
+        "w": 3,
+        "x": 12,
         "y": 0
       },
       "id": 5,
@@ -308,16 +351,26 @@
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "expr": "sum(${prefix}data_received{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"})",
-          "legendFormat": "Received",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum by (le) (increase(${prefix}tx_total_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__range])))",
+          "instant": true,
+          "legendFormat": "p95",
+          "range": false,
           "refId": "A"
         }
       ],
-      "title": "Data Received",
+      "title": "Tx p95",
       "type": "stat"
     },
     {
-      "datasource": "VictoriaMetrics",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -328,18 +381,22 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "purple"
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
           },
-          "unit": "bytes"
+          "unit": "percentunit"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 20,
+        "w": 3,
+        "x": 15,
         "y": 0
       },
       "id": 6,
@@ -363,12 +420,157 @@
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "expr": "sum(${prefix}data_sent{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"})",
-          "legendFormat": "Sent",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(sum(increase({__name__=\"${prefix}tx_error_rate.total\", condition=\"nonzero\", service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__range])) or vector(0)) / clamp_min(sum(increase({__name__=\"${prefix}tx_error_rate.total\", service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__range])), 1e-9)",
+          "instant": true,
+          "legendFormat": "errors",
+          "range": false,
           "refId": "A"
         }
       ],
-      "title": "Data Sent",
+      "title": "Tx errors",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 18,
+        "y": 0
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(max_over_time(${prefix}insert_rows_total{service.name=~\"$job\", step=~\"$step\", table_name=~\"$table_name\"}[$__range]))",
+          "instant": true,
+          "legendFormat": "rows",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Rows inserted",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 21,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(${prefix}tpcc_new_order_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / $__range_s * 60",
+          "instant": true,
+          "legendFormat": "tpmC",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "tpmC",
       "type": "stat"
     },
     {
@@ -379,13 +581,16 @@
         "x": 0,
         "y": 4
       },
-      "id": 10,
+      "id": 9,
       "panels": [],
-      "title": "Virtual Users",
+      "title": "Runtime",
       "type": "row"
     },
     {
-      "datasource": "VictoriaMetrics",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -400,7 +605,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 15,
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -410,11 +615,11 @@
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 2,
-            "pointSize": 5,
+            "pointSize": 4,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -437,7 +642,7 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "ops"
         },
         "overrides": []
       },
@@ -447,10 +652,12 @@
         "x": 0,
         "y": 5
       },
-      "id": 11,
+      "id": 10,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+            "lastNotNull"
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -458,27 +665,42 @@
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "expr": "sum by (scenario) (${prefix}vus{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"})",
-          "legendFormat": "VUs \u2014 {{scenario}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval]))",
+          "legendFormat": "tx/s",
+          "range": true,
           "refId": "A"
         },
         {
-          "expr": "sum by (scenario) (${prefix}vus_max{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"})",
-          "legendFormat": "Max VUs \u2014 {{scenario}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(${prefix}run_query_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__rate_interval]))",
+          "legendFormat": "queries/s",
+          "range": true,
           "refId": "B"
         }
       ],
-      "title": "VUs over time",
+      "title": "Throughput",
       "type": "timeseries"
     },
     {
-      "datasource": "VictoriaMetrics",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -493,7 +715,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 15,
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -503,11 +725,826 @@
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 2,
-            "pointSize": 5,
+            "pointSize": 4,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(${prefix}tx_total_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval])))",
+          "legendFormat": "tx p50",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tx_total_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval])))",
+          "legendFormat": "tx p90",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(${prefix}tx_total_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval])))",
+          "legendFormat": "tx p99",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__rate_interval])))",
+          "legendFormat": "query p50",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__rate_interval])))",
+          "legendFormat": "query p90",
+          "range": true,
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__rate_interval])))",
+          "legendFormat": "query p99",
+          "range": true,
+          "refId": "F"
+        }
+      ],
+      "title": "Duration percentiles",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 12,
+      "panels": [],
+      "title": "Transactions",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 14
+      },
+      "id": 40,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "quantile_over_time(0.01, sum(rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval]))[$__range:])",
+          "instant": true,
+          "legendFormat": "p1",
+          "range": false,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "quantile_over_time(0.05, sum(rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval]))[$__range:])",
+          "instant": true,
+          "legendFormat": "p5",
+          "range": false,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "quantile_over_time(0.10, sum(rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval]))[$__range:])",
+          "instant": true,
+          "legendFormat": "p10",
+          "range": false,
+          "refId": "C"
+        }
+      ],
+      "title": "TPS floor percentiles",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 14
+      },
+      "id": 41,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "topk(10, quantile_over_time(0.01, sum by (tx_name) (rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__rate_interval]))[$__range:]))",
+          "instant": true,
+          "legendFormat": "{{tx_name}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "TPS p1 by transaction",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 14
+      },
+      "id": 42,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "topk(10, quantile_over_time(0.05, sum by (tx_name) (rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__rate_interval]))[$__range:]))",
+          "instant": true,
+          "legendFormat": "{{tx_name}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "TPS p5 by transaction",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 14
+      },
+      "id": 43,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "topk(10, quantile_over_time(0.10, sum by (tx_name) (rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__rate_interval]))[$__range:]))",
+          "instant": true,
+          "legendFormat": "{{tx_name}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "TPS p10 by transaction",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 22
+      },
+      "id": 13,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "topk(10, sum by (tx_name) (increase(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__range])) / $__range_s)",
+          "instant": true,
+          "legendFormat": "{{tx_name}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Avg TPS by transaction",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 22
+      },
+      "id": 14,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "topk(10, histogram_quantile(0.90, sum by (le, tx_name) (increase(${prefix}tx_total_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__range]))))",
+          "instant": true,
+          "legendFormat": "{{tx_name}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Tx p90 by transaction",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 22
+      },
+      "id": 15,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "topk(10, histogram_quantile(0.90, sum by (le, tx_name) (increase(${prefix}tx_queries_per_tx_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__range]))))",
+          "instant": true,
+          "legendFormat": "{{tx_name}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Queries per tx p90",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 30
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (tx_name) (rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__rate_interval]))",
+          "legendFormat": "{{tx_name}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Transaction mix over time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -538,12 +1575,14 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 5
+        "y": 30
       },
-      "id": 12,
+      "id": 17,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+            "lastNotNull"
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -551,18 +1590,24 @@
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "expr": "sum by (scenario) (rate(${prefix}iterations{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval]))",
-          "legendFormat": "iter/s \u2014 {{scenario}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (tx_action) (rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval]))",
+          "legendFormat": "{{tx_action}}",
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "Iterations per second",
+      "title": "Commit / rollback rate",
       "type": "timeseries"
     },
     {
@@ -571,15 +1616,241 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 13
+        "y": 38
       },
-      "id": 20,
+      "id": 18,
       "panels": [],
-      "title": "Iteration Duration",
+      "title": "Queries",
       "type": "row"
     },
     {
-      "datasource": "VictoriaMetrics",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 39
+      },
+      "id": 19,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "topk(20, sum by (name) (increase(${prefix}run_query_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", name=~\"$query_name\", name!=\"\", type=~\"$query_type\"}[$__range])) / $__range_s)",
+          "instant": true,
+          "legendFormat": "{{name}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Avg QPS by query",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 39
+      },
+      "id": 20,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "topk(20, histogram_quantile(0.95, sum by (le, name) (increase(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", name=~\"$query_name\", name!=\"\", type=~\"$query_type\"}[$__range]))))",
+          "instant": true,
+          "legendFormat": "{{name}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Query p95 by name",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 39
+      },
+      "id": 21,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "topk(20, histogram_quantile(0.99, sum by (le, name) (increase(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", name=~\"$query_name\", name!=\"\", type=~\"$query_type\"}[$__range]))))",
+          "instant": true,
+          "legendFormat": "{{name}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Top slow queries p99",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -594,7 +1865,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 8,
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -604,11 +1875,110 @@
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 2,
-            "pointSize": 5,
+            "pointSize": 4,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 47
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (type) (rate(${prefix}run_query_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", type!=\"\"}[$__rate_interval]))",
+          "legendFormat": "{{type}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Query rate by type",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -637,14 +2007,16 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 16,
-        "x": 0,
-        "y": 14
+        "w": 12,
+        "x": 12,
+        "y": 47
       },
-      "id": 21,
+      "id": 23,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+            "lastNotNull"
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -652,32 +2024,220 @@
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum by (le, scenario) (rate(${prefix}iteration_duration_bucket{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval])))",
-          "legendFormat": "p50 \u2014 {{scenario}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.90, sum by (le, type) (rate(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", type!=\"\"}[$__rate_interval])))",
+          "legendFormat": "p90 {{type}}",
+          "range": true,
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.90, sum by (le, scenario) (rate(${prefix}iteration_duration_bucket{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval])))",
-          "legendFormat": "p90 \u2014 {{scenario}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.99, sum by (le, type) (rate(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", type!=\"\"}[$__rate_interval])))",
+          "legendFormat": "p99 {{type}}",
+          "range": true,
           "refId": "B"
-        },
-        {
-          "expr": "histogram_quantile(0.99, sum by (le, scenario) (rate(${prefix}iteration_duration_bucket{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval])))",
-          "legendFormat": "p99 \u2014 {{scenario}}",
-          "refId": "C"
         }
       ],
-      "title": "Iteration duration percentiles",
+      "title": "Query duration by type",
       "type": "timeseries"
     },
     {
-      "datasource": "VictoriaMetrics",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 55
+      },
+      "id": 24,
+      "panels": [],
+      "title": "Load",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 56
+      },
+      "id": 25,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sort_desc(sum by (table_name) (max_over_time(${prefix}insert_rows_total{service.name=~\"$job\"}[$__range])))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{table_name}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Rows inserted by table",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "Value": 1,
+              "table_name": 0
+            },
+            "renameByName": {
+              "Value": "rows"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 56
+      },
+      "id": 26,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_rows_per_second_bucket{service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])))",
+          "instant": true,
+          "legendFormat": "{{table_name}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Insert rows/s p90",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -704,15 +2264,22 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 14
+        "y": 56
       },
-      "id": 22,
+      "id": 27,
       "options": {
-        "colorMode": "value",
-        "graphMode": "sparkline",
-        "justifyMode": "auto",
-        "orientation": "vertical",
-        "percentChangeColorMode": "standard",
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -720,46 +2287,109 @@
           "fields": "",
           "values": false
         },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
       },
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(${prefix}iteration_duration_bucket{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval])))",
-          "legendFormat": "p50",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_duration_bucket{service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])))",
+          "instant": true,
+          "legendFormat": "{{table_name}}",
+          "range": false,
           "refId": "A"
-        },
-        {
-          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}iteration_duration_bucket{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval])))",
-          "legendFormat": "p90",
-          "refId": "B"
-        },
-        {
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(${prefix}iteration_duration_bucket{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval])))",
-          "legendFormat": "p99",
-          "refId": "C"
         }
       ],
-      "title": "Iteration duration p50 / p90 / p99",
-      "type": "stat"
+      "title": "Insert duration p90",
+      "type": "bargauge"
     },
     {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 22
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
       },
-      "id": 30,
-      "panels": [],
-      "title": "Query Performance",
-      "type": "row"
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 64
+      },
+      "id": 28,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(sum by (table_name) (max_over_time({__name__=\"${prefix}insert_error_rate.total\", condition=\"nonzero\", service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])) or sum by (table_name) (max_over_time({__name__=\"${prefix}insert_error_rate.total\", service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])) * 0) / clamp_min(sum by (table_name) (max_over_time({__name__=\"${prefix}insert_error_rate.total\", service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])), 1e-9)",
+          "instant": true,
+          "legendFormat": "{{table_name}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Insert error rate",
+      "type": "bargauge"
     },
     {
-      "datasource": "VictoriaMetrics",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -774,7 +2404,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 15,
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -784,11 +2414,11 @@
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 2,
-            "pointSize": 5,
+            "pointSize": 4,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -811,20 +2441,22 @@
               }
             ]
           },
-          "unit": "reqps"
+          "unit": "ops"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
         "w": 8,
-        "x": 0,
-        "y": 23
+        "x": 8,
+        "y": 64
       },
-      "id": 31,
+      "id": 29,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+            "lastNotNull"
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -832,22 +2464,31 @@
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "expr": "sum by (scenario) (rate(${prefix}run_query_count{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval]))",
-          "legendFormat": "queries/s \u2014 {{scenario}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_rows_per_second_bucket{service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])))",
+          "legendFormat": "p90 {{table_name}}",
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "Query rate (req/s)",
+      "title": "Insert rows/s by table",
       "type": "timeseries"
     },
     {
-      "datasource": "VictoriaMetrics",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -862,7 +2503,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 8,
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -872,11 +2513,11 @@
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 2,
-            "pointSize": 5,
+            "pointSize": 4,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -905,14 +2546,16 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 10,
-        "x": 8,
-        "y": 23
+        "w": 8,
+        "x": 16,
+        "y": 64
       },
-      "id": 32,
+      "id": 30,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+            "lastNotNull"
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -920,37 +2563,48 @@
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum by (le, scenario) (rate(${prefix}run_query_duration_bucket{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval])))",
-          "legendFormat": "p50 \u2014 {{scenario}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_duration_bucket{service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])))",
+          "legendFormat": "p90 {{table_name}}",
+          "range": true,
           "refId": "A"
-        },
-        {
-          "expr": "histogram_quantile(0.90, sum by (le, scenario) (rate(${prefix}run_query_duration_bucket{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval])))",
-          "legendFormat": "p90 \u2014 {{scenario}}",
-          "refId": "B"
-        },
-        {
-          "expr": "histogram_quantile(0.99, sum by (le, scenario) (rate(${prefix}run_query_duration_bucket{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval])))",
-          "legendFormat": "p99 \u2014 {{scenario}}",
-          "refId": "C"
         }
       ],
-      "title": "Query duration percentiles",
+      "title": "Insert duration by table",
       "type": "timeseries"
     },
     {
-      "datasource": "VictoriaMetrics",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 72
+      },
+      "id": 31,
+      "panels": [],
+      "title": "TPC-C",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
-            "fixedColor": "red",
-            "mode": "fixed"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -961,7 +2615,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 20,
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -971,11 +2625,11 @@
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 2,
-            "pointSize": 5,
+            "pointSize": 4,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -993,12 +2647,118 @@
                 "color": "green"
               },
               {
-                "color": "yellow",
-                "value": 0.01
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 73
+      },
+      "id": 32,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(${prefix}tpcc_new_order_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval]))",
+          "legendFormat": "new_order",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(${prefix}tpcc_payment_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval]))",
+          "legendFormat": "payment",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(${prefix}tpcc_order_status_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval]))",
+          "legendFormat": "order_status",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(${prefix}tpcc_delivery_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval]))",
+          "legendFormat": "delivery",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(${prefix}tpcc_stock_level_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval]))",
+          "legendFormat": "stock_level",
+          "range": true,
+          "refId": "E"
+        }
+      ],
+      "title": "TPC-C transaction rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
               },
               {
                 "color": "red",
-                "value": 0.05
+                "value": 80
               }
             ]
           },
@@ -1008,52 +2768,106 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
-        "x": 18,
-        "y": 23
+        "w": 12,
+        "x": 12,
+        "y": 73
       },
       "id": 33,
       "options": {
+        "displayMode": "gradient",
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
       },
       "pluginVersion": "12.0.2",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "editorMode": "code",
-          "expr": "(\n  sum by (scenario) (\n    rate({__name__=\"${prefix}run_query_error_rate.total\", condition=\"nonzero\", service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval])\n  )\n  or\n  sum by (scenario) (\n    rate({__name__=\"${prefix}run_query_error_rate.total\", service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval])\n  ) * 0\n)\n/\nsum by (scenario) (\n  rate({__name__=\"${prefix}run_query_error_rate.total\", service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval])\n)",
-          "legendFormat": "error rate \u2014 {{scenario}}",
-          "range": true,
+          "expr": "sum(increase(${prefix}tpcc_new_order_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase({__name__=~\"${prefix}tpcc_(new_order|payment|order_status|delivery|stock_level)_total\", service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "instant": true,
+          "legendFormat": "new_order",
+          "range": false,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(${prefix}tpcc_payment_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase({__name__=~\"${prefix}tpcc_(new_order|payment|order_status|delivery|stock_level)_total\", service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "instant": true,
+          "legendFormat": "payment",
+          "range": false,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(${prefix}tpcc_order_status_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase({__name__=~\"${prefix}tpcc_(new_order|payment|order_status|delivery|stock_level)_total\", service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "instant": true,
+          "legendFormat": "order_status",
+          "range": false,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(${prefix}tpcc_delivery_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase({__name__=~\"${prefix}tpcc_(new_order|payment|order_status|delivery|stock_level)_total\", service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "instant": true,
+          "legendFormat": "delivery",
+          "range": false,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(${prefix}tpcc_stock_level_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase({__name__=~\"${prefix}tpcc_(new_order|payment|order_status|delivery|stock_level)_total\", service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "instant": true,
+          "legendFormat": "stock_level",
+          "range": false,
+          "refId": "E"
         }
       ],
-      "title": "Query error rate",
-      "type": "timeseries"
+      "title": "TPC-C mix",
+      "type": "bargauge"
     },
     {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 31
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
       },
-      "id": 40,
-      "panels": [],
-      "title": "Network",
-      "type": "row"
-    },
-    {
-      "datasource": "VictoriaMetrics",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1068,7 +2882,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 15,
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -1078,11 +2892,453 @@
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 2,
-            "pointSize": 5,
+            "pointSize": 4,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 81
+      },
+      "id": 34,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tpcc_new_order_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval])))",
+          "legendFormat": "new_order",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tpcc_payment_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval])))",
+          "legendFormat": "payment",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tpcc_order_status_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval])))",
+          "legendFormat": "order_status",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tpcc_delivery_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval])))",
+          "legendFormat": "delivery",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tpcc_stock_level_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval])))",
+          "legendFormat": "stock_level",
+          "range": true,
+          "refId": "E"
+        }
+      ],
+      "title": "TPC-C duration p90",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 81
+      },
+      "id": 35,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(${prefix}tpcc_rollback_done{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_rollback_decided{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "instant": true,
+          "legendFormat": "rollback done",
+          "range": false,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(${prefix}tpcc_remote_line_remote{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_remote_line_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "instant": true,
+          "legendFormat": "remote lines",
+          "range": false,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(${prefix}tpcc_payment_remote{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_payment_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "instant": true,
+          "legendFormat": "payment remote",
+          "range": false,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(${prefix}tpcc_payment_byname{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_payment_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "instant": true,
+          "legendFormat": "payment by-name",
+          "range": false,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(${prefix}tpcc_payment_bc{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_payment_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "instant": true,
+          "legendFormat": "payment BC",
+          "range": false,
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(${prefix}tpcc_order_status_byname{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_order_status_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "instant": true,
+          "legendFormat": "order-status by-name",
+          "range": false,
+          "refId": "F"
+        }
+      ],
+      "title": "TPC-C compliance ratios",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 89
+      },
+      "id": 36,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(${prefix}tpcc_retry_attempts{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range]))",
+          "instant": true,
+          "legendFormat": "retries",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Serialization retries",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 93
+      },
+      "id": 37,
+      "panels": [],
+      "title": "Network",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 94
+      },
+      "id": 38,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(max_over_time(${prefix}data_received{service.name=~\"$job\"}[$__range]))",
+          "instant": true,
+          "legendFormat": "received",
+          "range": false,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(max_over_time(${prefix}data_sent{service.name=~\"$job\"}[$__range]))",
+          "instant": true,
+          "legendFormat": "sent",
+          "range": false,
+          "refId": "B"
+        }
+      ],
+      "title": "Network accumulated",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1107,49 +3363,20 @@
           },
           "unit": "Bps"
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Sent"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "purple",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Received"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 32
+        "w": 16,
+        "x": 8,
+        "y": 94
       },
-      "id": 41,
+      "id": 39,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+            "lastNotNull"
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -1157,19 +3384,31 @@
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "expr": "sum(rate(${prefix}data_received{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval]))",
-          "legendFormat": "Received",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(${prefix}data_received{service.name=~\"$job\"}[$__rate_interval]))",
+          "legendFormat": "received",
+          "range": true,
           "refId": "A"
         },
         {
-          "expr": "sum(rate(${prefix}data_sent{service_name=~\"$service_name\", scenario=~\"$scenario\", group=~\"$group\", service_version=~\"$service_version\"}[$__rate_interval]))",
-          "legendFormat": "Sent",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(${prefix}data_sent{service.name=~\"$job\"}[$__rate_interval]))",
+          "legendFormat": "sent",
+          "range": true,
           "refId": "B"
         }
       ],
@@ -1190,19 +3429,33 @@
     "list": [
       {
         "current": {
-          "text": "",
-          "value": ""
+          "text": "VictoriaMetrics",
+          "value": "victoriametrics"
+        },
+        "includeAll": false,
+        "label": "Datasource",
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "text": "stroppy_k6_tpcc_",
+          "value": "stroppy_k6_tpcc_"
         },
         "label": "Metric prefix",
         "name": "prefix",
         "options": [
           {
             "selected": true,
-            "text": "night_",
-            "value": "night_"
+            "text": "stroppy_k6_tpcc_",
+            "value": "stroppy_k6_tpcc_"
           }
         ],
-        "query": "",
+        "query": "stroppy_k6_tpcc_",
         "type": "textbox"
       },
       {
@@ -1211,13 +3464,16 @@
           "text": "All",
           "value": "$__all"
         },
-        "datasource": "VictoriaMetrics",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
         "includeAll": true,
-        "label": "service.name",
+        "label": "service",
         "multi": true,
-        "name": "service_name",
+        "name": "job",
         "options": [],
-        "query": "label_values({__name__=~\"${prefix}.*\"}, service_name)",
+        "query": "label_values({__name__=~\"${prefix}.*\"}, service.name)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
@@ -1228,13 +3484,16 @@
           "text": "All",
           "value": "$__all"
         },
-        "datasource": "VictoriaMetrics",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
         "includeAll": true,
         "label": "scenario",
         "multi": true,
         "name": "scenario",
         "options": [],
-        "query": "label_values({__name__=~\"${prefix}.*\"}, scenario)",
+        "query": "label_values({__name__=~\"${prefix}.*\", service.name=~\"$job\"}, scenario)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
@@ -1245,13 +3504,16 @@
           "text": "All",
           "value": "$__all"
         },
-        "datasource": "VictoriaMetrics",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
         "includeAll": true,
-        "label": "group",
+        "label": "step",
         "multi": true,
-        "name": "group",
+        "name": "step",
         "options": [],
-        "query": "label_values({__name__=~\"${prefix}.*\"}, group)",
+        "query": "label_values({__name__=~\"${prefix}.*\", service.name=~\"$job\"}, step)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
@@ -1262,13 +3524,116 @@
           "text": "All",
           "value": "$__all"
         },
-        "datasource": "VictoriaMetrics",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
         "includeAll": true,
-        "label": "service.version",
+        "label": "tx.name",
         "multi": true,
-        "name": "service_version",
+        "name": "tx_name",
         "options": [],
-        "query": "label_values({__name__=~\"${prefix}.*\"}, service_version)",
+        "query": "label_values({__name__=\"${prefix}tx_count\", service.name=~\"$job\", step=~\"$step\"}, tx_name)",
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "includeAll": true,
+        "label": "tx.action",
+        "multi": true,
+        "name": "tx_action",
+        "options": [],
+        "query": "label_values({__name__=\"${prefix}tx_count\", service.name=~\"$job\", step=~\"$step\"}, tx_action)",
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "includeAll": true,
+        "label": "tx.isolation",
+        "multi": true,
+        "name": "tx_isolation",
+        "options": [],
+        "query": "label_values({__name__=\"${prefix}tx_count\", service.name=~\"$job\", step=~\"$step\"}, tx_isolation)",
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "includeAll": true,
+        "label": "query.name",
+        "multi": true,
+        "name": "query_name",
+        "options": [],
+        "query": "label_values({__name__=\"${prefix}run_query_count\", service.name=~\"$job\", step=~\"$step\"}, name)",
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "includeAll": true,
+        "label": "query.type",
+        "multi": true,
+        "name": "query_type",
+        "options": [],
+        "query": "label_values({__name__=\"${prefix}run_query_count\", service.name=~\"$job\", step=~\"$step\"}, type)",
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "includeAll": true,
+        "label": "table.name",
+        "multi": true,
+        "name": "table_name",
+        "options": [],
+        "query": "label_values({__name__=\"${prefix}insert_rows_total\", service.name=~\"$job\", step=~\"$step\"}, table_name)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
@@ -1276,12 +3641,12 @@
     ]
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "Stroppy \u2014 DB Stress Testing",
   "uid": "stroppy-metrics-v1",
-  "version": 9
+  "version": 1
 }
