@@ -55,6 +55,14 @@ func (t *monitorConfigTask) Execute(nc *dag.NodeContext) error {
 		metricsEndpoint = fmt.Sprintf("%s/insert/%d/prometheus/api/v1/write", t.monitoringURL, t.accountID)
 	}
 
+	// VictoriaLogs ingest endpoint. Vmauth routes /insert/jsonline → vlinsert
+	// (see deployments/vmauth/config.yml). Stream fields key the log stream;
+	// _msg_field tells VL which JSON key holds the actual message body.
+	logsEndpoint := t.monitor.LogsEndpoint
+	if logsEndpoint == "" && t.monitoringURL != "" {
+		logsEndpoint = t.monitoringURL + "/insert/jsonline?_stream_fields=run_id,machine_id,role,unit&_msg_field=message&_time_field=timestamp"
+	}
+
 	// Scrape targets -- use InternalHost (container names) for container-to-container scraping.
 	var scrapeHosts []string
 	for _, tgt := range allTargets {
@@ -67,11 +75,12 @@ func (t *monitorConfigTask) Execute(nc *dag.NodeContext) error {
 
 	cfg := agent.MonitorSetupConfig{
 		MetricsEndpoint: metricsEndpoint,
-		LogsEndpoint:    t.monitor.LogsEndpoint,
+		LogsEndpoint:    logsEndpoint,
 		ScrapeTargets:   scrapeHosts,
 		RunID:           t.runID,
 		DatabaseKind:    string(t.dbKind),
 		BearerToken:     t.monitoringToken,
+		AccountID:       t.accountID,
 		IsYDBCombined:   t.ydbCombined,
 	}
 	return t.client.SendAll(nc, allTargets, agent.Command{

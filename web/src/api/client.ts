@@ -415,7 +415,7 @@ export async function getRunMetrics(
 
 export async function getRunLogs(
   runID: string,
-  opts?: { end?: string; start?: string; limit?: number; desc?: boolean; search?: string; actions?: string[] },
+  opts?: { end?: string; start?: string; limit?: number; desc?: boolean; search?: string; actions?: string[]; roles?: string[]; units?: string[]; machineIDs?: string[] },
 ): Promise<string[]> {
   const headers: Record<string, string> = {};
   if (_accessToken) headers["Authorization"] = `Bearer ${_accessToken}`;
@@ -426,6 +426,9 @@ export async function getRunLogs(
   if (opts?.desc) params.set("dir", "desc");
   if (opts?.search) params.set("search", opts.search);
   if (opts?.actions) for (const a of opts.actions) params.append("action", a);
+  if (opts?.roles) for (const r of opts.roles) params.append("role", r);
+  if (opts?.units) for (const u of opts.units) params.append("unit", u);
+  if (opts?.machineIDs) for (const m of opts.machineIDs) params.append("machine_id", m);
   params.set("limit", String(opts?.limit ?? 500));
   const url = `${API_BASE}/run/${runID}/logs?${params.toString()}`;
 

@@ -1243,6 +1243,48 @@ func (s *Server) runLogs(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Filter by role (e.g. database, ydb-storage, stroppy, proxy) — vector
+	// log events carry `role`; executor events do not, so a role filter
+	// scopes the result to vector-shipped DB stdout.
+	if roles := r.URL.Query()["role"]; len(roles) > 0 {
+		parts := make([]string, len(roles))
+		for i, v := range roles {
+			parts[i] = fmt.Sprintf(`role:"%s"`, strings.ReplaceAll(v, `"`, `\"`))
+		}
+		if len(parts) == 1 {
+			query += " " + parts[0]
+		} else {
+			query += " (" + strings.Join(parts, " OR ") + ")"
+		}
+	}
+
+	// Filter by systemd unit (postgresql.service, mysql.service,
+	// ydbd-storage.service, …) for narrowing DB logs to one engine.
+	if units := r.URL.Query()["unit"]; len(units) > 0 {
+		parts := make([]string, len(units))
+		for i, v := range units {
+			parts[i] = fmt.Sprintf(`unit:"%s"`, strings.ReplaceAll(v, `"`, `\"`))
+		}
+		if len(parts) == 1 {
+			query += " " + parts[0]
+		} else {
+			query += " (" + strings.Join(parts, " OR ") + ")"
+		}
+	}
+
+	// Filter by machine_id — useful when one VM out of N is misbehaving.
+	if mids := r.URL.Query()["machine_id"]; len(mids) > 0 {
+		parts := make([]string, len(mids))
+		for i, v := range mids {
+			parts[i] = fmt.Sprintf(`machine_id:"%s"`, strings.ReplaceAll(v, `"`, `\"`))
+		}
+		if len(parts) == 1 {
+			query += " " + parts[0]
+		} else {
+			query += " (" + strings.Join(parts, " OR ") + ")"
+		}
+	}
+
 	// Sort direction: "desc" returns newest first (for chat-like UI), default is "asc".
 	dir := r.URL.Query().Get("dir")
 	if dir == "desc" {
