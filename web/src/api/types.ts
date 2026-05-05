@@ -212,9 +212,14 @@ export interface StroppyConfig {
   script: string;               // e.g. "tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx"
   sql?: string;                  // optional second stroppy positional arg / RunConfig.sql
   duration: string;
+  k6_mode?: "duration" | "iterations";
+  iterations?: number;
+  quiet?: boolean;
+  no_thresholds?: boolean;
   vus: number;
   pool_size?: number;
   scale_factor?: number;
+  default_insert_method?: string;
   env?: Record<string, string>;  // script-specific env overrides from probe metadata
   files?: WorkloadFile[];        // run-scoped files materialized beside stroppy-config.json
   steps?: string[];             // step allowlist
@@ -242,6 +247,7 @@ export interface ProbeRequest {
   scale_factor?: number;
   env?: Record<string, string>;
   files?: WorkloadFile[];
+  include_human?: boolean;
 }
 
 export interface EnvDeclaration {
@@ -255,6 +261,8 @@ export interface ProbeResponse {
   steps?: string[];
   sql_sections?: { name: string; queries?: { name: string }[] }[];
   driver_setups?: { index: number; defaults: Record<string, unknown> }[];
+  human?: string;
+  human_error?: string;
 }
 
 export interface NetworkConfig {

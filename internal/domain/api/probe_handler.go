@@ -20,14 +20,15 @@ import (
 
 // probeRequest is the JSON body for POST /api/v1/probe.
 type probeRequest struct {
-	Version     string               `json:"version,omitempty"`
-	Script      string               `json:"script"`                // e.g. "tpcc/procs", "tpcb/tx"
-	SQL         string               `json:"sql,omitempty"`         // optional second SQL argument
-	DriverType  string               `json:"driver_type,omitempty"` // e.g. "postgres", "mysql", "picodata"
-	PoolSize    int                  `json:"pool_size,omitempty"`
-	ScaleFactor int                  `json:"scale_factor,omitempty"`
-	Env         map[string]string    `json:"env,omitempty"`
-	Files       []types.WorkloadFile `json:"files,omitempty"`
+	Version      string               `json:"version,omitempty"`
+	Script       string               `json:"script"`                // e.g. "tpcc/procs", "tpcb/tx"
+	SQL          string               `json:"sql,omitempty"`         // optional second SQL argument
+	DriverType   string               `json:"driver_type,omitempty"` // e.g. "postgres", "mysql", "picodata"
+	PoolSize     int                  `json:"pool_size,omitempty"`
+	ScaleFactor  int                  `json:"scale_factor,omitempty"`
+	Env          map[string]string    `json:"env,omitempty"`
+	Files        []types.WorkloadFile `json:"files,omitempty"`
+	IncludeHuman bool                 `json:"include_human,omitempty"`
 }
 
 // stroppyProbe handles POST /api/v1/probe.
@@ -54,12 +55,35 @@ func (s *Server) stroppyProbe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.IncludeHuman {
+		human, humanStderr, humanErr := s.executeStroppyProbeFormat(r.Context(), req, "human")
+		var payload map[string]any
+		if err := json.Unmarshal(stdout, &payload); err == nil {
+			if humanErr != nil {
+				text := strings.TrimSpace(humanStderr)
+				if text == "" {
+					text = humanErr.Error()
+				}
+				payload["human"] = text
+				payload["human_error"] = humanErr.Error()
+			} else {
+				payload["human"] = string(human)
+			}
+			writeJSON(w, http.StatusOK, payload)
+			return
+		}
+	}
+
 	// Return probe JSON output directly (stdout only, no log noise).
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(stdout)
 }
 
 func (s *Server) executeStroppyProbe(ctx context.Context, req probeRequest) ([]byte, string, error) {
+	return s.executeStroppyProbeFormat(ctx, req, "json")
+}
+
+func (s *Server) executeStroppyProbeFormat(ctx context.Context, req probeRequest, outputFormat string) ([]byte, string, error) {
 	script := req.Script
 	rc := &stroppypb.RunConfig{
 		Version: "1",
@@ -145,8 +169,12 @@ func (s *Server) executeStroppyProbe(ctx context.Context, req probeRequest) ([]b
 		return nil, "", err
 	}
 
-	// Run stroppy probe — capture stdout (JSON) separately from stderr (logs).
-	cmd := exec.CommandContext(ctx, binPath, "probe", "-f", configPath, "-o", "json")
+	// Run stroppy probe — capture stdout separately from stderr (logs).
+	args := []string{"probe", "-f", configPath}
+	if outputFormat != "" {
+		args = append(args, "-o", outputFormat)
+	}
+	cmd := exec.CommandContext(ctx, binPath, args...)
 	cmd.Dir = tmpDir
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout

@@ -91,6 +91,14 @@ func ValidateConfig(cfg types.RunConfig) error {
 	if cfg.Stroppy.VUs < 0 {
 		return fmt.Errorf("vus must be >= 0")
 	}
+	if cfg.Stroppy.Iterations < 0 {
+		return fmt.Errorf("iterations must be >= 0")
+	}
+	switch cfg.Stroppy.K6Mode {
+	case "", "duration", "iterations":
+	default:
+		return fmt.Errorf("k6_mode must be either duration or iterations")
+	}
 	if cfg.Stroppy.PoolSize < 0 {
 		return fmt.Errorf("pool_size must be >= 0")
 	}

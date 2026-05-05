@@ -54,6 +54,8 @@ import { NumericSlider, DurationSlider, SliderField, CPU_STEPS, ramSteps, DiskTy
 
 const DB_KINDS = ALL_DB_KINDS;
 const PROVIDERS: Provider[] = ["docker", "yandex"];
+type K6Mode = "duration" | "iterations";
+const DEFAULT_INSERT_METHODS = ["native", "plain_bulk", "plain_query"] as const;
 // SCRIPT_META is a label/description lookup for known stroppy scripts.
 // SCRIPT_COMPAT (in api/types.ts) is the source of truth for which scripts
 // run on which (kind, protocol); this map only adds presentation. Anything
@@ -157,9 +159,14 @@ export function NewRun() {
   );
   const [script, setScript] = useState(rcS?.script || rcS?.workload || "tpcc/procs");
   const [sql, setSql] = useState(rcS?.sql || "");
-  const [stroppyEnv, setStroppyEnv] = useState<Record<string, string>>(rcS?.env || {});
+  const [stroppyEnv, setStroppyEnv] = useState<Record<string, string>>({ STROPPY_ERROR_MODE: "", ...(rcS?.env || {}) });
   const [workloadFiles, setWorkloadFiles] = useState<WorkloadFile[]>(rcS?.files || []);
   const [duration, setDuration] = useState(rcS?.duration || "5m");
+  const [k6Mode, setK6Mode] = useState<K6Mode>((rcS?.k6_mode as K6Mode) || (rcS?.iterations ? "iterations" : "duration"));
+  const [iterations, setIterations] = useState(rcS?.iterations || 1);
+  const [quiet, setQuiet] = useState(rcS?.quiet ?? true);
+  const [noThresholds, setNoThresholds] = useState(rcS?.no_thresholds || false);
+  const [defaultInsertMethod, setDefaultInsertMethod] = useState(rcS?.default_insert_method || "native");
   // TPC-C-tuned defaults: scale 500 warehouses, 300 VUs, 200-conn pool. The
   // workload is OLTP-heavy enough that the smaller previous defaults
   // (10/100/1) produced runs that finished before any meaningful state was
@@ -288,9 +295,14 @@ export function NewRun() {
         script,
         ...(sql.trim() ? { sql: sql.trim() } : {}),
         duration,
+        k6_mode: k6Mode,
+        ...(k6Mode === "iterations" ? { iterations } : {}),
+        quiet,
+        no_thresholds: noThresholds,
         vus,
         pool_size: poolSize,
         scale_factor: scaleFactor,
+        default_insert_method: defaultInsertMethod,
         ...(Object.keys(stroppyEnv).length > 0 ? { env: stroppyEnv } : {}),
         ...(workloadFiles.length > 0 ? { files: workloadFiles } : {}),
         ...(selectedSteps.length > 0 ? { steps: selectedSteps } : {}),
@@ -304,7 +316,7 @@ export function NewRun() {
       cfg.platform_id = platformId;
     }
     return cfg;
-  }, [kind, protocol, selectedPresetId, provider, platformId, version, script, sql, duration, vus, poolSize, scaleFactor, packageId, stroppyEnv, workloadFiles, selectedSteps, noSteps, stroppyCpus, stroppyMemory, stroppyDisk, stroppyDiskType, stroppyVersion]);
+  }, [kind, protocol, selectedPresetId, provider, platformId, version, script, sql, duration, k6Mode, iterations, quiet, noThresholds, vus, poolSize, scaleFactor, defaultInsertMethod, packageId, stroppyEnv, workloadFiles, selectedSteps, noSteps, stroppyCpus, stroppyMemory, stroppyDisk, stroppyDiskType, stroppyVersion]);
 
   const configJSON = useMemo(() => JSON.stringify(redactRunConfigForDisplay(config), null, 2), [config]);
 
@@ -374,7 +386,8 @@ export function NewRun() {
   }, [step, config, stroppyConfigUserEdited]);
 
   const handleSubmit = useCallback(async () => {
-    if (!config.stroppy.duration.trim()) { setError("Duration is required"); return; }
+    if (config.stroppy.k6_mode !== "iterations" && !config.stroppy.duration.trim()) { setError("Duration is required"); return; }
+    if (config.stroppy.k6_mode === "iterations" && (config.stroppy.iterations || 0) < 1) { setError("Iterations must be at least 1"); return; }
     setSubmitting(true); setError(null);
     try {
       // The review-step textarea is the source of truth for the database config.
@@ -487,6 +500,11 @@ export function NewRun() {
               stroppyEnv={stroppyEnv} setStroppyEnv={setStroppyEnv}
               workloadFiles={workloadFiles} setWorkloadFiles={setWorkloadFiles}
               duration={duration} setDuration={setDuration}
+              k6Mode={k6Mode} setK6Mode={setK6Mode}
+              iterations={iterations} setIterations={setIterations}
+              quiet={quiet} setQuiet={setQuiet}
+              noThresholds={noThresholds} setNoThresholds={setNoThresholds}
+              defaultInsertMethod={defaultInsertMethod} setDefaultInsertMethod={setDefaultInsertMethod}
               scaleFactor={scaleFactor} setScaleFactor={setScaleFactor}
               vus={vus} setVus={setVus}
               poolSize={poolSize} setPoolSize={setPoolSize}
@@ -576,7 +594,7 @@ export function NewRun() {
               )}
               <SummaryRow label="Script" value={script} />
               {sql && <SummaryRow label="SQL" value={sql} />}
-              <SummaryRow label="Duration" value={duration} />
+              <SummaryRow label={k6Mode === "iterations" ? "Iterations" : "Duration"} value={k6Mode === "iterations" ? String(iterations) : duration} />
               <SummaryRow label="VUs" value={String(vus)} />
               <SummaryRow label="Pool" value={String(poolSize)} />
               {scaleFactor > 1 && <SummaryRow label="Scale" value={String(scaleFactor)} />}
@@ -987,6 +1005,11 @@ function StepStroppy({
   stroppyEnv, setStroppyEnv,
   workloadFiles, setWorkloadFiles,
   duration, setDuration,
+  k6Mode, setK6Mode,
+  iterations, setIterations,
+  quiet, setQuiet,
+  noThresholds, setNoThresholds,
+  defaultInsertMethod, setDefaultInsertMethod,
   scaleFactor, setScaleFactor,
   vus, setVus,
   poolSize, setPoolSize,
@@ -1020,6 +1043,11 @@ function StepStroppy({
   stroppyEnv: Record<string, string>; setStroppyEnv: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   workloadFiles: WorkloadFile[]; setWorkloadFiles: React.Dispatch<React.SetStateAction<WorkloadFile[]>>;
   duration: string; setDuration: (v: string) => void;
+  k6Mode: K6Mode; setK6Mode: (v: K6Mode) => void;
+  iterations: number; setIterations: (v: number) => void;
+  quiet: boolean; setQuiet: React.Dispatch<React.SetStateAction<boolean>>;
+  noThresholds: boolean; setNoThresholds: React.Dispatch<React.SetStateAction<boolean>>;
+  defaultInsertMethod: string; setDefaultInsertMethod: (v: string) => void;
   scaleFactor: number; setScaleFactor: (v: number) => void;
   vus: number; setVus: (v: number) => void;
   poolSize: number; setPoolSize: (v: number) => void;
@@ -1050,6 +1078,11 @@ function StepStroppy({
 }) {
   const [probeLoading, setProbeLoading] = useState(false);
   const [probeError, setProbeError] = useState<string | null>(null);
+  const [probeExpanded, setProbeExpanded] = useState(false);
+  const [loadWorkersLinked, setLoadWorkersLinked] = useState(() => {
+    const current = stroppyEnv.LOAD_WORKERS;
+    return current === undefined || current === "" || current === String(stroppyCpus);
+  });
 
   // Probe on script change to get steps/env.
   useEffect(() => {
@@ -1070,6 +1103,7 @@ function StepStroppy({
         scale_factor: scaleFactor,
         env: stroppyEnv,
         files: workloadFiles,
+        include_human: true,
       })
         .then((data) => {
           if (cancelled) return;
@@ -1089,6 +1123,11 @@ function StepStroppy({
     }, 350);
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [script, sql, dbKind, protocol, poolSize, scaleFactor, stroppyVersion, stroppyEnv, workloadFiles]);
+
+  useEffect(() => {
+    if (!loadWorkersLinked) return;
+    setEnvOverride(setStroppyEnv, "LOAD_WORKERS", String(stroppyCpus));
+  }, [loadWorkersLinked, setStroppyEnv, stroppyCpus]);
 
   const toggleNoStep = (step: string) => {
     setNoSteps(noSteps.includes(step) ? noSteps.filter((s) => s !== step) : [...noSteps, step]);
@@ -1126,6 +1165,8 @@ function StepStroppy({
   const currentCommitSha = isCommit ? stroppyVersion.slice("commit:".length) : "";
   const knownScripts = SCRIPT_COMPAT[`${dbKind}:${protocol}`] || [];
   const uploadedSQL = workloadFiles.find((f) => f.kind === "sql" || f.name.endsWith(".sql"));
+  const loadWorkersValue = loadWorkersLinked ? String(stroppyCpus) : (stroppyEnv.LOAD_WORKERS ?? "");
+  const stroppyErrorMode = stroppyEnv.STROPPY_ERROR_MODE ?? "";
 
   const handleSQLUpload = async (file: File | null) => {
     if (!file) return;
@@ -1297,26 +1338,156 @@ function StepStroppy({
         </div>
 
         {(probeLoading || probeError || probeData) && (
-          <div className={`flex items-center gap-2 text-xs p-2 border font-mono ${
+          <div className={`border font-mono ${
             probeError ? "border-red-500/30 text-red-400" : probeLoading ? "border-zinc-800/60 text-zinc-500" : "border-emerald-500/30 text-emerald-400"
           }`}>
-            {probeLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : probeError ? <AlertCircle className="h-3 w-3" /> : <Check className="h-3 w-3" />}
-            <span className="truncate">
-              {probeLoading ? "Probing workload..." : probeError ? probeError : `Probe OK: ${availableSteps.length} steps, ${probeData?.env_declarations?.length || 0} parameters`}
-            </span>
+            <button
+              type="button"
+              onClick={() => setProbeExpanded((v) => !v)}
+              aria-expanded={probeExpanded}
+              className="flex items-center gap-2 text-xs p-2 w-full text-left"
+            >
+              {probeLoading ? <Loader2 className="h-3 w-3 animate-spin shrink-0" /> : probeError ? <AlertCircle className="h-3 w-3 shrink-0" /> : <Check className="h-3 w-3 shrink-0" />}
+              <span className="truncate">
+                {probeLoading ? "Probing workload..." : probeError ? probeError : `Probe OK: ${availableSteps.length} steps, ${probeData?.env_declarations?.length || 0} parameters`}
+              </span>
+              <ChevronDown className={`h-3 w-3 ml-auto shrink-0 transition-transform ${probeExpanded ? "rotate-180" : ""}`} />
+            </button>
+            {probeExpanded && (
+              <pre className="max-h-80 overflow-auto whitespace-pre-wrap border-t border-current/20 p-2 text-[10px] leading-relaxed text-zinc-400 bg-[#070707]">
+                {probeLoading ? "Waiting for probe output..." : probeError ? probeError : (probeData?.human || "No human-readable probe output returned.")}
+              </pre>
+            )}
           </div>
         )}
       </div>
 
       {/* Parameters */}
       <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-        <DurationSlider label="Duration" value={duration} onChange={setDuration} />
+        <div className="space-y-2">
+          <Label className="block text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Run Mode</Label>
+          <div className="mt-1.5 inline-flex border border-zinc-800 bg-zinc-900 font-mono text-[11px]">
+            <button
+              type="button"
+              onClick={() => setK6Mode("duration")}
+              className={`px-3 h-8 ${k6Mode === "duration" ? "bg-primary/[0.08] text-primary" : "text-zinc-500 hover:text-zinc-300"}`}
+            >
+              duration
+            </button>
+            <button
+              type="button"
+              onClick={() => setK6Mode("iterations")}
+              className={`px-3 h-8 border-l border-zinc-800 ${k6Mode === "iterations" ? "bg-primary/[0.08] text-primary" : "text-zinc-500 hover:text-zinc-300"}`}
+            >
+              iterations
+            </button>
+          </div>
+          <div className="text-[9px] text-zinc-600">
+            Use iterations for one-shot SQL workloads and repeat counts for averages.
+          </div>
+        </div>
+        {k6Mode === "duration" ? (
+          <DurationSlider label="Duration" value={duration} onChange={setDuration} hint="k6 --duration" />
+        ) : (
+          <NumericSlider label="Iterations" value={iterations} min={1} max={1000}
+            onChange={setIterations} hint="k6 --iterations" />
+        )}
         <NumericSlider label="VUs" value={vus} min={1} max={1000}
           onChange={setVus} hint="Virtual users (k6 --vus), ~VUs/warehouses per warehouse" />
         <NumericSlider label="Scale Factor" value={scaleFactor} min={1} max={1000}
           onChange={setScaleFactor} hint="TPC-C warehouses / TPC-B branches" />
         <NumericSlider label="Pool Size" value={poolSize} min={10} max={1000} step={10}
           onChange={setPoolSize} hint="DB connections" />
+      </div>
+
+      <div>
+        <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-2 block">Execution Options</span>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">defaultInsertMethod</Label>
+            <Select value={defaultInsertMethod} onValueChange={setDefaultInsertMethod}>
+              <SelectTrigger className="h-8 bg-zinc-900 border-zinc-800 text-xs font-mono">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DEFAULT_INSERT_METHODS.map((method) => (
+                  <SelectItem key={method} value={method}>{method}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="text-[9px] text-zinc-600">Driver insert path for generated data.</div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">STROPPY_ERROR_MODE</Label>
+            <input
+              value={stroppyErrorMode}
+              onChange={(e) => setStroppyEnv((prev) => ({ ...prev, STROPPY_ERROR_MODE: e.target.value }))}
+              placeholder="default"
+              spellCheck={false}
+              className="h-8 w-full px-2 font-mono text-xs bg-zinc-900 border border-zinc-800 text-zinc-300 outline-none focus:border-zinc-600"
+            />
+            <div className="text-[9px] text-zinc-600">Leave empty for Stroppy default; common values are silent, log, throw, fail, abort.</div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setQuiet((v) => !v)}
+            className={`h-10 px-3 border text-left font-mono transition-colors ${
+              quiet ? "border-primary/30 bg-primary/[0.06]" : "border-zinc-800 bg-zinc-900"
+            }`}
+          >
+            <div className={`text-[11px] ${quiet ? "text-primary" : "text-zinc-400"}`}>-q quiet</div>
+            <div className="text-[9px] text-zinc-600">Enabled by default.</div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setNoThresholds((v) => !v)}
+            className={`h-10 px-3 border text-left font-mono transition-colors ${
+              noThresholds ? "border-primary/30 bg-primary/[0.06]" : "border-zinc-800 bg-zinc-900"
+            }`}
+          >
+            <div className={`text-[11px] ${noThresholds ? "text-primary" : "text-zinc-400"}`}>--no-thresholds</div>
+            <div className="text-[9px] text-zinc-600">Off by default.</div>
+          </button>
+
+          <div className="space-y-1.5 col-span-2">
+            <Label className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">LOAD_WORKERS</Label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min={1}
+                value={loadWorkersValue}
+                onChange={(e) => {
+                  setLoadWorkersLinked(false);
+                  setEnvOverride(setStroppyEnv, "LOAD_WORKERS", e.target.value);
+                }}
+                disabled={loadWorkersLinked}
+                className="h-8 min-w-0 flex-1 px-2 font-mono text-xs bg-zinc-900 border border-zinc-800 text-zinc-300 outline-none focus:border-zinc-600 disabled:text-zinc-500 disabled:bg-zinc-950"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (loadWorkersLinked) {
+                    setLoadWorkersLinked(false);
+                    return;
+                  }
+                  setLoadWorkersLinked(true);
+                  setEnvOverride(setStroppyEnv, "LOAD_WORKERS", String(stroppyCpus));
+                }}
+                className={`h-8 px-2 border flex items-center gap-1 text-[10px] font-mono ${
+                  loadWorkersLinked ? "border-primary/30 text-primary bg-primary/[0.06]" : "border-zinc-800 text-zinc-500 bg-zinc-900 hover:text-zinc-300"
+                }`}
+                title={loadWorkersLinked ? "Click to unlock custom LOAD_WORKERS" : "Match LOAD_WORKERS to runner CPU cores"}
+              >
+                <Cpu className="h-3 w-3" />
+                {loadWorkersLinked ? `${stroppyCpus} cores` : "use cores"}
+              </button>
+            </div>
+            <div className="text-[9px] text-zinc-600">Linked value follows the Stroppy runner CPU count; unlock to enter a custom loader count.</div>
+          </div>
+        </div>
       </div>
 
       {/* Steps (from probe) */}
@@ -1380,7 +1551,7 @@ function StepStroppy({
       {/* Env parameters from probe — editable */}
       {probeData?.env_declarations && probeData.env_declarations.length > 0 && (() => {
         // Filter out env vars already covered by dedicated UI controls.
-        const covered = new Set(["POOL_SIZE", "SCALE_FACTOR", "WAREHOUSES", "STROPPY_STEPS", "STROPPY_NO_STEPS", "STROPPY_ERROR_MODE"]);
+        const covered = new Set(["POOL_SIZE", "SCALE_FACTOR", "WAREHOUSES", "LOAD_WORKERS", "STROPPY_STEPS", "STROPPY_NO_STEPS", "STROPPY_ERROR_MODE"]);
         const envDecls = probeData.env_declarations.filter(
           (e) => !e.names.every((n) => covered.has(n))
         );

@@ -417,17 +417,22 @@ type StroppyConfig struct {
 	// behaviour of pre-protocol-aware run configs. For engines that speak
 	// only one protocol (postgres / mysql / mariadb / picodata) leaving this
 	// blank is fine; for YDB the choice matters (ydb-grpc vs ydb-pgwire).
-	Protocol    Protocol          `json:"protocol,omitempty"`
-	Script      string            `json:"script"`                 // e.g. "tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx"
-	SQL         string            `json:"sql,omitempty"`          // optional second stroppy positional arg / RunConfig.sql
-	Duration    string            `json:"duration"`               // k6 --duration flag
-	VUs         int               `json:"vus,omitempty"`          // k6 --vus flag
-	PoolSize    int               `json:"pool_size,omitempty"`    // DB connection pool size → env POOL_SIZE + driver pool
-	ScaleFactor int               `json:"scale_factor,omitempty"` // Warehouses → env SCALE_FACTOR
-	Env         map[string]string `json:"env,omitempty"`          // script-specific env overrides from probe metadata
-	Files       []WorkloadFile    `json:"files,omitempty"`
-	Steps       []string          `json:"steps,omitempty"`    // step allowlist (e.g. ["create_schema","load_data","workload"])
-	NoSteps     []string          `json:"no_steps,omitempty"` // step blocklist (e.g. ["drop_schema"])
+	Protocol            Protocol          `json:"protocol,omitempty"`
+	Script              string            `json:"script"`                          // e.g. "tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx"
+	SQL                 string            `json:"sql,omitempty"`                   // optional second stroppy positional arg / RunConfig.sql
+	Duration            string            `json:"duration"`                        // k6 --duration flag
+	K6Mode              string            `json:"k6_mode,omitempty"`               // "duration" or "iterations"; defaults to duration
+	Iterations          int               `json:"iterations,omitempty"`            // k6 --iterations flag when k6_mode=iterations
+	Quiet               *bool             `json:"quiet,omitempty"`                 // k6 -q flag; nil preserves the UI default (enabled)
+	NoThresholds        bool              `json:"no_thresholds,omitempty"`         // k6 --no-thresholds flag
+	VUs                 int               `json:"vus,omitempty"`                   // k6 --vus flag
+	PoolSize            int               `json:"pool_size,omitempty"`             // DB connection pool size → env POOL_SIZE + driver pool
+	ScaleFactor         int               `json:"scale_factor,omitempty"`          // Warehouses → env SCALE_FACTOR
+	DefaultInsertMethod string            `json:"default_insert_method,omitempty"` // driver defaultInsertMethod; "native" unless overridden
+	Env                 map[string]string `json:"env,omitempty"`                   // script-specific env overrides from probe metadata
+	Files               []WorkloadFile    `json:"files,omitempty"`
+	Steps               []string          `json:"steps,omitempty"`    // step allowlist (e.g. ["create_schema","load_data","workload"])
+	NoSteps             []string          `json:"no_steps,omitempty"` // step blocklist (e.g. ["drop_schema"])
 	// ConfigOverrideJSON, if set, is sent verbatim to the stroppy binary instead of the
 	// config built from the other fields. Allows advanced users to edit the full stroppy
 	// RunConfig protojson (drivers, k6_args, env, exporter, etc.) before launching a run.

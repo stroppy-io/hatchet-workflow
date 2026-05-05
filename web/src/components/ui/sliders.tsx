@@ -80,11 +80,12 @@ function parseDuration(s: string): string {
   return trimmed || "5m";
 }
 
-export function DurationSlider({ label, value, onChange, disabled }: {
+export function DurationSlider({ label, value, onChange, disabled, hint }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   disabled?: boolean;
+  hint?: string;
 }) {
   const normalized = parseDuration(value);
   const idx = DURATION_STEPS.indexOf(normalized);
@@ -102,6 +103,7 @@ export function DurationSlider({ label, value, onChange, disabled }: {
           onBlur={(e) => onChange(parseDuration(e.target.value))}
           className="h-6 w-16 text-[10px] font-mono text-right tabular-nums shrink-0" disabled={disabled} />
       </div>
+      {hint && <span className="text-[9px] text-zinc-700 font-mono">{hint}</span>}
     </div>
   );
 }

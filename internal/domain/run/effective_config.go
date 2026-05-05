@@ -166,8 +166,24 @@ func ComputeEffectiveConfigs(cfg *types.RunConfig) map[string]map[string]string 
 	if s.Version != "" {
 		bench["stroppy"] = "v" + s.Version
 	}
-	if s.Duration != "" {
+	k6Mode := s.K6Mode
+	if k6Mode == "" {
+		k6Mode = "duration"
+	}
+	bench["k6 mode"] = k6Mode
+	if k6Mode == "duration" && s.Duration != "" {
 		bench["duration"] = s.Duration
+	}
+	if k6Mode == "iterations" && s.Iterations > 0 {
+		bench["iterations"] = fmt.Sprintf("%d", s.Iterations)
+	}
+	quiet := true
+	if s.Quiet != nil {
+		quiet = *s.Quiet
+	}
+	bench["quiet"] = fmt.Sprintf("%t", quiet)
+	if s.NoThresholds {
+		bench["thresholds"] = "disabled"
 	}
 	if s.VUs > 0 {
 		bench["VUs"] = fmt.Sprintf("%d", s.VUs)
@@ -177,6 +193,9 @@ func ComputeEffectiveConfigs(cfg *types.RunConfig) map[string]map[string]string 
 	}
 	if s.ScaleFactor > 0 {
 		bench["scale"] = fmt.Sprintf("%d", s.ScaleFactor)
+	}
+	if s.DefaultInsertMethod != "" {
+		bench["insert"] = s.DefaultInsertMethod
 	}
 	if s.Machine != nil {
 		bench["runner"] = fmt.Sprintf("%d vCPU / %d MB", s.Machine.CPUs, s.Machine.MemoryMB)

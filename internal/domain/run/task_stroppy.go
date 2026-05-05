@@ -252,6 +252,35 @@ func BuildStroppyConfigJSON(s types.StroppyConfig, dbKind types.DatabaseKind, db
 	if duration == "" {
 		duration = "60s"
 	}
+	iterations := s.Iterations
+	if iterations <= 0 {
+		iterations = 1
+	}
+	k6Mode := strings.ToLower(strings.TrimSpace(s.K6Mode))
+	if k6Mode == "" {
+		k6Mode = "duration"
+	}
+	quiet := true
+	if s.Quiet != nil {
+		quiet = *s.Quiet
+	}
+	k6Args := make([]string, 0, 8)
+	if quiet {
+		k6Args = append(k6Args, "-q")
+	}
+	k6Args = append(k6Args, "--vus", fmt.Sprintf("%d", vus))
+	if k6Mode == "iterations" {
+		k6Args = append(k6Args, "--iterations", fmt.Sprintf("%d", iterations))
+	} else {
+		k6Args = append(k6Args, "--duration", duration)
+	}
+	if s.NoThresholds {
+		k6Args = append(k6Args, "--no-thresholds")
+	}
+	defaultInsertMethod := strings.TrimSpace(s.DefaultInsertMethod)
+	if defaultInsertMethod == "" {
+		defaultInsertMethod = "native"
+	}
 
 	var sqlPtr *string
 	if s.SQL != "" {
@@ -266,8 +295,9 @@ func BuildStroppyConfigJSON(s types.StroppyConfig, dbKind types.DatabaseKind, db
 		Sql:     sqlPtr,
 		Drivers: map[uint32]*stroppypb.DriverRunConfig{
 			0: {
-				DriverType: driverType,
-				Url:        driverURL,
+				DriverType:          driverType,
+				Url:                 driverURL,
+				DefaultInsertMethod: defaultInsertMethod,
 				Pool: &stroppypb.DriverRunConfig_PoolConfig{
 					MaxConns: &maxConns,
 					MinConns: &maxConns,
@@ -294,7 +324,7 @@ func BuildStroppyConfigJSON(s types.StroppyConfig, dbKind types.DatabaseKind, db
 			}
 			return env
 		}(),
-		K6Args:  []string{"--vus", fmt.Sprintf("%d", vus), "--duration", duration},
+		K6Args:  k6Args,
 		Steps:   s.Steps,
 		NoSteps: s.NoSteps,
 		Global: &stroppypb.GlobalConfig{
