@@ -34,6 +34,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus, Trash2 } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 interface AdminUser {
   id: string;
@@ -52,6 +53,7 @@ export function TenantMembers() {
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedRole, setSelectedRole] = useState("viewer");
   const [adding, setAdding] = useState(false);
+  const confirm = useConfirm();
 
   async function load() {
     try {
@@ -103,7 +105,7 @@ export function TenantMembers() {
   }
 
   async function handleRemove(userId: string, username: string) {
-    if (!confirm(`Remove "${username}" from this tenant?`)) return;
+    if (!(await confirm({ title: `Remove "${username}" from this tenant?`, description: "They will lose access to this tenant's runs and resources.", danger: true, confirmLabel: "Remove" }))) return;
     try {
       await removeMember(userId);
       await load();

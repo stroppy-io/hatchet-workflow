@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   RefreshCw,
   Trash2,
@@ -399,6 +400,7 @@ export function Runs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancellingIds, setCancellingIds] = useState<Set<string>>(new Set());
+  const confirm = useConfirm();
 
   // Load presets once for id→name lookup in the table.
   useEffect(() => {
@@ -481,7 +483,7 @@ export function Runs() {
   }
 
   async function handleDelete(runID: string) {
-    if (!confirm(`Delete run "${runID}"? This will also remove its Docker resources.`)) return;
+    if (!(await confirm({ title: `Delete run "${runID}"?`, description: "This will also remove its Docker resources. Cannot be undone.", danger: true }))) return;
     try {
       await deleteRun(runID);
       await fetchRuns();

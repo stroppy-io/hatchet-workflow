@@ -8,6 +8,7 @@ import {
   uploadPackageDeb,
 } from "@/api/client";
 import type { Package } from "@/api/types";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +49,7 @@ export function Packages() {
   const [editing, setEditing] = useState<Package | null>(null);
   const [creating, setCreating] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const confirm = useConfirm();
 
   const load = useCallback(async () => {
     try {
@@ -66,7 +68,7 @@ export function Packages() {
   );
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this package?")) return;
+    if (!(await confirm({ title: "Delete this package?", description: "This action cannot be undone.", danger: true }))) return;
     try {
       await deletePackage(id);
       setMessage({ type: "success", text: "Deleted" });

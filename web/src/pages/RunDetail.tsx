@@ -8,6 +8,7 @@ import { MetricsPanel } from "@/components/MetricsPanel";
 import { TopologyFlow } from "@/components/TopologyFlow";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RefreshCw, AlertCircle, Trash2, StopCircle, Share2, Check, RotateCcw } from "lucide-react";
@@ -98,6 +99,7 @@ export function RunDetail() {
   const [error, setError] = useState<string | null>(null);
   const [grafana, setGrafana] = useState<GrafanaSettings | null>(null);
   const [renderedConfigs, setRenderedConfigs] = useState<Record<string, string>>({});
+  const confirm = useConfirm();
   const snapshotRef = useRef(snapshot);
   snapshotRef.current = snapshot;
 
@@ -176,7 +178,7 @@ export function RunDetail() {
 
   async function handleDelete() {
     if (!id) return;
-    if (!confirm(`Delete run "${id}"? This will also remove its Docker resources.`)) return;
+    if (!(await confirm({ title: `Delete run "${id}"?`, description: "This will also remove its Docker resources. Cannot be undone.", danger: true }))) return;
     setDeleting(true);
     try {
       await deleteRun(id);

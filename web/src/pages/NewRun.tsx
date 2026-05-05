@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
+import { JsonEditor } from "@/components/ui/json-editor";
+import { ConfigEditor } from "@/components/ui/config-editor";
 import {
   Check,
   AlertCircle,
@@ -1641,11 +1643,10 @@ function StepStroppy({
             </button>
           </div>
         </div>
-        <textarea
+        <JsonEditor
           value={stroppyConfigDraft ?? ""}
-          onChange={(e) => updateStroppyConfigDraft(e.target.value)}
-          spellCheck={false}
-          className="w-full h-80 bg-[#0a0a0a] text-[11px] font-mono text-zinc-300 border border-zinc-800 p-2 outline-none focus:border-zinc-600 resize-y"
+          onChange={updateStroppyConfigDraft}
+          height="20rem"
         />
       </div>
     </div>
@@ -1883,11 +1884,10 @@ function StepReview({
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-[9px] font-mono text-zinc-600 uppercase">Database Config (editable JSON — overrides field-level settings)</span>
                           </div>
-                          <textarea
+                          <JsonEditor
                             value={dbConfigDraft}
-                            onChange={(e) => setDbConfigDraft(e.target.value)}
-                            spellCheck={false}
-                            className="w-full h-72 bg-[#0a0a0a] text-[11px] font-mono text-zinc-300 border border-zinc-800 p-2 outline-none focus:border-zinc-600 resize-y"
+                            onChange={setDbConfigDraft}
+                            height="18rem"
                           />
                           {(() => {
                             const ds = suggestDiskGb(script, scaleFactor);
@@ -1921,11 +1921,11 @@ function StepReview({
                                         </button>
                                       )}
                                     </div>
-                                    <textarea
+                                    <ConfigEditor
+                                      filename={key}
                                       value={body}
-                                      onChange={(e) => setRenderedConfigDrafts((prev) => ({ ...prev, [key]: e.target.value }))}
-                                      spellCheck={false}
-                                      className="w-full h-56 bg-[#0a0a0a] text-[11px] font-mono text-zinc-300 border border-zinc-800 p-2 outline-none focus:border-zinc-600 resize-y"
+                                      onChange={(next) => setRenderedConfigDrafts((prev) => ({ ...prev, [key]: next }))}
+                                      height="14rem"
                                     />
                                   </div>
                                 );
@@ -1949,11 +1949,10 @@ function StepReview({
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-[9px] font-mono text-zinc-600 uppercase">Stroppy Config (editable protojson — overrides field-level settings)</span>
                           </div>
-                          <textarea
+                          <JsonEditor
                             value={stroppyConfigDraft}
-                            onChange={(e) => setStroppyConfigDraft(e.target.value)}
-                            spellCheck={false}
-                            className="w-full h-72 bg-[#0a0a0a] text-[11px] font-mono text-zinc-300 border border-zinc-800 p-2 outline-none focus:border-zinc-600 resize-y"
+                            onChange={setStroppyConfigDraft}
+                            height="18rem"
                           />
                           {cfgEntries && Object.keys(cfgEntries).length > 0 && (
                             <div className="mt-2 space-y-0.5">

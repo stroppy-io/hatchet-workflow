@@ -28,12 +28,14 @@ import {
 } from "lucide-react";
 
 import { DB_COLORS } from "@/lib/db-colors";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export function Presets() {
   const [presets, setPresets] = useState<Preset[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterKind, setFilterKind] = useState<string>("");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const confirm = useConfirm();
 
   const load = useCallback(async () => {
     try {
@@ -49,7 +51,7 @@ export function Presets() {
   useEffect(() => { load(); }, [load]);
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this preset?")) return;
+    if (!(await confirm({ title: "Delete this preset?", description: "This action cannot be undone.", danger: true }))) return;
     try {
       await deletePreset(id);
       setMessage({ type: "success", text: "Deleted" });

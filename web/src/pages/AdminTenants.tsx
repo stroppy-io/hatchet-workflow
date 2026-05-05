@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus, Trash2 } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export function AdminTenants() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -28,6 +29,7 @@ export function AdminTenants() {
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+  const confirm = useConfirm();
 
   async function load() {
     try {
@@ -59,7 +61,7 @@ export function AdminTenants() {
   }
 
   async function handleDelete(id: string, tenantName: string) {
-    if (!confirm(`Delete tenant "${tenantName}"? This cannot be undone.`)) return;
+    if (!(await confirm({ title: `Delete tenant "${tenantName}"?`, description: "This cannot be undone. All runs, presets, packages, and members will be lost.", danger: true }))) return;
     try {
       await deleteTenantAdmin(id);
       await load();

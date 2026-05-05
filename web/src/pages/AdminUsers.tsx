@@ -25,6 +25,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus, Trash2, KeyRound } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 interface AdminUser {
   id: string;
@@ -37,6 +38,7 @@ export function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const confirm = useConfirm();
 
   // Create dialog
   const [createOpen, setCreateOpen] = useState(false);
@@ -84,7 +86,7 @@ export function AdminUsers() {
   }
 
   async function handleDelete(id: string, username: string) {
-    if (!confirm(`Delete user "${username}"? This cannot be undone.`)) return;
+    if (!(await confirm({ title: `Delete user "${username}"?`, description: "This cannot be undone.", danger: true }))) return;
     try {
       await deleteUserAdmin(id);
       await load();

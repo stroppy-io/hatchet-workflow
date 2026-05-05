@@ -28,11 +28,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus, Trash2, Copy, Check } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export function TenantTokens() {
   const [tokens, setTokens] = useState<TenantAPIToken[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const confirm = useConfirm();
 
   // Create dialog
   const [createOpen, setCreateOpen] = useState(false);
@@ -82,7 +84,7 @@ export function TenantTokens() {
   }
 
   async function handleRevoke(id: string, name: string) {
-    if (!confirm(`Revoke token "${name}"?`)) return;
+    if (!(await confirm({ title: `Revoke token "${name}"?`, description: "Any client using this token will lose access immediately.", danger: true, confirmLabel: "Revoke" }))) return;
     try {
       await revokeAPIToken(id);
       await load();

@@ -9,6 +9,13 @@ examples/test.json
 examples/dump_test.go
 web/node_modules
 web/dist
+# yarn is the canonical package manager (see web/package.json packageManager).
+# Block competing lockfiles so a stray `bun add` / `npm install` doesn't
+# desync the project again.
+web/bun.lock
+web/bun.lockb
+web/package-lock.json
+web/pnpm-lock.yaml
 *.tsbuildinfo
 tests/e2e/node_modules
 tests/e2e/report
