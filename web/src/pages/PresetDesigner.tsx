@@ -38,7 +38,7 @@ import {
   X,
 } from "lucide-react";
 import { DB_COLORS } from "@/lib/db-colors";
-import { SliderField, NumericSlider, closestStep, ramSteps, CPU_STEPS, DISK_STEPS, DiskTypeSelect } from "@/components/ui/sliders";
+import { SliderField, NumericSlider, closestStep, ramSteps, CPU_STEPS, diskStepsForType, DiskTypeSelect } from "@/components/ui/sliders";
 
 // ─── Validation ──────────────────────────────────────────────────
 
@@ -310,13 +310,20 @@ function MachineEditor({
         <SliderField label="Memory" value={mem} steps={memSteps} disabled={disabled}
           onChange={(v) => onChange({ ...spec, memory_mb: v })}
           format={(v) => v >= 1024 ? `${(v / 1024).toFixed(v % 1024 ? 1 : 0)} GB` : `${v} MB`} />
-        <SliderField label="Disk" value={spec.disk_gb} steps={DISK_STEPS} disabled={disabled}
+        <SliderField label="Disk" value={spec.disk_gb} steps={diskStepsForType(spec.disk_type || "network-ssd")} disabled={disabled}
           onChange={(v) => onChange({ ...spec, disk_gb: v })}
           format={(v) => `${v} GB`} />
       </div>
       <DiskTypeSelect
         value={spec.disk_type || "network-ssd"}
-        onChange={(v) => onChange({ ...spec, disk_type: v })}
+        onChange={(v) => {
+          // Switching to io-m3 forces 93 GiB granularity; snap current size
+          // to the nearest valid step so the slider isn't stuck on an
+          // illegal value.
+          const newSteps = diskStepsForType(v);
+          const newSize = closestStep(spec.disk_gb, newSteps);
+          onChange({ ...spec, disk_type: v, disk_gb: newSize });
+        }}
         diskSizeGb={spec.disk_gb}
       />
       {children}

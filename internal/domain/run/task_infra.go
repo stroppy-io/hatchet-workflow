@@ -392,6 +392,9 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 			if diskType == "" {
 				diskType = "network-ssd"
 			}
+			// YC io-m3 requires disk size be a multiple of 93 GiB; round
+			// up the boot disk so the API accepts it.
+			diskGB = roundIOM3GB(diskGB, diskType)
 
 			secondary := make([]yandexTfSecondaryDisk, 0, len(spec.SecondaryDisks))
 			for _, d := range spec.SecondaryDisks {
@@ -404,7 +407,7 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 				}
 				secondary = append(secondary, yandexTfSecondaryDisk{
 					DeviceName: d.DeviceName,
-					SizeGB:     d.SizeGB,
+					SizeGB:     roundIOM3GB(d.SizeGB, dt),
 					Type:       dt,
 				})
 			}
@@ -717,6 +720,8 @@ func (t *machinesTask) yandexManagedYDBMachines(nc *dag.NodeContext) error {
 			if diskType == "" {
 				diskType = "network-ssd"
 			}
+			// YC io-m3 requires disk size be a multiple of 93 GiB.
+			diskGB = roundIOM3GB(diskGB, diskType)
 			netAccel := "standard"
 			if yc.SoftwareAcceleratedNetwork {
 				netAccel = "software_accelerated"

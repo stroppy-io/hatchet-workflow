@@ -88,6 +88,14 @@ func serveCmd() *cobra.Command {
 			defer pool.Close()
 
 			logger, _ := zap.NewDevelopment()
+
+			// One-shot migration: round any pre-existing io-m3 disk sizes in
+			// presets to a 93 GiB multiple so the YC API stops rejecting
+			// runs that hit those sizes. Idempotent.
+			if err := postgres.MigrateIOM3Presets(ctx, pool, logger); err != nil {
+				logger.Warn("io-m3 preset migration failed (non-fatal)", zap.Error(err))
+			}
+
 			app := api.New(api.Config{Pool: pool, Logger: logger})
 			srv := api.NewServer(app, logger, pool, jwtSec, monitoringURL, monitoringToken, grafanaURL, listenAddr)
 			srv.CleanupOrphanedRuns()

@@ -1535,7 +1535,11 @@ function StepStroppy({
         </div>
         <DiskTypeSelect
           value={stroppyDiskType}
-          onChange={setStroppyDiskType}
+          onChange={(v) => {
+            // io-m3 chunk granularity: snap current disk size to a valid step.
+            setStroppyDisk(closestStep(stroppyDisk, diskStepsForType(v)));
+            setStroppyDiskType(v);
+          }}
           diskSizeGb={stroppyDisk}
         />
         {(() => {

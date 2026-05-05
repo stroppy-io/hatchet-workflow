@@ -11,6 +11,21 @@ import (
 // the review step textarea.
 const ydbStorageChunkGB = 93
 
+// roundIOM3GB rounds a disk size up to the next 93 GiB chunk when the
+// disk type is io-m3. Other disk types pass through unchanged. The Yandex
+// Cloud API rejects io-m3 disks whose size isn't a multiple of
+// 99857989632 bytes (= 93 GiB).
+func roundIOM3GB(diskGB int, diskType string) int {
+	if diskType != "network-ssd-io-m3" || diskGB <= 0 {
+		return diskGB
+	}
+	chunks := (diskGB + ydbStorageChunkGB - 1) / ydbStorageChunkGB
+	if chunks < 1 {
+		chunks = 1
+	}
+	return chunks * ydbStorageChunkGB
+}
+
 // estimatedRawDataGB returns a coarse estimate of the user-data size in GB
 // produced by `script × scaleFactor`, before headroom for WAL, compaction
 // snapshots, etc. Heuristics:

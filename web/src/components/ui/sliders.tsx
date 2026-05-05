@@ -111,8 +111,28 @@ export function DurationSlider({ label, value, onChange, disabled, hint }: {
 export const CPU_STEPS = [2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256];
 export const DISK_STEPS = [25, 50, 100, 200, 300, 500, 750, 1024, 2048, 4096, 8192, 16384, 32768, 65536];
 
+// io-m3 chunk size — Yandex Cloud requires io-m3 disks be multiples of
+// 93 GiB. Backend mirrors this constant in run/pdisk_size.go.
+export const IO_M3_CHUNK_GB = 93;
+
+// Pre-computed io-m3 ladder. Generous low-end coverage in single-chunk
+// steps then geometric growth so the slider stays usable up to 64 TiB.
+function buildIOM3Steps(): number[] {
+  const steps: number[] = [];
+  // 1..10 chunks (93..930 GiB).
+  for (let i = 1; i <= 10; i++) steps.push(i * IO_M3_CHUNK_GB);
+  // Then 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 704 chunks.
+  const big = [12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 704];
+  for (const c of big) steps.push(c * IO_M3_CHUNK_GB);
+  return steps;
+}
+export const IO_M3_DISK_STEPS = buildIOM3Steps();
+
 export function diskStepsForType(diskType: string): number[] {
   const maxGb = DISK_SPECS[diskType]?.maxSizeGb ?? 8192;
+  if (diskType === "network-ssd-io-m3") {
+    return IO_M3_DISK_STEPS.filter((s) => s <= maxGb);
+  }
   return DISK_STEPS.filter((s) => s <= maxGb);
 }
 
