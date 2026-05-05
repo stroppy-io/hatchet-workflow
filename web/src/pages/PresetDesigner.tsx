@@ -227,7 +227,7 @@ function defaultMachine(role: string, cpus = 2, mem = 4096, disk = 50): MachineS
   return { role: role as MachineSpec["role"], count: 1, cpus, memory_mb: mem, disk_gb: disk };
 }
 
-function defaultPostgres(): PostgresTopology {
+export function defaultPostgres(): PostgresTopology {
   return {
     master: defaultMachine("database"),
     replicas: [],
@@ -238,7 +238,7 @@ function defaultPostgres(): PostgresTopology {
   };
 }
 
-function defaultMySQL(): MySQLTopology {
+export function defaultMySQL(): MySQLTopology {
   return {
     primary: defaultMachine("database"),
     replicas: [],
@@ -247,7 +247,7 @@ function defaultMySQL(): MySQLTopology {
   };
 }
 
-function defaultPicodata(): PicodataTopology {
+export function defaultPicodata(): PicodataTopology {
   return {
     instances: [defaultMachine("database")],
     replication_factor: 1,
@@ -255,7 +255,7 @@ function defaultPicodata(): PicodataTopology {
   };
 }
 
-function defaultYDB(): YDBTopology {
+export function defaultYDB(): YDBTopology {
   return {
     storage: { role: "database", count: 1, cpus: 2, memory_mb: 4096, disk_gb: 80 },
     fault_tolerance: "none",
@@ -557,7 +557,7 @@ function OptionsEditor({
 
 // ─── Postgres Form ───────────────────────────────────────────────
 
-function PostgresForm({ topology, onChange, disabled }: {
+export function PostgresForm({ topology, onChange, disabled }: {
   topology: PostgresTopology;
   onChange: (t: PostgresTopology) => void;
   disabled?: boolean;
@@ -670,7 +670,7 @@ function PostgresForm({ topology, onChange, disabled }: {
 
 // ─── MySQL Form ──────────────────────────────────────────────────
 
-function MySQLForm({ topology, onChange, disabled }: {
+export function MySQLForm({ topology, onChange, disabled }: {
   topology: MySQLTopology;
   onChange: (t: MySQLTopology) => void;
   disabled?: boolean;
@@ -755,7 +755,7 @@ function MySQLForm({ topology, onChange, disabled }: {
 
 // ─── Picodata Form ───────────────────────────────────────────────
 
-function PicodataForm({ topology, onChange, disabled }: {
+export function PicodataForm({ topology, onChange, disabled }: {
   topology: PicodataTopology;
   onChange: (t: PicodataTopology) => void;
   disabled?: boolean;
@@ -886,7 +886,7 @@ const YDB_STORAGE_DEFAULTS: Record<string, string> = { "--log-level": "WARN", "-
 const YDB_DATABASE_DEFAULTS: Record<string, string> = { "--log-level": "WARN", "--grpc-port": "2135", "--mon-port": "8766" };
 const YDB_HAPROXY_DEFAULTS: Record<string, string> = { ...HAPROXY_DEFAULTS };
 
-function YDBForm({ topology, onChange, disabled }: {
+export function YDBForm({ topology, onChange, disabled }: {
   topology: YDBTopology;
   onChange: (t: YDBTopology) => void;
   disabled?: boolean;

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { startRun, validateRun, dryRun, listPresets, listPackages, probeScript, getStroppyVersions, getStroppyCommits, getSettings, previewStroppyConfig, type StroppyCommit } from "@/api/client";
+import { startRun, validateRun, dryRun, listPresets, listPackages, probeScript, getStroppyVersions, getStroppyCommits, getSettings, previewStroppyConfig, createRunPreset, createPreset, type StroppyCommit } from "@/api/client";
 import {
   ALL_DB_KINDS,
   KIND_PROTOCOLS,
@@ -27,6 +27,22 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
+import {
+  PostgresForm,
+  MySQLForm,
+  PicodataForm,
+  YDBForm,
+  defaultPostgres,
+  defaultMySQL,
+  defaultPicodata,
+  defaultYDB,
+} from "@/pages/PresetDesigner";
+import type {
+  PostgresTopology,
+  MySQLTopology,
+  PicodataTopology,
+  YDBTopology,
+} from "@/api/types";
 import { JsonEditor } from "@/components/ui/json-editor";
 import { ConfigEditor } from "@/components/ui/config-editor";
 import {
@@ -47,7 +63,16 @@ import {
   Upload,
   X,
   RotateCcw,
+  FlaskConical,
+  Layers,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 import { DB_COLORS } from "@/lib/db-colors";
 import { NumericSlider, DurationSlider, SliderField, CPU_STEPS, ramSteps, DiskTypeSelect, PlatformSelect, cpuStepsForPlatform, platformLimits, closestStep, diskStepsForType } from "@/components/ui/sliders";
@@ -145,11 +170,31 @@ export function NewRun() {
 
   const [step, setStep] = useState(0);
 
+  // Optional human-friendly identity. Editable on creation only — once the
+  // run is launched these are immutable in the snapshot.
+  const [runName, setRunName] = useState(rc?.name || "");
+  const [runDescription, setRunDescription] = useState(rc?.description || "");
+
+  // Bring-your-own database. When enabled the wizard sends external_db, the
+  // backend skips infra/install/configure phases and stroppy points straight
+  // at the supplied endpoint. Topology preset is irrelevant in that mode.
+  const [externalEnabled, setExternalEnabled] = useState(!!rc?.external_db);
+  const [externalEndpoint, setExternalEndpoint] = useState(rc?.external_db?.endpoint || "");
+  const [externalDatabase, setExternalDatabase] = useState(rc?.external_db?.database || "");
+  const [externalUsername, setExternalUsername] = useState(rc?.external_db?.username || "");
+  const [externalPassword, setExternalPassword] = useState(rc?.external_db?.password || "");
+  const [externalSSLMode, setExternalSSLMode] = useState(rc?.external_db?.ssl_mode || "");
+
   const [allPresets, setAllPresets] = useState<Preset[]>([]);
   const [kind, setKind] = useState<DatabaseKind>(
     rc?.database?.kind as DatabaseKind || (searchParams.get("kind") as DatabaseKind) || "postgres"
   );
   const [selectedPresetId, setSelectedPresetId] = useState(rc?.preset_id || searchParams.get("preset_id") || "");
+  // Inline topology edits made on the Database step. Replaces the selected
+  // preset's topology when set; keyed by db-kind so switching kinds doesn't
+  // wipe edits made for another. Saving as a new preset (button below the
+  // editor) clears this map entry and re-selects the freshly created preset.
+  const [topologyEdits, setTopologyEdits] = useState<Record<string, unknown>>({});
   const [provider, setProvider] = useState<Provider>(rc?.provider || "docker");
   const [platformId, setPlatformId] = useState(rc?.platform_id || "standard-v3");
   const [version, setVersion] = useState(rc?.database?.version || DB_VERSIONS[kind][0]);
@@ -313,13 +358,35 @@ export function NewRun() {
         ...(provider === "yandex" ? { machine: { role: "stroppy" as const, count: 1, cpus: stroppyCpus, memory_mb: stroppyMemory, disk_gb: stroppyDisk, disk_type: stroppyDiskType } } : {}),
       },
     };
-    if (selectedPresetId) cfg.preset_id = selectedPresetId;
+    // When the user has uncommitted topology edits for the current kind,
+    // ship them inline as cfg.database.{kind} and drop preset_id — the
+    // backend would otherwise overwrite our edited topology with the
+    // server-side preset row.
+    const edited = topologyEdits[kind] as Record<string, unknown> | undefined;
+    if (!externalEnabled && edited) {
+      const dbAny = cfg.database as unknown as Record<string, unknown>;
+      const subKey = kind === "ydb-managed" ? "ydb_managed" : kind;
+      dbAny[subKey] = edited;
+    } else if (!externalEnabled && selectedPresetId) {
+      cfg.preset_id = selectedPresetId;
+    }
     if (packageId) cfg.package_id = packageId;
     if (provider === "yandex") {
       cfg.platform_id = platformId;
     }
+    if (runName.trim()) cfg.name = runName.trim();
+    if (runDescription.trim()) cfg.description = runDescription.trim();
+    if (externalEnabled && externalEndpoint.trim()) {
+      cfg.external_db = {
+        endpoint: externalEndpoint.trim(),
+        ...(externalDatabase.trim() ? { database: externalDatabase.trim() } : {}),
+        ...(externalUsername.trim() ? { username: externalUsername.trim() } : {}),
+        ...(externalPassword ? { password: externalPassword } : {}),
+        ...(externalSSLMode.trim() ? { ssl_mode: externalSSLMode.trim() } : {}),
+      };
+    }
     return cfg;
-  }, [kind, protocol, selectedPresetId, provider, platformId, version, script, sql, duration, k6Mode, iterations, quiet, noThresholds, vus, poolSize, scaleFactor, defaultInsertMethod, packageId, stroppyEnv, workloadFiles, selectedSteps, noSteps, stroppyCpus, stroppyMemory, stroppyDisk, stroppyDiskType, stroppyVersion]);
+  }, [kind, protocol, selectedPresetId, provider, platformId, version, script, sql, duration, k6Mode, iterations, quiet, noThresholds, vus, poolSize, scaleFactor, defaultInsertMethod, packageId, stroppyEnv, workloadFiles, selectedSteps, noSteps, stroppyCpus, stroppyMemory, stroppyDisk, stroppyDiskType, stroppyVersion, runName, runDescription, externalEnabled, externalEndpoint, externalDatabase, externalUsername, externalPassword, externalSSLMode, topologyEdits]);
 
   const configJSON = useMemo(() => JSON.stringify(redactRunConfigForDisplay(config), null, 2), [config]);
 
@@ -387,6 +454,92 @@ export function NewRun() {
     })();
     return () => { cancelled = true; };
   }, [step, config, stroppyConfigUserEdited]);
+
+  // buildLaunchConfig assembles the same RunConfig handleSubmit ships to the
+  // server, with all draft edits (db config, stroppy config override,
+  // rendered config overrides) folded in. Extracted so "Save as Run Preset"
+  // can persist exactly what the user is about to launch — minus identity.
+  const buildLaunchConfig = useCallback((): RunConfig | { error: string } => {
+    const launchConfig: RunConfig = { ...config };
+    if (dbConfigDraft && resolvedConfig) {
+      try {
+        launchConfig.database = JSON.parse(dbConfigDraft);
+      } catch (e) {
+        return { error: `Invalid JSON in database config: ${e instanceof Error ? e.message : String(e)}` };
+      }
+    }
+    const renderedOverrides: Record<string, string> = {};
+    for (const [k, v] of Object.entries(renderedConfigDrafts)) {
+      if (renderedConfigsPristine[k] !== v) renderedOverrides[k] = v;
+    }
+    if (Object.keys(renderedOverrides).length > 0) {
+      launchConfig.database = {
+        ...launchConfig.database,
+        rendered_config_overrides: { ...(launchConfig.database.rendered_config_overrides || {}), ...renderedOverrides },
+      };
+    }
+    if (stroppyConfigUserEdited) {
+      try {
+        JSON.parse(stroppyConfigDraft || "");
+        launchConfig.stroppy = { ...launchConfig.stroppy, config_override_json: stroppyConfigDraft || "" };
+      } catch (e) {
+        return { error: `Invalid JSON in stroppy config: ${e instanceof Error ? e.message : String(e)}` };
+      }
+    }
+    return launchConfig;
+  }, [config, dbConfigDraft, resolvedConfig, stroppyConfigDraft, stroppyConfigUserEdited, renderedConfigDrafts, renderedConfigsPristine]);
+
+  const handleSaveAsPreset = useCallback(async (name: string, description: string, alsoLaunch: boolean) => {
+    const built = buildLaunchConfig();
+    if ("error" in built) {
+      setError(built.error);
+      throw new Error(built.error);
+    }
+    await createRunPreset({
+      name: name.trim(),
+      description: description.trim(),
+      db_kind: kind,
+      config: built,
+    });
+    if (alsoLaunch) {
+      // Fire-and-forget: handleSubmit handles its own loading/error state
+      // and navigates on success. We do NOT await it here so the dialog can
+      // close promptly after the save completes.
+      void handleSubmit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildLaunchConfig, kind]);
+
+  // handleSaveAsTopologyPreset persists ONLY the database topology subtree
+  // (not workload, not stroppy, not infra) as a new entry in the topology
+  // presets catalog. Lets users tweak machine specs / *Options maps / extra
+  // replicas in the wizard and reuse the result as a starting point for
+  // future runs without having to leave the flow.
+  const handleSaveAsTopologyPreset = useCallback(async (name: string, description: string) => {
+    const built = buildLaunchConfig();
+    if ("error" in built) {
+      setError(built.error);
+      throw new Error(built.error);
+    }
+    const db = built.database;
+    // Pick the kind-specific topology pointer. The presets catalog stores
+    // raw topology JSON keyed by db_kind; the kind/version/rendered overrides
+    // live on the run, not the preset.
+    const topology =
+      db.postgres ?? db.mysql ?? db.mariadb ?? db.picodata ??
+      db.ydb ?? db.ydb_managed ?? db.cockroach;
+    if (!topology) {
+      const msg = "No topology to save — the current database config has no topology subtree.";
+      setError(msg);
+      throw new Error(msg);
+    }
+    await createPreset({
+      name: name.trim(),
+      description: description.trim(),
+      db_kind: kind,
+      topology,
+    });
+  }, [buildLaunchConfig, kind]);
 
   const handleSubmit = useCallback(async () => {
     if (config.stroppy.k6_mode !== "iterations" && !config.stroppy.duration.trim()) { setError("Duration is required"); return; }
@@ -481,7 +634,13 @@ export function NewRun() {
         {/* Left — step content */}
         <div className="flex-1 min-w-0 overflow-y-auto p-5">
           {step === 0 && (
-            <StepInfra provider={provider} setProvider={setProvider} platformId={platformId} setPlatformId={setPlatformId} providers={allowedProviders} />
+            <StepInfra
+              provider={provider} setProvider={setProvider}
+              platformId={platformId} setPlatformId={setPlatformId}
+              providers={allowedProviders}
+              runName={runName} setRunName={setRunName}
+              runDescription={runDescription} setRunDescription={setRunDescription}
+            />
           )}
           {step === 1 && (
             <StepDatabase
@@ -494,6 +653,18 @@ export function NewRun() {
               selectedPresetId={selectedPresetId} setSelectedPresetId={setSelectedPresetId}
               dbMeta={dbMeta} dbColor={dbColor}
               allowedKinds={allowedKinds}
+              externalEnabled={externalEnabled} setExternalEnabled={setExternalEnabled}
+              externalEndpoint={externalEndpoint} setExternalEndpoint={setExternalEndpoint}
+              externalDatabase={externalDatabase} setExternalDatabase={setExternalDatabase}
+              externalUsername={externalUsername} setExternalUsername={setExternalUsername}
+              externalPassword={externalPassword} setExternalPassword={setExternalPassword}
+              externalSSLMode={externalSSLMode} setExternalSSLMode={setExternalSSLMode}
+              onSaveAsTopologyPreset={handleSaveAsTopologyPreset}
+              defaultPresetName={runName}
+              defaultPresetDescription={runDescription}
+              topologyEdits={topologyEdits}
+              setTopologyEdits={setTopologyEdits}
+              onPresetCreated={(newID) => { setSelectedPresetId(newID); listPresets().then(setAllPresets).catch(() => {}); }}
             />
           )}
           {step === 2 && (
@@ -567,6 +738,9 @@ export function NewRun() {
               renderedConfigDrafts={renderedConfigDrafts}
               setRenderedConfigDrafts={setRenderedConfigDrafts}
               renderedConfigsPristine={renderedConfigsPristine}
+              onSaveAsPreset={handleSaveAsPreset}
+              defaultPresetName={runName}
+              defaultPresetDescription={runDescription}
             />
           )}
 
@@ -644,15 +818,45 @@ function SummaryRow({ icon: Icon, label, value, color }: {
 
 // ─── Step 1: Infrastructure ──────────────────────────────────────
 
-function StepInfra({ provider, setProvider, platformId, setPlatformId, providers }: {
+function StepInfra({ provider, setProvider, platformId, setPlatformId, providers, runName, setRunName, runDescription, setRunDescription }: {
   provider: Provider;
   setProvider: (p: Provider) => void;
   platformId: string;
   setPlatformId: (p: string) => void;
   providers: Provider[];
+  runName: string;
+  setRunName: (v: string) => void;
+  runDescription: string;
+  setRunDescription: (v: string) => void;
 }) {
   return (
     <div className="space-y-5 max-w-lg">
+      {/* Optional run identity. Set on creation only — once launched these
+          are immutable in the snapshot, so we surface them up-front instead
+          of burying them in the review step. */}
+      <div className="border border-zinc-800/60 bg-[#070707] px-3 py-2.5 space-y-2">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">Test Identity</h2>
+          <span className="text-[10px] font-mono text-zinc-700">optional</span>
+        </div>
+        <input
+          type="text"
+          value={runName}
+          onChange={(e) => setRunName(e.target.value)}
+          placeholder="Test name (e.g. baseline-tpcc-pg17-100vu)"
+          className="w-full bg-transparent border-0 border-b border-zinc-800 px-0 py-1.5 text-sm font-mono text-zinc-200 placeholder:text-zinc-700 focus:outline-none focus:border-primary/60 transition-colors"
+          maxLength={128}
+        />
+        <textarea
+          value={runDescription}
+          onChange={(e) => setRunDescription(e.target.value)}
+          placeholder="Description — what changed vs the baseline, why this run exists, what to compare against"
+          className="w-full bg-transparent border-0 border-b border-zinc-800 px-0 py-1.5 text-xs font-mono text-zinc-300 placeholder:text-zinc-700 focus:outline-none focus:border-primary/60 transition-colors resize-none"
+          rows={2}
+          maxLength={1024}
+        />
+      </div>
+
       <div>
         <h2 className="text-sm font-semibold mb-1">Where to run?</h2>
         <p className="text-xs text-zinc-500">Choose the infrastructure provider for provisioning machines.</p>
@@ -700,6 +904,18 @@ function StepDatabase({
   selectedPresetId, setSelectedPresetId,
   dbMeta, dbColor,
   allowedKinds,
+  externalEnabled, setExternalEnabled,
+  externalEndpoint, setExternalEndpoint,
+  externalDatabase, setExternalDatabase,
+  externalUsername, setExternalUsername,
+  externalPassword, setExternalPassword,
+  externalSSLMode, setExternalSSLMode,
+  onSaveAsTopologyPreset,
+  defaultPresetName,
+  defaultPresetDescription,
+  topologyEdits,
+  setTopologyEdits,
+  onPresetCreated,
 }: {
   kind: DatabaseKind; setKind: (k: DatabaseKind) => void;
   protocol: Protocol; setProtocol: (p: Protocol) => void;
@@ -711,6 +927,18 @@ function StepDatabase({
   selectedPresetId: string; setSelectedPresetId: (v: string) => void;
   dbMeta: { icon: typeof Database; label: string };
   dbColor: { hex: string; text: string; accent: string };
+  externalEnabled: boolean; setExternalEnabled: (v: boolean) => void;
+  externalEndpoint: string; setExternalEndpoint: (v: string) => void;
+  externalDatabase: string; setExternalDatabase: (v: string) => void;
+  externalUsername: string; setExternalUsername: (v: string) => void;
+  externalPassword: string; setExternalPassword: (v: string) => void;
+  externalSSLMode: string; setExternalSSLMode: (v: string) => void;
+  onSaveAsTopologyPreset: (name: string, description: string) => Promise<void>;
+  defaultPresetName: string;
+  defaultPresetDescription: string;
+  topologyEdits: Record<string, unknown>;
+  setTopologyEdits: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
+  onPresetCreated: (id: string) => void;
 }) {
   const protocolsForKind = KIND_PROTOCOLS[kind];
   return (
@@ -718,6 +946,75 @@ function StepDatabase({
       <div>
         <h2 className="text-sm font-semibold mb-1">Database</h2>
         <p className="text-xs text-zinc-500">Choose the database engine, version, and topology preset.</p>
+      </div>
+
+      {/* BYO toggle. When on, the wizard skips infra/install — stroppy points
+          at the user-supplied endpoint. We still need a database kind so the
+          wire protocol + script compatibility checks work. */}
+      <div className="border border-zinc-800/60 bg-[#070707] p-3 space-y-3">
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={externalEnabled}
+            onChange={(e) => setExternalEnabled(e.target.checked)}
+            className="accent-primary"
+          />
+          <span className="text-xs font-mono text-zinc-300">
+            Bring your own database
+          </span>
+          <span className="text-[10px] font-mono text-zinc-600 ml-1">
+            — skip infra; stroppy points at an existing endpoint
+          </span>
+        </label>
+        {externalEnabled && (
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="space-y-1.5 col-span-2">
+              <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Endpoint</Label>
+              <input
+                value={externalEndpoint}
+                onChange={(e) => setExternalEndpoint(e.target.value)}
+                placeholder="host:port"
+                className="w-full bg-[#0a0a0a] border border-zinc-800 px-2 py-1.5 text-xs font-mono text-zinc-200 focus:outline-none focus:border-primary/60"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Database</Label>
+              <input
+                value={externalDatabase}
+                onChange={(e) => setExternalDatabase(e.target.value)}
+                placeholder="stroppy"
+                className="w-full bg-[#0a0a0a] border border-zinc-800 px-2 py-1.5 text-xs font-mono text-zinc-200 focus:outline-none focus:border-primary/60"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">SSL Mode</Label>
+              <input
+                value={externalSSLMode}
+                onChange={(e) => setExternalSSLMode(e.target.value)}
+                placeholder="disable / require / ..."
+                className="w-full bg-[#0a0a0a] border border-zinc-800 px-2 py-1.5 text-xs font-mono text-zinc-200 focus:outline-none focus:border-primary/60"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Username</Label>
+              <input
+                value={externalUsername}
+                onChange={(e) => setExternalUsername(e.target.value)}
+                placeholder="stroppy"
+                className="w-full bg-[#0a0a0a] border border-zinc-800 px-2 py-1.5 text-xs font-mono text-zinc-200 focus:outline-none focus:border-primary/60"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Password</Label>
+              <input
+                type="password"
+                value={externalPassword}
+                onChange={(e) => setExternalPassword(e.target.value)}
+                className="w-full bg-[#0a0a0a] border border-zinc-800 px-2 py-1.5 text-xs font-mono text-zinc-200 focus:outline-none focus:border-primary/60"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* DB Kind */}
@@ -843,6 +1140,179 @@ function StepDatabase({
           })}
         </div>
       </div>
+
+      {/* Inline topology editor + save-as-preset. Lets the operator tweak
+          the selected preset (machine specs, replicas, options) without
+          leaving the wizard. Edits are kept per-kind in topologyEdits;
+          discard restores the original preset; save creates a new preset
+          and re-selects it. */}
+      {!externalEnabled && (
+        <TopologyEditPanel
+          kind={kind}
+          presetsForKind={presetsForKind}
+          selectedPresetId={selectedPresetId}
+          topologyEdits={topologyEdits}
+          setTopologyEdits={setTopologyEdits}
+          defaultPresetName={defaultPresetName}
+          defaultPresetDescription={defaultPresetDescription}
+          onSaveAsTopologyPreset={onSaveAsTopologyPreset}
+          onPresetCreated={onPresetCreated}
+        />
+      )}
+    </div>
+  );
+}
+
+function TopologyEditPanel({
+  kind,
+  presetsForKind,
+  selectedPresetId,
+  topologyEdits,
+  setTopologyEdits,
+  defaultPresetName,
+  defaultPresetDescription,
+  onSaveAsTopologyPreset,
+  onPresetCreated,
+}: {
+  kind: DatabaseKind;
+  presetsForKind: Preset[];
+  selectedPresetId: string;
+  topologyEdits: Record<string, unknown>;
+  setTopologyEdits: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
+  defaultPresetName: string;
+  defaultPresetDescription: string;
+  onSaveAsTopologyPreset: (name: string, description: string) => Promise<void>;
+  onPresetCreated: (id: string) => void;
+}) {
+  const selectedPreset = presetsForKind.find((p) => p.id === selectedPresetId);
+  const [editing, setEditing] = useState(false);
+  // Engine-specific editor state. Only the entry matching the current kind
+  // is used; the others stay seeded with sane defaults so switching kinds
+  // mid-edit doesn't lose the user's work for the active kind.
+  const [pg, setPg] = useState<PostgresTopology>(defaultPostgres());
+  const [my, setMy] = useState<MySQLTopology>(defaultMySQL());
+  const [pico, setPico] = useState<PicodataTopology>(defaultPicodata());
+  const [ydb, setYdb] = useState<YDBTopology>(defaultYDB());
+
+  const editorSupported = kind === "postgres" || kind === "mysql" || kind === "mariadb" || kind === "picodata" || kind === "ydb";
+  const hasEdits = !!topologyEdits[kind];
+
+  // Hydrate the engine state from the selected preset whenever it changes
+  // OR when the user opens the editor — gives them a clean starting point
+  // matching the picked tile.
+  function loadFromPreset() {
+    if (!selectedPreset) return;
+    const t = selectedPreset.topology as unknown;
+    if (kind === "postgres") setPg(t as PostgresTopology);
+    else if (kind === "mysql" || kind === "mariadb") setMy(t as MySQLTopology);
+    else if (kind === "picodata") setPico(t as PicodataTopology);
+    else if (kind === "ydb") setYdb(t as YDBTopology);
+  }
+
+  // Re-load whenever the selected preset id flips (different tile picked).
+  useEffect(() => {
+    loadFromPreset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPresetId, kind]);
+
+  function pushEditsToParent(t: unknown) {
+    setTopologyEdits((prev) => ({ ...prev, [kind]: t }));
+  }
+
+  function discardEdits() {
+    setTopologyEdits((prev) => {
+      const next = { ...prev };
+      delete next[kind];
+      return next;
+    });
+    loadFromPreset();
+  }
+
+  function renderForm() {
+    if (kind === "postgres") {
+      return <PostgresForm topology={pg} onChange={(t) => { setPg(t); pushEditsToParent(t); }} disabled={false} />;
+    }
+    if (kind === "mysql" || kind === "mariadb") {
+      return <MySQLForm topology={my} onChange={(t) => { setMy(t); pushEditsToParent(t); }} disabled={false} />;
+    }
+    if (kind === "picodata") {
+      return <PicodataForm topology={pico} onChange={(t) => { setPico(t); pushEditsToParent(t); }} disabled={false} />;
+    }
+    if (kind === "ydb") {
+      return <YDBForm topology={ydb} onChange={(t) => { setYdb(t); pushEditsToParent(t); }} disabled={false} />;
+    }
+    return null;
+  }
+
+  return (
+    <div className="border-t border-zinc-800/50 pt-4 space-y-3">
+      <div className="flex items-center gap-2">
+        {editorSupported && selectedPreset && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setEditing((v) => !v)}
+            className="gap-1.5"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            {editing ? "Hide editor" : "Edit topology"}
+          </Button>
+        )}
+        {hasEdits && (
+          <>
+            <span className="text-[10px] font-mono text-amber-400/80 border border-amber-500/30 px-2 py-0.5">
+              modified
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={discardEdits}
+              className="gap-1.5 text-zinc-500 hover:text-zinc-200"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Discard edits
+            </Button>
+          </>
+        )}
+        <div className="flex-1" />
+        {/* Save-as-preset is always available so users can clone the picked
+            preset as-is too; the button switches label/icon when there are
+            uncommitted edits to make the affordance obvious. */}
+        <SaveAsPresetButton
+          variant="topology"
+          defaultName={defaultPresetName}
+          defaultDescription={defaultPresetDescription}
+          onSave={async (name, description) => {
+            await onSaveAsTopologyPreset(name, description);
+            // Clear the edited state so the new preset's row in the catalog
+            // becomes the source of truth. Caller re-fetches the list and
+            // selects the freshly minted id.
+            setTopologyEdits((prev) => {
+              const next = { ...prev };
+              delete next[kind];
+              return next;
+            });
+            // The created id isn't returned here; we just refresh the list
+            // via onPresetCreated and let the parent re-select.
+            onPresetCreated("");
+          }}
+          disabled={false}
+        />
+      </div>
+
+      {editing && editorSupported && (
+        <div className="border border-zinc-800/60 bg-[#070707] p-4">
+          {renderForm()}
+        </div>
+      )}
+      {editing && !editorSupported && (
+        <div className="border border-dashed border-zinc-800 p-4 text-xs text-zinc-500">
+          Inline editor isn't available for this database kind yet — edit the
+          topology directly in the JSON viewer on the Review step.
+        </div>
+      )}
     </div>
   );
 }
@@ -1744,6 +2214,9 @@ function StepReview({
   renderedConfigDrafts,
   setRenderedConfigDrafts,
   renderedConfigsPristine,
+  onSaveAsPreset,
+  defaultPresetName,
+  defaultPresetDescription,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dryRunResult: any;
@@ -1764,9 +2237,15 @@ function StepReview({
   renderedConfigDrafts: Record<string, string>;
   setRenderedConfigDrafts: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   renderedConfigsPristine: Record<string, string>;
+  onSaveAsPreset: (name: string, description: string, alsoLaunch: boolean) => Promise<void>;
+  defaultPresetName: string;
+  defaultPresetDescription: string;
 }) {
   const canLaunch = validationResult?.ok && !dryRunLoading && !error;
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // Groups collapsed by default in the review preview — the high-signal
+  // info is what's about to run, not the per-phase config which the user
+  // has already configured upstream. They click groups open as needed.
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const toggle = (label: string) => setExpanded((prev) => {
     const next = new Set(prev);
     next.has(label) ? next.delete(label) : next.add(label);
@@ -1819,9 +2298,11 @@ function StepReview({
         </div>
       )}
 
-      {/* Execution plan — accordion groups */}
+      {/* Execution plan — accordion groups, full width to match the
+          launch row underneath. Inner editors use the row width when a
+          group is expanded. */}
       {activeGroups.length > 0 && (
-        <div className="select-none max-w-xl">
+        <div className="select-none w-full">
           {activeGroups.map((group, gi) => {
             const isLast = gi === activeGroups.length - 1;
             const GroupIcon = group.icon;
@@ -1852,8 +2333,8 @@ function StepReview({
                   </button>
 
                   {isExpanded && (
-                    <>
-                      <div className="border-t border-zinc-800/50">
+                    <div className="border-t border-zinc-800/50 flex flex-col md:flex-row md:divide-x md:divide-zinc-800/30">
+                      <div className="md:w-72 md:shrink-0">
                         {group.phases.map((phaseId, pi) => {
                           const node = dagNodes.find((n: DryRunNode) => n.id === phaseId);
                           const isLastStep = pi === group.phases.length - 1;
@@ -1880,7 +2361,7 @@ function StepReview({
                       </div>
 
                       {groupKey === "database" && dbConfigDraft !== null ? (
-                        <div className="border-t border-zinc-800/20 px-3 py-1.5 bg-zinc-900/50">
+                        <div className="px-3 py-1.5 bg-zinc-900/50 flex-1 min-w-0 border-t md:border-t-0 border-zinc-800/20">
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-[9px] font-mono text-zinc-600 uppercase">Database Config (editable JSON — overrides field-level settings)</span>
                           </div>
@@ -1934,7 +2415,7 @@ function StepReview({
                           )}
                         </div>
                       ) : groupKey === "benchmark" && stroppyConfigDraft !== null ? (
-                        <div className="border-t border-zinc-800/20 px-3 py-1.5 bg-zinc-900/50">
+                        <div className="px-3 py-1.5 bg-zinc-900/50 flex-1 min-w-0 border-t md:border-t-0 border-zinc-800/20">
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-[10px] font-mono text-zinc-500 shrink-0">Stroppy Version</span>
                             <input
@@ -1964,13 +2445,13 @@ function StepReview({
                           )}
                         </div>
                       ) : cfgEntries && Object.keys(cfgEntries).length > 0 ? (
-                        <div className="border-t border-zinc-800/20 px-3 py-1.5 bg-zinc-900/50 space-y-0.5">
+                        <div className="px-3 py-1.5 bg-zinc-900/50 space-y-0.5 flex-1 min-w-0 border-t md:border-t-0 border-zinc-800/20">
                           {Object.entries(cfgEntries).map(([k, v]) => (
                             <EditableCfgRow key={k} k={k} v={v} groupKey={groupKey} onEdit={onEdit} />
                           ))}
                         </div>
                       ) : null}
-                    </>
+                    </div>
                   )}
                 </div>
 
@@ -1985,16 +2466,156 @@ function StepReview({
         </div>
       )}
 
-      {/* Launch */}
-      <Button
-        size="lg"
-        onClick={onSubmit}
-        disabled={!canLaunch || submitting}
-        className="w-full gap-2 h-12 text-base"
-      >
-        <Rocket className="h-5 w-5" />
-        {submitting ? "Launching..." : "Launch Run"}
-      </Button>
+      {/* Save as Run Preset (with optional launch toggle in dialog) +
+          Launch Run, sharing the row width 50/50. Topology save lives back
+          on the Database step, next to where the topology actually gets
+          picked. */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <SaveAsPresetButton
+          variant="run"
+          defaultName={defaultPresetName}
+          defaultDescription={defaultPresetDescription}
+          onSave={onSaveAsPreset}
+          disabled={!canLaunch}
+          allowLaunchToggle
+          fullWidth
+        />
+        <Button
+          size="lg"
+          onClick={onSubmit}
+          disabled={!canLaunch || submitting}
+          className="flex-1 w-full gap-2 h-12 text-base"
+        >
+          <Rocket className="h-5 w-5" />
+          {submitting ? "Launching..." : "Launch Run"}
+        </Button>
+      </div>
     </div>
+  );
+}
+
+function SaveAsPresetButton({ variant, defaultName, defaultDescription, onSave, disabled, allowLaunchToggle, fullWidth }: {
+  variant: "run" | "topology";
+  defaultName: string;
+  defaultDescription: string;
+  // Run-preset variant accepts a third arg requesting an immediate launch
+  // after save; topology variant ignores it.
+  onSave: (name: string, description: string, alsoLaunch: boolean) => Promise<void>;
+  disabled?: boolean;
+  allowLaunchToggle?: boolean;
+  // When true, button stretches to fill its flex parent — used in the
+  // review row where Save and Launch share the width 50/50.
+  fullWidth?: boolean;
+}) {
+  const isRun = variant === "run";
+  const buttonLabel = isRun ? "Save as Run Preset" : "Save as Topology Preset";
+  const dialogTitle = isRun ? "Save as Run Preset" : "Save as Topology Preset";
+  const Icon = isRun ? FlaskConical : Layers;
+  const dialogDescription = isRun
+    ? "Persists the current workload + infrastructure config as a reusable template. The run-specific name & description (if any) are stripped before saving."
+    : "Persists the current database topology subtree (machine specs, replicas, options, proxy/etcd toggles) as a new entry in the topology presets catalog. Workload & stroppy settings are not saved.";
+  const placeholder = isRun ? "e.g. tpcc-pg17-100vu-baseline" : "e.g. PostgreSQL HA-tuned (32GB shared_buffers)";
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(defaultName);
+  const [description, setDescription] = useState(defaultDescription);
+  const [alsoLaunch, setAlsoLaunch] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setName(defaultName);
+      setDescription(defaultDescription);
+      setAlsoLaunch(false);
+      setDone(false);
+      setErr("");
+    }
+  }, [open, defaultName, defaultDescription]);
+
+  async function save() {
+    if (!name.trim()) return;
+    setSaving(true);
+    setErr("");
+    try {
+      await onSave(name, description, alsoLaunch);
+      setDone(true);
+      // When also-launch is on the parent navigates away on success; the
+      // dialog auto-closes anyway after a short flash so nobody's left
+      // staring at "Saved!" forever.
+      window.setTimeout(() => setOpen(false), 700);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        size="lg"
+        disabled={disabled}
+        onClick={() => setOpen(true)}
+        className={`h-12 gap-2 text-base ${fullWidth ? "flex-1 w-full" : ""}`}
+      >
+        <Icon className="h-4 w-4" />
+        {buttonLabel}
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{dialogTitle}</DialogTitle>
+            <DialogDescription>{dialogDescription}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <div className="space-y-1.5">
+              <label className="text-xs text-zinc-500 font-mono">Name</label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoFocus
+                placeholder={placeholder}
+                className="w-full bg-[#0a0a0a] border border-zinc-800 px-2 py-1.5 text-sm font-mono text-zinc-200 focus:outline-none focus:border-primary/60"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs text-zinc-500 font-mono">Description</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+                placeholder="optional"
+                className="w-full bg-[#0a0a0a] border border-zinc-800 px-2 py-1.5 text-xs font-mono text-zinc-300 focus:outline-none focus:border-primary/60 resize-none"
+              />
+            </div>
+            {allowLaunchToggle && (
+              <label className="flex items-center gap-2 cursor-pointer select-none pt-1">
+                <input
+                  type="checkbox"
+                  checked={alsoLaunch}
+                  onChange={(e) => setAlsoLaunch(e.target.checked)}
+                  className="accent-primary"
+                />
+                <span className="text-xs font-mono text-zinc-300">
+                  Launch run after saving
+                </span>
+                <Rocket className="h-3 w-3 text-zinc-600 ml-auto" />
+              </label>
+            )}
+            {err && <div className="text-xs text-destructive font-mono">{err}</div>}
+            <Button onClick={save} disabled={saving || done || !name.trim()}>
+              {done
+                ? alsoLaunch ? "Saved + launching..." : "Saved!"
+                : saving
+                  ? alsoLaunch ? "Saving + launching..." : "Saving..."
+                  : alsoLaunch ? "Save + Launch" : "Save"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -92,7 +92,11 @@ func (s *RunStorage) List(ctx context.Context, tenantID string) ([]dag.RunSummar
 						Role  string `json:"role"`
 						Count int    `json:"count"`
 					} `json:"machines"`
-					PresetID string `json:"preset_id"`
+					PresetID    string `json:"preset_id"`
+					Name        string `json:"name"`
+					Description string `json:"description"`
+					SuiteID     string `json:"suite_id"`
+					RunPresetID string `json:"run_preset_id"`
 				}
 				if json.Unmarshal(snap.State.RunConfig, &rc) == nil {
 					summary.DBKind = rc.Database.Kind
@@ -101,6 +105,10 @@ func (s *RunStorage) List(ctx context.Context, tenantID string) ([]dag.RunSummar
 					summary.Duration = rc.Stroppy.Duration
 					summary.VUs = rc.Stroppy.VUs
 					summary.PresetID = rc.PresetID
+					summary.Name = rc.Name
+					summary.Description = rc.Description
+					summary.SuiteID = rc.SuiteID
+					summary.RunPresetID = rc.RunPresetID
 					for _, m := range rc.Machines {
 						if m.Role == "database" {
 							summary.NodeCount += m.Count

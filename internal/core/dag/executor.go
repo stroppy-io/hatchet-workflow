@@ -229,7 +229,20 @@ func (e *Executor) runAlwaysRunNodes(ctx context.Context) {
 	}
 }
 
+// stroppyShortRunCutoff is the threshold below which a failed run_stroppy
+// attempt is considered "fast enough that retrying makes sense" (likely a
+// transient setup/connection blip rather than a workload issue mid-run).
+const stroppyShortRunCutoff = time.Minute
+
 // executeWithRetry runs a node with retries. Updates state to done/failed/cancelled.
+//
+// Special-case: the run_stroppy node never retries by default — once stroppy
+// has been running for a while, a failure is almost always a real workload or
+// data issue that won't fix itself on a fresh attempt, and re-running burns
+// machine time. The exception is fast failures (<1 min): those are usually
+// transient (driver connect, schema not yet visible, etc.) and worth one
+// retry. So run_stroppy gets at most 1 retry, granted only when the first
+// attempt failed within stroppyShortRunCutoff.
 func (e *Executor) executeWithRetry(ctx context.Context, n *Node) {
 	nc := &NodeContext{
 		Context: ctx,
@@ -238,12 +251,22 @@ func (e *Executor) executeWithRetry(ctx context.Context, n *Node) {
 
 	var lastErr error
 	delay := e.retry.BaseDelay
+	isStroppy := n.ID == string(PhaseRunStroppyID)
+	maxRetries := e.retry.MaxRetries
+	if isStroppy {
+		// Default: no retries for stroppy. Bumped to 1 below if the first
+		// attempt fails quickly.
+		maxRetries = 0
+	}
 
-	for attempt := 0; attempt <= e.retry.MaxRetries; attempt++ {
+	for attempt := 0; ; attempt++ {
+		if attempt > maxRetries {
+			break
+		}
 		if attempt > 0 {
 			nc.Log().Warn("retrying node",
 				zap.Int("attempt", attempt),
-				zap.Int("max_retries", e.retry.MaxRetries),
+				zap.Int("max_retries", maxRetries),
 				zap.Duration("backoff", delay),
 				zap.Error(lastErr),
 			)
@@ -263,6 +286,7 @@ func (e *Executor) executeWithRetry(ctx context.Context, n *Node) {
 			}
 		}
 
+		started := time.Now()
 		err := n.Task.Execute(nc)
 		if err == nil {
 			e.markDone(ctx, n.ID)
@@ -270,15 +294,35 @@ func (e *Executor) executeWithRetry(ctx context.Context, n *Node) {
 		}
 
 		lastErr = err
+		elapsed := time.Since(started)
 		nc.Log().Error("node execution failed",
 			zap.Int("attempt", attempt+1),
-			zap.Int("max_attempts", e.retry.MaxRetries+1),
+			zap.Int("max_attempts", maxRetries+1),
+			zap.Duration("elapsed", elapsed),
 			zap.Error(err),
 		)
+
+		// Stroppy node: only grant a retry if the first attempt died fast
+		// (<1 min). Long-running stroppy failures aren't worth retrying.
+		if isStroppy && attempt == 0 && elapsed < stroppyShortRunCutoff {
+			maxRetries = 1
+			nc.Log().Info("granting one retry: stroppy failed before cutoff",
+				zap.Duration("elapsed", elapsed),
+				zap.Duration("cutoff", stroppyShortRunCutoff),
+			)
+		}
 	}
 
-	e.markFailed(n.ID, fmt.Errorf("after %d attempts: %w", e.retry.MaxRetries+1, lastErr))
+	e.markFailed(n.ID, fmt.Errorf("after %d attempts: %w", maxRetries+1, lastErr))
 }
+
+// PhaseRunStroppyID mirrors types.PhaseRunStroppy without importing the
+// types package (which would create an import cycle: dag is below types in
+// the layering). Kept as a typed string so any drift gets caught at compile
+// time the next time someone updates the phase constants.
+type phaseID string
+
+const PhaseRunStroppyID phaseID = "run_stroppy"
 
 func (e *Executor) getReady() []*Node {
 	e.mu.Lock()

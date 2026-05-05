@@ -454,13 +454,19 @@ type NetworkConfig struct {
 // RunConfig is the full specification of a test run.
 // It is used to build the execution DAG.
 type RunConfig struct {
-	ID       string         `json:"id"`
-	Provider Provider       `json:"provider"`
-	Network  NetworkConfig  `json:"network"`
-	Machines []MachineSpec  `json:"machines"`
-	Database DatabaseConfig `json:"database"`
-	Monitor  MonitorConfig  `json:"monitor"`
-	Stroppy  StroppyConfig  `json:"stroppy"`
+	ID string `json:"id"`
+	// Name is an optional human-friendly label for this run, set on creation
+	// only. Surfaces in run lists / details. Empty string means unnamed.
+	Name string `json:"name,omitempty"`
+	// Description is an optional free-form note about this run. Set on
+	// creation only.
+	Description string         `json:"description,omitempty"`
+	Provider    Provider       `json:"provider"`
+	Network     NetworkConfig  `json:"network"`
+	Machines    []MachineSpec  `json:"machines"`
+	Database    DatabaseConfig `json:"database"`
+	Monitor     MonitorConfig  `json:"monitor"`
+	Stroppy     StroppyConfig  `json:"stroppy"`
 	// PresetID references a presets row. If set and no topology is provided in Database,
 	// the preset's topology is applied. Topology in the request takes priority.
 	PresetID string `json:"preset_id,omitempty"`
@@ -472,6 +478,38 @@ type RunConfig struct {
 	// MachineOverride, when set, overrides the CPU/memory/disk of all database-role
 	// machines from the preset topology. Allows per-run sizing without editing the preset.
 	MachineOverride *MachineSpec `json:"machine_override,omitempty"`
+	// RunPresetID references a run_presets row when this run was started from
+	// a saved run-preset (workload+infra parameter template). Surfaced in the
+	// run summary; resolution happens client-side.
+	RunPresetID string `json:"run_preset_id,omitempty"`
+	// SuiteID references a suite_runs row when this run was started as part
+	// of a suite (a sequence of run-presets). Surfaced in the run summary so
+	// the UI can group runs by suite.
+	SuiteID string `json:"suite_id,omitempty"`
+	// ExternalDB, when set, treats the run as bring-your-own-database: the
+	// agent skips infra/install/configure phases and points stroppy at the
+	// supplied endpoint. Database.Kind / Database.Version still describe the
+	// target so script compatibility checks work.
+	ExternalDB *ExternalDBConfig `json:"external_db,omitempty"`
 	// ResolvedPackage is populated by the server before building the DAG. Not sent by clients.
 	ResolvedPackage *Package `json:"-"`
+}
+
+// ExternalDBConfig describes a user-supplied database endpoint. When present
+// in RunConfig, the executor skips machines/install/configure phases for the
+// database and routes stroppy directly at this endpoint. Monitoring is also
+// skipped (no agents to scrape) — metrics come only from stroppy itself.
+type ExternalDBConfig struct {
+	// Endpoint is the connection target as a host:port pair (e.g.
+	// "10.1.0.5:5432"). For YDB this is the grpc endpoint.
+	Endpoint string `json:"endpoint"`
+	// Database is the database name / path (e.g. "stroppy", or for YDB
+	// "/Root/testdb").
+	Database string `json:"database,omitempty"`
+	// Username and password for authentication. Optional for engines that
+	// support trust auth (rare in production).
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
+	// SSLMode is engine-specific (e.g. "disable", "require"). Optional.
+	SSLMode string `json:"ssl_mode,omitempty"`
 }

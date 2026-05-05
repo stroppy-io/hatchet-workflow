@@ -3,6 +3,9 @@ import type {
   Snapshot,
   RunSummary,
   Preset,
+  RunPreset,
+  Suite,
+  SuiteItem,
   ServerSettings,
   Package,
   ComparisonResponse,
@@ -397,6 +400,96 @@ export async function deletePreset(id: string): Promise<{ status: string }> {
 
 export async function clonePreset(id: string): Promise<{ id: string; name: string }> {
   return request(`${API_BASE}/presets/${id}/clone`, { method: "POST" });
+}
+
+// ---------- Run Presets ----------
+
+export async function listRunPresets(params?: {
+  db_kind?: string;
+}): Promise<RunPreset[]> {
+  const qs = new URLSearchParams();
+  if (params?.db_kind) qs.set("db_kind", params.db_kind);
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return request(`${API_BASE}/run-presets${suffix}`);
+}
+
+export async function getRunPreset(id: string): Promise<RunPreset> {
+  return request(`${API_BASE}/run-presets/${id}`);
+}
+
+export async function createRunPreset(data: {
+  name: string;
+  description?: string;
+  db_kind: DatabaseKind;
+  config: RunConfig;
+}): Promise<{ id: string }> {
+  return request(`${API_BASE}/run-presets`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateRunPreset(
+  id: string,
+  data: { name?: string; description?: string; config?: RunConfig },
+): Promise<{ status: string }> {
+  return request(`${API_BASE}/run-presets/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteRunPreset(id: string): Promise<{ status: string }> {
+  return request(`${API_BASE}/run-presets/${id}`, { method: "DELETE" });
+}
+
+// ---------- Suites ----------
+
+export async function listSuites(): Promise<Suite[]> {
+  return request(`${API_BASE}/suites`);
+}
+
+export async function getSuite(id: string): Promise<Suite> {
+  return request(`${API_BASE}/suites/${id}`);
+}
+
+export async function createSuite(data: {
+  name: string;
+  description?: string;
+  items: SuiteItem[];
+}): Promise<{ id: string }> {
+  return request(`${API_BASE}/suites`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateSuite(
+  id: string,
+  data: { name?: string; description?: string; items?: SuiteItem[] },
+): Promise<{ status: string }> {
+  return request(`${API_BASE}/suites/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteSuite(id: string): Promise<{ status: string }> {
+  return request(`${API_BASE}/suites/${id}`, { method: "DELETE" });
+}
+
+export async function launchSuite(
+  id: string,
+  data?: {
+    overrides?: Record<number, Partial<RunConfig>>;
+    name_prefix?: string;
+    description?: string;
+  },
+): Promise<{ suite_id: string; batch_id: string; items: number }> {
+  return request(`${API_BASE}/suites/${id}/run`, {
+    method: "POST",
+    body: JSON.stringify(data || {}),
+  });
 }
 
 // ---------- Probe ----------

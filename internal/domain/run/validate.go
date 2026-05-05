@@ -20,8 +20,13 @@ func ValidateConfig(cfg types.RunConfig) error {
 		return fmt.Errorf("database.kind is required")
 	}
 
-	// At least one topology must be set (or preset_id).
-	if cfg.Database.Postgres == nil && cfg.Database.MySQL == nil && cfg.Database.MariaDB == nil && cfg.Database.Picodata == nil && cfg.Database.YDB == nil && cfg.Database.YDBManaged == nil && cfg.Database.Cockroach == nil && cfg.PresetID == "" {
+	// External DB short-circuits topology requirements — the user supplies
+	// the endpoint themselves so there's no infra to plan.
+	if cfg.ExternalDB != nil {
+		if cfg.ExternalDB.Endpoint == "" {
+			return fmt.Errorf("external_db.endpoint is required")
+		}
+	} else if cfg.Database.Postgres == nil && cfg.Database.MySQL == nil && cfg.Database.MariaDB == nil && cfg.Database.Picodata == nil && cfg.Database.YDB == nil && cfg.Database.YDBManaged == nil && cfg.Database.Cockroach == nil && cfg.PresetID == "" {
 		return fmt.Errorf("database topology or preset_id is required")
 	}
 

@@ -86,6 +86,18 @@ func FillMachinesFromTopology(cfg *types.RunConfig) {
 		return // user specified machines explicitly
 	}
 
+	// Bring-your-own database: no DB nodes; the only machine we provision is
+	// the stroppy runner. The runner spec is added below from cfg.Stroppy.Machine
+	// like in the normal path.
+	if cfg.ExternalDB != nil {
+		if cfg.Stroppy.Machine != nil {
+			m := *cfg.Stroppy.Machine
+			m.Role = types.RoleStroppy
+			cfg.Machines = append(cfg.Machines, m)
+		}
+		return
+	}
+
 	ov := cfg.MachineOverride
 	ovCPU := func(orig int) int { return applyOverride(orig, ov, func(m *types.MachineSpec) int { return m.CPUs }) }
 	ovMem := func(orig int) int {

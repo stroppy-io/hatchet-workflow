@@ -14,6 +14,8 @@ import {
   Building2,
   ShieldCheck,
   HeartPulse,
+  FlaskConical,
+  Boxes,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { TenantSwitcher } from "@/components/TenantSwitcher";
@@ -33,18 +35,53 @@ interface NavItem {
   minLevel: number; // 1=viewer, 2=operator, 3=owner, 99=root
 }
 
-const navItems: NavItem[] = [
-  { to: "/", icon: List, label: "Runs", minLevel: 1 },
-  { to: "/runs/new", icon: Play, label: "New Run", minLevel: 2 },
-  { to: "/compare", icon: GitCompare, label: "Compare", minLevel: 1 },
-  { to: "/packages", icon: Package, label: "Packages", minLevel: 1 },
-  { to: "/presets", icon: Layers, label: "Presets", minLevel: 1 },
-  { to: "/settings", icon: Settings, label: "Settings", minLevel: 1 },
-  { to: "/members", icon: Users, label: "Members", minLevel: 3 },
-  { to: "/tokens", icon: KeyRound, label: "API Tokens", minLevel: 3 },
-  { to: "/admin/tenants", icon: Building2, label: "Admin (Tenants)", minLevel: 99 },
-  { to: "/admin/users", icon: ShieldCheck, label: "Admin (Users)", minLevel: 99 },
-  { to: "/admin/server", icon: HeartPulse, label: "Server Health", minLevel: 99 },
+interface NavGroup {
+  label: string;
+  minLevel: number; // hide whole group when user can't see any item
+  items: NavItem[];
+}
+
+// Logical grouping. Operators land on Tests every day, library is reference
+// material, tenant scope is the per-org admin surface, system scope is
+// root-only. Order = how often a typical operator touches each group.
+const navGroups: NavGroup[] = [
+  {
+    label: "Tests",
+    minLevel: 1,
+    items: [
+      { to: "/suites", icon: Boxes, label: "Suites", minLevel: 1 },
+      { to: "/", icon: List, label: "Test Runs", minLevel: 1 },
+      { to: "/runs/new", icon: Play, label: "New Run", minLevel: 2 },
+      { to: "/compare", icon: GitCompare, label: "Compare", minLevel: 1 },
+    ],
+  },
+  {
+    label: "Library",
+    minLevel: 1,
+    items: [
+      { to: "/run-presets", icon: FlaskConical, label: "Run Presets", minLevel: 1 },
+      { to: "/presets", icon: Layers, label: "Topology Presets", minLevel: 1 },
+      { to: "/packages", icon: Package, label: "Packages", minLevel: 1 },
+    ],
+  },
+  {
+    label: "Tenant",
+    minLevel: 1,
+    items: [
+      { to: "/settings", icon: Settings, label: "Settings", minLevel: 1 },
+      { to: "/members", icon: Users, label: "Members", minLevel: 3 },
+      { to: "/tokens", icon: KeyRound, label: "API Tokens", minLevel: 3 },
+    ],
+  },
+  {
+    label: "System",
+    minLevel: 99,
+    items: [
+      { to: "/admin/tenants", icon: Building2, label: "Tenants", minLevel: 99 },
+      { to: "/admin/users", icon: ShieldCheck, label: "Users", minLevel: 99 },
+      { to: "/admin/server", icon: HeartPulse, label: "Server Health", minLevel: 99 },
+    ],
+  },
 ];
 
 export function Layout() {
@@ -65,25 +102,34 @@ export function Layout() {
           {user?.is_root && <TenantSwitcher />}
         </div>
         <nav className="flex-1 py-2 overflow-y-auto">
-          {navItems
-            .filter((item) => level >= item.minLevel)
-            .map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === "/"}
-                className={({ isActive }) =>
-                  `flex items-center gap-2.5 px-4 py-2 text-sm transition-colors ${
-                    isActive
-                      ? "text-foreground bg-muted border-r-2 border-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  }`
-                }
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </NavLink>
-            ))}
+          {navGroups.map((group) => {
+            const visible = group.items.filter((it) => level >= it.minLevel);
+            if (visible.length === 0) return null;
+            return (
+              <div key={group.label} className="mb-2">
+                <div className="px-4 pt-2 pb-1 text-[10px] font-mono uppercase tracking-wider text-zinc-600">
+                  {group.label}
+                </div>
+                {visible.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === "/"}
+                    className={({ isActive }) =>
+                      `flex items-center gap-2.5 px-4 py-1.5 text-sm transition-colors ${
+                        isActive
+                          ? "text-foreground bg-muted border-r-2 border-primary"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      }`
+                    }
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            );
+          })}
         </nav>
         <div className="border-t border-border">
           {user && (

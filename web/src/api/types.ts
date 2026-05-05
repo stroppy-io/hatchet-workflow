@@ -288,8 +288,18 @@ export interface Package {
   updated_at?: string;
 }
 
+export interface ExternalDBConfig {
+  endpoint: string;
+  database?: string;
+  username?: string;
+  password?: string;
+  ssl_mode?: string;
+}
+
 export interface RunConfig {
   id: string;
+  name?: string;
+  description?: string;
   provider: Provider;
   network: NetworkConfig;
   machines: MachineSpec[];
@@ -300,6 +310,9 @@ export interface RunConfig {
   package_id?: string;
   platform_id?: string;
   machine_override?: MachineSpec;
+  run_preset_id?: string;
+  suite_id?: string;
+  external_db?: ExternalDBConfig;
 }
 
 // --- DAG / Snapshot ---
@@ -351,6 +364,46 @@ export interface RunSummary {
   node_count?: number;
   preset_id?: string;
   cancelled?: boolean;
+  name?: string;
+  description?: string;
+  suite_id?: string;
+  run_preset_id?: string;
+}
+
+// --- Run Presets ---
+
+export interface RunPreset {
+  id: string;
+  name: string;
+  description: string;
+  db_kind: string;
+  config: RunConfig;
+  created_at: string;
+  updated_at: string;
+}
+
+// --- Suites ---
+
+export interface SuiteItem {
+  run_preset_id: string;
+  overrides?: Partial<RunConfig>;
+}
+
+export interface SuiteRunSummary {
+  batch_id: string;
+  run_id: string;
+  position: number;
+  created_at: string;
+}
+
+export interface Suite {
+  id: string;
+  name: string;
+  description: string;
+  items: SuiteItem[];
+  runs?: SuiteRunSummary[];
+  created_at: string;
+  updated_at: string;
 }
 
 // --- Presets ---

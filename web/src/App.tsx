@@ -8,6 +8,9 @@ import { RunDetail } from "@/pages/RunDetail";
 import { Compare } from "@/pages/Compare";
 import { SettingsPage } from "@/pages/Settings";
 import { Presets } from "@/pages/Presets";
+import { RunPresets } from "@/pages/RunPresets";
+import { Suites } from "@/pages/Suites";
+import { SuiteDetail } from "@/pages/SuiteDetail";
 import { Packages } from "@/pages/Packages";
 import { PresetDesigner } from "@/pages/PresetDesigner";
 import { ServerHealth } from "@/pages/ServerHealth";
@@ -121,6 +124,9 @@ function AppRoutes() {
         <Route path="/compare" element={<Compare />} />
         <Route path="/packages" element={<Packages />} />
         <Route path="/presets" element={<Presets />} />
+        <Route path="/run-presets" element={<RunPresets />} />
+        <Route path="/suites" element={<Suites />} />
+        <Route path="/suites/:id" element={<SuiteDetail />} />
 
         <Route path="/settings" element={<SettingsPage />} />
 

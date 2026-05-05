@@ -58,23 +58,27 @@ type Snapshot struct {
 
 // RunSummary is a compact view of a saved snapshot for listing.
 type RunSummary struct {
-	ID         string       `json:"id"`
-	Nodes      []NodeStatus `json:"nodes"`
-	Total      int          `json:"total"`
-	Done       int          `json:"done"`
-	Failed     int          `json:"failed"`
-	Pending    int          `json:"pending"`
-	StartedAt  time.Time    `json:"started_at,omitempty"`
-	FinishedAt time.Time    `json:"finished_at,omitempty"`
-	DBKind     string       `json:"db_kind,omitempty"`
-	Provider   string       `json:"provider,omitempty"`
-	Script     string       `json:"script,omitempty"`
-	Duration   string       `json:"duration,omitempty"`
-	VUs        int          `json:"vus,omitempty"`
-	DBVersion  string       `json:"db_version,omitempty"`
-	NodeCount  int          `json:"node_count,omitempty"`
-	PresetID   string       `json:"preset_id,omitempty"` // ID of preset used (when run was started from one); frontend resolves name via /presets
-	Cancelled  bool         `json:"cancelled,omitempty"`
+	ID          string       `json:"id"`
+	Nodes       []NodeStatus `json:"nodes"`
+	Total       int          `json:"total"`
+	Done        int          `json:"done"`
+	Failed      int          `json:"failed"`
+	Pending     int          `json:"pending"`
+	StartedAt   time.Time    `json:"started_at,omitempty"`
+	FinishedAt  time.Time    `json:"finished_at,omitempty"`
+	DBKind      string       `json:"db_kind,omitempty"`
+	Provider    string       `json:"provider,omitempty"`
+	Script      string       `json:"script,omitempty"`
+	Duration    string       `json:"duration,omitempty"`
+	VUs         int          `json:"vus,omitempty"`
+	DBVersion   string       `json:"db_version,omitempty"`
+	NodeCount   int          `json:"node_count,omitempty"`
+	PresetID    string       `json:"preset_id,omitempty"` // ID of preset used (when run was started from one); frontend resolves name via /presets
+	Cancelled   bool         `json:"cancelled,omitempty"`
+	Name        string       `json:"name,omitempty"`        // user-supplied run name (optional, set at creation)
+	Description string       `json:"description,omitempty"` // user-supplied run description (optional, set at creation)
+	SuiteID     string       `json:"suite_id,omitempty"`    // suite that owns this run, when started as part of one
+	RunPresetID string       `json:"run_preset_id,omitempty"`
 }
 
 // Storage is the interface for persisting executor state.

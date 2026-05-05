@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   useReactTable,
   getCoreRowModel,
@@ -12,7 +12,7 @@ import {
   type ColumnFiltersState,
   type RowSelectionState,
 } from "@tanstack/react-table";
-import { listRuns, deleteRun, cancelRun, getRunStatus, listPresets } from "@/api/client";
+import { listRuns, deleteRun, cancelRun, getRunStatus, listPresets, getSuite, listSuites } from "@/api/client";
 import type { RunSummary, RunConfig } from "@/api/types";
 import {
   Table,
@@ -41,6 +41,7 @@ import {
   AlertCircle,
   StopCircle,
   RotateCcw,
+  Boxes,
 } from "lucide-react";
 
 // --- Helpers ---
@@ -150,23 +151,40 @@ function makeColumns(onDelete: (id: string) => void, onCancel: (id: string) => v
       enableSorting: false,
       size: 36,
     },
-    // ID (truncated to last 8 chars)
+    // ID (truncated to last 8 chars). Whole row is clickable; this column
+    // just renders the short id text — the navigation is handled by the
+    // TableRow onClick. Title attr keeps the full id discoverable on hover.
     {
       accessorKey: "id",
       header: ({ column }) => (
-        <SortableHeader column={column} label="Run ID" />
+        <SortableHeader column={column} label="ID" />
       ),
       cell: ({ row }) => {
-        const id = row.original.id;
-        const short = id.length > 8 ? id.slice(-8) : id;
+        const r = row.original;
+        const short = r.id.length > 8 ? r.id.slice(-8) : r.id;
         return (
-          <Link
-            to={`/runs/${id}`}
-            className="font-mono text-xs text-primary hover:underline"
-            title={id}
-          >
+          <span className="font-mono text-xs text-primary" title={r.id}>
             {short}
-          </Link>
+          </span>
+        );
+      },
+    },
+    // Name (separate column — sortable, falls back to em dash when unset).
+    {
+      accessorKey: "name",
+      header: ({ column }) => (
+        <SortableHeader column={column} label="Name" />
+      ),
+      cell: ({ row }) => {
+        const r = row.original;
+        if (!r.name) {
+          return <span className="text-xs text-zinc-700">—</span>;
+        }
+        const titleAttr = r.description ? `${r.name}\n\n${r.description}` : r.name;
+        return (
+          <span className="text-xs text-zinc-200 truncate block max-w-[18rem]" title={titleAttr}>
+            {r.name}
+          </span>
         );
       },
     },
@@ -395,6 +413,11 @@ const PAGE_SIZES = [10, 25, 50, 100];
 
 export function Runs() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Suite + batch filtering — populated from URL so links from the Suites
+  // page deep-link straight to "all runs from suite X" or "batch Y of suite X".
+  const suiteFilter = searchParams.get("suite") || "";
+  const batchFilter = searchParams.get("batch") || "";
   const [runs, setRuns] = useState<RunSummary[]>([]);
   const [presetNames, setPresetNames] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -412,6 +435,45 @@ export function Runs() {
       })
       .catch(() => {/* preset list optional — column falls back to id slice */});
   }, []);
+
+  // Suite name + batch run_id allowlist, populated when ?suite= / ?batch=
+  // query params are present. Lets the active-filter chip show a real name
+  // and lets the batch filter narrow rows to exactly the runs of that batch.
+  const [suiteName, setSuiteName] = useState<string>("");
+  const [batchRunIds, setBatchRunIds] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    if (!suiteFilter) {
+      setSuiteName(""); setBatchRunIds(null);
+      return;
+    }
+    let cancelled = false;
+    if (batchFilter) {
+      // Resolve the batch's runs through getSuite; the runs[] field is
+      // populated by the API for individual suite GETs (not list).
+      getSuite(suiteFilter)
+        .then((s) => {
+          if (cancelled) return;
+          setSuiteName(s.name);
+          const ids = new Set<string>();
+          for (const r of s.runs ?? []) {
+            if (r.batch_id === batchFilter) ids.add(r.run_id);
+          }
+          setBatchRunIds(ids);
+        })
+        .catch(() => { if (!cancelled) setBatchRunIds(new Set()); });
+    } else {
+      // Just need a name for the chip — list call is cheap.
+      listSuites()
+        .then((all) => {
+          if (cancelled) return;
+          const found = all.find((s) => s.id === suiteFilter);
+          setSuiteName(found?.name || "");
+          setBatchRunIds(null);
+        })
+        .catch(() => { /* leave name empty */ });
+    }
+    return () => { cancelled = true; };
+  }, [suiteFilter, batchFilter]);
 
   // Auto-refresh
   const REFRESH_OPTIONS = [
@@ -548,8 +610,18 @@ export function Runs() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const columns = useMemo(() => makeColumns(handleDelete, handleCancel, handleRerun, cancellingIds, presetNames), [cancellingIds, presetNames]);
 
+  // Apply the URL-driven suite/batch filters before handing rows to the
+  // table — so per-column filters (status, db, provider) compose with the
+  // suite scope rather than fighting it.
+  const scopedRuns = useMemo(() => {
+    let out = runs;
+    if (suiteFilter) out = out.filter((r) => r.suite_id === suiteFilter);
+    if (batchRunIds) out = out.filter((r) => batchRunIds!.has(r.id));
+    return out;
+  }, [runs, suiteFilter, batchRunIds]);
+
   const table = useReactTable({
-    data: runs,
+    data: scopedRuns,
     columns,
     state: { sorting, columnFilters, rowSelection },
     onSortingChange: setSorting,
@@ -579,10 +651,36 @@ export function Runs() {
 
   return (
     <div className="p-5 flex flex-col gap-4 min-h-full">
+      {/* Active suite filter chip — clicking the X clears both query
+          params at once so a stuck batch filter doesn't outlive its suite. */}
+      {suiteFilter && (
+        <div className="flex items-center gap-2 px-2.5 py-1.5 border border-primary/30 bg-primary/[0.04] text-[11px] font-mono">
+          <Boxes className="h-3.5 w-3.5 text-primary" />
+          <span className="text-zinc-400">Suite:</span>
+          <Link to={`/suites/${suiteFilter}`} className="text-primary hover:underline">
+            {suiteName || suiteFilter.slice(0, 8)}
+          </Link>
+          {batchFilter && (
+            <>
+              <span className="text-zinc-600">·</span>
+              <span className="text-zinc-400">batch</span>
+              <span className="text-primary">{batchFilter.slice(0, 8)}</span>
+            </>
+          )}
+          <button
+            onClick={() => setSearchParams(new URLSearchParams())}
+            className="ml-2 text-zinc-500 hover:text-destructive"
+            title="Clear suite filter"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+
       {/* Header bar */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <h1 className="text-base font-semibold font-mono tracking-tight">Runs</h1>
+          <h1 className="text-base font-semibold font-mono tracking-tight">Test Runs</h1>
           <span className="text-[11px] text-zinc-600 font-mono tabular-nums">
             {table.getFilteredRowModel().rows.length} of {runs.length}
           </span>
@@ -748,7 +846,15 @@ export function Runs() {
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() ? "selected" : undefined}
-                  className="border-zinc-800/50 hover:bg-zinc-900/50 data-[state=selected]:bg-primary/[0.04]"
+                  className="border-zinc-800/50 hover:bg-zinc-900/60 data-[state=selected]:bg-primary/[0.04] cursor-pointer transition-colors"
+                  onClick={(e) => {
+                    // Ignore clicks originating in interactive cells (checkbox,
+                    // action buttons, links). Lets row click be the dominant
+                    // gesture without trapping the existing controls.
+                    const target = e.target as HTMLElement;
+                    if (target.closest("button, a, input, [data-row-stop]")) return;
+                    navigate(`/runs/${row.original.id}`);
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="py-2.5">

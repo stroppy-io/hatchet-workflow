@@ -73,6 +73,14 @@ func (b *builder) addAlwaysRun(phase string, deps []string, task dag.Task) {
 }
 
 func (b *builder) build() error {
+	// Bring-your-own database: skip everything that would have managed the
+	// database (install/configure/monitor/proxy/etcd/patroni/pgbouncer/ydb-init).
+	// We still need a network + a stroppy runner machine, then stroppy points
+	// straight at the user-supplied endpoint.
+	if b.cfg.ExternalDB != nil {
+		return b.buildExternalDB()
+	}
+
 	afterMachines := []string{b.ph(types.PhaseMachines)}
 
 	// --- infrastructure (MustComplete — must finish before teardown on cancel) ---
@@ -191,6 +199,74 @@ func (b *builder) build() error {
 		return fmt.Errorf("run: invalid graph: %w", err)
 	}
 	return nil
+}
+
+// buildExternalDB assembles a minimal DAG when the user supplies an external
+// database endpoint. Skips install/configure/monitor/proxy/etcd/etc — the
+// agent only needs to spin up a stroppy runner and aim it at the supplied
+// endpoint. Pre-seeds State.DBEndpoint so stroppy doesn't try to look it up
+// from a missing configure_db phase.
+func (b *builder) buildExternalDB() error {
+	host, port := splitHostPort(b.cfg.ExternalDB.Endpoint)
+	if host == "" {
+		return fmt.Errorf("external_db.endpoint must be host:port")
+	}
+	b.deps.State.SetDBEndpoint(host, port)
+
+	afterMachines := []string{b.ph(types.PhaseMachines)}
+
+	b.addMustComplete(b.ph(types.PhaseNetwork), nil,
+		&networkTask{cfg: b.cfg.Network, provider: b.cfg.Provider, deployer: b.deps.Deployer, state: b.deps.State, runID: b.cfg.ID})
+
+	b.addMustComplete(b.ph(types.PhaseMachines), []string{b.ph(types.PhaseNetwork)},
+		&machinesTask{runCfg: b.cfg, state: b.deps.State, deployer: b.deps.Deployer, serverAddr: b.deps.ServerAddr, settings: b.deps.Settings, jwtIssuer: b.deps.JWTIssuer, tenantID: b.deps.TenantID})
+
+	b.add(b.ph(types.PhaseInstallStroppy), afterMachines,
+		&stroppyInstallTask{client: b.deps.Client, state: b.deps.State, stroppy: b.cfg.Stroppy})
+
+	stroppySettings := types.DefaultStroppySettings()
+	stroppySettings.OTLPMetricPrefix = strings.ReplaceAll(b.cfg.ID, "-", "_") + "_"
+	if b.deps.MonitoringURL != "" {
+		stroppySettings.SetFromMonitoringURL(b.deps.MonitoringURL, b.deps.MonitoringToken, b.deps.AccountID)
+	}
+	b.add(b.ph(types.PhaseRunStroppy), []string{b.ph(types.PhaseInstallStroppy)},
+		&stroppyRunTask{
+			client:          b.deps.Client,
+			state:           b.deps.State,
+			stroppy:         b.cfg.Stroppy,
+			stroppySettings: stroppySettings,
+			dbKind:          b.cfg.Database.Kind,
+			dbCfg:           b.cfg.Database,
+			runID:           b.cfg.ID,
+			monitoringURL:   b.deps.MonitoringURL,
+			monitoringToken: b.deps.MonitoringToken,
+			accountID:       b.deps.AccountID,
+		})
+
+	b.addAlwaysRun(b.ph(types.PhaseTeardown), []string{b.ph(types.PhaseRunStroppy)},
+		&teardownTask{provider: b.cfg.Provider, state: b.deps.State, deployer: b.deps.Deployer})
+
+	if err := b.g.Validate(); err != nil {
+		return fmt.Errorf("run: invalid graph: %w", err)
+	}
+	return nil
+}
+
+func splitHostPort(addr string) (string, int) {
+	idx := strings.LastIndex(addr, ":")
+	if idx <= 0 || idx == len(addr)-1 {
+		return "", 0
+	}
+	host := addr[:idx]
+	portStr := addr[idx+1:]
+	port := 0
+	for _, c := range portStr {
+		if c < '0' || c > '9' {
+			return "", 0
+		}
+		port = port*10 + int(c-'0')
+	}
+	return host, port
 }
 
 // --- conditional phase helpers ---

@@ -470,13 +470,88 @@ function RenderedConfigBlock({ name, body }: { name: string; body: string }) {
 
 // ─── DAG pipeline (vertical) ─────────────────────────────────────
 
-function DagPipeline({ nodes, cancelled, effectiveConfigs, renderedConfigs, onViewLogs }: { nodes: NodeStatus[]; cancelled?: boolean; effectiveConfigs?: Record<string, Record<string, string>>; renderedConfigs?: Record<string, string>; onViewLogs?: (phase: string) => void }) {
+// deriveGroupConfig backfills a synthetic config row map for a group when the
+// snapshot's effective_configs map is missing or empty for that group. The
+// stroppy benchmark group has its config in cfg.stroppy on every run, so we
+// can always render it — older runs that finished before the agent reported
+// effective_configs would otherwise show "config not available". Other groups
+// get a small derived view from RunConfig too, since the snapshot always
+// stores it. Real effective_configs (when present) take precedence: this is
+// only the fallback.
+function deriveGroupConfig(groupKey: string, cfg: RunConfig | null): Record<string, string> | null {
+  if (!cfg) return null;
+  const out: Record<string, string> = {};
+  const put = (k: string, v: unknown) => {
+    if (v === undefined || v === null) return;
+    if (typeof v === "string" && v === "") return;
+    if (typeof v === "number" && v === 0) return;
+    out[k] = String(v);
+  };
+  switch (groupKey) {
+    case "benchmark": {
+      const s = cfg.stroppy || {};
+      put("version", s.version);
+      put("script", s.script || s.workload);
+      put("sql", s.sql);
+      put("protocol", s.protocol);
+      put("duration", s.duration);
+      put("k6_mode", s.k6_mode);
+      put("iterations", s.iterations);
+      put("vus", s.vus ?? s.vus_scale ?? s.workers);
+      put("pool_size", s.pool_size);
+      put("scale_factor", s.scale_factor);
+      put("default_insert_method", s.default_insert_method);
+      if (s.no_thresholds) put("no_thresholds", "true");
+      if (s.quiet === false) put("quiet", "false");
+      if (s.steps?.length) put("steps", s.steps.join(", "));
+      if (s.no_steps?.length) put("no_steps", s.no_steps.join(", "));
+      break;
+    }
+    case "infrastructure": {
+      put("provider", cfg.provider);
+      put("platform_id", cfg.platform_id);
+      put("network.cidr", cfg.network?.cidr);
+      put("network.zone", cfg.network?.zone);
+      break;
+    }
+    case "database": {
+      put("kind", cfg.database?.kind);
+      put("version", cfg.database?.version);
+      put("preset_id", cfg.preset_id);
+      if (cfg.external_db?.endpoint) {
+        put("external_db.endpoint", cfg.external_db.endpoint);
+        put("external_db.database", cfg.external_db.database);
+      }
+      break;
+    }
+    case "monitoring": {
+      put("metrics_endpoint", cfg.monitor?.metrics_endpoint);
+      put("logs_endpoint", cfg.monitor?.logs_endpoint);
+      break;
+    }
+  }
+  return Object.keys(out).length > 0 ? out : null;
+}
+
+function DagPipeline({ nodes, cancelled, effectiveConfigs, renderedConfigs, runConfig, onViewLogs }: { nodes: NodeStatus[]; cancelled?: boolean; effectiveConfigs?: Record<string, Record<string, string>>; renderedConfigs?: Record<string, string>; runConfig?: RunConfig | null; onViewLogs?: (phase: string) => void }) {
   const allPhaseIds = useMemo(() => phaseGroups.flatMap((g) => g.phases), []);
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // Groups are collapsed by default. Persist user expansions to
+  // localStorage so the choice sticks across reloads of the same run.
+  const expandKey = "stroppy.runOverview.expandedGroups";
+  const [expanded, setExpanded] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem(expandKey);
+      if (raw) return new Set(JSON.parse(raw) as string[]);
+    } catch { /* ignore */ }
+    return new Set();
+  });
 
   const toggle = (label: string) => setExpanded((prev) => {
     const next = new Set(prev);
     next.has(label) ? next.delete(label) : next.add(label);
+    try {
+      localStorage.setItem(expandKey, JSON.stringify(Array.from(next)));
+    } catch { /* ignore */ }
     return next;
   });
 
@@ -554,11 +629,13 @@ function DagPipeline({ nodes, cancelled, effectiveConfigs, renderedConfigs, onVi
                   <ChevronDown className={`w-3 h-3 text-zinc-600 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
                 </button>
 
-                {/* Expanded content: steps + config */}
+                {/* Expanded content: steps + config laid out side-by-side
+                    so the wide right pane gets used. On narrow viewports
+                    the flex wraps to a column automatically. */}
                 {isExpanded && (
-                  <>
+                  <div className="border-t border-zinc-800/30 flex flex-col md:flex-row md:divide-x md:divide-zinc-800/30">
                     {/* Steps */}
-                    <div className="border-t border-zinc-800/30 px-2.5 py-1 space-y-px">
+                    <div className="px-2.5 py-1 space-y-px md:w-72 md:shrink-0">
                       {group.phases.map((phaseId) => {
                         const node = nodeMap.get(phaseId);
                         if (!node) return null;
@@ -611,23 +688,27 @@ function DagPipeline({ nodes, cancelled, effectiveConfigs, renderedConfigs, onVi
                       })}
                     </div>
 
-                    {/* Effective config + rendered config files for this group. */}
+                    {/* Effective config + rendered config files for this group.
+                        Falls back to a synthetic config derived from RunConfig
+                        when the snapshot has no effective_configs entry — old
+                        runs and runs whose agent didn't report still get the
+                        benchmark/database/infra summary. */}
                     {(() => {
                       const groupKey = group.label.toLowerCase();
-                      const stored = effectiveConfigs?.[groupKey];
+                      const stored = effectiveConfigs?.[groupKey] || deriveGroupConfig(groupKey, runConfig ?? null);
                       const renderedKeys = renderedConfigs
                         ? Object.keys(renderedConfigs).filter((k) => groupOwnsRenderedKey(groupKey, k))
                         : [];
                       const hasAnything = stored || renderedKeys.length > 0;
                       if (!hasAnything) {
                         return (
-                          <div className="border-t border-zinc-800/20 px-2.5 py-1.5 bg-zinc-900/30">
+                          <div className="px-2.5 py-1.5 bg-zinc-900/30 flex-1 min-w-0 border-t md:border-t-0 border-zinc-800/20">
                             <span className="text-[10px] font-mono text-zinc-700">config not available for this run</span>
                           </div>
                         );
                       }
                       return (
-                        <div className="border-t border-zinc-800/20 px-2.5 py-1.5 bg-zinc-900/30 space-y-2">
+                        <div className="px-2.5 py-1.5 bg-zinc-900/30 space-y-2 flex-1 min-w-0 border-t md:border-t-0 border-zinc-800/20">
                           {stored && (
                             <div className="space-y-0.5">
                               {Object.entries(stored).map(([k, v]) => <CfgRow key={k} k={k} v={v} />)}
@@ -639,7 +720,7 @@ function DagPipeline({ nodes, cancelled, effectiveConfigs, renderedConfigs, onVi
                         </div>
                       );
                     })()}
-                  </>
+                  </div>
                 )}
               </div>
 
@@ -791,7 +872,7 @@ export function RunOverview({ nodes, snapshot, runStatus, onViewLogs, renderedCo
 
       {/* Right — DAG pipeline */}
       <div className="flex-1 min-w-0">
-        <DagPipeline nodes={nodes} cancelled={runStatus === "cancelled"} effectiveConfigs={snapshot?.state?.effective_configs} renderedConfigs={renderedConfigs} onViewLogs={onViewLogs} />
+        <DagPipeline nodes={nodes} cancelled={runStatus === "cancelled"} effectiveConfigs={snapshot?.state?.effective_configs} renderedConfigs={renderedConfigs} runConfig={config} onViewLogs={onViewLogs} />
       </div>
     </div>
   );

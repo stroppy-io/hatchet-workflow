@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS suite_runs;
+DROP TABLE IF EXISTS suites;
+DROP TABLE IF EXISTS run_presets;
