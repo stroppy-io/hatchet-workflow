@@ -192,7 +192,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "max(pg_replication_lag{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"})",
+          "expr": "max(pg_replication_lag{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"})",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -283,7 +283,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(pg_stat_activity_count{stroppy_run_id=\"$run_id\",state=\"active\",stroppy_machine_id=\"$Instance\"})",
+          "expr": "sum(pg_stat_activity_count{stroppy_run_id=\"$run_id\",state=\"active\",stroppy_machine_id=~\"$Instance\"})",
           "refId": "A"
         }
       ],
@@ -506,7 +506,7 @@
       "pluginVersion": "7.0.3",
       "targets": [
         {
-          "expr": "sum(pg_stat_database_xact_commit{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"})/(sum(pg_stat_database_xact_commit{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}) + sum(pg_stat_database_xact_rollback{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}))",
+          "expr": "sum(pg_stat_database_xact_commit{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"})/(sum(pg_stat_database_xact_commit{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}) + sum(pg_stat_database_xact_rollback{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}))",
           "refId": "A"
         }
       ],
@@ -586,7 +586,7 @@
       "tableColumn": "{instance=\"db01vp-nbg6a.obs.noris.net:9187\", job=\"postgres-exporter\", server=\"213.95.132.73:5432\"}",
       "targets": [
         {
-          "expr": "time()-(pg_postmaster_start_time_seconds{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"})",
+          "expr": "time()-(pg_postmaster_start_time_seconds{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"})",
           "legendFormat": "",
           "refId": "A"
         }
@@ -676,7 +676,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum((rate(pg_stat_database_xact_commit{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}[$Interval])))+sum((rate(pg_stat_database_xact_rollback{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}[$Interval])))",
+          "expr": "sum((rate(pg_stat_database_xact_commit{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))+sum((rate(pg_stat_database_xact_rollback{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -767,7 +767,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum((rate(pg_stat_statements_calls{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}[$Interval])))",
+          "expr": "sum((rate(pg_stat_statements_calls{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -859,7 +859,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(pg_database_size{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"})",
+          "expr": "sum(pg_database_size{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"})",
           "refId": "A"
         }
       ],
@@ -948,7 +948,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum((delta(pg_stat_statements_total_time_seconds{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}[$Interval])))/sum((delta(pg_stat_statements_calls{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}[$Interval])))",
+          "expr": "sum((delta(pg_stat_statements_total_time_seconds{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))/sum((delta(pg_stat_statements_calls{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -1040,7 +1040,7 @@
       "tableColumn": "pg_settings_shared_buffers_bytes{instance=\"db01vp-nbg6a.obs.noris.net:9187\", job=\"postgres-exporter\", server=\"213.95.132.73:5432\"}",
       "targets": [
         {
-          "expr": "pg_settings_shared_buffers_bytes{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}",
+          "expr": "pg_settings_shared_buffers_bytes{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}",
           "refId": "A"
         }
       ],
@@ -1129,7 +1129,7 @@
       "tableColumn": "pg_settings_max_connections{instance=\"db01vp-nbg6a.obs.noris.net:9187\", job=\"postgres-exporter\", server=\"213.95.132.73:5432\"}",
       "targets": [
         {
-          "expr": "pg_settings_max_connections{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}",
+          "expr": "pg_settings_max_connections{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}",
           "refId": "A"
         }
       ],
@@ -1209,7 +1209,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum by (state) (pg_stat_activity_count{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"})",
+          "expr": "sum by (state) (pg_stat_activity_count{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"})",
           "legendFormat": "{{state}}",
           "refId": "A"
         }
@@ -1318,7 +1318,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum by (datname) (pg_stat_activity_count{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"})",
+          "expr": "sum by (datname) (pg_stat_activity_count{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"})",
           "legendFormat": "{{datname}}",
           "refId": "A"
         }
@@ -1524,19 +1524,19 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum((rate(pg_stat_database_tup_inserted{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}[$Interval])))",
+          "expr": "sum((rate(pg_stat_database_tup_inserted{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
           "interval": "",
           "legendFormat": "Inserts",
           "refId": "A"
         },
         {
-          "expr": "sum((rate(pg_stat_database_tup_updated{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}[$Interval])))",
+          "expr": "sum((rate(pg_stat_database_tup_updated{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
           "interval": "",
           "legendFormat": "Updates",
           "refId": "B"
         },
         {
-          "expr": "sum((rate(pg_stat_database_tup_deleted{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}[$Interval])))",
+          "expr": "sum((rate(pg_stat_database_tup_deleted{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
           "interval": "",
           "legendFormat": "Deletes",
           "refId": "C"
@@ -1632,13 +1632,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum ((rate(pg_stat_database_blk_read_time{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}[$Interval])))",
+          "expr": "sum ((rate(pg_stat_database_blk_read_time{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
           "interval": "",
           "legendFormat": "blk_read_time",
           "refId": "A"
         },
         {
-          "expr": "sum ((rate(pg_stat_database_blk_write_time{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}[$Interval])))",
+          "expr": "sum ((rate(pg_stat_database_blk_write_time{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
           "interval": "",
           "legendFormat": "blk_read_time",
           "refId": "B"
@@ -1735,13 +1735,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum((rate(pg_stat_database_tup_fetched{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}[$Interval])))",
+          "expr": "sum((rate(pg_stat_database_tup_fetched{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
           "interval": "",
           "legendFormat": "Fetched",
           "refId": "A"
         },
         {
-          "expr": "sum((rate(pg_stat_database_tup_returned{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}[$Interval])))",
+          "expr": "sum((rate(pg_stat_database_tup_returned{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
           "interval": "",
           "legendFormat": "Returned",
           "refId": "B"
@@ -1843,7 +1843,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum by (mode) (pg_locks_count{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"})",
+          "expr": "sum by (mode) (pg_locks_count{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"})",
           "legendFormat": "{{mode}}",
           "refId": "A"
         }
@@ -1946,7 +1946,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum by (datname) ((rate(pg_stat_database_deadlocks{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}[$Interval])))",
+          "expr": "sum by (datname) ((rate(pg_stat_database_deadlocks{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
           "interval": "",
           "legendFormat": "{{datname}}",
           "refId": "A"
@@ -2050,7 +2050,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum by (datname) ((rate(pg_stat_database_temp_files{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"}[$Interval])))",
+          "expr": "sum by (datname) ((rate(pg_stat_database_temp_files{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
           "interval": "",
           "legendFormat": "{{datname}}",
           "refId": "A"
@@ -2148,7 +2148,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "max(pg_replication_lag{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\"})",
+          "expr": "max(pg_replication_lag{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"})",
           "instant": false,
           "intervalFactor": 1,
           "legendFormat": "lag ",
@@ -2283,7 +2283,7 @@
           "tableColumn": "pg_stat_activity_count{datname=\"grafana\", instance=\"db01vp-nbg6a.obs.noris.net:9187\", job=\"postgres-exporter\", server=\"213.95.132.73:5432\", state=\"active\"}",
           "targets": [
             {
-              "expr": "pg_stat_activity_count{stroppy_run_id=\"$run_id\",state=\"active\",stroppy_machine_id=\"$Instance\",datname=~\"$Database\"}",
+              "expr": "pg_stat_activity_count{stroppy_run_id=\"$run_id\",state=\"active\",stroppy_machine_id=~\"$Instance\",datname=~\"$Database\"}",
               "refId": "A"
             }
           ],
@@ -2379,7 +2379,7 @@
           "tableColumn": "pg_database_size{datname=\"grafana\", instance=\"db01vp-nbg6a.obs.noris.net:9187\", job=\"postgres-exporter\", server=\"213.95.132.73:5432\"}",
           "targets": [
             {
-              "expr": "pg_database_size{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=\"$Database\"}",
+              "expr": "pg_database_size{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=\"$Database\"}",
               "refId": "A"
             }
           ],
@@ -2545,7 +2545,7 @@
           },
           "targets": [
             {
-              "expr": "pg_stat_database_xact_commit{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=~\"$Database\"}/(pg_stat_database_xact_commit{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=~\"$Database\"} + pg_stat_database_xact_rollback{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=~\"$Database\"})",
+              "expr": "pg_stat_database_xact_commit{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=~\"$Database\"}/(pg_stat_database_xact_commit{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=~\"$Database\"} + pg_stat_database_xact_rollback{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=~\"$Database\"})",
               "refId": "A"
             }
           ],
@@ -2631,7 +2631,7 @@
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum((rate(pg_stat_database_xact_commit{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=\"$Database\"}[$Interval])))+sum((rate(pg_stat_database_xact_rollback{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=\"$Database\"}[$Interval])))",
+              "expr": "sum((rate(pg_stat_database_xact_commit{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=\"$Database\"}[$Interval])))+sum((rate(pg_stat_database_xact_rollback{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=\"$Database\"}[$Interval])))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -2720,7 +2720,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum by (state) (pg_stat_activity_count{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=\"$Database\"})",
+              "expr": "sum by (state) (pg_stat_activity_count{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=\"$Database\"})",
               "legendFormat": "{{state}}",
               "refId": "A"
             }
@@ -2829,13 +2829,13 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "rate(pg_stat_database_xact_commit{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=\"$Database\"}[$Interval])",
+              "expr": "rate(pg_stat_database_xact_commit{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=\"$Database\"}[$Interval])",
               "interval": "",
               "legendFormat": "committed",
               "refId": "A"
             },
             {
-              "expr": "rate(pg_stat_database_xact_rollback{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=\"$Database\"}[$Interval])",
+              "expr": "rate(pg_stat_database_xact_rollback{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=\"$Database\"}[$Interval])",
               "hide": false,
               "interval": "",
               "legendFormat": "rollback",
@@ -2940,19 +2940,19 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "rate(pg_stat_database_tup_inserted{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=\"$Database\"}[$Interval])",
+              "expr": "rate(pg_stat_database_tup_inserted{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=\"$Database\"}[$Interval])",
               "interval": "",
               "legendFormat": "Inserts",
               "refId": "A"
             },
             {
-              "expr": "rate(pg_stat_database_tup_updated{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=\"$Database\"}[$Interval])",
+              "expr": "rate(pg_stat_database_tup_updated{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=\"$Database\"}[$Interval])",
               "interval": "",
               "legendFormat": "Updates",
               "refId": "B"
             },
             {
-              "expr": "rate(pg_stat_database_tup_deleted{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=\"$Database\"}[$Interval])",
+              "expr": "rate(pg_stat_database_tup_deleted{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=\"$Database\"}[$Interval])",
               "interval": "",
               "legendFormat": "Deletes",
               "refId": "C"
@@ -3056,13 +3056,13 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "rate(pg_stat_database_tup_fetched{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=\"$Database\"}[$Interval])",
+              "expr": "rate(pg_stat_database_tup_fetched{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=\"$Database\"}[$Interval])",
               "interval": "",
               "legendFormat": "Fetched",
               "refId": "A"
             },
             {
-              "expr": "rate(pg_stat_database_tup_returned{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=\"$Database\"}[$Interval])",
+              "expr": "rate(pg_stat_database_tup_returned{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=\"$Database\"}[$Interval])",
               "interval": "",
               "legendFormat": "Returned",
               "refId": "B"
@@ -3171,7 +3171,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum by (mode) (pg_locks_count{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=\"$Database\"})",
+              "expr": "sum by (mode) (pg_locks_count{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=\"$Database\"})",
               "legendFormat": "{{mode}}",
               "refId": "A"
             }
@@ -3281,7 +3281,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "rate(pg_stat_database_deadlocks{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=\"$Database\"}[$Interval])",
+              "expr": "rate(pg_stat_database_deadlocks{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=\"$Database\"}[$Interval])",
               "interval": "",
               "legendFormat": "deadlocks",
               "refId": "A"
@@ -3392,7 +3392,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "rate(pg_stat_database_temp_files{stroppy_run_id=\"$run_id\",stroppy_machine_id=\"$Instance\",datname=\"$Database\"}[$Interval])",
+              "expr": "rate(pg_stat_database_temp_files{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",datname=\"$Database\"}[$Interval])",
               "interval": "",
               "legendFormat": "temp_files",
               "refId": "A"
@@ -3469,14 +3469,14 @@
         "type": "textbox"
       },
       {
-        "allValue": null,
+        "allValue": ".+",
         "current": {},
         "datasource": "VictoriaMetrics",
         "definition": "label_values(pg_up{stroppy_run_id=\"$run_id\"}, stroppy_machine_id)",
         "hide": 0,
-        "includeAll": false,
+        "includeAll": true,
         "label": "Machine",
-        "multi": false,
+        "multi": true,
         "name": "Instance",
         "options": [],
         "query": "label_values(pg_up{stroppy_run_id=\"$run_id\"}, stroppy_machine_id)",
@@ -3494,14 +3494,14 @@
         "allValue": null,
         "current": {},
         "datasource": "VictoriaMetrics",
-        "definition": "label_values(pg_stat_database_datname{stroppy_run_id=\"$run_id\", stroppy_machine_id=\"$Instance\"}, datname)",
+        "definition": "label_values(pg_stat_database_datname{stroppy_run_id=\"$run_id\", stroppy_machine_id=~\"$Instance\"}, datname)",
         "hide": 0,
         "includeAll": true,
         "label": null,
         "multi": true,
         "name": "Database",
         "options": [],
-        "query": "label_values(pg_stat_database_datname{stroppy_run_id=\"$run_id\", stroppy_machine_id=\"$Instance\"}, datname)",
+        "query": "label_values(pg_stat_database_datname{stroppy_run_id=\"$run_id\", stroppy_machine_id=~\"$Instance\"}, datname)",
         "refresh": 1,
         "regex": "/^(?!template*|postgres).*$/",
         "skipUrlSync": false,

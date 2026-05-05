@@ -165,7 +165,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "rate(node_pressure_cpu_waiting_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+          "expr": "rate(node_pressure_cpu_waiting_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
           "format": "time_series",
           "instant": true,
           "legendFormat": "CPU",
@@ -176,7 +176,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "rate(node_pressure_memory_waiting_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+          "expr": "rate(node_pressure_memory_waiting_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
           "format": "time_series",
           "instant": true,
           "legendFormat": "Mem",
@@ -187,7 +187,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "rate(node_pressure_io_waiting_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+          "expr": "rate(node_pressure_io_waiting_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
           "format": "time_series",
           "instant": true,
           "legendFormat": "I/O",
@@ -198,7 +198,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "rate(node_pressure_irq_stalled_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+          "expr": "rate(node_pressure_irq_stalled_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
           "format": "time_series",
           "instant": true,
           "legendFormat": "Irq",
@@ -279,7 +279,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\",stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])))",
+          "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\",stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])))",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -359,7 +359,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "scalar(node_load1{stroppy_machine_id=\"$node\",job=\"$job\"}) * 100 / count(count(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}) by (cpu))",
+          "expr": "scalar(node_load1{stroppy_machine_id=~\"$node\",job=\"$job\"}) * 100 / count(count(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}) by (cpu))",
           "format": "time_series",
           "instant": true,
           "range": false,
@@ -429,7 +429,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "clamp_min((1 - (node_memory_MemAvailable_bytes{stroppy_machine_id=\"$node\", job=\"$job\"} / node_memory_MemTotal_bytes{stroppy_machine_id=\"$node\", job=\"$job\"})) * 100, 0)",
+          "expr": "clamp_min((1 - (node_memory_MemAvailable_bytes{stroppy_machine_id=~\"$node\", job=\"$job\"} / node_memory_MemTotal_bytes{stroppy_machine_id=~\"$node\", job=\"$job\"})) * 100, 0)",
           "format": "time_series",
           "instant": true,
           "range": false,
@@ -509,7 +509,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "(node_memory_SwapTotal_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} > bool 0) * ((node_memory_SwapTotal_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} - node_memory_SwapFree_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}) / (node_memory_SwapTotal_bytes{stroppy_machine_id=\"$node\",job=\"$job\"})) * 100",
+          "expr": "(node_memory_SwapTotal_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} > bool 0) * ((node_memory_SwapTotal_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} - node_memory_SwapFree_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}) / (node_memory_SwapTotal_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"})) * 100",
           "instant": true,
           "range": false,
           "refId": "A",
@@ -588,7 +588,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "(\n  (node_filesystem_size_bytes{stroppy_machine_id=\"$node\", job=\"$job\", mountpoint=\"/\", fstype!=\"rootfs\"}\n   - node_filesystem_avail_bytes{stroppy_machine_id=\"$node\", job=\"$job\", mountpoint=\"/\", fstype!=\"rootfs\"})\n  / node_filesystem_size_bytes{stroppy_machine_id=\"$node\", job=\"$job\", mountpoint=\"/\", fstype!=\"rootfs\"}\n) * 100\n",
+          "expr": "(\n  (node_filesystem_size_bytes{stroppy_machine_id=~\"$node\", job=\"$job\", mountpoint=\"/\", fstype!=\"rootfs\"}\n   - node_filesystem_avail_bytes{stroppy_machine_id=~\"$node\", job=\"$job\", mountpoint=\"/\", fstype!=\"rootfs\"})\n  / node_filesystem_size_bytes{stroppy_machine_id=~\"$node\", job=\"$job\", mountpoint=\"/\", fstype!=\"rootfs\"}\n) * 100\n",
           "format": "time_series",
           "instant": true,
           "range": false,
@@ -660,7 +660,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "count(count(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}) by (cpu))",
+          "expr": "count(count(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}) by (cpu))",
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
@@ -736,7 +736,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "node_memory_MemTotal_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+          "expr": "node_memory_MemTotal_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
           "instant": true,
           "range": false,
           "refId": "A",
@@ -812,7 +812,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "node_memory_SwapTotal_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+          "expr": "node_memory_SwapTotal_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
           "instant": true,
           "range": false,
           "refId": "A",
@@ -892,7 +892,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "node_filesystem_size_bytes{stroppy_machine_id=\"$node\",job=\"$job\",mountpoint=\"/\",fstype!=\"rootfs\"}",
+          "expr": "node_filesystem_size_bytes{stroppy_machine_id=~\"$node\",job=\"$job\",mountpoint=\"/\",fstype!=\"rootfs\"}",
           "format": "time_series",
           "instant": true,
           "range": false,
@@ -969,7 +969,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "node_time_seconds{stroppy_machine_id=\"$node\",job=\"$job\"} - node_boot_time_seconds{stroppy_machine_id=\"$node\",job=\"$job\"}",
+          "expr": "node_time_seconds{stroppy_machine_id=~\"$node\",job=\"$job\"} - node_boot_time_seconds{stroppy_machine_id=~\"$node\",job=\"$job\"}",
           "instant": true,
           "range": false,
           "refId": "A",
@@ -1150,7 +1150,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "avg(rate(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\", mode=\"system\"}[$__rate_interval]))",
+          "expr": "avg(rate(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\", mode=\"system\"}[$__rate_interval]))",
           "format": "time_series",
           "instant": false,
           "legendFormat": "Busy System",
@@ -1160,7 +1160,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "avg(rate(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\", mode=\"user\"}[$__rate_interval]))",
+          "expr": "avg(rate(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\", mode=\"user\"}[$__rate_interval]))",
           "format": "time_series",
           "legendFormat": "Busy User",
           "range": true,
@@ -1169,7 +1169,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "avg(rate(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\", mode=\"iowait\"}[$__rate_interval]))",
+          "expr": "avg(rate(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\", mode=\"iowait\"}[$__rate_interval]))",
           "format": "time_series",
           "legendFormat": "Busy Iowait",
           "range": true,
@@ -1178,7 +1178,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "sum(rate(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\", mode=~\".*irq\"}[$__rate_interval]))",
+          "expr": "sum(rate(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\", mode=~\".*irq\"}[$__rate_interval]))",
           "format": "time_series",
           "legendFormat": "Busy IRQs",
           "range": true,
@@ -1187,7 +1187,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "avg(sum without (mode) (rate(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\",  mode!='idle',mode!='user',mode!='system',mode!='iowait',mode!='irq',mode!='softirq'}[$__rate_interval])))",
+          "expr": "avg(sum without (mode) (rate(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\",  mode!='idle',mode!='user',mode!='system',mode!='iowait',mode!='irq',mode!='softirq'}[$__rate_interval])))",
           "format": "time_series",
           "legendFormat": "Busy Other",
           "range": true,
@@ -1196,7 +1196,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "avg(rate(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\", mode=\"idle\"}[$__rate_interval]))",
+          "expr": "avg(rate(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\", mode=\"idle\"}[$__rate_interval]))",
           "format": "time_series",
           "legendFormat": "Idle",
           "range": true,
@@ -1360,7 +1360,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "node_memory_MemTotal_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+          "expr": "node_memory_MemTotal_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
           "format": "time_series",
           "legendFormat": "Total",
           "range": true,
@@ -1369,7 +1369,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "node_memory_MemTotal_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} - node_memory_MemFree_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} - (node_memory_Cached_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} + node_memory_Buffers_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} + node_memory_SReclaimable_bytes{stroppy_machine_id=\"$node\",job=\"$job\"})",
+          "expr": "node_memory_MemTotal_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} - node_memory_MemFree_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} - (node_memory_Cached_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} + node_memory_Buffers_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} + node_memory_SReclaimable_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"})",
           "format": "time_series",
           "legendFormat": "Used",
           "range": true,
@@ -1378,7 +1378,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "node_memory_Cached_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} + node_memory_Buffers_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} + node_memory_SReclaimable_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+          "expr": "node_memory_Cached_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} + node_memory_Buffers_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} + node_memory_SReclaimable_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
           "format": "time_series",
           "legendFormat": "Cache + Buffer",
           "range": true,
@@ -1387,7 +1387,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "node_memory_MemFree_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+          "expr": "node_memory_MemFree_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
           "format": "time_series",
           "legendFormat": "Free",
           "range": true,
@@ -1396,7 +1396,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "(node_memory_SwapTotal_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} - node_memory_SwapFree_bytes{stroppy_machine_id=\"$node\",job=\"$job\"})",
+          "expr": "(node_memory_SwapTotal_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} - node_memory_SwapFree_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"})",
           "format": "time_series",
           "legendFormat": "Swap used",
           "range": true,
@@ -1499,7 +1499,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "rate(node_network_receive_bytes_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])*8",
+          "expr": "rate(node_network_receive_bytes_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])*8",
           "format": "time_series",
           "legendFormat": "Rx {{device}}",
           "range": true,
@@ -1508,7 +1508,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "rate(node_network_transmit_bytes_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])*8",
+          "expr": "rate(node_network_transmit_bytes_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])*8",
           "format": "time_series",
           "legendFormat": "Tx {{device}}",
           "range": true,
@@ -1600,7 +1600,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "((node_filesystem_size_bytes{stroppy_machine_id=\"$node\", job=\"$job\", device!~\"rootfs\"} - node_filesystem_avail_bytes{stroppy_machine_id=\"$node\", job=\"$job\", device!~\"rootfs\"}) / node_filesystem_size_bytes{stroppy_machine_id=\"$node\", job=\"$job\", device!~\"rootfs\"}) * 100",
+          "expr": "((node_filesystem_size_bytes{stroppy_machine_id=~\"$node\", job=\"$job\", device!~\"rootfs\"} - node_filesystem_avail_bytes{stroppy_machine_id=~\"$node\", job=\"$job\", device!~\"rootfs\"}) / node_filesystem_size_bytes{stroppy_machine_id=~\"$node\", job=\"$job\", device!~\"rootfs\"}) * 100",
           "format": "time_series",
           "legendFormat": "{{mountpoint}}",
           "range": true,
@@ -1856,7 +1856,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(rate(node_cpu_seconds_total{mode=\"system\",stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}) by (cpu)))",
+              "expr": "sum(rate(node_cpu_seconds_total{mode=\"system\",stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}) by (cpu)))",
               "format": "time_series",
               "interval": "",
               "legendFormat": "System - Processes executing in kernel mode",
@@ -1866,7 +1866,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "sum(rate(node_cpu_seconds_total{mode=\"user\",stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}) by (cpu)))",
+              "expr": "sum(rate(node_cpu_seconds_total{mode=\"user\",stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}) by (cpu)))",
               "format": "time_series",
               "legendFormat": "User - Normal processes executing in user mode",
               "range": true,
@@ -1875,7 +1875,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "sum(rate(node_cpu_seconds_total{mode=\"nice\",stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}) by (cpu)))",
+              "expr": "sum(rate(node_cpu_seconds_total{mode=\"nice\",stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}) by (cpu)))",
               "format": "time_series",
               "legendFormat": "Nice - Niced processes executing in user mode",
               "range": true,
@@ -1884,7 +1884,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "sum(rate(node_cpu_seconds_total{mode=\"iowait\",stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}) by (cpu)))",
+              "expr": "sum(rate(node_cpu_seconds_total{mode=\"iowait\",stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}) by (cpu)))",
               "format": "time_series",
               "legendFormat": "Iowait - Waiting for I/O to complete",
               "range": true,
@@ -1893,7 +1893,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "sum(rate(node_cpu_seconds_total{mode=\"irq\",stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}) by (cpu)))",
+              "expr": "sum(rate(node_cpu_seconds_total{mode=\"irq\",stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}) by (cpu)))",
               "format": "time_series",
               "legendFormat": "Irq - Servicing interrupts",
               "range": true,
@@ -1902,7 +1902,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "sum(rate(node_cpu_seconds_total{mode=\"softirq\",stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}) by (cpu)))",
+              "expr": "sum(rate(node_cpu_seconds_total{mode=\"softirq\",stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}) by (cpu)))",
               "format": "time_series",
               "legendFormat": "Softirq - Servicing softirqs",
               "range": true,
@@ -1911,7 +1911,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "sum(rate(node_cpu_seconds_total{mode=\"steal\",stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}) by (cpu)))",
+              "expr": "sum(rate(node_cpu_seconds_total{mode=\"steal\",stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}) by (cpu)))",
               "format": "time_series",
               "legendFormat": "Steal - Time spent in other operating systems when running in a virtualized environment",
               "range": true,
@@ -1920,7 +1920,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "sum(rate(node_cpu_seconds_total{mode=\"idle\",stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}) by (cpu)))",
+              "expr": "sum(rate(node_cpu_seconds_total{mode=\"idle\",stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}) by (cpu)))",
               "format": "time_series",
               "legendFormat": "Idle - Waiting for something to happen",
               "range": true,
@@ -1929,7 +1929,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "sum by(instance) (rate(node_cpu_guest_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])) / on(instance) group_left sum by (instance)((rate(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval]))) > 0",
+              "expr": "sum by(instance) (rate(node_cpu_guest_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])) / on(instance) group_left sum by (instance)((rate(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval]))) > 0",
               "format": "time_series",
               "legendFormat": "Guest CPU usage",
               "range": true,
@@ -2326,7 +2326,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_memory_MemTotal_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} - node_memory_MemFree_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} - node_memory_Buffers_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} - node_memory_Cached_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} - node_memory_Slab_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} - node_memory_PageTables_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} - node_memory_SwapCached_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_MemTotal_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} - node_memory_MemFree_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} - node_memory_Buffers_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} - node_memory_Cached_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} - node_memory_Slab_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} - node_memory_PageTables_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} - node_memory_SwapCached_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Apps - Memory used by user-space applications",
               "range": true,
@@ -2335,7 +2335,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_PageTables_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_PageTables_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "PageTables - Memory used to map between virtual and physical memory addresses",
               "range": true,
@@ -2344,7 +2344,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_SwapCached_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_SwapCached_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "SwapCache - Memory that keeps track of pages that have been fetched from swap but not yet been modified",
               "range": true,
@@ -2353,7 +2353,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_Slab_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Slab_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Slab - Memory used by the kernel to cache data structures for its own use (caches like inode, dentry, etc)",
               "range": true,
@@ -2362,7 +2362,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_Cached_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Cached_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Cache - Parked file data (file content) cache",
               "range": true,
@@ -2371,7 +2371,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_Buffers_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Buffers_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Buffers - Block device (e.g. harddisk) cache",
               "range": true,
@@ -2380,7 +2380,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_MemFree_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_MemFree_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Unused - Free memory unassigned",
               "range": true,
@@ -2389,7 +2389,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "(node_memory_SwapTotal_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} - node_memory_SwapFree_bytes{stroppy_machine_id=\"$node\",job=\"$job\"})",
+              "expr": "(node_memory_SwapTotal_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} - node_memory_SwapFree_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"})",
               "format": "time_series",
               "legendFormat": "Swap - Swap space used",
               "range": true,
@@ -2398,7 +2398,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_HardwareCorrupted_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_HardwareCorrupted_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Hardware Corrupted - Amount of RAM that the kernel identified as corrupted / not working",
               "range": true,
@@ -2505,7 +2505,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_network_receive_bytes_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])*8",
+              "expr": "rate(node_network_receive_bytes_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])*8",
               "format": "time_series",
               "legendFormat": "{{device}} - Rx in",
               "range": true,
@@ -2514,7 +2514,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_network_transmit_bytes_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])*8",
+              "expr": "rate(node_network_transmit_bytes_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])*8",
               "format": "time_series",
               "legendFormat": "{{device}} - Tx out",
               "range": true,
@@ -2621,7 +2621,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "(node_network_speed_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} > bool 0) * (rate(node_network_receive_bytes_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval]) / ignoring(speed) node_network_speed_bytes{stroppy_machine_id=\"$node\",job=\"$job\", speed!=\"-1\"})",
+              "expr": "(node_network_speed_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} > bool 0) * (rate(node_network_receive_bytes_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval]) / ignoring(speed) node_network_speed_bytes{stroppy_machine_id=~\"$node\",job=\"$job\", speed!=\"-1\"})",
               "format": "time_series",
               "legendFormat": "{{device}} - Rx in",
               "range": true,
@@ -2630,7 +2630,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "(node_network_speed_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} > bool 0) * (rate(node_network_transmit_bytes_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval]) / ignoring(speed) node_network_speed_bytes{stroppy_machine_id=\"$node\",job=\"$job\", speed!=\"-1\"})",
+              "expr": "(node_network_speed_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} > bool 0) * (rate(node_network_transmit_bytes_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval]) / ignoring(speed) node_network_speed_bytes{stroppy_machine_id=~\"$node\",job=\"$job\", speed!=\"-1\"})",
               "format": "time_series",
               "legendFormat": "{{device}} - Tx out",
               "range": true,
@@ -2737,7 +2737,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_reads_completed_total{stroppy_machine_id=\"$node\",job=\"$job\",device=~\"[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[$__rate_interval])",
+              "expr": "rate(node_disk_reads_completed_total{stroppy_machine_id=~\"$node\",job=\"$job\",device=~\"[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[$__rate_interval])",
               "legendFormat": "{{device}} - Read",
               "range": true,
               "refId": "A",
@@ -2745,7 +2745,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_writes_completed_total{stroppy_machine_id=\"$node\",job=\"$job\",device=~\"[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[$__rate_interval])",
+              "expr": "rate(node_disk_writes_completed_total{stroppy_machine_id=~\"$node\",job=\"$job\",device=~\"[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[$__rate_interval])",
               "legendFormat": "{{device}} - Write",
               "range": true,
               "refId": "B",
@@ -2851,7 +2851,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_read_bytes_total{stroppy_machine_id=\"$node\",job=\"$job\",device=~\"[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[$__rate_interval])",
+              "expr": "rate(node_disk_read_bytes_total{stroppy_machine_id=~\"$node\",job=\"$job\",device=~\"[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Read",
               "range": true,
@@ -2860,7 +2860,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_written_bytes_total{stroppy_machine_id=\"$node\",job=\"$job\",device=~\"[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[$__rate_interval])",
+              "expr": "rate(node_disk_written_bytes_total{stroppy_machine_id=~\"$node\",job=\"$job\",device=~\"[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Write",
               "range": true,
@@ -2955,7 +2955,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_filesystem_avail_bytes{stroppy_machine_id=\"$node\",job=\"$job\",device!~'rootfs'}",
+              "expr": "node_filesystem_avail_bytes{stroppy_machine_id=~\"$node\",job=\"$job\",device!~'rootfs'}",
               "format": "time_series",
               "legendFormat": "{{mountpoint}}",
               "metric": "",
@@ -2965,7 +2965,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_filesystem_free_bytes{stroppy_machine_id=\"$node\",job=\"$job\",device!~'rootfs'}",
+              "expr": "node_filesystem_free_bytes{stroppy_machine_id=~\"$node\",job=\"$job\",device!~'rootfs'}",
               "format": "time_series",
               "hide": true,
               "legendFormat": "{{mountpoint}} - Free",
@@ -2975,7 +2975,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_filesystem_size_bytes{stroppy_machine_id=\"$node\",job=\"$job\",device!~'rootfs'}",
+              "expr": "node_filesystem_size_bytes{stroppy_machine_id=~\"$node\",job=\"$job\",device!~'rootfs'}",
               "format": "time_series",
               "hide": true,
               "legendFormat": "{{mountpoint}} - Size",
@@ -3071,7 +3071,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_filesystem_size_bytes{stroppy_machine_id=\"$node\",job=\"$job\",device!~'rootfs'} - node_filesystem_avail_bytes{stroppy_machine_id=\"$node\",job=\"$job\",device!~'rootfs'}",
+              "expr": "node_filesystem_size_bytes{stroppy_machine_id=~\"$node\",job=\"$job\",device!~'rootfs'} - node_filesystem_avail_bytes{stroppy_machine_id=~\"$node\",job=\"$job\",device!~'rootfs'}",
               "format": "time_series",
               "legendFormat": "{{mountpoint}}",
               "range": true,
@@ -3166,7 +3166,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_io_time_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\",device=~\"[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"} [$__rate_interval])",
+              "expr": "rate(node_disk_io_time_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\",device=~\"[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"} [$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{device}}",
@@ -3286,7 +3286,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_pressure_cpu_waiting_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_pressure_cpu_waiting_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "CPU - Some",
               "range": true,
@@ -3295,7 +3295,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_pressure_memory_waiting_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_pressure_memory_waiting_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "Memory - Some",
               "range": true,
@@ -3304,7 +3304,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_pressure_memory_stalled_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_pressure_memory_stalled_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "Memory - Full",
               "range": true,
@@ -3313,7 +3313,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_pressure_io_waiting_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_pressure_io_waiting_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "I/O - Some",
               "range": true,
@@ -3322,7 +3322,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_pressure_io_stalled_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_pressure_io_stalled_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "I/O - Full",
               "range": true,
@@ -3331,7 +3331,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_pressure_irq_stalled_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_pressure_irq_stalled_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "IRQ - Full",
               "range": true,
@@ -3461,7 +3461,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_memory_Committed_AS_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Committed_AS_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Committed_AS \u2013 Memory promised to processes (not necessarily used)",
               "range": true,
@@ -3470,7 +3470,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_CommitLimit_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_CommitLimit_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "CommitLimit - Max allowable committed memory",
               "range": true,
@@ -3565,7 +3565,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_memory_Writeback_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Writeback_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Writeback \u2013 Memory currently being flushed to disk",
               "range": true,
@@ -3574,7 +3574,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_WritebackTmp_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_WritebackTmp_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "WritebackTmp \u2013 FUSE temporary writeback buffers",
               "range": true,
@@ -3583,7 +3583,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_Dirty_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Dirty_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Dirty \u2013 Memory marked dirty (pending write to disk)",
               "range": true,
@@ -3592,7 +3592,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_NFS_Unstable_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_NFS_Unstable_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "NFS Unstable \u2013 Pages sent to NFS server, awaiting storage commit",
               "range": true,
@@ -3687,7 +3687,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_memory_SUnreclaim_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_SUnreclaim_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "SUnreclaim \u2013 Non-reclaimable slab memory (kernel objects)",
               "range": true,
@@ -3696,7 +3696,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_SReclaimable_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_SReclaimable_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "SReclaimable \u2013 Potentially reclaimable slab memory (e.g., inode cache)",
               "range": true,
@@ -3792,7 +3792,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_memory_Mapped_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Mapped_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Mapped \u2013 Memory mapped from files (e.g., libraries, mmap)",
               "range": true,
@@ -3801,7 +3801,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_Shmem_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Shmem_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Shmem \u2013 Shared memory used by processes and tmpfs",
               "range": true,
@@ -3810,7 +3810,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_ShmemHugePages_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_ShmemHugePages_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "ShmemHugePages \u2013 Shared memory (shmem/tmpfs) allocated with HugePages",
@@ -3820,7 +3820,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_ShmemPmdMapped_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_ShmemPmdMapped_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "PMD Mapped \u2013 Shmem/tmpfs backed by Transparent HugePages (PMD)",
@@ -3948,7 +3948,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "(node_memory_Inactive_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}) \n/ \n(node_memory_MemTotal_bytes{stroppy_machine_id=\"$node\",job=\"$job\"})",
+              "expr": "(node_memory_Inactive_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}) \n/ \n(node_memory_MemTotal_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"})",
               "format": "time_series",
               "legendFormat": "Inactive \u2013 Less recently used memory, more likely to be reclaimed",
               "range": true,
@@ -3957,7 +3957,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "(node_memory_Active_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}) \n/ \n(node_memory_MemTotal_bytes{stroppy_machine_id=\"$node\",job=\"$job\"})\n",
+              "expr": "(node_memory_Active_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}) \n/ \n(node_memory_MemTotal_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"})\n",
               "format": "time_series",
               "legendFormat": "Active \u2013 Recently used memory, retained unless under pressure",
               "range": true,
@@ -4053,7 +4053,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_memory_Inactive_file_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Inactive_file_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Inactive_file - File-backed memory on inactive LRU list",
               "range": true,
@@ -4062,7 +4062,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_Inactive_anon_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Inactive_anon_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Inactive_anon \u2013 Anonymous memory on inactive LRU (incl. tmpfs & swap cache)",
               "range": true,
@@ -4071,7 +4071,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_Active_file_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Active_file_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Active_file - File-backed memory on active LRU list",
               "range": true,
@@ -4080,7 +4080,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_Active_anon_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Active_anon_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Active_anon \u2013 Anonymous memory on active LRU (incl. tmpfs & swap cache)",
               "range": true,
@@ -4176,7 +4176,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_memory_KernelStack_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_KernelStack_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "KernelStack \u2013 Kernel stack memory (per-thread, non-reclaimable)",
               "range": true,
@@ -4185,7 +4185,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_Percpu_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Percpu_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "PerCPU \u2013 Dynamically allocated per-CPU memory (used by kernel modules)",
@@ -4195,7 +4195,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_Bounce_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Bounce_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Bounce Memory \u2013 I/O buffer for DMA-limited devices",
@@ -4321,7 +4321,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_memory_VmallocChunk_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_VmallocChunk_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Vmalloc Free Chunk \u2013 Largest available block in vmalloc area",
               "range": true,
@@ -4330,7 +4330,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_VmallocTotal_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_VmallocTotal_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Vmalloc Total \u2013 Total size of the vmalloc memory area",
               "range": true,
@@ -4339,7 +4339,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_VmallocUsed_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_VmallocUsed_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Vmalloc Used \u2013 Portion of vmalloc area currently in use",
               "range": true,
@@ -4434,7 +4434,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_memory_AnonHugePages_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_AnonHugePages_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "AnonHugePages \u2013 Anonymous memory using HugePages",
               "range": true,
@@ -4443,7 +4443,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_AnonPages_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_AnonPages_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "AnonPages \u2013 Anonymous memory (non-file-backed)",
               "range": true,
@@ -4555,7 +4555,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_memory_Unevictable_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Unevictable_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Unevictable \u2013 Kernel-pinned memory (not swappable)",
               "range": true,
@@ -4564,7 +4564,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_Mlocked_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_Mlocked_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Mlocked \u2013 Application-locked memory via mlock()",
               "range": true,
@@ -4934,7 +4934,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_memory_DirectMap1G_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_DirectMap1G_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "DirectMap 1G \u2013 Memory mapped with 1GB pages",
               "range": true,
@@ -4943,7 +4943,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_DirectMap2M_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_DirectMap2M_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "DirectMap 2M \u2013 Memory mapped with 2MB pages",
@@ -4953,7 +4953,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_DirectMap4k_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_DirectMap4k_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "DirectMap 4K \u2013 Memory mapped with 4KB pages",
@@ -5049,7 +5049,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "(node_memory_HugePages_Total{stroppy_machine_id=\"$node\",job=\"$job\"} - node_memory_HugePages_Free{stroppy_machine_id=\"$node\",job=\"$job\"}) * node_memory_Hugepagesize_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "(node_memory_HugePages_Total{stroppy_machine_id=~\"$node\",job=\"$job\"} - node_memory_HugePages_Free{stroppy_machine_id=~\"$node\",job=\"$job\"}) * node_memory_Hugepagesize_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "HugePages Used \u2013 Currently allocated",
               "range": true,
@@ -5058,7 +5058,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_HugePages_Rsvd{stroppy_machine_id=\"$node\",job=\"$job\"} * node_memory_Hugepagesize_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_HugePages_Rsvd{stroppy_machine_id=~\"$node\",job=\"$job\"} * node_memory_Hugepagesize_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "HugePages Reserved \u2013 Promised but unused",
               "range": true,
@@ -5067,7 +5067,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_HugePages_Surp{stroppy_machine_id=\"$node\",job=\"$job\"} * node_memory_Hugepagesize_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_HugePages_Surp{stroppy_machine_id=~\"$node\",job=\"$job\"} * node_memory_Hugepagesize_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "HugePages Surplus \u2013 Dynamic pool extension",
               "range": true,
@@ -5076,7 +5076,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_memory_HugePages_Total{stroppy_machine_id=\"$node\",job=\"$job\"} * node_memory_Hugepagesize_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_memory_HugePages_Total{stroppy_machine_id=~\"$node\",job=\"$job\"} * node_memory_Hugepagesize_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "HugePages Total \u2013 Reserved memory",
               "range": true,
@@ -5197,7 +5197,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_vmstat_pgpgin{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_vmstat_pgpgin{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "Pagesin - Page in ops",
               "range": true,
@@ -5206,7 +5206,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_vmstat_pgpgout{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_vmstat_pgpgout{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "Pagesout - Page out ops",
               "range": true,
@@ -5313,7 +5313,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_vmstat_pswpin{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_vmstat_pswpin{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "Pswpin - Pages swapped in",
               "range": true,
@@ -5322,7 +5322,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_vmstat_pswpout{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_vmstat_pswpout{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "Pswpout - Pages swapped out",
               "range": true,
@@ -5455,7 +5455,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_vmstat_pgfault{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_vmstat_pgfault{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "Pgfault - Page major and minor fault ops",
               "range": true,
@@ -5464,7 +5464,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_vmstat_pgmajfault{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_vmstat_pgmajfault{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "Pgmajfault - Major page fault ops",
               "range": true,
@@ -5473,7 +5473,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_vmstat_pgfault{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])  - rate(node_vmstat_pgmajfault{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_vmstat_pgfault{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])  - rate(node_vmstat_pgmajfault{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "Pgminfault - Minor page fault ops",
               "range": true,
@@ -5584,7 +5584,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_vmstat_oom_kill{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_vmstat_oom_kill{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "OOM Kills",
@@ -5693,7 +5693,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_timex_estimated_error_seconds{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_timex_estimated_error_seconds{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Estimated error",
@@ -5703,7 +5703,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_timex_offset_seconds{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_timex_offset_seconds{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Offset local vs reference",
@@ -5713,7 +5713,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_timex_maxerror_seconds{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_timex_maxerror_seconds{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Maximum error",
@@ -5808,7 +5808,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_timex_loop_time_constant{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_timex_loop_time_constant{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "PLL Time Constant",
@@ -5903,7 +5903,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_timex_sync_status{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_timex_sync_status{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Sync status (1 = ok)",
@@ -5913,7 +5913,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_timex_frequency_adjustment_ratio{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_timex_frequency_adjustment_ratio{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Frequency Adjustment",
@@ -5923,7 +5923,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_timex_tick_seconds{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_timex_tick_seconds{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "hide": true,
               "interval": "",
@@ -5934,7 +5934,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_timex_tai_offset_seconds{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_timex_tai_offset_seconds{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "hide": true,
               "interval": "",
@@ -6030,7 +6030,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_timex_pps_frequency_hertz{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_timex_pps_frequency_hertz{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "PPS Frequency Offset",
@@ -6040,7 +6040,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_timex_pps_stability_hertz{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_timex_pps_stability_hertz{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "PPS Frequency Stability",
@@ -6135,7 +6135,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_timex_pps_jitter_seconds{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_timex_pps_jitter_seconds{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "PPS Jitter",
@@ -6145,7 +6145,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_timex_pps_shift_seconds{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_timex_pps_shift_seconds{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "PPS Shift",
@@ -6244,7 +6244,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_timex_pps_calibration_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_timex_pps_calibration_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "PPS Calibrations/sec",
@@ -6254,7 +6254,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_timex_pps_error_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_timex_pps_error_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "PPS Errors/sec",
@@ -6264,7 +6264,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_timex_pps_stability_exceeded_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_timex_pps_stability_exceeded_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "PPS Stability Exceeded/sec",
@@ -6274,7 +6274,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_timex_pps_jitter_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_timex_pps_jitter_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "PPS Jitter Events/sec",
@@ -6388,7 +6388,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_procs_blocked{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_procs_blocked{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Blocked (I/O Wait)",
               "range": true,
@@ -6397,7 +6397,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_procs_running{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_procs_running{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Runnable (Ready for CPU)",
               "range": true,
@@ -6577,7 +6577,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_processes_state{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_processes_state{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{ state }}",
@@ -6673,7 +6673,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_forks_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_forks_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "Process Forks per second",
               "range": true,
@@ -6784,7 +6784,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_schedstat_running_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_schedstat_running_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "hide": true,
               "interval": "",
@@ -6795,7 +6795,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_schedstat_waiting_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_schedstat_waiting_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "hide": true,
               "interval": "",
@@ -6806,7 +6806,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "((rate(node_schedstat_running_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval]) + rate(node_schedstat_waiting_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])) > bool 0) * (rate(node_schedstat_waiting_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval]) / (rate(node_schedstat_running_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval]) + rate(node_schedstat_waiting_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])))",
+              "expr": "((rate(node_schedstat_running_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval]) + rate(node_schedstat_waiting_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])) > bool 0) * (rate(node_schedstat_waiting_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval]) / (rate(node_schedstat_running_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval]) + rate(node_schedstat_waiting_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])))",
               "format": "time_series",
               "interval": "",
               "legendFormat": "CPU {{cpu}}",
@@ -6932,7 +6932,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_processes_pids{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_processes_pids{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Number of PIDs",
@@ -6942,7 +6942,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_processes_max_processes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_processes_max_processes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "PIDs limit",
@@ -7068,7 +7068,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_processes_threads{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_processes_threads{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Allocated threads",
@@ -7078,7 +7078,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_processes_max_threads{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_processes_max_threads{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Threads limit",
@@ -7188,7 +7188,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_context_switches_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_context_switches_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "Context switches",
               "range": true,
@@ -7197,7 +7197,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_intr_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_intr_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "Interrupts",
               "range": true,
@@ -7322,7 +7322,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_load1{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_load1{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Load 1m",
               "range": true,
@@ -7331,7 +7331,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_load5{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_load5{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Load 5m",
               "range": true,
@@ -7340,7 +7340,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_load15{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_load15{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Load 15m",
               "range": true,
@@ -7349,7 +7349,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "count(count(node_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}) by (cpu))",
+              "expr": "count(count(node_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}) by (cpu))",
               "format": "time_series",
               "legendFormat": "CPU Core Count",
               "range": true,
@@ -7510,7 +7510,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_cpu_scaling_frequency_hertz{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_cpu_scaling_frequency_hertz{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "CPU {{ cpu }}",
@@ -7520,7 +7520,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "avg(node_cpu_scaling_frequency_max_hertz{stroppy_machine_id=\"$node\",job=\"$job\"})",
+              "expr": "avg(node_cpu_scaling_frequency_max_hertz{stroppy_machine_id=~\"$node\",job=\"$job\"})",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Max",
@@ -7530,7 +7530,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "avg(node_cpu_scaling_frequency_min_hertz{stroppy_machine_id=\"$node\",job=\"$job\"})",
+              "expr": "avg(node_cpu_scaling_frequency_min_hertz{stroppy_machine_id=~\"$node\",job=\"$job\"})",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Min",
@@ -7625,7 +7625,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_schedstat_timeslices_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_schedstat_timeslices_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "CPU {{ cpu }}",
@@ -7721,7 +7721,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_interrupts_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_interrupts_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{ type }} - {{ info }}",
@@ -7847,7 +7847,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_entropy_available_bits{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_entropy_available_bits{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Entropy available",
               "range": true,
@@ -7856,7 +7856,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_entropy_pool_size_bits{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_entropy_pool_size_bits{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Entropy pool max",
               "range": true,
@@ -7985,7 +7985,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_hwmon_temp_celsius{stroppy_machine_id=\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_hwmon_temp_celsius{stroppy_machine_id=~\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{ chip_name }} {{ sensor }}",
@@ -7994,7 +7994,7 @@
               "step": 240
             },
             {
-              "expr": "node_hwmon_temp_crit_alarm_celsius{stroppy_machine_id=\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_hwmon_temp_crit_alarm_celsius{stroppy_machine_id=~\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "hide": true,
               "interval": "",
@@ -8004,7 +8004,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_hwmon_temp_crit_celsius{stroppy_machine_id=\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_hwmon_temp_crit_celsius{stroppy_machine_id=~\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{ chip_name }} {{ sensor }} Critical",
@@ -8013,7 +8013,7 @@
               "step": 240
             },
             {
-              "expr": "node_hwmon_temp_crit_hyst_celsius{stroppy_machine_id=\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_hwmon_temp_crit_hyst_celsius{stroppy_machine_id=~\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "hide": true,
               "interval": "",
@@ -8022,7 +8022,7 @@
               "step": 240
             },
             {
-              "expr": "node_hwmon_temp_max_celsius{stroppy_machine_id=\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_hwmon_temp_max_celsius{stroppy_machine_id=~\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "hide": true,
               "interval": "",
@@ -8137,7 +8137,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "(node_cooling_device_max_state{stroppy_machine_id=\"$node\",job=\"$job\"} > bool 0) * (100 * node_cooling_device_cur_state{stroppy_machine_id=\"$node\",job=\"$job\"} / node_cooling_device_max_state{stroppy_machine_id=\"$node\",job=\"$job\"})",
+              "expr": "(node_cooling_device_max_state{stroppy_machine_id=~\"$node\",job=\"$job\"} > bool 0) * (100 * node_cooling_device_cur_state{stroppy_machine_id=~\"$node\",job=\"$job\"} / node_cooling_device_max_state{stroppy_machine_id=~\"$node\",job=\"$job\"})",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{name}} - {{type}}",
@@ -8236,7 +8236,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_power_supply_online{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_power_supply_online{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{ power_supply }} online",
@@ -8332,7 +8332,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_hwmon_fan_rpm{stroppy_machine_id=\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_hwmon_fan_rpm{stroppy_machine_id=~\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{ chip_name }} {{ sensor }}",
@@ -8342,7 +8342,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_hwmon_fan_min_rpm{stroppy_machine_id=\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_hwmon_fan_min_rpm{stroppy_machine_id=~\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "hide": true,
               "interval": "",
@@ -8528,7 +8528,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_systemd_units{stroppy_machine_id=\"$node\",job=\"$job\",state=\"activating\"}",
+              "expr": "node_systemd_units{stroppy_machine_id=~\"$node\",job=\"$job\",state=\"activating\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Activating",
@@ -8538,7 +8538,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_systemd_units{stroppy_machine_id=\"$node\",job=\"$job\",state=\"active\"}",
+              "expr": "node_systemd_units{stroppy_machine_id=~\"$node\",job=\"$job\",state=\"active\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Active",
@@ -8548,7 +8548,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_systemd_units{stroppy_machine_id=\"$node\",job=\"$job\",state=\"deactivating\"}",
+              "expr": "node_systemd_units{stroppy_machine_id=~\"$node\",job=\"$job\",state=\"deactivating\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Deactivating",
@@ -8558,7 +8558,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_systemd_units{stroppy_machine_id=\"$node\",job=\"$job\",state=\"failed\"}",
+              "expr": "node_systemd_units{stroppy_machine_id=~\"$node\",job=\"$job\",state=\"failed\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Failed",
@@ -8568,7 +8568,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_systemd_units{stroppy_machine_id=\"$node\",job=\"$job\",state=\"inactive\"}",
+              "expr": "node_systemd_units{stroppy_machine_id=~\"$node\",job=\"$job\",state=\"inactive\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Inactive",
@@ -8664,7 +8664,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_systemd_socket_current_connections{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_systemd_socket_current_connections{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{ name }}",
@@ -8760,7 +8760,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_systemd_socket_accepted_connections_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_systemd_socket_accepted_connections_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{ name }}",
@@ -8856,7 +8856,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_systemd_socket_refused_connections_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_systemd_socket_refused_connections_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{ name }}",
@@ -8993,7 +8993,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_reads_completed_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_disk_reads_completed_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "legendFormat": "{{device}} - Read",
               "range": true,
               "refId": "A",
@@ -9001,7 +9001,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_writes_completed_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_disk_writes_completed_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "legendFormat": "{{device}} - Write",
               "range": true,
               "refId": "B",
@@ -9122,7 +9122,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_read_bytes_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_disk_read_bytes_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Read",
               "range": true,
@@ -9132,7 +9132,7 @@
             {
               "editorMode": "code",
               "exemplar": false,
-              "expr": "rate(node_disk_written_bytes_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_disk_written_bytes_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "instant": false,
               "legendFormat": "{{device}} - Write",
@@ -9255,7 +9255,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "(rate(node_disk_reads_completed_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval]) > bool 0) * (rate(node_disk_read_time_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval]) / rate(node_disk_reads_completed_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval]))",
+              "expr": "(rate(node_disk_reads_completed_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval]) > bool 0) * (rate(node_disk_read_time_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval]) / rate(node_disk_reads_completed_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval]))",
               "interval": "",
               "legendFormat": "{{device}} - Read",
               "range": true,
@@ -9264,7 +9264,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "(rate(node_disk_writes_completed_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval]) > bool 0) * (rate(node_disk_write_time_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval]) / rate(node_disk_writes_completed_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval]))",
+              "expr": "(rate(node_disk_writes_completed_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval]) > bool 0) * (rate(node_disk_write_time_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval]) / rate(node_disk_writes_completed_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval]))",
               "interval": "",
               "legendFormat": "{{device}} - Write",
               "range": true,
@@ -9375,7 +9375,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_io_time_weighted_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_disk_io_time_weighted_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "{{device}}",
               "range": true,
@@ -9497,7 +9497,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_reads_merged_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_disk_reads_merged_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "legendFormat": "{{device}} - Read",
               "range": true,
               "refId": "A",
@@ -9505,7 +9505,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_writes_merged_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_disk_writes_merged_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "legendFormat": "{{device}} - Write",
               "range": true,
               "refId": "B",
@@ -9615,7 +9615,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_io_time_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_disk_io_time_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "{{device}} - General IO",
               "range": true,
@@ -9624,7 +9624,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_discard_time_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_disk_discard_time_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "{{device}} - Discard/TRIM",
               "range": true,
@@ -9633,7 +9633,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_flush_requests_time_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_disk_flush_requests_time_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "{{device}} - Flush (write cache)",
               "range": true,
@@ -9743,7 +9743,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_discards_completed_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_disk_discards_completed_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "{{device}} - Discards completed",
               "range": true,
@@ -9752,7 +9752,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_discards_merged_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_disk_discards_merged_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "{{device}} - Discards merged",
               "range": true,
@@ -9761,7 +9761,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_flush_requests_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_disk_flush_requests_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "{{device}} - Flush",
               "range": true,
@@ -9871,7 +9871,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_disk_discarded_sectors_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_disk_discarded_sectors_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "{{device}}",
               "range": true,
@@ -9982,7 +9982,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_disk_io_now{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_disk_io_now{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "interval": "",
               "legendFormat": "{{device}}",
               "range": true,
@@ -10121,7 +10121,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_filefd_maximum{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_filefd_maximum{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Max open files",
               "range": true,
@@ -10130,7 +10130,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_filefd_allocated{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_filefd_allocated{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "Open files",
               "range": true,
@@ -10225,7 +10225,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_filesystem_files_free{stroppy_machine_id=\"$node\",job=\"$job\",device!~'rootfs'}",
+              "expr": "node_filesystem_files_free{stroppy_machine_id=~\"$node\",job=\"$job\",device!~'rootfs'}",
               "format": "time_series",
               "legendFormat": "{{mountpoint}}",
               "range": true,
@@ -10321,7 +10321,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_filesystem_readonly{stroppy_machine_id=\"$node\",job=\"$job\",device!~'rootfs'}",
+              "expr": "node_filesystem_readonly{stroppy_machine_id=~\"$node\",job=\"$job\",device!~'rootfs'}",
               "format": "time_series",
               "legendFormat": "{{mountpoint}} - ReadOnly",
               "range": true,
@@ -10330,7 +10330,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_filesystem_device_error{stroppy_machine_id=\"$node\",job=\"$job\",device!~'rootfs',fstype!~'tmpfs'}",
+              "expr": "node_filesystem_device_error{stroppy_machine_id=~\"$node\",job=\"$job\",device!~'rootfs',fstype!~'tmpfs'}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{mountpoint}} - Device error",
@@ -10426,7 +10426,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_filesystem_files{stroppy_machine_id=\"$node\",job=\"$job\",device!~'rootfs'}",
+              "expr": "node_filesystem_files{stroppy_machine_id=~\"$node\",job=\"$job\",device!~'rootfs'}",
               "format": "time_series",
               "legendFormat": "{{mountpoint}}",
               "range": true,
@@ -10548,7 +10548,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_network_receive_packets_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_network_receive_packets_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{device}} - Rx in",
@@ -10558,7 +10558,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_network_transmit_packets_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_network_transmit_packets_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{device}} - Tx out",
@@ -10667,7 +10667,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_network_receive_errs_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_network_receive_errs_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Rx in",
               "range": true,
@@ -10676,7 +10676,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_network_transmit_errs_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_network_transmit_errs_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Tx out",
               "range": true,
@@ -10784,7 +10784,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_network_receive_drop_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_network_receive_drop_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Rx in",
               "range": true,
@@ -10793,7 +10793,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_network_transmit_drop_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_network_transmit_drop_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Tx out",
               "range": true,
@@ -10901,7 +10901,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_network_receive_compressed_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_network_receive_compressed_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Rx in",
               "range": true,
@@ -10910,7 +10910,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_network_transmit_compressed_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_network_transmit_compressed_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Tx out",
               "range": true,
@@ -11018,7 +11018,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_network_receive_multicast_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_network_receive_multicast_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Rx in",
               "range": true,
@@ -11126,7 +11126,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_network_receive_nohandler_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_network_receive_nohandler_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Rx in",
               "range": true,
@@ -11234,7 +11234,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_network_receive_frame_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_network_receive_frame_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Rx in",
               "range": true,
@@ -11342,7 +11342,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_network_receive_fifo_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_network_receive_fifo_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Rx in",
               "range": true,
@@ -11351,7 +11351,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_network_transmit_fifo_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_network_transmit_fifo_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Tx out",
               "range": true,
@@ -11459,7 +11459,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_network_transmit_colls_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_network_transmit_colls_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Tx out",
               "range": true,
@@ -11554,7 +11554,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_network_transmit_carrier_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_network_transmit_carrier_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "{{device}} - Tx out",
               "range": true,
@@ -11649,7 +11649,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_arp_entries{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_arp_entries{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "{{ device }} ARP Table",
               "range": true,
@@ -11774,7 +11774,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_nf_conntrack_entries{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_nf_conntrack_entries{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "NF conntrack entries",
               "range": true,
@@ -11783,7 +11783,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_nf_conntrack_entries_limit{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_nf_conntrack_entries_limit{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "NF conntrack limit",
               "range": true,
@@ -11878,7 +11878,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_network_up{operstate=\"up\",stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_network_up{operstate=\"up\",stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "hide": true,
               "legendFormat": "{{interface}} - Operational state UP",
@@ -11888,7 +11888,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_network_carrier{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_network_carrier{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "instant": false,
               "legendFormat": "{{device}} - Physical link",
@@ -11958,7 +11958,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_network_speed_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} * 8",
+              "expr": "node_network_speed_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} * 8",
               "format": "time_series",
               "legendFormat": "{{ device }}",
               "range": true,
@@ -12028,7 +12028,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_network_mtu_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_network_mtu_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "{{ device }}",
               "range": true,
@@ -12138,7 +12138,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_sockstat_TCP_alloc{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_sockstat_TCP_alloc{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Allocated Sockets",
@@ -12148,7 +12148,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_sockstat_TCP_inuse{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_sockstat_TCP_inuse{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "In-Use Sockets",
@@ -12158,7 +12158,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_sockstat_TCP_orphan{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_sockstat_TCP_orphan{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Orphaned Sockets",
@@ -12168,7 +12168,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_sockstat_TCP_tw{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_sockstat_TCP_tw{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "TIME_WAIT Sockets",
@@ -12265,7 +12265,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_sockstat_UDPLITE_inuse{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_sockstat_UDPLITE_inuse{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "UDPLite - In-Use Sockets",
@@ -12275,7 +12275,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_sockstat_UDP_inuse{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_sockstat_UDP_inuse{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "UDP - In-Use Sockets",
@@ -12372,7 +12372,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_sockstat_sockets_used{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_sockstat_sockets_used{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Total sockets",
@@ -12469,7 +12469,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_sockstat_FRAG_inuse{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_sockstat_FRAG_inuse{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "FRAG - In-Use Sockets",
@@ -12479,7 +12479,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_sockstat_RAW_inuse{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_sockstat_RAW_inuse{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "RAW - In-Use Sockets",
@@ -12576,7 +12576,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_sockstat_TCP_mem_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_sockstat_TCP_mem_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "TCP",
@@ -12586,7 +12586,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_sockstat_UDP_mem_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_sockstat_UDP_mem_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "UDP",
@@ -12596,7 +12596,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_sockstat_FRAG_memory{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_sockstat_FRAG_memory{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "interval": "",
               "legendFormat": "Fragmentation",
               "range": true,
@@ -12691,7 +12691,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "(node_sockstat_TCP_inuse{stroppy_machine_id=\"$node\",job=\"$job\"} > bool 0) * (node_sockstat_TCP_mem_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} / node_sockstat_TCP_inuse{stroppy_machine_id=\"$node\",job=\"$job\"})",
+              "expr": "(node_sockstat_TCP_inuse{stroppy_machine_id=~\"$node\",job=\"$job\"} > bool 0) * (node_sockstat_TCP_mem_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} / node_sockstat_TCP_inuse{stroppy_machine_id=~\"$node\",job=\"$job\"})",
               "format": "time_series",
               "interval": "",
               "legendFormat": "TCP",
@@ -12701,7 +12701,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "(node_sockstat_UDP_inuse{stroppy_machine_id=\"$node\",job=\"$job\"} > bool 0) * (node_sockstat_UDP_mem_bytes{stroppy_machine_id=\"$node\",job=\"$job\"} / node_sockstat_UDP_inuse{stroppy_machine_id=\"$node\",job=\"$job\"})",
+              "expr": "(node_sockstat_UDP_inuse{stroppy_machine_id=~\"$node\",job=\"$job\"} > bool 0) * (node_sockstat_UDP_mem_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"} / node_sockstat_UDP_inuse{stroppy_machine_id=~\"$node\",job=\"$job\"})",
               "format": "time_series",
               "interval": "",
               "legendFormat": "UDP",
@@ -12798,7 +12798,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_sockstat_TCP_mem{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_sockstat_TCP_mem{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "TCP",
@@ -12808,7 +12808,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_sockstat_UDP_mem{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_sockstat_UDP_mem{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "UDP",
@@ -12917,7 +12917,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_softnet_processed_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_softnet_processed_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "CPU {{cpu}} - Processed",
@@ -12927,7 +12927,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_softnet_dropped_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_softnet_dropped_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "CPU {{cpu}} - Dropped",
@@ -13027,7 +13027,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_softnet_times_squeezed_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_softnet_times_squeezed_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "CPU {{cpu}} - Times Squeezed",
@@ -13143,7 +13143,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_softnet_received_rps_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_softnet_received_rps_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "CPU {{cpu}} - Processed",
@@ -13153,7 +13153,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_softnet_flow_limit_count_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_softnet_flow_limit_count_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "CPU {{cpu}} - Dropped",
@@ -13276,7 +13276,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_IpExt_InOctets{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_IpExt_InOctets{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "IP Rx in",
@@ -13286,7 +13286,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_IpExt_OutOctets{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_IpExt_OutOctets{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "legendFormat": "IP Tx out",
               "range": true,
@@ -13404,7 +13404,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Tcp_InSegs{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Tcp_InSegs{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "instant": false,
               "interval": "",
@@ -13414,7 +13414,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Tcp_OutSegs{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Tcp_OutSegs{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "TCP Tx out",
@@ -13522,7 +13522,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Udp_InDatagrams{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Udp_InDatagrams{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "UDP Rx in",
@@ -13532,7 +13532,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Udp_OutDatagrams{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Udp_OutDatagrams{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "UDP Tx out",
@@ -13644,7 +13644,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Icmp_InMsgs{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Icmp_InMsgs{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "ICMP Rx in",
@@ -13654,7 +13654,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Icmp_OutMsgs{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Icmp_OutMsgs{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "ICMP Tx out",
@@ -13750,7 +13750,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_TcpExt_ListenOverflows{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_TcpExt_ListenOverflows{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Listen Overflows",
@@ -13760,7 +13760,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_TcpExt_ListenDrops{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_TcpExt_ListenDrops{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Listen Drops",
@@ -13770,7 +13770,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_TcpExt_TCPSynRetrans{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_TcpExt_TCPSynRetrans{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "SYN Retransmits",
@@ -13780,7 +13780,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Tcp_RetransSegs{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Tcp_RetransSegs{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "Segment Retransmits",
               "range": true,
@@ -13788,7 +13788,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Tcp_InErrs{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Tcp_InErrs{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "Receive Errors",
               "range": true,
@@ -13796,7 +13796,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Tcp_OutRsts{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Tcp_OutRsts{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "RST Sent",
               "range": true,
@@ -13804,7 +13804,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_TcpExt_TCPRcvQDrop{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_TcpExt_TCPRcvQDrop{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "Receive Queue Drops",
               "range": true,
@@ -13812,7 +13812,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_TcpExt_TCPOFOQueue{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_TcpExt_TCPOFOQueue{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "Out-of-order Queued",
               "range": true,
@@ -13820,7 +13820,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_TcpExt_TCPTimeouts{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_TcpExt_TCPTimeouts{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "TCP Timeouts",
               "range": true,
@@ -13917,7 +13917,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Udp_InErrors{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Udp_InErrors{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "UDP Rx in Errors",
@@ -13927,7 +13927,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Udp_NoPorts{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Udp_NoPorts{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "UDP No Listener",
@@ -13937,7 +13937,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_UdpLite_InErrors{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_UdpLite_InErrors{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "UDPLite Rx in Errors",
               "range": true,
@@ -13945,7 +13945,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Udp_RcvbufErrors{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Udp_RcvbufErrors{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "UDP Rx in Buffer Errors",
@@ -13955,7 +13955,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Udp_SndbufErrors{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Udp_SndbufErrors{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "UDP Tx out Buffer Errors",
@@ -14063,7 +14063,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Icmp_InErrors{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Icmp_InErrors{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "ICMP Rx In",
@@ -14174,7 +14174,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_TcpExt_SyncookiesFailed{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_TcpExt_SyncookiesFailed{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "SYN Cookies Failed",
@@ -14184,7 +14184,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_TcpExt_SyncookiesRecv{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_TcpExt_SyncookiesRecv{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "SYN Cookies Validated",
@@ -14194,7 +14194,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_TcpExt_SyncookiesSent{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_TcpExt_SyncookiesSent{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "SYN Cookies Sent",
@@ -14320,7 +14320,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_netstat_Tcp_CurrEstab{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_netstat_Tcp_CurrEstab{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Current Connections",
@@ -14330,7 +14330,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_netstat_Tcp_MaxConn{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_netstat_Tcp_MaxConn{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Max Connections",
@@ -14425,7 +14425,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_udp_queues{stroppy_machine_id=\"$node\",job=\"$job\",ip=\"v4\",queue=\"rx\"}",
+              "expr": "node_udp_queues{stroppy_machine_id=~\"$node\",job=\"$job\",ip=\"v4\",queue=\"rx\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "UDP Rx in Queue",
@@ -14435,7 +14435,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_udp_queues{stroppy_machine_id=\"$node\",job=\"$job\",ip=\"v4\",queue=\"tx\"}",
+              "expr": "node_udp_queues{stroppy_machine_id=~\"$node\",job=\"$job\",ip=\"v4\",queue=\"tx\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "UDP Tx out Queue",
@@ -14531,7 +14531,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Tcp_ActiveOpens{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Tcp_ActiveOpens{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Active Opens",
@@ -14541,7 +14541,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "rate(node_netstat_Tcp_PassiveOpens{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(node_netstat_Tcp_PassiveOpens{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Passive Opens",
@@ -14638,7 +14638,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_tcp_connection_states{state=\"established\",stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_tcp_connection_states{state=\"established\",stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Established",
@@ -14648,7 +14648,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_tcp_connection_states{state=\"fin_wait2\",stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_tcp_connection_states{state=\"fin_wait2\",stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "FIN_WAIT2",
@@ -14658,7 +14658,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_tcp_connection_states{state=\"listen\",stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_tcp_connection_states{state=\"listen\",stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Listen",
@@ -14668,7 +14668,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_tcp_connection_states{state=\"time_wait\",stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_tcp_connection_states{state=\"time_wait\",stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "TIME_WAIT",
@@ -14678,7 +14678,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_tcp_connection_states{state=\"close_wait\", stroppy_machine_id=\"$node\", job=\"$job\"}",
+              "expr": "node_tcp_connection_states{state=\"close_wait\", stroppy_machine_id=~\"$node\", job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "CLOSE_WAIT",
@@ -14775,7 +14775,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_tcp_connection_states{state=\"syn_sent\",stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_tcp_connection_states{state=\"syn_sent\",stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "SYN_SENT",
               "range": true,
@@ -14784,7 +14784,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_tcp_connection_states{state=\"syn_recv\",stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_tcp_connection_states{state=\"syn_recv\",stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "SYN_RECV",
               "range": true,
@@ -14793,7 +14793,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_tcp_connection_states{state=\"fin_wait1\",stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_tcp_connection_states{state=\"fin_wait1\",stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "FIN_WAIT1",
               "range": true,
@@ -14802,7 +14802,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_tcp_connection_states{state=\"close\",stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_tcp_connection_states{state=\"close\",stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "CLOSE",
               "range": true,
@@ -14811,7 +14811,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_tcp_connection_states{state=\"last_ack\",stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_tcp_connection_states{state=\"last_ack\",stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "LAST_ACK",
               "range": true,
@@ -14820,7 +14820,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_tcp_connection_states{state=\"closing\",stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_tcp_connection_states{state=\"closing\",stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "CLOSING",
               "range": true,
@@ -14915,7 +14915,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_tcp_connection_states{state=\"rx_queued_bytes\",stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_tcp_connection_states{state=\"rx_queued_bytes\",stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "RX Queued (waiting to be read)",
               "range": true,
@@ -14924,7 +14924,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "node_tcp_connection_states{state=\"tx_queued_bytes\",stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_tcp_connection_states{state=\"tx_queued_bytes\",stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "legendFormat": "TX Queued (waiting to be sent)",
               "range": true,
@@ -15036,7 +15036,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_scrape_collector_duration_seconds{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_scrape_collector_duration_seconds{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{collector}}",
@@ -15131,7 +15131,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "rate(process_cpu_seconds_total{stroppy_machine_id=\"$node\",job=\"$job\"}[$__rate_interval])",
+              "expr": "rate(process_cpu_seconds_total{stroppy_machine_id=~\"$node\",job=\"$job\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "legendFormat": "Process CPU Usage",
@@ -15281,7 +15281,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "process_virtual_memory_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "process_virtual_memory_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "interval": "",
               "legendFormat": "Virtual Memory",
               "range": true,
@@ -15290,7 +15290,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "process_virtual_memory_max_bytes{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "process_virtual_memory_max_bytes{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "interval": "",
               "legendFormat": "Virtual Memory Limit",
               "range": true,
@@ -15439,7 +15439,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "process_max_fds{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "process_max_fds{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "interval": "",
               "legendFormat": "Maximum open file descriptors",
               "range": true,
@@ -15448,7 +15448,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "process_open_fds{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "process_open_fds{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "interval": "",
               "legendFormat": "Open file descriptors",
               "range": true,
@@ -15524,7 +15524,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_scrape_collector_success{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "node_scrape_collector_success{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "{{collector}}",
@@ -15534,7 +15534,7 @@
             },
             {
               "editorMode": "code",
-              "expr": "1 - node_textfile_scrape_error{stroppy_machine_id=\"$node\",job=\"$job\"}",
+              "expr": "1 - node_textfile_scrape_error{stroppy_machine_id=~\"$node\",job=\"$job\"}",
               "format": "time_series",
               "interval": "",
               "legendFormat": "textfile",
@@ -15559,7 +15559,10 @@
   "templating": {
     "list": [
       {
-        "current": { "value": "", "text": "" },
+        "current": {
+          "value": "",
+          "text": ""
+        },
         "datasource": "VictoriaMetrics",
         "definition": "",
         "hide": 2,
@@ -15610,7 +15613,7 @@
         "current": {},
         "datasource": "VictoriaMetrics",
         "definition": "label_values(node_uname_info{job=\"$job\", stroppy_run_id=\"$run_id\"}, stroppy_machine_id)",
-        "includeAll": false,
+        "includeAll": true,
         "label": "Machine",
         "name": "node",
         "options": [],
@@ -15621,7 +15624,9 @@
         "refresh": 1,
         "regex": "",
         "sort": 1,
-        "type": "query"
+        "type": "query",
+        "multi": true,
+        "allValue": ".+"
       }
     ]
   },

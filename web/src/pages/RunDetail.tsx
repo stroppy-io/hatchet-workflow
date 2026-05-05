@@ -58,21 +58,21 @@ function DashboardSelector({ grafana, runID, dbKind, startedAt, finishedAt, targ
   // which doesn't use the `node` template var).
   const [selectedMachine, setSelectedMachine] = useState<string>("");
 
-  const uid = dashboards[selectedDashboard] || "";
-
   // Surface only this run's machines in the bar — the dashboard template
   // var query already filters by stroppy_run_id, but explicit pills here
   // map machine_id → role so the user sees what they're switching between.
   const runTargets = (targets || []).filter((t) => t.role !== "");
-  // System-style dashboards (everything except the workload metrics one)
-  // honor the `node` template var. For the stroppy dashboard the bar is
-  // shown in read-only mode — clicking a machine has no effect there.
-  const machineSelectActive = selectedDashboard !== "stroppy";
+  // Machine pill bar is only meaningful for the system (node-exporter)
+  // dashboard — that's the only one whose template var actually filters
+  // by stroppy_machine_id. Postgres uses its own DB instance scope and
+  // stroppy is run-wide, so the bar is hidden there entirely.
+  const machineSelectActive = selectedDashboard === "system";
+  const showMachineBar = machineSelectActive;
 
-  // Build iframe src — memoize to avoid reloading iframe on every poll.
-  // While run is in progress, use "now" as end time (Grafana auto-refreshes internally).
-  // Once finished, lock the time range.
-  const iframeSrc = useMemo(() => {
+  // urlFor builds the embed URL for a specific dashboard. Used to seed
+  // every iframe's src once and never recompute — see mountedSrcs below.
+  const urlFor = (name: string, machine: string) => {
+    const dashUid = dashboards[name] || "";
     let timeParams = "";
     if (startedAt && startedAt !== "0001-01-01T00:00:00Z") {
       const from = new Date(startedAt).getTime() - 30000;
@@ -80,17 +80,83 @@ function DashboardSelector({ grafana, runID, dbKind, startedAt, finishedAt, targ
         const to = new Date(finishedAt).getTime() + 60000;
         timeParams = `&from=${from}&to=${to}`;
       } else {
-        // Run in progress — use relative "now" so Grafana auto-refreshes.
         timeParams = `&from=${from}&to=now&refresh=5s`;
       }
     }
-    // var-run_id for system/db dashboards (vmagent external_labels), var-prefix for stroppy dashboard (K6 metric prefix = runID_)
     const prefix = runID.replace(/-/g, "_") + "_";
-    const nodeParam = machineSelectActive && selectedMachine ? `&var-node=${encodeURIComponent(selectedMachine)}` : "";
-    return `${grafana.url}/d/${uid}?var-run_id=${runID}&var-prefix=${prefix}${nodeParam}${timeParams}&kiosk&theme=dark`;
-    // Only recalculate when dashboard, machine, startedAt, or finishedAt changes — NOT on every poll.
+    // var-node only applies to the system dashboard (node_exporter view).
+    // Empty machine means "All"; otherwise pin to the picked machine.
+    let nodeParam = "";
+    if (name === "system") {
+      nodeParam = machine
+        ? `&var-node=${encodeURIComponent(machine)}`
+        : "&var-node=All";
+    }
+    return `${grafana.url}/d/${dashUid}?var-run_id=${runID}&var-prefix=${prefix}${nodeParam}${timeParams}&kiosk&theme=dark`;
+  };
+
+  // mountedSrcs caches an iframe URL per (dashboard, machine) pair. Each
+  // pair gets its own iframe DOM node, kept mounted with display:none when
+  // hidden. Switching dashboard or machine becomes a CSS toggle, never a
+  // reload — Grafana state, scroll, refresh timer all survive.
+  // Stroppy dashboard ignores var-node, so its key uses an empty machine
+  // slot so all machine selections collapse onto the single cached iframe.
+  const mountedSrcsRef = useRef<Map<string, string>>(new Map());
+  const [, setMountTick] = useState(0);
+
+  function keyFor(name: string, machine: string): string {
+    // Only the system dashboard varies its iframe per-machine. Other
+    // dashboards collapse onto a single iframe (machine slot blank).
+    return `${name}|${name === "system" ? machine : ""}`;
+  }
+
+  // Preload the Cartesian product (visibleDashboards × machines) on mount
+  // and whenever the target list grows. Every (dashboard, machine) pair
+  // gets exactly one iframe — the active pair is shown, all others stay
+  // hidden but warm. Tab AND machine switches become pure CSS toggles.
+  // Stroppy dashboard ignores machine, so it collapses onto a single
+  // iframe (machine="") regardless of the pill picked.
+  useEffect(() => {
+    const m = mountedSrcsRef.current;
+    let mutated = false;
+    // Always include the "auto/all" slot so the auto pill is instant too.
+    const machines = ["", ...runTargets.map((t) => t.id)];
+    for (const name of visibleDashboards) {
+      if (name !== "system") {
+        // Single iframe per non-system dashboard (no machine variation).
+        const k = keyFor(name, "");
+        if (!m.has(k)) {
+          m.set(k, urlFor(name, ""));
+          mutated = true;
+        }
+        continue;
+      }
+      for (const machine of machines) {
+        const k = keyFor(name, machine);
+        if (!m.has(k)) {
+          m.set(k, urlFor(name, machine));
+          mutated = true;
+        }
+      }
+    }
+    if (mutated) setMountTick((n) => n + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [grafana.url, uid, runID, startedAt, finishedAt, selectedMachine, machineSelectActive]);
+  }, [visibleDashboards.join(","), runTargets.map((t) => t.id).join(",")]);
+
+  // When the run's time bounds change (run finishes), refresh ALL mounted
+  // URLs — the locked from..to window is part of the URL. Cached entries
+  // get rebuilt with the same (dashboard, machine) key so visibility toggles
+  // keep working.
+  useEffect(() => {
+    const m = mountedSrcsRef.current;
+    if (m.size === 0) return;
+    for (const k of Array.from(m.keys())) {
+      const [name, machine] = k.split("|");
+      m.set(k, urlFor(name, machine));
+    }
+    setMountTick((n) => n + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startedAt, finishedAt]);
 
   return (
     <>
@@ -110,7 +176,7 @@ function DashboardSelector({ grafana, runID, dbKind, startedAt, finishedAt, targ
           </button>
         ))}
       </div>
-      {runTargets.length > 0 && (
+      {runTargets.length > 0 && showMachineBar && (
         <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 border-b border-border bg-[#070707]">
           <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-600 mr-1">
             Machines
@@ -155,12 +221,25 @@ function DashboardSelector({ grafana, runID, dbKind, startedAt, finishedAt, targ
           })}
         </div>
       )}
-      <iframe
-        src={iframeSrc}
-        className="w-full border-0 h-[calc(100vh-14rem)]"
-        title="Run Metrics Dashboard"
-        sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-      />
+      {/* One iframe per (dashboard, machine) pair the user has visited.
+          Only the active pair is visible; the rest stay mounted but
+          hidden so re-selecting them is instant — no Grafana reload. */}
+      <div className="relative w-full" style={{ height: "calc(100vh - 14rem)" }}>
+        {Array.from(mountedSrcsRef.current.entries()).map(([k, src]) => {
+          const activeKey = keyFor(selectedDashboard, selectedMachine);
+          return (
+            <iframe
+              key={k}
+              src={src}
+              className={`absolute inset-0 w-full h-full border-0 ${
+                k === activeKey ? "block" : "hidden"
+              }`}
+              title={`${k} dashboard`}
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+            />
+          );
+        })}
+      </div>
     </>
   );
 }
