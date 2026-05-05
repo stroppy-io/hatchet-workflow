@@ -128,14 +128,14 @@ type KindProtocolKey struct {
 // portability breaks down. The wizard's script picker is a function of
 // (kind, protocol); validation rejects anything not in the matrix.
 var ScriptCompat = map[KindProtocolKey][]string{
-	{DatabasePostgres, ProtocolPG}:         {"tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx"},
-	{DatabaseMySQL, ProtocolMySQL}:         {"tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx"},
-	{DatabaseMariaDB, ProtocolMySQL}:       {"tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx"},
-	{DatabasePicodata, ProtocolPicodata}:   {"tpcc/tx", "tpcb/tx"},
-	{DatabaseYDB, ProtocolYDBGRPC}:         {"tpcc/tx", "tpcb/tx"},
+	{DatabasePostgres, ProtocolPG}:         {"tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx", "tpch/tx"},
+	{DatabaseMySQL, ProtocolMySQL}:         {"tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx", "tpch/tx"},
+	{DatabaseMariaDB, ProtocolMySQL}:       {"tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx", "tpch/tx"},
+	{DatabasePicodata, ProtocolPicodata}:   {"tpcc/tx", "tpcb/tx", "tpch/tx"},
+	{DatabaseYDB, ProtocolYDBGRPC}:         {"tpcc/tx", "tpcb/tx", "tpch/tx"},
 	{DatabaseYDB, ProtocolYDBPgwire}:       {"tpcc/tx-ydb-pgwire", "tpcb/tx-ydb-pgwire"},
-	{DatabaseYDBManaged, ProtocolYDBGRPCS}: {"tpcc/tx", "tpcb/tx"},
-	{DatabaseCockroach, ProtocolCockroach}: {"tpcc/tx", "tpcb/tx"},
+	{DatabaseYDBManaged, ProtocolYDBGRPCS}: {"tpcc/tx", "tpcb/tx", "tpch/tx"},
+	{DatabaseCockroach, ProtocolCockroach}: {"tpcc/tx", "tpcb/tx", "tpch/tx"},
 }
 
 // ScriptSupported returns true if (kind, protocol) is registered in

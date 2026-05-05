@@ -66,6 +66,7 @@ const SCRIPT_META: Record<string, { label: string; desc: string }> = {
   "tpcc/tx":             { label: "TPC-C Tx",    desc: "Raw transactions" },
   "tpcb/procs":          { label: "TPC-B Procs", desc: "Stored procedures" },
   "tpcb/tx":             { label: "TPC-B Tx",    desc: "Raw transactions" },
+  "tpch/tx":             { label: "TPC-H Tx",    desc: "Analytical queries" },
   "tpcc/tx-ydb-pgwire":  { label: "TPC-C Tx (YDB pgwire)", desc: "Subset that fits YDB's pg-wire feature ceiling" },
   "tpcb/tx-ydb-pgwire":  { label: "TPC-B Tx (YDB pgwire)", desc: "Subset that fits YDB's pg-wire feature ceiling" },
 };
@@ -167,12 +168,12 @@ export function NewRun() {
   const [quiet, setQuiet] = useState(rcS?.quiet ?? true);
   const [noThresholds, setNoThresholds] = useState(rcS?.no_thresholds || false);
   const [defaultInsertMethod, setDefaultInsertMethod] = useState(rcS?.default_insert_method || "native");
-  // TPC-C-tuned defaults: scale 500 warehouses, 300 VUs, 200-conn pool. The
+  // TPC-C-tuned defaults: scale 500 warehouses, 100 VUs, 150-conn pool. The
   // workload is OLTP-heavy enough that the smaller previous defaults
   // (10/100/1) produced runs that finished before any meaningful state was
   // built up. Overridden by rcS.* on rerun.
-  const [vus, setVus] = useState(rcS?.vus || rcS?.vus_scale || 300);
-  const [poolSize, setPoolSize] = useState(rcS?.pool_size || 200);
+  const [vus, setVus] = useState(rcS?.vus || rcS?.vus_scale || 100);
+  const [poolSize, setPoolSize] = useState(rcS?.pool_size || 150);
   const [scaleFactor, setScaleFactor] = useState(rcS?.scale_factor || 500);
   const [stroppyVersion, setStroppyVersion] = useState(rcS?.version || "");
   const [stroppyVersions, setStroppyVersions] = useState<string[]>(rcS?.version ? [rcS.version] : []);
@@ -184,7 +185,7 @@ export function NewRun() {
   const [selectedSteps, setSelectedSteps] = useState<string[]>(rcS?.steps || []);
   const [noSteps, setNoSteps] = useState<string[]>(rcS?.no_steps || []);
   // Stroppy runner sizing — defaults to 32 vCPU / 64 GB / 100 GB, sized for
-  // the new TPC-C defaults (300 VUs, pool 200). Overridden by rcSM.* on
+  // the new TPC-C defaults (100 VUs, pool 150). Overridden by rcSM.* on
   // rerun. The suggestStroppyMachine() helper is still used as a live hint
   // in StepStroppy when the user adjusts VUs/pool.
   const [stroppyCpus, setStroppyCpus] = useState(rcSM?.cpus || 32);

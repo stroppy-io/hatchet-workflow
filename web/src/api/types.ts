@@ -31,14 +31,14 @@ export const KIND_PROTOCOLS: Record<DatabaseKind, Protocol[]> = {
 // SCRIPT_COMPAT keys (kind, protocol) and lists which scripts the wizard
 // should offer. Mirrors types.ScriptCompat on the server.
 export const SCRIPT_COMPAT: Record<string, string[]> = {
-  "postgres:pg":      ["tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx"],
-  "mysql:mysql":      ["tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx"],
-  "mariadb:mysql":    ["tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx"],
-  "picodata:picodata": ["tpcc/tx", "tpcb/tx"],
-  "ydb:ydb-grpc":     ["tpcc/tx", "tpcb/tx"],
+  "postgres:pg":      ["tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx", "tpch/tx"],
+  "mysql:mysql":      ["tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx", "tpch/tx"],
+  "mariadb:mysql":    ["tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx", "tpch/tx"],
+  "picodata:picodata": ["tpcc/tx", "tpcb/tx", "tpch/tx"],
+  "ydb:ydb-grpc":     ["tpcc/tx", "tpcb/tx", "tpch/tx"],
   "ydb:ydb-pgwire":   ["tpcc/tx-ydb-pgwire", "tpcb/tx-ydb-pgwire"],
-  "ydb-managed:ydb-grpcs": ["tpcc/tx", "tpcb/tx"],
-  "cockroach:cockroach": ["tpcc/tx", "tpcb/tx"],
+  "ydb-managed:ydb-grpcs": ["tpcc/tx", "tpcb/tx", "tpch/tx"],
+  "cockroach:cockroach": ["tpcc/tx", "tpcb/tx", "tpch/tx"],
 };
 
 /** All supported database kinds — single source of truth for UI iterations. */

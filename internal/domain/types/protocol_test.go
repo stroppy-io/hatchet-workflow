@@ -36,6 +36,12 @@ func TestScriptSupported(t *testing.T) {
 	if !ScriptSupported(DatabaseYDB, ProtocolYDBGRPC, "tpcc/tx") {
 		t.Error("ydb-grpc should support tpcc/tx")
 	}
+	if !ScriptSupported(DatabaseYDB, ProtocolYDBGRPC, "tpch/tx") {
+		t.Error("ydb-grpc should support tpch/tx")
+	}
+	if ScriptSupported(DatabaseYDB, ProtocolYDBPgwire, "tpch/tx") {
+		t.Error("ydb-pgwire should not offer generic tpch/tx")
+	}
 	if ScriptSupported(DatabaseYDB, ProtocolYDBGRPC, "tpcc/tx-ydb-pgwire") {
 		t.Error("ydb-grpc should NOT support the pgwire-only variant")
 	}
@@ -52,10 +58,10 @@ func TestScriptSupported(t *testing.T) {
 
 func TestProtocolMeta_FormatURL(t *testing.T) {
 	cases := []struct {
-		proto    Protocol
-		host     string
-		port     string
-		want     string
+		proto Protocol
+		host  string
+		port  string
+		want  string
 	}{
 		{ProtocolPG, "10.0.0.1", "5432", "postgresql://10.0.0.1:5432/postgres?sslmode=disable"},
 		{ProtocolMySQL, "10.0.0.1", "3306", "root@tcp(10.0.0.1:3306)/"},
