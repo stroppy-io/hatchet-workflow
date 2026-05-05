@@ -25,6 +25,11 @@ import {
   Timer,
   FileCode,
   ChevronDown,
+  Repeat,
+  VolumeX,
+  AlertOctagon,
+  Wand2,
+  FileText,
 } from "lucide-react";
 
 // ─── Phase groups ────────────────────────────────────────────────
@@ -369,10 +374,35 @@ function ConfigPanel({ config, startedAt, finishedAt, isRunning }: {
         <div className="space-y-0">
           <ConfigLine label="script" value={script} icon={FileCode} />
           {s.version && <ConfigLine label="stroppy" value={`v${s.version}`} icon={Tag} />}
-          <ConfigLine label="duration" value={s.duration} icon={Clock} />
+          {s.sql && <ConfigLine label="sql" value={s.sql} icon={FileCode} />}
+          {/* k6 driving knob: duration vs iterations. Show whichever the
+              user picked; the unselected one is omitted to avoid clutter. */}
+          {s.k6_mode === "iterations" ? (
+            <ConfigLine label="iterations" value={String(s.iterations ?? 0)} icon={Repeat} />
+          ) : (
+            <ConfigLine label="duration" value={s.duration} icon={Clock} />
+          )}
           {vus > 0 && <ConfigLine label="VUs" value={String(vus)} icon={Users} />}
           {(s.pool_size ?? 0) > 0 && <ConfigLine label="pool" value={String(s.pool_size)} icon={Network} />}
           {(s.scale_factor ?? 0) > 0 && <ConfigLine label="scale" value={String(s.scale_factor)} />}
+          {s.default_insert_method && s.default_insert_method !== "native" && (
+            <ConfigLine label="insert" value={s.default_insert_method} icon={Wand2} />
+          )}
+          {s.quiet === false && <ConfigLine label="quiet" value="off" icon={VolumeX} />}
+          {s.no_thresholds && <ConfigLine label="thresholds" value="off" icon={AlertOctagon} />}
+          {s.env && Object.keys(s.env).length > 0 && (
+            <div className="text-[10px] font-mono text-zinc-600 mt-1">
+              env: {Object.entries(s.env).filter(([, v]) => v !== "").map(([k, v]) => `${k}=${v}`).join(", ") || "(none)"}
+            </div>
+          )}
+          {s.files && s.files.length > 0 && (
+            <div className="flex items-start gap-1.5 mt-1 text-[10px] font-mono text-zinc-600">
+              <FileText className="w-3 h-3 mt-0.5 shrink-0" />
+              <span className="truncate" title={s.files.map((f) => f.name).join(", ")}>
+                {s.files.length} file{s.files.length === 1 ? "" : "s"}: {s.files.map((f) => f.name).join(", ")}
+              </span>
+            </div>
+          )}
           {s.steps && s.steps.length > 0 && (
             <div className="text-[10px] font-mono text-zinc-600 mt-1">
               steps: {s.steps.join(", ")}
