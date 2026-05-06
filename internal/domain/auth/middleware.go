@@ -126,6 +126,13 @@ func isPublicPath(path string) bool {
 	if strings.HasPrefix(path, "/api/share/") {
 		return true
 	}
+	// Server-side binary cache: agents pull node_exporter/vmagent/etc via
+	// curl during cloud-init/install_monitor, before they have agent JWTs.
+	// Endpoint serves only public OSS binaries (proxied from github), safe
+	// to expose unauthenticated.
+	if strings.HasPrefix(path, "/api/binaries/") {
+		return true
+	}
 	// WebSocket: authenticated via ?token= query param (browsers can't set headers on WS).
 	if strings.HasPrefix(path, "/ws/") {
 		return false // let middleware handle auth from query param

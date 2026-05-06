@@ -193,7 +193,7 @@ func (b *builder) build() error {
 
 	// --- teardown (always runs, even if upstream fails) ---
 	b.addAlwaysRun(b.ph(types.PhaseTeardown), []string{b.ph(types.PhaseRunStroppy)},
-		&teardownTask{provider: b.cfg.Provider, state: b.deps.State, deployer: b.deps.Deployer})
+		&teardownTask{provider: b.cfg.Provider, state: b.deps.State, deployer: b.deps.Deployer, settings: b.deps.Settings})
 
 	if err := b.g.Validate(); err != nil {
 		return fmt.Errorf("run: invalid graph: %w", err)
@@ -244,7 +244,7 @@ func (b *builder) buildExternalDB() error {
 		})
 
 	b.addAlwaysRun(b.ph(types.PhaseTeardown), []string{b.ph(types.PhaseRunStroppy)},
-		&teardownTask{provider: b.cfg.Provider, state: b.deps.State, deployer: b.deps.Deployer})
+		&teardownTask{provider: b.cfg.Provider, state: b.deps.State, deployer: b.deps.Deployer, settings: b.deps.Settings})
 
 	if err := b.g.Validate(); err != nil {
 		return fmt.Errorf("run: invalid graph: %w", err)
