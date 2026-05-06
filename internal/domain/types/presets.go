@@ -207,15 +207,10 @@ func describePicodataPreset(p PicodataPreset) string {
 type YDBPreset string
 
 const (
-	YDBSingle          YDBPreset = "single"
-	YDBUniversal3      YDBPreset = "universal-3"
-	YDBSplit33         YDBPreset = "split-3-3"
-	YDBSplit63         YDBPreset = "split-6-3"
-	YDBSplit36         YDBPreset = "split-3-6"
-	YDBSplit33MultiSSD YDBPreset = "split-3-3-3pdisks"
-	YDBMirror3DC3x32   YDBPreset = "mirror3dc-3x32"
-	YDBMirror3DC9x32   YDBPreset = "mirror3dc-9x32"
-	YDBMirror3DC3x64   YDBPreset = "mirror3dc-3x64"
+	YDBSingle        YDBPreset = "single"
+	YDBMirror3DC3x32 YDBPreset = "mirror3dc-3x32"
+	YDBMirror3DC9x32 YDBPreset = "mirror3dc-9x32"
+	YDBMirror3DC3x64 YDBPreset = "mirror3dc-3x64"
 )
 
 // Legacy YDB presets use a 64 vCPU / 128 GB RAM node flavor with a 50 GB
@@ -249,37 +244,6 @@ func ydbStorageNodes(count int) MachineSpec {
 			SizeGB:     ydbStoragePdiskGB,
 			Type:       ydbStoragePdiskType,
 		}},
-	}
-}
-
-// ydbStorageNodesMultiDisk is the same flavor as ydbStorageNodes but with
-// `pdisks` raw block devices attached (named ydb-data-0, ydb-data-1, …).
-// Each becomes an independent YDB pdisk so the cluster can spread blob I/O
-// across more spindles in parallel; total cluster pdisk count = nodes × pdisks.
-func ydbStorageNodesMultiDisk(count, pdisks int) MachineSpec {
-	disks := make([]SecondaryDisk, 0, pdisks)
-	for i := 0; i < pdisks; i++ {
-		disks = append(disks, SecondaryDisk{
-			DeviceName: fmt.Sprintf("%s-%d", ydbStorageDevice, i),
-			SizeGB:     ydbStoragePdiskGB,
-			Type:       ydbStoragePdiskType,
-		})
-	}
-	return MachineSpec{
-		Role: RoleDatabase, Count: count,
-		CPUs: ydbNodeCPUs, MemoryMB: ydbNodeMemoryMB,
-		DiskGB:         ydbNodeBootDiskGB,
-		DiskType:       ydbNodeBootDiskType,
-		SecondaryDisks: disks,
-	}
-}
-
-func ydbDatabaseNodes(count int) *MachineSpec {
-	return &MachineSpec{
-		Role: RoleDatabase, Count: count,
-		CPUs: ydbNodeCPUs, MemoryMB: ydbNodeMemoryMB,
-		DiskGB:   ydbNodeBootDiskGB,
-		DiskType: ydbNodeBootDiskType,
 	}
 }
 
@@ -331,40 +295,6 @@ var YDBPresets = map[YDBPreset]YDBTopology{
 		DatabasePath:   "/Root/testdb",
 		AutoSizePdisks: true,
 	},
-	YDBUniversal3: {
-		Storage:        ydbStorageNodes(3),
-		FaultTolerance: "none",
-		DatabasePath:   "/Root/testdb",
-		AutoSizePdisks: true,
-	},
-	YDBSplit33: {
-		Storage:        ydbStorageNodes(3),
-		Database:       ydbDatabaseNodes(3),
-		FaultTolerance: "none",
-		DatabasePath:   "/Root/testdb",
-		AutoSizePdisks: true,
-	},
-	YDBSplit63: {
-		Storage:        ydbStorageNodes(6),
-		Database:       ydbDatabaseNodes(3),
-		FaultTolerance: "none",
-		DatabasePath:   "/Root/testdb",
-		AutoSizePdisks: true,
-	},
-	YDBSplit36: {
-		Storage:        ydbStorageNodes(3),
-		Database:       ydbDatabaseNodes(6),
-		FaultTolerance: "none",
-		DatabasePath:   "/Root/testdb",
-		AutoSizePdisks: true,
-	},
-	YDBSplit33MultiSSD: {
-		Storage:        ydbStorageNodesMultiDisk(3, 3), // 3 storage × 3 pdisks = 9 raw block devices total
-		Database:       ydbDatabaseNodes(3),
-		FaultTolerance: "none",
-		DatabasePath:   "/Root/testdb",
-		AutoSizePdisks: true,
-	},
 	YDBMirror3DC3x32: ydbMirror3DCTarget(ydbTargetDatabaseNodes(3, 32, 65536)),
 	YDBMirror3DC9x32: ydbMirror3DCTarget(ydbTargetDatabaseNodes(9, 32, 65536)),
 	YDBMirror3DC3x64: ydbMirror3DCTarget(ydbTargetDatabaseNodes(3, 64, 131072)),
@@ -374,16 +304,6 @@ func describeYDBPreset(p YDBPreset) string {
 	switch p {
 	case YDBSingle:
 		return "1 universal node (storage + compute on one box)"
-	case YDBUniversal3:
-		return "3 universal nodes (storage + compute on each)"
-	case YDBSplit33:
-		return "Split: 3 storage + 3 database nodes (6 total)"
-	case YDBSplit63:
-		return "Split: 6 storage + 3 database nodes — storage-heavy (9 total)"
-	case YDBSplit36:
-		return "Split: 3 storage + 6 database nodes — compute-heavy (9 total)"
-	case YDBSplit33MultiSSD:
-		return "Split: 3 storage × 3 pdisks (9 raw devices) + 3 database nodes"
 	case YDBMirror3DC3x32:
 		return "Target perf topology: mirror-3-dc, 3×32 vCPU compute, 3×16 vCPU storage, 9 io-m3 pdisks"
 	case YDBMirror3DC9x32:
