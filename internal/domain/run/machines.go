@@ -167,14 +167,14 @@ func FillMachinesFromTopology(cfg *types.RunConfig) {
 				cfg.Machines = append(cfg.Machines, types.MachineSpec{
 					Role: types.RoleYDBDatabase, Count: d.Count,
 					CPUs: ovCPU(d.CPUs), MemoryMB: ovMem(d.MemoryMB), DiskGB: ovDisk(d.DiskGB),
-					DiskType: d.DiskType, SecondaryDisks: d.SecondaryDisks,
+					DiskType: d.DiskType, SecondaryDisks: d.SecondaryDisks, Placement: d.Placement,
 				})
 			}
 			s := db.YDB.Storage
 			cfg.Machines = append(cfg.Machines, types.MachineSpec{
 				Role: types.RoleYDBStorage, Count: s.Count,
 				CPUs: ovCPU(s.CPUs), MemoryMB: ovMem(s.MemoryMB), DiskGB: ovDisk(s.DiskGB),
-				DiskType: s.DiskType, SecondaryDisks: s.SecondaryDisks,
+				DiskType: s.DiskType, SecondaryDisks: s.SecondaryDisks, Placement: s.Placement,
 			})
 			if db.YDB.HAProxy != nil {
 				cfg.Machines = append(cfg.Machines, *db.YDB.HAProxy)

@@ -87,9 +87,10 @@ func TestRenderYDBStorageConf_MultiDiskPerHost(t *testing.T) {
 		"/dev/disk/by-id/virtio-ydb-data-2",
 	}
 	out := RenderYDBStorageConf(RenderYDBConfOpts{
-		HostCount:        3,
-		MemoryMB:         4096,
-		BlockDevicePaths: paths,
+		HostCount:         3,
+		MemoryMB:          4096,
+		BlockDevicePaths:  paths,
+		FailureDomainType: "disk",
 	})
 	// host_configs should list one drive entry per pdisk (3 paths × "type: SSD").
 	for _, p := range paths {
@@ -100,6 +101,33 @@ func TestRenderYDBStorageConf_MultiDiskPerHost(t *testing.T) {
 	// blob_storage_config: 3 hosts × 3 pdisks = 9 fail_domains × 1 vdisk_location each.
 	if c := strings.Count(out, "vdisk_locations:"); c != 9 {
 		t.Errorf("expected 9 vdisk_locations (3 hosts × 3 pdisks), got %d", c)
+	}
+}
+
+func TestRenderYDBStorageConf_Mirror3DCDiskLocations(t *testing.T) {
+	out := RenderYDBStorageConf(RenderYDBConfOpts{
+		HostCount:         3,
+		HostLocations:     []string{"ru-central1-a", "ru-central1-b", "ru-central1-c"},
+		MemoryMB:          4096,
+		FaultTolerance:    "mirror-3-dc",
+		FailureDomainType: "disk",
+		DefaultDiskType:   "SSD",
+		BlockDevicePaths: []string{
+			"/dev/disk/by-id/virtio-ydb-data-0",
+			"/dev/disk/by-id/virtio-ydb-data-1",
+			"/dev/disk/by-id/virtio-ydb-data-2",
+		},
+	})
+	for _, loc := range []string{"data_center: 'ru-central1-a'", "data_center: 'ru-central1-b'", "data_center: 'ru-central1-c'"} {
+		if !strings.Contains(out, loc) {
+			t.Fatalf("missing location %q:\n%s", loc, out)
+		}
+	}
+	if strings.Count(out, "      - fail_domains:") != 3 {
+		t.Fatalf("expected 3 rings for mirror-3-dc, got:\n%s", out)
+	}
+	if c := strings.Count(out, "vdisk_locations:"); c != 9 {
+		t.Fatalf("expected 9 vdisk locations, got %d:\n%s", c, out)
 	}
 }
 

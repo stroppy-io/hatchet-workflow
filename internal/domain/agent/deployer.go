@@ -21,6 +21,7 @@ type Target struct {
 	Host         string `json:"host"`     // address for server→agent HTTP (may be localhost in host mode)
 	InternalHost string `json:"internal"` // container name for container→container communication
 	AgentPort    int    `json:"agent_port"`
+	Zone         string `json:"zone,omitempty"` // provider-native placement zone, when known
 }
 
 // Addr returns the agent HTTP address.

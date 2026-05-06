@@ -66,6 +66,12 @@ func ComputeEffectiveConfigs(cfg *types.RunConfig) map[string]map[string]string 
 				"erasure":   ft,
 				"db_path":   db.YDB.DatabasePath,
 			}
+			if db.YDB.FailureDomainType != "" {
+				out["database"]["failure_domain"] = db.YDB.FailureDomainType
+			}
+			if db.YDB.StorageGroups > 0 {
+				out["database"]["storage_groups"] = fmt.Sprintf("%d", db.YDB.StorageGroups)
+			}
 		}
 
 	case types.DatabasePostgres:

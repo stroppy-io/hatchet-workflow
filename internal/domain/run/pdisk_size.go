@@ -73,6 +73,9 @@ func AdjustYDBStorageDisk(cfg *types.RunConfig) {
 	if cfg.Database.Kind != types.DatabaseYDB || cfg.Database.YDB == nil {
 		return
 	}
+	if !cfg.Database.YDB.AutoSizePdisks {
+		return
+	}
 	sd := cfg.Database.YDB.Storage.SecondaryDisks
 	if len(sd) == 0 {
 		return

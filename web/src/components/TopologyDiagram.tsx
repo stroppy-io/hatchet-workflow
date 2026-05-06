@@ -32,7 +32,8 @@ function formatSpec(s: Partial<MachineSpec> | undefined): string {
   const sd = s.secondary_disks?.[0];
   if (sd?.size_gb) {
     const t = (sd.type || "").replace("network-ssd-io-m3", "io-m3").replace("network-ssd", "ssd");
-    line += ` + ${sd.size_gb} GB${t ? " " + t : ""}`;
+    const count = s.secondary_disks?.length || 1;
+    line += ` + ${count}x${sd.size_gb} GB${t ? " " + t : ""}`;
   }
   return line;
 }

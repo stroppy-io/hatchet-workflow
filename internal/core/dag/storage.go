@@ -44,6 +44,7 @@ type TargetInfo struct {
 	Host         string `json:"host"`
 	InternalHost string `json:"internal_host"`
 	AgentPort    int    `json:"agent_port"`
+	Zone         string `json:"zone,omitempty"`
 	Role         string `json:"role"` // "database", "monitor", "stroppy", "proxy"
 }
 

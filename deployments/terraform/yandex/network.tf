@@ -1,7 +1,17 @@
+locals {
+  subnets = length(var.networking.subnets) > 0 ? var.networking.subnets : {
+    (var.networking.zone) = {
+      zone = var.networking.zone
+      cidr = var.networking.cidr
+    }
+  }
+}
+
 resource "yandex_vpc_subnet" "subnet" {
-  name           = var.networking.name
-  zone           = var.networking.zone
-  v4_cidr_blocks = [var.networking.cidr]
+  for_each       = local.subnets
+  name           = "${var.networking.name}-${each.key}"
+  zone           = each.value.zone
+  v4_cidr_blocks = [each.value.cidr]
   network_id     = var.networking.external_id
 }
 
@@ -23,7 +33,7 @@ resource "yandex_vpc_security_group" "security-group" {
   }
   ingress {
     protocol       = "ANY"
-    v4_cidr_blocks = concat(yandex_vpc_subnet.subnet.v4_cidr_blocks)
+    v4_cidr_blocks = flatten([for s in yandex_vpc_subnet.subnet : s.v4_cidr_blocks])
     from_port      = 0
     to_port        = 65535
   }

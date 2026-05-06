@@ -213,9 +213,12 @@ const (
 	YDBSplit63         YDBPreset = "split-6-3"
 	YDBSplit36         YDBPreset = "split-3-6"
 	YDBSplit33MultiSSD YDBPreset = "split-3-3-3pdisks"
+	YDBMirror3DC3x32   YDBPreset = "mirror3dc-3x32"
+	YDBMirror3DC9x32   YDBPreset = "mirror3dc-9x32"
+	YDBMirror3DC3x64   YDBPreset = "mirror3dc-3x64"
 )
 
-// All YDB nodes share the same flavor for now: 64 vCPU / 128 GB RAM, 50 GB
+// Legacy YDB presets use a 64 vCPU / 128 GB RAM node flavor with a 50 GB
 // boot disk on plain network-ssd (cheap, just OS + binaries), plus a raw
 // block device on storage-role nodes that becomes the YDB pdisk. io-m3 is
 // the higher-IOPS replicated SSD class — only used for the pdisk where
@@ -280,41 +283,91 @@ func ydbDatabaseNodes(count int) *MachineSpec {
 	}
 }
 
+func ydbTargetStorageNodes() MachineSpec {
+	disks := make([]SecondaryDisk, 0, 3)
+	for i := 0; i < 3; i++ {
+		disks = append(disks, SecondaryDisk{
+			DeviceName: fmt.Sprintf("%s-%d", ydbStorageDevice, i),
+			SizeGB:     930,
+			Type:       ydbStoragePdiskType,
+		})
+	}
+	return MachineSpec{
+		Role: RoleDatabase, Count: 3,
+		CPUs: 16, MemoryMB: 32768,
+		DiskGB:         ydbNodeBootDiskGB,
+		DiskType:       ydbNodeBootDiskType,
+		SecondaryDisks: disks,
+		Placement:      &PlacementSpec{Strategy: "round-robin"},
+	}
+}
+
+func ydbTargetDatabaseNodes(count, cpus, memoryMB int) *MachineSpec {
+	return &MachineSpec{
+		Role: RoleDatabase, Count: count,
+		CPUs: cpus, MemoryMB: memoryMB,
+		DiskGB:    ydbNodeBootDiskGB,
+		DiskType:  ydbNodeBootDiskType,
+		Placement: &PlacementSpec{Strategy: "round-robin"},
+	}
+}
+
+func ydbMirror3DCTarget(database *MachineSpec) YDBTopology {
+	return YDBTopology{
+		Storage:           ydbTargetStorageNodes(),
+		Database:          database,
+		FaultTolerance:    "mirror-3-dc",
+		FailureDomainType: "disk",
+		DefaultDiskType:   "SSD",
+		StorageGroups:     8,
+		DatabasePath:      "/Root/testdb",
+	}
+}
+
 var YDBPresets = map[YDBPreset]YDBTopology{
 	YDBSingle: {
 		Storage:        ydbStorageNodes(1),
 		FaultTolerance: "none",
 		DatabasePath:   "/Root/testdb",
+		AutoSizePdisks: true,
 	},
 	YDBUniversal3: {
 		Storage:        ydbStorageNodes(3),
 		FaultTolerance: "none",
 		DatabasePath:   "/Root/testdb",
+		AutoSizePdisks: true,
 	},
 	YDBSplit33: {
 		Storage:        ydbStorageNodes(3),
 		Database:       ydbDatabaseNodes(3),
 		FaultTolerance: "none",
 		DatabasePath:   "/Root/testdb",
+		AutoSizePdisks: true,
 	},
 	YDBSplit63: {
 		Storage:        ydbStorageNodes(6),
 		Database:       ydbDatabaseNodes(3),
 		FaultTolerance: "none",
 		DatabasePath:   "/Root/testdb",
+		AutoSizePdisks: true,
 	},
 	YDBSplit36: {
 		Storage:        ydbStorageNodes(3),
 		Database:       ydbDatabaseNodes(6),
 		FaultTolerance: "none",
 		DatabasePath:   "/Root/testdb",
+		AutoSizePdisks: true,
 	},
 	YDBSplit33MultiSSD: {
 		Storage:        ydbStorageNodesMultiDisk(3, 3), // 3 storage × 3 pdisks = 9 raw block devices total
 		Database:       ydbDatabaseNodes(3),
 		FaultTolerance: "none",
 		DatabasePath:   "/Root/testdb",
+		AutoSizePdisks: true,
 	},
+	YDBMirror3DC3x32: ydbMirror3DCTarget(ydbTargetDatabaseNodes(3, 32, 65536)),
+	YDBMirror3DC9x32: ydbMirror3DCTarget(ydbTargetDatabaseNodes(9, 32, 65536)),
+	YDBMirror3DC3x64: ydbMirror3DCTarget(ydbTargetDatabaseNodes(3, 64, 131072)),
 }
 
 func describeYDBPreset(p YDBPreset) string {
@@ -331,6 +384,12 @@ func describeYDBPreset(p YDBPreset) string {
 		return "Split: 3 storage + 6 database nodes — compute-heavy (9 total)"
 	case YDBSplit33MultiSSD:
 		return "Split: 3 storage × 3 pdisks (9 raw devices) + 3 database nodes"
+	case YDBMirror3DC3x32:
+		return "Target perf topology: mirror-3-dc, 3×32 vCPU compute, 3×16 vCPU storage, 9 io-m3 pdisks"
+	case YDBMirror3DC9x32:
+		return "Target perf topology: mirror-3-dc, 9×32 vCPU compute, 3×16 vCPU storage, 9 io-m3 pdisks"
+	case YDBMirror3DC3x64:
+		return "Target perf topology: mirror-3-dc, 3×64 vCPU compute, 3×16 vCPU storage, 9 io-m3 pdisks"
 	default:
 		return string(p)
 	}

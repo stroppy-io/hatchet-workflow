@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -138,6 +139,7 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 
 	// Deploy database machines.
 	for _, spec := range t.runCfg.Machines {
+		zones := placementZones(spec.Placement)
 		for i := range spec.Count {
 			machineID := fmt.Sprintf("%s-%s-%d", t.runCfg.ID, spec.Role, i)
 			port := agent.DefaultAgentPort
@@ -173,6 +175,7 @@ func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
 			target := agent.Target{
 				ID:           machineID,
 				InternalHost: result.ContainerName,
+				Zone:         zoneForInstance(spec.Placement, zones, i),
 			}
 
 			switch spec.Role {
@@ -245,6 +248,22 @@ func runSubnetCIDR(runID string, _ string) string {
 	return fmt.Sprintf("10.%d.0.0/16", octet)
 }
 
+func runSubnetCIDRs(runID string, zones []string) map[string]yandexTfSubnet {
+	var h byte
+	for _, b := range []byte(runID) {
+		h = h*31 + b
+	}
+	octet := int(h%254) + 1
+	out := make(map[string]yandexTfSubnet, len(zones))
+	for i, zone := range zones {
+		out[zone] = yandexTfSubnet{
+			Zone: zone,
+			CIDR: fmt.Sprintf("10.%d.%d.0/24", octet, i),
+		}
+	}
+	return out
+}
+
 // yandexTfVars matches the terraform variable structure from main branch.
 type yandexTfVars struct {
 	Networking yandexTfNetworking `json:"networking"`
@@ -252,10 +271,16 @@ type yandexTfVars struct {
 }
 
 type yandexTfNetworking struct {
-	Name       string `json:"name"`
-	ExternalID string `json:"external_id"`
-	CIDR       string `json:"cidr"`
-	Zone       string `json:"zone"`
+	Name       string                    `json:"name"`
+	ExternalID string                    `json:"external_id"`
+	CIDR       string                    `json:"cidr"`
+	Zone       string                    `json:"zone"`
+	Subnets    map[string]yandexTfSubnet `json:"subnets,omitempty"`
+}
+
+type yandexTfSubnet struct {
+	Zone string `json:"zone"`
+	CIDR string `json:"cidr"`
 }
 
 type yandexTfCompute struct {
@@ -270,6 +295,7 @@ type yandexTfVM struct {
 	Memory                  int                     `json:"memory"`
 	DiskSize                int                     `json:"disk_size"`
 	DiskType                string                  `json:"disk_type"`
+	Zone                    string                  `json:"zone,omitempty"`
 	InternalIP              string                  `json:"internal_ip"`
 	HasPublicIP             bool                    `json:"has_public_ip"`
 	UserData                string                  `json:"user_data"`
@@ -331,10 +357,20 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 	vmSpecs := make(map[string]yandexTfVM)
 	// Track role per VM name for state population after apply.
 	vmRoles := make(map[string]types.MachineRole)
+	vmZones := make(map[string]string)
+	subnetZones := map[string]struct{}{}
 
 	for _, spec := range t.runCfg.Machines {
+		zones := yandexPlacementZones(spec.Placement, yc.Zone)
 		for i := range spec.Count {
 			machineID := fmt.Sprintf("%s-%s-%d", t.runCfg.ID, spec.Role, i)
+			vmZone := zoneForInstance(spec.Placement, zones, i)
+			if vmZone == "" {
+				vmZone = yc.Zone
+			}
+			if vmZone != "" {
+				subnetZones[vmZone] = struct{}{}
+			}
 
 			// Generate agent JWT token (valid for 24h).
 			agentToken := ""
@@ -422,12 +458,14 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 				Memory:                  memGB,
 				DiskSize:                diskGB,
 				DiskType:                diskType,
+				Zone:                    vmZone,
 				HasPublicIP:             yc.AssignPublicIP,
 				UserData:                cloudInit,
 				SecondaryDisks:          secondary,
 				NetworkAccelerationType: netAccel,
 			}
 			vmRoles[machineID] = spec.Role
+			vmZones[machineID] = vmZone
 		}
 	}
 
@@ -443,6 +481,15 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 	// Generate unique subnet name and CIDR per run to avoid collisions.
 	subnetName := fmt.Sprintf("%s-%s", yc.NetworkName, t.runCfg.ID)
 	subnetCIDR := runSubnetCIDR(t.runCfg.ID, yc.SubnetCIDR)
+	var subnetMap map[string]yandexTfSubnet
+	if len(subnetZones) > 1 {
+		zones := make([]string, 0, len(subnetZones))
+		for z := range subnetZones {
+			zones = append(zones, z)
+		}
+		sort.Strings(zones)
+		subnetMap = runSubnetCIDRs(t.runCfg.ID, zones)
+	}
 
 	// Build terraform variables matching main branch format.
 	vars := yandexTfVars{
@@ -451,6 +498,7 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 			ExternalID: yc.NetworkID,
 			CIDR:       subnetCIDR,
 			Zone:       yc.Zone,
+			Subnets:    subnetMap,
 		},
 		Compute: yandexTfCompute{
 			PlatformID:       platformID,
@@ -529,6 +577,7 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 			ID:           name,
 			Host:         ip,
 			InternalHost: vmInfo.InternalIP,
+			Zone:         vmZones[name],
 		}
 
 		switch role {
