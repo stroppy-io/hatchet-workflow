@@ -365,11 +365,18 @@ export function RunDetail() {
   const hasCancelled = nodes.some((n) => n.status === "cancelled");
   const hasRunning = nodes.some((n) => n.status === "running");
   const hasPending = nodes.some((n) => n.status === "pending");
+  // Trust the durable scheduler's job_state when it's terminal: a run can
+  // have pending nodes left over (e.g. teardown ran but later phases were
+  // cancelled by on_step_fail=stop) yet the job_runs row is already
+  // failed/finished/cancelled. Without this, the badge would say "Running"
+  // because pending nodes exist, contradicting the Runs-list "Failed".
+  const jobState = (snapshot as unknown as { job_state?: string } | null)?.job_state;
+  const jobTerminal = jobState === "failed" || jobState === "finished" || jobState === "cancelled";
   const inTeardown = nodes.some((n) => n.id === "teardown" && (n.status === "running" || n.status === "done"));
 
   // Run is finished when no nodes are pending or running.
   const isFinished = snapshot
-    ? snapshot.nodes.length > 0 && !hasPending && !hasRunning
+    ? snapshot.nodes.length > 0 && (jobTerminal || (!hasPending && !hasRunning))
     : false;
 
   // Cancelled = has cancelled nodes (proper FSM state from backend).
