@@ -185,10 +185,9 @@ export function NewRun() {
   const [externalPassword, setExternalPassword] = useState(rc?.external_db?.password || "");
   const [externalSSLMode, setExternalSSLMode] = useState(rc?.external_db?.ssl_mode || "");
 
+  const initialKind = (rc?.database?.kind as DatabaseKind) || (searchParams.get("kind") as DatabaseKind) || "postgres";
   const [allPresets, setAllPresets] = useState<Preset[]>([]);
-  const [kind, setKind] = useState<DatabaseKind>(
-    rc?.database?.kind as DatabaseKind || (searchParams.get("kind") as DatabaseKind) || "postgres"
-  );
+  const [kind, setKind] = useState<DatabaseKind>(initialKind);
   const [selectedPresetId, setSelectedPresetId] = useState(rc?.preset_id || searchParams.get("preset_id") || "");
   // Inline topology edits made on the Database step. Replaces the selected
   // preset's topology when set; keyed by db-kind so switching kinds doesn't
@@ -203,7 +202,7 @@ export function NewRun() {
   // for runs that never set this field). Toggling resets the script if the
   // current one isn't supported by the new (kind, protocol) combo.
   const [protocol, setProtocol] = useState<Protocol>(
-    (rcS?.protocol as Protocol) || KIND_PROTOCOLS[(rc?.database?.kind as DatabaseKind) || "postgres"][0],
+    (rcS?.protocol as Protocol) || KIND_PROTOCOLS[initialKind][0],
   );
   const [script, setScript] = useState(rcS?.script || rcS?.workload || "tpcc/procs");
   const [sql, setSql] = useState(rcS?.sql || "");
@@ -397,13 +396,15 @@ export function NewRun() {
       previewStroppyConfig(config)
         .then((resp) => {
           if (cancelled) return;
-          setStroppyConfigDraft(resp.stroppy_config);
           setStroppyConfigPristine(resp.stroppy_config);
+          setStroppyConfigDraft(resp.stroppy_config);
+          setStroppyConfigUserEdited(false);
         })
         .catch(() => {
           if (!cancelled && stroppyConfigDraft === null) {
-            setStroppyConfigDraft("");
             setStroppyConfigPristine("");
+            setStroppyConfigDraft("");
+            setStroppyConfigUserEdited(false);
           }
         });
     }, 250);
@@ -436,8 +437,9 @@ export function NewRun() {
             setDbConfigDraft(JSON.stringify(rc.database, null, 2));
           }
           if (typeof drObj.stroppy_config === "string" && !stroppyConfigUserEdited) {
-            setStroppyConfigDraft(drObj.stroppy_config);
             setStroppyConfigPristine(drObj.stroppy_config);
+            setStroppyConfigDraft(drObj.stroppy_config);
+            setStroppyConfigUserEdited(false);
           }
           // Seed rendered config files. Pristine map keeps a baseline so we
           // only ship overrides for entries the user actually edited.
@@ -644,7 +646,12 @@ export function NewRun() {
           )}
           {step === 1 && (
             <StepDatabase
-              kind={kind} setKind={setKind}
+              kind={kind} setKind={(nextKind) => {
+                setKind(nextKind);
+                if (!KIND_PROTOCOLS[nextKind].includes(protocol)) {
+                  setProtocol(KIND_PROTOCOLS[nextKind][0]);
+                }
+              }}
               protocol={protocol} setProtocol={setProtocol}
               version={version} setVersion={setVersion}
               packageId={packageId} setPackageId={setPackageId}
@@ -730,7 +737,10 @@ export function NewRun() {
               dbConfigDraft={dbConfigDraft}
               setDbConfigDraft={setDbConfigDraft}
               stroppyConfigDraft={stroppyConfigDraft}
-              setStroppyConfigDraft={(v) => { setStroppyConfigDraft(v); setStroppyConfigUserEdited(v !== stroppyConfigPristine); }}
+              setStroppyConfigDraft={(v) => {
+                setStroppyConfigDraft(v);
+                setStroppyConfigUserEdited(stroppyConfigPristine === null ? stroppyConfigUserEdited : v !== stroppyConfigPristine);
+              }}
               script={script}
               scaleFactor={scaleFactor}
               stroppyVersion={stroppyVersion}
@@ -1656,7 +1666,7 @@ function StepStroppy({
 
   const updateStroppyConfigDraft = (value: string) => {
     setStroppyConfigDraft(value);
-    setStroppyConfigUserEdited(value !== (stroppyConfigPristine || ""));
+    setStroppyConfigUserEdited(stroppyConfigPristine === null ? stroppyConfigUserEdited : value !== stroppyConfigPristine);
   };
 
   const resetStroppyConfigDraft = () => {
