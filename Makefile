@@ -72,8 +72,11 @@ test-unit: ## Run pure unit tests (no DB / no docker)
 test-db: ## Run DB-backed integration tests (auto-starts postgres if needed)
 	@docker compose ps --status running --services 2>/dev/null | grep -qx postgres \
 		|| (echo "Starting postgres for tests..."; docker compose up -d postgres; sleep 4)
+	@# -p 1 serializes packages — scheduler tests share the DB with the
+	@# postgres test suite, and the scheduler's claim loop will otherwise
+	@# steal rows from concurrent suites that target different tenants.
 	@TEST_DATABASE_URL="$(TEST_DATABASE_URL)" \
-	  go test $$(go list ./... | grep -v '/tests$$') -count=1
+	  go test $$(go list ./... | grep -v '/tests$$') -count=1 -p 1
 
 test-full: test-unit test-db ## Full Go test sweep (unit + DB-backed integration)
 	@echo "All Go tests passed."
