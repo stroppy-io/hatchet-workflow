@@ -48,6 +48,7 @@ func TestAdjustYDBStorageDisk_SetsFirstSecondaryDisk(t *testing.T) {
 		Database: types.DatabaseConfig{
 			Kind: types.DatabaseYDB,
 			YDB: &types.YDBTopology{
+				AutoSizePdisks: true,
 				Storage: types.MachineSpec{
 					SecondaryDisks: []types.SecondaryDisk{
 						{DeviceName: "ydb-data", SizeGB: 558, Type: "network-ssd-io-m3"},
@@ -61,6 +62,27 @@ func TestAdjustYDBStorageDisk_SetsFirstSecondaryDisk(t *testing.T) {
 	got := cfg.Database.YDB.Storage.SecondaryDisks[0].SizeGB
 	if got != 186 {
 		t.Errorf("expected 186 GB for tpcc × 500, got %d", got)
+	}
+}
+
+func TestAdjustYDBStorageDisk_NoOpWhenAutoSizeDisabled(t *testing.T) {
+	cfg := types.RunConfig{
+		Database: types.DatabaseConfig{
+			Kind: types.DatabaseYDB,
+			YDB: &types.YDBTopology{
+				Storage: types.MachineSpec{
+					SecondaryDisks: []types.SecondaryDisk{
+						{DeviceName: "ydb-data", SizeGB: 930, Type: "network-ssd-io-m3"},
+					},
+				},
+			},
+		},
+		Stroppy: types.StroppyConfig{Script: "tpcc/tx", ScaleFactor: 500},
+	}
+	AdjustYDBStorageDisk(&cfg)
+	got := cfg.Database.YDB.Storage.SecondaryDisks[0].SizeGB
+	if got != 930 {
+		t.Errorf("expected fixed 930 GB pdisk to stay unchanged, got %d", got)
 	}
 }
 

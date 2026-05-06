@@ -219,16 +219,29 @@ func (s *State) ExportRunState() *dag.RunState {
 	}
 
 	for _, t := range s.dbTargets {
-		rs.Targets = append(rs.Targets, dag.TargetInfo{ID: t.ID, Host: t.Host, InternalHost: t.InternalHost, AgentPort: t.AgentPort, Role: "database"})
+		role := "database"
+		for _, y := range s.ydbStorageTargets {
+			if y.ID == t.ID {
+				role = "ydb-storage"
+				break
+			}
+		}
+		for _, y := range s.ydbDatabaseTargets {
+			if y.ID == t.ID {
+				role = "ydb-database"
+				break
+			}
+		}
+		rs.Targets = append(rs.Targets, dag.TargetInfo{ID: t.ID, Host: t.Host, InternalHost: t.InternalHost, AgentPort: t.AgentPort, Zone: t.Zone, Role: role})
 	}
 	for _, t := range s.monitorTargets {
-		rs.Targets = append(rs.Targets, dag.TargetInfo{ID: t.ID, Host: t.Host, InternalHost: t.InternalHost, AgentPort: t.AgentPort, Role: "monitor"})
+		rs.Targets = append(rs.Targets, dag.TargetInfo{ID: t.ID, Host: t.Host, InternalHost: t.InternalHost, AgentPort: t.AgentPort, Zone: t.Zone, Role: "monitor"})
 	}
 	for _, t := range s.proxyTargets {
-		rs.Targets = append(rs.Targets, dag.TargetInfo{ID: t.ID, Host: t.Host, InternalHost: t.InternalHost, AgentPort: t.AgentPort, Role: "proxy"})
+		rs.Targets = append(rs.Targets, dag.TargetInfo{ID: t.ID, Host: t.Host, InternalHost: t.InternalHost, AgentPort: t.AgentPort, Zone: t.Zone, Role: "proxy"})
 	}
 	if s.stroppyTarget != nil {
-		rs.Targets = append(rs.Targets, dag.TargetInfo{ID: s.stroppyTarget.ID, Host: s.stroppyTarget.Host, InternalHost: s.stroppyTarget.InternalHost, AgentPort: s.stroppyTarget.AgentPort, Role: "stroppy"})
+		rs.Targets = append(rs.Targets, dag.TargetInfo{ID: s.stroppyTarget.ID, Host: s.stroppyTarget.Host, InternalHost: s.stroppyTarget.InternalHost, AgentPort: s.stroppyTarget.AgentPort, Zone: s.stroppyTarget.Zone, Role: "stroppy"})
 	}
 
 	return rs
@@ -249,12 +262,20 @@ func (s *State) ImportRunState(rs *dag.RunState) {
 	s.monitorTargets = nil
 	s.proxyTargets = nil
 	s.stroppyTarget = nil
+	s.ydbStorageTargets = nil
+	s.ydbDatabaseTargets = nil
 
 	for _, t := range rs.Targets {
-		target := agent.Target{ID: t.ID, Host: t.Host, InternalHost: t.InternalHost, AgentPort: t.AgentPort}
+		target := agent.Target{ID: t.ID, Host: t.Host, InternalHost: t.InternalHost, AgentPort: t.AgentPort, Zone: t.Zone}
 		switch t.Role {
 		case "database":
 			s.dbTargets = append(s.dbTargets, target)
+		case "ydb-storage":
+			s.dbTargets = append(s.dbTargets, target)
+			s.ydbStorageTargets = append(s.ydbStorageTargets, target)
+		case "ydb-database":
+			s.dbTargets = append(s.dbTargets, target)
+			s.ydbDatabaseTargets = append(s.ydbDatabaseTargets, target)
 		case "monitor":
 			s.monitorTargets = append(s.monitorTargets, target)
 		case "proxy":

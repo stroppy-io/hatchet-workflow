@@ -73,6 +73,9 @@ type MachineSpec struct {
 	// disk. Today only consumed by YDB (storage nodes point pdisk at the raw
 	// device when one is present). Other engines ignore the field.
 	SecondaryDisks []SecondaryDisk `json:"secondary_disks,omitempty"`
+	// Placement controls cloud-zone placement for this machine group. When
+	// omitted, the provider's default single-zone placement is used.
+	Placement *PlacementSpec `json:"placement,omitempty"`
 }
 
 // SecondaryDisk is a raw block device attached to a VM in addition to its
@@ -82,6 +85,14 @@ type SecondaryDisk struct {
 	DeviceName string `json:"device_name"` // stable name, surfaces as virtio-<name> in the guest
 	SizeGB     int    `json:"size_gb"`
 	Type       string `json:"type,omitempty"` // network-ssd / network-ssd-nonreplicated / etc; defaults to network-ssd
+}
+
+// PlacementSpec controls how instances in a MachineSpec are spread across
+// cloud zones. "round-robin" distributes instances over Zones by index;
+// "single" keeps every instance in the first zone.
+type PlacementSpec struct {
+	Strategy string   `json:"strategy,omitempty"` // "single" | "round-robin"
+	Zones    []string `json:"zones,omitempty"`    // provider-native zone names; empty means provider default/derived zones
 }
 
 // --- Database topologies ---
@@ -144,14 +155,18 @@ type CockroachTopology struct {
 
 // YDBTopology describes a YDB cluster layout.
 type YDBTopology struct {
-	Storage         MachineSpec       `json:"storage"`            // static (storage) nodes
-	Database        *MachineSpec      `json:"database,omitempty"` // dynamic (compute) nodes; nil = combined mode
-	HAProxy         *MachineSpec      `json:"haproxy,omitempty"`  // optional load balancer
-	FaultTolerance  string            `json:"fault_tolerance"`    // "none", "block-4-2", "mirror-3-dc"
-	DatabasePath    string            `json:"database_path"`      // default "/Root/testdb"
-	StorageOptions  map[string]string `json:"storage_options,omitempty"`
-	DatabaseOptions map[string]string `json:"database_options,omitempty"`
-	HAProxyOptions  map[string]string `json:"haproxy_options,omitempty"`
+	Storage           MachineSpec       `json:"storage"`                       // static (storage) nodes
+	Database          *MachineSpec      `json:"database,omitempty"`            // dynamic (compute) nodes; nil = combined mode
+	HAProxy           *MachineSpec      `json:"haproxy,omitempty"`             // optional load balancer
+	FaultTolerance    string            `json:"fault_tolerance"`               // "none", "block-4-2", "mirror-3-dc"
+	FailureDomainType string            `json:"failure_domain_type,omitempty"` // "" | "disk"
+	DefaultDiskType   string            `json:"default_disk_type,omitempty"`   // YDB disk category, e.g. "SSD"
+	StorageGroups     int               `json:"storage_groups,omitempty"`      // database create pool group count
+	AutoSizePdisks    bool              `json:"auto_size_pdisks,omitempty"`    // dry-run may resize secondary disks from workload size
+	DatabasePath      string            `json:"database_path"`                 // default "/Root/testdb"
+	StorageOptions    map[string]string `json:"storage_options,omitempty"`
+	DatabaseOptions   map[string]string `json:"database_options,omitempty"`
+	HAProxyOptions    map[string]string `json:"haproxy_options,omitempty"`
 }
 
 // YDBManagedKind selects the Yandex Cloud Managed YDB flavor.

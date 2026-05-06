@@ -67,7 +67,9 @@ export type MachineRole =
   | "stroppy"
   | "etcd"
   | "proxy"
-  | "pgbouncer";
+  | "pgbouncer"
+  | "ydb-storage"
+  | "ydb-database";
 
 export type NodeStatusValue = "pending" | "running" | "done" | "failed" | "cancelled";
 
@@ -81,12 +83,18 @@ export interface MachineSpec {
   disk_gb: number;
   disk_type?: string;
   secondary_disks?: SecondaryDisk[];
+  placement?: PlacementSpec;
 }
 
 export interface SecondaryDisk {
   device_name: string;
   size_gb: number;
   type?: string;
+}
+
+export interface PlacementSpec {
+  strategy?: "single" | "round-robin";
+  zones?: string[];
 }
 
 export interface PostgresTopology {
@@ -138,6 +146,10 @@ export interface YDBTopology {
   database?: MachineSpec;
   haproxy?: MachineSpec;
   fault_tolerance: string;
+  failure_domain_type?: string;
+  default_disk_type?: string;
+  storage_groups?: number;
+  auto_size_pdisks?: boolean;
   database_path: string;
   storage_options?: Record<string, string>;
   database_options?: Record<string, string>;

@@ -38,7 +38,7 @@ import {
   X,
 } from "lucide-react";
 import { DB_COLORS } from "@/lib/db-colors";
-import { SliderField, NumericSlider, closestStep, ramSteps, CPU_STEPS, diskStepsForType, DiskTypeSelect } from "@/components/ui/sliders";
+import { SliderField, NumericSlider, closestStep, ramSteps, CPU_STEPS, diskStepsForType, DiskTypeSelect, IO_M3_CHUNK_GB } from "@/components/ui/sliders";
 
 // ─── Validation ──────────────────────────────────────────────────
 
@@ -214,6 +214,19 @@ function validateYDB(t: YDBTopology): ValidationError[] {
   if (t.storage.cpus < 1) errs.push({ field: "storage.cpus", message: "Storage CPUs must be >= 1" });
   if (t.storage.memory_mb < 2048) errs.push({ field: "storage.memory_mb", message: "Storage RAM must be >= 2 GB" });
   if (t.storage.disk_gb < 80) errs.push({ field: "storage.disk_gb", message: "Storage disk must be >= 80 GB" });
+  if ((t.storage_groups || 0) < 0) errs.push({ field: "storage_groups", message: "Storage groups must be >= 0" });
+  if (t.failure_domain_type && t.failure_domain_type !== "disk") errs.push({ field: "failure_domain_type", message: "Failure domain must be disk or unset" });
+  for (let i = 0; i < (t.storage.secondary_disks || []).length; i++) {
+    const d = t.storage.secondary_disks![i];
+    if (!(d.device_name || "").trim()) errs.push({ field: `secondary_disks[${i}].device_name`, message: "Pdisk device name is required" });
+    if ((d.type || "") === "network-ssd-io-m3" && d.size_gb % IO_M3_CHUNK_GB !== 0) {
+      errs.push({ field: `secondary_disks[${i}].size_gb`, message: `io-m3 pdisk size must be a multiple of ${IO_M3_CHUNK_GB} GB` });
+    }
+  }
+  if (t.fault_tolerance === "mirror-3-dc" && t.failure_domain_type === "disk") {
+    if (t.storage.count < 3) errs.push({ field: "storage.count", message: "mirror-3-dc disk domains require at least 3 storage nodes" });
+    if ((t.storage.secondary_disks || []).length < 3) errs.push({ field: "secondary_disks", message: "mirror-3-dc disk domains require at least 3 pdisks per storage node" });
+  }
   if (t.haproxy) {
     if (t.haproxy.count < 1) errs.push({ field: "haproxy.count", message: "HAProxy count must be >= 1" });
     errs.push(...validateMachine(t.haproxy, "HAProxy"));
@@ -259,6 +272,8 @@ export function defaultYDB(): YDBTopology {
   return {
     storage: { role: "database", count: 1, cpus: 2, memory_mb: 4096, disk_gb: 80 },
     fault_tolerance: "none",
+    default_disk_type: "SSD",
+    storage_groups: 1,
     database_path: "/Root/testdb",
   };
 }
@@ -882,9 +897,100 @@ export function PicodataForm({ topology, onChange, disabled }: {
 
 // ─── YDB Form ────────────────────────────────────────────────────
 
-const YDB_STORAGE_DEFAULTS: Record<string, string> = { "--log-level": "WARN", "--grpc-port": "2135", "--mon-port": "8765", "--ic-port": "19001" };
-const YDB_DATABASE_DEFAULTS: Record<string, string> = { "--log-level": "WARN", "--grpc-port": "2135", "--mon-port": "8766" };
 const YDB_HAPROXY_DEFAULTS: Record<string, string> = { ...HAPROXY_DEFAULTS };
+
+function inferPdiskPrefix(disks: NonNullable<MachineSpec["secondary_disks"]>): string {
+  const name = disks[0]?.device_name || "ydb-data-0";
+  const m = name.match(/^(.*)-\d+$/);
+  return m?.[1] || name || "ydb-data";
+}
+
+function buildPdisks(count: number, prefix: string, sizeGb: number, type: string): NonNullable<MachineSpec["secondary_disks"]> {
+  return Array.from({ length: count }, (_, i) => ({
+    device_name: `${prefix || "ydb-data"}-${i}`,
+    size_gb: sizeGb,
+    type,
+  }));
+}
+
+function PlacementEditor({ label, spec, onChange, disabled }: {
+  label: string;
+  spec: MachineSpec;
+  onChange: (s: MachineSpec) => void;
+  disabled?: boolean;
+}) {
+  const placement = spec.placement || {};
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-zinc-800/50 pt-3">
+      <div className="space-y-1.5">
+        <Label className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">{label} placement</Label>
+        <Select value={placement.strategy || "single"}
+          onValueChange={(v) => onChange({ ...spec, placement: { ...placement, strategy: v as "single" | "round-robin" } })}
+          disabled={disabled}>
+          <SelectTrigger className="h-7 text-xs font-mono"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="single">single zone</SelectItem>
+            <SelectItem value="round-robin">round-robin zones</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1.5">
+        <Label className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">Zones</Label>
+        <Input
+          value={(placement.zones || []).join(", ")}
+          onChange={(e) => {
+            const zones = e.target.value.split(",").map((z) => z.trim()).filter(Boolean);
+            onChange({ ...spec, placement: { ...placement, zones: zones.length ? zones : undefined } });
+          }}
+          className="h-7 text-xs font-mono"
+          placeholder="auto: region-a,b,c"
+          disabled={disabled}
+        />
+      </div>
+    </div>
+  );
+}
+
+function YDBPDisksEditor({ spec, onChange, disabled }: {
+  spec: MachineSpec;
+  onChange: (s: MachineSpec) => void;
+  disabled?: boolean;
+}) {
+  const disks = spec.secondary_disks || [];
+  const count = disks.length;
+  const prefix = inferPdiskPrefix(disks);
+  const diskType = disks[0]?.type || "network-ssd-io-m3";
+  const sizeGb = disks[0]?.size_gb || 930;
+  const setDisks = (nextCount = count, nextPrefix = prefix, nextSize = sizeGb, nextType = diskType) => {
+    onChange({ ...spec, secondary_disks: nextCount > 0 ? buildPdisks(nextCount, nextPrefix, nextSize, nextType) : undefined });
+  };
+  return (
+    <div className="border-t border-zinc-800/50 pt-3 space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <NumericSlider label="PDisks / storage VM" value={count} min={0} max={8}
+          onChange={(v) => setDisks(v)} disabled={disabled} />
+        <SliderField label="PDisk Size" value={sizeGb} steps={diskStepsForType(diskType)}
+          onChange={(v) => setDisks(count || 1, prefix, v, diskType)} disabled={disabled}
+          format={(v) => `${v} GB`} />
+        <div className="space-y-1.5">
+          <Label className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">Device Prefix</Label>
+          <Input value={prefix}
+            onChange={(e) => setDisks(count || 1, e.target.value, sizeGb, diskType)}
+            className="h-7 text-xs font-mono" placeholder="ydb-data" disabled={disabled} />
+        </div>
+      </div>
+      <DiskTypeSelect
+        value={diskType}
+        diskSizeGb={sizeGb}
+        onChange={(v) => {
+          if (disabled) return;
+          const nextSize = closestStep(sizeGb, diskStepsForType(v));
+          setDisks(count || 1, prefix, nextSize, v);
+        }}
+      />
+    </div>
+  );
+}
 
 export function YDBForm({ topology, onChange, disabled }: {
   topology: YDBTopology;
@@ -896,9 +1002,10 @@ export function YDBForm({ topology, onChange, disabled }: {
       {/* Storage nodes */}
       <MachineEditor label="Storage Nodes" spec={topology.storage}
         onChange={(s) => onChange({ ...topology, storage: s })} disabled={disabled}>
-        <OptionsEditor label="storage config" options={topology.storage_options}
-          locked={{}} lockedHints={{}} defaults={YDB_STORAGE_DEFAULTS} disabled={disabled}
-          onChange={(opts) => onChange({ ...topology, storage_options: opts })} />
+        <YDBPDisksEditor spec={topology.storage}
+          onChange={(s) => onChange({ ...topology, storage: s })} disabled={disabled} />
+        <PlacementEditor label="Storage" spec={topology.storage}
+          onChange={(s) => onChange({ ...topology, storage: s })} disabled={disabled} />
       </MachineEditor>
 
       {/* Split mode (separate database/compute nodes) */}
@@ -914,9 +1021,8 @@ export function YDBForm({ topology, onChange, disabled }: {
           <div className="mt-2">
             <MachineEditor label="Database (Compute) Nodes" spec={topology.database}
               onChange={(s) => onChange({ ...topology, database: s })} disabled={disabled}>
-              <OptionsEditor label="database config" options={topology.database_options}
-                locked={{}} lockedHints={{}} defaults={YDB_DATABASE_DEFAULTS} disabled={disabled}
-                onChange={(opts) => onChange({ ...topology, database_options: opts })} />
+              <PlacementEditor label="Database" spec={topology.database}
+                onChange={(s) => onChange({ ...topology, database: s })} disabled={disabled} />
             </MachineEditor>
           </div>
         )}
@@ -944,7 +1050,7 @@ export function YDBForm({ topology, onChange, disabled }: {
       </div>
 
       {/* Fault Tolerance + Database Path */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="space-y-1.5">
           <Label className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">Fault Tolerance</Label>
           <Select value={topology.fault_tolerance}
@@ -961,10 +1067,42 @@ export function YDBForm({ topology, onChange, disabled }: {
           </Select>
         </div>
         <div className="space-y-1.5">
+          <Label className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">Failure Domain</Label>
+          <Select value={topology.failure_domain_type || "host"}
+            onValueChange={(v) => onChange({ ...topology, failure_domain_type: v === "host" ? undefined : v })}
+            disabled={disabled}>
+            <SelectTrigger className="h-7 text-xs font-mono"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="host">host</SelectItem>
+              <SelectItem value="disk">disk</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <NumericSlider label="Storage Groups" value={topology.storage_groups || 1} min={1} max={32}
+          onChange={(v) => onChange({ ...topology, storage_groups: v })} disabled={disabled} />
+        <div className="space-y-1.5">
           <Label className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">Database Path</Label>
           <Input value={topology.database_path}
             onChange={(e) => onChange({ ...topology, database_path: e.target.value })}
             className="h-7 text-xs font-mono" placeholder="/Root/testdb" disabled={disabled} />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">YDB Disk Type</Label>
+          <Select value={topology.default_disk_type || "SSD"}
+            onValueChange={(v) => onChange({ ...topology, default_disk_type: v })}
+            disabled={disabled}>
+            <SelectTrigger className="h-7 text-xs font-mono"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="SSD">SSD</SelectItem>
+              <SelectItem value="NVME">NVME</SelectItem>
+              <SelectItem value="ROT">ROT</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-end">
+          <Toggle label="Auto-size pdisks" checked={!!topology.auto_size_pdisks}
+            onChange={(v) => onChange({ ...topology, auto_size_pdisks: v || undefined })}
+            disabled={disabled} />
         </div>
       </div>
     </div>

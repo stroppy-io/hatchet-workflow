@@ -5,6 +5,10 @@ variable "networking" {
     external_id = string
     cidr        = string
     zone        = string
+    subnets = optional(map(object({
+      zone = string
+      cidr = string
+    })), {})
   })
   default = {
     name        = ""
@@ -37,6 +41,7 @@ variable "compute" {
       memory        = number
       disk_size     = number
       disk_type     = string
+      zone          = optional(string, "")
       internal_ip   = string
       has_public_ip = bool
       user_data     = string

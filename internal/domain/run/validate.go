@@ -125,6 +125,85 @@ func ValidateConfig(cfg types.RunConfig) error {
 		}
 	}
 
+	if cfg.Database.Kind == types.DatabaseYDB && cfg.Database.YDB != nil {
+		if err := validateYDBTopology(cfg.Database.YDB); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateYDBTopology(t *types.YDBTopology) error {
+	switch t.FaultTolerance {
+	case "", "none", "block-4-2", "mirror-3-dc":
+	default:
+		return fmt.Errorf("ydb.fault_tolerance must be one of none, block-4-2, mirror-3-dc")
+	}
+	switch t.FailureDomainType {
+	case "", "disk":
+	default:
+		return fmt.Errorf("ydb.failure_domain_type must be empty or disk")
+	}
+	if t.DefaultDiskType != "" {
+		switch t.DefaultDiskType {
+		case "SSD", "NVME", "ROT":
+		default:
+			return fmt.Errorf("ydb.default_disk_type must be SSD, NVME, or ROT")
+		}
+	}
+	if t.StorageGroups < 0 {
+		return fmt.Errorf("ydb.storage_groups must be >= 0")
+	}
+	if err := validatePlacement("ydb.storage.placement", t.Storage.Placement); err != nil {
+		return err
+	}
+	if err := validateIOM3Disk("ydb.storage.boot", t.Storage.DiskGB, t.Storage.DiskType); err != nil {
+		return err
+	}
+	for i, d := range t.Storage.SecondaryDisks {
+		if err := validateIOM3Disk(fmt.Sprintf("ydb.storage.secondary_disks[%d]", i), d.SizeGB, d.Type); err != nil {
+			return err
+		}
+	}
+	if t.Database != nil {
+		if err := validatePlacement("ydb.database.placement", t.Database.Placement); err != nil {
+			return err
+		}
+		if err := validateIOM3Disk("ydb.database.boot", t.Database.DiskGB, t.Database.DiskType); err != nil {
+			return err
+		}
+	}
+	if t.FaultTolerance == "mirror-3-dc" && t.FailureDomainType == "disk" {
+		if t.Storage.Count < 3 {
+			return fmt.Errorf("ydb mirror-3-dc disk failure-domain topology requires at least 3 storage nodes")
+		}
+		if len(t.Storage.SecondaryDisks) < 3 {
+			return fmt.Errorf("ydb mirror-3-dc disk failure-domain topology requires at least 3 secondary disks per storage node")
+		}
+	}
+	return nil
+}
+
+func validatePlacement(path string, p *types.PlacementSpec) error {
+	if p == nil {
+		return nil
+	}
+	switch p.Strategy {
+	case "", "single", "round-robin":
+	default:
+		return fmt.Errorf("%s.strategy must be single or round-robin", path)
+	}
+	return nil
+}
+
+func validateIOM3Disk(path string, sizeGB int, diskType string) error {
+	if diskType != "network-ssd-io-m3" || sizeGB <= 0 {
+		return nil
+	}
+	if sizeGB%ydbStorageChunkGB != 0 {
+		return fmt.Errorf("%s size must be a multiple of %d GB for network-ssd-io-m3", path, ydbStorageChunkGB)
+	}
 	return nil
 }
 

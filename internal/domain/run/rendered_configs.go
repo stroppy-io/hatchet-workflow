@@ -169,12 +169,15 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 			storageMem /= 2
 		}
 		put("ydb.yaml:storage", dbconfig.RenderYDBStorageConf(dbconfig.RenderYDBConfOpts{
-			HostCount:       db.YDB.Storage.Count,
-			DiskPath:        "/ydb_data",
-			BlockDevicePaths: ydbBlockDevices,
-			CPUs:            db.YDB.Storage.CPUs,
-			MemoryMB:        storageMem,
-			FaultTolerance:  db.YDB.FaultTolerance,
+			HostCount:         db.YDB.Storage.Count,
+			HostLocations:     previewYDBHostLocations(db.YDB.Storage.Count, db.YDB.Storage.Placement),
+			DiskPath:          "/ydb_data",
+			BlockDevicePaths:  ydbBlockDevices,
+			CPUs:              db.YDB.Storage.CPUs,
+			MemoryMB:          storageMem,
+			FaultTolerance:    db.YDB.FaultTolerance,
+			FailureDomainType: db.YDB.FailureDomainType,
+			DefaultDiskType:   db.YDB.DefaultDiskType,
 		}))
 		// Database (dynamic) node config: separate file the agent writes to
 		// /opt/ydb/cfg/database.yaml. Same cluster topology as the storage
@@ -187,12 +190,15 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 			dbMem = db.YDB.Database.MemoryMB
 		}
 		put("ydb.yaml:database", dbconfig.RenderYDBDatabaseConf(dbconfig.RenderYDBDatabaseConfOpts{
-			HostCount:       db.YDB.Storage.Count,
-			DiskPath:        "/ydb_data",
-			BlockDevicePaths: ydbBlockDevices,
-			CPUs:            dbCPUs,
-			MemoryMB:        dbMem,
-			FaultTolerance:  db.YDB.FaultTolerance,
+			HostCount:         db.YDB.Storage.Count,
+			HostLocations:     previewYDBHostLocations(db.YDB.Storage.Count, db.YDB.Storage.Placement),
+			DiskPath:          "/ydb_data",
+			BlockDevicePaths:  ydbBlockDevices,
+			CPUs:              dbCPUs,
+			MemoryMB:          dbMem,
+			FaultTolerance:    db.YDB.FaultTolerance,
+			FailureDomainType: db.YDB.FailureDomainType,
+			DefaultDiskType:   db.YDB.DefaultDiskType,
 		}))
 		if db.YDB.HAProxy != nil {
 			put("haproxy.cfg", dbconfig.RenderHAProxyConf(dbconfig.RenderHAProxyConfOpts{
@@ -203,5 +209,17 @@ func BuildRenderedConfigs(cfg *types.RunConfig) map[string]string {
 		}
 	}
 
+	return out
+}
+
+func previewYDBHostLocations(count int, placement *types.PlacementSpec) []string {
+	if count <= 0 {
+		return nil
+	}
+	zones := placementZones(placement)
+	out := make([]string, count)
+	for i := 0; i < count; i++ {
+		out[i] = zoneForInstance(placement, zones, i)
+	}
 	return out
 }

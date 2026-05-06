@@ -16,24 +16,30 @@ func ydbHostPlaceholder(i int) string {
 
 // RenderYDBConfOpts collects the inputs RenderYDBStorageConf needs.
 type RenderYDBConfOpts struct {
-	HostCount        int      // number of static (storage) nodes — drives placeholder list
-	DiskPath         string   // "/ydb_data" in Docker, real disk on VM (used when BlockDevicePaths is empty)
-	BlockDevicePaths []string // when set, pdisk paths: emits each device verbatim instead of <DiskPath>/pdisk.data; one drive per entry, one fail_domain per (node × pdisk)
-	CPUs             int      // vCPUs hint for actor_system_config
-	MemoryMB         int      // total RAM for memory_controller_config (85% mark)
-	FaultTolerance   string   // "none" | "block-4-2" | "mirror-3-dc"
+	HostCount         int      // number of static (storage) nodes — drives placeholder list
+	HostLocations     []string // optional data_center values, indexed like hosts
+	DiskPath          string   // "/ydb_data" in Docker, real disk on VM (used when BlockDevicePaths is empty)
+	BlockDevicePaths  []string // when set, pdisk paths: emits each device verbatim instead of <DiskPath>/pdisk.data; one drive per entry, one fail_domain per (node × pdisk)
+	CPUs              int      // vCPUs hint for actor_system_config
+	MemoryMB          int      // total RAM for memory_controller_config (85% mark)
+	FaultTolerance    string   // "none" | "block-4-2" | "mirror-3-dc"
+	FailureDomainType string   // "" | "disk"; disk maps each pdisk to its own fail_domain
+	DefaultDiskType   string   // "SSD" by default
 }
 
 // RenderYDBDatabaseConfOpts collects the inputs RenderYDBDatabaseConf needs.
 // Database (dynamic) nodes carry the cluster topology too — they need to know
 // the storage hosts to register against, plus their own CPU/memory budget.
 type RenderYDBDatabaseConfOpts struct {
-	HostCount        int      // storage host count — same placeholder shape as the storage config
-	DiskPath         string   // mostly cosmetic on database nodes; kept for parity with the storage yaml so users see one consistent template
-	BlockDevicePaths []string // mirrors the storage knob so the pdisk path: lines match across both yamls
-	CPUs             int      // vCPUs hint for actor_system_config (COMPUTE)
-	MemoryMB         int      // total RAM for memory_controller_config (85% mark)
-	FaultTolerance   string   // mirrored from cluster setting
+	HostCount         int      // storage host count — same placeholder shape as the storage config
+	HostLocations     []string // optional data_center values, indexed like storage hosts
+	DiskPath          string   // mostly cosmetic on database nodes; kept for parity with the storage yaml so users see one consistent template
+	BlockDevicePaths  []string // mirrors the storage knob so the pdisk path: lines match across both yamls
+	CPUs              int      // vCPUs hint for actor_system_config (COMPUTE)
+	MemoryMB          int      // total RAM for memory_controller_config (85% mark)
+	FaultTolerance    string   // mirrored from cluster setting
+	FailureDomainType string   // mirrored from cluster setting
+	DefaultDiskType   string   // mirrored from cluster setting
 }
 
 // RenderYDBStorageConf returns the YDB static-node config.yaml body with
@@ -42,13 +48,16 @@ type RenderYDBDatabaseConfOpts struct {
 // host list before writing.
 func RenderYDBStorageConf(opts RenderYDBConfOpts) string {
 	return renderYDBYAML(yDBYAMLOpts{
-		nodeType:         "STORAGE",
-		hostCount:        opts.HostCount,
-		diskPath:         opts.DiskPath,
-		blockDevicePaths: opts.BlockDevicePaths,
-		cpus:             opts.CPUs,
-		memoryMB:         opts.MemoryMB,
-		faultTolerance:   opts.FaultTolerance,
+		nodeType:          "STORAGE",
+		hostCount:         opts.HostCount,
+		hostLocations:     opts.HostLocations,
+		diskPath:          opts.DiskPath,
+		blockDevicePaths:  opts.BlockDevicePaths,
+		cpus:              opts.CPUs,
+		memoryMB:          opts.MemoryMB,
+		faultTolerance:    opts.FaultTolerance,
+		failureDomainType: opts.FailureDomainType,
+		defaultDiskType:   opts.DefaultDiskType,
 	})
 }
 
@@ -59,24 +68,30 @@ func RenderYDBStorageConf(opts RenderYDBConfOpts) string {
 // storage node's.
 func RenderYDBDatabaseConf(opts RenderYDBDatabaseConfOpts) string {
 	return renderYDBYAML(yDBYAMLOpts{
-		nodeType:         "COMPUTE",
-		hostCount:        opts.HostCount,
-		diskPath:         opts.DiskPath,
-		blockDevicePaths: opts.BlockDevicePaths,
-		cpus:             opts.CPUs,
-		memoryMB:         opts.MemoryMB,
-		faultTolerance:   opts.FaultTolerance,
+		nodeType:          "COMPUTE",
+		hostCount:         opts.HostCount,
+		hostLocations:     opts.HostLocations,
+		diskPath:          opts.DiskPath,
+		blockDevicePaths:  opts.BlockDevicePaths,
+		cpus:              opts.CPUs,
+		memoryMB:          opts.MemoryMB,
+		faultTolerance:    opts.FaultTolerance,
+		failureDomainType: opts.FailureDomainType,
+		defaultDiskType:   opts.DefaultDiskType,
 	})
 }
 
 type yDBYAMLOpts struct {
-	nodeType         string // "STORAGE" or "COMPUTE"
-	hostCount        int
-	diskPath         string
-	blockDevicePaths []string
-	cpus             int
-	memoryMB         int
-	faultTolerance   string
+	nodeType          string // "STORAGE" or "COMPUTE"
+	hostCount         int
+	hostLocations     []string
+	diskPath          string
+	blockDevicePaths  []string
+	cpus              int
+	memoryMB          int
+	faultTolerance    string
+	failureDomainType string
+	defaultDiskType   string
 }
 
 func renderYDBYAML(opts yDBYAMLOpts) string {
@@ -105,6 +120,12 @@ func renderYDBYAML(opts yDBYAMLOpts) string {
 		erasure = opts.faultTolerance
 	}
 
+	defaultDiskType := opts.defaultDiskType
+	if defaultDiskType == "" {
+		defaultDiskType = "SSD"
+	}
+	storagePoolKind := strings.ToLower(defaultDiskType)
+
 	zones := []string{"zone-a", "zone-b", "zone-c"}
 
 	memMB := opts.memoryMB
@@ -128,7 +149,7 @@ func renderYDBYAML(opts yDBYAMLOpts) string {
 	b.WriteString("- drive:\n")
 	for _, p := range pdiskPaths {
 		fmt.Fprintf(&b, "  - path: %s\n", p)
-		b.WriteString("    type: SSD\n")
+		fmt.Fprintf(&b, "    type: %s\n", defaultDiskType)
 	}
 	b.WriteString("  host_config_id: 1\n")
 
@@ -139,7 +160,11 @@ func renderYDBYAML(opts yDBYAMLOpts) string {
 		b.WriteString("  host_config_id: 1\n")
 		b.WriteString("  walle_location:\n")
 		fmt.Fprintf(&b, "    body: %d\n", i+1)
-		fmt.Fprintf(&b, "    data_center: '%s'\n", zones[i%len(zones)])
+		loc := zones[i%len(zones)]
+		if i < len(opts.hostLocations) && opts.hostLocations[i] != "" {
+			loc = opts.hostLocations[i]
+		}
+		fmt.Fprintf(&b, "    data_center: '%s'\n", loc)
 		fmt.Fprintf(&b, "    rack: '%d'\n", i+1)
 	}
 
@@ -148,11 +173,11 @@ func renderYDBYAML(opts yDBYAMLOpts) string {
 	b.WriteString("  domain:\n")
 	b.WriteString("  - name: Root\n")
 	b.WriteString("    storage_pool_types:\n")
-	b.WriteString("    - kind: ssd\n")
+	fmt.Fprintf(&b, "    - kind: %s\n", storagePoolKind)
 	b.WriteString("      pool_config:\n")
 	b.WriteString("        box_id: 1\n")
 	fmt.Fprintf(&b, "        erasure_species: %s\n", erasure)
-	b.WriteString("        kind: ssd\n")
+	fmt.Fprintf(&b, "        kind: %s\n", storagePoolKind)
 	if erasure == "mirror-3-dc" {
 		b.WriteString("        geometry:\n")
 		b.WriteString("          realm_level_begin: 10\n")
@@ -162,7 +187,7 @@ func renderYDBYAML(opts yDBYAMLOpts) string {
 	}
 	b.WriteString("        pdisk_filter:\n")
 	b.WriteString("        - property:\n")
-	b.WriteString("          - type: SSD\n")
+	fmt.Fprintf(&b, "          - type: %s\n", defaultDiskType)
 	b.WriteString("        vdisk_kind: Default\n")
 	b.WriteString("  state_storage:\n")
 	b.WriteString("  - ring:\n")
@@ -200,31 +225,47 @@ func renderYDBYAML(opts yDBYAMLOpts) string {
 	b.WriteString("    groups:\n")
 	fmt.Fprintf(&b, "    - erasure_species: %s\n", erasure)
 	b.WriteString("      rings:\n")
-	// blob_storage_config — one fail_domain per (node × pdisk) tuple. Each
-	// fail_domain holds a single vdisk_location pointing at one pdisk on one
-	// node, addressed by raw path. With N nodes × K pdisks/node, YDB sees
-	// N×K fail_domains and can place vdisks across them for parallelism.
+	// blob_storage_config — disk failure domains emit one fail_domain per
+	// (node × pdisk) tuple. Host failure domains group every pdisk on the
+	// same node under one fail_domain.
+	writeDiskDomain := func(nodeID int, p string) {
+		b.WriteString("        - vdisk_locations:\n")
+		fmt.Fprintf(&b, "          - node_id: %d\n", nodeID)
+		fmt.Fprintf(&b, "            pdisk_category: %s\n", defaultDiskType)
+		fmt.Fprintf(&b, "            path: %s\n", p)
+	}
+	writeHostDomain := func(nodeID int) {
+		b.WriteString("        - vdisk_locations:\n")
+		for _, p := range pdiskPaths {
+			fmt.Fprintf(&b, "          - node_id: %d\n", nodeID)
+			fmt.Fprintf(&b, "            pdisk_category: %s\n", defaultDiskType)
+			fmt.Fprintf(&b, "            path: %s\n", p)
+		}
+	}
+	diskFailureDomains := opts.failureDomainType == "disk"
 	if erasure == "mirror-3-dc" {
 		// mirror-3-dc lays out one ring per DC. We map host index → DC by
 		// repeating the same ring shape; preserves the existing single-disk
 		// behaviour while extending to multiple pdisks per host.
 		for i := 0; i < hostCount; i++ {
 			b.WriteString("      - fail_domains:\n")
-			for _, p := range pdiskPaths {
-				b.WriteString("        - vdisk_locations:\n")
-				fmt.Fprintf(&b, "          - node_id: %d\n", i+1)
-				b.WriteString("            pdisk_category: SSD\n")
-				fmt.Fprintf(&b, "            path: %s\n", p)
+			if diskFailureDomains {
+				for _, p := range pdiskPaths {
+					writeDiskDomain(i+1, p)
+				}
+			} else {
+				writeHostDomain(i + 1)
 			}
 		}
 	} else {
 		b.WriteString("      - fail_domains:\n")
 		for i := 0; i < hostCount; i++ {
-			for _, p := range pdiskPaths {
-				b.WriteString("        - vdisk_locations:\n")
-				fmt.Fprintf(&b, "          - node_id: %d\n", i+1)
-				b.WriteString("            pdisk_category: SSD\n")
-				fmt.Fprintf(&b, "            path: %s\n", p)
+			if diskFailureDomains {
+				for _, p := range pdiskPaths {
+					writeDiskDomain(i+1, p)
+				}
+			} else {
+				writeHostDomain(i + 1)
 			}
 		}
 	}
@@ -236,7 +277,7 @@ func renderYDBYAML(opts yDBYAMLOpts) string {
 	for i := 0; i < 3; i++ {
 		fmt.Fprintf(&b, "    - erasure_species: %s\n", erasure)
 		b.WriteString("      pdisk_category: 0\n")
-		b.WriteString("      storage_pool_kind: ssd\n")
+		fmt.Fprintf(&b, "      storage_pool_kind: %s\n", storagePoolKind)
 	}
 
 	// grpc_config

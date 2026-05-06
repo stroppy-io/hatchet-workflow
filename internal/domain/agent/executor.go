@@ -1779,12 +1779,15 @@ func (e *Executor) configYDB(ctx context.Context, cmd Command) error {
 	body := cfg.ConfOverride
 	if body == "" {
 		body = dbconfig.RenderYDBStorageConf(dbconfig.RenderYDBConfOpts{
-			HostCount:        len(cfg.Hosts),
-			DiskPath:         diskPath,
-			BlockDevicePaths: cfg.BlockDevicePaths,
-			CPUs:             cfg.CPUs,
-			MemoryMB:         memMB,
-			FaultTolerance:   cfg.FaultTolerance,
+			HostCount:         len(cfg.Hosts),
+			HostLocations:     cfg.HostLocations,
+			DiskPath:          diskPath,
+			BlockDevicePaths:  cfg.BlockDevicePaths,
+			CPUs:              cfg.CPUs,
+			MemoryMB:          memMB,
+			FaultTolerance:    cfg.FaultTolerance,
+			FailureDomainType: cfg.FailureDomainType,
+			DefaultDiskType:   cfg.DefaultDiskType,
 		})
 	}
 	body = dbconfig.SubstituteYDBHostPlaceholders(body, cfg.Hosts)
@@ -1879,6 +1882,14 @@ func (e *Executor) initYDB(ctx context.Context, cmd Command) error {
 	if dbPath == "" {
 		dbPath = "/Root/testdb"
 	}
+	storageGroups := cfg.StorageGroups
+	if storageGroups <= 0 {
+		storageGroups = 1
+	}
+	storagePoolKind := cfg.StoragePoolKind
+	if storagePoolKind == "" {
+		storagePoolKind = "ssd"
+	}
 
 	// Initialize blobstorage (retry — cluster needs time to form quorum).
 	e.emitLine("initializing YDB blobstorage...")
@@ -1890,8 +1901,8 @@ func (e *Executor) initYDB(ctx context.Context, cmd Command) error {
 
 	e.emitLine(fmt.Sprintf("creating YDB database %s...", dbPath))
 	if _, err := e.shell(ctx, fmt.Sprintf(
-		`for i in $(seq 1 15); do LD_LIBRARY_PATH=/opt/ydb/lib /opt/ydb/bin/ydbd -s %s admin database %s create ssd:1 2>&1 && exit 0; sleep 2; done; exit 1`,
-		endpoint, dbPath)); err != nil {
+		`for i in $(seq 1 15); do LD_LIBRARY_PATH=/opt/ydb/lib /opt/ydb/bin/ydbd -s %s admin database %s create %s:%d 2>&1 && exit 0; sleep 2; done; exit 1`,
+		endpoint, dbPath, storagePoolKind, storageGroups)); err != nil {
 		return fmt.Errorf("create database: %w", err)
 	}
 
@@ -1922,12 +1933,15 @@ func (e *Executor) startYDBDB(ctx context.Context, cmd Command) error {
 	body := cfg.ConfOverride
 	if body == "" {
 		body = dbconfig.RenderYDBDatabaseConf(dbconfig.RenderYDBDatabaseConfOpts{
-			HostCount:        len(cfg.StorageHosts),
-			DiskPath:         "/ydb_data",
-			BlockDevicePaths: cfg.BlockDevicePaths,
-			CPUs:             cfg.CPUs,
-			MemoryMB:         memMB,
-			FaultTolerance:   cfg.FaultTolerance,
+			HostCount:         len(cfg.StorageHosts),
+			HostLocations:     cfg.StorageLocations,
+			DiskPath:          "/ydb_data",
+			BlockDevicePaths:  cfg.BlockDevicePaths,
+			CPUs:              cfg.CPUs,
+			MemoryMB:          memMB,
+			FaultTolerance:    cfg.FaultTolerance,
+			FailureDomainType: cfg.FailureDomainType,
+			DefaultDiskType:   cfg.DefaultDiskType,
 		})
 	}
 	body = dbconfig.SubstituteYDBHostPlaceholders(body, cfg.StorageHosts)
