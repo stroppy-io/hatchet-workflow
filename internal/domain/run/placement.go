@@ -23,6 +23,18 @@ func placementZones(p *types.PlacementSpec) []string {
 	return logicalYDBZones
 }
 
+// yandexDefaultRoundRobinSuffixes is the set of YC zone suffixes used when
+// PlacementSpec asks for round-robin without an explicit Zones list.
+//
+// Only a/b/d are usable for stroppy clusters today:
+//   - `c` was decommissioned (subnet → "Illegal argument zone_id", disk →
+//     "Zone is down")
+//   - `e` is a separate region not exposed for general compute
+//   - `m` is the Yandex BareMetal zone — different SKU, no general VMs
+//
+// Yandex docs: https://yandex.cloud/en/docs/overview/concepts/geo-scope
+var yandexDefaultRoundRobinSuffixes = []string{"-a", "-b", "-d"}
+
 func yandexPlacementZones(p *types.PlacementSpec, defaultZone string) []string {
 	if p != nil && len(p.Zones) > 0 {
 		return placementZones(p)
@@ -41,7 +53,11 @@ func yandexPlacementZones(p *types.PlacementSpec, defaultZone string) []string {
 		return []string{defaultZone}
 	}
 	region := defaultZone[:idx]
-	return []string{region + "-a", region + "-b", region + "-c"}
+	out := make([]string, 0, len(yandexDefaultRoundRobinSuffixes))
+	for _, suffix := range yandexDefaultRoundRobinSuffixes {
+		out = append(out, region+suffix)
+	}
+	return out
 }
 
 func zoneForInstance(p *types.PlacementSpec, zones []string, idx int) string {

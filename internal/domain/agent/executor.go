@@ -806,20 +806,51 @@ func (e *Executor) installMonitor(ctx context.Context, cmd Command) error {
 	mon := types.DefaultMonitoring()
 	machineID := os.Getenv("STROPPY_MACHINE_ID")
 
+	// All supporting binaries are fetched through the cloud server's
+	// /api/binaries proxy instead of github directly. Two reasons:
+	//   1) github SSL handshakes from Yandex Cloud are flaky (the source
+	//      of "curl: (28) SSL connection timeout" we kept seeing during
+	//      install_monitor / install_stroppy);
+	//   2) one cold download per artifact warms the server cache for the
+	//      whole fleet — a 10-VM run pays the github cost once.
+	// binURL composes the proxy URL.  STROPPY_SERVER_ADDR is set on the
+	// agent at provisioning time (cloud-init / docker run).
+	binURL := func(name, ver, file string) string {
+		base := strings.TrimRight(os.Getenv("STROPPY_SERVER_ADDR"), "/")
+		if base == "" {
+			// CLI / direct mode — no server in front. Fall back to the
+			// upstream so the legacy code path keeps working.
+			switch name {
+			case "node_exporter":
+				return fmt.Sprintf("https://github.com/prometheus/node_exporter/releases/download/v%s/%s", ver, file)
+			case "mysqld_exporter":
+				return fmt.Sprintf("https://github.com/prometheus/mysqld_exporter/releases/download/v%s/%s", ver, file)
+			case "postgres_exporter":
+				return fmt.Sprintf("https://github.com/prometheus-community/postgres_exporter/releases/download/v%s/%s", ver, file)
+			case "vector":
+				return fmt.Sprintf("https://packages.timber.io/vector/%s/%s", ver, file)
+			case "vmagent":
+				return fmt.Sprintf("https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v%s/%s", ver, file)
+			case "stroppy":
+				return fmt.Sprintf("https://github.com/stroppy-io/stroppy/releases/download/v%s/%s", ver, file)
+			}
+			return ""
+		}
+		return fmt.Sprintf("%s/api/binaries/%s/%s/%s", base, name, ver, file)
+	}
+	curlOpts := `--connect-timeout 20 --max-time 300 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 600`
+
 	// --- node_exporter on ALL machines (skip if pre-installed in agent image) ---
 	if _, err := e.shell(ctx, "which node_exporter"); err != nil {
 		neVer := mon.NodeExporterVersion
-		neURL := fmt.Sprintf(
-			"https://github.com/prometheus/node_exporter/releases/download/v%s/node_exporter-%s.linux-amd64.tar.gz",
-			neVer, neVer,
-		)
+		neFile := fmt.Sprintf("node_exporter-%s.linux-amd64.tar.gz", neVer)
 		neScript := fmt.Sprintf(
-			`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 "%s" -o /tmp/node_exporter.tar.gz && `+
+			`curl -fsSL %s "%s" -o /tmp/node_exporter.tar.gz && `+
 				`tar xzf /tmp/node_exporter.tar.gz -C /tmp && `+
 				`cp /tmp/node_exporter-%s.linux-amd64/node_exporter /usr/local/bin/node_exporter && `+
 				`chmod +x /usr/local/bin/node_exporter && `+
 				`rm -rf /tmp/node_exporter*`,
-			neURL, neVer,
+			curlOpts, binURL("node_exporter", neVer, neFile), neVer,
 		)
 		if _, err := e.shell(ctx, neScript); err != nil {
 			return fmt.Errorf("install node_exporter: %w", err)
@@ -830,17 +861,14 @@ func (e *Executor) installMonitor(ctx context.Context, cmd Command) error {
 	if strings.Contains(machineID, "-database-") && cfg.DatabaseKind == "mysql" {
 		if _, err := e.shell(ctx, "which mysqld_exporter"); err != nil {
 			meVer := "0.19.0"
-			meURL := fmt.Sprintf(
-				"https://github.com/prometheus/mysqld_exporter/releases/download/v%s/mysqld_exporter-%s.linux-amd64.tar.gz",
-				meVer, meVer,
-			)
+			meFile := fmt.Sprintf("mysqld_exporter-%s.linux-amd64.tar.gz", meVer)
 			meScript := fmt.Sprintf(
-				`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 "%s" -o /tmp/mysqld_exporter.tar.gz && `+
+				`curl -fsSL %s "%s" -o /tmp/mysqld_exporter.tar.gz && `+
 					`tar xzf /tmp/mysqld_exporter.tar.gz -C /tmp && `+
 					`cp /tmp/mysqld_exporter-%s.linux-amd64/mysqld_exporter /usr/local/bin/mysqld_exporter && `+
 					`chmod +x /usr/local/bin/mysqld_exporter && `+
 					`rm -rf /tmp/mysqld_exporter*`,
-				meURL, meVer,
+				curlOpts, binURL("mysqld_exporter", meVer, meFile), meVer,
 			)
 			if _, err := e.shell(ctx, meScript); err != nil {
 				return fmt.Errorf("install mysqld_exporter: %w", err)
@@ -851,17 +879,14 @@ func (e *Executor) installMonitor(ctx context.Context, cmd Command) error {
 	// --- postgres_exporter only on database machines (and only for postgres) ---
 	if strings.Contains(machineID, "-database-") && cfg.DatabaseKind == "postgres" {
 		peVer := mon.PostgresExporterVersion
-		peURL := fmt.Sprintf(
-			"https://github.com/prometheus-community/postgres_exporter/releases/download/v%s/postgres_exporter-%s.linux-amd64.tar.gz",
-			peVer, peVer,
-		)
+		peFile := fmt.Sprintf("postgres_exporter-%s.linux-amd64.tar.gz", peVer)
 		peScript := fmt.Sprintf(
-			`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 "%s" -o /tmp/postgres_exporter.tar.gz && `+
+			`curl -fsSL %s "%s" -o /tmp/postgres_exporter.tar.gz && `+
 				`tar xzf /tmp/postgres_exporter.tar.gz -C /tmp && `+
 				`cp /tmp/postgres_exporter-%s.linux-amd64/postgres_exporter /usr/local/bin/postgres_exporter && `+
 				`chmod +x /usr/local/bin/postgres_exporter && `+
 				`rm -rf /tmp/postgres_exporter*`,
-			peURL, peVer,
+			curlOpts, binURL("postgres_exporter", peVer, peFile), peVer,
 		)
 		if _, err := e.shell(ctx, peScript); err != nil {
 			return fmt.Errorf("install postgres_exporter: %w", err)
@@ -870,20 +895,15 @@ func (e *Executor) installMonitor(ctx context.Context, cmd Command) error {
 
 	// --- vector on every machine (collects journald + DB logs, ships to VictoriaLogs) ---
 	if _, err := e.shell(ctx, "which vector"); err != nil {
-		// Static-musl tarball — works on any glibc, no apt repo needed.
-		// See https://vector.dev/download/ for release artifacts.
 		vecVer := "0.43.1"
-		vecURL := fmt.Sprintf(
-			"https://packages.timber.io/vector/%s/vector-%s-x86_64-unknown-linux-musl.tar.gz",
-			vecVer, vecVer,
-		)
+		vecFile := fmt.Sprintf("vector-%s-x86_64-unknown-linux-musl.tar.gz", vecVer)
 		vecScript := fmt.Sprintf(
-			`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 "%s" -o /tmp/vector.tar.gz && `+
+			`curl -fsSL %s "%s" -o /tmp/vector.tar.gz && `+
 				`tar xzf /tmp/vector.tar.gz -C /tmp && `+
 				`cp /tmp/vector-x86_64-unknown-linux-musl/bin/vector /usr/local/bin/vector && `+
 				`chmod +x /usr/local/bin/vector && `+
 				`rm -rf /tmp/vector*`,
-			vecURL,
+			curlOpts, binURL("vector", vecVer, vecFile),
 		)
 		if _, err := e.shell(ctx, vecScript); err != nil {
 			// Best-effort: log shipping is non-critical, run keeps going.
@@ -897,17 +917,14 @@ func (e *Executor) installMonitor(ctx context.Context, cmd Command) error {
 		if vaVer == "" {
 			vaVer = "1.139.0"
 		}
-		vaURL := fmt.Sprintf(
-			"https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v%s/vmutils-linux-amd64-v%s.tar.gz",
-			vaVer, vaVer,
-		)
+		vaFile := fmt.Sprintf("vmutils-linux-amd64-v%s.tar.gz", vaVer)
 		vaScript := fmt.Sprintf(
-			`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 "%s" -o /tmp/vmutils.tar.gz && `+
+			`curl -fsSL %s "%s" -o /tmp/vmutils.tar.gz && `+
 				`tar xzf /tmp/vmutils.tar.gz -C /tmp && `+
 				`cp /tmp/vmagent-prod /usr/local/bin/vmagent && `+
 				`chmod +x /usr/local/bin/vmagent && `+
 				`rm -rf /tmp/vmutils* /tmp/vmagent* /tmp/vmalert* /tmp/vmauth* /tmp/vmbackup* /tmp/vmrestore*`,
-			vaURL,
+			curlOpts, binURL("vmagent", vaVer, vaFile),
 		)
 		if _, err := e.shell(ctx, vaScript); err != nil {
 			return fmt.Errorf("install vmagent: %w", err)

@@ -309,3 +309,41 @@ func (a *Actor) DestroyTerraform(ctx context.Context, wd WdId) error {
 	defer a.workdirs.Remove(wd)
 	return tf.Destroy(ctx, tfexec.Parallelism(10))
 }
+
+// DestroyExisting runs `terraform destroy` against an on-disk workdir even
+// when the in-memory workdirs map is empty — needed after server restart,
+// where the Apply ran in a previous process so the actor that did it is
+// long gone, but `/tmp/stroppy-terraform/<wd>/terraform.tfstate` is still
+// on the persistent volume. Caller supplies env (YC_TOKEN etc) via opts so
+// the provider can authenticate.
+//
+// Errors out if the on-disk directory is missing — there's nothing to
+// destroy if the tfstate isn't there.
+func (a *Actor) DestroyExisting(ctx context.Context, wd WdId, opts ...Options) error {
+	if w, ok := a.workdirs.Get(wd); ok {
+		// Already registered — fall through to the standard path. Apply
+		// env overrides on top so the caller can refresh YC_TOKEN if it
+		// rotated between apply and destroy.
+		for _, opt := range opts {
+			opt(w)
+		}
+		tf, err := a.newTerraform(ctx, w)
+		if err != nil {
+			return fmt.Errorf("error running NewTerraform: %s", err)
+		}
+		defer a.workdirs.Remove(wd)
+		return tf.Destroy(ctx, tfexec.Parallelism(10))
+	}
+	// Cold path: rebuild the workdir record from the on-disk path.
+	w := NewWorkdirWithParams(wd, opts...)
+	if _, err := os.Stat(string(w.workdirPath)); err != nil {
+		return fmt.Errorf("on-disk workdir for %s not found at %s: %w", wd, w.workdirPath, err)
+	}
+	a.workdirs.Set(wd, w)
+	tf, err := a.newTerraform(ctx, w)
+	if err != nil {
+		return fmt.Errorf("error running NewTerraform: %s", err)
+	}
+	defer a.workdirs.Remove(wd)
+	return tf.Destroy(ctx, tfexec.Parallelism(10))
+}

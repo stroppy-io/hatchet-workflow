@@ -121,6 +121,10 @@ services:
       # Terraform workdir — survives `docker compose down/up` so a server
       # restart never strands cloud resources by losing tfstate.
       - tfstate:/tmp/stroppy-terraform
+      # Persistent cache of fetched binaries (node_exporter, vmagent, stroppy,
+      # vector, postgres_exporter, mysqld_exporter). Survives compose
+      # restarts so agents reuse local downloads instead of going to github.
+      - binaries:/var/lib/stroppy-cache
     environment:
       DATABASE_URL: postgres://stroppy:${POSTGRES_PASSWORD:-stroppy}@127.0.0.1:5436/stroppy?sslmode=disable
       JWT_SECRET: ${JWT_SECRET:-stroppy-dev-secret}
@@ -148,6 +152,7 @@ volumes:
   vmdata:
   vldata:
   tfstate:
+  binaries:
   grafanadata:
   caddy_data:
   caddy_config:

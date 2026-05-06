@@ -324,6 +324,14 @@ func (s *Server) Router() http.Handler {
 	// --- Agent binary download (public — agent has no token yet at download time) ---
 	r.Get("/agent/binary", s.serveBinary)
 
+	// --- Cached binary proxy (public — agents fetch supporting binaries
+	//     like node_exporter / vmagent / stroppy through the server so we
+	//     don't hammer github from every Yandex VM). Path layout:
+	//         /api/binaries/{name}/{version}/{filename}
+	//     The server caches each artifact on disk; subsequent agent
+	//     requests stream straight from the cache.
+	r.Get("/api/binaries/{name}/{version}/{filename}", s.serveCachedBinary)
+
 	// --- SPA (embedded frontend) ---
 	if s.spaFS != nil {
 		r.Get("/*", s.serveSPA)

@@ -235,8 +235,13 @@ func DefaultServerSettings() ServerSettings {
 // DefaultMonitoring returns the platform-wide monitoring agent versions.
 func DefaultMonitoring() MonitoringStack {
 	return MonitoringStack{
-		NodeExporterVersion:     "1.9.1",
-		PostgresExporterVersion: "0.16.0",
+		NodeExporterVersion: "1.9.1",
+		// 0.16.0 predates PG17's pg_stat_bgwriter split (checkpoints_timed
+		// moved to pg_stat_checkpointer). Older exporter on PG17 spams
+		// `pq: column "checkpoints_timed" does not exist` and stalls
+		// scrapes — vmagent times out the /metrics endpoint. 0.18+ ships
+		// the schema fix.
+		PostgresExporterVersion: "0.18.1",
 		OtelColVersion:          "0.127.0",
 		VmagentVersion:          "1.139.0",
 		EtcdVersion:             "3.5.17",

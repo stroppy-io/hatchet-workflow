@@ -1021,10 +1021,25 @@ func (t *teardownTask) yandexTeardown(nc *dag.NodeContext) error {
 		}
 	}
 
+	// Re-derive YC creds from settings so a recovered teardown (different
+	// process) authenticates against the same folder Apply ran against.
+	// In the "actor was alive" path the workdir already has env baked in;
+	// the redundant overrides are harmless.
+	yc := t.settings.Cloud.Yandex
+	env := terraform.TfEnv{
+		"YC_TOKEN":     yc.Token,
+		"YC_CLOUD_ID":  yc.CloudID,
+		"YC_FOLDER_ID": yc.FolderID,
+		"YC_ZONE":      yc.Zone,
+	}
+
 	nc.Log().Info("running terraform destroy for Yandex Cloud", zap.String("wd_id", wdIdStr))
 
 	ctx := context.Context(nc)
-	if err := actor.DestroyTerraform(ctx, terraform.NewWdId(wdIdStr)); err != nil {
+	// DestroyExisting falls back to rebuilding the workdir record from
+	// disk when the in-memory map is empty (post-restart recovery). Same
+	// behaviour as DestroyTerraform when the workdir is registered.
+	if err := actor.DestroyExisting(ctx, terraform.NewWdId(wdIdStr), terraform.WithEnv(env)); err != nil {
 		return fmt.Errorf("teardown: terraform destroy: %w", err)
 	}
 
