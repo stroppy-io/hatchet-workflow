@@ -6,6 +6,7 @@ import { RunOverview } from "@/components/RunOverview";
 import { LogStream } from "@/components/LogStream";
 import { MetricsPanel } from "@/components/MetricsPanel";
 import { TopologyFlow } from "@/components/TopologyFlow";
+import { AgentsPanel } from "@/components/AgentsPanel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -616,6 +617,7 @@ export function RunDetail() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="topology">Topology</TabsTrigger>
+          <TabsTrigger value="agents">Agents</TabsTrigger>
           <div className="w-px h-4 bg-zinc-800 mx-1" />
           <TabsTrigger value="logs">Logs</TabsTrigger>
           <TabsTrigger value="metrics">Metrics</TabsTrigger>
@@ -642,6 +644,14 @@ export function RunDetail() {
           <Card className="h-[calc(100vh-11rem)]">
             <CardContent className="p-0 h-full">
               <TopologyFlow config={runConfig} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="agents">
+          <Card className="h-[calc(100vh-11rem)]">
+            <CardContent className="p-0 h-full overflow-auto">
+              <AgentsPanel runID={id} />
             </CardContent>
           </Card>
         </TabsContent>

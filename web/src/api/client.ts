@@ -741,3 +741,21 @@ export async function listQueue(): Promise<QueueRow[]> {
 export async function getQuotas(): Promise<QuotasResponse> {
   return request(`${API_BASE}/quotas`);
 }
+
+// ---------- Run Agents ----------
+
+export interface AgentInfo {
+  machine_id: string;
+  role: string;
+  host?: string;
+  internal_host?: string;
+  agent_port?: number;
+  registered: boolean;
+  healthy: boolean;
+  health_error?: string;
+  last_seen_at?: string;
+}
+
+export async function getRunAgents(runID: string): Promise<AgentInfo[]> {
+  return request(`${API_BASE}/run/${runID}/agents`);
+}

@@ -239,6 +239,7 @@ func (s *Server) Router() http.Handler {
 		r.Get("/run/{runID}/logs", s.runLogs)
 		r.Get("/run/{runID}/metrics", s.runMetrics)
 		r.Get("/run/{runID}/rendered-configs", s.runRenderedConfigs)
+		r.Get("/run/{runID}/agents", s.runAgents)
 		r.Get("/compare", s.compareRuns)
 		r.Get("/stroppy-versions", s.stroppyVersions)
 		r.Get("/stroppy-commits", s.stroppyCommits)

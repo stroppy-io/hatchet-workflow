@@ -814,7 +814,7 @@ func (e *Executor) installMonitor(ctx context.Context, cmd Command) error {
 			neVer, neVer,
 		)
 		neScript := fmt.Sprintf(
-			`curl -fsSL "%s" -o /tmp/node_exporter.tar.gz && `+
+			`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 "%s" -o /tmp/node_exporter.tar.gz && `+
 				`tar xzf /tmp/node_exporter.tar.gz -C /tmp && `+
 				`cp /tmp/node_exporter-%s.linux-amd64/node_exporter /usr/local/bin/node_exporter && `+
 				`chmod +x /usr/local/bin/node_exporter && `+
@@ -835,7 +835,7 @@ func (e *Executor) installMonitor(ctx context.Context, cmd Command) error {
 				meVer, meVer,
 			)
 			meScript := fmt.Sprintf(
-				`curl -fsSL "%s" -o /tmp/mysqld_exporter.tar.gz && `+
+				`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 "%s" -o /tmp/mysqld_exporter.tar.gz && `+
 					`tar xzf /tmp/mysqld_exporter.tar.gz -C /tmp && `+
 					`cp /tmp/mysqld_exporter-%s.linux-amd64/mysqld_exporter /usr/local/bin/mysqld_exporter && `+
 					`chmod +x /usr/local/bin/mysqld_exporter && `+
@@ -856,7 +856,7 @@ func (e *Executor) installMonitor(ctx context.Context, cmd Command) error {
 			peVer, peVer,
 		)
 		peScript := fmt.Sprintf(
-			`curl -fsSL "%s" -o /tmp/postgres_exporter.tar.gz && `+
+			`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 "%s" -o /tmp/postgres_exporter.tar.gz && `+
 				`tar xzf /tmp/postgres_exporter.tar.gz -C /tmp && `+
 				`cp /tmp/postgres_exporter-%s.linux-amd64/postgres_exporter /usr/local/bin/postgres_exporter && `+
 				`chmod +x /usr/local/bin/postgres_exporter && `+
@@ -878,7 +878,7 @@ func (e *Executor) installMonitor(ctx context.Context, cmd Command) error {
 			vecVer, vecVer,
 		)
 		vecScript := fmt.Sprintf(
-			`curl -fsSL "%s" -o /tmp/vector.tar.gz && `+
+			`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 "%s" -o /tmp/vector.tar.gz && `+
 				`tar xzf /tmp/vector.tar.gz -C /tmp && `+
 				`cp /tmp/vector-x86_64-unknown-linux-musl/bin/vector /usr/local/bin/vector && `+
 				`chmod +x /usr/local/bin/vector && `+
@@ -902,7 +902,7 @@ func (e *Executor) installMonitor(ctx context.Context, cmd Command) error {
 			vaVer, vaVer,
 		)
 		vaScript := fmt.Sprintf(
-			`curl -fsSL "%s" -o /tmp/vmutils.tar.gz && `+
+			`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 "%s" -o /tmp/vmutils.tar.gz && `+
 				`tar xzf /tmp/vmutils.tar.gz -C /tmp && `+
 				`cp /tmp/vmagent-prod /usr/local/bin/vmagent && `+
 				`chmod +x /usr/local/bin/vmagent && `+
@@ -1273,7 +1273,7 @@ func (e *Executor) installStroppy(ctx context.Context, cmd Command) error {
 			short,
 		)
 		script := fmt.Sprintf(
-			`curl -fsSL "%s" -o /usr/local/bin/stroppy && chmod +x /usr/local/bin/stroppy`,
+			`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 "%s" -o /usr/local/bin/stroppy && chmod +x /usr/local/bin/stroppy`,
 			dlURL,
 		)
 		if _, err := e.shell(ctx, script); err != nil {
@@ -1285,7 +1285,7 @@ func (e *Executor) installStroppy(ctx context.Context, cmd Command) error {
 	// Released version: tarball from GitHub releases.
 	dlURL := fmt.Sprintf("https://github.com/stroppy-io/stroppy/releases/download/v%s/stroppy_linux_amd64.tar.gz", version)
 	script := fmt.Sprintf(
-		`curl -fsSL "%s" -o /tmp/stroppy.tar.gz && `+
+		`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 "%s" -o /tmp/stroppy.tar.gz && `+
 			`tar xzf /tmp/stroppy.tar.gz -C /tmp && `+
 			`cp /tmp/stroppy /usr/local/bin/stroppy && `+
 			`chmod +x /usr/local/bin/stroppy && `+
@@ -1374,7 +1374,7 @@ func (e *Executor) installEtcd(ctx context.Context, cmd Command) error {
 		version, version,
 	)
 	script := fmt.Sprintf(
-		`curl -fsSL "%s" -o /tmp/etcd.tar.gz && `+
+		`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 "%s" -o /tmp/etcd.tar.gz && `+
 			`tar xzf /tmp/etcd.tar.gz -C /tmp && `+
 			`cp /tmp/etcd-v%s-linux-amd64/etcd /usr/local/bin/etcd && `+
 			`cp /tmp/etcd-v%s-linux-amd64/etcdctl /usr/local/bin/etcdctl && `+
@@ -1637,7 +1637,7 @@ func (e *Executor) installProxySQL(ctx context.Context, cmd Command) error {
 	// Download ProxySQL from GitHub releases (more reliable than repo.proxysql.com).
 	version := "2.7.3"
 	url := fmt.Sprintf("https://github.com/sysown/proxysql/releases/download/v%s/proxysql_%s-ubuntu22_amd64.deb", version, version)
-	githubScript := fmt.Sprintf(`curl -fsSL "%s" -o /tmp/proxysql.deb && dpkg -i /tmp/proxysql.deb && rm -f /tmp/proxysql.deb`, url)
+	githubScript := fmt.Sprintf(`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 "%s" -o /tmp/proxysql.deb && dpkg -i /tmp/proxysql.deb && rm -f /tmp/proxysql.deb`, url)
 
 	if _, err := e.shell(ctx, githubScript); err != nil {
 		// Fallback: use apt repo if GitHub download fails.

@@ -211,10 +211,15 @@ func (s *State) ExportRunState() *dag.RunState {
 	defer s.mu.RUnlock()
 
 	rs := &dag.RunState{
-		ContainerIDs:     append([]string{}, s.containerIDs...),
-		NetworkID:        s.networkID,
-		DBHost:           s.dbHost,
-		DBPort:           s.dbPort,
+		ContainerIDs: append([]string{}, s.containerIDs...),
+		NetworkID:    s.networkID,
+		DBHost:       s.dbHost,
+		DBPort:       s.dbPort,
+		// Persist the terraform workdir id so a recovered worker (different
+		// process / restarted server) can run `terraform destroy` against
+		// the on-disk tfstate. Without this, teardown silently skips and
+		// VMs leak in Yandex Cloud.
+		TerraformWdId:    s.terraformWdId,
 		EffectiveConfigs: s.effectiveConfigs,
 	}
 
@@ -256,6 +261,7 @@ func (s *State) ImportRunState(rs *dag.RunState) {
 	s.networkID = rs.NetworkID
 	s.dbHost = rs.DBHost
 	s.dbPort = rs.DBPort
+	s.terraformWdId = rs.TerraformWdId
 	s.effectiveConfigs = rs.EffectiveConfigs
 
 	s.dbTargets = nil

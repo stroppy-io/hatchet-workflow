@@ -33,6 +33,11 @@ type RunState struct {
 	NetworkID    string          `json:"network_id"`
 	DBHost       string          `json:"db_host"`
 	DBPort       int             `json:"db_port"`
+	// TerraformWdId is the persistent workdir id for the run's terraform
+	// state. Load-bearing for teardown: without it, a recovered run can't
+	// `terraform destroy` and leaks Yandex VMs. Filled by machinesTask
+	// BEFORE apply, so even an apply crash leaves enough state to clean up.
+	TerraformWdId string `json:"terraform_wd_id,omitempty"`
 	// EffectiveConfigs stores the actual resolved config per component (e.g. "database", "monitoring").
 	// Set by config tasks at execution time so the UI shows real values, not derived estimates.
 	EffectiveConfigs map[string]map[string]string `json:"effective_configs,omitempty"`
