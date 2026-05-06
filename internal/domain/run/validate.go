@@ -111,6 +111,20 @@ func ValidateConfig(cfg types.RunConfig) error {
 		return fmt.Errorf("scale_factor must be >= 0")
 	}
 
+	// Stroppy version: required and >= STROPPY_MIN_VERSION env (default 5.1.1).
+	// Older versions resolve scripts to a legacy embedded tx.ts that ignores
+	// driver_type — caused YDB runs to connect via pg-wire on grpc port.
+	if strings.TrimSpace(cfg.Stroppy.Version) == "" {
+		return fmt.Errorf("stroppy.version is required (minimum %s)", types.MinStroppyVersionString())
+	}
+	v, err := types.ParseStroppyVersion(cfg.Stroppy.Version)
+	if err != nil {
+		return fmt.Errorf("stroppy.version %q is not valid semver: %w", cfg.Stroppy.Version, err)
+	}
+	if v.LessThan(types.MinStroppyVersion()) {
+		return fmt.Errorf("stroppy.version %s is below minimum %s", cfg.Stroppy.Version, types.MinStroppyVersionString())
+	}
+
 	// Machine specs basic checks.
 	if cfg.Stroppy.Machine != nil {
 		m := cfg.Stroppy.Machine

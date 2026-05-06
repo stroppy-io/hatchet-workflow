@@ -1304,7 +1304,7 @@ func (s *Server) stroppyVersions(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		v := strings.TrimPrefix(rel.TagName, "v")
-		if compareVersions(v, "4.1.0") >= 0 {
+		if compareVersions(v, types.MinStroppyVersionString()) >= 0 {
 			if rel.Prerelease {
 				prerelease = append(prerelease, v)
 			} else {

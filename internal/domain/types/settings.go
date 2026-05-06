@@ -251,7 +251,7 @@ func DefaultMonitoring() MonitoringStack {
 // DefaultStroppySettings returns platform-wide stroppy OTLP defaults.
 func DefaultStroppySettings() StroppySettings {
 	return StroppySettings{
-		Version:          "4.1.0",
+		Version:          defaultMinStroppyVersion,
 		OTLPExporterType: "http",
 		OTLPInsecure:     true,
 		OTLPURLPath:      "/opentelemetry/v1/metrics",
