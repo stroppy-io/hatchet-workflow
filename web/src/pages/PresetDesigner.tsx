@@ -943,7 +943,7 @@ function PlacementEditor({ label, spec, onChange, disabled }: {
             onChange({ ...spec, placement: { ...placement, zones: zones.length ? zones : undefined } });
           }}
           className="h-7 text-xs font-mono"
-          placeholder="auto: region-a,b,c"
+          placeholder="auto: region-a,b,d"
           disabled={disabled}
         />
       </div>
