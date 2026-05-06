@@ -1188,16 +1188,36 @@ func (e *Executor) startVector(ctx context.Context, cfg MonitorSetupConfig, mach
 	// can filter by run_id, role, unit. _msg_field=message in the URL tells
 	// VL to read the message body from the `message` key.
 	b.WriteString("\ntransforms:\n")
-	b.WriteString("  enrich:\n")
-	inputs := "['journald'"
+	// Multiline join: YDB / Postgres / MySQL emit multi-line records via
+	// journald & file tailers — each physical line lands as its own event.
+	// Reduce groups continuation lines back into the parent record by
+	// detecting "start-of-record" markers (ISO timestamp, or syslog-style
+	// `:KQP_…` prefix YDB uses). Without this, UI shows the header line
+	// (`… msg: `) with empty body and the body text on the next row.
+	b.WriteString("  multiline_join:\n")
+	multilineInputs := "['journald'"
 	if cfg.DatabaseKind == "postgres" {
-		inputs += ", 'postgres_files'"
+		multilineInputs += ", 'postgres_files'"
 	}
 	if cfg.DatabaseKind == "mysql" || cfg.DatabaseKind == "mariadb" {
-		inputs += ", 'mysql_files'"
+		multilineInputs += ", 'mysql_files'"
 	}
-	inputs += "]"
-	fmt.Fprintf(&b, "    inputs: %s\n", inputs)
+	multilineInputs += "]"
+	fmt.Fprintf(&b, "    inputs: %s\n", multilineInputs)
+	b.WriteString("    type: reduce\n")
+	b.WriteString("    group_by: ['_SYSTEMD_UNIT', 'host', 'file']\n")
+	// New record starts on ISO date OR on YDB's `:KQP_…`/`:BS_…` etc tags
+	// at line start. Anything else is a continuation and gets merged.
+	b.WriteString("    starts_when: |\n")
+	b.WriteString("      msg = (.message ?? \"\") |> string!\n")
+	b.WriteString("      match!(msg, r'^(\\d{4}-\\d{2}-\\d{2}|:[A-Z][A-Z0-9_]+\\s)')\n")
+	b.WriteString("    merge_strategies:\n")
+	b.WriteString("      message: concat_newline\n")
+	b.WriteString("    expire_after_ms: 2000\n")
+	b.WriteString("    flush_period_ms: 500\n")
+
+	b.WriteString("  enrich:\n")
+	b.WriteString("    inputs: ['multiline_join']\n")
 	b.WriteString("    type: remap\n")
 	b.WriteString("    source: |\n")
 	fmt.Fprintf(&b, "      .run_id = %q\n", cfg.RunID)

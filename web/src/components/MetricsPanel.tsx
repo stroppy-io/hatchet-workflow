@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { getRunMetrics } from "@/api/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RefreshCw, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 interface MetricSummary {
   key: string;
@@ -64,46 +61,41 @@ export function MetricsPanel({ runID, startedAt, finishedAt }: MetricsPanelProps
   const [error, setError] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
 
-  // Use run timestamps if available, otherwise default to last 2 hours.
-  const toLocalInput = (d: Date) => {
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  };
-
-  const defaultStart = startedAt
-    ? toLocalInput(new Date(new Date(startedAt).getTime() - 60000)) // 1min before run start
-    : toLocalInput(new Date(Date.now() - 7200000));
-  const defaultEnd = finishedAt && finishedAt !== "0001-01-01T00:00:00Z"
-    ? toLocalInput(new Date(new Date(finishedAt).getTime() + 60000)) // 1min after run end
-    : toLocalInput(new Date());
-
-  const [start, setStart] = useState(defaultStart);
-  const [end, setEnd] = useState(defaultEnd);
-
-  const fetchMetrics = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // datetime-local values are local time — convert to ISO/UTC for the API.
-      const startISO = new Date(start).toISOString();
-      const endISO = new Date(end).toISOString();
-      const data = (await getRunMetrics(runID, startISO, endISO)) as unknown as RunMetricsResponse;
-      setMetrics(data.metrics || []);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to fetch metrics";
-      if (msg.includes("503")) {
-        setUnavailable(true);
-      } else {
-        setError(msg);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Range follows the test window — same model Grafana uses for embed
+  // panels. Pad ±60s so the first/last scrape falls inside the query
+  // window. Live runs end at "now" and re-fetch on a ticker.
+  const isLive = !finishedAt || finishedAt === "0001-01-01T00:00:00Z";
 
   useEffect(() => {
+    let cancelled = false;
+    const fetchMetrics = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const startMs = startedAt ? new Date(startedAt).getTime() - 60000 : Date.now() - 7200000;
+        const endMs = isLive ? Date.now() : new Date(finishedAt!).getTime() + 60000;
+        const data = (await getRunMetrics(runID, new Date(startMs).toISOString(), new Date(endMs).toISOString())) as unknown as RunMetricsResponse;
+        if (cancelled) return;
+        setMetrics(data.metrics || []);
+      } catch (err) {
+        if (cancelled) return;
+        const msg = err instanceof Error ? err.message : "Failed to fetch metrics";
+        if (msg.includes("503")) setUnavailable(true);
+        else setError(msg);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
     fetchMetrics();
-  }, [runID]);
+    // While the run is active the upper bound floats — refresh every 15s
+    // so the panel mirrors what the Grafana iframe shows. Idle once the
+    // run terminates (window stops moving).
+    if (isLive) {
+      const t = setInterval(fetchMetrics, 15000);
+      return () => { cancelled = true; clearInterval(t); };
+    }
+    return () => { cancelled = true; };
+  }, [runID, startedAt, finishedAt, isLive]);
 
   const metricsByKey = Object.fromEntries(metrics.map((m) => [m.key, m]));
 
@@ -117,37 +109,9 @@ export function MetricsPanel({ runID, startedAt, finishedAt }: MetricsPanelProps
 
   return (
     <div className="space-y-4">
-      {/* Time range controls */}
-      <div className="flex items-end gap-3 p-3 border border-border/50 bg-[#060606]">
-        <div className="space-y-1">
-          <Label className="text-[10px] uppercase tracking-widest text-zinc-500">From</Label>
-          <Input
-            type="datetime-local"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-            className="h-8 text-xs font-mono bg-transparent border-zinc-800"
-          />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-[10px] uppercase tracking-widest text-zinc-500">To</Label>
-          <Input
-            type="datetime-local"
-            value={end}
-            onChange={(e) => setEnd(e.target.value)}
-            className="h-8 text-xs font-mono bg-transparent border-zinc-800"
-          />
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={fetchMetrics}
-          disabled={loading}
-          className="h-8"
-        >
-          <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
-          Query
-        </Button>
-      </div>
+      {loading && metrics.length === 0 && (
+        <div className="text-[10px] uppercase tracking-widest text-zinc-600 px-1">Loading…</div>
+      )}
 
       {error && (
         <div className="text-xs text-destructive p-2 border border-destructive/30 font-mono">

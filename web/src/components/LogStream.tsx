@@ -23,6 +23,11 @@ interface DisplayLine {
   unit: string;
   text: string;
   ts: number;
+  // Stable cross-client event id used by copy-link / scroll-to-line. Built
+  // from VL _stream_id + _time when available so the same event yields the
+  // same id for every viewer regardless of pagination state. WS-streamed
+  // agent lines fall back to `<ts>-<random>` — those are session-local.
+  id: string;
 }
 
 /* ---------- constants ---------- */
@@ -116,15 +121,20 @@ function shortMachine(id: string): string {
 function parseLine(raw: string): DisplayLine {
   try {
     const o = JSON.parse(raw);
+    const ts = o._time ? new Date(o._time).getTime() : 0;
+    const sid = o._stream_id || "";
+    const time = o._time || "";
+    const id = sid && time ? `${sid}@${time}` : `${ts}-${Math.random().toString(36).slice(2, 8)}`;
     return {
       machineID: o.machine_id || "server",
       action: o.action || o.node_id || "",
       role: o.role || "",
       unit: o.unit || o.SYSTEMD_UNIT || "",
       text: o._msg || o.line || o.message || raw,
-      ts: o._time ? new Date(o._time).getTime() : 0,
+      ts,
+      id,
     };
-  } catch { return { machineID: "server", action: "", role: "", unit: "", text: raw, ts: 0 }; }
+  } catch { return { machineID: "server", action: "", role: "", unit: "", text: raw, ts: 0, id: `r-${Math.random().toString(36).slice(2, 10)}` }; }
 }
 
 function extractScopes(snap: Snapshot | null | undefined) {
@@ -215,8 +225,17 @@ export function LogStream({ runID, snapshot, focusPhase }: LogStreamProps) {
     }
     return null;
   });
+  // Stable cross-client event id from URL hash (#E=<sid>@<time>). Preferred
+  // over `#L<n>` — line numbers diverge between viewers because they index
+  // local state, but the event id is server-derived and reproducible.
+  const [initialTargetEventID] = useState<string | null>(() => {
+    const hash = window.location.hash;
+    if (hash.startsWith("#E=")) return decodeURIComponent(hash.slice(3));
+    return null;
+  });
   // Visual highlight — updated by click or URL, no scroll side effect.
   const [highlightLine, setHighlightLine] = useState<number | null>(initialTargetLine);
+  const [highlightEventID, setHighlightEventID] = useState<string | null>(initialTargetEventID);
 
   // --- Debounce search ---
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -327,6 +346,18 @@ export function LogStream({ runID, snapshot, focusPhase }: LogStreamProps) {
       didInitialScroll.current = true;
       const doScroll = () => {
         if (!vlistRef.current) return;
+        // Prefer event-id anchor (#E=…) — stable across viewers. Fall back
+        // to legacy line-number anchor (#L<n>) for self-shared links from
+        // the same session.
+        if (initialTargetEventID !== null) {
+          const idx = lines.findIndex((l) => l.id === initialTargetEventID);
+          if (idx >= 0) {
+            vlistRef.current.scrollToIndex(idx, { align: "center" });
+            setAutoScroll(false);
+            setHighlightLine(idx + 1);
+            return;
+          }
+        }
         if (initialTargetLine !== null && initialTargetLine <= lines.length) {
           vlistRef.current.scrollToIndex(initialTargetLine - 1, { align: "center" });
           setAutoScroll(false);
@@ -345,13 +376,13 @@ export function LogStream({ runID, snapshot, focusPhase }: LogStreamProps) {
     const unsub = ws.onMessage((msg: WSMessage) => {
       if (msg.type === "agent_log") {
         const p = msg.payload as AgentLogLine;
-        appendLine({ machineID: p.machine_id || "unknown", action: p.action || "", role: "", unit: "", text: p.line, ts: Date.now() });
+        appendLine({ machineID: p.machine_id || "unknown", action: p.action || "", role: "", unit: "", text: p.line, ts: Date.now(), id: `ws-${Date.now()}-${Math.random().toString(36).slice(2, 8)}` });
       } else if (msg.type === "log") {
         const p = msg.payload as Record<string, unknown>;
         if (p.message) {
           const skip = new Set(["level", "message", "time", "node_id"]);
           const extras = Object.entries(p).filter(([k]) => !skip.has(k)).map(([k, v]) => `${k}=${v}`).join("  ");
-          appendLine({ machineID: "server", action: String(msg.node_id || ""), role: "", unit: "", text: extras ? `${p.message}  ${extras}` : String(p.message), ts: Date.now() });
+          appendLine({ machineID: "server", action: String(msg.node_id || ""), role: "", unit: "", text: extras ? `${p.message}  ${extras}` : String(p.message), ts: Date.now(), id: `ws-${Date.now()}-${Math.random().toString(36).slice(2, 8)}` });
         }
       }
     });
@@ -410,13 +441,18 @@ export function LogStream({ runID, snapshot, focusPhase }: LogStreamProps) {
   const handleScrollEnd = () => { progScrollRef.current = false; };
 
   // --- Copy line link ---
-  const copyLineLink = useCallback((lineNum: number) => {
-    const url = `${window.location.origin}/runs/${runID}?tab=logs#L${lineNum}`;
+  // Encodes both the visual line number (`#L<n>`, useful for self-reference
+  // in the same session) and the stable event id (`#E=<sid>@<time>`, the
+  // form that survives reloads and works across users with different
+  // pagination state). Loader prefers #E when both present.
+  const copyLineLink = useCallback((lineNum: number, eventID: string) => {
+    const frag = `#E=${encodeURIComponent(eventID)}`;
+    const url = `${window.location.origin}/runs/${runID}?tab=logs${frag}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedLine(lineNum);
-      // Update URL hash without reload.
-      window.history.replaceState(null, "", `#L${lineNum}`);
+      window.history.replaceState(null, "", frag);
       setHighlightLine(lineNum);
+      setHighlightEventID(eventID);
       setTimeout(() => setCopiedLine(null), 1500);
     });
   }, [runID]);
@@ -508,11 +544,11 @@ export function LogStream({ runID, snapshot, focusPhase }: LogStreamProps) {
             {rows.map((dl, i) => {
               const lineNum = i + 1;
               const color = machineColor(dl.machineID, colorMapRef.current);
-              const isHighlighted = highlightLine === lineNum;
+              const isHighlighted = highlightLine === lineNum || (highlightEventID !== null && dl.id === highlightEventID);
               const isCopied = copiedLine === lineNum;
               return (
                 <div
-                  key={i}
+                  key={dl.id}
                   className={`flex group hover:bg-white/[0.03] px-1 ${
                     wrapLines ? "py-px" : "h-5"
                   } ${isHighlighted ? "bg-yellow-500/10 border-l-2 border-yellow-500" : ""}`}
@@ -524,13 +560,16 @@ export function LogStream({ runID, snapshot, focusPhase }: LogStreamProps) {
                         ? "text-emerald-400"
                         : "text-zinc-800 group-hover:text-zinc-500"
                     }`}
-                    onClick={() => copyLineLink(lineNum)}
-                    title="Click to copy link to this line"
+                    onClick={() => copyLineLink(lineNum, dl.id)}
+                    title="Click to copy stable cross-user link to this event"
                   >
                     {isCopied ? <Check className="h-3 w-3 inline" /> : lineNum}
                   </span>
-                  {/* Machine label */}
-                  <span className={`${color} shrink-0 w-24 truncate select-none pr-1 text-right text-[11px] leading-5`}>
+                  {/* Machine label — full id on hover via title (truncate=ellipsis on overflow) */}
+                  <span
+                    className={`${color} shrink-0 w-44 truncate select-none pr-1 text-right text-[11px] leading-5`}
+                    title={dl.machineID}
+                  >
                     [{shortMachine(dl.machineID)}]
                   </span>
                   {/* Log text */}
