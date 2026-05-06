@@ -8,10 +8,14 @@ import (
 )
 
 // NodeContext is passed to every ExecuteFunc.
-// It carries the parent context and a node-scoped logger.
+// It carries the parent context, a node-scoped logger, and an optional
+// snapshot-save hook for tasks that need to persist state mid-execution
+// (e.g. terraform tasks recording the workdir id BEFORE apply, so a
+// crash during apply still leaves enough state for teardown to clean up).
 type NodeContext struct {
 	context.Context
-	log *zap.Logger
+	log    *zap.Logger
+	saveFn func()
 }
 
 // Log returns the node-scoped zap logger.
@@ -20,10 +24,20 @@ func (nc *NodeContext) Log() *zap.Logger {
 	return nc.log
 }
 
+// SaveSnapshot triggers an immediate executor save of the current state.
+// No-op when no save hook is wired (older tests / direct task invocation).
+// Tasks should call this after any mutation of run state that's load-
+// bearing for recovery — i.e. anything teardown needs to find again.
+func (nc *NodeContext) SaveSnapshot() {
+	if nc.saveFn != nil {
+		nc.saveFn()
+	}
+}
+
 // WithContext returns a shallow copy of NodeContext with a different context.Context.
 // The logger is preserved from the original.
 func (nc *NodeContext) WithContext(ctx context.Context) *NodeContext {
-	return &NodeContext{Context: ctx, log: nc.log}
+	return &NodeContext{Context: ctx, log: nc.log, saveFn: nc.saveFn}
 }
 
 // LogSink receives log entries per node for external streaming (UI, storage, etc.).

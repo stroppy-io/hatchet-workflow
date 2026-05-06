@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,7 +8,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/auth"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/run"
@@ -22,6 +20,7 @@ type suiteItem struct {
 	Name        string               `json:"name"`
 	Description string               `json:"description"`
 	Items       []postgres.SuiteItem `json:"items"`
+	Policy      postgres.SuitePolicy `json:"policy"`
 	CreatedAt   string               `json:"created_at"`
 	UpdatedAt   string               `json:"updated_at"`
 	Runs        []suiteRunSummary    `json:"runs,omitempty"`
@@ -39,17 +38,23 @@ func suiteToItem(s postgres.Suite) suiteItem {
 	if items == nil {
 		items = []postgres.SuiteItem{}
 	}
+	policy := s.Policy
+	if policy.Mode == "" {
+		policy = postgres.DefaultSuitePolicy()
+	}
 	return suiteItem{
 		ID: s.ID, Name: s.Name, Description: s.Description, Items: items,
+		Policy:    policy,
 		CreatedAt: s.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: s.UpdatedAt.Format(time.RFC3339),
 	}
 }
 
 type suiteReq struct {
-	Name        string               `json:"name"`
-	Description string               `json:"description"`
-	Items       []postgres.SuiteItem `json:"items"`
+	Name        string                `json:"name"`
+	Description string                `json:"description"`
+	Items       []postgres.SuiteItem  `json:"items"`
+	Policy      *postgres.SuitePolicy `json:"policy,omitempty"`
 }
 
 func (s *Server) listSuites(w http.ResponseWriter, r *http.Request) {
@@ -101,8 +106,13 @@ func (s *Server) createSuite(w http.ResponseWriter, r *http.Request) {
 	}
 	st := postgres.NewSuiteStorage(s.pool)
 	id := uuid.New().String()
+	policy := postgres.DefaultSuitePolicy()
+	if req.Policy != nil {
+		policy = *req.Policy
+	}
 	if err := st.Create(r.Context(), postgres.Suite{
 		ID: id, TenantID: tenantID, Name: req.Name, Description: req.Description, Items: req.Items,
+		Policy: policy,
 	}); err != nil {
 		writeJSON(w, http.StatusConflict, map[string]string{"error": "create failed: " + err.Error()})
 		return
@@ -127,8 +137,13 @@ func (s *Server) updateSuite(w http.ResponseWriter, r *http.Request) {
 	if req.Name == "" {
 		req.Name = existing.Name
 	}
+	policy := existing.Policy
+	if req.Policy != nil {
+		policy = *req.Policy
+	}
 	if err := st.Update(r.Context(), postgres.Suite{
 		ID: id, TenantID: tenantID, Name: req.Name, Description: req.Description, Items: req.Items,
+		Policy: policy,
 	}); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
@@ -175,18 +190,33 @@ func (s *Server) launchSuite(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "suite has no items"})
 		return
 	}
+	if s.scheduler == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "scheduler not initialised"})
+		return
+	}
 
 	rpStorage := postgres.NewRunPresetStorage(s.pool)
 
-	// Build all configs up-front so we fail before launching anything if a
-	// referenced run-preset is missing or malformed. Sequential launch
-	// happens in a goroutine afterwards.
-	type prepared struct {
-		cfg      types.RunConfig
-		position int
+	// Snapshot the suite's execution policy at launch time. Edits made
+	// AFTER launch don't retroactively change the running batch.
+	policy := su.Policy
+	if policy.Mode == "" {
+		policy = postgres.DefaultSuitePolicy()
 	}
+	policyJSON, _ := json.Marshal(policy)
+
+	// Resolve every step's merged config FIRST. Validation happens here so
+	// we fail the launch before any DB writes if any preset is missing or
+	// any overrides JSON is malformed.
 	batchID := uuid.New().String()
-	var plan []prepared
+	now := time.Now().UnixMilli()
+
+	type planned struct {
+		runID    string
+		position int
+		cfg      types.RunConfig
+	}
+	var plan []planned
 
 	for i, it := range su.Items {
 		rp, err := rpStorage.Get(r.Context(), tenantID, it.RunPresetID)
@@ -196,11 +226,6 @@ func (s *Server) launchSuite(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		// Stored item overrides first, then per-launch overrides. JSON merge
-		// is shallow at the top level — the SPA sends partial RunConfig
-		// patches like {"stroppy":{"vus":200}} and expects them to replace
-		// the matching top-level subtree, which mirrors how `rerun_config`
-		// behaves on the existing rerun flow.
 		base := rp.Config
 		if len(it.Overrides) > 0 {
 			base = mergeJSONShallow(base, it.Overrides)
@@ -215,7 +240,7 @@ func (s *Server) launchSuite(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		cfg.ID = fmt.Sprintf("run-%d-s%d", time.Now().UnixMilli(), i)
+		cfg.ID = fmt.Sprintf("run-%d-s%d", now, i)
 		cfg.SuiteID = id
 		cfg.RunPresetID = it.RunPresetID
 		if req.NamePrefix != "" {
@@ -228,61 +253,91 @@ func (s *Server) launchSuite(w http.ResponseWriter, r *http.Request) {
 		if req.Description != "" {
 			cfg.Description = req.Description
 		}
-		plan = append(plan, prepared{cfg: cfg, position: i})
+		plan = append(plan, planned{runID: cfg.ID, position: i, cfg: cfg})
 	}
 
-	// Launch sequentially in the background so each run completes (or fails)
-	// before the next starts. Fire-and-forget to the executor; failures are
-	// surfaced via the run snapshot.
-	go func() {
-		ctx := context.Background()
-		for _, step := range plan {
-			cfg := step.cfg
-			cfg.ID = fmt.Sprintf("run-%d-s%d", time.Now().UnixMilli(), step.position)
-
-			// Resolve preset topology, package, probe.
-			if err := s.resolveRunPreset(ctx, tenantID, &cfg); err != nil {
-				s.logger.Error("suite launch: resolve preset failed", zap.String("suite", id), zap.Int("pos", step.position), zap.Error(err))
-				continue
-			}
-			if err := s.resolveRunPackage(ctx, tenantID, &cfg); err != nil {
-				s.logger.Error("suite launch: resolve package failed", zap.String("suite", id), zap.Error(err))
-				continue
-			}
-			run.FillMachinesFromTopology(&cfg)
-
-			runCtx, cancel := context.WithCancel(ctx)
-			s.runCancelsMu.Lock()
-			s.runCancels[cfg.ID] = cancel
-			s.runTenants[cfg.ID] = tenantID
-			s.runCancelsMu.Unlock()
-
-			_ = st.RecordRun(ctx, postgres.SuiteRunRow{
-				SuiteID: id, BatchID: batchID, RunID: cfg.ID,
-				TenantID: tenantID, Position: step.position,
-			})
-
-			activeRuns.Inc()
-			done := make(chan struct{})
-			go func(c types.RunConfig) {
-				defer close(done)
-				defer activeRuns.Dec()
-				if err := s.app.Start(runCtx, tenantID, c); err != nil {
-					s.logger.Error("suite run failed", zap.String("run_id", c.ID), zap.Error(err))
-				}
-			}(cfg)
-			<-done
-
-			s.runCancelsMu.Lock()
-			delete(s.runCancels, cfg.ID)
-			delete(s.runTenants, cfg.ID)
-			s.runCancelsMu.Unlock()
-			cancel()
+	// Persist the entire batch as queued job_runs. Sequential ordering is
+	// enforced inside ClaimNext via a position-blockers check (a step at
+	// position N is only claimable once all earlier steps are terminal).
+	// suite_runs index row is inserted alongside so the existing UI lookup
+	// keeps working.
+	for _, p := range plan {
+		cfg := p.cfg
+		// Resolve preset/package/probe + quota + cost — same pipeline as
+		// single-run enqueue.
+		if err := s.resolveRunPreset(r.Context(), tenantID, &cfg); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("step %d: %s", p.position, err.Error())})
+			return
 		}
-	}()
+		if err := s.resolveRunPackage(r.Context(), tenantID, &cfg); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("step %d: %s", p.position, err.Error())})
+			return
+		}
+		if err := s.probeRunWorkload(r.Context(), cfg); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("step %d probe: %s", p.position, err.Error())})
+			return
+		}
+		run.FillMachinesFromTopology(&cfg)
+
+		cost := run.EstimateRunCost(cfg)
+		cfgJSON, _ := json.Marshal(&cfg)
+		if err := s.scheduler.Jobs().Enqueue(r.Context(), postgres.JobRun{
+			RunID:       cfg.ID,
+			TenantID:    tenantID,
+			BatchID:     batchID,
+			SuiteID:     id,
+			RunPresetID: cfg.RunPresetID,
+			Position:    p.position,
+			Config:      cfgJSON,
+			SuitePolicy: policyJSON,
+			Cost: postgres.JobCost{
+				CPUs: cost.CPUs, MemoryMB: cost.MemoryMB, DiskGB: cost.DiskGB,
+				VMCount: cost.VMCount, RunsRunning: cost.RunsRunning,
+			},
+		}); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{
+				"error": fmt.Sprintf("enqueue step %d failed: %s", p.position, err.Error()),
+			})
+			return
+		}
+		_ = st.RecordRun(r.Context(), postgres.SuiteRunRow{
+			SuiteID: id, BatchID: batchID, RunID: cfg.ID,
+			TenantID: tenantID, Position: p.position,
+		})
+	}
 
 	writeJSON(w, http.StatusAccepted, map[string]any{
 		"suite_id": id, "batch_id": batchID, "items": len(plan),
+	})
+}
+
+// cancelBatch transitions every job in a launched batch to cancelled.
+// Queued rows go straight to state=cancelled; running ones get their
+// worker context cancel()'d via scheduler.CancelRun and finish naturally.
+func (s *Server) cancelBatch(w http.ResponseWriter, r *http.Request) {
+	tenantID := auth.TenantID(r.Context())
+	id := chi.URLParam(r, "id")
+	batchID := chi.URLParam(r, "batchID")
+	if s.scheduler == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "scheduler not initialised"})
+		return
+	}
+	rows, err := s.scheduler.Jobs().ListByBatch(r.Context(), tenantID, batchID)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	cancelled := 0
+	for _, j := range rows {
+		if j.State == postgres.JobStateFinished || j.State == postgres.JobStateFailed || j.State == postgres.JobStateCancelled {
+			continue
+		}
+		if ok, _ := s.scheduler.CancelRun(r.Context(), tenantID, j.RunID); ok {
+			cancelled++
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"suite_id": id, "batch_id": batchID, "cancelled": cancelled,
 	})
 }
 

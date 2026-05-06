@@ -118,6 +118,9 @@ services:
       - --addr=:8080
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      # Terraform workdir — survives `docker compose down/up` so a server
+      # restart never strands cloud resources by losing tfstate.
+      - tfstate:/tmp/stroppy-terraform
     environment:
       DATABASE_URL: postgres://stroppy:${POSTGRES_PASSWORD:-stroppy}@127.0.0.1:5436/stroppy?sslmode=disable
       JWT_SECRET: ${JWT_SECRET:-stroppy-dev-secret}
@@ -144,6 +147,7 @@ volumes:
   pgdata:
   vmdata:
   vldata:
+  tfstate:
   grafanadata:
   caddy_data:
   caddy_config:

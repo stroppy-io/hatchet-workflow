@@ -19,6 +19,22 @@ type SuiteItem struct {
 	Overrides   json.RawMessage `json:"overrides,omitempty"`
 }
 
+// SuitePolicy controls how the scheduler admits step jobs of a launched
+// batch. Sequential is the default (blocks N until N-1 is terminal);
+// parallel admits up to MaxParallel jobs from the same batch concurrently.
+type SuitePolicy struct {
+	Mode           string `json:"mode"`             // "sequential" | "parallel"
+	MaxParallel    int    `json:"max_parallel"`     // parallel only; 0 = unlimited
+	OnStepFail     string `json:"on_step_fail"`     // "continue" | "stop"
+	StepTimeoutMin int    `json:"step_timeout_min"` // 0 = no timeout
+}
+
+// DefaultSuitePolicy returns the policy used for suites that haven't set
+// one explicitly. Mirrors the migration's column default.
+func DefaultSuitePolicy() SuitePolicy {
+	return SuitePolicy{Mode: "sequential", MaxParallel: 1, OnStepFail: "continue"}
+}
+
 // Suite is an ordered list of run-preset launches that can be executed as a
 // batch and re-run later with overrides.
 type Suite struct {
@@ -27,6 +43,7 @@ type Suite struct {
 	Name        string
 	Description string
 	Items       []SuiteItem
+	Policy      SuitePolicy
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -54,10 +71,17 @@ func (s *SuiteStorage) Create(ctx context.Context, su Suite) error {
 	if err != nil {
 		return err
 	}
+	if su.Policy.Mode == "" {
+		su.Policy = DefaultSuitePolicy()
+	}
+	policyJSON, err := json.Marshal(su.Policy)
+	if err != nil {
+		return err
+	}
 	_, err = s.pool.Exec(ctx, `
-		INSERT INTO suites (id, tenant_id, name, description, items, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
-		su.ID, su.TenantID, su.Name, su.Description, string(itemsJSON),
+		INSERT INTO suites (id, tenant_id, name, description, items, execution_policy, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+		su.ID, su.TenantID, su.Name, su.Description, string(itemsJSON), string(policyJSON),
 	)
 	return err
 }
@@ -67,10 +91,17 @@ func (s *SuiteStorage) Update(ctx context.Context, su Suite) error {
 	if err != nil {
 		return err
 	}
+	if su.Policy.Mode == "" {
+		su.Policy = DefaultSuitePolicy()
+	}
+	policyJSON, err := json.Marshal(su.Policy)
+	if err != nil {
+		return err
+	}
 	tag, err := s.pool.Exec(ctx, `
-		UPDATE suites SET name = $3, description = $4, items = $5, updated_at = NOW()
+		UPDATE suites SET name = $3, description = $4, items = $5, execution_policy = $6, updated_at = NOW()
 		WHERE id = $1 AND tenant_id = $2`,
-		su.ID, su.TenantID, su.Name, su.Description, string(itemsJSON),
+		su.ID, su.TenantID, su.Name, su.Description, string(itemsJSON), string(policyJSON),
 	)
 	if err != nil {
 		return err
@@ -83,12 +114,14 @@ func (s *SuiteStorage) Update(ctx context.Context, su Suite) error {
 
 func (s *SuiteStorage) Get(ctx context.Context, tenantID, id string) (*Suite, error) {
 	var su Suite
-	var itemsStr string
+	var itemsStr, policyStr string
 	err := s.pool.QueryRow(ctx, `
-		SELECT id, tenant_id, name, description, items, created_at, updated_at
+		SELECT id, tenant_id, name, description, items,
+		       COALESCE(execution_policy, '{}'),
+		       created_at, updated_at
 		FROM suites WHERE id = $1 AND tenant_id = $2`,
 		id, tenantID,
-	).Scan(&su.ID, &su.TenantID, &su.Name, &su.Description, &itemsStr, &su.CreatedAt, &su.UpdatedAt)
+	).Scan(&su.ID, &su.TenantID, &su.Name, &su.Description, &itemsStr, &policyStr, &su.CreatedAt, &su.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return nil, nil
 	}
@@ -98,12 +131,20 @@ func (s *SuiteStorage) Get(ctx context.Context, tenantID, id string) (*Suite, er
 	if err := json.Unmarshal([]byte(itemsStr), &su.Items); err != nil {
 		return nil, err
 	}
+	if policyStr != "" && policyStr != "{}" {
+		_ = json.Unmarshal([]byte(policyStr), &su.Policy)
+	}
+	if su.Policy.Mode == "" {
+		su.Policy = DefaultSuitePolicy()
+	}
 	return &su, nil
 }
 
 func (s *SuiteStorage) List(ctx context.Context, tenantID string) ([]Suite, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT id, tenant_id, name, description, items, created_at, updated_at
+		SELECT id, tenant_id, name, description, items,
+		       COALESCE(execution_policy, '{}'),
+		       created_at, updated_at
 		FROM suites WHERE tenant_id = $1 ORDER BY name`,
 		tenantID,
 	)
@@ -115,12 +156,18 @@ func (s *SuiteStorage) List(ctx context.Context, tenantID string) ([]Suite, erro
 	var out []Suite
 	for rows.Next() {
 		var su Suite
-		var itemsStr string
-		if err := rows.Scan(&su.ID, &su.TenantID, &su.Name, &su.Description, &itemsStr, &su.CreatedAt, &su.UpdatedAt); err != nil {
+		var itemsStr, policyStr string
+		if err := rows.Scan(&su.ID, &su.TenantID, &su.Name, &su.Description, &itemsStr, &policyStr, &su.CreatedAt, &su.UpdatedAt); err != nil {
 			return nil, err
 		}
 		if err := json.Unmarshal([]byte(itemsStr), &su.Items); err != nil {
 			continue
+		}
+		if policyStr != "" && policyStr != "{}" {
+			_ = json.Unmarshal([]byte(policyStr), &su.Policy)
+		}
+		if su.Policy.Mode == "" {
+			su.Policy = DefaultSuitePolicy()
 		}
 		out = append(out, su)
 	}

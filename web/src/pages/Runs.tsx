@@ -46,7 +46,7 @@ import {
 
 // --- Helpers ---
 
-type RunStatus = "done" | "failed" | "running" | "pending" | "cancelled" | "cancelling";
+type RunStatus = "queued" | "done" | "failed" | "running" | "pending" | "cancelled" | "cancelling";
 
 function deriveStatus(r: RunSummary, cancellingIds?: Set<string>): RunStatus {
   if (cancellingIds?.has(r.id)) {
@@ -58,10 +58,15 @@ function deriveStatus(r: RunSummary, cancellingIds?: Set<string>): RunStatus {
   if (r.failed > 0) return "failed";
   if (r.done === r.total && r.total > 0) return "done";
   if (r.done > 0) return "running";
+  // Queued runs have no snapshot yet — listRuns synthesises a row with
+  // total=0, done=0, pending=1 so we can tell them apart from "ran but
+  // produced no nodes".
+  if (r.total === 0 && r.pending > 0) return "queued";
   return "pending";
 }
 
 const STATUS_CONFIG: Record<RunStatus, { label: string; variant: "success" | "destructive" | "warning" | "pending" | "secondary" }> = {
+  queued: { label: "Queued", variant: "secondary" },
   done: { label: "Done", variant: "success" },
   failed: { label: "Failed", variant: "destructive" },
   cancelling: { label: "Cancelling", variant: "warning" },

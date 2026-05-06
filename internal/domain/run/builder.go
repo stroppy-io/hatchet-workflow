@@ -417,6 +417,9 @@ func (b *builder) dbTasks() (install dag.Task, config dag.Task, err error) {
 		// yandex_managed_ydb terraform module when Kind is YDBManaged).
 		return &noopTask{}, &noopTask{}, nil
 	case types.DatabaseCockroach:
+		if db.Cockroach == nil {
+			return nil, nil, fmt.Errorf("cockroach topology missing for database.kind=cockroach")
+		}
 		return &cockroachInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version},
 			&cockroachConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.Cockroach}, nil
 	default:

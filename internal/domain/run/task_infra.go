@@ -483,6 +483,14 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 		}),
 	)
 
+	// Record the workdir BEFORE apply so a server crash mid-apply still
+	// leaves enough state in the snapshot for the teardown phase to fire
+	// `terraform destroy` against whatever VMs got partially created.
+	// Without this, an early apply failure would orphan VMs in YC.
+	t.state.SetTerraformWdId(string(wdId))
+	t.state.SetTerraformActor(actor)
+	nc.SaveSnapshot()
+
 	nc.Log().Info("running terraform apply for Yandex Cloud",
 		zap.String("run_id", t.runCfg.ID),
 		zap.Int("vm_count", len(vmSpecs)),
@@ -493,10 +501,6 @@ func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
 	if err != nil {
 		return fmt.Errorf("machines: terraform apply: %w", err)
 	}
-
-	// Store working directory ID and actor for teardown.
-	t.state.SetTerraformWdId(string(wdId))
-	t.state.SetTerraformActor(actor)
 
 	// Parse terraform output — main branch format returns nat_ip + internal_ip.
 	vmIPs, err := terraform.GetTfOutputVal[yandexVmIPs](output, "vm_ips")
@@ -820,6 +824,12 @@ func (t *machinesTask) yandexManagedYDBMachines(nc *dag.NodeContext) error {
 		}),
 	)
 
+	// Record workdir before apply so an apply crash still leaves state for
+	// teardown to clean up partially created managed-YDB resources.
+	t.state.SetTerraformWdId(string(wdId))
+	t.state.SetTerraformActor(actor)
+	nc.SaveSnapshot()
+
 	nc.Log().Info("running terraform apply for Yandex Cloud Managed YDB",
 		zap.String("run_id", t.runCfg.ID),
 		zap.String("managed_type", mgType),
@@ -831,9 +841,6 @@ func (t *machinesTask) yandexManagedYDBMachines(nc *dag.NodeContext) error {
 	if err != nil {
 		return fmt.Errorf("machines: terraform apply (managed ydb): %w", err)
 	}
-
-	t.state.SetTerraformWdId(string(wdId))
-	t.state.SetTerraformActor(actor)
 
 	vmIPs, err := terraform.GetTfOutputVal[yandexVmIPs](output, "vm_ips")
 	if err != nil {

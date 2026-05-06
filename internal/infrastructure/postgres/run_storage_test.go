@@ -23,8 +23,13 @@ func testDB(t *testing.T) *RunStorage {
 	}
 	t.Cleanup(func() { pool.Close() })
 
-	_, err = pool.Exec(ctx, "INSERT INTO tenants (id, name) VALUES ('t1', 'test-tenant') ON CONFLICT DO NOTHING")
-	if err != nil {
+	// Ensure tenant t1 exists. Use a per-test unique name in case earlier
+	// suites left a conflicting `test-tenant` row with a different id —
+	// ON CONFLICT DO NOTHING would otherwise silently skip the insert and
+	// every Save below FK-fails.
+	if _, err := pool.Exec(ctx,
+		`INSERT INTO tenants (id, name) VALUES ('t1', 't1-' || gen_random_uuid()::text)
+		 ON CONFLICT (id) DO NOTHING`); err != nil {
 		t.Fatal(err)
 	}
 

@@ -457,6 +457,7 @@ export async function createSuite(data: {
   name: string;
   description?: string;
   items: SuiteItem[];
+  policy?: import("./types").SuitePolicy;
 }): Promise<{ id: string }> {
   return request(`${API_BASE}/suites`, {
     method: "POST",
@@ -466,7 +467,7 @@ export async function createSuite(data: {
 
 export async function updateSuite(
   id: string,
-  data: { name?: string; description?: string; items?: SuiteItem[] },
+  data: { name?: string; description?: string; items?: SuiteItem[]; policy?: import("./types").SuitePolicy },
 ): Promise<{ status: string }> {
   return request(`${API_BASE}/suites/${id}`, {
     method: "PUT",
@@ -489,6 +490,15 @@ export async function launchSuite(
   return request(`${API_BASE}/suites/${id}/run`, {
     method: "POST",
     body: JSON.stringify(data || {}),
+  });
+}
+
+export async function cancelBatch(
+  suiteID: string,
+  batchID: string,
+): Promise<{ suite_id: string; batch_id: string; cancelled: number }> {
+  return request(`${API_BASE}/suites/${suiteID}/batches/${batchID}/cancel`, {
+    method: "POST",
   });
 }
 
@@ -691,4 +701,43 @@ export async function getSharedRun(token: string): Promise<{
   const res = await fetch(`/api/share/${token}`);
   if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
   return res.json();
+}
+
+// ---------- Queue / Quotas ----------
+
+export interface JobCost {
+  cpus: number;
+  memory_mb: number;
+  disk_gb: number;
+  vm_count: number;
+  runs_running: number;
+}
+
+export interface QueueRow {
+  run_id: string;
+  batch_id?: string;
+  suite_id?: string;
+  position: number;
+  state: "queued" | "claimed" | "running" | "finished" | "failed" | "cancelled";
+  cost: JobCost;
+  created_at: string;
+  started_at?: string;
+  heartbeat_at?: string;
+  error?: string;
+  name?: string;
+}
+
+export interface QuotasResponse {
+  used: JobCost;
+  limits: JobCost;
+  queue_depth: number;
+  running_count: number;
+}
+
+export async function listQueue(): Promise<QueueRow[]> {
+  return request(`${API_BASE}/queue`);
+}
+
+export async function getQuotas(): Promise<QuotasResponse> {
+  return request(`${API_BASE}/quotas`);
 }

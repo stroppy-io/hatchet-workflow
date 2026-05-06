@@ -28,9 +28,18 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/metrics"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/run"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
 	pgdb "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/generated"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/victoria"
 )
+
+// schedAPI is what Server needs from the scheduler. Defined locally so we
+// don't pull the scheduler package into api/ (which would create a cycle:
+// scheduler imports api.App as Runner).
+type schedAPI interface {
+	Jobs() *postgres.JobStorage
+	CancelRun(ctx context.Context, tenantID, runID string) (bool, error)
+}
 
 // Server is the HTTP server exposing agent, external, and UI APIs.
 type Server struct {
@@ -81,6 +90,37 @@ type Server struct {
 
 	// spaFS serves the embedded SPA files. If nil, SPA is not served.
 	spaFS http.FileSystem
+
+	// scheduler owns the durable run queue + worker pool. Wired in by
+	// main.go right after construction; runStart/launchSuite enqueue here
+	// instead of running goroutines inline.
+	scheduler schedAPI
+}
+
+// SetScheduler wires the durable scheduler. Must be called once before
+// the HTTP server starts accepting requests.
+func (s *Server) SetScheduler(sch schedAPI) {
+	s.scheduler = sch
+	// Forward the scheduler's instance UUID + DB pool into PollClient so
+	// every dispatched command is durably persisted in agent_commands.
+	if g, ok := sch.(interface{ InstanceID() string }); ok && s.pollClient != nil {
+		s.pollClient.SetPool(s.pool, g.InstanceID())
+	}
+}
+
+// SettingsResolver returns a closure the scheduler uses to resolve per-tenant
+// settings (quota limits) at admission time.
+func (s *Server) SettingsResolver() func(tenantID string) *types.ServerSettings {
+	return func(tenantID string) *types.ServerSettings { return s.settingsForTenant(tenantID) }
+}
+
+// RecoverChecker returns a closure deciding whether a snapshot is
+// recoverable. Provider-aware: docker checks ContainerIDs alive, yandex
+// pings each agent's /health.
+func (s *Server) RecoverChecker() func(state *dag.RunState) bool {
+	return func(state *dag.RunState) bool {
+		return s.canRecoverState(state)
+	}
 }
 
 // NewServer creates an HTTP server backed by the App.
@@ -193,6 +233,8 @@ func (s *Server) Router() http.Handler {
 		r.Get("/packages/{id}", s.getPackage)
 		r.Get("/packages/{id}/deb", s.downloadPackageDeb)
 		r.Get("/runs", s.listRuns)
+		r.Get("/queue", s.listQueue)
+		r.Get("/quotas", s.getQuotas)
 		r.Get("/run/{runID}/status", s.runStatus)
 		r.Get("/run/{runID}/logs", s.runLogs)
 		r.Get("/run/{runID}/metrics", s.runMetrics)
@@ -235,6 +277,7 @@ func (s *Server) Router() http.Handler {
 			r.Put("/suites/{id}", s.updateSuite)
 			r.Delete("/suites/{id}", s.deleteSuite)
 			r.Post("/suites/{id}/run", s.launchSuite)
+			r.Post("/suites/{id}/batches/{batchID}/cancel", s.cancelBatch)
 			r.Post("/packages", s.createPackage)
 			r.Put("/packages/{id}", s.updatePackage)
 			r.Delete("/packages/{id}", s.deletePackage)
@@ -357,10 +400,30 @@ func (s *Server) agentRegister(w http.ResponseWriter, r *http.Request) {
 func (s *Server) agentPoll(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		MachineID string `json:"machine_id"`
+		Host      string `json:"host,omitempty"`
+		Port      int    `json:"port,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
+	}
+
+	// Re-register this agent on every poll. Lets us rebuild the in-memory
+	// agents map after a server restart without requiring agents to call
+	// /register again — they already keep polling, so we lift identity out
+	// of the poll body.
+	if req.MachineID != "" {
+		s.agentsMu.Lock()
+		_, existed := s.agents[req.MachineID]
+		s.agents[req.MachineID] = agent.Target{
+			ID: req.MachineID, Host: req.Host, AgentPort: req.Port,
+		}
+		s.agentsMu.Unlock()
+		if !existed {
+			agentCount.Inc()
+			s.logger.Info("agent observed via poll (re-registered)",
+				zap.String("machine_id", req.MachineID))
+		}
 	}
 
 	// Long-poll: block up to 60s waiting for a command.
@@ -368,6 +431,25 @@ func (s *Server) agentPoll(w http.ResponseWriter, r *http.Request) {
 	if cmd == nil {
 		w.WriteHeader(http.StatusNoContent)
 		return
+	}
+
+	// Audit the dispatch in agent_commands (best-effort — failure here
+	// doesn't block the agent because the in-memory queue is the source of
+	// truth right now). Audits let the orphan/reaper logic see what was
+	// dispatched even after a server restart.
+	if cmd.ID != "" && req.MachineID != "" {
+		payload, _ := json.Marshal(cmd)
+		go func(runID, machineID string, payload []byte) {
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			_, err := s.pool.Exec(ctx, `
+				INSERT INTO agent_commands (run_id, machine_id, payload, state, claimed_by, claimed_at)
+				VALUES ($1, $2, $3, 'claimed', $4, NOW())`,
+				runID, machineID, string(payload), s.instanceID())
+			if err != nil {
+				s.logger.Debug("agent_commands insert failed", zap.Error(err))
+			}
+		}(extractRunID(req.MachineID), req.MachineID, payload)
 	}
 
 	writeJSON(w, http.StatusOK, cmd)
@@ -388,9 +470,46 @@ func (s *Server) agentReport(w http.ResponseWriter, r *http.Request) {
 	// Route report to the waiting PollClient.Send() call.
 	s.pollClient.DeliverReport(report)
 
+	// Audit the completion in agent_commands. UPDATE is best-effort and
+	// non-blocking — the in-memory channel above is what unblocks the
+	// waiting task in this server lifetime.
+	if report.CommandID != "" {
+		go func(rep agent.Report) {
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			state := "done"
+			if rep.Status == agent.ReportFailed {
+				state = "failed"
+			}
+			_, err := s.pool.Exec(ctx, `
+				UPDATE agent_commands
+				SET state=$2, completed_at=NOW(), result=$3, error=$4
+				WHERE payload::text LIKE '%' || $1 || '%' AND state IN ('pending','claimed')`,
+				rep.CommandID, state, rep.Output, rep.Error)
+			if err != nil {
+				s.logger.Debug("agent_commands update failed", zap.Error(err))
+			}
+		}(report)
+	}
+
 	// Broadcast to WS clients.
 	s.hub.broadcast(wsMessage{Type: "report", Payload: report})
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+// instanceID returns this server process's identifier for audit columns.
+// Empty if scheduler isn't wired (test/CLI mode); the field then stores ”.
+func (s *Server) instanceID() string {
+	if s.scheduler == nil {
+		return ""
+	}
+	type idGetter interface {
+		InstanceID() string
+	}
+	if g, ok := s.scheduler.(idGetter); ok {
+		return g.InstanceID()
+	}
+	return ""
 }
 
 func (s *Server) agentLogBatch(w http.ResponseWriter, r *http.Request) {
@@ -431,88 +550,86 @@ func (s *Server) runStart(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	// Auto-generate ID if empty.
 	if cfg.ID == "" {
 		cfg.ID = fmt.Sprintf("run-%d", time.Now().UnixMilli())
 	}
-
-	// Resolve preset topology if preset_id is provided and no explicit topology set.
-	if err := s.resolveRunPreset(r.Context(), tenantID, &cfg); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+	if err := s.enqueueRun(r.Context(), tenantID, &cfg); err != nil {
+		writeJSON(w, errStatus(err), map[string]string{"error": err.Error()})
 		return
 	}
+	writeJSON(w, http.StatusAccepted, map[string]string{"run_id": cfg.ID, "status": "queued"})
+}
 
-	// Resolve package (from package_id or default built-in).
-	if err := s.resolveRunPackage(r.Context(), tenantID, &cfg); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-		return
+// enqueueError carries an HTTP status code so the runStart / launchSuite
+// handlers can map quota / validation / conflict reasons cleanly.
+type enqueueError struct {
+	code int
+	err  error
+}
+
+func (e *enqueueError) Error() string { return e.err.Error() }
+func errStatus(err error) int {
+	if e, ok := err.(*enqueueError); ok {
+		return e.code
 	}
+	return http.StatusInternalServerError
+}
 
-	if err := s.probeRunWorkload(r.Context(), cfg); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "workload probe failed: " + err.Error()})
-		return
+// enqueueRun resolves preset/package/probe, validates quotas, persists the
+// merged RunConfig in job_runs as queued. Used by both runStart (single)
+// and the suite launcher.
+func (s *Server) enqueueRun(ctx context.Context, tenantID string, cfg *types.RunConfig) error {
+	if err := s.resolveRunPreset(ctx, tenantID, cfg); err != nil {
+		return &enqueueError{code: http.StatusBadRequest, err: err}
 	}
+	if err := s.resolveRunPackage(ctx, tenantID, cfg); err != nil {
+		return &enqueueError{code: http.StatusBadRequest, err: err}
+	}
+	if err := s.probeRunWorkload(ctx, *cfg); err != nil {
+		return &enqueueError{code: http.StatusBadRequest, err: fmt.Errorf("workload probe failed: %w", err)}
+	}
+	run.FillMachinesFromTopology(cfg)
 
-	// Fill machines from topology so quota checks see actual node specs.
-	run.FillMachinesFromTopology(&cfg)
-
-	// Enforce tenant quotas.
 	settings := s.settingsForTenant(tenantID)
-	if err := settings.Quotas.ValidateQuotas(&cfg); err != nil {
-		writeJSON(w, http.StatusForbidden, map[string]string{"error": "quota exceeded: " + err.Error()})
-		return
+	if err := settings.Quotas.ValidateQuotas(cfg); err != nil {
+		return &enqueueError{code: http.StatusForbidden, err: fmt.Errorf("quota exceeded: %w", err)}
 	}
-
-	// Check for duplicate (run already exists in storage).
-	if snap, _ := s.app.Storage().Load(r.Context(), tenantID, cfg.ID); snap != nil {
-		writeJSON(w, http.StatusConflict, map[string]string{
-			"error": fmt.Sprintf("run %q already exists", cfg.ID),
-		})
-		return
-	}
-
-	// Check concurrent run limit.
-	if settings.Quotas.MaxConcurrentRuns > 0 {
-		s.runCancelsMu.Lock()
-		count := 0
-		for _, tid := range s.runTenants {
-			if tid == tenantID {
-				count++
-			}
+	if settings.Quotas.MaxQueueDepth > 0 && s.scheduler != nil {
+		n, err := s.scheduler.Jobs().CountQueued(ctx, tenantID)
+		if err == nil && n >= settings.Quotas.MaxQueueDepth {
+			return &enqueueError{code: http.StatusTooManyRequests, err: fmt.Errorf("queue depth limit reached (%d/%d)", n, settings.Quotas.MaxQueueDepth)}
 		}
-		s.runCancelsMu.Unlock()
-		if count >= settings.Quotas.MaxConcurrentRuns {
-			writeJSON(w, http.StatusForbidden, map[string]string{
-				"error": fmt.Sprintf("concurrent run limit reached (%d/%d)", count, settings.Quotas.MaxConcurrentRuns),
-			})
-			return
+	}
+	if snap, _ := s.app.Storage().Load(ctx, tenantID, cfg.ID); snap != nil {
+		return &enqueueError{code: http.StatusConflict, err: fmt.Errorf("run %q already exists", cfg.ID)}
+	}
+	if s.scheduler != nil {
+		if existing, _ := s.scheduler.Jobs().Get(ctx, tenantID, cfg.ID); existing != nil {
+			return &enqueueError{code: http.StatusConflict, err: fmt.Errorf("run %q already queued", cfg.ID)}
 		}
 	}
 
-	// Run asynchronously with cancellable context.
-	ctx, cancel := context.WithCancel(context.Background())
-	s.runCancelsMu.Lock()
-	s.runCancels[cfg.ID] = cancel
-	s.runTenants[cfg.ID] = tenantID
-	s.runCancelsMu.Unlock()
-
-	activeRuns.Inc()
-	go func() {
-		defer func() {
-			activeRuns.Dec()
-			s.runCancelsMu.Lock()
-			delete(s.runCancels, cfg.ID)
-			delete(s.runTenants, cfg.ID)
-			s.runCancelsMu.Unlock()
-			cancel()
-		}()
-		if err := s.app.Start(ctx, tenantID, cfg); err != nil {
-			s.logger.Error("run failed", zap.String("run_id", cfg.ID), zap.Error(err))
-		}
-	}()
-
-	writeJSON(w, http.StatusAccepted, map[string]string{"run_id": cfg.ID, "status": "started"})
+	cost := run.EstimateRunCost(*cfg)
+	cfgJSON, err := json.Marshal(cfg)
+	if err != nil {
+		return &enqueueError{code: http.StatusInternalServerError, err: err}
+	}
+	if s.scheduler == nil {
+		return &enqueueError{code: http.StatusServiceUnavailable, err: fmt.Errorf("scheduler not initialised")}
+	}
+	return s.scheduler.Jobs().Enqueue(ctx, postgres.JobRun{
+		RunID:       cfg.ID,
+		TenantID:    tenantID,
+		BatchID:     cfg.SuiteID, // suites populate via launchSuite, not here
+		SuiteID:     cfg.SuiteID,
+		RunPresetID: cfg.RunPresetID,
+		Position:    0,
+		Config:      cfgJSON,
+		Cost: postgres.JobCost{
+			CPUs: cost.CPUs, MemoryMB: cost.MemoryMB, DiskGB: cost.DiskGB,
+			VMCount: cost.VMCount, RunsRunning: cost.RunsRunning,
+		},
+	})
 }
 
 func (s *Server) runValidate(w http.ResponseWriter, r *http.Request) {
@@ -595,10 +712,51 @@ func (s *Server) runStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if snap == nil {
+		// Run might still be queued (no snapshot yet — scheduler hasn't
+		// claimed it). Synthesise a minimal snapshot from the job_runs row
+		// so the UI can show "queued" instead of 404'ing.
+		if s.scheduler != nil {
+			if job, _ := s.scheduler.Jobs().Get(r.Context(), tenantID, runID); job != nil {
+				writeJSON(w, http.StatusOK, queuedSnapshotShim(job))
+				return
+			}
+		}
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
+	// Annotate with current job state so UI can surface queued/running/etc.
+	if s.scheduler != nil {
+		if job, _ := s.scheduler.Jobs().Get(r.Context(), tenantID, runID); job != nil {
+			extra := map[string]any{
+				"graph":          json.RawMessage(snap.GraphJSON),
+				"nodes":          snap.Nodes,
+				"state":          snap.State,
+				"started_at":     snap.StartedAt,
+				"finished_at":    snap.FinishedAt,
+				"job_state":      string(job.State),
+				"queue_position": job.Position,
+				"batch_id":       job.BatchID,
+			}
+			writeJSON(w, http.StatusOK, extra)
+			return
+		}
+	}
 	writeJSON(w, http.StatusOK, snap)
+}
+
+// queuedSnapshotShim returns a minimal snapshot-shaped response for jobs
+// that haven't started executing yet (no `runs` row exists). The UI
+// reuses RunDetail rendering for this — empty nodes + job_state="queued".
+func queuedSnapshotShim(job *postgres.JobRun) map[string]any {
+	return map[string]any{
+		"graph":          "",
+		"nodes":          []any{},
+		"state":          nil,
+		"job_state":      string(job.State),
+		"batch_id":       job.BatchID,
+		"queue_position": job.Position,
+		"created_at":     job.CreatedAt,
+	}
 }
 
 // runRenderedConfigs returns the per-component config files that the agent
@@ -643,6 +801,47 @@ func (s *Server) listRuns(w http.ResponseWriter, r *http.Request) {
 			runs[i].Cancelled = true
 		}
 	}
+	// Append queued jobs that don't have a snapshot yet so they appear in
+	// the runs list as "Queued" instead of being invisible until the
+	// scheduler claims them.
+	if s.scheduler != nil {
+		known := make(map[string]bool, len(runs))
+		for _, r2 := range runs {
+			known[r2.ID] = true
+		}
+		rows, err := s.pool.Query(r.Context(), `
+			SELECT run_id, COALESCE(batch_id,''), COALESCE(suite_id,''), COALESCE(run_preset_id,''),
+			       config, created_at
+			FROM job_runs
+			WHERE tenant_id=$1 AND state='queued'
+			ORDER BY created_at DESC`, tenantID)
+		if err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				var (
+					id, batchID, suiteID, runPresetID, cfgStr string
+					createdAt                                 any
+				)
+				if err := rows.Scan(&id, &batchID, &suiteID, &runPresetID, &cfgStr, &createdAt); err != nil {
+					continue
+				}
+				if known[id] {
+					continue
+				}
+				var cfg types.RunConfig
+				_ = json.Unmarshal([]byte(cfgStr), &cfg)
+				summary := dag.RunSummary{
+					ID: id, Total: 0, Done: 0, Pending: 1,
+					DBKind: string(cfg.Database.Kind), Provider: string(cfg.Provider),
+					Script: cfg.Stroppy.Script, Duration: cfg.Stroppy.Duration,
+					VUs: cfg.Stroppy.VUs, DBVersion: cfg.Database.Version,
+					PresetID: cfg.PresetID, Name: cfg.Name, Description: cfg.Description,
+					SuiteID: suiteID, RunPresetID: runPresetID,
+				}
+				runs = append(runs, summary)
+			}
+		}
+	}
 	writeJSON(w, http.StatusOK, runs)
 }
 
@@ -650,25 +849,38 @@ func (s *Server) cancelRun(w http.ResponseWriter, r *http.Request) {
 	tenantID := auth.TenantID(r.Context())
 	runID := chi.URLParam(r, "runID")
 
-	// Verify run belongs to this tenant.
+	// Two cancel paths: if the scheduler owns this run (queued or running),
+	// it short-circuits to either UPDATE state=cancelled (queued) or
+	// cancel() the worker context (running). Legacy in-memory map is kept
+	// as a fallback for tests / cases where the scheduler is not wired.
+	if s.scheduler != nil {
+		ok, err := s.scheduler.CancelRun(r.Context(), tenantID, runID)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		if ok {
+			s.cancelledRuns[runID] = true
+			writeJSON(w, http.StatusOK, map[string]string{"status": "cancelling", "run_id": runID})
+			return
+		}
+	}
+
+	// Fallback: in-memory cancel map (recovery flow before durable jobs).
 	if _, err := s.app.Storage().Load(r.Context(), tenantID, runID); err != nil {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "run not found"})
 		return
 	}
-
 	s.runCancelsMu.Lock()
 	cancel, ok := s.runCancels[runID]
 	s.runCancelsMu.Unlock()
-
 	if !ok {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "run not active or already finished"})
 		return
 	}
-
 	s.logger.Info("cancelling run", zap.String("run_id", runID))
 	cancel()
 	s.cancelledRuns[runID] = true
-
 	writeJSON(w, http.StatusOK, map[string]string{"status": "cancelling", "run_id": runID})
 }
 
@@ -808,6 +1020,16 @@ func (s *Server) CleanupOrphanedRuns() {
 	s.RecoverOrCleanupRuns()
 }
 
+// CleanupOrphanResourcesOnly nukes Docker containers/networks left behind
+// by previous server lifetimes WITHOUT touching run snapshots — that path
+// is owned by the scheduler now. Safe to call on every server start.
+func (s *Server) CleanupOrphanResourcesOnly() {
+	// Only Docker provisions local resources we'd want to GC; Yandex VMs
+	// stay alive in the cloud across server restarts and are owned by the
+	// run's terraform workdir.
+	s.cleanupOrphanedContainers(map[string]bool{})
+}
+
 // canRecoverRun checks whether the Docker containers from a previous run are still running.
 func (s *Server) canRecoverRun(state *dag.RunState) bool {
 	if state == nil || len(state.ContainerIDs) == 0 {
@@ -827,6 +1049,55 @@ func (s *Server) canRecoverRun(state *dag.RunState) bool {
 		}
 	}
 
+	return false
+}
+
+// canRecoverState dispatches by provider — docker uses ContainerInspect
+// (current behaviour), yandex pings each registered agent's /health since
+// VMs don't show up in our local Docker daemon. Used by the scheduler's
+// startup recovery sweep.
+func (s *Server) canRecoverState(state *dag.RunState) bool {
+	if state == nil {
+		return false
+	}
+	switch state.Provider {
+	case "yandex":
+		return s.canRecoverYandex(state)
+	default:
+		return s.canRecoverRun(state)
+	}
+}
+
+// canRecoverYandex does a 3-second HTTP ping of every target's agent.
+// Recovery is deemed possible if at least one agent answers — even partial
+// fleet liveness is enough to drive the DAG forward to teardown.
+func (s *Server) canRecoverYandex(state *dag.RunState) bool {
+	if len(state.Targets) == 0 {
+		return false
+	}
+	cl := &http.Client{Timeout: 3 * time.Second}
+	for _, t := range state.Targets {
+		host := t.Host
+		if host == "" {
+			host = t.InternalHost
+		}
+		if host == "" {
+			continue
+		}
+		port := t.AgentPort
+		if port == 0 {
+			port = 8090
+		}
+		url := fmt.Sprintf("http://%s:%d/health", host, port)
+		resp, err := cl.Get(url)
+		if err != nil {
+			continue
+		}
+		_ = resp.Body.Close()
+		if resp.StatusCode < 500 {
+			return true
+		}
+	}
 	return false
 }
 

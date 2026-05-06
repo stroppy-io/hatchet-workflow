@@ -396,11 +396,26 @@ export interface SuiteRunSummary {
   created_at: string;
 }
 
+export interface SuitePolicy {
+  mode: "sequential" | "parallel";
+  max_parallel: number;
+  on_step_fail: "continue" | "stop";
+  step_timeout_min: number;
+}
+
+export const DEFAULT_SUITE_POLICY: SuitePolicy = {
+  mode: "sequential",
+  max_parallel: 1,
+  on_step_fail: "continue",
+  step_timeout_min: 0,
+};
+
 export interface Suite {
   id: string;
   name: string;
   description: string;
   items: SuiteItem[];
+  policy?: SuitePolicy;
   runs?: SuiteRunSummary[];
   created_at: string;
   updated_at: string;

@@ -9,7 +9,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
@@ -17,6 +19,7 @@ import (
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/api"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/scheduler"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
 )
 
@@ -98,7 +101,29 @@ func serveCmd() *cobra.Command {
 
 			app := api.New(api.Config{Pool: pool, Logger: logger})
 			srv := api.NewServer(app, logger, pool, jwtSec, monitoringURL, monitoringToken, grafanaURL, listenAddr)
-			srv.CleanupOrphanedRuns()
+			// Pre-scheduler best-effort: clean leftover Docker containers/networks
+			// from previous lifetimes. Run recovery is owned by the scheduler.
+			srv.CleanupOrphanResourcesOnly()
+
+			// Durable scheduler — replaces in-memory queue + recovers any
+			// jobs left claimed/running by a previous server process.
+			sch := scheduler.New(scheduler.Config{
+				InstanceID:       uuid.New().String(),
+				Logger:           logger,
+				Pool:             pool,
+				Runner:           app,
+				SettingsResolver: srv.SettingsResolver(),
+				RecoverChecker:   srv.RecoverChecker(),
+			})
+			srv.SetScheduler(sch)
+			if err := sch.Start(ctx); err != nil {
+				return fmt.Errorf("scheduler start: %w", err)
+			}
+			defer func() {
+				stopCtx, stopCancel := context.WithTimeout(context.Background(), 30*time.Second)
+				defer stopCancel()
+				sch.Stop(stopCtx)
+			}()
 
 			// Embed SPA into the server.
 			spaFS, err := fs.Sub(web.Dist, "dist")

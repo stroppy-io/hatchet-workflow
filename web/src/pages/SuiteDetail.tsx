@@ -5,14 +5,17 @@ import {
   updateSuite,
   listRunPresets,
   launchSuite,
+  cancelBatch,
 } from "@/api/client";
 import type {
   Suite,
   SuiteItem,
+  SuitePolicy,
   SuiteRunSummary,
   RunPreset,
   RunConfig,
 } from "@/api/types";
+import { DEFAULT_SUITE_POLICY } from "@/api/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +60,7 @@ export function SuiteDetail() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [items, setItems] = useState<SuiteItem[]>([]);
+  const [policy, setPolicy] = useState<SuitePolicy>(DEFAULT_SUITE_POLICY);
   const [overrideDrafts, setOverrideDrafts] = useState<Record<number, string>>({});
   const [saving, setSaving] = useState(false);
   const [launching, setLaunching] = useState(false);
@@ -71,6 +75,7 @@ export function SuiteDetail() {
       setName(s.name);
       setDescription(s.description);
       setItems(s.items || []);
+      setPolicy(s.policy || DEFAULT_SUITE_POLICY);
       setOverrideDrafts({});
       setAllRunPresets(rps);
     } catch (err) {
@@ -170,7 +175,7 @@ export function SuiteDetail() {
     if (!id) return;
     setSaving(true);
     try {
-      await updateSuite(id, { name, description, items });
+      await updateSuite(id, { name, description, items, policy });
       setMessage({ type: "success", text: "Saved" });
       load();
     } catch (err) {
@@ -185,7 +190,7 @@ export function SuiteDetail() {
     setLaunching(true);
     try {
       // Persist current edits first so the batch reflects the latest plan.
-      await updateSuite(id, { name, description, items });
+      await updateSuite(id, { name, description, items, policy });
       const r = await launchSuite(id, {
         name_prefix: namePrefix || undefined,
         description: launchDescription || undefined,
@@ -408,6 +413,60 @@ export function SuiteDetail() {
             </div>
           </div>
 
+          {/* Execution policy — applied at the next launch. Editable while
+              a batch is in flight, but the change is snapshotted into job_runs
+              at launch time so the running batch keeps its prior policy. */}
+          <div className="space-y-2 border-t border-zinc-800/50 pt-3">
+            <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Policy</div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-mono text-zinc-500">Mode</label>
+              <select
+                value={policy.mode}
+                onChange={(e) => setPolicy((p) => ({ ...p, mode: e.target.value as "sequential" | "parallel" }))}
+                className="w-full bg-[#0a0a0a] border border-zinc-800 px-2 py-1 text-[11px] font-mono text-zinc-200 focus:outline-none focus:border-primary/60"
+              >
+                <option value="sequential">sequential</option>
+                <option value="parallel">parallel</option>
+              </select>
+            </div>
+            {policy.mode === "parallel" && (
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono text-zinc-500">Max parallel</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={64}
+                  value={policy.max_parallel}
+                  onChange={(e) => setPolicy((p) => ({ ...p, max_parallel: Math.max(1, parseInt(e.target.value) || 1) }))}
+                  className="w-full bg-[#0a0a0a] border border-zinc-800 px-2 py-1 text-[11px] font-mono text-zinc-200 focus:outline-none focus:border-primary/60"
+                />
+              </div>
+            )}
+            <div className="space-y-1">
+              <label className="text-[10px] font-mono text-zinc-500">On step fail</label>
+              <select
+                value={policy.on_step_fail}
+                onChange={(e) => setPolicy((p) => ({ ...p, on_step_fail: e.target.value as "continue" | "stop" }))}
+                className="w-full bg-[#0a0a0a] border border-zinc-800 px-2 py-1 text-[11px] font-mono text-zinc-200 focus:outline-none focus:border-primary/60"
+              >
+                <option value="continue">continue</option>
+                <option value="stop">stop</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-mono text-zinc-500">Step timeout (min)</label>
+              <input
+                type="number"
+                min={0}
+                max={1440}
+                value={policy.step_timeout_min}
+                onChange={(e) => setPolicy((p) => ({ ...p, step_timeout_min: Math.max(0, parseInt(e.target.value) || 0) }))}
+                placeholder="0 = no timeout"
+                className="w-full bg-[#0a0a0a] border border-zinc-800 px-2 py-1 text-[11px] font-mono text-zinc-200 focus:outline-none focus:border-primary/60"
+              />
+            </div>
+          </div>
+
           <div className="space-y-2 border-t border-zinc-800/50 pt-3">
             <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Stats</div>
             <StatRow label="Steps" value={String(items.length)} />
@@ -456,18 +515,40 @@ export function SuiteDetail() {
             <div className="text-[11px] text-zinc-600 italic">No runs yet.</div>
           ) : (
             <div className="space-y-2">
-              {batches.map((b) => (
+              {batches.map((b, bi) => {
+                const recent = bi === 0; // only let the user cancel the latest batch
+                return (
                 <div key={b.batchId} className="border border-zinc-800/60 bg-[#080808]">
                   <div className="flex items-center justify-between px-2 py-1.5 border-b border-zinc-800/40">
                     <span className="text-[10px] font-mono text-zinc-400">
                       {new Date(b.createdAt).toLocaleString()}
                     </span>
-                    <Link
-                      to={`/runs?suite=${id}&batch=${b.batchId}`}
-                      className="text-[10px] font-mono text-primary hover:underline"
-                    >
-                      batch
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      {recent && id && (
+                        <button
+                          onClick={async () => {
+                            if (!id) return;
+                            try {
+                              const r = await cancelBatch(id, b.batchId);
+                              setMessage({ type: "success", text: `Cancelled ${r.cancelled} job(s)` });
+                              load();
+                            } catch (err) {
+                              setMessage({ type: "error", text: err instanceof Error ? err.message : "Cancel failed" });
+                            }
+                          }}
+                          className="text-[10px] font-mono text-zinc-500 hover:text-destructive"
+                          title="Cancel all queued/running jobs in this batch"
+                        >
+                          cancel
+                        </button>
+                      )}
+                      <Link
+                        to={`/runs?suite=${id}&batch=${b.batchId}`}
+                        className="text-[10px] font-mono text-primary hover:underline"
+                      >
+                        batch
+                      </Link>
+                    </div>
                   </div>
                   <div className="divide-y divide-zinc-800/30">
                     {b.runs.map((r) => (
@@ -490,7 +571,8 @@ export function SuiteDetail() {
                     ))}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

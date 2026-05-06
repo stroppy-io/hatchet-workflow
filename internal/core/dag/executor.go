@@ -247,6 +247,14 @@ func (e *Executor) executeWithRetry(ctx context.Context, n *Node) {
 	nc := &NodeContext{
 		Context: ctx,
 		log:     newNodeLogger(e.log, e.sink, e.id, n.ID),
+		// Lets a task force a snapshot save mid-execute. Used by terraform
+		// tasks to persist the workdir id BEFORE apply so a crash during
+		// apply still leaves enough state for teardown.
+		saveFn: func() {
+			saveCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = e.save(saveCtx)
+		},
 	}
 
 	var lastErr error

@@ -150,6 +150,18 @@ type TenantQuotas struct {
 	MaxMemoryMBPerNode int      `json:"max_memory_mb_per_node,omitempty"`
 	MaxDiskGBPerNode   int      `json:"max_disk_gb_per_node,omitempty"`
 	MaxConcurrentRuns  int      `json:"max_concurrent_runs,omitempty"`
+	// In-flight resource pool — used by the scheduler to decide whether a
+	// queued run can be admitted right now. Sum across all currently
+	// running jobs of this tenant must stay under each non-zero limit.
+	// Zero on any field = no restriction on that dimension. The tenant's
+	// concurrent count goes through MaxConcurrentRuns above.
+	MaxConcurrentCPUs     int `json:"max_concurrent_cpus,omitempty"`
+	MaxConcurrentMemoryMB int `json:"max_concurrent_memory_mb,omitempty"`
+	MaxConcurrentDiskGB   int `json:"max_concurrent_disk_gb,omitempty"`
+	MaxConcurrentVMs      int `json:"max_concurrent_vms,omitempty"`
+	// Hard cap on queue depth to keep operators from accidentally piling
+	// thousands of jobs on a tenant. 0 = no cap.
+	MaxQueueDepth int `json:"max_queue_depth,omitempty"`
 }
 
 // ServerSettings is the per-tenant settings (stored in DB).

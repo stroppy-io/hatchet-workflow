@@ -1,5 +1,6 @@
 # stroppy-cloud Makefile
 .PHONY: help configure build build-all test test-integration test-e2e test-coverage \
+        test-unit test-db test-full smoke smoke-clean \
         lint fmt docker-build docker-push docker-up docker-down docker-logs \
         serve docs-install docs-dev docs-build web-install web-dev web-build \
         clean release
@@ -57,6 +58,26 @@ build-all: ## Build for all platforms
 test: ## Run unit tests
 	go test ./... -count=1 -race
 
+# ------------- DB-backed test pipeline -------------
+# Picks POSTGRES_PASSWORD from .env when present; defaults to docker-compose's "stroppy".
+POSTGRES_PASSWORD ?= $(shell grep -E '^POSTGRES_PASSWORD=' .env 2>/dev/null | cut -d= -f2)
+POSTGRES_PASSWORD := $(if $(POSTGRES_PASSWORD),$(POSTGRES_PASSWORD),stroppy)
+TEST_DATABASE_URL ?= postgres://stroppy:$(POSTGRES_PASSWORD)@127.0.0.1:5436/stroppy?sslmode=disable
+
+test-unit: ## Run pure unit tests (no DB / no docker)
+	@go test ./internal/domain/run/ ./internal/domain/scheduler/ \
+		./internal/infrastructure/postgres/ \
+		-run "TestEstimate|TestJobCost|TestPreFail|TestStepTimeout" -count=1
+
+test-db: ## Run DB-backed integration tests (auto-starts postgres if needed)
+	@docker compose ps --status running --services 2>/dev/null | grep -qx postgres \
+		|| (echo "Starting postgres for tests..."; docker compose up -d postgres; sleep 4)
+	@TEST_DATABASE_URL="$(TEST_DATABASE_URL)" \
+	  go test $$(go list ./... | grep -v '/tests$$') -count=1
+
+test-full: test-unit test-db ## Full Go test sweep (unit + DB-backed integration)
+	@echo "All Go tests passed."
+
 test-integration: build ## Run integration tests (requires Docker)
 	go test -tags=integration -timeout 30m -v ./tests/
 
@@ -100,6 +121,15 @@ docker-down: ## Stop test stack
 
 docker-logs: ## Show server logs
 	docker compose -f docker-compose.yaml logs -f server
+
+# ============================================================
+# Smoke — full local stack + minimal docker run end-to-end
+# ============================================================
+smoke: ## End-to-end smoke: bring up stack, login, launch tiny postgres run
+	@./scripts/smoke.sh
+
+smoke-clean: ## Tear down smoke stack + wipe volumes
+	docker compose down -v
 
 # ============================================================
 # Serve (development)

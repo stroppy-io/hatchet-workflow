@@ -408,9 +408,13 @@ export function RunDetail() {
               </p>
             )}
           </div>
-          {/* Run status badge */}
+          {/* Run status badge. Treats `nodes: []` + `state: null` (returned
+              by the runStatus queued shim) as "Queued" so users see why
+              their just-launched run has no DAG progress yet. */}
           {snapshot && (
-            isCancelled ? (
+            (snapshot.nodes?.length ?? 0) === 0 && !snapshot.state ? (
+              <Badge className="bg-zinc-700/40 text-zinc-300 border-zinc-600/40">Queued</Badge>
+            ) : isCancelled ? (
               <Badge className="bg-zinc-500/20 text-zinc-400 border-zinc-500/30">Cancelled</Badge>
             ) : cancelling ? (
               <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 animate-pulse">Cancelling...</Badge>
