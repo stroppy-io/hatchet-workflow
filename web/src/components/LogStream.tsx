@@ -548,7 +548,17 @@ export function LogStream({ runID, snapshot, focusPhase }: LogStreamProps) {
               const isCopied = copiedLine === lineNum;
               return (
                 <div
-                  key={dl.id}
+                  // Position-stable key. Composite of array index + dl.id —
+                  // dl.id alone collided when VL groups rows under the same
+                  // (_stream_id, _time) millisecond, causing React to merge
+                  // DOM nodes and overlap consecutive lines.
+                  key={`${i}:${dl.id}`}
+                  // `relative` + `min-h-[20px]` forces every row to occupy
+                  // at least one CSS line. Without it, virtua's height
+                  // measurement on a freshly-appended (yet-unmeasured) row
+                  // is 0 and the row paints at y=0, stacking on top of an
+                  // earlier row until the next ResizeObserver tick.
+                  style={{ position: "relative", minHeight: 20 }}
                   className={`flex group hover:bg-white/[0.03] px-1 ${
                     wrapLines ? "py-px" : "h-5"
                   } ${isHighlighted ? "bg-yellow-500/10 border-l-2 border-yellow-500" : ""}`}
