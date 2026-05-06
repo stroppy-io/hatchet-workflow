@@ -114,15 +114,30 @@ func ValidateConfig(cfg types.RunConfig) error {
 	// Stroppy version: required and >= STROPPY_MIN_VERSION env (default 5.1.1).
 	// Older versions resolve scripts to a legacy embedded tx.ts that ignores
 	// driver_type — caused YDB runs to connect via pg-wire on grpc port.
-	if strings.TrimSpace(cfg.Stroppy.Version) == "" {
+	// Commit-pinned (commit:<sha>) bypasses semver compare — explicit dev
+	// override; user vouches for that build. Still validates SHA shape so
+	// `commit:` alone or junk doesn't slip through.
+	sv := strings.TrimSpace(cfg.Stroppy.Version)
+	if sv == "" {
 		return fmt.Errorf("stroppy.version is required (minimum %s)", types.MinStroppyVersionString())
 	}
-	v, err := types.ParseStroppyVersion(cfg.Stroppy.Version)
-	if err != nil {
-		return fmt.Errorf("stroppy.version %q is not valid semver: %w", cfg.Stroppy.Version, err)
-	}
-	if v.LessThan(types.MinStroppyVersion()) {
-		return fmt.Errorf("stroppy.version %s is below minimum %s", cfg.Stroppy.Version, types.MinStroppyVersionString())
+	if sha, ok := strings.CutPrefix(sv, "commit:"); ok {
+		if len(sha) < 7 || len(sha) > 40 {
+			return fmt.Errorf("stroppy.version commit SHA must be 7–40 hex chars, got %q", sha)
+		}
+		for _, c := range sha {
+			if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+				return fmt.Errorf("stroppy.version commit SHA must be lowercase hex, got %q", sha)
+			}
+		}
+	} else {
+		v, err := types.ParseStroppyVersion(sv)
+		if err != nil {
+			return fmt.Errorf("stroppy.version %q is not valid semver: %w", sv, err)
+		}
+		if v.LessThan(types.MinStroppyVersion()) {
+			return fmt.Errorf("stroppy.version %s is below minimum %s", sv, types.MinStroppyVersionString())
+		}
 	}
 
 	// Machine specs basic checks.
