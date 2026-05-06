@@ -506,8 +506,12 @@ type RunConfig struct {
 	// supplied endpoint. Database.Kind / Database.Version still describe the
 	// target so script compatibility checks work.
 	ExternalDB *ExternalDBConfig `json:"external_db,omitempty"`
-	// ResolvedPackage is populated by the server before building the DAG. Not sent by clients.
-	ResolvedPackage *Package `json:"-"`
+	// ResolvedPackage is populated by the server before building the DAG.
+	// Serialised so the resolution survives the durable job_runs queue —
+	// scheduler claims a row, unmarshals the cfg, and the install task
+	// downstream needs Package non-nil. Clients sending this field have it
+	// overwritten by resolveRunPackage on the server anyway.
+	ResolvedPackage *Package `json:"resolved_package,omitempty"`
 }
 
 // ExternalDBConfig describes a user-supplied database endpoint. When present
