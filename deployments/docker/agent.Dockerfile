@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ARG VMAGENT_VERSION=v1.139.0
 ARG NODE_EXPORTER_VERSION=1.9.1
 ARG MYSQLD_EXPORTER_VERSION=0.19.0
-ARG STROPPY_VERSION=5.1.1
+ARG STROPPY_VERSION=5.1.2
 
 RUN curl -fsSL "https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/${VMAGENT_VERSION}/vmutils-linux-amd64-${VMAGENT_VERSION}.tar.gz" \
     | tar xzf - -C /tmp \

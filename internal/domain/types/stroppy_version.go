@@ -8,7 +8,7 @@ import (
 	hcversion "github.com/hashicorp/go-version"
 )
 
-const defaultMinStroppyVersion = "5.1.1"
+const defaultMinStroppyVersion = "5.1.2"
 
 var (
 	minStroppyVersionOnce sync.Once
