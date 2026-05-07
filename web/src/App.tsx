@@ -11,6 +11,8 @@ import { Presets } from "@/pages/Presets";
 import { RunPresets } from "@/pages/RunPresets";
 import { Suites } from "@/pages/Suites";
 import { SuiteDetail } from "@/pages/SuiteDetail";
+import { SuiteBuilder } from "@/pages/SuiteBuilder";
+import { WorkloadEditor } from "@/pages/WorkloadEditor";
 import { Packages } from "@/pages/Packages";
 import { PresetDesigner } from "@/pages/PresetDesigner";
 import { ServerHealth } from "@/pages/ServerHealth";
@@ -126,7 +128,11 @@ function AppRoutes() {
         <Route path="/presets" element={<Presets />} />
         <Route path="/run-presets" element={<RunPresets />} />
         <Route path="/suites" element={<Suites />} />
+        <Route path="/suites/new" element={<SuiteBuilder />} />
         <Route path="/suites/:id" element={<SuiteDetail />} />
+        <Route path="/suites/:id/edit" element={<SuiteBuilder />} />
+        <Route path="/suites/:id/items/new" element={<WorkloadEditor />} />
+        <Route path="/suites/:id/items/:itemId/edit" element={<WorkloadEditor />} />
 
         <Route path="/settings" element={<SettingsPage />} />
 

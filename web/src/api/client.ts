@@ -443,7 +443,34 @@ export async function deleteRunPreset(id: string): Promise<{ status: string }> {
   return request(`${API_BASE}/run-presets/${id}`, { method: "DELETE" });
 }
 
-// ---------- Suites ----------
+// ---------- Suites (v2) ----------
+
+import type {
+  ComparisonConfig,
+  SuiteCompareResponse,
+  StroppyConfig,
+  NetworkConfig,
+  MachineSpec,
+  Provider,
+} from "./types";
+
+export type SuiteWriteFields = {
+  name?: string;
+  description?: string;
+  policy?: import("./types").SuitePolicy;
+  comparison?: ComparisonConfig;
+  db_preset_ids?: string[];
+  provider?: Provider;
+  platform_id?: string;
+  network?: NetworkConfig;
+  stroppy_machine?: Partial<MachineSpec>;
+  cron_expr?: string;
+  timezone?: string;
+  enabled?: boolean;
+  concurrent_policy?: "forbid" | "allow";
+  catchup_mode?: "skip" | "once";
+  retention_runs?: number;
+};
 
 export async function listSuites(): Promise<Suite[]> {
   return request(`${API_BASE}/suites`);
@@ -453,12 +480,9 @@ export async function getSuite(id: string): Promise<Suite> {
   return request(`${API_BASE}/suites/${id}`);
 }
 
-export async function createSuite(data: {
-  name: string;
-  description?: string;
-  items: SuiteItem[];
-  policy?: import("./types").SuitePolicy;
-}): Promise<{ id: string }> {
+export async function createSuite(
+  data: SuiteWriteFields & { name: string },
+): Promise<{ id: string }> {
   return request(`${API_BASE}/suites`, {
     method: "POST",
     body: JSON.stringify(data),
@@ -467,7 +491,7 @@ export async function createSuite(data: {
 
 export async function updateSuite(
   id: string,
-  data: { name?: string; description?: string; items?: SuiteItem[]; policy?: import("./types").SuitePolicy },
+  data: SuiteWriteFields,
 ): Promise<{ status: string }> {
   return request(`${API_BASE}/suites/${id}`, {
     method: "PUT",
@@ -481,15 +505,10 @@ export async function deleteSuite(id: string): Promise<{ status: string }> {
 
 export async function launchSuite(
   id: string,
-  data?: {
-    overrides?: Record<number, Partial<RunConfig>>;
-    name_prefix?: string;
-    description?: string;
-  },
 ): Promise<{ suite_id: string; batch_id: string; items: number }> {
   return request(`${API_BASE}/suites/${id}/run`, {
     method: "POST",
-    body: JSON.stringify(data || {}),
+    body: JSON.stringify({}),
   });
 }
 
@@ -500,6 +519,68 @@ export async function cancelBatch(
   return request(`${API_BASE}/suites/${suiteID}/batches/${batchID}/cancel`, {
     method: "POST",
   });
+}
+
+// ---------- Suite items ----------
+
+export type SuiteItemWriteFields = {
+  name?: string;
+  workload?: StroppyConfig;
+  position?: number;
+  enabled?: boolean;
+};
+
+export async function listSuiteItems(suiteID: string): Promise<SuiteItem[]> {
+  return request(`${API_BASE}/suites/${suiteID}/items`);
+}
+
+export async function createSuiteItem(
+  suiteID: string,
+  data: SuiteItemWriteFields & { workload: StroppyConfig },
+): Promise<{ id: string }> {
+  return request(`${API_BASE}/suites/${suiteID}/items`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateSuiteItem(
+  suiteID: string,
+  itemID: string,
+  data: SuiteItemWriteFields,
+): Promise<{ status: string }> {
+  return request(`${API_BASE}/suites/${suiteID}/items/${itemID}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteSuiteItem(
+  suiteID: string,
+  itemID: string,
+): Promise<{ status: string }> {
+  return request(`${API_BASE}/suites/${suiteID}/items/${itemID}`, {
+    method: "DELETE",
+  });
+}
+
+export async function reorderSuiteItems(
+  suiteID: string,
+  order: Record<string, number>,
+): Promise<{ status: string }> {
+  return request(`${API_BASE}/suites/${suiteID}/items/reorder`, {
+    method: "POST",
+    body: JSON.stringify({ order }),
+  });
+}
+
+export async function compareBatch(
+  suiteID: string,
+  batchID: string,
+  baseline: string,
+): Promise<SuiteCompareResponse> {
+  const q = baseline ? `?baseline=${encodeURIComponent(baseline)}` : "";
+  return request(`${API_BASE}/suites/${suiteID}/batches/${batchID}/compare${q}`);
 }
 
 // ---------- Probe ----------

@@ -10,7 +10,10 @@ import {
   type PicodataTopology,
   type PicodataTier,
   type YDBTopology,
+  type YDBManagedTopology,
+  type YDBManagedComputeType,
   type MachineSpec,
+  YDB_MANAGED_RESOURCE_PRESETS,
 } from "@/api/types";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
 import { Button } from "@/components/ui/button";
@@ -275,6 +278,18 @@ export function defaultYDB(): YDBTopology {
     default_disk_type: "SSD",
     storage_groups: 1,
     database_path: "/Root/testdb",
+  };
+}
+
+export function defaultYDBManaged(): YDBManagedTopology {
+  return {
+    type: "dedicated",
+    compute_type: "oltp",
+    resource_preset_id: "medium",
+    node_count: 1,
+    storage_groups: 1,
+    storage_type: "ssd",
+    client: { role: "stroppy", count: 1, cpus: 8, memory_mb: 16384, disk_gb: 50, disk_type: "network-ssd" },
   };
 }
 
@@ -1109,6 +1124,307 @@ export function YDBForm({ topology, onChange, disabled }: {
   );
 }
 
+// ─── YDB Managed (Yandex Cloud) ─────────────────────────────────
+
+// YDBManagedForm mirrors the YC console's "Managed YDB" creation panel:
+// type toggle (serverless/dedicated), compute class (oltp/olap),
+// resource preset cards, node count or auto-scale, storage groups.
+// Serverless mode hides the dedicated-only fields and surfaces the
+// throttling RCU cap instead.
+export function YDBManagedForm({ topology, onChange, disabled }: {
+  topology: YDBManagedTopology;
+  onChange: (t: YDBManagedTopology) => void;
+  disabled?: boolean;
+}) {
+  const isDedicated = topology.type === "dedicated";
+  const computeType: YDBManagedComputeType = topology.compute_type ?? "oltp";
+  const filteredPresets = YDB_MANAGED_RESOURCE_PRESETS.filter((p) => p.compute_type === computeType);
+  const autoScaleOn = !!topology.auto_scale;
+
+  return (
+    <div className="space-y-5">
+      {/* Type — serverless vs dedicated */}
+      <div>
+        <Label className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-1.5 block">
+          Тип базы данных
+        </Label>
+        <div className="grid grid-cols-2 gap-2">
+          {(["serverless", "dedicated"] as const).map((t) => {
+            const active = topology.type === t;
+            return (
+              <button
+                key={t}
+                type="button"
+                disabled={disabled}
+                onClick={() => onChange({ ...topology, type: t })}
+                className={`border p-3 text-left transition-all ${
+                  active ? "border-primary/40 bg-primary/[0.06]" : "border-zinc-800/60 hover:bg-zinc-900/50 hover:border-zinc-700"
+                } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              >
+                <div className={`text-xs font-mono font-semibold capitalize ${active ? "text-primary" : "text-zinc-400"}`}>
+                  {t === "serverless" ? "Serverless" : "Dedicated"}
+                </div>
+                <div className="text-[10px] text-zinc-600 mt-0.5">
+                  {t === "serverless"
+                    ? "Pay-per-request. Throttled by RCU."
+                    : "Allocated cluster. Resource presets + storage groups."}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Serverless-only — throttling cap */}
+      {!isDedicated && (
+        <div className="border border-zinc-800/60 bg-[#070707] p-3 space-y-3">
+          <Label className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+            Throttling RCU limit
+          </Label>
+          <Input
+            type="number"
+            min={0}
+            value={topology.throttling_rcus ?? 0}
+            disabled={disabled}
+            onChange={(e) => onChange({ ...topology, throttling_rcus: Number(e.target.value) || 0 })}
+            placeholder="0 = YC default"
+            className="h-8 text-xs font-mono"
+          />
+          <p className="text-[10px] font-mono text-zinc-600">0 = YC defaults applied.</p>
+        </div>
+      )}
+
+      {/* Dedicated-only fields */}
+      {isDedicated && (
+        <>
+          {/* Compute type — OLTP / OLAP */}
+          <div>
+            <Label className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-1.5 block">
+              Вычислительные ресурсы — тип нагрузки
+            </Label>
+            <div className="grid grid-cols-2 gap-2">
+              {(["oltp", "olap"] as const).map((c) => {
+                const active = computeType === c;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => {
+                      // Switching compute type may invalidate the picked
+                      // resource_preset_id — auto-pick the first preset of
+                      // the new family so the picker doesn't end up empty.
+                      const next = YDB_MANAGED_RESOURCE_PRESETS.find((p) => p.compute_type === c);
+                      onChange({
+                        ...topology,
+                        compute_type: c,
+                        resource_preset_id: next?.id ?? topology.resource_preset_id,
+                      });
+                    }}
+                    className={`border p-2.5 text-left transition-all ${
+                      active ? "border-primary/40 bg-primary/[0.06]" : "border-zinc-800/60 hover:bg-zinc-900/50 hover:border-zinc-700"
+                    } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  >
+                    <div className={`text-xs font-mono font-semibold uppercase ${active ? "text-primary" : "text-zinc-400"}`}>
+                      {c}
+                    </div>
+                    <div className="text-[10px] text-zinc-600 mt-0.5">
+                      {c === "oltp" ? "Транзакционная нагрузка" : "Аналитические запросы"}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Resource preset cards */}
+          <div>
+            <Label className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-1.5 block">
+              Параметры узла обработки
+            </Label>
+            {filteredPresets.length === 0 ? (
+              <div className="text-[11px] font-mono text-amber-500/80 border border-amber-500/30 bg-amber-500/[0.04] p-2">
+                No {computeType.toUpperCase()} presets in catalog yet.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {filteredPresets.map((p) => {
+                  const active = topology.resource_preset_id === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => onChange({ ...topology, resource_preset_id: p.id })}
+                      className={`border p-2 text-left transition-all ${
+                        active ? "border-primary/40 bg-primary/[0.06]" : "border-zinc-800/60 hover:bg-zinc-900/50 hover:border-zinc-700"
+                      } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    >
+                      <div className={`text-xs font-mono font-medium ${active ? "text-primary" : "text-zinc-300"}`}>
+                        {p.label}
+                      </div>
+                      <div className="flex gap-1 mt-1">
+                        <span className="text-[9px] font-mono px-1.5 py-0.5 border border-zinc-800 text-zinc-500">
+                          {p.cores} cores
+                        </span>
+                        <span className="text-[9px] font-mono px-1.5 py-0.5 border border-zinc-800 text-zinc-500">
+                          {p.memory_gb} GB
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Scaling — fixed node_count or auto_scale */}
+          <div className="border border-zinc-800/60 bg-[#070707] p-3 space-y-3">
+            <Label className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+              Масштабирование
+            </Label>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={autoScaleOn}
+                disabled={disabled}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    onChange({
+                      ...topology,
+                      auto_scale: { min_size: topology.node_count ?? 1, max_size: Math.max(2, topology.node_count ?? 1), cpu_utilization_percent: 70 },
+                    });
+                  } else {
+                    const { auto_scale: _, ...rest } = topology;
+                    void _;
+                    onChange(rest);
+                  }
+                }}
+                className="accent-primary w-3.5 h-3.5 cursor-pointer"
+              />
+              <span className="text-xs font-mono text-zinc-300">Автоматическое масштабирование</span>
+            </div>
+
+            {!autoScaleOn ? (
+              <div className="space-y-1.5">
+                <Label className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">
+                  Количество узлов
+                </Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={topology.node_count ?? 1}
+                  disabled={disabled}
+                  onChange={(e) => onChange({ ...topology, node_count: Math.max(1, Number(e.target.value) || 1) })}
+                  className="h-7 text-xs font-mono w-32"
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">Min nodes</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={topology.auto_scale?.min_size ?? 1}
+                    disabled={disabled}
+                    onChange={(e) => onChange({
+                      ...topology,
+                      auto_scale: {
+                        ...(topology.auto_scale ?? { min_size: 1, max_size: 2 }),
+                        min_size: Math.max(1, Number(e.target.value) || 1),
+                      },
+                    })}
+                    className="h-7 text-xs font-mono"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">Max nodes</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={topology.auto_scale?.max_size ?? 2}
+                    disabled={disabled}
+                    onChange={(e) => onChange({
+                      ...topology,
+                      auto_scale: {
+                        ...(topology.auto_scale ?? { min_size: 1, max_size: 2 }),
+                        max_size: Math.max(1, Number(e.target.value) || 2),
+                      },
+                    })}
+                    className="h-7 text-xs font-mono"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">CPU target %</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={topology.auto_scale?.cpu_utilization_percent ?? 70}
+                    disabled={disabled}
+                    onChange={(e) => onChange({
+                      ...topology,
+                      auto_scale: {
+                        ...(topology.auto_scale ?? { min_size: 1, max_size: 2 }),
+                        cpu_utilization_percent: Math.min(100, Math.max(1, Number(e.target.value) || 70)),
+                      },
+                    })}
+                    className="h-7 text-xs font-mono"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Storage groups */}
+          <div className="border border-zinc-800/60 bg-[#070707] p-3 space-y-3">
+            <Label className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Группы хранения</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">Тип диска</Label>
+                <Select
+                  value={topology.storage_type || "ssd"}
+                  onValueChange={(v) => onChange({ ...topology, storage_type: v })}
+                  disabled={disabled}
+                >
+                  <SelectTrigger className="h-7 text-xs font-mono"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ssd">SSD</SelectItem>
+                    <SelectItem value="ssd-io-optimized">SSD io-optimized</SelectItem>
+                    <SelectItem value="rot">ROT (HDD)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">
+                  Количество групп · ×100 GB
+                </Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={topology.storage_groups ?? 1}
+                  disabled={disabled}
+                  onChange={(e) => onChange({ ...topology, storage_groups: Math.max(1, Number(e.target.value) || 1) })}
+                  className="h-7 text-xs font-mono"
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Stroppy runner client VM — always shown */}
+      <MachineEditor
+        label="Stroppy Runner (client VM)"
+        spec={topology.client}
+        onChange={(s) => onChange({ ...topology, client: s })}
+        disabled={disabled}
+      />
+    </div>
+  );
+}
+
 // ─── Main Page ───────────────────────────────────────────────────
 
 const DB_META: Record<DatabaseKind, { icon: typeof Database; label: string }> = {
@@ -1137,6 +1453,7 @@ export function PresetDesigner() {
   const [myTopology, setMyTopology] = useState<MySQLTopology>(defaultMySQL());
   const [picoTopology, setPicoTopology] = useState<PicodataTopology>(defaultPicodata());
   const [ydbTopology, setYdbTopology] = useState<YDBTopology>(defaultYDB());
+  const [ydbmTopology, setYdbmTopology] = useState<YDBManagedTopology>(defaultYDBManaged());
 
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -1153,6 +1470,7 @@ export function PresetDesigner() {
         else if (p.db_kind === "mysql") setMyTopology(p.topology as MySQLTopology);
         else if (p.db_kind === "picodata") setPicoTopology(p.topology as PicodataTopology);
         else if (p.db_kind === "ydb") setYdbTopology(p.topology as YDBTopology);
+        else if (p.db_kind === "ydb-managed") setYdbmTopology(p.topology as YDBManagedTopology);
       })
       .catch(() => setMessage({ type: "error", text: "Failed to load preset" }))
       .finally(() => setLoading(false));
@@ -1162,8 +1480,9 @@ export function PresetDesigner() {
     if (dbKind === "postgres") return pgTopology;
     if (dbKind === "mysql") return myTopology;
     if (dbKind === "ydb") return ydbTopology;
+    if (dbKind === "ydb-managed") return ydbmTopology;
     return picoTopology;
-  }, [dbKind, pgTopology, myTopology, picoTopology, ydbTopology]);
+  }, [dbKind, pgTopology, myTopology, picoTopology, ydbTopology, ydbmTopology]);
 
   const errors = useMemo((): ValidationError[] => {
     const errs: ValidationError[] = [];
@@ -1293,6 +1612,17 @@ export function PresetDesigner() {
             )}
             {dbKind === "ydb" && (
               <YDBForm topology={ydbTopology} onChange={setYdbTopology} disabled={isBuiltin} />
+            )}
+            {dbKind === "ydb-managed" && (
+              <YDBManagedForm topology={ydbmTopology} onChange={setYdbmTopology} disabled={isBuiltin} />
+            )}
+            {dbKind === "mariadb" && (
+              <MySQLForm topology={myTopology} onChange={setMyTopology} disabled={isBuiltin} />
+            )}
+            {dbKind === "cockroach" && (
+              <div className="text-[11px] font-mono text-zinc-500 border border-zinc-800/60 bg-[#070707] p-3">
+                CockroachDB has no inline topology editor yet — edit via Raw JSON.
+              </div>
             )}
           </div>
         </div>

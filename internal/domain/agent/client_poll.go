@@ -318,6 +318,19 @@ func (c *PollClient) getQueue(machineID string) chan Command {
 	return q
 }
 
+// waitForAgentTimeout sets the upper bound on how long Send() blocks waiting
+// for the target agent to start polling. Generous because of the recovery
+// path: when the orchestrator restarts mid-run, an agent that was OOM-killed
+// or hit by a botched teardown needs systemd to restart it, the new process
+// to come up, and the poll loop to reach the new server. 3 minutes covers
+// the slow cases without making fresh provisions feel broken.
+const waitForAgentTimeout = 3 * time.Minute
+
+// firstWarnAfter is when we log a heads-up that the agent still hasn't
+// connected — useful when triaging "did not poll" failures to know whether
+// the connect was instant-but-slow or simply absent.
+const firstWarnAfter = 30 * time.Second
+
 func (c *PollClient) waitForAgent(ctx context.Context, machineID string) error {
 	c.mu.Lock()
 	ch, ok := c.healthy[machineID]
@@ -327,13 +340,23 @@ func (c *PollClient) waitForAgent(ctx context.Context, machineID string) error {
 	}
 	c.mu.Unlock()
 
-	deadline := time.After(120 * time.Second)
-	select {
-	case <-ch:
-		return nil
-	case <-deadline:
-		return fmt.Errorf("agent %s did not poll within 120s", machineID)
-	case <-ctx.Done():
-		return ctx.Err()
+	warn := time.After(firstWarnAfter)
+	deadline := time.After(waitForAgentTimeout)
+	for {
+		select {
+		case <-ch:
+			return nil
+		case <-warn:
+			c.logger.Warn("still waiting for agent to poll",
+				zap.String("machine_id", machineID),
+				zap.Duration("waited", firstWarnAfter),
+				zap.Duration("deadline", waitForAgentTimeout),
+			)
+			warn = nil
+		case <-deadline:
+			return fmt.Errorf("agent %s did not poll within %s", machineID, waitForAgentTimeout)
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
 }

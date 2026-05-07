@@ -39,6 +39,17 @@ type SettingsResolver func(tenantID string) *types.ServerSettings
 // docker checks ContainerIDs alive, yandex pings agent /health.
 type RecoverChecker func(state *dag.RunState) bool
 
+// SuiteLauncher fires one batch of a cron-scheduled suite. Implementation
+// lives in the api package (same place that knows how to resolve presets,
+// probe workloads, etc.). Called once per acquired cron lease; the
+// returned batchID is recorded on the suite row, the count is logged.
+type SuiteLauncher func(ctx context.Context, tenantID, suiteID string, fireAt time.Time) (batchID string, count int, err error)
+
+// CronNextFn computes the next firing instant for a cron expression in
+// the given timezone. Decoupled so scheduler doesn't import the cron
+// library directly.
+type CronNextFn func(expr, tz string, from time.Time) (time.Time, error)
+
 // Config bundles scheduler tunables.
 type Config struct {
 	InstanceID        string // unique per server process
@@ -53,6 +64,13 @@ type Config struct {
 	ReaperInterval    time.Duration // how often to revive stale claims
 	InstanceHeartbeat time.Duration // server_instances heartbeat
 	MarkOnNotRecover  string        // error message planted on non-recoverable claimed jobs
+
+	// Suite cron loop. Disabled when SuiteLauncher or CronNext is nil.
+	SuiteLauncher SuiteLauncher
+	CronNext      CronNextFn
+	CronInterval  time.Duration // how often to poll suites for due firings
+	CronLeaseTTL  time.Duration // lease lifetime per acquired suite (auto-expires)
+	CronBatchSize int           // max suites picked up per tick
 }
 
 func Defaults() Config {
@@ -63,6 +81,9 @@ func Defaults() Config {
 		ReaperInterval:    10 * time.Second,
 		InstanceHeartbeat: 5 * time.Second,
 		MarkOnNotRecover:  "server restarted -- run could not be recovered",
+		CronInterval:      30 * time.Second,
+		CronLeaseTTL:      60 * time.Second,
+		CronBatchSize:     10,
 	}
 }
 
@@ -71,6 +92,7 @@ func Defaults() Config {
 type Scheduler struct {
 	cfg    Config
 	jobs   *postgres.JobStorage
+	suites *postgres.SuiteStorage
 	pool   *pgxpool.Pool
 	logger *zap.Logger
 
@@ -104,9 +126,19 @@ func New(cfg Config) *Scheduler {
 	if cfg.MarkOnNotRecover == "" {
 		cfg.MarkOnNotRecover = d.MarkOnNotRecover
 	}
+	if cfg.CronInterval == 0 {
+		cfg.CronInterval = d.CronInterval
+	}
+	if cfg.CronLeaseTTL == 0 {
+		cfg.CronLeaseTTL = d.CronLeaseTTL
+	}
+	if cfg.CronBatchSize == 0 {
+		cfg.CronBatchSize = d.CronBatchSize
+	}
 	return &Scheduler{
 		cfg:     cfg,
 		jobs:    postgres.NewJobStorage(cfg.Pool),
+		suites:  postgres.NewSuiteStorage(cfg.Pool),
 		pool:    cfg.Pool,
 		logger:  cfg.Logger,
 		running: make(map[string]context.CancelFunc),
@@ -136,6 +168,10 @@ func (s *Scheduler) Start(ctx context.Context) error {
 	go s.reaperLoop()
 	s.wg.Add(1)
 	go s.claimLoop()
+	if s.cfg.SuiteLauncher != nil && s.cfg.CronNext != nil {
+		s.wg.Add(1)
+		go s.cronLoop()
+	}
 	return nil
 }
 
@@ -254,6 +290,113 @@ func (s *Scheduler) cancelOrphanCommands(ctx context.Context) (int, error) {
 		return 0, err
 	}
 	return int(tag.RowsAffected()), nil
+}
+
+// cronLoop polls for cron-scheduled suites whose next_fire_at has come
+// due. Only runs if both SuiteLauncher and CronNext are wired in Config.
+//
+// Per tick:
+//  1. List due suites (FOR UPDATE SKIP LOCKED would over-block — we use
+//     an optimistic CAS via AcquireCronLease instead so multiple servers
+//     can drain in parallel).
+//  2. For each, try to acquire its lease. Loser servers move on.
+//  3. Honour catchup_mode: skip = advance next_fire_at without firing,
+//     once = fire one batch then advance. Either way the row's lease is
+//     released so the row can fire again on its next interval.
+//  4. Concurrent_policy=forbid is enforced by the launcher itself
+//     (returns http.StatusConflict). Treat that as a no-op skip — still
+//     advance next_fire_at.
+//
+// All errors are logged but don't abort the loop. The lease TTL ensures
+// a crashed server in the middle of launching releases the row within
+// CronLeaseTTL so other servers can pick up the next firing.
+func (s *Scheduler) cronLoop() {
+	defer s.wg.Done()
+	t := time.NewTicker(s.cfg.CronInterval)
+	defer t.Stop()
+	for {
+		select {
+		case <-s.stopCh:
+			return
+		case <-t.C:
+			s.tryFireDueSuites()
+		}
+	}
+}
+
+func (s *Scheduler) tryFireDueSuites() {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	due, err := s.suites.DueCron(ctx, time.Now(), s.cfg.CronBatchSize)
+	if err != nil {
+		s.logger.Warn("scheduler: list due suites failed", zap.Error(err))
+		return
+	}
+	for _, su := range due {
+		s.fireSuite(ctx, su)
+	}
+}
+
+func (s *Scheduler) fireSuite(ctx context.Context, su postgres.Suite) {
+	if su.NextFireAt == nil {
+		return
+	}
+	fireAt := *su.NextFireAt
+
+	won, err := s.suites.AcquireCronLease(ctx, su.ID, s.cfg.InstanceID, fireAt, s.cfg.CronLeaseTTL)
+	if err != nil {
+		s.logger.Warn("scheduler: acquire cron lease failed", zap.String("suite", su.ID), zap.Error(err))
+		return
+	}
+	if !won {
+		// Another server beat us to it. They'll advance next_fire_at on
+		// release; we'll see the new value on the next tick.
+		return
+	}
+
+	// Compute next firing now so we can release the row even if launch
+	// fails. CronNext returns an error only on garbage cron expressions —
+	// in that case freeze the schedule by leaving next_fire_at NULL so
+	// the row stops firing until a human edits it.
+	next, nerr := s.cfg.CronNext(su.CronExpr, su.Timezone, time.Now())
+	var nextPtr *time.Time
+	if nerr == nil {
+		nextPtr = &next
+	} else {
+		s.logger.Warn("scheduler: cron parse failed -- pausing suite",
+			zap.String("suite", su.ID), zap.String("expr", su.CronExpr), zap.Error(nerr))
+	}
+
+	batchID := ""
+	switch su.CatchupMode {
+	case "skip":
+		// Don't actually fire; just advance the schedule. Useful when a
+		// server was offline long enough to miss several windows.
+		s.logger.Info("scheduler: cron tick skipped (catchup=skip)",
+			zap.String("suite", su.ID), zap.Time("missed", fireAt))
+	default: // "once" or empty
+		bid, count, err := s.cfg.SuiteLauncher(ctx, su.TenantID, su.ID, fireAt)
+		if err != nil {
+			s.logger.Warn("scheduler: cron launch failed",
+				zap.String("suite", su.ID), zap.Error(err))
+		} else {
+			batchID = bid
+			s.logger.Info("scheduler: cron launched suite",
+				zap.String("suite", su.ID), zap.String("batch", bid), zap.Int("items", count))
+		}
+	}
+
+	// Release the lease and advance scheduling state. nextPtr may be nil
+	// (cron expression broken) — that pauses future firings.
+	var nextVal time.Time
+	if nextPtr != nil {
+		nextVal = *nextPtr
+	}
+	if err := s.suites.ReleaseCronLease(ctx, su.ID, s.cfg.InstanceID, fireAt, nextVal, batchID); err != nil {
+		s.logger.Warn("scheduler: release cron lease failed",
+			zap.String("suite", su.ID), zap.Error(err))
+	}
 }
 
 func (s *Scheduler) claimLoop() {

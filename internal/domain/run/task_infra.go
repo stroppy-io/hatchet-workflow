@@ -652,15 +652,41 @@ type yandexManagedTfVars struct {
 	Managed    yandexManagedTfManaged `json:"managed"`
 }
 
+type yandexManagedTfAutoScale struct {
+	MinSize           int `json:"min_size"`
+	MaxSize           int `json:"max_size"`
+	CPUUtilizationPct int `json:"cpu_utilization_percent,omitempty"`
+}
+
 type yandexManagedTfManaged struct {
-	Name               string `json:"name"`
-	Type               string `json:"type"`
-	FolderID           string `json:"folder_id"`
-	LocationID         string `json:"location_id"`
-	ResourcePresetID   string `json:"resource_preset_id,omitempty"`
-	StorageGroups      int    `json:"storage_groups,omitempty"`
-	StorageTypeID      string `json:"storage_type_id,omitempty"`
-	ThrottlingRcuLimit int    `json:"throttling_rcu_limit,omitempty"`
+	Name               string                    `json:"name"`
+	Type               string                    `json:"type"`
+	FolderID           string                    `json:"folder_id"`
+	LocationID         string                    `json:"location_id"`
+	ResourcePresetID   string                    `json:"resource_preset_id,omitempty"`
+	NodeCount          int                       `json:"node_count,omitempty"`
+	AutoScale          *yandexManagedTfAutoScale `json:"auto_scale,omitempty"`
+	StorageGroups      int                       `json:"storage_groups,omitempty"`
+	StorageTypeID      string                    `json:"storage_type_id,omitempty"`
+	ThrottlingRcuLimit int                       `json:"throttling_rcu_limit,omitempty"`
+}
+
+// managedAutoScaleVar maps the public AutoScale block to the terraform
+// var shape, defaulting CPUUtilizationPct to 70% when the caller leaves
+// it zero — same default the YC console offers.
+func managedAutoScaleVar(t *types.YDBManagedTopology) *yandexManagedTfAutoScale {
+	if t == nil || t.AutoScale == nil {
+		return nil
+	}
+	pct := t.AutoScale.CPUUtilizationPct
+	if pct <= 0 {
+		pct = 70
+	}
+	return &yandexManagedTfAutoScale{
+		MinSize:           t.AutoScale.MinSize,
+		MaxSize:           t.AutoScale.MaxSize,
+		CPUUtilizationPct: pct,
+	}
 }
 
 // parseYDBEndpoint splits a YC ydb_api_endpoint URL into host and port.
@@ -845,6 +871,8 @@ func (t *machinesTask) yandexManagedYDBMachines(nc *dag.NodeContext) error {
 			FolderID:           yc.FolderID,
 			LocationID:         locationID,
 			ResourcePresetID:   managed.ResourcePresetID,
+			NodeCount:          managed.NodeCount,
+			AutoScale:          managedAutoScaleVar(managed),
 			StorageGroups:      managed.StorageGroups,
 			StorageTypeID:      managed.StorageType,
 			ThrottlingRcuLimit: managed.ThrottlingRCUs,

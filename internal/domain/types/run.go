@@ -177,6 +177,28 @@ const (
 	YDBManagedKindDedicated  YDBManagedKind = "dedicated"
 )
 
+// YDBManagedComputeType selects the workload class shown in the YC console.
+// It is purely a UI / preset-filter affordance: the YDB terraform provider
+// has no OLTP/OLAP cluster flag; what changes between modes is the set of
+// `resource_preset_id` values you pick from. Some presets ("oltp-c16-m128")
+// are explicitly tuned for the OLTP workload, others are general-purpose.
+type YDBManagedComputeType string
+
+const (
+	YDBManagedComputeOLTP YDBManagedComputeType = "oltp"
+	YDBManagedComputeOLAP YDBManagedComputeType = "olap"
+)
+
+// YDBManagedAutoScale enables and parameterises the dedicated cluster's
+// auto-scaling. Mirrors `scale_policy.auto_scale` on the terraform side.
+// The provider treats auto-scaling as a preview feature gated by the
+// `enable_autoscaling=1` label (set automatically when this is non-nil).
+type YDBManagedAutoScale struct {
+	MinSize           int `json:"min_size"`
+	MaxSize           int `json:"max_size"`
+	CPUUtilizationPct int `json:"cpu_utilization_percent,omitempty"`
+}
+
 // YDBManagedTopology describes a Yandex Cloud Managed YDB deployment plus
 // the client VM that runs stroppy. There are no storage / compute nodes —
 // YC manages the database. The client VM is provisioned with an attached
@@ -186,9 +208,19 @@ type YDBManagedTopology struct {
 	// Type selects serverless (pay-per-request, grpc only) vs dedicated
 	// (fixed cluster, grpc + pgwire). Required.
 	Type YDBManagedKind `json:"type"`
+	// ComputeType is the workload class shown in the YC console (oltp /
+	// olap). Persisted so the UI can filter the resource_preset_id list
+	// to the matching family on edit; not forwarded to terraform.
+	ComputeType YDBManagedComputeType `json:"compute_type,omitempty"`
 	// ResourcePresetID is the dedicated DB resource preset (e.g.
-	// "medium"). Ignored for serverless.
+	// "medium"). Ignored for serverless. See types.YDBManagedResourcePresets.
 	ResourcePresetID string `json:"resource_preset_id,omitempty"`
+	// NodeCount is the dedicated DB fixed-scale node count. Ignored when
+	// AutoScale is set. Defaults to 1.
+	NodeCount int `json:"node_count,omitempty"`
+	// AutoScale, if non-nil, switches the dedicated cluster to auto-scale
+	// mode and replaces NodeCount. Provider gates this behind a label.
+	AutoScale *YDBManagedAutoScale `json:"auto_scale,omitempty"`
 	// StorageGroups is the dedicated DB number of storage groups. Ignored
 	// for serverless.
 	StorageGroups int `json:"storage_groups,omitempty"`

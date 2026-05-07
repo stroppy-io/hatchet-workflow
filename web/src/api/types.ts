@@ -161,9 +161,20 @@ export interface YDBTopology {
 // token + CA from the YC metadata service, so the only extra surface the
 // user sees is `client` (the runner VM, which the terraform module attaches
 // the stroppy SA to).
+export type YDBManagedComputeType = "oltp" | "olap";
+
+export interface YDBManagedAutoScale {
+  min_size: number;
+  max_size: number;
+  cpu_utilization_percent?: number;  // default 70
+}
+
 export interface YDBManagedTopology {
   type: "serverless" | "dedicated";
+  compute_type?: YDBManagedComputeType; // dedicated only — UI filter, not sent to terraform
   resource_preset_id?: string;       // dedicated only
+  node_count?: number;               // dedicated, fixed_scale only (default 1)
+  auto_scale?: YDBManagedAutoScale;  // dedicated, replaces node_count when set
   storage_groups?: number;           // dedicated only
   storage_type?: string;             // dedicated only
   throttling_rcus?: number;          // serverless only
@@ -172,6 +183,33 @@ export interface YDBManagedTopology {
   endpoint?: string;                 // populated by terraform output at run time
   terraform_output?: YDBManagedTerraformOutput;
 }
+
+// YDBManagedResourcePreset mirrors types.YDBManagedResourcePreset in Go.
+// The dedicated-cluster picker — Cores + MemoryGB drive the label badges,
+// ComputeType filters the list against the OLTP/OLAP toggle.
+export interface YDBManagedResourcePreset {
+  id: string;
+  label: string;
+  cores: number;
+  memory_gb: number;
+  compute_type: YDBManagedComputeType;
+}
+
+// Catalog mirrors types.YDBManagedResourcePresets in Go. Kept here so the
+// UI doesn't need a backend round-trip just to render the picker; resync
+// when YC publishes new presets.
+export const YDB_MANAGED_RESOURCE_PRESETS: YDBManagedResourcePreset[] = [
+  { id: "small-m8",      label: "Small M8",      cores: 4,  memory_gb: 8,   compute_type: "oltp" },
+  { id: "small",         label: "Small",         cores: 4,  memory_gb: 16,  compute_type: "oltp" },
+  { id: "medium",        label: "Medium",        cores: 8,  memory_gb: 32,  compute_type: "oltp" },
+  { id: "medium-m64",    label: "Medium M64",    cores: 8,  memory_gb: 64,  compute_type: "oltp" },
+  { id: "medium-m96",    label: "Medium M96",    cores: 8,  memory_gb: 96,  compute_type: "oltp" },
+  { id: "large",         label: "Large",         cores: 12, memory_gb: 48,  compute_type: "oltp" },
+  { id: "xlarge",        label: "XLarge",        cores: 16, memory_gb: 64,  compute_type: "oltp" },
+  { id: "oltp-c16-m128", label: "OLTP C16 M128", cores: 16, memory_gb: 128, compute_type: "oltp" },
+  { id: "olap-medium",   label: "OLAP Medium",   cores: 8,  memory_gb: 32,  compute_type: "olap" },
+  { id: "olap-large",    label: "OLAP Large",    cores: 12, memory_gb: 48,  compute_type: "olap" },
+];
 
 export interface YDBManagedTerraformOutput {
   id: string;
@@ -394,18 +432,23 @@ export interface RunPreset {
   updated_at: string;
 }
 
-// --- Suites ---
+// --- Suites (v3: matrix of db_presets × workloads) ---
+//
+// A Suite is the cartesian product of `db_preset_ids` (database axis,
+// references presets) and `items` (workload axis, each item is a
+// StroppyConfig). One launch produces N*M job_runs — one per matrix cell.
+// Shared infrastructure (provider, network, stroppy machine) lives on the
+// Suite itself.
 
 export interface SuiteItem {
-  run_preset_id: string;
-  overrides?: Partial<RunConfig>;
-}
-
-export interface SuiteRunSummary {
-  batch_id: string;
-  run_id: string;
+  id: string;
+  suite_id: string;
   position: number;
+  name: string;
+  workload: StroppyConfig;
+  enabled: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 export interface SuitePolicy {
@@ -422,15 +465,77 @@ export const DEFAULT_SUITE_POLICY: SuitePolicy = {
   step_timeout_min: 0,
 };
 
+export interface ComparisonConfig {
+  strategy?: "" | "previous" | "first" | "fixed";
+  baseline_batch_id?: string;
+  threshold_pct?: number;
+}
+
+export interface SuiteRunBrief {
+  run_id: string;
+  suite_item_id?: string;
+  db_preset_id?: string;
+  position: number;
+  state: string;
+}
+
+export interface SuiteBatchSummary {
+  batch_id: string;
+  trigger?: string;
+  fire_at?: string;
+  created_at: string;
+  total: number;
+  finished: number;
+  failed: number;
+  cancelled: number;
+  running: number;
+  queued: number;
+  runs: SuiteRunBrief[];
+}
+
 export interface Suite {
   id: string;
   name: string;
   description: string;
-  items: SuiteItem[];
-  policy?: SuitePolicy;
-  runs?: SuiteRunSummary[];
+  policy: SuitePolicy;
+  comparison: ComparisonConfig;
+  // Matrix axes.
+  db_preset_ids: string[];
+  // Items are returned inline by GET /suites/:id; managed via items endpoints.
+  items?: SuiteItem[];
+  // Shared infrastructure for every (preset × workload) cell.
+  provider: Provider;
+  platform_id?: string;
+  network: NetworkConfig;
+  stroppy_machine: Partial<MachineSpec>;
+  // Scheduling.
+  cron_expr?: string;
+  timezone: string;
+  enabled: boolean;
+  next_fire_at?: string;
+  last_fire_at?: string;
+  last_batch_id?: string;
+  concurrent_policy: "forbid" | "allow";
+  catchup_mode: "skip" | "once";
+  retention_runs: number;
   created_at: string;
   updated_at: string;
+  batches?: SuiteBatchSummary[];
+}
+
+export interface SuiteComparePair {
+  db_preset_id: string;
+  suite_item_id: string;
+  position: number;
+  run_a: string;
+  run_b: string;
+}
+
+export interface SuiteCompareResponse {
+  suite_id: string;
+  batch_id: string;
+  baseline_batch_id: string;
+  pairs: SuiteComparePair[];
 }
 
 // --- Presets ---

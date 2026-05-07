@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 )
 
 const defaultStroppyBinaryCacheDir = "/tmp/stroppy-cloud/stroppy-binaries"
@@ -142,21 +143,60 @@ func downloadRawExecutable(ctx context.Context, url, dest string) error {
 	return os.Rename(tmp, dest)
 }
 
+// stroppyHTTPClient is shared across binary downloads. Default
+// http.DefaultClient has no timeout knobs; GitHub's release-assets CDN
+// occasionally hangs on TLS handshake or first byte, which surfaces as
+// "TLS handshake timeout" in probe responses. Explicit Transport with
+// generous-but-bounded timeouts + a few retries make the path reliable
+// enough that a single transient flake doesn't fail the whole UI flow.
+var stroppyHTTPClient = &http.Client{
+	Timeout: 5 * time.Minute,
+	Transport: &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		TLSHandshakeTimeout:   30 * time.Second,
+		ResponseHeaderTimeout: 60 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		IdleConnTimeout:       90 * time.Second,
+	},
+}
+
 func httpGet(ctx context.Context, url string) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
+	const attempts = 3
+	var lastErr error
+	for i := 0; i < attempts; i++ {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := stroppyHTTPClient.Do(req)
+		if err != nil {
+			lastErr = fmt.Errorf("download stroppy binary: %w", err)
+			// Transient network errors (TLS handshake / read timeout) — back off and retry.
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(time.Duration(i+1) * 2 * time.Second):
+			}
+			continue
+		}
+		if resp.StatusCode != http.StatusOK {
+			defer resp.Body.Close()
+			body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+			// 5xx is retryable; 4xx is not (wrong version, missing release).
+			if resp.StatusCode >= 500 && i < attempts-1 {
+				lastErr = fmt.Errorf("download stroppy binary %d: %s", resp.StatusCode, string(body))
+				select {
+				case <-ctx.Done():
+					return nil, ctx.Err()
+				case <-time.After(time.Duration(i+1) * 2 * time.Second):
+				}
+				continue
+			}
+			return nil, fmt.Errorf("download stroppy binary %d: %s", resp.StatusCode, string(body))
+		}
+		return resp, nil
 	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("download stroppy binary: %w", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		defer resp.Body.Close()
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return nil, fmt.Errorf("download stroppy binary %d: %s", resp.StatusCode, string(body))
-	}
-	return resp, nil
+	return nil, lastErr
 }
 
 func writeExecutable(path string, src io.Reader) error {

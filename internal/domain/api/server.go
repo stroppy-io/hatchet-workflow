@@ -114,6 +114,29 @@ func (s *Server) SettingsResolver() func(tenantID string) *types.ServerSettings 
 	return func(tenantID string) *types.ServerSettings { return s.settingsForTenant(tenantID) }
 }
 
+// SuiteLauncher returns the closure the scheduler's cron loop uses to
+// fire one batch of a cron-scheduled suite. The signature matches
+// scheduler.SuiteLauncher; we don't import the scheduler type to avoid
+// pulling its package into api/.
+func (s *Server) SuiteLauncher() func(ctx context.Context, tenantID, suiteID string, fireAt time.Time) (string, int, error) {
+	return func(ctx context.Context, tenantID, suiteID string, fireAt time.Time) (string, int, error) {
+		batchID, count, _, err := s.runSuiteOnce(ctx, tenantID, suiteID, "cron", &fireAt)
+		return batchID, count, err
+	}
+}
+
+// CronNext returns the closure the scheduler uses to compute next firing
+// times. Wraps the parser in this package so all cron logic lives here.
+func (s *Server) CronNext() func(expr, tz string, from time.Time) (time.Time, error) {
+	return func(expr, tz string, from time.Time) (time.Time, error) {
+		loc, err := time.LoadLocation(tz)
+		if err != nil || loc == nil {
+			loc = time.UTC
+		}
+		return nextCronFire(expr, from.In(loc))
+	}
+}
+
 // RecoverChecker returns a closure deciding whether a snapshot is
 // recoverable. Provider-aware: docker checks ContainerIDs alive, yandex
 // pings each agent's /health.
@@ -249,6 +272,8 @@ func (s *Server) Router() http.Handler {
 		r.Get("/run-presets/{id}", s.getRunPreset)
 		r.Get("/suites", s.listSuites)
 		r.Get("/suites/{id}", s.getSuite)
+		r.Get("/suites/{id}/items", s.listSuiteItems)
+		r.Get("/suites/{id}/batches/{batchID}/compare", s.compareBatch)
 		r.Get("/settings", s.getSettings)
 
 		// Operator+
@@ -279,6 +304,10 @@ func (s *Server) Router() http.Handler {
 			r.Delete("/suites/{id}", s.deleteSuite)
 			r.Post("/suites/{id}/run", s.launchSuite)
 			r.Post("/suites/{id}/batches/{batchID}/cancel", s.cancelBatch)
+			r.Post("/suites/{id}/items", s.createSuiteItem)
+			r.Put("/suites/{id}/items/{itemID}", s.updateSuiteItem)
+			r.Delete("/suites/{id}/items/{itemID}", s.deleteSuiteItem)
+			r.Post("/suites/{id}/items/reorder", s.reorderSuiteItems)
 			r.Post("/packages", s.createPackage)
 			r.Put("/packages/{id}", s.updatePackage)
 			r.Delete("/packages/{id}", s.deletePackage)

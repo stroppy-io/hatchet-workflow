@@ -36,9 +36,27 @@ resource "yandex_ydb_database_dedicated" "this" {
 
   resource_preset_id = var.managed.resource_preset_id
 
+  # Auto-scale is a preview feature gated by an explicit label per the
+  # provider docs. Stamp the label automatically when auto_scale is set so
+  # callers don't have to know the magic.
+  labels = var.managed.auto_scale == null ? {} : { enable_autoscaling = "1" }
+
   scale_policy {
-    fixed_scale {
-      size = 1
+    dynamic "fixed_scale" {
+      for_each = var.managed.auto_scale == null ? [var.managed.node_count] : []
+      content {
+        size = fixed_scale.value
+      }
+    }
+    dynamic "auto_scale" {
+      for_each = var.managed.auto_scale == null ? [] : [var.managed.auto_scale]
+      content {
+        min_size = auto_scale.value.min_size
+        max_size = auto_scale.value.max_size
+        target_tracking {
+          cpu_utilization_percent = auto_scale.value.cpu_utilization_percent
+        }
+      }
     }
   }
 

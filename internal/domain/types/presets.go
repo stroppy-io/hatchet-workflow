@@ -348,11 +348,46 @@ var YDBManagedPresets = map[YDBManagedPreset]YDBManagedTopology{
 	},
 	YDBManagedDedicated: {
 		Type:             YDBManagedKindDedicated,
+		ComputeType:      YDBManagedComputeOLTP,
 		ResourcePresetID: "medium",
+		NodeCount:        1,
 		StorageGroups:    1,
 		StorageType:      "ssd",
 		Client:           ydbManagedClient(),
 	},
+}
+
+// YDBManagedResourcePreset describes one row of the dedicated cluster
+// resource-preset picker shown in the YC console (Compute resources →
+// Параметры узла обработки). The preset_id is the value that goes onto
+// `yandex_ydb_database_dedicated.resource_preset_id` — Yandex's CLI lists
+// them via `yc ydb resource-preset list`. Labels mirror the console
+// exactly so the UI feels native.
+type YDBManagedResourcePreset struct {
+	ID          string                `json:"id"`
+	Label       string                `json:"label"`
+	Cores       int                   `json:"cores"`
+	MemoryGB    int                   `json:"memory_gb"`
+	ComputeType YDBManagedComputeType `json:"compute_type"`
+}
+
+// YDBManagedResourcePresets is the catalog of dedicated YDB resource
+// presets. ComputeType is set per preset because the YC console filters
+// the picker by the OLTP/OLAP toggle — some presets (oltp-c16-m128) are
+// explicitly tuned for OLTP and don't appear in the OLAP list.
+var YDBManagedResourcePresets = []YDBManagedResourcePreset{
+	{ID: "small-m8", Label: "Small M8", Cores: 4, MemoryGB: 8, ComputeType: YDBManagedComputeOLTP},
+	{ID: "small", Label: "Small", Cores: 4, MemoryGB: 16, ComputeType: YDBManagedComputeOLTP},
+	{ID: "medium", Label: "Medium", Cores: 8, MemoryGB: 32, ComputeType: YDBManagedComputeOLTP},
+	{ID: "medium-m64", Label: "Medium M64", Cores: 8, MemoryGB: 64, ComputeType: YDBManagedComputeOLTP},
+	{ID: "medium-m96", Label: "Medium M96", Cores: 8, MemoryGB: 96, ComputeType: YDBManagedComputeOLTP},
+	{ID: "large", Label: "Large", Cores: 12, MemoryGB: 48, ComputeType: YDBManagedComputeOLTP},
+	{ID: "xlarge", Label: "XLarge", Cores: 16, MemoryGB: 64, ComputeType: YDBManagedComputeOLTP},
+	{ID: "oltp-c16-m128", Label: "OLTP C16 M128", Cores: 16, MemoryGB: 128, ComputeType: YDBManagedComputeOLTP},
+	// OLAP-tuned presets — kept separate so the UI filter has something to
+	// switch to. Add concrete IDs as YC publishes them.
+	{ID: "olap-medium", Label: "OLAP Medium", Cores: 8, MemoryGB: 32, ComputeType: YDBManagedComputeOLAP},
+	{ID: "olap-large", Label: "OLAP Large", Cores: 12, MemoryGB: 48, ComputeType: YDBManagedComputeOLAP},
 }
 
 func describeYDBManagedPreset(p YDBManagedPreset) string {

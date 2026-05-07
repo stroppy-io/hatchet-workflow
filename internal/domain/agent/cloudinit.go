@@ -62,8 +62,13 @@ write_files:
       Type=simple
       EnvironmentFile=/etc/stroppy/agent.env
       ExecStart={{.BinPath}} agent
-      Restart=on-failure
-      RestartSec=5
+      # Restart=always keeps the agent up even after a clean exit (e.g. SIGTERM
+      # from a botched cleanup) — Restart=on-failure was missing those cases
+      # and the orchestrator would later 120s-timeout waiting for a poll that
+      # would never come.
+      Restart=always
+      RestartSec=2
+      StartLimitIntervalSec=0
 
       [Install]
       WantedBy=multi-user.target

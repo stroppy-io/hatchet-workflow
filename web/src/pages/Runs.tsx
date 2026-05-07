@@ -460,8 +460,9 @@ export function Runs() {
           if (cancelled) return;
           setSuiteName(s.name);
           const ids = new Set<string>();
-          for (const r of s.runs ?? []) {
-            if (r.batch_id === batchFilter) ids.add(r.run_id);
+          for (const b of s.batches ?? []) {
+            if (b.batch_id !== batchFilter) continue;
+            for (const r of b.runs) ids.add(r.run_id);
           }
           setBatchRunIds(ids);
         })

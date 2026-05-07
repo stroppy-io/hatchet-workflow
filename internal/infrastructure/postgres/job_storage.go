@@ -102,8 +102,22 @@ type JobRun struct {
 	// time so the scheduler's claim path can gate sequential vs parallel
 	// without joining suites every tick. Empty for ad-hoc (non-suite) jobs.
 	SuitePolicy json.RawMessage
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	// SuiteItemID points back to the suite_items row this job was launched
+	// from. Stable across runs of the same item, so comparison can pair
+	// runs across batches by item identity. Empty for ad-hoc runs.
+	SuiteItemID string
+	// Trigger records what enqueued this job: "manual" | "cron" | "api".
+	// Empty for legacy rows.
+	Trigger string
+	// FireAt is the scheduled cron tick instant for cron-launched jobs.
+	// Acts (with suite_id + db_preset_id + suite_item_id) as an idempotency
+	// key against races where two servers fire the same tick concurrently.
+	FireAt *time.Time
+	// DBPresetID identifies the database axis cell of the matrix this job
+	// was launched for. Empty for ad-hoc runs and pre-matrix suites.
+	DBPresetID string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 type JobStorage struct {
@@ -147,15 +161,40 @@ func (s *JobStorage) Enqueue(ctx context.Context, j JobRun) error {
 	_, err = tx.Exec(ctx, `
 		INSERT INTO job_runs (
 			run_id, tenant_id, batch_id, suite_id, run_preset_id, position,
-			state, config, cost, priority, not_before, suite_policy, created_at, updated_at
-		) VALUES ($1,$2,$3,$4,$5,$6,'queued',$7,$8,$9,$10,$11, NOW(), NOW())`,
+			state, config, cost, priority, not_before, suite_policy,
+			suite_item_id, trigger, fire_at, db_preset_id,
+			created_at, updated_at
+		) VALUES ($1,$2,$3,$4,$5,$6,'queued',$7,$8,$9,$10,$11, $12,$13,$14,$15, NOW(), NOW())
+		ON CONFLICT DO NOTHING`,
 		j.RunID, j.TenantID, nullStr(j.BatchID), nullStr(j.SuiteID), nullStr(j.RunPresetID), j.Position,
 		cfgStr, string(costJSON), j.Priority, j.NotBefore, policyStr,
+		nullStr(j.SuiteItemID), nullStr(j.Trigger), j.FireAt, nullStr(j.DBPresetID),
 	)
 	if err != nil {
 		return err
 	}
 	return tx.Commit(ctx)
+}
+
+// ListBySuite returns all jobs ever produced by the given suite, newest
+// first. Replaces the legacy suite_runs join — every column needed lives
+// on job_runs already.
+func (s *JobStorage) ListBySuite(ctx context.Context, tenantID, suiteID string) ([]JobRun, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT run_id, tenant_id, COALESCE(batch_id,''), COALESCE(suite_id,''), COALESCE(run_preset_id,''),
+		       position, state, config, cost, priority, not_before, COALESCE(suite_policy, '{}'),
+		       COALESCE(claimed_by,''), claimed_at, heartbeat_at, started_at, finished_at,
+		       COALESCE(error,''), quota_freed,
+		       COALESCE(suite_item_id,''), COALESCE(trigger,''), fire_at,
+		       COALESCE(db_preset_id,''),
+		       created_at, updated_at
+		FROM job_runs WHERE tenant_id=$1 AND suite_id=$2
+		ORDER BY created_at DESC, position ASC`, tenantID, suiteID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanJobs(rows)
 }
 
 // Get returns a single job row by (tenant_id, run_id), or nil if missing.
@@ -164,7 +203,10 @@ func (s *JobStorage) Get(ctx context.Context, tenantID, runID string) (*JobRun, 
 		SELECT run_id, tenant_id, COALESCE(batch_id,''), COALESCE(suite_id,''), COALESCE(run_preset_id,''),
 		       position, state, config, cost, priority, not_before, COALESCE(suite_policy, '{}'),
 		       COALESCE(claimed_by,''), claimed_at, heartbeat_at, started_at, finished_at,
-		       COALESCE(error,''), quota_freed, created_at, updated_at
+		       COALESCE(error,''), quota_freed,
+		       COALESCE(suite_item_id,''), COALESCE(trigger,''), fire_at,
+		       COALESCE(db_preset_id,''),
+		       created_at, updated_at
 		FROM job_runs WHERE run_id=$1 AND tenant_id=$2`, runID, tenantID)
 	return scanJob(row)
 }
@@ -175,7 +217,10 @@ func (s *JobStorage) ListByBatch(ctx context.Context, tenantID, batchID string) 
 		SELECT run_id, tenant_id, COALESCE(batch_id,''), COALESCE(suite_id,''), COALESCE(run_preset_id,''),
 		       position, state, config, cost, priority, not_before, COALESCE(suite_policy, '{}'),
 		       COALESCE(claimed_by,''), claimed_at, heartbeat_at, started_at, finished_at,
-		       COALESCE(error,''), quota_freed, created_at, updated_at
+		       COALESCE(error,''), quota_freed,
+		       COALESCE(suite_item_id,''), COALESCE(trigger,''), fire_at,
+		       COALESCE(db_preset_id,''),
+		       created_at, updated_at
 		FROM job_runs WHERE tenant_id=$1 AND batch_id=$2 ORDER BY position`, tenantID, batchID)
 	if err != nil {
 		return nil, err
@@ -206,7 +251,10 @@ func (s *JobStorage) ClaimNext(ctx context.Context, instanceID string, limits ma
 		SELECT run_id, tenant_id, COALESCE(batch_id,''), COALESCE(suite_id,''), COALESCE(run_preset_id,''),
 		       position, state, config, cost, priority, not_before, COALESCE(suite_policy, '{}'),
 		       COALESCE(claimed_by,''), claimed_at, heartbeat_at, started_at, finished_at,
-		       COALESCE(error,''), quota_freed, created_at, updated_at
+		       COALESCE(error,''), quota_freed,
+		       COALESCE(suite_item_id,''), COALESCE(trigger,''), fire_at,
+		       COALESCE(db_preset_id,''),
+		       created_at, updated_at
 		FROM job_runs
 		WHERE state='queued' AND (not_before IS NULL OR not_before <= NOW())
 		ORDER BY priority DESC, created_at ASC
@@ -508,8 +556,12 @@ func (s *JobStorage) ListInflight(ctx context.Context) ([]JobRun, error) {
 		SELECT run_id, tenant_id, COALESCE(batch_id,''), COALESCE(suite_id,''), COALESCE(run_preset_id,''),
 		       position, state, config, cost, priority, not_before, COALESCE(suite_policy, '{}'),
 		       COALESCE(claimed_by,''), claimed_at, heartbeat_at, started_at, finished_at,
-		       COALESCE(error,''), quota_freed, created_at, updated_at
-		FROM job_runs WHERE state IN ('claimed','running')`)
+		       COALESCE(error,''), quota_freed,
+		       COALESCE(suite_item_id,''), COALESCE(trigger,''), fire_at,
+		       COALESCE(db_preset_id,''),
+		       created_at, updated_at
+		FROM job_runs WHERE state IN ('claimed','running')
+		`)
 	if err != nil {
 		return nil, err
 	}
@@ -596,13 +648,16 @@ func scanJob(row pgx.Row) (*JobRun, error) {
 		hbAt      *time.Time
 		startAt   *time.Time
 		finishAt  *time.Time
+		fireAt    *time.Time
 		state     string
 	)
 	err := row.Scan(
 		&j.RunID, &j.TenantID, &j.BatchID, &j.SuiteID, &j.RunPresetID,
 		&j.Position, &state, &j.Config, &costStr, &j.Priority, &notBef, &policyStr,
 		&j.ClaimedBy, &claimAt, &hbAt, &startAt, &finishAt,
-		&j.Error, &j.QuotaFreed, &j.CreatedAt, &j.UpdatedAt,
+		&j.Error, &j.QuotaFreed,
+		&j.SuiteItemID, &j.Trigger, &fireAt,
+		&j.CreatedAt, &j.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -616,6 +671,7 @@ func scanJob(row pgx.Row) (*JobRun, error) {
 	j.HeartbeatAt = hbAt
 	j.StartedAt = startAt
 	j.FinishedAt = finishAt
+	j.FireAt = fireAt
 	_ = json.Unmarshal([]byte(costStr), &j.Cost)
 	if policyStr != "" {
 		j.SuitePolicy = json.RawMessage(policyStr)
@@ -635,13 +691,17 @@ func scanJobs(rows pgx.Rows) ([]JobRun, error) {
 			hbAt      *time.Time
 			startAt   *time.Time
 			finishAt  *time.Time
+			fireAt    *time.Time
 			state     string
 		)
 		if err := rows.Scan(
 			&j.RunID, &j.TenantID, &j.BatchID, &j.SuiteID, &j.RunPresetID,
 			&j.Position, &state, &j.Config, &costStr, &j.Priority, &notBef, &policyStr,
 			&j.ClaimedBy, &claimAt, &hbAt, &startAt, &finishAt,
-			&j.Error, &j.QuotaFreed, &j.CreatedAt, &j.UpdatedAt,
+			&j.Error, &j.QuotaFreed,
+			&j.SuiteItemID, &j.Trigger, &fireAt,
+			&j.DBPresetID,
+			&j.CreatedAt, &j.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -651,6 +711,7 @@ func scanJobs(rows pgx.Rows) ([]JobRun, error) {
 		j.HeartbeatAt = hbAt
 		j.StartedAt = startAt
 		j.FinishedAt = finishAt
+		j.FireAt = fireAt
 		_ = json.Unmarshal([]byte(costStr), &j.Cost)
 		if policyStr != "" {
 			j.SuitePolicy = json.RawMessage(policyStr)

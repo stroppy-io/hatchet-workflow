@@ -114,6 +114,8 @@ func serveCmd() *cobra.Command {
 				Runner:           app,
 				SettingsResolver: srv.SettingsResolver(),
 				RecoverChecker:   srv.RecoverChecker(),
+				SuiteLauncher:    srv.SuiteLauncher(),
+				CronNext:         srv.CronNext(),
 			})
 			srv.SetScheduler(sch)
 			if err := sch.Start(ctx); err != nil {

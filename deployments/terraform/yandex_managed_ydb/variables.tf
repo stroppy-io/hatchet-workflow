@@ -64,8 +64,18 @@ variable "managed" {
     folder_id           = string
     location_id         = string
     resource_preset_id  = optional(string, "medium")
-    storage_groups      = optional(number, 1)
-    storage_type_id     = optional(string, "ssd")
+    node_count          = optional(number, 1)
+    # auto_scale switches the dedicated cluster to auto-scaling mode. When
+    # set, scale_policy.fixed_scale is replaced by scale_policy.auto_scale
+    # and the resource gets the `enable_autoscaling=1` label that gates
+    # the provider's preview path. Leave null for fixed-scale.
+    auto_scale = optional(object({
+      min_size                = number
+      max_size                = number
+      cpu_utilization_percent = optional(number, 70)
+    }))
+    storage_groups       = optional(number, 1)
+    storage_type_id      = optional(string, "ssd")
     throttling_rcu_limit = optional(number, 0)
   })
   validation {
@@ -79,5 +89,16 @@ variable "managed" {
   validation {
     condition     = var.managed.folder_id != ""
     error_message = "managed.folder_id is required"
+  }
+  validation {
+    condition     = var.managed.node_count >= 1
+    error_message = "managed.node_count must be >= 1"
+  }
+  validation {
+    condition = var.managed.auto_scale == null || (
+      var.managed.auto_scale.min_size >= 1 &&
+      var.managed.auto_scale.max_size >= var.managed.auto_scale.min_size
+    )
+    error_message = "managed.auto_scale: min_size >= 1 and max_size >= min_size"
   }
 }

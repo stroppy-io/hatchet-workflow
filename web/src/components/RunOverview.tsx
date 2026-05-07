@@ -311,8 +311,21 @@ function ConfigPanel({ config, startedAt, finishedAt, isRunning }: {
           <div className="text-[11px] text-zinc-500 uppercase tracking-wider mb-1.5">Managed YDB</div>
           <div className="space-y-0">
             <ConfigLine label="type" value={db.ydb_managed.type} icon={Tag} />
+            {db.ydb_managed.type === "dedicated" && db.ydb_managed.compute_type && (
+              <ConfigLine label="workload" value={db.ydb_managed.compute_type.toUpperCase()} icon={Zap} />
+            )}
             {db.ydb_managed.type === "dedicated" && db.ydb_managed.resource_preset_id && (
               <ConfigLine label="preset" value={db.ydb_managed.resource_preset_id} icon={Cpu} />
+            )}
+            {db.ydb_managed.type === "dedicated" && db.ydb_managed.auto_scale && (
+              <ConfigLine
+                label="scale"
+                value={`auto ${db.ydb_managed.auto_scale.min_size}-${db.ydb_managed.auto_scale.max_size} @ ${db.ydb_managed.auto_scale.cpu_utilization_percent ?? 70}% CPU`}
+                icon={Users}
+              />
+            )}
+            {db.ydb_managed.type === "dedicated" && !db.ydb_managed.auto_scale && db.ydb_managed.node_count != null && (
+              <ConfigLine label="nodes" value={String(db.ydb_managed.node_count)} icon={Users} />
             )}
             {db.ydb_managed.type === "dedicated" && db.ydb_managed.storage_groups != null && (
               <ConfigLine label="storage groups" value={String(db.ydb_managed.storage_groups)} icon={HardDrive} />
