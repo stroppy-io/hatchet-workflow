@@ -1137,6 +1137,21 @@ func (e *Executor) startVector(ctx context.Context, cfg MonitorSetupConfig, mach
 		return fmt.Errorf("vector binary not installed")
 	}
 
+	confBody := buildVectorConfig(cfg, machineID)
+	confPath := "/etc/vector/vector.yaml"
+	writeScript := fmt.Sprintf("mkdir -p /etc/vector /var/lib/vector && cat > %s << 'VECTORCFG'\n%sVECTORCFG", confPath, confBody)
+	if _, err := e.shell(ctx, writeScript); err != nil {
+		return fmt.Errorf("write vector config: %w", err)
+	}
+
+	if err := e.startDaemon("vector", "/usr/local/bin/vector", "--config", confPath); err != nil {
+		return fmt.Errorf("start vector: %w", err)
+	}
+	e.emitLine("vector log shipper started")
+	return nil
+}
+
+func buildVectorConfig(cfg MonitorSetupConfig, machineID string) string {
 	// Derive role from machineID convention "<runID>-<role>-<i>".
 	role := "unknown"
 	switch {
@@ -1210,12 +1225,12 @@ func (e *Executor) startVector(ctx context.Context, cfg MonitorSetupConfig, mach
 	// at line start. Anything else is a continuation and gets merged.
 	b.WriteString("    starts_when: |\n")
 	b.WriteString("      msg = \"\"\n")
-	b.WriteString("      if exists(.message) {\n")
+	b.WriteString("      if is_string(.message) {\n")
 	b.WriteString("        msg = string!(.message)\n")
-	b.WriteString("      } else if exists(.MESSAGE) {\n")
+	b.WriteString("      } else if is_string(.MESSAGE) {\n")
 	b.WriteString("        msg = string!(.MESSAGE)\n")
 	b.WriteString("      }\n")
-	b.WriteString("      match!(msg, r'^(\\d{4}-\\d{2}-\\d{2}|:[A-Z][A-Z0-9_]+\\s)')\n")
+	b.WriteString("      match(msg, r'^(\\d{4}-\\d{2}-\\d{2}|:[A-Z][A-Z0-9_]+\\s)')\n")
 	b.WriteString("    merge_strategies:\n")
 	b.WriteString("      message: concat_newline\n")
 	b.WriteString("    expire_after_ms: 2000\n")
@@ -1229,9 +1244,16 @@ func (e *Executor) startVector(ctx context.Context, cfg MonitorSetupConfig, mach
 	fmt.Fprintf(&b, "      .machine_id = %q\n", machineID)
 	fmt.Fprintf(&b, "      .role = %q\n", role)
 	// Map vector's internal fields to what VL expects.
-	b.WriteString("      .unit = .SYSTEMD_UNIT || .source_type || \"\"\n")
-	b.WriteString("      .timestamp = .timestamp || now()\n")
-	b.WriteString("      if exists(.message) { .message = .message } else if exists(.MESSAGE) { .message = .MESSAGE } else { .message = encode_json(.) }\n")
+	b.WriteString("      .unit = \"\"\n")
+	b.WriteString("      if is_string(.SYSTEMD_UNIT) {\n")
+	b.WriteString("        .unit = .SYSTEMD_UNIT\n")
+	b.WriteString("      } else if is_string(.source_type) {\n")
+	b.WriteString("        .unit = .source_type\n")
+	b.WriteString("      }\n")
+	b.WriteString("      if !exists(.timestamp) {\n")
+	b.WriteString("        .timestamp = now()\n")
+	b.WriteString("      }\n")
+	b.WriteString("      if is_string(.message) { .message = .message } else if is_string(.MESSAGE) { .message = .MESSAGE } else { .message = encode_json(.) }\n")
 
 	// HTTP sink → vmauth → vlinsert. Auth: Bearer token + AccountID header
 	// for per-tenant isolation in VictoriaLogs.
@@ -1245,29 +1267,21 @@ func (e *Executor) startVector(ctx context.Context, cfg MonitorSetupConfig, mach
 	b.WriteString("      codec: json\n")
 	b.WriteString("    framing:\n")
 	b.WriteString("      method: newline_delimited\n")
-	b.WriteString("    request:\n")
-	b.WriteString("      headers:\n")
-	if cfg.BearerToken != "" {
-		fmt.Fprintf(&b, "        Authorization: %q\n", "Bearer "+cfg.BearerToken)
-	}
-	if cfg.AccountID > 0 {
-		fmt.Fprintf(&b, "        AccountID: %q\n", fmt.Sprintf("%d", cfg.AccountID))
+	if cfg.BearerToken != "" || cfg.AccountID > 0 {
+		b.WriteString("    request:\n")
+		b.WriteString("      headers:\n")
+		if cfg.BearerToken != "" {
+			fmt.Fprintf(&b, "        Authorization: %q\n", "Bearer "+cfg.BearerToken)
+		}
+		if cfg.AccountID > 0 {
+			fmt.Fprintf(&b, "        AccountID: %q\n", fmt.Sprintf("%d", cfg.AccountID))
+		}
 	}
 	b.WriteString("    batch:\n")
 	b.WriteString("      max_events: 1000\n")
 	b.WriteString("      timeout_secs: 5\n")
 
-	confPath := "/etc/vector/vector.yaml"
-	writeScript := fmt.Sprintf("mkdir -p /etc/vector /var/lib/vector && cat > %s << 'VECTORCFG'\n%sVECTORCFG", confPath, b.String())
-	if _, err := e.shell(ctx, writeScript); err != nil {
-		return fmt.Errorf("write vector config: %w", err)
-	}
-
-	if err := e.startDaemon("vector", "/usr/local/bin/vector", "--config", confPath); err != nil {
-		return fmt.Errorf("start vector: %w", err)
-	}
-	e.emitLine("vector log shipper started")
-	return nil
+	return b.String()
 }
 
 // ---------------------------------------------------------------------------

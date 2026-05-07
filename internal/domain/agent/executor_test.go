@@ -1,6 +1,10 @@
 package agent
 
 import (
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
@@ -87,6 +91,81 @@ func TestSafeWorkloadFileName(t *testing.T) {
 		if _, err := safeWorkloadFileName(name); err == nil {
 			t.Fatalf("safeWorkloadFileName(%q) expected error", name)
 		}
+	}
+}
+
+func TestBuildVectorConfigVRLSyntaxSurface(t *testing.T) {
+	body := buildVectorConfig(MonitorSetupConfig{
+		LogsEndpoint: "http://victorialogs:9428/insert/jsonline",
+		RunID:        "run-test",
+		DatabaseKind: "postgres",
+		BearerToken:  "token",
+		AccountID:    7,
+	}, "run-test-database-0")
+
+	for _, bad := range []string{"|>", "??", "match!", " || "} {
+		if strings.Contains(body, bad) {
+			t.Fatalf("vector config contains unsupported VRL fragment %q:\n%s", bad, body)
+		}
+	}
+	for _, want := range []string{
+		"starts_when: |",
+		"if is_string(.message)",
+		"match(msg, r'^(\\d{4}-\\d{2}-\\d{2}|:[A-Z][A-Z0-9_]+\\s)')",
+		"postgres_files:",
+		"AccountID: \"7\"",
+	} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("vector config missing %q:\n%s", want, body)
+		}
+	}
+}
+
+func TestBuildVectorConfigValidateWithVector(t *testing.T) {
+	vectorBin := os.Getenv("VECTOR_BIN")
+	if vectorBin == "" {
+		t.Skip("set VECTOR_BIN to validate generated configs with a real vector binary")
+	}
+
+	cases := []struct {
+		name        string
+		database    string
+		machineID   string
+		logsURL     string
+		accountID   int32
+		bearerToken string
+	}{
+		{name: "postgres", database: "postgres", machineID: "run-test-database-0", logsURL: "http://victorialogs:9428/insert/jsonline", accountID: 7, bearerToken: "token"},
+		{name: "mysql", database: "mysql", machineID: "run-test-database-0", logsURL: "http://victorialogs:9428/insert/jsonline"},
+		{name: "ydb", database: "ydb", machineID: "run-test-ydb-storage-0", logsURL: "http://victorialogs:9428/insert/jsonline"},
+		{name: "stroppy", database: "postgres", machineID: "run-test-stroppy-0", logsURL: "http://victorialogs:9428/insert/jsonline"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			body := buildVectorConfig(MonitorSetupConfig{
+				LogsEndpoint: tc.logsURL,
+				RunID:        "run-test",
+				DatabaseKind: tc.database,
+				BearerToken:  tc.bearerToken,
+				AccountID:    tc.accountID,
+			}, tc.machineID)
+			tmp := t.TempDir()
+			dataDir := filepath.Join(tmp, "vector-data")
+			if err := os.Mkdir(dataDir, 0755); err != nil {
+				t.Fatalf("create vector data dir: %v", err)
+			}
+			body = strings.Replace(body, "data_dir: /var/lib/vector", "data_dir: "+dataDir, 1)
+			path := filepath.Join(tmp, "vector.yaml")
+			if err := os.WriteFile(path, []byte(body), 0644); err != nil {
+				t.Fatalf("write vector config: %v", err)
+			}
+			cmd := exec.Command(vectorBin, "validate", path)
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				t.Fatalf("vector validate failed: %v\n%s\nconfig:\n%s", err, string(out), body)
+			}
+		})
 	}
 }
 
