@@ -1209,7 +1209,7 @@ func (e *Executor) startVector(ctx context.Context, cfg MonitorSetupConfig, mach
 	// New record starts on ISO date OR on YDB's `:KQP_…`/`:BS_…` etc tags
 	// at line start. Anything else is a continuation and gets merged.
 	b.WriteString("    starts_when: |\n")
-	b.WriteString("      msg = (.message ?? \"\") |> string!\n")
+	b.WriteString("      msg = string!(.message ?? .MESSAGE ?? \"\")\n")
 	b.WriteString("      match!(msg, r'^(\\d{4}-\\d{2}-\\d{2}|:[A-Z][A-Z0-9_]+\\s)')\n")
 	b.WriteString("    merge_strategies:\n")
 	b.WriteString("      message: concat_newline\n")
