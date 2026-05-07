@@ -483,9 +483,18 @@ func (s *JobStorage) CancelQueued(ctx context.Context, tenantID, runID string) (
 	return tag.RowsAffected() > 0, nil
 }
 
-// ReviveStale flips claimed/running rows whose worker died (heartbeat
-// older than `staleAfter`) back to queued and frees their reserved quota
-// so a fresh claim can take them. Returns the number of revived rows.
+// ReviveStale flips claimed/running rows whose worker died back to queued
+// and frees their reserved quota so a fresh claim can take them. The
+// "dead" condition is two-pronged: the row's heartbeat is older than
+// staleAfter AND the owning server_instance is itself missing or stale.
+//
+// The server-instance check is what protects against the
+// duplicate-machines bug — without it, a momentary heartbeat lag (the
+// worker is busy doing a long terraform apply, didn't get a chance to
+// hit the heartbeat goroutine for staleAfter seconds) was enough for the
+// reaper to revive the row, the scheduler to pick it up, and a SECOND
+// worker to start applying terraform on top. Both workers then created
+// duplicate cloud resources.
 func (s *JobStorage) ReviveStale(ctx context.Context, staleAfter time.Duration) (int, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
@@ -494,9 +503,20 @@ func (s *JobStorage) ReviveStale(ctx context.Context, staleAfter time.Duration) 
 	defer tx.Rollback(ctx)
 
 	rows, err := tx.Query(ctx, `
-		SELECT run_id, tenant_id, cost, quota_freed FROM job_runs
-		WHERE state IN ('claimed','running')
-		  AND heartbeat_at < NOW() - ($1 * INTERVAL '1 second')
+		SELECT j.run_id, j.tenant_id, j.cost, j.quota_freed FROM job_runs j
+		LEFT JOIN server_instances si ON si.id = j.claimed_by
+		WHERE j.state IN ('claimed','running')
+		  AND j.heartbeat_at < NOW() - ($1 * INTERVAL '1 second')
+		  AND (
+		    -- claimed_by is unset (legacy rows / claim race) → revive.
+		    j.claimed_by IS NULL
+		    -- owner server row was deleted (clean shutdown) → revive.
+		    OR si.id IS NULL
+		    -- owner server explicitly stopping → revive.
+		    OR si.stopping = TRUE
+		    -- owner server itself missed its instance heartbeat → revive.
+		    OR si.heartbeat_at < NOW() - ($1 * INTERVAL '1 second')
+		  )
 		FOR UPDATE SKIP LOCKED`, staleAfter.Seconds())
 	if err != nil {
 		return 0, err

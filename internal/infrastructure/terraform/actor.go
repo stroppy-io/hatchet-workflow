@@ -145,13 +145,33 @@ func WithEnv(env TfEnv) Options {
 	}
 }
 
+// CreateDir prepares the workdir for terraform. CRITICAL: it must NOT
+// remove an existing terraform.tfstate — that file is the only record of
+// resources already created in the cloud, and wiping it on a recovered
+// run causes terraform to re-apply against an empty state, producing a
+// second set of VMs (the original ones are orphaned and unreachable
+// because no state knows about them).
+//
+// Strategy:
+//   - If workdir exists AND has terraform.tfstate, keep it intact and
+//     just rewrite the .tf source files + var file (handled by WriteFiles
+//     downstream). Subsequent `terraform apply` becomes a no-op refresh.
+//   - If workdir exists but state file is absent (interrupted before
+//     first apply), wipe and recreate — the alternative is an orphaned
+//     `.terraform/` cache pointing at a stale provider lockfile.
+//   - If workdir is missing, create it fresh.
 func (w *WorkdirWithParams) CreateDir() error {
-	err := os.RemoveAll(string(w.workdirPath))
-	if err != nil && !os.IsNotExist(err) {
+	statePath := path.Join(string(w.workdirPath), "terraform.tfstate")
+	if _, err := os.Stat(statePath); err == nil {
+		// State exists — preserve it. Ensure the directory itself exists
+		// (it does, since stat succeeded) and bail out without touching
+		// disk further.
+		return nil
+	}
+	if err := os.RemoveAll(string(w.workdirPath)); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("error cleaning up working directory: %s", err)
 	}
-	err = os.MkdirAll(string(w.workdirPath), os.ModePerm)
-	if err != nil {
+	if err := os.MkdirAll(string(w.workdirPath), os.ModePerm); err != nil {
 		return fmt.Errorf("error creating working directory: %s", err)
 	}
 	return nil

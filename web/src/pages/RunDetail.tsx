@@ -380,8 +380,12 @@ export function RunDetail() {
     ? snapshot.nodes.length > 0 && (jobTerminal || (!hasPending && !hasRunning))
     : false;
 
-  // Cancelled = has cancelled nodes (proper FSM state from backend).
-  const isCancelled = hasCancelled;
+  // Cancelled = either any node ran into the cancelled FSM state, or the
+  // scheduler-level job_runs row is itself in the cancelled state. The
+  // latter catches early cancels where no node ever reached "running" so
+  // none could be marked cancelled — without this the badge would show
+  // "Completed" for runs the runs list shows as "Cancelled".
+  const isCancelled = hasCancelled || jobState === "cancelled";
 
   const runConfig = useMemo<RunConfig | null>(() => {
     const rc = snapshot?.state?.run_config;
