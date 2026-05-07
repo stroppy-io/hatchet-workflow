@@ -193,9 +193,20 @@ func (s *Scheduler) Stop(ctx context.Context) {
 	_, _ = s.pool.Exec(context.Background(), `DELETE FROM server_instances WHERE id=$1`, s.cfg.InstanceID)
 }
 
-// CancelRun stops a running worker if this server owns it; otherwise
-// transitions a queued row to cancelled. Returns true when something was
-// done.
+// CancelRun terminates a run regardless of where its worker lives:
+//
+//  1. If this scheduler owns the worker (entry in s.running), cancel its
+//     context — the worker observes ctx.Err() on its next checkpoint and
+//     transitions through Finish naturally.
+//  2. Otherwise try to cancel a queued row via CancelQueued (no worker
+//     to interrupt, just flip state).
+//  3. Otherwise the row is claimed/running on a server that isn't us
+//     (the owner died, or we're a sibling replica). Force-mark the row
+//     cancelled directly via MarkCancelledRemote so the UI sees the
+//     terminal state immediately. The owning worker, if still alive,
+//     hits an idempotent Finish() and exits cleanly.
+//
+// Returns true when ANY of the three paths fired.
 func (s *Scheduler) CancelRun(ctx context.Context, tenantID, runID string) (bool, error) {
 	s.mu.Lock()
 	cancel, ok := s.running[runID]
@@ -208,7 +219,17 @@ func (s *Scheduler) CancelRun(ctx context.Context, tenantID, runID string) (bool
 	if err != nil {
 		return false, err
 	}
-	return cancelled, nil
+	if cancelled {
+		return true, nil
+	}
+	// Last resort — running on a remote/unreachable owner, or local
+	// scheduler lost track of it (e.g. crash between row claim and
+	// s.running registration). Direct row update keeps the UI honest.
+	remote, err := s.jobs.MarkCancelledRemote(ctx, tenantID, runID)
+	if err != nil {
+		return false, err
+	}
+	return remote, nil
 }
 
 // --- internals ---

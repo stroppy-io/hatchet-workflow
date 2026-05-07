@@ -470,6 +470,71 @@ func (s *JobStorage) Finish(ctx context.Context, tenantID, runID string, state J
 	return tx.Commit(ctx)
 }
 
+// MarkCancelledRemote forcibly transitions a claimed/running job to
+// cancelled when the local scheduler does not own its worker (e.g. the
+// owning server died or this is a different replica). The owner's worker,
+// if still alive, observes the terminal row on its next heartbeat /
+// Finish call — those paths are idempotent. Frees the tenant's reserved
+// quota in the same transaction so subsequent claims aren't blocked.
+// Returns true iff the row was actually transitioned.
+func (s *JobStorage) MarkCancelledRemote(ctx context.Context, tenantID, runID string) (bool, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback(ctx)
+
+	var (
+		costStr     string
+		alreadyFree bool
+		state       string
+	)
+	err = tx.QueryRow(ctx, `
+		SELECT cost, quota_freed, state FROM job_runs
+		WHERE run_id=$1 AND tenant_id=$2 FOR UPDATE`, runID, tenantID,
+	).Scan(&costStr, &alreadyFree, &state)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+	if state != string(JobStateClaimed) && state != string(JobStateRunning) {
+		// queued is handled by CancelQueued; terminal states are already done.
+		return false, nil
+	}
+
+	if !alreadyFree {
+		var cost JobCost
+		_ = json.Unmarshal([]byte(costStr), &cost)
+		used, err := getUsedTx(ctx, tx, tenantID)
+		if err != nil {
+			return false, err
+		}
+		freed := used.Sub(cost)
+		if used.RunsRunning > 0 {
+			freed.RunsRunning = used.RunsRunning - 1
+		}
+		freedJSON, _ := json.Marshal(freed)
+		if _, err := tx.Exec(ctx, `
+			UPDATE quota_accounts SET used=$2, updated_at=NOW() WHERE tenant_id=$1`,
+			tenantID, string(freedJSON)); err != nil {
+			return false, err
+		}
+	}
+	if _, err := tx.Exec(ctx, `
+		UPDATE job_runs
+		SET state='cancelled', error='cancelled by user (remote)',
+		    finished_at=NOW(), updated_at=NOW(), quota_freed=TRUE
+		WHERE run_id=$1 AND tenant_id=$2`, runID, tenantID); err != nil {
+		return false, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // CancelQueued marks a queued job cancelled without spinning anything up.
 // Returns true if a row was actually updated. Worker-running jobs need
 // runtime cancel via the scheduler — this helper is for queued-only.
