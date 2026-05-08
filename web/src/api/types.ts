@@ -503,6 +503,10 @@ export interface Suite {
   db_preset_ids: string[];
   // Items are returned inline by GET /suites/:id; managed via items endpoints.
   items?: SuiteItem[];
+  // ItemCount is the workload-axis size — populated on both list and detail
+  // responses so the suites table can render the "Workloads" column without
+  // a per-row fetch.
+  item_count?: number;
   // Shared infrastructure for every (preset × workload) cell.
   provider: Provider;
   platform_id?: string;
@@ -523,19 +527,26 @@ export interface Suite {
   batches?: SuiteBatchSummary[];
 }
 
-export interface SuiteComparePair {
-  db_preset_id: string;
-  suite_item_id: string;
-  position: number;
-  run_a: string;
-  run_b: string;
+export interface SuiteCrossMember {
+  run_id: string;
+  state: string;
+  db_preset_id?: string;
+  preset_name?: string;
+  suite_item_id?: string;
+  item_name?: string;
 }
 
-export interface SuiteCompareResponse {
+export interface SuiteCrossGroup {
+  group_key: string;
+  group_label: string;
+  members: SuiteCrossMember[];
+}
+
+export interface SuiteCrossResponse {
   suite_id: string;
   batch_id: string;
-  baseline_batch_id: string;
-  pairs: SuiteComparePair[];
+  pivot: "item" | "preset";
+  groups: SuiteCrossGroup[];
 }
 
 // --- Presets ---

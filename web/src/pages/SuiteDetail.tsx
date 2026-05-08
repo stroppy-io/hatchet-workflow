@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState, Fragment } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   cancelBatch,
-  compareBatch,
+  compareRuns,
+  crossBatch,
   deleteSuiteItem,
   getSuite,
   launchSuite,
@@ -13,10 +14,12 @@ import {
 } from "@/api/client";
 import { KIND_PROTOCOLS, SCRIPT_COMPAT } from "@/api/types";
 import type {
+  ComparisonResponse,
   Preset,
   Suite,
   SuiteBatchSummary,
-  SuiteComparePair,
+  SuiteCrossGroup,
+  SuiteCrossMember,
   SuiteItem,
 } from "@/api/types";
 import { Badge } from "@/components/ui/badge";
@@ -337,6 +340,7 @@ export function SuiteDetail() {
             Batches
             <span className="ml-1.5 text-[10px] text-zinc-600 tabular-nums">{batches.length}</span>
           </TabsTrigger>
+          <TabsTrigger value="compare">Compare</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -414,6 +418,14 @@ export function SuiteDetail() {
               ) : (
                 <BatchesList suiteID={suite.id} batches={batches} presetMap={presetMap} onCancel={cancelB} />
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="compare">
+          <Card className="min-h-[calc(100vh-13rem)]">
+            <CardContent className="p-0">
+              <CompareTab suiteID={suite.id} batches={batches} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -840,7 +852,7 @@ function BatchesList({
               {isOpen && (
                 <TableRow className="border-zinc-800/50 hover:bg-transparent">
                   <TableCell colSpan={6} className="bg-[#050505] p-4">
-                    <BatchDetail suiteID={suiteID} batch={b} presetMap={presetMap} />
+                    <BatchDetail batch={b} presetMap={presetMap} />
                   </TableCell>
                 </TableRow>
               )}
@@ -874,140 +886,320 @@ function BatchProgress({ b }: { b: SuiteBatchSummary }) {
 }
 
 function BatchDetail({
-  suiteID,
   batch,
   presetMap,
 }: {
-  suiteID: string;
   batch: SuiteBatchSummary;
   presetMap: Record<string, Preset>;
 }) {
-  const [pairs, setPairs] = useState<SuiteComparePair[] | null>(null);
-  const [baselineID, setBaselineID] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  async function runCompare(strategy: string) {
-    setLoading(true);
-    setErr(null);
-    try {
-      const r = await compareBatch(suiteID, batch.batch_id, strategy);
-      setPairs(r.pairs);
-      setBaselineID(r.baseline_batch_id);
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Compare failed");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 mb-2">
-          Cells <span className="text-zinc-700">({batch.runs.length})</span>
-        </div>
-        <div className="space-y-1">
-          {batch.runs.map((r) => {
-            const pname = r.db_preset_id ? presetMap[r.db_preset_id]?.name ?? r.db_preset_id.slice(0, 6) : "—";
-            const color = r.db_preset_id ? DB_COLORS[presetMap[r.db_preset_id]?.db_kind as keyof typeof DB_COLORS] : null;
-            const stateColor =
-              r.state === "finished" ? "text-emerald-400" :
-              r.state === "failed" ? "text-red-400" :
-              r.state === "cancelled" ? "text-zinc-500" :
-              r.state === "running" ? "text-amber-400" :
-              "text-zinc-500";
-            return (
-              <Link
-                key={r.run_id}
-                to={`/runs/${r.run_id}`}
-                className="flex items-center gap-2 px-2 py-1 border border-zinc-800/60 bg-[#070707] hover:border-zinc-700 hover:bg-zinc-900/60 transition-colors text-[11px] font-mono"
-                title={r.run_id}
-              >
-                {color ? (
-                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color.hex }} />
-                ) : (
-                  <span className="w-1.5 h-1.5 shrink-0" />
-                )}
-                <span className="text-zinc-500 truncate flex-1">[{pname}] {r.run_id.slice(-12)}</span>
-                <span className={`shrink-0 ${stateColor}`}>{r.state}</span>
-              </Link>
-            );
-          })}
-        </div>
+    <div>
+      <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 mb-2">
+        Cells <span className="text-zinc-700">({batch.runs.length})</span>
       </div>
-
-      <div>
-        <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 mb-2 flex items-center gap-2">
-          Compare against
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={loading}
-            onClick={() => runCompare("previous")}
-            className="h-6 px-2 text-[10px] font-mono"
-          >
-            <GitCompareArrows className="w-3 h-3 mr-1" /> previous
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={loading}
-            onClick={() => runCompare("first")}
-            className="h-6 px-2 text-[10px] font-mono"
-          >
-            first
-          </Button>
-        </div>
-
-        {err && <div className="text-[11px] font-mono text-destructive">{err}</div>}
-
-        {pairs ? (
-          pairs.length > 0 ? (
-            <div className="space-y-1">
-              <div className="text-[10px] font-mono text-zinc-600">
-                Baseline batch:{" "}
-                <span className="text-zinc-400 font-mono">{baselineID.slice(0, 8) || "(none)"}</span>
-              </div>
-              {pairs.map((p, i) => {
-                const pname = p.db_preset_id ? presetMap[p.db_preset_id]?.name ?? p.db_preset_id.slice(0, 6) : "—";
-                const color = p.db_preset_id ? DB_COLORS[presetMap[p.db_preset_id]?.db_kind as keyof typeof DB_COLORS] : null;
-                return (
-                  <div
-                    key={`${p.db_preset_id}-${p.suite_item_id}-${i}`}
-                    className="flex items-center gap-2 px-2 py-1 border border-zinc-800/60 bg-[#070707] text-[11px] font-mono"
-                  >
-                    {color ? (
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color.hex }} />
-                    ) : (
-                      <span className="w-1.5 h-1.5 shrink-0" />
-                    )}
-                    <span className="text-zinc-500 truncate flex-1">[{pname}]</span>
-                    {p.run_b ? (
-                      <Link
-                        to={`/compare?a=${p.run_a}&b=${p.run_b}`}
-                        className="text-primary hover:underline shrink-0"
-                      >
-                        open diff →
-                      </Link>
-                    ) : (
-                      <span className="text-zinc-700 shrink-0">no baseline match</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-[11px] font-mono text-zinc-600">No baseline batch found.</div>
-          )
-        ) : (
-          <div className="text-[11px] font-mono text-zinc-600">
-            Pick a baseline strategy to pair runs by (db_preset, workload).
-          </div>
-        )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+        {batch.runs.map((r) => {
+          const pname = r.db_preset_id ? presetMap[r.db_preset_id]?.name ?? r.db_preset_id.slice(0, 6) : "—";
+          const color = r.db_preset_id ? DB_COLORS[presetMap[r.db_preset_id]?.db_kind as keyof typeof DB_COLORS] : null;
+          const stateColor =
+            r.state === "finished" ? "text-emerald-400" :
+            r.state === "failed" ? "text-red-400" :
+            r.state === "cancelled" ? "text-zinc-500" :
+            r.state === "running" ? "text-amber-400" :
+            "text-zinc-500";
+          return (
+            <Link
+              key={r.run_id}
+              to={`/runs/${r.run_id}`}
+              className="flex items-center gap-2 px-2 py-1 border border-zinc-800/60 bg-[#070707] hover:border-zinc-700 hover:bg-zinc-900/60 transition-colors text-[11px] font-mono"
+              title={r.run_id}
+            >
+              {color ? (
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color.hex }} />
+              ) : (
+                <span className="w-1.5 h-1.5 shrink-0" />
+              )}
+              <span className="text-zinc-500 truncate flex-1">[{pname}] {r.run_id.slice(-12)}</span>
+              <span className={`shrink-0 ${stateColor}`}>{r.state}</span>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
+}
+
+
+// ─── Compare tab — N-way cross-DB / cross-workload table ──────────
+
+function CompareTab({ suiteID, batches }: { suiteID: string; batches: SuiteBatchSummary[] }) {
+  const [pivot, setPivot] = useState<"item" | "preset">("item");
+  const [batchID, setBatchID] = useState<string>(() => batches[0]?.batch_id || "");
+  const [groups, setGroups] = useState<SuiteCrossGroup[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!batchID) return;
+    setLoading(true);
+    setErr(null);
+    crossBatch(suiteID, batchID, pivot)
+      .then((r) => setGroups(r.groups))
+      .catch((e) => setErr(e instanceof Error ? e.message : "Failed"))
+      .finally(() => setLoading(false));
+  }, [suiteID, batchID, pivot]);
+
+  if (batches.length === 0) {
+    return (
+      <div className="px-4 py-12 text-center text-xs font-mono text-zinc-600">
+        No batches yet — launch the matrix to compare runs.
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Toolbar */}
+      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-zinc-800/60 flex-wrap">
+        <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">Compare</span>
+
+        <div className="inline-flex border border-zinc-800 overflow-hidden text-[11px] font-mono">
+          <button
+            type="button"
+            onClick={() => setPivot("item")}
+            className={`px-2.5 py-1 ${pivot === "item" ? "bg-primary/10 text-primary" : "text-zinc-500 hover:text-zinc-300"}`}
+          >by workload</button>
+          <button
+            type="button"
+            onClick={() => setPivot("preset")}
+            className={`px-2.5 py-1 border-l border-zinc-800 ${pivot === "preset" ? "bg-primary/10 text-primary" : "text-zinc-500 hover:text-zinc-300"}`}
+          >by DB</button>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Batch</span>
+          <select
+            value={batchID}
+            onChange={(e) => setBatchID(e.target.value)}
+            className="h-7 bg-zinc-900 border border-zinc-800 px-2 text-[11px] font-mono text-zinc-300 outline-none focus:border-zinc-600"
+          >
+            {batches.map((b) => (
+              <option key={b.batch_id} value={b.batch_id}>
+                {b.batch_id.slice(0, 8)} · {new Date(b.created_at).toLocaleString()}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {loading && <Loader className="text-[10px] font-mono text-zinc-500">loading…</Loader>}
+      </div>
+
+      {err && (
+        <div className="px-4 py-3 text-[11px] font-mono text-destructive border-b border-zinc-800/60">
+          {err}
+        </div>
+      )}
+
+      {groups && groups.length === 0 && (
+        <div className="px-4 py-12 text-center text-xs font-mono text-zinc-600">
+          No groups in this batch.
+        </div>
+      )}
+
+      {groups && groups.length > 0 && (
+        <div className="space-y-4 p-4">
+          {groups.map((g) => (
+            <NWayTable key={g.group_key} group={g} pivot={pivot} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Loader({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <span className={className}>{children}</span>;
+}
+
+// NWayTable fans out compareRuns(anchor, member) for every non-anchor
+// member of one group, then merges results into a single table by metric
+// key. Anchor's avg comes from the first compare's avg_a; each other
+// member contributes its avg_b + diff_avg_pct + verdict.
+function NWayTable({ group, pivot }: { group: SuiteCrossGroup; pivot: "item" | "preset" }) {
+  const finishedMembers = useMemo(
+    () => group.members.filter((m) => m.state === "finished"),
+    [group],
+  );
+  const anchor = finishedMembers[0];
+  const others = finishedMembers.slice(1);
+  const failed = group.members.filter((m) => m.state !== "finished");
+
+  // For each (anchor, other) pair fetch the comparison.
+  const [pairs, setPairs] = useState<Record<string, ComparisonResponse | null>>({});
+  const [pairErrs, setPairErrs] = useState<Record<string, string>>({});
+  const [pairLoading, setPairLoading] = useState(false);
+
+  useEffect(() => {
+    if (!anchor || others.length === 0) {
+      setPairs({});
+      return;
+    }
+    setPairLoading(true);
+    setPairErrs({});
+    Promise.all(
+      others.map((m) =>
+        compareRuns(anchor.run_id, m.run_id)
+          .then((r) => [m.run_id, r] as const)
+          .catch((e) => {
+            setPairErrs((p) => ({ ...p, [m.run_id]: e instanceof Error ? e.message : "fail" }));
+            return [m.run_id, null] as const;
+          }),
+      ),
+    )
+      .then((results) => {
+        const map: Record<string, ComparisonResponse | null> = {};
+        for (const [k, v] of results) map[k] = v;
+        setPairs(map);
+      })
+      .finally(() => setPairLoading(false));
+  }, [anchor?.run_id, others.map((o) => o.run_id).join(",")]);
+
+  // Build merged metric rows. Key = metric key. Each row gets:
+  //   anchor: avg_a from any pair (all should match)
+  //   per-other: avg_b + diff_avg_pct + verdict
+  const merged = useMemo(() => {
+    const out: Record<string, {
+      key: string; name: string; unit: string;
+      anchorAvg: number;
+      perOther: Record<string, { avg: number; diff: number; verdict: string } | null>;
+    }> = {};
+    for (const [otherID, resp] of Object.entries(pairs)) {
+      if (!resp) continue;
+      for (const r of resp.metrics) {
+        const row = out[r.key] || {
+          key: r.key, name: r.name, unit: r.unit,
+          anchorAvg: r.avg_a, perOther: {},
+        };
+        row.anchorAvg = r.avg_a;
+        row.perOther[otherID] = { avg: r.avg_b, diff: r.diff_avg_pct, verdict: r.verdict };
+        out[r.key] = row;
+      }
+    }
+    return Object.values(out).sort((a, b) => a.name.localeCompare(b.name));
+  }, [pairs]);
+
+  if (!anchor) {
+    return (
+      <div className="border border-zinc-800/60 bg-[#070707] p-3">
+        <div className="text-[11px] font-mono text-zinc-300 mb-1.5">
+          {group.group_label}
+          <span className="text-zinc-700 ml-2">({group.members.length} runs)</span>
+        </div>
+        <div className="text-[11px] font-mono text-amber-500/80">
+          No finished runs — nothing to compare.
+        </div>
+      </div>
+    );
+  }
+
+  const sub = (m: SuiteCrossMember) =>
+    pivot === "item"
+      ? m.preset_name || m.db_preset_id?.slice(0, 6) || "—"
+      : m.item_name || "—";
+
+  return (
+    <div className="border border-zinc-800/60 bg-[#070707]">
+      <div className="px-3 py-2 border-b border-zinc-800/50 flex items-center gap-2">
+        <span className="text-xs font-mono font-semibold text-zinc-200">{group.group_label}</span>
+        <span className="text-[10px] font-mono text-zinc-700">{finishedMembers.length}/{group.members.length} finished</span>
+        {failed.length > 0 && (
+          <span className="text-[10px] font-mono text-red-400/70">
+            ({failed.map((f) => `${sub(f)}: ${f.state}`).join(", ")})
+          </span>
+        )}
+        {pairLoading && <span className="text-[10px] font-mono text-zinc-500 ml-auto">collecting metrics…</span>}
+      </div>
+
+      {others.length === 0 ? (
+        <div className="px-3 py-4 text-[11px] font-mono text-zinc-500">
+          Only one finished run — nothing to diff against.
+          <Link to={`/runs/${anchor.run_id}/metrics`} className="text-primary hover:underline ml-2">
+            view metrics →
+          </Link>
+        </div>
+      ) : merged.length === 0 ? (
+        <div className="px-3 py-4 text-[11px] font-mono text-zinc-500">
+          {pairLoading ? "collecting metrics…" : "No comparison data available yet."}
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs font-mono">
+            <thead>
+              <tr className="border-b border-zinc-800/60 text-left text-[10px] uppercase tracking-wider text-zinc-500 bg-zinc-900/30">
+                <th className="py-2 px-3">Metric</th>
+                <th className="py-2 px-3 text-right">
+                  <span className="text-cyan-400">{sub(anchor)}</span>
+                  <span className="text-zinc-700 ml-1">(anchor)</span>
+                </th>
+                {others.map((m) => (
+                  <th key={m.run_id} className="py-2 px-3 text-right">
+                    <span className="text-amber-400">{sub(m)}</span>
+                    {pairErrs[m.run_id] && (
+                      <span className="text-red-400 ml-1" title={pairErrs[m.run_id]}>err</span>
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {merged.map((row) => (
+                <tr key={row.key} className="border-b border-zinc-800/40 hover:bg-zinc-900/30">
+                  <td className="py-1.5 px-3">
+                    <div className="text-zinc-300">{row.name}</div>
+                    <div className="text-[9px] text-zinc-700">{row.key}</div>
+                  </td>
+                  <td className="py-1.5 px-3 text-right text-zinc-300 tabular-nums">
+                    {formatMetric(row.anchorAvg, row.unit)}
+                  </td>
+                  {others.map((m) => {
+                    const d = row.perOther[m.run_id];
+                    if (!d) return <td key={m.run_id} className="py-1.5 px-3 text-right text-zinc-700">—</td>;
+                    const cls =
+                      d.verdict === "better" ? "text-emerald-400" :
+                      d.verdict === "worse" ? "text-red-400" :
+                      "text-zinc-500";
+                    return (
+                      <td key={m.run_id} className="py-1.5 px-3 text-right tabular-nums">
+                        <div className="text-zinc-300">{formatMetric(d.avg, row.unit)}</div>
+                        <div className={`text-[10px] ${cls}`}>
+                          {d.diff > 0 ? "+" : ""}{d.diff.toFixed(1)}%
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function formatMetric(v: number, unit: string): string {
+  if (unit === "%" || unit === "percent") return `${v.toFixed(1)}%`;
+  if (unit === "ms") return v >= 1000 ? `${(v / 1000).toFixed(2)}s` : `${v.toFixed(1)}ms`;
+  if (unit === "bytes/s" || unit === "B/s") {
+    if (v >= 1e9) return `${(v / 1e9).toFixed(1)}GB/s`;
+    if (v >= 1e6) return `${(v / 1e6).toFixed(1)}MB/s`;
+    if (v >= 1e3) return `${(v / 1e3).toFixed(1)}KB/s`;
+    return `${v.toFixed(0)}B/s`;
+  }
+  if (Math.abs(v) >= 1e6) return `${(v / 1e6).toFixed(1)}M`;
+  if (Math.abs(v) >= 1e3) return `${(v / 1e3).toFixed(1)}K`;
+  if (Number.isInteger(v)) return String(v);
+  return v.toFixed(2);
 }
 
 export default SuiteDetail;

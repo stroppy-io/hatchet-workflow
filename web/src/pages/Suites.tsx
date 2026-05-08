@@ -12,6 +12,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import {
+  cloneSuite,
   deleteSuite,
   launchSuite,
   listSuites,
@@ -41,6 +42,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Clock,
+  Copy,
   Layers,
   Pause,
   Pencil,
@@ -146,6 +148,7 @@ function makeColumns(
   onLaunch: (s: Suite) => void,
   onToggle: (s: Suite, enabled: boolean) => void,
   onEdit: (s: Suite) => void,
+  onClone: (s: Suite) => void,
   onDelete: (s: Suite) => void,
   busyID: string | null,
 ): ColumnDef<Suite>[] {
@@ -222,7 +225,7 @@ function makeColumns(
       id: "workloads",
       header: "Workloads",
       cell: ({ row }) => {
-        const n = row.original.items?.length ?? 0;
+        const n = row.original.item_count ?? row.original.items?.length ?? 0;
         return (
           <span className="font-mono text-xs text-zinc-400 inline-flex items-center gap-1">
             <Zap className="w-3 h-3 text-zinc-600" />
@@ -325,7 +328,7 @@ function makeColumns(
       header: "",
       cell: ({ row }) => {
         const s = row.original;
-        const cantLaunch = busyID === s.id || (s.items?.length ?? 0) === 0 || (s.db_preset_ids?.length ?? 0) === 0;
+        const cantLaunch = busyID === s.id || (s.item_count ?? s.items?.length ?? 0) === 0 || (s.db_preset_ids?.length ?? 0) === 0;
         return (
           <div className="flex items-center gap-0.5">
             <Button
@@ -354,6 +357,20 @@ function makeColumns(
               }}
             >
               <Pencil className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0 text-zinc-500 hover:text-primary cursor-pointer"
+              title="Clone suite"
+              disabled={busyID === s.id}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClone(s);
+              }}
+            >
+              <Copy className="h-3.5 w-3.5" />
             </Button>
             <Button
               size="sm"
@@ -450,6 +467,19 @@ export function Suites() {
     navigate(`/suites/${s.id}/edit`);
   }
 
+  async function handleClone(s: Suite) {
+    setBusyID(s.id);
+    try {
+      const r = await cloneSuite(s.id);
+      await fetchSuites();
+      navigate(`/suites/${r.id}/edit`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Clone failed");
+    } finally {
+      setBusyID(null);
+    }
+  }
+
   async function handleDelete(s: Suite) {
     const ok = await confirm({
       title: `Delete suite "${s.name}"?`,
@@ -470,7 +500,7 @@ export function Suites() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const columns = useMemo(
-    () => makeColumns(handleLaunch, handleToggle, handleEdit, handleDelete, busyID),
+    () => makeColumns(handleLaunch, handleToggle, handleEdit, handleClone, handleDelete, busyID),
     [busyID],
   );
 

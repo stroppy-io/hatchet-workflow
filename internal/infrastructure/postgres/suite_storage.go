@@ -479,6 +479,42 @@ func (s *SuiteStorage) ReleaseCronLease(ctx context.Context, suiteID, owner stri
 	return err
 }
 
+// ItemCounts returns suite_id → enabled-item count for one tenant in a
+// single round trip. Used by listSuites to render the "Workloads" column
+// without N+1 SELECTs against suite_items.
+func (s *SuiteStorage) ItemCounts(ctx context.Context, tenantID string) (map[string]int, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT suite_id, COUNT(*)::int FROM suite_items
+		 WHERE tenant_id=$1 GROUP BY suite_id`, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]int{}
+	for rows.Next() {
+		var sid string
+		var n int
+		if err := rows.Scan(&sid, &n); err != nil {
+			return nil, err
+		}
+		out[sid] = n
+	}
+	return out, rows.Err()
+}
+
+// MarkLaunched stamps last_fire_at + last_batch_id for non-cron launches.
+// Cron path uses ReleaseCronLease which also clears the lease; manual /
+// API launches go through here so the suites list shows fresh "last
+// batch" info instead of staying blank until the next cron fire.
+func (s *SuiteStorage) MarkLaunched(ctx context.Context, tenantID, suiteID, batchID string) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE suites
+		   SET last_fire_at=NOW(), last_batch_id=$3, updated_at=NOW()
+		 WHERE id=$1 AND tenant_id=$2`,
+		suiteID, tenantID, nullStr(batchID))
+	return err
+}
+
 func (s *SuiteStorage) SetNextFire(ctx context.Context, tenantID, suiteID string, next *time.Time) error {
 	_, err := s.pool.Exec(ctx,
 		`UPDATE suites SET next_fire_at=$3, updated_at=NOW()

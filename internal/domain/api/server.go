@@ -273,7 +273,7 @@ func (s *Server) Router() http.Handler {
 		r.Get("/suites", s.listSuites)
 		r.Get("/suites/{id}", s.getSuite)
 		r.Get("/suites/{id}/items", s.listSuiteItems)
-		r.Get("/suites/{id}/batches/{batchID}/compare", s.compareBatch)
+		r.Get("/suites/{id}/batches/{batchID}/cross", s.crossCompareBatch)
 		r.Get("/settings", s.getSettings)
 
 		// Operator+
@@ -302,6 +302,7 @@ func (s *Server) Router() http.Handler {
 			r.Post("/suites", s.createSuite)
 			r.Put("/suites/{id}", s.updateSuite)
 			r.Delete("/suites/{id}", s.deleteSuite)
+			r.Post("/suites/{id}/clone", s.cloneSuite)
 			r.Post("/suites/{id}/run", s.launchSuite)
 			r.Post("/suites/{id}/batches/{batchID}/cancel", s.cancelBatch)
 			r.Post("/suites/{id}/items", s.createSuiteItem)

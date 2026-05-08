@@ -45,14 +45,34 @@ func BuiltinPackages() []Package {
 			},
 		},
 		{
+			// MySQL 8.0 from upstream mysql.com APT repo. Ubuntu 22.04+
+			// ships only the unversioned mysql-server in archive; the
+			// "mysql-server-8.0" package name comes from MySQL's repo, so
+			// add their key + sources.list before apt update.
 			Name: "MySQL 8.0", Description: "Default MySQL 8.0",
 			DbKind: "mysql", DbVersion: "8.0", IsBuiltin: true,
 			AptPackages: []string{"mysql-server-8.0", "mysql-client"},
+			PreInstall: []string{
+				`apt-get install -y curl gnupg lsb-release ca-certificates`,
+				`install -d /etc/apt/keyrings`,
+				`curl -fsSL https://repo.mysql.com/RPM-GPG-KEY-mysql-2023 | gpg --dearmor -o /etc/apt/keyrings/mysql.gpg`,
+				`bash -c 'echo "deb [signed-by=/etc/apt/keyrings/mysql.gpg] http://repo.mysql.com/apt/ubuntu/ $(lsb_release -cs) mysql-8.0" > /etc/apt/sources.list.d/mysql.list'`,
+				`apt-get update`,
+			},
 		},
 		{
-			Name: "MySQL 8.4", Description: "Default MySQL 8.4",
+			// MySQL 8.4 LTS from upstream mysql.com APT repo. Same path as
+			// 8.0 but pointing to the 8.4 component.
+			Name: "MySQL 8.4", Description: "Default MySQL 8.4 (LTS)",
 			DbKind: "mysql", DbVersion: "8.4", IsBuiltin: true,
 			AptPackages: []string{"mysql-server-8.4", "mysql-client"},
+			PreInstall: []string{
+				`apt-get install -y curl gnupg lsb-release ca-certificates`,
+				`install -d /etc/apt/keyrings`,
+				`curl -fsSL https://repo.mysql.com/RPM-GPG-KEY-mysql-2023 | gpg --dearmor -o /etc/apt/keyrings/mysql.gpg`,
+				`bash -c 'echo "deb [signed-by=/etc/apt/keyrings/mysql.gpg] http://repo.mysql.com/apt/ubuntu/ $(lsb_release -cs) mysql-8.4-lts" > /etc/apt/sources.list.d/mysql.list'`,
+				`apt-get update`,
+			},
 		},
 		{
 			// MariaDB 10.11 LTS — last release supported until 2028-02.

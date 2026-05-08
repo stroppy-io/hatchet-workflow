@@ -447,7 +447,6 @@ export async function deleteRunPreset(id: string): Promise<{ status: string }> {
 
 import type {
   ComparisonConfig,
-  SuiteCompareResponse,
   StroppyConfig,
   NetworkConfig,
   MachineSpec,
@@ -501,6 +500,13 @@ export async function updateSuite(
 
 export async function deleteSuite(id: string): Promise<{ status: string }> {
   return request(`${API_BASE}/suites/${id}`, { method: "DELETE" });
+}
+
+// cloneSuite duplicates the suite (with items). Server picks a fresh
+// "<name> (copy [N])" so UNIQUE(tenant_id, name) doesn't collide. Cron is
+// disabled on the clone — caller can re-enable after review.
+export async function cloneSuite(id: string): Promise<{ id: string; name: string }> {
+  return request(`${API_BASE}/suites/${id}/clone`, { method: "POST" });
 }
 
 export async function launchSuite(
@@ -574,13 +580,15 @@ export async function reorderSuiteItems(
   });
 }
 
-export async function compareBatch(
+// crossBatch groups the runs of one batch by suite_item_id (pivot=item:
+// cross-DB) or db_preset_id (pivot=preset: cross-workload). Each group is
+// an N-way comparison context the UI fans out into pairwise /compare links.
+export async function crossBatch(
   suiteID: string,
   batchID: string,
-  baseline: string,
-): Promise<SuiteCompareResponse> {
-  const q = baseline ? `?baseline=${encodeURIComponent(baseline)}` : "";
-  return request(`${API_BASE}/suites/${suiteID}/batches/${batchID}/compare${q}`);
+  pivot: "item" | "preset" = "item",
+): Promise<import("./types").SuiteCrossResponse> {
+  return request(`${API_BASE}/suites/${suiteID}/batches/${batchID}/cross?pivot=${pivot}`);
 }
 
 // ---------- Probe ----------

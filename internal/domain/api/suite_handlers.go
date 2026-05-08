@@ -43,6 +43,7 @@ type suiteResp struct {
 	CreatedAt        string                    `json:"created_at"`
 	UpdatedAt        string                    `json:"updated_at"`
 	Items            []suiteItemResp           `json:"items,omitempty"`
+	ItemCount        int                       `json:"item_count"`
 	Batches          []suiteBatchSummary       `json:"batches,omitempty"`
 }
 
@@ -182,9 +183,12 @@ func (s *Server) listSuites(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
+	counts, _ := st.ItemCounts(r.Context(), tenantID)
 	out := make([]suiteResp, 0, len(rows))
 	for _, su := range rows {
-		out = append(out, suiteToResp(su))
+		r := suiteToResp(su)
+		r.ItemCount = counts[su.ID]
+		out = append(out, r)
 	}
 	writeJSON(w, http.StatusOK, ensureSlice(out))
 }
@@ -203,7 +207,9 @@ func (s *Server) getSuite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp := suiteToResp(*su)
+	resp.ItemCount = 0
 	if items, err := st.ListItems(r.Context(), tenantID, id); err == nil {
+		resp.ItemCount = len(items)
 		for _, it := range items {
 			resp.Items = append(resp.Items, itemToResp(it))
 		}
@@ -342,6 +348,80 @@ func (s *Server) updateSuite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "updated"})
+}
+
+// cloneSuite duplicates a suite (metadata + items) under a new id. The
+// clone keeps everything the user picked — db_preset_ids, infra, schedule,
+// policy, comparison defaults, items — but resets state-of-execution
+// fields (last_fire_at, last_batch_id, lock_owner, next_fire_at) and
+// disables cron by default so the clone doesn't immediately fire.
+func (s *Server) cloneSuite(w http.ResponseWriter, r *http.Request) {
+	tenantID := auth.TenantID(r.Context())
+	id := chi.URLParam(r, "id")
+	st := postgres.NewSuiteStorage(s.pool)
+
+	src, err := st.Get(r.Context(), tenantID, id)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	if src == nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+		return
+	}
+	items, err := st.ListItems(r.Context(), tenantID, id)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+
+	// New name: append " (copy)" / " (copy 2)" / … so UNIQUE(tenant_id, name)
+	// doesn't collide on repeated clones of the same source.
+	existing, _ := st.List(r.Context(), tenantID)
+	taken := map[string]struct{}{}
+	for _, s := range existing {
+		taken[s.Name] = struct{}{}
+	}
+	newName := src.Name + " (copy)"
+	for n := 2; ; n++ {
+		if _, hit := taken[newName]; !hit {
+			break
+		}
+		newName = fmt.Sprintf("%s (copy %d)", src.Name, n)
+	}
+
+	clone := *src
+	clone.ID = uuid.New().String()
+	clone.Name = newName
+	clone.LastFireAt = nil
+	clone.NextFireAt = nil
+	clone.LastBatchID = ""
+	clone.LockOwner = ""
+	clone.LockExpiresAt = nil
+	// Disable cron on clones: prevents an immediate fire on the duplicate
+	// before the operator has a chance to review.
+	clone.Enabled = false
+
+	if err := st.Create(r.Context(), clone); err != nil {
+		writeJSON(w, http.StatusConflict, map[string]string{"error": "clone failed: " + err.Error()})
+		return
+	}
+	for _, it := range items {
+		newItem := postgres.SuiteItem{
+			ID:       uuid.New().String(),
+			SuiteID:  clone.ID,
+			TenantID: tenantID,
+			Position: it.Position,
+			Name:     it.Name,
+			Workload: it.Workload,
+			Enabled:  it.Enabled,
+		}
+		if err := st.CreateItem(r.Context(), newItem); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "clone item failed: " + err.Error()})
+			return
+		}
+	}
+	writeJSON(w, http.StatusCreated, map[string]string{"id": clone.ID, "name": clone.Name})
 }
 
 func (s *Server) deleteSuite(w http.ResponseWriter, r *http.Request) {
@@ -682,6 +762,17 @@ func (s *Server) runSuiteOnce(
 			pos++
 		}
 	}
+	if enqueued > 0 {
+		// Stamp suite.last_fire_at + last_batch_id for both manual and cron
+		// launches. Cron path will overwrite via ReleaseCronLease; manual
+		// path used to leave these blank, hiding "last batch" info on the
+		// suites list until a cron fire happened.
+		if err := st.MarkLaunched(ctx, tenantID, suiteID, batchID); err != nil {
+			// Non-fatal: the runs themselves are already enqueued. Just log
+			// via the caller's path by surfacing a soft warning into skipped.
+			skipped = append(skipped, fmt.Sprintf("mark-launched: %s", err.Error()))
+		}
+	}
 	if enqueued == 0 {
 		return "", 0, skipped, &enqueueError{
 			code: http.StatusBadRequest,
@@ -743,103 +834,117 @@ func (s *Server) cancelBatch(w http.ResponseWriter, r *http.Request) {
 
 // --- compare batch vs baseline ---
 
-// compareBatch pairs runs in the requested batch against a baseline batch
-// by (db_preset_id, suite_item_id) — the matrix cell coordinate. Stable
-// across reorders and additions/removals as long as the cell identity is
-// preserved.
-func (s *Server) compareBatch(w http.ResponseWriter, r *http.Request) {
+// crossCompareBatch groups runs WITHIN one batch by either suite_item_id
+// (pivot=item — cross-DB: same workload on different DBs) or db_preset_id
+// (pivot=preset — cross-workload: different workloads on the same DB).
+// Each group is the input for an N-way comparison the UI assembles by
+// firing /compare?a=&b= per pair.
+//
+// pivot=item is the priority: lets the user answer "TPC-C runs faster on
+// PG-HA or Cockroach in this batch?" without hopping across batches.
+func (s *Server) crossCompareBatch(w http.ResponseWriter, r *http.Request) {
 	tenantID := auth.TenantID(r.Context())
 	suiteID := chi.URLParam(r, "id")
 	batchID := chi.URLParam(r, "batchID")
-	baseline := r.URL.Query().Get("baseline")
-
+	pivot := r.URL.Query().Get("pivot")
+	if pivot == "" {
+		pivot = "item"
+	}
+	if pivot != "item" && pivot != "preset" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "pivot must be 'item' or 'preset'"})
+		return
+	}
 	if s.scheduler == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "scheduler not initialised"})
 		return
 	}
-	current, err := s.scheduler.Jobs().ListByBatch(r.Context(), tenantID, batchID)
+	jobs, err := s.scheduler.Jobs().ListByBatch(r.Context(), tenantID, batchID)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-	baselineBatch, err := s.resolveBaselineBatch(r.Context(), tenantID, suiteID, batchID, baseline)
-	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		return
-	}
-	type pair struct {
-		DBPresetID  string `json:"db_preset_id"`
-		SuiteItemID string `json:"suite_item_id"`
-		Position    int    `json:"position"`
-		RunA        string `json:"run_a"`
-		RunB        string `json:"run_b"`
-	}
-	type cellKey struct{ db, item string }
-	baseByCell := map[cellKey]postgres.JobRun{}
-	for _, j := range baselineBatch {
-		baseByCell[cellKey{j.DBPresetID, j.SuiteItemID}] = j
-	}
-	out := make([]pair, 0, len(current))
-	for _, j := range current {
-		p := pair{
-			DBPresetID: j.DBPresetID, SuiteItemID: j.SuiteItemID,
-			Position: j.Position, RunA: j.RunID,
-		}
-		if b, ok := baseByCell[cellKey{j.DBPresetID, j.SuiteItemID}]; ok {
-			p.RunB = b.RunID
-		}
-		out = append(out, p)
-	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"suite_id":          suiteID,
-		"batch_id":          batchID,
-		"baseline_batch_id": baselineBatchID(baselineBatch),
-		"pairs":             out,
-	})
-}
 
-func (s *Server) resolveBaselineBatch(ctx context.Context, tenantID, suiteID, currentBatchID, strategy string) ([]postgres.JobRun, error) {
-	if strategy == "" {
-		return nil, nil
-	}
-	if strategy != "previous" && strategy != "first" {
-		return s.scheduler.Jobs().ListByBatch(ctx, tenantID, strategy)
-	}
-	all, err := s.scheduler.Jobs().ListBySuite(ctx, tenantID, suiteID)
-	if err != nil {
-		return nil, err
-	}
-	type batchRow struct {
-		batchID string
-		when    time.Time
-	}
-	seen := map[string]batchRow{}
-	for _, j := range all {
-		if j.BatchID == "" || j.BatchID == currentBatchID {
+	// Resolve DB preset names + suite item names so the UI can render
+	// readable group / member labels without N extra round-trips.
+	q := pgdb.New(s.pool)
+	presetName := map[string]string{}
+	for _, j := range jobs {
+		if j.DBPresetID == "" || presetName[j.DBPresetID] != "" {
 			continue
 		}
-		b, ok := seen[j.BatchID]
-		if !ok || j.CreatedAt.Before(b.when) {
-			seen[j.BatchID] = batchRow{batchID: j.BatchID, when: j.CreatedAt}
+		row, err := q.GetPreset(r.Context(), pgdb.GetPresetParams{ID: j.DBPresetID, TenantID: tenantID})
+		if err == nil {
+			presetName[j.DBPresetID] = row.Name
 		}
 	}
-	if len(seen) == 0 {
-		return nil, nil
-	}
-	var pick batchRow
-	for _, b := range seen {
-		if pick.batchID == "" {
-			pick = b
-			continue
-		}
-		if strategy == "previous" && b.when.After(pick.when) {
-			pick = b
-		}
-		if strategy == "first" && b.when.Before(pick.when) {
-			pick = b
+	itemName := map[string]string{}
+	if items, err := postgres.NewSuiteStorage(s.pool).ListItems(r.Context(), tenantID, suiteID); err == nil {
+		for _, it := range items {
+			itemName[it.ID] = it.Name
 		}
 	}
-	return s.scheduler.Jobs().ListByBatch(ctx, tenantID, pick.batchID)
+
+	type member struct {
+		RunID       string `json:"run_id"`
+		State       string `json:"state"`
+		DBPresetID  string `json:"db_preset_id,omitempty"`
+		PresetName  string `json:"preset_name,omitempty"`
+		SuiteItemID string `json:"suite_item_id,omitempty"`
+		ItemName    string `json:"item_name,omitempty"`
+	}
+	type group struct {
+		// GroupKey identifies the group: suite_item_id when pivot=item,
+		// db_preset_id when pivot=preset.
+		GroupKey   string   `json:"group_key"`
+		GroupLabel string   `json:"group_label"`
+		Members    []member `json:"members"`
+	}
+
+	groups := map[string]*group{}
+	order := []string{}
+	for _, j := range jobs {
+		var key, label string
+		if pivot == "item" {
+			key = j.SuiteItemID
+			label = itemName[j.SuiteItemID]
+			if label == "" {
+				label = key
+			}
+		} else {
+			key = j.DBPresetID
+			label = presetName[j.DBPresetID]
+			if label == "" {
+				label = key
+			}
+		}
+		if key == "" {
+			continue // legacy ad-hoc job that doesn't fit the matrix
+		}
+		g, ok := groups[key]
+		if !ok {
+			g = &group{GroupKey: key, GroupLabel: label}
+			groups[key] = g
+			order = append(order, key)
+		}
+		g.Members = append(g.Members, member{
+			RunID: j.RunID, State: string(j.State),
+			DBPresetID:  j.DBPresetID,
+			PresetName:  presetName[j.DBPresetID],
+			SuiteItemID: j.SuiteItemID,
+			ItemName:    itemName[j.SuiteItemID],
+		})
+	}
+	out := make([]group, 0, len(order))
+	for _, k := range order {
+		out = append(out, *groups[k])
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"suite_id": suiteID,
+		"batch_id": batchID,
+		"pivot":    pivot,
+		"groups":   out,
+	})
 }
 
 // --- shared helpers ---
@@ -889,13 +994,6 @@ func summariseBatches(jobs []postgres.JobRun) []suiteBatchSummary {
 		out = append(out, *idx[id])
 	}
 	return out
-}
-
-func baselineBatchID(rows []postgres.JobRun) string {
-	if len(rows) == 0 {
-		return ""
-	}
-	return rows[0].BatchID
 }
 
 func errStatusOr(err error, fallback int) int {
