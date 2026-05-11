@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, Fragment } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   cancelBatch,
+  cloneSuite,
   compareRuns,
   crossBatch,
   deleteSuiteItem,
@@ -47,6 +48,7 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
+  Copy,
   Cpu,
   Database,
   GitCompareArrows,
@@ -208,6 +210,19 @@ export function SuiteDetail() {
     }
   }
 
+  async function clone() {
+    if (!suite) return;
+    setBusy(true);
+    try {
+      const r = await cloneSuite(suite.id);
+      navigate(`/suites/${r.id}/edit`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Clone failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function cancelB(batchID: string) {
     if (!suite) return;
     const ok = await confirm({
@@ -301,6 +316,10 @@ export function SuiteDetail() {
           <Button variant="outline" size="sm" onClick={() => navigate(`/suites/${suite.id}/edit`)}>
             <Pencil className="h-3.5 w-3.5" />
             Edit
+          </Button>
+          <Button variant="outline" size="sm" onClick={clone} disabled={busy}>
+            <Copy className="h-3.5 w-3.5" />
+            Clone
           </Button>
           <Button
             size="sm"
