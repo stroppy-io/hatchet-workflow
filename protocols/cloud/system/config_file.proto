@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package cloud.system;
+
+import "google/protobuf/timestamp.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/system";
+
+message TemplatedFile {
+    string template_name = 1;                // e.g. "postgresql.conf.tmpl"
+    map<string, string> values = 2;          // substituted into template
+}
+
+message FileRef {
+    string uri = 1;                          // s3://..., pkg://..., file://...
+    string sha256 = 2;                       // integrity check
+}
+
+message ConfigFile {
+    string path = 1;                         // e.g. "/etc/postgresql/17/main/postgresql.conf"
+    oneof content {
+        option (validate.required) = true;
+        string inline = 2;                   // raw content
+        TemplatedFile templated = 3;         // reference to bundled template + values
+        FileRef ref = 4;                     // reference to stored blob (S3, package, etc)
+    }
+    uint32 mode = 5;                          // unix perms, e.g. 0644
+    string owner = 6;                         // optional chown user
+}

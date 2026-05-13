@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package cloud.models;
+
+import "goplain/goplain.proto";
+import "models/common.proto";
+import "models/tenant.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/models";
+
+
+message AccountId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+/* Represents a tenant account with email, nickname, and role. */
+message Account {
+    /* Collection of accounts. */
+    message List {repeated Account accounts = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "accounts"
+        virtual_columns: [
+            {sql_name: "password_hash", sql_type: "TEXT", is_nullable: false}
+        ]
+        indexes: [
+            {name: "accounts_tenant_email_uniq", columns: ["tenant_id", "email"], unique: true},
+            {name: "accounts_tenant_nickname_uniq", columns: ["tenant_id", "nickname"], unique: true}
+        ]
+    };
+
+    AccountId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    models.TenantId tenant_id = 2 [
+        (ratel.column).constraints = {
+            references_schema: "public"
+            references_table: "tenants"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+    models.Timestamps timestamps = 3 [(goplain.field).embed = true];
+
+    string email = 4 [(validate.rules).string.email = true]; // Account email address
+    string nickname = 5 [(validate.rules).string = {min_len: 3, max_len: 255}]; // Display name for the account
+    /* Defines the tenant-level permissions and responsibilities. */
+    enum TenantRole {
+        TENANT_ROLE_UNSPECIFIED = 0;
+        TENANT_ROLE_VIEWER = 1; // Read-only access
+        TENANT_ROLE_OWNER = 2; // Full ownership and control
+        TENANT_ROLE_ADMIN = 3; // Administrative privileges
+    }
+    TenantRole role = 6 [(validate.rules).enum = {defined_only: true, not_in: [0]}]; // Account role in the tenant
+}

@@ -1,0 +1,233 @@
+syntax = "proto3";
+
+package cloud.models;
+
+import "goplain/goplain.proto";
+import "models/common.proto";
+import "models/database.proto";
+import "models/tenant.proto";
+import "models/workload.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/models";
+
+
+message TestRunId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+/* TestRun — individual benchmark execution instance with database, workload, and reference to its template or suite. */
+message TestRun {
+    message List {repeated TestRun test_runs = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "test_runs"
+        indexes: [
+            {name: "test_runs_suite_run_idx", columns: ["suite_run_id"]},
+            {name: "test_runs_template_idx",  columns: ["template_id"]},
+            {name: "test_runs_tenant_idx",    columns: ["tenant_id"]}
+        ]
+    };
+
+    TestRunId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    models.TenantId tenant_id = 2 [
+        (ratel.column).constraints = {
+            references_schema: "public"
+            references_table: "tenants"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+    models.Timestamps timestamps = 3 [(goplain.field).embed = true];
+    models.Identity identity = 4 [(goplain.field).embed = true];
+
+    optional models.TestSuiteRunId suite_run_id = 5 [
+        (ratel.column).constraints = {
+            references_schema: "public"
+            references_table: "test_suite_runs"
+            references_column: "id"
+            on_delete: CASCADE
+        }
+    ]; // Parent suite run batch, null if standalone.
+    optional models.TestRunTemplateId template_id = 6 [
+        (ratel.column).constraints = {
+            references_schema: "public"
+            references_table: "test_run_templates"
+            references_column: "id"
+            on_delete: SET_NULL
+        }
+    ]; // Optional template this run was instantiated from.
+
+    models.DatabaseOrPreset database = 10 [(goplain.field).embed = true];
+    models.WorkloadOrPreset workload = 11 [(goplain.field).embed = true];
+}
+
+
+message TestRunTemplateId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+/* TestRunTemplate — reusable test configuration capturing database preset, workload preset, and execution parameters. */
+message TestRunTemplate {
+    message List {repeated TestRunTemplate test_run_templates = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "test_run_templates"
+        indexes: [
+            {name: "test_run_templates_tenant_idx", columns: ["tenant_id"]}
+        ]
+    };
+
+    TestRunTemplateId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    models.TenantId tenant_id = 2 [
+        (ratel.column).constraints = {
+            references_schema: "public"
+            references_table: "tenants"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+    models.Timestamps timestamps = 3 [(goplain.field).embed = true];
+    models.Identity identity = 4 [(goplain.field).embed = true];
+
+    models.DatabaseOrPreset database = 10 [(goplain.field).embed = true];
+    models.WorkloadOrPreset workload = 11 [(goplain.field).embed = true];
+}
+
+
+message TestSuiteId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+/* TestSuite — parameterized benchmark specification with database × workload matrix and admission policy. */
+message TestSuite {
+    message List {repeated TestSuite test_suites = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "test_suites"
+        indexes: [
+            {name: "test_suites_tenant_idx", columns: ["tenant_id"]}
+        ]
+    };
+
+    TestSuiteId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    models.TenantId tenant_id = 2 [
+        (ratel.column).constraints = {
+            references_schema: "public"
+            references_table: "tenants"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+    models.Timestamps timestamps = 3 [(goplain.field).embed = true];
+    models.Identity identity = 4 [(goplain.field).embed = true];
+
+    /* Matrix — cartesian product of databases × workloads defining all benchmark combinations to execute. */
+    message Matrix {
+        repeated DatabaseOrPreset databases = 1 [(validate.rules).repeated.min_items = 1];
+        repeated WorkloadOrPreset workloads = 2 [(validate.rules).repeated.min_items = 1];
+    }
+    Matrix matrix = 7 [
+        (validate.rules).message.required = true,
+        (goplain.field).serialize = true,
+        (ratel.column).constraints.default_value = "'{}'::jsonb"
+    ];
+
+    // Policy — admission of matrix cells (DB × Workload jobs) of a launched suite.
+    // Source: stroppy-cloud/internal/infrastructure/postgres/suite_storage.go SuitePolicy.
+    message Policy {
+        enum Mode {
+            MODE_UNSPECIFIED = 0;
+            MODE_SEQUENTIAL  = 1;     // block N until N-1 terminal (default)
+            MODE_PARALLEL    = 2;     // admit up to max_parallel concurrently
+        }
+        enum OnStepFail {
+            ON_STEP_FAIL_UNSPECIFIED = 0;
+            ON_STEP_FAIL_CONTINUE    = 1;  // default
+            ON_STEP_FAIL_STOP        = 2;  // abort remaining cells
+        }
+        // Inter-batch concurrency — applies when same suite re-launched while
+        // previous batch still alive.
+        enum ConcurrentPolicy {
+            CONCURRENT_POLICY_UNSPECIFIED = 0;
+            CONCURRENT_POLICY_FORBID      = 1;  // reject new batch (default)
+            CONCURRENT_POLICY_ALLOW       = 2;  // run side-by-side
+        }
+        enum CatchupMode {
+            CATCHUP_MODE_UNSPECIFIED = 0;
+            CATCHUP_MODE_SKIP        = 1;  // missed schedule windows dropped (default)
+            CATCHUP_MODE_RUN_ONCE    = 2;  // run a single catch-up cycle
+        }
+
+        Mode mode = 1 [(validate.rules).enum.defined_only = true];
+        // max_parallel: only used when mode=PARALLEL. 0 = unlimited.
+        uint32 max_parallel = 2 [(validate.rules).uint32.lte = 1024];
+        OnStepFail on_step_fail = 3 [(validate.rules).enum.defined_only = true];
+        // step_timeout_min: per-cell wall clock cap. 0 = no timeout.
+        uint32 step_timeout_min = 4 [(validate.rules).uint32.lte = 10080];   // 1 week
+        ConcurrentPolicy concurrent_policy = 5 [(validate.rules).enum.defined_only = true];
+        CatchupMode catchup_mode = 6 [(validate.rules).enum.defined_only = true];
+    }
+    Policy policy = 8 [
+        (goplain.field).serialize = true,
+        (ratel.column).constraints.default_value = "'{}'::jsonb"
+    ];
+}
+
+
+message TestSuiteRunId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+/* TestSuiteRun — concrete batch execution of a suite with instantiated test runs and captured matrix snapshot. */
+message TestSuiteRun {
+    message List {repeated TestSuiteRun test_suite_runs = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "test_suite_runs"
+        indexes: [
+            {name: "test_suite_runs_tenant_idx", columns: ["tenant_id"]},
+            {name: "test_suite_runs_suite_idx",  columns: ["suite_id"]}
+        ]
+    };
+
+    TestSuiteRunId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    // Denormalised tenant_id — naturally inherited via suite_id, kept here
+    // so cross-tenant queries do not require a JOIN. Must match the suite's
+    // tenant — backend invariant.
+    models.TenantId tenant_id = 2 [
+        (ratel.column).constraints = {
+            references_schema: "public"
+            references_table: "tenants"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+    models.Timestamps timestamps = 3 [(goplain.field).embed = true];
+
+    models.TestSuiteId suite_id = 4 [
+        (ratel.column).constraints = {
+            references_schema: "public"
+            references_table: "test_suites"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+
+    repeated models.TestRunId test_run_ids = 5; // ULIDs of test runs in this batch; no FK (app-enforced integrity).
+    // Snapshot of suite matrix at run time — matrix can change between runs.
+    TestSuite.Matrix matrix = 6 [
+        (goplain.field).serialize = true,
+        (ratel.column).constraints.default_value = "'{}'::jsonb"
+    ];
+}
