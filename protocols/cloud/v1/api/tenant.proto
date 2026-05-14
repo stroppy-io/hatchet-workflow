@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "v1/iam/tenant.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/api";
+
+message CreateTenantRequest {
+    cloud.v1.iam.Tenant tenant = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpdateTenantRequest {
+    cloud.v1.iam.Tenant tenant = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+service TenantService {
+    rpc ListMyTenants (google.protobuf.Empty) returns (cloud.v1.iam.Tenant.List) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+    }
+    rpc CreateTenant (CreateTenantRequest) returns (cloud.v1.iam.Tenant) {
+        option idempotency_level = IDEMPOTENT;
+    }
+    rpc UpdateTenant (UpdateTenantRequest) returns (cloud.v1.iam.Tenant) {
+        option idempotency_level = IDEMPOTENT;
+    }
+    rpc DeleteTenant (cloud.v1.iam.TenantId) returns (cloud.v1.iam.Tenant) {
+        option idempotency_level = IDEMPOTENT;
+    }
+}

@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "google/protobuf/timestamp.proto";
+import "v1/iam/api_token.proto";
+import "v1/iam/tenant.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/api";
+
+
+message CreateApiTokenRequest {
+    cloud.v1.iam.ApiToken token = 1 [(validate.rules).message = {required: true}];
+}
+
+/* CreateApiTokenResponse — returned ONCE at creation with the raw token. */
+message CreateApiTokenResponse {
+    cloud.v1.iam.ApiToken token = 1;
+    /* raw_token — full bearer string. Server stores only SHA-256 hash.
+       Caller must persist this value; never shown again. */
+    string raw_token = 2;
+}
+
+message UpdateApiTokenExpiryRequest {
+    cloud.v1.iam.ApiTokenId id = 1 [(validate.rules).message = {required: true}];
+    optional google.protobuf.Timestamp expires_at = 2;
+}
+
+
+service ApiTokenService {
+    rpc CreateApiToken       (CreateApiTokenRequest)       returns (CreateApiTokenResponse) { option idempotency_level = IDEMPOTENT; }
+    rpc RevokeApiToken       (cloud.v1.iam.ApiTokenId)        returns (cloud.v1.iam.ApiToken)     { option idempotency_level = IDEMPOTENT; }
+    rpc GetApiToken          (cloud.v1.iam.ApiTokenId)        returns (cloud.v1.iam.ApiToken)     { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListApiTokens        (cloud.v1.iam.TenantId)          returns (cloud.v1.iam.ApiToken.List){ option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc UpdateApiTokenExpiry (UpdateApiTokenExpiryRequest) returns (cloud.v1.iam.ApiToken)     { option idempotency_level = IDEMPOTENT; }
+}

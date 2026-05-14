@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "google/protobuf/timestamp.proto";
+import "v1/system/dag.proto";
+import "v1/testing/test_run.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/api";
+
+
+message GetRunMetricsRequest {
+    cloud.v1.testing.TestRunId test_run_id = 1 [(validate.rules).message = {required: true}];
+    /* metric_names — filter; empty = all. */
+    repeated string metric_names = 2 [(validate.rules).repeated.max_items = 64];
+    optional google.protobuf.Timestamp from = 3;
+    optional google.protobuf.Timestamp to = 4;
+    uint32 step_seconds = 5 [(validate.rules).uint32 = {gte: 1, lte: 86400}];   // aggregation step
+}
+
+message MetricSeries {
+    string name = 1;
+    map<string, string> labels = 2;
+    repeated MetricPoint points = 3;
+}
+message MetricPoint {
+    google.protobuf.Timestamp ts = 1;
+    double value = 2;
+}
+message MetricSeriesList { repeated MetricSeries series = 1; }
+
+
+service MetricsService {
+    /* GetRunMetrics — time-series from VictoriaMetrics scoped to this TestRun. */
+    rpc GetRunMetrics (GetRunMetricsRequest) returns (MetricSeriesList) { option idempotency_level = NO_SIDE_EFFECTS; }
+    /* GetDagRunMetrics — engine-level metrics for a DagRun. */
+    rpc GetDagRunMetrics (cloud.v1.system.DagRunId) returns (MetricSeriesList) { option idempotency_level = NO_SIDE_EFFECTS; }
+}

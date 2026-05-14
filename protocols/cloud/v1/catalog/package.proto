@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package cloud.v1.catalog;
+
+import "v1/iam/user.proto";
+import "v1/common/timestamps.proto";
+import "v1/catalog/database.proto";
+import "v1/common/identity.proto";
+import "v1/iam/tenant.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/catalog";
+
+
+message PackageId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+/* Package — installable unit for a specific DB engine + version on agent
+   hosts. One row = one recipe (apt repo bootstrap, package list, or .deb
+   blob). Builtin packages have tenant_id IS NULL.
+   Source: stroppy-cloud/internal/domain/types/packages.go Package. */
+message Package {
+    message List {repeated Package packages = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "packages"
+        indexes: [
+            {name: "packages_tenant_idx",        columns: ["tenant_id"]},
+            {name: "packages_kind_version_idx",  columns: ["db_kind", "db_version"]}
+        ]
+    };
+
+    PackageId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    optional cloud.v1.iam.TenantId tenant_id = 2 [(ratel.column).constraints = {
+        references_schema: "public"
+        references_table: "tenants"
+        references_column: "id"
+        on_delete: CASCADE
+    }];     // null = builtin (visible to all tenants)
+    cloud.v1.common.Timestamps timestamps = 3 [(goplain.field).embed = true];
+    cloud.v1.common.Identity identity = 4 [(goplain.field).embed = true];
+    optional cloud.v1.iam.UserId created_by = 9 [(ratel.column).constraints = {
+        references_schema: "public"
+        references_table: "users"
+        references_column: "id"
+        on_delete: SET_NULL
+    }];
+
+    Database.Kind db_kind = 10 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    string db_version = 11 [(validate.rules).string.max_len = 32];
+    bool is_builtin = 12;
+
+    /* Source — how the agent obtains the binary. Exactly one variant. */
+    oneof source {
+        option (validate.required) = true;
+        AptSource apt = 20;
+        DebBlobSource deb_blob = 21;
+        BinaryDownload binary = 22;
+        ContainerImage container = 23;
+    }
+
+    /* AptSource — install via apt-get; optionally bootstrap a vendor repo
+       (curl key + add sources.list) before apt-get update. */
+    message AptSource {
+        repeated string apt_packages = 1 [(validate.rules).repeated.min_items = 1];
+        // pre_install — shell commands executed before apt-get install.
+        // Typically: add repo, import GPG key, apt-get update.
+        repeated string pre_install = 2 [(validate.rules).repeated.max_items = 64];
+        string custom_repo = 3 [(validate.rules).string.max_len = 1024];     // optional explicit repo URL (for audit)
+        string custom_repo_key = 4 [(validate.rules).string.max_len = 1024]; // optional explicit key URL (for audit)
+    }
+
+    /* DebBlobSource — install from a .deb file served by the platform.
+       deb_filename names the artifact; deb_token authenticates the download
+       (injected at run start). */
+    message DebBlobSource {
+        string deb_filename = 1 [(validate.rules).string = {min_len: 1, max_len: 255}];
+        string deb_token = 2 [(validate.rules).string.max_len = 1024];
+        // pre_install — optional commands run before dpkg -i.
+        repeated string pre_install = 3 [(validate.rules).repeated.max_items = 32];
+    }
+
+    /* BinaryDownload — fetch tarball/binary from URL, extract to prefix.
+       Prefer cached_artifact_ref over raw url so agents go through the
+       BinaryCacheService (no per-agent upstream hit, integrity verified). */
+    message BinaryDownload {
+        oneof origin {
+            option (validate.required) = true;
+            DirectUrl url = 1;                 // legacy: direct external URL
+            CachedRef cached_artifact = 2;     // points at BinaryArtifact row
+        }
+        string install_prefix = 3 [(validate.rules).string.max_len = 256];     // e.g. /opt/stroppy
+        repeated string post_extract = 4 [(validate.rules).repeated.max_items = 32];
+
+        message DirectUrl {
+            string url = 1 [(validate.rules).string = {min_len: 1, max_len: 1024}];
+            string sha256 = 2 [(validate.rules).string.len = 64];
+        }
+        message CachedRef {
+            string name = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+            string version = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+            string filename = 3 [(validate.rules).string = {min_len: 1, max_len: 255}];
+            string arch = 4 [(validate.rules).string.max_len = 16];
+            string os = 5 [(validate.rules).string.max_len = 16];
+        }
+    }
+
+    /* ContainerImage — pull docker image; used only with PROVIDER_DOCKER. */
+    message ContainerImage {
+        string image = 1 [(validate.rules).string = {min_len: 1, max_len: 256}];   // registry/name:tag
+        string digest = 2 [(validate.rules).string.max_len = 80];                   // optional sha256:...
+    }
+}

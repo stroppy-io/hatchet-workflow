@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "v1/iam/user.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/api";
+
+
+message CreateUserRequest {
+    cloud.v1.iam.User user = 1 [(validate.rules).message = {required: true}];
+    string password = 2 [(validate.rules).string.pattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'];
+}
+
+message UpdateUserRequest {
+    cloud.v1.iam.User user = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+message UpdatePasswordRequest {
+    string old_password = 1 [(validate.rules).string.pattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'];
+    string new_password = 2 [(validate.rules).string.pattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'];
+    string new_password_confirmation = 3 [(validate.rules).string.pattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'];
+}
+
+
+service UserService {
+    rpc CreateUser     (CreateUserRequest)     returns (cloud.v1.iam.User) { option idempotency_level = IDEMPOTENT; }
+    rpc UpdateUser     (UpdateUserRequest)     returns (cloud.v1.iam.User) { option idempotency_level = IDEMPOTENT; }
+    rpc DeleteUser     (cloud.v1.iam.UserId)      returns (cloud.v1.iam.User) { option idempotency_level = IDEMPOTENT; }
+    rpc UpdatePassword (UpdatePasswordRequest) returns (cloud.v1.iam.User) { option idempotency_level = IDEMPOTENT; }
+    rpc Me             (google.protobuf.Empty) returns (cloud.v1.iam.User) { option idempotency_level = NO_SIDE_EFFECTS; }
+}

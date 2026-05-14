@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package cloud.v1.tasks;
+
+import "v1/testing/test_run.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/tasks";
+
+
+/* TestRunRefTask — payload for a SUITE_RUN-level node that represents
+   a single matrix cell. Handler spawns a child DagRun for the referenced
+   TestRun and waits for its terminal status. */
+message TestRunRefTask {
+    cloud.v1.testing.TestRunId test_run_id = 1 [(validate.rules).message.required = true];
+}

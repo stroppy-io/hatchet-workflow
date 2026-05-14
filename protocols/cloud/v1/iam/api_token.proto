@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package cloud.v1.iam;
+
+import "v1/common/timestamps.proto";
+import "v1/iam/tenant.proto";
+import "v1/iam/user.proto";
+import "goplain/goplain.proto";
+import "google/protobuf/timestamp.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/iam";
+
+
+/* ApiTokenScope — granular permission for an API token. */
+enum ApiTokenScope {
+    API_TOKEN_SCOPE_UNSPECIFIED  = 0;
+    API_TOKEN_SCOPE_RUNS_READ    = 1;
+    API_TOKEN_SCOPE_RUNS_WRITE   = 2;
+    API_TOKEN_SCOPE_PRESETS_READ = 3;
+    API_TOKEN_SCOPE_PRESETS_WRITE = 4;
+    API_TOKEN_SCOPE_SETTINGS_READ  = 5;
+    API_TOKEN_SCOPE_SETTINGS_WRITE = 6;
+    API_TOKEN_SCOPE_ADMIN        = 99;
+}
+
+
+message ApiTokenId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+/* ApiToken — long-lived bearer token for tenant-scoped automation (CI/CD,
+   scripts). Token value is shown only once at creation; storage keeps the
+   SHA-256 hash. Scopes restrict the permitted operations. */
+message ApiToken {
+    message List {repeated ApiToken api_tokens = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "api_tokens"
+        virtual_columns: [
+            {sql_name: "token_hash", sql_type: "TEXT", is_nullable: false}
+        ]
+        indexes: [
+            {name: "api_tokens_tenant_idx",     columns: ["tenant_id"]},
+            {name: "api_tokens_hash_uniq",      columns: ["token_hash"], unique: true}
+        ]
+    };
+
+    ApiTokenId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.iam.TenantId tenant_id = 2 [
+        (ratel.column).constraints = {
+            references_schema: "public"
+            references_table: "tenants"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+    /* created_by — user who issued the token; SET_NULL on user removal so
+       token survives audit but loses attribution. */
+    optional cloud.v1.iam.UserId created_by = 3 [(ratel.column).constraints = {
+        references_schema: "public"
+        references_table: "users"
+        references_column: "id"
+        on_delete: SET_NULL
+    }];
+    cloud.v1.common.Timestamps timestamps = 4 [(goplain.field).embed = true];
+
+    // Human-readable label shown in the UI ("ci-deploy-prod", "github-actions").
+    string name = 10 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    optional string description = 11 [(validate.rules).string.max_len = 1024];
+
+    repeated ApiTokenScope scopes = 20 [(validate.rules).repeated.min_items = 1];
+    optional google.protobuf.Timestamp expires_at = 21;
+    optional google.protobuf.Timestamp last_used_at = 22;
+}

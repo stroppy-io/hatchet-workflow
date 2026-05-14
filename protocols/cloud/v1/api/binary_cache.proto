@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "google/protobuf/duration.proto";
+import "v1/ops/binary_artifact.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/api";
+
+
+message ResolveArtifactRequest {
+    /* Lookup by canonical name + version + filename. */
+    string name = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string version = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string filename = 3 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    string arch = 4 [(validate.rules).string.max_len = 16];
+    string os = 5   [(validate.rules).string.max_len = 16];
+}
+
+message ResolveArtifactResponse {
+    cloud.v1.ops.BinaryArtifact artifact = 1;
+    /* download_url — short-lived presigned URL for the agent to GET the blob.
+       Server may serve directly or hand off to S3/object storage. */
+    string download_url = 2 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+    google.protobuf.Duration url_ttl = 3;
+}
+
+message PrewarmRequest {
+    /* Force the server to fetch (kind, version) artifacts so first agent
+       request doesn't pay the upstream latency. Returns warmed rows. */
+    repeated ResolveArtifactRequest items = 1 [(validate.rules).repeated.min_items = 1];
+}
+
+message ListArtifactsRequest {
+    optional cloud.v1.ops.BinaryArtifactKind kind = 1;
+    string name_prefix = 2 [(validate.rules).string.max_len = 64];
+}
+
+
+/* BinaryCacheService — server-side cache of binaries (node_exporter,
+   stroppy, agent, etc). Agents call Resolve → download from short-lived
+   URL. Server fetches upstream on cache miss, persists, re-serves.
+   Eliminates repeated GitHub/vendor traffic per agent boot. */
+service BinaryCacheService {
+    /* Resolve — main agent entry point. Idempotent; populates cache on miss. */
+    rpc Resolve       (ResolveArtifactRequest) returns (ResolveArtifactResponse) { option idempotency_level = IDEMPOTENT; }
+    /* Prewarm — admin/CI ops; force cache population for a list of artifacts. */
+    rpc Prewarm       (PrewarmRequest)         returns (cloud.v1.ops.BinaryArtifact.List) { option idempotency_level = IDEMPOTENT; }
+    rpc GetArtifact   (cloud.v1.ops.BinaryArtifactId) returns (cloud.v1.ops.BinaryArtifact)  { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListArtifacts (ListArtifactsRequest)   returns (cloud.v1.ops.BinaryArtifact.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc EvictArtifact (cloud.v1.ops.BinaryArtifactId) returns (cloud.v1.ops.BinaryArtifact)  { option idempotency_level = IDEMPOTENT; }
+}

@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package cloud.v1.ops;
+
+import "v1/iam/user.proto";
+import "v1/common/timestamps.proto";
+import "v1/common/identity.proto";
+import "v1/iam/tenant.proto";
+import "goplain/goplain.proto";
+import "google/protobuf/timestamp.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/ops";
+
+
+/* WebhookEvent — event types the sender emits. */
+enum WebhookEvent {
+    WEBHOOK_EVENT_UNSPECIFIED   = 0;
+    WEBHOOK_EVENT_RUN_STARTED   = 1;
+    WEBHOOK_EVENT_RUN_COMPLETED = 2;
+    WEBHOOK_EVENT_RUN_FAILED    = 3;
+    WEBHOOK_EVENT_NODE_DONE     = 4;
+    WEBHOOK_EVENT_NODE_FAILED   = 5;
+    WEBHOOK_EVENT_SUITE_STARTED   = 6;
+    WEBHOOK_EVENT_SUITE_COMPLETED = 7;
+}
+
+
+message WebhookId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+/* Webhook — tenant-scoped outbound HTTP notification target.
+   Payload schema: { event, run_id?, node_id?, error?, timestamp, data? }. */
+message Webhook {
+    message List {repeated Webhook webhooks = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "webhooks"
+        indexes: [
+            {name: "webhooks_tenant_idx", columns: ["tenant_id"]}
+        ]
+    };
+
+    WebhookId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.iam.TenantId tenant_id = 2 [
+        (ratel.column).constraints = {
+            references_schema: "public"
+            references_table: "tenants"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.common.Timestamps timestamps = 3 [(goplain.field).embed = true];
+    cloud.v1.common.Identity identity = 4 [(goplain.field).embed = true];
+    optional cloud.v1.iam.UserId created_by = 9 [(ratel.column).constraints = {
+        references_schema: "public"
+        references_table: "users"
+        references_column: "id"
+        on_delete: SET_NULL
+    }];
+
+    string url = 10 [(validate.rules).string = {min_len: 8, max_len: 4096, pattern: "^https?://"}];
+    /* events — filter; empty = all events. */
+    repeated WebhookEvent events = 11 [(validate.rules).repeated = {
+        max_items: 32,
+        items: {enum: {defined_only: true, not_in: [0]}}
+    }];
+    /* secret — used for HMAC-SHA256 signature header (X-Stroppy-Signature).
+       Empty = no signing. Stored as plaintext (tenant-managed). */
+    string secret = 12 [(validate.rules).string.max_len = 512];
+    /* extra headers sent on every delivery (e.g. Authorization: Bearer ...). */
+    map<string, string> headers = 13 [(validate.rules).map.max_pairs = 16];
+
+    uint32 timeout_seconds = 20 [(validate.rules).uint32 = {gte: 1, lte: 300}];
+    uint32 max_retries = 21 [(validate.rules).uint32.lte = 10];
+    bool enabled = 22;
+    /* last_*_at — sender-updated cheaply for UI freshness; not for control flow. */
+    optional google.protobuf.Timestamp last_success_at = 23;
+    optional google.protobuf.Timestamp last_failure_at = 24;
+    string last_failure_error = 25 [(validate.rules).string.max_len = 1024];
+}

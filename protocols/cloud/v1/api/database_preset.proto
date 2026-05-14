@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "v1/catalog/database.proto";
+import "google/protobuf/field_mask.proto";
+import "v1/iam/tenant.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/api";
+
+
+message CreateDatabasePresetRequest {
+    cloud.v1.catalog.DatabasePreset preset = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpdateDatabasePresetRequest {
+    cloud.v1.catalog.DatabasePreset preset = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+
+service DatabasePresetService {
+    rpc CreateDatabasePreset (CreateDatabasePresetRequest) returns (cloud.v1.catalog.DatabasePreset)       { option idempotency_level = IDEMPOTENT; }
+    rpc UpdateDatabasePreset (UpdateDatabasePresetRequest) returns (cloud.v1.catalog.DatabasePreset)       { option idempotency_level = IDEMPOTENT; }
+    rpc DeleteDatabasePreset (cloud.v1.catalog.DatabasePresetId) returns (cloud.v1.catalog.DatabasePreset)    { option idempotency_level = IDEMPOTENT; }
+    rpc GetDatabasePreset    (cloud.v1.catalog.DatabasePresetId) returns (cloud.v1.catalog.DatabasePreset)    { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListDatabasePresets  (cloud.v1.iam.TenantId)             returns (cloud.v1.catalog.DatabasePreset.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+    /* CloneDatabasePreset — copy with new id + suffix "-copy" to allow edit. */
+    rpc CloneDatabasePreset  (cloud.v1.catalog.DatabasePresetId) returns (cloud.v1.catalog.DatabasePreset)    { option idempotency_level = IDEMPOTENT; }
+}

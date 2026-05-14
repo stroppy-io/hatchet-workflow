@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "v1/iam/tenant.proto";
+import "v1/testing/test_suite.proto";
+import "v1/testing/test_suite_run.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/api";
+
+
+service TestSuiteRunService {
+    rpc GetTestSuiteRun    (cloud.v1.testing.TestSuiteRunId) returns (cloud.v1.testing.TestSuiteRun)      { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListBySuite        (cloud.v1.testing.TestSuiteId)    returns (cloud.v1.testing.TestSuiteRun.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListByTenant       (cloud.v1.iam.TenantId)           returns (cloud.v1.testing.TestSuiteRun.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc CancelTestSuiteRun (cloud.v1.testing.TestSuiteRunId) returns (cloud.v1.testing.TestSuiteRun)      { option idempotency_level = IDEMPOTENT; }
+}

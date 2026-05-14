@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package cloud.v1.system;
+
+import "goplain/goplain.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "v1/common/timestamps.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/system";
+
+
+/* CatchupMode — what to do when ticker wakes after missed windows. */
+enum CatchupMode {
+    CATCHUP_MODE_UNSPECIFIED = 0;
+    CATCHUP_MODE_SKIP        = 1;   // missed windows dropped silently
+    CATCHUP_MODE_RUN_ONCE    = 2;   // fire a single catch-up cycle on first wake
+}
+
+/* MisfirePolicy — handling when a fire is detected past its window
+   (process killed, ticker fell behind). Distinguishes from Catchup
+   (long outage replay) by scope: this applies per-window. */
+enum MisfirePolicy {
+    MISFIRE_POLICY_UNSPECIFIED = 0;
+    MISFIRE_POLICY_SKIP        = 1;   // drop late fires beyond max_misfire_age
+    MISFIRE_POLICY_FIRE_ONCE   = 2;   // fire once if late but within max_misfire_age
+    MISFIRE_POLICY_FIRE_ALL    = 3;   // fire every missed window (dangerous; use only with idempotent hooks)
+}
+
+
+message ScheduleId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+/* Schedule — generic cron-fire factory. On each fire the cron ticker
+   dispatches to the Go handler registered under `hook_name` with `payload`
+   as input. Engine does not know what the handler does — typically the
+   handler creates a DagRun, but it can do anything. */
+message Schedule {
+    message List {repeated Schedule schedules = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "schedules"
+        indexes: [
+            {name: "schedules_fire_idx", columns: ["enabled", "next_fire_at"]}
+        ]
+    };
+
+    ScheduleId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.common.Timestamps timestamps = 2 [(goplain.field).embed = true];
+
+    // cron_expr — standard 5- or 6-field crontab string.
+    string cron_expr = 10 [(validate.rules).string = {min_len: 9, max_len: 128}];
+    // hook_name — Go handler registered at app startup, dispatched on each fire.
+    string hook_name = 11 [(validate.rules).string = {min_len: 1, max_len: 128, pattern: "^[a-z][a-z0-9_.-]*$"}];
+    // payload — Any blob the handler reads (typed by domain).
+    google.protobuf.Any payload = 12;
+
+    bool enabled = 20;
+    CatchupMode catchup = 21 [(validate.rules).enum.defined_only = true];
+    MisfirePolicy misfire_policy = 22 [(validate.rules).enum.defined_only = true];
+    /* max_misfire_age_seconds — fires older than this are dropped per
+       misfire_policy. Default = 0 = treat all as late. */
+    uint32 max_misfire_age_seconds = 23 [(validate.rules).uint32.lte = 604800];   // 7d cap
+    optional google.protobuf.Timestamp last_fired_at = 24;
+    optional google.protobuf.Timestamp next_fire_at = 25;
+
+    /* Leasing — exactly-once fire across cluster. Ticker process acquires
+       the row with `UPDATE ... WHERE next_fire_at <= now() AND
+       (lease_owner IS NULL OR lease_expires_at < now()) RETURNING *`
+       (atomic). Holder updates last_fired_at, computes next_fire_at,
+       releases lease. Crash mid-lease → next ticker takes over after
+       expires_at. */
+    string lease_owner = 26 [(validate.rules).string.max_len = 128];   // ticker instance id
+    optional google.protobuf.Timestamp lease_expires_at = 27;
+
+    /* Failure counter — bumped on hook errors; ops can disable schedules
+       past a threshold. Sticky until reset. */
+    uint32 consecutive_failures = 28;
+    string last_failure_error = 29 [(validate.rules).string.max_len = 4096];
+
+    // metadata — free-form JSON for domain annotations (tenant_id, etc).
+    google.protobuf.Struct metadata = 30 [
+        (goplain.field).serialize = true,
+        (ratel.column).constraints.default_value = "'{}'::jsonb"
+    ];
+}

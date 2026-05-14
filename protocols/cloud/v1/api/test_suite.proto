@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "google/protobuf/field_mask.proto";
+import "v1/iam/tenant.proto";
+import "v1/testing/test_suite.proto";
+import "v1/testing/test_suite_run.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/api";
+
+
+message CreateTestSuiteRequest {
+    cloud.v1.testing.TestSuite suite = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpdateTestSuiteRequest {
+    cloud.v1.testing.TestSuite suite = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+
+service TestSuiteService {
+    rpc CreateTestSuite (CreateTestSuiteRequest) returns (cloud.v1.testing.TestSuite)       { option idempotency_level = IDEMPOTENT; }
+    rpc UpdateTestSuite (UpdateTestSuiteRequest) returns (cloud.v1.testing.TestSuite)       { option idempotency_level = IDEMPOTENT; }
+    rpc DeleteTestSuite (cloud.v1.testing.TestSuiteId) returns (cloud.v1.testing.TestSuite)    { option idempotency_level = IDEMPOTENT; }
+    rpc GetTestSuite    (cloud.v1.testing.TestSuiteId) returns (cloud.v1.testing.TestSuite)    { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListTestSuites  (cloud.v1.iam.TenantId)        returns (cloud.v1.testing.TestSuite.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+
+    /* LaunchTestSuite — produces a TestSuiteRun with materialized matrix cells. */
+    rpc LaunchTestSuite (cloud.v1.testing.TestSuiteId) returns (cloud.v1.testing.TestSuiteRun) { option idempotency_level = IDEMPOTENT; }
+    rpc CloneTestSuite  (cloud.v1.testing.TestSuiteId) returns (cloud.v1.testing.TestSuite)    { option idempotency_level = IDEMPOTENT; }
+}

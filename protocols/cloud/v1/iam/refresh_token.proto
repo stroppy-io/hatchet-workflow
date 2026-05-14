@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package cloud.v1.iam;
+
+import "v1/common/timestamps.proto";
+import "v1/iam/user.proto";
+import "goplain/goplain.proto";
+import "google/protobuf/timestamp.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/iam";
+
+
+/* RevocationReason — why a refresh token was revoked. REUSED triggers
+   family-wide revocation: a revoked-but-reused token = stolen → kill all
+   descendants in the rotation chain. */
+enum RevocationReason {
+    REVOCATION_REASON_UNSPECIFIED = 0;
+    REVOCATION_REASON_ROTATED     = 1;   // normal use: redeemed → replaced
+    REVOCATION_REASON_LOGOUT      = 2;   // user-initiated
+    REVOCATION_REASON_REUSED      = 3;   // theft suspected — family blown
+    REVOCATION_REASON_EXPIRED     = 4;   // sweeper-marked
+    REVOCATION_REASON_ADMIN       = 5;   // ops revoke
+}
+
+
+message RefreshTokenId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+/* RefreshToken — opaque session refresh credential (SHA-256 hashed at rest).
+   Rotation contract:
+     1. Redeem (Refresh RPC) reads row by token_hash → must be non-revoked
+        and not expired.
+     2. Server issues NEW token + row with same family_id, sets
+        replaced_by on the old row, revoked_at=now, reason=ROTATED.
+     3. Old row stays for reuse detection (audit + family kill switch).
+     4. If a token already revoked is presented again → REUSE: server
+        revokes the ENTIRE family_id and forces full re-login.
+   Lookup by token_hash; user_id index for "revoke all sessions". */
+message RefreshToken {
+    message List {repeated RefreshToken refresh_tokens = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "refresh_tokens"
+        indexes: [
+            {name: "refresh_tokens_hash_uniq",  columns: ["token_hash"], unique: true},
+            {name: "refresh_tokens_user_idx",   columns: ["user_id"]},
+            {name: "refresh_tokens_family_idx", columns: ["family_id"]},
+            {name: "refresh_tokens_expiry_idx", columns: ["expires_at"]}
+        ]
+    };
+
+    RefreshTokenId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.iam.UserId user_id = 2 [
+        (ratel.column).constraints = {
+            references_schema: "public"
+            references_table: "users"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.common.Timestamps timestamps = 3 [(goplain.field).embed = true];
+
+    /* token_hash — SHA-256 of opaque token. Never log raw. */
+    string token_hash = 10 [(validate.rules).string.len = 64];
+    google.protobuf.Timestamp expires_at = 11 [(validate.rules).timestamp = {required: true, gt_now: true}];
+
+    /* family_id — common identifier across rotation chain. New on Login,
+       inherited on Refresh. Reuse of a revoked token kills the family. */
+    string family_id = 12 [(validate.rules).string.len = 26];
+    /* replaced_by — points to successor row after rotation. Null on the
+       current/active token. */
+    optional RefreshTokenId replaced_by = 13 [(ratel.column).constraints = {
+        references_schema: "public"
+        references_table: "refresh_tokens"
+        references_column: "id"
+        on_delete: SET_NULL
+    }];
+    /* jti — JWT id claim equivalent; for audit / revocation lists. */
+    string jti = 14 [(validate.rules).string = {min_len: 16, max_len: 64}];
+
+    optional google.protobuf.Timestamp revoked_at = 20;
+    RevocationReason revocation_reason = 21 [(validate.rules).enum.defined_only = true];
+
+    /* Audit captured at issue. */
+    string user_agent = 30 [(validate.rules).string.max_len = 512];
+    string source_ip = 31 [(validate.rules).string.max_len = 45];
+}

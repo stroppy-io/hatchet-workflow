@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package cloud.v1.tasks;
+
+import "v1/catalog/database.proto";
+import "v1/catalog/deployment.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/tasks";
+
+
+/* OneShotTask — single-machine command (cockroach init, ydb init, ydb
+   start_db, etc). Handler dispatches by engine_kind. Runs `command` on the
+   first machine of `role`, optionally waits for a readiness probe. */
+message OneShotTask {
+    cloud.v1.catalog.Database.Kind engine_kind = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    cloud.v1.catalog.MachineRole role = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+
+    Target target = 3 [(validate.rules).enum.defined_only = true];
+    enum Target {
+        TARGET_UNSPECIFIED = 0;
+        TARGET_FIRST       = 1;   // run on first machine of role
+        TARGET_ALL         = 2;   // run on every machine of role
+    }
+
+    // command_template — shell template; engine-specific args interpolated.
+    // Engine-typical: "cockroach init --certs-dir=...", "ydbd admin blobstorage init".
+    string command_template = 10 [(validate.rules).string.max_len = 4096];
+    map<string, string> template_vars = 11 [(validate.rules).map.max_pairs = 64];
+
+    // post_check_command — optional readiness probe; non-zero exit retries.
+    string post_check_command = 20 [(validate.rules).string.max_len = 4096];
+    uint32 post_check_retries = 21 [(validate.rules).uint32.lte = 100];
+    uint32 post_check_delay_seconds = 22 [(validate.rules).uint32.lte = 600];
+}

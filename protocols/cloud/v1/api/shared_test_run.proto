@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "v1/iam/tenant.proto";
+import "v1/testing/shared_test_run.proto";
+import "v1/testing/test_run.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/api";
+
+
+message CreateSharedTestRunRequest {
+    cloud.v1.testing.TestRunId test_run_id = 1 [(validate.rules).message = {required: true}];
+    /* expires_in_days — auto-expiry; 0 = no expiry. */
+    uint32 expires_in_days = 2 [(validate.rules).uint32.lte = 3650];
+}
+
+message GetSharedTestRunByTokenRequest {
+    string token = 1 [(validate.rules).string = {min_len: 16, max_len: 64}];
+}
+
+
+service SharedTestRunService {
+    rpc CreateSharedTestRun (CreateSharedTestRunRequest)     returns (cloud.v1.testing.SharedTestRun)      { option idempotency_level = IDEMPOTENT; }
+    rpc RevokeSharedTestRun (cloud.v1.testing.SharedTestRunId)  returns (cloud.v1.testing.SharedTestRun)      { option idempotency_level = IDEMPOTENT; }
+    rpc ListSharedTestRuns  (cloud.v1.iam.TenantId)             returns (cloud.v1.testing.SharedTestRun.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+    /* GetByToken — public, unauthenticated endpoint. */
+    rpc GetByToken          (GetSharedTestRunByTokenRequest) returns (cloud.v1.testing.SharedTestRun)      { option idempotency_level = NO_SIDE_EFFECTS; }
+}

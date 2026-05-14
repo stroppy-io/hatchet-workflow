@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package cloud.v1.tasks;
+
+import "v1/catalog/deployment.proto";
+import "v1/catalog/package.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/tasks";
+
+
+/* PackageInstallTask — generic "install a Package on role's machines" task.
+   Handler resolves Package by id, dispatches on Package.source variant
+   (apt / deb_blob / binary / container) to do the actual install.
+   Targets all machines tagged with `role` in the DagRun's state. */
+message PackageInstallTask {
+    cloud.v1.catalog.PackageId package_id = 1 [(validate.rules).message.required = true];
+    cloud.v1.catalog.MachineRole role = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+}

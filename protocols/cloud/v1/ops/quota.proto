@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package cloud.v1.ops;
+
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/ops";
+
+
+/* QuotaSource — where a quota is enforced/measured. */
+enum QuotaSource {
+    QUOTA_SOURCE_UNSPECIFIED = 0;
+    QUOTA_SOURCE_PLATFORM    = 1;   // stroppy internal limits (max queue depth, concurrent runs)
+    QUOTA_SOURCE_TENANT      = 2;   // TenantQuotas (per-tenant cap)
+    QUOTA_SOURCE_PROVIDER    = 3;   // cloud API (YC limit) — queried live
+}
+
+/* Quota — single resource limit. resource_id is a free-form string so new
+   quota kinds can be added without proto changes (e.g. "yc.cpus",
+   "yc.gpus", "yc.memory_gb", "runs.concurrent", "queue.depth"). */
+message Quota {
+    string resource_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128, pattern: "^[a-z][a-z0-9_.-]*$"}];
+    string display_name = 2 [(validate.rules).string.max_len = 128];
+    string unit = 3 [(validate.rules).string.max_len = 32];   // "cores", "GB", "count"
+    QuotaSource source = 4 [(validate.rules).enum.defined_only = true];
+    int64 limit = 5;
+    int64 used = 6;
+    int64 available = 7;
+    optional google.protobuf.Timestamp queried_at = 8;
+    /* zone / region — provider-side scoping when source=PROVIDER (empty for platform/tenant). */
+    string scope = 9 [(validate.rules).string.max_len = 64];
+}
+
+message QuotaList {
+    repeated Quota quotas = 1;
+}

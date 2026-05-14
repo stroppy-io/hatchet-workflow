@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package cloud.v1.agent;
+
+import "v1/catalog/deployment.proto";
+import "v1/common/timestamps.proto";
+import "goplain/goplain.proto";
+import "google/protobuf/timestamp.proto";
+import "v1/iam/tenant.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/agent";
+
+
+/* AgentStatus — registry-level lifecycle of an Agent row. */
+enum AgentStatus {
+    AGENT_STATUS_UNSPECIFIED = 0;
+    AGENT_STATUS_REGISTERED  = 1;   // POST /agents/register succeeded; no heartbeat yet
+    AGENT_STATUS_HEALTHY     = 2;   // recent heartbeat within threshold
+    AGENT_STATUS_STALE       = 3;   // missed heartbeats; recoverable
+    AGENT_STATUS_OFFLINE     = 4;   // long-missed; assume dead
+    AGENT_STATUS_TERMINATED  = 5;   // tenant teardown completed
+}
+
+
+message AgentId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+/* Agent — registry row for a daemon running on a provisioned host.
+   Bound to a tenant + the DagRun that requested provisioning.
+   dag_run_id is a plain string (not FK) so the audit row survives
+   DagRun deletion. */
+message Agent {
+    message List {repeated Agent agents = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "agents"
+        indexes: [
+            {name: "agents_tenant_idx",        columns: ["tenant_id"]},
+            {name: "agents_dag_run_idx",       columns: ["dag_run_id"]},
+            {name: "agents_status_idx",        columns: ["status"]},
+            {name: "agents_machine_uniq",      columns: ["tenant_id", "machine_id"], unique: true},
+            {name: "agents_heartbeat_idx",     columns: ["last_heartbeat"]}
+        ]
+    };
+
+    AgentId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.iam.TenantId tenant_id = 2 [
+        (ratel.column).constraints = {
+            references_schema: "public"
+            references_table: "tenants"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.common.Timestamps timestamps = 3 [(goplain.field).embed = true];
+
+    /* dag_run_id — DagRun that provisioned this host. Plain ULID string,
+       no FK — survives DagRun deletion for audit. Empty after termination. */
+    string dag_run_id = 5 [(validate.rules).string.len = 26];
+
+    /* machine_id — terraform-stable identifier for the host (compute
+       instance id, container id). Unique per (tenant, host). */
+    string machine_id = 10 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    cloud.v1.catalog.MachineRole role = 11 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    string internal_ip = 12 [(validate.rules).string = {min_len: 1, max_len: 45}];   // IPv6-max
+    optional string public_ip = 13 [(validate.rules).string.max_len = 45];
+
+    string agent_version = 20 [(validate.rules).string.max_len = 32];
+    /* capabilities — reported in Heartbeat (e.g. "systemd", "docker", "apt"). */
+    repeated string capabilities = 21 [(validate.rules).repeated.max_items = 64];
+
+    AgentStatus status = 30 [(validate.rules).enum.defined_only = true];
+    optional google.protobuf.Timestamp last_heartbeat = 31;
+    /* missed_heartbeats — incremented by the watcher; resets on contact. */
+    uint32 missed_heartbeats = 32;
+    /* last_error — last command error reported, for ops triage. */
+    string last_error = 33 [(validate.rules).string.max_len = 4096];
+}

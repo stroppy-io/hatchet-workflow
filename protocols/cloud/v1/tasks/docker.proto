@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package cloud.v1.tasks;
+
+import "v1/common/config_file.proto";
+import "google/protobuf/struct.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/tasks";
+
+
+/* DockerTask — single task for local docker-based runs. Mirror of
+   TerraformTask but for the docker provider (no cloud). Used for dev /
+   smoke / CI without provisioning real VMs.
+
+   Handler:
+     OP_UP   — pulls images, brings containers up via `docker compose up -d`
+               or equivalent. Captures container ids/IPs into state.
+     OP_DOWN — `docker compose down`; reads container_ids from state. */
+message DockerTask {
+    Op op = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    enum Op {
+        OP_UNSPECIFIED = 0;
+        OP_UP          = 1;
+        OP_DOWN        = 2;
+    }
+
+    /* Compose files / Dockerfile templates / .env rendered onto the host. */
+    repeated cloud.v1.common.ConfigFile files = 2 [(validate.rules).repeated.max_items = 32];
+
+    /* Variables for template substitution (engine images, ports, ulimits). */
+    google.protobuf.Struct vars = 3;
+
+    /* container_ids_state_key — state key listing the launched container
+       ids. OP_UP writes it. OP_DOWN reads it. */
+    string container_ids_state_key = 10 [(validate.rules).string = {min_len: 1, max_len: 128, pattern: "^[a-z][a-z0-9_.-]*$"}];
+
+    /* Network options — bridge name, subnet override. Local-only. */
+    string network_name = 20 [(validate.rules).string.max_len = 64];
+    string subnet_cidr = 21 [(validate.rules).string.max_len = 18];
+}

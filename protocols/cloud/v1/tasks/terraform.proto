@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package cloud.v1.tasks;
+
+import "v1/common/config_file.proto";
+import "v1/catalog/settings.proto";
+import "google/protobuf/struct.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/tasks";
+
+
+/* TerraformTask — single task for any terraform-managed infra operation.
+   Replaces NetworkTask + MachinesTask + TeardownTask for cloud providers.
+
+   Handler:
+     OP_APPLY   — creates workdir under wd_id (newly generated if absent in
+                  state), writes .tf files + .tfvars, runs `terraform apply`,
+                  captures outputs into DagRun state under output_state_keys.
+     OP_DESTROY — reads wd_id from state, runs `terraform destroy` against
+                  same workdir. Idempotent. Always-run + must-complete.
+
+   State keys are domain-defined strings — engine never interprets them. */
+message TerraformTask {
+    Op op = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    enum Op {
+        OP_UNSPECIFIED = 0;
+        OP_APPLY       = 1;
+        OP_DESTROY     = 2;
+    }
+
+    /* Module — embedded terraform module to instantiate. Modules live under
+       stroppy-cloud/deployments/terraform/ and are bundled with the binary. */
+    Module module = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    enum Module {
+        MODULE_UNSPECIFIED        = 0;
+        MODULE_YANDEX             = 1;   // yandex/  — self-hosted YC VMs + VPC
+        MODULE_YANDEX_MANAGED_YDB = 2;   // yandex_managed_ydb/  — managed YDB + client VM
+    }
+
+    /* Variables passed to terraform (tfvars). Rendered by the domain builder
+       from Deployment + per-engine knobs. Engine doesn't open this Struct. */
+    google.protobuf.Struct vars = 3;
+
+    /* Extra inline .tf files to inject alongside the embedded module
+       (overrides, patches, vendor backports). Usually empty. */
+    repeated cloud.v1.common.ConfigFile extra_files = 4 [(validate.rules).repeated.max_items = 32];
+
+    /* wd_id_state_key — DagRun state key holding terraform workdir id.
+         OP_APPLY: handler writes the id here after creating the workdir.
+         OP_DESTROY: handler reads it. Empty wd_id on destroy = noop. */
+    string wd_id_state_key = 10 [(validate.rules).string = {min_len: 1, max_len: 128, pattern: "^[a-z][a-z0-9_.-]*$"}];
+
+    /* output_state_keys — map<terraform_output_name → state_key>. Handler
+       captures listed outputs into DagRun state after OP_APPLY. */
+    map<string, string> output_state_keys = 11 [(validate.rules).map.max_pairs = 64];
+
+    /* Backend config for terraform state storage (S3/GCS/local). Optional;
+       empty = local filesystem under wd. */
+    map<string, string> backend_config = 20 [(validate.rules).map.max_pairs = 32];
+
+    /* secret_refs — list of SettingsItem keys whose values the handler must
+       resolve at apply/destroy time and inject as terraform env-vars
+       (TF_VAR_<name>=<value>). Engine never sees the secret values — only
+       the keys. Lookup tenant scope comes from DagRun.metadata.tenant_id. */
+    repeated SecretRef secret_refs = 30 [(validate.rules).repeated.max_items = 32];
+
+    /* SecretRef — pair (SettingsItem.Key, TF_VAR_<name>). */
+    message SecretRef {
+        cloud.v1.catalog.SettingsItem.Key key = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        // tf_var_name — terraform variable name to inject into (env-var
+        // form: "TF_VAR_<tf_var_name>"). E.g. "yc_token", "ssh_pub_key".
+        string tf_var_name = 2 [(validate.rules).string = {min_len: 1, max_len: 64, pattern: "^[a-z][a-z0-9_]*$"}];
+    }
+}
