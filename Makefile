@@ -4,7 +4,7 @@
         lint fmt docker-build docker-push docker-up docker-down docker-logs \
         serve docs-install docs-dev docs-build web-install web-dev web-build \
         proto-lint proto-gen proto-gen-go proto-gen-ts migrate-gen migrate-clear \
-        clean release
+        clean release server-run
 
 # ============================================================
 # Variables
@@ -220,5 +220,9 @@ clean: ## Clean build artifacts
 # ============================================================
 release: build-all docker-build ## Build all artifacts for release
 	@echo "Release $(VERSION) built. Push with: make docker-push"
+
+.PHONY: server-run
+server-run: ## Run the new server locally (requires CONFIG_PATH + JWT_SECRET)
+	go run ./cmd/stroppy-cloud server --config $${CONFIG_PATH:-./deployments/local/server/config.yaml}
 
 .DEFAULT_GOAL := help

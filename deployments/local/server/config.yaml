@@ -1,0 +1,26 @@
+server:
+  http_addr: ":8080"
+postgres:
+  dsn: "postgres://stroppy:stroppy@127.0.0.1:5436/stroppy?sslmode=disable"
+  max_conns: 25
+valkey:
+  addr: "127.0.0.1:6379"
+  db: 0
+auth:
+  jwt_secret_env: "JWT_SECRET"
+  access_ttl: "15m"
+  refresh_ttl: "720h"
+idempotency:
+  enabled: true
+  ttl: "24h"
+workers:
+  node_workers: 4
+  scheduler_tick: "5s"
+  webhook_workers: 2
+  recovery_on_start: true
+features:
+  initial_admin_email: "admin@local"
+  initial_admin_password_env: "INITIAL_ADMIN_PASSWORD"
+log:
+  level: "info"
+  format: "json"
