@@ -5,6 +5,8 @@ package cloud.v1.iam;
 import "v1/common/timestamps.proto";
 import "goplain/goplain.proto";
 import "v1/common/identity.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
 import "ratelproto/ratelproto.proto";
 import "validate/validate.proto";
 
@@ -26,4 +28,28 @@ message Tenant {
     ];
     cloud.v1.common.Timestamps timestamps = 2 [(goplain.field).embed = true];
     cloud.v1.common.Identity identity = 3 [(goplain.field).embed = true];
+}
+
+message CreateTenantRequest {
+    Tenant tenant = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpdateTenantRequest {
+    Tenant tenant = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+service TenantService {
+    rpc ListMyTenants (google.protobuf.Empty) returns (Tenant.List) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+    }
+    rpc CreateTenant (CreateTenantRequest) returns (Tenant) {
+        option idempotency_level = IDEMPOTENT;
+    }
+    rpc UpdateTenant (UpdateTenantRequest) returns (Tenant) {
+        option idempotency_level = IDEMPOTENT;
+    }
+    rpc DeleteTenant (TenantId) returns (Tenant) {
+        option idempotency_level = IDEMPOTENT;
+    }
 }

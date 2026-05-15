@@ -78,3 +78,21 @@ message SharedSuiteRun {
     optional google.protobuf.Timestamp expires_at = 13;
     uint64 view_count = 14;
 }
+
+
+message CreateSharedSuiteRunRequest {
+    TestSuiteRunId test_suite_run_id = 1 [(validate.rules).message = {required: true}];
+    uint32 expires_in_days = 2 [(validate.rules).uint32.lte = 3650];
+}
+
+message GetSharedSuiteRunByTokenRequest {
+    string token = 1 [(validate.rules).string = {min_len: 16, max_len: 64}];
+}
+
+
+service SharedSuiteRunService {
+    rpc CreateSharedSuiteRun (CreateSharedSuiteRunRequest)    returns (SharedSuiteRun)      { option idempotency_level = IDEMPOTENT; }
+    rpc RevokeSharedSuiteRun (SharedSuiteRunId)               returns (SharedSuiteRun)      { option idempotency_level = IDEMPOTENT; }
+    rpc ListSharedSuiteRuns  (cloud.v1.iam.TenantId)          returns (SharedSuiteRun.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc GetByToken           (GetSharedSuiteRunByTokenRequest) returns (SharedSuiteRun)    { option idempotency_level = NO_SIDE_EFFECTS; }
+}

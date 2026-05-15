@@ -8,6 +8,7 @@ import "v1/catalog/workload.proto";
 import "v1/common/identity.proto";
 import "v1/common/timestamps.proto";
 import "goplain/goplain.proto";
+import "google/protobuf/field_mask.proto";
 import "v1/iam/tenant.proto";
 import "ratelproto/ratelproto.proto";
 import "validate/validate.proto";
@@ -53,4 +54,23 @@ message TestRunTemplate {
 
     cloud.v1.catalog.DatabaseOrPreset database = 10 [(goplain.field).embed = true];
     cloud.v1.catalog.WorkloadOrPreset workload = 11 [(goplain.field).embed = true];
+}
+
+
+message CreateTestRunTemplateRequest {
+    TestRunTemplate template = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpdateTestRunTemplateRequest {
+    TestRunTemplate template = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+
+service TestRunTemplateService {
+    rpc CreateTestRunTemplate (CreateTestRunTemplateRequest) returns (TestRunTemplate)      { option idempotency_level = IDEMPOTENT; }
+    rpc UpdateTestRunTemplate (UpdateTestRunTemplateRequest) returns (TestRunTemplate)      { option idempotency_level = IDEMPOTENT; }
+    rpc DeleteTestRunTemplate (TestRunTemplateId)            returns (TestRunTemplate)      { option idempotency_level = IDEMPOTENT; }
+    rpc GetTestRunTemplate    (TestRunTemplateId)            returns (TestRunTemplate)      { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListTestRunTemplates  (cloud.v1.iam.TenantId)        returns (TestRunTemplate.List) { option idempotency_level = NO_SIDE_EFFECTS; }
 }

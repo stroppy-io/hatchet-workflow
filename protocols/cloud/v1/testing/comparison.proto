@@ -1,18 +1,17 @@
 syntax = "proto3";
 
-package cloud.v1.api;
+package cloud.v1.testing;
 
-import "v1/api/metrics.proto";
 import "v1/testing/test_run.proto";
 import "v1/testing/test_suite_run.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/api";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/testing";
 
 
 message CompareRunsRequest {
-    cloud.v1.testing.TestRunId a = 1 [(validate.rules).message = {required: true}];
-    cloud.v1.testing.TestRunId b = 2 [(validate.rules).message = {required: true}];
+    TestRunId a = 1 [(validate.rules).message = {required: true}];
+    TestRunId b = 2 [(validate.rules).message = {required: true}];
     /* metric_names — limit comparison to these; empty = all common metrics. */
     repeated string metric_names = 3;
 }
@@ -33,20 +32,20 @@ message MetricDiff {
 }
 message CompareRunsResponse {
     repeated MetricDiff diffs = 1;
-    cloud.v1.testing.TestRunId a = 2;
-    cloud.v1.testing.TestRunId b = 3;
+    TestRunId a = 2;
+    TestRunId b = 3;
 }
 
 message CrossCompareBatchRequest {
-    cloud.v1.testing.TestSuiteRunId test_suite_run_id = 1 [(validate.rules).message = {required: true}];
+    TestSuiteRunId test_suite_run_id = 1 [(validate.rules).message = {required: true}];
     /* baseline_run_id — reference TestRun (other cells compared to it).
        Empty = pairwise matrix across all cells. */
-    optional cloud.v1.testing.TestRunId baseline_run_id = 2;
+    optional TestRunId baseline_run_id = 2;
 }
 message CrossCompareBatchResponse {
     repeated CellMetrics cells = 1;
     message CellMetrics {
-        cloud.v1.testing.TestRunId test_run_id = 1;
+        TestRunId test_run_id = 1;
         MetricSeriesList metrics = 2;
         repeated MetricDiff diffs_vs_baseline = 3;
     }

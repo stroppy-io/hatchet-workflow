@@ -76,3 +76,30 @@ message ApiToken {
     optional google.protobuf.Timestamp expires_at = 21;
     optional google.protobuf.Timestamp last_used_at = 22;
 }
+
+
+message CreateApiTokenRequest {
+    ApiToken token = 1 [(validate.rules).message = {required: true}];
+}
+
+/* CreateApiTokenResponse — returned ONCE at creation with the raw token. */
+message CreateApiTokenResponse {
+    ApiToken token = 1;
+    /* raw_token — full bearer string. Server stores only SHA-256 hash.
+       Caller must persist this value; never shown again. */
+    string raw_token = 2;
+}
+
+message UpdateApiTokenExpiryRequest {
+    ApiTokenId id = 1 [(validate.rules).message = {required: true}];
+    optional google.protobuf.Timestamp expires_at = 2;
+}
+
+
+service ApiTokenService {
+    rpc CreateApiToken       (CreateApiTokenRequest)       returns (CreateApiTokenResponse) { option idempotency_level = IDEMPOTENT; }
+    rpc RevokeApiToken       (ApiTokenId)                  returns (ApiToken)               { option idempotency_level = IDEMPOTENT; }
+    rpc GetApiToken          (ApiTokenId)                  returns (ApiToken)               { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListApiTokens        (TenantId)                    returns (ApiToken.List)          { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc UpdateApiTokenExpiry (UpdateApiTokenExpiryRequest) returns (ApiToken)               { option idempotency_level = IDEMPOTENT; }
+}

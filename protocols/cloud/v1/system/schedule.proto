@@ -4,9 +4,11 @@ package cloud.v1.system;
 
 import "goplain/goplain.proto";
 import "google/protobuf/any.proto";
+import "google/protobuf/field_mask.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "v1/common/timestamps.proto";
+import "v1/iam/tenant.proto";
 import "ratelproto/ratelproto.proto";
 import "validate/validate.proto";
 
@@ -88,4 +90,28 @@ message Schedule {
         (goplain.field).serialize = true,
         (ratel.column).constraints.default_value = "'{}'::jsonb"
     ];
+}
+
+
+message CreateScheduleRequest {
+    Schedule schedule = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpdateScheduleRequest {
+    Schedule schedule = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+
+service ScheduleService {
+    rpc CreateSchedule  (CreateScheduleRequest) returns (Schedule)      { option idempotency_level = IDEMPOTENT; }
+    rpc UpdateSchedule  (UpdateScheduleRequest) returns (Schedule)      { option idempotency_level = IDEMPOTENT; }
+    rpc DeleteSchedule  (ScheduleId)            returns (Schedule)      { option idempotency_level = IDEMPOTENT; }
+    rpc GetSchedule     (ScheduleId)            returns (Schedule)      { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListSchedules   (cloud.v1.iam.TenantId) returns (Schedule.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+
+    rpc EnableSchedule  (ScheduleId) returns (Schedule) { option idempotency_level = IDEMPOTENT; }
+    rpc DisableSchedule (ScheduleId) returns (Schedule) { option idempotency_level = IDEMPOTENT; }
+    /* TriggerNow — fire the schedule's hook immediately, ignoring cron. */
+    rpc TriggerNow      (ScheduleId) returns (Schedule) { option idempotency_level = IDEMPOTENT; }
 }

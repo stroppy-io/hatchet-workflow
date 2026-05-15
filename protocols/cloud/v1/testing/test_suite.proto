@@ -8,6 +8,7 @@ import "v1/catalog/workload.proto";
 import "v1/common/identity.proto";
 import "v1/common/timestamps.proto";
 import "goplain/goplain.proto";
+import "google/protobuf/field_mask.proto";
 import "v1/iam/tenant.proto";
 import "ratelproto/ratelproto.proto";
 import "validate/validate.proto";
@@ -97,4 +98,25 @@ message TestSuite {
         (goplain.field).serialize = true,
         (ratel.column).constraints.default_value = "'{}'::jsonb"
     ];
+}
+
+
+message CreateTestSuiteRequest {
+    TestSuite suite = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpdateTestSuiteRequest {
+    TestSuite suite = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+
+service TestSuiteService {
+    rpc CreateTestSuite (CreateTestSuiteRequest) returns (TestSuite)      { option idempotency_level = IDEMPOTENT; }
+    rpc UpdateTestSuite (UpdateTestSuiteRequest) returns (TestSuite)      { option idempotency_level = IDEMPOTENT; }
+    rpc DeleteTestSuite (TestSuiteId)            returns (TestSuite)      { option idempotency_level = IDEMPOTENT; }
+    rpc GetTestSuite    (TestSuiteId)            returns (TestSuite)      { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListTestSuites  (cloud.v1.iam.TenantId)  returns (TestSuite.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+
+    rpc CloneTestSuite  (TestSuiteId) returns (TestSuite) { option idempotency_level = IDEMPOTENT; }
 }

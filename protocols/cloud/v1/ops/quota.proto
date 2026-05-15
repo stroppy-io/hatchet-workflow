@@ -3,6 +3,7 @@ syntax = "proto3";
 package cloud.v1.ops;
 
 import "google/protobuf/timestamp.proto";
+import "v1/iam/tenant.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/ops";
@@ -34,4 +35,26 @@ message Quota {
 
 message QuotaList {
     repeated Quota quotas = 1;
+}
+
+
+message GetQuotasRequest {
+    cloud.v1.iam.TenantId tenant_id = 1 [(validate.rules).message = {required: true}];
+    /* sources — filter by source. Empty = all (platform + tenant + provider). */
+    repeated QuotaSource sources = 2;
+    /* resource_id_prefix — filter by prefix ("yc.", "runs.", ...). */
+    string resource_id_prefix = 3 [(validate.rules).string.max_len = 64];
+}
+
+message RefreshQuotasRequest {
+    cloud.v1.iam.TenantId tenant_id = 1 [(validate.rules).message = {required: true}];
+    /* force_provider — re-query cloud API even if cache fresh. */
+    bool force_provider = 2;
+}
+
+
+service QuotaService {
+    rpc GetQuotas     (GetQuotasRequest)     returns (QuotaList) { option idempotency_level = NO_SIDE_EFFECTS; }
+    /* RefreshQuotas — force provider re-query (YC API call). */
+    rpc RefreshQuotas (RefreshQuotasRequest) returns (QuotaList) { option idempotency_level = IDEMPOTENT; }
 }

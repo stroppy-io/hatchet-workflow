@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package cloud.v1.api;
+package cloud.v1.iam;
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/api";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/iam";
 
 
 message TokenPair {
@@ -36,7 +36,7 @@ message LogoutRequest {
 
 
 service AuthService {
-    rpc Login         (LoginRequest)        returns (LoginResponse)        { option idempotency_level = IDEMPOTENT; }
-    rpc RefreshTokens (RefreshTokenRequest) returns (RefreshTokenResponse) { option idempotency_level = IDEMPOTENT; }
+    rpc Login         (LoginRequest)        returns (LoginResponse)         { option idempotency_level = IDEMPOTENT; }
+    rpc RefreshTokens (RefreshTokenRequest) returns (RefreshTokenResponse)  { option idempotency_level = IDEMPOTENT; }
     rpc Logout        (LogoutRequest)       returns (google.protobuf.Empty) { option idempotency_level = IDEMPOTENT; }
 }

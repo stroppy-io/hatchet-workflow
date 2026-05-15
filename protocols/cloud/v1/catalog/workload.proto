@@ -5,6 +5,7 @@ package cloud.v1.catalog;
 import "v1/iam/user.proto";
 import "v1/common/timestamps.proto";
 import "goplain/goplain.proto";
+import "google/protobuf/field_mask.proto";
 import "v1/common/identity.proto";
 import "v1/iam/tenant.proto";
 import "ratelproto/ratelproto.proto";
@@ -168,4 +169,24 @@ message WorkloadOrPreset {
             (ratel.column).constraints.default_value = "'{}'::jsonb"
         ]; // Inline workload definition.
     }
+}
+
+
+message CreateWorkloadPresetRequest {
+    WorkloadPreset preset = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpdateWorkloadPresetRequest {
+    WorkloadPreset preset = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+
+service WorkloadPresetService {
+    rpc CreateWorkloadPreset (CreateWorkloadPresetRequest) returns (WorkloadPreset)       { option idempotency_level = IDEMPOTENT; }
+    rpc UpdateWorkloadPreset (UpdateWorkloadPresetRequest) returns (WorkloadPreset)       { option idempotency_level = IDEMPOTENT; }
+    rpc DeleteWorkloadPreset (WorkloadPresetId)            returns (WorkloadPreset)       { option idempotency_level = IDEMPOTENT; }
+    rpc GetWorkloadPreset    (WorkloadPresetId)            returns (WorkloadPreset)       { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListWorkloadPresets  (cloud.v1.iam.TenantId)       returns (WorkloadPreset.List)  { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc CloneWorkloadPreset  (WorkloadPresetId)            returns (WorkloadPreset)       { option idempotency_level = IDEMPOTENT; }
 }

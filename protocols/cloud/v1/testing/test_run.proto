@@ -3,22 +3,25 @@ syntax = "proto3";
 package cloud.v1.testing;
 
 import "v1/iam/user.proto";
+import "v1/agent/protocol.proto";
 import "v1/catalog/database.proto";
 import "v1/catalog/workload.proto";
 import "v1/common/identity.proto";
 import "v1/common/timestamps.proto";
 import "goplain/goplain.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
 import "v1/iam/tenant.proto";
 import "ratelproto/ratelproto.proto";
 import "v1/system/dag.proto";
 import "v1/testing/test_run_template.proto";
-import "v1/testing/test_suite_run.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/testing";
 
 
 message TestRunId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+message TestSuiteRunId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
 /* TestRun — individual benchmark execution instance with database, workload,
    and optional reference to its template or parent suite-run batch. */
 message TestRun {
@@ -80,4 +83,119 @@ message TestRun {
 
     cloud.v1.catalog.DatabaseOrPreset database = 10 [(goplain.field).embed = true];
     cloud.v1.catalog.WorkloadOrPreset workload = 11 [(goplain.field).embed = true];
+}
+
+
+message CreateTestRunRequest {
+    TestRun test_run = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpdateTestRunRequest {
+    TestRun test_run = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+/* TestRunStep — read-only projection of an engine NodeRun for the frontend.
+   Step id is opaque to the user (engine node_run_id). No engine mutation
+   APIs are exposed — users only observe. */
+message TestRunStep {
+    string id = 1 [(validate.rules).string.len = 26];
+    /* name — human-readable step label rendered server-side from task kind
+       and parameters (e.g. "terraform.apply", "pg.install:node-1"). */
+    string name = 2;
+    /* kind — task kind discriminator (e.g. "terraform", "package_install"). */
+    string kind = 3;
+    cloud.v1.system.NodeRunStatus status = 4;
+    google.protobuf.Timestamp started_at = 5;
+    google.protobuf.Timestamp finished_at = 6;
+    /* depends_on — ids of other TestRunSteps in the same TestRun. */
+    repeated string depends_on = 7;
+    /* error — short error message when status = FAILED. Full output via StreamTestRunLogs. */
+    string error = 8;
+    int32 attempt = 9;
+}
+
+/* TestRunProgress — DAG snapshot for one TestRun. */
+message TestRunProgress {
+    cloud.v1.system.DagRunStatus status = 1;
+    repeated TestRunStep steps = 2;
+    google.protobuf.Timestamp started_at = 3;
+    google.protobuf.Timestamp finished_at = 4;
+}
+
+message MetricPoint {
+    google.protobuf.Timestamp ts = 1;
+    double value = 2;
+}
+
+message MetricSeries {
+    string name = 1;
+    map<string, string> labels = 2;
+    repeated MetricPoint points = 3;
+}
+
+message MetricSeriesList {
+    repeated MetricSeries series = 1;
+}
+
+message GetTestRunResponse {
+    TestRun test_run = 1;
+    /* progress — present when a DagRun is bound (after LaunchTestRun). */
+    TestRunProgress progress = 2;
+}
+
+message WatchTestRunRequest {
+    TestRunId test_run_id = 1 [(validate.rules).message = {required: true}];
+}
+
+/* StreamTestRunLogsRequest — live log feed for a TestRun. Optional step_id
+   narrows to one step (TestRunStep.id, == engine node_run_id under the hood). */
+message StreamTestRunLogsRequest {
+    TestRunId test_run_id = 1 [(validate.rules).message = {required: true}];
+    /* step_id — optional filter; empty = all steps of the run. */
+    string step_id = 2 [(validate.rules).string.max_len = 26];
+    /* since — replay backlog from this time; default = now (live tail). */
+    optional google.protobuf.Timestamp since = 3;
+    /* follow — keep stream open until run terminates; false = backlog only. */
+    bool follow = 4;
+}
+
+message GetTestRunMetricsRequest {
+    TestRunId test_run_id = 1 [(validate.rules).message = {required: true}];
+    /* metric_names — filter; empty = all. */
+    repeated string metric_names = 2 [(validate.rules).repeated.max_items = 64];
+    optional google.protobuf.Timestamp from = 3;
+    optional google.protobuf.Timestamp to = 4;
+    /* step_seconds — aggregation step for time-series points. */
+    uint32 step_seconds = 5 [(validate.rules).uint32 = {gte: 1, lte: 86400}];
+}
+
+
+service TestRunService {
+    /* CreateTestRun — persists intent. Launching = LaunchTestRun creates DagRun. */
+    rpc CreateTestRun (CreateTestRunRequest) returns (TestRun)            { option idempotency_level = IDEMPOTENT; }
+    rpc UpdateTestRun (UpdateTestRunRequest) returns (TestRun)            { option idempotency_level = IDEMPOTENT; }
+    rpc DeleteTestRun (TestRunId)            returns (TestRun)            { option idempotency_level = IDEMPOTENT; }
+    /* GetTestRun — returns TestRun plus current DAG progress projection. */
+    rpc GetTestRun    (TestRunId)            returns (GetTestRunResponse) { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListTestRuns  (cloud.v1.iam.TenantId) returns (TestRun.List)       { option idempotency_level = NO_SIDE_EFFECTS; }
+
+    /* WatchTestRun — server-streams TestRunProgress snapshots as DAG state changes. */
+    rpc WatchTestRun  (WatchTestRunRequest)  returns (stream TestRunProgress) { option idempotency_level = NO_SIDE_EFFECTS; }
+
+    /* StreamTestRunLogs — server-streaming log feed scoped to this TestRun.
+       Maps to WebSocket on the HTTP gateway. */
+    rpc StreamTestRunLogs (StreamTestRunLogsRequest) returns (stream cloud.v1.agent.LogLine) { option idempotency_level = NO_SIDE_EFFECTS; }
+
+    /* GetTestRunMetrics — time-series from VictoriaMetrics scoped to this TestRun. */
+    rpc GetTestRunMetrics (GetTestRunMetricsRequest) returns (MetricSeriesList) { option idempotency_level = NO_SIDE_EFFECTS; }
+
+    /* LaunchTestRun — creates a DagRun for the TestRun. Idempotent on
+       (test_run_id, attempt) — re-launching with same attempt is a no-op. */
+    rpc LaunchTestRun (TestRunId) returns (TestRun) { option idempotency_level = IDEMPOTENT; }
+    /* CancelTestRun — cancels the running DagRun bound to this TestRun. */
+    rpc CancelTestRun (TestRunId) returns (TestRun) { option idempotency_level = IDEMPOTENT; }
+
+    /* InstantiateTestRun — create a new TestRun from a template. */
+    rpc InstantiateTestRun (TestRunTemplateId) returns (TestRun) { option idempotency_level = IDEMPOTENT; }
 }

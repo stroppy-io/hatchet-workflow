@@ -77,3 +77,23 @@ message SharedTestRun {
     optional google.protobuf.Timestamp expires_at = 13;
     uint64 view_count = 14;
 }
+
+
+message CreateSharedTestRunRequest {
+    TestRunId test_run_id = 1 [(validate.rules).message = {required: true}];
+    /* expires_in_days — auto-expiry; 0 = no expiry. */
+    uint32 expires_in_days = 2 [(validate.rules).uint32.lte = 3650];
+}
+
+message GetSharedTestRunByTokenRequest {
+    string token = 1 [(validate.rules).string = {min_len: 16, max_len: 64}];
+}
+
+
+service SharedTestRunService {
+    rpc CreateSharedTestRun (CreateSharedTestRunRequest)     returns (SharedTestRun)      { option idempotency_level = IDEMPOTENT; }
+    rpc RevokeSharedTestRun (SharedTestRunId)                returns (SharedTestRun)      { option idempotency_level = IDEMPOTENT; }
+    rpc ListSharedTestRuns  (cloud.v1.iam.TenantId)          returns (SharedTestRun.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+    /* GetByToken — public, unauthenticated endpoint. */
+    rpc GetByToken          (GetSharedTestRunByTokenRequest) returns (SharedTestRun)      { option idempotency_level = NO_SIDE_EFFECTS; }
+}

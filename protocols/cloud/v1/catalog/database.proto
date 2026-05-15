@@ -5,6 +5,7 @@ package cloud.v1.catalog;
 import "v1/iam/user.proto";
 import "v1/common/timestamps.proto";
 import "goplain/goplain.proto";
+import "google/protobuf/field_mask.proto";
 import "v1/common/identity.proto";
 import "v1/iam/tenant.proto";
 import "ratelproto/ratelproto.proto";
@@ -329,4 +330,25 @@ message DatabaseOrPreset {
             (ratel.column).constraints.default_value = "'{}'::jsonb"
         ]; // Inline custom configuration
     }
+}
+
+
+message CreateDatabasePresetRequest {
+    DatabasePreset preset = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpdateDatabasePresetRequest {
+    DatabasePreset preset = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+
+service DatabasePresetService {
+    rpc CreateDatabasePreset (CreateDatabasePresetRequest) returns (DatabasePreset)       { option idempotency_level = IDEMPOTENT; }
+    rpc UpdateDatabasePreset (UpdateDatabasePresetRequest) returns (DatabasePreset)       { option idempotency_level = IDEMPOTENT; }
+    rpc DeleteDatabasePreset (DatabasePresetId)            returns (DatabasePreset)       { option idempotency_level = IDEMPOTENT; }
+    rpc GetDatabasePreset    (DatabasePresetId)            returns (DatabasePreset)       { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListDatabasePresets  (cloud.v1.iam.TenantId)       returns (DatabasePreset.List)  { option idempotency_level = NO_SIDE_EFFECTS; }
+    /* CloneDatabasePreset — copy with new id + suffix "-copy" to allow edit. */
+    rpc CloneDatabasePreset  (DatabasePresetId)            returns (DatabasePreset)       { option idempotency_level = IDEMPOTENT; }
 }

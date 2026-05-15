@@ -8,6 +8,7 @@ import "v1/catalog/database.proto";
 import "v1/common/identity.proto";
 import "v1/iam/tenant.proto";
 import "goplain/goplain.proto";
+import "google/protobuf/field_mask.proto";
 import "ratelproto/ratelproto.proto";
 import "validate/validate.proto";
 
@@ -114,4 +115,29 @@ message Package {
         string image = 1 [(validate.rules).string = {min_len: 1, max_len: 256}];   // registry/name:tag
         string digest = 2 [(validate.rules).string.max_len = 80];                   // optional sha256:...
     }
+}
+
+
+message CreatePackageRequest {
+    Package package = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpdatePackageRequest {
+    Package package = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+message ListPackagesRequest {
+    optional cloud.v1.iam.TenantId tenant_id = 1;       // null = also include builtins
+    optional Database.Kind db_kind = 2;
+}
+
+
+service PackageService {
+    rpc CreatePackage (CreatePackageRequest) returns (Package)      { option idempotency_level = IDEMPOTENT; }
+    rpc UpdatePackage (UpdatePackageRequest) returns (Package)      { option idempotency_level = IDEMPOTENT; }
+    rpc DeletePackage (PackageId)            returns (Package)      { option idempotency_level = IDEMPOTENT; }
+    rpc GetPackage    (PackageId)            returns (Package)      { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListPackages  (ListPackagesRequest)  returns (Package.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ClonePackage  (PackageId)            returns (Package)      { option idempotency_level = IDEMPOTENT; }
 }

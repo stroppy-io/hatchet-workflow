@@ -97,3 +97,29 @@ message SettingsItem {
         (ratel.column).constraints.default_value = "'{}'::jsonb"
     ];
 }
+
+
+message ListSettingsRequest {
+    cloud.v1.iam.TenantId tenant_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message SetSettingRequest {
+    SettingsItemId id = 2 [(validate.rules).message = {required: true}];
+    SettingsItem.Value value = 3 [(validate.rules).message = {required: true}];
+}
+
+message SetSettingManyRequest {
+    repeated SetSettingRequest settings = 2 [(validate.rules).message = {required: true}];
+}
+
+service SettingsService {
+    rpc ListSettings (ListSettingsRequest) returns (SettingsItem.List) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+    }
+    rpc SetSetting (SetSettingRequest) returns (SettingsItem) {
+        option idempotency_level = IDEMPOTENT;
+    }
+    rpc SetSettingMany (SetSettingManyRequest) returns (SettingsItem.List) {
+        option idempotency_level = IDEMPOTENT;
+    }
+}

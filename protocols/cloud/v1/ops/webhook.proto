@@ -7,6 +7,7 @@ import "v1/common/timestamps.proto";
 import "v1/common/identity.proto";
 import "v1/iam/tenant.proto";
 import "goplain/goplain.proto";
+import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "ratelproto/ratelproto.proto";
 import "validate/validate.proto";
@@ -82,4 +83,37 @@ message Webhook {
     optional google.protobuf.Timestamp last_success_at = 23;
     optional google.protobuf.Timestamp last_failure_at = 24;
     string last_failure_error = 25 [(validate.rules).string.max_len = 1024];
+}
+
+
+message CreateWebhookRequest {
+    Webhook webhook = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpdateWebhookRequest {
+    Webhook webhook = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+message TestWebhookRequest {
+    WebhookId id = 1 [(validate.rules).message = {required: true}];
+    /* Override event for test ping; default = RUN_STARTED. */
+    WebhookEvent event = 2 [(validate.rules).enum.defined_only = true];
+}
+
+message TestWebhookResponse {
+    bool delivered = 1;
+    uint32 status_code = 2;
+    string error = 3;
+    uint32 latency_ms = 4;
+}
+
+
+service WebhookService {
+    rpc CreateWebhook (CreateWebhookRequest) returns (Webhook)      { option idempotency_level = IDEMPOTENT; }
+    rpc UpdateWebhook (UpdateWebhookRequest) returns (Webhook)      { option idempotency_level = IDEMPOTENT; }
+    rpc DeleteWebhook (WebhookId)            returns (Webhook)      { option idempotency_level = IDEMPOTENT; }
+    rpc GetWebhook    (WebhookId)            returns (Webhook)      { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListWebhooks  (cloud.v1.iam.TenantId) returns (Webhook.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc TestWebhook   (TestWebhookRequest)   returns (TestWebhookResponse) { option idempotency_level = IDEMPOTENT; }
 }

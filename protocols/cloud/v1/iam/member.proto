@@ -64,3 +64,24 @@ message TenantMember {
 
     TenantRole role = 10 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
 }
+
+
+message AddMemberRequest {
+    TenantId tenant_id = 1 [(validate.rules).message = {required: true}];
+    UserId   user_id   = 2 [(validate.rules).message = {required: true}];
+    TenantRole role    = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+}
+
+message UpdateMemberRoleRequest {
+    TenantMemberId member_id = 1 [(validate.rules).message = {required: true}];
+    TenantRole role          = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+}
+
+
+service TenantMemberService {
+    rpc AddMember        (AddMemberRequest)        returns (TenantMember)      { option idempotency_level = IDEMPOTENT; }
+    rpc UpdateMemberRole (UpdateMemberRoleRequest) returns (TenantMember)      { option idempotency_level = IDEMPOTENT; }
+    rpc RemoveMember     (TenantMemberId)          returns (TenantMember)      { option idempotency_level = IDEMPOTENT; }
+    rpc ListByTenant     (TenantId)                returns (TenantMember.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListByUser       (UserId)                  returns (TenantMember.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+}

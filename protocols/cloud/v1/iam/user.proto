@@ -4,6 +4,8 @@ package cloud.v1.iam;
 
 import "v1/common/timestamps.proto";
 import "goplain/goplain.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
 import "ratelproto/ratelproto.proto";
 import "validate/validate.proto";
 
@@ -36,4 +38,30 @@ message User {
 
     string email = 3 [(validate.rules).string = {min_len: 5, max_len: 255, email: true}];
     string nickname = 4 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-zA-Z0-9_.-]+$"}];
+}
+
+
+message CreateUserRequest {
+    User user = 1 [(validate.rules).message = {required: true}];
+    string password = 2 [(validate.rules).string.pattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'];
+}
+
+message UpdateUserRequest {
+    User user = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+message UpdatePasswordRequest {
+    string old_password = 1 [(validate.rules).string.pattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'];
+    string new_password = 2 [(validate.rules).string.pattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'];
+    string new_password_confirmation = 3 [(validate.rules).string.pattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'];
+}
+
+
+service UserService {
+    rpc CreateUser     (CreateUserRequest)     returns (User) { option idempotency_level = IDEMPOTENT; }
+    rpc UpdateUser     (UpdateUserRequest)     returns (User) { option idempotency_level = IDEMPOTENT; }
+    rpc DeleteUser     (UserId)                returns (User) { option idempotency_level = IDEMPOTENT; }
+    rpc UpdatePassword (UpdatePasswordRequest) returns (User) { option idempotency_level = IDEMPOTENT; }
+    rpc Me             (google.protobuf.Empty) returns (User) { option idempotency_level = NO_SIDE_EFFECTS; }
 }

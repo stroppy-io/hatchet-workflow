@@ -2,18 +2,20 @@ syntax = "proto3";
 
 package cloud.v1.testing;
 
+import "v1/agent/protocol.proto";
 import "v1/common/timestamps.proto";
 import "goplain/goplain.proto";
+import "google/protobuf/timestamp.proto";
 import "v1/iam/tenant.proto";
 import "ratelproto/ratelproto.proto";
 import "v1/system/dag.proto";
+import "v1/testing/test_run.proto";
 import "v1/testing/test_suite.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/testing";
 
 
-message TestSuiteRunId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
 /* TestSuiteRun — concrete batch execution of a TestSuite. Captures the
    matrix snapshot at launch time so later edits to the suite don't
    retroactively change historical runs. */
@@ -77,4 +79,73 @@ message TestSuiteRun {
         (goplain.field).serialize = true,
         (ratel.column).constraints.default_value = "'{}'::jsonb"
     ];
+}
+
+
+/* TestSuiteRunChild — read-only projection of one child TestRun under a suite run. */
+message TestSuiteRunChild {
+    TestRunId test_run_id = 1 [(validate.rules).message = {required: true}];
+    /* name — human-readable label for this child (test display name). */
+    string name = 2;
+    TestRunProgress progress = 3;
+}
+
+/* TestSuiteRunProgress — suite-level meta-DAG + per-child DAG snapshots. */
+message TestSuiteRunProgress {
+    /* status — status of the suite-level meta-DAG (SUITE → TEST_RUN edges). */
+    cloud.v1.system.DagRunStatus status = 1;
+    repeated TestSuiteRunChild children = 2;
+}
+
+message GetTestSuiteRunResponse {
+    TestSuiteRun suite_run = 1;
+    TestSuiteRunProgress progress = 2;
+}
+
+message WatchTestSuiteRunRequest {
+    TestSuiteRunId suite_run_id = 1 [(validate.rules).message = {required: true}];
+}
+
+/* StreamTestSuiteRunLogsRequest — live log feed aggregated across all child
+   TestRuns of a suite run. Optional test_run_id narrows to one child. */
+message StreamTestSuiteRunLogsRequest {
+    TestSuiteRunId suite_run_id = 1 [(validate.rules).message = {required: true}];
+    /* test_run_id — optional child filter; empty = all children. */
+    TestRunId test_run_id = 2;
+    /* step_id — optional step filter inside the chosen child. */
+    string step_id = 3 [(validate.rules).string.max_len = 26];
+    optional google.protobuf.Timestamp since = 4;
+    bool follow = 5;
+}
+
+message GetTestSuiteRunMetricsRequest {
+    TestSuiteRunId suite_run_id = 1 [(validate.rules).message = {required: true}];
+    repeated string metric_names = 2 [(validate.rules).repeated.max_items = 64];
+    optional google.protobuf.Timestamp from = 3;
+    optional google.protobuf.Timestamp to = 4;
+    uint32 step_seconds = 5 [(validate.rules).uint32 = {gte: 1, lte: 86400}];
+    /* test_run_id — optional child filter; empty = aggregate across children. */
+    TestRunId test_run_id = 6;
+}
+
+
+service TestSuiteRunService {
+    /* GetTestSuiteRun — returns suite run plus meta-DAG progress and per-child TestRun projections. */
+    rpc GetTestSuiteRun    (TestSuiteRunId) returns (GetTestSuiteRunResponse) { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListBySuite        (TestSuiteId)    returns (TestSuiteRun.List)       { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListByTenant       (cloud.v1.iam.TenantId) returns (TestSuiteRun.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+
+    /* WatchTestSuiteRun — server-streams progress snapshots as suite/children DAG state changes. */
+    rpc WatchTestSuiteRun  (WatchTestSuiteRunRequest) returns (stream TestSuiteRunProgress) { option idempotency_level = NO_SIDE_EFFECTS; }
+
+    /* StreamTestSuiteRunLogs — aggregated log feed across child TestRuns. */
+    rpc StreamTestSuiteRunLogs (StreamTestSuiteRunLogsRequest) returns (stream cloud.v1.agent.LogLine) { option idempotency_level = NO_SIDE_EFFECTS; }
+
+    /* GetTestSuiteRunMetrics — aggregated metrics across child TestRuns. */
+    rpc GetTestSuiteRunMetrics (GetTestSuiteRunMetricsRequest) returns (MetricSeriesList) { option idempotency_level = NO_SIDE_EFFECTS; }
+
+    rpc CancelTestSuiteRun (TestSuiteRunId) returns (TestSuiteRun) { option idempotency_level = IDEMPOTENT; }
+
+    /* LaunchTestSuite — produces a TestSuiteRun with materialized matrix cells. */
+    rpc LaunchTestSuite (TestSuiteId) returns (TestSuiteRun) { option idempotency_level = IDEMPOTENT; }
 }

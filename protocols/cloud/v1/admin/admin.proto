@@ -1,13 +1,13 @@
 syntax = "proto3";
 
-package cloud.v1.api;
+package cloud.v1.admin;
 
 import "google/protobuf/empty.proto";
 import "v1/iam/tenant.proto";
 import "v1/iam/user.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/api";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/admin";
 
 
 message AdminCreateTenantRequest {
@@ -31,10 +31,10 @@ message AdminResetPasswordRequest {
 service AdminService {
     rpc ListAllTenants    (google.protobuf.Empty)        returns (cloud.v1.iam.Tenant.List) { option idempotency_level = NO_SIDE_EFFECTS; }
     rpc CreateTenant      (AdminCreateTenantRequest)     returns (cloud.v1.iam.Tenant)      { option idempotency_level = IDEMPOTENT; }
-    rpc DeleteTenantHard  (cloud.v1.iam.TenantId)           returns (cloud.v1.iam.Tenant)      { option idempotency_level = IDEMPOTENT; }
+    rpc DeleteTenantHard  (cloud.v1.iam.TenantId)        returns (cloud.v1.iam.Tenant)      { option idempotency_level = IDEMPOTENT; }
 
     rpc ListAllUsers      (google.protobuf.Empty)        returns (cloud.v1.iam.User.List)   { option idempotency_level = NO_SIDE_EFFECTS; }
     rpc CreateUser        (AdminCreateUserRequest)       returns (cloud.v1.iam.User)        { option idempotency_level = IDEMPOTENT; }
-    rpc DeleteUser        (cloud.v1.iam.UserId)             returns (cloud.v1.iam.User)        { option idempotency_level = IDEMPOTENT; }
+    rpc DeleteUser        (cloud.v1.iam.UserId)          returns (cloud.v1.iam.User)        { option idempotency_level = IDEMPOTENT; }
     rpc ResetUserPassword (AdminResetPasswordRequest)    returns (cloud.v1.iam.User)        { option idempotency_level = IDEMPOTENT; }
 }
