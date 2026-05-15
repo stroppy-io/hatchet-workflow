@@ -2,17 +2,17 @@ syntax = "proto3";
 
 package cloud.v1.catalog;
 
-import "v1/iam/user.proto";
-import "v1/common/timestamps.proto";
+import "cloud/v1/iam/user.proto";
+import "cloud/v1/common/timestamps.proto";
 import "goplain/goplain.proto";
 import "google/protobuf/field_mask.proto";
-import "v1/common/identity.proto";
-import "v1/iam/tenant.proto";
+import "cloud/v1/common/identity.proto";
+import "cloud/v1/iam/tenant.proto";
 import "ratelproto/ratelproto.proto";
-import "v1/common/config_file.proto";
+import "cloud/v1/common/config_file.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/catalog";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog";
 
 
 /*
@@ -290,7 +290,6 @@ message DatabasePreset {
     ];
     cloud.v1.iam.TenantId tenant_id = 2 [
         (ratel.column).constraints = {
-            references_schema: "public"
             references_table: "tenants"
             references_column: "id"
             on_delete: CASCADE
@@ -300,7 +299,6 @@ message DatabasePreset {
     cloud.v1.common.Timestamps timestamps = 3 [(goplain.field).embed = true];
     cloud.v1.common.Identity identity = 4 [(goplain.field).embed = true];
     optional cloud.v1.iam.UserId created_by = 9 [(ratel.column).constraints = {
-        references_schema: "public"
         references_table: "users"
         references_column: "id"
         on_delete: SET_NULL
@@ -316,11 +314,10 @@ message DatabasePreset {
 /* Reference a preset or inline database configuration. */
 message DatabaseOrPreset {
     /* Either a preset or inline database config. */
-    oneof database {
+    oneof database_variant {
         option (goplain.oneof).embed = true;
         option (validate.required) = true;
         cloud.v1.catalog.DatabasePresetId database_preset_id = 10 [(ratel.column).constraints = {
-            references_schema: "public"
             references_table: "database_presets"
             references_column: "id"
             on_delete: RESTRICT

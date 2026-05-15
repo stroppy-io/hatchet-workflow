@@ -2,14 +2,14 @@ syntax = "proto3";
 
 package cloud.v1.iam;
 
-import "v1/common/timestamps.proto";
-import "v1/iam/user.proto";
+import "cloud/v1/common/timestamps.proto";
+import "cloud/v1/iam/user.proto";
 import "goplain/goplain.proto";
 import "google/protobuf/timestamp.proto";
 import "ratelproto/ratelproto.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/iam";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam";
 
 
 /* RevocationReason — why a refresh token was revoked. REUSED triggers
@@ -56,7 +56,6 @@ message RefreshToken {
     ];
     cloud.v1.iam.UserId user_id = 2 [
         (ratel.column).constraints = {
-            references_schema: "public"
             references_table: "users"
             references_column: "id"
             on_delete: CASCADE
@@ -75,7 +74,6 @@ message RefreshToken {
     /* replaced_by — points to successor row after rotation. Null on the
        current/active token. */
     optional RefreshTokenId replaced_by = 13 [(ratel.column).constraints = {
-        references_schema: "public"
         references_table: "refresh_tokens"
         references_column: "id"
         on_delete: SET_NULL

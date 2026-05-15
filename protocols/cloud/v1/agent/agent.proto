@@ -2,15 +2,15 @@ syntax = "proto3";
 
 package cloud.v1.agent;
 
-import "v1/catalog/deployment.proto";
-import "v1/common/timestamps.proto";
+import "cloud/v1/catalog/deployment.proto";
+import "cloud/v1/common/timestamps.proto";
 import "goplain/goplain.proto";
 import "google/protobuf/timestamp.proto";
-import "v1/iam/tenant.proto";
+import "cloud/v1/iam/tenant.proto";
 import "ratelproto/ratelproto.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/agent";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent";
 
 
 /* AgentStatus — registry-level lifecycle of an Agent row. */
@@ -50,7 +50,6 @@ message Agent {
     ];
     cloud.v1.iam.TenantId tenant_id = 2 [
         (ratel.column).constraints = {
-            references_schema: "public"
             references_table: "tenants"
             references_column: "id"
             on_delete: CASCADE

@@ -2,11 +2,11 @@ syntax = "proto3";
 
 package cloud.v1.tasks;
 
-import "v1/common/config_file.proto";
+import "cloud/v1/common/config_file.proto";
 import "google/protobuf/struct.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/tasks";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/tasks";
 
 
 /* DockerTask — single task for local docker-based runs. Mirror of

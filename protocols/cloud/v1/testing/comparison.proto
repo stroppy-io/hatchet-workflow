@@ -2,11 +2,11 @@ syntax = "proto3";
 
 package cloud.v1.testing;
 
-import "v1/testing/test_run.proto";
-import "v1/testing/test_suite_run.proto";
+import "cloud/v1/testing/test_run.proto";
+import "cloud/v1/testing/test_suite_run.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/testing";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing";
 
 
 message CompareRunsRequest {

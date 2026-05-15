@@ -2,11 +2,11 @@ syntax = "proto3";
 
 package cloud.v1.admin;
 
-import "v1/agent/binary_cache.proto";
-import "v1/ops/binary_artifact.proto";
+import "cloud/v1/agent/binary_cache.proto";
+import "cloud/v1/ops/binary_artifact.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/admin";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/admin";
 
 
 message PrewarmRequest {

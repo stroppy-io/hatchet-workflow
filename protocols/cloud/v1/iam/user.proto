@@ -2,14 +2,14 @@ syntax = "proto3";
 
 package cloud.v1.iam;
 
-import "v1/common/timestamps.proto";
+import "cloud/v1/common/timestamps.proto";
 import "goplain/goplain.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "ratelproto/ratelproto.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/iam";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam";
 
 
 message UserId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
@@ -43,7 +43,7 @@ message User {
 
 message CreateUserRequest {
     User user = 1 [(validate.rules).message = {required: true}];
-    string password = 2 [(validate.rules).string.pattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'];
+    string password = 2 [(validate.rules).string = {min_len: 8, max_len: 128}];
 }
 
 message UpdateUserRequest {
@@ -52,9 +52,9 @@ message UpdateUserRequest {
 }
 
 message UpdatePasswordRequest {
-    string old_password = 1 [(validate.rules).string.pattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'];
-    string new_password = 2 [(validate.rules).string.pattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'];
-    string new_password_confirmation = 3 [(validate.rules).string.pattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'];
+    string old_password = 1 [(validate.rules).string = {min_len: 8, max_len: 128}];
+    string new_password = 2 [(validate.rules).string = {min_len: 8, max_len: 128}];
+    string new_password_confirmation = 3 [(validate.rules).string = {min_len: 8, max_len: 128}];
 }
 
 

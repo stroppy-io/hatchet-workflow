@@ -2,14 +2,14 @@ syntax = "proto3";
 
 package cloud.v1.catalog;
 
-import "v1/common/timestamps.proto";
+import "cloud/v1/common/timestamps.proto";
 import "goplain/goplain.proto";
-import "v1/common/identity.proto";
-import "v1/iam/tenant.proto";
+import "cloud/v1/common/identity.proto";
+import "cloud/v1/iam/tenant.proto";
 import "ratelproto/ratelproto.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/catalog";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog";
 
 
 /* YandexCloudPlatformId — Yandex Cloud VM platform architecture tier. */
@@ -50,7 +50,6 @@ message SettingsItem {
     ];
     cloud.v1.iam.TenantId tenant_id = 2 [
         (ratel.column).constraints = {
-            references_schema: "public"
             references_table: "tenants"
             references_column: "id"
             on_delete: CASCADE
@@ -109,7 +108,7 @@ message SetSettingRequest {
 }
 
 message SetSettingManyRequest {
-    repeated SetSettingRequest settings = 2 [(validate.rules).message = {required: true}];
+    repeated SetSettingRequest settings = 2 [(validate.rules).repeated = {min_items: 1, items: {message: {required: true}}}];
 }
 
 service SettingsService {

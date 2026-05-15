@@ -10,9 +10,10 @@ lint:
 deps:
   - github.com/bufbuild/protoc-gen-validate@v1.3.3
   - github.com/yaroher/protoc-gen-go-plain@v0.7.13
-  - github.com/yaroher/ratel@v0.4.23
+  - github.com/yaroher/ratel@v0.4.25
 generate:
   inputs:
+    - directory: cloud
     - git_repo:
         url: github.com/bufbuild/protoc-gen-validate
         sub_directory: validate

@@ -2,14 +2,14 @@ syntax = "proto3";
 
 package cloud.v1.agent;
 
-import "v1/agent/agent.proto";
-import "v1/agent/protocol.proto";
-import "v1/catalog/deployment.proto";
+import "cloud/v1/agent/agent.proto";
+import "cloud/v1/agent/protocol.proto";
+import "cloud/v1/catalog/deployment.proto";
 import "google/protobuf/empty.proto";
-import "v1/iam/tenant.proto";
+import "cloud/v1/iam/tenant.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/agent";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent";
 
 
 /* RegisterRequest — agent boot-time registration. Cloud-init injects a

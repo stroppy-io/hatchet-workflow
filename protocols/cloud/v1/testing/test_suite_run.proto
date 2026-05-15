@@ -2,18 +2,18 @@ syntax = "proto3";
 
 package cloud.v1.testing;
 
-import "v1/agent/protocol.proto";
-import "v1/common/timestamps.proto";
+import "cloud/v1/agent/protocol.proto";
+import "cloud/v1/common/timestamps.proto";
 import "goplain/goplain.proto";
 import "google/protobuf/timestamp.proto";
-import "v1/iam/tenant.proto";
+import "cloud/v1/iam/tenant.proto";
 import "ratelproto/ratelproto.proto";
-import "v1/system/dag.proto";
-import "v1/testing/test_run.proto";
-import "v1/testing/test_suite.proto";
+import "cloud/v1/system/dag.proto";
+import "cloud/v1/testing/test_run.proto";
+import "cloud/v1/testing/test_suite.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/testing";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing";
 
 
 /* TestSuiteRun — concrete batch execution of a TestSuite. Captures the
@@ -40,7 +40,6 @@ message TestSuiteRun {
        must match the suite's tenant. */
     cloud.v1.iam.TenantId tenant_id = 2 [
         (ratel.column).constraints = {
-            references_schema: "public"
             references_table: "tenants"
             references_column: "id"
             on_delete: CASCADE
@@ -51,7 +50,6 @@ message TestSuiteRun {
 
     cloud.v1.testing.TestSuiteId suite_id = 4 [
         (ratel.column).constraints = {
-            references_schema: "public"
             references_table: "test_suites"
             references_column: "id"
             on_delete: CASCADE
@@ -68,7 +66,6 @@ message TestSuiteRun {
 
     /* Latest meta-DagRun (SUITE_RUN-level) executing this TestSuiteRun. */
     optional cloud.v1.system.DagRunId dag_run_id = 6 [(ratel.column).constraints = {
-        references_schema: "public"
         references_table: "dag_runs"
         references_column: "id"
         on_delete: SET_NULL

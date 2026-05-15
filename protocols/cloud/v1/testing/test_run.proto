@@ -2,22 +2,22 @@ syntax = "proto3";
 
 package cloud.v1.testing;
 
-import "v1/iam/user.proto";
-import "v1/agent/protocol.proto";
-import "v1/catalog/database.proto";
-import "v1/catalog/workload.proto";
-import "v1/common/identity.proto";
-import "v1/common/timestamps.proto";
+import "cloud/v1/iam/user.proto";
+import "cloud/v1/agent/protocol.proto";
+import "cloud/v1/catalog/database.proto";
+import "cloud/v1/catalog/workload.proto";
+import "cloud/v1/common/identity.proto";
+import "cloud/v1/common/timestamps.proto";
 import "goplain/goplain.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "v1/iam/tenant.proto";
+import "cloud/v1/iam/tenant.proto";
 import "ratelproto/ratelproto.proto";
-import "v1/system/dag.proto";
-import "v1/testing/test_run_template.proto";
+import "cloud/v1/system/dag.proto";
+import "cloud/v1/testing/test_run_template.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/testing";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing";
 
 
 message TestRunId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
@@ -43,7 +43,6 @@ message TestRun {
     ];
     cloud.v1.iam.TenantId tenant_id = 2 [
         (ratel.column).constraints = {
-            references_schema: "public"
             references_table: "tenants"
             references_column: "id"
             on_delete: CASCADE
@@ -54,13 +53,11 @@ message TestRun {
     cloud.v1.common.Identity identity = 4 [(goplain.field).embed = true];
 
     optional cloud.v1.testing.TestSuiteRunId suite_run_id = 5 [(ratel.column).constraints = {
-        references_schema: "public"
         references_table: "test_suite_runs"
         references_column: "id"
         on_delete: CASCADE
     }]; // Parent suite-run batch, null if standalone.
     optional cloud.v1.testing.TestRunTemplateId template_id = 6 [(ratel.column).constraints = {
-        references_schema: "public"
         references_table: "test_run_templates"
         references_column: "id"
         on_delete: SET_NULL
@@ -69,13 +66,11 @@ message TestRun {
     /* Latest DagRun executing this TestRun. Engine is source of truth for
        execution state; this is a back-pointer for domain queries. */
     optional cloud.v1.system.DagRunId dag_run_id = 7 [(ratel.column).constraints = {
-        references_schema: "public"
         references_table: "dag_runs"
         references_column: "id"
         on_delete: SET_NULL
     }];
     optional cloud.v1.iam.UserId created_by = 9 [(ratel.column).constraints = {
-        references_schema: "public"
         references_table: "users"
         references_column: "id"
         on_delete: SET_NULL

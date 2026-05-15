@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package cloud.v1.tasks;
 
-import "v1/testing/test_run.proto";
+import "cloud/v1/testing/test_run.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/tasks";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/tasks";
 
 
 /* TestRunRefTask — payload for a SUITE_RUN-level node that represents

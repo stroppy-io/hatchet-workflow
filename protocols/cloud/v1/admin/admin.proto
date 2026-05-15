@@ -3,11 +3,11 @@ syntax = "proto3";
 package cloud.v1.admin;
 
 import "google/protobuf/empty.proto";
-import "v1/iam/tenant.proto";
-import "v1/iam/user.proto";
+import "cloud/v1/iam/tenant.proto";
+import "cloud/v1/iam/user.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/admin";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/admin";
 
 
 message AdminCreateTenantRequest {
@@ -18,12 +18,12 @@ message AdminCreateTenantRequest {
 
 message AdminCreateUserRequest {
     cloud.v1.iam.User user = 1 [(validate.rules).message = {required: true}];
-    string password = 2 [(validate.rules).string.pattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'];
+    string password = 2 [(validate.rules).string = {min_len: 8, max_len: 128}];
 }
 
 message AdminResetPasswordRequest {
     cloud.v1.iam.UserId user_id = 1 [(validate.rules).message = {required: true}];
-    string new_password = 2 [(validate.rules).string.pattern = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'];
+    string new_password = 2 [(validate.rules).string = {min_len: 8, max_len: 128}];
 }
 
 

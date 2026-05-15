@@ -2,11 +2,11 @@ syntax = "proto3";
 
 package cloud.v1.tasks;
 
-import "v1/catalog/database.proto";
-import "v1/catalog/deployment.proto";
+import "cloud/v1/catalog/database.proto";
+import "cloud/v1/catalog/deployment.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/tasks";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/tasks";
 
 
 /* OneShotTask — single-machine command (cockroach init, ydb init, ydb

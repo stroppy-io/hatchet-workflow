@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package cloud.v1.tasks;
 
-import "v1/catalog/workload.proto";
+import "cloud/v1/catalog/workload.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/tasks";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/tasks";
 
 
 /* StroppyRunTask — execute a stroppy test on the runner machine.

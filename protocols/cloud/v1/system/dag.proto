@@ -6,11 +6,11 @@ import "goplain/goplain.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
-import "v1/common/timestamps.proto";
+import "cloud/v1/common/timestamps.proto";
 import "ratelproto/ratelproto.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/system";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system";
 
 
 /* DagRunStatus — overall DagRun execution state. */
@@ -116,7 +116,6 @@ message DagRun {
 
     DagId dag_id = 4 [
         (ratel.column).constraints = {
-            references_schema: "public"
             references_table: "dags"
             references_column: "id"
             on_delete: RESTRICT
@@ -134,7 +133,6 @@ message DagRun {
        and previous_attempt_id set. History preserved. */
     uint32 attempt = 20 [(validate.rules).uint32.gte = 1];
     optional DagRunId previous_attempt_id = 21 [(ratel.column).constraints = {
-        references_schema: "public"
         references_table: "dag_runs"
         references_column: "id"
         on_delete: SET_NULL
@@ -174,7 +172,6 @@ message NodeRun {
     ];
     DagRunId dag_run_id = 2 [
         (ratel.column).constraints = {
-            references_schema: "public"
             references_table: "dag_runs"
             references_column: "id"
             on_delete: CASCADE
@@ -225,7 +222,6 @@ message DagRunStateEntry {
     ];
     DagRunId dag_run_id = 2 [
         (ratel.column).constraints = {
-            references_schema: "public"
             references_table: "dag_runs"
             references_column: "id"
             on_delete: CASCADE

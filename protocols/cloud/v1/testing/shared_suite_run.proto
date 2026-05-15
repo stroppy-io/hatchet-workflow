@@ -2,17 +2,18 @@ syntax = "proto3";
 
 package cloud.v1.testing;
 
-import "v1/common/timestamps.proto";
+import "cloud/v1/common/timestamps.proto";
 import "goplain/goplain.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
-import "v1/iam/tenant.proto";
-import "v1/iam/user.proto";
+import "cloud/v1/iam/tenant.proto";
+import "cloud/v1/iam/user.proto";
 import "ratelproto/ratelproto.proto";
-import "v1/testing/test_suite_run.proto";
+import "cloud/v1/testing/test_run.proto";
+import "cloud/v1/testing/test_suite_run.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/testing";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing";
 
 
 message SharedSuiteRunId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
@@ -38,7 +39,6 @@ message SharedSuiteRun {
     ];
     cloud.v1.iam.TenantId tenant_id = 2 [
         (ratel.column).constraints = {
-            references_schema: "public"
             references_table: "tenants"
             references_column: "id"
             on_delete: CASCADE
@@ -49,7 +49,6 @@ message SharedSuiteRun {
 
     cloud.v1.testing.TestSuiteRunId test_suite_run_id = 4 [
         (ratel.column).constraints = {
-            references_schema: "public"
             references_table: "test_suite_runs"
             references_column: "id"
             on_delete: CASCADE
@@ -57,7 +56,6 @@ message SharedSuiteRun {
         (validate.rules).message = {required: true}
     ];
     optional cloud.v1.iam.UserId created_by = 5 [(ratel.column).constraints = {
-        references_schema: "public"
         references_table: "users"
         references_column: "id"
         on_delete: SET_NULL

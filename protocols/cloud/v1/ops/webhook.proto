@@ -2,17 +2,17 @@ syntax = "proto3";
 
 package cloud.v1.ops;
 
-import "v1/iam/user.proto";
-import "v1/common/timestamps.proto";
-import "v1/common/identity.proto";
-import "v1/iam/tenant.proto";
+import "cloud/v1/iam/user.proto";
+import "cloud/v1/common/timestamps.proto";
+import "cloud/v1/common/identity.proto";
+import "cloud/v1/iam/tenant.proto";
 import "goplain/goplain.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "ratelproto/ratelproto.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/v1/ops";
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/ops";
 
 
 /* WebhookEvent — event types the sender emits. */
@@ -48,7 +48,6 @@ message Webhook {
     ];
     cloud.v1.iam.TenantId tenant_id = 2 [
         (ratel.column).constraints = {
-            references_schema: "public"
             references_table: "tenants"
             references_column: "id"
             on_delete: CASCADE
@@ -58,7 +57,6 @@ message Webhook {
     cloud.v1.common.Timestamps timestamps = 3 [(goplain.field).embed = true];
     cloud.v1.common.Identity identity = 4 [(goplain.field).embed = true];
     optional cloud.v1.iam.UserId created_by = 9 [(ratel.column).constraints = {
-        references_schema: "public"
         references_table: "users"
         references_column: "id"
         on_delete: SET_NULL
