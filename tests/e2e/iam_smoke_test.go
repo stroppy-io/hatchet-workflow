@@ -10,6 +10,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/stretchr/testify/require"
 
+	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	"github.com/stroppy-io/stroppy-cloud/internal/sdk/client"
 	"github.com/stroppy-io/stroppy-cloud/internal/testutil/fixture"
@@ -39,7 +40,7 @@ func TestE2E_LoginCreateTenant(t *testing.T) {
 	// Create a tenant as the authenticated user.
 	authed := client.New(srv.URL, client.WithBearer(access))
 	tenantResp, err := authed.Tenant.CreateTenant(ctx, connect.NewRequest(&iampb.CreateTenantRequest{
-		Tenant: &iampb.Tenant{Name: "Acme"},
+		Tenant: &iampb.Tenant{Identity: &commonpb.Identity{Name: "Acme"}},
 	}))
 	require.NoError(t, err)
 	require.NotEmpty(t, tenantResp.Msg.GetId().GetValue())
