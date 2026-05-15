@@ -87,3 +87,23 @@ func TestLoginWrongPassword(t *testing.T) {
 	_, err = f.IAM.Login(ctx, "u@e.com", "wrong")
 	require.Error(t, err)
 }
+
+func TestApiTokenCreateAndVerify(t *testing.T) {
+	f := fixture.NewIAM(t)
+	ctx := context.Background()
+
+	u, err := f.IAM.CreateUser(ctx, &iampb.User{Email: "t@e.com", Nickname: "t"}, "P@ss123!")
+	require.NoError(t, err)
+
+	tn, err := f.IAM.CreateTenant(ctx, &iampb.Tenant{Identity: &commonpb.Identity{Name: "T"}}, u.GetId())
+	require.NoError(t, err)
+
+	token, plain, err := f.IAM.CreateApiToken(ctx, tn.GetId(), u.GetId(), "ci-pipeline")
+	require.NoError(t, err)
+	require.NotEmpty(t, plain)
+	require.NotEmpty(t, token.GetId().GetValue())
+
+	resolved, err := f.IAM.VerifyApiToken(ctx, plain)
+	require.NoError(t, err)
+	require.Equal(t, tn.GetId().GetValue(), resolved.GetTenantId().GetValue())
+}
