@@ -50,3 +50,40 @@ func TestCreateTenantAndMember(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, ok)
 }
+
+func TestLoginAndRefreshRotation(t *testing.T) {
+	f := fixture.NewIAM(t)
+	ctx := context.Background()
+
+	_, err := f.IAM.CreateUser(ctx, &iampb.User{Email: "user@e.com", Nickname: "user1"}, "P@ssw0rd!")
+	require.NoError(t, err)
+
+	pair1, err := f.IAM.Login(ctx, "user@e.com", "P@ssw0rd!")
+	require.NoError(t, err)
+	require.NotEmpty(t, pair1.GetAccessToken())
+	require.NotEmpty(t, pair1.GetRefreshToken())
+
+	pair2, err := f.IAM.RefreshTokens(ctx, pair1.GetRefreshToken())
+	require.NoError(t, err)
+	require.NotEqual(t, pair1.GetAccessToken(), pair2.GetAccessToken())
+	require.NotEqual(t, pair1.GetRefreshToken(), pair2.GetRefreshToken())
+
+	// Reuse old token → triggers family revoke
+	_, err = f.IAM.RefreshTokens(ctx, pair1.GetRefreshToken())
+	require.Error(t, err)
+
+	// New token also invalid (family revoked)
+	_, err = f.IAM.RefreshTokens(ctx, pair2.GetRefreshToken())
+	require.Error(t, err)
+}
+
+func TestLoginWrongPassword(t *testing.T) {
+	f := fixture.NewIAM(t)
+	ctx := context.Background()
+
+	_, err := f.IAM.CreateUser(ctx, &iampb.User{Email: "u@e.com", Nickname: "u"}, "Correct123!")
+	require.NoError(t, err)
+
+	_, err = f.IAM.Login(ctx, "u@e.com", "wrong")
+	require.Error(t, err)
+}
