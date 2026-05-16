@@ -32,3 +32,23 @@ func TestCreateAndListDatabasePresets(t *testing.T) {
 	require.Len(t, list, 1)
 	require.Equal(t, "pg-default", list[0].GetIdentity().GetName())
 }
+
+func TestCreateAndListWorkloadPresets(t *testing.T) {
+	f := fixture.NewCatalog(t)
+	ctx := context.Background()
+
+	u, _ := f.IAM.CreateUser(ctx, &iampb.User{Email: "w@e.com", Nickname: "w"}, "P@ss1234!")
+	tn, _ := f.IAM.CreateTenant(ctx, &iampb.Tenant{Identity: &commonpb.Identity{Name: "T"}}, u.GetId())
+
+	preset := &catalogpb.WorkloadPreset{
+		Identity: &commonpb.Identity{Name: "tpcc-default"},
+		Workload: &catalogpb.Workload{},
+	}
+	created, err := f.Catalog.CreateWorkloadPreset(ctx, tn.GetId(), u.GetId(), preset)
+	require.NoError(t, err)
+	require.NotEmpty(t, created.GetId().GetValue())
+
+	list, err := f.Catalog.ListWorkloadPresets(ctx, tn.GetId())
+	require.NoError(t, err)
+	require.Len(t, list, 1)
+}
