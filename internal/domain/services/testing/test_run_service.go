@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"go.opentelemetry.io/otel/trace"
@@ -102,12 +103,13 @@ func runScannerSetters(s *testingpb.TestRunScanner) []set.ValueSetter[testingpb.
 type TestRunService struct {
 	*tracing.Entity
 
-	runs    *repository.ProtoRepository[testingpb.TestRunAlias, testingpb.TestRunColumnAlias, *testingpb.TestRunScanner, *testingpb.TestRun]
-	txMgr   pgtx.TxManager
-	events  eventing.Bus
-	catalog CatalogPort
-	engine  SystemEnginePort
-	builder DagBuilderPort
+	runs      *repository.ProtoRepository[testingpb.TestRunAlias, testingpb.TestRunColumnAlias, *testingpb.TestRunScanner, *testingpb.TestRun]
+	templates *repository.ProtoRepository[testingpb.TestRunTemplateAlias, testingpb.TestRunTemplateColumnAlias, *testingpb.TestRunTemplateScanner, *testingpb.TestRunTemplate]
+	txMgr     pgtx.TxManager
+	events    eventing.Bus
+	catalog   CatalogPort
+	engine    SystemEnginePort
+	builder   DagBuilderPort
 }
 
 // NewTestRunService constructs a TestRunService.
@@ -124,6 +126,10 @@ func NewTestRunService(
 		runs: repository.NewProtoRepository(
 			repository.NewScannerRepository(testingpb.TestRuns.Table, executor),
 			testingpb.TestRunConverter,
+		),
+		templates: repository.NewProtoRepository(
+			repository.NewScannerRepository(testingpb.TestRunTemplates.Table, executor),
+			testingpb.TestRunTemplateConverter,
 		),
 		txMgr:   txMgr,
 		events:  events,
@@ -265,4 +271,115 @@ func (s *TestRunService) LaunchTestRun(
 // CancelTestRun is not yet implemented (requires proto change for cancel_requested).
 func (s *TestRunService) CancelTestRun(_ context.Context, _ *testingpb.TestRunId) error {
 	return fmt.Errorf("CancelTestRun: not implemented (cancel pending proto change)")
+}
+
+// UpdateTestRun patches mutable Identity fields of a TestRun and bumps
+// updated_at.  Database and Workload are immutable after launch and are NOT
+// touched here.
+func (s *TestRunService) UpdateTestRun(
+	ctx context.Context,
+	tr *testingpb.TestRun,
+) (*testingpb.TestRun, error) {
+	return tracing.WithTraceRet(s.Tracer(), ctx, "UpdateTestRun",
+		func(ctx context.Context, _ trace.Span) (*testingpb.TestRun, error) {
+			return pgtx.WithSerializableRet(ctx, s.txMgr,
+				func(ctx context.Context) (*testingpb.TestRun, error) {
+					existing, err := s.GetTestRun(ctx, tr.GetId())
+					if err != nil {
+						return nil, err
+					}
+					if tr.GetIdentity() != nil {
+						existing.Identity = tr.GetIdentity()
+					}
+					existing.Timestamps.UpdatedAt = timestamppb.Now()
+					scanner := existing.IntoPlain()
+					if scanner.Label == nil {
+						scanner.Label = []string{}
+					}
+					if _, err := s.runs.Execute(ctx,
+						testingpb.TestRuns.Update().
+							Set(
+								scanner.GetSetter(testingpb.TestRunColumnName)(),
+								scanner.GetSetter(testingpb.TestRunColumnDescription)(),
+								scanner.GetSetter(testingpb.TestRunColumnLabel)(),
+								scanner.GetSetter(testingpb.TestRunColumnUpdatedAt)(),
+							).
+							Where(
+								testingpb.TestRuns.Id.Eq(existing.GetId().GetValue()),
+							),
+					); err != nil {
+						return nil, err
+					}
+					return existing, nil
+				})
+		})
+}
+
+// DeleteTestRun soft-deletes the TestRun by setting deleted_at = now().
+// Returns the pre-delete record.
+func (s *TestRunService) DeleteTestRun(
+	ctx context.Context,
+	id *testingpb.TestRunId,
+) (*testingpb.TestRun, error) {
+	existing, err := s.GetTestRun(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	n, err := s.runs.Execute(ctx,
+		testingpb.TestRuns.Update().
+			Set(testingpb.TestRuns.DeletedAt.Set(&now)).
+			Where(
+				testingpb.TestRuns.Id.Eq(id.GetValue()),
+				testingpb.TestRuns.DeletedAt.IsNull(),
+			),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if n == 0 {
+		return nil, domainerr.NotFound(domainerr.ResourceInfo("test_run", id.GetValue()))
+	}
+	return existing, nil
+}
+
+// InstantiateTestRun creates a new TestRun by copying Identity (name gets a
+// "-copy" suffix), Database, and Workload from the given template.
+func (s *TestRunService) InstantiateTestRun(
+	ctx context.Context,
+	tplID *testingpb.TestRunTemplateId,
+	callerID *iampb.UserId,
+) (*testingpb.TestRun, error) {
+	return tracing.WithTraceRet(s.Tracer(), ctx, "InstantiateTestRun",
+		func(ctx context.Context, _ trace.Span) (*testingpb.TestRun, error) {
+			tpl, err := s.templates.QueryRow(ctx,
+				testingpb.TestRunTemplates.Select(safeSelectCols...).Where(
+					testingpb.TestRunTemplates.Id.Eq(tplID.GetValue()),
+					testingpb.TestRunTemplates.DeletedAt.IsNull(),
+				),
+			)
+			if err != nil {
+				if errors.Is(err, pgx.ErrNoRows) {
+					return nil, domainerr.NotFound(domainerr.ResourceInfo("test_run_template", tplID.GetValue()))
+				}
+				return nil, err
+			}
+
+			identity := &commonpb.Identity{
+				Name:        tpl.GetIdentity().GetName() + "-copy",
+				Description: tpl.GetIdentity().Description,
+				Labels:      tpl.GetIdentity().GetLabels(),
+			}
+
+			newTR := &testingpb.TestRun{
+				Identity: identity,
+				Database: tpl.GetDatabase(),
+				Workload: tpl.GetWorkload(),
+				TemplateId: &testingpb.TestRunTemplateId{
+					Value: tplID.GetValue(),
+				},
+			}
+
+			return s.CreateTestRun(ctx, tpl.GetTenantId(), callerID, newTR)
+		})
 }
