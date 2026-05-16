@@ -225,4 +225,12 @@ release: build-all docker-build ## Build all artifacts for release
 server-run: ## Run the new server locally (requires CONFIG_PATH + JWT_SECRET)
 	go run ./cmd/stroppy-cloud server --config $${CONFIG_PATH:-./deployments/local/server/config.yaml}
 
+.PHONY: stroppy-bin-fetch
+stroppy-bin-fetch: ## Provide a real stroppy binary at /tmp/stroppy-test-binaries/stroppy-dev to exercise probe tests
+	@mkdir -p /tmp/stroppy-test-binaries
+	@if [ ! -x /tmp/stroppy-test-binaries/stroppy-dev ]; then \
+	  echo "Provide a real stroppy binary at /tmp/stroppy-test-binaries/stroppy-dev to exercise probe tests."; \
+	  echo "Skipping for now."; \
+	fi
+
 .DEFAULT_GOAL := help
