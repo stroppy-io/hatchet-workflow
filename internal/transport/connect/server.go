@@ -5,12 +5,16 @@ import (
 
 	"connectrpc.com/connect"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog/catalogconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam/iamconnect"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/stroppy/stroppyconnect"
 )
 
 // Deps aggregates Connect handler dependencies for mounting.
 type Deps struct {
-	IAMHandler *IAMHandler
+	IAMHandler     *IAMHandler
+	CatalogHandler *CatalogHandler
+	StroppyHandler *StroppyHandler
 
 	Interceptors connect.Option
 }
@@ -30,6 +34,26 @@ func Mount(d Deps) http.Handler {
 	// Tenant service
 	tenantPath, tenantHandler := iamconnect.NewTenantServiceHandler(d.IAMHandler, d.Interceptors)
 	mux.Handle(tenantPath, tenantHandler)
+
+	// DatabasePreset service
+	dbPresetPath, dbPresetHandler := catalogconnect.NewDatabasePresetServiceHandler(d.CatalogHandler, d.Interceptors)
+	mux.Handle(dbPresetPath, dbPresetHandler)
+
+	// WorkloadPreset service
+	wlPresetPath, wlPresetHandler := catalogconnect.NewWorkloadPresetServiceHandler(d.CatalogHandler, d.Interceptors)
+	mux.Handle(wlPresetPath, wlPresetHandler)
+
+	// Package service
+	pkgPath, pkgHandler := catalogconnect.NewPackageServiceHandler(d.CatalogHandler, d.Interceptors)
+	mux.Handle(pkgPath, pkgHandler)
+
+	// Settings service
+	settingsPath, settingsHandler := catalogconnect.NewSettingsServiceHandler(d.CatalogHandler, d.Interceptors)
+	mux.Handle(settingsPath, settingsHandler)
+
+	// Stroppy service
+	stroppyPath, stroppyHandler := stroppyconnect.NewStroppyServiceHandler(d.StroppyHandler, d.Interceptors)
+	mux.Handle(stroppyPath, stroppyHandler)
 
 	return mux
 }
@@ -51,6 +75,9 @@ func TenantBypass() map[string]bool {
 	out[iamconnect.UserServiceMeProcedure] = true
 	out[iamconnect.TenantServiceCreateTenantProcedure] = true
 	out[iamconnect.TenantServiceListMyTenantsProcedure] = true
+	// Stroppy version/commit listing is public catalog data — no tenant required.
+	out[stroppyconnect.StroppyServiceListStroppyVersionsProcedure] = true
+	out[stroppyconnect.StroppyServiceListStroppyCommitsProcedure] = true
 	return out
 }
 

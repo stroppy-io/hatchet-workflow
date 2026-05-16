@@ -103,6 +103,45 @@ func (s *Service) SetSetting(
 	)
 }
 
+// GetSettingByID retrieves a settings item by its primary key ID.
+// Returns domainerr.NotFound if no row matches.
+func (s *Service) GetSettingByID(ctx context.Context, id *catalogpb.SettingsItemId) (*catalogpb.SettingsItem, error) {
+	item, err := s.settingsRepo.QueryRow(ctx,
+		catalogpb.SettingsItems.SelectAll().Where(
+			catalogpb.SettingsItems.Id.Eq(id.GetValue()),
+		),
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domainerr.NotFound(domainerr.ResourceInfo("settings_item", id.GetValue()))
+		}
+		return nil, err
+	}
+	return item, nil
+}
+
+// SetSettingMany upserts multiple settings items in a single serializable transaction.
+// On partial failure the whole batch is rolled back.
+func (s *Service) SetSettingMany(ctx context.Context, tenantID *iampb.TenantId, items []*catalogpb.SettingsItem) ([]*catalogpb.SettingsItem, error) {
+	return tracing.WithTraceRet(s.Tracer(), ctx, "SetSettingMany",
+		func(ctx context.Context, _ trace.Span) ([]*catalogpb.SettingsItem, error) {
+			return pgtx.WithSerializableRet(ctx, s.txMgr,
+				func(ctx context.Context) ([]*catalogpb.SettingsItem, error) {
+					results := make([]*catalogpb.SettingsItem, 0, len(items))
+					for _, item := range items {
+						result, err := s.SetSetting(ctx, tenantID, item.GetPart(), item.GetKey(), item.GetValue())
+						if err != nil {
+							return nil, err
+						}
+						results = append(results, result)
+					}
+					return results, nil
+				},
+			)
+		},
+	)
+}
+
 // GetSetting retrieves a settings item by (tenant_id, part, key).
 // Returns domainerr.NotFound if no row matches.
 func (s *Service) GetSetting(

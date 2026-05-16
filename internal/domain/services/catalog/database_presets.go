@@ -98,3 +98,53 @@ func (s *Service) CloneDatabasePreset(ctx context.Context, id *catalogpb.Databas
 	}
 	return s.CreateDatabasePreset(ctx, original.GetTenantId(), callerID, cloned)
 }
+
+// UpdateDatabasePreset patches the mutable fields of an existing database preset.
+func (s *Service) UpdateDatabasePreset(ctx context.Context, preset *catalogpb.DatabasePreset) (*catalogpb.DatabasePreset, error) {
+	return tracing.WithTraceRet(s.Tracer(), ctx, "UpdateDatabasePreset",
+		func(ctx context.Context, _ trace.Span) (*catalogpb.DatabasePreset, error) {
+			return pgtx.WithSerializableRet(ctx, s.txMgr,
+				func(ctx context.Context) (*catalogpb.DatabasePreset, error) {
+					existing, err := s.GetDatabasePreset(ctx, preset.GetId())
+					if err != nil {
+						return nil, err
+					}
+					if preset.GetIdentity() != nil {
+						existing.Identity = preset.GetIdentity()
+					}
+					if preset.GetDatabase() != nil {
+						existing.Database = preset.GetDatabase()
+					}
+					existing.Timestamps.UpdatedAt = timestamppb.Now()
+					scanner := existing.IntoPlain()
+					if _, err := s.dbPresetRepo.Execute(ctx,
+						catalogpb.DatabasePresets.Update().
+							Set(
+								scanner.GetSetter(catalogpb.DatabasePresetColumnName)(),
+								scanner.GetSetter(catalogpb.DatabasePresetColumnDescription)(),
+								scanner.GetSetter(catalogpb.DatabasePresetColumnLabel)(),
+								scanner.GetSetter(catalogpb.DatabasePresetColumnDatabase)(),
+								scanner.GetSetter(catalogpb.DatabasePresetColumnUpdatedAt)(),
+							).
+							Where(
+								catalogpb.DatabasePresets.Id.Eq(existing.GetId().GetValue()),
+							),
+					); err != nil {
+						return nil, err
+					}
+					return existing, nil
+				})
+		})
+}
+
+// DeleteDatabasePresetAndReturn soft-deletes a database preset and returns the pre-delete record.
+func (s *Service) DeleteDatabasePresetAndReturn(ctx context.Context, id *catalogpb.DatabasePresetId) (*catalogpb.DatabasePreset, error) {
+	existing, err := s.GetDatabasePreset(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.DeleteDatabasePreset(ctx, id); err != nil {
+		return nil, err
+	}
+	return existing, nil
+}

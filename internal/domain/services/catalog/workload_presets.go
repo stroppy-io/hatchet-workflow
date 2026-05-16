@@ -98,3 +98,53 @@ func (s *Service) CloneWorkloadPreset(ctx context.Context, id *catalogpb.Workloa
 	}
 	return s.CreateWorkloadPreset(ctx, original.GetTenantId(), callerID, cloned)
 }
+
+// UpdateWorkloadPreset patches the mutable fields of an existing workload preset.
+func (s *Service) UpdateWorkloadPreset(ctx context.Context, preset *catalogpb.WorkloadPreset) (*catalogpb.WorkloadPreset, error) {
+	return tracing.WithTraceRet(s.Tracer(), ctx, "UpdateWorkloadPreset",
+		func(ctx context.Context, _ trace.Span) (*catalogpb.WorkloadPreset, error) {
+			return pgtx.WithSerializableRet(ctx, s.txMgr,
+				func(ctx context.Context) (*catalogpb.WorkloadPreset, error) {
+					existing, err := s.GetWorkloadPreset(ctx, preset.GetId())
+					if err != nil {
+						return nil, err
+					}
+					if preset.GetIdentity() != nil {
+						existing.Identity = preset.GetIdentity()
+					}
+					if preset.GetWorkload() != nil {
+						existing.Workload = preset.GetWorkload()
+					}
+					existing.Timestamps.UpdatedAt = timestamppb.Now()
+					scanner := existing.IntoPlain()
+					if _, err := s.workloadPresetRepo.Execute(ctx,
+						catalogpb.WorkloadPresets.Update().
+							Set(
+								scanner.GetSetter(catalogpb.WorkloadPresetColumnName)(),
+								scanner.GetSetter(catalogpb.WorkloadPresetColumnDescription)(),
+								scanner.GetSetter(catalogpb.WorkloadPresetColumnLabel)(),
+								scanner.GetSetter(catalogpb.WorkloadPresetColumnWorkload)(),
+								scanner.GetSetter(catalogpb.WorkloadPresetColumnUpdatedAt)(),
+							).
+							Where(
+								catalogpb.WorkloadPresets.Id.Eq(existing.GetId().GetValue()),
+							),
+					); err != nil {
+						return nil, err
+					}
+					return existing, nil
+				})
+		})
+}
+
+// DeleteWorkloadPresetAndReturn soft-deletes a workload preset and returns the pre-delete record.
+func (s *Service) DeleteWorkloadPresetAndReturn(ctx context.Context, id *catalogpb.WorkloadPresetId) (*catalogpb.WorkloadPreset, error) {
+	existing, err := s.GetWorkloadPreset(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.DeleteWorkloadPreset(ctx, id); err != nil {
+		return nil, err
+	}
+	return existing, nil
+}

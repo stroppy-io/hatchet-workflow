@@ -150,6 +150,64 @@ func (s *Service) DeletePackage(ctx context.Context, id *catalogpb.PackageId) er
 	return nil
 }
 
+// UpdatePackage patches the mutable fields of an existing package.
+func (s *Service) UpdatePackage(ctx context.Context, pkg *catalogpb.Package) (*catalogpb.Package, error) {
+	return tracing.WithTraceRet(s.Tracer(), ctx, "UpdatePackage",
+		func(ctx context.Context, _ trace.Span) (*catalogpb.Package, error) {
+			return pgtx.WithSerializableRet(ctx, s.txMgr,
+				func(ctx context.Context) (*catalogpb.Package, error) {
+					existing, err := s.GetPackage(ctx, pkg.GetId())
+					if err != nil {
+						return nil, err
+					}
+					if pkg.GetIdentity() != nil {
+						existing.Identity = pkg.GetIdentity()
+					}
+					if pkg.GetDbKind() != catalogpb.Database_DATABASE_KIND_UNSPECIFIED {
+						existing.DbKind = pkg.GetDbKind()
+					}
+					if pkg.GetDbVersion() != "" {
+						existing.DbVersion = pkg.GetDbVersion()
+					}
+					if pkg.GetSource() != nil {
+						existing.Source = pkg.GetSource()
+					}
+					existing.Timestamps.UpdatedAt = timestamppb.Now()
+					scanner := existing.IntoPlain()
+					if _, err := s.packageRepo.Execute(ctx,
+						catalogpb.Packages.Update().
+							Set(
+								scanner.GetSetter(catalogpb.PackageColumnName)(),
+								scanner.GetSetter(catalogpb.PackageColumnDescription)(),
+								scanner.GetSetter(catalogpb.PackageColumnLabel)(),
+								scanner.GetSetter(catalogpb.PackageColumnDbKind)(),
+								scanner.GetSetter(catalogpb.PackageColumnDbVersion)(),
+								scanner.GetSetter(catalogpb.PackageColumnSource)(),
+								scanner.GetSetter(catalogpb.PackageColumnUpdatedAt)(),
+							).
+							Where(
+								catalogpb.Packages.Id.Eq(existing.GetId().GetValue()),
+							),
+					); err != nil {
+						return nil, err
+					}
+					return existing, nil
+				})
+		})
+}
+
+// DeletePackageAndReturn soft-deletes a package and returns the pre-delete record.
+func (s *Service) DeletePackageAndReturn(ctx context.Context, id *catalogpb.PackageId) (*catalogpb.Package, error) {
+	existing, err := s.GetPackage(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.DeletePackage(ctx, id); err != nil {
+		return nil, err
+	}
+	return existing, nil
+}
+
 // ClonePackage creates a copy of an existing package under the same tenant.
 func (s *Service) ClonePackage(ctx context.Context, id *catalogpb.PackageId, callerID *iampb.UserId) (*catalogpb.Package, error) {
 	original, err := s.GetPackage(ctx, id)
