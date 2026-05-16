@@ -165,6 +165,11 @@
     "@babel/helper-string-parser" "^7.27.1"
     "@babel/helper-validator-identifier" "^7.28.5"
 
+"@bufbuild/protobuf@^2.12.0":
+  version "2.12.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-2.12.0.tgz#53225636a8fcebb2bd94998ad9d42f99f96add4d"
+  integrity sha512-B/XlCaFIP8LOwzo+bz5uFzATYokcwCKQcghqnlfwSmM5eX/qTkvDBnDPs+gXtX/RyjxJ4DRikECcPJbyALA8FA==
+
 "@codemirror/autocomplete@^6.0.0":
   version "6.20.1"
   resolved "https://registry.yarnpkg.com/@codemirror/autocomplete/-/autocomplete-6.20.1.tgz#4cfbc8b2e1e25f890ec34a081037e58b4e44143e"
@@ -262,6 +267,16 @@
     crelt "^1.0.6"
     style-mod "^4.1.0"
     w3c-keyname "^2.2.4"
+
+"@connectrpc/connect-web@^2.1.1":
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@connectrpc/connect-web/-/connect-web-2.1.1.tgz#155eb30cd8cfc91142870277ab300d313f9d8dcf"
+  integrity sha512-J8317Q2MaFRCT1jzVR1o06bZhDIBmU0UAzWx6xOIXzOq8+k71/+k7MUF7AwcBUX+34WIvbm5syRgC5HXQA8fOg==
+
+"@connectrpc/connect@^2.1.1":
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@connectrpc/connect/-/connect-2.1.1.tgz#a9623190d218890bec2d68e56037cb124a33e857"
+  integrity sha512-JzhkaTvM73m2K1URT6tv53k2RwngSmCXLZJgK580qNQOXRzZRR/BCMfZw3h+90JpnG6XksP5bYT+cz0rpUzUWQ==
 
 "@emnapi/core@^1.8.1":
   version "1.10.0"
