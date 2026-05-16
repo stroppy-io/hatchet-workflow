@@ -2,6 +2,7 @@ package pgcontainer
 
 import (
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -29,6 +30,8 @@ func (anypbCodec) PlanEncode(_ *pgtype.Map, _ uint32, format int16, value any) p
 	switch value.(type) {
 	case *anypb.Any:
 		return encodePlanAnyPb{}
+	case map[string]string:
+		return encodePlanJSONStringMap{}
 	}
 	return nil
 }
@@ -40,6 +43,8 @@ func (anypbCodec) PlanScan(_ *pgtype.Map, _ uint32, format int16, target any) pg
 	switch target.(type) {
 	case **anypb.Any:
 		return scanPlanAnyPb{}
+	case *map[string]string:
+		return scanPlanJSONStringMap{}
 	}
 	return nil
 }
@@ -100,5 +105,45 @@ func (scanPlanAnyPb) Scan(src []byte, dst any) error {
 		return nil
 	}
 	*target = &a
+	return nil
+}
+
+// ── map[string]string JSON codec ─────────────────────────────────────────────
+
+type encodePlanJSONStringMap struct{}
+
+func (encodePlanJSONStringMap) Encode(value any, buf []byte) ([]byte, error) {
+	m, ok := value.(map[string]string)
+	if !ok {
+		return nil, fmt.Errorf("anypbCodec: expected map[string]string, got %T", value)
+	}
+	if m == nil {
+		return append(buf, '{', '}'), nil
+	}
+	data, err := json.Marshal(m)
+	if err != nil {
+		return nil, fmt.Errorf("anypbCodec: marshal map: %w", err)
+	}
+	return append(buf, data...), nil
+}
+
+type scanPlanJSONStringMap struct{}
+
+func (scanPlanJSONStringMap) Scan(src []byte, dst any) error {
+	target, ok := dst.(*map[string]string)
+	if !ok {
+		return fmt.Errorf("anypbCodec: expected *map[string]string, got %T", dst)
+	}
+	if src == nil || len(src) == 0 {
+		*target = map[string]string{}
+		return nil
+	}
+	var m map[string]string
+	if err := json.Unmarshal(src, &m); err != nil {
+		// Not valid JSON — treat as empty map.
+		*target = map[string]string{}
+		return nil
+	}
+	*target = m
 	return nil
 }
