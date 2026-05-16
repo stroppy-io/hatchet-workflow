@@ -79,6 +79,7 @@ CREATE TABLE "public"."users" (
   "deleted_at" timestamptz,
   "email" text NOT NULL,
   "nickname" text NOT NULL,
+  "platform_role" text NOT NULL DEFAULT 'PLATFORM_ROLE_NONE'::text,
   "password_hash" text NOT NULL,
   PRIMARY KEY ("id")
 );
@@ -101,6 +102,7 @@ CREATE TABLE "public"."dag_runs" (
   "attempt" int4 NOT NULL,
   "previous_attempt_id" text,
   "error" text NOT NULL,
+  "cancel_requested" bool NOT NULL DEFAULT false,
   "metadata" json NOT NULL DEFAULT '{}'::jsonb,
   PRIMARY KEY ("id"),
   FOREIGN KEY ("dag_id") REFERENCES "public"."dags" ("id") ON UPDATE NO ACTION ON DELETE RESTRICT,
@@ -143,6 +145,21 @@ CREATE UNIQUE INDEX "agents_machine_uniq" ON "public"."agents" USING btree ("ten
 CREATE INDEX "agents_status_idx" ON "public"."agents" USING btree ("status");
 -- create index agents_tenant_idx
 CREATE INDEX "agents_tenant_idx" ON "public"."agents" USING btree ("tenant_id");
+-- create table quota_counters
+CREATE TABLE "public"."quota_counters" (
+  "id" text NOT NULL,
+  "tenant_id" text NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "updated_at" timestamptz NOT NULL DEFAULT now(),
+  "deleted_at" timestamptz,
+  "resource_id" text NOT NULL,
+  "limit_value" int8 NOT NULL,
+  "used" int8 NOT NULL,
+  PRIMARY KEY ("id"),
+  FOREIGN KEY ("tenant_id") REFERENCES "public"."tenants" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
+);
+-- create index quota_counters_tenant_resource_uniq
+CREATE UNIQUE INDEX "quota_counters_tenant_resource_uniq" ON "public"."quota_counters" USING btree ("tenant_id", "resource_id");
 -- create table settings_items
 CREATE TABLE "public"."settings_items" (
   "id" text NOT NULL,
@@ -373,6 +390,28 @@ CREATE UNIQUE INDEX "node_runs_dag_run_node_uniq" ON "public"."node_runs" USING 
 CREATE INDEX "node_runs_dag_run_status_idx" ON "public"."node_runs" USING btree ("dag_run_id", "status");
 -- create index node_runs_status_idx
 CREATE INDEX "node_runs_status_idx" ON "public"."node_runs" USING btree ("status");
+-- create table agent_commands
+CREATE TABLE "public"."agent_commands" (
+  "id" text NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "updated_at" timestamptz NOT NULL DEFAULT now(),
+  "deleted_at" timestamptz,
+  "agent_id" text NOT NULL,
+  "node_run_id" text NOT NULL,
+  "command_payload" bytea NOT NULL,
+  "state" text NOT NULL,
+  "attempt" int4 NOT NULL,
+  "issued_at" timestamptz,
+  "delivered_at" timestamptz,
+  "reported_at" timestamptz,
+  "result_payload" bytea NOT NULL,
+  PRIMARY KEY ("id"),
+  FOREIGN KEY ("agent_id") REFERENCES "public"."agents" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
+);
+-- create index agent_commands_agent_state_idx
+CREATE INDEX "agent_commands_agent_state_idx" ON "public"."agent_commands" USING btree ("agent_id", "state");
+-- create index agent_commands_node_run_idx
+CREATE INDEX "agent_commands_node_run_idx" ON "public"."agent_commands" USING btree ("node_run_id");
 -- create table test_suite_runs
 CREATE TABLE "public"."test_suite_runs" (
   "id" text NOT NULL,
@@ -393,6 +432,28 @@ CREATE TABLE "public"."test_suite_runs" (
 CREATE INDEX "test_suite_runs_suite_idx" ON "public"."test_suite_runs" USING btree ("suite_id");
 -- create index test_suite_runs_tenant_idx
 CREATE INDEX "test_suite_runs_tenant_idx" ON "public"."test_suite_runs" USING btree ("tenant_id");
+-- create table webhook_deliveries
+CREATE TABLE "public"."webhook_deliveries" (
+  "id" text NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "updated_at" timestamptz NOT NULL DEFAULT now(),
+  "deleted_at" timestamptz,
+  "webhook_id" text NOT NULL,
+  "event" text NOT NULL,
+  "payload" bytea NOT NULL,
+  "state" text NOT NULL,
+  "attempts" int4 NOT NULL,
+  "next_attempt_at" timestamptz,
+  "delivered_at" timestamptz,
+  "last_error" text NOT NULL,
+  "last_status_code" int4,
+  PRIMARY KEY ("id"),
+  FOREIGN KEY ("webhook_id") REFERENCES "public"."webhooks" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
+);
+-- create index webhook_deliveries_drain_idx
+CREATE INDEX "webhook_deliveries_drain_idx" ON "public"."webhook_deliveries" USING btree ("state", "next_attempt_at");
+-- create index webhook_deliveries_webhook_idx
+CREATE INDEX "webhook_deliveries_webhook_idx" ON "public"."webhook_deliveries" USING btree ("webhook_id");
 -- create table test_run_templates
 CREATE TABLE "public"."test_run_templates" (
   "id" text NOT NULL,

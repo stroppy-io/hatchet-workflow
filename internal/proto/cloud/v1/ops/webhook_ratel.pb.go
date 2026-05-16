@@ -327,12 +327,249 @@ var WebhookConverter = repository.Converter[*WebhookScanner, *Webhook]{
 	ToProto:   (*WebhookScanner).IntoPb,
 }
 
+// WebhookDeliveryAlias is the table alias type for the webhook_deliveries table
+type WebhookDeliveryAlias string
+
+func (a WebhookDeliveryAlias) String() string { return string(a) }
+
+const WebhookDeliveryAliasName WebhookDeliveryAlias = "webhook_deliveries"
+
+// WebhookDeliveryColumnAlias represents column names for the webhook_deliveries table
+type WebhookDeliveryColumnAlias string
+
+func (c WebhookDeliveryColumnAlias) String() string { return string(c) }
+
+const (
+	WebhookDeliveryColumnId             WebhookDeliveryColumnAlias = "id"
+	WebhookDeliveryColumnCreatedAt      WebhookDeliveryColumnAlias = "created_at"
+	WebhookDeliveryColumnUpdatedAt      WebhookDeliveryColumnAlias = "updated_at"
+	WebhookDeliveryColumnDeletedAt      WebhookDeliveryColumnAlias = "deleted_at"
+	WebhookDeliveryColumnWebhookId      WebhookDeliveryColumnAlias = "webhook_id"
+	WebhookDeliveryColumnEvent          WebhookDeliveryColumnAlias = "event"
+	WebhookDeliveryColumnPayload        WebhookDeliveryColumnAlias = "payload"
+	WebhookDeliveryColumnState          WebhookDeliveryColumnAlias = "state"
+	WebhookDeliveryColumnAttempts       WebhookDeliveryColumnAlias = "attempts"
+	WebhookDeliveryColumnNextAttemptAt  WebhookDeliveryColumnAlias = "next_attempt_at"
+	WebhookDeliveryColumnDeliveredAt    WebhookDeliveryColumnAlias = "delivered_at"
+	WebhookDeliveryColumnLastError      WebhookDeliveryColumnAlias = "last_error"
+	WebhookDeliveryColumnLastStatusCode WebhookDeliveryColumnAlias = "last_status_code"
+)
+
+func (s *WebhookDeliveryScanner) GetTarget(col string) func() any {
+	switch WebhookDeliveryColumnAlias(col) {
+	case WebhookDeliveryColumnId:
+		return func() any { return &s.Id }
+	case WebhookDeliveryColumnCreatedAt:
+		return func() any { return &s.CreatedAt }
+	case WebhookDeliveryColumnUpdatedAt:
+		return func() any { return &s.UpdatedAt }
+	case WebhookDeliveryColumnDeletedAt:
+		return func() any { return &s.DeletedAt }
+	case WebhookDeliveryColumnWebhookId:
+		return func() any { return &s.WebhookId }
+	case WebhookDeliveryColumnEvent:
+		return func() any { return &s.Event }
+	case WebhookDeliveryColumnPayload:
+		return func() any { return &s.Payload }
+	case WebhookDeliveryColumnState:
+		return func() any { return &s.State }
+	case WebhookDeliveryColumnAttempts:
+		return func() any { return &s.Attempts }
+	case WebhookDeliveryColumnNextAttemptAt:
+		return func() any { return &s.NextAttemptAt }
+	case WebhookDeliveryColumnDeliveredAt:
+		return func() any { return &s.DeliveredAt }
+	case WebhookDeliveryColumnLastError:
+		return func() any { return &s.LastError }
+	case WebhookDeliveryColumnLastStatusCode:
+		return func() any { return &s.LastStatusCode }
+	default:
+		panic("unknown field: " + col)
+	}
+}
+
+func (s *WebhookDeliveryScanner) GetSetter(f WebhookDeliveryColumnAlias) func() set.ValueSetter[WebhookDeliveryColumnAlias] {
+	switch f {
+	case WebhookDeliveryColumnId:
+		return func() set.ValueSetter[WebhookDeliveryColumnAlias] { return set.NewSetter(f, &s.Id) }
+	case WebhookDeliveryColumnCreatedAt:
+		return func() set.ValueSetter[WebhookDeliveryColumnAlias] { return set.NewSetter(f, &s.CreatedAt) }
+	case WebhookDeliveryColumnUpdatedAt:
+		return func() set.ValueSetter[WebhookDeliveryColumnAlias] { return set.NewSetter(f, &s.UpdatedAt) }
+	case WebhookDeliveryColumnDeletedAt:
+		return func() set.ValueSetter[WebhookDeliveryColumnAlias] { return set.NewSetter(f, &s.DeletedAt) }
+	case WebhookDeliveryColumnWebhookId:
+		return func() set.ValueSetter[WebhookDeliveryColumnAlias] { return set.NewSetter(f, &s.WebhookId) }
+	case WebhookDeliveryColumnEvent:
+		return func() set.ValueSetter[WebhookDeliveryColumnAlias] { return set.NewSetter(f, &s.Event) }
+	case WebhookDeliveryColumnPayload:
+		return func() set.ValueSetter[WebhookDeliveryColumnAlias] { return set.NewSetter(f, &s.Payload) }
+	case WebhookDeliveryColumnState:
+		return func() set.ValueSetter[WebhookDeliveryColumnAlias] { return set.NewSetter(f, &s.State) }
+	case WebhookDeliveryColumnAttempts:
+		return func() set.ValueSetter[WebhookDeliveryColumnAlias] { return set.NewSetter(f, &s.Attempts) }
+	case WebhookDeliveryColumnNextAttemptAt:
+		return func() set.ValueSetter[WebhookDeliveryColumnAlias] { return set.NewSetter(f, &s.NextAttemptAt) }
+	case WebhookDeliveryColumnDeliveredAt:
+		return func() set.ValueSetter[WebhookDeliveryColumnAlias] { return set.NewSetter(f, &s.DeliveredAt) }
+	case WebhookDeliveryColumnLastError:
+		return func() set.ValueSetter[WebhookDeliveryColumnAlias] { return set.NewSetter(f, &s.LastError) }
+	case WebhookDeliveryColumnLastStatusCode:
+		return func() set.ValueSetter[WebhookDeliveryColumnAlias] { return set.NewSetter(f, &s.LastStatusCode) }
+	default:
+		panic("unknown field: " + string(f))
+	}
+}
+
+func (s *WebhookDeliveryScanner) GetValue(f WebhookDeliveryColumnAlias) func() any {
+	switch f {
+	case WebhookDeliveryColumnId:
+		return func() any { return s.Id }
+	case WebhookDeliveryColumnCreatedAt:
+		return func() any { return s.CreatedAt }
+	case WebhookDeliveryColumnUpdatedAt:
+		return func() any { return s.UpdatedAt }
+	case WebhookDeliveryColumnDeletedAt:
+		return func() any { return s.DeletedAt }
+	case WebhookDeliveryColumnWebhookId:
+		return func() any { return s.WebhookId }
+	case WebhookDeliveryColumnEvent:
+		return func() any { return s.Event }
+	case WebhookDeliveryColumnPayload:
+		return func() any { return s.Payload }
+	case WebhookDeliveryColumnState:
+		return func() any { return s.State }
+	case WebhookDeliveryColumnAttempts:
+		return func() any { return s.Attempts }
+	case WebhookDeliveryColumnNextAttemptAt:
+		return func() any { return s.NextAttemptAt }
+	case WebhookDeliveryColumnDeliveredAt:
+		return func() any { return s.DeliveredAt }
+	case WebhookDeliveryColumnLastError:
+		return func() any { return s.LastError }
+	case WebhookDeliveryColumnLastStatusCode:
+		return func() any { return s.LastStatusCode }
+	default:
+		panic("unknown field: " + string(f))
+	}
+}
+
+func (s *WebhookDeliveryScanner) AllSetters() []set.ValueSetter[WebhookDeliveryColumnAlias] {
+	return []set.ValueSetter[WebhookDeliveryColumnAlias]{
+		set.NewSetter[WebhookDeliveryColumnAlias](WebhookDeliveryColumnId, s.Id),
+		set.NewSetter[WebhookDeliveryColumnAlias](WebhookDeliveryColumnCreatedAt, s.CreatedAt),
+		set.NewSetter[WebhookDeliveryColumnAlias](WebhookDeliveryColumnUpdatedAt, s.UpdatedAt),
+		set.NewSetter[WebhookDeliveryColumnAlias](WebhookDeliveryColumnDeletedAt, s.DeletedAt),
+		set.NewSetter[WebhookDeliveryColumnAlias](WebhookDeliveryColumnWebhookId, s.WebhookId),
+		set.NewSetter[WebhookDeliveryColumnAlias](WebhookDeliveryColumnEvent, s.Event),
+		set.NewSetter[WebhookDeliveryColumnAlias](WebhookDeliveryColumnPayload, s.Payload),
+		set.NewSetter[WebhookDeliveryColumnAlias](WebhookDeliveryColumnState, s.State),
+		set.NewSetter[WebhookDeliveryColumnAlias](WebhookDeliveryColumnAttempts, s.Attempts),
+		set.NewSetter[WebhookDeliveryColumnAlias](WebhookDeliveryColumnNextAttemptAt, s.NextAttemptAt),
+		set.NewSetter[WebhookDeliveryColumnAlias](WebhookDeliveryColumnDeliveredAt, s.DeliveredAt),
+		set.NewSetter[WebhookDeliveryColumnAlias](WebhookDeliveryColumnLastError, s.LastError),
+		set.NewSetter[WebhookDeliveryColumnAlias](WebhookDeliveryColumnLastStatusCode, s.LastStatusCode),
+	}
+}
+
+// Relations returns the relation loaders for the webhook_deliveries table
+func (s *WebhookDeliveryScanner) Relations() []exec.RelationLoader[*WebhookDeliveryScanner] {
+	return nil
+}
+
+// WebhookDeliverysTable represents the webhook_deliveries table with its columns
+type WebhookDeliverysTable struct {
+	*schema.Table[WebhookDeliveryAlias, WebhookDeliveryColumnAlias, *WebhookDeliveryScanner]
+	Id             schema.TextColumnI[WebhookDeliveryColumnAlias]
+	CreatedAt      schema.TimestamptzColumnI[WebhookDeliveryColumnAlias]
+	UpdatedAt      schema.TimestamptzColumnI[WebhookDeliveryColumnAlias]
+	DeletedAt      schema.NullTimestamptzColumnI[WebhookDeliveryColumnAlias]
+	WebhookId      schema.TextColumnI[WebhookDeliveryColumnAlias]
+	Event          schema.TextColumnI[WebhookDeliveryColumnAlias]
+	Payload        schema.ByteaColumnI[WebhookDeliveryColumnAlias]
+	State          schema.TextColumnI[WebhookDeliveryColumnAlias]
+	Attempts       schema.IntegerColumnI[WebhookDeliveryColumnAlias]
+	NextAttemptAt  schema.NullTimestamptzColumnI[WebhookDeliveryColumnAlias]
+	DeliveredAt    schema.NullTimestamptzColumnI[WebhookDeliveryColumnAlias]
+	LastError      schema.TextColumnI[WebhookDeliveryColumnAlias]
+	LastStatusCode schema.NullIntegerColumnI[WebhookDeliveryColumnAlias]
+}
+
+// WebhookDeliverys is the global webhook_deliveries table instance
+var WebhookDeliverys = func() WebhookDeliverysTable {
+	idCol := schema.TextColumn(WebhookDeliveryColumnId, ddl.WithPrimaryKey[WebhookDeliveryColumnAlias]())
+	createdAtCol := schema.TimestamptzColumn(WebhookDeliveryColumnCreatedAt, ddl.WithDefault[WebhookDeliveryColumnAlias]("now()"), ddl.WithNotNull[WebhookDeliveryColumnAlias]())
+	updatedAtCol := schema.TimestamptzColumn(WebhookDeliveryColumnUpdatedAt, ddl.WithDefault[WebhookDeliveryColumnAlias]("now()"), ddl.WithNotNull[WebhookDeliveryColumnAlias]())
+	deletedAtCol := schema.NullTimestamptzColumn(WebhookDeliveryColumnDeletedAt, ddl.WithDefault[WebhookDeliveryColumnAlias]("null"))
+	webhookIdCol := schema.TextColumn(WebhookDeliveryColumnWebhookId, ddl.WithReferences[WebhookDeliveryColumnAlias]("webhooks", "id"), ddl.WithOnDelete[WebhookDeliveryColumnAlias]("CASCADE"), ddl.WithNotNull[WebhookDeliveryColumnAlias]())
+	eventCol := schema.TextColumn(WebhookDeliveryColumnEvent, ddl.WithNotNull[WebhookDeliveryColumnAlias]())
+	payloadCol := schema.ByteaColumn(WebhookDeliveryColumnPayload, ddl.WithNotNull[WebhookDeliveryColumnAlias]())
+	stateCol := schema.TextColumn(WebhookDeliveryColumnState, ddl.WithNotNull[WebhookDeliveryColumnAlias]())
+	attemptsCol := schema.IntegerColumn(WebhookDeliveryColumnAttempts, ddl.WithNotNull[WebhookDeliveryColumnAlias]())
+	nextAttemptAtCol := schema.NullTimestamptzColumn(WebhookDeliveryColumnNextAttemptAt)
+	deliveredAtCol := schema.NullTimestamptzColumn(WebhookDeliveryColumnDeliveredAt)
+	lastErrorCol := schema.TextColumn(WebhookDeliveryColumnLastError, ddl.WithNotNull[WebhookDeliveryColumnAlias]())
+	lastStatusCodeCol := schema.NullIntegerColumn(WebhookDeliveryColumnLastStatusCode)
+
+	idx0 := ddl.NewIndex[WebhookDeliveryAlias, WebhookDeliveryColumnAlias]("webhook_deliveries_drain_idx", WebhookDeliveryAliasName).OnColumns(WebhookDeliveryColumnState, WebhookDeliveryColumnNextAttemptAt)
+	idx1 := ddl.NewIndex[WebhookDeliveryAlias, WebhookDeliveryColumnAlias]("webhook_deliveries_webhook_idx", WebhookDeliveryAliasName).OnColumns(WebhookDeliveryColumnWebhookId)
+
+	return WebhookDeliverysTable{
+		Table: schema.NewTable[WebhookDeliveryAlias, WebhookDeliveryColumnAlias, *WebhookDeliveryScanner](
+			WebhookDeliveryAliasName,
+			func() *WebhookDeliveryScanner { return &WebhookDeliveryScanner{} },
+			[]*ddl.ColumnDDL[WebhookDeliveryColumnAlias]{
+				idCol.DDL(),
+				createdAtCol.DDL(),
+				updatedAtCol.DDL(),
+				deletedAtCol.DDL(),
+				webhookIdCol.DDL(),
+				eventCol.DDL(),
+				payloadCol.DDL(),
+				stateCol.DDL(),
+				attemptsCol.DDL(),
+				nextAttemptAtCol.DDL(),
+				deliveredAtCol.DDL(),
+				lastErrorCol.DDL(),
+				lastStatusCodeCol.DDL(),
+			},
+			ddl.WithIndexes[WebhookDeliveryAlias, WebhookDeliveryColumnAlias](
+				idx0,
+				idx1,
+			),
+		),
+		Id:             idCol,
+		CreatedAt:      createdAtCol,
+		UpdatedAt:      updatedAtCol,
+		DeletedAt:      deletedAtCol,
+		WebhookId:      webhookIdCol,
+		Event:          eventCol,
+		Payload:        payloadCol,
+		State:          stateCol,
+		Attempts:       attemptsCol,
+		NextAttemptAt:  nextAttemptAtCol,
+		DeliveredAt:    deliveredAtCol,
+		LastError:      lastErrorCol,
+		LastStatusCode: lastStatusCodeCol,
+	}
+}()
+
+// WebhookDeliverysRef is a reference to the webhook_deliveries table for relations
+var WebhookDeliverysRef schema.RelationTableAlias[WebhookDeliveryAlias] = WebhookDeliverys.Table
+
+// WebhookDeliveryConverter provides conversion between WebhookDelivery and WebhookDeliveryScanner
+var WebhookDeliveryConverter = repository.Converter[*WebhookDeliveryScanner, *WebhookDelivery]{
+	ToScanner: (*WebhookDelivery).IntoPlain,
+	ToProto:   (*WebhookDeliveryScanner).IntoPb,
+}
+
 // ============================================================================
 // Constraint Names
 // ============================================================================
 
 const (
-	WebhookConstraintPkey = "webhooks_pkey"
+	WebhookConstraintPkey         = "webhooks_pkey"
+	WebhookDeliveryConstraintPkey = "webhook_deliveries_pkey"
 )
 
 // ============================================================================
@@ -340,7 +577,8 @@ const (
 // ============================================================================
 
 var (
-	ErrWebhookPrimaryKey = errors.New("primary key constraint violated: webhooks_pkey")
+	ErrWebhookPrimaryKey         = errors.New("primary key constraint violated: webhooks_pkey")
+	ErrWebhookDeliveryPrimaryKey = errors.New("primary key constraint violated: webhook_deliveries_pkey")
 )
 
 // ============================================================================
@@ -350,4 +588,9 @@ var (
 // IsWebhookPrimaryKeyError checks if the error is a primary_key constraint violation on webhooks
 func IsWebhookPrimaryKeyError(err error) bool {
 	return sqlerr.IsConstraintNamed(err, WebhookConstraintPkey)
+}
+
+// IsWebhookDeliveryPrimaryKeyError checks if the error is a primary_key constraint violation on webhook_deliveries
+func IsWebhookDeliveryPrimaryKeyError(err error) bool {
+	return sqlerr.IsConstraintNamed(err, WebhookDeliveryConstraintPkey)
 }

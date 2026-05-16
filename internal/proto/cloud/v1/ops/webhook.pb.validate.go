@@ -604,6 +604,445 @@ var _Webhook_Events_NotInLookup = map[WebhookEvent]struct{}{
 	0: {},
 }
 
+// Validate checks the field values on WebhookDeliveryId with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *WebhookDeliveryId) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on WebhookDeliveryId with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// WebhookDeliveryIdMultiError, or nil if none found.
+func (m *WebhookDeliveryId) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *WebhookDeliveryId) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetValue()) != 26 {
+		err := WebhookDeliveryIdValidationError{
+			field:  "Value",
+			reason: "value length must be 26 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+
+	}
+
+	if len(errors) > 0 {
+		return WebhookDeliveryIdMultiError(errors)
+	}
+
+	return nil
+}
+
+// WebhookDeliveryIdMultiError is an error wrapping multiple validation errors
+// returned by WebhookDeliveryId.ValidateAll() if the designated constraints
+// aren't met.
+type WebhookDeliveryIdMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m WebhookDeliveryIdMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m WebhookDeliveryIdMultiError) AllErrors() []error { return m }
+
+// WebhookDeliveryIdValidationError is the validation error returned by
+// WebhookDeliveryId.Validate if the designated constraints aren't met.
+type WebhookDeliveryIdValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e WebhookDeliveryIdValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e WebhookDeliveryIdValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e WebhookDeliveryIdValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e WebhookDeliveryIdValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e WebhookDeliveryIdValidationError) ErrorName() string {
+	return "WebhookDeliveryIdValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e WebhookDeliveryIdValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sWebhookDeliveryId.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = WebhookDeliveryIdValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = WebhookDeliveryIdValidationError{}
+
+// Validate checks the field values on WebhookDelivery with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *WebhookDelivery) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on WebhookDelivery with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// WebhookDeliveryMultiError, or nil if none found.
+func (m *WebhookDelivery) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *WebhookDelivery) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetId() == nil {
+		err := WebhookDeliveryValidationError{
+			field:  "Id",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, WebhookDeliveryValidationError{
+					field:  "Id",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, WebhookDeliveryValidationError{
+					field:  "Id",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return WebhookDeliveryValidationError{
+				field:  "Id",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTimestamps()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, WebhookDeliveryValidationError{
+					field:  "Timestamps",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, WebhookDeliveryValidationError{
+					field:  "Timestamps",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTimestamps()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return WebhookDeliveryValidationError{
+				field:  "Timestamps",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetWebhookId() == nil {
+		err := WebhookDeliveryValidationError{
+			field:  "WebhookId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetWebhookId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, WebhookDeliveryValidationError{
+					field:  "WebhookId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, WebhookDeliveryValidationError{
+					field:  "WebhookId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWebhookId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return WebhookDeliveryValidationError{
+				field:  "WebhookId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if _, ok := WebhookEvent_name[int32(m.GetEvent())]; !ok {
+		err := WebhookDeliveryValidationError{
+			field:  "Event",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetPayload()) > 1048576 {
+		err := WebhookDeliveryValidationError{
+			field:  "Payload",
+			reason: "value length must be at most 1048576 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := WebhookDeliveryState_name[int32(m.GetState())]; !ok {
+		err := WebhookDeliveryValidationError{
+			field:  "State",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Attempts
+
+	if utf8.RuneCountInString(m.GetLastError()) > 4096 {
+		err := WebhookDeliveryValidationError{
+			field:  "LastError",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.NextAttemptAt != nil {
+
+		if all {
+			switch v := interface{}(m.GetNextAttemptAt()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, WebhookDeliveryValidationError{
+						field:  "NextAttemptAt",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, WebhookDeliveryValidationError{
+						field:  "NextAttemptAt",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetNextAttemptAt()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return WebhookDeliveryValidationError{
+					field:  "NextAttemptAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if m.DeliveredAt != nil {
+
+		if all {
+			switch v := interface{}(m.GetDeliveredAt()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, WebhookDeliveryValidationError{
+						field:  "DeliveredAt",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, WebhookDeliveryValidationError{
+						field:  "DeliveredAt",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetDeliveredAt()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return WebhookDeliveryValidationError{
+					field:  "DeliveredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if m.LastStatusCode != nil {
+		// no validation rules for LastStatusCode
+	}
+
+	if len(errors) > 0 {
+		return WebhookDeliveryMultiError(errors)
+	}
+
+	return nil
+}
+
+// WebhookDeliveryMultiError is an error wrapping multiple validation errors
+// returned by WebhookDelivery.ValidateAll() if the designated constraints
+// aren't met.
+type WebhookDeliveryMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m WebhookDeliveryMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m WebhookDeliveryMultiError) AllErrors() []error { return m }
+
+// WebhookDeliveryValidationError is the validation error returned by
+// WebhookDelivery.Validate if the designated constraints aren't met.
+type WebhookDeliveryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e WebhookDeliveryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e WebhookDeliveryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e WebhookDeliveryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e WebhookDeliveryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e WebhookDeliveryValidationError) ErrorName() string { return "WebhookDeliveryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e WebhookDeliveryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sWebhookDelivery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = WebhookDeliveryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = WebhookDeliveryValidationError{}
+
 // Validate checks the field values on CreateWebhookRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -1323,3 +1762,139 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = Webhook_ListValidationError{}
+
+// Validate checks the field values on WebhookDelivery_List with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *WebhookDelivery_List) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on WebhookDelivery_List with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// WebhookDelivery_ListMultiError, or nil if none found.
+func (m *WebhookDelivery_List) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *WebhookDelivery_List) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetDeliveries() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, WebhookDelivery_ListValidationError{
+						field:  fmt.Sprintf("Deliveries[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, WebhookDelivery_ListValidationError{
+						field:  fmt.Sprintf("Deliveries[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return WebhookDelivery_ListValidationError{
+					field:  fmt.Sprintf("Deliveries[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return WebhookDelivery_ListMultiError(errors)
+	}
+
+	return nil
+}
+
+// WebhookDelivery_ListMultiError is an error wrapping multiple validation
+// errors returned by WebhookDelivery_List.ValidateAll() if the designated
+// constraints aren't met.
+type WebhookDelivery_ListMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m WebhookDelivery_ListMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m WebhookDelivery_ListMultiError) AllErrors() []error { return m }
+
+// WebhookDelivery_ListValidationError is the validation error returned by
+// WebhookDelivery_List.Validate if the designated constraints aren't met.
+type WebhookDelivery_ListValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e WebhookDelivery_ListValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e WebhookDelivery_ListValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e WebhookDelivery_ListValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e WebhookDelivery_ListValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e WebhookDelivery_ListValidationError) ErrorName() string {
+	return "WebhookDelivery_ListValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e WebhookDelivery_ListValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sWebhookDelivery_List.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = WebhookDelivery_ListValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = WebhookDelivery_ListValidationError{}

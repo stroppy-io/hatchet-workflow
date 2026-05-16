@@ -83,6 +83,56 @@ message Webhook {
     string last_failure_error = 25 [(validate.rules).string.max_len = 1024];
 }
 
+/* WebhookDeliveryState — outbox row lifecycle. */
+enum WebhookDeliveryState {
+    WEBHOOK_DELIVERY_STATE_UNSPECIFIED = 0;
+    WEBHOOK_DELIVERY_STATE_PENDING     = 1;
+    WEBHOOK_DELIVERY_STATE_IN_FLIGHT   = 2;
+    WEBHOOK_DELIVERY_STATE_DELIVERED   = 3;
+    WEBHOOK_DELIVERY_STATE_DEAD        = 4;
+}
+
+message WebhookDeliveryId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+
+/* WebhookDelivery — durable outbox row. Worker drains state=PENDING and
+   next_attempt_at<=now(), POSTs with HMAC signature, on failure schedules
+   exponential backoff up to max_retries. */
+message WebhookDelivery {
+    message List {repeated WebhookDelivery deliveries = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "webhook_deliveries"
+        indexes: [
+            {name: "webhook_deliveries_drain_idx", columns: ["state", "next_attempt_at"]},
+            {name: "webhook_deliveries_webhook_idx", columns: ["webhook_id"]}
+        ]
+    };
+
+    WebhookDeliveryId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.common.Timestamps timestamps = 2 [(goplain.field).embed = true];
+    WebhookId webhook_id = 4 [
+        (ratel.column).constraints = {
+            references_table: "webhooks"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+
+    WebhookEvent event = 10 [(validate.rules).enum.defined_only = true];
+    bytes payload = 11 [(validate.rules).bytes.max_len = 1048576];
+    WebhookDeliveryState state = 12 [(validate.rules).enum.defined_only = true];
+    uint32 attempts = 13;
+    optional google.protobuf.Timestamp next_attempt_at = 14;
+    optional google.protobuf.Timestamp delivered_at = 15;
+    string last_error = 16 [(validate.rules).string.max_len = 4096];
+    optional uint32 last_status_code = 17;
+}
+
 
 message CreateWebhookRequest {
     Webhook webhook = 1 [(validate.rules).message = {required: true}];

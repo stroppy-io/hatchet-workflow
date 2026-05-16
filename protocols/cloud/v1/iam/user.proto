@@ -13,6 +13,15 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
 
 
 message UserId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+
+/* PlatformRole — cross-tenant operator role. NONE = regular user; ADMIN = can
+   call AdminService endpoints. Stored on User and embedded in JWT claims. */
+enum PlatformRole {
+    PLATFORM_ROLE_UNSPECIFIED = 0;
+    PLATFORM_ROLE_NONE        = 1;
+    PLATFORM_ROLE_ADMIN       = 2;
+}
+
 /* User — global identity. Tenancy is N:M via TenantMember.
    password_hash is a virtual column; never serialized to wire. */
 message User {
@@ -38,6 +47,7 @@ message User {
 
     string email = 3 [(validate.rules).string = {min_len: 5, max_len: 255, email: true}];
     string nickname = 4 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-zA-Z0-9_.-]+$"}];
+    PlatformRole platform_role = 5 [(ratel.column).constraints.default_value = "'PLATFORM_ROLE_NONE'"];
 }
 
 

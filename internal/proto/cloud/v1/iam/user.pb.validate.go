@@ -280,6 +280,8 @@ func (m *User) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	// no validation rules for PlatformRole
+
 	if len(errors) > 0 {
 		return UserMultiError(errors)
 	}

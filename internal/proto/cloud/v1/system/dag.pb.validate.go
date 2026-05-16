@@ -666,6 +666,8 @@ func (m *DagRun) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	// no validation rules for CancelRequested
+
 	if all {
 		switch v := interface{}(m.GetMetadata()).(type) {
 		case interface{ ValidateAll() error }:

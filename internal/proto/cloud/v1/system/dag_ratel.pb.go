@@ -192,6 +192,7 @@ const (
 	DagRunColumnAttempt           DagRunColumnAlias = "attempt"
 	DagRunColumnPreviousAttemptId DagRunColumnAlias = "previous_attempt_id"
 	DagRunColumnError             DagRunColumnAlias = "error"
+	DagRunColumnCancelRequested   DagRunColumnAlias = "cancel_requested"
 	DagRunColumnMetadata          DagRunColumnAlias = "metadata"
 )
 
@@ -223,6 +224,8 @@ func (s *DagRunScanner) GetTarget(col string) func() any {
 		return func() any { return &s.PreviousAttemptId }
 	case DagRunColumnError:
 		return func() any { return &s.Error }
+	case DagRunColumnCancelRequested:
+		return func() any { return &s.CancelRequested }
 	case DagRunColumnMetadata:
 		return func() any { return &s.Metadata }
 	default:
@@ -258,6 +261,8 @@ func (s *DagRunScanner) GetSetter(f DagRunColumnAlias) func() set.ValueSetter[Da
 		return func() set.ValueSetter[DagRunColumnAlias] { return set.NewSetter(f, &s.PreviousAttemptId) }
 	case DagRunColumnError:
 		return func() set.ValueSetter[DagRunColumnAlias] { return set.NewSetter(f, &s.Error) }
+	case DagRunColumnCancelRequested:
+		return func() set.ValueSetter[DagRunColumnAlias] { return set.NewSetter(f, &s.CancelRequested) }
 	case DagRunColumnMetadata:
 		return func() set.ValueSetter[DagRunColumnAlias] { return set.NewSetter(f, &s.Metadata) }
 	default:
@@ -293,6 +298,8 @@ func (s *DagRunScanner) GetValue(f DagRunColumnAlias) func() any {
 		return func() any { return s.PreviousAttemptId }
 	case DagRunColumnError:
 		return func() any { return s.Error }
+	case DagRunColumnCancelRequested:
+		return func() any { return s.CancelRequested }
 	case DagRunColumnMetadata:
 		return func() any { return s.Metadata }
 	default:
@@ -315,6 +322,7 @@ func (s *DagRunScanner) AllSetters() []set.ValueSetter[DagRunColumnAlias] {
 		set.NewSetter[DagRunColumnAlias](DagRunColumnAttempt, s.Attempt),
 		set.NewSetter[DagRunColumnAlias](DagRunColumnPreviousAttemptId, s.PreviousAttemptId),
 		set.NewSetter[DagRunColumnAlias](DagRunColumnError, s.Error),
+		set.NewSetter[DagRunColumnAlias](DagRunColumnCancelRequested, s.CancelRequested),
 		set.NewSetter[DagRunColumnAlias](DagRunColumnMetadata, s.Metadata),
 	}
 }
@@ -340,6 +348,7 @@ type DagRunsTable struct {
 	Attempt           schema.IntegerColumnI[DagRunColumnAlias]
 	PreviousAttemptId schema.NullTextColumnI[DagRunColumnAlias]
 	Error             schema.TextColumnI[DagRunColumnAlias]
+	CancelRequested   schema.BooleanColumnI[DagRunColumnAlias]
 	Metadata          schema.JSONColumnI[DagRunColumnAlias]
 }
 
@@ -358,6 +367,7 @@ var DagRuns = func() DagRunsTable {
 	attemptCol := schema.IntegerColumn(DagRunColumnAttempt, ddl.WithNotNull[DagRunColumnAlias]())
 	previousAttemptIdCol := schema.NullTextColumn(DagRunColumnPreviousAttemptId, ddl.WithReferences[DagRunColumnAlias]("dag_runs", "id"), ddl.WithOnDelete[DagRunColumnAlias]("SET NULL"))
 	errorCol := schema.TextColumn(DagRunColumnError, ddl.WithNotNull[DagRunColumnAlias]())
+	cancelRequestedCol := schema.BooleanColumn(DagRunColumnCancelRequested, ddl.WithDefault[DagRunColumnAlias]("false"), ddl.WithNotNull[DagRunColumnAlias]())
 	metadataCol := schema.JSONColumn(DagRunColumnMetadata, ddl.WithDefault[DagRunColumnAlias]("'{}'::jsonb"), ddl.WithNotNull[DagRunColumnAlias]())
 
 	idx0 := ddl.NewIndex[DagRunAlias, DagRunColumnAlias]("dag_runs_dag_idx", DagRunAliasName).OnColumns(DagRunColumnDagId)
@@ -382,6 +392,7 @@ var DagRuns = func() DagRunsTable {
 				attemptCol.DDL(),
 				previousAttemptIdCol.DDL(),
 				errorCol.DDL(),
+				cancelRequestedCol.DDL(),
 				metadataCol.DDL(),
 			},
 			ddl.WithIndexes[DagRunAlias, DagRunColumnAlias](
@@ -403,6 +414,7 @@ var DagRuns = func() DagRunsTable {
 		Attempt:           attemptCol,
 		PreviousAttemptId: previousAttemptIdCol,
 		Error:             errorCol,
+		CancelRequested:   cancelRequestedCol,
 		Metadata:          metadataCol,
 	}
 }()

@@ -191,3 +191,114 @@ func (p *WebhookScanner) IntoPb() *Webhook {
 	pb.LastFailureError = p.LastFailureError
 	return pb
 }
+
+// WebhookDelivery — durable outbox row. Worker drains state=PENDING and
+// next_attempt_at<=now(), POSTs with HMAC signature, on failure schedules
+// exponential backoff up to max_retries.
+type WebhookDeliveryScanner struct {
+	Id             string     `json:"id"` // origin: type_alias, empath: id
+	CreatedAt      time.Time  `json:"createdAt"`
+	UpdatedAt      time.Time  `json:"updatedAt"`
+	DeletedAt      *time.Time `json:"deletedAt,omitempty"`
+	WebhookId      string     `json:"webhookId"` // origin: type_alias, empath: webhook_id
+	Event          string     `json:"event"`
+	Payload        []byte     `json:"payload"`
+	State          string     `json:"state"`
+	Attempts       uint32     `json:"attempts"`
+	NextAttemptAt  *time.Time `json:"nextAttemptAt,omitempty"`
+	DeliveredAt    *time.Time `json:"deliveredAt,omitempty"`
+	LastError      string     `json:"lastError"`
+	LastStatusCode *uint32    `json:"lastStatusCode,omitempty"`
+}
+
+// IntoPlain converts protobuf message to plain struct
+func (pb *WebhookDelivery) IntoPlain() *WebhookDeliveryScanner {
+	if pb == nil {
+		return nil
+	}
+	p := &WebhookDeliveryScanner{}
+
+	// Id type alias from id
+	if pb.GetId() != nil {
+		p.Id = pb.GetId().GetValue()
+	}
+	// CreatedAt from
+	if pb.GetTimestamps() != nil && pb.GetTimestamps().GetCreatedAt() != nil {
+		p.CreatedAt = ratelcast.TimestampToTime(pb.GetTimestamps().GetCreatedAt())
+	}
+	// UpdatedAt from
+	if pb.GetTimestamps() != nil && pb.GetTimestamps().GetUpdatedAt() != nil {
+		p.UpdatedAt = ratelcast.TimestampToTime(pb.GetTimestamps().GetUpdatedAt())
+	}
+	// DeletedAt from
+	if pb.GetTimestamps() != nil && pb.GetTimestamps().GetDeletedAt() != nil {
+		_tmp := ratelcast.TimestampToTime(pb.GetTimestamps().GetDeletedAt())
+		p.DeletedAt = &_tmp
+	}
+	// WebhookId type alias from webhook_id
+	if pb.GetWebhookId() != nil {
+		p.WebhookId = pb.GetWebhookId().GetValue()
+	}
+	p.Event = pb.Event.String()
+	p.Payload = pb.Payload
+	p.State = pb.State.String()
+	p.Attempts = pb.Attempts
+	if pb.NextAttemptAt != nil {
+		_tmp := ratelcast.TimestampToTime(pb.NextAttemptAt)
+		p.NextAttemptAt = &_tmp
+	}
+	if pb.DeliveredAt != nil {
+		_tmp := ratelcast.TimestampToTime(pb.DeliveredAt)
+		p.DeliveredAt = &_tmp
+	}
+	p.LastError = pb.LastError
+	p.LastStatusCode = pb.LastStatusCode
+	return p
+}
+
+// IntoPb converts plain struct to protobuf message
+func (p *WebhookDeliveryScanner) IntoPb() *WebhookDelivery {
+	if p == nil {
+		return nil
+	}
+	pb := &WebhookDelivery{}
+
+	// Id type alias -> id
+	if p.Id != "" {
+		pb.Id = &WebhookDeliveryId{Value: p.Id}
+	}
+	// CreatedAt ->
+	if pb.Timestamps == nil {
+		pb.Timestamps = &common.Timestamps{}
+	}
+	pb.Timestamps.CreatedAt = ratelcast.TimeToTimestamp(p.CreatedAt)
+	// UpdatedAt ->
+	if pb.Timestamps == nil {
+		pb.Timestamps = &common.Timestamps{}
+	}
+	pb.Timestamps.UpdatedAt = ratelcast.TimeToTimestamp(p.UpdatedAt)
+	// DeletedAt ->
+	if p.DeletedAt != nil {
+		if pb.Timestamps == nil {
+			pb.Timestamps = &common.Timestamps{}
+		}
+		pb.Timestamps.DeletedAt = ratelcast.TimeToTimestamp(*p.DeletedAt)
+	}
+	// WebhookId type alias -> webhook_id
+	if p.WebhookId != "" {
+		pb.WebhookId = &WebhookId{Value: p.WebhookId}
+	}
+	pb.Event = WebhookEvent(WebhookEvent_value[p.Event])
+	pb.Payload = p.Payload
+	pb.State = WebhookDeliveryState(WebhookDeliveryState_value[p.State])
+	pb.Attempts = p.Attempts
+	if p.NextAttemptAt != nil {
+		pb.NextAttemptAt = ratelcast.TimeToTimestamp(*p.NextAttemptAt)
+	}
+	if p.DeliveredAt != nil {
+		pb.DeliveredAt = ratelcast.TimeToTimestamp(*p.DeliveredAt)
+	}
+	pb.LastError = p.LastError
+	pb.LastStatusCode = p.LastStatusCode
+	return pb
+}

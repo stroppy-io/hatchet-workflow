@@ -27,6 +27,57 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// PlatformRole — cross-tenant operator role. NONE = regular user; ADMIN = can
+// call AdminService endpoints. Stored on User and embedded in JWT claims.
+type PlatformRole int32
+
+const (
+	PlatformRole_PLATFORM_ROLE_UNSPECIFIED PlatformRole = 0
+	PlatformRole_PLATFORM_ROLE_NONE        PlatformRole = 1
+	PlatformRole_PLATFORM_ROLE_ADMIN       PlatformRole = 2
+)
+
+// Enum value maps for PlatformRole.
+var (
+	PlatformRole_name = map[int32]string{
+		0: "PLATFORM_ROLE_UNSPECIFIED",
+		1: "PLATFORM_ROLE_NONE",
+		2: "PLATFORM_ROLE_ADMIN",
+	}
+	PlatformRole_value = map[string]int32{
+		"PLATFORM_ROLE_UNSPECIFIED": 0,
+		"PLATFORM_ROLE_NONE":        1,
+		"PLATFORM_ROLE_ADMIN":       2,
+	}
+)
+
+func (x PlatformRole) Enum() *PlatformRole {
+	p := new(PlatformRole)
+	*p = x
+	return p
+}
+
+func (x PlatformRole) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PlatformRole) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_iam_user_proto_enumTypes[0].Descriptor()
+}
+
+func (PlatformRole) Type() protoreflect.EnumType {
+	return &file_cloud_v1_iam_user_proto_enumTypes[0]
+}
+
+func (x PlatformRole) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PlatformRole.Descriptor instead.
+func (PlatformRole) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_iam_user_proto_rawDescGZIP(), []int{0}
+}
+
 type UserId struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
@@ -79,6 +130,7 @@ type User struct {
 	Timestamps    *common.Timestamps     `protobuf:"bytes,2,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
 	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
 	Nickname      string                 `protobuf:"bytes,4,opt,name=nickname,proto3" json:"nickname,omitempty"`
+	PlatformRole  PlatformRole           `protobuf:"varint,5,opt,name=platform_role,json=platformRole,proto3,enum=cloud.v1.iam.PlatformRole" json:"platform_role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -139,6 +191,13 @@ func (x *User) GetNickname() string {
 		return x.Nickname
 	}
 	return ""
+}
+
+func (x *User) GetPlatformRole() PlatformRole {
+	if x != nil {
+		return x.PlatformRole
+	}
+	return PlatformRole_PLATFORM_ROLE_UNSPECIFIED
 }
 
 type CreateUserRequest struct {
@@ -355,14 +414,15 @@ const file_cloud_v1_iam_user_proto_rawDesc = "" +
 	"\n" +
 	"\x17cloud/v1/iam/user.proto\x12\fcloud.v1.iam\x1a cloud/v1/common/timestamps.proto\x1a\x15goplain/goplain.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"2\n" +
 	"\x06UserId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"\xff\x02\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"\xde\x03\n" +
 	"\x04User\x126\n" +
 	"\x02id\x18\x01 \x01(\v2\x14.cloud.v1.iam.UserIdB\x10\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x04\x12\x02\x10\x01R\x02id\x12C\n" +
 	"\n" +
 	"timestamps\x18\x02 \x01(\v2\x1b.cloud.v1.common.TimestampsB\x06\x82\xa6\x1d\x02 \x01R\n" +
 	"timestamps\x12\"\n" +
 	"\x05email\x18\x03 \x01(\tB\f\xfaB\tr\a\x10\x05\x18\xff\x01`\x01R\x05email\x128\n" +
-	"\bnickname\x18\x04 \x01(\tB\x1c\xfaB\x19r\x17\x10\x03\x18@2\x11^[a-zA-Z0-9_.-]+$R\bnickname\x1a0\n" +
+	"\bnickname\x18\x04 \x01(\tB\x1c\xfaB\x19r\x17\x10\x03\x18@2\x11^[a-zA-Z0-9_.-]+$R\bnickname\x12]\n" +
+	"\rplatform_role\x18\x05 \x01(\x0e2\x1a.cloud.v1.iam.PlatformRoleB\x1c\x9a\xb5\x18\x18\x12\x16\x1a\x14'PLATFORM_ROLE_NONE'R\fplatformRole\x1a0\n" +
 	"\x04List\x12(\n" +
 	"\x05users\x18\x01 \x03(\v2\x12.cloud.v1.iam.UserR\x05users:j\x92\xb5\x18`\b\x01\x12\x05users\x1a\x15\n" +
 	"\rpassword_hash\x12\x04TEXT*\x1b\n" +
@@ -382,7 +442,11 @@ const file_cloud_v1_iam_user_proto_rawDesc = "" +
 	"\fnew_password\x18\x02 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\b\x18\x80\x01R\vnewPassword\x12F\n" +
 	"\x19new_password_confirmation\x18\x03 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\b\x18\x80\x01R\x17newPasswordConfirmation2\xe1\x02\n" +
+	"\xfaB\ar\x05\x10\b\x18\x80\x01R\x17newPasswordConfirmation*^\n" +
+	"\fPlatformRole\x12\x1d\n" +
+	"\x19PLATFORM_ROLE_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12PLATFORM_ROLE_NONE\x10\x01\x12\x17\n" +
+	"\x13PLATFORM_ROLE_ADMIN\x10\x022\xe1\x02\n" +
 	"\vUserService\x12F\n" +
 	"\n" +
 	"CreateUser\x12\x1f.cloud.v1.iam.CreateUserRequest\x1a\x12.cloud.v1.iam.User\"\x03\x90\x02\x02\x12F\n" +
@@ -405,40 +469,43 @@ func file_cloud_v1_iam_user_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_iam_user_proto_rawDescData
 }
 
+var file_cloud_v1_iam_user_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_cloud_v1_iam_user_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_cloud_v1_iam_user_proto_goTypes = []any{
-	(*UserId)(nil),                // 0: cloud.v1.iam.UserId
-	(*User)(nil),                  // 1: cloud.v1.iam.User
-	(*CreateUserRequest)(nil),     // 2: cloud.v1.iam.CreateUserRequest
-	(*UpdateUserRequest)(nil),     // 3: cloud.v1.iam.UpdateUserRequest
-	(*UpdatePasswordRequest)(nil), // 4: cloud.v1.iam.UpdatePasswordRequest
-	(*User_List)(nil),             // 5: cloud.v1.iam.User.List
-	(*common.Timestamps)(nil),     // 6: cloud.v1.common.Timestamps
-	(*fieldmaskpb.FieldMask)(nil), // 7: google.protobuf.FieldMask
-	(*emptypb.Empty)(nil),         // 8: google.protobuf.Empty
+	(PlatformRole)(0),             // 0: cloud.v1.iam.PlatformRole
+	(*UserId)(nil),                // 1: cloud.v1.iam.UserId
+	(*User)(nil),                  // 2: cloud.v1.iam.User
+	(*CreateUserRequest)(nil),     // 3: cloud.v1.iam.CreateUserRequest
+	(*UpdateUserRequest)(nil),     // 4: cloud.v1.iam.UpdateUserRequest
+	(*UpdatePasswordRequest)(nil), // 5: cloud.v1.iam.UpdatePasswordRequest
+	(*User_List)(nil),             // 6: cloud.v1.iam.User.List
+	(*common.Timestamps)(nil),     // 7: cloud.v1.common.Timestamps
+	(*fieldmaskpb.FieldMask)(nil), // 8: google.protobuf.FieldMask
+	(*emptypb.Empty)(nil),         // 9: google.protobuf.Empty
 }
 var file_cloud_v1_iam_user_proto_depIdxs = []int32{
-	0,  // 0: cloud.v1.iam.User.id:type_name -> cloud.v1.iam.UserId
-	6,  // 1: cloud.v1.iam.User.timestamps:type_name -> cloud.v1.common.Timestamps
-	1,  // 2: cloud.v1.iam.CreateUserRequest.user:type_name -> cloud.v1.iam.User
-	1,  // 3: cloud.v1.iam.UpdateUserRequest.user:type_name -> cloud.v1.iam.User
-	7,  // 4: cloud.v1.iam.UpdateUserRequest.update_mask:type_name -> google.protobuf.FieldMask
-	1,  // 5: cloud.v1.iam.User.List.users:type_name -> cloud.v1.iam.User
-	2,  // 6: cloud.v1.iam.UserService.CreateUser:input_type -> cloud.v1.iam.CreateUserRequest
-	3,  // 7: cloud.v1.iam.UserService.UpdateUser:input_type -> cloud.v1.iam.UpdateUserRequest
-	0,  // 8: cloud.v1.iam.UserService.DeleteUser:input_type -> cloud.v1.iam.UserId
-	4,  // 9: cloud.v1.iam.UserService.UpdatePassword:input_type -> cloud.v1.iam.UpdatePasswordRequest
-	8,  // 10: cloud.v1.iam.UserService.Me:input_type -> google.protobuf.Empty
-	1,  // 11: cloud.v1.iam.UserService.CreateUser:output_type -> cloud.v1.iam.User
-	1,  // 12: cloud.v1.iam.UserService.UpdateUser:output_type -> cloud.v1.iam.User
-	1,  // 13: cloud.v1.iam.UserService.DeleteUser:output_type -> cloud.v1.iam.User
-	1,  // 14: cloud.v1.iam.UserService.UpdatePassword:output_type -> cloud.v1.iam.User
-	1,  // 15: cloud.v1.iam.UserService.Me:output_type -> cloud.v1.iam.User
-	11, // [11:16] is the sub-list for method output_type
-	6,  // [6:11] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	1,  // 0: cloud.v1.iam.User.id:type_name -> cloud.v1.iam.UserId
+	7,  // 1: cloud.v1.iam.User.timestamps:type_name -> cloud.v1.common.Timestamps
+	0,  // 2: cloud.v1.iam.User.platform_role:type_name -> cloud.v1.iam.PlatformRole
+	2,  // 3: cloud.v1.iam.CreateUserRequest.user:type_name -> cloud.v1.iam.User
+	2,  // 4: cloud.v1.iam.UpdateUserRequest.user:type_name -> cloud.v1.iam.User
+	8,  // 5: cloud.v1.iam.UpdateUserRequest.update_mask:type_name -> google.protobuf.FieldMask
+	2,  // 6: cloud.v1.iam.User.List.users:type_name -> cloud.v1.iam.User
+	3,  // 7: cloud.v1.iam.UserService.CreateUser:input_type -> cloud.v1.iam.CreateUserRequest
+	4,  // 8: cloud.v1.iam.UserService.UpdateUser:input_type -> cloud.v1.iam.UpdateUserRequest
+	1,  // 9: cloud.v1.iam.UserService.DeleteUser:input_type -> cloud.v1.iam.UserId
+	5,  // 10: cloud.v1.iam.UserService.UpdatePassword:input_type -> cloud.v1.iam.UpdatePasswordRequest
+	9,  // 11: cloud.v1.iam.UserService.Me:input_type -> google.protobuf.Empty
+	2,  // 12: cloud.v1.iam.UserService.CreateUser:output_type -> cloud.v1.iam.User
+	2,  // 13: cloud.v1.iam.UserService.UpdateUser:output_type -> cloud.v1.iam.User
+	2,  // 14: cloud.v1.iam.UserService.DeleteUser:output_type -> cloud.v1.iam.User
+	2,  // 15: cloud.v1.iam.UserService.UpdatePassword:output_type -> cloud.v1.iam.User
+	2,  // 16: cloud.v1.iam.UserService.Me:output_type -> cloud.v1.iam.User
+	12, // [12:17] is the sub-list for method output_type
+	7,  // [7:12] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_iam_user_proto_init() }
@@ -451,13 +518,14 @@ func file_cloud_v1_iam_user_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_iam_user_proto_rawDesc), len(file_cloud_v1_iam_user_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_cloud_v1_iam_user_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_iam_user_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_iam_user_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_iam_user_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_iam_user_proto = out.File

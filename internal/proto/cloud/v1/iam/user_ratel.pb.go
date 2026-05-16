@@ -40,6 +40,7 @@ const (
 	UserColumnDeletedAt    UserColumnAlias = "deleted_at"
 	UserColumnEmail        UserColumnAlias = "email"
 	UserColumnNickname     UserColumnAlias = "nickname"
+	UserColumnPlatformRole UserColumnAlias = "platform_role"
 	UserColumnPasswordHash UserColumnAlias = "password_hash"
 )
 
@@ -57,6 +58,8 @@ func (s *UserScanner) GetTarget(col string) func() any {
 		return func() any { return &s.Email }
 	case UserColumnNickname:
 		return func() any { return &s.Nickname }
+	case UserColumnPlatformRole:
+		return func() any { return &s.PlatformRole }
 	case UserColumnPasswordHash:
 		return func() any { return &s.PasswordHash }
 	default:
@@ -78,6 +81,8 @@ func (s *UserScanner) GetSetter(f UserColumnAlias) func() set.ValueSetter[UserCo
 		return func() set.ValueSetter[UserColumnAlias] { return set.NewSetter(f, &s.Email) }
 	case UserColumnNickname:
 		return func() set.ValueSetter[UserColumnAlias] { return set.NewSetter(f, &s.Nickname) }
+	case UserColumnPlatformRole:
+		return func() set.ValueSetter[UserColumnAlias] { return set.NewSetter(f, &s.PlatformRole) }
 	case UserColumnPasswordHash:
 		return func() set.ValueSetter[UserColumnAlias] { return set.NewSetter(f, &s.PasswordHash) }
 	default:
@@ -99,6 +104,8 @@ func (s *UserScanner) GetValue(f UserColumnAlias) func() any {
 		return func() any { return s.Email }
 	case UserColumnNickname:
 		return func() any { return s.Nickname }
+	case UserColumnPlatformRole:
+		return func() any { return s.PlatformRole }
 	case UserColumnPasswordHash:
 		return func() any { return s.PasswordHash }
 	default:
@@ -114,6 +121,7 @@ func (s *UserScanner) AllSetters() []set.ValueSetter[UserColumnAlias] {
 		set.NewSetter[UserColumnAlias](UserColumnDeletedAt, s.DeletedAt),
 		set.NewSetter[UserColumnAlias](UserColumnEmail, s.Email),
 		set.NewSetter[UserColumnAlias](UserColumnNickname, s.Nickname),
+		set.NewSetter[UserColumnAlias](UserColumnPlatformRole, s.PlatformRole),
 		set.NewSetter[UserColumnAlias](UserColumnPasswordHash, s.PasswordHash),
 	}
 }
@@ -132,6 +140,7 @@ type UsersTable struct {
 	DeletedAt    schema.NullTimestamptzColumnI[UserColumnAlias]
 	Email        schema.TextColumnI[UserColumnAlias]
 	Nickname     schema.TextColumnI[UserColumnAlias]
+	PlatformRole schema.TextColumnI[UserColumnAlias]
 	PasswordHash schema.TextColumnI[UserColumnAlias]
 }
 
@@ -143,6 +152,7 @@ var Users = func() UsersTable {
 	deletedAtCol := schema.NullTimestamptzColumn(UserColumnDeletedAt, ddl.WithDefault[UserColumnAlias]("null"))
 	emailCol := schema.TextColumn(UserColumnEmail, ddl.WithNotNull[UserColumnAlias]())
 	nicknameCol := schema.TextColumn(UserColumnNickname, ddl.WithNotNull[UserColumnAlias]())
+	platformRoleCol := schema.TextColumn(UserColumnPlatformRole, ddl.WithDefault[UserColumnAlias]("'PLATFORM_ROLE_NONE'"), ddl.WithNotNull[UserColumnAlias]())
 	passwordHashCol := schema.TextColumn(UserColumnPasswordHash, ddl.WithNotNull[UserColumnAlias]())
 
 	idx0 := ddl.NewIndex[UserAlias, UserColumnAlias]("users_email_uniq", UserAliasName).OnColumns(UserColumnEmail)
@@ -161,6 +171,7 @@ var Users = func() UsersTable {
 				deletedAtCol.DDL(),
 				emailCol.DDL(),
 				nicknameCol.DDL(),
+				platformRoleCol.DDL(),
 				passwordHashCol.DDL(),
 			},
 			ddl.WithIndexes[UserAlias, UserColumnAlias](
@@ -174,6 +185,7 @@ var Users = func() UsersTable {
 		DeletedAt:    deletedAtCol,
 		Email:        emailCol,
 		Nickname:     nicknameCol,
+		PlatformRole: platformRoleCol,
 		PasswordHash: passwordHashCol,
 	}
 }()

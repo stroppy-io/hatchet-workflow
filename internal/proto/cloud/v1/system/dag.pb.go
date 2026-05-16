@@ -331,6 +331,9 @@ type DagRun struct {
 	PreviousAttemptId *DagRunId `protobuf:"bytes,21,opt,name=previous_attempt_id,json=previousAttemptId,proto3,oneof" json:"previous_attempt_id,omitempty"`
 	// Terminal error message when status=FAILED.
 	Error string `protobuf:"bytes,22,opt,name=error,proto3" json:"error,omitempty"`
+	// cancel_requested — soft cancel flag. Workers poll this between handler
+	// yield points and propagate via ctx.Done.
+	CancelRequested bool `protobuf:"varint,23,opt,name=cancel_requested,json=cancelRequested,proto3" json:"cancel_requested,omitempty"`
 	// metadata — free-form JSON for domain annotations (tenant_id, owner
 	// ref, request_id, anything). Engine treats it as opaque.
 	Metadata      *structpb.Struct `protobuf:"bytes,30,opt,name=metadata,proto3" json:"metadata,omitempty"`
@@ -443,6 +446,13 @@ func (x *DagRun) GetError() string {
 		return x.Error
 	}
 	return ""
+}
+
+func (x *DagRun) GetCancelRequested() bool {
+	if x != nil {
+		return x.CancelRequested
+	}
+	return false
 }
 
 func (x *DagRun) GetMetadata() *structpb.Struct {
@@ -1117,7 +1127,7 @@ const file_cloud_v1_system_dag_proto_rawDesc = "" +
 	"\fmax_attempts\x18\a \x01(\rB\a\xfaB\x04*\x02\x18dR\vmaxAttempts\x122\n" +
 	"\x0ftimeout_seconds\x18\b \x01(\rB\t\xfaB\x06*\x04\x18\x80\xa3\x05R\x0etimeoutSeconds:\x12\x92\xb5\x18\b\b\x01\x12\x04dags\x82\xa6\x1d\x02\b\x01\"4\n" +
 	"\bDagRunId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"\x8a\b\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"\xc4\b\n" +
 	"\x06DagRun\x12;\n" +
 	"\x02id\x18\x01 \x01(\v2\x19.cloud.v1.system.DagRunIdB\x10\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x04\x12\x02\x10\x01R\x02id\x12C\n" +
 	"\n" +
@@ -1134,7 +1144,8 @@ const file_cloud_v1_system_dag_proto_rawDesc = "" +
 	"finishedAt\x88\x01\x01\x12!\n" +
 	"\aattempt\x18\x14 \x01(\rB\a\xfaB\x04*\x02(\x01R\aattempt\x12f\n" +
 	"\x13previous_attempt_id\x18\x15 \x01(\v2\x19.cloud.v1.system.DagRunIdB\x16\x9a\xb5\x18\x12\x12\x102\bdag_runs:\x02id@\x02H\x03R\x11previousAttemptId\x88\x01\x01\x12\x1f\n" +
-	"\x05error\x18\x16 \x01(\tB\t\xfaB\x06r\x04\x18\x80\x80\x04R\x05error\x12N\n" +
+	"\x05error\x18\x16 \x01(\tB\t\xfaB\x06r\x04\x18\x80\x80\x04R\x05error\x128\n" +
+	"\x10cancel_requested\x18\x17 \x01(\bB\r\x9a\xb5\x18\t\x12\a\x1a\x05falseR\x0fcancelRequested\x12N\n" +
 	"\bmetadata\x18\x1e \x01(\v2\x17.google.protobuf.StructB\x19\x9a\xb5\x18\x0f\x12\r\x1a\v'{}'::jsonb\x82\xa6\x1d\x02\x10\x01R\bmetadata\x1a:\n" +
 	"\x04List\x122\n" +
 	"\bdag_runs\x18\x01 \x03(\v2\x17.cloud.v1.system.DagRunR\adagRuns:\x85\x01\x92\xb5\x18{\b\x01\x12\bdag_runs*\x1a\n" +

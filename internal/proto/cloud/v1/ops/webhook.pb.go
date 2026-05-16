@@ -93,6 +93,62 @@ func (WebhookEvent) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_ops_webhook_proto_rawDescGZIP(), []int{0}
 }
 
+// WebhookDeliveryState — outbox row lifecycle.
+type WebhookDeliveryState int32
+
+const (
+	WebhookDeliveryState_WEBHOOK_DELIVERY_STATE_UNSPECIFIED WebhookDeliveryState = 0
+	WebhookDeliveryState_WEBHOOK_DELIVERY_STATE_PENDING     WebhookDeliveryState = 1
+	WebhookDeliveryState_WEBHOOK_DELIVERY_STATE_IN_FLIGHT   WebhookDeliveryState = 2
+	WebhookDeliveryState_WEBHOOK_DELIVERY_STATE_DELIVERED   WebhookDeliveryState = 3
+	WebhookDeliveryState_WEBHOOK_DELIVERY_STATE_DEAD        WebhookDeliveryState = 4
+)
+
+// Enum value maps for WebhookDeliveryState.
+var (
+	WebhookDeliveryState_name = map[int32]string{
+		0: "WEBHOOK_DELIVERY_STATE_UNSPECIFIED",
+		1: "WEBHOOK_DELIVERY_STATE_PENDING",
+		2: "WEBHOOK_DELIVERY_STATE_IN_FLIGHT",
+		3: "WEBHOOK_DELIVERY_STATE_DELIVERED",
+		4: "WEBHOOK_DELIVERY_STATE_DEAD",
+	}
+	WebhookDeliveryState_value = map[string]int32{
+		"WEBHOOK_DELIVERY_STATE_UNSPECIFIED": 0,
+		"WEBHOOK_DELIVERY_STATE_PENDING":     1,
+		"WEBHOOK_DELIVERY_STATE_IN_FLIGHT":   2,
+		"WEBHOOK_DELIVERY_STATE_DELIVERED":   3,
+		"WEBHOOK_DELIVERY_STATE_DEAD":        4,
+	}
+)
+
+func (x WebhookDeliveryState) Enum() *WebhookDeliveryState {
+	p := new(WebhookDeliveryState)
+	*p = x
+	return p
+}
+
+func (x WebhookDeliveryState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (WebhookDeliveryState) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_ops_webhook_proto_enumTypes[1].Descriptor()
+}
+
+func (WebhookDeliveryState) Type() protoreflect.EnumType {
+	return &file_cloud_v1_ops_webhook_proto_enumTypes[1]
+}
+
+func (x WebhookDeliveryState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use WebhookDeliveryState.Descriptor instead.
+func (WebhookDeliveryState) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_ops_webhook_proto_rawDescGZIP(), []int{1}
+}
+
 type WebhookId struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
@@ -300,6 +356,177 @@ func (x *Webhook) GetLastFailureError() string {
 	return ""
 }
 
+type WebhookDeliveryId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WebhookDeliveryId) Reset() {
+	*x = WebhookDeliveryId{}
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WebhookDeliveryId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WebhookDeliveryId) ProtoMessage() {}
+
+func (x *WebhookDeliveryId) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WebhookDeliveryId.ProtoReflect.Descriptor instead.
+func (*WebhookDeliveryId) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_ops_webhook_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *WebhookDeliveryId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+// WebhookDelivery — durable outbox row. Worker drains state=PENDING and
+// next_attempt_at<=now(), POSTs with HMAC signature, on failure schedules
+// exponential backoff up to max_retries.
+type WebhookDelivery struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             *WebhookDeliveryId     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Timestamps     *common.Timestamps     `protobuf:"bytes,2,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
+	WebhookId      *WebhookId             `protobuf:"bytes,4,opt,name=webhook_id,json=webhookId,proto3" json:"webhook_id,omitempty"`
+	Event          WebhookEvent           `protobuf:"varint,10,opt,name=event,proto3,enum=cloud.v1.ops.WebhookEvent" json:"event,omitempty"`
+	Payload        []byte                 `protobuf:"bytes,11,opt,name=payload,proto3" json:"payload,omitempty"`
+	State          WebhookDeliveryState   `protobuf:"varint,12,opt,name=state,proto3,enum=cloud.v1.ops.WebhookDeliveryState" json:"state,omitempty"`
+	Attempts       uint32                 `protobuf:"varint,13,opt,name=attempts,proto3" json:"attempts,omitempty"`
+	NextAttemptAt  *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=next_attempt_at,json=nextAttemptAt,proto3,oneof" json:"next_attempt_at,omitempty"`
+	DeliveredAt    *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=delivered_at,json=deliveredAt,proto3,oneof" json:"delivered_at,omitempty"`
+	LastError      string                 `protobuf:"bytes,16,opt,name=last_error,json=lastError,proto3" json:"last_error,omitempty"`
+	LastStatusCode *uint32                `protobuf:"varint,17,opt,name=last_status_code,json=lastStatusCode,proto3,oneof" json:"last_status_code,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *WebhookDelivery) Reset() {
+	*x = WebhookDelivery{}
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WebhookDelivery) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WebhookDelivery) ProtoMessage() {}
+
+func (x *WebhookDelivery) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WebhookDelivery.ProtoReflect.Descriptor instead.
+func (*WebhookDelivery) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_ops_webhook_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *WebhookDelivery) GetId() *WebhookDeliveryId {
+	if x != nil {
+		return x.Id
+	}
+	return nil
+}
+
+func (x *WebhookDelivery) GetTimestamps() *common.Timestamps {
+	if x != nil {
+		return x.Timestamps
+	}
+	return nil
+}
+
+func (x *WebhookDelivery) GetWebhookId() *WebhookId {
+	if x != nil {
+		return x.WebhookId
+	}
+	return nil
+}
+
+func (x *WebhookDelivery) GetEvent() WebhookEvent {
+	if x != nil {
+		return x.Event
+	}
+	return WebhookEvent_WEBHOOK_EVENT_UNSPECIFIED
+}
+
+func (x *WebhookDelivery) GetPayload() []byte {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+func (x *WebhookDelivery) GetState() WebhookDeliveryState {
+	if x != nil {
+		return x.State
+	}
+	return WebhookDeliveryState_WEBHOOK_DELIVERY_STATE_UNSPECIFIED
+}
+
+func (x *WebhookDelivery) GetAttempts() uint32 {
+	if x != nil {
+		return x.Attempts
+	}
+	return 0
+}
+
+func (x *WebhookDelivery) GetNextAttemptAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.NextAttemptAt
+	}
+	return nil
+}
+
+func (x *WebhookDelivery) GetDeliveredAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DeliveredAt
+	}
+	return nil
+}
+
+func (x *WebhookDelivery) GetLastError() string {
+	if x != nil {
+		return x.LastError
+	}
+	return ""
+}
+
+func (x *WebhookDelivery) GetLastStatusCode() uint32 {
+	if x != nil && x.LastStatusCode != nil {
+		return *x.LastStatusCode
+	}
+	return 0
+}
+
 type CreateWebhookRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Webhook       *Webhook               `protobuf:"bytes,1,opt,name=webhook,proto3" json:"webhook,omitempty"`
@@ -309,7 +536,7 @@ type CreateWebhookRequest struct {
 
 func (x *CreateWebhookRequest) Reset() {
 	*x = CreateWebhookRequest{}
-	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[2]
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -321,7 +548,7 @@ func (x *CreateWebhookRequest) String() string {
 func (*CreateWebhookRequest) ProtoMessage() {}
 
 func (x *CreateWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[2]
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -334,7 +561,7 @@ func (x *CreateWebhookRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateWebhookRequest.ProtoReflect.Descriptor instead.
 func (*CreateWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_ops_webhook_proto_rawDescGZIP(), []int{2}
+	return file_cloud_v1_ops_webhook_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CreateWebhookRequest) GetWebhook() *Webhook {
@@ -354,7 +581,7 @@ type UpdateWebhookRequest struct {
 
 func (x *UpdateWebhookRequest) Reset() {
 	*x = UpdateWebhookRequest{}
-	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[3]
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -366,7 +593,7 @@ func (x *UpdateWebhookRequest) String() string {
 func (*UpdateWebhookRequest) ProtoMessage() {}
 
 func (x *UpdateWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[3]
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -379,7 +606,7 @@ func (x *UpdateWebhookRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateWebhookRequest.ProtoReflect.Descriptor instead.
 func (*UpdateWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_ops_webhook_proto_rawDescGZIP(), []int{3}
+	return file_cloud_v1_ops_webhook_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *UpdateWebhookRequest) GetWebhook() *Webhook {
@@ -407,7 +634,7 @@ type TestWebhookRequest struct {
 
 func (x *TestWebhookRequest) Reset() {
 	*x = TestWebhookRequest{}
-	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[4]
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -419,7 +646,7 @@ func (x *TestWebhookRequest) String() string {
 func (*TestWebhookRequest) ProtoMessage() {}
 
 func (x *TestWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[4]
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -432,7 +659,7 @@ func (x *TestWebhookRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestWebhookRequest.ProtoReflect.Descriptor instead.
 func (*TestWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_ops_webhook_proto_rawDescGZIP(), []int{4}
+	return file_cloud_v1_ops_webhook_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *TestWebhookRequest) GetId() *WebhookId {
@@ -461,7 +688,7 @@ type TestWebhookResponse struct {
 
 func (x *TestWebhookResponse) Reset() {
 	*x = TestWebhookResponse{}
-	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[5]
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -473,7 +700,7 @@ func (x *TestWebhookResponse) String() string {
 func (*TestWebhookResponse) ProtoMessage() {}
 
 func (x *TestWebhookResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[5]
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -486,7 +713,7 @@ func (x *TestWebhookResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestWebhookResponse.ProtoReflect.Descriptor instead.
 func (*TestWebhookResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_ops_webhook_proto_rawDescGZIP(), []int{5}
+	return file_cloud_v1_ops_webhook_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *TestWebhookResponse) GetDelivered() bool {
@@ -526,7 +753,7 @@ type Webhook_List struct {
 
 func (x *Webhook_List) Reset() {
 	*x = Webhook_List{}
-	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[6]
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -538,7 +765,7 @@ func (x *Webhook_List) String() string {
 func (*Webhook_List) ProtoMessage() {}
 
 func (x *Webhook_List) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[6]
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -557,6 +784,50 @@ func (*Webhook_List) Descriptor() ([]byte, []int) {
 func (x *Webhook_List) GetWebhooks() []*Webhook {
 	if x != nil {
 		return x.Webhooks
+	}
+	return nil
+}
+
+type WebhookDelivery_List struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Deliveries    []*WebhookDelivery     `protobuf:"bytes,1,rep,name=deliveries,proto3" json:"deliveries,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WebhookDelivery_List) Reset() {
+	*x = WebhookDelivery_List{}
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WebhookDelivery_List) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WebhookDelivery_List) ProtoMessage() {}
+
+func (x *WebhookDelivery_List) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_ops_webhook_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WebhookDelivery_List.ProtoReflect.Descriptor instead.
+func (*WebhookDelivery_List) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_ops_webhook_proto_rawDescGZIP(), []int{3, 0}
+}
+
+func (x *WebhookDelivery_List) GetDeliveries() []*WebhookDelivery {
+	if x != nil {
+		return x.Deliveries
 	}
 	return nil
 }
@@ -600,7 +871,36 @@ const file_cloud_v1_ops_webhook_proto_rawDesc = "" +
 	"\x13webhooks_tenant_idx\x12\ttenant_id\x82\xa6\x1d\x02\b\x01B\r\n" +
 	"\v_created_byB\x12\n" +
 	"\x10_last_success_atB\x12\n" +
-	"\x10_last_failure_at\"Q\n" +
+	"\x10_last_failure_at\"=\n" +
+	"\x11WebhookDeliveryId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"\xa1\a\n" +
+	"\x0fWebhookDelivery\x12A\n" +
+	"\x02id\x18\x01 \x01(\v2\x1f.cloud.v1.ops.WebhookDeliveryIdB\x10\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x04\x12\x02\x10\x01R\x02id\x12C\n" +
+	"\n" +
+	"timestamps\x18\x02 \x01(\v2\x1b.cloud.v1.common.TimestampsB\x06\x82\xa6\x1d\x02 \x01R\n" +
+	"timestamps\x12V\n" +
+	"\n" +
+	"webhook_id\x18\x04 \x01(\v2\x17.cloud.v1.ops.WebhookIdB\x1e\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x12\x12\x102\bwebhooks:\x02id@\x01R\twebhookId\x12:\n" +
+	"\x05event\x18\n" +
+	" \x01(\x0e2\x1a.cloud.v1.ops.WebhookEventB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05event\x12#\n" +
+	"\apayload\x18\v \x01(\fB\t\xfaB\x06z\x04\x18\x80\x80@R\apayload\x12B\n" +
+	"\x05state\x18\f \x01(\x0e2\".cloud.v1.ops.WebhookDeliveryStateB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05state\x12\x1a\n" +
+	"\battempts\x18\r \x01(\rR\battempts\x12G\n" +
+	"\x0fnext_attempt_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampH\x00R\rnextAttemptAt\x88\x01\x01\x12B\n" +
+	"\fdelivered_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampH\x01R\vdeliveredAt\x88\x01\x01\x12'\n" +
+	"\n" +
+	"last_error\x18\x10 \x01(\tB\b\xfaB\x05r\x03\x18\x80 R\tlastError\x12-\n" +
+	"\x10last_status_code\x18\x11 \x01(\rH\x02R\x0elastStatusCode\x88\x01\x01\x1aE\n" +
+	"\x04List\x12=\n" +
+	"\n" +
+	"deliveries\x18\x01 \x03(\v2\x1d.cloud.v1.ops.WebhookDeliveryR\n" +
+	"deliveries:\x86\x01\x92\xb5\x18|\b\x01\x12\x12webhook_deliveries*6\n" +
+	"\x1cwebhook_deliveries_drain_idx\x12\x05state\x12\x0fnext_attempt_at*,\n" +
+	"\x1ewebhook_deliveries_webhook_idx\x12\n" +
+	"webhook_id\x82\xa6\x1d\x02\b\x01B\x12\n" +
+	"\x10_next_attempt_atB\x0f\n" +
+	"\r_delivered_atB\x13\n" +
+	"\x11_last_status_code\"Q\n" +
 	"\x14CreateWebhookRequest\x129\n" +
 	"\awebhook\x18\x01 \x01(\v2\x15.cloud.v1.ops.WebhookB\b\xfaB\x05\x8a\x01\x02\x10\x01R\awebhook\"\x98\x01\n" +
 	"\x14UpdateWebhookRequest\x129\n" +
@@ -625,7 +925,13 @@ const file_cloud_v1_ops_webhook_proto_rawDesc = "" +
 	"\x17WEBHOOK_EVENT_NODE_DONE\x10\x04\x12\x1d\n" +
 	"\x19WEBHOOK_EVENT_NODE_FAILED\x10\x05\x12\x1f\n" +
 	"\x1bWEBHOOK_EVENT_SUITE_STARTED\x10\x06\x12!\n" +
-	"\x1dWEBHOOK_EVENT_SUITE_COMPLETED\x10\a2\xdd\x03\n" +
+	"\x1dWEBHOOK_EVENT_SUITE_COMPLETED\x10\a*\xcf\x01\n" +
+	"\x14WebhookDeliveryState\x12&\n" +
+	"\"WEBHOOK_DELIVERY_STATE_UNSPECIFIED\x10\x00\x12\"\n" +
+	"\x1eWEBHOOK_DELIVERY_STATE_PENDING\x10\x01\x12$\n" +
+	" WEBHOOK_DELIVERY_STATE_IN_FLIGHT\x10\x02\x12$\n" +
+	" WEBHOOK_DELIVERY_STATE_DELIVERED\x10\x03\x12\x1f\n" +
+	"\x1bWEBHOOK_DELIVERY_STATE_DEAD\x10\x042\xdd\x03\n" +
 	"\x0eWebhookService\x12O\n" +
 	"\rCreateWebhook\x12\".cloud.v1.ops.CreateWebhookRequest\x1a\x15.cloud.v1.ops.Webhook\"\x03\x90\x02\x02\x12O\n" +
 	"\rUpdateWebhook\x12\".cloud.v1.ops.UpdateWebhookRequest\x1a\x15.cloud.v1.ops.Webhook\"\x03\x90\x02\x02\x12D\n" +
@@ -647,58 +953,70 @@ func file_cloud_v1_ops_webhook_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_ops_webhook_proto_rawDescData
 }
 
-var file_cloud_v1_ops_webhook_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_ops_webhook_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_cloud_v1_ops_webhook_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_cloud_v1_ops_webhook_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_cloud_v1_ops_webhook_proto_goTypes = []any{
 	(WebhookEvent)(0),             // 0: cloud.v1.ops.WebhookEvent
-	(*WebhookId)(nil),             // 1: cloud.v1.ops.WebhookId
-	(*Webhook)(nil),               // 2: cloud.v1.ops.Webhook
-	(*CreateWebhookRequest)(nil),  // 3: cloud.v1.ops.CreateWebhookRequest
-	(*UpdateWebhookRequest)(nil),  // 4: cloud.v1.ops.UpdateWebhookRequest
-	(*TestWebhookRequest)(nil),    // 5: cloud.v1.ops.TestWebhookRequest
-	(*TestWebhookResponse)(nil),   // 6: cloud.v1.ops.TestWebhookResponse
-	(*Webhook_List)(nil),          // 7: cloud.v1.ops.Webhook.List
-	nil,                           // 8: cloud.v1.ops.Webhook.HeadersEntry
-	(*iam.TenantId)(nil),          // 9: cloud.v1.iam.TenantId
-	(*common.Timestamps)(nil),     // 10: cloud.v1.common.Timestamps
-	(*common.Identity)(nil),       // 11: cloud.v1.common.Identity
-	(*iam.UserId)(nil),            // 12: cloud.v1.iam.UserId
-	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil), // 14: google.protobuf.FieldMask
+	(WebhookDeliveryState)(0),     // 1: cloud.v1.ops.WebhookDeliveryState
+	(*WebhookId)(nil),             // 2: cloud.v1.ops.WebhookId
+	(*Webhook)(nil),               // 3: cloud.v1.ops.Webhook
+	(*WebhookDeliveryId)(nil),     // 4: cloud.v1.ops.WebhookDeliveryId
+	(*WebhookDelivery)(nil),       // 5: cloud.v1.ops.WebhookDelivery
+	(*CreateWebhookRequest)(nil),  // 6: cloud.v1.ops.CreateWebhookRequest
+	(*UpdateWebhookRequest)(nil),  // 7: cloud.v1.ops.UpdateWebhookRequest
+	(*TestWebhookRequest)(nil),    // 8: cloud.v1.ops.TestWebhookRequest
+	(*TestWebhookResponse)(nil),   // 9: cloud.v1.ops.TestWebhookResponse
+	(*Webhook_List)(nil),          // 10: cloud.v1.ops.Webhook.List
+	nil,                           // 11: cloud.v1.ops.Webhook.HeadersEntry
+	(*WebhookDelivery_List)(nil),  // 12: cloud.v1.ops.WebhookDelivery.List
+	(*iam.TenantId)(nil),          // 13: cloud.v1.iam.TenantId
+	(*common.Timestamps)(nil),     // 14: cloud.v1.common.Timestamps
+	(*common.Identity)(nil),       // 15: cloud.v1.common.Identity
+	(*iam.UserId)(nil),            // 16: cloud.v1.iam.UserId
+	(*timestamppb.Timestamp)(nil), // 17: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil), // 18: google.protobuf.FieldMask
 }
 var file_cloud_v1_ops_webhook_proto_depIdxs = []int32{
-	1,  // 0: cloud.v1.ops.Webhook.id:type_name -> cloud.v1.ops.WebhookId
-	9,  // 1: cloud.v1.ops.Webhook.tenant_id:type_name -> cloud.v1.iam.TenantId
-	10, // 2: cloud.v1.ops.Webhook.timestamps:type_name -> cloud.v1.common.Timestamps
-	11, // 3: cloud.v1.ops.Webhook.identity:type_name -> cloud.v1.common.Identity
-	12, // 4: cloud.v1.ops.Webhook.created_by:type_name -> cloud.v1.iam.UserId
+	2,  // 0: cloud.v1.ops.Webhook.id:type_name -> cloud.v1.ops.WebhookId
+	13, // 1: cloud.v1.ops.Webhook.tenant_id:type_name -> cloud.v1.iam.TenantId
+	14, // 2: cloud.v1.ops.Webhook.timestamps:type_name -> cloud.v1.common.Timestamps
+	15, // 3: cloud.v1.ops.Webhook.identity:type_name -> cloud.v1.common.Identity
+	16, // 4: cloud.v1.ops.Webhook.created_by:type_name -> cloud.v1.iam.UserId
 	0,  // 5: cloud.v1.ops.Webhook.events:type_name -> cloud.v1.ops.WebhookEvent
-	8,  // 6: cloud.v1.ops.Webhook.headers:type_name -> cloud.v1.ops.Webhook.HeadersEntry
-	13, // 7: cloud.v1.ops.Webhook.last_success_at:type_name -> google.protobuf.Timestamp
-	13, // 8: cloud.v1.ops.Webhook.last_failure_at:type_name -> google.protobuf.Timestamp
-	2,  // 9: cloud.v1.ops.CreateWebhookRequest.webhook:type_name -> cloud.v1.ops.Webhook
-	2,  // 10: cloud.v1.ops.UpdateWebhookRequest.webhook:type_name -> cloud.v1.ops.Webhook
-	14, // 11: cloud.v1.ops.UpdateWebhookRequest.update_mask:type_name -> google.protobuf.FieldMask
-	1,  // 12: cloud.v1.ops.TestWebhookRequest.id:type_name -> cloud.v1.ops.WebhookId
-	0,  // 13: cloud.v1.ops.TestWebhookRequest.event:type_name -> cloud.v1.ops.WebhookEvent
-	2,  // 14: cloud.v1.ops.Webhook.List.webhooks:type_name -> cloud.v1.ops.Webhook
-	3,  // 15: cloud.v1.ops.WebhookService.CreateWebhook:input_type -> cloud.v1.ops.CreateWebhookRequest
-	4,  // 16: cloud.v1.ops.WebhookService.UpdateWebhook:input_type -> cloud.v1.ops.UpdateWebhookRequest
-	1,  // 17: cloud.v1.ops.WebhookService.DeleteWebhook:input_type -> cloud.v1.ops.WebhookId
-	1,  // 18: cloud.v1.ops.WebhookService.GetWebhook:input_type -> cloud.v1.ops.WebhookId
-	9,  // 19: cloud.v1.ops.WebhookService.ListWebhooks:input_type -> cloud.v1.iam.TenantId
-	5,  // 20: cloud.v1.ops.WebhookService.TestWebhook:input_type -> cloud.v1.ops.TestWebhookRequest
-	2,  // 21: cloud.v1.ops.WebhookService.CreateWebhook:output_type -> cloud.v1.ops.Webhook
-	2,  // 22: cloud.v1.ops.WebhookService.UpdateWebhook:output_type -> cloud.v1.ops.Webhook
-	2,  // 23: cloud.v1.ops.WebhookService.DeleteWebhook:output_type -> cloud.v1.ops.Webhook
-	2,  // 24: cloud.v1.ops.WebhookService.GetWebhook:output_type -> cloud.v1.ops.Webhook
-	7,  // 25: cloud.v1.ops.WebhookService.ListWebhooks:output_type -> cloud.v1.ops.Webhook.List
-	6,  // 26: cloud.v1.ops.WebhookService.TestWebhook:output_type -> cloud.v1.ops.TestWebhookResponse
-	21, // [21:27] is the sub-list for method output_type
-	15, // [15:21] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	11, // 6: cloud.v1.ops.Webhook.headers:type_name -> cloud.v1.ops.Webhook.HeadersEntry
+	17, // 7: cloud.v1.ops.Webhook.last_success_at:type_name -> google.protobuf.Timestamp
+	17, // 8: cloud.v1.ops.Webhook.last_failure_at:type_name -> google.protobuf.Timestamp
+	4,  // 9: cloud.v1.ops.WebhookDelivery.id:type_name -> cloud.v1.ops.WebhookDeliveryId
+	14, // 10: cloud.v1.ops.WebhookDelivery.timestamps:type_name -> cloud.v1.common.Timestamps
+	2,  // 11: cloud.v1.ops.WebhookDelivery.webhook_id:type_name -> cloud.v1.ops.WebhookId
+	0,  // 12: cloud.v1.ops.WebhookDelivery.event:type_name -> cloud.v1.ops.WebhookEvent
+	1,  // 13: cloud.v1.ops.WebhookDelivery.state:type_name -> cloud.v1.ops.WebhookDeliveryState
+	17, // 14: cloud.v1.ops.WebhookDelivery.next_attempt_at:type_name -> google.protobuf.Timestamp
+	17, // 15: cloud.v1.ops.WebhookDelivery.delivered_at:type_name -> google.protobuf.Timestamp
+	3,  // 16: cloud.v1.ops.CreateWebhookRequest.webhook:type_name -> cloud.v1.ops.Webhook
+	3,  // 17: cloud.v1.ops.UpdateWebhookRequest.webhook:type_name -> cloud.v1.ops.Webhook
+	18, // 18: cloud.v1.ops.UpdateWebhookRequest.update_mask:type_name -> google.protobuf.FieldMask
+	2,  // 19: cloud.v1.ops.TestWebhookRequest.id:type_name -> cloud.v1.ops.WebhookId
+	0,  // 20: cloud.v1.ops.TestWebhookRequest.event:type_name -> cloud.v1.ops.WebhookEvent
+	3,  // 21: cloud.v1.ops.Webhook.List.webhooks:type_name -> cloud.v1.ops.Webhook
+	5,  // 22: cloud.v1.ops.WebhookDelivery.List.deliveries:type_name -> cloud.v1.ops.WebhookDelivery
+	6,  // 23: cloud.v1.ops.WebhookService.CreateWebhook:input_type -> cloud.v1.ops.CreateWebhookRequest
+	7,  // 24: cloud.v1.ops.WebhookService.UpdateWebhook:input_type -> cloud.v1.ops.UpdateWebhookRequest
+	2,  // 25: cloud.v1.ops.WebhookService.DeleteWebhook:input_type -> cloud.v1.ops.WebhookId
+	2,  // 26: cloud.v1.ops.WebhookService.GetWebhook:input_type -> cloud.v1.ops.WebhookId
+	13, // 27: cloud.v1.ops.WebhookService.ListWebhooks:input_type -> cloud.v1.iam.TenantId
+	8,  // 28: cloud.v1.ops.WebhookService.TestWebhook:input_type -> cloud.v1.ops.TestWebhookRequest
+	3,  // 29: cloud.v1.ops.WebhookService.CreateWebhook:output_type -> cloud.v1.ops.Webhook
+	3,  // 30: cloud.v1.ops.WebhookService.UpdateWebhook:output_type -> cloud.v1.ops.Webhook
+	3,  // 31: cloud.v1.ops.WebhookService.DeleteWebhook:output_type -> cloud.v1.ops.Webhook
+	3,  // 32: cloud.v1.ops.WebhookService.GetWebhook:output_type -> cloud.v1.ops.Webhook
+	10, // 33: cloud.v1.ops.WebhookService.ListWebhooks:output_type -> cloud.v1.ops.Webhook.List
+	9,  // 34: cloud.v1.ops.WebhookService.TestWebhook:output_type -> cloud.v1.ops.TestWebhookResponse
+	29, // [29:35] is the sub-list for method output_type
+	23, // [23:29] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_ops_webhook_proto_init() }
@@ -707,13 +1025,14 @@ func file_cloud_v1_ops_webhook_proto_init() {
 		return
 	}
 	file_cloud_v1_ops_webhook_proto_msgTypes[1].OneofWrappers = []any{}
+	file_cloud_v1_ops_webhook_proto_msgTypes[3].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_ops_webhook_proto_rawDesc), len(file_cloud_v1_ops_webhook_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   8,
+			NumEnums:      2,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

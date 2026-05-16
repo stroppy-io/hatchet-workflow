@@ -128,6 +128,7 @@ type DagRunScanner struct {
 	Attempt           uint32     `json:"attempt"`
 	PreviousAttemptId *string    `json:"previousAttemptId,omitempty"` // origin: type_alias, empath: previous_attempt_id
 	Error             string     `json:"error"`
+	CancelRequested   bool       `json:"cancelRequested"`
 	Metadata          []byte     `json:"metadata"` // origin: serialized, empath: metadata
 }
 
@@ -180,6 +181,7 @@ func (pb *DagRun) IntoPlain() *DagRunScanner {
 		p.PreviousAttemptId = &_tmp
 	}
 	p.Error = pb.Error
+	p.CancelRequested = pb.CancelRequested
 	// Metadata serialized from metadata
 	if pb.Metadata != nil {
 		if data, err := protojson.Marshal(pb.Metadata); err == nil {
@@ -240,6 +242,7 @@ func (p *DagRunScanner) IntoPb() *DagRun {
 		pb.PreviousAttemptId = &DagRunId{Value: *p.PreviousAttemptId}
 	}
 	pb.Error = p.Error
+	pb.CancelRequested = p.CancelRequested
 	// Metadata deserialize -> metadata
 	if len(p.Metadata) > 0 {
 		var msg structpb.Struct

@@ -8,7 +8,10 @@ package ops
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	iam "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	_ "github.com/yaroher/protoc-gen-go-plain/goplain"
+	_ "github.com/yaroher/ratel/ratelproto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -348,11 +351,187 @@ func (x *RefreshQuotasRequest) GetForceProvider() bool {
 	return false
 }
 
+type QuotaCounterId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuotaCounterId) Reset() {
+	*x = QuotaCounterId{}
+	mi := &file_cloud_v1_ops_quota_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuotaCounterId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuotaCounterId) ProtoMessage() {}
+
+func (x *QuotaCounterId) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_ops_quota_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuotaCounterId.ProtoReflect.Descriptor instead.
+func (*QuotaCounterId) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_ops_quota_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *QuotaCounterId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+// QuotaCounter — persisted enforcement counter for atomic check-and-reserve.
+// Keyed by (tenant_id, resource_id). `used` is incremented on reserve and
+// decremented on release. `limit_value` is the cap; reserve fails when
+// used+amount > limit_value.
+type QuotaCounter struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            *QuotaCounterId        `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	TenantId      *iam.TenantId          `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Timestamps    *common.Timestamps     `protobuf:"bytes,3,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
+	ResourceId    string                 `protobuf:"bytes,10,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
+	LimitValue    int64                  `protobuf:"varint,11,opt,name=limit_value,json=limitValue,proto3" json:"limit_value,omitempty"`
+	Used          int64                  `protobuf:"varint,12,opt,name=used,proto3" json:"used,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuotaCounter) Reset() {
+	*x = QuotaCounter{}
+	mi := &file_cloud_v1_ops_quota_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuotaCounter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuotaCounter) ProtoMessage() {}
+
+func (x *QuotaCounter) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_ops_quota_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuotaCounter.ProtoReflect.Descriptor instead.
+func (*QuotaCounter) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_ops_quota_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *QuotaCounter) GetId() *QuotaCounterId {
+	if x != nil {
+		return x.Id
+	}
+	return nil
+}
+
+func (x *QuotaCounter) GetTenantId() *iam.TenantId {
+	if x != nil {
+		return x.TenantId
+	}
+	return nil
+}
+
+func (x *QuotaCounter) GetTimestamps() *common.Timestamps {
+	if x != nil {
+		return x.Timestamps
+	}
+	return nil
+}
+
+func (x *QuotaCounter) GetResourceId() string {
+	if x != nil {
+		return x.ResourceId
+	}
+	return ""
+}
+
+func (x *QuotaCounter) GetLimitValue() int64 {
+	if x != nil {
+		return x.LimitValue
+	}
+	return 0
+}
+
+func (x *QuotaCounter) GetUsed() int64 {
+	if x != nil {
+		return x.Used
+	}
+	return 0
+}
+
+type QuotaCounter_List struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Counters      []*QuotaCounter        `protobuf:"bytes,1,rep,name=counters,proto3" json:"counters,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuotaCounter_List) Reset() {
+	*x = QuotaCounter_List{}
+	mi := &file_cloud_v1_ops_quota_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuotaCounter_List) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuotaCounter_List) ProtoMessage() {}
+
+func (x *QuotaCounter_List) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_ops_quota_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuotaCounter_List.ProtoReflect.Descriptor instead.
+func (*QuotaCounter_List) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_ops_quota_proto_rawDescGZIP(), []int{5, 0}
+}
+
+func (x *QuotaCounter_List) GetCounters() []*QuotaCounter {
+	if x != nil {
+		return x.Counters
+	}
+	return nil
+}
+
 var File_cloud_v1_ops_quota_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_ops_quota_proto_rawDesc = "" +
 	"\n" +
-	"\x18cloud/v1/ops/quota.proto\x12\fcloud.v1.ops\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19cloud/v1/iam/tenant.proto\x1a\x17validate/validate.proto\"\x86\x03\n" +
+	"\x18cloud/v1/ops/quota.proto\x12\fcloud.v1.ops\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19cloud/v1/iam/tenant.proto\x1a cloud/v1/common/timestamps.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\x86\x03\n" +
 	"\x05Quota\x12@\n" +
 	"\vresource_id\x18\x01 \x01(\tB\x1f\xfaB\x1cr\x1a\x10\x01\x18\x80\x012\x13^[a-z][a-z0-9_.-]*$R\n" +
 	"resourceId\x12+\n" +
@@ -374,7 +553,25 @@ const file_cloud_v1_ops_quota_proto_rawDesc = "" +
 	"\x12resource_id_prefix\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@R\x10resourceIdPrefix\"|\n" +
 	"\x14RefreshQuotasRequest\x12=\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x16.cloud.v1.iam.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12%\n" +
-	"\x0eforce_provider\x18\x02 \x01(\bR\rforceProvider*z\n" +
+	"\x0eforce_provider\x18\x02 \x01(\bR\rforceProvider\":\n" +
+	"\x0eQuotaCounterId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"\xe8\x03\n" +
+	"\fQuotaCounter\x12>\n" +
+	"\x02id\x18\x01 \x01(\v2\x1c.cloud.v1.ops.QuotaCounterIdB\x10\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x04\x12\x02\x10\x01R\x02id\x12R\n" +
+	"\ttenant_id\x18\x02 \x01(\v2\x16.cloud.v1.iam.TenantIdB\x1d\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x11\x12\x0f2\atenants:\x02id@\x01R\btenantId\x12C\n" +
+	"\n" +
+	"timestamps\x18\x03 \x01(\v2\x1b.cloud.v1.common.TimestampsB\x06\x82\xa6\x1d\x02 \x01R\n" +
+	"timestamps\x12+\n" +
+	"\vresource_id\x18\n" +
+	" \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\n" +
+	"resourceId\x12\x1f\n" +
+	"\vlimit_value\x18\v \x01(\x03R\n" +
+	"limitValue\x12\x12\n" +
+	"\x04used\x18\f \x01(\x03R\x04used\x1a>\n" +
+	"\x04List\x126\n" +
+	"\bcounters\x18\x01 \x03(\v2\x1a.cloud.v1.ops.QuotaCounterR\bcounters:]\x92\xb5\x18S\b\x01\x12\x0equota_counters*?\n" +
+	"#quota_counters_tenant_resource_uniq\x12\ttenant_id\x12\vresource_id\x18\x01\x82\xa6\x1d\x02\b\x01*z\n" +
 	"\vQuotaSource\x12\x1c\n" +
 	"\x18QUOTA_SOURCE_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15QUOTA_SOURCE_PLATFORM\x10\x01\x12\x17\n" +
@@ -397,32 +594,40 @@ func file_cloud_v1_ops_quota_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_ops_quota_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_ops_quota_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_cloud_v1_ops_quota_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_cloud_v1_ops_quota_proto_goTypes = []any{
 	(QuotaSource)(0),              // 0: cloud.v1.ops.QuotaSource
 	(*Quota)(nil),                 // 1: cloud.v1.ops.Quota
 	(*QuotaList)(nil),             // 2: cloud.v1.ops.QuotaList
 	(*GetQuotasRequest)(nil),      // 3: cloud.v1.ops.GetQuotasRequest
 	(*RefreshQuotasRequest)(nil),  // 4: cloud.v1.ops.RefreshQuotasRequest
-	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
-	(*iam.TenantId)(nil),          // 6: cloud.v1.iam.TenantId
+	(*QuotaCounterId)(nil),        // 5: cloud.v1.ops.QuotaCounterId
+	(*QuotaCounter)(nil),          // 6: cloud.v1.ops.QuotaCounter
+	(*QuotaCounter_List)(nil),     // 7: cloud.v1.ops.QuotaCounter.List
+	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
+	(*iam.TenantId)(nil),          // 9: cloud.v1.iam.TenantId
+	(*common.Timestamps)(nil),     // 10: cloud.v1.common.Timestamps
 }
 var file_cloud_v1_ops_quota_proto_depIdxs = []int32{
-	0, // 0: cloud.v1.ops.Quota.source:type_name -> cloud.v1.ops.QuotaSource
-	5, // 1: cloud.v1.ops.Quota.queried_at:type_name -> google.protobuf.Timestamp
-	1, // 2: cloud.v1.ops.QuotaList.quotas:type_name -> cloud.v1.ops.Quota
-	6, // 3: cloud.v1.ops.GetQuotasRequest.tenant_id:type_name -> cloud.v1.iam.TenantId
-	0, // 4: cloud.v1.ops.GetQuotasRequest.sources:type_name -> cloud.v1.ops.QuotaSource
-	6, // 5: cloud.v1.ops.RefreshQuotasRequest.tenant_id:type_name -> cloud.v1.iam.TenantId
-	3, // 6: cloud.v1.ops.QuotaService.GetQuotas:input_type -> cloud.v1.ops.GetQuotasRequest
-	4, // 7: cloud.v1.ops.QuotaService.RefreshQuotas:input_type -> cloud.v1.ops.RefreshQuotasRequest
-	2, // 8: cloud.v1.ops.QuotaService.GetQuotas:output_type -> cloud.v1.ops.QuotaList
-	2, // 9: cloud.v1.ops.QuotaService.RefreshQuotas:output_type -> cloud.v1.ops.QuotaList
-	8, // [8:10] is the sub-list for method output_type
-	6, // [6:8] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	0,  // 0: cloud.v1.ops.Quota.source:type_name -> cloud.v1.ops.QuotaSource
+	8,  // 1: cloud.v1.ops.Quota.queried_at:type_name -> google.protobuf.Timestamp
+	1,  // 2: cloud.v1.ops.QuotaList.quotas:type_name -> cloud.v1.ops.Quota
+	9,  // 3: cloud.v1.ops.GetQuotasRequest.tenant_id:type_name -> cloud.v1.iam.TenantId
+	0,  // 4: cloud.v1.ops.GetQuotasRequest.sources:type_name -> cloud.v1.ops.QuotaSource
+	9,  // 5: cloud.v1.ops.RefreshQuotasRequest.tenant_id:type_name -> cloud.v1.iam.TenantId
+	5,  // 6: cloud.v1.ops.QuotaCounter.id:type_name -> cloud.v1.ops.QuotaCounterId
+	9,  // 7: cloud.v1.ops.QuotaCounter.tenant_id:type_name -> cloud.v1.iam.TenantId
+	10, // 8: cloud.v1.ops.QuotaCounter.timestamps:type_name -> cloud.v1.common.Timestamps
+	6,  // 9: cloud.v1.ops.QuotaCounter.List.counters:type_name -> cloud.v1.ops.QuotaCounter
+	3,  // 10: cloud.v1.ops.QuotaService.GetQuotas:input_type -> cloud.v1.ops.GetQuotasRequest
+	4,  // 11: cloud.v1.ops.QuotaService.RefreshQuotas:input_type -> cloud.v1.ops.RefreshQuotasRequest
+	2,  // 12: cloud.v1.ops.QuotaService.GetQuotas:output_type -> cloud.v1.ops.QuotaList
+	2,  // 13: cloud.v1.ops.QuotaService.RefreshQuotas:output_type -> cloud.v1.ops.QuotaList
+	12, // [12:14] is the sub-list for method output_type
+	10, // [10:12] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_ops_quota_proto_init() }
@@ -437,7 +642,7 @@ func file_cloud_v1_ops_quota_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_ops_quota_proto_rawDesc), len(file_cloud_v1_ops_quota_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   4,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

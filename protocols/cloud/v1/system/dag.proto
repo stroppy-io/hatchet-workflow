@@ -141,6 +141,10 @@ message DagRun {
     // Terminal error message when status=FAILED.
     string error = 22 [(validate.rules).string.max_len = 65536];
 
+    // cancel_requested — soft cancel flag. Workers poll this between handler
+    // yield points and propagate via ctx.Done.
+    bool cancel_requested = 23 [(ratel.column).constraints.default_value = "false"];
+
     // metadata — free-form JSON for domain annotations (tenant_id, owner
     // ref, request_id, anything). Engine treats it as opaque.
     google.protobuf.Struct metadata = 30 [

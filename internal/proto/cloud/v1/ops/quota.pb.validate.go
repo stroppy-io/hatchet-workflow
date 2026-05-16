@@ -667,3 +667,474 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = RefreshQuotasRequestValidationError{}
+
+// Validate checks the field values on QuotaCounterId with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *QuotaCounterId) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on QuotaCounterId with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in QuotaCounterIdMultiError,
+// or nil if none found.
+func (m *QuotaCounterId) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *QuotaCounterId) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetValue()) != 26 {
+		err := QuotaCounterIdValidationError{
+			field:  "Value",
+			reason: "value length must be 26 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+
+	}
+
+	if len(errors) > 0 {
+		return QuotaCounterIdMultiError(errors)
+	}
+
+	return nil
+}
+
+// QuotaCounterIdMultiError is an error wrapping multiple validation errors
+// returned by QuotaCounterId.ValidateAll() if the designated constraints
+// aren't met.
+type QuotaCounterIdMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m QuotaCounterIdMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m QuotaCounterIdMultiError) AllErrors() []error { return m }
+
+// QuotaCounterIdValidationError is the validation error returned by
+// QuotaCounterId.Validate if the designated constraints aren't met.
+type QuotaCounterIdValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QuotaCounterIdValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QuotaCounterIdValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QuotaCounterIdValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QuotaCounterIdValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QuotaCounterIdValidationError) ErrorName() string { return "QuotaCounterIdValidationError" }
+
+// Error satisfies the builtin error interface
+func (e QuotaCounterIdValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQuotaCounterId.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QuotaCounterIdValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QuotaCounterIdValidationError{}
+
+// Validate checks the field values on QuotaCounter with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *QuotaCounter) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on QuotaCounter with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in QuotaCounterMultiError, or
+// nil if none found.
+func (m *QuotaCounter) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *QuotaCounter) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetId() == nil {
+		err := QuotaCounterValidationError{
+			field:  "Id",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, QuotaCounterValidationError{
+					field:  "Id",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, QuotaCounterValidationError{
+					field:  "Id",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return QuotaCounterValidationError{
+				field:  "Id",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetTenantId() == nil {
+		err := QuotaCounterValidationError{
+			field:  "TenantId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTenantId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, QuotaCounterValidationError{
+					field:  "TenantId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, QuotaCounterValidationError{
+					field:  "TenantId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTenantId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return QuotaCounterValidationError{
+				field:  "TenantId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTimestamps()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, QuotaCounterValidationError{
+					field:  "Timestamps",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, QuotaCounterValidationError{
+					field:  "Timestamps",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTimestamps()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return QuotaCounterValidationError{
+				field:  "Timestamps",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if l := utf8.RuneCountInString(m.GetResourceId()); l < 1 || l > 128 {
+		err := QuotaCounterValidationError{
+			field:  "ResourceId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for LimitValue
+
+	// no validation rules for Used
+
+	if len(errors) > 0 {
+		return QuotaCounterMultiError(errors)
+	}
+
+	return nil
+}
+
+// QuotaCounterMultiError is an error wrapping multiple validation errors
+// returned by QuotaCounter.ValidateAll() if the designated constraints aren't met.
+type QuotaCounterMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m QuotaCounterMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m QuotaCounterMultiError) AllErrors() []error { return m }
+
+// QuotaCounterValidationError is the validation error returned by
+// QuotaCounter.Validate if the designated constraints aren't met.
+type QuotaCounterValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QuotaCounterValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QuotaCounterValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QuotaCounterValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QuotaCounterValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QuotaCounterValidationError) ErrorName() string { return "QuotaCounterValidationError" }
+
+// Error satisfies the builtin error interface
+func (e QuotaCounterValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQuotaCounter.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QuotaCounterValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QuotaCounterValidationError{}
+
+// Validate checks the field values on QuotaCounter_List with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *QuotaCounter_List) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on QuotaCounter_List with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// QuotaCounter_ListMultiError, or nil if none found.
+func (m *QuotaCounter_List) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *QuotaCounter_List) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetCounters() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, QuotaCounter_ListValidationError{
+						field:  fmt.Sprintf("Counters[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, QuotaCounter_ListValidationError{
+						field:  fmt.Sprintf("Counters[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QuotaCounter_ListValidationError{
+					field:  fmt.Sprintf("Counters[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return QuotaCounter_ListMultiError(errors)
+	}
+
+	return nil
+}
+
+// QuotaCounter_ListMultiError is an error wrapping multiple validation errors
+// returned by QuotaCounter_List.ValidateAll() if the designated constraints
+// aren't met.
+type QuotaCounter_ListMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m QuotaCounter_ListMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m QuotaCounter_ListMultiError) AllErrors() []error { return m }
+
+// QuotaCounter_ListValidationError is the validation error returned by
+// QuotaCounter_List.Validate if the designated constraints aren't met.
+type QuotaCounter_ListValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QuotaCounter_ListValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QuotaCounter_ListValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QuotaCounter_ListValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QuotaCounter_ListValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QuotaCounter_ListValidationError) ErrorName() string {
+	return "QuotaCounter_ListValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e QuotaCounter_ListValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQuotaCounter_List.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QuotaCounter_ListValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QuotaCounter_ListValidationError{}
