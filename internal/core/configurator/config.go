@@ -45,6 +45,8 @@ type TerraformConfig struct {
 type StroppyConfig struct {
 	DefaultVersion string `mapstructure:"default_version"`
 	BinariesDir    string `mapstructure:"binaries_dir"`
+	ReleasesURL    string `mapstructure:"releases_url"`
+	CommitsURL     string `mapstructure:"commits_url"`
 }
 type AuthConfig struct {
 	JWTSecretEnv string        `mapstructure:"jwt_secret_env"`

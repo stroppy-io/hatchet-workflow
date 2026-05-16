@@ -6,6 +6,18 @@ postgres:
 valkey:
   addr: "127.0.0.1:6379"
   db: 0
+s3:
+  endpoint: "http://127.0.0.1:9000"
+  bucket: "stroppy"
+  region: "us-east-1"
+  access_key_env: "S3_ACCESS_KEY"
+  secret_key_env: "S3_SECRET_KEY"
+  use_path_style: true
+stroppy:
+  default_version: "v4.1.0"
+  binaries_dir: "/var/lib/stroppy/bin"
+  releases_url: "https://api.github.com/repos/stroppy-io/stroppy/releases"
+  commits_url: "https://api.github.com/repos/stroppy-io/stroppy/commits"
 auth:
   jwt_secret_env: "JWT_SECRET"
   access_ttl: "15m"

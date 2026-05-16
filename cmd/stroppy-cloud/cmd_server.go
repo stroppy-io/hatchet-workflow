@@ -19,10 +19,14 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/core/configurator"
 	"github.com/stroppy-io/stroppy-cloud/internal/core/eventing"
 	"github.com/stroppy-io/stroppy-cloud/internal/core/logger"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/catalog"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/iam"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/stroppy"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/migrations"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/pgtx"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/s3"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/stroppybin"
 	valkey "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/valkey"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	transportconnect "github.com/stroppy-io/stroppy-cloud/internal/transport/connect"
@@ -96,6 +100,18 @@ func runServer(ctx context.Context, cfgPath string) error {
 
 	iamSvc := iam.New(exec, txMgr, bus, cfg.Auth, jwtSecret)
 
+	s3Client, err := s3.New(ctx, cfg.S3)
+	if err != nil {
+		return fmt.Errorf("s3: %w", err)
+	}
+
+	stroppyRunner := stroppybin.New(cfg.Stroppy.DefaultVersion, cfg.Stroppy.BinariesDir)
+
+	catalogSvc := catalog.New(exec, txMgr, bus)
+	catalogSvc.SetPackageStorage(catalog.NewS3PackageStorage(s3Client))
+
+	stroppySvc := stroppy.New(stroppyRunner, valkeyCli, cfg.Stroppy.ReleasesURL, cfg.Stroppy.CommitsURL)
+
 	// Bootstrap initial admin (idempotent).
 	if cfg.Features.InitialAdminEmail != "" {
 		pwd := os.Getenv(cfg.Features.InitialAdminPasswordEnv)
@@ -128,8 +144,10 @@ func runServer(ctx context.Context, cfgPath string) error {
 
 	mux := http.NewServeMux()
 	mux.Handle("/", transportconnect.Mount(transportconnect.Deps{
-		IAMHandler:   transportconnect.NewIAMHandler(iamSvc),
-		Interceptors: interceptors,
+		IAMHandler:     transportconnect.NewIAMHandler(iamSvc),
+		CatalogHandler: transportconnect.NewCatalogHandler(catalogSvc),
+		StroppyHandler: transportconnect.NewStroppyHandler(stroppySvc),
+		Interceptors:   interceptors,
 	}))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 
