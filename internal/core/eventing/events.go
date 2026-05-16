@@ -45,6 +45,7 @@ type TestRunDone struct {
 // NodeRunDone is published when an individual node run completes.
 type NodeRunDone struct {
 	NodeRunID string
+	DagRunID  string
 	TestRunID string
 	Success   bool
 }

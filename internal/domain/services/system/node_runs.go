@@ -12,6 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/core/domainerr"
+	"github.com/stroppy-io/stroppy-cloud/internal/core/eventing"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	systempb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system"
 )
@@ -77,7 +78,19 @@ func (s *Service) MarkNodeRunSucceeded(ctx context.Context, id *systempb.NodeRun
 		return err
 	}
 
-	return s.recomputeAfterNode(ctx, node)
+	if err := s.recomputeAfterNode(ctx, node); err != nil {
+		return err
+	}
+
+	_ = s.events.Publish(ctx, eventing.Event{
+		Topic: eventing.TopicNodeRunDone,
+		Payload: eventing.NodeRunDone{
+			NodeRunID: id.GetValue(),
+			DagRunID:  node.GetDagRunId().GetValue(),
+			Success:   true,
+		},
+	})
+	return nil
 }
 
 // MarkNodeRunFailed handles failure of a NodeRun. If the node has remaining
@@ -161,7 +174,19 @@ func (s *Service) MarkNodeRunFailed(ctx context.Context, id *systempb.NodeRunId,
 		return err
 	}
 
-	return s.recomputeAfterNode(ctx, node)
+	if err := s.recomputeAfterNode(ctx, node); err != nil {
+		return err
+	}
+
+	_ = s.events.Publish(ctx, eventing.Event{
+		Topic: eventing.TopicNodeRunDone,
+		Payload: eventing.NodeRunDone{
+			NodeRunID: id.GetValue(),
+			DagRunID:  node.GetDagRunId().GetValue(),
+			Success:   false,
+		},
+	})
+	return nil
 }
 
 // recomputeAfterNode unblocks PENDING_DEPS siblings whose deps are now all
@@ -276,6 +301,13 @@ func (s *Service) recomputeAfterNode(ctx context.Context, completed *systempb.No
 		return err
 	}
 
+	_ = s.events.Publish(ctx, eventing.Event{
+		Topic: eventing.TopicDagRunDone,
+		Payload: eventing.DagRunDone{
+			DagRunID: dagRun.GetId().GetValue(),
+			Success:  !anyFailed,
+		},
+	})
 	return nil
 }
 
