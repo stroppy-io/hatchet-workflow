@@ -8,6 +8,7 @@ const (
 	keyUserID ctxKey = iota
 	keyTenantID
 	keyRequestID
+	keyPlatformRole
 )
 
 func WithUserID(ctx context.Context, id string) context.Context {
@@ -34,5 +35,14 @@ func WithRequestID(ctx context.Context, id string) context.Context {
 
 func RequestIDFromCtx(ctx context.Context) string {
 	v, _ := ctx.Value(keyRequestID).(string)
+	return v
+}
+
+func WithPlatformRole(ctx context.Context, role string) context.Context {
+	return context.WithValue(ctx, keyPlatformRole, role)
+}
+
+func PlatformRoleFromCtx(ctx context.Context) string {
+	v, _ := ctx.Value(keyPlatformRole).(string)
 	return v
 }

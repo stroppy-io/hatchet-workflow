@@ -8,16 +8,18 @@ import (
 )
 
 type accessClaims struct {
-	UserID string `json:"sub"`
-	JTI    string `json:"jti"`
+	UserID       string `json:"sub"`
+	JTI          string `json:"jti"`
+	PlatformRole string `json:"platform_role,omitempty"`
 	jwt.RegisteredClaims
 }
 
-func (s *Service) signAccessToken(userID, jti string) (string, error) {
+func (s *Service) signAccessToken(userID, jti, platformRole string) (string, error) {
 	now := time.Now()
 	claims := accessClaims{
-		UserID: userID,
-		JTI:    jti,
+		UserID:       userID,
+		JTI:          jti,
+		PlatformRole: platformRole,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(s.cfg.AccessTTL)),
@@ -27,7 +29,8 @@ func (s *Service) signAccessToken(userID, jti string) (string, error) {
 	return tok.SignedString(s.jwtSecret)
 }
 
-func (s *Service) VerifyAccessToken(token string) (string, string, error) {
+// VerifyAccessToken validates a JWT and returns (userID, jti, platformRole, error).
+func (s *Service) VerifyAccessToken(token string) (string, string, string, error) {
 	parsed, err := jwt.ParseWithClaims(token, &accessClaims{}, func(t *jwt.Token) (any, error) {
 		if t.Method != jwt.SigningMethodHS256 {
 			return nil, fmt.Errorf("unexpected sign method: %v", t.Method)
@@ -35,11 +38,11 @@ func (s *Service) VerifyAccessToken(token string) (string, string, error) {
 		return s.jwtSecret, nil
 	})
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	claims, ok := parsed.Claims.(*accessClaims)
 	if !ok || !parsed.Valid {
-		return "", "", fmt.Errorf("invalid token")
+		return "", "", "", fmt.Errorf("invalid token")
 	}
-	return claims.UserID, claims.JTI, nil
+	return claims.UserID, claims.JTI, claims.PlatformRole, nil
 }

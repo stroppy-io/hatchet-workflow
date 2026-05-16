@@ -98,3 +98,65 @@ func (s *Service) ListUsers(ctx context.Context) ([]*iampb.User, error) {
 		iampb.Users.SelectAll().Where(iampb.Users.DeletedAt.IsNull()),
 	)
 }
+
+// DeleteUser hard-deletes a user by ID (cascades on FKs).
+func (s *Service) DeleteUser(ctx context.Context, id *iampb.UserId) (*iampb.User, error) {
+	u, err := s.GetUserByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.userRepo.Execute(ctx,
+		iampb.Users.Delete().Where(iampb.Users.Id.Eq(id.GetValue())),
+	); err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
+// ResetUserPassword sets a new password hash and revokes all active refresh tokens.
+func (s *Service) ResetUserPassword(ctx context.Context, id *iampb.UserId, newPassword string) (*iampb.User, error) {
+	return pgtx.WithSerializableRet(ctx, s.txManager, func(ctx context.Context) (*iampb.User, error) {
+		u, err := s.GetUserByID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		hash, err := hashPassword(newPassword)
+		if err != nil {
+			return nil, err
+		}
+		now := time.Now()
+		if _, err := s.userRepo.Execute(ctx,
+			iampb.Users.Update().
+				Set(iampb.Users.PasswordHash.Set(hash)).
+				Where(iampb.Users.Id.Eq(id.GetValue())),
+		); err != nil {
+			return nil, err
+		}
+		// Revoke all active refresh tokens — forces re-login on all devices.
+		if _, err := s.refreshRepo.Execute(ctx,
+			iampb.RefreshTokens.Update().
+				Set(iampb.RefreshTokens.RevokedAt.Set(&now)).
+				Where(
+					iampb.RefreshTokens.UserId.Eq(id.GetValue()),
+					iampb.RefreshTokens.RevokedAt.IsNull(),
+				),
+		); err != nil {
+			return nil, err
+		}
+		return u, nil
+	})
+}
+
+// PromoteToAdmin sets platform_role=PLATFORM_ROLE_ADMIN on the given user.
+func (s *Service) PromoteToAdmin(ctx context.Context, id *iampb.UserId) (*iampb.User, error) {
+	return pgtx.WithSerializableRet(ctx, s.txManager, func(ctx context.Context) (*iampb.User, error) {
+		if _, err := s.userRepo.Execute(ctx,
+			iampb.Users.Update().
+				Set(iampb.Users.PlatformRole.Set(iampb.PlatformRole_PLATFORM_ROLE_ADMIN.String())).
+				Where(iampb.Users.Id.Eq(id.GetValue())),
+		); err != nil {
+			return nil, err
+		}
+		return s.GetUserByID(ctx, id)
+	})
+}

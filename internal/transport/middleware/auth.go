@@ -13,7 +13,7 @@ import (
 
 // AuthPort is implemented by iam.Service.
 type AuthPort interface {
-	VerifyAccessToken(token string) (userID string, jti string, err error)
+	VerifyAccessToken(token string) (userID string, jti string, platformRole string, err error)
 	VerifyApiToken(ctx context.Context, plain string) (*iampb.ApiToken, error)
 }
 
@@ -37,11 +37,12 @@ func Auth(svc AuthPort, bypass map[string]bool) connect.UnaryInterceptorFunc {
 			token := parts[1]
 			switch scheme {
 			case "bearer":
-				userID, _, err := svc.VerifyAccessToken(token)
+				userID, _, platformRole, err := svc.VerifyAccessToken(token)
 				if err != nil {
 					return nil, toConnect(domainerr.Unauthenticated())
 				}
 				ctx = WithUserID(ctx, userID)
+				ctx = WithPlatformRole(ctx, platformRole)
 			case "token":
 				row, err := svc.VerifyApiToken(ctx, token)
 				if err != nil {

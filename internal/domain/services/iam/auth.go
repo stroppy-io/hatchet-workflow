@@ -127,7 +127,15 @@ func (s *Service) Logout(ctx context.Context, refreshTokenValue string) error {
 func (s *Service) issuePair(ctx context.Context, userID *iampb.UserId, familyID string) (*iampb.TokenPair, error) {
 	now := time.Now()
 	jti := ids.New()
-	access, err := s.signAccessToken(userID.GetValue(), jti)
+
+	// Embed platform_role into the access token so the admin middleware can gate
+	// admin-only endpoints without an extra DB round-trip.
+	platformRole := ""
+	if user, err := s.GetUserByID(ctx, userID); err == nil {
+		platformRole = user.GetPlatformRole().String()
+	}
+
+	access, err := s.signAccessToken(userID.GetValue(), jti, platformRole)
 	if err != nil {
 		return nil, err
 	}

@@ -91,6 +91,27 @@ func (s *Service) GetTenantByID(ctx context.Context, id *iampb.TenantId) (*iampb
 	return t, nil
 }
 
+// ListAllTenants returns all non-deleted tenants (platform-admin view).
+func (s *Service) ListAllTenants(ctx context.Context) ([]*iampb.Tenant, error) {
+	return s.tenantRepo.Query(ctx,
+		iampb.Tenants.SelectAll().Where(iampb.Tenants.DeletedAt.IsNull()),
+	)
+}
+
+// DeleteTenantHard hard-deletes a tenant by ID (cascades on FKs via DB constraints).
+func (s *Service) DeleteTenantHard(ctx context.Context, id *iampb.TenantId) (*iampb.Tenant, error) {
+	t, err := s.GetTenantByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.tenantRepo.Execute(ctx,
+		iampb.Tenants.Delete().Where(iampb.Tenants.Id.Eq(id.GetValue())),
+	); err != nil {
+		return nil, err
+	}
+	return t, nil
+}
+
 // ListTenantsForUser returns tenants where user is a member.
 func (s *Service) ListTenantsForUser(ctx context.Context, userID *iampb.UserId) ([]*iampb.Tenant, error) {
 	members, err := s.memberRepo.Query(ctx,
