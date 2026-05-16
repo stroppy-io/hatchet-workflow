@@ -6,13 +6,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/migrations"
 	pgxinfra "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/migrations"
 )
 
 var (
@@ -58,7 +60,15 @@ func Shared(t *testing.T) string {
 func Bootstrap(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 	dsn := Shared(t)
-	pool, err := pgxpool.New(context.Background(), dsn)
+	cfg, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		t.Fatalf("pgcontainer: parse config: %v", err)
+	}
+	cfg.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+		registerProtoTypes(conn.TypeMap())
+		return nil
+	}
+	pool, err := pgxpool.NewWithConfig(context.Background(), cfg)
 	if err != nil {
 		t.Fatalf("pgcontainer: pool: %v", err)
 	}
@@ -68,4 +78,15 @@ func Bootstrap(t *testing.T) *pgxpool.Pool {
 	}
 	t.Cleanup(pool.Close)
 	return pool
+}
+
+// registerProtoTypes registers custom pgx codecs needed for proto message
+// fields that are stored in PostgreSQL text columns. This is necessary because
+// ratel-generated scanners use *anypb.Any directly for text NOT NULL columns.
+func registerProtoTypes(tm *pgtype.Map) {
+	tm.RegisterType(&pgtype.Type{
+		Name:  "text",
+		OID:   pgtype.TextOID,
+		Codec: anypbCodec{},
+	})
 }

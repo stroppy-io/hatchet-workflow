@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/yaroher/ratel/pkg/dml/set"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -57,12 +59,15 @@ func (s *Service) MarkNodeRunSucceeded(ctx context.Context, id *systempb.NodeRun
 	touchTimestamps(node, now)
 
 	scanner := node.IntoPlain()
+	// The output column is text NOT NULL but the scanner holds *anypb.Any which
+	// pgx cannot encode directly as text. Serialize to JSON string explicitly.
+	outputStr := serializeAnyOutput(output)
 	if _, err := s.nodeRunRepo.Execute(ctx,
 		systempb.NodeRuns.Update().
 			Set(
 				scanner.GetSetter(systempb.NodeRunColumnStatus)(),
 				scanner.GetSetter(systempb.NodeRunColumnFinishedAt)(),
-				scanner.GetSetter(systempb.NodeRunColumnOutput)(),
+				set.NewSetter[systempb.NodeRunColumnAlias](systempb.NodeRunColumnOutput, outputStr),
 				scanner.GetSetter(systempb.NodeRunColumnUpdatedAt)(),
 			).
 			Where(
@@ -281,6 +286,19 @@ func touchTimestamps(node *systempb.NodeRun, t time.Time) {
 		node.Timestamps = &commonpb.Timestamps{}
 	}
 	node.Timestamps.UpdatedAt = timestamppb.New(t)
+}
+
+// serializeAnyOutput converts *anypb.Any to a JSON string for storage in the
+// text NOT NULL output column. Returns "" when output is nil.
+func serializeAnyOutput(output *anypb.Any) string {
+	if output == nil {
+		return ""
+	}
+	data, err := protojson.Marshal(output)
+	if err != nil {
+		return ""
+	}
+	return string(data)
 }
 
 // terminalAggregate reports whether all siblings are in a terminal state and

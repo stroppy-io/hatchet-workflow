@@ -12,7 +12,7 @@ import (
 type MockHandler struct{}
 
 func NewMockHandler() *MockHandler { return &MockHandler{} }
-func (h *MockHandler) Kind() string { return "Mock" }
+func (h *MockHandler) Kind() string { return "" }
 func (h *MockHandler) Execute(_ context.Context, _ *systempb.NodeRun, _ *anypb.Any, _ nodeworker.StateStore) (*anypb.Any, error) {
 	return nil, nil
 }

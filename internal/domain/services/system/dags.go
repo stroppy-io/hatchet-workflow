@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/core/domainerr"
@@ -32,6 +33,12 @@ func (s *Service) SaveDag(ctx context.Context, dag *systempb.Dag) (*systempb.Dag
 					dag.Timestamps = &commonpb.Timestamps{
 						CreatedAt: now,
 						UpdatedAt: now,
+					}
+					if dag.Metadata == nil {
+						dag.Metadata = &structpb.Struct{Fields: map[string]*structpb.Value{}}
+					}
+					if dag.Graph == nil {
+						dag.Graph = &systempb.Dag_Graph{}
 					}
 					scanner := dag.IntoPlain()
 					if _, err := s.dagRepo.Execute(ctx,
