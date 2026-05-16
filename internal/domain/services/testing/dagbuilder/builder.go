@@ -7,20 +7,25 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/testing"
 	catalogpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog"
 	systempb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system"
 	taskspb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/tasks"
 	testingpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing"
 )
 
-// Builder converts a TestRun into a systempb.Dag template the engine can execute.
-type Builder struct {
-	catalog testing.CatalogPort
+// CatalogPort is the subset of catalog the builder needs. Defined locally
+// to avoid an import cycle with the parent testing package.
+type CatalogPort interface {
+	GetDatabasePreset(ctx context.Context, id *catalogpb.DatabasePresetId) (*catalogpb.DatabasePreset, error)
+	GetWorkloadPreset(ctx context.Context, id *catalogpb.WorkloadPresetId) (*catalogpb.WorkloadPreset, error)
+	GetPackage(ctx context.Context, id *catalogpb.PackageId) (*catalogpb.Package, error)
 }
 
-// New creates a Builder backed by the given CatalogPort.
-func New(catalog testing.CatalogPort) *Builder { return &Builder{catalog: catalog} }
+type Builder struct {
+	catalog CatalogPort
+}
+
+func New(catalog CatalogPort) *Builder { return &Builder{catalog: catalog} }
 
 // FromTestRun produces a 4-node DAG: provision → install → workload → teardown.
 func (b *Builder) FromTestRun(ctx context.Context, tr *testingpb.TestRun) (*systempb.Dag, error) {
