@@ -33,3 +33,10 @@ type SystemEnginePort interface {
 type MetricsPort interface {
 	Query(ctx context.Context, tenant *iampb.TenantId, testRunID *testingpb.TestRunId, query string) (*testingpb.MetricSeriesList, error)
 }
+
+// DagBuilderPort converts a TestRun into a Dag template. Defined as an
+// interface here to avoid an import cycle between the testing and dagbuilder
+// packages.
+type DagBuilderPort interface {
+	FromTestRun(ctx context.Context, tr *testingpb.TestRun) (*systempb.Dag, error)
+}
