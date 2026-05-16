@@ -19,6 +19,7 @@ type Service struct {
 	stateRepo    *repository.ProtoRepository[systempb.DagRunStateEntryAlias, systempb.DagRunStateEntryColumnAlias, *systempb.DagRunStateEntryScanner, *systempb.DagRunStateEntry]
 	scheduleRepo *repository.ProtoRepository[systempb.ScheduleAlias, systempb.ScheduleColumnAlias, *systempb.ScheduleScanner, *systempb.Schedule]
 
+	db     exec.DB
 	txMgr  pgtx.TxManager
 	events eventing.Bus
 }
@@ -26,6 +27,7 @@ type Service struct {
 func New(executor exec.DB, txMgr pgtx.TxManager, events eventing.Bus) *Service {
 	return &Service{
 		Entity: tracing.NewEntity("system.Service"),
+		db:     executor,
 		dagRepo: repository.NewProtoRepository(
 			repository.NewScannerRepository(systempb.Dags.Table, executor),
 			systempb.DagConverter,

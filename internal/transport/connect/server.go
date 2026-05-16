@@ -8,13 +8,15 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog/catalogconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam/iamconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/stroppy/stroppyconnect"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system/systemconnect"
 )
 
 // Deps aggregates Connect handler dependencies for mounting.
 type Deps struct {
-	IAMHandler     *IAMHandler
-	CatalogHandler *CatalogHandler
-	StroppyHandler *StroppyHandler
+	IAMHandler      *IAMHandler
+	CatalogHandler  *CatalogHandler
+	StroppyHandler  *StroppyHandler
+	ScheduleHandler *ScheduleHandler
 
 	Interceptors connect.Option
 }
@@ -54,6 +56,10 @@ func Mount(d Deps) http.Handler {
 	// Stroppy service
 	stroppyPath, stroppyHandler := stroppyconnect.NewStroppyServiceHandler(d.StroppyHandler, d.Interceptors)
 	mux.Handle(stroppyPath, stroppyHandler)
+
+	// Schedule service
+	schedPath, schedHandler := systemconnect.NewScheduleServiceHandler(d.ScheduleHandler, d.Interceptors)
+	mux.Handle(schedPath, schedHandler)
 
 	return mux
 }

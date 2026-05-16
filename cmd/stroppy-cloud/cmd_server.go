@@ -174,10 +174,11 @@ func runServer(ctx context.Context, cfgPath string) error {
 
 	mux := http.NewServeMux()
 	mux.Handle("/", transportconnect.Mount(transportconnect.Deps{
-		IAMHandler:     transportconnect.NewIAMHandler(iamSvc),
-		CatalogHandler: transportconnect.NewCatalogHandler(catalogSvc),
-		StroppyHandler: transportconnect.NewStroppyHandler(stroppySvc),
-		Interceptors:   interceptors,
+		IAMHandler:      transportconnect.NewIAMHandler(iamSvc),
+		CatalogHandler:  transportconnect.NewCatalogHandler(catalogSvc),
+		StroppyHandler:  transportconnect.NewStroppyHandler(stroppySvc),
+		ScheduleHandler: transportconnect.NewScheduleHandler(systemSvc),
+		Interceptors:    interceptors,
 	}))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 

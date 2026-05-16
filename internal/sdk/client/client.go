@@ -9,6 +9,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog/catalogconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam/iamconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/stroppy/stroppyconnect"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system/systemconnect"
 )
 
 // Client aggregates typed Connect stubs for every public service.
@@ -27,6 +28,7 @@ type Client struct {
 	Package        catalogconnect.PackageServiceClient
 	Settings       catalogconnect.SettingsServiceClient
 	Stroppy        stroppyconnect.StroppyServiceClient
+	Schedule       systemconnect.ScheduleServiceClient
 }
 
 // Option configures Client.
@@ -57,6 +59,7 @@ func New(serverURL string, opts ...Option) *Client {
 	c.Package = catalogconnect.NewPackageServiceClient(c.httpClient, serverURL, connOpts...)
 	c.Settings = catalogconnect.NewSettingsServiceClient(c.httpClient, serverURL, connOpts...)
 	c.Stroppy = stroppyconnect.NewStroppyServiceClient(c.httpClient, serverURL, connOpts...)
+	c.Schedule = systemconnect.NewScheduleServiceClient(c.httpClient, serverURL, connOpts...)
 	return c
 }
 
