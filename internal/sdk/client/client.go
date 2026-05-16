@@ -6,8 +6,10 @@ import (
 
 	"connectrpc.com/connect"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent/agentconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog/catalogconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam/iamconnect"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/ops/opsconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/stroppy/stroppyconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system/systemconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing/testingconnect"
@@ -38,6 +40,10 @@ type Client struct {
 	SharedTestRun  testingconnect.SharedTestRunServiceClient
 	SharedSuiteRun testingconnect.SharedSuiteRunServiceClient
 	Comparison     testingconnect.ComparisonServiceClient
+
+	Webhook     opsconnect.WebhookServiceClient
+	Quota       opsconnect.QuotaServiceClient
+	BinaryCache agentconnect.BinaryCacheServiceClient
 }
 
 // Option configures Client.
@@ -69,6 +75,9 @@ func New(serverURL string, opts ...Option) *Client {
 	c.Settings = catalogconnect.NewSettingsServiceClient(c.httpClient, serverURL, connOpts...)
 	c.Stroppy = stroppyconnect.NewStroppyServiceClient(c.httpClient, serverURL, connOpts...)
 	c.Schedule = systemconnect.NewScheduleServiceClient(c.httpClient, serverURL, connOpts...)
+	c.Webhook = opsconnect.NewWebhookServiceClient(c.httpClient, serverURL, connOpts...)
+	c.Quota = opsconnect.NewQuotaServiceClient(c.httpClient, serverURL, connOpts...)
+	c.BinaryCache = agentconnect.NewBinaryCacheServiceClient(c.httpClient, serverURL, connOpts...)
 	c.initTestingClients(connOpts)
 	return c
 }
