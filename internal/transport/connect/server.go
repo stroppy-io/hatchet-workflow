@@ -8,6 +8,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent/agentconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog/catalogconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam/iamconnect"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/ops/opsconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/stroppy/stroppyconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system/systemconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing/testingconnect"
@@ -25,6 +26,10 @@ type Deps struct {
 	SharedSuiteRunHandler *SharedSuiteRunHandler
 	ComparisonHandler  *ComparisonHandler
 	AgentHandler       *AgentHandler
+
+	WebhookHandler     *WebhookHandler
+	QuotaHandler       *QuotaHandler
+	BinaryCacheHandler *BinaryCacheHandler
 
 	Interceptors connect.Option
 }
@@ -109,6 +114,24 @@ func Mount(d Deps) http.Handler {
 	if d.AgentHandler != nil {
 		agentPath, agentH := agentconnect.NewAgentServiceHandler(d.AgentHandler, d.Interceptors)
 		mux.Handle(agentPath, agentH)
+	}
+
+	// Webhook service
+	if d.WebhookHandler != nil {
+		webhookPath, webhookH := opsconnect.NewWebhookServiceHandler(d.WebhookHandler, d.Interceptors)
+		mux.Handle(webhookPath, webhookH)
+	}
+
+	// Quota service
+	if d.QuotaHandler != nil {
+		quotaPath, quotaH := opsconnect.NewQuotaServiceHandler(d.QuotaHandler, d.Interceptors)
+		mux.Handle(quotaPath, quotaH)
+	}
+
+	// BinaryCache service (agent-facing)
+	if d.BinaryCacheHandler != nil {
+		binaryPath, binaryH := agentconnect.NewBinaryCacheServiceHandler(d.BinaryCacheHandler, d.Interceptors)
+		mux.Handle(binaryPath, binaryH)
 	}
 
 	return mux
