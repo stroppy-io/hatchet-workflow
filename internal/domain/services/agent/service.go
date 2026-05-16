@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -9,12 +10,12 @@ import (
 	"github.com/yaroher/ratel/pkg/exec"
 	"github.com/yaroher/ratel/pkg/repository"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/core/eventing"
 	"github.com/stroppy-io/stroppy-cloud/internal/core/ids"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/pgtx"
 	agentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
-	"github.com/stroppy-io/stroppy-cloud/internal/core/eventing"
-	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/pgtx"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -25,54 +26,52 @@ type bootEntry struct {
 }
 
 // Service handles agent registration, polling and deregistration.
-// Bootstrap tokens and poll tokens are stored in-memory (single-node).
+// Bootstrap tokens are JWT-signed; poll tokens are stored in-memory (single-node).
 type Service struct {
-	repo   *repository.ProtoRepository[agentpb.AgentAlias, agentpb.AgentColumnAlias, *agentpb.AgentScanner, *agentpb.Agent]
-	txMgr  pgtx.TxManager
-	events eventing.Bus
-	hub    *Hub
+	repo      *repository.ProtoRepository[agentpb.AgentAlias, agentpb.AgentColumnAlias, *agentpb.AgentScanner, *agentpb.Agent]
+	txMgr     pgtx.TxManager
+	events    eventing.Bus
+	hub       *Hub
+	cmdRepo   *CommandsRepo
+	bootstrap *BootstrapTokenStore
 
 	mu     sync.Mutex
-	tokens map[string]string    // poll_token → agent_id
-	boots  map[string]bootEntry // bootstrap_token → metadata
+	tokens map[string]string // poll_token → agent_id
 }
 
-func New(executor exec.DB, txMgr pgtx.TxManager, events eventing.Bus, hub *Hub) *Service {
+func New(executor exec.DB, txMgr pgtx.TxManager, events eventing.Bus, hub *Hub, cmdRepo *CommandsRepo, bootstrap *BootstrapTokenStore) *Service {
 	return &Service{
 		repo: repository.NewProtoRepository(
 			repository.NewScannerRepository(agentpb.Agents.Table, executor),
 			agentpb.AgentConverter,
 		),
-		txMgr:  txMgr,
-		events: events,
-		hub:    hub,
-		tokens: map[string]string{},
-		boots:  map[string]bootEntry{},
+		txMgr:     txMgr,
+		events:    events,
+		hub:       hub,
+		cmdRepo:   cmdRepo,
+		bootstrap: bootstrap,
+		tokens:    map[string]string{},
 	}
 }
 
-// IssueBootstrap returns a one-shot bootstrap token bound to the given
+// IssueBootstrap returns a signed JWT bootstrap token bound to the given
 // tenant and dag-run. The agent presents this token in Register.
 func (s *Service) IssueBootstrap(tenantID, dagRunID string) string {
-	t := ids.New()
-	s.mu.Lock()
-	s.boots[t] = bootEntry{tenantID: tenantID, dagRunID: dagRunID}
-	s.mu.Unlock()
-	return t
+	tok, err := s.bootstrap.Issue(tenantID, dagRunID, "", "")
+	if err != nil {
+		return ""
+	}
+	return tok
 }
 
 // Register validates the bootstrap token, inserts an agents row, and returns
 // the Agent proto plus a long-lived poll_token.
 func (s *Service) Register(ctx context.Context, req *agentpb.RegisterRequest) (*agentpb.RegisterResponse, error) {
-	s.mu.Lock()
-	entry, ok := s.boots[req.GetBootstrapToken()]
-	if ok {
-		delete(s.boots, req.GetBootstrapToken())
+	claims, err := s.bootstrap.Verify(req.GetBootstrapToken())
+	if err != nil {
+		return nil, fmt.Errorf("agent.Register: invalid bootstrap_token: %w", err)
 	}
-	s.mu.Unlock()
-	if !ok {
-		return nil, fmt.Errorf("agent.Register: invalid or already-used bootstrap_token")
-	}
+	entry := bootEntry{tenantID: claims.TenantID, dagRunID: claims.DagRunID}
 
 	now := time.Now()
 	nowTs := timestamppb.New(now)
@@ -125,10 +124,24 @@ func (s *Service) Poll(ctx context.Context, req *agentpb.PollRequest) (*agentpb.
 	if rep := req.GetReport(); rep != nil {
 		for _, r := range rep.GetReports() {
 			s.hub.Resolve(r.GetCommandId(), r)
+			if s.cmdRepo != nil {
+				reportBytes, _ := json.Marshal(r)
+				_ = s.cmdRepo.MarkReported(ctx, r.GetCommandId(), reportBytes)
+			}
 		}
 	}
 
 	cmds := s.hub.Drain(agentID)
+	if s.cmdRepo != nil {
+		for _, cmd := range cmds {
+			// Insert PENDING row (using hub cmd.Id as the DB row id for correlation),
+			// then immediately transition to DELIVERED.
+			payload, _ := json.Marshal(cmd.GetAction())
+			if _, err := s.cmdRepo.Insert(ctx, cmd.GetId(), agentID, cmd.GetRunId(), payload); err == nil {
+				_ = s.cmdRepo.MarkDelivered(ctx, cmd.GetId())
+			}
+		}
+	}
 	return &agentpb.CommandBatch{Commands: cmds}, nil
 }
 

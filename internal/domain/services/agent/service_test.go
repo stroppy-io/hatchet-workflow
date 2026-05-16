@@ -24,6 +24,7 @@ import (
 type agentFixture struct {
 	svc      *agentsvc.Service
 	hub      *agentsvc.Hub
+	cmdRepo  *agentsvc.CommandsRepo
 	iamSvc   *iam.Service
 	tenantID string
 }
@@ -57,11 +58,14 @@ func setupAgentFixture(t *testing.T) *agentFixture {
 	}
 
 	hub := agentsvc.NewHub()
-	svc := agentsvc.New(executor, f.TxMgr, f.Events, hub)
+	cmdRepo := agentsvc.NewCommandsRepo(executor, f.TxMgr)
+	bootstrapStore := agentsvc.NewBootstrapTokenStore([]byte("test-bootstrap-secret-32-bytes!!"))
+	svc := agentsvc.New(executor, f.TxMgr, f.Events, hub, cmdRepo, bootstrapStore)
 
 	return &agentFixture{
 		svc:      svc,
 		hub:      hub,
+		cmdRepo:  cmdRepo,
 		iamSvc:   iamSvc,
 		tenantID: tenant.GetId().GetValue(),
 	}
@@ -182,4 +186,72 @@ func TestService_Deregister(t *testing.T) {
 
 	err = af.svc.Deregister(ctx, resp.GetAgent().GetId())
 	require.NoError(t, err)
+}
+
+func TestService_CommandPersistedReported(t *testing.T) {
+	af := setupAgentFixture(t)
+	ctx := context.Background()
+
+	token := af.svc.IssueBootstrap(af.tenantID, "dag-run-cmd-persist")
+	resp, err := af.svc.Register(ctx, &agentpb.RegisterRequest{
+		BootstrapToken: token,
+		MachineId:      "machine-persist",
+		Role:           catalogpb.MachineRole_MACHINE_ROLE_DATABASE,
+		InternalIp:     "10.0.0.9",
+		AgentVersion:   "v0.1.0",
+		Capabilities:   []string{},
+	})
+	require.NoError(t, err)
+	agentID := resp.GetAgent().GetId().GetValue()
+
+	action := &agentpb.Action{
+		Verb: &agentpb.Action_RunShell{
+			RunShell: &agentpb.RunShell{Argv: []string{"echo", "hello"}, Shell: false},
+		},
+	}
+
+	dispatchDone := make(chan *agentpb.Report, 1)
+	go func() {
+		r, _ := af.hub.Dispatch(ctx, agentID, "machine-persist", action, 10*time.Second)
+		dispatchDone <- r
+	}()
+	time.Sleep(30 * time.Millisecond)
+
+	batch, err := af.svc.Poll(ctx, &agentpb.PollRequest{
+		AgentId: resp.GetAgent().GetId(),
+		Report:  &agentpb.AgentReport{},
+	})
+	require.NoError(t, err)
+	require.Len(t, batch.GetCommands(), 1)
+	cmd := batch.GetCommands()[0]
+
+	report := &agentpb.Report{
+		CommandId:  cmd.GetId(),
+		MachineId:  "machine-persist",
+		Status:     agentpb.ReportStatus_REPORT_STATUS_SUCCEEDED,
+		FinishedAt: timestamppb.Now(),
+	}
+	_, err = af.svc.Poll(ctx, &agentpb.PollRequest{
+		AgentId: resp.GetAgent().GetId(),
+		Report:  &agentpb.AgentReport{Reports: []*agentpb.Report{report}},
+	})
+	require.NoError(t, err)
+	select {
+	case <-dispatchDone:
+	case <-time.After(5 * time.Second):
+		t.Fatal("dispatch did not complete in time")
+	}
+
+	// Verify DB: at least one REPORTED agent_command row exists.
+	cmds, err := af.cmdRepo.FindByNodeRun(ctx, cmd.GetId())
+	require.NoError(t, err)
+	// cmd.GetId() is the hub cmd ID used as nodeRunID (RunId field).
+	// Actually RunId may be empty — search by the command id directly.
+	_ = cmds
+	// Re-check: the row is stored with the hub cmd.Id as the DB row id.
+	// FindByNodeRun with cmd.GetId() won't find it since nodeRunId=RunId field.
+	// Use MarkReported's actual effect: insert+mark means the row id == cmd.Id.
+	reported, err := af.cmdRepo.FindReportedForID(ctx, cmd.GetId())
+	require.NoError(t, err)
+	require.NotNil(t, reported, "expected REPORTED agent_command row")
 }
