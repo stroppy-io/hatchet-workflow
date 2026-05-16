@@ -19,6 +19,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/core/configurator"
 	"github.com/stroppy-io/stroppy-cloud/internal/core/eventing"
 	"github.com/stroppy-io/stroppy-cloud/internal/core/logger"
+	agentsvc "github.com/stroppy-io/stroppy-cloud/internal/domain/services/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/catalog"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/iam"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/stroppy"
@@ -136,6 +137,9 @@ func runServer(ctx context.Context, cfgPath string) error {
 		}
 	}
 
+	agentHub := agentsvc.NewHub()
+	agentService := agentsvc.New(exec, txMgr, bus, agentHub)
+
 	nodeReg := nodeworker.NewRegistry()
 	nodeReg.Register(mockhandler.NewMockHandler())
 
@@ -194,7 +198,8 @@ func runServer(ctx context.Context, cfgPath string) error {
 		SharedTestRunHandler:  transportconnect.NewSharedTestRunHandler(sharedTestRunSvc),
 		SharedSuiteRunHandler: transportconnect.NewSharedSuiteRunHandler(sharedSuiteRunSvc),
 		ComparisonHandler:     transportconnect.NewComparisonHandler(comparisonSvc),
-		Interceptors:    interceptors,
+		AgentHandler:          transportconnect.NewAgentHandler(agentService),
+		Interceptors:          interceptors,
 	}))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 
