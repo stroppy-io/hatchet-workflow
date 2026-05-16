@@ -36,6 +36,11 @@ func execute(ctx context.Context, w *Worker, n *claimedNode) {
 		_ = w.system.MarkNodeRunFailed(ctx, &systempb.NodeRunId{Value: n.ID}, "get dag_run: "+err.Error())
 		return
 	}
+	// If the parent DagRun has been cancelled, fail this node immediately.
+	if dagRun.GetCancelRequested() {
+		_ = w.system.MarkNodeRunFailed(ctx, &systempb.NodeRunId{Value: n.ID}, "cancelled")
+		return
+	}
 	dag, err := w.system.GetDag(ctx, dagRun.GetDagId())
 	if err != nil {
 		_ = w.system.MarkNodeRunFailed(ctx, &systempb.NodeRunId{Value: n.ID}, "get dag: "+err.Error())

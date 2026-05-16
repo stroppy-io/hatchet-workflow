@@ -3,6 +3,7 @@ package system
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/yaroher/ratel/pkg/dml/set"
@@ -111,12 +112,34 @@ func (s *Service) GetDagRun(ctx context.Context, id *systempb.DagRunId) (*system
 	return run, nil
 }
 
-// CancelDagRun signals cancellation for a running DagRun.
-//
-// TODO: requires DagRun.cancel_requested column (proto change). Workers will
-// check this field once it is added. Until then the method is a stub.
-func (s *Service) CancelDagRun(_ context.Context, _ *systempb.DagRunId) error {
-	return errors.New("cancel not implemented")
+// CancelDagRun sets cancel_requested=true on the DagRun.
+// Returns domainerr.NotFound if the row does not exist or is soft-deleted.
+func (s *Service) CancelDagRun(ctx context.Context, id *systempb.DagRunId) error {
+	return tracing.WithTraceErr(s.Tracer(), ctx, "CancelDagRun",
+		func(ctx context.Context, _ trace.Span) error {
+			return pgtx.WithSerializable(ctx, s.txMgr,
+				func(ctx context.Context) error {
+					now := time.Now()
+					n, err := s.dagRunRepo.Execute(ctx,
+						systempb.DagRuns.Update().
+							Set(
+								systempb.DagRuns.CancelRequested.Set(true),
+								systempb.DagRuns.UpdatedAt.Set(now),
+							).
+							Where(
+								systempb.DagRuns.Id.Eq(id.GetValue()),
+								systempb.DagRuns.DeletedAt.IsNull(),
+							),
+					)
+					if err != nil {
+						return err
+					}
+					if n == 0 {
+						return domainerr.NotFound(domainerr.ResourceInfo("dag_run", id.GetValue()))
+					}
+					return nil
+				})
+		})
 }
 
 // serializeMetadata converts a flat map[string]string into a *structpb.Struct

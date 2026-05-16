@@ -12,6 +12,49 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/testutil/fixture"
 )
 
+func TestWorkerHonorsCancelRequested(t *testing.T) {
+	f := fixture.NewSystem(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	dag := &systempb.Dag{
+		Graph: &systempb.Dag_Graph{
+			Nodes: []*systempb.Dag_Node{{Id: "only", MaxAttempts: 1}},
+		},
+	}
+	dag, err := f.System.SaveDag(ctx, dag)
+	require.NoError(t, err)
+
+	run, err := f.System.StartDagRun(ctx, system.StartDagRunInput{Dag: dag})
+	require.NoError(t, err)
+
+	// Cancel before the worker picks up the node.
+	err = f.System.CancelDagRun(ctx, run.GetId())
+	require.NoError(t, err)
+
+	workerCtx, workerCancel := context.WithCancel(ctx)
+	defer workerCancel()
+	go f.Worker.Run(workerCtx)
+
+	deadline := time.Now().Add(15 * time.Second)
+	for {
+		if time.Now().After(deadline) {
+			t.Fatalf("dag_run did not reach terminal state in time")
+		}
+		got, err := f.System.GetDagRun(ctx, run.GetId())
+		require.NoError(t, err)
+		status := got.GetStatus()
+		if status == systempb.DagRunStatus_DAG_RUN_STATUS_FAILED {
+			// Expected: node was cancelled → dag failed.
+			return
+		}
+		if status == systempb.DagRunStatus_DAG_RUN_STATUS_SUCCEEDED {
+			t.Fatal("dag_run succeeded but should have been cancelled")
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
 func TestWorkerCompletesTwoNodeDag(t *testing.T) {
 	f := fixture.NewSystem(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
