@@ -18,5 +18,9 @@ func Root() *cobra.Command {
 	cmd.AddCommand(probeCmd())
 	cmd.AddCommand(versionCmd())
 	cmd.AddCommand(scheduleCmd())
+	cmd.AddCommand(templateCmd())
+	cmd.AddCommand(runCmd())
+	cmd.AddCommand(suiteCmd())
+	cmd.AddCommand(compareCmd())
 	return cmd
 }
