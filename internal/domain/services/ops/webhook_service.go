@@ -27,7 +27,8 @@ import (
 // WebhookService provides CRUD and TestWebhook for the webhooks table.
 type WebhookService struct {
 	repo  *repository.ProtoRepository[opspb.WebhookAlias, opspb.WebhookColumnAlias, *opspb.WebhookScanner, *opspb.Webhook]
-	txMgr pgtx.TxManager
+	dRepo *repository.ProtoRepository[opspb.WebhookDeliveryAlias, opspb.WebhookDeliveryColumnAlias, *opspb.WebhookDeliveryScanner, *opspb.WebhookDelivery]
+	txMgr  pgtx.TxManager
 	events eventing.Bus
 }
 
@@ -37,6 +38,10 @@ func NewWebhookService(executor exec.DB, txMgr pgtx.TxManager, events eventing.B
 		repo: repository.NewProtoRepository(
 			repository.NewScannerRepository(opspb.Webhooks.Table, executor),
 			opspb.WebhookConverter,
+		),
+		dRepo: repository.NewProtoRepository(
+			repository.NewScannerRepository(opspb.WebhookDeliverys.Table, executor),
+			opspb.WebhookDeliveryConverter,
 		),
 		txMgr:  txMgr,
 		events: events,
@@ -274,4 +279,86 @@ func (s *WebhookService) TestWebhook(ctx context.Context, id *opspb.WebhookId, e
 		result.Error = fmt.Sprintf("unexpected status %d", resp.StatusCode)
 	}
 	return result, nil
+}
+
+// EnqueueDelivery inserts a WebhookDelivery row with state=PENDING.
+func (s *WebhookService) EnqueueDelivery(ctx context.Context, webhookID string, event opspb.WebhookEvent, payloadJSON []byte) error {
+	now := time.Now()
+	nowTs := timestamppb.New(now)
+	d := &opspb.WebhookDelivery{
+		Id:        &opspb.WebhookDeliveryId{Value: ids.New()},
+		WebhookId: &opspb.WebhookId{Value: webhookID},
+		Event:     event,
+		Payload:   payloadJSON,
+		State:     opspb.WebhookDeliveryState_WEBHOOK_DELIVERY_STATE_PENDING,
+		Attempts:  0,
+		LastError: "",
+		Timestamps: &commonpb.Timestamps{
+			CreatedAt: nowTs,
+			UpdatedAt: nowTs,
+		},
+	}
+	nextAttempt := now
+	d.NextAttemptAt = timestamppb.New(nextAttempt)
+
+	scanner := d.IntoPlain()
+	_, err := s.dRepo.Execute(ctx,
+		opspb.WebhookDeliverys.Insert().From(
+			set.NewSetter(opspb.WebhookDeliveryColumnId, scanner.Id),
+			set.NewSetter(opspb.WebhookDeliveryColumnCreatedAt, scanner.CreatedAt),
+			set.NewSetter(opspb.WebhookDeliveryColumnUpdatedAt, scanner.UpdatedAt),
+			set.NewSetter(opspb.WebhookDeliveryColumnWebhookId, scanner.WebhookId),
+			set.NewSetter(opspb.WebhookDeliveryColumnEvent, scanner.Event),
+			set.NewSetter(opspb.WebhookDeliveryColumnPayload, scanner.Payload),
+			set.NewSetter(opspb.WebhookDeliveryColumnState, scanner.State),
+			set.NewSetter(opspb.WebhookDeliveryColumnAttempts, scanner.Attempts),
+			set.NewSetter(opspb.WebhookDeliveryColumnNextAttemptAt, scanner.NextAttemptAt),
+			set.NewSetter(opspb.WebhookDeliveryColumnLastError, scanner.LastError),
+		),
+	)
+	return err
+}
+
+// ListPendingDeliveries returns up to limit PENDING deliveries.
+func (s *WebhookService) ListPendingDeliveries(ctx context.Context, limit int) ([]*opspb.WebhookDelivery, error) {
+	return s.dRepo.Query(ctx,
+		opspb.WebhookDeliverys.SelectAll().Where(
+			opspb.WebhookDeliverys.State.Eq(opspb.WebhookDeliveryState_WEBHOOK_DELIVERY_STATE_PENDING.String()),
+			opspb.WebhookDeliverys.DeletedAt.IsNull(),
+		),
+	)
+}
+
+// UpdateDeliveryState transitions a delivery row to the given state.
+func (s *WebhookService) UpdateDeliveryState(
+	ctx context.Context,
+	id string,
+	state opspb.WebhookDeliveryState,
+	attempts uint32,
+	nextAt *time.Time,
+	deliveredAt *time.Time,
+	lastErr string,
+	statusCode *uint32,
+) error {
+	now := time.Now()
+	attemptsI32 := int32(attempts)
+	var statusCodeI32 *int32
+	if statusCode != nil {
+		v := int32(*statusCode)
+		statusCodeI32 = &v
+	}
+	_, err := s.dRepo.Execute(ctx,
+		opspb.WebhookDeliverys.Update().
+			Set(
+				opspb.WebhookDeliverys.State.Set(state.String()),
+				opspb.WebhookDeliverys.Attempts.Set(attemptsI32),
+				opspb.WebhookDeliverys.NextAttemptAt.Set(nextAt),
+				opspb.WebhookDeliverys.DeliveredAt.Set(deliveredAt),
+				opspb.WebhookDeliverys.LastError.Set(lastErr),
+				opspb.WebhookDeliverys.LastStatusCode.Set(statusCodeI32),
+				opspb.WebhookDeliverys.UpdatedAt.Set(now),
+			).
+			Where(opspb.WebhookDeliverys.Id.Eq(id)),
+	)
+	return err
 }
