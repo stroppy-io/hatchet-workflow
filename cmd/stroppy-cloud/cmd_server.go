@@ -23,6 +23,8 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/iam"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/stroppy"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/system"
+	testingsvc "github.com/stroppy-io/stroppy-cloud/internal/domain/services/testing"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/testing/dagbuilder"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/workers/nodeworker"
 	mockhandler "github.com/stroppy-io/stroppy-cloud/internal/domain/workers/nodeworker/handlers"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/workers/recovery"
@@ -119,6 +121,11 @@ func runServer(ctx context.Context, cfgPath string) error {
 
 	systemSvc := system.New(exec, txMgr, bus)
 
+	tplSvc := testingsvc.NewTemplateService(exec, txMgr, bus)
+	suiteSvc := testingsvc.NewTestSuiteService(exec, txMgr, bus)
+	builder := dagbuilder.New(catalogSvc)
+	runSvc := testingsvc.NewTestRunService(exec, txMgr, bus, catalogSvc, systemSvc, builder)
+
 	if cfg.Workers.RecoveryOnStart {
 		if err := recovery.Run(ctx, pool, zlog); err != nil {
 			return fmt.Errorf("recovery: %w", err)
@@ -178,6 +185,7 @@ func runServer(ctx context.Context, cfgPath string) error {
 		CatalogHandler:  transportconnect.NewCatalogHandler(catalogSvc),
 		StroppyHandler:  transportconnect.NewStroppyHandler(stroppySvc),
 		ScheduleHandler: transportconnect.NewScheduleHandler(systemSvc),
+		TestingHandler:  transportconnect.NewTestingHandler(tplSvc, runSvc, suiteSvc),
 		Interceptors:    interceptors,
 	}))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
