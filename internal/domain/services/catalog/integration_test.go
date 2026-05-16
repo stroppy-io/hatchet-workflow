@@ -80,3 +80,48 @@ func TestCreateAndListWorkloadPresets(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, list, 1)
 }
+
+func TestSettingsSetAndGet(t *testing.T) {
+	f := fixture.NewCatalog(t)
+	ctx := context.Background()
+
+	u, _ := f.IAM.CreateUser(ctx, &iampb.User{Email: "s@e.com", Nickname: "s"}, "P@ss1234!")
+	tn, _ := f.IAM.CreateTenant(ctx, &iampb.Tenant{Identity: &commonpb.Identity{Name: "T"}}, u.GetId())
+
+	val := &catalogpb.SettingsItem_Value{Value: &catalogpb.SettingsItem_Value_StringValue{StringValue: "yc-token-123"}}
+	row, err := f.Catalog.SetSetting(ctx, tn.GetId(),
+		catalogpb.SettingsItem_PART_YANDEX_CLOUD,
+		catalogpb.SettingsItem_KEY_YANDEX_CLOUD_TOKEN,
+		val,
+	)
+	require.NoError(t, err)
+	require.NotEmpty(t, row.GetId().GetValue())
+
+	got, err := f.Catalog.GetSetting(ctx, tn.GetId(),
+		catalogpb.SettingsItem_PART_YANDEX_CLOUD,
+		catalogpb.SettingsItem_KEY_YANDEX_CLOUD_TOKEN,
+	)
+	require.NoError(t, err)
+	require.Equal(t, "yc-token-123", got.GetValue().GetStringValue())
+}
+
+func TestSettingsUpsertReplacesValue(t *testing.T) {
+	f := fixture.NewCatalog(t)
+	ctx := context.Background()
+
+	u, _ := f.IAM.CreateUser(ctx, &iampb.User{Email: "s2@e.com", Nickname: "s2"}, "P@ss1234!")
+	tn, _ := f.IAM.CreateTenant(ctx, &iampb.Tenant{Identity: &commonpb.Identity{Name: "T2"}}, u.GetId())
+
+	v1 := &catalogpb.SettingsItem_Value{Value: &catalogpb.SettingsItem_Value_StringValue{StringValue: "v1"}}
+	r1, err := f.Catalog.SetSetting(ctx, tn.GetId(), catalogpb.SettingsItem_PART_YANDEX_CLOUD, catalogpb.SettingsItem_KEY_YANDEX_CLOUD_TOKEN, v1)
+	require.NoError(t, err)
+
+	v2 := &catalogpb.SettingsItem_Value{Value: &catalogpb.SettingsItem_Value_StringValue{StringValue: "v2"}}
+	r2, err := f.Catalog.SetSetting(ctx, tn.GetId(), catalogpb.SettingsItem_PART_YANDEX_CLOUD, catalogpb.SettingsItem_KEY_YANDEX_CLOUD_TOKEN, v2)
+	require.NoError(t, err)
+	require.Equal(t, r1.GetId().GetValue(), r2.GetId().GetValue(), "upsert must reuse existing row")
+
+	got, err := f.Catalog.GetSetting(ctx, tn.GetId(), catalogpb.SettingsItem_PART_YANDEX_CLOUD, catalogpb.SettingsItem_KEY_YANDEX_CLOUD_TOKEN)
+	require.NoError(t, err)
+	require.Equal(t, "v2", got.GetValue().GetStringValue())
+}
