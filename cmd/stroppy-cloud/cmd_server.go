@@ -22,6 +22,7 @@ import (
 	agentsvc "github.com/stroppy-io/stroppy-cloud/internal/domain/services/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/catalog"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/iam"
+	opssvc "github.com/stroppy-io/stroppy-cloud/internal/domain/services/ops"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/stroppy"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/system"
 	testingsvc "github.com/stroppy-io/stroppy-cloud/internal/domain/services/testing"
@@ -137,6 +138,10 @@ func runServer(ctx context.Context, cfgPath string) error {
 		}
 	}
 
+	webhookSvc := opssvc.NewWebhookService(exec, txMgr, bus)
+	quotaSvc := opssvc.NewQuotaService()
+	binaryCacheSvc := opssvc.NewBinaryCacheService(exec, txMgr)
+
 	agentHub := agentsvc.NewHub()
 	agentService := agentsvc.New(exec, txMgr, bus, agentHub)
 
@@ -199,6 +204,9 @@ func runServer(ctx context.Context, cfgPath string) error {
 		SharedSuiteRunHandler: transportconnect.NewSharedSuiteRunHandler(sharedSuiteRunSvc),
 		ComparisonHandler:     transportconnect.NewComparisonHandler(comparisonSvc),
 		AgentHandler:          transportconnect.NewAgentHandler(agentService),
+		WebhookHandler:        transportconnect.NewWebhookHandler(webhookSvc),
+		QuotaHandler:          transportconnect.NewQuotaHandler(quotaSvc),
+		BinaryCacheHandler:    transportconnect.NewBinaryCacheHandler(binaryCacheSvc),
 		Interceptors:          interceptors,
 	}))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
