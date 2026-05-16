@@ -5,6 +5,7 @@ import (
 
 	"connectrpc.com/connect"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/admin/adminconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent/agentconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog/catalogconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam/iamconnect"
@@ -12,6 +13,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/stroppy/stroppyconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system/systemconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing/testingconnect"
+	"github.com/stroppy-io/stroppy-cloud/internal/transport/middleware"
 )
 
 // Deps aggregates Connect handler dependencies for mounting.
@@ -31,7 +33,14 @@ type Deps struct {
 	QuotaHandler       *QuotaHandler
 	BinaryCacheHandler *BinaryCacheHandler
 
+	// Admin handlers (platform-admin only).
+	AdminHandler            *AdminHandler
+	BinaryCacheAdminHandler *BinaryCacheAdminHandler
+
 	Interceptors connect.Option
+	// AdminInterceptors is applied on top of Interceptors for platform-admin routes.
+	// If nil, Interceptors is used (without platform-admin enforcement).
+	AdminInterceptors connect.Option
 }
 
 // Mount returns an http.Handler aggregating all Connect handlers.
@@ -134,7 +143,30 @@ func Mount(d Deps) http.Handler {
 		mux.Handle(binaryPath, binaryH)
 	}
 
+	// Admin service (platform-admin facing). Uses AdminInterceptors which adds
+	// RequirePlatformAdmin on top of the base interceptor chain.
+	adminOpts := d.adminInterceptors()
+	if d.AdminHandler != nil {
+		adminPath, adminH := adminconnect.NewAdminServiceHandler(d.AdminHandler, adminOpts)
+		mux.Handle(adminPath, adminH)
+	}
+
+	// BinaryCacheAdmin service (platform-admin facing).
+	if d.BinaryCacheAdminHandler != nil {
+		bcAdminPath, bcAdminH := adminconnect.NewBinaryCacheAdminServiceHandler(d.BinaryCacheAdminHandler, adminOpts)
+		mux.Handle(bcAdminPath, bcAdminH)
+	}
+
 	return mux
+}
+
+// adminInterceptors returns AdminInterceptors if set, otherwise builds one by
+// appending RequirePlatformAdmin to the base Interceptors option.
+func (d Deps) adminInterceptors() connect.Option {
+	if d.AdminInterceptors != nil {
+		return d.AdminInterceptors
+	}
+	return connect.WithOptions(d.Interceptors, connect.WithInterceptors(middleware.RequirePlatformAdmin()))
 }
 
 // AuthBypass returns the set of fully-qualified procedure paths that skip
@@ -161,6 +193,18 @@ func TenantBypass() map[string]bool {
 	// Stroppy version/commit listing is public catalog data — no tenant required.
 	out[stroppyconnect.StroppyServiceListStroppyVersionsProcedure] = true
 	out[stroppyconnect.StroppyServiceListStroppyCommitsProcedure] = true
+	// Admin endpoints are cross-tenant — no per-request tenant resolution.
+	out[adminconnect.AdminServiceListAllTenantsProcedure] = true
+	out[adminconnect.AdminServiceCreateTenantProcedure] = true
+	out[adminconnect.AdminServiceDeleteTenantHardProcedure] = true
+	out[adminconnect.AdminServiceListAllUsersProcedure] = true
+	out[adminconnect.AdminServiceCreateUserProcedure] = true
+	out[adminconnect.AdminServiceDeleteUserProcedure] = true
+	out[adminconnect.AdminServiceResetUserPasswordProcedure] = true
+	out[adminconnect.BinaryCacheAdminServicePrewarmProcedure] = true
+	out[adminconnect.BinaryCacheAdminServiceGetArtifactProcedure] = true
+	out[adminconnect.BinaryCacheAdminServiceListArtifactsProcedure] = true
+	out[adminconnect.BinaryCacheAdminServiceEvictArtifactProcedure] = true
 	return out
 }
 

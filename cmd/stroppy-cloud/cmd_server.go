@@ -19,6 +19,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/core/configurator"
 	"github.com/stroppy-io/stroppy-cloud/internal/core/eventing"
 	"github.com/stroppy-io/stroppy-cloud/internal/core/logger"
+	adminsvc "github.com/stroppy-io/stroppy-cloud/internal/domain/services/admin"
 	agentsvc "github.com/stroppy-io/stroppy-cloud/internal/domain/services/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/catalog"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/iam"
@@ -28,7 +29,7 @@ import (
 	testingsvc "github.com/stroppy-io/stroppy-cloud/internal/domain/services/testing"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/testing/dagbuilder"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/workers/nodeworker"
-	mockhandler "github.com/stroppy-io/stroppy-cloud/internal/domain/workers/nodeworker/handlers"
+	handlers "github.com/stroppy-io/stroppy-cloud/internal/domain/workers/nodeworker/handlers"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/workers/recovery"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/workers/scheduler"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
@@ -123,10 +124,14 @@ func runServer(ctx context.Context, cfgPath string) error {
 
 	systemSvc := system.New(exec, txMgr, bus)
 
+	webhookSvc := opssvc.NewWebhookService(exec, txMgr, bus)
+	quotaSvc := opssvc.NewQuotaService(exec, pool, txMgr)
+	binaryCacheSvc := opssvc.NewBinaryCacheService(exec, txMgr)
+
 	tplSvc := testingsvc.NewTemplateService(exec, txMgr, bus)
 	suiteSvc := testingsvc.NewTestSuiteService(exec, txMgr, bus)
 	builder := dagbuilder.New(catalogSvc)
-	runSvc := testingsvc.NewTestRunService(exec, txMgr, bus, catalogSvc, systemSvc, builder)
+	runSvc := testingsvc.NewTestRunService(exec, txMgr, bus, catalogSvc, systemSvc, builder).WithQuota(quotaSvc)
 	suiteRunSvc := testingsvc.NewTestSuiteRunService(exec, txMgr, bus, systemSvc, builder)
 	sharedTestRunSvc := testingsvc.NewSharedTestRunService(exec, txMgr, bus)
 	sharedSuiteRunSvc := testingsvc.NewSharedSuiteRunService(exec, txMgr, bus)
@@ -138,15 +143,25 @@ func runServer(ctx context.Context, cfgPath string) error {
 		}
 	}
 
-	webhookSvc := opssvc.NewWebhookService(exec, txMgr, bus)
-	quotaSvc := opssvc.NewQuotaService()
-	binaryCacheSvc := opssvc.NewBinaryCacheService(exec, txMgr)
+	adminService := adminsvc.NewAdminService(iamSvc)
+	binaryCacheAdminSvc := adminsvc.NewBinaryCacheAdminService(exec, txMgr)
 
 	agentHub := agentsvc.NewHub()
-	agentService := agentsvc.New(exec, txMgr, bus, agentHub)
+	agentCmdRepo := agentsvc.NewCommandsRepo(exec, txMgr)
+	bootstrapStore := agentsvc.NewBootstrapTokenStore(jwtSecret)
+	agentService := agentsvc.New(exec, txMgr, bus, agentHub, agentCmdRepo, bootstrapStore)
 
 	nodeReg := nodeworker.NewRegistry()
-	nodeReg.Register(mockhandler.NewMockHandler())
+	nodeReg.Register(handlers.NewMockHandler()) // "" kind fallback for untyped specs
+	nodeReg.Register(handlers.NewTerraformHandler(zlog))
+	nodeReg.Register(handlers.NewDockerHandler(zlog))
+	// Agent-bound handlers: agentID/machineID resolved from node metadata at runtime.
+	// Placeholder empty IDs — real wiring added when agent resolver pattern is implemented.
+	nodeReg.Register(handlers.NewPackageInstallHandler(agentHub, "", "", 0))
+	nodeReg.Register(handlers.NewStroppyRunHandler(agentHub, "", "", 0))
+	nodeReg.Register(handlers.NewOneShotHandler(agentHub, "", "", 0))
+	nodeReg.Register(handlers.NewConfigApplyHandler(agentHub, "", "", 0))
+	nodeReg.Register(handlers.NewTestRunRefHandler())
 
 	worker := nodeworker.New(pool, systemSvc, nodeReg, nodeworker.Config{
 		Workers: cfg.Workers.NodeWorkers,
@@ -161,6 +176,17 @@ func runServer(ctx context.Context, cfgPath string) error {
 	defer cancelWorkers()
 	go worker.Run(workerCtx)
 	go sched.Run(workerCtx)
+
+	// Release one concurrent-run quota slot whenever a test run finishes.
+	bus.Subscribe(eventing.TopicTestRunDone, func(_ context.Context, e eventing.Event) {
+		payload, ok := e.Payload.(eventing.TestRunDone)
+		if !ok {
+			return
+		}
+		releaseCtx, c := context.WithTimeout(context.Background(), 10*time.Second)
+		defer c()
+		_ = quotaSvc.Release(releaseCtx, &iampb.TenantId{Value: payload.TenantID}, "runs.concurrent", 1)
+	})
 
 	// Bootstrap initial admin (idempotent).
 	if cfg.Features.InitialAdminEmail != "" {
@@ -204,10 +230,12 @@ func runServer(ctx context.Context, cfgPath string) error {
 		SharedSuiteRunHandler: transportconnect.NewSharedSuiteRunHandler(sharedSuiteRunSvc),
 		ComparisonHandler:     transportconnect.NewComparisonHandler(comparisonSvc),
 		AgentHandler:          transportconnect.NewAgentHandler(agentService),
-		WebhookHandler:        transportconnect.NewWebhookHandler(webhookSvc),
-		QuotaHandler:          transportconnect.NewQuotaHandler(quotaSvc),
-		BinaryCacheHandler:    transportconnect.NewBinaryCacheHandler(binaryCacheSvc),
-		Interceptors:          interceptors,
+		WebhookHandler:          transportconnect.NewWebhookHandler(webhookSvc),
+		QuotaHandler:            transportconnect.NewQuotaHandler(quotaSvc),
+		BinaryCacheHandler:      transportconnect.NewBinaryCacheHandler(binaryCacheSvc),
+		AdminHandler:            transportconnect.NewAdminHandler(adminService),
+		BinaryCacheAdminHandler: transportconnect.NewBinaryCacheAdminHandler(binaryCacheAdminSvc),
+		Interceptors:            interceptors,
 	}))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 
@@ -246,6 +274,9 @@ func bootstrapAdmin(ctx context.Context, iamSvc *iam.Service, email, password st
 	user, err := iamSvc.CreateUser(ctx, &iampb.User{Email: email, Nickname: "admin"}, password)
 	if err != nil {
 		return err
+	}
+	if _, err := iamSvc.PromoteToAdmin(ctx, user.GetId()); err != nil {
+		return fmt.Errorf("promote admin: %w", err)
 	}
 	log.Info("bootstrapped initial admin", zap.String("user_id", user.GetId().GetValue()))
 	return nil

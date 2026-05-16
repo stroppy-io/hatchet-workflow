@@ -24,5 +24,6 @@ func Root() *cobra.Command {
 	cmd.AddCommand(compareCmd())
 	cmd.AddCommand(webhookCmd())
 	cmd.AddCommand(quotaCmd())
+	cmd.AddCommand(adminCmd())
 	return cmd
 }
