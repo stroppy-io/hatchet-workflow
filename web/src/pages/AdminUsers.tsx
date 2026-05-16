@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import { clients } from "@/api/clients";
-import type { Timestamp } from "@bufbuild/protobuf/wkt";
-
-function protoTsToISO(ts?: Timestamp): string {
-  if (!ts) return "";
-  return new Date(Number(ts.seconds) * 1000 + Math.floor(ts.nanos / 1_000_000)).toISOString();
-}
+import { protoTsToISO } from "@/lib/proto-helpers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

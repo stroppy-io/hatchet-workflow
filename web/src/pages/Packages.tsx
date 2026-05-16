@@ -1,13 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
+import { clients } from "@/api/clients";
+import { getAccessToken } from "@/api/transport";
+import { Database_Kind } from "@/lib/proto/cloud/v1/catalog/database_pb";
 import {
-  listPackages,
-  createPackage,
-  deletePackage,
-  clonePackage,
-  updatePackage,
-  uploadPackageDeb,
-} from "@/api/client";
-import type { Package } from "@/api/types";
+  type Package as ProtoPackage,
+} from "@/lib/proto/cloud/v1/catalog/package_pb";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,24 +33,107 @@ import {
   FileDown,
 } from "lucide-react";
 
+// ─── Local UI type ────────────────────────────────────────────────
+
+interface PkgRow {
+  id: string;
+  name: string;
+  description: string;
+  db_kind: string; // human-readable string
+  db_kind_proto: Database_Kind;
+  db_version: string;
+  is_builtin: boolean;
+  apt_packages: string[];
+  pre_install: string[];
+  custom_repo: string;
+  custom_repo_key: string;
+  deb_filename: string;
+  has_deb: boolean;
+}
+
+// ─── Enum helpers ─────────────────────────────────────────────────
+
+const KIND_TO_STRING: Record<Database_Kind, string> = {
+  [Database_Kind.DATABASE_KIND_UNSPECIFIED]: "",
+  [Database_Kind.DATABASE_KIND_POSTGRES]: "postgres",
+  [Database_Kind.DATABASE_KIND_MYSQL]: "mysql",
+  [Database_Kind.DATABASE_KIND_MARIADB]: "mariadb",
+  [Database_Kind.DATABASE_KIND_YDB]: "ydb",
+  [Database_Kind.DATABASE_KIND_YDB_MANAGED]: "ydb-managed",
+  [Database_Kind.DATABASE_KIND_COCKROACH]: "cockroach",
+  [Database_Kind.DATABASE_KIND_PICODATA]: "picodata",
+};
+
+const STRING_TO_KIND: Record<string, Database_Kind> = {
+  postgres: Database_Kind.DATABASE_KIND_POSTGRES,
+  mysql: Database_Kind.DATABASE_KIND_MYSQL,
+  mariadb: Database_Kind.DATABASE_KIND_MARIADB,
+  ydb: Database_Kind.DATABASE_KIND_YDB,
+  "ydb-managed": Database_Kind.DATABASE_KIND_YDB_MANAGED,
+  cockroach: Database_Kind.DATABASE_KIND_COCKROACH,
+  picodata: Database_Kind.DATABASE_KIND_PICODATA,
+};
+
+function protoToRow(p: ProtoPackage): PkgRow {
+  const apt = p.source?.source?.case === "apt" ? p.source.source.value : null;
+  const deb = p.source?.source?.case === "debBlob" ? p.source.source.value : null;
+  return {
+    id: p.id?.value ?? "",
+    name: p.identity?.name ?? "",
+    description: p.identity?.description ?? "",
+    db_kind: KIND_TO_STRING[p.dbKind] ?? "",
+    db_kind_proto: p.dbKind,
+    db_version: p.dbVersion,
+    is_builtin: p.isBuiltin,
+    apt_packages: apt?.aptPackages ?? [],
+    pre_install: apt?.preInstall ?? [],
+    custom_repo: apt?.customRepo ?? "",
+    custom_repo_key: apt?.customRepoKey ?? "",
+    deb_filename: deb?.debFilename ?? "",
+    has_deb: !!deb,
+  };
+}
+
+async function uploadPackageDeb(packageId: string, file: File): Promise<void> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const headers: Record<string, string> = {};
+  const token = getAccessToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`/api/v1/packages/${packageId}/deb`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+}
+
+// ─── Icons ────────────────────────────────────────────────────────
+
 const DB_ICONS: Record<string, typeof Database> = {
   postgres: Database,
   mysql: Server,
   picodata: Cpu,
 };
 
+// ─── Main page ───────────────────────────────────────────────────
+
 export function Packages() {
-  const [packages, setPackages] = useState<Package[]>([]);
+  const [packages, setPackages] = useState<PkgRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
-  const [editing, setEditing] = useState<Package | null>(null);
+  const [editing, setEditing] = useState<PkgRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const confirm = useConfirm();
 
   const load = useCallback(async () => {
     try {
-      setPackages(await listPackages());
+      const resp = await clients.package.listPackages({});
+      setPackages((resp.packages ?? []).map(protoToRow));
     } catch (err) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "Failed to load" });
     } finally {
@@ -70,7 +150,7 @@ export function Packages() {
   async function handleDelete(id: string) {
     if (!(await confirm({ title: "Delete this package?", description: "This action cannot be undone.", danger: true }))) return;
     try {
-      await deletePackage(id);
+      await clients.package.deletePackage({ value: id });
       setMessage({ type: "success", text: "Deleted" });
       load();
     } catch (err) {
@@ -80,8 +160,8 @@ export function Packages() {
 
   async function handleClone(id: string) {
     try {
-      const r = await clonePackage(id);
-      setMessage({ type: "success", text: `Cloned as "${r.name}"` });
+      const r = await clients.package.clonePackage({ value: id });
+      setMessage({ type: "success", text: `Cloned as "${r.identity?.name}"` });
       load();
     } catch (err) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "Failed" });
@@ -145,7 +225,7 @@ export function Packages() {
                 </div>
                 <span className="text-xs font-mono text-zinc-400">{pkg.db_kind}</span>
                 <span className="text-xs font-mono text-zinc-500">{pkg.db_version}</span>
-                <span className="text-[10px] font-mono text-zinc-500">{pkg.apt_packages?.length || 0} apt</span>
+                <span className="text-[10px] font-mono text-zinc-500">{pkg.apt_packages.length} apt</span>
                 <span className="text-[10px] font-mono text-zinc-500">{pkg.has_deb ? "yes" : "—"}</span>
                 <div className="flex items-center gap-1">
                   <button onClick={() => setEditing(pkg)} className="p-1 text-zinc-600 hover:text-zinc-300" title="Edit">
@@ -185,7 +265,7 @@ function PackageEditor({
   onClose,
   onSaved,
 }: {
-  pkg: Package | null;
+  pkg: PkgRow | null;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -209,14 +289,34 @@ function PackageEditor({
     setSaving(true);
     setError("");
     try {
+      const pkgProto = {
+        identity: { name, description },
+        dbKind: STRING_TO_KIND[dbKind] ?? Database_Kind.DATABASE_KIND_UNSPECIFIED,
+        dbVersion,
+        source: {
+          source: {
+            case: "apt" as const,
+            value: {
+              aptPackages,
+              preInstall,
+              customRepo,
+              customRepoKey,
+            },
+          },
+        },
+      };
+
       let targetId = pkg?.id;
       if (isEdit) {
-        await updatePackage(pkg!.id, { name, description, db_kind: dbKind, db_version: dbVersion, apt_packages: aptPackages, pre_install: preInstall, custom_repo: customRepo, custom_repo_key: customRepoKey });
+        await clients.package.updatePackage({
+          package: { id: { value: pkg!.id }, ...pkgProto },
+          updateMask: { paths: ["identity", "db_version", "source"] },
+        });
       } else {
-        const res = await createPackage({ name, description, db_kind: dbKind, db_version: dbVersion, apt_packages: aptPackages, pre_install: preInstall, custom_repo: customRepo, custom_repo_key: customRepoKey });
-        targetId = res.id;
+        const res = await clients.package.createPackage({ package: pkgProto });
+        targetId = res.id?.value;
       }
-      // Upload .deb if selected (works for both create and edit).
+
       if (debFile && targetId) {
         await uploadPackageDeb(targetId, debFile);
       }

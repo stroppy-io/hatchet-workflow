@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
-import { getRunMetrics } from "@/api/client";
+import { getAccessToken } from "@/api/transport";
+
+async function getRunMetrics(runID: string, start: string, end: string): Promise<unknown> {
+  const token = getAccessToken();
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+  const url = `/api/v1/run/${runID}/metrics?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
+  const res = await fetch(url, { headers });
+  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+  return res.json();
+}
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 

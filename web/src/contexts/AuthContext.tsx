@@ -5,16 +5,32 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import type { AuthUser } from "@/api/types";
 import { clients } from "@/api/clients";
 import {
   setAccessToken,
   setTenantId,
   setRefresher,
 } from "@/api/transport";
-import {
-  refreshToken as legacyRefreshToken,
-} from "@/api/client";
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  tenant_id: string | null;
+  tenant_name: string | null;
+  role: "viewer" | "operator" | "owner";
+  is_root: boolean;
+  tenants: { id: string; tenant_name: string; role: string }[];
+}
+
+/** Bootstrap session using the httpOnly cookie (REST legacy endpoint). */
+async function legacyRefreshToken(): Promise<{ access_token: string }> {
+  const res = await fetch("/api/v1/auth/refresh", {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("refresh failed");
+  return res.json();
+}
 
 // In-memory refresh token (never put in localStorage).
 let _refreshToken: string | null = null;

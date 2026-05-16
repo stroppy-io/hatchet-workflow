@@ -1,15 +1,66 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
-import { compareRuns, getGrafanaSettings } from "@/api/client";
-import type { ComparisonResponse, GrafanaSettings } from "@/api/types";
-import { MetricsDiff } from "@/components/MetricsDiff";
+import { getAccessToken } from "@/api/transport";
+import { MetricsDiff, type ComparisonRow } from "@/components/MetricsDiff";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { AlertCircle, GitCompare, ArrowLeft, ExternalLink, Loader2, Cpu } from "lucide-react";
-import type { RunConfig, MachineSpec } from "@/api/types";
+
+// ─── Local types ──────────────────────────────────────────────────
+interface ComparisonResponse {
+  run_a: string;
+  run_b: string;
+  start: string;
+  end: string;
+  metrics: ComparisonRow[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  config_a?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  config_b?: any;
+  summary: { better: number; worse: number; same: number };
+}
+
+interface GrafanaSettings {
+  url: string;
+  embed_enabled: boolean;
+  dashboards: Record<string, string>;
+}
+
+interface MachineSpec {
+  role?: string;
+  count?: number;
+  cpus?: number;
+  memory_mb?: number;
+  disk_gb?: number;
+  disk_type?: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type RunConfig = Record<string, any>;
+
+// ─── Local fetch helpers ──────────────────────────────────────────
+function authHeaders(): Record<string, string> {
+  const token = getAccessToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function compareRuns(a: string, b: string, start?: string, end?: string): Promise<ComparisonResponse> {
+  const params = new URLSearchParams({ a, b });
+  if (start) params.set("start", start);
+  if (end) params.set("end", end);
+  const res = await fetch(`/api/v1/compare?${params.toString()}`, { headers: authHeaders() });
+  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+async function getGrafanaSettings(): Promise<GrafanaSettings> {
+  const res = await fetch("/api/v1/grafana", { headers: authHeaders() });
+  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+  return res.json();
+}
 
 export function Compare() {
   const [searchParams] = useSearchParams();
@@ -250,7 +301,7 @@ function dbMachineFromConfig(cfg: RunConfig): MachineSpec | null {
   if (db?.picodata?.instances?.[0]) return db.picodata.instances[0];
   if (db?.ydb?.storage) return db.ydb.storage;
   if (cfg.machine_override) return cfg.machine_override;
-  return cfg.machines?.find((m) => m.role === "database") ?? null;
+  return cfg.machines?.find((m: MachineSpec) => m.role === "database") ?? null;
 }
 
 function HardwareCard({ label, runId, config, color }: { label: string; runId: string; config?: RunConfig; color: string }) {
@@ -274,11 +325,11 @@ function HardwareCard({ label, runId, config, color }: { label: string; runId: s
           </>}
           {db && <>
             <span className="text-zinc-500">DB Machine</span>
-            <span className="text-zinc-300">{db.cpus} vCPU / {fmtMem(db.memory_mb)} / {db.disk_gb} GB {db.disk_type || ""}</span>
+            <span className="text-zinc-300">{db.cpus} vCPU / {fmtMem(db.memory_mb ?? 0)} / {db.disk_gb} GB {db.disk_type || ""}</span>
           </>}
           {stroppy && <>
             <span className="text-zinc-500">Runner</span>
-            <span className="text-zinc-300">{stroppy.cpus} vCPU / {fmtMem(stroppy.memory_mb)}</span>
+            <span className="text-zinc-300">{stroppy.cpus} vCPU / {fmtMem(stroppy.memory_mb ?? 0)}</span>
           </>}
           <span className="text-zinc-500">Workload</span>
           <span className="text-zinc-300">{config.stroppy?.script} / {config.stroppy?.vus} VUs / SF {config.stroppy?.scale_factor || 1}</span>

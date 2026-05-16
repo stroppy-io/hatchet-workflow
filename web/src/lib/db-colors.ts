@@ -1,4 +1,4 @@
-import type { DatabaseKind } from "@/api/types";
+type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb" | "ydb-managed" | "cockroach";
 
 // Corporate brand colors for each database engine.
 // PostgreSQL: elephant blue — #336791

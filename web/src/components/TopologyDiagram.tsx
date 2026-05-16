@@ -1,5 +1,54 @@
-import type { DatabaseKind, MachineSpec, PostgresTopology, MySQLTopology, PicodataTopology, YDBTopology, YDBManagedTopology, CockroachTopology } from "@/api/types";
 import { DB_COLORS } from "@/lib/db-colors";
+
+// Local topology shape interfaces (mirrors legacy REST types — pure UI structs).
+type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb" | "ydb-managed" | "cockroach";
+
+interface MachineSpec {
+  cpus?: number;
+  memory_mb?: number;
+  disk_gb?: number;
+  secondary_disks?: { size_gb?: number; type?: string }[];
+}
+interface NodeSpec extends MachineSpec { count: number; }
+interface PostgresTopology {
+  master?: NodeSpec;
+  replicas?: NodeSpec[];
+  haproxy?: NodeSpec;
+  etcd?: boolean;
+  sync_replicas?: number;
+  pgbouncer?: boolean;
+  patroni?: boolean;
+}
+interface MySQLTopology {
+  primary?: NodeSpec;
+  replicas?: NodeSpec[];
+  proxysql?: NodeSpec;
+  group_replication?: boolean;
+  semi_sync?: boolean;
+}
+interface PicodataTopology {
+  instances?: NodeSpec[];
+  tiers?: { name: string; count: number; can_vote?: boolean }[];
+  haproxy?: NodeSpec;
+  shards?: number;
+  replication_factor?: number;
+}
+interface YDBTopology {
+  storage: NodeSpec;
+  database?: NodeSpec;
+  haproxy?: NodeSpec;
+  fault_tolerance?: string;
+}
+interface YDBManagedTopology {
+  type?: string;
+  resource_preset_id?: string;
+  storage_groups?: number;
+  storage_type?: string;
+  client?: NodeSpec;
+}
+interface CockroachTopology {
+  nodes: NodeSpec;
+}
 import { Database, Server, Cpu, Shield, Layers, Globe, Cloud } from "lucide-react";
 
 interface TopologyDiagramProps {

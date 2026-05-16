@@ -1,4 +1,15 @@
-import type { ComparisonRow } from "@/api/types";
+export interface ComparisonRow {
+  key: string;
+  name: string;
+  unit: string;
+  avg_a: number;
+  avg_b: number;
+  max_a: number;
+  max_b: number;
+  diff_avg_pct: number;
+  diff_max_pct: number;
+  verdict: "better" | "worse" | "same";
+}
 import { ArrowUp, ArrowDown, Minus } from "lucide-react";
 
 interface MetricsDiffProps {

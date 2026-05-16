@@ -1,7 +1,19 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { getSharedRun } from "@/api/client";
-import type { Snapshot, NodeStatus, RunConfig } from "@/api/types";
+import type { Snapshot } from "@/components/LogStream";
+import type { NodeStatus } from "@/components/RunCard";
+import type { RunConfig } from "@/components/TopologyFlow";
+
+async function getSharedRun(token: string): Promise<{
+  run_id: string;
+  snapshot: unknown;
+  metrics: unknown;
+  created_at: string;
+}> {
+  const res = await fetch(`/api/share/${token}`);
+  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+  return res.json();
+}
 import { MetricsPanel } from "@/components/MetricsPanel";
 import { RunOverview } from "@/components/RunOverview";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,7 +44,7 @@ export function SharedRun() {
       .finally(() => setLoading(false));
   }, [token]);
 
-  const nodes: NodeStatus[] = snapshot?.nodes || [];
+  const nodes: NodeStatus[] = (snapshot?.nodes || []) as NodeStatus[];
   const config = useMemo<RunConfig | null>(() => {
     const rc = snapshot?.state?.run_config;
     if (!rc) return null;

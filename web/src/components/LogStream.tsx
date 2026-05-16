@@ -1,8 +1,47 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { VList, type VListHandle } from "virtua";
-import { WSConnection } from "@/api/ws";
-import { getRunLogs } from "@/api/client";
-import type { WSMessage, Snapshot } from "@/api/types";
+import { WSConnection, type WSMessage } from "@/api/ws";
+import { getAccessToken } from "@/api/transport";
+
+// ─── Local types (previously from @/api/types) ──────────────────
+export interface SnapshotTarget { id: string; host: string; internal_host: string; role: string; }
+export interface Snapshot {
+  graph?: string;
+  nodes?: { id: string; status: string; error?: string }[];
+  started_at?: string;
+  finished_at?: string;
+  state?: {
+    targets?: SnapshotTarget[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    run_config?: string | Record<string, unknown>;
+    effective_configs?: Record<string, Record<string, string>>;
+  };
+}
+
+async function getRunLogs(
+  runID: string,
+  opts?: { end?: string; start?: string; limit?: number; desc?: boolean; search?: string; actions?: string[]; roles?: string[]; units?: string[]; machineIDs?: string[] },
+): Promise<string[]> {
+  const token = getAccessToken();
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+  const params = new URLSearchParams();
+  if (opts?.end) params.set("end", opts.end);
+  if (opts?.start) params.set("start", opts.start);
+  if (opts?.desc) params.set("dir", "desc");
+  if (opts?.search) params.set("search", opts.search);
+  if (opts?.actions) for (const a of opts.actions) params.append("action", a);
+  if (opts?.roles) for (const r of opts.roles) params.append("role", r);
+  if (opts?.units) for (const u of opts.units) params.append("unit", u);
+  if (opts?.machineIDs) for (const m of opts.machineIDs) params.append("machine_id", m);
+  params.set("limit", String(opts?.limit ?? 500));
+  const url = `/api/v1/run/${runID}/logs?${params.toString()}`;
+  const res = await fetch(url, { headers });
+  if (res.status === 503) return [];
+  if (!res.ok) throw new Error(`logs: ${res.status}: ${await res.text()}`);
+  const text = await res.text();
+  if (!text.trim()) return [];
+  return text.trim().split("\n").filter(Boolean);
+}
 import { ArrowDown, Server, Zap, Search, X, WrapText, AlignLeft, Check } from "lucide-react";
 import { MultiFilter, type FilterOption } from "@/components/ui/multi-filter";
 
@@ -143,7 +182,7 @@ function extractScopes(snap: Snapshot | null | undefined) {
   if (snap) {
     const targets = snap.state?.targets;
     if (Array.isArray(targets)) for (const t of targets) if (t.id && !machines.includes(t.id)) machines.push(t.id);
-    for (const n of snap.nodes) phases.push(n.id);
+    for (const n of snap.nodes ?? []) phases.push(n.id);
   }
   return { machines, phases, a2p: buildA2P(phases) };
 }

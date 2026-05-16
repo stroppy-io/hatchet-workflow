@@ -1,4 +1,4 @@
-import type { Provider } from "@/api/types";
+import type { Provider } from "@/components/WorkloadForm";
 import { Cloud, Container } from "lucide-react";
 import { PlatformSelect } from "@/components/ui/sliders";
 

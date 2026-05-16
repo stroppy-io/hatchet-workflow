@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { clients } from "@/api/clients";
-import type { Tenant } from "@/api/types";
-import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { protoTsToISO } from "@/lib/proto-helpers";
 
-function protoTsToISO(ts?: Timestamp): string {
-  if (!ts) return "";
-  return new Date(Number(ts.seconds) * 1000 + Math.floor(ts.nanos / 1_000_000)).toISOString();
+interface Tenant {
+  id: string;
+  name: string;
+  created_at: string;
 }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

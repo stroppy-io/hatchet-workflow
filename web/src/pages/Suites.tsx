@@ -8,20 +8,13 @@ import {
   getSortedRowModel,
   flexRender,
   type ColumnDef,
-  type ColumnFiltersState,
   type SortingState,
 } from "@tanstack/react-table";
-import {
-  cloneSuite,
-  deleteSuite,
-  launchSuite,
-  listSuites,
-  updateSuite,
-} from "@/api/client";
-import type { Suite } from "@/api/types";
+import { clients } from "@/api/clients";
+import { getTenantId } from "@/api/transport";
+import type { TestSuite } from "@/lib/proto/cloud/v1/testing/test_suite_pb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   Table,
@@ -36,15 +29,12 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  CalendarClock,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Clock,
   Copy,
   Layers,
-  Pause,
   Pencil,
   Play,
   Plus,
@@ -53,63 +43,13 @@ import {
   Zap,
 } from "lucide-react";
 
-// Suites: top-level list of cron-schedulable benchmark bundles. Style
-// mirrors the Runs table — same chrome, mono typography, dark zinc, sharp
-// borders — so the section reads as a sibling, not a separate product.
-
-type SuiteStatus = "running" | "scheduled" | "paused" | "manual";
-
-function deriveStatus(s: Suite): SuiteStatus {
-  // "running" wins when a recent batch is still alive — the matrix is
-  // actively producing runs and the user wants that surfaced first.
-  if (s.cron_expr && s.enabled) return "scheduled";
-  if (s.cron_expr && !s.enabled) return "paused";
-  return "manual";
-}
-
-const STATUS_CONFIG: Record<
-  SuiteStatus,
-  { label: string; variant: "success" | "destructive" | "warning" | "pending" | "secondary" | "default" }
-> = {
-  running: { label: "Running", variant: "warning" },
-  scheduled: { label: "Scheduled", variant: "success" },
-  paused: { label: "Paused", variant: "secondary" },
-  manual: { label: "Manual", variant: "default" },
-};
-
-function formatRel(iso?: string): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  if (d.getFullYear() < 2000) return "—";
-  const sameDay = d.toDateString() === new Date().toDateString();
-  if (sameDay) {
-    return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-  }
-  return d.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-// FilterChip mirrors the chip used in Runs.tsx — small mono pill with a
-// subtle primary glow when active.
-function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-2.5 py-1 text-[11px] font-mono border transition-colors cursor-pointer ${
-        active
-          ? "border-primary/60 text-primary bg-primary/8"
-          : "border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
+const PAGE_SIZES = [10, 25, 50, 100];
+const REFRESH_OPTIONS = [
+  { label: "Off", value: 0 },
+  { label: "5s", value: 5 },
+  { label: "15s", value: 15 },
+  { label: "30s", value: 30 },
+];
 
 function SortableHeader({
   column,
@@ -136,80 +76,51 @@ function SortableHeader({
   );
 }
 
-const PAGE_SIZES = [10, 25, 50, 100];
-const REFRESH_OPTIONS = [
-  { label: "Off", value: 0 },
-  { label: "5s", value: 5 },
-  { label: "15s", value: 15 },
-  { label: "30s", value: 30 },
-];
-
 function makeColumns(
-  onLaunch: (s: Suite) => void,
-  onToggle: (s: Suite, enabled: boolean) => void,
-  onEdit: (s: Suite) => void,
-  onClone: (s: Suite) => void,
-  onDelete: (s: Suite) => void,
+  onLaunch: (s: TestSuite) => void,
+  onEdit: (s: TestSuite) => void,
+  onClone: (s: TestSuite) => void,
+  onDelete: (s: TestSuite) => void,
   busyID: string | null,
-): ColumnDef<Suite>[] {
+): ColumnDef<TestSuite>[] {
   return [
-    // ID — last 8 chars, font-mono primary; matches Runs ID column.
     {
       accessorKey: "id",
       header: ({ column }) => <SortableHeader column={column} label="ID" />,
       cell: ({ row }) => {
-        const s = row.original;
-        const short = s.id.length > 8 ? s.id.slice(-8) : s.id;
+        const id = row.original.id?.value ?? "";
+        const short = id.length > 8 ? id.slice(-8) : id;
         return (
-          <span className="font-mono text-xs text-primary" title={s.id}>
+          <span className="font-mono text-xs text-primary" title={id}>
             {short}
           </span>
         );
       },
       size: 96,
     },
-    // Name + description preview.
     {
-      accessorKey: "name",
+      id: "name",
+      accessorFn: (s) => s.identity?.name ?? "",
       header: ({ column }) => <SortableHeader column={column} label="Name" />,
       cell: ({ row }) => {
         const s = row.original;
-        const titleAttr = s.description ? `${s.name}\n\n${s.description}` : s.name;
         return (
           <div className="min-w-0 max-w-[22rem]">
-            <span className="text-xs text-zinc-200 truncate block" title={titleAttr}>
-              {s.name}
-            </span>
-            {s.description && (
+            <span className="text-xs text-zinc-200 truncate block">{s.identity?.name}</span>
+            {s.identity?.description && (
               <span className="text-[10px] text-zinc-600 font-mono truncate block">
-                {s.description}
+                {s.identity.description}
               </span>
             )}
           </div>
         );
       },
     },
-    // Status — composite of cron + enabled + last batch.
-    {
-      id: "status",
-      accessorFn: (s) => deriveStatus(s),
-      header: ({ column }) => <SortableHeader column={column} label="Status" />,
-      cell: ({ row }) => {
-        const status = deriveStatus(row.original);
-        const cfg = STATUS_CONFIG[status];
-        return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
-      },
-      filterFn: (row, _id, value) => {
-        if (!value || value === "all") return true;
-        return deriveStatus(row.original) === value;
-      },
-    },
-    // DB targets count.
     {
       id: "targets",
       header: "Targets",
       cell: ({ row }) => {
-        const n = row.original.db_preset_ids?.length ?? 0;
+        const n = row.original.matrix?.databases?.length ?? 0;
         return (
           <span className="font-mono text-xs text-zinc-400 inline-flex items-center gap-1">
             <Layers className="w-3 h-3 text-zinc-600" />
@@ -220,12 +131,11 @@ function makeColumns(
       enableSorting: false,
       size: 110,
     },
-    // Workloads count.
     {
       id: "workloads",
       header: "Workloads",
       cell: ({ row }) => {
-        const n = row.original.item_count ?? row.original.items?.length ?? 0;
+        const n = row.original.matrix?.workloads?.length ?? 0;
         return (
           <span className="font-mono text-xs text-zinc-400 inline-flex items-center gap-1">
             <Zap className="w-3 h-3 text-zinc-600" />
@@ -236,112 +146,38 @@ function makeColumns(
       enableSorting: false,
       size: 110,
     },
-    // Schedule (cron expression + tz).
     {
-      id: "schedule",
-      header: "Schedule",
+      id: "policy",
+      header: "Policy",
       cell: ({ row }) => {
-        const s = row.original;
-        if (!s.cron_expr) {
-          return <span className="font-mono text-xs text-zinc-600">{"—"}</span>;
-        }
+        const mode = row.original.policy?.mode;
         return (
-          <span className="font-mono text-xs text-zinc-400 inline-flex items-center gap-1">
-            <Clock className="w-3 h-3 text-zinc-600" />
-            <span className="text-zinc-300">{s.cron_expr}</span>
-            <span className="text-zinc-700">{s.timezone}</span>
-          </span>
+          <Badge variant="secondary" className="text-[10px]">
+            {mode === 1 ? "sequential" : mode === 2 ? "parallel" : "—"}
+          </Badge>
         );
       },
       enableSorting: false,
+      size: 110,
     },
-    // Last batch — short id + relative time.
-    {
-      id: "last_batch",
-      accessorFn: (s) => s.last_fire_at || "",
-      header: ({ column }) => <SortableHeader column={column} label="Last batch" />,
-      cell: ({ row }) => {
-        const s = row.original;
-        if (!s.last_fire_at) return <span className="font-mono text-xs text-zinc-600">{"—"}</span>;
-        return (
-          <div className="flex flex-col">
-            <span className="text-xs text-zinc-400 font-mono">{formatRel(s.last_fire_at)}</span>
-            {s.last_batch_id && (
-              <span className="text-[10px] text-zinc-700 font-mono tabular-nums">
-                {s.last_batch_id.slice(0, 8)}
-              </span>
-            )}
-          </div>
-        );
-      },
-      sortingFn: (a, b) => {
-        const av = a.original.last_fire_at ? new Date(a.original.last_fire_at).getTime() : 0;
-        const bv = b.original.last_fire_at ? new Date(b.original.last_fire_at).getTime() : 0;
-        return av - bv;
-      },
-    },
-    // Next fire — only for scheduled+enabled rows.
-    {
-      id: "next_fire",
-      accessorFn: (s) => s.next_fire_at || "",
-      header: ({ column }) => <SortableHeader column={column} label="Next fire" />,
-      cell: ({ row }) => {
-        const s = row.original;
-        if (!s.enabled || !s.next_fire_at) {
-          return <span className="font-mono text-xs text-zinc-600">{"—"}</span>;
-        }
-        return (
-          <span className="font-mono text-xs text-zinc-400 inline-flex items-center gap-1">
-            <CalendarClock className="w-3 h-3 text-zinc-600" />
-            {formatRel(s.next_fire_at)}
-          </span>
-        );
-      },
-      sortingFn: (a, b) => {
-        const av = a.original.next_fire_at ? new Date(a.original.next_fire_at).getTime() : Infinity;
-        const bv = b.original.next_fire_at ? new Date(b.original.next_fire_at).getTime() : Infinity;
-        return av - bv;
-      },
-    },
-    // Enabled — Switch column. Click stops row navigation.
-    {
-      id: "enabled",
-      header: "On",
-      cell: ({ row }) => {
-        const s = row.original;
-        return (
-          <span data-row-stop className="inline-flex items-center" onClick={(e) => e.stopPropagation()}>
-            <Switch
-              checked={s.enabled}
-              disabled={busyID === s.id}
-              onCheckedChange={(v: boolean) => onToggle(s, v)}
-            />
-          </span>
-        );
-      },
-      enableSorting: false,
-      size: 56,
-    },
-    // Actions
     {
       id: "actions",
       header: "",
       cell: ({ row }) => {
         const s = row.original;
-        const cantLaunch = busyID === s.id || (s.item_count ?? s.items?.length ?? 0) === 0 || (s.db_preset_ids?.length ?? 0) === 0;
+        const id = s.id?.value ?? "";
+        const cantLaunch = busyID === id ||
+          (s.matrix?.databases?.length ?? 0) === 0 ||
+          (s.matrix?.workloads?.length ?? 0) === 0;
         return (
           <div className="flex items-center gap-0.5">
             <Button
               size="sm"
               variant="ghost"
               className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-400 cursor-pointer disabled:text-zinc-700"
-              title={cantLaunch ? "Add at least one DB target and one workload first" : "Launch matrix now"}
+              title={cantLaunch ? "Add at least one DB and one workload first" : "Launch matrix now"}
               disabled={cantLaunch}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onLaunch(s);
-              }}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onLaunch(s); }}
             >
               <Play className="h-3.5 w-3.5" />
             </Button>
@@ -350,11 +186,7 @@ function makeColumns(
               variant="ghost"
               className="h-7 w-7 p-0 text-zinc-500 hover:text-primary cursor-pointer"
               title="Edit suite"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onEdit(s);
-              }}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(s); }}
             >
               <Pencil className="h-3.5 w-3.5" />
             </Button>
@@ -363,12 +195,8 @@ function makeColumns(
               variant="ghost"
               className="h-7 w-7 p-0 text-zinc-500 hover:text-primary cursor-pointer"
               title="Clone suite"
-              disabled={busyID === s.id}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onClone(s);
-              }}
+              disabled={busyID === id}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClone(s); }}
             >
               <Copy className="h-3.5 w-3.5" />
             </Button>
@@ -377,12 +205,8 @@ function makeColumns(
               variant="ghost"
               className="h-7 w-7 p-0 text-zinc-600 hover:text-destructive cursor-pointer"
               title="Delete suite"
-              disabled={busyID === s.id}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onDelete(s);
-              }}
+              disabled={busyID === id}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(s); }}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -399,24 +223,25 @@ export function Suites() {
   const navigate = useNavigate();
   const confirm = useConfirm();
 
-  const [suites, setSuites] = useState<Suite[]>([]);
+  const [suites, setSuites] = useState<TestSuite[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyID, setBusyID] = useState<string | null>(null);
 
-  // Auto-refresh, mirrors Runs.
   const [refreshInterval, setRefreshInterval] = useState(15);
   const refreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [sorting, setSorting] = useState<SortingState>([{ id: "name", desc: false }]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   async function fetchSuites() {
     setLoading(true);
     setError(null);
     try {
-      const result = await listSuites();
-      setSuites(result ?? []);
+      const tid = getTenantId();
+      const resp = await clients.suite.listTestSuites(
+        tid ? { value: tid } : {}
+      );
+      setSuites(resp.testSuites ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load suites");
     } finally {
@@ -431,31 +256,16 @@ export function Suites() {
     if (refreshInterval > 0) {
       refreshRef.current = setInterval(fetchSuites, refreshInterval * 1000);
     }
-    return () => {
-      if (refreshRef.current) clearInterval(refreshRef.current);
-    };
+    return () => { if (refreshRef.current) clearInterval(refreshRef.current); };
   }, [refreshInterval]);
 
-  async function handleToggle(s: Suite, enabled: boolean) {
-    setBusyID(s.id);
+  async function handleLaunch(s: TestSuite) {
+    const id = s.id?.value ?? "";
+    setBusyID(id);
     try {
-      await updateSuite(s.id, { enabled });
+      const r = await clients.suiteRun.launchTestSuite({ value: id });
       await fetchSuites();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to toggle suite");
-    } finally {
-      setBusyID(null);
-    }
-  }
-
-  async function handleLaunch(s: Suite) {
-    setBusyID(s.id);
-    try {
-      const r = await launchSuite(s.id);
-      // Inline transient feedback — full toast system isn't installed yet.
-      setError(null);
-      await fetchSuites();
-      navigate(`/runs?suite=${s.id}&batch=${r.batch_id}`);
+      navigate(`/runs?suite=${id}&batch=${r.id?.value ?? ""}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Launch failed");
     } finally {
@@ -463,16 +273,13 @@ export function Suites() {
     }
   }
 
-  async function handleEdit(s: Suite) {
-    navigate(`/suites/${s.id}/edit`);
-  }
-
-  async function handleClone(s: Suite) {
-    setBusyID(s.id);
+  async function handleClone(s: TestSuite) {
+    const id = s.id?.value ?? "";
+    setBusyID(id);
     try {
-      const r = await cloneSuite(s.id);
+      const r = await clients.suite.cloneTestSuite({ value: id });
       await fetchSuites();
-      navigate(`/suites/${r.id}/edit`);
+      navigate(`/suites/${r.id?.value}/edit`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Clone failed");
     } finally {
@@ -480,16 +287,17 @@ export function Suites() {
     }
   }
 
-  async function handleDelete(s: Suite) {
+  async function handleDelete(s: TestSuite) {
     const ok = await confirm({
-      title: `Delete suite "${s.name}"?`,
-      description: "This removes the suite and its scheduled items. Past batches stay visible under runs.",
+      title: `Delete suite "${s.identity?.name}"?`,
+      description: "This removes the suite and its items. Past runs stay visible.",
       danger: true,
     });
     if (!ok) return;
-    setBusyID(s.id);
+    const id = s.id?.value ?? "";
+    setBusyID(id);
     try {
-      await deleteSuite(s.id);
+      await clients.suite.deleteTestSuite({ value: id });
       await fetchSuites();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete suite");
@@ -500,38 +308,28 @@ export function Suites() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const columns = useMemo(
-    () => makeColumns(handleLaunch, handleToggle, handleEdit, handleClone, handleDelete, busyID),
+    () => makeColumns(
+      handleLaunch,
+      (s) => navigate(`/suites/${s.id?.value}/edit`),
+      handleClone,
+      handleDelete,
+      busyID,
+    ),
     [busyID],
   );
 
   const table = useReactTable({
     data: suites,
     columns,
-    state: { sorting, columnFilters },
+    state: { sorting },
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getRowId: (row) => row.id,
+    getRowId: (row) => row.id?.value ?? "",
     initialState: { pagination: { pageSize: 25 } },
   });
-
-  const filterValues = useMemo(() => {
-    const statuses = new Set<string>();
-    for (const s of suites) statuses.add(deriveStatus(s));
-    return { statuses: Array.from(statuses).sort() };
-  }, [suites]);
-
-  const activeStatus = columnFilters.find((f) => f.id === "status")?.value as string | undefined;
-  function setStatusFilter(value: string | undefined) {
-    setColumnFilters((prev) => {
-      const without = prev.filter((f) => f.id !== "status");
-      if (!value || value === "all") return without;
-      return [...without, { id: "status", value }];
-    });
-  }
 
   return (
     <div className="p-5 flex flex-col gap-4 min-h-full">
@@ -562,7 +360,7 @@ export function Suites() {
               className="p-1 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer disabled:opacity-50"
               title="Refresh now"
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${loading || refreshInterval > 0 ? "animate-spin" : ""}`} />
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
             </button>
             {REFRESH_OPTIONS.map((opt) => (
               <button
@@ -588,32 +386,6 @@ export function Suites() {
           {error}
         </div>
       )}
-
-      {/* Filters — single dimension (status). Add more here when needed. */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        {filterValues.statuses.length > 1 && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-zinc-600 font-mono uppercase tracking-wider">Status</span>
-            <FilterChip label="all" active={!activeStatus} onClick={() => setStatusFilter(undefined)} />
-            {filterValues.statuses.map((s) => (
-              <FilterChip
-                key={s}
-                label={s}
-                active={activeStatus === s}
-                onClick={() => setStatusFilter(activeStatus === s ? undefined : s)}
-              />
-            ))}
-          </div>
-        )}
-        {activeStatus && (
-          <button
-            onClick={() => setColumnFilters([])}
-            className="text-[10px] text-zinc-500 hover:text-zinc-300 font-mono underline underline-offset-2 cursor-pointer"
-          >
-            clear filters
-          </button>
-        )}
-      </div>
 
       {/* Table */}
       <div className="border border-zinc-800/80 bg-[#080808] flex-1 min-h-0 overflow-auto">
@@ -643,8 +415,8 @@ export function Suites() {
                   className="border-zinc-800/50 hover:bg-zinc-900/60 cursor-pointer transition-colors"
                   onClick={(e) => {
                     const target = e.target as HTMLElement;
-                    if (target.closest("button, a, input, [data-row-stop]")) return;
-                    navigate(`/suites/${row.original.id}`);
+                    if (target.closest("button, a, input")) return;
+                    navigate(`/suites/${row.original.id?.value}`);
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
@@ -660,9 +432,7 @@ export function Suites() {
                   <span className="text-xs text-zinc-600 font-mono">
                     {loading
                       ? "Loading suites..."
-                      : suites.length === 0
-                        ? "No suites yet — create one to bundle (db_preset × workload) runs."
-                        : "No suites matching filters"}
+                      : "No suites yet — create one to bundle (db × workload) runs."}
                   </span>
                 </TableCell>
               </TableRow>
@@ -671,7 +441,7 @@ export function Suites() {
         </Table>
       </div>
 
-      {/* Pagination — duplicates the Runs footer pattern. */}
+      {/* Pagination */}
       {suites.length > 0 && (
         <div className="flex items-center justify-between mt-auto">
           <div className="flex items-center gap-2">
@@ -724,9 +494,5 @@ export function Suites() {
     </div>
   );
 }
-
-// Pause icon imported but unused after status refactor — re-export to keep
-// tree-shaking happy if a future "Pause" action lands here.
-export { Pause };
 
 export default Suites;

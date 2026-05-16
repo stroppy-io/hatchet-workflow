@@ -9,13 +9,59 @@ import {
   BackgroundVariant,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import type {
-  RunConfig,
-  PostgresTopology,
-  MySQLTopology,
-  PicodataTopology,
-  YDBTopology,
-} from "@/api/types";
+// ─── Local types (previously from @/api/types) ──────────────────
+interface MachineSpec {
+  role?: string;
+  count: number;
+  cpus?: number;
+  memory_mb?: number;
+  disk_gb?: number;
+  disk_type?: string;
+}
+
+interface PostgresTopology {
+  master: MachineSpec;
+  replicas?: MachineSpec[];
+  haproxy?: MachineSpec;
+  pgbouncer?: boolean;
+  patroni?: boolean;
+  etcd?: boolean;
+  sync_replicas?: number;
+}
+
+interface MySQLTopology {
+  primary: MachineSpec;
+  replicas?: MachineSpec[];
+  proxysql?: MachineSpec;
+  group_replication?: boolean;
+  semi_sync?: boolean;
+}
+
+interface PicodataTier { name: string; replication_factor?: number; can_vote?: boolean; count: number; }
+
+interface PicodataTopology {
+  instances: MachineSpec[];
+  haproxy?: MachineSpec;
+  replication_factor?: number;
+  shards?: number;
+  tiers?: PicodataTier[];
+}
+
+interface YDBTopology {
+  storage: MachineSpec;
+  database?: MachineSpec;
+  haproxy?: MachineSpec;
+  fault_tolerance?: string;
+}
+
+export interface RunConfig {
+  id?: string;
+  name?: string;
+  provider?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  database?: any;
+  machines?: MachineSpec[];
+}
 import { DB_COLORS } from "@/lib/db-colors";
 
 const INFRA_PROXY = "#A0860A";
@@ -47,7 +93,7 @@ function buildPostgres(t: PostgresTopology): { nodes: TopoNode[]; edges: TopoEdg
   const replicaCount = t.replicas?.reduce((s, r) => s + r.count, 0) || 0;
   if (replicaCount > 0) {
     nodes.push({ id: "replicas", label: `Replica${replicaCount > 1 ? "s" : ""}`, count: replicaCount, color: c.hexSecondary, group: "db" });
-    edges.push({ from: "master", to: "replicas", label: t.sync_replicas > 0 ? "sync" : "async", animated: true });
+    edges.push({ from: "master", to: "replicas", label: (t.sync_replicas ?? 0) > 0 ? "sync" : "async", animated: true });
   }
 
   if (t.patroni) {

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import type { NodeStatus, NodeStatusValue } from "@/api/types";
+import type { NodeStatus, NodeStatusValue } from "@/components/RunCard";
 import { Check, X, Loader2, Circle, ChevronRight, Zap, Server, Database, BarChart3, Play, Trash2 } from "lucide-react";
 
 interface DagGraphProps {

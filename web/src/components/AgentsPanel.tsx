@@ -1,5 +1,25 @@
 import { useEffect, useState, useCallback } from "react";
-import { getRunAgents, type AgentInfo } from "@/api/client";
+import { getAccessToken } from "@/api/transport";
+
+interface AgentInfo {
+  machine_id: string;
+  role: string;
+  host?: string;
+  internal_host?: string;
+  agent_port?: number;
+  registered: boolean;
+  healthy: boolean;
+  health_error?: string;
+  last_seen_at?: string;
+}
+
+async function getRunAgents(runID: string): Promise<AgentInfo[]> {
+  const token = getAccessToken();
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+  const res = await fetch(`/api/v1/run/${runID}/agents`, { headers });
+  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+  return res.json();
+}
 import { Badge } from "@/components/ui/badge";
 import {
   Table,

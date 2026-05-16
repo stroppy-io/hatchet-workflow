@@ -1,20 +1,152 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getPreset, createPreset, updatePreset } from "@/api/client";
-import {
-  ALL_DB_KINDS,
-  type DatabaseKind,
-  type Preset,
-  type PostgresTopology,
-  type MySQLTopology,
-  type PicodataTopology,
-  type PicodataTier,
-  type YDBTopology,
-  type YDBManagedTopology,
-  type YDBManagedComputeType,
-  type MachineSpec,
-  YDB_MANAGED_RESOURCE_PRESETS,
-} from "@/api/types";
+import { getAccessToken } from "@/api/transport";
+
+// ─── Local types (previously from @/api/types) ──────────────────────────────
+export type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb" | "ydb-managed" | "cockroach";
+export const ALL_DB_KINDS: DatabaseKind[] = ["postgres", "mysql", "mariadb", "picodata", "ydb", "ydb-managed", "cockroach"];
+
+export type YDBManagedComputeType = "oltp" | "olap";
+
+export interface MachineSpec {
+  role: string;
+  count: number;
+  cpus: number;
+  memory_mb: number;
+  disk_gb: number;
+  disk_type?: string;
+  secondary_disks?: { device_name?: string; size_gb: number; type?: string }[];
+  placement?: { strategy?: "single" | "round-robin"; zones?: string[] };
+}
+
+export interface PostgresTopology {
+  master: MachineSpec;
+  replicas?: MachineSpec[];
+  haproxy?: MachineSpec;
+  pgbouncer: boolean;
+  patroni: boolean;
+  etcd: boolean;
+  sync_replicas: number;
+  master_options?: Record<string, string>;
+  replica_options?: Record<string, string>;
+  haproxy_options?: Record<string, string>;
+  pgbouncer_options?: Record<string, string>;
+  patroni_options?: Record<string, string>;
+  etcd_options?: Record<string, string>;
+}
+
+export interface MySQLTopology {
+  primary: MachineSpec;
+  replicas?: MachineSpec[];
+  proxysql?: MachineSpec;
+  group_replication: boolean;
+  semi_sync: boolean;
+  primary_options?: Record<string, string>;
+  replica_options?: Record<string, string>;
+  proxysql_options?: Record<string, string>;
+}
+
+export interface PicodataTier {
+  name: string;
+  replication_factor: number;
+  can_vote: boolean;
+  count: number;
+}
+
+export interface PicodataTopology {
+  instances: MachineSpec[];
+  haproxy?: MachineSpec;
+  replication_factor: number;
+  shards: number;
+  tiers?: PicodataTier[];
+  instance_options?: Record<string, string>;
+  haproxy_options?: Record<string, string>;
+}
+
+export interface YDBTopology {
+  storage: MachineSpec;
+  database?: MachineSpec;
+  haproxy?: MachineSpec;
+  fault_tolerance: string;
+  failure_domain_type?: string;
+  default_disk_type?: string;
+  storage_groups?: number;
+  auto_size_pdisks?: boolean;
+  database_path: string;
+  storage_options?: Record<string, string>;
+  database_options?: Record<string, string>;
+  haproxy_options?: Record<string, string>;
+}
+
+export interface YDBManagedResourcePreset {
+  id: string;
+  label: string;
+  cores: number;
+  memory_gb: number;
+  compute_type: YDBManagedComputeType;
+}
+
+export const YDB_MANAGED_RESOURCE_PRESETS: YDBManagedResourcePreset[] = [
+  { id: "small-m8",      label: "Small M8",      cores: 4,  memory_gb: 8,   compute_type: "oltp" },
+  { id: "small",         label: "Small",         cores: 4,  memory_gb: 16,  compute_type: "oltp" },
+  { id: "medium",        label: "Medium",        cores: 8,  memory_gb: 32,  compute_type: "oltp" },
+  { id: "medium-m64",    label: "Medium M64",    cores: 8,  memory_gb: 64,  compute_type: "oltp" },
+  { id: "medium-m96",    label: "Medium M96",    cores: 8,  memory_gb: 96,  compute_type: "oltp" },
+  { id: "large",         label: "Large",         cores: 12, memory_gb: 48,  compute_type: "oltp" },
+  { id: "xlarge",        label: "XLarge",        cores: 16, memory_gb: 64,  compute_type: "oltp" },
+  { id: "oltp-c16-m128", label: "OLTP C16 M128", cores: 16, memory_gb: 128, compute_type: "oltp" },
+  { id: "olap-medium",   label: "OLAP Medium",   cores: 8,  memory_gb: 32,  compute_type: "olap" },
+  { id: "olap-large",    label: "OLAP Large",    cores: 12, memory_gb: 48,  compute_type: "olap" },
+];
+
+export interface YDBManagedTopology {
+  type: "serverless" | "dedicated";
+  compute_type?: YDBManagedComputeType;
+  resource_preset_id?: string;
+  node_count?: number;
+  auto_scale?: { min_size: number; max_size: number; cpu_utilization_percent?: number };
+  storage_groups?: number;
+  storage_type?: string;
+  throttling_rcus?: number;
+  client: MachineSpec;
+  database_path?: string;
+  endpoint?: string;
+  terraform_output?: Record<string, unknown>;
+}
+
+export interface Preset {
+  id: string;
+  name: string;
+  description: string;
+  db_kind: DatabaseKind;
+  is_builtin: boolean;
+  topology: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | YDBManagedTopology;
+  created_at?: string;
+}
+
+// ─── Local fetch helpers (REST endpoints, no ConnectRPC equivalent) ──────────
+function _authHeaders(): Record<string, string> {
+  const token = getAccessToken();
+  return token ? { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
+}
+
+async function getPreset(id: string): Promise<Preset> {
+  const res = await fetch(`/api/v1/presets/${id}`, { headers: _authHeaders() });
+  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+async function createPreset(data: { name: string; description?: string; db_kind: DatabaseKind; topology: unknown }): Promise<{ id: string }> {
+  const res = await fetch("/api/v1/presets", { method: "POST", headers: _authHeaders(), body: JSON.stringify(data) });
+  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+async function updatePreset(id: string, data: { name?: string; description?: string; topology?: unknown }): Promise<{ status: string }> {
+  const res = await fetch(`/api/v1/presets/${id}`, { method: "PUT", headers: _authHeaders(), body: JSON.stringify(data) });
+  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+  return res.json();
+}
 import { TopologyDiagram } from "@/components/TopologyDiagram";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

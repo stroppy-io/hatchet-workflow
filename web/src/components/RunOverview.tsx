@@ -1,7 +1,40 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import type { NodeStatus, NodeStatusValue, RunConfig, MachineSpec, DatabaseKind } from "@/api/types";
+import type { NodeStatus, NodeStatusValue } from "@/components/RunCard";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
-import { listPresets } from "@/api/client";
+import { clients } from "@/api/clients";
+import { getTenantId } from "@/api/transport";
+
+// ─── Local types (previously from @/api/types) ──────────────────
+type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb" | "ydb-managed" | "cockroach";
+
+interface MachineSpec {
+  role: string;
+  count: number;
+  cpus: number;
+  memory_mb: number;
+  disk_gb: number;
+  disk_type?: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface RunConfig {
+  id?: string;
+  name?: string;
+  provider?: string;
+  preset_id?: string;
+  package_id?: string;
+  platform_id?: string;
+  network?: { cidr?: string; zone?: string };
+  machines?: MachineSpec[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  database?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  external_db?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  stroppy?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  monitor?: any;
+}
 import {
   Check,
   X,
@@ -202,11 +235,12 @@ function ConfigPanel({ config, startedAt, finishedAt, isRunning }: {
       return;
     }
     let cancelled = false;
-    listPresets()
-      .then((ps) => {
+    const tid = getTenantId();
+    clients.databasePreset.listDatabasePresets(tid ? { value: tid } : {})
+      .then((resp) => {
         if (cancelled) return;
-        const found = (ps ?? []).find((p) => p.id === id);
-        setPresetName(found?.name);
+        const found = (resp.databasePresets ?? []).find((p) => p.id?.value === id);
+        setPresetName(found?.identity?.name);
       })
       .catch(() => {/* ignore — column will fall back to id */});
     return () => { cancelled = true; };
@@ -411,8 +445,8 @@ function ConfigPanel({ config, startedAt, finishedAt, isRunning }: {
           {s.files && s.files.length > 0 && (
             <div className="flex items-start gap-1.5 mt-1 text-[10px] font-mono text-zinc-600">
               <FileText className="w-3 h-3 mt-0.5 shrink-0" />
-              <span className="truncate" title={s.files.map((f) => f.name).join(", ")}>
-                {s.files.length} file{s.files.length === 1 ? "" : "s"}: {s.files.map((f) => f.name).join(", ")}
+              <span className="truncate" title={s.files.map((f: { name: string }) => f.name).join(", ")}>
+                {s.files.length} file{s.files.length === 1 ? "" : "s"}: {s.files.map((f: { name: string }) => f.name).join(", ")}
               </span>
             </div>
           )}

@@ -1,19 +1,103 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  probeScript,
-  getStroppyCommits,
-  getStroppyVersions,
-  type StroppyCommit,
-} from "@/api/client";
-import {
-  SCRIPT_COMPAT,
-  type DatabaseKind,
-  type Protocol,
-  type Provider,
-  type ProbeResponse,
-  type TenantQuotas,
-  type WorkloadFile,
-} from "@/api/types";
+import { getAccessToken } from "@/api/transport";
+
+// ─── Local type definitions (previously from @/api/types) ──────────
+export type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb" | "ydb-managed" | "cockroach";
+export type Protocol = "pg" | "mysql" | "picodata" | "ydb-grpc" | "ydb-pgwire" | "ydb-grpcs" | "cockroach";
+export type Provider = "yandex" | "docker";
+
+export interface WorkloadFile {
+  name: string;
+  kind?: "sql" | string;
+  content: string;
+}
+
+export interface EnvDeclaration {
+  names: string[];
+  default?: string;
+  description: string;
+}
+
+export interface ProbeResponse {
+  env_declarations?: EnvDeclaration[];
+  steps?: string[];
+  sql_sections?: { name: string; queries?: { name: string }[] }[];
+  driver_setups?: { index: number; defaults: Record<string, unknown> }[];
+  human?: string;
+  human_error?: string;
+}
+
+export interface TenantQuotas {
+  allowed_db_kinds?: string[];
+  allowed_providers?: string[];
+  max_nodes?: number;
+  max_cpus_per_node?: number;
+  max_memory_mb_per_node?: number;
+  max_disk_gb_per_node?: number;
+  max_concurrent_runs?: number;
+}
+
+export interface StroppyCommit {
+  short: string;
+  tag: string;
+  name?: string;
+  download_url: string;
+  published_at: string;
+}
+
+export const KIND_PROTOCOLS: Record<DatabaseKind, Protocol[]> = {
+  postgres: ["pg"],
+  mysql: ["mysql"],
+  mariadb: ["mysql"],
+  picodata: ["picodata"],
+  ydb: ["ydb-grpc", "ydb-pgwire"],
+  "ydb-managed": ["ydb-grpcs"],
+  cockroach: ["cockroach"],
+};
+
+export const SCRIPT_COMPAT: Record<string, string[]> = {
+  "postgres:pg":           ["tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx", "tpch/tx"],
+  "mysql:mysql":           ["tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx", "tpch/tx"],
+  "mariadb:mysql":         ["tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx", "tpch/tx"],
+  "picodata:picodata":     ["tpcc/tx", "tpcb/tx", "tpch/tx"],
+  "ydb:ydb-grpc":          ["tpcc/tx", "tpcb/tx", "tpch/tx"],
+  "ydb:ydb-pgwire":        ["tpcc/tx-ydb-pgwire", "tpcb/tx-ydb-pgwire"],
+  "ydb-managed:ydb-grpcs": ["tpcc/tx", "tpcb/tx", "tpch/tx"],
+  "cockroach:cockroach":   ["tpcc/tx", "tpcb/tx", "tpch/tx"],
+};
+
+// ─── Local fetch helpers (no ConnectRPC equivalent) ────────────────
+
+function authHeaders(): Record<string, string> {
+  const token = getAccessToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function probeScript(req: {
+  script: string; version?: string; sql?: string; driver_type?: string;
+  pool_size?: number; scale_factor?: number; env?: Record<string, string>;
+  files?: WorkloadFile[]; include_human?: boolean;
+}): Promise<ProbeResponse> {
+  const res = await fetch("/api/v1/probe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(req),
+  });
+  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+async function getStroppyVersions(): Promise<string[]> {
+  const res = await fetch("/api/v1/stroppy-versions", { headers: authHeaders() });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+async function getStroppyCommits(): Promise<StroppyCommit[]> {
+  const res = await fetch("/api/v1/stroppy-commits", { headers: authHeaders() });
+  if (!res.ok) return [];
+  return res.json();
+}
 import { Label } from "@/components/ui/label";
 import {
   Select,

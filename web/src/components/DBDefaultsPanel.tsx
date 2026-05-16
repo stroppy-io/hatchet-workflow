@@ -1,6 +1,32 @@
 import { useEffect, useState } from "react";
-import { getDBDefaults } from "@/api/client";
-import type { DatabaseKind } from "@/api/types";
+import { clients } from "@/api/clients";
+import { getTenantId } from "@/api/transport";
+import { Database_Kind } from "@/lib/proto/cloud/v1/catalog/database_pb";
+
+type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb" | "ydb-managed" | "cockroach";
+
+const KIND_ENUM: Partial<Record<DatabaseKind, Database_Kind>> = {
+  postgres: Database_Kind.DATABASE_KIND_POSTGRES,
+  mysql: Database_Kind.DATABASE_KIND_MYSQL,
+  mariadb: Database_Kind.DATABASE_KIND_MARIADB,
+  picodata: Database_Kind.DATABASE_KIND_PICODATA,
+  ydb: Database_Kind.DATABASE_KIND_YDB,
+  "ydb-managed": Database_Kind.DATABASE_KIND_YDB_MANAGED,
+  cockroach: Database_Kind.DATABASE_KIND_COCKROACH,
+};
+
+async function getDBDefaults(kind: DatabaseKind): Promise<Record<string, unknown>> {
+  const tid = getTenantId();
+  const resp = await clients.databasePreset.listDatabasePresets(tid ? { value: tid } : {});
+  const kindEnum = KIND_ENUM[kind];
+  const result: Record<string, unknown> = {};
+  for (const p of resp.databasePresets ?? []) {
+    if (kindEnum !== undefined && p.database?.kind !== kindEnum) continue;
+    const name = p.identity?.name ?? p.id?.value ?? "?";
+    result[name] = p.database;
+  }
+  return result;
+}
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Database, Server, Cpu, Cloud } from "lucide-react";

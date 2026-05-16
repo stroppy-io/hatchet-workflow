@@ -1,5 +1,19 @@
-import type { WSMessage, LogLine } from "./types";
-import { getAccessToken } from "./client";
+import { getAccessToken } from "./transport";
+
+export interface WSMessage {
+  type: "log" | "report" | "agent_log";
+  run_id?: string;
+  node_id?: string;
+  payload: unknown;
+}
+
+export interface LogLine {
+  run_id: string;
+  phase: string;
+  machine_id: string;
+  line: string;
+  ts: string;
+}
 
 export type WSMessageHandler = (msg: WSMessage) => void;
 export type LogHandler = (line: LogLine) => void;

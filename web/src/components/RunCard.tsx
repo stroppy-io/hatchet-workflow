@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { NodeStatus, NodeStatusValue } from "@/api/types";
+export type NodeStatusValue = "pending" | "running" | "done" | "failed" | "cancelled";
+export interface NodeStatus { id: string; status: NodeStatusValue; error?: string; }
 
 interface RunCardProps {
   runID: string;

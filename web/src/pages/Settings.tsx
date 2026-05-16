@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { clients } from "@/api/clients";
+import { getTenantId } from "@/api/transport";
 import {
-  getSettings,
-  updateSettings,
-} from "@/api/client";
-import type { ServerSettings } from "@/api/types";
+  SettingsItem_Key,
+  SettingsItem_Part,
+} from "@/lib/proto/cloud/v1/catalog/settings_pb";
+import type { SettingsItem } from "@/lib/proto/cloud/v1/catalog/settings_pb";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,10 +15,107 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Save, AlertCircle, Check } from "lucide-react";
 
+// ─── Local flat shape (mirrors legacy REST type) ──────────────────
+
+interface YcSettings {
+  token: string;
+  cloud_id: string;
+  folder_id: string;
+  zone: string;
+  network_id: string;
+  network_name: string;
+  subnet_cidr: string;
+  platform_id: string;
+  image_id: string;
+  assign_public_ip: boolean;
+  software_accelerated_network: boolean;
+  ssh_user: string;
+  ssh_public_key: string;
+}
+
+interface LocalSettings {
+  server_addr: string;
+  binary_url: string;
+  yandex: YcSettings;
+}
+
+const EMPTY_YC: YcSettings = {
+  token: "", cloud_id: "", folder_id: "", zone: "", network_id: "",
+  network_name: "", subnet_cidr: "", platform_id: "", image_id: "",
+  assign_public_ip: false, software_accelerated_network: false,
+  ssh_user: "", ssh_public_key: "",
+};
+
+const EMPTY: LocalSettings = { server_addr: "", binary_url: "", yandex: { ...EMPTY_YC } };
+
+// ─── Proto <-> local converters ───────────────────────────────────
+
+function itemsToLocal(items: SettingsItem[]): LocalSettings {
+  const s: LocalSettings = { ...EMPTY, yandex: { ...EMPTY_YC } };
+  for (const item of items) {
+    const v = item.value?.value;
+    const str = (v as { case?: string; value?: unknown })?.case === "stringValue"
+      ? String((v as { value: unknown }).value ?? "")
+      : "";
+    const bool = (v as { case?: string; value?: unknown })?.case === "boolValue"
+      ? Boolean((v as { value: unknown }).value)
+      : false;
+    switch (item.key) {
+      case SettingsItem_Key.YANDEX_CLOUD_TOKEN: s.yandex.token = str; break;
+      case SettingsItem_Key.YANDEX_CLOUD_CLOUD_ID: s.yandex.cloud_id = str; break;
+      case SettingsItem_Key.YANDEX_CLOUD_FOLDER_ID: s.yandex.folder_id = str; break;
+      case SettingsItem_Key.YANDEX_CLOUD_ZONE: s.yandex.zone = str; break;
+      case SettingsItem_Key.YANDEX_CLOUD_NETWORK_ID: s.yandex.network_id = str; break;
+      case SettingsItem_Key.YANDEX_CLOUD_NETWORK_NAME: s.yandex.network_name = str; break;
+      case SettingsItem_Key.YANDEX_CLOUD_SUBNET_CIDR: s.yandex.subnet_cidr = str; break;
+      case SettingsItem_Key.YANDEX_CLOUD_PLATFORM_ID: s.yandex.platform_id = str; break;
+      case SettingsItem_Key.YANDEX_CLOUD_IMAGE_ID: s.yandex.image_id = str; break;
+      case SettingsItem_Key.YANDEX_CLOUD_ASSIGN_PUBLIC_IP: s.yandex.assign_public_ip = (v as { case?: string; value?: unknown })?.case === "boolValue" ? bool : str === "true"; break;
+      case SettingsItem_Key.YANDEX_CLOUD_SOFTWARE_ACCELERATED_NETWORK: s.yandex.software_accelerated_network = (v as { case?: string; value?: unknown })?.case === "boolValue" ? bool : str === "true"; break;
+      case SettingsItem_Key.YANDEX_CLOUD_SSH_USER: s.yandex.ssh_user = str; break;
+      case SettingsItem_Key.YANDEX_CLOUD_SSH_PUBLIC_KEY: s.yandex.ssh_public_key = str; break;
+    }
+  }
+  return s;
+}
+
+function localToRequests(s: LocalSettings) {
+  const yc = s.yandex;
+  const strItem = (key: SettingsItem_Key, val: string) => ({
+    id: { value: "" },
+    part: SettingsItem_Part.YANDEX_CLOUD,
+    key,
+    value: { value: { case: "stringValue" as const, value: val } },
+  });
+  const boolItem = (key: SettingsItem_Key, val: boolean) => ({
+    id: { value: "" },
+    part: SettingsItem_Part.YANDEX_CLOUD,
+    key,
+    value: { value: { case: "boolValue" as const, value: val } },
+  });
+  return [
+    strItem(SettingsItem_Key.YANDEX_CLOUD_TOKEN, yc.token),
+    strItem(SettingsItem_Key.YANDEX_CLOUD_CLOUD_ID, yc.cloud_id),
+    strItem(SettingsItem_Key.YANDEX_CLOUD_FOLDER_ID, yc.folder_id),
+    strItem(SettingsItem_Key.YANDEX_CLOUD_ZONE, yc.zone),
+    strItem(SettingsItem_Key.YANDEX_CLOUD_NETWORK_ID, yc.network_id),
+    strItem(SettingsItem_Key.YANDEX_CLOUD_NETWORK_NAME, yc.network_name),
+    strItem(SettingsItem_Key.YANDEX_CLOUD_SUBNET_CIDR, yc.subnet_cidr),
+    strItem(SettingsItem_Key.YANDEX_CLOUD_PLATFORM_ID, yc.platform_id),
+    strItem(SettingsItem_Key.YANDEX_CLOUD_IMAGE_ID, yc.image_id),
+    boolItem(SettingsItem_Key.YANDEX_CLOUD_ASSIGN_PUBLIC_IP, yc.assign_public_ip),
+    boolItem(SettingsItem_Key.YANDEX_CLOUD_SOFTWARE_ACCELERATED_NETWORK, yc.software_accelerated_network),
+    strItem(SettingsItem_Key.YANDEX_CLOUD_SSH_USER, yc.ssh_user),
+    strItem(SettingsItem_Key.YANDEX_CLOUD_SSH_PUBLIC_KEY, yc.ssh_public_key),
+  ];
+}
+
+// ─── Page ─────────────────────────────────────────────────────────
+
 export function SettingsPage() {
   const { user } = useAuth();
   const canEdit = !!user && (user.is_root || user.role === "owner");
-  const [settings, setSettings] = useState<ServerSettings | null>(null);
+  const [settings, setSettings] = useState<LocalSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{
@@ -27,8 +126,11 @@ export function SettingsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const s = await getSettings();
-        setSettings(s);
+        const tid = getTenantId();
+        const resp = await clients.settings.listSettings(
+          tid ? { tenantId: { value: tid } } : {}
+        );
+        setSettings(itemsToLocal(resp.settingsItems ?? []));
       } catch (err) {
         setMessage({
           type: "error",
@@ -46,7 +148,14 @@ export function SettingsPage() {
     setSaving(true);
     setMessage(null);
     try {
-      await updateSettings(settings);
+      const tid = getTenantId();
+      const reqs = localToRequests(settings).map((item) => ({
+        id: item.id,
+        value: item.value,
+        // include tenantId if scoped
+        ...(tid ? { tenantId: { value: tid } } : {}),
+      }));
+      await clients.settings.setSettingMany({ settings: reqs });
       setMessage({ type: "success", text: "Settings saved" });
     } catch (err) {
       setMessage({
@@ -57,20 +166,9 @@ export function SettingsPage() {
     setSaving(false);
   }
 
-  function updateField<
-    S extends keyof ServerSettings,
-    K extends keyof ServerSettings[S],
-  >(section: S, key: K, value: ServerSettings[S][K]) {
+  function setYc(key: keyof YcSettings, value: string | boolean) {
     if (!settings) return;
-    setSettings({
-      ...settings,
-      [section]: { ...settings[section], [key]: value },
-    });
-  }
-
-  function update<S extends keyof ServerSettings>(section: S, value: ServerSettings[S]) {
-    if (!settings) return;
-    setSettings({ ...settings, [section]: value });
+    setSettings({ ...settings, yandex: { ...settings.yandex, [key]: value } });
   }
 
   if (loading) {
@@ -110,7 +208,6 @@ export function SettingsPage() {
       <Tabs defaultValue="cloud">
         <TabsList>
           <TabsTrigger value="cloud">Cloud</TabsTrigger>
-          <TabsTrigger value="quotas">Quotas</TabsTrigger>
         </TabsList>
 
         {/* Cloud settings */}
@@ -121,45 +218,6 @@ export function SettingsPage() {
                 <CardTitle>Cloud / Server</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Server address — required for cloud runs */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>
-                      Server Address <Badge variant="destructive" className="text-[10px] ml-1">required</Badge>
-                      {!user?.is_root && <Badge variant="secondary" className="text-[10px] ml-1">root only</Badge>}
-                    </Label>
-                    <Input
-                      value={settings.cloud.server_addr || ""}
-                      onChange={(e) =>
-                        updateField("cloud", "server_addr", e.target.value)
-                      }
-                      disabled={!user?.is_root}
-                      className="font-mono text-xs"
-                      placeholder="http://84.201.148.157:8080"
-                    />
-                    <p className="text-[10px] text-muted-foreground">
-                      Public URL agents will use to reach this server
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>
-                      Binary URL Override
-                      {!user?.is_root && <Badge variant="secondary" className="text-[10px] ml-1">root only</Badge>}
-                    </Label>
-                    <Input
-                      value={settings.cloud.binary_url || ""}
-                      onChange={(e) =>
-                        updateField("cloud", "binary_url", e.target.value)
-                      }
-                      disabled={!user?.is_root}
-                      className="font-mono text-xs"
-                      placeholder="defaults to server_addr/agent/binary"
-                    />
-                  </div>
-                </div>
-
-                <hr className="border-border" />
-
                 {/* YC Credentials */}
                 <div>
                   <h3 className="text-sm font-medium mb-3">Yandex Cloud Credentials</h3>
@@ -170,16 +228,9 @@ export function SettingsPage() {
                       </Label>
                       <Input
                         type="password"
-                        value={settings.cloud.yandex.token || ""}
-                        onChange={(e) =>
-                          setSettings({
-                            ...settings,
-                            cloud: {
-                              ...settings.cloud,
-                              yandex: { ...settings.cloud.yandex, token: e.target.value },
-                            },
-                          })
-                        }
+                        value={settings.yandex.token}
+                        onChange={(e) => setYc("token", e.target.value)}
+                        disabled={!canEdit}
                         className="font-mono text-xs"
                         placeholder="OAuth or IAM token"
                       />
@@ -189,16 +240,9 @@ export function SettingsPage() {
                         Cloud ID <Badge variant="destructive" className="text-[10px] ml-1">required</Badge>
                       </Label>
                       <Input
-                        value={settings.cloud.yandex.cloud_id || ""}
-                        onChange={(e) =>
-                          setSettings({
-                            ...settings,
-                            cloud: {
-                              ...settings.cloud,
-                              yandex: { ...settings.cloud.yandex, cloud_id: e.target.value },
-                            },
-                          })
-                        }
+                        value={settings.yandex.cloud_id}
+                        onChange={(e) => setYc("cloud_id", e.target.value)}
+                        disabled={!canEdit}
                         className="font-mono text-xs"
                       />
                     </div>
@@ -228,19 +272,9 @@ export function SettingsPage() {
                           {required && <Badge variant="destructive" className="text-[10px] ml-1">required</Badge>}
                         </Label>
                         <Input
-                          value={(settings.cloud.yandex as any)[key] || ""}
-                          onChange={(e) =>
-                            setSettings({
-                              ...settings,
-                              cloud: {
-                                ...settings.cloud,
-                                yandex: {
-                                  ...settings.cloud.yandex,
-                                  [key]: e.target.value,
-                                },
-                              },
-                            })
-                          }
+                          value={settings.yandex[key] as string}
+                          onChange={(e) => setYc(key, e.target.value)}
+                          disabled={!canEdit}
                           className="font-mono text-xs"
                         />
                       </div>
@@ -253,19 +287,9 @@ export function SettingsPage() {
                   <div className="flex items-center gap-2 h-9">
                     <input
                       type="checkbox"
-                      checked={settings.cloud.yandex.assign_public_ip ?? false}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          cloud: {
-                            ...settings.cloud,
-                            yandex: {
-                              ...settings.cloud.yandex,
-                              assign_public_ip: e.target.checked,
-                            },
-                          },
-                        })
-                      }
+                      checked={settings.yandex.assign_public_ip}
+                      onChange={(e) => setYc("assign_public_ip", e.target.checked)}
+                      disabled={!canEdit}
                       className="accent-primary"
                     />
                     <span className="text-sm text-muted-foreground">
@@ -279,23 +303,13 @@ export function SettingsPage() {
                   <div className="flex items-center gap-2 h-9">
                     <input
                       type="checkbox"
-                      checked={settings.cloud.yandex.software_accelerated_network ?? false}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          cloud: {
-                            ...settings.cloud,
-                            yandex: {
-                              ...settings.cloud.yandex,
-                              software_accelerated_network: e.target.checked,
-                            },
-                          },
-                        })
-                      }
+                      checked={settings.yandex.software_accelerated_network}
+                      onChange={(e) => setYc("software_accelerated_network", e.target.checked)}
+                      disabled={!canEdit}
                       className="accent-primary"
                     />
                     <span className="text-sm text-muted-foreground">
-                      Offload packet processing to dedicated host cores (lower latency/jitter; requires compatible platform_id)
+                      Offload packet processing to dedicated host cores
                     </span>
                   </div>
                 </div>
@@ -304,19 +318,9 @@ export function SettingsPage() {
                   <div className="space-y-2">
                     <Label>SSH User</Label>
                     <Input
-                      value={settings.cloud.yandex.ssh_user || ""}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          cloud: {
-                            ...settings.cloud,
-                            yandex: {
-                              ...settings.cloud.yandex,
-                              ssh_user: e.target.value,
-                            },
-                          },
-                        })
-                      }
+                      value={settings.yandex.ssh_user}
+                      onChange={(e) => setYc("ssh_user", e.target.value)}
+                      disabled={!canEdit}
                       className="font-mono text-xs"
                       placeholder="stroppy"
                     />
@@ -330,19 +334,9 @@ export function SettingsPage() {
                   <Label>SSH Public Key</Label>
                   <textarea
                     className="w-full h-20 bg-transparent border border-input p-3 font-mono text-xs resize-y focus:outline-none focus:ring-1 focus:ring-ring"
-                    value={settings.cloud.yandex.ssh_public_key || ""}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        cloud: {
-                          ...settings.cloud,
-                          yandex: {
-                            ...settings.cloud.yandex,
-                            ssh_public_key: e.target.value,
-                          },
-                        },
-                      })
-                    }
+                    value={settings.yandex.ssh_public_key}
+                    onChange={(e) => setYc("ssh_public_key", e.target.value)}
+                    disabled={!canEdit}
                   />
                 </div>
 
@@ -356,120 +350,6 @@ export function SettingsPage() {
             </Card>
           )}
         </TabsContent>
-
-        {/* Quotas tab */}
-        <TabsContent value="quotas">
-          {settings && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Tenant Quotas</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <p className="text-xs text-zinc-500">
-                  Resource limits for this tenant. Empty or 0 means no restriction.
-                </p>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Allowed Databases</Label>
-                    <Input
-                      value={(settings.quotas?.allowed_db_kinds || []).join(", ")}
-                      onChange={(e) => update("quotas", {
-                        ...settings.quotas,
-                        allowed_db_kinds: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-                      })}
-                      disabled={!canEdit}
-                      placeholder="all (e.g. ydb, postgres)"
-                      className="font-mono text-xs"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Allowed Providers</Label>
-                    <Input
-                      value={(settings.quotas?.allowed_providers || []).join(", ")}
-                      onChange={(e) => update("quotas", {
-                        ...settings.quotas,
-                        allowed_providers: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-                      })}
-                      disabled={!canEdit}
-                      placeholder="all (e.g. yandex, docker)"
-                      className="font-mono text-xs"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Max Nodes</Label>
-                    <Input
-                      type="number" min={0}
-                      value={settings.quotas?.max_nodes || ""}
-                      onChange={(e) => update("quotas", { ...settings.quotas, max_nodes: parseInt(e.target.value) || 0 })}
-                      disabled={!canEdit}
-                      placeholder="unlimited"
-                      className="font-mono text-xs"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Max CPUs/Node</Label>
-                    <Input
-                      type="number" min={0}
-                      value={settings.quotas?.max_cpus_per_node || ""}
-                      onChange={(e) => update("quotas", { ...settings.quotas, max_cpus_per_node: parseInt(e.target.value) || 0 })}
-                      disabled={!canEdit}
-                      placeholder="unlimited"
-                      className="font-mono text-xs"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Max RAM/Node (MB)</Label>
-                    <Input
-                      type="number" min={0}
-                      value={settings.quotas?.max_memory_mb_per_node || ""}
-                      onChange={(e) => update("quotas", { ...settings.quotas, max_memory_mb_per_node: parseInt(e.target.value) || 0 })}
-                      disabled={!canEdit}
-                      placeholder="unlimited"
-                      className="font-mono text-xs"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Max Disk/Node (GB)</Label>
-                    <Input
-                      type="number" min={0}
-                      value={settings.quotas?.max_disk_gb_per_node || ""}
-                      onChange={(e) => update("quotas", { ...settings.quotas, max_disk_gb_per_node: parseInt(e.target.value) || 0 })}
-                      disabled={!canEdit}
-                      placeholder="unlimited"
-                      className="font-mono text-xs"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Max Concurrent Runs</Label>
-                    <Input
-                      type="number" min={0}
-                      value={settings.quotas?.max_concurrent_runs || ""}
-                      onChange={(e) => update("quotas", { ...settings.quotas, max_concurrent_runs: parseInt(e.target.value) || 0 })}
-                      disabled={!canEdit}
-                      placeholder="unlimited"
-                      className="font-mono text-xs"
-                    />
-                  </div>
-                </div>
-
-                {canEdit && (
-                  <Button onClick={handleSaveSettings} disabled={saving} size="sm">
-                    <Save className="h-3.5 w-3.5" />
-                    {saving ? "Saving..." : "Save Settings"}
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
       </Tabs>
     </div>
   );

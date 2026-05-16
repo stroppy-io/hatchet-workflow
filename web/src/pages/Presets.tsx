@@ -1,11 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import {
-  listPresets,
-  deletePreset,
-  clonePreset,
-} from "@/api/client";
-import { ALL_DB_KINDS, type Preset, type DatabaseKind } from "@/api/types";
+import { clients } from "@/api/clients";
+import { getTenantId } from "@/api/transport";
+import { Database_Kind } from "@/lib/proto/cloud/v1/catalog/database_pb";
+import type { DatabasePreset, Database } from "@/lib/proto/cloud/v1/catalog/database_pb";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,12 +24,120 @@ import {
   Check,
   AlertCircle,
 } from "lucide-react";
-
 import { DB_COLORS } from "@/lib/db-colors";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 
+// ─── Local row type ───────────────────────────────────────────────
+
+type DbKindStr = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb" | "ydb-managed" | "cockroach";
+
+const ALL_DB_KINDS: DbKindStr[] = ["postgres", "mysql", "mariadb", "picodata", "ydb", "ydb-managed", "cockroach"];
+
+const KIND_TO_STR: Partial<Record<Database_Kind, DbKindStr>> = {
+  [Database_Kind.DATABASE_KIND_POSTGRES]: "postgres",
+  [Database_Kind.DATABASE_KIND_MYSQL]: "mysql",
+  [Database_Kind.DATABASE_KIND_MARIADB]: "mariadb",
+  [Database_Kind.DATABASE_KIND_YDB]: "ydb",
+  [Database_Kind.DATABASE_KIND_YDB_MANAGED]: "ydb-managed",
+  [Database_Kind.DATABASE_KIND_COCKROACH]: "cockroach",
+  [Database_Kind.DATABASE_KIND_PICODATA]: "picodata",
+};
+
+// Convert proto Database to legacy topology shapes (for TopologyDiagram).
+// TopologyDiagram only needs count fields and boolean feature flags.
+function toTopology(db: Database | undefined): Record<string, unknown> | undefined {
+  if (!db) return undefined;
+  const v = db.variant;
+  if (v.case === "postgres" && v.value.shape) {
+    const s = v.value.shape;
+    return {
+      master: { count: 1 },
+      replicas: s.replicas > 0 ? [{ count: s.replicas }] : [],
+      haproxy: s.haproxyDedicated ? { count: 1 } : undefined,
+      etcd: s.patroni && !s.etcdColocated,
+      patroni: s.patroni,
+      pgbouncer: s.pgbouncerColocated,
+      sync_replicas: s.syncReplicas,
+    };
+  }
+  if ((v.case === "mysql" || v.case === "mariadb") && v.value.shape) {
+    const s = v.value.shape;
+    return {
+      primary: { count: 1 },
+      replicas: s.replicas > 0 ? [{ count: s.replicas }] : [],
+      proxysql: s.proxysqlDedicated ? { count: 1 } : undefined,
+      group_replication: s.groupReplication,
+      semi_sync: s.semiSync,
+    };
+  }
+  if (v.case === "ydb" && v.value.shape) {
+    const s = v.value.shape;
+    return {
+      storage: { count: s.storageNodes },
+      database: s.databaseNodes > 0 ? { count: s.databaseNodes } : undefined,
+      haproxy: s.haproxyDedicated ? { count: 1 } : undefined,
+    };
+  }
+  if (v.case === "picodata" && v.value.shape) {
+    const s = v.value.shape;
+    const tiers = s.tiers?.map((t) => ({
+      name: t.name,
+      count: t.count,
+      can_vote: t.canVote,
+    })) ?? [];
+    return {
+      instances: tiers.length === 0 ? [{ count: s.nodes }] : undefined,
+      tiers: tiers.length > 0 ? tiers : undefined,
+      haproxy: s.haproxyDedicated ? { count: 1 } : undefined,
+      shards: s.shards,
+      replication_factor: s.replicationFactor,
+    };
+  }
+  if (v.case === "cockroach" && v.value.shape) {
+    return { nodes: { count: v.value.shape.nodes } };
+  }
+  if (v.case === "ydbManaged" && v.value.shape) {
+    const s = v.value.shape;
+    return {
+      type: s.computeType === 1 ? "dedicated" : "serverless",
+      resource_preset_id: s.resourcePresetId,
+      storage_groups: s.storageGroups,
+      storage_type: s.storageTypeId,
+    };
+  }
+  return undefined;
+}
+
+function nodeCount(db: Database | undefined): number {
+  if (!db) return 0;
+  const v = db.variant;
+  if (v.case === "postgres" && v.value.shape) {
+    const s = v.value.shape;
+    return 1 + s.replicas + (s.haproxyDedicated ? 1 : 0) + (s.patroni && !s.etcdColocated ? 3 : 0);
+  }
+  if ((v.case === "mysql" || v.case === "mariadb") && v.value.shape) {
+    const s = v.value.shape;
+    return 1 + s.replicas + (s.proxysqlDedicated ? 1 : 0);
+  }
+  if (v.case === "ydb" && v.value.shape) {
+    const s = v.value.shape;
+    return s.storageNodes + s.databaseNodes + (s.haproxyDedicated ? 1 : 0);
+  }
+  if (v.case === "picodata" && v.value.shape) {
+    const s = v.value.shape;
+    const fromTiers = s.tiers?.reduce((acc, t) => acc + t.count, 0) ?? 0;
+    return (fromTiers || s.nodes) + (s.haproxyDedicated ? 1 : 0);
+  }
+  if (v.case === "cockroach" && v.value.shape) {
+    return v.value.shape.nodes;
+  }
+  return 1;
+}
+
+// ─── Page ─────────────────────────────────────────────────────────
+
 export function Presets() {
-  const [presets, setPresets] = useState<Preset[]>([]);
+  const [presets, setPresets] = useState<DatabasePreset[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterKind, setFilterKind] = useState<string>("");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -39,21 +145,24 @@ export function Presets() {
 
   const load = useCallback(async () => {
     try {
-      const params = filterKind ? { db_kind: filterKind } : undefined;
-      setPresets(await listPresets(params));
+      const tid = getTenantId();
+      const resp = await clients.databasePreset.listDatabasePresets(
+        tid ? { value: tid } : {}
+      );
+      setPresets(resp.databasePresets ?? []);
     } catch (err) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "Failed to load" });
     } finally {
       setLoading(false);
     }
-  }, [filterKind]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
   async function handleDelete(id: string) {
     if (!(await confirm({ title: "Delete this preset?", description: "This action cannot be undone.", danger: true }))) return;
     try {
-      await deletePreset(id);
+      await clients.databasePreset.deleteDatabasePreset({ value: id });
       setMessage({ type: "success", text: "Deleted" });
       load();
     } catch (err) {
@@ -61,26 +170,27 @@ export function Presets() {
     }
   }
 
-  async function handleClone(id: string) {
+  async function handleClone(id: string, name: string) {
     try {
-      const r = await clonePreset(id);
-      setMessage({ type: "success", text: `Cloned as "${r.name}"` });
+      const r = await clients.databasePreset.cloneDatabasePreset({ value: id });
+      setMessage({ type: "success", text: `Cloned as "${r.identity?.name ?? name}"` });
       load();
     } catch (err) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "Failed" });
     }
   }
 
-  // Group presets by db_kind for display.
-  const grouped: Record<string, Preset[]> = {};
+  // Group by db kind
+  const grouped: Record<string, DatabasePreset[]> = {};
   for (const k of ALL_DB_KINDS) grouped[k] = [];
   for (const p of presets) {
-    if (grouped[p.db_kind]) grouped[p.db_kind].push(p);
+    const k = KIND_TO_STR[p.database?.kind ?? 0];
+    if (k && (!filterKind || filterKind === k)) {
+      (grouped[k] ??= []).push(p);
+    }
   }
 
-  const kindsToShow = filterKind
-    ? [filterKind as DatabaseKind]
-    : ALL_DB_KINDS;
+  const kindsToShow = filterKind ? [filterKind as DbKindStr] : ALL_DB_KINDS;
 
   return (
     <div className="p-6 space-y-6">
@@ -127,16 +237,17 @@ export function Presets() {
           if (!items?.length) return null;
           return (
             <div key={kind}>
-              <h2 className={`text-sm font-semibold uppercase tracking-wider mb-3 ${DB_COLORS[kind].text}`}>
+              <h2 className={`text-sm font-semibold uppercase tracking-wider mb-3 ${DB_COLORS[kind]?.text ?? ""}`}>
                 {kind}
               </h2>
               <div className="grid grid-cols-3 gap-4">
                 {items.map((p) => (
                   <PresetCard
-                    key={p.id}
+                    key={p.id?.value}
                     preset={p}
-                    onClone={() => handleClone(p.id)}
-                    onDelete={() => handleDelete(p.id)}
+                    dbKind={KIND_TO_STR[p.database?.kind ?? 0] ?? "postgres"}
+                    onClone={() => handleClone(p.id?.value ?? "", p.identity?.name ?? "")}
+                    onDelete={() => handleDelete(p.id?.value ?? "")}
                   />
                 ))}
               </div>
@@ -152,57 +263,51 @@ export function Presets() {
 
 function PresetCard({
   preset,
+  dbKind,
   onClone,
   onDelete,
 }: {
-  preset: Preset;
+  preset: DatabasePreset;
+  dbKind: DbKindStr;
   onClone: () => void;
   onDelete: () => void;
 }) {
-  const features = extractFeatures(preset);
-  const nodeCount = countNodes(preset);
+  const topology = toTopology(preset.database);
+  const nodes = nodeCount(preset.database);
+  const isBuiltin = !preset.tenantId;
 
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
-            <CardTitle className="text-sm truncate">{preset.name}</CardTitle>
-            {preset.is_builtin && <Badge variant="secondary" className="text-[8px] shrink-0">builtin</Badge>}
+            <CardTitle className="text-sm truncate">{preset.identity?.name}</CardTitle>
+            {isBuiltin && <Badge variant="secondary" className="text-[8px] shrink-0">builtin</Badge>}
           </div>
           <Badge variant="secondary">
-            {nodeCount} node{nodeCount !== 1 ? "s" : ""}
+            {nodes} node{nodes !== 1 ? "s" : ""}
           </Badge>
         </div>
-        {preset.description && (
-          <p className="text-[10px] text-zinc-500 font-mono truncate">{preset.description}</p>
+        {preset.identity?.description && (
+          <p className="text-[10px] text-zinc-500 font-mono truncate">{preset.identity.description}</p>
         )}
       </CardHeader>
       <CardContent className="space-y-3">
-        <TopologyDiagram kind={preset.db_kind} topology={preset.topology} />
-        {features.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {features.map((f) => (
-              <Badge key={f} variant="outline" className="text-[10px]">
-                {f}
-              </Badge>
-            ))}
-          </div>
-        )}
+        <TopologyDiagram kind={dbKind} topology={topology as never} />
         <div className="flex items-center gap-1 pt-1">
-          <Link to={`/runs/new?preset_id=${preset.id}`} className="flex-1">
+          <Link to={`/runs/new?preset_id=${preset.id?.value}`} className="flex-1">
             <Button size="sm" variant="outline" className="w-full">
               <Play className="h-3 w-3" />
               Start Run
             </Button>
           </Link>
-          <Link to={`/presets/${preset.id}/edit`} className="p-1.5 text-zinc-600 hover:text-zinc-300" title="Edit">
+          <Link to={`/presets/${preset.id?.value}/edit`} className="p-1.5 text-zinc-600 hover:text-zinc-300" title="Edit">
             <Pencil className="w-3 h-3" />
           </Link>
           <button onClick={onClone} className="p-1.5 text-zinc-600 hover:text-zinc-300" title="Clone">
             <Copy className="w-3 h-3" />
           </button>
-          {!preset.is_builtin && (
+          {!isBuiltin && (
             <button onClick={onDelete} className="p-1.5 text-zinc-600 hover:text-red-400" title="Delete">
               <Trash2 className="w-3 h-3" />
             </button>
@@ -211,70 +316,4 @@ function PresetCard({
       </CardContent>
     </Card>
   );
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────
-
-function extractFeatures(preset: Preset): string[] {
-  const t = preset.topology;
-  const features: string[] = [];
-
-  if (preset.db_kind === "postgres") {
-    const pg = t as import("@/api/types").PostgresTopology;
-    if (pg.patroni) features.push("Patroni");
-    if (pg.pgbouncer) features.push("PgBouncer");
-    if (pg.etcd) features.push("Etcd");
-    if (pg.haproxy) features.push("HAProxy");
-    if (pg.sync_replicas > 0) features.push(`${pg.sync_replicas} sync`);
-  } else if (preset.db_kind === "mysql") {
-    const my = t as import("@/api/types").MySQLTopology;
-    if (my.group_replication) features.push("Group Replication");
-    if (my.semi_sync) features.push("Semi-Sync");
-    if (my.proxysql) features.push("ProxySQL");
-  } else if (preset.db_kind === "picodata") {
-    const pico = t as import("@/api/types").PicodataTopology;
-    features.push(`${pico.shards} shards`);
-    features.push(`rf=${pico.replication_factor}`);
-    if (pico.haproxy) features.push("HAProxy");
-    if (pico.tiers?.length) features.push(`${pico.tiers.length} tiers`);
-  } else if (preset.db_kind === "ydb") {
-    const ydb = t as import("@/api/types").YDBTopology;
-    if (ydb.database) features.push("Split storage/compute");
-    else features.push("Combined");
-    if (ydb.haproxy) features.push("HAProxy");
-    if (ydb.fault_tolerance && ydb.fault_tolerance !== "none") features.push(ydb.fault_tolerance);
-  }
-
-  return features;
-}
-
-function countNodes(preset: Preset): number {
-  const t = preset.topology;
-
-  if (preset.db_kind === "postgres") {
-    const pg = t as import("@/api/types").PostgresTopology;
-    const etcdCount = pg.etcd ? 3 : 0;
-    return (pg.master?.count || 0)
-      + (pg.replicas?.reduce((s, r) => s + r.count, 0) || 0)
-      + (pg.haproxy?.count || 0)
-      + etcdCount;
-  }
-  if (preset.db_kind === "mysql") {
-    const my = t as import("@/api/types").MySQLTopology;
-    return (my.primary?.count || 0)
-      + (my.replicas?.reduce((s, r) => s + r.count, 0) || 0)
-      + (my.proxysql?.count || 0);
-  }
-  if (preset.db_kind === "picodata") {
-    const pico = t as import("@/api/types").PicodataTopology;
-    return (pico.instances?.reduce((s, i) => s + i.count, 0) || 0)
-      + (pico.haproxy?.count || 0);
-  }
-  if (preset.db_kind === "ydb") {
-    const ydb = t as import("@/api/types").YDBTopology;
-    return (ydb.storage?.count || 0)
-      + (ydb.database?.count || 0)
-      + (ydb.haproxy?.count || 0);
-  }
-  return 0;
 }

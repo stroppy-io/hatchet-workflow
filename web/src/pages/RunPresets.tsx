@@ -1,11 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  listRunPresets,
-  deleteRunPreset,
-  updateRunPreset,
-} from "@/api/client";
-import { ALL_DB_KINDS, type RunPreset } from "@/api/types";
+import { clients } from "@/api/clients";
+import { getTenantId } from "@/api/transport";
+import { protoTsToISO } from "@/lib/proto-helpers";
+import type { TestRunTemplate } from "@/lib/proto/cloud/v1/testing/test_run_template_pb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,27 +31,97 @@ import {
 import { Play, Trash2, Pencil, AlertCircle, FlaskConical } from "lucide-react";
 import { DB_COLORS } from "@/lib/db-colors";
 import { useConfirm } from "@/components/ui/confirm-dialog";
+import { Database_Kind } from "@/lib/proto/cloud/v1/catalog/database_pb";
+import { Workload_Script } from "@/lib/proto/cloud/v1/catalog/workload_pb";
+
+const ALL_DB_KINDS = ["postgres", "mysql", "mariadb", "picodata", "ydb", "ydb-managed", "cockroach"] as const;
+
+const KIND_STRING: Partial<Record<Database_Kind, string>> = {
+  [Database_Kind.DATABASE_KIND_POSTGRES]: "postgres",
+  [Database_Kind.DATABASE_KIND_MYSQL]: "mysql",
+  [Database_Kind.DATABASE_KIND_MARIADB]: "mariadb",
+  [Database_Kind.DATABASE_KIND_YDB]: "ydb",
+  [Database_Kind.DATABASE_KIND_YDB_MANAGED]: "ydb-managed",
+  [Database_Kind.DATABASE_KIND_COCKROACH]: "cockroach",
+  [Database_Kind.DATABASE_KIND_PICODATA]: "picodata",
+};
+
+const SCRIPT_STRING: Partial<Record<Workload_Script, string>> = {
+  [Workload_Script.TPCC_PROCS]: "tpcc-procs",
+  [Workload_Script.TPCC_TX]: "tpcc-tx",
+  [Workload_Script.TPCB_PROCS]: "tpcb-procs",
+  [Workload_Script.TPCB_TX]: "tpcb-tx",
+  [Workload_Script.TPCH_TX]: "tpch-tx",
+  [Workload_Script.TPCC_TX_YDB_PGWIRE]: "tpcc-tx-ydb-pgwire",
+  [Workload_Script.TPCB_TX_YDB_PGWIRE]: "tpcb-tx-ydb-pgwire",
+};
+
+// Extract display info from proto template
+function templateDbKind(t: TestRunTemplate): string {
+  const dv = t.database?.databaseVariant;
+  if (dv?.case === "database") {
+    return KIND_STRING[dv.value.kind] ?? "";
+  }
+  return "";
+}
+
+function templateDbVersion(t: TestRunTemplate): string {
+  const dv = t.database?.databaseVariant;
+  if (dv?.case === "database") {
+    return "";
+  }
+  return "";
+}
+
+function templateScript(t: TestRunTemplate): string {
+  const wv = t.workload?.workloadVariant;
+  if (wv?.case === "workload") {
+    return SCRIPT_STRING[wv.value.shape?.script ?? 0] ?? "";
+  }
+  return "";
+}
+
+function templateVus(t: TestRunTemplate): number | null {
+  const wv = t.workload?.workloadVariant;
+  if (wv?.case === "workload") {
+    return wv.value.shape?.load?.vus ?? null;
+  }
+  return null;
+}
+
+function templateDuration(t: TestRunTemplate): string {
+  const wv = t.workload?.workloadVariant;
+  if (wv?.case === "workload") {
+    const mode = wv.value.shape?.load?.mode;
+    if (mode?.case === "duration") return mode.value;
+  }
+  return "";
+}
 
 export function RunPresets() {
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const [presets, setPresets] = useState<RunPreset[]>([]);
+  const [templates, setTemplates] = useState<TestRunTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterKind, setFilterKind] = useState<string>("");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // Edit dialog — only name/description; the underlying RunConfig is edited
-  // from NewRun via "Save as preset" instead, since editing it inline would
-  // re-implement the whole wizard.
-  const [editing, setEditing] = useState<RunPreset | null>(null);
+  const [editing, setEditing] = useState<TestRunTemplate | null>(null);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const params = filterKind ? { db_kind: filterKind } : undefined;
-      setPresets(await listRunPresets(params));
+      const tid = getTenantId();
+      const resp = await clients.template.listTestRunTemplates(
+        tid ? { value: tid } : {}
+      );
+      let list = resp.testRunTemplates ?? [];
+      if (filterKind) {
+        list = list.filter((t) => templateDbKind(t) === filterKind);
+      }
+      setTemplates(list);
     } catch (err) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "Failed to load" });
     } finally {
@@ -63,23 +131,21 @@ export function RunPresets() {
 
   useEffect(() => { load(); }, [load]);
 
-  function handleUse(p: RunPreset) {
-    // Hydrate NewRun by piggy-backing on the existing rerun flow — same path
-    // already used for re-running an existing run. The wizard reads
-    // sessionStorage on mount and seeds every state field from it.
-    const cfg = { ...p.config, run_preset_id: p.id };
-    sessionStorage.setItem("rerun_config", JSON.stringify(cfg));
+  function handleUse(t: TestRunTemplate) {
+    // Seed the new-run wizard with template id so it can pre-fill.
+    sessionStorage.setItem("rerun_config", JSON.stringify({ template_id: t.id?.value }));
     navigate("/runs/new");
   }
 
-  async function handleDelete(p: RunPreset) {
+  async function handleDelete(t: TestRunTemplate) {
+    const name = t.identity?.name ?? t.id?.value;
     if (!(await confirm({
-      title: `Delete run preset "${p.name}"?`,
+      title: `Delete run preset "${name}"?`,
       description: "This template will no longer be available for new runs or suites that reference it.",
       danger: true,
     }))) return;
     try {
-      await deleteRunPreset(p.id);
+      await clients.template.deleteTestRunTemplate({ value: t.id?.value ?? "" });
       setMessage({ type: "success", text: "Deleted" });
       load();
     } catch (err) {
@@ -87,17 +153,23 @@ export function RunPresets() {
     }
   }
 
-  function startEdit(p: RunPreset) {
-    setEditing(p);
-    setEditName(p.name);
-    setEditDescription(p.description);
+  function startEdit(t: TestRunTemplate) {
+    setEditing(t);
+    setEditName(t.identity?.name ?? "");
+    setEditDescription(t.identity?.description ?? "");
   }
 
   async function saveEdit() {
     if (!editing) return;
     setSaving(true);
     try {
-      await updateRunPreset(editing.id, { name: editName, description: editDescription });
+      await clients.template.updateTestRunTemplate({
+        template: {
+          id: editing.id,
+          identity: { name: editName, description: editDescription },
+        },
+        updateMask: { paths: ["identity"] },
+      });
       setEditing(null);
       load();
     } catch (err) {
@@ -149,7 +221,7 @@ export function RunPresets() {
 
       {loading ? (
         <div className="text-sm text-muted-foreground">Loading...</div>
-      ) : presets.length === 0 ? (
+      ) : templates.length === 0 ? (
         <div className="border border-dashed border-zinc-800 p-10 text-center space-y-2">
           <FlaskConical className="h-6 w-6 mx-auto text-zinc-700" />
           <p className="text-sm text-zinc-500">No run presets yet.</p>
@@ -170,54 +242,56 @@ export function RunPresets() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {presets.map((p) => {
-              const c = p.config || {};
-              const dbColor = DB_COLORS[c.database?.kind as keyof typeof DB_COLORS];
+            {templates.map((t) => {
+              const dbKind = templateDbKind(t);
+              const dbVer = templateDbVersion(t);
+              const script = templateScript(t);
+              const vus = templateVus(t);
+              const duration = templateDuration(t);
+              const dbColor = DB_COLORS[dbKind as keyof typeof DB_COLORS];
               return (
-                <TableRow key={p.id}>
+                <TableRow key={t.id?.value}>
                   <TableCell>
                     <div className="flex flex-col leading-tight max-w-md">
-                      <span className="text-xs text-zinc-200 truncate">{p.name}</span>
-                      {p.description && (
-                        <span className="text-[10px] text-zinc-500 truncate">{p.description}</span>
+                      <span className="text-xs text-zinc-200 truncate">{t.identity?.name}</span>
+                      {t.identity?.description && (
+                        <span className="text-[10px] text-zinc-500 truncate">{t.identity.description}</span>
                       )}
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={dbColor?.text}>
-                      {c.database?.kind} {c.database?.version}
+                      {dbKind} {dbVer}
                     </Badge>
                   </TableCell>
                   <TableCell className="font-mono text-xs text-zinc-400">
-                    {c.stroppy?.script || "—"}
-                    {c.stroppy?.duration && (
-                      <span className="text-zinc-600"> · {c.stroppy.duration}</span>
-                    )}
+                    {script || "—"}
+                    {duration && <span className="text-zinc-600"> · {duration}</span>}
                   </TableCell>
                   <TableCell className="font-mono text-xs text-zinc-400">
-                    {c.stroppy?.vus ?? "—"}
+                    {vus ?? "—"}
                   </TableCell>
                   <TableCell className="text-xs text-zinc-500">
-                    {new Date(p.updated_at).toLocaleDateString()}
+                    {t.timestamps?.updatedAt ? new Date(protoTsToISO(t.timestamps.updatedAt)).toLocaleDateString() : "—"}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleUse(p)}
+                        onClick={() => handleUse(t)}
                         className="text-zinc-400 hover:text-primary transition-colors"
                         title="Use this preset"
                       >
                         <Play className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        onClick={() => startEdit(p)}
+                        onClick={() => startEdit(t)}
                         className="text-zinc-400 hover:text-zinc-200 transition-colors"
                         title="Rename"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        onClick={() => handleDelete(p)}
+                        onClick={() => handleDelete(t)}
                         className="text-zinc-400 hover:text-destructive transition-colors"
                         title="Delete"
                       >

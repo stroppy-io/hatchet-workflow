@@ -1,25 +1,36 @@
-import { useEffect, useState, useMemo } from "react";
-import type { GrafanaSettings } from "@/api/types";
+import { useEffect, useState } from "react";
 import { AlertCircle } from "lucide-react";
 
+interface HealthStatus {
+  status: string;
+}
+
 export function ServerHealth() {
-  const [grafana, setGrafana] = useState<GrafanaSettings | null>(null);
+  const [health, setHealth] = useState<HealthStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [grafanaUrl, setGrafanaUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/v1/grafana")
+    fetch("/health")
       .then((r) => {
         if (!r.ok) throw new Error(`${r.status}`);
-        return r.json() as Promise<GrafanaSettings>;
+        return r.json() as Promise<HealthStatus>;
       })
-      .then(setGrafana)
-      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load Grafana settings"));
+      .then(setHealth)
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to reach /health"));
   }, []);
 
-  const iframeSrc = useMemo(() => {
-    if (!grafana?.url) return null;
-    return `${grafana.url}/d/stroppy-server?kiosk&theme=dark&refresh=10s`;
-  }, [grafana]);
+  useEffect(() => {
+    // Try to get grafana URL from settings (best-effort).
+    fetch("/api/v1/grafana")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.url && data?.embed_enabled) {
+          setGrafanaUrl(`${data.url}/d/stroppy-server?kiosk&theme=dark&refresh=10s`);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="flex flex-col h-full">
@@ -35,23 +46,28 @@ export function ServerHealth() {
         </div>
       )}
 
+      {health && !grafanaUrl && (
+        <div className="mx-6 p-4 border border-zinc-800 bg-zinc-900/30">
+          <div className="flex items-center gap-2">
+            <div className={`w-2.5 h-2.5 rounded-full ${health.status === "ok" ? "bg-emerald-500" : "bg-red-500"}`} />
+            <span className="text-sm font-mono text-zinc-200">
+              Status: <span className={health.status === "ok" ? "text-emerald-400" : "text-red-400"}>{health.status}</span>
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 min-h-0">
-        {grafana?.embed_enabled && iframeSrc ? (
+        {grafanaUrl ? (
           <iframe
-            src={iframeSrc}
+            src={grafanaUrl}
             className="w-full h-full border-0"
             title="Server Health Dashboard"
             sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
           />
-        ) : (
-          <div className="p-6 text-sm text-muted-foreground">
-            {grafana && !grafana.embed_enabled
-              ? "Grafana embed is disabled. Enable GF_SECURITY_ALLOW_EMBEDDING=true."
-              : !error
-                ? "Loading..."
-                : "Cannot display dashboard."}
-          </div>
-        )}
+        ) : !error && !health ? (
+          <div className="p-6 text-sm text-muted-foreground">Loading...</div>
+        ) : null}
       </div>
     </div>
   );

@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { TenantSwitcher } from "@/components/TenantSwitcher";
-import type { AuthUser } from "@/api/types";
+import type { AuthUser } from "@/contexts/AuthContext";
 
 const roleLevel: Record<string, number> = { viewer: 1, operator: 2, owner: 3 };
 

@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react";
 import { clients } from "@/api/clients";
 import { TenantRole } from "@/lib/proto/cloud/v1/iam/member_pb";
-import type { Timestamp } from "@bufbuild/protobuf/wkt";
-
-function protoTsToISO(ts?: Timestamp): string {
-  if (!ts) return "";
-  return new Date(Number(ts.seconds) * 1000 + Math.floor(ts.nanos / 1_000_000)).toISOString();
-}
+import { protoTsToISO } from "@/lib/proto-helpers";
 import { getTenantId } from "@/api/transport";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
