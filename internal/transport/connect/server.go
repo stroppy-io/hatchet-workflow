@@ -14,11 +14,15 @@ import (
 
 // Deps aggregates Connect handler dependencies for mounting.
 type Deps struct {
-	IAMHandler      *IAMHandler
-	CatalogHandler  *CatalogHandler
-	StroppyHandler  *StroppyHandler
-	ScheduleHandler *ScheduleHandler
-	TestingHandler  *TestingHandler
+	IAMHandler         *IAMHandler
+	CatalogHandler     *CatalogHandler
+	StroppyHandler     *StroppyHandler
+	ScheduleHandler    *ScheduleHandler
+	TestingHandler     *TestingHandler
+	TestSuiteRunHandler *TestSuiteRunHandler
+	SharedTestRunHandler *SharedTestRunHandler
+	SharedSuiteRunHandler *SharedSuiteRunHandler
+	ComparisonHandler  *ComparisonHandler
 
 	Interceptors connect.Option
 }
@@ -74,6 +78,30 @@ func Mount(d Deps) http.Handler {
 	// TestSuite service
 	suitePath, suiteH := testingconnect.NewTestSuiteServiceHandler(d.TestingHandler, d.Interceptors)
 	mux.Handle(suitePath, suiteH)
+
+	// TestSuiteRun service
+	if d.TestSuiteRunHandler != nil {
+		suiteRunPath, suiteRunH := testingconnect.NewTestSuiteRunServiceHandler(d.TestSuiteRunHandler, d.Interceptors)
+		mux.Handle(suiteRunPath, suiteRunH)
+	}
+
+	// SharedTestRun service
+	if d.SharedTestRunHandler != nil {
+		sharedRunPath, sharedRunH := testingconnect.NewSharedTestRunServiceHandler(d.SharedTestRunHandler, d.Interceptors)
+		mux.Handle(sharedRunPath, sharedRunH)
+	}
+
+	// SharedSuiteRun service
+	if d.SharedSuiteRunHandler != nil {
+		sharedSuitePath, sharedSuiteH := testingconnect.NewSharedSuiteRunServiceHandler(d.SharedSuiteRunHandler, d.Interceptors)
+		mux.Handle(sharedSuitePath, sharedSuiteH)
+	}
+
+	// Comparison service
+	if d.ComparisonHandler != nil {
+		cmpPath, cmpH := testingconnect.NewComparisonServiceHandler(d.ComparisonHandler, d.Interceptors)
+		mux.Handle(cmpPath, cmpH)
+	}
 
 	return mux
 }

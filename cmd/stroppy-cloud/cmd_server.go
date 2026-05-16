@@ -125,6 +125,10 @@ func runServer(ctx context.Context, cfgPath string) error {
 	suiteSvc := testingsvc.NewTestSuiteService(exec, txMgr, bus)
 	builder := dagbuilder.New(catalogSvc)
 	runSvc := testingsvc.NewTestRunService(exec, txMgr, bus, catalogSvc, systemSvc, builder)
+	suiteRunSvc := testingsvc.NewTestSuiteRunService(exec, txMgr, bus, systemSvc, builder)
+	sharedTestRunSvc := testingsvc.NewSharedTestRunService(exec, txMgr, bus)
+	sharedSuiteRunSvc := testingsvc.NewSharedSuiteRunService(exec, txMgr, bus)
+	comparisonSvc := testingsvc.NewComparisonService(nil)
 
 	if cfg.Workers.RecoveryOnStart {
 		if err := recovery.Run(ctx, pool, zlog); err != nil {
@@ -185,7 +189,11 @@ func runServer(ctx context.Context, cfgPath string) error {
 		CatalogHandler:  transportconnect.NewCatalogHandler(catalogSvc),
 		StroppyHandler:  transportconnect.NewStroppyHandler(stroppySvc),
 		ScheduleHandler: transportconnect.NewScheduleHandler(systemSvc),
-		TestingHandler:  transportconnect.NewTestingHandler(tplSvc, runSvc, suiteSvc),
+		TestingHandler:        transportconnect.NewTestingHandler(tplSvc, runSvc, suiteSvc),
+		TestSuiteRunHandler:   transportconnect.NewTestSuiteRunHandler(suiteRunSvc),
+		SharedTestRunHandler:  transportconnect.NewSharedTestRunHandler(sharedTestRunSvc),
+		SharedSuiteRunHandler: transportconnect.NewSharedSuiteRunHandler(sharedSuiteRunSvc),
+		ComparisonHandler:     transportconnect.NewComparisonHandler(comparisonSvc),
 		Interceptors:    interceptors,
 	}))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
