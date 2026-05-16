@@ -9,6 +9,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam/iamconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/stroppy/stroppyconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system/systemconnect"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing/testingconnect"
 )
 
 // Deps aggregates Connect handler dependencies for mounting.
@@ -17,6 +18,7 @@ type Deps struct {
 	CatalogHandler  *CatalogHandler
 	StroppyHandler  *StroppyHandler
 	ScheduleHandler *ScheduleHandler
+	TestingHandler  *TestingHandler
 
 	Interceptors connect.Option
 }
@@ -60,6 +62,18 @@ func Mount(d Deps) http.Handler {
 	// Schedule service
 	schedPath, schedHandler := systemconnect.NewScheduleServiceHandler(d.ScheduleHandler, d.Interceptors)
 	mux.Handle(schedPath, schedHandler)
+
+	// TestRunTemplate service
+	tplPath, tplH := testingconnect.NewTestRunTemplateServiceHandler(d.TestingHandler, d.Interceptors)
+	mux.Handle(tplPath, tplH)
+
+	// TestRun service
+	runPath, runH := testingconnect.NewTestRunServiceHandler(d.TestingHandler, d.Interceptors)
+	mux.Handle(runPath, runH)
+
+	// TestSuite service
+	suitePath, suiteH := testingconnect.NewTestSuiteServiceHandler(d.TestingHandler, d.Interceptors)
+	mux.Handle(suitePath, suiteH)
 
 	return mux
 }
