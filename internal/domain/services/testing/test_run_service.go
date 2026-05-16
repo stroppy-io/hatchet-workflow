@@ -110,6 +110,7 @@ type TestRunService struct {
 	catalog   CatalogPort
 	engine    SystemEnginePort
 	builder   DagBuilderPort
+	quota     QuotaPort
 }
 
 // NewTestRunService constructs a TestRunService.
@@ -136,7 +137,14 @@ func NewTestRunService(
 		catalog: catalog,
 		engine:  engine,
 		builder: builder,
+		quota:   NoopQuota(),
 	}
+}
+
+// WithQuota sets a real QuotaPort for enforcement. Call after NewTestRunService.
+func (s *TestRunService) WithQuota(q QuotaPort) *TestRunService {
+	s.quota = q
+	return s
 }
 
 // CreateTestRun assigns an ID, tenant, caller and timestamps, then INSERTs in a
@@ -232,6 +240,10 @@ func (s *TestRunService) LaunchTestRun(
 				return nil, status.Errorf(codes.FailedPrecondition,
 					"test_run %s is already launched (dag_run_id=%s)",
 					id.GetValue(), tr.GetDagRunId().GetValue())
+			}
+
+			if err := s.quota.CheckAndReserve(ctx, tr.GetTenantId(), "runs.concurrent", 1); err != nil {
+				return nil, fmt.Errorf("LaunchTestRun: quota: %w", err)
 			}
 
 			dag, err := s.builder.FromTestRun(ctx, tr)

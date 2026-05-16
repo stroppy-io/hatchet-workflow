@@ -10,6 +10,25 @@ import (
 	testingpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing"
 )
 
+// QuotaPort enforces per-tenant resource quotas.
+type QuotaPort interface {
+	CheckAndReserve(ctx context.Context, tenantID *iampb.TenantId, resourceID string, amount int64) error
+	Release(ctx context.Context, tenantID *iampb.TenantId, resourceID string, amount int64) error
+}
+
+// quotaNoop is a no-op QuotaPort for tests that don't need quota enforcement.
+type quotaNoop struct{}
+
+func (quotaNoop) CheckAndReserve(_ context.Context, _ *iampb.TenantId, _ string, _ int64) error {
+	return nil
+}
+func (quotaNoop) Release(_ context.Context, _ *iampb.TenantId, _ string, _ int64) error {
+	return nil
+}
+
+// NoopQuota returns a QuotaPort that always succeeds.
+func NoopQuota() QuotaPort { return quotaNoop{} }
+
 type IamPort interface {
 	HasTenantRole(ctx context.Context, u *iampb.UserId, t *iampb.TenantId, min iampb.TenantRole) (bool, error)
 	UserFromCtx(ctx context.Context) (*iampb.UserId, error)
