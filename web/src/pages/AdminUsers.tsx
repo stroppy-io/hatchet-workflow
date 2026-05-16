@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import {
-  listUsersAdmin,
-  createUserAdmin,
-  deleteUserAdmin,
-  resetPasswordAdmin,
-} from "@/api/client";
+import { clients } from "@/api/clients";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+
+function protoTsToISO(ts?: Timestamp): string {
+  if (!ts) return "";
+  return new Date(Number(ts.seconds) * 1000 + Math.floor(ts.nanos / 1_000_000)).toISOString();
+}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,7 +57,15 @@ export function AdminUsers() {
 
   async function load() {
     try {
-      setUsers((await listUsersAdmin()) || []);
+      const resp = await clients.admin.listAllUsers({});
+      setUsers(
+        (resp.users ?? []).map((u) => ({
+          id: u.id?.value ?? "",
+          username: u.nickname || u.email,
+          is_root: false, // proto User has no platformRole yet
+          created_at: protoTsToISO(u.timestamps?.createdAt),
+        }))
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load users");
     } finally {
@@ -73,7 +82,10 @@ export function AdminUsers() {
     setCreating(true);
     setError("");
     try {
-      await createUserAdmin(newUsername.trim(), newPassword, newIsRoot);
+      await clients.admin.createUser({
+        user: { email: newUsername.trim(), nickname: newUsername.trim() },
+        password: newPassword,
+      });
       setNewUsername("");
       setNewPassword("");
       setNewIsRoot(false);
@@ -88,7 +100,7 @@ export function AdminUsers() {
   async function handleDelete(id: string, username: string) {
     if (!(await confirm({ title: `Delete user "${username}"?`, description: "This cannot be undone.", danger: true }))) return;
     try {
-      await deleteUserAdmin(id);
+      await clients.admin.deleteUser({ value: id });
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete user");
@@ -100,7 +112,10 @@ export function AdminUsers() {
     setResetting(true);
     setError("");
     try {
-      await resetPasswordAdmin(resetUserId, resetPwd);
+      await clients.admin.resetUserPassword({
+        userId: { value: resetUserId },
+        newPassword: resetPwd,
+      });
       setResetPwd("");
       setResetOpen(false);
     } catch (err) {

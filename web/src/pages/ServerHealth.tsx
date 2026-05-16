@@ -1,5 +1,4 @@
 import { useEffect, useState, useMemo } from "react";
-import { getGrafanaSettings } from "@/api/client";
 import type { GrafanaSettings } from "@/api/types";
 import { AlertCircle } from "lucide-react";
 
@@ -8,7 +7,11 @@ export function ServerHealth() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getGrafanaSettings()
+    fetch("/api/v1/grafana")
+      .then((r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.json() as Promise<GrafanaSettings>;
+      })
       .then(setGrafana)
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load Grafana settings"));
   }, []);

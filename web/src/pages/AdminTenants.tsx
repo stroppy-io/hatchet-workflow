@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
-import { listTenantsAdmin, createTenantAdmin, deleteTenantAdmin } from "@/api/client";
+import { clients } from "@/api/clients";
 import type { Tenant } from "@/api/types";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+
+function protoTsToISO(ts?: Timestamp): string {
+  if (!ts) return "";
+  return new Date(Number(ts.seconds) * 1000 + Math.floor(ts.nanos / 1_000_000)).toISOString();
+}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,7 +39,14 @@ export function AdminTenants() {
 
   async function load() {
     try {
-      setTenants((await listTenantsAdmin()) || []);
+      const resp = await clients.admin.listAllTenants({});
+      setTenants(
+        (resp.tenants ?? []).map((t) => ({
+          id: t.id?.value ?? "",
+          name: t.identity?.name ?? "",
+          created_at: protoTsToISO(t.timestamps?.createdAt),
+        }))
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load tenants");
     } finally {
@@ -50,7 +63,9 @@ export function AdminTenants() {
     setCreating(true);
     setError("");
     try {
-      await createTenantAdmin(name.trim());
+      await clients.admin.createTenant({
+        tenant: { identity: { name: name.trim() } },
+      });
       setName("");
       setOpen(false);
       await load();
@@ -63,7 +78,7 @@ export function AdminTenants() {
   async function handleDelete(id: string, tenantName: string) {
     if (!(await confirm({ title: `Delete tenant "${tenantName}"?`, description: "This cannot be undone. All runs, presets, packages, and members will be lost.", danger: true }))) return;
     try {
-      await deleteTenantAdmin(id);
+      await clients.admin.deleteTenantHard({ value: id });
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete tenant");

@@ -9,17 +9,11 @@ import type { AuthUser } from "@/api/types";
 import { clients } from "@/api/clients";
 import {
   setAccessToken,
+  setTenantId,
   setRefresher,
 } from "@/api/transport";
-// meAPI still used because UserService.Me returns proto User {id,email,nickname}
-// which lacks tenant_id / role / is_root / tenants — REST /auth/me returns the
-// enriched AuthUser. TODO: replace once the server exposes a richer Me RPC.
-// selectTenantAPI kept for the same reason — no SelectTenant RPC yet.
 import {
-  meAPI,
   refreshToken as legacyRefreshToken,
-  selectTenantAPI,
-  SessionExpiredError,
 } from "@/api/client";
 
 // In-memory refresh token (never put in localStorage).
@@ -62,6 +56,56 @@ async function doRefresh(): Promise<string | null> {
   }
 }
 
+/** Build AuthUser from ConnectRPC User + tenant list. */
+async function fetchUserFromProto(): Promise<AuthUser | null> {
+  try {
+    // Restore tenant from localStorage if present.
+    const storedTenantId = localStorage.getItem("stroppy.tenantId");
+    if (storedTenantId) {
+      setTenantId(storedTenantId);
+    }
+
+    const [userResp, tenantsResp] = await Promise.all([
+      clients.user.me({}),
+      clients.tenant.listMyTenants({}).catch(() => ({ tenants: [] as import("@/lib/proto/cloud/v1/iam/tenant_pb").Tenant[] })),
+    ]);
+
+    const tenantsList = (tenantsResp.tenants ?? []).map((t) => ({
+      id: t.id?.value ?? "",
+      tenant_name: t.identity?.name ?? "",
+      role: "viewer" as const,
+    }));
+
+    // Determine current tenant context.
+    const currentTenantId = storedTenantId || null;
+    const currentTenant = currentTenantId
+      ? tenantsResp.tenants?.find((t) => t.id?.value === currentTenantId)
+      : null;
+
+    // Probe root status: only admins can call listAllTenants.
+    let isRoot = false;
+    try {
+      await clients.admin.listAllTenants({});
+      isRoot = true;
+    } catch {
+      isRoot = false;
+    }
+
+    const authUser: AuthUser = {
+      id: userResp.id?.value ?? "",
+      username: userResp.nickname || userResp.email,
+      tenant_id: currentTenantId,
+      tenant_name: currentTenant?.identity?.name ?? null,
+      role: "viewer",
+      is_root: isRoot,
+      tenants: tenantsList,
+    };
+    return authUser;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,36 +118,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchUser = useCallback(async () => {
-    try {
-      // TODO: replace meAPI() with clients.user.me({}) once the server's Me RPC
-      // returns tenant_id / role / is_root / tenants in addition to email/nickname.
-      const u = await meAPI();
+    const u = await fetchUserFromProto();
+    if (u) {
       setUser(u);
-    } catch (e) {
+    } else {
       setUser(null);
       setAccessToken(null);
       _refreshToken = null;
-      if (e instanceof SessionExpiredError) return;
     }
   }, []);
 
-  // Global handler: catch unhandled SessionExpiredError from any legacy REST call.
-  useEffect(() => {
-    const handler = (event: PromiseRejectionEvent) => {
-      if (event.reason instanceof SessionExpiredError) {
-        event.preventDefault();
-        setAccessToken(null);
-        _refreshToken = null;
-        setUser(null);
-      }
-    };
-    window.addEventListener("unhandledrejection", handler);
-    return () => window.removeEventListener("unhandledrejection", handler);
-  }, []);
-
-  // On mount: try to restore session via cookie-based refresh (legacy REST).
-  // After login we'll have _refreshToken in-memory and use ConnectRPC for
-  // subsequent refreshes. The httpOnly cookie is required for the bootstrap call.
+  // On mount: try to restore session via cookie-based refresh.
+  // The httpOnly cookie is required for the bootstrap call.
   useEffect(() => {
     (async () => {
       try {
@@ -141,6 +167,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // best-effort
     }
     setAccessToken(null);
+    setTenantId(null);
+    localStorage.removeItem("stroppy.tenantId");
     _refreshToken = null;
     setUser(null);
   }, []);
@@ -154,12 +182,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchUser]);
 
+  // selectTenant is purely client-side: store id in localStorage + transport header.
   const selectTenant = useCallback(
     async (tenantId: string) => {
-      // TODO: migrate to ConnectRPC once the server exposes a SelectTenant RPC
-      // or the Me RPC includes tenant context so we can call setTenantId().
-      const r = await selectTenantAPI(tenantId);
-      setAccessToken(r.access_token);
+      localStorage.setItem("stroppy.tenantId", tenantId);
+      setTenantId(tenantId);
       await fetchUser();
     },
     [fetchUser]

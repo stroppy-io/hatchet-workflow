@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
-import { listAPITokens, createAPIToken, revokeAPIToken } from "@/api/client";
-import type { TenantAPIToken } from "@/api/types";
+import { clients } from "@/api/clients";
+import { ApiTokenScope } from "@/lib/proto/cloud/v1/iam/api_token_pb";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+
+function protoTsToISO(ts?: Timestamp): string {
+  if (!ts) return "";
+  return new Date(Number(ts.seconds) * 1000 + Math.floor(ts.nanos / 1_000_000)).toISOString();
+}
+import { getTenantId } from "@/api/transport";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,8 +37,31 @@ import {
 import { Plus, Trash2, Copy, Check } from "lucide-react";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 
+interface TokenRow {
+  id: string;
+  name: string;
+  role: string;
+  created_by: string;
+  expires_at: string | null;
+  created_at: string;
+}
+
+function roleScopesToString(scopes: ApiTokenScope[]): string {
+  if (scopes.includes(ApiTokenScope.ADMIN)) return "owner";
+  if (scopes.includes(ApiTokenScope.RUNS_WRITE)) return "operator";
+  return "viewer";
+}
+
+function roleStringToScopes(role: string): ApiTokenScope[] {
+  switch (role) {
+    case "owner": return [ApiTokenScope.ADMIN, ApiTokenScope.RUNS_READ, ApiTokenScope.RUNS_WRITE, ApiTokenScope.PRESETS_READ, ApiTokenScope.PRESETS_WRITE, ApiTokenScope.SETTINGS_READ, ApiTokenScope.SETTINGS_WRITE];
+    case "operator": return [ApiTokenScope.RUNS_READ, ApiTokenScope.RUNS_WRITE, ApiTokenScope.PRESETS_READ, ApiTokenScope.PRESETS_WRITE];
+    default: return [ApiTokenScope.RUNS_READ, ApiTokenScope.PRESETS_READ];
+  }
+}
+
 export function TenantTokens() {
-  const [tokens, setTokens] = useState<TenantAPIToken[]>([]);
+  const [tokens, setTokens] = useState<TokenRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const confirm = useConfirm();
@@ -49,7 +79,18 @@ export function TenantTokens() {
 
   async function load() {
     try {
-      setTokens((await listAPITokens()) || []);
+      const tid = getTenantId() ?? "";
+      const resp = await clients.apiToken.listApiTokens({ value: tid });
+      setTokens(
+        (resp.apiTokens ?? []).map((t) => ({
+          id: t.id?.value ?? "",
+          name: t.name,
+          role: roleScopesToString(t.scopes),
+          created_by: t.createdBy?.value ?? "",
+          expires_at: t.expiresAt ? protoTsToISO(t.expiresAt) : null,
+          created_at: protoTsToISO(t.timestamps?.createdAt),
+        }))
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load tokens");
     } finally {
@@ -66,12 +107,19 @@ export function TenantTokens() {
     setCreating(true);
     setError("");
     try {
-      const result = await createAPIToken(
-        tokenName.trim(),
-        tokenRole,
-        tokenExpiry || undefined
-      );
-      setPlaintext(result.plaintext);
+      const tid = getTenantId() ?? "";
+      const expiresAt = tokenExpiry
+        ? { seconds: BigInt(Math.floor(new Date(tokenExpiry).getTime() / 1000)), nanos: 0 }
+        : undefined;
+      const result = await clients.apiToken.createApiToken({
+        token: {
+          name: tokenName.trim(),
+          tenantId: { value: tid },
+          scopes: roleStringToScopes(tokenRole),
+          expiresAt,
+        },
+      });
+      setPlaintext(result.rawToken);
       setTokenName("");
       setTokenRole("viewer");
       setTokenExpiry("");
@@ -86,7 +134,7 @@ export function TenantTokens() {
   async function handleRevoke(id: string, name: string) {
     if (!(await confirm({ title: `Revoke token "${name}"?`, description: "Any client using this token will lose access immediately.", danger: true, confirmLabel: "Revoke" }))) return;
     try {
-      await revokeAPIToken(id);
+      await clients.apiToken.revokeApiToken({ value: id });
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to revoke token");

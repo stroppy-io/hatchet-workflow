@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { listTenantsAdmin } from "@/api/client";
-import type { Tenant } from "@/api/types";
+import { clients } from "@/api/clients";
 import {
   Select,
   SelectTrigger,
@@ -10,13 +9,27 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
+interface TenantOption {
+  id: string;
+  name: string;
+}
+
 export function TenantSwitcher() {
   const { user, selectTenant } = useAuth();
-  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [tenants, setTenants] = useState<TenantOption[]>([]);
 
   useEffect(() => {
     if (user?.is_root) {
-      listTenantsAdmin().then((t) => setTenants(t || [])).catch(() => {});
+      clients.admin.listAllTenants({})
+        .then((resp) =>
+          setTenants(
+            (resp.tenants ?? []).map((t) => ({
+              id: t.id?.value ?? "",
+              name: t.identity?.name ?? "",
+            }))
+          )
+        )
+        .catch(() => {});
     }
   }, [user?.is_root]);
 

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import {
-  listMembers,
-  addMember,
-  updateMemberRole,
-  removeMember,
-  listUsersAdmin,
-} from "@/api/client";
-import type { TenantMember } from "@/api/types";
+import { clients } from "@/api/clients";
+import { TenantRole } from "@/lib/proto/cloud/v1/iam/member_pb";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+
+function protoTsToISO(ts?: Timestamp): string {
+  if (!ts) return "";
+  return new Date(Number(ts.seconds) * 1000 + Math.floor(ts.nanos / 1_000_000)).toISOString();
+}
+import { getTenantId } from "@/api/transport";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,16 +37,41 @@ import {
 import { Plus, Trash2 } from "lucide-react";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 
+interface MemberRow {
+  memberId: string;
+  userId: string;
+  username: string;
+  role: string;
+  created_at: string;
+}
+
 interface AdminUser {
   id: string;
   username: string;
-  is_root: boolean;
-  created_at: string;
+}
+
+function roleToString(role: TenantRole): string {
+  switch (role) {
+    case TenantRole.VIEWER: return "viewer";
+    case TenantRole.MEMBER: return "operator";
+    case TenantRole.ADMIN: return "admin";
+    case TenantRole.OWNER: return "owner";
+    default: return "viewer";
+  }
+}
+
+function stringToRole(s: string): TenantRole {
+  switch (s) {
+    case "operator": return TenantRole.MEMBER;
+    case "admin": return TenantRole.ADMIN;
+    case "owner": return TenantRole.OWNER;
+    default: return TenantRole.VIEWER;
+  }
 }
 
 export function TenantMembers() {
   const { user } = useAuth();
-  const [members, setMembers] = useState<TenantMember[]>([]);
+  const [members, setMembers] = useState<MemberRow[]>([]);
   const [allUsers, setAllUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -57,12 +83,27 @@ export function TenantMembers() {
 
   async function load() {
     try {
-      const m = (await listMembers()) || [];
-      setMembers(m);
+      const tid = getTenantId() ?? "";
+      const resp = await clients.member.listByTenant({ value: tid });
+      setMembers(
+        (resp.members ?? []).map((m) => ({
+          memberId: m.id?.value ?? "",
+          userId: m.userId?.value ?? "",
+          username: m.userId?.value ?? "(unknown)",
+          role: roleToString(m.role),
+          created_at: protoTsToISO(m.timestamps?.createdAt),
+        }))
+      );
       // Only root users can list all users for adding members.
       if (user?.is_root) {
         try {
-          setAllUsers((await listUsersAdmin()) || []);
+          const usersResp = await clients.admin.listAllUsers({});
+          setAllUsers(
+            (usersResp.users ?? []).map((u) => ({
+              id: u.id?.value ?? "",
+              username: u.nickname || u.email,
+            }))
+          );
         } catch {
           // Not root or endpoint unavailable.
         }
@@ -83,7 +124,12 @@ export function TenantMembers() {
     setAdding(true);
     setError("");
     try {
-      await addMember(selectedUserId, selectedRole);
+      const tid = getTenantId() ?? "";
+      await clients.member.addMember({
+        tenantId: { value: tid },
+        userId: { value: selectedUserId },
+        role: stringToRole(selectedRole),
+      });
       setSelectedUserId("");
       setSelectedRole("viewer");
       setOpen(false);
@@ -94,20 +140,23 @@ export function TenantMembers() {
     setAdding(false);
   }
 
-  async function handleRoleChange(userId: string, role: string) {
+  async function handleRoleChange(memberId: string, role: string) {
     setError("");
     try {
-      await updateMemberRole(userId, role);
+      await clients.member.updateMemberRole({
+        memberId: { value: memberId },
+        role: stringToRole(role),
+      });
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update role");
     }
   }
 
-  async function handleRemove(userId: string, username: string) {
+  async function handleRemove(memberId: string, username: string) {
     if (!(await confirm({ title: `Remove "${username}" from this tenant?`, description: "They will lose access to this tenant's runs and resources.", danger: true, confirmLabel: "Remove" }))) return;
     try {
-      await removeMember(userId);
+      await clients.member.removeMember({ value: memberId });
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove member");
@@ -116,7 +165,7 @@ export function TenantMembers() {
 
   // Users not already members.
   const availableUsers = allUsers.filter(
-    (u) => !members.some((m) => m.user_id === u.id)
+    (u) => !members.some((m) => m.userId === u.id)
   );
 
   return (
@@ -236,12 +285,12 @@ export function TenantMembers() {
           </TableHeader>
           <TableBody>
             {members.map((m) => (
-              <TableRow key={m.user_id}>
+              <TableRow key={m.memberId}>
                 <TableCell className="font-medium">{m.username}</TableCell>
                 <TableCell>
                   <Select
                     value={m.role}
-                    onValueChange={(v) => handleRoleChange(m.user_id, v)}
+                    onValueChange={(v) => handleRoleChange(m.memberId, v)}
                   >
                     <SelectTrigger className="h-7 w-28 text-xs">
                       <SelectValue />
@@ -258,7 +307,7 @@ export function TenantMembers() {
                 </TableCell>
                 <TableCell>
                   <button
-                    onClick={() => handleRemove(m.user_id, m.username)}
+                    onClick={() => handleRemove(m.memberId, m.username)}
                     className="text-muted-foreground hover:text-destructive transition-colors"
                     title="Remove member"
                   >
