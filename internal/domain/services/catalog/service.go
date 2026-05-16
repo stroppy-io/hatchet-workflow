@@ -18,6 +18,8 @@ type Service struct {
 	packageRepo        *repository.ProtoRepository[catalogpb.PackageAlias, catalogpb.PackageColumnAlias, *catalogpb.PackageScanner, *catalogpb.Package]
 	settingsRepo       *repository.ProtoRepository[catalogpb.SettingsItemAlias, catalogpb.SettingsItemColumnAlias, *catalogpb.SettingsItemScanner, *catalogpb.SettingsItem]
 
+	pkgStorage PackageStorage
+
 	txMgr  pgtx.TxManager
 	events eventing.Bus
 }
