@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/testutil/fixture"
+	stroppypb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/stroppy"
 )
 
 func TestListStroppyVersionsCached(t *testing.T) {
@@ -26,4 +27,27 @@ func TestListStroppyVersionsCached(t *testing.T) {
 	list2, err := f.Stroppy.ListStroppyVersions(context.Background())
 	require.NoError(t, err)
 	require.Len(t, list2.GetVersions(), 2)
+}
+
+func TestPreviewWithOverridePassthrough(t *testing.T) {
+	f := fixture.NewStroppy(t, "[]", "[]")
+	req := &stroppypb.PreviewStroppyConfigRequest{
+		ConfigOverrideJson: `{"hand":"crafted"}`,
+	}
+	out, err := f.Stroppy.PreviewStroppyConfig(context.Background(), req)
+	require.NoError(t, err)
+	require.JSONEq(t, `{"hand":"crafted"}`, out.GetStroppyConfigJson())
+}
+
+func TestPreviewRenders(t *testing.T) {
+	f := fixture.NewStroppy(t, "[]", "[]")
+	req := &stroppypb.PreviewStroppyConfigRequest{
+		Script:     "tpcc/procs",
+		DriverType: "postgres",
+		PoolSize:   16,
+	}
+	out, err := f.Stroppy.PreviewStroppyConfig(context.Background(), req)
+	require.NoError(t, err)
+	require.Contains(t, out.GetStroppyConfigJson(), "tpcc/procs")
+	require.Contains(t, out.GetStroppyConfigJson(), "postgres")
 }
