@@ -5,6 +5,7 @@ import (
 
 	"connectrpc.com/connect"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent/agentconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog/catalogconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam/iamconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/stroppy/stroppyconnect"
@@ -23,6 +24,7 @@ type Deps struct {
 	SharedTestRunHandler *SharedTestRunHandler
 	SharedSuiteRunHandler *SharedSuiteRunHandler
 	ComparisonHandler  *ComparisonHandler
+	AgentHandler       *AgentHandler
 
 	Interceptors connect.Option
 }
@@ -103,6 +105,12 @@ func Mount(d Deps) http.Handler {
 		mux.Handle(cmpPath, cmpH)
 	}
 
+	// Agent service
+	if d.AgentHandler != nil {
+		agentPath, agentH := agentconnect.NewAgentServiceHandler(d.AgentHandler, d.Interceptors)
+		mux.Handle(agentPath, agentH)
+	}
+
 	return mux
 }
 
@@ -113,6 +121,10 @@ func AuthBypass() map[string]bool {
 		iamconnect.AuthServiceLoginProcedure:         true,
 		iamconnect.AuthServiceRefreshTokensProcedure: true,
 		iamconnect.AuthServiceLogoutProcedure:        true,
+		// Agent uses its own bootstrap_token / poll_token, not JWTs.
+		agentconnect.AgentServiceRegisterProcedure:   true,
+		agentconnect.AgentServicePollProcedure:       true,
+		agentconnect.AgentServiceDeregisterProcedure: true,
 	}
 }
 
