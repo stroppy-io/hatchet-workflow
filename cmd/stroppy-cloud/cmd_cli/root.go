@@ -12,5 +12,10 @@ func Root() *cobra.Command {
 	cmd.AddCommand(logoutCmd())
 	cmd.AddCommand(whoamiCmd())
 	cmd.AddCommand(contextCmd())
+	cmd.AddCommand(presetCmd())
+	cmd.AddCommand(packageCmd())
+	cmd.AddCommand(settingsCmd())
+	cmd.AddCommand(probeCmd())
+	cmd.AddCommand(versionCmd())
 	return cmd
 }

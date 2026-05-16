@@ -6,7 +6,9 @@ import (
 
 	"connectrpc.com/connect"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog/catalogconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam/iamconnect"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/stroppy/stroppyconnect"
 )
 
 // Client aggregates typed Connect stubs for every public service.
@@ -19,6 +21,12 @@ type Client struct {
 	Auth   iamconnect.AuthServiceClient
 	User   iamconnect.UserServiceClient
 	Tenant iamconnect.TenantServiceClient
+
+	DatabasePreset catalogconnect.DatabasePresetServiceClient
+	WorkloadPreset catalogconnect.WorkloadPresetServiceClient
+	Package        catalogconnect.PackageServiceClient
+	Settings       catalogconnect.SettingsServiceClient
+	Stroppy        stroppyconnect.StroppyServiceClient
 }
 
 // Option configures Client.
@@ -44,6 +52,11 @@ func New(serverURL string, opts ...Option) *Client {
 	c.Auth = iamconnect.NewAuthServiceClient(c.httpClient, serverURL, connOpts...)
 	c.User = iamconnect.NewUserServiceClient(c.httpClient, serverURL, connOpts...)
 	c.Tenant = iamconnect.NewTenantServiceClient(c.httpClient, serverURL, connOpts...)
+	c.DatabasePreset = catalogconnect.NewDatabasePresetServiceClient(c.httpClient, serverURL, connOpts...)
+	c.WorkloadPreset = catalogconnect.NewWorkloadPresetServiceClient(c.httpClient, serverURL, connOpts...)
+	c.Package = catalogconnect.NewPackageServiceClient(c.httpClient, serverURL, connOpts...)
+	c.Settings = catalogconnect.NewSettingsServiceClient(c.httpClient, serverURL, connOpts...)
+	c.Stroppy = stroppyconnect.NewStroppyServiceClient(c.httpClient, serverURL, connOpts...)
 	return c
 }
 
