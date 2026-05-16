@@ -22,6 +22,11 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/catalog"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/iam"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/stroppy"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/system"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/workers/nodeworker"
+	mockhandler "github.com/stroppy-io/stroppy-cloud/internal/domain/workers/nodeworker/handlers"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/workers/recovery"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/workers/scheduler"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/migrations"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/pgtx"
@@ -111,6 +116,31 @@ func runServer(ctx context.Context, cfgPath string) error {
 	catalogSvc.SetPackageStorage(catalog.NewS3PackageStorage(s3Client))
 
 	stroppySvc := stroppy.New(stroppyRunner, valkeyCli, cfg.Stroppy.ReleasesURL, cfg.Stroppy.CommitsURL)
+
+	systemSvc := system.New(exec, txMgr, bus)
+
+	if cfg.Workers.RecoveryOnStart {
+		if err := recovery.Run(ctx, pool, zlog); err != nil {
+			return fmt.Errorf("recovery: %w", err)
+		}
+	}
+
+	nodeReg := nodeworker.NewRegistry()
+	nodeReg.Register(mockhandler.NewMockHandler())
+
+	worker := nodeworker.New(pool, systemSvc, nodeReg, nodeworker.Config{
+		Workers: cfg.Workers.NodeWorkers,
+		Tick:    500 * time.Millisecond,
+	}, zlog)
+	sched := scheduler.New(pool, systemSvc, scheduler.Config{
+		Tick:          cfg.Workers.SchedulerTick,
+		LeaseDuration: 30 * time.Second,
+	}, zlog)
+
+	workerCtx, cancelWorkers := context.WithCancel(ctx)
+	defer cancelWorkers()
+	go worker.Run(workerCtx)
+	go sched.Run(workerCtx)
 
 	// Bootstrap initial admin (idempotent).
 	if cfg.Features.InitialAdminEmail != "" {
