@@ -6,6 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/admin/adminconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent/agentconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog/catalogconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam/iamconnect"
@@ -44,6 +45,10 @@ type Client struct {
 	Webhook     opsconnect.WebhookServiceClient
 	Quota       opsconnect.QuotaServiceClient
 	BinaryCache agentconnect.BinaryCacheServiceClient
+
+	// Admin clients (platform-admin only).
+	Admin            adminconnect.AdminServiceClient
+	BinaryCacheAdmin adminconnect.BinaryCacheAdminServiceClient
 }
 
 // Option configures Client.
@@ -56,6 +61,17 @@ func WithBearer(token string) Option {
 			c.headers = http.Header{}
 		}
 		c.headers.Set("Authorization", "Bearer "+token)
+	}
+}
+
+// WithTenantHeader sets the X-Tenant-Id header on every request so that the
+// Tenant middleware can resolve the active tenant without a body field.
+func WithTenantHeader(tenantID string) Option {
+	return func(c *Client) {
+		if c.headers == nil {
+			c.headers = http.Header{}
+		}
+		c.headers.Set("X-Tenant-Id", tenantID)
 	}
 }
 
@@ -78,6 +94,8 @@ func New(serverURL string, opts ...Option) *Client {
 	c.Webhook = opsconnect.NewWebhookServiceClient(c.httpClient, serverURL, connOpts...)
 	c.Quota = opsconnect.NewQuotaServiceClient(c.httpClient, serverURL, connOpts...)
 	c.BinaryCache = agentconnect.NewBinaryCacheServiceClient(c.httpClient, serverURL, connOpts...)
+	c.Admin = adminconnect.NewAdminServiceClient(c.httpClient, serverURL, connOpts...)
+	c.BinaryCacheAdmin = adminconnect.NewBinaryCacheAdminServiceClient(c.httpClient, serverURL, connOpts...)
 	c.initTestingClients(connOpts)
 	return c
 }
