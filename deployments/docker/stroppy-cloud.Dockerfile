@@ -32,7 +32,7 @@ COPY --from=spa /app/web/dist ./web/dist
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 	-ldflags="-w -s -X github.com/stroppy-io/stroppy-cloud/internal/core/build.Version=$VERSION -X github.com/stroppy-io/stroppy-cloud/internal/core/build.ServiceName=stroppy-cloud" \
 	-trimpath \
-	-v -o /app/bin/stroppy-cloud "./cmd/cli"
+	-v -o /app/bin/stroppy-cloud "./cmd/stroppy-cloud"
 
 # Stage 3: Runtime
 FROM ubuntu:22.04
