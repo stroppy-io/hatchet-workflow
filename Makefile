@@ -44,14 +44,14 @@ configure: ## Check that all required tools are installed
 # ============================================================
 build: web-build ## Build the stroppy-cloud binary (with embedded SPA)
 	@mkdir -p bin
-	CGO_ENABLED=0 go build $(GOFLAGS) -o bin/$(BINARY) ./cmd/cli/
+	CGO_ENABLED=0 go build $(GOFLAGS) -o bin/$(BINARY) ./cmd/stroppy-cloud/
 
 build-all: ## Build for all platforms
 	@mkdir -p bin
-	GOOS=linux   GOARCH=amd64 CGO_ENABLED=0 go build $(GOFLAGS) -o bin/$(BINARY)-linux-amd64   ./cmd/cli/
-	GOOS=linux   GOARCH=arm64 CGO_ENABLED=0 go build $(GOFLAGS) -o bin/$(BINARY)-linux-arm64   ./cmd/cli/
-	GOOS=darwin  GOARCH=amd64 CGO_ENABLED=0 go build $(GOFLAGS) -o bin/$(BINARY)-darwin-amd64  ./cmd/cli/
-	GOOS=darwin  GOARCH=arm64 CGO_ENABLED=0 go build $(GOFLAGS) -o bin/$(BINARY)-darwin-arm64  ./cmd/cli/
+	GOOS=linux   GOARCH=amd64 CGO_ENABLED=0 go build $(GOFLAGS) -o bin/$(BINARY)-linux-amd64   ./cmd/stroppy-cloud/
+	GOOS=linux   GOARCH=arm64 CGO_ENABLED=0 go build $(GOFLAGS) -o bin/$(BINARY)-linux-arm64   ./cmd/stroppy-cloud/
+	GOOS=darwin  GOARCH=amd64 CGO_ENABLED=0 go build $(GOFLAGS) -o bin/$(BINARY)-darwin-amd64  ./cmd/stroppy-cloud/
+	GOOS=darwin  GOARCH=arm64 CGO_ENABLED=0 go build $(GOFLAGS) -o bin/$(BINARY)-darwin-arm64  ./cmd/stroppy-cloud/
 
 # ============================================================
 # Test
@@ -66,27 +66,19 @@ POSTGRES_PASSWORD := $(if $(POSTGRES_PASSWORD),$(POSTGRES_PASSWORD),stroppy)
 TEST_DATABASE_URL ?= postgres://stroppy:$(POSTGRES_PASSWORD)@127.0.0.1:5436/stroppy?sslmode=disable
 
 test-unit: ## Run pure unit tests (no DB / no docker)
-	@go test ./internal/domain/run/ ./internal/domain/scheduler/ \
-		./internal/infrastructure/postgres/ \
-		-run "TestEstimate|TestJobCost|TestPreFail|TestStepTimeout" -count=1
+	@go test ./internal/core/... -count=1 -race
 
-test-db: ## Run DB-backed integration tests (auto-starts postgres if needed)
-	@docker compose ps --status running --services 2>/dev/null | grep -qx postgres \
-		|| (echo "Starting postgres for tests..."; docker compose up -d postgres; sleep 4)
-	@# -p 1 serializes packages — scheduler tests share the DB with the
-	@# postgres test suite, and the scheduler's claim loop will otherwise
-	@# steal rows from concurrent suites that target different tenants.
-	@TEST_DATABASE_URL="$(TEST_DATABASE_URL)" \
-	  go test $$(go list ./... | grep -v '/tests$$') -count=1 -p 1
+test-db: ## Run DB-backed integration tests (testcontainers — Docker required)
+	@go test ./internal/domain/... ./internal/transport/... -count=1 -timeout 600s
 
 test-full: test-unit test-db ## Full Go test sweep (unit + DB-backed integration)
 	@echo "All Go tests passed."
 
 test-integration: build ## Run integration tests (requires Docker)
-	go test -tags=integration -timeout 30m -v ./tests/
+	go test -tags=e2e -timeout 30m -v ./tests/e2e/...
 
-test-e2e: build ## Run E2E tests for all databases
-	go test -tags=integration -timeout 60m -v ./tests/ -run TestE2E
+test-e2e: build ## Run full E2E suite
+	go test -tags=e2e -timeout 60m -v ./tests/e2e/...
 
 test-browser: ## Run Playwright browser E2E tests (requires running server at localhost:8080)
 	cd tests/e2e && npx playwright test
@@ -138,8 +130,8 @@ smoke-clean: ## Tear down smoke stack + wipe volumes
 # ============================================================
 # Serve (development)
 # ============================================================
-serve: build ## Run server locally
-	./bin/$(BINARY) serve --addr :8080 --data-dir ./data
+serve: build ## Run server locally against deployments/local/server/config.yaml
+	./bin/$(BINARY) server --config $${CONFIG_PATH:-./deployments/local/server/config.yaml}
 
 # ============================================================
 # Docs (Docusaurus)
