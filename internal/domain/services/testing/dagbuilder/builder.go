@@ -52,6 +52,12 @@ func (b *Builder) FromTestRun(ctx context.Context, tr *testingpb.TestRun) (*syst
 	}
 
 	plan := planForEngine(db.GetKind())
+	// External DB variant is a per-row attribute orthogonal to kind: the
+	// Database message carries an oneof variant; when External is set we
+	// skip all infra and just run the workload.
+	if db.GetExternal() != nil {
+		plan.external = true
+	}
 	module := plan.module
 
 	var nodes []*systempb.Dag_Node
@@ -178,6 +184,14 @@ func planForEngine(kind catalogpb.Database_Kind) enginePlan {
 			module:    taskspb.TerraformTask_MODULE_YANDEX,
 			installDB: true,
 			initCmd:   "ydbd admin blobstorage init --config /etc/ydbd/config.yaml",
+		}
+	case catalogpb.Database_DATABASE_KIND_YDB_MANAGED:
+		// Managed YDB: separate TF module, cloud manages the database, so
+		// we skip install + init. Only provision (client VM + managed db)
+		// and workload run.
+		return enginePlan{
+			module:    taskspb.TerraformTask_MODULE_YANDEX_MANAGED_YDB,
+			installDB: false,
 		}
 	}
 	// Unknown engine: skeleton 4-node DAG.
