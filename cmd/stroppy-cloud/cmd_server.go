@@ -179,7 +179,7 @@ func runServer(ctx context.Context, cfgPath string) error {
 		zlog.Warn("terraform actor init failed; handler will refuse non-noop runs", zap.Error(tfActorErr))
 	}
 	nodeReg.Register(handlers.NewTerraformHandler(tfActor, nil, zlog))
-	nodeReg.Register(handlers.NewDockerHandler(zlog))
+	nodeReg.Register(handlers.NewDockerHandler("", zlog))
 	// Agent-bound handlers: agentID/machineID resolved from node metadata at runtime.
 	// Placeholder empty IDs — real wiring added when agent resolver pattern is implemented.
 	nodeReg.Register(handlers.NewPackageInstallHandler(agentHub, "", "", 0))
