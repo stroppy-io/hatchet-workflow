@@ -174,8 +174,8 @@ func (h *TestingHandler) ListTestRuns(ctx context.Context, req *connect.Request[
 	return connect.NewResponse(&testingpb.TestRun_List{TestRuns: items}), nil
 }
 
-func (h *TestingHandler) WatchTestRun(_ context.Context, _ *connect.Request[testingpb.WatchTestRunRequest], _ *connect.ServerStream[testingpb.TestRunProgress]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("not implemented"))
+func (h *TestingHandler) WatchTestRun(ctx context.Context, req *connect.Request[testingpb.WatchTestRunRequest], stream *connect.ServerStream[testingpb.TestRunProgress]) error {
+	return h.runs.WatchTestRun(ctx, req.Msg.GetTestRunId(), stream.Send)
 }
 
 func (h *TestingHandler) StreamTestRunLogs(_ context.Context, _ *connect.Request[testingpb.StreamTestRunLogsRequest], _ *connect.ServerStream[agentpb.LogLine]) error {

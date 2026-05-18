@@ -23,6 +23,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/pgtx"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	systempb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system"
 	testingpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing"
 )
 
@@ -278,6 +279,116 @@ func (s *TestRunService) LaunchTestRun(
 			tr.DagRunId = dagRun.GetId()
 			return tr, nil
 		})
+}
+
+// WatchTestRun streams TestRunProgress snapshots as the underlying DagRun
+// makes progress. Send is invoked once on subscribe (initial snapshot) and
+// once per NodeRunDone / DagRunDone event from the in-memory bus. Returns
+// nil on clean context cancellation, otherwise the underlying engine error.
+func (s *TestRunService) WatchTestRun(
+	ctx context.Context,
+	id *testingpb.TestRunId,
+	send func(*testingpb.TestRunProgress) error,
+) error {
+	tr, err := s.GetTestRun(ctx, id)
+	if err != nil {
+		return err
+	}
+	if tr.GetDagRunId() == nil || tr.GetDagRunId().GetValue() == "" {
+		// Run not launched yet — single PENDING snapshot, then done.
+		return send(&testingpb.TestRunProgress{Status: systempb.DagRunStatus_DAG_RUN_STATUS_PENDING})
+	}
+	dagRunID := tr.GetDagRunId()
+
+	snapshot := func() (*testingpb.TestRunProgress, error) {
+		dr, err := s.engine.GetDagRun(ctx, dagRunID)
+		if err != nil {
+			return nil, err
+		}
+		nrs, err := s.engineNodeRuns(ctx, dagRunID)
+		if err != nil {
+			return nil, err
+		}
+		return buildTestRunProgress(dr, nrs), nil
+	}
+
+	initial, err := snapshot()
+	if err != nil {
+		return err
+	}
+	if err := send(initial); err != nil {
+		return err
+	}
+	// Terminal already? short-circuit.
+	if isTerminalDagStatus(initial.GetStatus()) {
+		return nil
+	}
+
+	ch, release, err := s.engine.SubscribeProgress(ctx, dagRunID, "")
+	if err != nil {
+		return err
+	}
+	defer release()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case _, ok := <-ch:
+			if !ok {
+				return nil
+			}
+			snap, err := snapshot()
+			if err != nil {
+				return err
+			}
+			if err := send(snap); err != nil {
+				return err
+			}
+			if isTerminalDagStatus(snap.GetStatus()) {
+				return nil
+			}
+		}
+	}
+}
+
+func (s *TestRunService) engineNodeRuns(ctx context.Context, dagRunID *systempb.DagRunId) ([]*systempb.NodeRun, error) {
+	if lister, ok := s.engine.(interface {
+		ListNodeRunsByDagRun(context.Context, *systempb.DagRunId) ([]*systempb.NodeRun, error)
+	}); ok {
+		return lister.ListNodeRunsByDagRun(ctx, dagRunID)
+	}
+	return nil, nil
+}
+
+func isTerminalDagStatus(s systempb.DagRunStatus) bool {
+	switch s {
+	case systempb.DagRunStatus_DAG_RUN_STATUS_SUCCEEDED,
+		systempb.DagRunStatus_DAG_RUN_STATUS_FAILED,
+		systempb.DagRunStatus_DAG_RUN_STATUS_CANCELLED:
+		return true
+	}
+	return false
+}
+
+func buildTestRunProgress(dr *systempb.DagRun, nrs []*systempb.NodeRun) *testingpb.TestRunProgress {
+	steps := make([]*testingpb.TestRunStep, 0, len(nrs))
+	for _, nr := range nrs {
+		steps = append(steps, &testingpb.TestRunStep{
+			Id:         nr.GetId().GetValue(),
+			Name:       nr.GetNodeId(),
+			Kind:       nr.GetNodeId(),
+			Status:     nr.GetStatus(),
+			StartedAt:  nr.GetStartedAt(),
+			FinishedAt: nr.GetFinishedAt(),
+		})
+	}
+	return &testingpb.TestRunProgress{
+		Status:     dr.GetStatus(),
+		Steps:      steps,
+		StartedAt:  dr.GetStartedAt(),
+		FinishedAt: dr.GetFinishedAt(),
+	}
 }
 
 // CancelTestRun requests cancellation of the underlying DagRun. Workers poll
