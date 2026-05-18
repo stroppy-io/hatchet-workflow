@@ -280,9 +280,19 @@ func (s *TestRunService) LaunchTestRun(
 		})
 }
 
-// CancelTestRun is not yet implemented (requires proto change for cancel_requested).
-func (s *TestRunService) CancelTestRun(_ context.Context, _ *testingpb.TestRunId) error {
-	return fmt.Errorf("CancelTestRun: not implemented (cancel pending proto change)")
+// CancelTestRun requests cancellation of the underlying DagRun. Workers poll
+// dag_runs.cancel_requested between handler yield points and propagate via
+// ctx.Done; in-flight nodes terminate, the finalizer rolls the DagRun to
+// DAG_RUN_STATUS_FAILED with error="cancelled".
+func (s *TestRunService) CancelTestRun(ctx context.Context, id *testingpb.TestRunId) error {
+	tr, err := s.GetTestRun(ctx, id)
+	if err != nil {
+		return err
+	}
+	if tr.GetDagRunId() == nil || tr.GetDagRunId().GetValue() == "" {
+		return nil
+	}
+	return s.engine.CancelDagRun(ctx, tr.GetDagRunId())
 }
 
 // UpdateTestRun patches mutable Identity fields of a TestRun and bumps

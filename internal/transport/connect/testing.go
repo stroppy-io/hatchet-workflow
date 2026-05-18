@@ -196,7 +196,7 @@ func (h *TestingHandler) LaunchTestRun(ctx context.Context, req *connect.Request
 
 func (h *TestingHandler) CancelTestRun(ctx context.Context, req *connect.Request[testingpb.TestRunId]) (*connect.Response[testingpb.TestRun], error) {
 	if err := h.runs.CancelTestRun(ctx, req.Msg); err != nil {
-		return nil, connect.NewError(connect.CodeUnimplemented, err)
+		return nil, err
 	}
 	tr, err := h.runs.GetTestRun(ctx, req.Msg)
 	if err != nil {
