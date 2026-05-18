@@ -23,6 +23,9 @@ func runCmd() *cobra.Command {
 	cmd.AddCommand(runLaunchCmd())
 	cmd.AddCommand(runDeleteCmd())
 	cmd.AddCommand(runCancelCmd())
+	cmd.AddCommand(runWaitCmd())
+	cmd.AddCommand(runBenchCmd())
+	cmd.AddCommand(runDryRunCmd())
 	return cmd
 }
 
