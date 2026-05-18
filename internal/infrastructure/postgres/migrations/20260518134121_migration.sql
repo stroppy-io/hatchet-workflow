@@ -36,6 +36,24 @@ CREATE TABLE "public"."dags" (
   "metadata" json NOT NULL DEFAULT '{}'::jsonb,
   PRIMARY KEY ("id")
 );
+-- create table node_run_logs
+CREATE TABLE "public"."node_run_logs" (
+  "id" text NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "updated_at" timestamptz NOT NULL DEFAULT now(),
+  "deleted_at" timestamptz,
+  "dag_run_id" text NOT NULL,
+  "node_run_id" text NOT NULL,
+  "command_id" text NOT NULL,
+  "ts" timestamptz NOT NULL,
+  "stream" text NOT NULL,
+  "line" text NOT NULL,
+  PRIMARY KEY ("id")
+);
+-- create index node_run_logs_dag_run_ts_idx
+CREATE INDEX "node_run_logs_dag_run_ts_idx" ON "public"."node_run_logs" USING btree ("dag_run_id", "ts");
+-- create index node_run_logs_node_run_ts_idx
+CREATE INDEX "node_run_logs_node_run_ts_idx" ON "public"."node_run_logs" USING btree ("node_run_id", "ts");
 -- create table schedules
 CREATE TABLE "public"."schedules" (
   "id" text NOT NULL,

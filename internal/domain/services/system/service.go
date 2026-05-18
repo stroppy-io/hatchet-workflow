@@ -18,6 +18,9 @@ type Service struct {
 	nodeRunRepo  *repository.ProtoRepository[systempb.NodeRunAlias, systempb.NodeRunColumnAlias, *systempb.NodeRunScanner, *systempb.NodeRun]
 	stateRepo    *repository.ProtoRepository[systempb.DagRunStateEntryAlias, systempb.DagRunStateEntryColumnAlias, *systempb.DagRunStateEntryScanner, *systempb.DagRunStateEntry]
 	scheduleRepo *repository.ProtoRepository[systempb.ScheduleAlias, systempb.ScheduleColumnAlias, *systempb.ScheduleScanner, *systempb.Schedule]
+	logRepo      *repository.ProtoRepository[systempb.NodeRunLogAlias, systempb.NodeRunLogColumnAlias, *systempb.NodeRunLogScanner, *systempb.NodeRunLog]
+
+	logBus *LogBus
 
 	db     exec.DB
 	txMgr  pgtx.TxManager
@@ -48,6 +51,11 @@ func New(executor exec.DB, txMgr pgtx.TxManager, events eventing.Bus) *Service {
 			repository.NewScannerRepository(systempb.Schedules.Table, executor),
 			systempb.ScheduleConverter,
 		),
+		logRepo: repository.NewProtoRepository(
+			repository.NewScannerRepository(systempb.NodeRunLogs.Table, executor),
+			systempb.NodeRunLogConverter,
+		),
+		logBus: NewLogBus(),
 		txMgr:  txMgr,
 		events: events,
 	}

@@ -2,7 +2,8 @@ package system
 
 import (
 	"context"
-	"fmt"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	agentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent"
 	systempb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system"
@@ -54,7 +55,61 @@ func (s *Service) SubscribeProgress(ctx context.Context, dagRunID *systempb.DagR
 	return ch, release, nil
 }
 
-// StreamLogs is not yet implemented. Watch streams are deferred to a later plan.
-func (s *Service) StreamLogs(_ context.Context, _ *systempb.DagRunId, _ string, _ string) (<-chan *agentpb.LogLine, func(), error) {
-	return nil, nil, fmt.Errorf("StreamLogs: not implemented")
+// StreamLogs first back-fills from node_run_logs then subscribes the LogBus
+// for live lines. stepID, when non-empty, filters by node_run_id. The since
+// cursor is not yet implemented.
+func (s *Service) StreamLogs(ctx context.Context, dagRunID *systempb.DagRunId, stepID string, _ string) (<-chan *agentpb.LogLine, func(), error) {
+	out := make(chan *agentpb.LogLine, 256)
+	busCh, release := s.logBus.Subscribe(dagRunID.GetValue())
+
+	go func() {
+		defer close(out)
+		// Backfill from DB.
+		rows, err := s.logRepo.Query(ctx,
+			systempb.NodeRunLogs.SelectAll().Where(
+				systempb.NodeRunLogs.DagRunId.Eq(dagRunID.GetValue()),
+			),
+		)
+		if err == nil {
+			for _, r := range rows {
+				if stepID != "" && r.GetNodeRunId() != stepID {
+					continue
+				}
+				line := &agentpb.LogLine{
+					CommandId: r.GetCommandId(),
+					Ts:        r.GetTs(),
+					Line:      r.GetLine(),
+				}
+				select {
+				case out <- line:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+		// Live.
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case l, ok := <-busCh:
+				if !ok {
+					return
+				}
+				if stepID != "" && l.NodeRunID != stepID {
+					continue
+				}
+				select {
+				case out <- &agentpb.LogLine{
+					CommandId: l.CommandID,
+					Ts:        timestamppb.New(l.Timestamp),
+					Line:      l.Line,
+				}:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+	}()
+	return out, release, nil
 }

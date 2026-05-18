@@ -22,6 +22,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/core/tracing"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/pgtx"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	agentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	systempb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system"
 	testingpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing"
@@ -388,6 +389,46 @@ func buildTestRunProgress(dr *systempb.DagRun, nrs []*systempb.NodeRun) *testing
 		Steps:      steps,
 		StartedAt:  dr.GetStartedAt(),
 		FinishedAt: dr.GetFinishedAt(),
+	}
+}
+
+// StreamTestRunLogs forwards engine StreamLogs to send. Backfills from
+// node_run_logs then follows the live LogBus until ctx cancels or follow=false
+// and backlog drains.
+func (s *TestRunService) StreamTestRunLogs(
+	ctx context.Context,
+	req *testingpb.StreamTestRunLogsRequest,
+	send func(*agentpb.LogLine) error,
+) error {
+	tr, err := s.GetTestRun(ctx, req.GetTestRunId())
+	if err != nil {
+		return err
+	}
+	if tr.GetDagRunId() == nil || tr.GetDagRunId().GetValue() == "" {
+		return nil
+	}
+	since := ""
+	if req.GetSince() != nil {
+		since = req.GetSince().AsTime().Format("2006-01-02T15:04:05Z")
+	}
+	ch, release, err := s.engine.StreamLogs(ctx, tr.GetDagRunId(), req.GetStepId(), since)
+	if err != nil {
+		return err
+	}
+	defer release()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case l, ok := <-ch:
+			if !ok {
+				return nil
+			}
+			if err := send(l); err != nil {
+				return err
+			}
+		}
 	}
 }
 
