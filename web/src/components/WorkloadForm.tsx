@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getAccessToken } from "@/api/transport";
+import { clients } from "@/api/clients";
 
 // ─── Local type definitions (previously from @/api/types) ──────────
 export type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb" | "ydb-managed" | "cockroach";
@@ -68,35 +68,57 @@ export const SCRIPT_COMPAT: Record<string, string[]> = {
 
 // ─── Local fetch helpers (no ConnectRPC equivalent) ────────────────
 
-function authHeaders(): Record<string, string> {
-  const token = getAccessToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 async function probeScript(req: {
   script: string; version?: string; sql?: string; driver_type?: string;
   pool_size?: number; scale_factor?: number; env?: Record<string, string>;
   files?: WorkloadFile[]; include_human?: boolean;
 }): Promise<ProbeResponse> {
-  const res = await fetch("/api/v1/probe", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify(req),
+  const r = await clients.stroppy.probeStroppyConfig({
+    stroppyVersion: req.version ?? "",
+    script: req.script,
+    sql: req.sql ?? "",
+    driverType: req.driver_type ?? "",
+    poolSize: req.pool_size ?? 0,
+    scaleFactor: req.scale_factor ?? 0,
+    env: req.env ?? {},
+    files: (req.files ?? []).map(f => ({ name: f.name, content: f.content })),
+    includeHuman: req.include_human ?? false,
   });
-  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
-  return res.json();
+  return {
+    raw_json: r.rawJson,
+    human: r.human,
+    env_declarations: (r.envDeclarations ?? []).map(d => ({
+      names: [d.name], type: d.type, default_value: d.defaultValue,
+      description: d.description, required: d.required,
+    })),
+    steps: (r.steps ?? []).map(s => ({ name: s.name, kind: s.kind, description: s.description })),
+    sql_sections: (r.sqlSections ?? []).map(s => ({ name: s.name, sql: s.sql })),
+    driver_setups: (r.driverSetups ?? []).map(d => ({ driver_type: d.driverType, settings: d.settings })),
+  } as unknown as ProbeResponse;
 }
 
 async function getStroppyVersions(): Promise<string[]> {
-  const res = await fetch("/api/v1/stroppy-versions", { headers: authHeaders() });
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    const r = await clients.stroppy.listStroppyVersions({});
+    return (r.versions ?? []).map(v => v.tag);
+  } catch {
+    return [];
+  }
 }
 
 async function getStroppyCommits(): Promise<StroppyCommit[]> {
-  const res = await fetch("/api/v1/stroppy-commits", { headers: authHeaders() });
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    const r = await clients.stroppy.listStroppyCommits({});
+    return (r.commits ?? []).map(c => ({
+      sha: c.sha, short_sha: c.shortSha, short: c.shortSha,
+      tag: "", download_url: "",
+      message: c.message, author: c.author,
+      committed_at: c.committedAt ? new Date(Number(c.committedAt.seconds) * 1000).toISOString() : "",
+      published_at: c.committedAt ? new Date(Number(c.committedAt.seconds) * 1000).toISOString() : "",
+    } as unknown as StroppyCommit));
+  } catch {
+    return [];
+  }
 }
 import { Label } from "@/components/ui/label";
 import {

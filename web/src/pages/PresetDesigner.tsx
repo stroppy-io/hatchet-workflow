@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getAccessToken } from "@/api/transport";
+import { getTenantId } from "@/api/transport";
+import { clients } from "@/api/clients";
 
 // ─── Local types (previously from @/api/types) ──────────────────────────────
 export type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb" | "ydb-managed" | "cockroach";
@@ -124,28 +125,38 @@ export interface Preset {
   created_at?: string;
 }
 
-// ─── Local fetch helpers (REST endpoints, no ConnectRPC equivalent) ──────────
-function _authHeaders(): Record<string, string> {
-  const token = getAccessToken();
-  return token ? { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
-}
-
 async function getPreset(id: string): Promise<Preset> {
-  const res = await fetch(`/api/v1/presets/${id}`, { headers: _authHeaders() });
-  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
-  return res.json();
+  const r = await clients.databasePreset.getDatabasePreset({ value: id });
+  return {
+    id: r.id?.value ?? "",
+    name: r.identity?.name ?? "",
+    description: r.identity?.description ?? "",
+    db_kind: String(r.database?.kind ?? ""),
+    topology: r.database,
+  } as unknown as Preset;
 }
 
 async function createPreset(data: { name: string; description?: string; db_kind: DatabaseKind; topology: unknown }): Promise<{ id: string }> {
-  const res = await fetch("/api/v1/presets", { method: "POST", headers: _authHeaders(), body: JSON.stringify(data) });
-  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
-  return res.json();
+  const tid = getTenantId() ?? "";
+  const r = await clients.databasePreset.createDatabasePreset({
+    preset: {
+      tenantId: { value: tid },
+      identity: { name: data.name, description: data.description ?? "", label: [] },
+      database: data.topology as unknown as never,
+    },
+  } as unknown as never);
+  return { id: r.id?.value ?? "" };
 }
 
 async function updatePreset(id: string, data: { name?: string; description?: string; topology?: unknown }): Promise<{ status: string }> {
-  const res = await fetch(`/api/v1/presets/${id}`, { method: "PUT", headers: _authHeaders(), body: JSON.stringify(data) });
-  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
-  return res.json();
+  await clients.databasePreset.updateDatabasePreset({
+    preset: {
+      id: { value: id },
+      identity: { name: data.name ?? "", description: data.description ?? "", label: [] },
+      database: data.topology as unknown as never,
+    },
+  } as unknown as never);
+  return { status: "ok" };
 }
 import { TopologyDiagram } from "@/components/TopologyDiagram";
 import { Button } from "@/components/ui/button";
