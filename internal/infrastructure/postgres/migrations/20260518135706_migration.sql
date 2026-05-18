@@ -557,6 +557,23 @@ CREATE INDEX "test_runs_suite_run_idx" ON "public"."test_runs" USING btree ("sui
 CREATE INDEX "test_runs_template_idx" ON "public"."test_runs" USING btree ("template_id");
 -- create index test_runs_tenant_idx
 CREATE INDEX "test_runs_tenant_idx" ON "public"."test_runs" USING btree ("tenant_id");
+-- create table baselines
+CREATE TABLE "public"."baselines" (
+  "id" text NOT NULL,
+  "tenant_id" text NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "updated_at" timestamptz NOT NULL DEFAULT now(),
+  "deleted_at" timestamptz,
+  "name" text NOT NULL,
+  "test_run_id" text NOT NULL,
+  "created_by" text,
+  PRIMARY KEY ("id"),
+  FOREIGN KEY ("created_by") REFERENCES "public"."users" ("id") ON UPDATE NO ACTION ON DELETE SET NULL,
+  FOREIGN KEY ("tenant_id") REFERENCES "public"."tenants" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+  FOREIGN KEY ("test_run_id") REFERENCES "public"."test_runs" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
+);
+-- create index baselines_tenant_name_uniq
+CREATE UNIQUE INDEX "baselines_tenant_name_uniq" ON "public"."baselines" USING btree ("tenant_id", "name");
 -- create table shared_test_runs
 CREATE TABLE "public"."shared_test_runs" (
   "id" text NOT NULL,

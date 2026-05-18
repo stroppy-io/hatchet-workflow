@@ -27,6 +27,7 @@ type Deps struct {
 	SharedTestRunHandler *SharedTestRunHandler
 	SharedSuiteRunHandler *SharedSuiteRunHandler
 	ComparisonHandler  *ComparisonHandler
+	BaselineHandler    *BaselineHandler
 	AgentHandler       *AgentHandler
 
 	WebhookHandler     *WebhookHandler
@@ -117,6 +118,12 @@ func Mount(d Deps) http.Handler {
 	if d.ComparisonHandler != nil {
 		cmpPath, cmpH := testingconnect.NewComparisonServiceHandler(d.ComparisonHandler, d.Interceptors)
 		mux.Handle(cmpPath, cmpH)
+	}
+
+	// Baseline service
+	if d.BaselineHandler != nil {
+		blPath, blH := testingconnect.NewBaselineServiceHandler(d.BaselineHandler, d.Interceptors)
+		mux.Handle(blPath, blH)
 	}
 
 	// Agent service

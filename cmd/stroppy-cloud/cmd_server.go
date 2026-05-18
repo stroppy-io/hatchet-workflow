@@ -150,6 +150,7 @@ func runServer(ctx context.Context, cfgPath string) error {
 		)
 	}
 	comparisonSvc := testingsvc.NewComparisonService(metricsAdapter)
+	baselineSvc := testingsvc.NewBaselineService(exec, txMgr, bus)
 	runSvc = runSvc.WithMetrics(metricsAdapter)
 
 	adminService := adminsvc.NewAdminService(iamSvc)
@@ -260,6 +261,7 @@ func runServer(ctx context.Context, cfgPath string) error {
 		SharedTestRunHandler:  transportconnect.NewSharedTestRunHandler(sharedTestRunSvc),
 		SharedSuiteRunHandler: transportconnect.NewSharedSuiteRunHandler(sharedSuiteRunSvc),
 		ComparisonHandler:     transportconnect.NewComparisonHandler(comparisonSvc),
+		BaselineHandler:       transportconnect.NewBaselineHandler(baselineSvc),
 		AgentHandler:          transportconnect.NewAgentHandler(agentService),
 		WebhookHandler:          transportconnect.NewWebhookHandler(webhookSvc),
 		QuotaHandler:            transportconnect.NewQuotaHandler(quotaSvc),
