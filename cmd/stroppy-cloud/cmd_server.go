@@ -262,6 +262,7 @@ func runServer(ctx context.Context, cfgPath string) error {
 	processStartedAt := time.Now()
 	mux.Handle("/metrics", middleware.MetricsHandler())
 	httpext.NewBinariesHandler("", binaryCacheSvc, zlog).Mount(mux)
+	httpext.NewPackagesHandler(catalogSvc, zlog).Mount(mux)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasPrefix(r.URL.Path, "/cloud.v1."):
