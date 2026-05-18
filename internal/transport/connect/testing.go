@@ -2,7 +2,6 @@ package connect
 
 import (
 	"context"
-	"errors"
 
 	"connectrpc.com/connect"
 
@@ -182,8 +181,12 @@ func (h *TestingHandler) StreamTestRunLogs(ctx context.Context, req *connect.Req
 	return h.runs.StreamTestRunLogs(ctx, req.Msg, stream.Send)
 }
 
-func (h *TestingHandler) GetTestRunMetrics(_ context.Context, _ *connect.Request[testingpb.GetTestRunMetricsRequest]) (*connect.Response[testingpb.MetricSeriesList], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("not implemented"))
+func (h *TestingHandler) GetTestRunMetrics(ctx context.Context, req *connect.Request[testingpb.GetTestRunMetricsRequest]) (*connect.Response[testingpb.MetricSeriesList], error) {
+	out, err := h.runs.GetTestRunMetrics(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(out), nil
 }
 
 func (h *TestingHandler) LaunchTestRun(ctx context.Context, req *connect.Request[testingpb.TestRunId]) (*connect.Response[testingpb.TestRun], error) {

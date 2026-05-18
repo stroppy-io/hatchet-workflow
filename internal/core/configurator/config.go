@@ -37,6 +37,8 @@ type S3Config struct {
 type VictoriaConfig struct {
 	PushURL  string `mapstructure:"push_url"`
 	QueryURL string `mapstructure:"query_url"`
+	// Token forwarded as Bearer to vmauth (optional).
+	Token string `mapstructure:"token"`
 }
 type TerraformConfig struct {
 	BinaryPath  string `mapstructure:"binary_path"`

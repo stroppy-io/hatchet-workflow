@@ -43,6 +43,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/s3"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/stroppybin"
 	valkey "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/valkey"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/victoria"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	transportconnect "github.com/stroppy-io/stroppy-cloud/internal/transport/connect"
 	"github.com/stroppy-io/stroppy-cloud/web"
@@ -141,7 +142,14 @@ func runServer(ctx context.Context, cfgPath string) error {
 	suiteRunSvc := testingsvc.NewTestSuiteRunService(exec, txMgr, bus, systemSvc, builder)
 	sharedTestRunSvc := testingsvc.NewSharedTestRunService(exec, txMgr, bus)
 	sharedSuiteRunSvc := testingsvc.NewSharedSuiteRunService(exec, txMgr, bus)
-	comparisonSvc := testingsvc.NewComparisonService(nil)
+	var metricsAdapter testingsvc.MetricsPort
+	if cfg.Victoria.QueryURL != "" {
+		metricsAdapter = victoria.NewMetricsAdapter(
+			victoria.NewClient(cfg.Victoria.QueryURL, cfg.Victoria.Token),
+		)
+	}
+	comparisonSvc := testingsvc.NewComparisonService(metricsAdapter)
+	runSvc = runSvc.WithMetrics(metricsAdapter)
 
 	adminService := adminsvc.NewAdminService(iamSvc)
 	binaryCacheAdminSvc := adminsvc.NewBinaryCacheAdminService(exec, txMgr)

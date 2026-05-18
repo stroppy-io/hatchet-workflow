@@ -113,6 +113,7 @@ type TestRunService struct {
 	engine    SystemEnginePort
 	builder   DagBuilderPort
 	quota     QuotaPort
+	metrics   MetricsPort
 }
 
 // NewTestRunService constructs a TestRunService.
@@ -147,6 +148,40 @@ func NewTestRunService(
 func (s *TestRunService) WithQuota(q QuotaPort) *TestRunService {
 	s.quota = q
 	return s
+}
+
+// WithMetrics sets a real MetricsPort backing GetTestRunMetrics.
+func (s *TestRunService) WithMetrics(m MetricsPort) *TestRunService {
+	s.metrics = m
+	return s
+}
+
+// GetTestRunMetrics queries the wired MetricsPort. If metric_names is empty,
+// runs a default PromQL aggregating "stroppy_*" series for the run.
+func (s *TestRunService) GetTestRunMetrics(
+	ctx context.Context,
+	req *testingpb.GetTestRunMetricsRequest,
+) (*testingpb.MetricSeriesList, error) {
+	if s.metrics == nil {
+		return &testingpb.MetricSeriesList{}, nil
+	}
+	tr, err := s.GetTestRun(ctx, req.GetTestRunId())
+	if err != nil {
+		return nil, err
+	}
+	out := &testingpb.MetricSeriesList{}
+	names := req.GetMetricNames()
+	if len(names) == 0 {
+		names = []string{`{__name__=~"stroppy_.+",test_run_id="$TEST_RUN_ID"}`}
+	}
+	for _, q := range names {
+		sub, err := s.metrics.Query(ctx, tr.GetTenantId(), tr.GetId(), q)
+		if err != nil {
+			return nil, err
+		}
+		out.Series = append(out.Series, sub.GetSeries()...)
+	}
+	return out, nil
 }
 
 // CreateTestRun assigns an ID, tenant, caller and timestamps, then INSERTs in a
