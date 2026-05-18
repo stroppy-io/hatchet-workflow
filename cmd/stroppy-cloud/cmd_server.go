@@ -193,6 +193,21 @@ func runServer(ctx context.Context, cfgPath string) error {
 	go worker.Run(workerCtx)
 	go sched.Run(workerCtx)
 
+	// Seed built-in packages whenever a tenant is created. Best-effort:
+	// failures are logged, not propagated, so a partial seed doesn't roll
+	// back the tenant creation.
+	bus.Subscribe(eventing.TopicTenantCreated, func(_ context.Context, e eventing.Event) {
+		payload, ok := e.Payload.(eventing.TenantCreated)
+		if !ok {
+			return
+		}
+		seedCtx, c := context.WithTimeout(context.Background(), 30*time.Second)
+		defer c()
+		if err := catalogSvc.SeedBuiltinPackages(seedCtx, &iampb.TenantId{Value: payload.TenantID}, nil); err != nil {
+			zlog.Warn("seed builtin packages failed", zap.String("tenant_id", payload.TenantID), zap.Error(err))
+		}
+	})
+
 	// Release one concurrent-run quota slot whenever a test run finishes.
 	bus.Subscribe(eventing.TopicTestRunDone, func(_ context.Context, e eventing.Event) {
 		payload, ok := e.Payload.(eventing.TestRunDone)
