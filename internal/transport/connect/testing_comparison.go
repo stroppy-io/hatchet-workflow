@@ -2,7 +2,6 @@ package connect
 
 import (
 	"context"
-	"errors"
 
 	"connectrpc.com/connect"
 
@@ -31,6 +30,11 @@ func (h *ComparisonHandler) CompareRuns(ctx context.Context, req *connect.Reques
 	return connect.NewResponse(result), nil
 }
 
-func (h *ComparisonHandler) CrossCompareBatch(_ context.Context, _ *connect.Request[testingpb.CrossCompareBatchRequest]) (*connect.Response[testingpb.CrossCompareBatchResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("not implemented"))
+func (h *ComparisonHandler) CrossCompareBatch(ctx context.Context, req *connect.Request[testingpb.CrossCompareBatchRequest]) (*connect.Response[testingpb.CrossCompareBatchResponse], error) {
+	tenantID := &iampb.TenantId{Value: middleware.TenantFromCtx(ctx)}
+	out, err := h.svc.CrossCompareBatch(ctx, tenantID, req.Msg.GetTestSuiteRunId(), req.Msg.GetBaselineRunId())
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(out), nil
 }

@@ -11,7 +11,8 @@ import (
 
 // ComparisonService computes per-metric diffs between two TestRuns.
 type ComparisonService struct {
-	metrics MetricsPort
+	metrics       MetricsPort
+	testRunLister TestRunSuiteLister
 }
 
 // NewComparisonService constructs a ComparisonService.
@@ -147,6 +148,66 @@ func unionKeys(a, b map[string]float64) []string {
 		}
 	}
 	return out
+}
+
+// CrossCompareBatch returns per-cell metrics + diffs vs a baseline run for
+// every TestRun within a TestSuiteRun. When baselineRunID is nil the first
+// child is used; pairwise matrix beyond that is the caller's job.
+//
+// Note: this needs a way to list child TestRuns of a TestSuiteRun. Until the
+// TestSuiteRun.children index is exposed via a port, we accept the suite-run
+// id and rely on the TestRun listing by suite_run_id ancestor (added below).
+func (s *ComparisonService) CrossCompareBatch(
+	ctx context.Context,
+	tenantID *iampb.TenantId,
+	suiteRunID *testingpb.TestSuiteRunId,
+	baselineRunID *testingpb.TestRunId,
+) (*testingpb.CrossCompareBatchResponse, error) {
+	if s.testRunLister == nil {
+		return nil, fmt.Errorf("CrossCompareBatch: TestRunByteSuite lister not wired")
+	}
+	children, err := s.testRunLister.ListTestRunsBySuiteRun(ctx, tenantID, suiteRunID)
+	if err != nil {
+		return nil, err
+	}
+	if len(children) == 0 {
+		return &testingpb.CrossCompareBatchResponse{}, nil
+	}
+	if baselineRunID == nil || baselineRunID.GetValue() == "" {
+		baselineRunID = children[0].GetId()
+	}
+
+	out := &testingpb.CrossCompareBatchResponse{}
+	for _, child := range children {
+		runMetrics, err := s.metrics.Query(ctx, tenantID, child.GetId(), "")
+		if err != nil {
+			return nil, fmt.Errorf("CrossCompareBatch: cell %s: %w", child.GetId().GetValue(), err)
+		}
+		cell := &testingpb.CrossCompareBatchResponse_CellMetrics{
+			TestRunId: child.GetId(),
+			Metrics:   runMetrics,
+		}
+		if child.GetId().GetValue() != baselineRunID.GetValue() {
+			diff, err := s.CompareRuns(ctx, tenantID, baselineRunID, child.GetId(), nil)
+			if err == nil {
+				cell.DiffsVsBaseline = diff.GetDiffs()
+			}
+		}
+		out.Cells = append(out.Cells, cell)
+	}
+	return out, nil
+}
+
+// TestRunSuiteLister is the minimum port needed to enumerate children of a
+// TestSuiteRun. Implemented by TestSuiteRunService.
+type TestRunSuiteLister interface {
+	ListTestRunsBySuiteRun(ctx context.Context, tenantID *iampb.TenantId, suiteRunID *testingpb.TestSuiteRunId) ([]*testingpb.TestRun, error)
+}
+
+// WithTestRunLister wires the lister required by CrossCompareBatch.
+func (s *ComparisonService) WithTestRunLister(l TestRunSuiteLister) *ComparisonService {
+	s.testRunLister = l
+	return s
 }
 
 // verdictFor assigns a verdict based on delta sign. For metrics where a higher

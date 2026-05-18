@@ -258,6 +258,24 @@ func (s *TestRunService) ListTestRuns(
 	)
 }
 
+// ListTestRunsBySuiteRun returns every TestRun belonging to a given
+// TestSuiteRun for the tenant. Satisfies testing.TestRunSuiteLister so
+// ComparisonService can run cross-compare batches.
+func (s *TestRunService) ListTestRunsBySuiteRun(
+	ctx context.Context,
+	tenantID *iampb.TenantId,
+	suiteRunID *testingpb.TestSuiteRunId,
+) ([]*testingpb.TestRun, error) {
+	suiteRunVal := suiteRunID.GetValue()
+	return s.runs.Query(ctx,
+		testingpb.TestRuns.Select(safeSelectColsRun...).Where(
+			testingpb.TestRuns.TenantId.Eq(tenantID.GetValue()),
+			testingpb.TestRuns.SuiteRunId.Eq(&suiteRunVal),
+			testingpb.TestRuns.DeletedAt.IsNull(),
+		),
+	)
+}
+
 // LaunchTestRun builds a Dag from the TestRun's spec, starts a DagRun, and
 // writes the DagRunId back to the TestRun row.
 //

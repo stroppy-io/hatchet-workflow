@@ -152,7 +152,10 @@ func runServer(ctx context.Context, cfgPath string) error {
 	}
 	comparisonSvc := testingsvc.NewComparisonService(metricsAdapter)
 	baselineSvc := testingsvc.NewBaselineService(exec, txMgr, bus)
+	// comparisonSvc.WithTestRunLister depends on runSvc constructor below;
+	// wired after runSvc + suiteRunSvc are built.
 	runSvc = runSvc.WithMetrics(metricsAdapter)
+	comparisonSvc.WithTestRunLister(runSvc)
 
 	adminService := adminsvc.NewAdminService(iamSvc)
 	binaryCacheAdminSvc := adminsvc.NewBinaryCacheAdminService(exec, txMgr)
