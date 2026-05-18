@@ -1,7 +1,7 @@
 server:
   http_addr: ":8080"
 postgres:
-  dsn: "postgres://stroppy:stroppy@127.0.0.1:5436/stroppy?sslmode=disable"
+  dsn: "postgres://stroppy:${POSTGRES_PASSWORD}@127.0.0.1:5436/stroppy?sslmode=disable"
   max_conns: 25
 valkey:
   addr: "127.0.0.1:6379"

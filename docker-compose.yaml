@@ -100,6 +100,52 @@ services:
     depends_on:
       - vminsert
 
+  # --- Valkey (Redis-compatible) for idempotency + caches ---
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: always
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:6379:6379"
+    volumes:
+      - valkeydata:/data
+    healthcheck:
+      test: [ "CMD", "valkey-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # --- MinIO (S3-compatible) for binary uploads ---
+  minio:
+    image: minio/minio:latest
+    restart: always
+    command: server /data --console-address ":9001"
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:9000:9000"
+      - "${BIND_ADDR:-0.0.0.0}:9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # --- Bootstrap MinIO bucket on first run ---
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${S3_ACCESS_KEY:-minioadmin} ${S3_SECRET_KEY:-minioadmin};
+      mc mb -p local/stroppy 2>/dev/null || true;
+      echo 'bucket ready'
+      "
+
   # --- Stroppy Cloud server ---
   # Runs with host networking so it can reach Docker agent containers directly.
   server:
@@ -111,28 +157,30 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      valkey:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
       vmauth:
         condition: service_started
     command:
-      - serve
-      - --addr=:8080
+      - server
+      - --config
+      - /etc/stroppy/config.yaml
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      # Terraform workdir — survives `docker compose down/up` so a server
-      # restart never strands cloud resources by losing tfstate.
+      - ./deployments/local/server/config.yaml:/etc/stroppy/config.yaml:ro
       - tfstate:/tmp/stroppy-terraform
-      # Persistent cache of fetched binaries (node_exporter, vmagent, stroppy,
-      # vector, postgres_exporter, mysqld_exporter). Survives compose
-      # restarts so agents reuse local downloads instead of going to github.
       - binaries:/var/lib/stroppy-cache
     environment:
-      DATABASE_URL: postgres://stroppy:${POSTGRES_PASSWORD:-stroppy}@127.0.0.1:5436/stroppy?sslmode=disable
-      JWT_SECRET: ${JWT_SECRET:-stroppy-dev-secret}
+      JWT_SECRET: ${JWT_SECRET:-stroppy-dev-secret-32-bytes-long!!}
+      INITIAL_ADMIN_PASSWORD: ${INITIAL_ADMIN_PASSWORD:-AdminP@ss123!}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stroppy}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
       MONITORING_URL: http://127.0.0.1:8427
       MONITORING_TOKEN: ${MONITORING_TOKEN:-stroppy-monitoring-secret}
       GRAFANA_URL: ${GRAFANA_URL:-http://127.0.0.1:3001}
-      STROPPY_ADMIN_PASSWORD: ${STROPPY_ADMIN_PASSWORD:-}
-      STROPPY_MIN_VERSION: ${STROPPY_MIN_VERSION:-5.1.2}
       YC_TOKEN: ${YC_TOKEN:-}
       YC_CLOUD_ID: ${YC_CLOUD_ID:-}
       YC_FOLDER_ID: ${YC_FOLDER_ID:-}
@@ -152,6 +200,8 @@ volumes:
   pgdata:
   vmdata:
   vldata:
+  valkeydata:
+  miniodata:
   tfstate:
   binaries:
   grafanadata:
