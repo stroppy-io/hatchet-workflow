@@ -2,56 +2,57 @@ package recovery
 
 import (
 	"context"
+	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
+
+	agentsvc "github.com/stroppy-io/stroppy-cloud/internal/domain/services/agent"
+	opssvc "github.com/stroppy-io/stroppy-cloud/internal/domain/services/ops"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/system"
 )
 
-func Run(ctx context.Context, pool *pgxpool.Pool, log *zap.Logger) error {
-	statements := []string{
-		`
-UPDATE node_runs
-SET status = 'NODE_RUN_STATUS_READY',
-    attempt = attempt + 1,
-    error = COALESCE(NULLIF(error, ''), 'process_restart'),
-    updated_at = now()
-WHERE status IN ('NODE_RUN_STATUS_RUNNING', 'NODE_RUN_STATUS_CANCELING')
-  AND deleted_at IS NULL;
-`,
-		`
-UPDATE webhook_deliveries
-SET state = 'PENDING', last_error = 'restart_requeue', updated_at = now()
-WHERE state = 'IN_FLIGHT';
-`,
-		`
-UPDATE agents
-SET status = 'AGENT_STATUS_UNKNOWN', updated_at = now()
-WHERE status = 'AGENT_STATUS_BUSY' AND last_seen_at < now() - interval '60 seconds';
-`,
-		`
-WITH agg AS (
-  SELECT dag_run_id,
-         bool_and(status IN ('NODE_RUN_STATUS_DONE','NODE_RUN_STATUS_SKIPPED')) AS all_done,
-         bool_or(status='NODE_RUN_STATUS_FAILED') AS any_failed
-  FROM node_runs WHERE deleted_at IS NULL GROUP BY dag_run_id
-)
-UPDATE dag_runs d
-SET status = CASE WHEN agg.any_failed THEN 'DAG_RUN_STATUS_FAILED'
-                  WHEN agg.all_done   THEN 'DAG_RUN_STATUS_SUCCEEDED'
-                  ELSE 'DAG_RUN_STATUS_RUNNING' END,
-    updated_at = now()
-FROM agg
-WHERE d.id = agg.dag_run_id AND d.status = 'DAG_RUN_STATUS_RUNNING';
-`,
+// staleAgentThreshold is how long since the last heartbeat before an agent is
+// considered stale during the startup sweep.
+const staleAgentThreshold = 60 * time.Second
+
+// Run executes a one-shot startup sweep that fixes up any state left dirty by a
+// previous crash. It delegates each step to the appropriate service method so
+// that all database access goes through ratel where possible; raw SQL is used
+// only in RecomputeDagRunStatuses (see that method for rationale).
+func Run(
+	ctx context.Context,
+	systemSvc *system.Service,
+	agentSvc *agentsvc.Service,
+	webhookSvc *opssvc.WebhookService,
+	log *zap.Logger,
+) error {
+	n, err := systemSvc.RecoverStuckNodeRuns(ctx)
+	if err != nil {
+		log.Warn("recovery: RecoverStuckNodeRuns failed", zap.Error(err))
+	} else {
+		log.Info("recovery: node_runs reset to READY", zap.Int64("rows", n))
 	}
 
-	for i, stmt := range statements {
-		ct, err := pool.Exec(ctx, stmt)
-		if err != nil {
-			log.Warn("recovery sweep statement skipped", zap.Int("idx", i), zap.Error(err))
-			continue
-		}
-		log.Info("recovery sweep statement applied", zap.Int("idx", i), zap.Int64("rows_affected", ct.RowsAffected()))
+	n, err = webhookSvc.RecoverInFlightDeliveries(ctx)
+	if err != nil {
+		log.Warn("recovery: RecoverInFlightDeliveries failed", zap.Error(err))
+	} else {
+		log.Info("recovery: webhook_deliveries reset to PENDING", zap.Int64("rows", n))
 	}
+
+	n, err = agentSvc.MarkStaleAgents(ctx, staleAgentThreshold)
+	if err != nil {
+		log.Warn("recovery: MarkStaleAgents failed", zap.Error(err))
+	} else {
+		log.Info("recovery: agents marked STALE", zap.Int64("rows", n))
+	}
+
+	n, err = systemSvc.RecomputeDagRunStatuses(ctx)
+	if err != nil {
+		log.Warn("recovery: RecomputeDagRunStatuses failed", zap.Error(err))
+	} else {
+		log.Info("recovery: dag_runs status recomputed", zap.Int64("rows", n))
+	}
+
 	return nil
 }

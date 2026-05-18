@@ -1,3 +1,5 @@
+// Raw SQL is required here for SKIP LOCKED, which ratel does not (yet) support.
+// All other database access in this binary goes through ratel — see CLAUDE.md.
 package scheduler
 
 import (

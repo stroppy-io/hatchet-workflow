@@ -311,6 +311,85 @@ func (s *Service) recomputeAfterNode(ctx context.Context, completed *systempb.No
 	return nil
 }
 
+// RecoverStuckNodeRuns resets any NodeRun that was left RUNNING at server
+// restart back to READY, increments its attempt counter, and records
+// "process_restart" as the error reason. The method is called once at startup
+// by the recovery worker; it loops over rows individually so ratel can build
+// the UPDATE without raw SQL. Returns the number of rows updated.
+func (s *Service) RecoverStuckNodeRuns(ctx context.Context) (int64, error) {
+	running := []string{
+		systempb.NodeRunStatus_NODE_RUN_STATUS_RUNNING.String(),
+	}
+	rows, err := s.nodeRunRepo.Query(ctx,
+		systempb.NodeRuns.SelectAll().Where(
+			systempb.NodeRuns.Status.In(running...),
+			systempb.NodeRuns.DeletedAt.IsNull(),
+		),
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	var updated int64
+	now := time.Now()
+	for _, node := range rows {
+		errMsg := node.GetError()
+		if errMsg == "" {
+			errMsg = "process_restart"
+		}
+		node.Status = systempb.NodeRunStatus_NODE_RUN_STATUS_READY
+		node.Attempt++
+		node.Error = errMsg
+		if node.Timestamps == nil {
+			node.Timestamps = &commonpb.Timestamps{}
+		}
+		node.Timestamps.UpdatedAt = timestamppb.New(now)
+		sc := node.IntoPlain()
+		if _, err := s.nodeRunRepo.Execute(ctx,
+			systempb.NodeRuns.Update().
+				Set(
+					sc.GetSetter(systempb.NodeRunColumnStatus)(),
+					sc.GetSetter(systempb.NodeRunColumnAttempt)(),
+					sc.GetSetter(systempb.NodeRunColumnError)(),
+					sc.GetSetter(systempb.NodeRunColumnUpdatedAt)(),
+				).
+				Where(systempb.NodeRuns.Id.Eq(node.GetId().GetValue())),
+		); err != nil {
+			return updated, err
+		}
+		updated++
+	}
+	return updated, nil
+}
+
+// RecomputeDagRunStatuses recalculates the status of every RUNNING DagRun by
+// aggregating its NodeRun states. Raw SQL is required because ratel does not
+// support bool_and/bool_or aggregates or CTE-based UPDATE…FROM patterns.
+// Only called at startup by the recovery worker.
+// Returns the number of DagRun rows updated.
+func (s *Service) RecomputeDagRunStatuses(ctx context.Context) (int64, error) {
+	// Column names from generated constants.
+	const q = `
+WITH agg AS (
+  SELECT dag_run_id,
+         bool_and(status IN ('NODE_RUN_STATUS_SUCCEEDED','NODE_RUN_STATUS_SKIPPED')) AS all_done,
+         bool_or(status  =  'NODE_RUN_STATUS_FAILED') AS any_failed
+  FROM node_runs WHERE deleted_at IS NULL GROUP BY dag_run_id
+)
+UPDATE dag_runs d
+SET status     = CASE WHEN agg.any_failed THEN 'DAG_RUN_STATUS_FAILED'
+                      WHEN agg.all_done   THEN 'DAG_RUN_STATUS_SUCCEEDED'
+                      ELSE 'DAG_RUN_STATUS_RUNNING' END,
+    updated_at = now()
+FROM agg
+WHERE d.id = agg.dag_run_id AND d.status = 'DAG_RUN_STATUS_RUNNING'`
+	ct, err := s.db.Exec(ctx, q)
+	if err != nil {
+		return 0, err
+	}
+	return ct.RowsAffected(), nil
+}
+
 // touchTimestamps sets UpdatedAt on a NodeRun's Timestamps to t.
 // It allocates the Timestamps struct if it is nil.
 func touchTimestamps(node *systempb.NodeRun, t time.Time) {

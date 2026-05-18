@@ -20,6 +20,7 @@ import (
 	opspb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/ops"
 )
 
+
 const defaultConcurrentRunsLimit int64 = 10
 
 // QuotaService enforces per-tenant resource quotas backed by quota_counters.
@@ -79,14 +80,31 @@ SELECT
 }
 
 // Release decrements the used counter by amount (floor 0).
+// A serializable transaction is used to avoid a read-modify-write race; GREATEST
+// cannot be expressed in ratel so the guard is applied in Go instead.
 func (s *QuotaService) Release(ctx context.Context, tenantID *iampb.TenantId, resourceID string, amount int64) error {
-	const q = `
-UPDATE quota_counters
-SET used = GREATEST(0, used - $3), updated_at = now()
-WHERE tenant_id = $1 AND resource_id = $2 AND deleted_at IS NULL
-`
-	_, err := s.pool.Exec(ctx, q, tenantID.GetValue(), resourceID, amount)
-	return err
+	return pgtx.WithSerializable(ctx, s.txMgr, func(ctx context.Context) error {
+		counter, err := s.getCounter(ctx, tenantID, resourceID)
+		if err != nil {
+			return err
+		}
+		if counter == nil {
+			return nil
+		}
+		newUsed := counter.GetUsed() - amount
+		if newUsed < 0 {
+			newUsed = 0
+		}
+		_, err = s.repo.Execute(ctx,
+			opspb.QuotaCounters.Update().
+				Set(
+					opspb.QuotaCounters.Used.Set(newUsed),
+					opspb.QuotaCounters.UpdatedAt.Set(time.Now()),
+				).
+				Where(opspb.QuotaCounters.Id.Eq(counter.GetId().GetValue())),
+		)
+		return err
+	})
 }
 
 // SetLimit upserts a quota_counters row for the given tenant+resource.

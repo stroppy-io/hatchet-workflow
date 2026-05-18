@@ -166,3 +166,22 @@ func (s *Service) AgentIDForToken(token string) string {
 	defer s.mu.Unlock()
 	return s.tokens[token]
 }
+
+// MarkStaleAgents flips any HEALTHY agent whose last_heartbeat is older than
+// threshold to STALE. Called once at startup by the recovery worker.
+// Returns the number of rows updated.
+func (s *Service) MarkStaleAgents(ctx context.Context, threshold time.Duration) (int64, error) {
+	cutoff := time.Now().Add(-threshold)
+	ct, err := s.repo.Execute(ctx,
+		agentpb.Agents.Update().
+			Set(
+				agentpb.Agents.Status.Set(agentpb.AgentStatus_AGENT_STATUS_STALE.String()),
+				agentpb.Agents.UpdatedAt.Set(time.Now()),
+			).
+			Where(
+				agentpb.Agents.Status.Eq(agentpb.AgentStatus_AGENT_STATUS_HEALTHY.String()),
+				agentpb.Agents.LastHeartbeat.Lt(&cutoff),
+			),
+	)
+	return ct, err
+}

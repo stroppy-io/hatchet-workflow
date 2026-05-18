@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/signal"
@@ -40,6 +41,7 @@ import (
 	valkey "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/valkey"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	transportconnect "github.com/stroppy-io/stroppy-cloud/internal/transport/connect"
+	"github.com/stroppy-io/stroppy-cloud/web"
 	"github.com/stroppy-io/stroppy-cloud/internal/transport/middleware"
 )
 
@@ -137,12 +139,6 @@ func runServer(ctx context.Context, cfgPath string) error {
 	sharedSuiteRunSvc := testingsvc.NewSharedSuiteRunService(exec, txMgr, bus)
 	comparisonSvc := testingsvc.NewComparisonService(nil)
 
-	if cfg.Workers.RecoveryOnStart {
-		if err := recovery.Run(ctx, pool, zlog); err != nil {
-			return fmt.Errorf("recovery: %w", err)
-		}
-	}
-
 	adminService := adminsvc.NewAdminService(iamSvc)
 	binaryCacheAdminSvc := adminsvc.NewBinaryCacheAdminService(exec, txMgr)
 
@@ -150,6 +146,12 @@ func runServer(ctx context.Context, cfgPath string) error {
 	agentCmdRepo := agentsvc.NewCommandsRepo(exec, txMgr)
 	bootstrapStore := agentsvc.NewBootstrapTokenStore(jwtSecret)
 	agentService := agentsvc.New(exec, txMgr, bus, agentHub, agentCmdRepo, bootstrapStore)
+
+	if cfg.Workers.RecoveryOnStart {
+		if err := recovery.Run(ctx, systemSvc, agentService, webhookSvc, zlog); err != nil {
+			return fmt.Errorf("recovery: %w", err)
+		}
+	}
 
 	nodeReg := nodeworker.NewRegistry()
 	nodeReg.Register(handlers.NewMockHandler()) // "" kind fallback for untyped specs
@@ -219,7 +221,7 @@ func runServer(ctx context.Context, cfgPath string) error {
 	)
 
 	mux := http.NewServeMux()
-	mux.Handle("/", transportconnect.Mount(transportconnect.Deps{
+	connectMux := transportconnect.Mount(transportconnect.Deps{
 		IAMHandler:      transportconnect.NewIAMHandler(iamSvc),
 		CatalogHandler:  transportconnect.NewCatalogHandler(catalogSvc),
 		StroppyHandler:  transportconnect.NewStroppyHandler(stroppySvc),
@@ -236,8 +238,28 @@ func runServer(ctx context.Context, cfgPath string) error {
 		AdminHandler:            transportconnect.NewAdminHandler(adminService),
 		BinaryCacheAdminHandler: transportconnect.NewBinaryCacheAdminHandler(binaryCacheAdminSvc),
 		Interceptors:            interceptors,
-	}))
+	})
+	// ConnectRPC paths all start with /cloud.v1.<package>.<Service>/ —
+	// route them to the connect mux; everything else falls through to the
+	// embedded SPA file server with index.html fallback.
+	spaFS, _ := fs.Sub(web.Dist, "dist")
+	spaServer := http.FileServer(http.FS(spaFS))
+	mux.Handle("/cloud.v1.", connectMux)
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// SPA index.html fallback for unknown paths (client-side routing).
+		if r.URL.Path != "/" {
+			f, err := spaFS.Open(r.URL.Path[1:])
+			if err != nil {
+				r2 := r.Clone(r.Context())
+				r2.URL.Path = "/"
+				spaServer.ServeHTTP(w, r2)
+				return
+			}
+			_ = f.Close()
+		}
+		spaServer.ServeHTTP(w, r)
+	})
 
 	srv := &http.Server{
 		Addr:    cfg.Server.HTTPAddr,

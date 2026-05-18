@@ -319,6 +319,24 @@ func (s *WebhookService) EnqueueDelivery(ctx context.Context, webhookID string, 
 	return err
 }
 
+// RecoverInFlightDeliveries resets any delivery stuck in IN_FLIGHT (e.g. after
+// a server crash) back to PENDING so the outbox worker will retry it.
+// Called once at startup by the recovery worker.
+// Returns the number of rows updated.
+func (s *WebhookService) RecoverInFlightDeliveries(ctx context.Context) (int64, error) {
+	return s.dRepo.Execute(ctx,
+		opspb.WebhookDeliverys.Update().
+			Set(
+				opspb.WebhookDeliverys.State.Set(opspb.WebhookDeliveryState_WEBHOOK_DELIVERY_STATE_PENDING.String()),
+				opspb.WebhookDeliverys.LastError.Set("restart_requeue"),
+				opspb.WebhookDeliverys.UpdatedAt.Set(time.Now()),
+			).
+			Where(
+				opspb.WebhookDeliverys.State.Eq(opspb.WebhookDeliveryState_WEBHOOK_DELIVERY_STATE_IN_FLIGHT.String()),
+			),
+	)
+}
+
 // ListPendingDeliveries returns up to limit PENDING deliveries.
 func (s *WebhookService) ListPendingDeliveries(ctx context.Context, limit int) ([]*opspb.WebhookDelivery, error) {
 	return s.dRepo.Query(ctx,
