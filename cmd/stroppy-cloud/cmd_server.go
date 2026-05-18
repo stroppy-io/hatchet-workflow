@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -239,26 +240,31 @@ func runServer(ctx context.Context, cfgPath string) error {
 		BinaryCacheAdminHandler: transportconnect.NewBinaryCacheAdminHandler(binaryCacheAdminSvc),
 		Interceptors:            interceptors,
 	})
-	// ConnectRPC paths all start with /cloud.v1.<package>.<Service>/ —
-	// route them to the connect mux; everything else falls through to the
-	// embedded SPA file server with index.html fallback.
+	// ConnectRPC paths all start with /cloud.v1.<package>.<Service>/ — route
+	// them to the connect mux; /healthz to the healthcheck; everything else
+	// to the embedded SPA file server with index.html fallback for
+	// client-side routing.
 	spaFS, _ := fs.Sub(web.Dist, "dist")
 	spaServer := http.FileServer(http.FS(spaFS))
-	mux.Handle("/cloud.v1.", connectMux)
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// SPA index.html fallback for unknown paths (client-side routing).
-		if r.URL.Path != "/" {
-			f, err := spaFS.Open(r.URL.Path[1:])
-			if err != nil {
-				r2 := r.Clone(r.Context())
-				r2.URL.Path = "/"
-				spaServer.ServeHTTP(w, r2)
-				return
+		switch {
+		case strings.HasPrefix(r.URL.Path, "/cloud.v1."):
+			connectMux.ServeHTTP(w, r)
+		case r.URL.Path == "/healthz":
+			w.WriteHeader(http.StatusOK)
+		default:
+			if r.URL.Path != "/" {
+				f, err := spaFS.Open(r.URL.Path[1:])
+				if err != nil {
+					r2 := r.Clone(r.Context())
+					r2.URL.Path = "/"
+					spaServer.ServeHTTP(w, r2)
+					return
+				}
+				_ = f.Close()
 			}
-			_ = f.Close()
+			spaServer.ServeHTTP(w, r)
 		}
-		spaServer.ServeHTTP(w, r)
 	})
 
 	srv := &http.Server{
