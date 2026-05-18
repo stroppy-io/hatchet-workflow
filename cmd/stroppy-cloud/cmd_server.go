@@ -42,6 +42,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/pgtx"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/s3"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/stroppybin"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/terraform"
 	valkey "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/valkey"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/victoria"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
@@ -170,7 +171,14 @@ func runServer(ctx context.Context, cfgPath string) error {
 
 	nodeReg := nodeworker.NewRegistry()
 	nodeReg.Register(handlers.NewMockHandler()) // "" kind fallback for untyped specs
-	nodeReg.Register(handlers.NewTerraformHandler(zlog))
+	// terraform.Actor uses a real `terraform` binary on PATH; ModuleResolver
+	// is nil for now — APPLY of a non-UNSPECIFIED module will hard-fail
+	// until the module bundle is delivered (B25/B26 task).
+	tfActor, tfActorErr := terraform.NewActor()
+	if tfActorErr != nil {
+		zlog.Warn("terraform actor init failed; handler will refuse non-noop runs", zap.Error(tfActorErr))
+	}
+	nodeReg.Register(handlers.NewTerraformHandler(tfActor, nil, zlog))
 	nodeReg.Register(handlers.NewDockerHandler(zlog))
 	// Agent-bound handlers: agentID/machineID resolved from node metadata at runtime.
 	// Placeholder empty IDs — real wiring added when agent resolver pattern is implemented.
