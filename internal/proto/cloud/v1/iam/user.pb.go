@@ -438,11 +438,11 @@ const file_cloud_v1_iam_user_proto_rawDesc = "" +
 	"updateMask\"\xbd\x01\n" +
 	"\x15UpdatePasswordRequest\x12-\n" +
 	"\fold_password\x18\x01 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\b\x18\x80\x01R\voldPassword\x12-\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\voldPassword\x12-\n" +
 	"\fnew_password\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\b\x18\x80\x01R\vnewPassword\x12F\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\vnewPassword\x12F\n" +
 	"\x19new_password_confirmation\x18\x03 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\b\x18\x80\x01R\x17newPasswordConfirmation*^\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x17newPasswordConfirmation*^\n" +
 	"\fPlatformRole\x12\x1d\n" +
 	"\x19PLATFORM_ROLE_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12PLATFORM_ROLE_NONE\x10\x01\x12\x17\n" +

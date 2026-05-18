@@ -62,9 +62,9 @@ message UpdateUserRequest {
 }
 
 message UpdatePasswordRequest {
-    string old_password = 1 [(validate.rules).string = {min_len: 8, max_len: 128}];
-    string new_password = 2 [(validate.rules).string = {min_len: 8, max_len: 128}];
-    string new_password_confirmation = 3 [(validate.rules).string = {min_len: 8, max_len: 128}];
+    string old_password = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    string new_password = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    string new_password_confirmation = 3 [(validate.rules).string = {min_len: 1, max_len: 128}];
 }
 
 

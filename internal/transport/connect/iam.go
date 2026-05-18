@@ -134,8 +134,16 @@ func (h *IAMHandler) DeleteUser(_ context.Context, _ *connect.Request[iampb.User
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("DeleteUser not implemented"))
 }
 
-func (h *IAMHandler) UpdatePassword(_ context.Context, _ *connect.Request[iampb.UpdatePasswordRequest]) (*connect.Response[iampb.User], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("UpdatePassword not implemented"))
+func (h *IAMHandler) UpdatePassword(ctx context.Context, req *connect.Request[iampb.UpdatePasswordRequest]) (*connect.Response[iampb.User], error) {
+	uid := middleware.UserFromCtx(ctx)
+	if uid == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("missing user context"))
+	}
+	u, err := h.svc.UpdatePassword(ctx, &iampb.UserId{Value: uid}, req.Msg.GetOldPassword(), req.Msg.GetNewPassword(), req.Msg.GetNewPasswordConfirmation())
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(u), nil
 }
 
 func (h *IAMHandler) Me(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[iampb.User], error) {
