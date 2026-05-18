@@ -2,6 +2,7 @@ package testserver
 
 import (
 	"net/http"
+	"time"
 
 	"connectrpc.com/connect"
 
@@ -22,7 +23,7 @@ func ForIAM(svc *iam.Service) http.Handler {
 		middleware.ErrorMapper(),
 	)
 	return transportconnect.Mount(transportconnect.Deps{
-		IAMHandler:   transportconnect.NewIAMHandler(svc),
+		IAMHandler:   transportconnect.NewIAMHandler(svc, 24*time.Hour, false),
 		Interceptors: interceptors,
 	})
 }
@@ -48,7 +49,7 @@ func ForAll(d AllDeps) http.Handler {
 		middleware.ErrorMapper(),
 	)
 	deps := transportconnect.Deps{
-		IAMHandler:      transportconnect.NewIAMHandler(d.IAM),
+		IAMHandler:      transportconnect.NewIAMHandler(d.IAM, 24*time.Hour, false),
 		CatalogHandler:  transportconnect.NewCatalogHandler(d.Catalog),
 		StroppyHandler:  transportconnect.NewStroppyHandler(d.Stroppy),
 		ScheduleHandler: transportconnect.NewScheduleHandler(d.System),

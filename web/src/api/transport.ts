@@ -44,8 +44,14 @@ const authInterceptor: Interceptor = (next) => async (req) => {
   }
 };
 
+// fetchWithCredentials forces credentials: "include" so the HttpOnly refresh
+// cookie set by the server on Login/Refresh travels back on subsequent calls.
+const fetchWithCredentials: typeof fetch = (input, init) =>
+  fetch(input, { ...init, credentials: "include" });
+
 export const transport = createConnectTransport({
   baseUrl: "/", // proxied to :8080 in dev, same-origin in prod
   useBinaryFormat: false,
+  fetch: fetchWithCredentials,
   interceptors: [authInterceptor],
 });

@@ -519,10 +519,10 @@ func (m *RefreshTokenRequest) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetRefreshToken()) < 8 {
+	if utf8.RuneCountInString(m.GetRefreshToken()) > 128 {
 		err := RefreshTokenRequestValidationError{
 			field:  "RefreshToken",
-			reason: "value length must be at least 8 runes",
+			reason: "value length must be at most 128 runes",
 		}
 		if !all {
 			return err
@@ -763,10 +763,10 @@ func (m *LogoutRequest) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetRefreshToken()) < 8 {
+	if utf8.RuneCountInString(m.GetRefreshToken()) > 128 {
 		err := LogoutRequestValidationError{
 			field:  "RefreshToken",
-			reason: "value length must be at least 8 runes",
+			reason: "value length must be at most 128 runes",
 		}
 		if !all {
 			return err

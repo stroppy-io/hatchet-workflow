@@ -52,6 +52,9 @@ type AuthConfig struct {
 	JWTSecretEnv string        `mapstructure:"jwt_secret_env"`
 	AccessTTL    time.Duration `mapstructure:"access_ttl"`
 	RefreshTTL   time.Duration `mapstructure:"refresh_ttl"`
+	// CookieSecure marks the refresh-token cookie Secure (HTTPS-only). Keep
+	// false for local dev over plain HTTP; set true in production.
+	CookieSecure bool `mapstructure:"cookie_secure"`
 }
 type IdempotencyConfig struct {
 	Enabled bool          `mapstructure:"enabled"`

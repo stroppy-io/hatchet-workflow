@@ -222,7 +222,7 @@ func runServer(ctx context.Context, cfgPath string) error {
 
 	mux := http.NewServeMux()
 	connectMux := transportconnect.Mount(transportconnect.Deps{
-		IAMHandler:      transportconnect.NewIAMHandler(iamSvc),
+		IAMHandler:      transportconnect.NewIAMHandler(iamSvc, cfg.Auth.RefreshTTL, cfg.Auth.CookieSecure),
 		CatalogHandler:  transportconnect.NewCatalogHandler(catalogSvc),
 		StroppyHandler:  transportconnect.NewStroppyHandler(stroppySvc),
 		ScheduleHandler: transportconnect.NewScheduleHandler(systemSvc),

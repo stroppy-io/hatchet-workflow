@@ -191,8 +191,11 @@ func (x *LoginResponse) GetTokens() *TokenPair {
 }
 
 type RefreshTokenRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RefreshToken  string                 `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// refresh_token — optional. Frontend leaves empty and relies on the
+	// HttpOnly cookie set by the server on Login/Refresh. CLI/SDK clients
+	// send the opaque token explicitly.
+	RefreshToken  string `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -280,7 +283,7 @@ func (x *RefreshTokenResponse) GetTokens() *TokenPair {
 
 type LogoutRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// refresh_token — revoke this specific token; access stays valid until expiry.
+	// refresh_token — optional; falls back to the HttpOnly cookie.
 	RefreshToken  string `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -337,13 +340,13 @@ const file_cloud_v1_iam_auth_proto_rawDesc = "" +
 	"\x05email\x18\x01 \x01(\tB\a\xfaB\x04r\x02`\x01R\x05email\x12#\n" +
 	"\bpassword\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\bR\bpassword\"@\n" +
 	"\rLoginResponse\x12/\n" +
-	"\x06tokens\x18\x01 \x01(\v2\x17.cloud.v1.iam.TokenPairR\x06tokens\"C\n" +
-	"\x13RefreshTokenRequest\x12,\n" +
-	"\rrefresh_token\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\bR\frefreshToken\"G\n" +
+	"\x06tokens\x18\x01 \x01(\v2\x17.cloud.v1.iam.TokenPairR\x06tokens\"D\n" +
+	"\x13RefreshTokenRequest\x12-\n" +
+	"\rrefresh_token\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\frefreshToken\"G\n" +
 	"\x14RefreshTokenResponse\x12/\n" +
-	"\x06tokens\x18\x01 \x01(\v2\x17.cloud.v1.iam.TokenPairR\x06tokens\"=\n" +
-	"\rLogoutRequest\x12,\n" +
-	"\rrefresh_token\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\bR\frefreshToken2\xf5\x01\n" +
+	"\x06tokens\x18\x01 \x01(\v2\x17.cloud.v1.iam.TokenPairR\x06tokens\">\n" +
+	"\rLogoutRequest\x12-\n" +
+	"\rrefresh_token\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\frefreshToken2\xf5\x01\n" +
 	"\vAuthService\x12E\n" +
 	"\x05Login\x12\x1a.cloud.v1.iam.LoginRequest\x1a\x1b.cloud.v1.iam.LoginResponse\"\x03\x90\x02\x02\x12[\n" +
 	"\rRefreshTokens\x12!.cloud.v1.iam.RefreshTokenRequest\x1a\".cloud.v1.iam.RefreshTokenResponse\"\x03\x90\x02\x02\x12B\n" +

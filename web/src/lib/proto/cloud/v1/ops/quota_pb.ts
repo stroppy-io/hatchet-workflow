@@ -8,6 +8,10 @@ import type { Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { TenantId, TenantIdJson } from "../iam/tenant_pb.ts";
 import { file_cloud_v1_iam_tenant } from "../iam/tenant_pb.ts";
+import type { Timestamps, TimestampsJson } from "../common/timestamps_pb.ts";
+import { file_cloud_v1_common_timestamps } from "../common/timestamps_pb.ts";
+import { file_goplain_goplain } from "../../../goplain/goplain_pb.ts";
+import { file_ratelproto_ratelproto } from "../../../ratelproto/ratelproto_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -15,7 +19,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/ops/quota.proto.
  */
 export const file_cloud_v1_ops_quota: GenFile = /*@__PURE__*/
-  fileDesc("ChhjbG91ZC92MS9vcHMvcXVvdGEucHJvdG8SDGNsb3VkLnYxLm9wcyK1AgoFUXVvdGESNAoLcmVzb3VyY2VfaWQYASABKAlCH/pCHHIaEAEYgAEyE15bYS16XVthLXowLTlfLi1dKiQSHgoMZGlzcGxheV9uYW1lGAIgASgJQgj6QgVyAxiAARIVCgR1bml0GAMgASgJQgf6QgRyAhggEjMKBnNvdXJjZRgEIAEoDjIZLmNsb3VkLnYxLm9wcy5RdW90YVNvdXJjZUII+kIFggECEAESDQoFbGltaXQYBSABKAMSDAoEdXNlZBgGIAEoAxIRCglhdmFpbGFibGUYByABKAMSMwoKcXVlcmllZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAIgBARIWCgVzY29wZRgJIAEoCUIH+kIEcgIYQEINCgtfcXVlcmllZF9hdCIwCglRdW90YUxpc3QSIwoGcXVvdGFzGAEgAygLMhMuY2xvdWQudjEub3BzLlF1b3RhIpgBChBHZXRRdW90YXNSZXF1ZXN0EjMKCXRlbmFudF9pZBgBIAEoCzIWLmNsb3VkLnYxLmlhbS5UZW5hbnRJZEII+kIFigECEAESKgoHc291cmNlcxgCIAMoDjIZLmNsb3VkLnYxLm9wcy5RdW90YVNvdXJjZRIjChJyZXNvdXJjZV9pZF9wcmVmaXgYAyABKAlCB/pCBHICGEAiYwoUUmVmcmVzaFF1b3Rhc1JlcXVlc3QSMwoJdGVuYW50X2lkGAEgASgLMhYuY2xvdWQudjEuaWFtLlRlbmFudElkQgj6QgWKAQIQARIWCg5mb3JjZV9wcm92aWRlchgCIAEoCCp6CgtRdW90YVNvdXJjZRIcChhRVU9UQV9TT1VSQ0VfVU5TUEVDSUZJRUQQABIZChVRVU9UQV9TT1VSQ0VfUExBVEZPUk0QARIXChNRVU9UQV9TT1VSQ0VfVEVOQU5UEAISGQoVUVVPVEFfU09VUkNFX1BST1ZJREVSEAMyrAEKDFF1b3RhU2VydmljZRJJCglHZXRRdW90YXMSHi5jbG91ZC52MS5vcHMuR2V0UXVvdGFzUmVxdWVzdBoXLmNsb3VkLnYxLm9wcy5RdW90YUxpc3QiA5ACARJRCg1SZWZyZXNoUXVvdGFzEiIuY2xvdWQudjEub3BzLlJlZnJlc2hRdW90YXNSZXF1ZXN0GhcuY2xvdWQudjEub3BzLlF1b3RhTGlzdCIDkAICQkFaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL29wc2IGcHJvdG8z", [file_google_protobuf_timestamp, file_cloud_v1_iam_tenant, file_validate_validate]);
+  fileDesc("ChhjbG91ZC92MS9vcHMvcXVvdGEucHJvdG8SDGNsb3VkLnYxLm9wcyK1AgoFUXVvdGESNAoLcmVzb3VyY2VfaWQYASABKAlCH/pCHHIaEAEYgAEyE15bYS16XVthLXowLTlfLi1dKiQSHgoMZGlzcGxheV9uYW1lGAIgASgJQgj6QgVyAxiAARIVCgR1bml0GAMgASgJQgf6QgRyAhggEjMKBnNvdXJjZRgEIAEoDjIZLmNsb3VkLnYxLm9wcy5RdW90YVNvdXJjZUII+kIFggECEAESDQoFbGltaXQYBSABKAMSDAoEdXNlZBgGIAEoAxIRCglhdmFpbGFibGUYByABKAMSMwoKcXVlcmllZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAIgBARIWCgVzY29wZRgJIAEoCUIH+kIEcgIYQEINCgtfcXVlcmllZF9hdCIwCglRdW90YUxpc3QSIwoGcXVvdGFzGAEgAygLMhMuY2xvdWQudjEub3BzLlF1b3RhIpgBChBHZXRRdW90YXNSZXF1ZXN0EjMKCXRlbmFudF9pZBgBIAEoCzIWLmNsb3VkLnYxLmlhbS5UZW5hbnRJZEII+kIFigECEAESKgoHc291cmNlcxgCIAMoDjIZLmNsb3VkLnYxLm9wcy5RdW90YVNvdXJjZRIjChJyZXNvdXJjZV9pZF9wcmVmaXgYAyABKAlCB/pCBHICGEAiYwoUUmVmcmVzaFF1b3Rhc1JlcXVlc3QSMwoJdGVuYW50X2lkGAEgASgLMhYuY2xvdWQudjEuaWFtLlRlbmFudElkQgj6QgWKAQIQARIWCg5mb3JjZV9wcm92aWRlchgCIAEoCCIzCg5RdW90YUNvdW50ZXJJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIqYDCgxRdW90YUNvdW50ZXISOgoCaWQYASABKAsyHC5jbG91ZC52MS5vcHMuUXVvdGFDb3VudGVySWRCEPpCBYoBAhABmrUYBBICEAESSAoJdGVuYW50X2lkGAIgASgLMhYuY2xvdWQudjEuaWFtLlRlbmFudElkQh36QgWKAQIQAZq1GBESDzIHdGVuYW50czoCaWRAARI3Cgp0aW1lc3RhbXBzGAMgASgLMhsuY2xvdWQudjEuY29tbW9uLlRpbWVzdGFtcHNCBoKmHQIgARIfCgtyZXNvdXJjZV9pZBgKIAEoCUIK+kIHcgUQARiAARITCgtsaW1pdF92YWx1ZRgLIAEoAxIMCgR1c2VkGAwgASgDGjQKBExpc3QSLAoIY291bnRlcnMYASADKAsyGi5jbG91ZC52MS5vcHMuUXVvdGFDb3VudGVyOl2StRhTKj8YAQojcXVvdGFfY291bnRlcnNfdGVuYW50X3Jlc291cmNlX3VuaXESCXRlbmFudF9pZBILcmVzb3VyY2VfaWQIARIOcXVvdGFfY291bnRlcnOCph0CCAEqegoLUXVvdGFTb3VyY2USHAoYUVVPVEFfU09VUkNFX1VOU1BFQ0lGSUVEEAASGQoVUVVPVEFfU09VUkNFX1BMQVRGT1JNEAESFwoTUVVPVEFfU09VUkNFX1RFTkFOVBACEhkKFVFVT1RBX1NPVVJDRV9QUk9WSURFUhADMqwBCgxRdW90YVNlcnZpY2USSQoJR2V0UXVvdGFzEh4uY2xvdWQudjEub3BzLkdldFF1b3Rhc1JlcXVlc3QaFy5jbG91ZC52MS5vcHMuUXVvdGFMaXN0IgOQAgESUQoNUmVmcmVzaFF1b3RhcxIiLmNsb3VkLnYxLm9wcy5SZWZyZXNoUXVvdGFzUmVxdWVzdBoXLmNsb3VkLnYxLm9wcy5RdW90YUxpc3QiA5ACAkJBWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9vcHNiBnByb3RvMw", [file_google_protobuf_timestamp, file_cloud_v1_iam_tenant, file_cloud_v1_common_timestamps, file_goplain_goplain, file_ratelproto_ratelproto, file_validate_validate]);
 
 /**
  * Quota — single resource limit. resource_id is a free-form string so new
@@ -270,6 +274,153 @@ export type RefreshQuotasRequestValid = RefreshQuotasRequest;
  */
 export const RefreshQuotasRequestSchema: GenMessage<RefreshQuotasRequest, {jsonType: RefreshQuotasRequestJson, validType: RefreshQuotasRequestValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_ops_quota, 3);
+
+/**
+ * @generated from message cloud.v1.ops.QuotaCounterId
+ */
+export type QuotaCounterId = Message<"cloud.v1.ops.QuotaCounterId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * @generated from message cloud.v1.ops.QuotaCounterId
+ */
+export type QuotaCounterIdJson = {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value?: string;
+};
+
+export type QuotaCounterIdValid = QuotaCounterId;
+
+/**
+ * Describes the message cloud.v1.ops.QuotaCounterId.
+ * Use `create(QuotaCounterIdSchema)` to create a new message.
+ */
+export const QuotaCounterIdSchema: GenMessage<QuotaCounterId, {jsonType: QuotaCounterIdJson, validType: QuotaCounterIdValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_ops_quota, 4);
+
+/**
+ * QuotaCounter — persisted enforcement counter for atomic check-and-reserve.
+ * Keyed by (tenant_id, resource_id). `used` is incremented on reserve and
+ * decremented on release. `limit_value` is the cap; reserve fails when
+ * used+amount > limit_value. 
+ *
+ * @generated from message cloud.v1.ops.QuotaCounter
+ */
+export type QuotaCounter = Message<"cloud.v1.ops.QuotaCounter"> & {
+  /**
+   * @generated from field: cloud.v1.ops.QuotaCounterId id = 1;
+   */
+  id?: QuotaCounterId;
+
+  /**
+   * @generated from field: cloud.v1.iam.TenantId tenant_id = 2;
+   */
+  tenantId?: TenantId;
+
+  /**
+   * @generated from field: cloud.v1.common.Timestamps timestamps = 3;
+   */
+  timestamps?: Timestamps;
+
+  /**
+   * @generated from field: string resource_id = 10;
+   */
+  resourceId: string;
+
+  /**
+   * @generated from field: int64 limit_value = 11;
+   */
+  limitValue: bigint;
+
+  /**
+   * @generated from field: int64 used = 12;
+   */
+  used: bigint;
+};
+
+/**
+ * QuotaCounter — persisted enforcement counter for atomic check-and-reserve.
+ * Keyed by (tenant_id, resource_id). `used` is incremented on reserve and
+ * decremented on release. `limit_value` is the cap; reserve fails when
+ * used+amount > limit_value. 
+ *
+ * @generated from message cloud.v1.ops.QuotaCounter
+ */
+export type QuotaCounterJson = {
+  /**
+   * @generated from field: cloud.v1.ops.QuotaCounterId id = 1;
+   */
+  id?: QuotaCounterIdJson;
+
+  /**
+   * @generated from field: cloud.v1.iam.TenantId tenant_id = 2;
+   */
+  tenantId?: TenantIdJson;
+
+  /**
+   * @generated from field: cloud.v1.common.Timestamps timestamps = 3;
+   */
+  timestamps?: TimestampsJson;
+
+  /**
+   * @generated from field: string resource_id = 10;
+   */
+  resourceId?: string;
+
+  /**
+   * @generated from field: int64 limit_value = 11;
+   */
+  limitValue?: string;
+
+  /**
+   * @generated from field: int64 used = 12;
+   */
+  used?: string;
+};
+
+export type QuotaCounterValid = QuotaCounter;
+
+/**
+ * Describes the message cloud.v1.ops.QuotaCounter.
+ * Use `create(QuotaCounterSchema)` to create a new message.
+ */
+export const QuotaCounterSchema: GenMessage<QuotaCounter, {jsonType: QuotaCounterJson, validType: QuotaCounterValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_ops_quota, 5);
+
+/**
+ * @generated from message cloud.v1.ops.QuotaCounter.List
+ */
+export type QuotaCounter_List = Message<"cloud.v1.ops.QuotaCounter.List"> & {
+  /**
+   * @generated from field: repeated cloud.v1.ops.QuotaCounter counters = 1;
+   */
+  counters: QuotaCounter[];
+};
+
+/**
+ * @generated from message cloud.v1.ops.QuotaCounter.List
+ */
+export type QuotaCounter_ListJson = {
+  /**
+   * @generated from field: repeated cloud.v1.ops.QuotaCounter counters = 1;
+   */
+  counters?: QuotaCounterJson[];
+};
+
+export type QuotaCounter_ListValid = QuotaCounter_List;
+
+/**
+ * Describes the message cloud.v1.ops.QuotaCounter.List.
+ * Use `create(QuotaCounter_ListSchema)` to create a new message.
+ */
+export const QuotaCounter_ListSchema: GenMessage<QuotaCounter_List, {jsonType: QuotaCounter_ListJson, validType: QuotaCounter_ListValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_ops_quota, 5, 0);
 
 /**
  * QuotaSource — where a quota is enforced/measured. 

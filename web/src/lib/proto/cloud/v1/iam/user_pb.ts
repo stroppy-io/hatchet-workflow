@@ -2,8 +2,8 @@
 // @generated from file cloud/v1/iam/user.proto (package cloud.v1.iam, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Timestamps, TimestampsJson } from "../common/timestamps_pb.ts";
 import { file_cloud_v1_common_timestamps } from "../common/timestamps_pb.ts";
 import { file_goplain_goplain } from "../../../goplain/goplain_pb.ts";
@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/iam/user.proto.
  */
 export const file_cloud_v1_iam_user: GenFile = /*@__PURE__*/
-  fileDesc("ChdjbG91ZC92MS9pYW0vdXNlci5wcm90bxIMY2xvdWQudjEuaWFtIisKBlVzZXJJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQQAQgBItcCCgRVc2VyEjIKAmlkGAEgASgLMhQuY2xvdWQudjEuaWFtLlVzZXJJZEIQ+kIFigECEAGatRgEEgIQARI3Cgp0aW1lc3RhbXBzGAIgASgLMhsuY2xvdWQudjEuY29tbW9uLlRpbWVzdGFtcHNCBoKmHQIgARIbCgVlbWFpbBgDIAEoCUIM+kIJcgcQBRj/AWABEi4KCG5pY2tuYW1lGAQgASgJQhz6QhlyFxADGEAyEV5bYS16QS1aMC05Xy4tXSskGikKBExpc3QSIQoFdXNlcnMYASADKAsyEi5jbG91ZC52MS5pYW0uVXNlcjpqkrUYYBoVCg1wYXNzd29yZF9oYXNoEgRURVhUKhsYAQoQdXNlcnNfZW1haWxfdW5pcRIFZW1haWwqIRgBChN1c2Vyc19uaWNrbmFtZV91bmlxEghuaWNrbmFtZQgBEgV1c2Vyc4KmHQIIASJdChFDcmVhdGVVc2VyUmVxdWVzdBIqCgR1c2VyGAEgASgLMhIuY2xvdWQudjEuaWFtLlVzZXJCCPpCBYoBAhABEhwKCHBhc3N3b3JkGAIgASgJQgr6QgdyBRAIGIABInoKEVVwZGF0ZVVzZXJSZXF1ZXN0EioKBHVzZXIYASABKAsyEi5jbG91ZC52MS5pYW0uVXNlckII+kIFigECEAESOQoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrQgj6QgWKAQIQASKKAQoVVXBkYXRlUGFzc3dvcmRSZXF1ZXN0EiAKDG9sZF9wYXNzd29yZBgBIAEoCUIK+kIHcgUQCBiAARIgCgxuZXdfcGFzc3dvcmQYAiABKAlCCvpCB3IFGIABEAgSLQoZbmV3X3Bhc3N3b3JkX2NvbmZpcm1hdGlvbhgDIAEoCUIK+kIHcgUYgAEQCDLhAgoLVXNlclNlcnZpY2USRgoKQ3JlYXRlVXNlchIfLmNsb3VkLnYxLmlhbS5DcmVhdGVVc2VyUmVxdWVzdBoSLmNsb3VkLnYxLmlhbS5Vc2VyIgOQAgISRgoKVXBkYXRlVXNlchIfLmNsb3VkLnYxLmlhbS5VcGRhdGVVc2VyUmVxdWVzdBoSLmNsb3VkLnYxLmlhbS5Vc2VyIgOQAgISOwoKRGVsZXRlVXNlchIULmNsb3VkLnYxLmlhbS5Vc2VySWQaEi5jbG91ZC52MS5pYW0uVXNlciIDkAICEk4KDlVwZGF0ZVBhc3N3b3JkEiMuY2xvdWQudjEuaWFtLlVwZGF0ZVBhc3N3b3JkUmVxdWVzdBoSLmNsb3VkLnYxLmlhbS5Vc2VyIgOQAgISNQoCTWUSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaEi5jbG91ZC52MS5pYW0uVXNlciIDkAIBQkFaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2lhbWIGcHJvdG8z", [file_cloud_v1_common_timestamps, file_goplain_goplain, file_google_protobuf_empty, file_google_protobuf_field_mask, file_ratelproto_ratelproto, file_validate_validate]);
+  fileDesc("ChdjbG91ZC92MS9pYW0vdXNlci5wcm90bxIMY2xvdWQudjEuaWFtIisKBlVzZXJJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQQAQgBIqgDCgRVc2VyEjIKAmlkGAEgASgLMhQuY2xvdWQudjEuaWFtLlVzZXJJZEIQ+kIFigECEAGatRgEEgIQARI3Cgp0aW1lc3RhbXBzGAIgASgLMhsuY2xvdWQudjEuY29tbW9uLlRpbWVzdGFtcHNCBoKmHQIgARIbCgVlbWFpbBgDIAEoCUIM+kIJcgcQBRj/AWABEi4KCG5pY2tuYW1lGAQgASgJQhz6QhlyFzIRXlthLXpBLVowLTlfLi1dKyQQAxhAEk8KDXBsYXRmb3JtX3JvbGUYBSABKA4yGi5jbG91ZC52MS5pYW0uUGxhdGZvcm1Sb2xlQhyatRgYEhYaFCdQTEFURk9STV9ST0xFX05PTkUnGikKBExpc3QSIQoFdXNlcnMYASADKAsyEi5jbG91ZC52MS5pYW0uVXNlcjpqkrUYYCobEgVlbWFpbBgBChB1c2Vyc19lbWFpbF91bmlxKiEKE3VzZXJzX25pY2tuYW1lX3VuaXESCG5pY2tuYW1lGAEIARIFdXNlcnMaFQoNcGFzc3dvcmRfaGFzaBIEVEVYVIKmHQIIASJdChFDcmVhdGVVc2VyUmVxdWVzdBIqCgR1c2VyGAEgASgLMhIuY2xvdWQudjEuaWFtLlVzZXJCCPpCBYoBAhABEhwKCHBhc3N3b3JkGAIgASgJQgr6QgdyBRiAARAIInoKEVVwZGF0ZVVzZXJSZXF1ZXN0EioKBHVzZXIYASABKAsyEi5jbG91ZC52MS5pYW0uVXNlckII+kIFigECEAESOQoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrQgj6QgWKAQIQASKKAQoVVXBkYXRlUGFzc3dvcmRSZXF1ZXN0EiAKDG9sZF9wYXNzd29yZBgBIAEoCUIK+kIHcgUQCBiAARIgCgxuZXdfcGFzc3dvcmQYAiABKAlCCvpCB3IFGIABEAgSLQoZbmV3X3Bhc3N3b3JkX2NvbmZpcm1hdGlvbhgDIAEoCUIK+kIHcgUQCBiAASpeCgxQbGF0Zm9ybVJvbGUSHQoZUExBVEZPUk1fUk9MRV9VTlNQRUNJRklFRBAAEhYKElBMQVRGT1JNX1JPTEVfTk9ORRABEhcKE1BMQVRGT1JNX1JPTEVfQURNSU4QAjLhAgoLVXNlclNlcnZpY2USRgoKQ3JlYXRlVXNlchIfLmNsb3VkLnYxLmlhbS5DcmVhdGVVc2VyUmVxdWVzdBoSLmNsb3VkLnYxLmlhbS5Vc2VyIgOQAgISRgoKVXBkYXRlVXNlchIfLmNsb3VkLnYxLmlhbS5VcGRhdGVVc2VyUmVxdWVzdBoSLmNsb3VkLnYxLmlhbS5Vc2VyIgOQAgISOwoKRGVsZXRlVXNlchIULmNsb3VkLnYxLmlhbS5Vc2VySWQaEi5jbG91ZC52MS5pYW0uVXNlciIDkAICEk4KDlVwZGF0ZVBhc3N3b3JkEiMuY2xvdWQudjEuaWFtLlVwZGF0ZVBhc3N3b3JkUmVxdWVzdBoSLmNsb3VkLnYxLmlhbS5Vc2VyIgOQAgISNQoCTWUSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaEi5jbG91ZC52MS5pYW0uVXNlciIDkAIBQkFaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2lhbWIGcHJvdG8z", [file_cloud_v1_common_timestamps, file_goplain_goplain, file_google_protobuf_empty, file_google_protobuf_field_mask, file_ratelproto_ratelproto, file_validate_validate]);
 
 /**
  * @generated from message cloud.v1.iam.UserId
@@ -74,6 +74,11 @@ export type User = Message<"cloud.v1.iam.User"> & {
    * @generated from field: string nickname = 4;
    */
   nickname: string;
+
+  /**
+   * @generated from field: cloud.v1.iam.PlatformRole platform_role = 5;
+   */
+  platformRole: PlatformRole;
 };
 
 /**
@@ -102,6 +107,11 @@ export type UserJson = {
    * @generated from field: string nickname = 4;
    */
   nickname?: string;
+
+  /**
+   * @generated from field: cloud.v1.iam.PlatformRole platform_role = 5;
+   */
+  platformRole?: PlatformRoleJson;
 };
 
 export type UserValid = User;
@@ -268,6 +278,43 @@ export type UpdatePasswordRequestValid = UpdatePasswordRequest;
  */
 export const UpdatePasswordRequestSchema: GenMessage<UpdatePasswordRequest, {jsonType: UpdatePasswordRequestJson, validType: UpdatePasswordRequestValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_iam_user, 4);
+
+/**
+ * PlatformRole — cross-tenant operator role. NONE = regular user; ADMIN = can
+ * call AdminService endpoints. Stored on User and embedded in JWT claims. 
+ *
+ * @generated from enum cloud.v1.iam.PlatformRole
+ */
+export enum PlatformRole {
+  /**
+   * @generated from enum value: PLATFORM_ROLE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: PLATFORM_ROLE_NONE = 1;
+   */
+  NONE = 1,
+
+  /**
+   * @generated from enum value: PLATFORM_ROLE_ADMIN = 2;
+   */
+  ADMIN = 2,
+}
+
+/**
+ * PlatformRole — cross-tenant operator role. NONE = regular user; ADMIN = can
+ * call AdminService endpoints. Stored on User and embedded in JWT claims. 
+ *
+ * @generated from enum cloud.v1.iam.PlatformRole
+ */
+export type PlatformRoleJson = "PLATFORM_ROLE_UNSPECIFIED" | "PLATFORM_ROLE_NONE" | "PLATFORM_ROLE_ADMIN";
+
+/**
+ * Describes the enum cloud.v1.iam.PlatformRole.
+ */
+export const PlatformRoleSchema: GenEnum<PlatformRole, PlatformRoleJson> = /*@__PURE__*/
+  enumDesc(file_cloud_v1_iam_user, 0);
 
 /**
  * @generated from service cloud.v1.iam.UserService

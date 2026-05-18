@@ -23,7 +23,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/ops/webhook.proto.
  */
 export const file_cloud_v1_ops_webhook: GenFile = /*@__PURE__*/
-  fileDesc("ChpjbG91ZC92MS9vcHMvd2ViaG9vay5wcm90bxIMY2xvdWQudjEub3BzIi4KCVdlYmhvb2tJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIrkHCgdXZWJob29rEjUKAmlkGAEgASgLMhcuY2xvdWQudjEub3BzLldlYmhvb2tJZEIQ+kIFigECEAGatRgEEgIQARJICgl0ZW5hbnRfaWQYAiABKAsyFi5jbG91ZC52MS5pYW0uVGVuYW50SWRCHfpCBYoBAhABmrUYERIPQAEyB3RlbmFudHM6AmlkEjcKCnRpbWVzdGFtcHMYAyABKAsyGy5jbG91ZC52MS5jb21tb24uVGltZXN0YW1wc0IGgqYdAiABEjMKCGlkZW50aXR5GAQgASgLMhkuY2xvdWQudjEuY29tbW9uLklkZW50aXR5QgaCph0CIAESQgoKY3JlYXRlZF9ieRgJIAEoCzIULmNsb3VkLnYxLmlhbS5Vc2VySWRCE5q1GA8SDUACMgV1c2VyczoCaWRIAIgBARIjCgN1cmwYCiABKAlCFvpCE3IREAgYgCAyCl5odHRwcz86Ly8SPQoGZXZlbnRzGAsgAygOMhouY2xvdWQudjEub3BzLldlYmhvb2tFdmVudEIR+kIOkgELECAiB4IBBBABIAASGAoGc2VjcmV0GAwgASgJQgj6QgVyAxiABBI9CgdoZWFkZXJzGA0gAygLMiIuY2xvdWQudjEub3BzLldlYmhvb2suSGVhZGVyc0VudHJ5Qgj6QgWaAQIQEBIjCg90aW1lb3V0X3NlY29uZHMYFCABKA1CCvpCByoFKAEYrAISHAoLbWF4X3JldHJpZXMYFSABKA1CB/pCBCoCGAoSDwoHZW5hYmxlZBgWIAEoCBI4Cg9sYXN0X3N1Y2Nlc3NfYXQYFyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSAGIAQESOAoPbGFzdF9mYWlsdXJlX2F0GBggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEgCiAEBEiQKEmxhc3RfZmFpbHVyZV9lcnJvchgZIAEoCUII+kIFcgMYgAgaLwoETGlzdBInCgh3ZWJob29rcxgBIAMoCzIVLmNsb3VkLnYxLm9wcy5XZWJob29rGi4KDEhlYWRlcnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBOjiStRguCAESCHdlYmhvb2tzKiAKE3dlYmhvb2tzX3RlbmFudF9pZHgSCXRlbmFudF9pZIKmHQIIAUINCgtfY3JlYXRlZF9ieUISChBfbGFzdF9zdWNjZXNzX2F0QhIKEF9sYXN0X2ZhaWx1cmVfYXQiSAoUQ3JlYXRlV2ViaG9va1JlcXVlc3QSMAoHd2ViaG9vaxgBIAEoCzIVLmNsb3VkLnYxLm9wcy5XZWJob29rQgj6QgWKAQIQASKDAQoUVXBkYXRlV2ViaG9va1JlcXVlc3QSMAoHd2ViaG9vaxgBIAEoCzIVLmNsb3VkLnYxLm9wcy5XZWJob29rQgj6QgWKAQIQARI5Cgt1cGRhdGVfbWFzaxgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5GaWVsZE1hc2tCCPpCBYoBAhABIngKElRlc3RXZWJob29rUmVxdWVzdBItCgJpZBgBIAEoCzIXLmNsb3VkLnYxLm9wcy5XZWJob29rSWRCCPpCBYoBAhABEjMKBWV2ZW50GAIgASgOMhouY2xvdWQudjEub3BzLldlYmhvb2tFdmVudEII+kIFggECEAEiYAoTVGVzdFdlYmhvb2tSZXNwb25zZRIRCglkZWxpdmVyZWQYASABKAgSEwoLc3RhdHVzX2NvZGUYAiABKA0SDQoFZXJyb3IYAyABKAkSEgoKbGF0ZW5jeV9tcxgEIAEoDSqLAgoMV2ViaG9va0V2ZW50Eh0KGVdFQkhPT0tfRVZFTlRfVU5TUEVDSUZJRUQQABIdChlXRUJIT09LX0VWRU5UX1JVTl9TVEFSVEVEEAESHwobV0VCSE9PS19FVkVOVF9SVU5fQ09NUExFVEVEEAISHAoYV0VCSE9PS19FVkVOVF9SVU5fRkFJTEVEEAMSGwoXV0VCSE9PS19FVkVOVF9OT0RFX0RPTkUQBBIdChlXRUJIT09LX0VWRU5UX05PREVfRkFJTEVEEAUSHwobV0VCSE9PS19FVkVOVF9TVUlURV9TVEFSVEVEEAYSIQodV0VCSE9PS19FVkVOVF9TVUlURV9DT01QTEVURUQQBzLdAwoOV2ViaG9va1NlcnZpY2USTwoNQ3JlYXRlV2ViaG9vaxIiLmNsb3VkLnYxLm9wcy5DcmVhdGVXZWJob29rUmVxdWVzdBoVLmNsb3VkLnYxLm9wcy5XZWJob29rIgOQAgISTwoNVXBkYXRlV2ViaG9vaxIiLmNsb3VkLnYxLm9wcy5VcGRhdGVXZWJob29rUmVxdWVzdBoVLmNsb3VkLnYxLm9wcy5XZWJob29rIgOQAgISRAoNRGVsZXRlV2ViaG9vaxIXLmNsb3VkLnYxLm9wcy5XZWJob29rSWQaFS5jbG91ZC52MS5vcHMuV2ViaG9vayIDkAICEkEKCkdldFdlYmhvb2sSFy5jbG91ZC52MS5vcHMuV2ViaG9va0lkGhUuY2xvdWQudjEub3BzLldlYmhvb2siA5ACARJHCgxMaXN0V2ViaG9va3MSFi5jbG91ZC52MS5pYW0uVGVuYW50SWQaGi5jbG91ZC52MS5vcHMuV2ViaG9vay5MaXN0IgOQAgESVwoLVGVzdFdlYmhvb2sSIC5jbG91ZC52MS5vcHMuVGVzdFdlYmhvb2tSZXF1ZXN0GiEuY2xvdWQudjEub3BzLlRlc3RXZWJob29rUmVzcG9uc2UiA5ACAkJBWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9vcHNiBnByb3RvMw", [file_cloud_v1_iam_user, file_cloud_v1_common_timestamps, file_cloud_v1_common_identity, file_cloud_v1_iam_tenant, file_goplain_goplain, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_ratelproto_ratelproto, file_validate_validate]);
+  fileDesc("ChpjbG91ZC92MS9vcHMvd2ViaG9vay5wcm90bxIMY2xvdWQudjEub3BzIi4KCVdlYmhvb2tJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQQAQgBIrkHCgdXZWJob29rEjUKAmlkGAEgASgLMhcuY2xvdWQudjEub3BzLldlYmhvb2tJZEIQ+kIFigECEAGatRgEEgIQARJICgl0ZW5hbnRfaWQYAiABKAsyFi5jbG91ZC52MS5pYW0uVGVuYW50SWRCHfpCBYoBAhABmrUYERIPMgd0ZW5hbnRzOgJpZEABEjcKCnRpbWVzdGFtcHMYAyABKAsyGy5jbG91ZC52MS5jb21tb24uVGltZXN0YW1wc0IGgqYdAiABEjMKCGlkZW50aXR5GAQgASgLMhkuY2xvdWQudjEuY29tbW9uLklkZW50aXR5QgaCph0CIAESQgoKY3JlYXRlZF9ieRgJIAEoCzIULmNsb3VkLnYxLmlhbS5Vc2VySWRCE5q1GA8SDTIFdXNlcnM6AmlkQAJIAIgBARIjCgN1cmwYCiABKAlCFvpCE3IREAgYgCAyCl5odHRwcz86Ly8SPQoGZXZlbnRzGAsgAygOMhouY2xvdWQudjEub3BzLldlYmhvb2tFdmVudEIR+kIOkgELIgeCAQQgABABECASGAoGc2VjcmV0GAwgASgJQgj6QgVyAxiABBI9CgdoZWFkZXJzGA0gAygLMiIuY2xvdWQudjEub3BzLldlYmhvb2suSGVhZGVyc0VudHJ5Qgj6QgWaAQIQEBIjCg90aW1lb3V0X3NlY29uZHMYFCABKA1CCvpCByoFKAEYrAISHAoLbWF4X3JldHJpZXMYFSABKA1CB/pCBCoCGAoSDwoHZW5hYmxlZBgWIAEoCBI4Cg9sYXN0X3N1Y2Nlc3NfYXQYFyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSAGIAQESOAoPbGFzdF9mYWlsdXJlX2F0GBggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEgCiAEBEiQKEmxhc3RfZmFpbHVyZV9lcnJvchgZIAEoCUII+kIFcgMYgAgaLwoETGlzdBInCgh3ZWJob29rcxgBIAMoCzIVLmNsb3VkLnYxLm9wcy5XZWJob29rGi4KDEhlYWRlcnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBOjiStRguKiAKE3dlYmhvb2tzX3RlbmFudF9pZHgSCXRlbmFudF9pZAgBEgh3ZWJob29rc4KmHQIIAUINCgtfY3JlYXRlZF9ieUISChBfbGFzdF9zdWNjZXNzX2F0QhIKEF9sYXN0X2ZhaWx1cmVfYXQiNgoRV2ViaG9va0RlbGl2ZXJ5SWQSFwoFdmFsdWUYASABKAlCCPpCBXIDmAEaOgiCph0ECAEQASKiBgoPV2ViaG9va0RlbGl2ZXJ5Ej0KAmlkGAEgASgLMh8uY2xvdWQudjEub3BzLldlYmhvb2tEZWxpdmVyeUlkQhD6QgWKAQIQAZq1GAQSAhABEjcKCnRpbWVzdGFtcHMYAiABKAsyGy5jbG91ZC52MS5jb21tb24uVGltZXN0YW1wc0IGgqYdAiABEksKCndlYmhvb2tfaWQYBCABKAsyFy5jbG91ZC52MS5vcHMuV2ViaG9va0lkQh76QgWKAQIQAZq1GBISEEABMgh3ZWJob29rczoCaWQSMwoFZXZlbnQYCiABKA4yGi5jbG91ZC52MS5vcHMuV2ViaG9va0V2ZW50Qgj6QgWCAQIQARIaCgdwYXlsb2FkGAsgASgMQgn6QgZ6BBiAgEASOwoFc3RhdGUYDCABKA4yIi5jbG91ZC52MS5vcHMuV2ViaG9va0RlbGl2ZXJ5U3RhdGVCCPpCBYIBAhABEhAKCGF0dGVtcHRzGA0gASgNEjgKD25leHRfYXR0ZW1wdF9hdBgOIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAIgBARI1CgxkZWxpdmVyZWRfYXQYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSAGIAQESHAoKbGFzdF9lcnJvchgQIAEoCUII+kIFcgMYgCASHQoQbGFzdF9zdGF0dXNfY29kZRgRIAEoDUgCiAEBGjkKBExpc3QSMQoKZGVsaXZlcmllcxgBIAMoCzIdLmNsb3VkLnYxLm9wcy5XZWJob29rRGVsaXZlcnk6hgGStRh8KjYKHHdlYmhvb2tfZGVsaXZlcmllc19kcmFpbl9pZHgSBXN0YXRlEg9uZXh0X2F0dGVtcHRfYXQqLBIKd2ViaG9va19pZAoed2ViaG9va19kZWxpdmVyaWVzX3dlYmhvb2tfaWR4CAESEndlYmhvb2tfZGVsaXZlcmllc4KmHQIIAUISChBfbmV4dF9hdHRlbXB0X2F0Qg8KDV9kZWxpdmVyZWRfYXRCEwoRX2xhc3Rfc3RhdHVzX2NvZGUiSAoUQ3JlYXRlV2ViaG9va1JlcXVlc3QSMAoHd2ViaG9vaxgBIAEoCzIVLmNsb3VkLnYxLm9wcy5XZWJob29rQgj6QgWKAQIQASKDAQoUVXBkYXRlV2ViaG9va1JlcXVlc3QSMAoHd2ViaG9vaxgBIAEoCzIVLmNsb3VkLnYxLm9wcy5XZWJob29rQgj6QgWKAQIQARI5Cgt1cGRhdGVfbWFzaxgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5GaWVsZE1hc2tCCPpCBYoBAhABIngKElRlc3RXZWJob29rUmVxdWVzdBItCgJpZBgBIAEoCzIXLmNsb3VkLnYxLm9wcy5XZWJob29rSWRCCPpCBYoBAhABEjMKBWV2ZW50GAIgASgOMhouY2xvdWQudjEub3BzLldlYmhvb2tFdmVudEII+kIFggECEAEiYAoTVGVzdFdlYmhvb2tSZXNwb25zZRIRCglkZWxpdmVyZWQYASABKAgSEwoLc3RhdHVzX2NvZGUYAiABKA0SDQoFZXJyb3IYAyABKAkSEgoKbGF0ZW5jeV9tcxgEIAEoDSqLAgoMV2ViaG9va0V2ZW50Eh0KGVdFQkhPT0tfRVZFTlRfVU5TUEVDSUZJRUQQABIdChlXRUJIT09LX0VWRU5UX1JVTl9TVEFSVEVEEAESHwobV0VCSE9PS19FVkVOVF9SVU5fQ09NUExFVEVEEAISHAoYV0VCSE9PS19FVkVOVF9SVU5fRkFJTEVEEAMSGwoXV0VCSE9PS19FVkVOVF9OT0RFX0RPTkUQBBIdChlXRUJIT09LX0VWRU5UX05PREVfRkFJTEVEEAUSHwobV0VCSE9PS19FVkVOVF9TVUlURV9TVEFSVEVEEAYSIQodV0VCSE9PS19FVkVOVF9TVUlURV9DT01QTEVURUQQByrPAQoUV2ViaG9va0RlbGl2ZXJ5U3RhdGUSJgoiV0VCSE9PS19ERUxJVkVSWV9TVEFURV9VTlNQRUNJRklFRBAAEiIKHldFQkhPT0tfREVMSVZFUllfU1RBVEVfUEVORElORxABEiQKIFdFQkhPT0tfREVMSVZFUllfU1RBVEVfSU5fRkxJR0hUEAISJAogV0VCSE9PS19ERUxJVkVSWV9TVEFURV9ERUxJVkVSRUQQAxIfChtXRUJIT09LX0RFTElWRVJZX1NUQVRFX0RFQUQQBDLdAwoOV2ViaG9va1NlcnZpY2USTwoNQ3JlYXRlV2ViaG9vaxIiLmNsb3VkLnYxLm9wcy5DcmVhdGVXZWJob29rUmVxdWVzdBoVLmNsb3VkLnYxLm9wcy5XZWJob29rIgOQAgISTwoNVXBkYXRlV2ViaG9vaxIiLmNsb3VkLnYxLm9wcy5VcGRhdGVXZWJob29rUmVxdWVzdBoVLmNsb3VkLnYxLm9wcy5XZWJob29rIgOQAgISRAoNRGVsZXRlV2ViaG9vaxIXLmNsb3VkLnYxLm9wcy5XZWJob29rSWQaFS5jbG91ZC52MS5vcHMuV2ViaG9vayIDkAICEkEKCkdldFdlYmhvb2sSFy5jbG91ZC52MS5vcHMuV2ViaG9va0lkGhUuY2xvdWQudjEub3BzLldlYmhvb2siA5ACARJHCgxMaXN0V2ViaG9va3MSFi5jbG91ZC52MS5pYW0uVGVuYW50SWQaGi5jbG91ZC52MS5vcHMuV2ViaG9vay5MaXN0IgOQAgESVwoLVGVzdFdlYmhvb2sSIC5jbG91ZC52MS5vcHMuVGVzdFdlYmhvb2tSZXF1ZXN0GiEuY2xvdWQudjEub3BzLlRlc3RXZWJob29rUmVzcG9uc2UiA5ACAkJBWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9vcHNiBnByb3RvMw", [file_cloud_v1_iam_user, file_cloud_v1_common_timestamps, file_cloud_v1_common_identity, file_cloud_v1_iam_tenant, file_goplain_goplain, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_ratelproto_ratelproto, file_validate_validate]);
 
 /**
  * @generated from message cloud.v1.ops.WebhookId
@@ -277,6 +277,201 @@ export const Webhook_ListSchema: GenMessage<Webhook_List, {jsonType: Webhook_Lis
   messageDesc(file_cloud_v1_ops_webhook, 1, 0);
 
 /**
+ * @generated from message cloud.v1.ops.WebhookDeliveryId
+ */
+export type WebhookDeliveryId = Message<"cloud.v1.ops.WebhookDeliveryId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * @generated from message cloud.v1.ops.WebhookDeliveryId
+ */
+export type WebhookDeliveryIdJson = {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value?: string;
+};
+
+export type WebhookDeliveryIdValid = WebhookDeliveryId;
+
+/**
+ * Describes the message cloud.v1.ops.WebhookDeliveryId.
+ * Use `create(WebhookDeliveryIdSchema)` to create a new message.
+ */
+export const WebhookDeliveryIdSchema: GenMessage<WebhookDeliveryId, {jsonType: WebhookDeliveryIdJson, validType: WebhookDeliveryIdValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_ops_webhook, 2);
+
+/**
+ * WebhookDelivery — durable outbox row. Worker drains state=PENDING and
+ * next_attempt_at<=now(), POSTs with HMAC signature, on failure schedules
+ * exponential backoff up to max_retries. 
+ *
+ * @generated from message cloud.v1.ops.WebhookDelivery
+ */
+export type WebhookDelivery = Message<"cloud.v1.ops.WebhookDelivery"> & {
+  /**
+   * @generated from field: cloud.v1.ops.WebhookDeliveryId id = 1;
+   */
+  id?: WebhookDeliveryId;
+
+  /**
+   * @generated from field: cloud.v1.common.Timestamps timestamps = 2;
+   */
+  timestamps?: Timestamps;
+
+  /**
+   * @generated from field: cloud.v1.ops.WebhookId webhook_id = 4;
+   */
+  webhookId?: WebhookId;
+
+  /**
+   * @generated from field: cloud.v1.ops.WebhookEvent event = 10;
+   */
+  event: WebhookEvent;
+
+  /**
+   * @generated from field: bytes payload = 11;
+   */
+  payload: Uint8Array;
+
+  /**
+   * @generated from field: cloud.v1.ops.WebhookDeliveryState state = 12;
+   */
+  state: WebhookDeliveryState;
+
+  /**
+   * @generated from field: uint32 attempts = 13;
+   */
+  attempts: number;
+
+  /**
+   * @generated from field: optional google.protobuf.Timestamp next_attempt_at = 14;
+   */
+  nextAttemptAt?: Timestamp;
+
+  /**
+   * @generated from field: optional google.protobuf.Timestamp delivered_at = 15;
+   */
+  deliveredAt?: Timestamp;
+
+  /**
+   * @generated from field: string last_error = 16;
+   */
+  lastError: string;
+
+  /**
+   * @generated from field: optional uint32 last_status_code = 17;
+   */
+  lastStatusCode?: number;
+};
+
+/**
+ * WebhookDelivery — durable outbox row. Worker drains state=PENDING and
+ * next_attempt_at<=now(), POSTs with HMAC signature, on failure schedules
+ * exponential backoff up to max_retries. 
+ *
+ * @generated from message cloud.v1.ops.WebhookDelivery
+ */
+export type WebhookDeliveryJson = {
+  /**
+   * @generated from field: cloud.v1.ops.WebhookDeliveryId id = 1;
+   */
+  id?: WebhookDeliveryIdJson;
+
+  /**
+   * @generated from field: cloud.v1.common.Timestamps timestamps = 2;
+   */
+  timestamps?: TimestampsJson;
+
+  /**
+   * @generated from field: cloud.v1.ops.WebhookId webhook_id = 4;
+   */
+  webhookId?: WebhookIdJson;
+
+  /**
+   * @generated from field: cloud.v1.ops.WebhookEvent event = 10;
+   */
+  event?: WebhookEventJson;
+
+  /**
+   * @generated from field: bytes payload = 11;
+   */
+  payload?: string;
+
+  /**
+   * @generated from field: cloud.v1.ops.WebhookDeliveryState state = 12;
+   */
+  state?: WebhookDeliveryStateJson;
+
+  /**
+   * @generated from field: uint32 attempts = 13;
+   */
+  attempts?: number;
+
+  /**
+   * @generated from field: optional google.protobuf.Timestamp next_attempt_at = 14;
+   */
+  nextAttemptAt?: TimestampJson;
+
+  /**
+   * @generated from field: optional google.protobuf.Timestamp delivered_at = 15;
+   */
+  deliveredAt?: TimestampJson;
+
+  /**
+   * @generated from field: string last_error = 16;
+   */
+  lastError?: string;
+
+  /**
+   * @generated from field: optional uint32 last_status_code = 17;
+   */
+  lastStatusCode?: number;
+};
+
+export type WebhookDeliveryValid = WebhookDelivery;
+
+/**
+ * Describes the message cloud.v1.ops.WebhookDelivery.
+ * Use `create(WebhookDeliverySchema)` to create a new message.
+ */
+export const WebhookDeliverySchema: GenMessage<WebhookDelivery, {jsonType: WebhookDeliveryJson, validType: WebhookDeliveryValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_ops_webhook, 3);
+
+/**
+ * @generated from message cloud.v1.ops.WebhookDelivery.List
+ */
+export type WebhookDelivery_List = Message<"cloud.v1.ops.WebhookDelivery.List"> & {
+  /**
+   * @generated from field: repeated cloud.v1.ops.WebhookDelivery deliveries = 1;
+   */
+  deliveries: WebhookDelivery[];
+};
+
+/**
+ * @generated from message cloud.v1.ops.WebhookDelivery.List
+ */
+export type WebhookDelivery_ListJson = {
+  /**
+   * @generated from field: repeated cloud.v1.ops.WebhookDelivery deliveries = 1;
+   */
+  deliveries?: WebhookDeliveryJson[];
+};
+
+export type WebhookDelivery_ListValid = WebhookDelivery_List;
+
+/**
+ * Describes the message cloud.v1.ops.WebhookDelivery.List.
+ * Use `create(WebhookDelivery_ListSchema)` to create a new message.
+ */
+export const WebhookDelivery_ListSchema: GenMessage<WebhookDelivery_List, {jsonType: WebhookDelivery_ListJson, validType: WebhookDelivery_ListValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_ops_webhook, 3, 0);
+
+/**
  * @generated from message cloud.v1.ops.CreateWebhookRequest
  */
 export type CreateWebhookRequest = Message<"cloud.v1.ops.CreateWebhookRequest"> & {
@@ -303,7 +498,7 @@ export type CreateWebhookRequestValid = CreateWebhookRequest;
  * Use `create(CreateWebhookRequestSchema)` to create a new message.
  */
 export const CreateWebhookRequestSchema: GenMessage<CreateWebhookRequest, {jsonType: CreateWebhookRequestJson, validType: CreateWebhookRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_ops_webhook, 2);
+  messageDesc(file_cloud_v1_ops_webhook, 4);
 
 /**
  * @generated from message cloud.v1.ops.UpdateWebhookRequest
@@ -342,7 +537,7 @@ export type UpdateWebhookRequestValid = UpdateWebhookRequest;
  * Use `create(UpdateWebhookRequestSchema)` to create a new message.
  */
 export const UpdateWebhookRequestSchema: GenMessage<UpdateWebhookRequest, {jsonType: UpdateWebhookRequestJson, validType: UpdateWebhookRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_ops_webhook, 3);
+  messageDesc(file_cloud_v1_ops_webhook, 5);
 
 /**
  * @generated from message cloud.v1.ops.TestWebhookRequest
@@ -385,7 +580,7 @@ export type TestWebhookRequestValid = TestWebhookRequest;
  * Use `create(TestWebhookRequestSchema)` to create a new message.
  */
 export const TestWebhookRequestSchema: GenMessage<TestWebhookRequest, {jsonType: TestWebhookRequestJson, validType: TestWebhookRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_ops_webhook, 4);
+  messageDesc(file_cloud_v1_ops_webhook, 6);
 
 /**
  * @generated from message cloud.v1.ops.TestWebhookResponse
@@ -444,7 +639,7 @@ export type TestWebhookResponseValid = TestWebhookResponse;
  * Use `create(TestWebhookResponseSchema)` to create a new message.
  */
 export const TestWebhookResponseSchema: GenMessage<TestWebhookResponse, {jsonType: TestWebhookResponseJson, validType: TestWebhookResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_ops_webhook, 5);
+  messageDesc(file_cloud_v1_ops_webhook, 7);
 
 /**
  * WebhookEvent — event types the sender emits. 
@@ -505,6 +700,51 @@ export type WebhookEventJson = "WEBHOOK_EVENT_UNSPECIFIED" | "WEBHOOK_EVENT_RUN_
  */
 export const WebhookEventSchema: GenEnum<WebhookEvent, WebhookEventJson> = /*@__PURE__*/
   enumDesc(file_cloud_v1_ops_webhook, 0);
+
+/**
+ * WebhookDeliveryState — outbox row lifecycle. 
+ *
+ * @generated from enum cloud.v1.ops.WebhookDeliveryState
+ */
+export enum WebhookDeliveryState {
+  /**
+   * @generated from enum value: WEBHOOK_DELIVERY_STATE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: WEBHOOK_DELIVERY_STATE_PENDING = 1;
+   */
+  PENDING = 1,
+
+  /**
+   * @generated from enum value: WEBHOOK_DELIVERY_STATE_IN_FLIGHT = 2;
+   */
+  IN_FLIGHT = 2,
+
+  /**
+   * @generated from enum value: WEBHOOK_DELIVERY_STATE_DELIVERED = 3;
+   */
+  DELIVERED = 3,
+
+  /**
+   * @generated from enum value: WEBHOOK_DELIVERY_STATE_DEAD = 4;
+   */
+  DEAD = 4,
+}
+
+/**
+ * WebhookDeliveryState — outbox row lifecycle. 
+ *
+ * @generated from enum cloud.v1.ops.WebhookDeliveryState
+ */
+export type WebhookDeliveryStateJson = "WEBHOOK_DELIVERY_STATE_UNSPECIFIED" | "WEBHOOK_DELIVERY_STATE_PENDING" | "WEBHOOK_DELIVERY_STATE_IN_FLIGHT" | "WEBHOOK_DELIVERY_STATE_DELIVERED" | "WEBHOOK_DELIVERY_STATE_DEAD";
+
+/**
+ * Describes the enum cloud.v1.ops.WebhookDeliveryState.
+ */
+export const WebhookDeliveryStateSchema: GenEnum<WebhookDeliveryState, WebhookDeliveryStateJson> = /*@__PURE__*/
+  enumDesc(file_cloud_v1_ops_webhook, 1);
 
 /**
  * @generated from service cloud.v1.ops.WebhookService

@@ -3,6 +3,8 @@ package connect
 import (
 	"context"
 	"errors"
+	"net/http"
+	"time"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -12,10 +14,69 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/transport/middleware"
 )
 
-// IAMHandler implements AuthServiceHandler, UserServiceHandler, and TenantServiceHandler.
-type IAMHandler struct{ svc *iam.Service }
+// refreshCookieName is the HttpOnly cookie carrying the refresh token. The
+// browser auto-sends it on Refresh + Logout requests; JavaScript never sees it.
+const refreshCookieName = "stroppy_refresh"
 
-func NewIAMHandler(svc *iam.Service) *IAMHandler { return &IAMHandler{svc: svc} }
+// refreshCookiePath scopes the cookie to the auth-service procedures so it is
+// not attached to every RPC.
+const refreshCookiePath = "/cloud.v1.iam.AuthService/"
+
+// IAMHandler implements AuthServiceHandler, UserServiceHandler, and TenantServiceHandler.
+type IAMHandler struct {
+	svc          *iam.Service
+	refreshTTL   time.Duration
+	cookieSecure bool
+}
+
+// NewIAMHandler wires the IAM service into Connect handlers. refreshTTL +
+// cookieSecure shape the HttpOnly refresh cookie issued on Login/Refresh.
+func NewIAMHandler(svc *iam.Service, refreshTTL time.Duration, cookieSecure bool) *IAMHandler {
+	return &IAMHandler{svc: svc, refreshTTL: refreshTTL, cookieSecure: cookieSecure}
+}
+
+// readRefreshFromRequest reads the refresh token first from the body, then
+// falls back to the HttpOnly cookie. Frontend clients send empty body + cookie;
+// CLI/SDK clients send body explicitly.
+func (h *IAMHandler) readRefreshFromRequest(headers http.Header, bodyToken string) string {
+	if bodyToken != "" {
+		return bodyToken
+	}
+	// Cookie header parsing via a synthetic *http.Request.
+	r := &http.Request{Header: headers}
+	if c, err := r.Cookie(refreshCookieName); err == nil {
+		return c.Value
+	}
+	return ""
+}
+
+// setRefreshCookie attaches the HttpOnly cookie to the response.
+func (h *IAMHandler) setRefreshCookie(headers http.Header, value string) {
+	c := &http.Cookie{
+		Name:     refreshCookieName,
+		Value:    value,
+		Path:     refreshCookiePath,
+		HttpOnly: true,
+		Secure:   h.cookieSecure,
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   int(h.refreshTTL.Seconds()),
+	}
+	headers.Add("Set-Cookie", c.String())
+}
+
+// clearRefreshCookie issues a Max-Age=0 cookie so the browser drops it.
+func (h *IAMHandler) clearRefreshCookie(headers http.Header) {
+	c := &http.Cookie{
+		Name:     refreshCookieName,
+		Value:    "",
+		Path:     refreshCookiePath,
+		HttpOnly: true,
+		Secure:   h.cookieSecure,
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   -1,
+	}
+	headers.Add("Set-Cookie", c.String())
+}
 
 // ─── AuthService ────────────────────────────────────────────────────────────
 
@@ -24,22 +85,35 @@ func (h *IAMHandler) Login(ctx context.Context, req *connect.Request[iampb.Login
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&iampb.LoginResponse{Tokens: pair}), nil
+	resp := connect.NewResponse(&iampb.LoginResponse{Tokens: pair})
+	h.setRefreshCookie(resp.Header(), pair.GetRefreshToken())
+	return resp, nil
 }
 
 func (h *IAMHandler) RefreshTokens(ctx context.Context, req *connect.Request[iampb.RefreshTokenRequest]) (*connect.Response[iampb.RefreshTokenResponse], error) {
-	pair, err := h.svc.RefreshTokens(ctx, req.Msg.GetRefreshToken())
+	tok := h.readRefreshFromRequest(req.Header(), req.Msg.GetRefreshToken())
+	if tok == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("refresh token missing"))
+	}
+	pair, err := h.svc.RefreshTokens(ctx, tok)
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&iampb.RefreshTokenResponse{Tokens: pair}), nil
+	resp := connect.NewResponse(&iampb.RefreshTokenResponse{Tokens: pair})
+	h.setRefreshCookie(resp.Header(), pair.GetRefreshToken())
+	return resp, nil
 }
 
 func (h *IAMHandler) Logout(ctx context.Context, req *connect.Request[iampb.LogoutRequest]) (*connect.Response[emptypb.Empty], error) {
-	if err := h.svc.Logout(ctx, req.Msg.GetRefreshToken()); err != nil {
-		return nil, err
+	tok := h.readRefreshFromRequest(req.Header(), req.Msg.GetRefreshToken())
+	if tok != "" {
+		if err := h.svc.Logout(ctx, tok); err != nil {
+			return nil, err
+		}
 	}
-	return connect.NewResponse(&emptypb.Empty{}), nil
+	resp := connect.NewResponse(&emptypb.Empty{})
+	h.clearRefreshCookie(resp.Header())
+	return resp, nil
 }
 
 // ─── UserService ─────────────────────────────────────────────────────────────

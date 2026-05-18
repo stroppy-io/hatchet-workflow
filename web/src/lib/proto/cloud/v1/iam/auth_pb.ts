@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/iam/auth.proto.
  */
 export const file_cloud_v1_iam_auth: GenFile = /*@__PURE__*/
-  fileDesc("ChdjbG91ZC92MS9pYW0vYXV0aC5wcm90bxIMY2xvdWQudjEuaWFtIrEBCglUb2tlblBhaXISFAoMYWNjZXNzX3Rva2VuGAEgASgJEhUKDXJlZnJlc2hfdG9rZW4YAiABKAkSOgoXYWNjZXNzX3Rva2VuX2V4cGlyZXNfaW4YAyABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SOwoYcmVmcmVzaF90b2tlbl9leHBpcmVzX2luGAQgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uIkEKDExvZ2luUmVxdWVzdBIWCgVlbWFpbBgBIAEoCUIH+kIEcgJgARIZCghwYXNzd29yZBgCIAEoCUIH+kIEcgIQCCI4Cg1Mb2dpblJlc3BvbnNlEicKBnRva2VucxgBIAEoCzIXLmNsb3VkLnYxLmlhbS5Ub2tlblBhaXIiNQoTUmVmcmVzaFRva2VuUmVxdWVzdBIeCg1yZWZyZXNoX3Rva2VuGAEgASgJQgf6QgRyAhAIIj8KFFJlZnJlc2hUb2tlblJlc3BvbnNlEicKBnRva2VucxgBIAEoCzIXLmNsb3VkLnYxLmlhbS5Ub2tlblBhaXIiLwoNTG9nb3V0UmVxdWVzdBIeCg1yZWZyZXNoX3Rva2VuGAEgASgJQgf6QgRyAhAIMvUBCgtBdXRoU2VydmljZRJFCgVMb2dpbhIaLmNsb3VkLnYxLmlhbS5Mb2dpblJlcXVlc3QaGy5jbG91ZC52MS5pYW0uTG9naW5SZXNwb25zZSIDkAICElsKDVJlZnJlc2hUb2tlbnMSIS5jbG91ZC52MS5pYW0uUmVmcmVzaFRva2VuUmVxdWVzdBoiLmNsb3VkLnYxLmlhbS5SZWZyZXNoVG9rZW5SZXNwb25zZSIDkAICEkIKBkxvZ291dBIbLmNsb3VkLnYxLmlhbS5Mb2dvdXRSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgOQAgJCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvaWFtYgZwcm90bzM", [file_google_protobuf_duration, file_google_protobuf_empty, file_validate_validate]);
+  fileDesc("ChdjbG91ZC92MS9pYW0vYXV0aC5wcm90bxIMY2xvdWQudjEuaWFtIrEBCglUb2tlblBhaXISFAoMYWNjZXNzX3Rva2VuGAEgASgJEhUKDXJlZnJlc2hfdG9rZW4YAiABKAkSOgoXYWNjZXNzX3Rva2VuX2V4cGlyZXNfaW4YAyABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SOwoYcmVmcmVzaF90b2tlbl9leHBpcmVzX2luGAQgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uIkEKDExvZ2luUmVxdWVzdBIWCgVlbWFpbBgBIAEoCUIH+kIEcgJgARIZCghwYXNzd29yZBgCIAEoCUIH+kIEcgIQCCI4Cg1Mb2dpblJlc3BvbnNlEicKBnRva2VucxgBIAEoCzIXLmNsb3VkLnYxLmlhbS5Ub2tlblBhaXIiNgoTUmVmcmVzaFRva2VuUmVxdWVzdBIfCg1yZWZyZXNoX3Rva2VuGAEgASgJQgj6QgVyAxiAASI/ChRSZWZyZXNoVG9rZW5SZXNwb25zZRInCgZ0b2tlbnMYASABKAsyFy5jbG91ZC52MS5pYW0uVG9rZW5QYWlyIjAKDUxvZ291dFJlcXVlc3QSHwoNcmVmcmVzaF90b2tlbhgBIAEoCUII+kIFcgMYgAEy9QEKC0F1dGhTZXJ2aWNlEkUKBUxvZ2luEhouY2xvdWQudjEuaWFtLkxvZ2luUmVxdWVzdBobLmNsb3VkLnYxLmlhbS5Mb2dpblJlc3BvbnNlIgOQAgISWwoNUmVmcmVzaFRva2VucxIhLmNsb3VkLnYxLmlhbS5SZWZyZXNoVG9rZW5SZXF1ZXN0GiIuY2xvdWQudjEuaWFtLlJlZnJlc2hUb2tlblJlc3BvbnNlIgOQAgISQgoGTG9nb3V0EhsuY2xvdWQudjEuaWFtLkxvZ291dFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiA5ACAkJBWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9pYW1iBnByb3RvMw", [file_google_protobuf_duration, file_google_protobuf_empty, file_validate_validate]);
 
 /**
  * @generated from message cloud.v1.iam.TokenPair
@@ -155,6 +155,10 @@ export const LoginResponseSchema: GenMessage<LoginResponse, {jsonType: LoginResp
  */
 export type RefreshTokenRequest = Message<"cloud.v1.iam.RefreshTokenRequest"> & {
   /**
+   * refresh_token — optional. Frontend leaves empty and relies on the
+   * HttpOnly cookie set by the server on Login/Refresh. CLI/SDK clients
+   * send the opaque token explicitly. 
+   *
    * @generated from field: string refresh_token = 1;
    */
   refreshToken: string;
@@ -165,6 +169,10 @@ export type RefreshTokenRequest = Message<"cloud.v1.iam.RefreshTokenRequest"> & 
  */
 export type RefreshTokenRequestJson = {
   /**
+   * refresh_token — optional. Frontend leaves empty and relies on the
+   * HttpOnly cookie set by the server on Login/Refresh. CLI/SDK clients
+   * send the opaque token explicitly. 
+   *
    * @generated from field: string refresh_token = 1;
    */
   refreshToken?: string;
@@ -213,7 +221,7 @@ export const RefreshTokenResponseSchema: GenMessage<RefreshTokenResponse, {jsonT
  */
 export type LogoutRequest = Message<"cloud.v1.iam.LogoutRequest"> & {
   /**
-   * refresh_token — revoke this specific token; access stays valid until expiry. 
+   * refresh_token — optional; falls back to the HttpOnly cookie. 
    *
    * @generated from field: string refresh_token = 1;
    */
@@ -225,7 +233,7 @@ export type LogoutRequest = Message<"cloud.v1.iam.LogoutRequest"> & {
  */
 export type LogoutRequestJson = {
   /**
-   * refresh_token — revoke this specific token; access stays valid until expiry. 
+   * refresh_token — optional; falls back to the HttpOnly cookie. 
    *
    * @generated from field: string refresh_token = 1;
    */

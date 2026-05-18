@@ -22,19 +22,6 @@ export interface AuthUser {
   tenants: { id: string; tenant_name: string; role: string }[];
 }
 
-/** Bootstrap session using the httpOnly cookie (REST legacy endpoint). */
-async function legacyRefreshToken(): Promise<{ access_token: string }> {
-  const res = await fetch("/api/v1/auth/refresh", {
-    method: "POST",
-    credentials: "include",
-  });
-  if (!res.ok) throw new Error("refresh failed");
-  return res.json();
-}
-
-// In-memory refresh token (never put in localStorage).
-let _refreshToken: string | null = null;
-
 export interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
@@ -55,18 +42,19 @@ export const AuthContext = createContext<AuthContextValue>({
   selectTenant: async () => {},
 });
 
-/** Attempt a ConnectRPC token refresh; return new access token or null. */
+/**
+ * doRefresh attempts a silent token refresh. The refresh token is in an
+ * HttpOnly cookie set by the server on Login/Refresh — the browser sends it
+ * automatically thanks to `credentials: "include"` in the transport. We pass
+ * an empty body; the handler reads the cookie.
+ */
 async function doRefresh(): Promise<string | null> {
-  if (!_refreshToken) return null;
   try {
-    const r = await clients.auth.refreshTokens({ refreshToken: _refreshToken });
+    const r = await clients.auth.refreshTokens({ refreshToken: "" });
     const at = r.tokens?.accessToken ?? null;
-    const rt = r.tokens?.refreshToken;
-    if (rt) _refreshToken = rt;
     if (at) setAccessToken(at);
     return at;
   } catch {
-    _refreshToken = null;
     setAccessToken(null);
     return null;
   }
@@ -75,7 +63,6 @@ async function doRefresh(): Promise<string | null> {
 /** Build AuthUser from ConnectRPC User + tenant list. */
 async function fetchUserFromProto(): Promise<AuthUser | null> {
   try {
-    // Restore tenant from localStorage if present.
     const storedTenantId = localStorage.getItem("stroppy.tenantId");
     if (storedTenantId) {
       setTenantId(storedTenantId);
@@ -83,7 +70,11 @@ async function fetchUserFromProto(): Promise<AuthUser | null> {
 
     const [userResp, tenantsResp] = await Promise.all([
       clients.user.me({}),
-      clients.tenant.listMyTenants({}).catch(() => ({ tenants: [] as import("@/lib/proto/cloud/v1/iam/tenant_pb").Tenant[] })),
+      clients.tenant
+        .listMyTenants({})
+        .catch(() => ({
+          tenants: [] as import("@/lib/proto/cloud/v1/iam/tenant_pb").Tenant[],
+        })),
     ]);
 
     const tenantsList = (tenantsResp.tenants ?? []).map((t) => ({
@@ -92,13 +83,11 @@ async function fetchUserFromProto(): Promise<AuthUser | null> {
       role: "viewer" as const,
     }));
 
-    // Determine current tenant context.
     const currentTenantId = storedTenantId || null;
     const currentTenant = currentTenantId
       ? tenantsResp.tenants?.find((t) => t.id?.value === currentTenantId)
       : null;
 
-    // Probe root status: only admins can call listAllTenants.
     let isRoot = false;
     try {
       await clients.admin.listAllTenants({});
@@ -107,7 +96,7 @@ async function fetchUserFromProto(): Promise<AuthUser | null> {
       isRoot = false;
     }
 
-    const authUser: AuthUser = {
+    return {
       id: userResp.id?.value ?? "",
       username: userResp.nickname || userResp.email,
       tenant_id: currentTenantId,
@@ -116,7 +105,6 @@ async function fetchUserFromProto(): Promise<AuthUser | null> {
       is_root: isRoot,
       tenants: tenantsList,
     };
-    return authUser;
   } catch {
     return null;
   }
@@ -126,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Wire the transport refresher so the auth interceptor can refresh tokens
+  // Wire the transport refresher so the auth interceptor refreshes tokens
   // automatically on Unauthenticated errors from any ConnectRPC call.
   useEffect(() => {
     setRefresher(doRefresh);
@@ -140,25 +128,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       setUser(null);
       setAccessToken(null);
-      _refreshToken = null;
     }
   }, []);
 
-  // On mount: try to restore session via cookie-based refresh.
-  // The httpOnly cookie is required for the bootstrap call.
+  // On mount: silent refresh attempt — if the HttpOnly cookie from a prior
+  // session is still valid, this gives us a new access token without UI.
   useEffect(() => {
     (async () => {
-      try {
-        const r = await legacyRefreshToken();
-        setAccessToken(r.access_token);
+      const fresh = await doRefresh();
+      if (fresh) {
         await fetchUser();
-      } catch {
-        setAccessToken(null);
-        _refreshToken = null;
-        setUser(null);
-      } finally {
-        setIsLoading(false);
       }
+      setIsLoading(false);
     })();
   }, [fetchUser]);
 
@@ -166,9 +147,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (email: string, password: string) => {
       const r = await clients.auth.login({ email, password });
       const at = r.tokens?.accessToken ?? "";
-      const rt = r.tokens?.refreshToken ?? "";
       setAccessToken(at);
-      _refreshToken = rt;
+      // Refresh token rides in HttpOnly cookie — never touched by JS.
       await fetchUser();
     },
     [fetchUser]
@@ -176,16 +156,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      if (_refreshToken) {
-        await clients.auth.logout({ refreshToken: _refreshToken });
-      }
+      await clients.auth.logout({ refreshToken: "" });
     } catch {
-      // best-effort
+      // best-effort; cookie still cleared by server
     }
     setAccessToken(null);
     setTenantId(null);
     localStorage.removeItem("stroppy.tenantId");
-    _refreshToken = null;
     setUser(null);
   }, []);
 
@@ -198,7 +175,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchUser]);
 
-  // selectTenant is purely client-side: store id in localStorage + transport header.
   const selectTenant = useCallback(
     async (tenantId: string) => {
       localStorage.setItem("stroppy.tenantId", tenantId);
