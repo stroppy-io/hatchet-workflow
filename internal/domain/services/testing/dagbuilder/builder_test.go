@@ -48,7 +48,9 @@ func TestBuilder_FromTestRun_InlineDatabaseWorkload(t *testing.T) {
 	dag, err := b.FromTestRun(context.Background(), tr)
 	require.NoError(t, err)
 	require.NotNil(t, dag.GetGraph())
-	require.Len(t, dag.GetGraph().GetNodes(), 4)
+	// Generic engine (UNSPECIFIED kind) → 6 nodes:
+	// provision, install-db, install-monitor, config-db, workload, teardown.
+	require.Len(t, dag.GetGraph().GetNodes(), 6)
 
 	type nodeInfo struct {
 		Deps []string
@@ -60,8 +62,10 @@ func TestBuilder_FromTestRun_InlineDatabaseWorkload(t *testing.T) {
 
 	require.Contains(t, byID, "provision")
 	require.Empty(t, byID["provision"].Deps)
-	require.Equal(t, []string{"provision"}, byID["install"].Deps)
-	require.Equal(t, []string{"install"}, byID["workload"].Deps)
+	require.Equal(t, []string{"provision"}, byID["install-db"].Deps)
+	require.Equal(t, []string{"provision"}, byID["install-monitor"].Deps)
+	require.Equal(t, []string{"install-db"}, byID["config-db"].Deps)
+	require.Equal(t, []string{"config-db"}, byID["workload"].Deps)
 	require.Equal(t, []string{"workload"}, byID["teardown"].Deps)
 }
 
@@ -83,7 +87,7 @@ func TestBuilder_FromTestRun_PresetDatabase(t *testing.T) {
 	dag, err := b.FromTestRun(context.Background(), tr)
 	require.NoError(t, err)
 	require.NotNil(t, dag.GetGraph())
-	require.Len(t, dag.GetGraph().GetNodes(), 4)
+	require.Len(t, dag.GetGraph().GetNodes(), 6)
 }
 
 func TestBuilder_FromTestRun_NilDatabase(t *testing.T) {
