@@ -46,6 +46,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/victoria"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	transportconnect "github.com/stroppy-io/stroppy-cloud/internal/transport/connect"
+	"github.com/stroppy-io/stroppy-cloud/internal/transport/httpext"
 	"github.com/stroppy-io/stroppy-cloud/web"
 	"github.com/stroppy-io/stroppy-cloud/internal/transport/middleware"
 )
@@ -260,6 +261,7 @@ func runServer(ctx context.Context, cfgPath string) error {
 	spaServer := http.FileServer(http.FS(spaFS))
 	processStartedAt := time.Now()
 	mux.Handle("/metrics", middleware.MetricsHandler())
+	httpext.NewBinariesHandler("", binaryCacheSvc, zlog).Mount(mux)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasPrefix(r.URL.Path, "/cloud.v1."):
