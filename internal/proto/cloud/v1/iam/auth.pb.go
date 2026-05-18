@@ -95,9 +95,12 @@ func (x *TokenPair) GetRefreshTokenExpiresIn() *durationpb.Duration {
 }
 
 type LoginRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// email — accepts either an email address (must contain "@") or a
+	// bare nickname/username. Server-side resolution picks the right
+	// column. Validation only enforces a non-empty short string.
+	Email         string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	Password      string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -335,10 +338,11 @@ const file_cloud_v1_iam_auth_proto_rawDesc = "" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12#\n" +
 	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12P\n" +
 	"\x17access_token_expires_in\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\x14accessTokenExpiresIn\x12R\n" +
-	"\x18refresh_token_expires_in\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\x15refreshTokenExpiresIn\"R\n" +
-	"\fLoginRequest\x12\x1d\n" +
-	"\x05email\x18\x01 \x01(\tB\a\xfaB\x04r\x02`\x01R\x05email\x12#\n" +
-	"\bpassword\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\bR\bpassword\"@\n" +
+	"\x18refresh_token_expires_in\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\x15refreshTokenExpiresIn\"U\n" +
+	"\fLoginRequest\x12 \n" +
+	"\x05email\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\xff\x01R\x05email\x12#\n" +
+	"\bpassword\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bpassword\"@\n" +
 	"\rLoginResponse\x12/\n" +
 	"\x06tokens\x18\x01 \x01(\v2\x17.cloud.v1.iam.TokenPairR\x06tokens\"D\n" +
 	"\x13RefreshTokenRequest\x12-\n" +

@@ -3,6 +3,7 @@ package iam
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/avito-tech/go-transaction-manager/trm"
@@ -21,15 +22,22 @@ import (
 )
 
 // Login validates credentials and returns a fresh TokenPair starting a new rotation family.
-func (s *Service) Login(ctx context.Context, email, password string) (*iampb.TokenPair, error) {
+// Login accepts an identifier that is either an email (contains @) or a
+// nickname/username, plus password. The dev workflow `admin / admin` works
+// against the bootstrapped admin user's nickname.
+func (s *Service) Login(ctx context.Context, identifier, password string) (*iampb.TokenPair, error) {
 	return tracing.WithTraceRet(s.Tracer(), ctx, "Login",
 		func(ctx context.Context, _ trace.Span) (*iampb.TokenPair, error) {
 			return pgtx.WithSerializableRet(ctx, s.txManager,
 				func(ctx context.Context) (*iampb.TokenPair, error) {
+					where := iampb.Users.Email.Eq(identifier)
+					if !strings.Contains(identifier, "@") {
+						where = iampb.Users.Nickname.Eq(identifier)
+					}
 					// Query via scanner to access virtual PasswordHash field.
 					userScanner, err := s.userRepo.Scanner().QueryRow(ctx,
 						iampb.Users.SelectAll().Where(
-							iampb.Users.Email.Eq(email),
+							where,
 							iampb.Users.DeletedAt.IsNull(),
 						),
 					)
