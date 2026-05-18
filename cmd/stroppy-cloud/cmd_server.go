@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -10,6 +11,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/stroppy-io/stroppy-cloud/internal/core/build"
 
 	"connectrpc.com/connect"
 	otelconnect "connectrpc.com/otelconnect"
@@ -241,17 +244,28 @@ func runServer(ctx context.Context, cfgPath string) error {
 		Interceptors:            interceptors,
 	})
 	// ConnectRPC paths all start with /cloud.v1.<package>.<Service>/ — route
-	// them to the connect mux; /healthz to the healthcheck; everything else
-	// to the embedded SPA file server with index.html fallback for
-	// client-side routing.
+	// them to the connect mux; /metrics + /health + /healthz are static
+	// endpoints; everything else falls through to the embedded SPA file
+	// server with index.html fallback for client-side routing.
 	spaFS, _ := fs.Sub(web.Dist, "dist")
 	spaServer := http.FileServer(http.FS(spaFS))
+	processStartedAt := time.Now()
+	mux.Handle("/metrics", middleware.MetricsHandler())
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasPrefix(r.URL.Path, "/cloud.v1."):
 			connectMux.ServeHTTP(w, r)
-		case r.URL.Path == "/healthz":
+		case r.URL.Path == "/healthz" || r.URL.Path == "/health":
+			payload := map[string]any{
+				"status":     "ok",
+				"service":    build.ServiceName,
+				"version":    build.Version,
+				"instance":   build.GlobalInstanceId,
+				"uptime_sec": int64(time.Since(processStartedAt).Seconds()),
+			}
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
+			_ = json.NewEncoder(w).Encode(payload)
 		default:
 			if r.URL.Path != "/" {
 				f, err := spaFS.Open(r.URL.Path[1:])
@@ -269,7 +283,7 @@ func runServer(ctx context.Context, cfgPath string) error {
 
 	srv := &http.Server{
 		Addr:    cfg.Server.HTTPAddr,
-		Handler: h2c.NewHandler(mux, &http2.Server{}),
+		Handler: h2c.NewHandler(middleware.MetricsHTTP(mux), &http2.Server{}),
 	}
 
 	zlog.Info("serving", zap.String("addr", cfg.Server.HTTPAddr))
