@@ -99,6 +99,13 @@ func (r *CommandsRepo) FindByNodeRun(ctx context.Context, nodeRunID string) ([]*
 	)
 }
 
+// FindByID returns a single AgentCommand by id. Returns pgx.ErrNoRows if absent.
+func (r *CommandsRepo) FindByID(ctx context.Context, id string) (*agentpb.AgentCommand, error) {
+	return r.repo.QueryRow(ctx,
+		agentpb.AgentCommands.SelectAll().Where(agentpb.AgentCommands.Id.Eq(id)),
+	)
+}
+
 // FindReportedForNodeRun returns the first REPORTED command for a node_run_id.
 func (r *CommandsRepo) FindReportedForNodeRun(ctx context.Context, nodeRunID string) (*agentpb.AgentCommand, error) {
 	cmds, err := r.FindByNodeRun(ctx, nodeRunID)

@@ -149,7 +149,8 @@ func runServer(ctx context.Context, cfgPath string) error {
 	agentHub := agentsvc.NewHub()
 	agentCmdRepo := agentsvc.NewCommandsRepo(exec, txMgr)
 	bootstrapStore := agentsvc.NewBootstrapTokenStore(jwtSecret)
-	agentService := agentsvc.New(exec, txMgr, bus, agentHub, agentCmdRepo, bootstrapStore)
+	agentService := agentsvc.New(exec, txMgr, bus, agentHub, agentCmdRepo, bootstrapStore).
+		WithLogIngester(systemLogAdapter{sys: systemSvc})
 
 	if cfg.Workers.RecoveryOnStart {
 		if err := recovery.Run(ctx, systemSvc, agentService, webhookSvc, zlog); err != nil {

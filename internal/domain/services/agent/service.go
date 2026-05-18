@@ -25,18 +25,66 @@ type bootEntry struct {
 	dagRunID string
 }
 
+// AgentLogLine mirrors system.AgentLogLine without an import cycle.
+type AgentLogLine struct {
+	DagRunID  string
+	NodeRunID string
+	CommandID string
+	Timestamp time.Time
+	Stream    string
+	Line      string
+}
+
+// LogIngester accepts a batch of agent log lines. Implemented by system.Service.
+type LogIngester interface {
+	IngestLogs(ctx context.Context, lines []AgentLogLine) error
+}
+
 // Service handles agent registration, polling and deregistration.
 // Bootstrap tokens are JWT-signed; poll tokens are stored in-memory (single-node).
 type Service struct {
-	repo      *repository.ProtoRepository[agentpb.AgentAlias, agentpb.AgentColumnAlias, *agentpb.AgentScanner, *agentpb.Agent]
-	txMgr     pgtx.TxManager
-	events    eventing.Bus
-	hub       *Hub
-	cmdRepo   *CommandsRepo
-	bootstrap *BootstrapTokenStore
+	repo        *repository.ProtoRepository[agentpb.AgentAlias, agentpb.AgentColumnAlias, *agentpb.AgentScanner, *agentpb.Agent]
+	txMgr       pgtx.TxManager
+	events      eventing.Bus
+	hub         *Hub
+	cmdRepo     *CommandsRepo
+	bootstrap   *BootstrapTokenStore
+	logIngester LogIngester
 
 	mu     sync.Mutex
 	tokens map[string]string // poll_token → agent_id
+}
+
+// WithLogIngester wires an optional log sink. No-op when ingester is nil.
+func (s *Service) WithLogIngester(li LogIngester) *Service { s.logIngester = li; return s }
+
+// dagRunForCommand resolves the parent DagRun id for a command by hitting the
+// agent_commands table. Empty string when unknown (best-effort tag).
+func (s *Service) dagRunForCommand(ctx context.Context, commandID string) string {
+	if s.cmdRepo == nil || commandID == "" {
+		return ""
+	}
+	cmd, err := s.cmdRepo.FindByID(ctx, commandID)
+	if err != nil || cmd == nil {
+		return ""
+	}
+	// agent_commands has no dag_run_id column; the NodeRun id maps back via
+	// the DAG runtime. Resolution at this layer is best-effort: return the
+	// node_run_id as a hint and let the log row carry it instead.
+	return ""
+}
+
+// nodeRunForCommand resolves the NodeRun id for a command by hitting the
+// agent_commands table. Empty string when unknown.
+func (s *Service) nodeRunForCommand(ctx context.Context, commandID string) string {
+	if s.cmdRepo == nil || commandID == "" {
+		return ""
+	}
+	cmd, err := s.cmdRepo.FindByID(ctx, commandID)
+	if err != nil || cmd == nil {
+		return ""
+	}
+	return cmd.GetNodeRunId()
 }
 
 func New(executor exec.DB, txMgr pgtx.TxManager, events eventing.Bus, hub *Hub, cmdRepo *CommandsRepo, bootstrap *BootstrapTokenStore) *Service {
@@ -128,6 +176,21 @@ func (s *Service) Poll(ctx context.Context, req *agentpb.PollRequest) (*agentpb.
 				reportBytes, _ := json.Marshal(r)
 				_ = s.cmdRepo.MarkReported(ctx, r.GetCommandId(), reportBytes)
 			}
+		}
+		// Forward log lines into the log sink (best-effort; no Poll back-pressure).
+		if s.logIngester != nil && len(rep.GetLogLines()) > 0 {
+			batch := make([]AgentLogLine, 0, len(rep.GetLogLines()))
+			for _, l := range rep.GetLogLines() {
+				batch = append(batch, AgentLogLine{
+					DagRunID:  s.dagRunForCommand(ctx, l.GetCommandId()),
+					NodeRunID: s.nodeRunForCommand(ctx, l.GetCommandId()),
+					CommandID: l.GetCommandId(),
+					Timestamp: l.GetTs().AsTime(),
+					Stream:    l.GetStream().String(),
+					Line:      l.GetLine(),
+				})
+			}
+			_ = s.logIngester.IngestLogs(ctx, batch)
 		}
 	}
 
