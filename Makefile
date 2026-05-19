@@ -178,6 +178,8 @@ clean: ## Clean build artifacts
 protocols: # Generate Go + TS code from proto
 	rm -rf $(CURDIR)/internal/proto
 	cd protocols && easyp -cfg easyp.go.yaml generate
+	rm -rf $(CURDIR)/web/src/lib/proto
+	cd protocols && easyp -cfg easyp.ts.yaml generate
 
 
 # ============================================================

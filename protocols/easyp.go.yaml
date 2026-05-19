@@ -1,0 +1,52 @@
+lint:
+  use:
+    - DEFAULT
+  enum_zero_value_suffix: NONE
+  service_suffix: API
+  ignore: []
+  except: []
+  allow_comment_ignores: false
+  ignore_only: {}
+deps:
+  - github.com/bufbuild/protoc-gen-validate@v1.3.3
+  - github.com/yaroher/protoc-gen-go-plain@v0.7.17
+  - github.com/yaroher/ratel@v0.4.25
+generate:
+  inputs:
+    - directory: cloud
+  plugins:
+    - name: go
+      out: ../internal/proto
+      opts:
+        paths: source_relative
+    - name: go-grpc
+      out: ../internal/proto
+      opts:
+        paths: source_relative
+    - name: connect-go
+      out: ../internal/proto
+      opts:
+        paths: source_relative
+    - name: validate
+      out: ../internal/proto
+      opts:
+        lang: go
+        paths: source_relative
+    - name: go-json
+      out: ../internal/proto
+      opts:
+        paths: source_relative
+    - name: go-plain
+      out: ../internal/proto
+      opts:
+        paths: source_relative
+        json_jx: false
+        jx_pb: false
+        pool: false
+    - name: ratel
+      out: ../internal/proto
+      opts:
+        paths: source_relative
+breaking:
+  ignore: []
+  against_git_ref: master-worker
