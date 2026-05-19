@@ -1,0 +1,189 @@
+syntax = "proto3";
+
+package cloud.v1.catalog;
+
+import "cloud/v1/iam/user.proto";
+import "cloud/v1/common/timestamps.proto";
+import "goplain/goplain.proto";
+import "google/protobuf/field_mask.proto";
+import "cloud/v1/common/identity.proto";
+import "cloud/v1/iam/tenant.proto";
+import "ratelproto/ratelproto.proto";
+import "cloud/v1/common/config_file.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog";
+
+
+// Workload — kind of test + shape (load profile) + tuning.
+// Mirrors database.proto layering: Shape = what + how much, Tuning = how.
+message Workload {
+    Shape  shape  = 1 [(validate.rules).message.required = true];
+    Tuning tuning = 2;
+
+
+    // Protocol — wire format stroppy uses to talk to the DB under test.
+    // Source: stroppy-cloud/internal/domain/types/protocol.go.
+    // CRDB collapsed into PROTOCOL_PG (it's pg-wire on port 26257; port lives
+    // in Database/connection meta, not in the protocol identity).
+    // YDB self-hosted collapsed into PROTOCOL_YDB_GRPCS (TLS is the default
+    // surface; plain gRPC retired).
+    enum Protocol {
+        PROTOCOL_UNSPECIFIED = 0;
+        PROTOCOL_PG          = 1;   // Postgres / CockroachDB / Yugabyte pg-wire
+        PROTOCOL_MYSQL       = 2;   // MySQL / MariaDB / Percona / Vitess
+        PROTOCOL_PICODATA    = 3;   // Picodata-aware pg-wire routing
+        PROTOCOL_YDB_GRPCS   = 4;   // YDB gRPC over TLS (self-hosted + Managed YDB)
+        PROTOCOL_YDB_PGWIRE  = 5;   // YDB experimental pg-wire subset
+    }
+
+    // Script — workload script. Compatibility with Protocol/DatabaseKind is a
+    // cross-field rule enforced backend (see protocol.go ScriptCompat matrix).
+    enum Script {
+        SCRIPT_UNSPECIFIED            = 0;
+        SCRIPT_TPCC_PROCS             = 1;  // TPC-C order-entry via stored procedures.
+        SCRIPT_TPCC_TX                = 2;  // TPC-C order-entry via explicit transactions.
+        SCRIPT_TPCB_PROCS             = 3;  // TPC-B debit-credit via stored procedures.
+        SCRIPT_TPCB_TX                = 4;  // TPC-B debit-credit via explicit transactions.
+        SCRIPT_TPCH_TX                = 5;  // TPC-H analytical queries via transactions.
+        SCRIPT_TPCC_TX_YDB_PGWIRE     = 6;  // TPC-C on YDB pg-wire subset (limited DDL/txn).
+        SCRIPT_TPCB_TX_YDB_PGWIRE     = 7;  // TPC-B on YDB pg-wire subset.
+    }
+
+    // Load — k6 load profile. Mode is exclusive: duration OR iterations.
+    message Load {
+        // Virtual users (k6 --vus). 1..practical-cap.
+        uint32 vus = 1 [(validate.rules).uint32 = {gte: 1, lte: 100000}];
+        oneof mode {
+            option (validate.required) = true;
+            // k6 --duration. Format like "10m", "1h30m".
+            string duration = 2 [(validate.rules).string = {
+                max_len: 32,
+                pattern: "^([0-9]+(ns|us|ms|s|m|h))+$"
+            }];
+            // k6 --iterations. Fixed iteration count.
+            uint32 iterations = 3 [(validate.rules).uint32.gte = 1];
+        }
+        bool quiet = 4;                     // k6 -q
+        bool no_thresholds = 5;             // k6 --no-thresholds
+    }
+
+    // Shape — what test, how it's protocol-wired, and load profile.
+    message Shape {
+        Script   script   = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        Protocol protocol = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        // Optional second stroppy positional arg (e.g. SQL probe file).
+        string sql = 3 [(validate.rules).string.max_len = 512];
+        Load load = 4;
+    }
+
+    // Tuning — runtime knobs + injected payload.
+    message Tuning {
+        // DB connection pool size on the stroppy side.
+        uint32 pool_size = 1 [(validate.rules).uint32.lte = 65535];
+        // TPC-C warehouses / TPC-B branches scale factor.
+        uint32 scale_factor = 2 [(validate.rules).uint32.lte = 100000];
+        // Insert method override. "native" by default.
+        string default_insert_method = 3 [(validate.rules).string.max_len = 64];
+        // Script-specific env overrides. POSIX-style key.
+        map<string, string> env = 4 [(validate.rules).map = {
+            max_pairs: 256,
+            keys:   {string: {min_len: 1, max_len: 256, pattern: "^[A-Z_][A-Z0-9_]*$"}},
+            values: {string: {max_len: 8192}}
+        }];
+        // Step allowlist / blocklist — phase filter (e.g. create_schema,
+        // load_data, workload). Mutually exclusive with no_steps — backend.
+        repeated string steps = 5 [(validate.rules).repeated = {
+            max_items: 32,
+            items: {string: {min_len: 1, max_len: 64, pattern: "^[a-z][a-z0-9_]*$"}}
+        }];
+        repeated string no_steps = 6 [(validate.rules).repeated = {
+            max_items: 32,
+            items: {string: {min_len: 1, max_len: 64, pattern: "^[a-z][a-z0-9_]*$"}}
+        }];
+        // Run-scoped files staged into stroppy working dir (SQL probes,
+        // support files). Reuses cloud.v1.common.ConfigFile (path + inline/templated/ref).
+        repeated cloud.v1.common.ConfigFile files = 7 [(validate.rules).repeated.max_items = 64];
+        // Escape hatch — raw stroppy protojson merged over the rendered config.
+        string config_override_json = 8 [(validate.rules).string.max_len = 1048576];
+    }
+}
+
+message WorkloadPresetId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+/* WorkloadPreset — named, reusable workload (script + protocol + tuning) saved per tenant. */
+message WorkloadPreset {
+    message List {repeated WorkloadPreset workload_presets = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "workload_presets"
+        indexes: [
+            {name: "workload_presets_tenant_idx", columns: ["tenant_id"]}
+        ]
+    };
+
+    WorkloadPresetId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.iam.TenantId tenant_id = 2 [
+        (ratel.column).constraints = {
+            references_table: "tenants"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.common.Timestamps timestamps = 3 [(goplain.field).embed = true];
+    cloud.v1.common.Identity identity = 4 [(goplain.field).embed = true];
+    optional cloud.v1.iam.UserId created_by = 9 [(ratel.column).constraints = {
+        references_table: "users"
+        references_column: "id"
+        on_delete: SET_NULL
+    }];
+
+    Workload workload = 12 [
+        (validate.rules).message.required = true,
+        (goplain.field).serialize = true,
+        (ratel.column).constraints.default_value = "'{}'::jsonb"
+    ];
+}
+
+/* WorkloadOrPreset — polymorphic choice: inline workload definition or reference to a saved preset. */
+message WorkloadOrPreset {
+    oneof workload_variant {
+        option (goplain.oneof).embed = true;
+        option (validate.required) = true;
+        cloud.v1.catalog.WorkloadPresetId workload_preset_id = 10 [
+            (ratel.column).constraints = {
+                references_table: "workload_presets"
+                references_column: "id"
+                on_delete: RESTRICT
+            }
+        ]; // Reference to a saved preset.
+        cloud.v1.catalog.Workload workload = 11 [
+            (goplain.field).serialize = true,
+            (ratel.column).constraints.default_value = "'{}'::jsonb"
+        ]; // Inline workload definition.
+    }
+}
+
+
+message CreateWorkloadPresetRequest {
+    WorkloadPreset preset = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpdateWorkloadPresetRequest {
+    WorkloadPreset preset = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+
+service WorkloadPresetService {
+    rpc CreateWorkloadPreset (CreateWorkloadPresetRequest) returns (WorkloadPreset)       { option idempotency_level = IDEMPOTENT; }
+    rpc UpdateWorkloadPreset (UpdateWorkloadPresetRequest) returns (WorkloadPreset)       { option idempotency_level = IDEMPOTENT; }
+    rpc DeleteWorkloadPreset (WorkloadPresetId)            returns (WorkloadPreset)       { option idempotency_level = IDEMPOTENT; }
+    rpc GetWorkloadPreset    (WorkloadPresetId)            returns (WorkloadPreset)       { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListWorkloadPresets  (cloud.v1.iam.TenantId)       returns (WorkloadPreset.List)  { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc CloneWorkloadPreset  (WorkloadPresetId)            returns (WorkloadPreset)       { option idempotency_level = IDEMPOTENT; }
+}

@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package cloud.v1.common;
+
+import "google/protobuf/timestamp.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
+
+
+/* Timestamps — universal audit fields. Imported by both system and domain
+   layers so neither depends on the other. */
+message Timestamps {
+    google.protobuf.Timestamp created_at = 1 [
+        (ratel.column) = {constraints: {default_value: "now()"}},
+        (validate.rules).timestamp = {required: true, lt_now: true}
+    ];
+    google.protobuf.Timestamp updated_at = 2 [
+        (ratel.column) = {constraints: {default_value: "now()"}},
+        (validate.rules).timestamp = {required: true, lt_now: true}
+    ];
+    optional google.protobuf.Timestamp deleted_at = 3 [
+        (ratel.column) = {constraints: {default_value: "null"}},
+        (validate.rules).timestamp.lt_now = true
+    ];
+}

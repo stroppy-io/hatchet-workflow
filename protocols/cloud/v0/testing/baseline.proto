@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package cloud.v1.testing;
+
+import "cloud/v1/common/timestamps.proto";
+import "cloud/v1/iam/tenant.proto";
+import "cloud/v1/iam/user.proto";
+import "cloud/v1/testing/test_run.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing";
+
+
+message BaselineId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+
+/* Baseline — named pointer to a TestRun a tenant tracks for regression
+   comparison. Unique per (tenant_id, name). */
+message Baseline {
+    message List {repeated Baseline baselines = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "baselines"
+        indexes: [
+            {name: "baselines_tenant_name_uniq", columns: ["tenant_id", "name"], unique: true}
+        ]
+    };
+
+    BaselineId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.iam.TenantId tenant_id = 2 [
+        (ratel.column).constraints = {
+            references_table: "tenants"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.common.Timestamps timestamps = 3 [(goplain.field).embed = true];
+
+    string name = 10 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    TestRunId test_run_id = 11 [
+        (ratel.column).constraints = {
+            references_table: "test_runs"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+    optional cloud.v1.iam.UserId created_by = 12 [(ratel.column).constraints = {
+        references_table: "users"
+        references_column: "id"
+        on_delete: SET_NULL
+    }];
+}
+
+
+message SetBaselineRequest {
+    cloud.v1.iam.TenantId tenant_id = 1 [(validate.rules).message = {required: true}];
+    string name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    TestRunId test_run_id = 3 [(validate.rules).message = {required: true}];
+}
+
+message GetBaselineRequest {
+    cloud.v1.iam.TenantId tenant_id = 1 [(validate.rules).message = {required: true}];
+    string name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+}
+
+
+service BaselineService {
+    rpc SetBaseline    (SetBaselineRequest)  returns (Baseline)      { option idempotency_level = IDEMPOTENT; }
+    rpc GetBaseline    (GetBaselineRequest)  returns (Baseline)      { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc ListBaselines  (cloud.v1.iam.TenantId) returns (Baseline.List) { option idempotency_level = NO_SIDE_EFFECTS; }
+    rpc DeleteBaseline (BaselineId)          returns (Baseline)      { option idempotency_level = IDEMPOTENT; }
+}

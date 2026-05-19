@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package cloud.v1.system;
+
+import "cloud/v1/common/timestamps.proto";
+import "cloud/v1/common/ulid.proto";
+import "google/protobuf/any.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime";
+
+
+message Dag {
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "dags"
+    };
+    message Node {
+        message List {repeated Node nodes = 1 [(validate.rules).repeated.min_items = 1];}
+        common.Ulid id = 1 [(validate.rules).message = {required: true}];
+        google.protobuf.Any state = 3;
+    }
+
+    message Edge {
+        message List {repeated Edge edges = 1 [(validate.rules).repeated.min_items = 1];}
+        common.Ulid id = 1 [(validate.rules).message = {required: true}];
+        common.Ulid source = 2 [(validate.rules).message = {required: true}];
+        common.Ulid target = 3 [(validate.rules).message = {required: true}];
+    }
+
+    common.Ulid id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.common.Timestamps timestamps = 2 [(goplain.field).embed = true];
+    Node.List nodes = 3 [
+        (validate.rules).repeated.min_items = 1,
+        (goplain.field).serialize = true,
+        (ratel.column).constraints.default_value = "'{}'::jsonb"
+    ];
+    Edge.List edges = 4 [
+        (validate.rules).repeated.min_items = 1,
+        (goplain.field).serialize = true,
+        (ratel.column).constraints.default_value = "'{}'::jsonb"
+    ];
+    google.protobuf.Any state = 5 [
+        (goplain.field).serialize = true,
+        (ratel.column).constraints.default_value = "'{}'::jsonb"
+    ];
+}

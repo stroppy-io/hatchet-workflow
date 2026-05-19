@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package cloud.v1.tasks;
+
+import "cloud/v1/common/config_file.proto";
+import "cloud/v1/catalog/database.proto";
+import "cloud/v1/catalog/deployment.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/tasks";
+
+
+/* ConfigApplyTask — generic "render configs on role's machines" task.
+   Handler dispatches by engine_kind. Renders `files`, applies `cli_args` /
+   `env` overrides, optionally restarts the service. */
+message ConfigApplyTask {
+    cloud.v1.catalog.Database.Kind engine_kind = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    cloud.v1.catalog.MachineRole role = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+
+    /* target_machine_ids — explicit fan-out. Takes precedence over `role`
+       when non-empty. */
+    repeated string target_machine_ids = 3 [(validate.rules).repeated.max_items = 256];
+
+    repeated cloud.v1.common.ConfigFile files = 10 [(validate.rules).repeated.max_items = 64];
+    repeated string cli_args = 11 [(validate.rules).repeated.max_items = 256];
+    map<string, string> env = 12 [(validate.rules).map.max_pairs = 256];
+
+    // restart_service — issue `systemctl restart <unit>` (or equivalent) after rendering.
+    bool restart_service = 20;
+    // unit_name — override default systemd unit. Empty = engine-default.
+    string unit_name = 21 [(validate.rules).string.max_len = 64];
+}

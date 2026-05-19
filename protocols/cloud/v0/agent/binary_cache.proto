@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package cloud.v1.agent;
+
+import "google/protobuf/duration.proto";
+import "cloud/v1/ops/binary_artifact.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent";
+
+
+message ResolveArtifactRequest {
+    /* Lookup by canonical name + version + filename. */
+    string name = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string version = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string filename = 3 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    string arch = 4 [(validate.rules).string.max_len = 16];
+    string os = 5   [(validate.rules).string.max_len = 16];
+}
+
+message ResolveArtifactResponse {
+    cloud.v1.ops.BinaryArtifact artifact = 1;
+    /* download_url — short-lived presigned URL for the agent to GET the blob.
+       Server may serve directly or hand off to S3/object storage. */
+    string download_url = 2 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+    google.protobuf.Duration url_ttl = 3;
+}
+
+
+/* BinaryCacheService — agent-facing resolver for cached binaries. */
+service BinaryCacheService {
+    /* Resolve — main agent entry point. Idempotent; populates cache on miss. */
+    rpc Resolve (ResolveArtifactRequest) returns (ResolveArtifactResponse) { option idempotency_level = IDEMPOTENT; }
+}

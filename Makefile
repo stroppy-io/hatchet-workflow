@@ -173,6 +173,13 @@ clean: ## Clean build artifacts
 	docker ps -a --filter "name=stroppy-agent" -q | xargs -r docker rm -f 2>/dev/null || true
 	docker network rm stroppy-run-net 2>/dev/null || true
 
+
+.PHONY: protocols
+protocols: # Generate Go + TS code from proto
+	rm -rf $(CURDIR)/internal/proto
+	cd protocols && easyp -cfg easyp.go.yaml generate
+
+
 # ============================================================
 # Release
 # ============================================================

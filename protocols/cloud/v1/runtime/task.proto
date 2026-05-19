@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package cloud.v1.system;
+
+import "google/protobuf/any.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime";
+
+
+message Task {
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_PENDING = 1;
+        STATUS_RUNNING = 2;
+        STATUS_COMPLETED = 3;
+        STATUS_FAILED = 4;
+    }
+    string name = 2 [(validate.rules).string.min_len = 1];
+    Status status = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    google.protobuf.Any state = 4;
+}

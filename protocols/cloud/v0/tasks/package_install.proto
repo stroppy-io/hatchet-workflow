@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package cloud.v1.tasks;
+
+import "cloud/v1/catalog/deployment.proto";
+import "cloud/v1/catalog/package.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/tasks";
+
+
+/* PackageInstallTask — generic "install a Package on these machines".
+   Builder fan-outs target machines into `target_machine_ids` and inlines
+   the resolved Package payload fields (apt repo / pre-install commands /
+   deb blob URL) — agent has no DB / catalog access. */
+message PackageInstallTask {
+    cloud.v1.catalog.PackageId package_id = 1 [(validate.rules).message.required = true];
+    cloud.v1.catalog.MachineRole role = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+
+    /* target_machine_ids — explicit machine_id fan-out. Builder writes one
+       PackageInstallTask per group of target machines. Takes precedence
+       over `role` when non-empty. */
+    repeated string target_machine_ids = 3 [(validate.rules).repeated.max_items = 256];
+
+    /* Inlined Package payload (Builder populates from catalog.GetPackage).
+       Empty fields are no-op (e.g. binary-source packages don't fill apt_packages). */
+    repeated string apt_packages    = 10 [(validate.rules).repeated.max_items = 64];
+    repeated string pre_install     = 11 [(validate.rules).repeated.max_items = 64];
+    string custom_repo              = 12 [(validate.rules).string.max_len = 1024];
+    string custom_repo_key          = 13 [(validate.rules).string.max_len = 1024];
+    string deb_blob_url             = 14 [(validate.rules).string.max_len = 4096];
+    string deb_blob_sha256          = 15 [(validate.rules).string.len = 64];
+}

@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package cloud.v1.system;
+
+import "cloud/v1/common/timestamps.proto";
+import "google/protobuf/timestamp.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system";
+
+
+message NodeRunLogId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+
+/* NodeRunLog — append-only log line shipped by an agent for a single
+   command attached to a NodeRun. Indexed by (dag_run_id, ts) so
+   StreamLogs can backfill quickly. */
+message NodeRunLog {
+    message List {repeated NodeRunLog logs = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "node_run_logs"
+        indexes: [
+            {name: "node_run_logs_dag_run_ts_idx", columns: ["dag_run_id", "ts"]},
+            {name: "node_run_logs_node_run_ts_idx", columns: ["node_run_id", "ts"]}
+        ]
+    };
+
+    NodeRunLogId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.common.Timestamps timestamps = 2 [(goplain.field).embed = true];
+
+    /* String FKs to keep this proto package free of cross-package refs. */
+    string dag_run_id = 10 [(validate.rules).string.len = 26];
+    string node_run_id = 11 [(validate.rules).string.len = 26];
+    /* command_id — opaque agent-issued command identifier from
+       cloud.v1.agent.LogLine.command_id; useful for cross-referencing. */
+    string command_id = 12 [(validate.rules).string.max_len = 64];
+
+    google.protobuf.Timestamp ts = 13 [(validate.rules).timestamp = {required: true}];
+
+    /* stream — STDOUT/STDERR/UNSPECIFIED, stored as string for portability. */
+    string stream = 14 [(validate.rules).string.max_len = 32];
+
+    /* line — single log line; agent batches up to 1024 lines per Poll. */
+    string line = 15 [(validate.rules).string.max_len = 65536];
+}

@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package cloud.v1.agent;
+
+import "cloud/v1/agent/agent.proto";
+import "cloud/v1/common/timestamps.proto";
+import "google/protobuf/timestamp.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent";
+
+
+/* AgentCommandState — persist-and-replay state machine.
+   PENDING   — INSERTed by NodeHandler, not yet delivered to agent.
+   DELIVERED — handed to agent via Poll response.
+   REPORTED  — agent posted final Report.
+   TIMED_OUT — no Report within timeout; NodeHandler may retry. */
+enum AgentCommandState {
+    AGENT_COMMAND_STATE_UNSPECIFIED = 0;
+    AGENT_COMMAND_STATE_PENDING     = 1;
+    AGENT_COMMAND_STATE_DELIVERED   = 2;
+    AGENT_COMMAND_STATE_REPORTED    = 3;
+    AGENT_COMMAND_STATE_TIMED_OUT   = 4;
+}
+
+message AgentCommandId { option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26]; }
+
+/* AgentCommand — durable command row. NodeHandler INSERTs PENDING, the
+   Hub picks it up to put on the per-agent channel and flips state to
+   DELIVERED. Agent posts Report; server flips to REPORTED + stores
+   result_payload. After server restart, NodeHandler can detect a REPORTED
+   row for the same (node_run_id, command_kind) and skip re-issuing. */
+message AgentCommand {
+    message List {repeated AgentCommand commands = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "agent_commands"
+        indexes: [
+            {name: "agent_commands_agent_state_idx", columns: ["agent_id", "state"]},
+            {name: "agent_commands_node_run_idx", columns: ["node_run_id"]}
+        ]
+    };
+
+    AgentCommandId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    cloud.v1.common.Timestamps timestamps = 2 [(goplain.field).embed = true];
+    AgentId agent_id = 4 [
+        (ratel.column).constraints = {
+            references_table: "agents"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+
+    /* node_run_id — back-link for idempotent recovery (string FK; no proto
+       package boundary). */
+    string node_run_id = 10 [(validate.rules).string.max_len = 26];
+    /* command_payload — serialized Command (proto wire bytes). */
+    bytes command_payload = 11 [(validate.rules).bytes.max_len = 1048576];
+    AgentCommandState state = 12 [(validate.rules).enum.defined_only = true];
+    uint32 attempt = 13;
+    optional google.protobuf.Timestamp issued_at = 14;
+    optional google.protobuf.Timestamp delivered_at = 15;
+    optional google.protobuf.Timestamp reported_at = 16;
+    /* result_payload — serialized Report (proto wire bytes). */
+    bytes result_payload = 17 [(validate.rules).bytes.max_len = 1048576];
+}

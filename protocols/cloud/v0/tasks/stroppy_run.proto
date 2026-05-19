@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package cloud.v1.tasks;
+
+import "cloud/v1/catalog/workload.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/tasks";
+
+
+/* StroppyRunTask — execute a stroppy test on the runner machine.
+   Handler reads stroppy_target from DagRun state, ssh's in, runs the
+   binary with rendered config. */
+message StroppyRunTask {
+    cloud.v1.catalog.Workload workload = 1 [(validate.rules).message.required = true];
+    // DB connection target — produced by config_db nodes upstream. Format:
+    // engine-specific URL (postgres://host:port/db?...).
+    string db_url_state_key = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    // stroppy binary version override; empty = platform default from StroppySettings.
+    string version = 3 [(validate.rules).string.max_len = 32];
+
+    /* target_machine_ids — explicit machine_id fan-out. Usually a single
+       stroppy worker (e.g. "stroppy-0"). */
+    repeated string target_machine_ids = 4 [(validate.rules).repeated.max_items = 16];
+
+    /* config_path_state_key — DagRun state key the upstream
+       render-stroppy-config node wrote the on-host config path to. */
+    string config_path_state_key = 5 [(validate.rules).string.max_len = 128];
+}
