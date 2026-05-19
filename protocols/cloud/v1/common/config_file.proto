@@ -7,27 +7,12 @@ import "validate/validate.proto";
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
 
 
-/* TemplatedFile — reference to a bundled template + substitution values. */
-message TemplatedFile {
-    string template_name = 1;                // e.g. "postgresql.conf.tmpl"
-    map<string, string> values = 2;          // substituted into template
-}
-
-/* FileRef — reference to a stored blob with integrity check. */
-message FileRef {
-    string uri = 1;                          // s3://..., pkg://..., file://...
-    string sha256 = 2;                       // integrity check
-}
-
-/* ConfigFile — file rendered onto a host. Universal across deployments. */
+/* ConfigFile — file rendered onto a host. Cloud renders all configs from
+   presets and sends fully-rendered text inline; the agent simply writes it.
+   No templating, no external blob references. */
 message ConfigFile {
-    string path = 1;                         // e.g. "/etc/postgresql/17/main/postgresql.conf"
-    oneof content {
-        option (validate.required) = true;
-        string inline = 2;
-        TemplatedFile templated = 3;
-        FileRef ref = 4;
-    }
-    uint32 mode = 5;                          // unix perms, e.g. 0644
-    string owner = 6;                         // optional chown user
+    string path = 1;                          // e.g. "/etc/postgresql/17/main/postgresql.conf"
+    string inline = 2 [(validate.rules).string.min_len = 0];  // fully-rendered file content
+    uint32 mode = 3;                          // unix perms, e.g. 0644
+    string owner = 4;                         // optional chown user
 }

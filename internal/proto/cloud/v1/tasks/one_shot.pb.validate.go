@@ -116,6 +116,17 @@ func (m *OneShotTask) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if len(m.GetTargetMachineIds()) > 16 {
+		err := OneShotTaskValidationError{
+			field:  "TargetMachineIds",
+			reason: "value must contain no more than 16 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if utf8.RuneCountInString(m.GetCommandTemplate()) > 4096 {
 		err := OneShotTaskValidationError{
 			field:  "CommandTemplate",
@@ -130,6 +141,17 @@ func (m *OneShotTask) validate(all bool) error {
 	if len(m.GetTemplateVars()) > 64 {
 		err := OneShotTaskValidationError{
 			field:  "TemplateVars",
+			reason: "value must contain no more than 64 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetStateVarRefs()) > 64 {
+		err := OneShotTaskValidationError{
+			field:  "StateVarRefs",
 			reason: "value must contain no more than 64 pair(s)",
 		}
 		if !all {

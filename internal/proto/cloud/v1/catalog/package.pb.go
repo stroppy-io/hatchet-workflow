@@ -574,7 +574,11 @@ type Package_DebBlobSource struct {
 	DebFilename string                 `protobuf:"bytes,1,opt,name=deb_filename,json=debFilename,proto3" json:"deb_filename,omitempty"`
 	DebToken    string                 `protobuf:"bytes,2,opt,name=deb_token,json=debToken,proto3" json:"deb_token,omitempty"`
 	// pre_install — optional commands run before dpkg -i.
-	PreInstall    []string `protobuf:"bytes,3,rep,name=pre_install,json=preInstall,proto3" json:"pre_install,omitempty"`
+	PreInstall []string `protobuf:"bytes,3,rep,name=pre_install,json=preInstall,proto3" json:"pre_install,omitempty"`
+	// sha256 — hex-encoded SHA-256 of the .deb (computed at upload time).
+	Sha256 string `protobuf:"bytes,4,opt,name=sha256,proto3" json:"sha256,omitempty"`
+	// size_bytes — informational; surfaced to the UI.
+	SizeBytes     uint64 `protobuf:"varint,5,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -628,6 +632,20 @@ func (x *Package_DebBlobSource) GetPreInstall() []string {
 		return x.PreInstall
 	}
 	return nil
+}
+
+func (x *Package_DebBlobSource) GetSha256() string {
+	if x != nil {
+		return x.Sha256
+	}
+	return ""
+}
+
+func (x *Package_DebBlobSource) GetSizeBytes() uint64 {
+	if x != nil {
+		return x.SizeBytes
+	}
+	return 0
 }
 
 // BinaryDownload — fetch tarball/binary from URL, extract to prefix.
@@ -918,7 +936,7 @@ const file_cloud_v1_catalog_package_proto_rawDesc = "" +
 	"\n" +
 	"\x1ecloud/v1/catalog/package.proto\x12\x10cloud.v1.catalog\x1a\x17cloud/v1/iam/user.proto\x1a cloud/v1/common/timestamps.proto\x1a\x1fcloud/v1/catalog/database.proto\x1a\x1ecloud/v1/common/identity.proto\x1a\x19cloud/v1/iam/tenant.proto\x1a\x15goplain/goplain.proto\x1a google/protobuf/field_mask.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"5\n" +
 	"\tPackageId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"\xa2\x10\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"\xe3\x10\n" +
 	"\aPackage\x12=\n" +
 	"\x02id\x18\x01 \x01(\v2\x1b.cloud.v1.catalog.PackageIdB\x10\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x04\x12\x02\x10\x01R\x02id\x12O\n" +
 	"\ttenant_id\x18\x02 \x01(\v2\x16.cloud.v1.iam.TenantIdB\x15\x9a\xb5\x18\x11\x12\x0f2\atenants:\x02id@\x01H\x00R\btenantId\x88\x01\x01\x12C\n" +
@@ -950,13 +968,16 @@ const file_cloud_v1_catalog_package_proto_rawDesc = "" +
 	"preInstall\x12)\n" +
 	"\vcustom_repo\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\bR\n" +
 	"customRepo\x120\n" +
-	"\x0fcustom_repo_key\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80\bR\rcustomRepoKey\x1a\x90\x01\n" +
+	"\x0fcustom_repo_key\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80\bR\rcustomRepoKey\x1a\xd1\x01\n" +
 	"\rDebBlobSource\x12-\n" +
 	"\fdeb_filename\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\xff\x01R\vdebFilename\x12%\n" +
 	"\tdeb_token\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\bR\bdebToken\x12)\n" +
 	"\vpre_install\x18\x03 \x03(\tB\b\xfaB\x05\x92\x01\x02\x10 R\n" +
-	"preInstall\x1a\xa1\x04\n" +
+	"preInstall\x12 \n" +
+	"\x06sha256\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x98\x01@R\x06sha256\x12\x1d\n" +
+	"\n" +
+	"size_bytes\x18\x05 \x01(\x04R\tsizeBytes\x1a\xa1\x04\n" +
 	"\x0eBinaryDownload\x12F\n" +
 	"\x03url\x18\x01 \x01(\v22.cloud.v1.catalog.Package.BinaryDownload.DirectUrlH\x00R\x03url\x12]\n" +
 	"\x0fcached_artifact\x18\x02 \x01(\v22.cloud.v1.catalog.Package.BinaryDownload.CachedRefH\x00R\x0ecachedArtifact\x12/\n" +

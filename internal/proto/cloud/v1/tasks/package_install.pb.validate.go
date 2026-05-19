@@ -123,6 +123,84 @@ func (m *PackageInstallTask) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if len(m.GetTargetMachineIds()) > 256 {
+		err := PackageInstallTaskValidationError{
+			field:  "TargetMachineIds",
+			reason: "value must contain no more than 256 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetAptPackages()) > 64 {
+		err := PackageInstallTaskValidationError{
+			field:  "AptPackages",
+			reason: "value must contain no more than 64 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetPreInstall()) > 64 {
+		err := PackageInstallTaskValidationError{
+			field:  "PreInstall",
+			reason: "value must contain no more than 64 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetCustomRepo()) > 1024 {
+		err := PackageInstallTaskValidationError{
+			field:  "CustomRepo",
+			reason: "value length must be at most 1024 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetCustomRepoKey()) > 1024 {
+		err := PackageInstallTaskValidationError{
+			field:  "CustomRepoKey",
+			reason: "value length must be at most 1024 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetDebBlobUrl()) > 4096 {
+		err := PackageInstallTaskValidationError{
+			field:  "DebBlobUrl",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetDebBlobSha256()) != 64 {
+		err := PackageInstallTaskValidationError{
+			field:  "DebBlobSha256",
+			reason: "value length must be 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+
+	}
+
 	if len(errors) > 0 {
 		return PackageInstallTaskMultiError(errors)
 	}

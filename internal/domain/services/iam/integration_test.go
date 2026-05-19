@@ -88,6 +88,72 @@ func TestLoginWrongPassword(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestUpdatePasswordHappyPath(t *testing.T) {
+	f := fixture.NewIAM(t)
+	ctx := context.Background()
+
+	created, err := f.IAM.CreateUser(ctx, &iampb.User{Email: "pw@e.com", Nickname: "pw"}, "OldPass123!")
+	require.NoError(t, err)
+
+	// Old password works.
+	_, err = f.IAM.Login(ctx, "pw@e.com", "OldPass123!")
+	require.NoError(t, err)
+
+	updated, err := f.IAM.UpdatePassword(ctx, created.GetId(), "OldPass123!", "NewPass456!", "NewPass456!")
+	require.NoError(t, err)
+	require.Equal(t, created.GetId().GetValue(), updated.GetId().GetValue())
+
+	// Old password rejected, new password accepted.
+	_, err = f.IAM.Login(ctx, "pw@e.com", "OldPass123!")
+	require.Error(t, err)
+	_, err = f.IAM.Login(ctx, "pw@e.com", "NewPass456!")
+	require.NoError(t, err)
+}
+
+func TestUpdatePasswordWrongOld(t *testing.T) {
+	f := fixture.NewIAM(t)
+	ctx := context.Background()
+	created, err := f.IAM.CreateUser(ctx, &iampb.User{Email: "pw2@e.com", Nickname: "pw2"}, "OldPass123!")
+	require.NoError(t, err)
+
+	_, err = f.IAM.UpdatePassword(ctx, created.GetId(), "WrongOld!", "NewPass456!", "NewPass456!")
+	require.Error(t, err)
+}
+
+func TestUpdatePasswordConfirmationMismatch(t *testing.T) {
+	f := fixture.NewIAM(t)
+	ctx := context.Background()
+	created, err := f.IAM.CreateUser(ctx, &iampb.User{Email: "pw3@e.com", Nickname: "pw3"}, "OldPass123!")
+	require.NoError(t, err)
+
+	_, err = f.IAM.UpdatePassword(ctx, created.GetId(), "OldPass123!", "NewPass456!", "DifferentConfirm!")
+	require.Error(t, err)
+}
+
+// TestLoginByUsername: identifier without "@" resolved against nickname column.
+func TestLoginByUsername(t *testing.T) {
+	f := fixture.NewIAM(t)
+	ctx := context.Background()
+
+	_, err := f.IAM.CreateUser(ctx, &iampb.User{Email: "admin@e.com", Nickname: "admin"}, "AdminP@ss!")
+	require.NoError(t, err)
+
+	pair, err := f.IAM.Login(ctx, "admin", "AdminP@ss!")
+	require.NoError(t, err)
+	require.NotEmpty(t, pair.GetAccessToken())
+}
+
+func TestLoginByUsernameUnknownNickname(t *testing.T) {
+	f := fixture.NewIAM(t)
+	ctx := context.Background()
+
+	_, err := f.IAM.CreateUser(ctx, &iampb.User{Email: "x@e.com", Nickname: "knownnick"}, "P@ss123!")
+	require.NoError(t, err)
+
+	_, err = f.IAM.Login(ctx, "unknownnick", "P@ss123!")
+	require.Error(t, err)
+}
+
 func TestApiTokenCreateAndVerify(t *testing.T) {
 	f := fixture.NewIAM(t)
 	ctx := context.Background()

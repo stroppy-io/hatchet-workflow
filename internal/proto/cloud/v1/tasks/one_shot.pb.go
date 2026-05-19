@@ -80,10 +80,17 @@ type OneShotTask struct {
 	EngineKind catalog.Database_Kind  `protobuf:"varint,1,opt,name=engine_kind,json=engineKind,proto3,enum=cloud.v1.catalog.Database_Kind" json:"engine_kind,omitempty"`
 	Role       catalog.MachineRole    `protobuf:"varint,2,opt,name=role,proto3,enum=cloud.v1.catalog.MachineRole" json:"role,omitempty"`
 	Target     OneShotTask_Target     `protobuf:"varint,3,opt,name=target,proto3,enum=cloud.v1.tasks.OneShotTask_Target" json:"target,omitempty"`
+	// target_machine_ids — explicit fan-out. When non-empty, the handler
+	// ignores `role` and `target` and dispatches to these machine_ids.
+	TargetMachineIds []string `protobuf:"bytes,4,rep,name=target_machine_ids,json=targetMachineIds,proto3" json:"target_machine_ids,omitempty"`
 	// command_template — shell template; engine-specific args interpolated.
 	// Engine-typical: "cockroach init --certs-dir=...", "ydbd admin blobstorage init".
 	CommandTemplate string            `protobuf:"bytes,10,opt,name=command_template,json=commandTemplate,proto3" json:"command_template,omitempty"`
 	TemplateVars    map[string]string `protobuf:"bytes,11,rep,name=template_vars,json=templateVars,proto3" json:"template_vars,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// state_var_refs — at execute time the handler reads each state-store key
+	// and merges the value (string) into TemplateVars before rendering. Key
+	// in the map is the template variable name; value is the state-store key.
+	StateVarRefs map[string]string `protobuf:"bytes,12,rep,name=state_var_refs,json=stateVarRefs,proto3" json:"state_var_refs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// post_check_command — optional readiness probe; non-zero exit retries.
 	PostCheckCommand      string `protobuf:"bytes,20,opt,name=post_check_command,json=postCheckCommand,proto3" json:"post_check_command,omitempty"`
 	PostCheckRetries      uint32 `protobuf:"varint,21,opt,name=post_check_retries,json=postCheckRetries,proto3" json:"post_check_retries,omitempty"`
@@ -143,6 +150,13 @@ func (x *OneShotTask) GetTarget() OneShotTask_Target {
 	return OneShotTask_TARGET_UNSPECIFIED
 }
 
+func (x *OneShotTask) GetTargetMachineIds() []string {
+	if x != nil {
+		return x.TargetMachineIds
+	}
+	return nil
+}
+
 func (x *OneShotTask) GetCommandTemplate() string {
 	if x != nil {
 		return x.CommandTemplate
@@ -153,6 +167,13 @@ func (x *OneShotTask) GetCommandTemplate() string {
 func (x *OneShotTask) GetTemplateVars() map[string]string {
 	if x != nil {
 		return x.TemplateVars
+	}
+	return nil
+}
+
+func (x *OneShotTask) GetStateVarRefs() map[string]string {
+	if x != nil {
+		return x.StateVarRefs
 	}
 	return nil
 }
@@ -182,21 +203,26 @@ var File_cloud_v1_tasks_one_shot_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_tasks_one_shot_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcloud/v1/tasks/one_shot.proto\x12\x0ecloud.v1.tasks\x1a\x1fcloud/v1/catalog/database.proto\x1a!cloud/v1/catalog/deployment.proto\x1a\x17validate/validate.proto\"\xaa\x05\n" +
+	"\x1dcloud/v1/tasks/one_shot.proto\x12\x0ecloud.v1.tasks\x1a\x1fcloud/v1/catalog/database.proto\x1a!cloud/v1/catalog/deployment.proto\x1a\x17validate/validate.proto\"\x82\a\n" +
 	"\vOneShotTask\x12L\n" +
 	"\vengine_kind\x18\x01 \x01(\x0e2\x1f.cloud.v1.catalog.Database.KindB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\n" +
 	"engineKind\x12=\n" +
 	"\x04role\x18\x02 \x01(\x0e2\x1d.cloud.v1.catalog.MachineRoleB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04role\x12D\n" +
-	"\x06target\x18\x03 \x01(\x0e2\".cloud.v1.tasks.OneShotTask.TargetB\b\xfaB\x05\x82\x01\x02\x10\x01R\x06target\x123\n" +
+	"\x06target\x18\x03 \x01(\x0e2\".cloud.v1.tasks.OneShotTask.TargetB\b\xfaB\x05\x82\x01\x02\x10\x01R\x06target\x126\n" +
+	"\x12target_machine_ids\x18\x04 \x03(\tB\b\xfaB\x05\x92\x01\x02\x10\x10R\x10targetMachineIds\x123\n" +
 	"\x10command_template\x18\n" +
 	" \x01(\tB\b\xfaB\x05r\x03\x18\x80 R\x0fcommandTemplate\x12\\\n" +
-	"\rtemplate_vars\x18\v \x03(\v2-.cloud.v1.tasks.OneShotTask.TemplateVarsEntryB\b\xfaB\x05\x9a\x01\x02\x10@R\ftemplateVars\x126\n" +
+	"\rtemplate_vars\x18\v \x03(\v2-.cloud.v1.tasks.OneShotTask.TemplateVarsEntryB\b\xfaB\x05\x9a\x01\x02\x10@R\ftemplateVars\x12]\n" +
+	"\x0estate_var_refs\x18\f \x03(\v2-.cloud.v1.tasks.OneShotTask.StateVarRefsEntryB\b\xfaB\x05\x9a\x01\x02\x10@R\fstateVarRefs\x126\n" +
 	"\x12post_check_command\x18\x14 \x01(\tB\b\xfaB\x05r\x03\x18\x80 R\x10postCheckCommand\x125\n" +
 	"\x12post_check_retries\x18\x15 \x01(\rB\a\xfaB\x04*\x02\x18dR\x10postCheckRetries\x12A\n" +
 	"\x18post_check_delay_seconds\x18\x16 \x01(\rB\b\xfaB\x05*\x03\x18\xd8\x04R\x15postCheckDelaySeconds\x1a?\n" +
 	"\x11TemplateVarsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a?\n" +
+	"\x11StateVarRefsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"B\n" +
 	"\x06Target\x12\x16\n" +
@@ -218,24 +244,26 @@ func file_cloud_v1_tasks_one_shot_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_tasks_one_shot_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_tasks_one_shot_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_cloud_v1_tasks_one_shot_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_cloud_v1_tasks_one_shot_proto_goTypes = []any{
 	(OneShotTask_Target)(0),    // 0: cloud.v1.tasks.OneShotTask.Target
 	(*OneShotTask)(nil),        // 1: cloud.v1.tasks.OneShotTask
 	nil,                        // 2: cloud.v1.tasks.OneShotTask.TemplateVarsEntry
-	(catalog.Database_Kind)(0), // 3: cloud.v1.catalog.Database.Kind
-	(catalog.MachineRole)(0),   // 4: cloud.v1.catalog.MachineRole
+	nil,                        // 3: cloud.v1.tasks.OneShotTask.StateVarRefsEntry
+	(catalog.Database_Kind)(0), // 4: cloud.v1.catalog.Database.Kind
+	(catalog.MachineRole)(0),   // 5: cloud.v1.catalog.MachineRole
 }
 var file_cloud_v1_tasks_one_shot_proto_depIdxs = []int32{
-	3, // 0: cloud.v1.tasks.OneShotTask.engine_kind:type_name -> cloud.v1.catalog.Database.Kind
-	4, // 1: cloud.v1.tasks.OneShotTask.role:type_name -> cloud.v1.catalog.MachineRole
+	4, // 0: cloud.v1.tasks.OneShotTask.engine_kind:type_name -> cloud.v1.catalog.Database.Kind
+	5, // 1: cloud.v1.tasks.OneShotTask.role:type_name -> cloud.v1.catalog.MachineRole
 	0, // 2: cloud.v1.tasks.OneShotTask.target:type_name -> cloud.v1.tasks.OneShotTask.Target
 	2, // 3: cloud.v1.tasks.OneShotTask.template_vars:type_name -> cloud.v1.tasks.OneShotTask.TemplateVarsEntry
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	3, // 4: cloud.v1.tasks.OneShotTask.state_var_refs:type_name -> cloud.v1.tasks.OneShotTask.StateVarRefsEntry
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_tasks_one_shot_proto_init() }
@@ -249,7 +277,7 @@ func file_cloud_v1_tasks_one_shot_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_tasks_one_shot_proto_rawDesc), len(file_cloud_v1_tasks_one_shot_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

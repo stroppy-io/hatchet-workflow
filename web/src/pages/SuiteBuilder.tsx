@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { clients } from "@/api/clients";
-import { getTenantId } from "@/api/transport";
+import { useTenantId, useTenantPath } from "@/hooks/useTenantPath";
+import { placeholderId } from "@/lib/proto-helpers";
 import type { TestSuite } from "@/lib/proto/cloud/v1/testing/test_suite_pb";
 import { TestSuite_Policy_Mode } from "@/lib/proto/cloud/v1/testing/test_suite_pb";
 import type { DatabasePreset } from "@/lib/proto/cloud/v1/catalog/database_pb";
@@ -43,6 +44,8 @@ export function SuiteBuilder() {
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
   const editing = Boolean(id);
+  const tid = useTenantId();
+  const tPath = useTenantPath();
 
   const [loading, setLoading] = useState(editing);
   const [saving, setSaving] = useState(false);
@@ -59,7 +62,6 @@ export function SuiteBuilder() {
   const [maxParallel, setMaxParallel] = useState(1);
 
   const load = useCallback(async () => {
-    const tid = getTenantId();
     try {
       const [presetsResp, suiteResp] = await Promise.all([
         clients.databasePreset.listDatabasePresets(tid ? { value: tid } : {}),
@@ -124,16 +126,17 @@ export function SuiteBuilder() {
           },
           updateMask: { paths: ["identity", "matrix", "policy"] },
         });
-        navigate(`/suites/${id}`);
+        navigate(tPath(`suites/${id}`));
       } else {
         const result = await clients.suite.createTestSuite({
           suite: {
+            id: placeholderId(),
             identity: { name: name.trim(), description: description.trim() },
             matrix: { databases, workloads: [] },
             policy,
           },
         });
-        navigate(`/suites/${result.id?.value}`);
+        navigate(tPath(`suites/${result.id?.value}`));
       }
     } catch (err) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "Save failed" });
@@ -154,7 +157,7 @@ export function SuiteBuilder() {
     <div className="flex flex-col h-full overflow-hidden bg-[#050505]">
       {/* Top bar */}
       <div className="shrink-0 px-5 py-3 border-b border-zinc-800 bg-[#070707] flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/suites")} className="text-zinc-500 hover:text-zinc-200">
+        <Button variant="ghost" size="sm" onClick={() => navigate(tPath("suites"))} className="text-zinc-500 hover:text-zinc-200">
           <ArrowLeft className="w-3.5 h-3.5 mr-1.5" /> Suites
         </Button>
         <div className="flex items-center gap-2">
@@ -296,7 +299,7 @@ export function SuiteBuilder() {
 
       {/* Footer */}
       <div className="shrink-0 px-5 py-3 border-t border-zinc-800 bg-[#070707] flex items-center justify-end gap-2">
-        <Button variant="ghost" onClick={() => navigate("/suites")} disabled={saving}>
+        <Button variant="ghost" onClick={() => navigate(tPath("suites"))} disabled={saving}>
           Cancel
         </Button>
         <Button onClick={save} disabled={saving || !name.trim()}>

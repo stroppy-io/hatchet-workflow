@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { clients } from "@/api/clients";
 import { getAccessToken } from "@/api/transport";
+import { placeholderId } from "@/lib/proto-helpers";
 import { Database_Kind } from "@/lib/proto/cloud/v1/catalog/database_pb";
 import {
   type Package as ProtoPackage,
@@ -100,7 +101,7 @@ async function uploadPackageDeb(packageId: string, file: File): Promise<void> {
   const headers: Record<string, string> = {};
   const token = getAccessToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  const res = await fetch(`/api/v1/packages/${packageId}/deb`, {
+  const res = await fetch(`/packages/${packageId}/deb`, {
     method: "POST",
     headers,
     body: formData,
@@ -290,6 +291,7 @@ function PackageEditor({
     setError("");
     try {
       const pkgProto = {
+        id: placeholderId(),
         identity: { name, description },
         dbKind: STRING_TO_KIND[dbKind] ?? Database_Kind.DATABASE_KIND_UNSPECIFIED,
         dbVersion,
@@ -309,7 +311,7 @@ function PackageEditor({
       let targetId = pkg?.id;
       if (isEdit) {
         await clients.package.updatePackage({
-          package: { id: { value: pkg!.id }, ...pkgProto },
+          package: { ...pkgProto, id: { value: pkg!.id } },
           updateMask: { paths: ["identity", "db_version", "source"] },
         });
       } else {

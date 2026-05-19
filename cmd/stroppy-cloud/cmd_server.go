@@ -20,6 +20,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/core/configurator"
 	"github.com/stroppy-io/stroppy-cloud/internal/core/eventing"
@@ -43,13 +44,15 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/s3"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/stroppybin"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/terraform"
+	tfmodules "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/terraform/modules"
 	valkey "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/valkey"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/victoria"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	testingpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing"
 	transportconnect "github.com/stroppy-io/stroppy-cloud/internal/transport/connect"
 	"github.com/stroppy-io/stroppy-cloud/internal/transport/httpext"
-	"github.com/stroppy-io/stroppy-cloud/web"
 	"github.com/stroppy-io/stroppy-cloud/internal/transport/middleware"
+	"github.com/stroppy-io/stroppy-cloud/web"
 )
 
 func serverCmd() *cobra.Command {
@@ -174,31 +177,65 @@ func runServer(ctx context.Context, cfgPath string) error {
 
 	nodeReg := nodeworker.NewRegistry()
 	nodeReg.Register(handlers.NewMockHandler()) // "" kind fallback for untyped specs
-	// terraform.Actor uses a real `terraform` binary on PATH; ModuleResolver
-	// is nil for now — APPLY of a non-UNSPECIFIED module will hard-fail
-	// until the module bundle is delivered (B25/B26 task).
 	tfActor, tfActorErr := terraform.NewActor()
 	if tfActorErr != nil {
 		zlog.Warn("terraform actor init failed; handler will refuse non-noop runs", zap.Error(tfActorErr))
 	}
-	nodeReg.Register(handlers.NewTerraformHandler(tfActor, nil, zlog))
+	// terraform handler: embedded modules + per-machine bootstrap-token
+	// issuer (so the rendered cloud-init userdata can register agents).
+	nodeReg.Register(handlers.NewTerraformHandler(tfActor, tfmodules.NewResolver(), zlog, agentService))
 	nodeReg.Register(handlers.NewDockerHandler("", zlog))
-	// Agent-bound handlers: agentID/machineID resolved from node metadata at runtime.
-	// Placeholder empty IDs — real wiring added when agent resolver pattern is implemented.
-	nodeReg.Register(handlers.NewPackageInstallHandler(agentHub, "", "", 0))
-	nodeReg.Register(handlers.NewStroppyRunHandler(agentHub, "", "", 0))
-	nodeReg.Register(handlers.NewOneShotHandler(agentHub, "", "", 0))
-	nodeReg.Register(handlers.NewConfigApplyHandler(agentHub, "", "", 0))
-	nodeReg.Register(handlers.NewTestRunRefHandler())
+	// Agent-bound handlers resolve (dag_run_id, machine_id) → agent_id from
+	// agentHub at execute time.
+	nodeReg.Register(handlers.NewPackageInstallHandler(agentHub, 0))
+	nodeReg.Register(handlers.NewStroppyRunHandler(agentHub, zlog, 0))
+	nodeReg.Register(handlers.NewOneShotHandler(agentHub, 0))
+	nodeReg.Register(handlers.NewConfigApplyHandler(agentHub, 0))
+	nodeReg.Register(handlers.NewWaitAgentsHandler(agentHub))
+	nodeReg.Register(handlers.NewTestRunRefHandler(runSvc, systemSvc, 0, 0))
 
 	worker := nodeworker.New(pool, systemSvc, nodeReg, nodeworker.Config{
 		Workers: cfg.Workers.NodeWorkers,
 		Tick:    500 * time.Millisecond,
 	}, zlog)
+	// Schedule hooks: every cron-triggered Schedule fire dispatches to a hook
+	// here. Currently registered hooks:
+	//   "launch_test_run" — payload = testing.TestRunId; calls runSvc.LaunchTestRun.
+	//   "launch_test_suite" — payload = testing.TestSuiteId; calls suiteRunSvc.LaunchTestSuite.
+	scheduleHooks := scheduler.NewHookRegistry()
+	scheduleHooks.Register("launch_test_run", func(ctx context.Context, payload *anypb.Any) error {
+		var id testingpb.TestRunId
+		if err := payload.UnmarshalTo(&id); err != nil {
+			return fmt.Errorf("launch_test_run: unmarshal payload: %w", err)
+		}
+		_, err := runSvc.LaunchTestRun(ctx, &id)
+		return err
+	})
+	scheduleHooks.Register("launch_test_suite", func(ctx context.Context, payload *anypb.Any) error {
+		var id testingpb.TestSuiteId
+		if err := payload.UnmarshalTo(&id); err != nil {
+			return fmt.Errorf("launch_test_suite: unmarshal payload: %w", err)
+		}
+		// Caller for system-triggered launches: use the schedule's owner from
+		// metadata when present, otherwise nil (suite-run-service tolerates
+		// nil caller for system-initiated runs).
+		_, err := suiteRunSvc.LaunchTestSuite(ctx, &id, nil)
+		return err
+	})
 	sched := scheduler.New(pool, systemSvc, scheduler.Config{
 		Tick:          cfg.Workers.SchedulerTick,
 		LeaseDuration: 30 * time.Second,
-	}, zlog)
+	}, zlog).WithHooks(scheduleHooks)
+	// Wire synchronous TriggerNow → hook dispatch so the UI button observes
+	// the side effect immediately. The scheduler-worker tick handles all
+	// other cron-driven fires.
+	systemSvc.WithHookInvoker(func(ctx context.Context, name string, payload *anypb.Any) error {
+		hook, ok := scheduleHooks.Lookup(name)
+		if !ok {
+			return fmt.Errorf("system.TriggerNow: hook %q not registered", name)
+		}
+		return hook(ctx, payload)
+	})
 
 	workerCtx, cancelWorkers := context.WithCancel(ctx)
 	defer cancelWorkers()
@@ -263,17 +300,17 @@ func runServer(ctx context.Context, cfgPath string) error {
 
 	mux := http.NewServeMux()
 	connectMux := transportconnect.Mount(transportconnect.Deps{
-		IAMHandler:      transportconnect.NewIAMHandler(iamSvc, cfg.Auth.RefreshTTL, cfg.Auth.CookieSecure),
-		CatalogHandler:  transportconnect.NewCatalogHandler(catalogSvc),
-		StroppyHandler:  transportconnect.NewStroppyHandler(stroppySvc),
-		ScheduleHandler: transportconnect.NewScheduleHandler(systemSvc),
-		TestingHandler:        transportconnect.NewTestingHandler(tplSvc, runSvc, suiteSvc),
-		TestSuiteRunHandler:   transportconnect.NewTestSuiteRunHandler(suiteRunSvc),
-		SharedTestRunHandler:  transportconnect.NewSharedTestRunHandler(sharedTestRunSvc),
-		SharedSuiteRunHandler: transportconnect.NewSharedSuiteRunHandler(sharedSuiteRunSvc),
-		ComparisonHandler:     transportconnect.NewComparisonHandler(comparisonSvc),
-		BaselineHandler:       transportconnect.NewBaselineHandler(baselineSvc),
-		AgentHandler:          transportconnect.NewAgentHandler(agentService),
+		IAMHandler:              transportconnect.NewIAMHandler(iamSvc, cfg.Auth.RefreshTTL, cfg.Auth.CookieSecure),
+		CatalogHandler:          transportconnect.NewCatalogHandler(catalogSvc),
+		StroppyHandler:          transportconnect.NewStroppyHandler(stroppySvc),
+		ScheduleHandler:         transportconnect.NewScheduleHandler(systemSvc),
+		TestingHandler:          transportconnect.NewTestingHandler(tplSvc, runSvc, suiteSvc),
+		TestSuiteRunHandler:     transportconnect.NewTestSuiteRunHandler(suiteRunSvc),
+		SharedTestRunHandler:    transportconnect.NewSharedTestRunHandler(sharedTestRunSvc),
+		SharedSuiteRunHandler:   transportconnect.NewSharedSuiteRunHandler(sharedSuiteRunSvc),
+		ComparisonHandler:       transportconnect.NewComparisonHandler(comparisonSvc),
+		BaselineHandler:         transportconnect.NewBaselineHandler(baselineSvc),
+		AgentHandler:            transportconnect.NewAgentHandler(agentService),
 		WebhookHandler:          transportconnect.NewWebhookHandler(webhookSvc),
 		QuotaHandler:            transportconnect.NewQuotaHandler(quotaSvc),
 		BinaryCacheHandler:      transportconnect.NewBinaryCacheHandler(binaryCacheSvc),

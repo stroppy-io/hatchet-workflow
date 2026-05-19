@@ -93,6 +93,10 @@ message Package {
         string deb_token = 2 [(validate.rules).string.max_len = 1024];
         // pre_install — optional commands run before dpkg -i.
         repeated string pre_install = 3 [(validate.rules).repeated.max_items = 32];
+        // sha256 — hex-encoded SHA-256 of the .deb (computed at upload time).
+        string sha256 = 4 [(validate.rules).string.len = 64];
+        // size_bytes — informational; surfaced to the UI.
+        uint64 size_bytes = 5;
     }
 
     /* BinaryDownload — fetch tarball/binary from URL, extract to prefix.

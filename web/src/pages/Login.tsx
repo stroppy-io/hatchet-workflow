@@ -18,6 +18,9 @@ export function Login() {
     setLoading(true);
     try {
       await login(username, password);
+      // Post-login routing is handled by AppRoutes.defaultLanding. Honour an
+      // explicit ?redirect= when present (e.g. deep-link share), otherwise
+      // fall back to "/" and let AppRoutes resolve the right tenant scope.
       const redirect = searchParams.get("redirect") || "/";
       navigate(redirect, { replace: true });
     } catch (err: unknown) {

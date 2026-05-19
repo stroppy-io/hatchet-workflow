@@ -1060,7 +1060,7 @@ const file_cloud_v1_testing_test_run_proto_rawDesc = "" +
 	"\x02to\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampH\x01R\x02to\x88\x01\x01\x12.\n" +
 	"\fstep_seconds\x18\x05 \x01(\rB\v\xfaB\b*\x06\x18\x80\xa3\x05(\x01R\vstepSecondsB\a\n" +
 	"\x05_fromB\x05\n" +
-	"\x03_to2\xd6\a\n" +
+	"\x03_to2\x9d\b\n" +
 	"\x0eTestRunService\x12W\n" +
 	"\rCreateTestRun\x12&.cloud.v1.testing.CreateTestRunRequest\x1a\x19.cloud.v1.testing.TestRun\"\x03\x90\x02\x02\x12W\n" +
 	"\rUpdateTestRun\x12&.cloud.v1.testing.UpdateTestRunRequest\x1a\x19.cloud.v1.testing.TestRun\"\x03\x90\x02\x02\x12L\n" +
@@ -1073,7 +1073,8 @@ const file_cloud_v1_testing_test_run_proto_rawDesc = "" +
 	"\x11GetTestRunMetrics\x12*.cloud.v1.testing.GetTestRunMetricsRequest\x1a\".cloud.v1.testing.MetricSeriesList\"\x03\x90\x02\x01\x12L\n" +
 	"\rLaunchTestRun\x12\x1b.cloud.v1.testing.TestRunId\x1a\x19.cloud.v1.testing.TestRun\"\x03\x90\x02\x02\x12L\n" +
 	"\rCancelTestRun\x12\x1b.cloud.v1.testing.TestRunId\x1a\x19.cloud.v1.testing.TestRun\"\x03\x90\x02\x02\x12Y\n" +
-	"\x12InstantiateTestRun\x12#.cloud.v1.testing.TestRunTemplateId\x1a\x19.cloud.v1.testing.TestRun\"\x03\x90\x02\x02BEZCgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testingb\x06proto3"
+	"\x12InstantiateTestRun\x12#.cloud.v1.testing.TestRunTemplateId\x1a\x19.cloud.v1.testing.TestRun\"\x03\x90\x02\x02\x12E\n" +
+	"\rDryRunTestRun\x12\x19.cloud.v1.testing.TestRun\x1a\x14.cloud.v1.system.Dag\"\x03\x90\x02\x01BEZCgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testingb\x06proto3"
 
 var (
 	file_cloud_v1_testing_test_run_proto_rawDescOnce sync.Once
@@ -1118,6 +1119,7 @@ var file_cloud_v1_testing_test_run_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),    // 26: google.protobuf.Timestamp
 	(system.DagRunStatus)(0),         // 27: cloud.v1.system.DagRunStatus
 	(*agent.LogLine)(nil),            // 28: cloud.v1.agent.LogLine
+	(*system.Dag)(nil),               // 29: cloud.v1.system.Dag
 }
 var file_cloud_v1_testing_test_run_proto_depIdxs = []int32{
 	0,  // 0: cloud.v1.testing.TestRun.id:type_name -> cloud.v1.testing.TestRunId
@@ -1164,19 +1166,21 @@ var file_cloud_v1_testing_test_run_proto_depIdxs = []int32{
 	0,  // 41: cloud.v1.testing.TestRunService.LaunchTestRun:input_type -> cloud.v1.testing.TestRunId
 	0,  // 42: cloud.v1.testing.TestRunService.CancelTestRun:input_type -> cloud.v1.testing.TestRunId
 	19, // 43: cloud.v1.testing.TestRunService.InstantiateTestRun:input_type -> cloud.v1.testing.TestRunTemplateId
-	2,  // 44: cloud.v1.testing.TestRunService.CreateTestRun:output_type -> cloud.v1.testing.TestRun
-	2,  // 45: cloud.v1.testing.TestRunService.UpdateTestRun:output_type -> cloud.v1.testing.TestRun
-	2,  // 46: cloud.v1.testing.TestRunService.DeleteTestRun:output_type -> cloud.v1.testing.TestRun
-	10, // 47: cloud.v1.testing.TestRunService.GetTestRun:output_type -> cloud.v1.testing.GetTestRunResponse
-	14, // 48: cloud.v1.testing.TestRunService.ListTestRuns:output_type -> cloud.v1.testing.TestRun.List
-	6,  // 49: cloud.v1.testing.TestRunService.WatchTestRun:output_type -> cloud.v1.testing.TestRunProgress
-	28, // 50: cloud.v1.testing.TestRunService.StreamTestRunLogs:output_type -> cloud.v1.agent.LogLine
-	9,  // 51: cloud.v1.testing.TestRunService.GetTestRunMetrics:output_type -> cloud.v1.testing.MetricSeriesList
-	2,  // 52: cloud.v1.testing.TestRunService.LaunchTestRun:output_type -> cloud.v1.testing.TestRun
-	2,  // 53: cloud.v1.testing.TestRunService.CancelTestRun:output_type -> cloud.v1.testing.TestRun
-	2,  // 54: cloud.v1.testing.TestRunService.InstantiateTestRun:output_type -> cloud.v1.testing.TestRun
-	44, // [44:55] is the sub-list for method output_type
-	33, // [33:44] is the sub-list for method input_type
+	2,  // 44: cloud.v1.testing.TestRunService.DryRunTestRun:input_type -> cloud.v1.testing.TestRun
+	2,  // 45: cloud.v1.testing.TestRunService.CreateTestRun:output_type -> cloud.v1.testing.TestRun
+	2,  // 46: cloud.v1.testing.TestRunService.UpdateTestRun:output_type -> cloud.v1.testing.TestRun
+	2,  // 47: cloud.v1.testing.TestRunService.DeleteTestRun:output_type -> cloud.v1.testing.TestRun
+	10, // 48: cloud.v1.testing.TestRunService.GetTestRun:output_type -> cloud.v1.testing.GetTestRunResponse
+	14, // 49: cloud.v1.testing.TestRunService.ListTestRuns:output_type -> cloud.v1.testing.TestRun.List
+	6,  // 50: cloud.v1.testing.TestRunService.WatchTestRun:output_type -> cloud.v1.testing.TestRunProgress
+	28, // 51: cloud.v1.testing.TestRunService.StreamTestRunLogs:output_type -> cloud.v1.agent.LogLine
+	9,  // 52: cloud.v1.testing.TestRunService.GetTestRunMetrics:output_type -> cloud.v1.testing.MetricSeriesList
+	2,  // 53: cloud.v1.testing.TestRunService.LaunchTestRun:output_type -> cloud.v1.testing.TestRun
+	2,  // 54: cloud.v1.testing.TestRunService.CancelTestRun:output_type -> cloud.v1.testing.TestRun
+	2,  // 55: cloud.v1.testing.TestRunService.InstantiateTestRun:output_type -> cloud.v1.testing.TestRun
+	29, // 56: cloud.v1.testing.TestRunService.DryRunTestRun:output_type -> cloud.v1.system.Dag
+	45, // [45:57] is the sub-list for method output_type
+	33, // [33:45] is the sub-list for method input_type
 	33, // [33:33] is the sub-list for extension type_name
 	33, // [33:33] is the sub-list for extension extendee
 	0,  // [0:33] is the sub-list for field type_name

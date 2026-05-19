@@ -30,7 +30,10 @@ func toConnect(err error) error {
 		if errors.As(err, &ce) {
 			return ce
 		}
-		return connect.NewError(connect.CodeInternal, errors.New(errorspb.Code_CODE_INTERNAL.String()))
+		// Preserve the underlying error message so the caller (and test logs)
+		// can see what actually failed — was wrapped as plain CODE_INTERNAL
+		// before, which hid SQL errors / proto-validation issues.
+		return connect.NewError(connect.CodeInternal, err)
 	}
 	cerr := connect.NewError(mapCode(de.Code()), errors.New(de.Code().String()))
 	for _, d := range de.Details() {

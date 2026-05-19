@@ -28,6 +28,7 @@ import (
 type TerraformHandler struct {
 	actor   *terraform.Actor
 	modules ModuleResolver
+	issuer  BootstrapTokenIssuer
 	log     *zap.Logger
 }
 
@@ -38,10 +39,19 @@ type ModuleResolver interface {
 	Resolve(module taskspb.TerraformTask_Module, vars map[string]any) ([]terraform.TfFile, terraform.TfVarFile, error)
 }
 
-// NewTerraformHandler wires the handler. modules may be nil for tests
-// (UNSPECIFIED module remains a successful no-op even without a resolver).
-func NewTerraformHandler(actor *terraform.Actor, modules ModuleResolver, log *zap.Logger) *TerraformHandler {
-	return &TerraformHandler{actor: actor, modules: modules, log: log}
+// BootstrapTokenIssuer is the subset of agent.Service the terraform handler
+// needs to mint per-machine bootstrap JWTs before `terraform apply`. Defined
+// locally to avoid an import cycle with the iam / agent services.
+type BootstrapTokenIssuer interface {
+	IssueBootstrap(ctx context.Context, tenantID, dagRunID, machineID, role string) (string, error)
+}
+
+// NewTerraformHandler wires the handler. `modules` may be nil only when
+// every TerraformTask in the pipeline uses MODULE_UNSPECIFIED (no-op);
+// production wiring must supply a real resolver. `issuer` may be nil for
+// tests that do not exercise machine fan-out.
+func NewTerraformHandler(actor *terraform.Actor, modules ModuleResolver, log *zap.Logger, issuer BootstrapTokenIssuer) *TerraformHandler {
+	return &TerraformHandler{actor: actor, modules: modules, issuer: issuer, log: log}
 }
 
 // Kind matches the Any.type_url suffix the registry filters on.
@@ -72,7 +82,7 @@ func (h *TerraformHandler) Execute(ctx context.Context, node *systempb.NodeRun, 
 
 	switch task.GetOp() {
 	case taskspb.TerraformTask_OP_APPLY:
-		return h.apply(ctx, &task, stateKey, state)
+		return h.apply(ctx, &task, node, stateKey, state)
 	case taskspb.TerraformTask_OP_DESTROY:
 		return h.destroy(ctx, &task, stateKey, state)
 	default:
@@ -80,11 +90,39 @@ func (h *TerraformHandler) Execute(ctx context.Context, node *systempb.NodeRun, 
 	}
 }
 
-func (h *TerraformHandler) apply(ctx context.Context, task *taskspb.TerraformTask, stateKey string, state nodeworker.StateStore) (*anypb.Any, error) {
+func (h *TerraformHandler) apply(ctx context.Context, task *taskspb.TerraformTask, node *systempb.NodeRun, stateKey string, state nodeworker.StateStore) (*anypb.Any, error) {
 	if h.modules == nil {
 		return nil, fmt.Errorf("terraform: ModuleResolver missing for module=%s", task.GetModule())
 	}
-	files, vars, err := h.modules.Resolve(task.GetModule(), structToMap(task.GetVars()))
+	vars := structToMap(task.GetVars())
+
+	// Issue one bootstrap JWT per planned machine BEFORE the terraform
+	// apply so the rendered cloud-init userdata (which the TF module
+	// templates) can embed the token. The machines list, role tags and
+	// tenant_id are written into Vars by the DAG builder.
+	if h.issuer != nil {
+		machines := readMachines(vars)
+		if len(machines) > 0 {
+			tenantID, _ := vars["tenant_id"].(string)
+			dagRunID := node.GetDagRunId().GetValue()
+			tokens := make(map[string]any, len(machines))
+			for _, m := range machines {
+				id, _ := m["id"].(string)
+				role, _ := m["role"].(string)
+				if id == "" {
+					continue
+				}
+				tok, err := h.issuer.IssueBootstrap(ctx, tenantID, dagRunID, id, role)
+				if err != nil {
+					return nil, fmt.Errorf("terraform: issue bootstrap for %s: %w", id, err)
+				}
+				tokens[id] = tok
+			}
+			vars["agent_bootstrap_tokens"] = tokens
+		}
+	}
+
+	files, varsFile, err := h.modules.Resolve(task.GetModule(), vars)
 	if err != nil {
 		return nil, fmt.Errorf("terraform: resolve module %s: %w", task.GetModule(), err)
 	}
@@ -102,7 +140,7 @@ func (h *TerraformHandler) apply(ctx context.Context, task *taskspb.TerraformTas
 		wdID = terraform.NewWdId(ids.New())
 	}
 
-	wd := terraform.NewWorkdirWithParams(wdID, terraform.WithTfFiles(files), terraform.WithVarFile(vars))
+	wd := terraform.NewWorkdirWithParams(wdID, terraform.WithTfFiles(files), terraform.WithVarFile(varsFile))
 	if _, err := state.Put(ctx, stateKey, mustWrapString(wdID.String())); err != nil {
 		h.log.Warn("terraform: persist wd_id failed", zap.Error(err))
 	}
@@ -114,6 +152,27 @@ func (h *TerraformHandler) apply(ctx context.Context, task *taskspb.TerraformTas
 	if output != nil {
 		if raw, err := json.Marshal(output); err == nil {
 			_, _ = state.Put(ctx, stateKey+".output", mustWrapBytes(raw))
+		}
+		// Persist named terraform outputs into the DagRun state-store under
+		// the configured destination keys. Each output value is the raw JSON
+		// terraform emitted; we decode strings as structpb.StringValue (so
+		// downstream OneShot state_var_refs picks them up) and structured
+		// outputs as their JSON encoding.
+		for outName, dstKey := range task.GetOutputStateKeys() {
+			raw, ok := output[outName]
+			if !ok || len(raw) == 0 {
+				continue
+			}
+			var asStr string
+			if err := json.Unmarshal(raw, &asStr); err == nil {
+				if _, perr := state.Put(ctx, dstKey, mustWrapString(asStr)); perr != nil {
+					h.log.Warn("terraform: persist output failed", zap.String("key", dstKey), zap.Error(perr))
+				}
+				continue
+			}
+			if _, perr := state.Put(ctx, dstKey, mustWrapBytes(raw)); perr != nil {
+				h.log.Warn("terraform: persist output failed", zap.String("key", dstKey), zap.Error(perr))
+			}
 		}
 	}
 	return nil, nil
@@ -138,6 +197,29 @@ func (h *TerraformHandler) destroy(ctx context.Context, _ *taskspb.TerraformTask
 		return nil, fmt.Errorf("terraform destroy %s: %w", wd, err)
 	}
 	return nil, nil
+}
+
+// readMachines extracts the planned machine inventory from a tfvars map.
+// The builder writes vars["machines"] as a list of {id, role, kind} maps.
+// Anything else returns nil so the handler skips the bootstrap-token step.
+func readMachines(vars map[string]any) []map[string]any {
+	raw, ok := vars["machines"]
+	if !ok {
+		return nil
+	}
+	list, ok := raw.([]any)
+	if !ok {
+		return nil
+	}
+	out := make([]map[string]any, 0, len(list))
+	for _, item := range list {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		out = append(out, m)
+	}
+	return out
 }
 
 func structToMap(s *structpb.Struct) map[string]any {

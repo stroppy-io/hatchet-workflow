@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { clients } from "@/api/clients";
-import { getTenantId } from "@/api/transport";
+import { useTenantId, useTenantPath } from "@/hooks/useTenantPath";
 import { protoTsToISO } from "@/lib/proto-helpers";
 import type { TestSuite } from "@/lib/proto/cloud/v1/testing/test_suite_pb";
 import type { DatabasePreset } from "@/lib/proto/cloud/v1/catalog/database_pb";
@@ -60,6 +60,8 @@ export function SuiteDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const confirm = useConfirm();
+  const tid = useTenantId();
+  const tPath = useTenantPath();
 
   const [suite, setSuite] = useState<TestSuite | null>(null);
   const [dbPresets, setDbPresets] = useState<DatabasePreset[]>([]);
@@ -77,7 +79,6 @@ export function SuiteDetail() {
     if (!id) return;
     setLoading(true);
     try {
-      const tid = getTenantId();
       const [s, presetsResp] = await Promise.all([
         clients.suite.getTestSuite({ value: id }),
         clients.databasePreset.listDatabasePresets(tid ? { value: tid } : {}),
@@ -171,7 +172,7 @@ export function SuiteDetail() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 min-w-0">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/suites")} className="text-zinc-500 hover:text-zinc-200 -ml-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate(tPath("suites"))} className="text-zinc-500 hover:text-zinc-200 -ml-2">
             <ArrowLeft className="h-3.5 w-3.5" />
           </Button>
           <div className="min-w-0">
@@ -191,7 +192,7 @@ export function SuiteDetail() {
             <RefreshCw className={`h-3.5 w-3.5 ${busy ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          <Link to={`/suites/${id}/edit`}>
+          <Link to={tPath(`suites/${id}/edit`)}>
             <Button variant="outline" size="sm">
               <Pencil className="h-3.5 w-3.5" />
               Edit
@@ -256,7 +257,7 @@ export function SuiteDetail() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs text-zinc-500">Workload configurations in this suite's matrix.</p>
-              <Link to={`/suites/${id}/items/new`}>
+              <Link to={tPath(`suites/${id}/items/new`)}>
                 <Button size="sm" variant="outline">
                   <Plus className="h-3.5 w-3.5" />
                   Add Workload
@@ -292,7 +293,7 @@ export function SuiteDetail() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Link to={`/suites/${id}/items/${idx}/edit`}>
+                          <Link to={tPath(`suites/${id}/items/${idx}/edit`)}>
                             <button className="p-1.5 text-zinc-600 hover:text-zinc-300" title="Edit">
                               <Pencil className="w-3 h-3" />
                             </button>

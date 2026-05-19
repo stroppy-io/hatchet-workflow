@@ -18,16 +18,16 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/core/eventing"
 	"github.com/stroppy-io/stroppy-cloud/internal/core/ids"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/pgtx"
+	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	opspb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/ops"
-	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // WebhookService provides CRUD and TestWebhook for the webhooks table.
 type WebhookService struct {
-	repo  *repository.ProtoRepository[opspb.WebhookAlias, opspb.WebhookColumnAlias, *opspb.WebhookScanner, *opspb.Webhook]
-	dRepo *repository.ProtoRepository[opspb.WebhookDeliveryAlias, opspb.WebhookDeliveryColumnAlias, *opspb.WebhookDeliveryScanner, *opspb.WebhookDelivery]
+	repo   *repository.ProtoRepository[opspb.WebhookAlias, opspb.WebhookColumnAlias, *opspb.WebhookScanner, *opspb.Webhook]
+	dRepo  *repository.ProtoRepository[opspb.WebhookDeliveryAlias, opspb.WebhookDeliveryColumnAlias, *opspb.WebhookDeliveryScanner, *opspb.WebhookDelivery]
 	txMgr  pgtx.TxManager
 	events eventing.Bus
 }
@@ -253,6 +253,9 @@ func (s *WebhookService) TestWebhook(ctx context.Context, id *opspb.WebhookId, e
 		}, nil
 	}
 	req.Header.Set("Content-Type", "application/json")
+	if secret := w.GetSecret(); secret != "" {
+		req.Header.Set("X-Stroppy-Signature", "sha256="+hmacSign([]byte(secret), body))
+	}
 	for k, v := range w.GetHeaders() {
 		req.Header.Set(k, v)
 	}

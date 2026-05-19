@@ -10,6 +10,7 @@ import (
 	context "context"
 	agent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent"
 	iam "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	system "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -32,6 +33,7 @@ const (
 	TestRunService_LaunchTestRun_FullMethodName      = "/cloud.v1.testing.TestRunService/LaunchTestRun"
 	TestRunService_CancelTestRun_FullMethodName      = "/cloud.v1.testing.TestRunService/CancelTestRun"
 	TestRunService_InstantiateTestRun_FullMethodName = "/cloud.v1.testing.TestRunService/InstantiateTestRun"
+	TestRunService_DryRunTestRun_FullMethodName      = "/cloud.v1.testing.TestRunService/DryRunTestRun"
 )
 
 // TestRunServiceClient is the client API for TestRunService service.
@@ -59,6 +61,11 @@ type TestRunServiceClient interface {
 	CancelTestRun(ctx context.Context, in *TestRunId, opts ...grpc.CallOption) (*TestRun, error)
 	// InstantiateTestRun — create a new TestRun from a template.
 	InstantiateTestRun(ctx context.Context, in *TestRunTemplateId, opts ...grpc.CallOption) (*TestRun, error)
+	// DryRunTestRun — resolve presets, validate, and build the DAG preview
+	// without launching. The returned Dag includes ConfigApplyTask specs
+	// with the per-component config files the agent would render — same
+	// data the legacy /run/{id}/rendered-configs endpoint exposed.
+	DryRunTestRun(ctx context.Context, in *TestRun, opts ...grpc.CallOption) (*system.Dag, error)
 }
 
 type testRunServiceClient struct {
@@ -197,6 +204,16 @@ func (c *testRunServiceClient) InstantiateTestRun(ctx context.Context, in *TestR
 	return out, nil
 }
 
+func (c *testRunServiceClient) DryRunTestRun(ctx context.Context, in *TestRun, opts ...grpc.CallOption) (*system.Dag, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(system.Dag)
+	err := c.cc.Invoke(ctx, TestRunService_DryRunTestRun_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TestRunServiceServer is the server API for TestRunService service.
 // All implementations must embed UnimplementedTestRunServiceServer
 // for forward compatibility.
@@ -222,6 +239,11 @@ type TestRunServiceServer interface {
 	CancelTestRun(context.Context, *TestRunId) (*TestRun, error)
 	// InstantiateTestRun — create a new TestRun from a template.
 	InstantiateTestRun(context.Context, *TestRunTemplateId) (*TestRun, error)
+	// DryRunTestRun — resolve presets, validate, and build the DAG preview
+	// without launching. The returned Dag includes ConfigApplyTask specs
+	// with the per-component config files the agent would render — same
+	// data the legacy /run/{id}/rendered-configs endpoint exposed.
+	DryRunTestRun(context.Context, *TestRun) (*system.Dag, error)
 	mustEmbedUnimplementedTestRunServiceServer()
 }
 
@@ -264,6 +286,9 @@ func (UnimplementedTestRunServiceServer) CancelTestRun(context.Context, *TestRun
 }
 func (UnimplementedTestRunServiceServer) InstantiateTestRun(context.Context, *TestRunTemplateId) (*TestRun, error) {
 	return nil, status.Error(codes.Unimplemented, "method InstantiateTestRun not implemented")
+}
+func (UnimplementedTestRunServiceServer) DryRunTestRun(context.Context, *TestRun) (*system.Dag, error) {
+	return nil, status.Error(codes.Unimplemented, "method DryRunTestRun not implemented")
 }
 func (UnimplementedTestRunServiceServer) mustEmbedUnimplementedTestRunServiceServer() {}
 func (UnimplementedTestRunServiceServer) testEmbeddedByValue()                        {}
@@ -470,6 +495,24 @@ func _TestRunService_InstantiateTestRun_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TestRunService_DryRunTestRun_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TestRun)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TestRunServiceServer).DryRunTestRun(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TestRunService_DryRunTestRun_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TestRunServiceServer).DryRunTestRun(ctx, req.(*TestRun))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TestRunService_ServiceDesc is the grpc.ServiceDesc for TestRunService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -512,6 +555,10 @@ var TestRunService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "InstantiateTestRun",
 			Handler:    _TestRunService_InstantiateTestRun_Handler,
+		},
+		{
+			MethodName: "DryRunTestRun",
+			Handler:    _TestRunService_DryRunTestRun_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

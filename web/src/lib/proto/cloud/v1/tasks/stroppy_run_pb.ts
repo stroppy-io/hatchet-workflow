@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/tasks/stroppy_run.proto.
  */
 export const file_cloud_v1_tasks_stroppy_run: GenFile = /*@__PURE__*/
-  fileDesc("CiBjbG91ZC92MS90YXNrcy9zdHJvcHB5X3J1bi5wcm90bxIOY2xvdWQudjEudGFza3MiiAEKDlN0cm9wcHlSdW5UYXNrEjYKCHdvcmtsb2FkGAEgASgLMhouY2xvdWQudjEuY2F0YWxvZy5Xb3JrbG9hZEII+kIFigECEAESJAoQZGJfdXJsX3N0YXRlX2tleRgCIAEoCUIK+kIHcgUQARiAARIYCgd2ZXJzaW9uGAMgASgJQgf6QgRyAhggQkNaQWdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3Rhc2tzYgZwcm90bzM", [file_cloud_v1_catalog_workload, file_validate_validate]);
+  fileDesc("CiBjbG91ZC92MS90YXNrcy9zdHJvcHB5X3J1bi5wcm90bxIOY2xvdWQudjEudGFza3Mi1wEKDlN0cm9wcHlSdW5UYXNrEjYKCHdvcmtsb2FkGAEgASgLMhouY2xvdWQudjEuY2F0YWxvZy5Xb3JrbG9hZEII+kIFigECEAESJAoQZGJfdXJsX3N0YXRlX2tleRgCIAEoCUIK+kIHcgUQARiAARIYCgd2ZXJzaW9uGAMgASgJQgf6QgRyAhggEiQKEnRhcmdldF9tYWNoaW5lX2lkcxgEIAMoCUII+kIFkgECEBASJwoVY29uZmlnX3BhdGhfc3RhdGVfa2V5GAUgASgJQgj6QgVyAxiAAUJDWkFnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS90YXNrc2IGcHJvdG8z", [file_cloud_v1_catalog_workload, file_validate_validate]);
 
 /**
  * StroppyRunTask — execute a stroppy test on the runner machine.
@@ -42,6 +42,22 @@ export type StroppyRunTask = Message<"cloud.v1.tasks.StroppyRunTask"> & {
    * @generated from field: string version = 3;
    */
   version: string;
+
+  /**
+   * target_machine_ids — explicit machine_id fan-out. Usually a single
+   * stroppy worker (e.g. "stroppy-0"). 
+   *
+   * @generated from field: repeated string target_machine_ids = 4;
+   */
+  targetMachineIds: string[];
+
+  /**
+   * config_path_state_key — DagRun state key the upstream
+   * render-stroppy-config node wrote the on-host config path to. 
+   *
+   * @generated from field: string config_path_state_key = 5;
+   */
+  configPathStateKey: string;
 };
 
 /**
@@ -71,6 +87,22 @@ export type StroppyRunTaskJson = {
    * @generated from field: string version = 3;
    */
   version?: string;
+
+  /**
+   * target_machine_ids — explicit machine_id fan-out. Usually a single
+   * stroppy worker (e.g. "stroppy-0"). 
+   *
+   * @generated from field: repeated string target_machine_ids = 4;
+   */
+  targetMachineIds?: string[];
+
+  /**
+   * config_path_state_key — DagRun state key the upstream
+   * render-stroppy-config node wrote the on-host config path to. 
+   *
+   * @generated from field: string config_path_state_key = 5;
+   */
+  configPathStateKey?: string;
 };
 
 export type StroppyRunTaskValid = StroppyRunTask;

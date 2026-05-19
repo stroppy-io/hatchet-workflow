@@ -1,14 +1,23 @@
 package system
 
 import (
+	"context"
+
 	"github.com/yaroher/ratel/pkg/exec"
 	"github.com/yaroher/ratel/pkg/repository"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/core/eventing"
 	"github.com/stroppy-io/stroppy-cloud/internal/core/tracing"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/pgtx"
 	systempb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system"
 )
+
+// HookInvoker dispatches a registered hook by name with the schedule's
+// payload. Wired by cmd_server to scheduler.HookRegistry.Lookup. TriggerNow
+// calls it synchronously so callers (UI / tests) observe the side effect
+// before the RPC returns instead of waiting for the next scheduler tick.
+type HookInvoker func(ctx context.Context, hookName string, payload *anypb.Any) error
 
 type Service struct {
 	*tracing.Entity
@@ -25,6 +34,15 @@ type Service struct {
 	db     exec.DB
 	txMgr  pgtx.TxManager
 	events eventing.Bus
+
+	hookInvoker HookInvoker
+}
+
+// WithHookInvoker installs a hook dispatcher. nil = TriggerNow only updates
+// next_fire_at and lets the next scheduler-worker tick fire the hook.
+func (s *Service) WithHookInvoker(fn HookInvoker) *Service {
+	s.hookInvoker = fn
+	return s
 }
 
 func New(executor exec.DB, txMgr pgtx.TxManager, events eventing.Bus) *Service {

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { clients } from "@/api/clients";
-import { getTenantId } from "@/api/transport";
+import { useTenantId, useTenantPath } from "@/hooks/useTenantPath";
 import { protoTsToISO } from "@/lib/proto-helpers";
 import type { TestRun } from "@/lib/proto/cloud/v1/testing/test_run_pb";
 import {
@@ -35,6 +35,8 @@ function formatDate(iso: string): string {
 
 export function Runs() {
   const navigate = useNavigate();
+  const tid = useTenantId();
+  const tPath = useTenantPath();
   const [runs, setRuns] = useState<TestRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +52,6 @@ export function Runs() {
   ];
 
   async function fetchRuns() {
-    const tid = getTenantId();
     if (!tid) return;
     setLoading(true);
     setError(null);
@@ -78,7 +79,6 @@ export function Runs() {
     };
   }, [refreshInterval]);
 
-  const tid = getTenantId();
   if (!tid) return null;
 
   return (
@@ -95,7 +95,7 @@ export function Runs() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => navigate("/runs/new")}
+            onClick={() => navigate(tPath("runs/new"))}
             className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 transition-colors cursor-pointer"
           >
             <Play className="h-3 w-3" />
@@ -160,7 +160,7 @@ export function Runs() {
                   <TableRow
                     key={id}
                     className="border-zinc-800/50 hover:bg-zinc-900/60 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/runs/${id}`)}
+                    onClick={() => navigate(tPath(`runs/${id}`))}
                   >
                     <TableCell className="py-2.5">
                       <span className="font-mono text-xs text-primary" title={id}>

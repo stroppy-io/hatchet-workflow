@@ -33,9 +33,15 @@ type StroppyRunTask struct {
 	// engine-specific URL (postgres://host:port/db?...).
 	DbUrlStateKey string `protobuf:"bytes,2,opt,name=db_url_state_key,json=dbUrlStateKey,proto3" json:"db_url_state_key,omitempty"`
 	// stroppy binary version override; empty = platform default from StroppySettings.
-	Version       string `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Version string `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
+	// target_machine_ids — explicit machine_id fan-out. Usually a single
+	// stroppy worker (e.g. "stroppy-0").
+	TargetMachineIds []string `protobuf:"bytes,4,rep,name=target_machine_ids,json=targetMachineIds,proto3" json:"target_machine_ids,omitempty"`
+	// config_path_state_key — DagRun state key the upstream
+	// render-stroppy-config node wrote the on-host config path to.
+	ConfigPathStateKey string `protobuf:"bytes,5,opt,name=config_path_state_key,json=configPathStateKey,proto3" json:"config_path_state_key,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *StroppyRunTask) Reset() {
@@ -89,16 +95,32 @@ func (x *StroppyRunTask) GetVersion() string {
 	return ""
 }
 
+func (x *StroppyRunTask) GetTargetMachineIds() []string {
+	if x != nil {
+		return x.TargetMachineIds
+	}
+	return nil
+}
+
+func (x *StroppyRunTask) GetConfigPathStateKey() string {
+	if x != nil {
+		return x.ConfigPathStateKey
+	}
+	return ""
+}
+
 var File_cloud_v1_tasks_stroppy_run_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_tasks_stroppy_run_proto_rawDesc = "" +
 	"\n" +
-	" cloud/v1/tasks/stroppy_run.proto\x12\x0ecloud.v1.tasks\x1a\x1fcloud/v1/catalog/workload.proto\x1a\x17validate/validate.proto\"\xaa\x01\n" +
+	" cloud/v1/tasks/stroppy_run.proto\x12\x0ecloud.v1.tasks\x1a\x1fcloud/v1/catalog/workload.proto\x1a\x17validate/validate.proto\"\x9f\x02\n" +
 	"\x0eStroppyRunTask\x12@\n" +
 	"\bworkload\x18\x01 \x01(\v2\x1a.cloud.v1.catalog.WorkloadB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bworkload\x123\n" +
 	"\x10db_url_state_key\x18\x02 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\rdbUrlStateKey\x12!\n" +
-	"\aversion\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18 R\aversionBCZAgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/tasksb\x06proto3"
+	"\aversion\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18 R\aversion\x126\n" +
+	"\x12target_machine_ids\x18\x04 \x03(\tB\b\xfaB\x05\x92\x01\x02\x10\x10R\x10targetMachineIds\x12;\n" +
+	"\x15config_path_state_key\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x12configPathStateKeyBCZAgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/tasksb\x06proto3"
 
 var (
 	file_cloud_v1_tasks_stroppy_run_proto_rawDescOnce sync.Once

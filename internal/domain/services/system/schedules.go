@@ -264,6 +264,14 @@ func (s *Service) TriggerNow(ctx context.Context, id *systempb.ScheduleId) (*sys
 			if !found {
 				return nil, domainerr.NotFound(domainerr.ResourceInfo("schedule", id.GetValue()))
 			}
-			return scanner.IntoPb(), nil
+			sched := scanner.IntoPb()
+			// Fire the hook synchronously so the caller (UI TriggerNow button,
+			// integration test) sees the side effect before the RPC returns.
+			// On hook failure we still return the updated schedule — the
+			// scheduler-worker tick will retry via recordFailure semantics.
+			if s.hookInvoker != nil && sched.GetHookName() != "" {
+				_ = s.hookInvoker(ctx, sched.GetHookName(), sched.GetPayload())
+			}
+			return sched, nil
 		})
 }

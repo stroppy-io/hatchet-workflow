@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { getAccessToken } from "@/api/transport";
+import { clients } from "@/api/clients";
+import { MetricDiff_Verdict } from "@/lib/proto/cloud/v1/testing/comparison_pb";
+import { useTenantPath } from "@/hooks/useTenantPath";
 import { MetricsDiff, type ComparisonRow } from "@/components/MetricsDiff";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,13 +50,43 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-async function compareRuns(a: string, b: string, start?: string, end?: string): Promise<ComparisonResponse> {
-  const params = new URLSearchParams({ a, b });
-  if (start) params.set("start", start);
-  if (end) params.set("end", end);
-  const res = await fetch(`/api/v1/compare?${params.toString()}`, { headers: authHeaders() });
-  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
-  return res.json();
+async function compareRuns(a: string, b: string): Promise<ComparisonResponse> {
+  const resp = await clients.comparison.compareRuns({
+    a: { value: a },
+    b: { value: b },
+    metricNames: [],
+  });
+  const rows: ComparisonRow[] = (resp.diffs ?? []).map((d) => {
+    let verdict: "better" | "worse" | "same" = "same";
+    if (d.verdict === MetricDiff_Verdict.IMPROVED) verdict = "better";
+    else if (d.verdict === MetricDiff_Verdict.REGRESSED) verdict = "worse";
+    return {
+      key: d.metricName,
+      name: d.metricName,
+      unit: "",
+      avg_a: d.aValue,
+      avg_b: d.bValue,
+      max_a: d.aValue,
+      max_b: d.bValue,
+      diff_avg_pct: d.pctDelta,
+      diff_max_pct: d.pctDelta,
+      verdict,
+    };
+  });
+  let better = 0, worse = 0, same = 0;
+  for (const r of rows) {
+    if (r.verdict === "better") better++;
+    else if (r.verdict === "worse") worse++;
+    else same++;
+  }
+  return {
+    run_a: a,
+    run_b: b,
+    start: "",
+    end: "",
+    metrics: rows,
+    summary: { better, worse, same },
+  };
 }
 
 async function getGrafanaSettings(): Promise<GrafanaSettings> {
@@ -65,6 +98,7 @@ async function getGrafanaSettings(): Promise<GrafanaSettings> {
 export function Compare() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const tPath = useTenantPath();
   const runA = searchParams.get("a") || "";
   const runB = searchParams.get("b") || "";
 
@@ -102,7 +136,7 @@ export function Compare() {
     const a = inputA.trim();
     const b = inputB.trim();
     if (!a || !b) return;
-    navigate(`/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`);
+    navigate(tPath(`compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`));
   }
 
   if (!runA || !runB) {
@@ -117,7 +151,7 @@ export function Compare() {
           <CardContent className="pt-6 space-y-4">
             <p className="text-xs text-zinc-500 font-mono">
               Enter two run IDs or select them from the{" "}
-              <Link to="/" className="text-primary hover:underline">runs table</Link>.
+              <Link to={tPath("runs")} className="text-primary hover:underline">runs table</Link>.
             </p>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -161,7 +195,7 @@ export function Compare() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
-            to="/"
+            to={tPath("runs")}
             className="text-zinc-500 hover:text-zinc-300 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -205,9 +239,9 @@ export function Compare() {
           </Button>
         )}
         <div className="flex items-center gap-2 ml-2 text-[10px] font-mono">
-          <Link to={`/runs/${runA}`} className="text-cyan-400 hover:underline">{runA}</Link>
+          <Link to={tPath(`runs/${runA}`)} className="text-cyan-400 hover:underline">{runA}</Link>
           <span className="text-zinc-700">vs</span>
-          <Link to={`/runs/${runB}`} className="text-amber-400 hover:underline">{runB}</Link>
+          <Link to={tPath(`runs/${runB}`)} className="text-amber-400 hover:underline">{runB}</Link>
         </div>
       </div>
 

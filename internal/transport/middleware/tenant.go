@@ -2,10 +2,10 @@ package middleware
 
 import (
 	"context"
-	"reflect"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/core/domainerr"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
@@ -33,6 +33,13 @@ func Tenant(svc TenantPort, bypass map[string]bool) connect.UnaryInterceptorFunc
 			if userID == "" {
 				return nil, toConnect(domainerr.Unauthenticated())
 			}
+			// Platform admins have cross-tenant access — skip the per-tenant
+			// membership check. UI relies on this for root users who switch
+			// between tenants via the TenantSwitcher without explicit membership.
+			if PlatformRoleFromCtx(ctx) == iampb.PlatformRole_PLATFORM_ROLE_ADMIN.String() {
+				ctx = WithTenantID(ctx, tenantID)
+				return next(ctx, req)
+			}
 			ok, err := svc.HasTenantMember(ctx,
 				&iampb.UserId{Value: userID},
 				&iampb.TenantId{Value: tenantID},
@@ -49,8 +56,14 @@ func Tenant(svc TenantPort, bypass map[string]bool) connect.UnaryInterceptorFunc
 	}
 }
 
-// tenantIDFromRequest reads "tenant_id" via reflection from any proto message
-// or falls back to X-Tenant-Id header. Cheap one-time reflection per request.
+// tenantIDFromRequest reads the tenant identifier from a request. Order:
+//  1. X-Tenant-Id header (canonical — set by the SPA on every call).
+//  2. proto field `tenant_id` if it carries a *TenantId message — walked via
+//     protoreflect so any service that embeds a tenant id is detected without
+//     hard-coding field offsets per request type.
+//  3. proto fields of TenantId type with name suffix "_id" / containing
+//     "tenant" — same protoreflect walk handles AddMemberRequest, settings
+//     requests, and any future shape that follows the convention.
 func tenantIDFromRequest(req connect.AnyRequest) string {
 	if v := req.Header().Get("X-Tenant-Id"); v != "" {
 		return v
@@ -59,15 +72,30 @@ func tenantIDFromRequest(req connect.AnyRequest) string {
 	if !ok {
 		return ""
 	}
-	rv := reflect.ValueOf(msg).Elem()
-	field := rv.FieldByName("TenantId")
-	if !field.IsValid() || field.IsNil() {
-		return ""
-	}
-	// Field is *iampb.TenantId
-	valField := field.Elem().FieldByName("Value")
-	if !valField.IsValid() {
-		return ""
-	}
-	return valField.String()
+	return walkProtoForTenantID(msg.ProtoReflect())
+}
+
+// walkProtoForTenantID iterates populated message-typed fields looking for
+// the embedded TenantId wrapper.
+func walkProtoForTenantID(m protoreflect.Message) string {
+	var found string
+	m.Range(func(fd protoreflect.FieldDescriptor, v protoreflect.Value) bool {
+		if fd.Kind() != protoreflect.MessageKind {
+			return true
+		}
+		if fd.IsList() || fd.IsMap() {
+			return true
+		}
+		sub := v.Message()
+		// Match by proto message full name to handle every TenantId wrapper.
+		if sub.Descriptor().FullName() == "cloud.v1.iam.TenantId" {
+			vf := sub.Descriptor().Fields().ByName("value")
+			if vf != nil {
+				found = sub.Get(vf).String()
+				return false
+			}
+		}
+		return true
+	})
+	return found
 }

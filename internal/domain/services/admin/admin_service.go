@@ -2,12 +2,15 @@ package admin
 
 import (
 	"context"
+	"errors"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/core/ids"
 	"github.com/stroppy-io/stroppy-cloud/internal/core/tracing"
 	adminpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/admin"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	"github.com/stroppy-io/stroppy-cloud/internal/transport/middleware"
 )
 
 // IamAdminPort is the subset of iam.Service methods consumed by AdminService.
@@ -25,6 +28,11 @@ type IamAdminPort interface {
 	GetUserByID(ctx context.Context, id *iampb.UserId) (*iampb.User, error)
 	AddMember(ctx context.Context, userID *iampb.UserId, tenantID *iampb.TenantId, role iampb.TenantRole) (*iampb.TenantMember, error)
 }
+
+// ErrNoCaller is returned when a Create-style RPC needs the calling user's ID
+// (e.g. to assign as tenant OWNER for a placeholder owner_user_id) but the
+// request context carries no authenticated user.
+var ErrNoCaller = errors.New("admin: no authenticated caller in context")
 
 // AdminService implements cross-tenant admin operations on tenants and users.
 type AdminService struct {
@@ -49,11 +57,19 @@ func (s *AdminService) ListAllTenants(ctx context.Context, _ *emptypb.Empty) (*i
 	return &iampb.Tenant_List{Tenants: tenants}, nil
 }
 
-// CreateTenant creates a tenant with the given tenant proto body. The
-// OwnerUserId field, if set, designates an existing user as OWNER member.
-// If unset, the tenant is created without an initial member.
+// CreateTenant creates a tenant. If OwnerUserId is the 26-char zero placeholder
+// (or empty), the calling admin is recorded as the OWNER. Tenant.Id is always
+// regenerated server-side regardless of the client value.
 func (s *AdminService) CreateTenant(ctx context.Context, req *adminpb.AdminCreateTenantRequest) (*iampb.Tenant, error) {
-	tenant, err := s.iam.CreateTenant(ctx, req.GetTenant(), req.GetOwnerUserId())
+	owner := req.GetOwnerUserId()
+	if owner == nil || owner.GetValue() == "" || ids.IsPlaceholder(owner.GetValue()) {
+		callerID := middleware.UserFromCtx(ctx)
+		if callerID == "" {
+			return nil, ErrNoCaller
+		}
+		owner = &iampb.UserId{Value: callerID}
+	}
+	tenant, err := s.iam.CreateTenant(ctx, req.GetTenant(), owner)
 	if err != nil {
 		return nil, err
 	}

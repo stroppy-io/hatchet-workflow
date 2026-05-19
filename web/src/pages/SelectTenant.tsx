@@ -26,7 +26,7 @@ export function SelectTenant() {
     const id = t.id!.value;
     setTenantId(id);
     localStorage.setItem("stroppy.tenantId", id);
-    navigate("/");
+    navigate(`/t/${id}/runs`);
   }
 
   if (loading) {

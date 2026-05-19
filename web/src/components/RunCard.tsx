@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useTenantPath } from "@/hooks/useTenantPath";
 export type NodeStatusValue = "pending" | "running" | "done" | "failed" | "cancelled";
 export interface NodeStatus { id: string; status: NodeStatusValue; error?: string; }
 
@@ -44,9 +45,10 @@ export function RunCard({ runID, nodes }: RunCardProps) {
   const status = overallStatus(nodes);
   const done = nodes.filter((n) => n.status === "done").length;
   const total = nodes.length;
+  const tPath = useTenantPath();
 
   return (
-    <Link to={`/runs/${runID}`}>
+    <Link to={tPath(`runs/${runID}`)}>
       <Card className="hover:border-primary/50 transition-colors cursor-pointer">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="font-mono text-xs">{runID}</CardTitle>

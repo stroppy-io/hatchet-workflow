@@ -1,0 +1,65 @@
+locals {
+  subnets = length(var.networking.subnets) > 0 ? var.networking.subnets : {
+    (var.networking.zone) = {
+      zone = var.networking.zone
+      cidr = var.networking.cidr
+    }
+  }
+}
+
+resource "yandex_vpc_subnet" "subnet" {
+  for_each       = local.subnets
+  name           = "${var.networking.name}-${each.key}"
+  zone           = each.value.zone
+  v4_cidr_blocks = [each.value.cidr]
+  network_id     = var.networking.external_id
+}
+
+resource "yandex_vpc_security_group" "security-group" {
+  name        = "${var.networking.name}-sec-grp"
+  description = "Security group for stroppy VMs"
+  network_id  = var.networking.external_id
+  ingress {
+    protocol          = "TCP"
+    predefined_target = "loadbalancer_healthchecks"
+    from_port         = 0
+    to_port           = 65535
+  }
+  ingress {
+    protocol          = "ANY"
+    predefined_target = "self_security_group"
+    from_port         = 0
+    to_port           = 65535
+  }
+  ingress {
+    protocol       = "ANY"
+    v4_cidr_blocks = flatten([for s in yandex_vpc_subnet.subnet : s.v4_cidr_blocks])
+    from_port      = 0
+    to_port        = 65535
+  }
+  ingress {
+    protocol       = "ICMP"
+    v4_cidr_blocks = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+  }
+  ingress {
+    protocol       = "TCP"
+    v4_cidr_blocks = ["0.0.0.0/0"]
+    from_port      = 30000
+    to_port        = 32767
+  }
+  # SSH from anywhere. Stroppy VMs are short-lived and accept key-based auth
+  # only (cloud-init seeds authorized_keys; password login is disabled by the
+  # default sshd config), so opening port 22 to the world is acceptable here.
+  ingress {
+    protocol       = "TCP"
+    v4_cidr_blocks = ["0.0.0.0/0"]
+    from_port      = 22
+    to_port        = 22
+  }
+  egress {
+    protocol       = "ANY"
+    v4_cidr_blocks = ["0.0.0.0/0"]
+    from_port      = 0
+    to_port        = 65535
+  }
+}

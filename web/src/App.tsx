@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-
 import { useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { TenantGate } from "@/components/TenantGate";
 import { Runs } from "@/pages/Runs";
 import { NewRun } from "@/pages/NewRun";
 import { RunDetail } from "@/pages/RunDetail";
@@ -27,36 +28,46 @@ import { TenantTokens } from "@/pages/TenantTokens";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 
+/**
+ * defaultLanding picks where to send an authenticated user landing at "/".
+ * Priority: previously-selected tenant in localStorage > sole tenant >
+ * select-tenant page > /admin/tenants for root with no tenants.
+ */
+function defaultLanding(user: ReturnType<typeof useAuth>["user"]): string {
+  if (!user) return "/login";
+  const stored = localStorage.getItem("stroppy.tenantId");
+  if (stored && (user.is_root || user.tenants?.some((t) => t.id === stored))) {
+    return `/t/${stored}/runs`;
+  }
+  const tenants = user.tenants ?? [];
+  if (tenants.length === 1) return `/t/${tenants[0].id}/runs`;
+  if (tenants.length > 1) return "/select-tenant";
+  if (user.is_root) return "/admin/tenants";
+  return "/select-tenant";
+}
+
 function AppRoutes() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { selectTenant } = useAuth();
-
-  // After login: auto-select tenant or redirect.
+  // Auto-pick tenant on first load when user lands somewhere that needs one.
   useEffect(() => {
     if (!user || !isAuthenticated) return;
-    // Skip if already on select-tenant or admin pages (root can access admin without tenant).
-    if (location.pathname === "/select-tenant" || location.pathname.startsWith("/admin")) return;
-
-    if (user.tenant_id) return; // tenant already selected
-
-    const tenants = user.tenants || [];
-    if (tenants.length === 1) {
-      // Auto-select the only tenant.
-      selectTenant(tenants[0].id);
-    } else if (tenants.length > 1) {
-      // Multiple tenants — show selector.
-      navigate("/select-tenant", { replace: true });
-    } else if (user.is_root) {
-      // Root with no tenants — go to admin to create one.
-      navigate("/admin/tenants", { replace: true });
-    } else {
-      // Non-root with no tenants — show selector (will display "no tenants" message).
-      navigate("/select-tenant", { replace: true });
+    // Skip if path is already routed properly.
+    const p = location.pathname;
+    if (
+      p === "/select-tenant" ||
+      p.startsWith("/admin") ||
+      p.startsWith("/t/") ||
+      p.startsWith("/share/") ||
+      p === "/login"
+    ) {
+      return;
     }
-  }, [user, isAuthenticated, selectTenant, navigate, location.pathname]);
+    // Otherwise resolve a landing.
+    navigate(defaultLanding(user), { replace: true });
+  }, [user, isAuthenticated, navigate, location.pathname]);
 
   if (isLoading) {
     return (
@@ -92,64 +103,13 @@ function AppRoutes() {
     );
   }
 
-  // No tenant selected yet — only show select-tenant and admin pages.
-  if (!user?.tenant_id) {
-    return (
-      <Routes>
-        <Route path="/select-tenant" element={<SelectTenant />} />
-        <Route element={<Layout />}>
-          <Route element={<ProtectedRoute requireRoot />}>
-            <Route path="/admin/tenants" element={<AdminTenants />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/server" element={<ServerHealth />} />
-          </Route>
-        </Route>
-        <Route path="/login" element={<Navigate to="/" replace />} />
-        <Route path="*" element={
-          user?.is_root
-            ? <Navigate to="/admin/tenants" replace />
-            : <Navigate to="/select-tenant" replace />
-        } />
-      </Routes>
-    );
-  }
-
   return (
     <Routes>
+      <Route path="/login" element={<Navigate to={defaultLanding(user)} replace />} />
       <Route path="/select-tenant" element={<SelectTenant />} />
 
-      <Route element={<Layout key={user?.tenant_id || ""} />}>
-        {/* Everyone */}
-        <Route path="/" element={<Runs />} />
-        <Route path="/runs" element={<Runs />} />
-        <Route path="/runs/:id" element={<RunDetail />} />
-        <Route path="/compare" element={<Compare />} />
-        <Route path="/packages" element={<Packages />} />
-        <Route path="/presets" element={<Presets />} />
-        <Route path="/run-presets" element={<RunPresets />} />
-        <Route path="/suites" element={<Suites />} />
-        <Route path="/suites/new" element={<SuiteBuilder />} />
-        <Route path="/suites/:id" element={<SuiteDetail />} />
-        <Route path="/suites/:id/edit" element={<SuiteBuilder />} />
-        <Route path="/suites/:id/items/new" element={<WorkloadEditor />} />
-        <Route path="/suites/:id/items/:itemId/edit" element={<WorkloadEditor />} />
-
-        <Route path="/settings" element={<SettingsPage />} />
-
-        {/* Operator+ */}
-        <Route element={<ProtectedRoute minRole="operator" />}>
-          <Route path="/runs/new" element={<NewRun />} />
-          <Route path="/presets/new" element={<PresetDesigner />} />
-          <Route path="/presets/:id/edit" element={<PresetDesigner />} />
-        </Route>
-
-        {/* Owner+ */}
-        <Route element={<ProtectedRoute minRole="owner" />}>
-          <Route path="/members" element={<TenantMembers />} />
-          <Route path="/tokens" element={<TenantTokens />} />
-        </Route>
-
-        {/* Root only */}
+      {/* Admin scope — no tenant in path (root operates cross-tenant). */}
+      <Route element={<Layout />}>
         <Route element={<ProtectedRoute requireRoot />}>
           <Route path="/admin/tenants" element={<AdminTenants />} />
           <Route path="/admin/users" element={<AdminUsers />} />
@@ -157,8 +117,39 @@ function AppRoutes() {
         </Route>
       </Route>
 
-      <Route path="/login" element={<Navigate to="/" replace />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Tenant-scoped routes: /t/:tenantId/<entity> */}
+      <Route path="/t/:tenantId" element={<TenantGate />}>
+        <Route element={<Layout />}>
+          <Route index element={<Navigate to="runs" replace />} />
+          <Route path="runs" element={<Runs />} />
+          <Route path="runs/:id" element={<RunDetail />} />
+          <Route path="compare" element={<Compare />} />
+          <Route path="packages" element={<Packages />} />
+          <Route path="presets" element={<Presets />} />
+          <Route path="run-presets" element={<RunPresets />} />
+          <Route path="suites" element={<Suites />} />
+          <Route path="suites/new" element={<SuiteBuilder />} />
+          <Route path="suites/:id" element={<SuiteDetail />} />
+          <Route path="suites/:id/edit" element={<SuiteBuilder />} />
+          <Route path="suites/:id/items/new" element={<WorkloadEditor />} />
+          <Route path="suites/:id/items/:itemId/edit" element={<WorkloadEditor />} />
+          <Route path="settings" element={<SettingsPage />} />
+
+          <Route element={<ProtectedRoute minRole="operator" />}>
+            <Route path="runs/new" element={<NewRun />} />
+            <Route path="presets/new" element={<PresetDesigner />} />
+            <Route path="presets/:id/edit" element={<PresetDesigner />} />
+          </Route>
+
+          <Route element={<ProtectedRoute minRole="owner" />}>
+            <Route path="members" element={<TenantMembers />} />
+            <Route path="tokens" element={<TenantTokens />} />
+          </Route>
+        </Route>
+      </Route>
+
+      <Route path="/" element={<Navigate to={defaultLanding(user)} replace />} />
+      <Route path="*" element={<Navigate to={defaultLanding(user)} replace />} />
     </Routes>
   );
 }

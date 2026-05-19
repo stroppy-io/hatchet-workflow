@@ -11,7 +11,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { clients } from "@/api/clients";
-import { getTenantId } from "@/api/transport";
+import { useTenantId, useTenantPath } from "@/hooks/useTenantPath";
 import type { TestSuite } from "@/lib/proto/cloud/v1/testing/test_suite_pb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -222,6 +222,8 @@ function makeColumns(
 export function Suites() {
   const navigate = useNavigate();
   const confirm = useConfirm();
+  const tid = useTenantId();
+  const tPath = useTenantPath();
 
   const [suites, setSuites] = useState<TestSuite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -237,7 +239,6 @@ export function Suites() {
     setLoading(true);
     setError(null);
     try {
-      const tid = getTenantId();
       const resp = await clients.suite.listTestSuites(
         tid ? { value: tid } : {}
       );
@@ -265,7 +266,7 @@ export function Suites() {
     try {
       const r = await clients.suiteRun.launchTestSuite({ value: id });
       await fetchSuites();
-      navigate(`/runs?suite=${id}&batch=${r.id?.value ?? ""}`);
+      navigate(tPath(`runs?suite=${id}&batch=${r.id?.value ?? ""}`));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Launch failed");
     } finally {
@@ -279,7 +280,7 @@ export function Suites() {
     try {
       const r = await clients.suite.cloneTestSuite({ value: id });
       await fetchSuites();
-      navigate(`/suites/${r.id?.value}/edit`);
+      navigate(tPath(`suites/${r.id?.value}/edit`));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Clone failed");
     } finally {
@@ -310,7 +311,7 @@ export function Suites() {
   const columns = useMemo(
     () => makeColumns(
       handleLaunch,
-      (s) => navigate(`/suites/${s.id?.value}/edit`),
+      (s) => navigate(tPath(`suites/${s.id?.value}/edit`)),
       handleClone,
       handleDelete,
       busyID,
@@ -345,7 +346,7 @@ export function Suites() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => navigate("/suites/new")}
+            onClick={() => navigate(tPath("suites/new"))}
             className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 transition-colors cursor-pointer"
           >
             <Plus className="h-3 w-3" />
@@ -416,7 +417,7 @@ export function Suites() {
                   onClick={(e) => {
                     const target = e.target as HTMLElement;
                     if (target.closest("button, a, input")) return;
-                    navigate(`/suites/${row.original.id?.value}`);
+                    navigate(tPath(`suites/${row.original.id?.value}`));
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (

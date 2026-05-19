@@ -14,16 +14,11 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/core/ids"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/pgtx"
 	agentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent"
+	catalogpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
-// bootEntry holds metadata encoded in a bootstrap token.
-type bootEntry struct {
-	tenantID string
-	dagRunID string
-}
 
 // AgentLogLine mirrors system.AgentLogLine without an import cycle.
 type AgentLogLine struct {
@@ -103,32 +98,45 @@ func New(executor exec.DB, txMgr pgtx.TxManager, events eventing.Bus, hub *Hub, 
 }
 
 // IssueBootstrap returns a signed JWT bootstrap token bound to the given
-// tenant and dag-run. The agent presents this token in Register.
-func (s *Service) IssueBootstrap(tenantID, dagRunID string) string {
-	tok, err := s.bootstrap.Issue(tenantID, dagRunID, "", "")
+// (tenant, dag_run, machine_id, role). The agent presents this token in
+// Register; the server treats the JWT claims as the trusted source of
+// machine identity.
+func (s *Service) IssueBootstrap(ctx context.Context, tenantID, dagRunID, machineID, role string) (string, error) {
+	_ = ctx
+	tok, err := s.bootstrap.Issue(tenantID, dagRunID, machineID, role)
 	if err != nil {
-		return ""
+		return "", fmt.Errorf("agent.IssueBootstrap: %w", err)
 	}
-	return tok
+	return tok, nil
+}
+
+// roleFromString maps a string MachineRole name back to the enum. Empty /
+// unknown → UNSPECIFIED.
+func roleFromString(s string) catalogpb.MachineRole {
+	if v, ok := catalogpb.MachineRole_value[s]; ok {
+		return catalogpb.MachineRole(v)
+	}
+	return catalogpb.MachineRole_MACHINE_ROLE_UNSPECIFIED
 }
 
 // Register validates the bootstrap token, inserts an agents row, and returns
-// the Agent proto plus a long-lived poll_token.
+// the Agent proto plus a long-lived poll_token. The JWT claims (tenant_id,
+// dag_run_id, machine_id, role) are the only trusted source — request body
+// fields with the same names are ignored.
 func (s *Service) Register(ctx context.Context, req *agentpb.RegisterRequest) (*agentpb.RegisterResponse, error) {
 	claims, err := s.bootstrap.Verify(req.GetBootstrapToken())
 	if err != nil {
 		return nil, fmt.Errorf("agent.Register: invalid bootstrap_token: %w", err)
 	}
-	entry := bootEntry{tenantID: claims.TenantID, dagRunID: claims.DagRunID}
 
 	now := time.Now()
 	nowTs := timestamppb.New(now)
 	agent := &agentpb.Agent{
 		Id:           &agentpb.AgentId{Value: ids.New()},
-		TenantId:     &iampb.TenantId{Value: entry.tenantID},
-		DagRunId:     entry.dagRunID,
-		MachineId:    req.GetMachineId(),
-		Role:         req.GetRole(),
+		TenantId:     &iampb.TenantId{Value: claims.TenantID},
+		DagRunId:     claims.DagRunID,
+		MachineId:    claims.MachineID,
+		Role:         roleFromString(claims.Role),
 		InternalIp:   req.GetInternalIp(),
 		PublicIp:     req.PublicIp,
 		AgentVersion: req.GetAgentVersion(),
@@ -149,6 +157,12 @@ func (s *Service) Register(ctx context.Context, req *agentpb.RegisterRequest) (*
 	s.mu.Lock()
 	s.tokens[token] = agent.GetId().GetValue()
 	s.mu.Unlock()
+
+	// Bind this (dag_run, machine_id) to the new agent_id so handlers can
+	// resolve targets by machine_id at execute time.
+	if s.hub != nil {
+		s.hub.Bind(claims.DagRunID, claims.MachineID, agent.GetId().GetValue())
+	}
 
 	return &agentpb.RegisterResponse{Agent: agent, PollToken: token}, nil
 }
@@ -208,18 +222,22 @@ func (s *Service) Poll(ctx context.Context, req *agentpb.PollRequest) (*agentpb.
 	return &agentpb.CommandBatch{Commands: cmds}, nil
 }
 
-// Deregister marks the agent as TERMINATED.
+// Deregister marks the agent as TERMINATED and clears every machine binding
+// it held in the Hub, so handlers no longer resolve to a dead agent.
 func (s *Service) Deregister(ctx context.Context, id *agentpb.AgentId) error {
 	now := time.Now()
-	_, err := s.repo.Execute(ctx,
+	if _, err := s.repo.Execute(ctx,
 		agentpb.Agents.Update().
 			Set(
 				agentpb.Agents.Status.Set(agentpb.AgentStatus_AGENT_STATUS_TERMINATED.String()),
 				agentpb.Agents.UpdatedAt.Set(now),
 			).
 			Where(agentpb.Agents.Id.Eq(id.GetValue())),
-	)
-	return err
+	); err != nil {
+		return err
+	}
+	s.hub.ClearByAgent(id.GetValue())
+	return nil
 }
 
 // AgentIDForToken resolves a poll_token to an agent_id.

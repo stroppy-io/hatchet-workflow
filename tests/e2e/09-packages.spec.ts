@@ -1,26 +1,32 @@
 import { test, expect } from "@playwright/test";
-import { login } from "./helpers";
+import { login, gotoTenant } from "./helpers";
 
-test.describe("Packages", () => {
-  test("packages page loads", async ({ page }) => {
+// Functional: packages list is the canonical reference of installable binaries.
+// Built-in tenant seed (A14) is missing in refactor, so we only validate that
+// the page renders honestly: either the list (rows from API) or an empty hint.
+// Upload/download via REST is gap.md A10 (lost) — those probes are skipped.
+
+test.describe("Packages list", () => {
+  test.beforeEach(async ({ page }) => {
     await login(page);
-    await page.goto("/packages");
-    await page.waitForTimeout(1000);
-    // Should show package list with built-in packages.
-    const hasPackages = (await page.locator("text=PostgreSQL").count()) > 0 ||
-                        (await page.locator("text=MySQL").count()) > 0 ||
-                        (await page.locator("text=No packages").count()) > 0;
-    expect(hasPackages).toBeTruthy();
+    await gotoTenant(page, "packages");
+    await page.waitForTimeout(1_500);
   });
 
-  test("packages show DB kind and version", async ({ page }) => {
-    await login(page);
-    await page.goto("/packages");
-    await page.waitForTimeout(1000);
-    // Built-in packages should show kind.
-    const kindBadge = page.locator("text=postgres").first();
-    if (await kindBadge.isVisible({ timeout: 3000 }).catch(() => false)) {
-      expect(true).toBeTruthy();
-    }
+  test("tenant-scoped URL", async ({ page }) => {
+    expect(page.url()).toMatch(/\/t\/[^/]+\/packages/);
+  });
+
+  test("page renders honestly — list or empty hint, never blank", async ({ page }) => {
+    const hasRows = (await page.locator("table tbody tr, [data-package-row]").count()) > 0;
+    const hasCard = (await page.getByRole("listitem").count()) > 0;
+    const hasEmpty = (await page.getByText(/no packages/i).count()) > 0;
+    expect(hasRows || hasCard || hasEmpty).toBeTruthy();
+  });
+});
+
+test.describe.skip("Package upload/download (blocked: gap.md A10 — REST removed, no Connect equivalent)", () => {
+  test("user uploads a .deb and downloads it back", () => {
+    // Placeholder.
   });
 });

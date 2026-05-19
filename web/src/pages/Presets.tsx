@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { clients } from "@/api/clients";
-import { getTenantId } from "@/api/transport";
+import { useTenantId, useTenantPath } from "@/hooks/useTenantPath";
 import { Database_Kind } from "@/lib/proto/cloud/v1/catalog/database_pb";
 import type { DatabasePreset, Database } from "@/lib/proto/cloud/v1/catalog/database_pb";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
@@ -142,10 +142,11 @@ export function Presets() {
   const [filterKind, setFilterKind] = useState<string>("");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const confirm = useConfirm();
+  const tid = useTenantId();
+  const tPath = useTenantPath();
 
   const load = useCallback(async () => {
     try {
-      const tid = getTenantId();
       const resp = await clients.databasePreset.listDatabasePresets(
         tid ? { value: tid } : {}
       );
@@ -155,7 +156,7 @@ export function Presets() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tid]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -212,7 +213,7 @@ export function Presets() {
               <SelectItem value="ydb">YDB</SelectItem>
             </SelectContent>
           </Select>
-          <Link to="/presets/new">
+          <Link to={tPath("presets/new")}>
             <Button size="sm">
               <Plus className="h-3.5 w-3.5" /> New Preset
             </Button>
@@ -272,6 +273,7 @@ function PresetCard({
   onClone: () => void;
   onDelete: () => void;
 }) {
+  const tPath = useTenantPath();
   const topology = toTopology(preset.database);
   const nodes = nodeCount(preset.database);
   const isBuiltin = !preset.tenantId;
@@ -295,13 +297,13 @@ function PresetCard({
       <CardContent className="space-y-3">
         <TopologyDiagram kind={dbKind} topology={topology as never} />
         <div className="flex items-center gap-1 pt-1">
-          <Link to={`/runs/new?preset_id=${preset.id?.value}`} className="flex-1">
+          <Link to={tPath(`runs/new?preset_id=${preset.id?.value}`)} className="flex-1">
             <Button size="sm" variant="outline" className="w-full">
               <Play className="h-3 w-3" />
               Start Run
             </Button>
           </Link>
-          <Link to={`/presets/${preset.id?.value}/edit`} className="p-1.5 text-zinc-600 hover:text-zinc-300" title="Edit">
+          <Link to={tPath(`presets/${preset.id?.value}/edit`)} className="p-1.5 text-zinc-600 hover:text-zinc-300" title="Edit">
             <Pencil className="w-3 h-3" />
           </Link>
           <button onClick={onClone} className="p-1.5 text-zinc-600 hover:text-zinc-300" title="Clone">

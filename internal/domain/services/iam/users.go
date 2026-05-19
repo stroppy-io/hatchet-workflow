@@ -113,6 +113,37 @@ func (s *Service) DeleteUser(ctx context.Context, id *iampb.UserId) (*iampb.User
 	return u, nil
 }
 
+// UpdateUser patches mutable fields (email, nickname). Password lives behind
+// UpdatePassword / ResetUserPassword; tenant_members live behind member APIs.
+func (s *Service) UpdateUser(ctx context.Context, user *iampb.User) (*iampb.User, error) {
+	if user.GetId() == nil || user.GetId().GetValue() == "" {
+		return nil, domainerr.InvalidArgument(domainerr.FieldViolation("id", "is required"))
+	}
+	existing, err := s.GetUserByID(ctx, user.GetId())
+	if err != nil {
+		return nil, err
+	}
+	if user.GetEmail() != "" {
+		existing.Email = user.GetEmail()
+	}
+	if user.GetNickname() != "" {
+		existing.Nickname = user.GetNickname()
+	}
+	now := time.Now()
+	if _, err := s.userRepo.Execute(ctx,
+		iampb.Users.Update().
+			Set(
+				iampb.Users.Email.Set(existing.GetEmail()),
+				iampb.Users.Nickname.Set(existing.GetNickname()),
+				iampb.Users.UpdatedAt.Set(now),
+			).
+			Where(iampb.Users.Id.Eq(user.GetId().GetValue())),
+	); err != nil {
+		return nil, err
+	}
+	return s.GetUserByID(ctx, user.GetId())
+}
+
 // ResetUserPassword sets a new password hash and revokes all active refresh tokens.
 func (s *Service) ResetUserPassword(ctx context.Context, id *iampb.UserId, newPassword string) (*iampb.User, error) {
 	return pgtx.WithSerializableRet(ctx, s.txManager, func(ctx context.Context) (*iampb.User, error) {

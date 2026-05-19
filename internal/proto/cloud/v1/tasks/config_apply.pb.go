@@ -31,9 +31,12 @@ type ConfigApplyTask struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
 	EngineKind catalog.Database_Kind  `protobuf:"varint,1,opt,name=engine_kind,json=engineKind,proto3,enum=cloud.v1.catalog.Database_Kind" json:"engine_kind,omitempty"`
 	Role       catalog.MachineRole    `protobuf:"varint,2,opt,name=role,proto3,enum=cloud.v1.catalog.MachineRole" json:"role,omitempty"`
-	Files      []*common.ConfigFile   `protobuf:"bytes,10,rep,name=files,proto3" json:"files,omitempty"`
-	CliArgs    []string               `protobuf:"bytes,11,rep,name=cli_args,json=cliArgs,proto3" json:"cli_args,omitempty"`
-	Env        map[string]string      `protobuf:"bytes,12,rep,name=env,proto3" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// target_machine_ids — explicit fan-out. Takes precedence over `role`
+	// when non-empty.
+	TargetMachineIds []string             `protobuf:"bytes,3,rep,name=target_machine_ids,json=targetMachineIds,proto3" json:"target_machine_ids,omitempty"`
+	Files            []*common.ConfigFile `protobuf:"bytes,10,rep,name=files,proto3" json:"files,omitempty"`
+	CliArgs          []string             `protobuf:"bytes,11,rep,name=cli_args,json=cliArgs,proto3" json:"cli_args,omitempty"`
+	Env              map[string]string    `protobuf:"bytes,12,rep,name=env,proto3" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// restart_service — issue `systemctl restart <unit>` (or equivalent) after rendering.
 	RestartService bool `protobuf:"varint,20,opt,name=restart_service,json=restartService,proto3" json:"restart_service,omitempty"`
 	// unit_name — override default systemd unit. Empty = engine-default.
@@ -86,6 +89,13 @@ func (x *ConfigApplyTask) GetRole() catalog.MachineRole {
 	return catalog.MachineRole(0)
 }
 
+func (x *ConfigApplyTask) GetTargetMachineIds() []string {
+	if x != nil {
+		return x.TargetMachineIds
+	}
+	return nil
+}
+
 func (x *ConfigApplyTask) GetFiles() []*common.ConfigFile {
 	if x != nil {
 		return x.Files
@@ -125,13 +135,14 @@ var File_cloud_v1_tasks_config_apply_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_tasks_config_apply_proto_rawDesc = "" +
 	"\n" +
-	"!cloud/v1/tasks/config_apply.proto\x12\x0ecloud.v1.tasks\x1a!cloud/v1/common/config_file.proto\x1a\x1fcloud/v1/catalog/database.proto\x1a!cloud/v1/catalog/deployment.proto\x1a\x17validate/validate.proto\"\xcf\x03\n" +
+	"!cloud/v1/tasks/config_apply.proto\x12\x0ecloud.v1.tasks\x1a!cloud/v1/common/config_file.proto\x1a\x1fcloud/v1/catalog/database.proto\x1a!cloud/v1/catalog/deployment.proto\x1a\x17validate/validate.proto\"\x88\x04\n" +
 	"\x0fConfigApplyTask\x12L\n" +
 	"\vengine_kind\x18\x01 \x01(\x0e2\x1f.cloud.v1.catalog.Database.KindB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\n" +
 	"engineKind\x12=\n" +
 	"\x04role\x18\x02 \x01(\x0e2\x1d.cloud.v1.catalog.MachineRoleB\n" +
-	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04role\x12;\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04role\x127\n" +
+	"\x12target_machine_ids\x18\x03 \x03(\tB\t\xfaB\x06\x92\x01\x03\x10\x80\x02R\x10targetMachineIds\x12;\n" +
 	"\x05files\x18\n" +
 	" \x03(\v2\x1b.cloud.v1.common.ConfigFileB\b\xfaB\x05\x92\x01\x02\x10@R\x05files\x12$\n" +
 	"\bcli_args\x18\v \x03(\tB\t\xfaB\x06\x92\x01\x03\x10\x80\x02R\acliArgs\x12E\n" +

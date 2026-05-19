@@ -77,13 +77,64 @@ func (s *Service) ListMembers(ctx context.Context, tenantID *iampb.TenantId) ([]
 	)
 }
 
-// RemoveMember soft-deletes a tenant member by ID.
-func (s *Service) RemoveMember(ctx context.Context, id *iampb.TenantMemberId) error {
+// RemoveMember soft-deletes a tenant member by ID and returns the previous
+// row (pre-delete) for handler response.
+func (s *Service) RemoveMember(ctx context.Context, id *iampb.TenantMemberId) (*iampb.TenantMember, error) {
+	existing, err := s.GetMember(ctx, id)
+	if err != nil {
+		return nil, err
+	}
 	now := time.Now()
-	_, err := s.memberRepo.Execute(ctx,
+	if _, err := s.memberRepo.Execute(ctx,
 		iampb.TenantMembers.Update().
 			Set(iampb.TenantMembers.DeletedAt.Set(&now)).
 			Where(iampb.TenantMembers.Id.Eq(id.GetValue())),
+	); err != nil {
+		return nil, err
+	}
+	return existing, nil
+}
+
+// GetMember returns a non-deleted tenant member by ID.
+func (s *Service) GetMember(ctx context.Context, id *iampb.TenantMemberId) (*iampb.TenantMember, error) {
+	m, err := s.memberRepo.QueryRow(ctx,
+		iampb.TenantMembers.SelectAll().Where(
+			iampb.TenantMembers.Id.Eq(id.GetValue()),
+			iampb.TenantMembers.DeletedAt.IsNull(),
+		),
 	)
-	return err
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return m, nil
+}
+
+// UpdateMemberRole updates the role of an existing tenant membership.
+func (s *Service) UpdateMemberRole(ctx context.Context, id *iampb.TenantMemberId, role iampb.TenantRole) (*iampb.TenantMember, error) {
+	now := time.Now()
+	if _, err := s.memberRepo.Execute(ctx,
+		iampb.TenantMembers.Update().
+			Set(
+				iampb.TenantMembers.Role.Set(role.String()),
+				iampb.TenantMembers.UpdatedAt.Set(now),
+			).
+			Where(iampb.TenantMembers.Id.Eq(id.GetValue())),
+	); err != nil {
+		return nil, err
+	}
+	return s.GetMember(ctx, id)
+}
+
+// ListMembersByUser returns all non-deleted memberships of a user (every
+// tenant they belong to).
+func (s *Service) ListMembersByUser(ctx context.Context, userID *iampb.UserId) ([]*iampb.TenantMember, error) {
+	return s.memberRepo.Query(ctx,
+		iampb.TenantMembers.SelectAll().Where(
+			iampb.TenantMembers.UserId.Eq(userID.GetValue()),
+			iampb.TenantMembers.DeletedAt.IsNull(),
+		),
+	)
 }

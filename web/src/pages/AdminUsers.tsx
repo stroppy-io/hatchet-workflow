@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { clients } from "@/api/clients";
-import { protoTsToISO } from "@/lib/proto-helpers";
+import { protoTsToISO, placeholderId } from "@/lib/proto-helpers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -78,7 +78,7 @@ export function AdminUsers() {
     setError("");
     try {
       await clients.admin.createUser({
-        user: { email: newUsername.trim(), nickname: newUsername.trim() },
+        user: { id: placeholderId(), email: newUsername.trim(), nickname: newUsername.trim() },
         password: newPassword,
       });
       setNewUsername("");

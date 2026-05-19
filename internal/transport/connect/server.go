@@ -18,17 +18,17 @@ import (
 
 // Deps aggregates Connect handler dependencies for mounting.
 type Deps struct {
-	IAMHandler         *IAMHandler
-	CatalogHandler     *CatalogHandler
-	StroppyHandler     *StroppyHandler
-	ScheduleHandler    *ScheduleHandler
-	TestingHandler     *TestingHandler
-	TestSuiteRunHandler *TestSuiteRunHandler
-	SharedTestRunHandler *SharedTestRunHandler
+	IAMHandler            *IAMHandler
+	CatalogHandler        *CatalogHandler
+	StroppyHandler        *StroppyHandler
+	ScheduleHandler       *ScheduleHandler
+	TestingHandler        *TestingHandler
+	TestSuiteRunHandler   *TestSuiteRunHandler
+	SharedTestRunHandler  *SharedTestRunHandler
 	SharedSuiteRunHandler *SharedSuiteRunHandler
-	ComparisonHandler  *ComparisonHandler
-	BaselineHandler    *BaselineHandler
-	AgentHandler       *AgentHandler
+	ComparisonHandler     *ComparisonHandler
+	BaselineHandler       *BaselineHandler
+	AgentHandler          *AgentHandler
 
 	WebhookHandler     *WebhookHandler
 	QuotaHandler       *QuotaHandler
@@ -59,6 +59,14 @@ func Mount(d Deps) http.Handler {
 	// Tenant service
 	tenantPath, tenantHandler := iamconnect.NewTenantServiceHandler(d.IAMHandler, d.Interceptors)
 	mux.Handle(tenantPath, tenantHandler)
+
+	// TenantMember service
+	memberPath, memberHandler := iamconnect.NewTenantMemberServiceHandler(d.IAMHandler, d.Interceptors)
+	mux.Handle(memberPath, memberHandler)
+
+	// ApiToken service
+	tokenPath, tokenHandler := iamconnect.NewApiTokenServiceHandler(d.IAMHandler, d.Interceptors)
+	mux.Handle(tokenPath, tokenHandler)
 
 	// DatabasePreset service
 	dbPresetPath, dbPresetHandler := catalogconnect.NewDatabasePresetServiceHandler(d.CatalogHandler, d.Interceptors)
@@ -187,6 +195,9 @@ func AuthBypass() map[string]bool {
 		agentconnect.AgentServiceRegisterProcedure:   true,
 		agentconnect.AgentServicePollProcedure:       true,
 		agentconnect.AgentServiceDeregisterProcedure: true,
+		// Public share endpoints — token in URL is the authorisation.
+		testingconnect.SharedTestRunServiceGetByTokenProcedure:  true,
+		testingconnect.SharedSuiteRunServiceGetByTokenProcedure: true,
 	}
 }
 

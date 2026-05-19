@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { VList, type VListHandle } from "virtua";
 import { WSConnection, type WSMessage } from "@/api/ws";
-import { getAccessToken } from "@/api/transport";
+import { clients } from "@/api/clients";
+import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 
 // ─── Local types (previously from @/api/types) ──────────────────
 export interface SnapshotTarget { id: string; host: string; internal_host: string; role: string; }
@@ -22,25 +23,39 @@ async function getRunLogs(
   runID: string,
   opts?: { end?: string; start?: string; limit?: number; desc?: boolean; search?: string; actions?: string[]; roles?: string[]; units?: string[]; machineIDs?: string[] },
 ): Promise<string[]> {
-  const token = getAccessToken();
-  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-  const params = new URLSearchParams();
-  if (opts?.end) params.set("end", opts.end);
-  if (opts?.start) params.set("start", opts.start);
-  if (opts?.desc) params.set("dir", "desc");
-  if (opts?.search) params.set("search", opts.search);
-  if (opts?.actions) for (const a of opts.actions) params.append("action", a);
-  if (opts?.roles) for (const r of opts.roles) params.append("role", r);
-  if (opts?.units) for (const u of opts.units) params.append("unit", u);
-  if (opts?.machineIDs) for (const m of opts.machineIDs) params.append("machine_id", m);
-  params.set("limit", String(opts?.limit ?? 500));
-  const url = `/api/v1/run/${runID}/logs?${params.toString()}`;
-  const res = await fetch(url, { headers });
-  if (res.status === 503) return [];
-  if (!res.ok) throw new Error(`logs: ${res.status}: ${await res.text()}`);
-  const text = await res.text();
-  if (!text.trim()) return [];
-  return text.trim().split("\n").filter(Boolean);
+  // Backlog fetch via ConnectRPC server-stream with follow=false. The new
+  // RPC lacks server-side search / action / role / unit filters; those are
+  // applied client-side by the existing useMemo over `lines`. `end` becomes
+  // the `since` cursor (we ask for everything since `since` and trim to
+  // `limit` client-side).
+  const limit = opts?.limit ?? 500;
+  const sinceDate = opts?.end ? new Date(opts.end) : undefined;
+  const collected: string[] = [];
+  try {
+    for await (const line of clients.testRun.streamTestRunLogs({
+      testRunId: { value: runID },
+      stepId: "",
+      follow: false,
+      since: sinceDate ? timestampFromDate(sinceDate) : undefined,
+    })) {
+      const tsMs = line.ts
+        ? Number(line.ts.seconds) * 1000 + Math.floor((line.ts.nanos ?? 0) / 1_000_000)
+        : 0;
+      // Serialize as JSON object compatible with parseLine().
+      collected.push(JSON.stringify({
+        _time: tsMs ? new Date(tsMs).toISOString() : "",
+        _stream_id: line.commandId,
+        machine_id: line.machineId,
+        action: "",
+        _msg: line.line,
+      }));
+      if (collected.length >= limit) break;
+    }
+  } catch {
+    return [];
+  }
+  if (opts?.desc) collected.reverse();
+  return collected;
 }
 import { ArrowDown, Server, Zap, Search, X, WrapText, AlignLeft, Check } from "lucide-react";
 import { MultiFilter, type FilterOption } from "@/components/ui/multi-filter";

@@ -193,4 +193,10 @@ service TestRunService {
 
     /* InstantiateTestRun — create a new TestRun from a template. */
     rpc InstantiateTestRun (TestRunTemplateId) returns (TestRun) { option idempotency_level = IDEMPOTENT; }
+
+    /* DryRunTestRun — resolve presets, validate, and build the DAG preview
+       without launching. The returned Dag includes ConfigApplyTask specs
+       with the per-component config files the agent would render — same
+       data the legacy /run/{id}/rendered-configs endpoint exposed. */
+    rpc DryRunTestRun (TestRun) returns (cloud.v1.system.Dag) { option idempotency_level = NO_SIDE_EFFECTS; }
 }

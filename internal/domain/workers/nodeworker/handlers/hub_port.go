@@ -10,4 +10,5 @@ import (
 // HubPort is implemented by agent.Hub.
 type HubPort interface {
 	Dispatch(ctx context.Context, agentID string, machineID string, action *agentpb.Action, timeout time.Duration) (*agentpb.Report, error)
+	ResolveByMachine(dagRunID, machineID string) (string, bool)
 }

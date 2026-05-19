@@ -2,7 +2,6 @@ package connect
 
 import (
 	"context"
-	"errors"
 
 	"connectrpc.com/connect"
 
@@ -67,14 +66,18 @@ func (h *TestSuiteRunHandler) CancelTestSuiteRun(ctx context.Context, req *conne
 	return connect.NewResponse(sr), nil
 }
 
-func (h *TestSuiteRunHandler) WatchTestSuiteRun(_ context.Context, _ *connect.Request[testingpb.WatchTestSuiteRunRequest], _ *connect.ServerStream[testingpb.TestSuiteRunProgress]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("not implemented"))
+func (h *TestSuiteRunHandler) WatchTestSuiteRun(ctx context.Context, req *connect.Request[testingpb.WatchTestSuiteRunRequest], stream *connect.ServerStream[testingpb.TestSuiteRunProgress]) error {
+	return h.svc.WatchTestSuiteRun(ctx, req.Msg.GetSuiteRunId(), stream.Send)
 }
 
-func (h *TestSuiteRunHandler) StreamTestSuiteRunLogs(_ context.Context, _ *connect.Request[testingpb.StreamTestSuiteRunLogsRequest], _ *connect.ServerStream[agentpb.LogLine]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("not implemented"))
+func (h *TestSuiteRunHandler) StreamTestSuiteRunLogs(ctx context.Context, req *connect.Request[testingpb.StreamTestSuiteRunLogsRequest], stream *connect.ServerStream[agentpb.LogLine]) error {
+	return h.svc.StreamTestSuiteRunLogs(ctx, req.Msg, stream.Send)
 }
 
-func (h *TestSuiteRunHandler) GetTestSuiteRunMetrics(_ context.Context, _ *connect.Request[testingpb.GetTestSuiteRunMetricsRequest]) (*connect.Response[testingpb.MetricSeriesList], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("not implemented"))
+func (h *TestSuiteRunHandler) GetTestSuiteRunMetrics(ctx context.Context, req *connect.Request[testingpb.GetTestSuiteRunMetricsRequest]) (*connect.Response[testingpb.MetricSeriesList], error) {
+	out, err := h.svc.GetTestSuiteRunMetrics(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(out), nil
 }

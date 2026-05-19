@@ -1570,6 +1570,20 @@ func (m *Package_DebBlobSource) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if utf8.RuneCountInString(m.GetSha256()) != 64 {
+		err := Package_DebBlobSourceValidationError{
+			field:  "Sha256",
+			reason: "value length must be 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+
+	}
+
+	// no validation rules for SizeBytes
+
 	if len(errors) > 0 {
 		return Package_DebBlobSourceMultiError(errors)
 	}

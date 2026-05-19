@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/tasks/config_apply.proto.
  */
 export const file_cloud_v1_tasks_config_apply: GenFile = /*@__PURE__*/
-  fileDesc("CiFjbG91ZC92MS90YXNrcy9jb25maWdfYXBwbHkucHJvdG8SDmNsb3VkLnYxLnRhc2tzIoIDCg9Db25maWdBcHBseVRhc2sSQAoLZW5naW5lX2tpbmQYASABKA4yHy5jbG91ZC52MS5jYXRhbG9nLkRhdGFiYXNlLktpbmRCCvpCB4IBBBABIAASNwoEcm9sZRgCIAEoDjIdLmNsb3VkLnYxLmNhdGFsb2cuTWFjaGluZVJvbGVCCvpCB4IBBBABIAASNAoFZmlsZXMYCiADKAsyGy5jbG91ZC52MS5jb21tb24uQ29uZmlnRmlsZUII+kIFkgECEEASGwoIY2xpX2FyZ3MYCyADKAlCCfpCBpIBAxCAAhJACgNlbnYYDCADKAsyKC5jbG91ZC52MS50YXNrcy5Db25maWdBcHBseVRhc2suRW52RW50cnlCCfpCBpoBAxCAAhIXCg9yZXN0YXJ0X3NlcnZpY2UYFCABKAgSGgoJdW5pdF9uYW1lGBUgASgJQgf6QgRyAhhAGioKCEVudkVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCQ1pBZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvdGFza3NiBnByb3RvMw", [file_cloud_v1_common_config_file, file_cloud_v1_catalog_database, file_cloud_v1_catalog_deployment, file_validate_validate]);
+  fileDesc("CiFjbG91ZC92MS90YXNrcy9jb25maWdfYXBwbHkucHJvdG8SDmNsb3VkLnYxLnRhc2tzIqkDCg9Db25maWdBcHBseVRhc2sSQAoLZW5naW5lX2tpbmQYASABKA4yHy5jbG91ZC52MS5jYXRhbG9nLkRhdGFiYXNlLktpbmRCCvpCB4IBBBABIAASNwoEcm9sZRgCIAEoDjIdLmNsb3VkLnYxLmNhdGFsb2cuTWFjaGluZVJvbGVCCvpCB4IBBBABIAASJQoSdGFyZ2V0X21hY2hpbmVfaWRzGAMgAygJQgn6QgaSAQMQgAISNAoFZmlsZXMYCiADKAsyGy5jbG91ZC52MS5jb21tb24uQ29uZmlnRmlsZUII+kIFkgECEEASGwoIY2xpX2FyZ3MYCyADKAlCCfpCBpIBAxCAAhJACgNlbnYYDCADKAsyKC5jbG91ZC52MS50YXNrcy5Db25maWdBcHBseVRhc2suRW52RW50cnlCCfpCBpoBAxCAAhIXCg9yZXN0YXJ0X3NlcnZpY2UYFCABKAgSGgoJdW5pdF9uYW1lGBUgASgJQgf6QgRyAhhAGioKCEVudkVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCQ1pBZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvdGFza3NiBnByb3RvMw", [file_cloud_v1_common_config_file, file_cloud_v1_catalog_database, file_cloud_v1_catalog_deployment, file_validate_validate]);
 
 /**
  * ConfigApplyTask — generic "render configs on role's machines" task.
@@ -36,6 +36,14 @@ export type ConfigApplyTask = Message<"cloud.v1.tasks.ConfigApplyTask"> & {
    * @generated from field: cloud.v1.catalog.MachineRole role = 2;
    */
   role: MachineRole;
+
+  /**
+   * target_machine_ids — explicit fan-out. Takes precedence over `role`
+   * when non-empty. 
+   *
+   * @generated from field: repeated string target_machine_ids = 3;
+   */
+  targetMachineIds: string[];
 
   /**
    * @generated from field: repeated cloud.v1.common.ConfigFile files = 10;
@@ -84,6 +92,14 @@ export type ConfigApplyTaskJson = {
    * @generated from field: cloud.v1.catalog.MachineRole role = 2;
    */
   role?: MachineRoleJson;
+
+  /**
+   * target_machine_ids — explicit fan-out. Takes precedence over `role`
+   * when non-empty. 
+   *
+   * @generated from field: repeated string target_machine_ids = 3;
+   */
+  targetMachineIds?: string[];
 
   /**
    * @generated from field: repeated cloud.v1.common.ConfigFile files = 10;

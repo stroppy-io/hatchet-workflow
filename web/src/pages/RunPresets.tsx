@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { clients } from "@/api/clients";
-import { getTenantId } from "@/api/transport";
+import { useTenantId, useTenantPath } from "@/hooks/useTenantPath";
 import { protoTsToISO } from "@/lib/proto-helpers";
 import type { TestRunTemplate } from "@/lib/proto/cloud/v1/testing/test_run_template_pb";
 import { Badge } from "@/components/ui/badge";
@@ -101,6 +101,8 @@ function templateDuration(t: TestRunTemplate): string {
 export function RunPresets() {
   const navigate = useNavigate();
   const confirm = useConfirm();
+  const tid = useTenantId();
+  const tPath = useTenantPath();
   const [templates, setTemplates] = useState<TestRunTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterKind, setFilterKind] = useState<string>("");
@@ -113,7 +115,6 @@ export function RunPresets() {
 
   const load = useCallback(async () => {
     try {
-      const tid = getTenantId();
       const resp = await clients.template.listTestRunTemplates(
         tid ? { value: tid } : {}
       );
@@ -127,14 +128,14 @@ export function RunPresets() {
     } finally {
       setLoading(false);
     }
-  }, [filterKind]);
+  }, [filterKind, tid]);
 
   useEffect(() => { load(); }, [load]);
 
   function handleUse(t: TestRunTemplate) {
     // Seed the new-run wizard with template id so it can pre-fill.
     sessionStorage.setItem("rerun_config", JSON.stringify({ template_id: t.id?.value }));
-    navigate("/runs/new");
+    navigate(tPath("runs/new"));
   }
 
   async function handleDelete(t: TestRunTemplate) {
@@ -201,7 +202,7 @@ export function RunPresets() {
               ))}
             </SelectContent>
           </Select>
-          <Button size="sm" onClick={() => navigate("/runs/new")}>
+          <Button size="sm" onClick={() => navigate(tPath("runs/new"))}>
             <Play className="h-3.5 w-3.5" />
             New Run
           </Button>

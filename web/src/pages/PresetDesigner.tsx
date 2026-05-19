@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getTenantId } from "@/api/transport";
+import { useTenantId, useTenantPath } from "@/hooks/useTenantPath";
+import { placeholderId } from "@/lib/proto-helpers";
 import { clients } from "@/api/clients";
 
 // ─── Local types (previously from @/api/types) ──────────────────────────────
@@ -136,10 +137,10 @@ async function getPreset(id: string): Promise<Preset> {
   } as unknown as Preset;
 }
 
-async function createPreset(data: { name: string; description?: string; db_kind: DatabaseKind; topology: unknown }): Promise<{ id: string }> {
-  const tid = getTenantId() ?? "";
+async function createPreset(tid: string, data: { name: string; description?: string; db_kind: DatabaseKind; topology: unknown }): Promise<{ id: string }> {
   const r = await clients.databasePreset.createDatabasePreset({
     preset: {
+      id: placeholderId(),
       tenantId: { value: tid },
       identity: { name: data.name, description: data.description ?? "", label: [] },
       database: data.topology as unknown as never,
@@ -1584,6 +1585,8 @@ export function PresetDesigner() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEdit = !!id;
+  const tid = useTenantId() ?? "";
+  const tPath = useTenantPath();
 
   const [loading, setLoading] = useState(!!id);
   const [saving, setSaving] = useState(false);
@@ -1648,14 +1651,14 @@ export function PresetDesigner() {
       if (isEdit) {
         await updatePreset(id!, { name, description, topology });
       } else {
-        await createPreset({ name, description, db_kind: dbKind, topology });
+        await createPreset(tid, { name, description, db_kind: dbKind, topology });
       }
-      navigate("/presets");
+      navigate(tPath("presets"));
     } catch (err) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "Failed to save" });
     }
     setSaving(false);
-  }, [isValid, isEdit, id, name, description, dbKind, currentTopology, navigate]);
+  }, [isValid, isEdit, id, name, description, dbKind, currentTopology, navigate, tid, tPath]);
 
   const dbColor = DB_COLORS[dbKind];
 
@@ -1668,14 +1671,14 @@ export function PresetDesigner() {
       {/* Top bar */}
       <div className="shrink-0 border-b border-zinc-800 bg-[#070707] px-5 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate("/presets")} className="text-zinc-500 hover:text-zinc-300">
+          <button onClick={() => navigate(tPath("presets"))} className="text-zinc-500 hover:text-zinc-300">
             <ArrowLeft className="w-4 h-4" />
           </button>
           <h1 className="text-sm font-semibold">{isEdit ? "Edit Preset" : "New Preset"}</h1>
           {isBuiltin && <Badge variant="secondary" className="text-[8px]">builtin</Badge>}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => navigate("/presets")}>Cancel</Button>
+          <Button variant="outline" size="sm" onClick={() => navigate(tPath("presets"))}>Cancel</Button>
           {!isBuiltin && (
             <Button size="sm" onClick={handleSave} disabled={saving || !isValid} className="gap-1.5">
               <Check className="h-3 w-3" />

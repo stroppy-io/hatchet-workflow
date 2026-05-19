@@ -40,11 +40,16 @@ func New(cfg configurator.PostgresConfig) (*pgxpool.Pool, error) {
 }
 
 // MigrateAtlas applies the given migration filesystems to the pool using ratel's
-// Atlas-backed migrator. The ratel v0.4.25 signature is:
-//
-//	migrate.Migrate(pool, lg, schema, migrations ...fs.FS) error
+// Atlas-backed migrator against the `public` schema.
 func MigrateAtlas(pool *pgxpool.Pool, migrations ...MigrationContent) error {
-	return migrate.Migrate(pool, logger.Global().Named("migrate"), migrationSchema, migrations...)
+	return MigrateAtlasInSchema(pool, migrationSchema, migrations...)
+}
+
+// MigrateAtlasInSchema applies migrations into the supplied schema. Used by
+// per-test pools that pin search_path to a fresh `t_<ulid>` schema and need
+// migrations isolated from the shared public namespace.
+func MigrateAtlasInSchema(pool *pgxpool.Pool, schema string, migrations ...MigrationContent) error {
+	return migrate.Migrate(pool, logger.Global().Named("migrate"), schema, migrations...)
 }
 
 func MigrateWithLock(pool *pgxpool.Pool, lockName string, migrations ...MigrationContent) error {

@@ -10,14 +10,14 @@ import (
 	"github.com/yaroher/ratel/pkg/pgx-ext/sqlexec"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/core/configurator"
+	"github.com/stroppy-io/stroppy-cloud/internal/core/ids"
 	agentsvc "github.com/stroppy-io/stroppy-cloud/internal/domain/services/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/iam"
 	agentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent"
 	catalogpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
-	"github.com/stroppy-io/stroppy-cloud/internal/core/configurator"
-	"github.com/stroppy-io/stroppy-cloud/internal/core/ids"
 	"github.com/stroppy-io/stroppy-cloud/internal/testutil/fixture"
 )
 
@@ -75,7 +75,8 @@ func TestService_RegisterAndPoll(t *testing.T) {
 	af := setupAgentFixture(t)
 	ctx := context.Background()
 
-	token := af.svc.IssueBootstrap(af.tenantID, "dag-run-001")
+	token, err := af.svc.IssueBootstrap(ctx, af.tenantID, "dag-run-001", "machine-abc", catalogpb.MachineRole_MACHINE_ROLE_DATABASE.String())
+	require.NoError(t, err)
 	require.NotEmpty(t, token)
 
 	ip := "1.2.3.4"
@@ -173,7 +174,8 @@ func TestService_Deregister(t *testing.T) {
 	af := setupAgentFixture(t)
 	ctx := context.Background()
 
-	token := af.svc.IssueBootstrap(af.tenantID, "dag-run-002")
+	token, err := af.svc.IssueBootstrap(ctx, af.tenantID, "dag-run-002", "machine-deregister", catalogpb.MachineRole_MACHINE_ROLE_DATABASE.String())
+	require.NoError(t, err)
 	resp, err := af.svc.Register(ctx, &agentpb.RegisterRequest{
 		BootstrapToken: token,
 		MachineId:      "machine-deregister",
@@ -192,7 +194,8 @@ func TestService_CommandPersistedReported(t *testing.T) {
 	af := setupAgentFixture(t)
 	ctx := context.Background()
 
-	token := af.svc.IssueBootstrap(af.tenantID, "dag-run-cmd-persist")
+	token, err := af.svc.IssueBootstrap(ctx, af.tenantID, "dag-run-cmd-persist", "machine-persist", catalogpb.MachineRole_MACHINE_ROLE_DATABASE.String())
+	require.NoError(t, err)
 	resp, err := af.svc.Register(ctx, &agentpb.RegisterRequest{
 		BootstrapToken: token,
 		MachineId:      "machine-persist",

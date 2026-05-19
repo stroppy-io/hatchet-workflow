@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { clients } from "@/api/clients";
-import { getTenantId } from "@/api/transport";
+import { useTenantId, useTenantPath } from "@/hooks/useTenantPath";
 import type { TestSuite } from "@/lib/proto/cloud/v1/testing/test_suite_pb";
 import type { DatabasePreset } from "@/lib/proto/cloud/v1/catalog/database_pb";
 import { Database_Kind } from "@/lib/proto/cloud/v1/catalog/database_pb";
@@ -74,6 +74,8 @@ const STR_TO_PROTOCOL: Record<string, Workload_Protocol> = {
 export function WorkloadEditor() {
   const navigate = useNavigate();
   const { id, itemId } = useParams<{ id: string; itemId?: string }>();
+  const tid = useTenantId();
+  const tPath = useTenantPath();
   const editing = Boolean(itemId);
   const workloadIndex = itemId ? parseInt(itemId, 10) : NaN;
 
@@ -130,7 +132,6 @@ export function WorkloadEditor() {
 
   useEffect(() => {
     if (!id) return;
-    const tid = getTenantId();
     Promise.all([
       clients.suite.getTestSuite({ value: id }),
       clients.databasePreset.listDatabasePresets(tid ? { value: tid } : {}),
@@ -185,7 +186,7 @@ export function WorkloadEditor() {
               const files: WorkloadFile[] = (tuning.files ?? []).map((f) => ({
                 name: f.path ?? "",
                 kind: "sql",
-                content: f.content?.case === "inline" ? f.content.value : "",
+                content: f.inline ?? "",
               }));
               setWorkloadFiles(files);
             }
@@ -268,7 +269,7 @@ export function WorkloadEditor() {
         },
         updateMask: { paths: ["matrix"] },
       });
-      navigate(`/suites/${id}`);
+      navigate(tPath(`suites/${id}`));
     } catch (err) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "Save failed" });
     } finally {
@@ -292,7 +293,7 @@ export function WorkloadEditor() {
   if (suiteDbPresets.length === 0) {
     return (
       <div className="container mx-auto px-4 py-6 max-w-3xl">
-        <Button variant="ghost" size="sm" onClick={() => navigate(`/suites/${id}`)}>
+        <Button variant="ghost" size="sm" onClick={() => navigate(tPath(`suites/${id}`))}>
           <ArrowLeft className="w-4 h-4 mr-1" /> Back
         </Button>
         <div className="mt-6 border rounded p-6 text-sm text-center text-muted-foreground">
@@ -306,7 +307,7 @@ export function WorkloadEditor() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
       <div className="flex items-center gap-2 mb-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate(`/suites/${id}`)}>
+        <Button variant="ghost" size="sm" onClick={() => navigate(tPath(`suites/${id}`))}>
           <ArrowLeft className="w-4 h-4 mr-1" /> Back
         </Button>
         <h1 className="text-xl font-semibold flex items-center gap-2">
@@ -406,7 +407,7 @@ export function WorkloadEditor() {
         </div>
 
         <div className="flex items-center justify-end gap-2 pt-4 border-t">
-          <Button variant="ghost" onClick={() => navigate(`/suites/${id}`)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => navigate(tPath(`suites/${id}`))}>Cancel</Button>
           <Button disabled={saving || !name.trim()} onClick={save}>
             <Save className="w-4 h-4 mr-1" />
             {editing ? "Save changes" : "Add workload"}

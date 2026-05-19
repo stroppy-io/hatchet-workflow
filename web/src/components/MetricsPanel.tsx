@@ -1,13 +1,32 @@
 import { useEffect, useState } from "react";
-import { getAccessToken } from "@/api/transport";
+import { clients } from "@/api/clients";
+import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 
-async function getRunMetrics(runID: string, start: string, end: string): Promise<unknown> {
-  const token = getAccessToken();
-  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-  const url = `/api/v1/run/${runID}/metrics?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
-  const res = await fetch(url, { headers });
-  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
-  return res.json();
+async function getRunMetrics(runID: string, startDate: Date, endDate: Date): Promise<MetricSummary[]> {
+  const resp = await clients.testRun.getTestRunMetrics({
+    testRunId: { value: runID },
+    metricNames: [],
+    from: timestampFromDate(startDate),
+    to: timestampFromDate(endDate),
+    stepSeconds: 30,
+  });
+  // Reduce time series into one MetricSummary per metric name.
+  return (resp.series ?? []).map((s) => {
+    const values = s.points.map((p) => p.value);
+    const last = values.length > 0 ? values[values.length - 1] : 0;
+    const min = values.length > 0 ? Math.min(...values) : 0;
+    const max = values.length > 0 ? Math.max(...values) : 0;
+    const avg = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+    return {
+      key: s.name,
+      name: s.name,
+      unit: s.labels?.unit ?? "",
+      avg,
+      min,
+      max,
+      last,
+    };
+  });
 }
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
@@ -20,12 +39,6 @@ interface MetricSummary {
   min: number;
   max: number;
   last: number;
-}
-
-interface RunMetricsResponse {
-  run_id: string;
-  range: { Start: string; End: string };
-  metrics: MetricSummary[];
 }
 
 interface MetricsPanelProps {
@@ -83,9 +96,9 @@ export function MetricsPanel({ runID, startedAt, finishedAt }: MetricsPanelProps
       try {
         const startMs = startedAt ? new Date(startedAt).getTime() - 60000 : Date.now() - 7200000;
         const endMs = isLive ? Date.now() : new Date(finishedAt!).getTime() + 60000;
-        const data = (await getRunMetrics(runID, new Date(startMs).toISOString(), new Date(endMs).toISOString())) as unknown as RunMetricsResponse;
+        const data = await getRunMetrics(runID, new Date(startMs), new Date(endMs));
         if (cancelled) return;
-        setMetrics(data.metrics || []);
+        setMetrics(data);
       } catch (err) {
         if (cancelled) return;
         const msg = err instanceof Error ? err.message : "Failed to fetch metrics";

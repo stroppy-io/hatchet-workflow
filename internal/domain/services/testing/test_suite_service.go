@@ -162,6 +162,15 @@ func (s *TestSuiteService) UpdateTestSuite(
 					}
 					existing.Timestamps.UpdatedAt = timestamppb.Now()
 					scanner := existing.IntoPlain()
+					if scanner.Label == nil {
+						scanner.Label = []string{}
+					}
+					if len(scanner.Matrix) == 0 {
+						scanner.Matrix = []byte("{}")
+					}
+					if len(scanner.Policy) == 0 {
+						scanner.Policy = []byte("{}")
+					}
 					if _, err := s.repo.Execute(ctx,
 						testingpb.TestSuites.Update().
 							Set(

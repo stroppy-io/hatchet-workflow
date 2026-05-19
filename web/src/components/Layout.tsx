@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
+import { useTenantPath, useTenantId } from "@/hooks/useTenantPath";
 import {
   List,
   Play,
@@ -29,10 +30,13 @@ function userLevel(user: AuthUser): number {
 }
 
 interface NavItem {
+  /** to — tenant-relative path for tenant items, absolute for admin items. */
   to: string;
   icon: typeof List;
   label: string;
   minLevel: number; // 1=viewer, 2=operator, 3=owner, 99=root
+  /** tenant — true if this item lives under /t/<id>/; false for absolute paths (admin). */
+  tenant: boolean;
 }
 
 interface NavGroup {
@@ -49,37 +53,37 @@ const navGroups: NavGroup[] = [
     label: "Tests",
     minLevel: 1,
     items: [
-      { to: "/suites", icon: Boxes, label: "Suites", minLevel: 1 },
-      { to: "/", icon: List, label: "Test Runs", minLevel: 1 },
-      { to: "/runs/new", icon: Play, label: "New Run", minLevel: 2 },
-      { to: "/compare", icon: GitCompare, label: "Compare", minLevel: 1 },
+      { to: "suites", icon: Boxes, label: "Suites", minLevel: 1, tenant: true },
+      { to: "runs", icon: List, label: "Test Runs", minLevel: 1, tenant: true },
+      { to: "runs/new", icon: Play, label: "New Run", minLevel: 2, tenant: true },
+      { to: "compare", icon: GitCompare, label: "Compare", minLevel: 1, tenant: true },
     ],
   },
   {
     label: "Library",
     minLevel: 1,
     items: [
-      { to: "/run-presets", icon: FlaskConical, label: "Run Presets", minLevel: 1 },
-      { to: "/presets", icon: Layers, label: "Topology Presets", minLevel: 1 },
-      { to: "/packages", icon: Package, label: "Packages", minLevel: 1 },
+      { to: "run-presets", icon: FlaskConical, label: "Run Presets", minLevel: 1, tenant: true },
+      { to: "presets", icon: Layers, label: "Topology Presets", minLevel: 1, tenant: true },
+      { to: "packages", icon: Package, label: "Packages", minLevel: 1, tenant: true },
     ],
   },
   {
     label: "Tenant",
     minLevel: 1,
     items: [
-      { to: "/settings", icon: Settings, label: "Settings", minLevel: 1 },
-      { to: "/members", icon: Users, label: "Members", minLevel: 3 },
-      { to: "/tokens", icon: KeyRound, label: "API Tokens", minLevel: 3 },
+      { to: "settings", icon: Settings, label: "Settings", minLevel: 1, tenant: true },
+      { to: "members", icon: Users, label: "Members", minLevel: 3, tenant: true },
+      { to: "tokens", icon: KeyRound, label: "API Tokens", minLevel: 3, tenant: true },
     ],
   },
   {
     label: "System",
     minLevel: 99,
     items: [
-      { to: "/admin/tenants", icon: Building2, label: "Tenants", minLevel: 99 },
-      { to: "/admin/users", icon: ShieldCheck, label: "Users", minLevel: 99 },
-      { to: "/admin/server", icon: HeartPulse, label: "Server Health", minLevel: 99 },
+      { to: "/admin/tenants", icon: Building2, label: "Tenants", minLevel: 99, tenant: false },
+      { to: "/admin/users", icon: ShieldCheck, label: "Users", minLevel: 99, tenant: false },
+      { to: "/admin/server", icon: HeartPulse, label: "Server Health", minLevel: 99, tenant: false },
     ],
   },
 ];
@@ -87,6 +91,20 @@ const navGroups: NavGroup[] = [
 export function Layout() {
   const { user, logout } = useAuth();
   const level = user ? userLevel(user) : 0;
+  const tenantId = useTenantId();
+  const tPath = useTenantPath();
+  // Resolve a "default" tenant id so tenant-scoped sidebar items still link
+  // somewhere when the user is on admin pages. Priority: URL > last-visited >
+  // sole/first tenant the user belongs to.
+  const fallbackTenantId = (() => {
+    if (tenantId) return tenantId;
+    const stored = typeof window !== "undefined" ? localStorage.getItem("stroppy.tenantId") : null;
+    if (stored && (user?.is_root || (user?.tenants ?? []).some((t) => t.id === stored))) {
+      return stored;
+    }
+    return user?.tenants?.[0]?.id ?? null;
+  })();
+  const hasTenantScope = !!fallbackTenantId;
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -103,18 +121,29 @@ export function Layout() {
         </div>
         <nav className="flex-1 py-2 overflow-y-auto">
           {navGroups.map((group) => {
-            const visible = group.items.filter((it) => level >= it.minLevel);
+            const visible = group.items.filter((it) =>
+              level >= it.minLevel && (it.tenant ? hasTenantScope : true)
+            );
             if (visible.length === 0) return null;
             return (
               <div key={group.label} className="mb-2">
                 <div className="px-4 pt-2 pb-1 text-[10px] font-mono uppercase tracking-wider text-zinc-600">
                   {group.label}
                 </div>
-                {visible.map((item) => (
+                {visible.map((item) => {
+                  // For tenant items: prefer the URL's tenant; otherwise fall
+                  // back to the resolved tenant (admin pages need links somewhere).
+                  const tenantHref = tenantId
+                    ? tPath(item.to)
+                    : fallbackTenantId
+                      ? `/t/${fallbackTenantId}/${item.to}`
+                      : "/select-tenant";
+                  const href = item.tenant ? tenantHref : item.to;
+                  return (
                   <NavLink
                     key={item.to}
-                    to={item.to}
-                    end={item.to === "/"}
+                    to={href}
+                    end={item.to === "runs"}
                     className={({ isActive }) =>
                       `flex items-center gap-2.5 px-4 py-1.5 text-sm transition-colors ${
                         isActive
@@ -126,7 +155,8 @@ export function Layout() {
                     <item.icon className="h-4 w-4" />
                     {item.label}
                   </NavLink>
-                ))}
+                  );
+                })}
               </div>
             );
           })}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { clients } from "@/api/clients";
 import { ApiTokenScope } from "@/lib/proto/cloud/v1/iam/api_token_pb";
-import { protoTsToISO } from "@/lib/proto-helpers";
+import { protoTsToISO, placeholderId } from "@/lib/proto-helpers";
 import { getTenantId } from "@/api/transport";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,6 +108,7 @@ export function TenantTokens() {
         : undefined;
       const result = await clients.apiToken.createApiToken({
         token: {
+          id: placeholderId(),
           name: tokenName.trim(),
           tenantId: { value: tid },
           scopes: roleStringToScopes(tokenRole),

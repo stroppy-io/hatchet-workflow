@@ -105,6 +105,17 @@ func (m *ConfigApplyTask) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if len(m.GetTargetMachineIds()) > 256 {
+		err := ConfigApplyTaskValidationError{
+			field:  "TargetMachineIds",
+			reason: "value must contain no more than 256 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(m.GetFiles()) > 64 {
 		err := ConfigApplyTaskValidationError{
 			field:  "Files",

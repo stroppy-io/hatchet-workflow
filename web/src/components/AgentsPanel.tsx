@@ -1,5 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
-import { getAccessToken } from "@/api/transport";
+import { clients } from "@/api/clients";
+import { useTenantId } from "@/hooks/useTenantPath";
+import {
+  AgentStatus,
+  type Agent as ProtoAgent,
+} from "@/lib/proto/cloud/v1/agent/agent_pb";
+import { MachineRole } from "@/lib/proto/cloud/v1/catalog/deployment_pb";
 
 interface AgentInfo {
   machine_id: string;
@@ -13,12 +19,45 @@ interface AgentInfo {
   last_seen_at?: string;
 }
 
-async function getRunAgents(runID: string): Promise<AgentInfo[]> {
-  const token = getAccessToken();
-  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-  const res = await fetch(`/api/v1/run/${runID}/agents`, { headers });
-  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
-  return res.json();
+const ROLE_NAME: Record<MachineRole, string> = {
+  [MachineRole.UNSPECIFIED]: "unknown",
+  [MachineRole.DATABASE]: "database",
+  [MachineRole.MONITOR]: "monitor",
+  [MachineRole.STROPPY]: "stroppy",
+  [MachineRole.PROXY]: "proxy",
+  [MachineRole.PGBOUNCER]: "pgbouncer",
+  [MachineRole.ETCD]: "etcd",
+  [MachineRole.YDB_STORAGE]: "ydb-storage",
+  [MachineRole.YDB_DATABASE]: "ydb-database",
+};
+
+function agentToInfo(a: ProtoAgent): AgentInfo {
+  const registered = a.status !== AgentStatus.UNSPECIFIED;
+  const healthy = a.status === AgentStatus.HEALTHY;
+  return {
+    machine_id: a.machineId,
+    role: ROLE_NAME[a.role] ?? "unknown",
+    host: a.publicIp,
+    internal_host: a.internalIp,
+    registered,
+    healthy,
+    health_error: a.lastError || undefined,
+  };
+}
+
+async function getRunAgents(runID: string, tenantID: string): Promise<AgentInfo[]> {
+  // No per-run AgentAdminService RPC — fall back to tenant-scoped list filtered
+  // client-side by dag_run_id. The TestRun.dag_run_id is the engine DagRun
+  // that provisioned the agents, which is what Agent.dag_run_id carries.
+  const tr = await clients.testRun.getTestRun({ value: runID });
+  const dagRunId = tr.testRun?.dagRunId?.value ?? "";
+  if (!dagRunId) return [];
+  const resp = await clients.agentAdmin.listAgents({
+    tenantId: { value: tenantID },
+  });
+  return (resp.agents ?? [])
+    .filter((a) => a.dagRunId === dagRunId)
+    .map(agentToInfo);
 }
 import { Badge } from "@/components/ui/badge";
 import {
@@ -43,21 +82,22 @@ const ROLE_STYLE: Record<string, string> = {
 };
 
 export function AgentsPanel({ runID }: { runID?: string }) {
+  const tenantId = useTenantId();
   const [rows, setRows] = useState<AgentInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!runID) return;
+    if (!runID || !tenantId) return;
     try {
-      setRows(await getRunAgents(runID));
+      setRows(await getRunAgents(runID, tenantId));
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load agents");
     } finally {
       setLoading(false);
     }
-  }, [runID]);
+  }, [runID, tenantId]);
 
   useEffect(() => {
     load();

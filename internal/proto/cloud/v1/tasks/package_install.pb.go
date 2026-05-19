@@ -23,14 +23,26 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// PackageInstallTask — generic "install a Package on role's machines" task.
-// Handler resolves Package by id, dispatches on Package.source variant
-// (apt / deb_blob / binary / container) to do the actual install.
-// Targets all machines tagged with `role` in the DagRun's state.
+// PackageInstallTask — generic "install a Package on these machines".
+// Builder fan-outs target machines into `target_machine_ids` and inlines
+// the resolved Package payload fields (apt repo / pre-install commands /
+// deb blob URL) — agent has no DB / catalog access.
 type PackageInstallTask struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PackageId     *catalog.PackageId     `protobuf:"bytes,1,opt,name=package_id,json=packageId,proto3" json:"package_id,omitempty"`
-	Role          catalog.MachineRole    `protobuf:"varint,2,opt,name=role,proto3,enum=cloud.v1.catalog.MachineRole" json:"role,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	PackageId *catalog.PackageId     `protobuf:"bytes,1,opt,name=package_id,json=packageId,proto3" json:"package_id,omitempty"`
+	Role      catalog.MachineRole    `protobuf:"varint,2,opt,name=role,proto3,enum=cloud.v1.catalog.MachineRole" json:"role,omitempty"`
+	// target_machine_ids — explicit machine_id fan-out. Builder writes one
+	// PackageInstallTask per group of target machines. Takes precedence
+	// over `role` when non-empty.
+	TargetMachineIds []string `protobuf:"bytes,3,rep,name=target_machine_ids,json=targetMachineIds,proto3" json:"target_machine_ids,omitempty"`
+	// Inlined Package payload (Builder populates from catalog.GetPackage).
+	// Empty fields are no-op (e.g. binary-source packages don't fill apt_packages).
+	AptPackages   []string `protobuf:"bytes,10,rep,name=apt_packages,json=aptPackages,proto3" json:"apt_packages,omitempty"`
+	PreInstall    []string `protobuf:"bytes,11,rep,name=pre_install,json=preInstall,proto3" json:"pre_install,omitempty"`
+	CustomRepo    string   `protobuf:"bytes,12,opt,name=custom_repo,json=customRepo,proto3" json:"custom_repo,omitempty"`
+	CustomRepoKey string   `protobuf:"bytes,13,opt,name=custom_repo_key,json=customRepoKey,proto3" json:"custom_repo_key,omitempty"`
+	DebBlobUrl    string   `protobuf:"bytes,14,opt,name=deb_blob_url,json=debBlobUrl,proto3" json:"deb_blob_url,omitempty"`
+	DebBlobSha256 string   `protobuf:"bytes,15,opt,name=deb_blob_sha256,json=debBlobSha256,proto3" json:"deb_blob_sha256,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -79,16 +91,76 @@ func (x *PackageInstallTask) GetRole() catalog.MachineRole {
 	return catalog.MachineRole(0)
 }
 
+func (x *PackageInstallTask) GetTargetMachineIds() []string {
+	if x != nil {
+		return x.TargetMachineIds
+	}
+	return nil
+}
+
+func (x *PackageInstallTask) GetAptPackages() []string {
+	if x != nil {
+		return x.AptPackages
+	}
+	return nil
+}
+
+func (x *PackageInstallTask) GetPreInstall() []string {
+	if x != nil {
+		return x.PreInstall
+	}
+	return nil
+}
+
+func (x *PackageInstallTask) GetCustomRepo() string {
+	if x != nil {
+		return x.CustomRepo
+	}
+	return ""
+}
+
+func (x *PackageInstallTask) GetCustomRepoKey() string {
+	if x != nil {
+		return x.CustomRepoKey
+	}
+	return ""
+}
+
+func (x *PackageInstallTask) GetDebBlobUrl() string {
+	if x != nil {
+		return x.DebBlobUrl
+	}
+	return ""
+}
+
+func (x *PackageInstallTask) GetDebBlobSha256() string {
+	if x != nil {
+		return x.DebBlobSha256
+	}
+	return ""
+}
+
 var File_cloud_v1_tasks_package_install_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_tasks_package_install_proto_rawDesc = "" +
 	"\n" +
-	"$cloud/v1/tasks/package_install.proto\x12\x0ecloud.v1.tasks\x1a!cloud/v1/catalog/deployment.proto\x1a\x1ecloud/v1/catalog/package.proto\x1a\x17validate/validate.proto\"\x99\x01\n" +
+	"$cloud/v1/tasks/package_install.proto\x12\x0ecloud.v1.tasks\x1a!cloud/v1/catalog/deployment.proto\x1a\x1ecloud/v1/catalog/package.proto\x1a\x17validate/validate.proto\"\xe5\x03\n" +
 	"\x12PackageInstallTask\x12D\n" +
 	"\n" +
 	"package_id\x18\x01 \x01(\v2\x1b.cloud.v1.catalog.PackageIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tpackageId\x12=\n" +
 	"\x04role\x18\x02 \x01(\x0e2\x1d.cloud.v1.catalog.MachineRoleB\n" +
-	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04roleBCZAgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/tasksb\x06proto3"
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04role\x127\n" +
+	"\x12target_machine_ids\x18\x03 \x03(\tB\t\xfaB\x06\x92\x01\x03\x10\x80\x02R\x10targetMachineIds\x12+\n" +
+	"\fapt_packages\x18\n" +
+	" \x03(\tB\b\xfaB\x05\x92\x01\x02\x10@R\vaptPackages\x12)\n" +
+	"\vpre_install\x18\v \x03(\tB\b\xfaB\x05\x92\x01\x02\x10@R\n" +
+	"preInstall\x12)\n" +
+	"\vcustom_repo\x18\f \x01(\tB\b\xfaB\x05r\x03\x18\x80\bR\n" +
+	"customRepo\x120\n" +
+	"\x0fcustom_repo_key\x18\r \x01(\tB\b\xfaB\x05r\x03\x18\x80\bR\rcustomRepoKey\x12*\n" +
+	"\fdeb_blob_url\x18\x0e \x01(\tB\b\xfaB\x05r\x03\x18\x80 R\n" +
+	"debBlobUrl\x120\n" +
+	"\x0fdeb_blob_sha256\x18\x0f \x01(\tB\b\xfaB\x05r\x03\x98\x01@R\rdebBlobSha256BCZAgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/tasksb\x06proto3"
 
 var (
 	file_cloud_v1_tasks_package_install_proto_rawDescOnce sync.Once

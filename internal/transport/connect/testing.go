@@ -8,6 +8,7 @@ import (
 	testingsvc "github.com/stroppy-io/stroppy-cloud/internal/domain/services/testing"
 	agentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	systempb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system"
 	testingpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing"
 	"github.com/stroppy-io/stroppy-cloud/internal/transport/middleware"
 )
@@ -195,6 +196,14 @@ func (h *TestingHandler) LaunchTestRun(ctx context.Context, req *connect.Request
 		return nil, err
 	}
 	return connect.NewResponse(result), nil
+}
+
+func (h *TestingHandler) DryRunTestRun(ctx context.Context, req *connect.Request[testingpb.TestRun]) (*connect.Response[systempb.Dag], error) {
+	dag, err := h.runs.DryRunTestRun(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(dag), nil
 }
 
 func (h *TestingHandler) CancelTestRun(ctx context.Context, req *connect.Request[testingpb.TestRunId]) (*connect.Response[testingpb.TestRun], error) {

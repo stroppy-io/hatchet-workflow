@@ -1,7 +1,7 @@
 package httpext
 
 import (
-	"io"
+	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -66,17 +66,21 @@ func (h *PackagesHandler) upload(w http.ResponseWriter, r *http.Request, pkgID *
 	}
 	defer f.Close()
 
-	key, err := h.catalog.UploadPackageBinary(r.Context(), pkgID, tenantID, fh.Filename, f, fh.Header.Get("Content-Type"))
+	key, sum, size, err := h.catalog.UploadPackageBinary(r.Context(), pkgID, tenantID, fh.Filename, f, fh.Header.Get("Content-Type"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_, _ = io.WriteString(w, `{"key":"`+key+`"}`)
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"key":    key,
+		"sha256": sum,
+		"size":   size,
+	})
 }
 
 func (h *PackagesHandler) download(w http.ResponseWriter, r *http.Request, pkgID *catalogpb.PackageId, tenantID *iampb.TenantId) {
-	// Filename is encoded in query string for now (UI knows from package row).
+	// Filename comes via query string; the UI looks it up from the package row.
 	filename := r.URL.Query().Get("filename")
 	if filename == "" {
 		http.Error(w, "?filename= required", http.StatusBadRequest)

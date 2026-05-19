@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"go.opentelemetry.io/otel/trace"
@@ -18,6 +19,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/core/ids"
 	"github.com/stroppy-io/stroppy-cloud/internal/core/tracing"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/pgtx"
+	agentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	systempb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system"
@@ -245,6 +247,132 @@ func (s *TestSuiteRunService) CancelTestSuiteRun(
 		return fmt.Errorf("CancelTestSuiteRun: suite_run %s has no dag_run_id", id.GetValue())
 	}
 	return s.engine.CancelDagRun(ctx, sr.GetDagRunId())
+}
+
+// loadChildRun reads a single child TestRun row by id from the underlying
+// repository (lightweight — avoids spinning up a full TestRunService).
+func (s *TestSuiteRunService) loadChildRun(ctx context.Context, id *testingpb.TestRunId) (*testingpb.TestRun, error) {
+	return s.runs.QueryRow(ctx,
+		testingpb.TestRuns.SelectAll().Where(
+			testingpb.TestRuns.Id.Eq(id.GetValue()),
+			testingpb.TestRuns.DeletedAt.IsNull(),
+		),
+	)
+}
+
+// WatchTestSuiteRun emits a single aggregated snapshot — one entry per child
+// TestRun with its DagRun status. A streaming variant would subscribe to the
+// engine's progress channel; the single-shot snapshot here is sufficient for
+// the UI's poll-and-refresh pattern and avoids holding N subscriptions per
+// viewer.
+func (s *TestSuiteRunService) WatchTestSuiteRun(
+	ctx context.Context,
+	suiteRunID *testingpb.TestSuiteRunId,
+	send func(*testingpb.TestSuiteRunProgress) error,
+) error {
+	sr, err := s.GetTestSuiteRun(ctx, suiteRunID)
+	if err != nil {
+		return err
+	}
+	progress := &testingpb.TestSuiteRunProgress{}
+	if sr.GetDagRunId() != nil {
+		if dr, err := s.engine.GetDagRun(ctx, sr.GetDagRunId()); err == nil {
+			progress.Status = dr.GetStatus()
+		}
+	}
+	for _, idStr := range sr.GetTestRunIds() {
+		childID := &testingpb.TestRunId{Value: idStr}
+		child, err := s.loadChildRun(ctx, childID)
+		if err != nil {
+			continue
+		}
+		childRow := &testingpb.TestSuiteRunChild{
+			TestRunId: childID,
+		}
+		if child.GetIdentity() != nil {
+			childRow.Name = child.GetIdentity().GetName()
+		}
+		if child.GetDagRunId() != nil {
+			if dr, err := s.engine.GetDagRun(ctx, child.GetDagRunId()); err == nil {
+				childRow.Progress = &testingpb.TestRunProgress{
+					Status:     dr.GetStatus(),
+					StartedAt:  dr.GetTimestamps().GetCreatedAt(),
+					FinishedAt: dr.GetTimestamps().GetUpdatedAt(),
+				}
+			}
+		}
+		progress.Children = append(progress.Children, childRow)
+	}
+	return send(progress)
+}
+
+// StreamTestSuiteRunLogs forwards LogLines from every child TestRun in the
+// suite. test_run_id filter narrows to one child.
+func (s *TestSuiteRunService) StreamTestSuiteRunLogs(
+	ctx context.Context,
+	req *testingpb.StreamTestSuiteRunLogsRequest,
+	send func(*agentpb.LogLine) error,
+) error {
+	sr, err := s.GetTestSuiteRun(ctx, req.GetSuiteRunId())
+	if err != nil {
+		return err
+	}
+	childIDs := sr.GetTestRunIds()
+	if filt := req.GetTestRunId(); filt != nil && filt.GetValue() != "" {
+		childIDs = []string{filt.GetValue()}
+	}
+	since := ""
+	if ts := req.GetSince(); ts != nil {
+		since = ts.AsTime().Format(time.RFC3339Nano)
+	}
+	for _, idStr := range childIDs {
+		childID := &testingpb.TestRunId{Value: idStr}
+		child, err := s.loadChildRun(ctx, childID)
+		if err != nil || child.GetDagRunId() == nil {
+			continue
+		}
+		ch, cancel, err := s.engine.StreamLogs(ctx, child.GetDagRunId(), req.GetStepId(), since)
+		if err != nil {
+			continue
+		}
+		drain := func() {
+			defer cancel()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case line, ok := <-ch:
+					if !ok {
+						return
+					}
+					if err := send(line); err != nil {
+						return
+					}
+				}
+			}
+		}
+		drain()
+	}
+	return nil
+}
+
+// GetTestSuiteRunMetrics returns a flat list of MetricSeries. With no
+// MetricsPort wired here the aggregation lives at the suite-run level only;
+// per-child metric retrieval is a TestRun-level concern handled by the
+// TestRunService. Empty list is honest behaviour: caller can iterate
+// GetTestSuiteRun.testRunIds and query TestRun metrics directly.
+func (s *TestSuiteRunService) GetTestSuiteRunMetrics(
+	ctx context.Context,
+	req *testingpb.GetTestSuiteRunMetricsRequest,
+) (*testingpb.MetricSeriesList, error) {
+	if _, err := s.GetTestSuiteRun(ctx, req.GetSuiteRunId()); err != nil {
+		return nil, err
+	}
+	// The caller is expected to issue per-child GetTestRunMetrics for each
+	// child TestRun returned by GetTestSuiteRun. This empty response is
+	// well-defined: no suite-level rollup exists yet (would require a metric
+	// label such as suite_run_id, which the stroppy emitter does not set).
+	return &testingpb.MetricSeriesList{}, nil
 }
 
 // materializeRuns creates one TestRun per matrix cell. Falls back to a single

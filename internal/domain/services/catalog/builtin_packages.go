@@ -3,8 +3,8 @@ package catalog
 import (
 	"context"
 
-	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	catalogpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog"
+	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 )
 
@@ -99,6 +99,11 @@ func builtinPackages() []builtinPkg {
 		{
 			name: "YDB Static 24",
 			kind: catalogpb.Database_DATABASE_KIND_YDB, version: "24",
+		},
+		{
+			name: "Monitor Agents", description: "Prometheus node_exporter for VM-side metrics",
+			kind: catalogpb.Database_DATABASE_KIND_UNSPECIFIED, version: "",
+			apt: []string{"prometheus-node-exporter"},
 		},
 	}
 }

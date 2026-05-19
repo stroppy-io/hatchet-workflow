@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { clients } from "@/api/clients";
-import { protoTsToISO } from "@/lib/proto-helpers";
+import { protoTsToISO, placeholderId } from "@/lib/proto-helpers";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Tenant {
   id: string;
@@ -36,6 +38,8 @@ export function AdminTenants() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
   const confirm = useConfirm();
+  const navigate = useNavigate();
+  const { selectTenant } = useAuth();
 
   async function load() {
     try {
@@ -63,11 +67,21 @@ export function AdminTenants() {
     setCreating(true);
     setError("");
     try {
-      await clients.admin.createTenant({
-        tenant: { identity: { name: name.trim() } },
+      const created = await clients.admin.createTenant({
+        tenant: { id: placeholderId(), identity: { name: name.trim() } },
+        // Owner placeholder: backend substitutes the calling admin as OWNER.
+        ownerUserId: placeholderId(),
       });
       setName("");
       setOpen(false);
+      const newId = created.id?.value ?? "";
+      if (newId) {
+        // Pin the new tenant as the active scope and navigate into it. Backend
+        // already added caller as OWNER member, so this is immediately usable.
+        await selectTenant(newId);
+        navigate(`/t/${newId}/runs`);
+        return;
+      }
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create tenant");

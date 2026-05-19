@@ -119,6 +119,28 @@ func (m *StroppyRunTask) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if len(m.GetTargetMachineIds()) > 16 {
+		err := StroppyRunTaskValidationError{
+			field:  "TargetMachineIds",
+			reason: "value must contain no more than 16 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetConfigPathStateKey()) > 128 {
+		err := StroppyRunTaskValidationError{
+			field:  "ConfigPathStateKey",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return StroppyRunTaskMultiError(errors)
 	}

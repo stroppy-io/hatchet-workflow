@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { clients } from "@/api/clients";
+import { useTenantPath } from "@/hooks/useTenantPath";
 import { protoTsToISO } from "@/lib/proto-helpers";
 import { useWatchTestRun } from "@/hooks/useWatchTestRun";
 import { useStreamTestRunLogs } from "@/hooks/useStreamTestRunLogs";
@@ -27,6 +28,7 @@ function formatDate(iso: string): string {
 export function RunDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const tPath = useTenantPath();
 
   const [testRun, setTestRun] = useState<TestRun | null>(null);
   const [progress, setProgress] = useState<TestRunProgress | null>(null);
@@ -253,7 +255,7 @@ export function RunDetail() {
       {/* Back */}
       <div>
         <button
-          onClick={() => navigate("/runs")}
+          onClick={() => navigate(tPath("runs"))}
           className="text-xs text-zinc-500 hover:text-zinc-300 font-mono underline underline-offset-2"
         >
           ← Back to runs

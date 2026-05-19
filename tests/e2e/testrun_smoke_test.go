@@ -64,6 +64,11 @@ func TestE2E_FullStack(t *testing.T) {
 	tenantID := tenantResp.Msg.GetId().GetValue()
 	require.NotEmpty(t, tenantID, "tenant ID must be non-empty")
 
+	// The TenantCreated subscriber in fixture.NewAll fires asynchronously;
+	// force-seed builtin packages so the DAG builder finds a postgres recipe
+	// without racing the event bus.
+	require.NoError(t, f.Catalog.SeedBuiltinPackages(ctx, &iampb.TenantId{Value: tenantID}, nil))
+
 	// Helper: requests that need a tenant scope carry X-Tenant-Id header.
 	withTenant := client.New(srv.URL, client.WithBearer(access), client.WithTenantHeader(tenantID))
 

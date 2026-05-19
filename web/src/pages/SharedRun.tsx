@@ -3,17 +3,8 @@ import { useParams } from "react-router-dom";
 import type { Snapshot } from "@/components/LogStream";
 import type { NodeStatus } from "@/components/RunCard";
 import type { RunConfig } from "@/components/TopologyFlow";
-
-async function getSharedRun(token: string): Promise<{
-  run_id: string;
-  snapshot: unknown;
-  metrics: unknown;
-  created_at: string;
-}> {
-  const res = await fetch(`/api/share/${token}`);
-  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
-  return res.json();
-}
+import { clients } from "@/api/clients";
+import { protoTsToISO } from "@/lib/proto-helpers";
 import { MetricsPanel } from "@/components/MetricsPanel";
 import { RunOverview } from "@/components/RunOverview";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,13 +23,17 @@ export function SharedRun() {
   useEffect(() => {
     if (!token) return;
     setLoading(true);
-    getSharedRun(token)
-      .then((data) => {
-        setRunId(data.run_id);
-        setCreatedAt(data.created_at);
-        setSnapshot(data.snapshot as Snapshot);
-        const m = data.metrics as { metrics?: MetricSummary[] };
-        setMetrics(m?.metrics || []);
+    clients.sharedRun
+      .getByToken({ token })
+      .then((sr) => {
+        setRunId(sr.testRunId?.value ?? "");
+        setCreatedAt(protoTsToISO(sr.timestamps?.createdAt));
+        // snapshot + metrics arrive as google.protobuf.Struct → JSON object.
+        // The legacy REST shape is preserved one-to-one inside the struct.
+        const snap = sr.snapshot ? (sr.snapshot as unknown as Snapshot) : null;
+        setSnapshot(snap);
+        const mStruct = sr.metrics as unknown as { metrics?: MetricSummary[] } | null;
+        setMetrics(mStruct?.metrics || []);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load shared run"))
       .finally(() => setLoading(false));

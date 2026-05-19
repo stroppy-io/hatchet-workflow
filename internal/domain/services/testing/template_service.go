@@ -201,20 +201,22 @@ func (s *TemplateService) UpdateTestRunTemplate(
 					}
 					existing.Timestamps.UpdatedAt = timestamppb.Now()
 					scanner := existing.IntoPlain()
+					if scanner.Label == nil {
+						scanner.Label = []string{}
+					}
+					// JSONB nil guard mirrors Create — empty []byte fails Postgres JSON parse.
+					if len(scanner.DatabaseVariantDatabase) == 0 {
+						scanner.DatabaseVariantDatabase = nil
+					}
+					if len(scanner.WorkloadVariantWorkload) == 0 {
+						scanner.WorkloadVariantWorkload = nil
+					}
+					// Build setters via scannerSetters() so FK empty-string → NULL
+					// guard is applied to update as well as insert.
+					setters := scannerSetters(scanner)
 					if _, err := s.repo.Execute(ctx,
 						testingpb.TestRunTemplates.Update().
-							Set(
-								scanner.GetSetter(testingpb.TestRunTemplateColumnName)(),
-								scanner.GetSetter(testingpb.TestRunTemplateColumnDescription)(),
-								scanner.GetSetter(testingpb.TestRunTemplateColumnLabel)(),
-								scanner.GetSetter(testingpb.TestRunTemplateColumnDatabaseVariantDatabasePresetId)(),
-								scanner.GetSetter(testingpb.TestRunTemplateColumnDatabaseVariantDatabase)(),
-								scanner.GetSetter(testingpb.TestRunTemplateColumnDatabaseVariantCase)(),
-								scanner.GetSetter(testingpb.TestRunTemplateColumnWorkloadVariantWorkloadPresetId)(),
-								scanner.GetSetter(testingpb.TestRunTemplateColumnWorkloadVariantWorkload)(),
-								scanner.GetSetter(testingpb.TestRunTemplateColumnWorkloadVariantCase)(),
-								scanner.GetSetter(testingpb.TestRunTemplateColumnUpdatedAt)(),
-							).
+							Set(setters...).
 							Where(
 								testingpb.TestRunTemplates.Id.Eq(existing.GetId().GetValue()),
 							),

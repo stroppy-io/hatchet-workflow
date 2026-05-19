@@ -23,10 +23,19 @@ message OneShotTask {
         TARGET_ALL         = 2;   // run on every machine of role
     }
 
+    /* target_machine_ids — explicit fan-out. When non-empty, the handler
+       ignores `role` and `target` and dispatches to these machine_ids. */
+    repeated string target_machine_ids = 4 [(validate.rules).repeated.max_items = 16];
+
     // command_template — shell template; engine-specific args interpolated.
     // Engine-typical: "cockroach init --certs-dir=...", "ydbd admin blobstorage init".
     string command_template = 10 [(validate.rules).string.max_len = 4096];
     map<string, string> template_vars = 11 [(validate.rules).map.max_pairs = 64];
+
+    /* state_var_refs — at execute time the handler reads each state-store key
+       and merges the value (string) into TemplateVars before rendering. Key
+       in the map is the template variable name; value is the state-store key. */
+    map<string, string> state_var_refs = 12 [(validate.rules).map.max_pairs = 64];
 
     // post_check_command — optional readiness probe; non-zero exit retries.
     string post_check_command = 20 [(validate.rules).string.max_len = 4096];

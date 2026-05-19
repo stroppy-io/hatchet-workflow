@@ -98,6 +98,62 @@ func (s *Service) ListAllTenants(ctx context.Context) ([]*iampb.Tenant, error) {
 	)
 }
 
+// UpdateTenant patches mutable identity fields (name, description). The tenant
+// id and timestamps are immutable. Returns the post-update row.
+func (s *Service) UpdateTenant(ctx context.Context, tenant *iampb.Tenant) (*iampb.Tenant, error) {
+	if tenant.GetId() == nil || tenant.GetId().GetValue() == "" {
+		return nil, domainerr.InvalidArgument(domainerr.FieldViolation("id", "is required"))
+	}
+	existing, err := s.GetTenantByID(ctx, tenant.GetId())
+	if err != nil {
+		return nil, err
+	}
+	if tenant.GetIdentity() != nil {
+		if name := tenant.GetIdentity().GetName(); name != "" {
+			existing.Identity.Name = name
+		}
+		if desc := tenant.GetIdentity().GetDescription(); desc != "" {
+			d := desc
+			existing.Identity.Description = &d
+		}
+	}
+	now := time.Now()
+	var descPtr *string
+	if existing.GetIdentity() != nil && existing.GetIdentity().Description != nil {
+		descPtr = existing.GetIdentity().Description
+	}
+	if _, err := s.tenantRepo.Execute(ctx,
+		iampb.Tenants.Update().
+			Set(
+				iampb.Tenants.Name.Set(existing.GetIdentity().GetName()),
+				iampb.Tenants.Description.Set(descPtr),
+				iampb.Tenants.UpdatedAt.Set(now),
+			).
+			Where(iampb.Tenants.Id.Eq(tenant.GetId().GetValue())),
+	); err != nil {
+		return nil, err
+	}
+	return s.GetTenantByID(ctx, tenant.GetId())
+}
+
+// DeleteTenant soft-deletes a tenant (sets deleted_at). For hard-delete use
+// DeleteTenantHard via the admin surface.
+func (s *Service) DeleteTenant(ctx context.Context, id *iampb.TenantId) (*iampb.Tenant, error) {
+	existing, err := s.GetTenantByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	if _, err := s.tenantRepo.Execute(ctx,
+		iampb.Tenants.Update().
+			Set(iampb.Tenants.DeletedAt.Set(&now)).
+			Where(iampb.Tenants.Id.Eq(id.GetValue())),
+	); err != nil {
+		return nil, err
+	}
+	return existing, nil
+}
+
 // DeleteTenantHard hard-deletes a tenant by ID (cascades on FKs via DB constraints).
 func (s *Service) DeleteTenantHard(ctx context.Context, id *iampb.TenantId) (*iampb.Tenant, error) {
 	t, err := s.GetTenantByID(ctx, id)

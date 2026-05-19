@@ -105,6 +105,76 @@ func TestSettingsSetAndGet(t *testing.T) {
 	require.Equal(t, "yc-token-123", got.GetValue().GetStringValue())
 }
 
+// TestDatabasePresets_TenantIsolation: presets created under tenant A must
+// not surface in ListDatabasePresets for tenant B.
+func TestDatabasePresets_TenantIsolation(t *testing.T) {
+	f := fixture.NewCatalog(t)
+	ctx := context.Background()
+
+	uA, _ := f.IAM.CreateUser(ctx, &iampb.User{Email: "ia@e.com", Nickname: "ia"}, "P@ss1234!")
+	tnA, _ := f.IAM.CreateTenant(ctx, &iampb.Tenant{Identity: &commonpb.Identity{Name: "TA"}}, uA.GetId())
+	uB, _ := f.IAM.CreateUser(ctx, &iampb.User{Email: "ib@e.com", Nickname: "ib"}, "P@ss1234!")
+	tnB, _ := f.IAM.CreateTenant(ctx, &iampb.Tenant{Identity: &commonpb.Identity{Name: "TB"}}, uB.GetId())
+
+	_, err := f.Catalog.CreateDatabasePreset(ctx, tnA.GetId(), uA.GetId(), &catalogpb.DatabasePreset{
+		Identity: &commonpb.Identity{Name: "a-only-preset"},
+		Database: &catalogpb.Database{Kind: catalogpb.Database_DATABASE_KIND_POSTGRES},
+	})
+	require.NoError(t, err)
+
+	listA, err := f.Catalog.ListDatabasePresets(ctx, tnA.GetId())
+	require.NoError(t, err)
+	require.Len(t, listA, 1)
+
+	listB, err := f.Catalog.ListDatabasePresets(ctx, tnB.GetId())
+	require.NoError(t, err)
+	require.Empty(t, listB, "Tenant B must not see Tenant A's database presets")
+}
+
+func TestWorkloadPresets_TenantIsolation(t *testing.T) {
+	f := fixture.NewCatalog(t)
+	ctx := context.Background()
+
+	uA, _ := f.IAM.CreateUser(ctx, &iampb.User{Email: "wa@e.com", Nickname: "wa"}, "P@ss1234!")
+	tnA, _ := f.IAM.CreateTenant(ctx, &iampb.Tenant{Identity: &commonpb.Identity{Name: "WA"}}, uA.GetId())
+	uB, _ := f.IAM.CreateUser(ctx, &iampb.User{Email: "wb@e.com", Nickname: "wb"}, "P@ss1234!")
+	tnB, _ := f.IAM.CreateTenant(ctx, &iampb.Tenant{Identity: &commonpb.Identity{Name: "WB"}}, uB.GetId())
+
+	_, err := f.Catalog.CreateWorkloadPreset(ctx, tnA.GetId(), uA.GetId(), &catalogpb.WorkloadPreset{
+		Identity: &commonpb.Identity{Name: "a-only-wl"},
+		Workload: &catalogpb.Workload{},
+	})
+	require.NoError(t, err)
+
+	listB, err := f.Catalog.ListWorkloadPresets(ctx, tnB.GetId())
+	require.NoError(t, err)
+	require.Empty(t, listB, "Tenant B must not see Tenant A's workload presets")
+}
+
+func TestSettings_TenantIsolation(t *testing.T) {
+	f := fixture.NewCatalog(t)
+	ctx := context.Background()
+
+	uA, _ := f.IAM.CreateUser(ctx, &iampb.User{Email: "sa@e.com", Nickname: "sa"}, "P@ss1234!")
+	tnA, _ := f.IAM.CreateTenant(ctx, &iampb.Tenant{Identity: &commonpb.Identity{Name: "SA"}}, uA.GetId())
+	uB, _ := f.IAM.CreateUser(ctx, &iampb.User{Email: "sb@e.com", Nickname: "sb"}, "P@ss1234!")
+	tnB, _ := f.IAM.CreateTenant(ctx, &iampb.Tenant{Identity: &commonpb.Identity{Name: "SB"}}, uB.GetId())
+
+	valA := &catalogpb.SettingsItem_Value{Value: &catalogpb.SettingsItem_Value_StringValue{StringValue: "tenant-A"}}
+	_, err := f.Catalog.SetSetting(ctx, tnA.GetId(),
+		catalogpb.SettingsItem_PART_YANDEX_CLOUD,
+		catalogpb.SettingsItem_KEY_YANDEX_CLOUD_TOKEN, valA)
+	require.NoError(t, err)
+
+	// Same key in tenant B must NOT see A's value.
+	gotB, err := f.Catalog.GetSetting(ctx, tnB.GetId(),
+		catalogpb.SettingsItem_PART_YANDEX_CLOUD,
+		catalogpb.SettingsItem_KEY_YANDEX_CLOUD_TOKEN)
+	if err == nil {
+		require.NotEqual(t, "tenant-A", gotB.GetValue().GetStringValue(), "tenant B must not read tenant A's setting")
+	}
+}
+
 func TestSettingsUpsertReplacesValue(t *testing.T) {
 	f := fixture.NewCatalog(t)
 	ctx := context.Background()

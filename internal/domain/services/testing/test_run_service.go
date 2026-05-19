@@ -21,8 +21,8 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/core/ids"
 	"github.com/stroppy-io/stroppy-cloud/internal/core/tracing"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/pgtx"
-	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	agentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent"
+	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	systempb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system"
 	testingpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing"
@@ -483,6 +483,19 @@ func (s *TestRunService) StreamTestRunLogs(
 			}
 		}
 	}
+}
+
+// DryRunTestRun resolves presets and builds the DAG preview without
+// launching anything. Returns the Dag so the caller can render config
+// files, validate the topology, and surface errors before committing.
+func (s *TestRunService) DryRunTestRun(ctx context.Context, tr *testingpb.TestRun) (*systempb.Dag, error) {
+	if tr == nil {
+		return nil, fmt.Errorf("DryRunTestRun: TestRun is nil")
+	}
+	if s.builder == nil {
+		return nil, fmt.Errorf("DryRunTestRun: DagBuilder not wired")
+	}
+	return s.builder.FromTestRun(ctx, tr)
 }
 
 // CancelTestRun requests cancellation of the underlying DagRun. Workers poll

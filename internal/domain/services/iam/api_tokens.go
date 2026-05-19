@@ -61,13 +61,63 @@ func (s *Service) VerifyApiToken(ctx context.Context, plain string) (*iampb.ApiT
 	return row, nil
 }
 
-// RevokeApiToken soft-deletes a token by ID.
-func (s *Service) RevokeApiToken(ctx context.Context, id *iampb.ApiTokenId) error {
+// RevokeApiToken soft-deletes a token by ID and returns the pre-delete row.
+func (s *Service) RevokeApiToken(ctx context.Context, id *iampb.ApiTokenId) (*iampb.ApiToken, error) {
+	existing, err := s.GetApiToken(ctx, id)
+	if err != nil {
+		return nil, err
+	}
 	now := time.Now()
-	_, err := s.tokenRepo.Execute(ctx,
+	if _, err := s.tokenRepo.Execute(ctx,
 		iampb.ApiTokens.Update().
 			Set(iampb.ApiTokens.DeletedAt.Set(&now)).
 			Where(iampb.ApiTokens.Id.Eq(id.GetValue())),
+	); err != nil {
+		return nil, err
+	}
+	return existing, nil
+}
+
+// GetApiToken returns a non-deleted token by ID.
+func (s *Service) GetApiToken(ctx context.Context, id *iampb.ApiTokenId) (*iampb.ApiToken, error) {
+	row, err := s.tokenRepo.QueryRow(ctx,
+		iampb.ApiTokens.SelectAll().Where(
+			iampb.ApiTokens.Id.Eq(id.GetValue()),
+			iampb.ApiTokens.DeletedAt.IsNull(),
+		),
 	)
-	return err
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domainerr.NotFound(domainerr.ResourceInfo("api_token", id.GetValue()))
+		}
+		return nil, err
+	}
+	return row, nil
+}
+
+// ListApiTokens returns all non-deleted tokens for a tenant.
+func (s *Service) ListApiTokens(ctx context.Context, tenantID *iampb.TenantId) ([]*iampb.ApiToken, error) {
+	return s.tokenRepo.Query(ctx,
+		iampb.ApiTokens.SelectAll().Where(
+			iampb.ApiTokens.TenantId.Eq(tenantID.GetValue()),
+			iampb.ApiTokens.DeletedAt.IsNull(),
+		),
+	)
+}
+
+// UpdateApiTokenExpiry sets expires_at on an existing token. expiresAt=nil
+// clears the expiry (token becomes long-lived).
+func (s *Service) UpdateApiTokenExpiry(ctx context.Context, id *iampb.ApiTokenId, expiresAt *time.Time) (*iampb.ApiToken, error) {
+	now := time.Now()
+	if _, err := s.tokenRepo.Execute(ctx,
+		iampb.ApiTokens.Update().
+			Set(
+				iampb.ApiTokens.ExpiresAt.Set(expiresAt),
+				iampb.ApiTokens.UpdatedAt.Set(now),
+			).
+			Where(iampb.ApiTokens.Id.Eq(id.GetValue())),
+	); err != nil {
+		return nil, err
+	}
+	return s.GetApiToken(ctx, id)
 }

@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/tasks/one_shot.proto.
  */
 export const file_cloud_v1_tasks_one_shot: GenFile = /*@__PURE__*/
-  fileDesc("Ch1jbG91ZC92MS90YXNrcy9vbmVfc2hvdC5wcm90bxIOY2xvdWQudjEudGFza3MiqgQKC09uZVNob3RUYXNrEkAKC2VuZ2luZV9raW5kGAEgASgOMh8uY2xvdWQudjEuY2F0YWxvZy5EYXRhYmFzZS5LaW5kQgr6QgeCAQQQASAAEjcKBHJvbGUYAiABKA4yHS5jbG91ZC52MS5jYXRhbG9nLk1hY2hpbmVSb2xlQgr6QgeCAQQQASAAEjwKBnRhcmdldBgDIAEoDjIiLmNsb3VkLnYxLnRhc2tzLk9uZVNob3RUYXNrLlRhcmdldEII+kIFggECEAESIgoQY29tbWFuZF90ZW1wbGF0ZRgKIAEoCUII+kIFcgMYgCASTgoNdGVtcGxhdGVfdmFycxgLIAMoCzItLmNsb3VkLnYxLnRhc2tzLk9uZVNob3RUYXNrLlRlbXBsYXRlVmFyc0VudHJ5Qgj6QgWaAQIQQBIkChJwb3N0X2NoZWNrX2NvbW1hbmQYFCABKAlCCPpCBXIDGIAgEiMKEnBvc3RfY2hlY2tfcmV0cmllcxgVIAEoDUIH+kIEKgIYZBIqChhwb3N0X2NoZWNrX2RlbGF5X3NlY29uZHMYFiABKA1CCPpCBSoDGNgEGjMKEVRlbXBsYXRlVmFyc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiQgoGVGFyZ2V0EhYKElRBUkdFVF9VTlNQRUNJRklFRBAAEhAKDFRBUkdFVF9GSVJTVBABEg4KClRBUkdFVF9BTEwQAkJDWkFnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS90YXNrc2IGcHJvdG8z", [file_cloud_v1_catalog_database, file_cloud_v1_catalog_deployment, file_validate_validate]);
+  fileDesc("Ch1jbG91ZC92MS90YXNrcy9vbmVfc2hvdC5wcm90bxIOY2xvdWQudjEudGFza3Mi1gUKC09uZVNob3RUYXNrEkAKC2VuZ2luZV9raW5kGAEgASgOMh8uY2xvdWQudjEuY2F0YWxvZy5EYXRhYmFzZS5LaW5kQgr6QgeCAQQQASAAEjcKBHJvbGUYAiABKA4yHS5jbG91ZC52MS5jYXRhbG9nLk1hY2hpbmVSb2xlQgr6QgeCAQQQASAAEjwKBnRhcmdldBgDIAEoDjIiLmNsb3VkLnYxLnRhc2tzLk9uZVNob3RUYXNrLlRhcmdldEII+kIFggECEAESJAoSdGFyZ2V0X21hY2hpbmVfaWRzGAQgAygJQgj6QgWSAQIQEBIiChBjb21tYW5kX3RlbXBsYXRlGAogASgJQgj6QgVyAxiAIBJOCg10ZW1wbGF0ZV92YXJzGAsgAygLMi0uY2xvdWQudjEudGFza3MuT25lU2hvdFRhc2suVGVtcGxhdGVWYXJzRW50cnlCCPpCBZoBAhBAEk8KDnN0YXRlX3Zhcl9yZWZzGAwgAygLMi0uY2xvdWQudjEudGFza3MuT25lU2hvdFRhc2suU3RhdGVWYXJSZWZzRW50cnlCCPpCBZoBAhBAEiQKEnBvc3RfY2hlY2tfY29tbWFuZBgUIAEoCUII+kIFcgMYgCASIwoScG9zdF9jaGVja19yZXRyaWVzGBUgASgNQgf6QgQqAhhkEioKGHBvc3RfY2hlY2tfZGVsYXlfc2Vjb25kcxgWIAEoDUII+kIFKgMY2AQaMwoRVGVtcGxhdGVWYXJzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARozChFTdGF0ZVZhclJlZnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIkIKBlRhcmdldBIWChJUQVJHRVRfVU5TUEVDSUZJRUQQABIQCgxUQVJHRVRfRklSU1QQARIOCgpUQVJHRVRfQUxMEAJCQ1pBZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvdGFza3NiBnByb3RvMw", [file_cloud_v1_catalog_database, file_cloud_v1_catalog_deployment, file_validate_validate]);
 
 /**
  * OneShotTask — single-machine command (cockroach init, ydb init, ydb
@@ -41,6 +41,14 @@ export type OneShotTask = Message<"cloud.v1.tasks.OneShotTask"> & {
   target: OneShotTask_Target;
 
   /**
+   * target_machine_ids — explicit fan-out. When non-empty, the handler
+   * ignores `role` and `target` and dispatches to these machine_ids. 
+   *
+   * @generated from field: repeated string target_machine_ids = 4;
+   */
+  targetMachineIds: string[];
+
+  /**
    * command_template — shell template; engine-specific args interpolated.
    * Engine-typical: "cockroach init --certs-dir=...", "ydbd admin blobstorage init".
    *
@@ -52,6 +60,15 @@ export type OneShotTask = Message<"cloud.v1.tasks.OneShotTask"> & {
    * @generated from field: map<string, string> template_vars = 11;
    */
   templateVars: { [key: string]: string };
+
+  /**
+   * state_var_refs — at execute time the handler reads each state-store key
+   * and merges the value (string) into TemplateVars before rendering. Key
+   * in the map is the template variable name; value is the state-store key. 
+   *
+   * @generated from field: map<string, string> state_var_refs = 12;
+   */
+  stateVarRefs: { [key: string]: string };
 
   /**
    * post_check_command — optional readiness probe; non-zero exit retries.
@@ -95,6 +112,14 @@ export type OneShotTaskJson = {
   target?: OneShotTask_TargetJson;
 
   /**
+   * target_machine_ids — explicit fan-out. When non-empty, the handler
+   * ignores `role` and `target` and dispatches to these machine_ids. 
+   *
+   * @generated from field: repeated string target_machine_ids = 4;
+   */
+  targetMachineIds?: string[];
+
+  /**
    * command_template — shell template; engine-specific args interpolated.
    * Engine-typical: "cockroach init --certs-dir=...", "ydbd admin blobstorage init".
    *
@@ -106,6 +131,15 @@ export type OneShotTaskJson = {
    * @generated from field: map<string, string> template_vars = 11;
    */
   templateVars?: { [key: string]: string };
+
+  /**
+   * state_var_refs — at execute time the handler reads each state-store key
+   * and merges the value (string) into TemplateVars before rendering. Key
+   * in the map is the template variable name; value is the state-store key. 
+   *
+   * @generated from field: map<string, string> state_var_refs = 12;
+   */
+  stateVarRefs?: { [key: string]: string };
 
   /**
    * post_check_command — optional readiness probe; non-zero exit retries.

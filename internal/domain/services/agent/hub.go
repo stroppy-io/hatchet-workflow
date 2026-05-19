@@ -14,10 +14,15 @@ import (
 // Commands are enqueued per agent and drained on each Poll call.
 // Dispatch blocks until the agent posts a Report for the command or the
 // context/timeout fires.
+//
+// Machine bindings: each (dag_run_id, machine_id) → agent_id mapping is
+// established by agent.Service.Register when the bootstrap JWT verifies.
+// Handlers call ResolveByMachine at execute time to find the live agent.
 type Hub struct {
-	mu      sync.Mutex
-	queues  map[string][]*agentpb.Command   // agent_id → pending Commands FIFO
-	pending map[string]chan *agentpb.Report // command_id → reply waiter
+	mu              sync.Mutex
+	queues          map[string][]*agentpb.Command   // agent_id → pending Commands FIFO
+	pending         map[string]chan *agentpb.Report // command_id → reply waiter
+	machineBindings sync.Map                        // "<dag_run_id>|<machine_id>" → agent_id
 }
 
 func NewHub() *Hub {
@@ -25,6 +30,41 @@ func NewHub() *Hub {
 		queues:  map[string][]*agentpb.Command{},
 		pending: map[string]chan *agentpb.Report{},
 	}
+}
+
+// Bind associates a (dag_run_id, machine_id) with a freshly-registered agent.
+// Called by agent.Service.Register after the bootstrap token verifies.
+func (h *Hub) Bind(dagRunID, machineID, agentID string) {
+	if dagRunID == "" || machineID == "" || agentID == "" {
+		return
+	}
+	h.machineBindings.Store(dagRunID+"|"+machineID, agentID)
+}
+
+// ResolveByMachine returns the agent_id bound to (dag_run_id, machine_id).
+// Returns ("", false) when no agent has registered for that pair yet.
+func (h *Hub) ResolveByMachine(dagRunID, machineID string) (string, bool) {
+	v, ok := h.machineBindings.Load(dagRunID + "|" + machineID)
+	if !ok {
+		return "", false
+	}
+	id, _ := v.(string)
+	return id, id != ""
+}
+
+// ClearByAgent removes every (dag_run_id, machine_id) → agent_id binding for
+// the given agent. Called by agent.Service.Deregister so subsequent handler
+// resolves return ("", false) instead of dispatching to a dead agent.
+func (h *Hub) ClearByAgent(agentID string) {
+	if agentID == "" {
+		return
+	}
+	h.machineBindings.Range(func(k, v any) bool {
+		if id, ok := v.(string); ok && id == agentID {
+			h.machineBindings.Delete(k)
+		}
+		return true
+	})
 }
 
 // Dispatch enqueues a command for the given agent and blocks until the

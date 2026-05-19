@@ -15,13 +15,13 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/tasks/package_install.proto.
  */
 export const file_cloud_v1_tasks_package_install: GenFile = /*@__PURE__*/
-  fileDesc("CiRjbG91ZC92MS90YXNrcy9wYWNrYWdlX2luc3RhbGwucHJvdG8SDmNsb3VkLnYxLnRhc2tzIogBChJQYWNrYWdlSW5zdGFsbFRhc2sSOQoKcGFja2FnZV9pZBgBIAEoCzIbLmNsb3VkLnYxLmNhdGFsb2cuUGFja2FnZUlkQgj6QgWKAQIQARI3CgRyb2xlGAIgASgOMh0uY2xvdWQudjEuY2F0YWxvZy5NYWNoaW5lUm9sZUIK+kIHggEEEAEgAEJDWkFnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS90YXNrc2IGcHJvdG8z", [file_cloud_v1_catalog_deployment, file_cloud_v1_catalog_package, file_validate_validate]);
+  fileDesc("CiRjbG91ZC92MS90YXNrcy9wYWNrYWdlX2luc3RhbGwucHJvdG8SDmNsb3VkLnYxLnRhc2tzIvMCChJQYWNrYWdlSW5zdGFsbFRhc2sSOQoKcGFja2FnZV9pZBgBIAEoCzIbLmNsb3VkLnYxLmNhdGFsb2cuUGFja2FnZUlkQgj6QgWKAQIQARI3CgRyb2xlGAIgASgOMh0uY2xvdWQudjEuY2F0YWxvZy5NYWNoaW5lUm9sZUIK+kIHggEEEAEgABIlChJ0YXJnZXRfbWFjaGluZV9pZHMYAyADKAlCCfpCBpIBAxCAAhIeCgxhcHRfcGFja2FnZXMYCiADKAlCCPpCBZIBAhBAEh0KC3ByZV9pbnN0YWxsGAsgAygJQgj6QgWSAQIQQBIdCgtjdXN0b21fcmVwbxgMIAEoCUII+kIFcgMYgAgSIQoPY3VzdG9tX3JlcG9fa2V5GA0gASgJQgj6QgVyAxiACBIeCgxkZWJfYmxvYl91cmwYDiABKAlCCPpCBXIDGIAgEiEKD2RlYl9ibG9iX3NoYTI1NhgPIAEoCUII+kIFcgOYAUBCQ1pBZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvdGFza3NiBnByb3RvMw", [file_cloud_v1_catalog_deployment, file_cloud_v1_catalog_package, file_validate_validate]);
 
 /**
- * PackageInstallTask — generic "install a Package on role's machines" task.
- * Handler resolves Package by id, dispatches on Package.source variant
- * (apt / deb_blob / binary / container) to do the actual install.
- * Targets all machines tagged with `role` in the DagRun's state. 
+ * PackageInstallTask — generic "install a Package on these machines".
+ * Builder fan-outs target machines into `target_machine_ids` and inlines
+ * the resolved Package payload fields (apt repo / pre-install commands /
+ * deb blob URL) — agent has no DB / catalog access. 
  *
  * @generated from message cloud.v1.tasks.PackageInstallTask
  */
@@ -35,13 +35,55 @@ export type PackageInstallTask = Message<"cloud.v1.tasks.PackageInstallTask"> & 
    * @generated from field: cloud.v1.catalog.MachineRole role = 2;
    */
   role: MachineRole;
+
+  /**
+   * target_machine_ids — explicit machine_id fan-out. Builder writes one
+   * PackageInstallTask per group of target machines. Takes precedence
+   * over `role` when non-empty. 
+   *
+   * @generated from field: repeated string target_machine_ids = 3;
+   */
+  targetMachineIds: string[];
+
+  /**
+   * Inlined Package payload (Builder populates from catalog.GetPackage).
+   * Empty fields are no-op (e.g. binary-source packages don't fill apt_packages). 
+   *
+   * @generated from field: repeated string apt_packages = 10;
+   */
+  aptPackages: string[];
+
+  /**
+   * @generated from field: repeated string pre_install = 11;
+   */
+  preInstall: string[];
+
+  /**
+   * @generated from field: string custom_repo = 12;
+   */
+  customRepo: string;
+
+  /**
+   * @generated from field: string custom_repo_key = 13;
+   */
+  customRepoKey: string;
+
+  /**
+   * @generated from field: string deb_blob_url = 14;
+   */
+  debBlobUrl: string;
+
+  /**
+   * @generated from field: string deb_blob_sha256 = 15;
+   */
+  debBlobSha256: string;
 };
 
 /**
- * PackageInstallTask — generic "install a Package on role's machines" task.
- * Handler resolves Package by id, dispatches on Package.source variant
- * (apt / deb_blob / binary / container) to do the actual install.
- * Targets all machines tagged with `role` in the DagRun's state. 
+ * PackageInstallTask — generic "install a Package on these machines".
+ * Builder fan-outs target machines into `target_machine_ids` and inlines
+ * the resolved Package payload fields (apt repo / pre-install commands /
+ * deb blob URL) — agent has no DB / catalog access. 
  *
  * @generated from message cloud.v1.tasks.PackageInstallTask
  */
@@ -55,6 +97,48 @@ export type PackageInstallTaskJson = {
    * @generated from field: cloud.v1.catalog.MachineRole role = 2;
    */
   role?: MachineRoleJson;
+
+  /**
+   * target_machine_ids — explicit machine_id fan-out. Builder writes one
+   * PackageInstallTask per group of target machines. Takes precedence
+   * over `role` when non-empty. 
+   *
+   * @generated from field: repeated string target_machine_ids = 3;
+   */
+  targetMachineIds?: string[];
+
+  /**
+   * Inlined Package payload (Builder populates from catalog.GetPackage).
+   * Empty fields are no-op (e.g. binary-source packages don't fill apt_packages). 
+   *
+   * @generated from field: repeated string apt_packages = 10;
+   */
+  aptPackages?: string[];
+
+  /**
+   * @generated from field: repeated string pre_install = 11;
+   */
+  preInstall?: string[];
+
+  /**
+   * @generated from field: string custom_repo = 12;
+   */
+  customRepo?: string;
+
+  /**
+   * @generated from field: string custom_repo_key = 13;
+   */
+  customRepoKey?: string;
+
+  /**
+   * @generated from field: string deb_blob_url = 14;
+   */
+  debBlobUrl?: string;
+
+  /**
+   * @generated from field: string deb_blob_sha256 = 15;
+   */
+  debBlobSha256?: string;
 };
 
 export type PackageInstallTaskValid = PackageInstallTask;

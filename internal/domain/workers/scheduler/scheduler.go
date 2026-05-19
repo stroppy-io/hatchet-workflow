@@ -6,14 +6,46 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/services/system"
+	systempb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system"
 )
+
+// Hook is dispatched on every fire of a Schedule whose hook_name matches the
+// registry key. payload is the schedule's Any blob, typed by the hook.
+type Hook func(ctx context.Context, payload *anypb.Any) error
+
+// HookRegistry maps hook_name → Hook. Concurrency-safe.
+type HookRegistry struct {
+	mu    sync.RWMutex
+	hooks map[string]Hook
+}
+
+func NewHookRegistry() *HookRegistry {
+	return &HookRegistry{hooks: map[string]Hook{}}
+}
+
+// Register adds (or replaces) a hook implementation.
+func (r *HookRegistry) Register(name string, h Hook) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.hooks[name] = h
+}
+
+// Lookup returns the registered hook for name, or false if absent.
+func (r *HookRegistry) Lookup(name string) (Hook, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	h, ok := r.hooks[name]
+	return h, ok
+}
 
 // Config holds scheduler tuning parameters.
 type Config struct {
@@ -42,9 +74,17 @@ func (c *Config) withDefaults() {
 type Scheduler struct {
 	pool       *pgxpool.Pool
 	sys        *system.Service
+	hooks      *HookRegistry
 	cfg        Config
 	log        *zap.Logger
 	instanceID string
+}
+
+// WithHooks installs the hook registry used by fire(). When unset (nil) the
+// scheduler logs and skips dispatch for any due schedule.
+func (s *Scheduler) WithHooks(reg *HookRegistry) *Scheduler {
+	s.hooks = reg
+	return s
 }
 
 // New creates a Scheduler. instanceID is derived from hostname + PID so that
@@ -164,8 +204,66 @@ WHERE id = $2
 	}
 }
 
+// fire resolves the schedule, dispatches to the registered hook, and records
+// failure state. Hook errors increment consecutive_failures + store last
+// error; on success the row is left unchanged so the caller can advance
+// last_fired_at / next_fire_at.
 func (s *Scheduler) fire(ctx context.Context, scheduleID string) {
-	s.log.Info("scheduler fired (stub)", zap.String("schedule_id", scheduleID))
+	sched, err := s.sys.GetSchedule(ctx, &systempb.ScheduleId{Value: scheduleID})
+	if err != nil {
+		s.log.Error("scheduler: GetSchedule before fire failed",
+			zap.String("schedule_id", scheduleID), zap.Error(err))
+		return
+	}
+	if s.hooks == nil {
+		s.log.Warn("scheduler: no hook registry installed — skipping dispatch",
+			zap.String("schedule_id", scheduleID),
+			zap.String("hook_name", sched.GetHookName()))
+		return
+	}
+	hook, ok := s.hooks.Lookup(sched.GetHookName())
+	if !ok {
+		s.recordFailure(ctx, scheduleID, fmt.Errorf("no hook registered for %q", sched.GetHookName()))
+		return
+	}
+	if hookErr := hook(ctx, sched.GetPayload()); hookErr != nil {
+		s.recordFailure(ctx, scheduleID, hookErr)
+		s.log.Error("scheduler: hook failed",
+			zap.String("schedule_id", scheduleID),
+			zap.String("hook_name", sched.GetHookName()),
+			zap.Error(hookErr))
+		return
+	}
+	s.clearFailures(ctx, scheduleID)
+	s.log.Info("scheduler fired",
+		zap.String("schedule_id", scheduleID),
+		zap.String("hook_name", sched.GetHookName()))
+}
+
+// recordFailure bumps consecutive_failures and stores last_failure_error.
+func (s *Scheduler) recordFailure(ctx context.Context, scheduleID string, err error) {
+	const q = `UPDATE schedules
+SET consecutive_failures = consecutive_failures + 1,
+    last_failure_error   = $1,
+    updated_at           = now()
+WHERE id = $2`
+	if _, dbErr := s.pool.Exec(ctx, q, err.Error(), scheduleID); dbErr != nil {
+		s.log.Error("scheduler: recordFailure failed",
+			zap.String("schedule_id", scheduleID), zap.Error(dbErr))
+	}
+}
+
+// clearFailures resets the consecutive_failures counter after a successful fire.
+func (s *Scheduler) clearFailures(ctx context.Context, scheduleID string) {
+	const q = `UPDATE schedules
+SET consecutive_failures = 0,
+    last_failure_error   = '',
+    updated_at           = now()
+WHERE id = $1 AND consecutive_failures > 0`
+	if _, err := s.pool.Exec(ctx, q, scheduleID); err != nil {
+		s.log.Warn("scheduler: clearFailures failed",
+			zap.String("schedule_id", scheduleID), zap.Error(err))
+	}
 }
 
 func (s *Scheduler) releaseLease(ctx context.Context, scheduleID string) {

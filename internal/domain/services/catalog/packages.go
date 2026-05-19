@@ -2,6 +2,8 @@ package catalog
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -174,6 +176,9 @@ func (s *Service) UpdatePackage(ctx context.Context, pkg *catalogpb.Package) (*c
 					}
 					existing.Timestamps.UpdatedAt = timestamppb.Now()
 					scanner := existing.IntoPlain()
+					if scanner.Label == nil {
+						scanner.Label = []string{}
+					}
 					if _, err := s.packageRepo.Execute(ctx,
 						catalogpb.Packages.Update().
 							Set(
@@ -233,21 +238,74 @@ func safeFilename(name string) (string, error) {
 	return base, nil
 }
 
-// UploadPackageBinary streams a binary to S3 and returns the storage key.
+// UploadPackageBinary streams a binary to S3 while computing its SHA-256
+// and size. The hash + size are persisted on the package's DebBlobSource so
+// the agent fetches with integrity verification (see PutFile.FetchSpec).
+// Returns the storage key, hex hash and byte count.
 // Key format: packages/<tenantID>/<packageULID>/<filename>.
-func (s *Service) UploadPackageBinary(ctx context.Context, pkgID *catalogpb.PackageId, tenantID *iampb.TenantId, filename string, body io.Reader, contentType string) (string, error) {
+func (s *Service) UploadPackageBinary(ctx context.Context, pkgID *catalogpb.PackageId, tenantID *iampb.TenantId, filename string, body io.Reader, contentType string) (string, string, int64, error) {
 	if s.pkgStorage == nil {
-		return "", domainerr.E(errorspb.Code_CODE_INTERNAL).WithCause(fmt.Errorf("package storage not configured"))
+		return "", "", 0, domainerr.E(errorspb.Code_CODE_INTERNAL).WithCause(fmt.Errorf("package storage not configured"))
 	}
 	safe, err := safeFilename(filename)
 	if err != nil {
-		return "", err
+		return "", "", 0, err
 	}
 	key := fmt.Sprintf("packages/%s/%s/%s", tenantID.GetValue(), pkgID.GetValue(), safe)
-	if _, err := s.pkgStorage.PutObject(ctx, key, body, contentType); err != nil {
-		return "", err
+
+	hasher := sha256.New()
+	counter := &countingWriter{}
+	teed := io.TeeReader(body, io.MultiWriter(hasher, counter))
+	if _, err := s.pkgStorage.PutObject(ctx, key, teed, contentType); err != nil {
+		return "", "", 0, err
 	}
-	return key, nil
+	sum := hex.EncodeToString(hasher.Sum(nil))
+	size := counter.n
+
+	if err := s.applyDebBlobIntegrity(ctx, pkgID, safe, sum, uint64(size)); err != nil {
+		return "", "", 0, err
+	}
+	return key, sum, size, nil
+}
+
+// applyDebBlobIntegrity updates the existing package row so its DebBlob
+// source carries the canonical filename, sha256 and size. Done in a
+// serialisable transaction to avoid clobbering concurrent UpdatePackage
+// writes.
+func (s *Service) applyDebBlobIntegrity(ctx context.Context, pkgID *catalogpb.PackageId, filename, sum string, size uint64) error {
+	return pgtx.WithSerializable(ctx, s.txMgr, func(ctx context.Context) error {
+		existing, err := s.GetPackage(ctx, pkgID)
+		if err != nil {
+			return err
+		}
+		blob, ok := existing.GetSource().GetSource().(*catalogpb.Package_PackageSource_DebBlob)
+		if !ok || blob == nil || blob.DebBlob == nil {
+			// Non deb-blob package: upload succeeds, no integrity row to write.
+			return nil
+		}
+		blob.DebBlob.DebFilename = filename
+		blob.DebBlob.Sha256 = sum
+		blob.DebBlob.SizeBytes = size
+		existing.Timestamps.UpdatedAt = timestamppb.Now()
+		scanner := existing.IntoPlain()
+		_, err = s.packageRepo.Execute(ctx,
+			catalogpb.Packages.Update().
+				Set(
+					scanner.GetSetter(catalogpb.PackageColumnSource)(),
+					scanner.GetSetter(catalogpb.PackageColumnUpdatedAt)(),
+				).
+				Where(catalogpb.Packages.Id.Eq(existing.GetId().GetValue())),
+		)
+		return err
+	})
+}
+
+// countingWriter is an io.Writer that just tallies bytes written.
+type countingWriter struct{ n int64 }
+
+func (c *countingWriter) Write(p []byte) (int, error) {
+	c.n += int64(len(p))
+	return len(p), nil
 }
 
 // PresignPackageDownload returns a presigned GET URL valid for 10 minutes.

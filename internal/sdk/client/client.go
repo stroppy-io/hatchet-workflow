@@ -23,9 +23,11 @@ type Client struct {
 	httpClient *http.Client
 	headers    http.Header
 
-	Auth   iamconnect.AuthServiceClient
-	User   iamconnect.UserServiceClient
-	Tenant iamconnect.TenantServiceClient
+	Auth         iamconnect.AuthServiceClient
+	User         iamconnect.UserServiceClient
+	Tenant       iamconnect.TenantServiceClient
+	TenantMember iamconnect.TenantMemberServiceClient
+	ApiToken     iamconnect.ApiTokenServiceClient
 
 	DatabasePreset catalogconnect.DatabasePresetServiceClient
 	WorkloadPreset catalogconnect.WorkloadPresetServiceClient
@@ -41,7 +43,9 @@ type Client struct {
 	SharedTestRun  testingconnect.SharedTestRunServiceClient
 	SharedSuiteRun testingconnect.SharedSuiteRunServiceClient
 	Comparison     testingconnect.ComparisonServiceClient
+	Baseline       testingconnect.BaselineServiceClient
 
+	Agent       agentconnect.AgentServiceClient
 	Webhook     opsconnect.WebhookServiceClient
 	Quota       opsconnect.QuotaServiceClient
 	BinaryCache agentconnect.BinaryCacheServiceClient
@@ -85,6 +89,8 @@ func New(serverURL string, opts ...Option) *Client {
 	c.Auth = iamconnect.NewAuthServiceClient(c.httpClient, serverURL, connOpts...)
 	c.User = iamconnect.NewUserServiceClient(c.httpClient, serverURL, connOpts...)
 	c.Tenant = iamconnect.NewTenantServiceClient(c.httpClient, serverURL, connOpts...)
+	c.TenantMember = iamconnect.NewTenantMemberServiceClient(c.httpClient, serverURL, connOpts...)
+	c.ApiToken = iamconnect.NewApiTokenServiceClient(c.httpClient, serverURL, connOpts...)
 	c.DatabasePreset = catalogconnect.NewDatabasePresetServiceClient(c.httpClient, serverURL, connOpts...)
 	c.WorkloadPreset = catalogconnect.NewWorkloadPresetServiceClient(c.httpClient, serverURL, connOpts...)
 	c.Package = catalogconnect.NewPackageServiceClient(c.httpClient, serverURL, connOpts...)
@@ -94,6 +100,7 @@ func New(serverURL string, opts ...Option) *Client {
 	c.Webhook = opsconnect.NewWebhookServiceClient(c.httpClient, serverURL, connOpts...)
 	c.Quota = opsconnect.NewQuotaServiceClient(c.httpClient, serverURL, connOpts...)
 	c.BinaryCache = agentconnect.NewBinaryCacheServiceClient(c.httpClient, serverURL, connOpts...)
+	c.Agent = agentconnect.NewAgentServiceClient(c.httpClient, serverURL, connOpts...)
 	c.Admin = adminconnect.NewAdminServiceClient(c.httpClient, serverURL, connOpts...)
 	c.BinaryCacheAdmin = adminconnect.NewBinaryCacheAdminServiceClient(c.httpClient, serverURL, connOpts...)
 	c.initTestingClients(connOpts)

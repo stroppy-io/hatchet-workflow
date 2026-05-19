@@ -35,11 +35,12 @@ merges. No silent removal.
 | A16 | Cross-compare batch | `/suites/{id}/batches/{b}/cross` | `comparison.CrossCompareBatch` declared | 🔴 handler UNIMPLEMENTED |
 | A17 | Grafana settings | `/api/v1/grafana` returns config | settings keys exist but no endpoint shim | 🔴 missing; SPA still calls REST |
 | A18 | Tenant `select-tenant` | `/auth/select-tenant` | client-side localStorage + X-Tenant-Id header | 🟡 functional change; documented |
-| A19 | User self password change | `/api/v1/auth/password` | `UserService.UpdatePassword` declared | 🔴 handler UNIMPLEMENTED |
+| A18b | Login identifier = email OR nickname | n/a (main had email-only) | `auth.Login` branches on `@` to pick column | ✅ admin/admin works on dev |
+| A19 | User self password change | `/api/v1/auth/password` | `UserService.UpdatePassword` declared | ✅ service + handler wired (`iam/update_password.go`) |
 | A20 | Cancel suite batch | `/suites/{id}/batches/{b}/cancel` | `CancelTestSuiteRun` declared | 🔴 not wired |
-| A21 | Run validate / dry-run | `/validate`, `/dry-run` | no equivalent | 🔴 lost |
-| A22 | Rendered configs view | `/run/{id}/rendered-configs` | no equivalent (state-entries cover partial) | 🔴 lost |
-| A23 | Run agents view | `/run/{id}/agents` | could derive from agents.dag_run_id | 🟡 needs simple endpoint |
+| A21 | Run validate / dry-run | `/validate`, `/dry-run` | `TestRunService.DryRunTestRun` | ✅ proto+svc+handler; returns Dag preview |
+| A22 | Rendered configs view | `/run/{id}/rendered-configs` | folded into `DryRunTestRun` Dag (ConfigApplyTask specs) | ✅ via A21 |
+| A23 | Suite items | `/suites/{id}/items*` | `TestSuite.Matrix` (databases × workloads cartesian) | ✅ existing Matrix shape covers items |
 | A24 | Stroppy probe | `/probe` REST | `StroppyService.ProbeStroppyConfig` ✅ | ✅ backend; SPA still calls REST in places |
 | A25 | Stroppy versions/commits | `/stroppy-versions`, `/stroppy-commits` | `StroppyService.ListStroppy*` ✅ | ✅ backend; SPA mixed |
 | A26 | Idempotency middleware | n/a | Valkey-backed Connect interceptor | ➕ new |
@@ -86,7 +87,7 @@ merges. No silent removal.
 | D1 | `bench` (cloud, wait until terminal) | implemented | 🔴 no equivalent |
 | D2 | `wait` (poll status) | implemented | 🔴 no equivalent |
 | D3 | `validate` / `dry-run` | implemented | 🔴 lost |
-| D4 | local run (full execution from config, no server) | implemented | 🔴 lost |
+| D4 | local run (full execution from config, no server) | implemented | 🔴 deferred — `cli run --watch` against `make server-run` covers dev/CI; full in-process engine = future work |
 | D5 | `run/suite/preset/package` CRUD | implemented | ✅ ported |
 
 ## Execution order

@@ -18,4 +18,12 @@ message StroppyRunTask {
     string db_url_state_key = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
     // stroppy binary version override; empty = platform default from StroppySettings.
     string version = 3 [(validate.rules).string.max_len = 32];
+
+    /* target_machine_ids — explicit machine_id fan-out. Usually a single
+       stroppy worker (e.g. "stroppy-0"). */
+    repeated string target_machine_ids = 4 [(validate.rules).repeated.max_items = 16];
+
+    /* config_path_state_key — DagRun state key the upstream
+       render-stroppy-config node wrote the on-host config path to. */
+    string config_path_state_key = 5 [(validate.rules).string.max_len = 128];
 }

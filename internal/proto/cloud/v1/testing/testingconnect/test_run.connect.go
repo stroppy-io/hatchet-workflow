@@ -10,6 +10,7 @@ import (
 	errors "errors"
 	agent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent"
 	iam "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	system "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/system"
 	testing "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/testing"
 	http "net/http"
 	strings "strings"
@@ -68,6 +69,9 @@ const (
 	// TestRunServiceInstantiateTestRunProcedure is the fully-qualified name of the TestRunService's
 	// InstantiateTestRun RPC.
 	TestRunServiceInstantiateTestRunProcedure = "/cloud.v1.testing.TestRunService/InstantiateTestRun"
+	// TestRunServiceDryRunTestRunProcedure is the fully-qualified name of the TestRunService's
+	// DryRunTestRun RPC.
+	TestRunServiceDryRunTestRunProcedure = "/cloud.v1.testing.TestRunService/DryRunTestRun"
 )
 
 // TestRunServiceClient is a client for the cloud.v1.testing.TestRunService service.
@@ -93,6 +97,11 @@ type TestRunServiceClient interface {
 	CancelTestRun(context.Context, *connect.Request[testing.TestRunId]) (*connect.Response[testing.TestRun], error)
 	// InstantiateTestRun — create a new TestRun from a template.
 	InstantiateTestRun(context.Context, *connect.Request[testing.TestRunTemplateId]) (*connect.Response[testing.TestRun], error)
+	// DryRunTestRun — resolve presets, validate, and build the DAG preview
+	// without launching. The returned Dag includes ConfigApplyTask specs
+	// with the per-component config files the agent would render — same
+	// data the legacy /run/{id}/rendered-configs endpoint exposed.
+	DryRunTestRun(context.Context, *connect.Request[testing.TestRun]) (*connect.Response[system.Dag], error)
 }
 
 // NewTestRunServiceClient constructs a client for the cloud.v1.testing.TestRunService service. By
@@ -183,6 +192,13 @@ func NewTestRunServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithIdempotency(connect.IdempotencyIdempotent),
 			connect.WithClientOptions(opts...),
 		),
+		dryRunTestRun: connect.NewClient[testing.TestRun, system.Dag](
+			httpClient,
+			baseURL+TestRunServiceDryRunTestRunProcedure,
+			connect.WithSchema(testRunServiceMethods.ByName("DryRunTestRun")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -199,6 +215,7 @@ type testRunServiceClient struct {
 	launchTestRun      *connect.Client[testing.TestRunId, testing.TestRun]
 	cancelTestRun      *connect.Client[testing.TestRunId, testing.TestRun]
 	instantiateTestRun *connect.Client[testing.TestRunTemplateId, testing.TestRun]
+	dryRunTestRun      *connect.Client[testing.TestRun, system.Dag]
 }
 
 // CreateTestRun calls cloud.v1.testing.TestRunService.CreateTestRun.
@@ -256,6 +273,11 @@ func (c *testRunServiceClient) InstantiateTestRun(ctx context.Context, req *conn
 	return c.instantiateTestRun.CallUnary(ctx, req)
 }
 
+// DryRunTestRun calls cloud.v1.testing.TestRunService.DryRunTestRun.
+func (c *testRunServiceClient) DryRunTestRun(ctx context.Context, req *connect.Request[testing.TestRun]) (*connect.Response[system.Dag], error) {
+	return c.dryRunTestRun.CallUnary(ctx, req)
+}
+
 // TestRunServiceHandler is an implementation of the cloud.v1.testing.TestRunService service.
 type TestRunServiceHandler interface {
 	// CreateTestRun — persists intent. Launching = LaunchTestRun creates DagRun.
@@ -279,6 +301,11 @@ type TestRunServiceHandler interface {
 	CancelTestRun(context.Context, *connect.Request[testing.TestRunId]) (*connect.Response[testing.TestRun], error)
 	// InstantiateTestRun — create a new TestRun from a template.
 	InstantiateTestRun(context.Context, *connect.Request[testing.TestRunTemplateId]) (*connect.Response[testing.TestRun], error)
+	// DryRunTestRun — resolve presets, validate, and build the DAG preview
+	// without launching. The returned Dag includes ConfigApplyTask specs
+	// with the per-component config files the agent would render — same
+	// data the legacy /run/{id}/rendered-configs endpoint exposed.
+	DryRunTestRun(context.Context, *connect.Request[testing.TestRun]) (*connect.Response[system.Dag], error)
 }
 
 // NewTestRunServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -365,6 +392,13 @@ func NewTestRunServiceHandler(svc TestRunServiceHandler, opts ...connect.Handler
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
+	testRunServiceDryRunTestRunHandler := connect.NewUnaryHandler(
+		TestRunServiceDryRunTestRunProcedure,
+		svc.DryRunTestRun,
+		connect.WithSchema(testRunServiceMethods.ByName("DryRunTestRun")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cloud.v1.testing.TestRunService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case TestRunServiceCreateTestRunProcedure:
@@ -389,6 +423,8 @@ func NewTestRunServiceHandler(svc TestRunServiceHandler, opts ...connect.Handler
 			testRunServiceCancelTestRunHandler.ServeHTTP(w, r)
 		case TestRunServiceInstantiateTestRunProcedure:
 			testRunServiceInstantiateTestRunHandler.ServeHTTP(w, r)
+		case TestRunServiceDryRunTestRunProcedure:
+			testRunServiceDryRunTestRunHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -440,4 +476,8 @@ func (UnimplementedTestRunServiceHandler) CancelTestRun(context.Context, *connec
 
 func (UnimplementedTestRunServiceHandler) InstantiateTestRun(context.Context, *connect.Request[testing.TestRunTemplateId]) (*connect.Response[testing.TestRun], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.testing.TestRunService.InstantiateTestRun is not implemented"))
+}
+
+func (UnimplementedTestRunServiceHandler) DryRunTestRun(context.Context, *connect.Request[testing.TestRun]) (*connect.Response[system.Dag], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.testing.TestRunService.DryRunTestRun is not implemented"))
 }

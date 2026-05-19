@@ -17,6 +17,10 @@ message ConfigApplyTask {
     cloud.v1.catalog.Database.Kind engine_kind = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
     cloud.v1.catalog.MachineRole role = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
 
+    /* target_machine_ids — explicit fan-out. Takes precedence over `role`
+       when non-empty. */
+    repeated string target_machine_ids = 3 [(validate.rules).repeated.max_items = 256];
+
     repeated cloud.v1.common.ConfigFile files = 10 [(validate.rules).repeated.max_items = 64];
     repeated string cli_args = 11 [(validate.rules).repeated.max_items = 256];
     map<string, string> env = 12 [(validate.rules).map.max_pairs = 256];

@@ -15,4 +15,5 @@ func (c *Client) initTestingClients(connOpts []connect.ClientOption) {
 	c.SharedTestRun = testingconnect.NewSharedTestRunServiceClient(c.httpClient, c.server, connOpts...)
 	c.SharedSuiteRun = testingconnect.NewSharedSuiteRunServiceClient(c.httpClient, c.server, connOpts...)
 	c.Comparison = testingconnect.NewComparisonServiceClient(c.httpClient, c.server, connOpts...)
+	c.Baseline = testingconnect.NewBaselineServiceClient(c.httpClient, c.server, connOpts...)
 }

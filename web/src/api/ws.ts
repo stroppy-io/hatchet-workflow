@@ -1,4 +1,4 @@
-import { getAccessToken } from "./transport";
+import { clients } from "./clients";
 
 export interface WSMessage {
   type: "log" | "report" | "agent_log";
@@ -18,45 +18,77 @@ export interface LogLine {
 export type WSMessageHandler = (msg: WSMessage) => void;
 export type LogHandler = (line: LogLine) => void;
 
+/**
+ * WSConnection — legacy facade around ConnectRPC's server-streaming
+ * `TestRunService.StreamTestRunLogs`. The old WebSocket transport at
+ * `/ws/logs` is gone; this class preserves the constructor +
+ * `connect/onMessage/disconnect` surface used by LogStream.tsx and
+ * pipes each LogLine through as a synthetic "agent_log" WSMessage.
+ *
+ * Live logs only: history is fetched by LogStream via the same Connect
+ * RPC with follow=false / since=<bound>.
+ */
 export class WSConnection {
-  private ws: WebSocket | null = null;
-  private baseUrl: string;
+  private runID?: string;
   private handlers: WSMessageHandler[] = [];
+  private abort: AbortController | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private shouldReconnect = true;
 
   constructor(runID?: string) {
-    const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const base = `${proto}//${window.location.host}`;
-    this.baseUrl = runID ? `${base}/ws/logs/${runID}` : `${base}/ws/logs`;
+    this.runID = runID;
   }
 
   connect(): void {
-    if (this.ws?.readyState === WebSocket.OPEN) return;
+    if (this.abort) return;
+    if (!this.runID) return;
+    this.shouldReconnect = true;
+    this.start();
+  }
 
-    // Pass JWT via query param — browsers can't set headers on WebSocket.
-    const token = getAccessToken();
-    const url = token ? `${this.baseUrl}?token=${encodeURIComponent(token)}` : this.baseUrl;
-    this.ws = new WebSocket(url);
-
-    this.ws.onmessage = (event) => {
+  private start(): void {
+    const ac = new AbortController();
+    this.abort = ac;
+    (async () => {
       try {
-        const msg: WSMessage = JSON.parse(event.data);
-        this.handlers.forEach((h) => h(msg));
+        for await (const line of clients.testRun.streamTestRunLogs(
+          {
+            testRunId: { value: this.runID! },
+            stepId: "",
+            follow: true,
+          },
+          { signal: ac.signal },
+        )) {
+          if (ac.signal.aborted) return;
+          // Convert proto LogLine → legacy WSMessage shape consumed by
+          // LogStream.tsx. ts is a proto Timestamp; coerce to ISO for
+          // downstream code that expects a string.
+          const tsMs = line.ts
+            ? Number(line.ts.seconds) * 1000 +
+              Math.floor((line.ts.nanos ?? 0) / 1_000_000)
+            : Date.now();
+          const msg: WSMessage = {
+            type: "agent_log",
+            run_id: this.runID,
+            payload: {
+              command_id: line.commandId,
+              machine_id: line.machineId,
+              action: "",
+              line: line.line,
+              stream: line.stream,
+              ts: new Date(tsMs).toISOString(),
+            },
+          };
+          this.handlers.forEach((h) => h(msg));
+        }
       } catch {
-        // ignore parse errors
+        // Stream closed or errored — fall through to reconnect.
       }
-    };
-
-    this.ws.onclose = () => {
-      if (this.shouldReconnect) {
-        this.reconnectTimer = setTimeout(() => this.connect(), 2000);
+      if (this.shouldReconnect && this.abort === ac) {
+        this.abort = null;
+        this.reconnectTimer = setTimeout(() => this.start(), 2000);
       }
-    };
-
-    this.ws.onerror = () => {
-      this.ws?.close();
-    };
+    })();
   }
 
   onMessage(handler: WSMessageHandler): () => void {
@@ -69,7 +101,7 @@ export class WSConnection {
   disconnect(): void {
     this.shouldReconnect = false;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
-    this.ws?.close();
-    this.ws = null;
+    this.abort?.abort();
+    this.abort = null;
   }
 }

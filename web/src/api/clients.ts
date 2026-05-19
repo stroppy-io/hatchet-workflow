@@ -7,6 +7,7 @@ import { TenantService } from "@/lib/proto/cloud/v1/iam/tenant_pb";
 // Note: member service is named TenantMemberService in the proto
 import { TenantMemberService } from "@/lib/proto/cloud/v1/iam/member_pb";
 import { ApiTokenService } from "@/lib/proto/cloud/v1/iam/api_token_pb";
+import { AgentAdminService } from "@/lib/proto/cloud/v1/agent/service_pb";
 import { TestRunService } from "@/lib/proto/cloud/v1/testing/test_run_pb";
 import { TestRunTemplateService } from "@/lib/proto/cloud/v1/testing/test_run_template_pb";
 import { TestSuiteService } from "@/lib/proto/cloud/v1/testing/test_suite_pb";
@@ -31,6 +32,7 @@ export const clients = {
   // member service is TenantMemberService in proto
   member: createClient(TenantMemberService, transport),
   apiToken: createClient(ApiTokenService, transport),
+  agentAdmin: createClient(AgentAdminService, transport),
   testRun: createClient(TestRunService, transport),
   template: createClient(TestRunTemplateService, transport),
   suite: createClient(TestSuiteService, transport),

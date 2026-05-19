@@ -11,112 +11,12 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/common/config_file.proto.
  */
 export const file_cloud_v1_common_config_file: GenFile = /*@__PURE__*/
-  fileDesc("CiFjbG91ZC92MS9jb21tb24vY29uZmlnX2ZpbGUucHJvdG8SD2Nsb3VkLnYxLmNvbW1vbiKRAQoNVGVtcGxhdGVkRmlsZRIVCg10ZW1wbGF0ZV9uYW1lGAEgASgJEjoKBnZhbHVlcxgCIAMoCzIqLmNsb3VkLnYxLmNvbW1vbi5UZW1wbGF0ZWRGaWxlLlZhbHVlc0VudHJ5Gi0KC1ZhbHVlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiJgoHRmlsZVJlZhILCgN1cmkYASABKAkSDgoGc2hhMjU2GAIgASgJIrcBCgpDb25maWdGaWxlEgwKBHBhdGgYASABKAkSEAoGaW5saW5lGAIgASgJSAASMwoJdGVtcGxhdGVkGAMgASgLMh4uY2xvdWQudjEuY29tbW9uLlRlbXBsYXRlZEZpbGVIABInCgNyZWYYBCABKAsyGC5jbG91ZC52MS5jb21tb24uRmlsZVJlZkgAEgwKBG1vZGUYBSABKA0SDQoFb3duZXIYBiABKAlCDgoHY29udGVudBID+EIBQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2NvbW1vbmIGcHJvdG8z", [file_validate_validate]);
+  fileDesc("CiFjbG91ZC92MS9jb21tb24vY29uZmlnX2ZpbGUucHJvdG8SD2Nsb3VkLnYxLmNvbW1vbiJQCgpDb25maWdGaWxlEgwKBHBhdGgYASABKAkSFwoGaW5saW5lGAIgASgJQgf6QgRyAhAAEgwKBG1vZGUYAyABKA0SDQoFb3duZXIYBCABKAlCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvY29tbW9uYgZwcm90bzM", [file_validate_validate]);
 
 /**
- * TemplatedFile — reference to a bundled template + substitution values. 
- *
- * @generated from message cloud.v1.common.TemplatedFile
- */
-export type TemplatedFile = Message<"cloud.v1.common.TemplatedFile"> & {
-  /**
-   * e.g. "postgresql.conf.tmpl"
-   *
-   * @generated from field: string template_name = 1;
-   */
-  templateName: string;
-
-  /**
-   * substituted into template
-   *
-   * @generated from field: map<string, string> values = 2;
-   */
-  values: { [key: string]: string };
-};
-
-/**
- * TemplatedFile — reference to a bundled template + substitution values. 
- *
- * @generated from message cloud.v1.common.TemplatedFile
- */
-export type TemplatedFileJson = {
-  /**
-   * e.g. "postgresql.conf.tmpl"
-   *
-   * @generated from field: string template_name = 1;
-   */
-  templateName?: string;
-
-  /**
-   * substituted into template
-   *
-   * @generated from field: map<string, string> values = 2;
-   */
-  values?: { [key: string]: string };
-};
-
-export type TemplatedFileValid = TemplatedFile;
-
-/**
- * Describes the message cloud.v1.common.TemplatedFile.
- * Use `create(TemplatedFileSchema)` to create a new message.
- */
-export const TemplatedFileSchema: GenMessage<TemplatedFile, {jsonType: TemplatedFileJson, validType: TemplatedFileValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_common_config_file, 0);
-
-/**
- * FileRef — reference to a stored blob with integrity check. 
- *
- * @generated from message cloud.v1.common.FileRef
- */
-export type FileRef = Message<"cloud.v1.common.FileRef"> & {
-  /**
-   * s3://..., pkg://..., file://...
-   *
-   * @generated from field: string uri = 1;
-   */
-  uri: string;
-
-  /**
-   * integrity check
-   *
-   * @generated from field: string sha256 = 2;
-   */
-  sha256: string;
-};
-
-/**
- * FileRef — reference to a stored blob with integrity check. 
- *
- * @generated from message cloud.v1.common.FileRef
- */
-export type FileRefJson = {
-  /**
-   * s3://..., pkg://..., file://...
-   *
-   * @generated from field: string uri = 1;
-   */
-  uri?: string;
-
-  /**
-   * integrity check
-   *
-   * @generated from field: string sha256 = 2;
-   */
-  sha256?: string;
-};
-
-export type FileRefValid = FileRef;
-
-/**
- * Describes the message cloud.v1.common.FileRef.
- * Use `create(FileRefSchema)` to create a new message.
- */
-export const FileRefSchema: GenMessage<FileRef, {jsonType: FileRefJson, validType: FileRefValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_common_config_file, 1);
-
-/**
- * ConfigFile — file rendered onto a host. Universal across deployments. 
+ * ConfigFile — file rendered onto a host. Cloud renders all configs from
+ * presets and sends fully-rendered text inline; the agent simply writes it.
+ * No templating, no external blob references. 
  *
  * @generated from message cloud.v1.common.ConfigFile
  */
@@ -129,45 +29,31 @@ export type ConfigFile = Message<"cloud.v1.common.ConfigFile"> & {
   path: string;
 
   /**
-   * @generated from oneof cloud.v1.common.ConfigFile.content
+   * fully-rendered file content
+   *
+   * @generated from field: string inline = 2;
    */
-  content: {
-    /**
-     * @generated from field: string inline = 2;
-     */
-    value: string;
-    case: "inline";
-  } | {
-    /**
-     * @generated from field: cloud.v1.common.TemplatedFile templated = 3;
-     */
-    value: TemplatedFile;
-    case: "templated";
-  } | {
-    /**
-     * @generated from field: cloud.v1.common.FileRef ref = 4;
-     */
-    value: FileRef;
-    case: "ref";
-  } | { case: undefined; value?: undefined };
+  inline: string;
 
   /**
    * unix perms, e.g. 0644
    *
-   * @generated from field: uint32 mode = 5;
+   * @generated from field: uint32 mode = 3;
    */
   mode: number;
 
   /**
    * optional chown user
    *
-   * @generated from field: string owner = 6;
+   * @generated from field: string owner = 4;
    */
   owner: string;
 };
 
 /**
- * ConfigFile — file rendered onto a host. Universal across deployments. 
+ * ConfigFile — file rendered onto a host. Cloud renders all configs from
+ * presets and sends fully-rendered text inline; the agent simply writes it.
+ * No templating, no external blob references. 
  *
  * @generated from message cloud.v1.common.ConfigFile
  */
@@ -180,31 +66,23 @@ export type ConfigFileJson = {
   path?: string;
 
   /**
+   * fully-rendered file content
+   *
    * @generated from field: string inline = 2;
    */
   inline?: string;
 
   /**
-   * @generated from field: cloud.v1.common.TemplatedFile templated = 3;
-   */
-  templated?: TemplatedFileJson;
-
-  /**
-   * @generated from field: cloud.v1.common.FileRef ref = 4;
-   */
-  ref?: FileRefJson;
-
-  /**
    * unix perms, e.g. 0644
    *
-   * @generated from field: uint32 mode = 5;
+   * @generated from field: uint32 mode = 3;
    */
   mode?: number;
 
   /**
    * optional chown user
    *
-   * @generated from field: string owner = 6;
+   * @generated from field: string owner = 4;
    */
   owner?: string;
 };
@@ -216,5 +94,5 @@ export type ConfigFileValid = ConfigFile;
  * Use `create(ConfigFileSchema)` to create a new message.
  */
 export const ConfigFileSchema: GenMessage<ConfigFile, {jsonType: ConfigFileJson, validType: ConfigFileValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_common_config_file, 2);
+  messageDesc(file_cloud_v1_common_config_file, 0);
 

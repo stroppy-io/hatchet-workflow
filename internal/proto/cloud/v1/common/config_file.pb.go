@@ -22,131 +22,22 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// TemplatedFile — reference to a bundled template + substitution values.
-type TemplatedFile struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TemplateName  string                 `protobuf:"bytes,1,opt,name=template_name,json=templateName,proto3" json:"template_name,omitempty"`                                           // e.g. "postgresql.conf.tmpl"
-	Values        map[string]string      `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // substituted into template
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TemplatedFile) Reset() {
-	*x = TemplatedFile{}
-	mi := &file_cloud_v1_common_config_file_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TemplatedFile) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TemplatedFile) ProtoMessage() {}
-
-func (x *TemplatedFile) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_common_config_file_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TemplatedFile.ProtoReflect.Descriptor instead.
-func (*TemplatedFile) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_common_config_file_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *TemplatedFile) GetTemplateName() string {
-	if x != nil {
-		return x.TemplateName
-	}
-	return ""
-}
-
-func (x *TemplatedFile) GetValues() map[string]string {
-	if x != nil {
-		return x.Values
-	}
-	return nil
-}
-
-// FileRef — reference to a stored blob with integrity check.
-type FileRef struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Uri           string                 `protobuf:"bytes,1,opt,name=uri,proto3" json:"uri,omitempty"`       // s3://..., pkg://..., file://...
-	Sha256        string                 `protobuf:"bytes,2,opt,name=sha256,proto3" json:"sha256,omitempty"` // integrity check
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *FileRef) Reset() {
-	*x = FileRef{}
-	mi := &file_cloud_v1_common_config_file_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FileRef) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FileRef) ProtoMessage() {}
-
-func (x *FileRef) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_common_config_file_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FileRef.ProtoReflect.Descriptor instead.
-func (*FileRef) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_common_config_file_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *FileRef) GetUri() string {
-	if x != nil {
-		return x.Uri
-	}
-	return ""
-}
-
-func (x *FileRef) GetSha256() string {
-	if x != nil {
-		return x.Sha256
-	}
-	return ""
-}
-
-// ConfigFile — file rendered onto a host. Universal across deployments.
+// ConfigFile — file rendered onto a host. Cloud renders all configs from
+// presets and sends fully-rendered text inline; the agent simply writes it.
+// No templating, no external blob references.
 type ConfigFile struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Path  string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"` // e.g. "/etc/postgresql/17/main/postgresql.conf"
-	// Types that are valid to be assigned to Content:
-	//
-	//	*ConfigFile_Inline
-	//	*ConfigFile_Templated
-	//	*ConfigFile_Ref
-	Content       isConfigFile_Content `protobuf_oneof:"content"`
-	Mode          uint32               `protobuf:"varint,5,opt,name=mode,proto3" json:"mode,omitempty"`  // unix perms, e.g. 0644
-	Owner         string               `protobuf:"bytes,6,opt,name=owner,proto3" json:"owner,omitempty"` // optional chown user
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`     // e.g. "/etc/postgresql/17/main/postgresql.conf"
+	Inline        string                 `protobuf:"bytes,2,opt,name=inline,proto3" json:"inline,omitempty"` // fully-rendered file content
+	Mode          uint32                 `protobuf:"varint,3,opt,name=mode,proto3" json:"mode,omitempty"`    // unix perms, e.g. 0644
+	Owner         string                 `protobuf:"bytes,4,opt,name=owner,proto3" json:"owner,omitempty"`   // optional chown user
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ConfigFile) Reset() {
 	*x = ConfigFile{}
-	mi := &file_cloud_v1_common_config_file_proto_msgTypes[2]
+	mi := &file_cloud_v1_common_config_file_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -158,7 +49,7 @@ func (x *ConfigFile) String() string {
 func (*ConfigFile) ProtoMessage() {}
 
 func (x *ConfigFile) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_common_config_file_proto_msgTypes[2]
+	mi := &file_cloud_v1_common_config_file_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -171,7 +62,7 @@ func (x *ConfigFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigFile.ProtoReflect.Descriptor instead.
 func (*ConfigFile) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_common_config_file_proto_rawDescGZIP(), []int{2}
+	return file_cloud_v1_common_config_file_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ConfigFile) GetPath() string {
@@ -181,38 +72,11 @@ func (x *ConfigFile) GetPath() string {
 	return ""
 }
 
-func (x *ConfigFile) GetContent() isConfigFile_Content {
-	if x != nil {
-		return x.Content
-	}
-	return nil
-}
-
 func (x *ConfigFile) GetInline() string {
 	if x != nil {
-		if x, ok := x.Content.(*ConfigFile_Inline); ok {
-			return x.Inline
-		}
+		return x.Inline
 	}
 	return ""
-}
-
-func (x *ConfigFile) GetTemplated() *TemplatedFile {
-	if x != nil {
-		if x, ok := x.Content.(*ConfigFile_Templated); ok {
-			return x.Templated
-		}
-	}
-	return nil
-}
-
-func (x *ConfigFile) GetRef() *FileRef {
-	if x != nil {
-		if x, ok := x.Content.(*ConfigFile_Ref); ok {
-			return x.Ref
-		}
-	}
-	return nil
 }
 
 func (x *ConfigFile) GetMode() uint32 {
@@ -229,51 +93,17 @@ func (x *ConfigFile) GetOwner() string {
 	return ""
 }
 
-type isConfigFile_Content interface {
-	isConfigFile_Content()
-}
-
-type ConfigFile_Inline struct {
-	Inline string `protobuf:"bytes,2,opt,name=inline,proto3,oneof"`
-}
-
-type ConfigFile_Templated struct {
-	Templated *TemplatedFile `protobuf:"bytes,3,opt,name=templated,proto3,oneof"`
-}
-
-type ConfigFile_Ref struct {
-	Ref *FileRef `protobuf:"bytes,4,opt,name=ref,proto3,oneof"`
-}
-
-func (*ConfigFile_Inline) isConfigFile_Content() {}
-
-func (*ConfigFile_Templated) isConfigFile_Content() {}
-
-func (*ConfigFile_Ref) isConfigFile_Content() {}
-
 var File_cloud_v1_common_config_file_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_common_config_file_proto_rawDesc = "" +
 	"\n" +
-	"!cloud/v1/common/config_file.proto\x12\x0fcloud.v1.common\x1a\x17validate/validate.proto\"\xb3\x01\n" +
-	"\rTemplatedFile\x12#\n" +
-	"\rtemplate_name\x18\x01 \x01(\tR\ftemplateName\x12B\n" +
-	"\x06values\x18\x02 \x03(\v2*.cloud.v1.common.TemplatedFile.ValuesEntryR\x06values\x1a9\n" +
-	"\vValuesEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"3\n" +
-	"\aFileRef\x12\x10\n" +
-	"\x03uri\x18\x01 \x01(\tR\x03uri\x12\x16\n" +
-	"\x06sha256\x18\x02 \x01(\tR\x06sha256\"\xe2\x01\n" +
+	"!cloud/v1/common/config_file.proto\x12\x0fcloud.v1.common\x1a\x17validate/validate.proto\"k\n" +
 	"\n" +
 	"ConfigFile\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\x12\x18\n" +
-	"\x06inline\x18\x02 \x01(\tH\x00R\x06inline\x12>\n" +
-	"\ttemplated\x18\x03 \x01(\v2\x1e.cloud.v1.common.TemplatedFileH\x00R\ttemplated\x12,\n" +
-	"\x03ref\x18\x04 \x01(\v2\x18.cloud.v1.common.FileRefH\x00R\x03ref\x12\x12\n" +
-	"\x04mode\x18\x05 \x01(\rR\x04mode\x12\x14\n" +
-	"\x05owner\x18\x06 \x01(\tR\x05ownerB\x0e\n" +
-	"\acontent\x12\x03\xf8B\x01BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/commonb\x06proto3"
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1f\n" +
+	"\x06inline\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x00R\x06inline\x12\x12\n" +
+	"\x04mode\x18\x03 \x01(\rR\x04mode\x12\x14\n" +
+	"\x05owner\x18\x04 \x01(\tR\x05ownerBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/commonb\x06proto3"
 
 var (
 	file_cloud_v1_common_config_file_proto_rawDescOnce sync.Once
@@ -287,22 +117,16 @@ func file_cloud_v1_common_config_file_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_common_config_file_proto_rawDescData
 }
 
-var file_cloud_v1_common_config_file_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_cloud_v1_common_config_file_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_cloud_v1_common_config_file_proto_goTypes = []any{
-	(*TemplatedFile)(nil), // 0: cloud.v1.common.TemplatedFile
-	(*FileRef)(nil),       // 1: cloud.v1.common.FileRef
-	(*ConfigFile)(nil),    // 2: cloud.v1.common.ConfigFile
-	nil,                   // 3: cloud.v1.common.TemplatedFile.ValuesEntry
+	(*ConfigFile)(nil), // 0: cloud.v1.common.ConfigFile
 }
 var file_cloud_v1_common_config_file_proto_depIdxs = []int32{
-	3, // 0: cloud.v1.common.TemplatedFile.values:type_name -> cloud.v1.common.TemplatedFile.ValuesEntry
-	0, // 1: cloud.v1.common.ConfigFile.templated:type_name -> cloud.v1.common.TemplatedFile
-	1, // 2: cloud.v1.common.ConfigFile.ref:type_name -> cloud.v1.common.FileRef
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	0, // [0:0] is the sub-list for method output_type
+	0, // [0:0] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_common_config_file_proto_init() }
@@ -310,18 +134,13 @@ func file_cloud_v1_common_config_file_proto_init() {
 	if File_cloud_v1_common_config_file_proto != nil {
 		return
 	}
-	file_cloud_v1_common_config_file_proto_msgTypes[2].OneofWrappers = []any{
-		(*ConfigFile_Inline)(nil),
-		(*ConfigFile_Templated)(nil),
-		(*ConfigFile_Ref)(nil),
-	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_common_config_file_proto_rawDesc), len(file_cloud_v1_common_config_file_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
