@@ -1,0 +1,287 @@
+syntax = "proto3";
+
+package cloud.v1.domain;
+
+import "cloud/v1/deployment/deployment.proto";
+import "cloud/v1/runtime/render/config.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
+
+
+/**
+ * Database model idea:
+ *
+ * Database is an intent, not an ops plan. The user describes which DB target
+ * should exist for a test and which engine-level rollout/configuration they
+ * want. Machines, packages, rendered host files, and runtime ops are attached
+ * later by planner/deployment layers.
+ *
+ * Flow:
+ * 1. UI sends Database intent.
+ * 2. Backend renders RenderedDatabaseConfig as a preview.
+ * 3. UI shows generated render items.
+ * 4. User can add render.Config.Override patches.
+ * 5. Backend re-renders preview with overrides.
+ * 6. Planner converts final intent + overrides into runtime.ops and DAG nodes.
+ */
+message Database {
+    enum Kind {
+        KIND_UNSPECIFIED = 0;
+        KIND_POSTGRES = 1;
+        KIND_MYSQL = 2;
+        KIND_MARIADB = 3;
+        KIND_YDB = 4;
+        KIND_COCKROACH = 5;
+        KIND_PICODATA = 6;
+    }
+
+    Kind kind = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    string version = 2 [(validate.rules).string.max_len = 64];
+    runtime.render.Config config = 3 [(validate.rules).message.required = true];
+    /**
+     * Target says whether cloud should create the target or use a user-provided
+     * endpoint. It intentionally avoids machine sizing: self-hosted resources
+     * are attached later by the planner/deployment layer.
+     */
+    message Target {
+        /**
+            * External is BYOD: cloud does not provision a DB, it only renders stroppy
+            * connection metadata for the supplied endpoint.
+        */
+        message External {
+            string endpoint = 1 [(validate.rules).string = {min_len: 3, max_len: 512}]; /** host:port */
+            string database = 2 [(validate.rules).string.max_len = 256];
+            string username = 3 [(validate.rules).string.max_len = 256];
+            string password = 4 [(validate.rules).string.max_len = 512];
+            string ssl_mode = 5 [(validate.rules).string.max_len = 32];
+            map<string, string> extra_params = 10 [(validate.rules).map.max_pairs = 16];
+        }
+        /**
+        * SelfHosted means cloud owns target lifecycle for the test. For ordinary
+        * engines this means provisioning compute and installing the DB. Some
+        * engine configs, such as YDB managed, can still describe a provider-managed
+        * rollout inside this self-hosted target path.
+        */
+        message SelfHosted {}
+        oneof target {
+            option (validate.required) = true;
+            SelfHosted self_hosted = 1;
+            External external = 3;
+        }
+    }
+    Target target = 4 [(validate.rules).message.required = true];
+
+    message Options {
+        message Postgres {
+            Replication replication = 1;
+            Access access = 2;
+            repeated string extensions = 3 [(validate.rules).repeated.max_items = 64];
+            map<string, string> parameters = 10 [(validate.rules).map.max_pairs = 256];
+
+            message Replication {
+                enum Mode {
+                    MODE_UNSPECIFIED = 0;
+                    MODE_SINGLE = 1;
+                    MODE_STREAMING = 2;
+                    MODE_PATRONI = 3;
+                }
+                Mode mode = 1 [(validate.rules).enum.defined_only = true];
+                uint32 replicas = 2 [(validate.rules).uint32.lte = 32];
+                uint32 sync_replicas = 3 [(validate.rules).uint32.lte = 32];
+            }
+
+            message Access {
+                bool pgbouncer = 1;
+                bool haproxy = 2;
+            }
+        }
+
+        message Mysql {
+            Replication replication = 1;
+            Access access = 2;
+            map<string, string> parameters = 10 [(validate.rules).map.max_pairs = 256];
+
+            message Replication {
+                enum Mode {
+                    MODE_UNSPECIFIED = 0;
+                    MODE_SINGLE = 1;
+                    MODE_ASYNC = 2;
+                    MODE_SEMI_SYNC = 3;
+                    MODE_GROUP_REPLICATION = 4;
+                }
+                Mode mode = 1 [(validate.rules).enum.defined_only = true];
+                uint32 replicas = 2 [(validate.rules).uint32.lte = 32];
+            }
+
+            message Access {
+                bool proxysql = 1;
+            }
+        }
+
+        message Ydb {
+            oneof rollout {
+                option (validate.required) = true;
+                SelfHosted self_hosted = 1;
+                Managed managed = 2;
+            }
+            Access access = 3;
+            string database_path = 4 [(validate.rules).string = {
+                max_len: 255,
+                pattern: "^$|^/[A-Za-z0-9_/-]+$"
+            }];
+            map<string, string> parameters = 10 [(validate.rules).map.max_pairs = 256];
+
+            message SelfHosted {
+                uint32 storage_nodes = 1 [(validate.rules).uint32.lte = 1024];
+                uint32 database_nodes = 2 [(validate.rules).uint32.lte = 1024];
+                uint32 storage_groups = 3 [(validate.rules).uint32.lte = 256];
+                bool auto_size_pdisks = 4;
+                FaultTolerance fault_tolerance = 5 [(validate.rules).enum.defined_only = true];
+                FailureDomain failure_domain = 6 [(validate.rules).enum.defined_only = true];
+
+                enum FaultTolerance {
+                    FAULT_TOLERANCE_UNSPECIFIED = 0;
+                    FAULT_TOLERANCE_NONE = 1;
+                    FAULT_TOLERANCE_BLOCK_4_2 = 2;
+                    FAULT_TOLERANCE_MIRROR_3_DC = 3;
+                }
+                enum FailureDomain {
+                    FAILURE_DOMAIN_UNSPECIFIED = 0;
+                    FAILURE_DOMAIN_DISK = 1;
+                    FAILURE_DOMAIN_BODY = 2;
+                    FAILURE_DOMAIN_RACK = 3;
+                    FAILURE_DOMAIN_DATACENTER = 4;
+                }
+            }
+
+            message Managed {
+                enum Kind {
+                    KIND_UNSPECIFIED = 0;
+                    KIND_SERVERLESS = 1;
+                    KIND_DEDICATED = 2;
+                }
+                enum ComputeType {
+                    COMPUTE_TYPE_UNSPECIFIED = 0;
+                    COMPUTE_TYPE_OLTP = 1;
+                    COMPUTE_TYPE_OLAP = 2;
+                }
+                enum ResourcePresetId {
+                    RESOURCE_PRESET_ID_UNSPECIFIED = 0;
+                    RESOURCE_PRESET_ID_SMALL_M8 = 1;
+                    RESOURCE_PRESET_ID_SMALL = 2;
+                    RESOURCE_PRESET_ID_MEDIUM = 3;
+                    RESOURCE_PRESET_ID_MEDIUM_M64 = 4;
+                    RESOURCE_PRESET_ID_MEDIUM_M96 = 5;
+                    RESOURCE_PRESET_ID_LARGE = 6;
+                    RESOURCE_PRESET_ID_XLARGE = 7;
+                    RESOURCE_PRESET_ID_OLTP_C16_M128 = 8;
+                    RESOURCE_PRESET_ID_OLAP_MEDIUM = 9;
+                    RESOURCE_PRESET_ID_OLAP_LARGE = 10;
+                    RESOURCE_PRESET_ID_MEDIUM_2 = 11;
+                    RESOURCE_PRESET_ID_MEDIUM_3 = 12;
+                    RESOURCE_PRESET_ID_XLARGE_2 = 13;
+                }
+                enum StorageTypeId {
+                    STORAGE_TYPE_ID_UNSPECIFIED = 0;
+                    STORAGE_TYPE_ID_SSD = 1;
+                    STORAGE_TYPE_ID_ROT = 2;
+                    STORAGE_TYPE_ID_LOCAL_SSD = 3;
+                }
+                /** LocationId is provider-side region. */
+                enum LocationId {
+                    LOCATION_ID_UNSPECIFIED = 0;
+                    LOCATION_ID_RU_CENTRAL1 = 1;
+                    LOCATION_ID_KZ1 = 2;
+                }
+                /** CleanupPolicy maps to datatransfer ydb endpoint cleanup_policy. */
+                enum CleanupPolicy {
+                    CLEANUP_POLICY_UNSPECIFIED = 0;
+                    CLEANUP_POLICY_DISABLED = 1;
+                    CLEANUP_POLICY_DROP = 2;
+                }
+                /** DefaultCompression maps to datatransfer ydb default_compression. */
+                enum DefaultCompression {
+                    DEFAULT_COMPRESSION_UNSPECIFIED = 0;
+                    DEFAULT_COMPRESSION_DISABLED = 1;
+                    DEFAULT_COMPRESSION_LZ4 = 2;
+                }
+                /** FamilyCompression maps to yandex_ydb_table.family.compression. */
+                enum FamilyCompression {
+                    FAMILY_COMPRESSION_UNSPECIFIED = 0;
+                    FAMILY_COMPRESSION_OFF = 1;
+                    FAMILY_COMPRESSION_LZ4 = 2;
+                }
+                message AutoScale {
+                    uint32 min_size = 1 [(validate.rules).uint32 = {gte: 1, lte: 64}];
+                    uint32 max_size = 2 [(validate.rules).uint32 = {gte: 1, lte: 64}];
+                    uint32 cpu_utilization_percent = 3 [(validate.rules).uint32 = {gte: 1, lte: 100}];
+                }
+
+                Kind kind = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+                ComputeType compute_type = 2 [(validate.rules).enum.defined_only = true];
+                uint32 node_count = 3 [(validate.rules).uint32 = {gte: 1, lte: 64}];
+                uint32 storage_groups = 4 [(validate.rules).uint32.lte = 256];
+                ResourcePresetId resource_preset_id = 5 [(validate.rules).enum.defined_only = true];
+                StorageTypeId storage_type_id = 6 [(validate.rules).enum.defined_only = true];
+                uint32 throttling_rcus = 7 [(validate.rules).uint32.lte = 10000];
+                AutoScale auto_scale = 8;
+                LocationId location_id = 9 [(validate.rules).enum.defined_only = true];
+                /** deletion_protection forwards to provider TF. */
+                bool deletion_protection = 10;
+                /** assign_public_ips applies to dedicated databases. */
+                bool assign_public_ips = 11;
+                /** provisioned_rcus is provisioned RU/s for serverless. */
+                uint32 provisioned_rcus = 12 [(validate.rules).uint32.lte = 10000];
+                /** storage_size_limit_gb caps serverless storage in GB. */
+                uint32 storage_size_limit_gb = 13;
+            }
+
+            message Access {
+                bool haproxy = 1;
+            }
+        }
+
+        message Cockroach {
+            uint32 nodes = 1 [(validate.rules).uint32 = {gte: 1, lte: 256}];
+            uint32 zone_replicas = 2 [(validate.rules).uint32 = {gte: 1, lte: 7}];
+            map<string, string> parameters = 10 [(validate.rules).map.max_pairs = 256];
+        }
+
+        message Picodata {
+            repeated Tier tiers = 1 [(validate.rules).repeated.max_items = 16];
+            uint32 shards = 2 [(validate.rules).uint32.lte = 100000];
+            Access access = 3;
+            map<string, string> parameters = 10 [(validate.rules).map.max_pairs = 256];
+
+            message Tier {
+                string name = 1 [(validate.rules).string = {min_len: 1, max_len: 63, pattern: "^[a-z][a-z0-9_-]*$"}];
+                uint32 count = 2 [(validate.rules).uint32 = {gte: 1, lte: 1024}];
+                uint32 replication_factor = 3 [(validate.rules).uint32 = {gte: 1, lte: 32}];
+                bool can_vote = 4;
+            }
+
+            message Access {
+                bool haproxy = 1;
+            }
+        }
+
+        oneof options {
+            option (validate.required) = true;
+            Postgres postgres = 1;
+            Mysql mysql = 2;
+            Ydb ydb = 3;
+            Cockroach cockroach = 4;
+            Picodata picodata = 5;
+        }
+    }
+    Options options = 5 [(validate.rules).message.required = true];
+}
+
+message DatabaseOrPreset {
+    oneof kind {
+        option (validate.required) = true;
+        string database_preset_id = 1 [(validate.rules).string = {min_len: 1}];
+        Database database = 2 [(validate.rules).message.required = true];
+    }
+}

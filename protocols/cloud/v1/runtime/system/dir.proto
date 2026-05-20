@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.system;
+
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/system";
+
+/* Dir describes a Linux directory. */
+message Dir {
+    /* info contains path, permissions, owner, and group. */
+    Info info = 1 [(validate.rules).message.required = true];
+    /* create_parents creates missing parent directories. */
+    bool create_parents = 2;
+
+    /* Info describes filesystem metadata for a Linux directory. */
+    message Info {
+        /* path is an absolute or executor-relative directory path. */
+        string path = 1 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+        /* mode contains Unix permission bits, e.g. 0755. Zero means executor default. */
+        uint32 mode = 2 [(validate.rules).uint32.lte = 0xFFF];
+        /* owner is the desired Unix user name. Empty means executor default. */
+        string owner = 3 [(validate.rules).string.max_len = 64];
+        /* group is the desired Unix group name. Empty means executor default. */
+        string group = 4 [(validate.rules).string.max_len = 64];
+    }
+
+    /* Temp describes a temporary directory request. */
+    message Temp {
+        /* base is the parent directory for the temporary directory. Empty means executor default. */
+        string base = 1 [(validate.rules).string.max_len = 4096];
+        /* pattern is the name pattern used by the executor. */
+        string pattern = 2 [(validate.rules).string = {min_len: 1, max_len: 256}];
+        /* mode contains Unix permission bits, e.g. 0700. Zero means executor default. */
+        uint32 mode = 3 [(validate.rules).uint32.lte = 0xFFF];
+        /* owner is the desired Unix user name. Empty means executor default. */
+        string owner = 4 [(validate.rules).string.max_len = 64];
+        /* group is the desired Unix group name. Empty means executor default. */
+        string group = 5 [(validate.rules).string.max_len = 64];
+    }
+}

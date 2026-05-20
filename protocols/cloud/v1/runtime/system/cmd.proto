@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.system;
+
+import "cloud/v1/runtime/system/env.proto";
+import "google/protobuf/duration.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/system";
+
+/*
+    Cmd describes a command execution request and its observable result.
+    It is a reusable system model, not an operation. Runtime ops decide how to
+    execute it, capture output, enforce timeout, and interpret exit codes.
+ */
+message Cmd {
+    /* spec describes the command to execute. */
+    Spec spec = 1 [(validate.rules).message.required = true];
+    /* result contains observed execution output after the command finishes. */
+    optional Result result = 2;
+
+    /* Spec describes how a process should be executed. */
+    message Spec {
+        oneof command {
+            option (validate.required) = true;
+            /* argv executes a command directly without shell parsing. */
+            Argv argv = 1 [(validate.rules).message.required = true];
+            /* script executes text through a shell. */
+            Script script = 2 [(validate.rules).message.required = true];
+        }
+
+        /* cwd is the working directory for the command. Empty means executor default. */
+        string cwd = 3 [(validate.rules).string.max_len = 4096];
+        /* env contains environment variables added or overridden for the command. */
+        Env env = 4;
+        /* stdin contains bytes written to process stdin. */
+        bytes stdin = 5 [(validate.rules).bytes.max_len = 1048576];
+        /* timeout limits command runtime. Zero means executor default. */
+        google.protobuf.Duration timeout = 6 [(validate.rules).duration = {
+            gte: {seconds: 0},
+            lte: {seconds: 86400}
+        }];
+        /* expected_exit_codes lists successful exit codes. Empty means executor default. */
+        repeated int32 expected_exit_codes = 7 [(validate.rules).repeated.max_items = 16];
+        /* streams controls stdout and stderr handling. */
+        Streams streams = 8;
+    }
+
+    /* Argv describes direct exec-style command arguments. */
+    message Argv {
+        /* args contains executable path and arguments. */
+        repeated string args = 1 [(validate.rules).repeated = {min_items: 1, max_items: 512}];
+    }
+
+    /* Script describes shell-style command execution. */
+    message Script {
+        /* text contains shell script content. */
+        string text = 1 [(validate.rules).string = {min_len: 1, max_bytes: 1048576}];
+        /* shell contains shell executable path. Empty means executor default. */
+        string shell = 2 [(validate.rules).string.max_len = 256];
+    }
+
+    /* Streams describes stdout/stderr handling requested by the caller. */
+    message Streams {
+        /* Mode selects how one process stream is handled. */
+        enum Mode {
+            /* UNSPECIFIED means executor default. */
+            MODE_UNSPECIFIED = 0;
+            /* INHERIT attaches the stream to executor output. */
+            MODE_INHERIT = 1;
+            /* CAPTURE stores the stream in Cmd.Result. */
+            MODE_CAPTURE = 2;
+            /* DISCARD drops the stream. */
+            MODE_DISCARD = 3;
+            /* STDERR_TO_STDOUT redirects stderr into stdout. */
+            MODE_STDERR_TO_STDOUT = 4;
+        }
+
+        /* stdout controls standard output handling. */
+        Mode stdout = 1 [(validate.rules).enum.defined_only = true];
+        /* stderr controls standard error handling. */
+        Mode stderr = 2 [(validate.rules).enum.defined_only = true];
+    }
+
+    /* Result describes process output observed after execution. */
+    message Result {
+        /* exit_code is the process exit code. */
+        int32 exit_code = 1;
+        /* stdout contains captured standard output. */
+        bytes stdout = 2 [(validate.rules).bytes.max_len = 1048576];
+        /* stderr contains captured standard error. */
+        bytes stderr = 3 [(validate.rules).bytes.max_len = 1048576];
+        /* timed_out is true when the executor terminated the command by timeout. */
+        bool timed_out = 4;
+        /* elapsed is observed wall-clock runtime. */
+        google.protobuf.Duration elapsed = 5 [(validate.rules).duration = {gte: {seconds: 0}}];
+    }
+}

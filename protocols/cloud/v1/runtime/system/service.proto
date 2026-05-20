@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.system;
+
+import "cloud/v1/runtime/system/file.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/system";
+
+/*
+    Service describes a Linux service definition as a rendered system resource.
+    It is intentionally not an operation: applying the files, running
+    daemon-reload, enabling, starting, stopping, or restarting the service should
+    be decomposed into runtime ops.
+ */
+message Service {
+    oneof manager {
+        option (validate.required) = true;
+        /* systemd describes a systemd-managed service. */
+        Systemd systemd = 1 [(validate.rules).message.required = true];
+    }
+
+    /* Systemd describes a systemd unit and its desired persistent state. */
+    message Systemd {
+
+        /* UnitType identifies the systemd unit suffix. */
+        enum UnitType {
+            /* UNSPECIFIED is invalid. */
+            UNIT_TYPE_UNSPECIFIED = 0;
+            /* SERVICE is a .service unit. */
+            UNIT_TYPE_SERVICE = 1;
+            /* SOCKET is a .socket unit. */
+            UNIT_TYPE_SOCKET = 2;
+            /* TIMER is a .timer unit. */
+            UNIT_TYPE_TIMER = 3;
+            /* TARGET is a .target unit. */
+            UNIT_TYPE_TARGET = 4;
+            /* PATH is a .path unit. */
+            UNIT_TYPE_PATH = 5;
+            /* MOUNT is a .mount unit. */
+            UNIT_TYPE_MOUNT = 6;
+        }
+        /* unit is the unit name including suffix, e.g. "postgresql.service". */
+        string unit = 1 [(validate.rules).string = {min_len: 1, max_len: 256}];
+
+        /* type identifies the systemd unit suffix. */
+        UnitType type = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        /*
+            unit_file is the full unit file, usually under /etc/systemd/system.
+            The file content is already rendered and can be previewed or overridden before apply.
+         */
+        File unit_file = 3 [(validate.rules).message.required = true];
+        /*
+            drop_in_files contains files usually placed under
+            /etc/systemd/system/<unit>.d/*.conf.
+         */
+        repeated File drop_in_files = 4 [(validate.rules).repeated.max_items = 128];
+
+        /* DesiredState is persistent enablement state requested after apply. */
+        enum DesiredState {
+            /* UNSPECIFIED means no persistent state requested. */
+            DESIRED_STATE_UNSPECIFIED = 0;
+            /* DISABLED requests disabled unit state. */
+            DESIRED_STATE_DISABLED = 1;
+            /* ENABLED requests enabled unit state. */
+            DESIRED_STATE_ENABLED = 2;
+            /* MASKED requests masked unit state. */
+            DESIRED_STATE_MASKED = 3;
+        }
+        /* desired_state is persistent enablement state requested after files are applied. */
+        DesiredState desired_state = 5 [(validate.rules).enum.defined_only = true];
+
+        /* start requests starting the unit after apply. */
+        bool start = 6;
+        /* daemon_reload requests systemd daemon-reload after writing unit files. */
+        bool daemon_reload = 7;
+    }
+}

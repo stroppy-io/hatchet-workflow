@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package cloud.v1.deployment;
+
+import "cloud/v1/common/tags.proto";
+import "cloud/v1/deployment/docker.proto";
+import "cloud/v1/deployment/yandex.proto";
+import "cloud/v1/runtime/system/ip.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment";
+
+enum Provider {
+    PROVIDER_UNSPECIFIED = 0;
+    PROVIDER_DOCKER = 1;
+    PROVIDER_YANDEX = 2;
+}
+
+message Machine {
+    /* cores is VM vCPU count. */
+    uint32 cores = 1 [(validate.rules).uint32.gt = 0];
+    /* memory_gb is VM RAM in GiB. */
+    uint64 memory_gb = 2 [(validate.rules).uint64.gt = 0];
+}
+
+/*
+    REQUIRED VALIDATE TO ALL SPEC FROM OneOff is one Provider Kind
+*/
+message DeploymentIntent {
+    message Spec {
+        string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+        oneof spec {
+            option (validate.required) = true;
+            deployment.Yandex.Vm yandex_vm = 10 [(validate.rules).message.required = true];
+            deployment.Yandex.ManagedYdb managed_ydb = 11 [(validate.rules).message.required = true];
+            deployment.Docker.Container docker_container= 12 [(validate.rules).message.required = true];
+        }
+    }
+    repeated Spec specs = 1 [(validate.rules).repeated = {min_items: 1, max_items: 128}];
+    common.Tags tags = 3;
+}
+
+/* Deployment is the runtime+output bundle produced after apply. */
+message Deployment {
+    Provider provider = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    runtime.system.Network network = 2;
+    oneof deployment {
+        option (validate.required) = true;
+        deployment.Docker docker = 10;
+        deployment.Yandex yandex = 11;
+    }
+}

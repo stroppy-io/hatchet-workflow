@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.ops;
+
+import "cloud/v1/runtime/system/cmd.proto";
+import "cloud/v1/runtime/system/dir.proto";
+import "cloud/v1/runtime/system/file.proto";
+import "cloud/v1/runtime/system/os.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/ops";
+
+/*
+    Operation is one indivisible runtime action executed by the agent.
+    Runtime operations intentionally have a small surface: put file content on a
+    machine, create directories, and run commands. Complex scenarios such as
+    package installation, systemctl, cleanup, chmod/chown of existing paths, or
+    daemon lifecycle are represented as a sequence/DAG of these primitives.
+ */
+message Operation {
+    /* id identifies this operation inside a sequence, DAG, or execution log. */
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+
+    /* Kind mirrors the selected operation/result branch for cheap validation. */
+    enum Kind {
+        /* UNSPECIFIED is invalid. */
+        KIND_UNSPECIFIED = 0;
+        /* WRITE_FILE writes or replaces file content. */
+        KIND_WRITE_FILE = 1;
+        /* APPEND_FILE appends content to an existing or newly created file. */
+        KIND_APPEND_FILE = 2;
+        /* MAKE_DIR creates a directory. */
+        KIND_MAKE_DIR = 3;
+        /* MAKE_TEMP_DIR allocates a temporary directory. */
+        KIND_MAKE_TEMP_DIR = 4;
+        /* READ_OS_INFO collects structured host facts. */
+        KIND_READ_OS_INFO = 5;
+        /* RUN_CMD executes a command. */
+        KIND_RUN_CMD = 6;
+    }
+    /* kind declares which operation/result branch is expected. */
+    Kind kind = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+
+    /* ReadOsInfo asks the agent to collect observable host facts. */
+    message ReadOsInfo {}
+    oneof operation {
+        option (validate.required) = true;
+        /* write_file writes or replaces file content. */
+        system.File write_file = 10;
+        /* append_file appends file content. */
+        system.File append_file = 11;
+        /* make_dir creates a directory. */
+        system.Dir make_dir = 12;
+        /* make_temp_dir creates a temporary directory and returns its path. */
+        system.Dir.Temp make_temp_dir = 13;
+        /* read_os_info collects structured host facts. */
+        ReadOsInfo read_os_info = 30;
+        /* run_cmd executes a command. */
+        system.Cmd.Spec run_cmd = 40;
+    }
+
+    /* Ack is a typed successful result for operations without payload. */
+    message Ack {}
+    /* Result describes what the agent observed after executing an operation. */
+    message Result {
+        oneof result {
+            option (validate.required) = true;
+            /* write_file acknowledges successful file write. */
+            Ack write_file = 10;
+            /* append_file acknowledges successful file append. */
+            Ack append_file = 11;
+            /* make_dir acknowledges successful directory creation. */
+            Ack make_dir = 12;
+            /* make_temp_dir contains the allocated temporary directory. */
+            system.Dir make_temp_dir = 13;
+            /* read_os_info contains collected host facts. */
+            system.OsInfo read_os_info = 30;
+            /* run_cmd contains command execution output. */
+            system.Cmd.Result run_cmd = 40;
+        }
+    }
+    /* result is filled by the executor after this operation finishes. */
+    optional Result result = 3;
+}

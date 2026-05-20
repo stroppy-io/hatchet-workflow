@@ -174,12 +174,42 @@ clean: ## Clean build artifacts
 	docker network rm stroppy-run-net 2>/dev/null || true
 
 
+# ============================================================
+# Protocols (proto → Go + TS codegen via easyp)
+# ============================================================
+PROTO_GO_OUT  := internal/proto
+PROTO_TS_OUT  := web/src/lib/proto
+APP_MIGRATIONS := internal/infrastructure/postgres/migrations
+GO_MODULE := $(shell head -1 go.mod | awk '{print $$2}')
+# Package order matters for ratel: FK targets must precede dependents.
+# iam (users/tenants) is referenced by everything else, so it goes first.
+# system (dags/dag_runs) is referenced by testing, so it precedes testing.
+APP_PROTO_PKGS := $(shell \
+  pkgs=$$(grep -rl '(ratel\.table)' protocols/cloud --include='*.proto' 2>/dev/null \
+    | xargs -I{} dirname {} | sort -u \
+    | sed 's|^protocols/|internal/proto/|' \
+    | sed 's|^|$(GO_MODULE)/|'); \
+  order="iam common catalog ops system agent testing"; \
+  out=""; \
+  for o in $$order; do for p in $$pkgs; do echo "$$p" | grep -q "/$$o\$$" && out="$$out$$p,"; done; done; \
+  for p in $$pkgs; do echo "$$out" | grep -q "$$p," || out="$$out$$p,"; done; \
+  echo "$$out" | sed 's/,$$//')
+
 .PHONY: protocols
 protocols: # Generate Go + TS code from proto
+	cd protocols && easyp -cfg easyp.go.yaml mod update && easyp -cfg easyp.go.yaml mod vendor
 	rm -rf $(CURDIR)/internal/proto
 	cd protocols && easyp -cfg easyp.go.yaml generate
 	rm -rf $(CURDIR)/web/src/lib/proto
 	cd protocols && easyp -cfg easyp.ts.yaml generate
+
+
+migrate-gen: ## Generate new migration from proto diff (ratel)
+	ratel diff -p $(APP_PROTO_PKGS) --discover --engine ratel -d $(APP_MIGRATIONS)
+
+migrate-clear: ## Delete all migrations and regenerate (pre-v1 only)
+	rm -f $(APP_MIGRATIONS)/*.sql $(APP_MIGRATIONS)/atlas.sum
+	ratel diff -p $(APP_PROTO_PKGS) --discover --engine ratel -d $(APP_MIGRATIONS)
 
 
 # ============================================================

@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/models/common.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+/* Root tenant entity representing an isolated workspace. */
+message Tenant {
+    /* Container for paginated tenant results. */
+    message List {repeated Tenant tenants = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "tenants"
+    };
+    models.Entity entity = 1 [(goplain.field).embed = true];
+    models.AccountId owner_account_id = 2 [(ratel.column).constraints = {
+        references_table: "accounts"
+        references_column: "id"
+        on_delete: CASCADE
+    }];
+
+    repeated TenantMember members = 3 [(ratel.relation) = {
+        one_to_many: {
+            ref_name: "tenant_id"
+            on_delete_cascade: true
+            existed_field: true
+        }
+    }];
+}
+
+/* Root tenant entity representing an isolated workspace. */
+message TenantMember {
+    message List {repeated TenantMember tenant_members = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "tenants"
+    };
+    models.Entity entity = 1 [(goplain.field).embed = true];
+    models.TenantId tenant_id = 2 [(ratel.column).constraints = {
+        references_table: "tenants"
+        references_column: "id"
+        on_delete: CASCADE
+    }];
+    models.AccountId account_id = 3 [(ratel.column).constraints = {
+        references_table: "accounts"
+        references_column: "id"
+        on_delete: CASCADE
+    }];
+    enum Role {
+        ROLE_UNSPECIFIED = 0;
+        ROLE_VIEWER = 1;
+        ROLE_ADMIN = 2;
+        ROLE_OWNER = 3;
+    }
+    Role role = 4 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+}

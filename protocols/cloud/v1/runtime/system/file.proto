@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.system;
+
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/system";
+
+/*
+    File is a Linux file description that can be rendered, previewed, stored, or
+    later applied by runtime ops. It intentionally contains only file data and
+    filesystem metadata, without domain concepts such as database role, target,
+    preview state, or override state.
+ */
+message File {
+    /* info contains path, permissions, owner, and group. */
+    Info info = 1 [(validate.rules).message.required = true];
+    oneof source {
+        option (validate.required) = true;
+        /* content contains inline file content. */
+        Content content = 2 [(validate.rules).message.required = true];
+        /* ref points to content stored outside this message. */
+        Ref ref = 3 [(validate.rules).message.required = true];
+    }
+
+    /* Info describes filesystem metadata for a Linux file. */
+    message Info {
+        /* path is an absolute or executor-relative file path. */
+        string path = 1 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+        /* mode contains Unix permission bits, e.g. 0644. Zero means executor default. */
+        uint32 mode = 3 [(validate.rules).uint32.lte = 0xFFF];
+        /* owner is the desired Unix user name. Empty means executor default. */
+        string owner = 4 [(validate.rules).string.max_len = 64];
+        /* group is the desired Unix group name. Empty means executor default. */
+        string group = 5 [(validate.rules).string.max_len = 64];
+    }
+
+    /* Content is inline file payload. */
+    message Content {
+        oneof content {
+            option (validate.required) = true;
+            /* text contains UTF-8 or text-like file content. */
+            string text = 1 [(validate.rules).string.max_bytes = 104857600];
+            /* bytes contains binary file content. */
+            bytes bytes = 2 [(validate.rules).bytes.max_len = 104857600];
+        }
+    }
+
+    /*
+        Ref identifies file content stored outside the current message. The
+        resolver can map refs to object storage, artifact storage, uploaded
+        files, or generated outputs without changing the file metadata model.
+     */
+    message Ref {
+        /* uri identifies external file content. */
+        string uri = 1 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+        /* checksum optionally verifies external file content. */
+        string checksum = 2 [(validate.rules).string.max_len = 256];
+        /* size_bytes optionally records expected content size. */
+        uint64 size_bytes = 3;
+    }
+}

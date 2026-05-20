@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/domain/workload.proto";
+import "cloud/v1/models/common.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+message WorkloadPreset {
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "workload_presets"
+    };
+    models.Entity entity = 1 [(goplain.field).embed = true];
+    models.AccountId owner_account_id = 2 [(ratel.column).constraints = {
+        references_table: "accounts"
+        references_column: "id"
+        on_delete: CASCADE
+    }];
+    domain.Workload workload = 3 [
+        (goplain.field).embed = true,
+        (validate.rules).message.required = true
+    ];
+}

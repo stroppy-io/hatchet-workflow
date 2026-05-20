@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.render;
+
+import "cloud/v1/runtime/system/cmd.proto";
+import "cloud/v1/runtime/system/env.proto";
+import "cloud/v1/runtime/system/file.proto";
+import "cloud/v1/runtime/system/service.proto";
+import "validate/validate.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/render";
+
+message CfgValue {
+    system.File file = 10;
+    system.Service service = 12;
+    google.protobuf.Struct struct = 14;
+}
+
+
+/*
+    Config is a rendered preview surface shown to a user before runtime planning.
+    It contains generated artifacts and user overrides, but it is not an
+    execution plan. A planner later converts accepted rendered items into
+    runtime.ops and DAG nodes.
+ */
+message Config {
+    /* id identifies this render result. */
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /* items contains rendered artifacts available for preview and override. */
+    repeated Item items = 2 [(validate.rules).repeated.max_items = 1024];
+    /* overrides contains user changes applied on top of generated defaults. */
+    repeated Override overrides = 3 [(validate.rules).repeated.max_items = 256];
+
+    /* Item is one rendered artifact visible to the user. */
+    message Item {
+        /* id is stable across re-renders and is used by overrides. */
+        string id = 1 [(validate.rules).string = {min_len: 1, max_len: 256}];
+        /* overridden is true when the item includes a user override. */
+        bool overridden = 5;
+
+        oneof rendered {
+            option (validate.required) = true;
+            /* file contains rendered file content and metadata. */
+            system.File file = 10;
+            /* environment contains rendered environment variables. */
+            system.Env environment = 11;
+            /* service contains rendered service definition. */
+            system.Service service = 12;
+            /* command contains rendered command specification. */
+            system.Cmd.Spec command = 13;
+            /* struct contains rendered struct content. (now used only for ydb managed tf config) */
+            google.protobuf.Struct struct = 14;
+        }
+    }
+
+    /* Override is a user change applied to one rendered item. */
+    message Override {
+        /* item_id references Config.Item.id. */
+        string item_id = 1 [(validate.rules).string = {min_len: 1, max_len: 256}];
+
+        oneof override {
+            option (validate.required) = true;
+            /* file replaces a rendered file item. */
+            system.File file = 10;
+            /* environment replaces a rendered environment item. */
+            system.Env environment = 11;
+            /* service replaces a rendered service item. */
+            system.Service service = 12;
+            /* command replaces a rendered command item. */
+            system.Cmd.Spec command = 13;
+            /* text_patch replaces text content for text-like rendered items. */
+            TextPatch text_patch = 20;
+            /* key_value_patch updates map-like rendered items. */
+            KeyValuePatch key_value_patch = 21;
+        }
+
+        /* TextPatch replaces text content for a rendered item. */
+        message TextPatch {
+            /* content contains replacement text. */
+            string content = 1 [(validate.rules).string.max_bytes = 1048576];
+        }
+
+        /* KeyValuePatch updates key-value rendered content. */
+        message KeyValuePatch {
+            /* set contains keys to create or replace. */
+            map<string, string> set = 1 [(validate.rules).map.max_pairs = 256];
+            /* remove contains keys to remove. */
+            repeated string remove = 2 [(validate.rules).repeated.max_items = 256];
+        }
+    }
+}

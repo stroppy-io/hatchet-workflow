@@ -1,0 +1,176 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.system;
+
+import "google/protobuf/duration.proto";
+import "validate/validate.proto";
+import "cloud/v1/runtime/system/ip.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/system";
+
+/*
+    OsInfo describes observable Linux host facts collected by the agent.
+    It is a data snapshot, not an operation. Runtime ops may populate this model
+    from /etc/os-release, uname, /proc, sysfs, lsblk, mountinfo, iproute2, or
+    equivalent platform APIs.
+ */
+message OsInfo {
+    /* host contains identity and environment facts. */
+    Host host = 1;
+    /* release contains Linux distribution metadata. */
+    Release release = 2;
+    /* kernel contains uname-style kernel facts. */
+    Kernel kernel = 3;
+    /* cpu contains processor topology and capabilities. */
+    Cpu cpu = 4;
+    /* memory contains RAM and swap facts. */
+    Memory memory = 5;
+    /* filesystems contains mounted filesystem facts. */
+    repeated Filesystem filesystems = 6 [(validate.rules).repeated.max_items = 1024];
+    /* block_devices contains block device facts. */
+    repeated BlockDevice block_devices = 7 [(validate.rules).repeated.max_items = 1024];
+    /* network_interfaces contains network interface facts. */
+    repeated NetworkInterface network_interfaces = 8 [(validate.rules).repeated.max_items = 1024];
+    /* uptime is host uptime observed by the agent. */
+    google.protobuf.Duration uptime = 9 [(validate.rules).duration = {gte: {seconds: 0}}];
+
+    /* Host contains identity and environment facts for the current machine. */
+    message Host {
+        /* hostname is the short host name. */
+        string hostname = 1 [(validate.rules).string.max_len = 255];
+        /* fqdn is the fully qualified domain name. */
+        string fqdn = 2 [(validate.rules).string.max_len = 255];
+        /* machine_id is the stable machine identifier when available. */
+        string machine_id = 3 [(validate.rules).string.max_len = 128];
+        /* boot_id identifies the current boot. */
+        string boot_id = 4 [(validate.rules).string.max_len = 128];
+        /* timezone is the configured local timezone. */
+        string timezone = 5 [(validate.rules).string.max_len = 128];
+        /* virtualization describes detected virtualization technology. */
+        string virtualization = 6 [(validate.rules).string.max_len = 128];
+        /* containerized is true when the agent appears to run in a container. */
+        bool containerized = 7;
+    }
+
+    /* Release mirrors normalized /etc/os-release distribution metadata. */
+    message Release {
+        /* id is distribution id, e.g. ubuntu or debian. */
+        string id = 1 [(validate.rules).string.max_len = 64];
+        /* id_like contains related distribution ids. */
+        string id_like = 2 [(validate.rules).string.max_len = 256];
+        /* name is distribution display name. */
+        string name = 3 [(validate.rules).string.max_len = 256];
+        /* pretty_name is full distribution display name. */
+        string pretty_name = 4 [(validate.rules).string.max_len = 256];
+        /* version is distribution version text. */
+        string version = 5 [(validate.rules).string.max_len = 256];
+        /* version_id is normalized distribution version. */
+        string version_id = 6 [(validate.rules).string.max_len = 64];
+        /* codename is distribution codename when available. */
+        string codename = 7 [(validate.rules).string.max_len = 64];
+    }
+
+    /* Kernel contains uname-style kernel facts. */
+    message Kernel {
+        /* name is kernel name, usually Linux. */
+        string name = 1 [(validate.rules).string.max_len = 64];
+        /* release is kernel release. */
+        string release = 2 [(validate.rules).string.max_len = 256];
+        /* version is kernel build version. */
+        string version = 3 [(validate.rules).string.max_len = 512];
+        /* architecture is machine architecture reported by the kernel. */
+        string architecture = 4 [(validate.rules).string.max_len = 64];
+    }
+
+    /* Cpu describes processor topology and capabilities. */
+    message Cpu {
+        /* architecture is CPU architecture. */
+        string architecture = 1 [(validate.rules).string.max_len = 64];
+        /* vendor is CPU vendor. */
+        string vendor = 2 [(validate.rules).string.max_len = 128];
+        /* model_name is CPU model name. */
+        string model_name = 3 [(validate.rules).string.max_len = 256];
+        /* sockets is physical CPU socket count. */
+        uint32 sockets = 4;
+        /* cores is physical core count. */
+        uint32 cores = 5;
+        /* threads is hardware thread count. */
+        uint32 threads = 6;
+        /* logical_cpus is the number of online logical CPUs. */
+        uint32 logical_cpus = 7;
+        /* flags contains CPU feature flags. */
+        repeated string flags = 8 [(validate.rules).repeated.max_items = 1024];
+    }
+
+    /* Memory describes RAM and swap totals visible to the agent. */
+    message Memory {
+        /* total_bytes is total physical memory. */
+        uint64 total_bytes = 1;
+        /* available_bytes is memory available for new workloads. */
+        uint64 available_bytes = 2;
+        /* free_bytes is currently free memory. */
+        uint64 free_bytes = 3;
+        /* swap_total_bytes is total swap size. */
+        uint64 swap_total_bytes = 4;
+        /* swap_free_bytes is free swap size. */
+        uint64 swap_free_bytes = 5;
+    }
+
+    /* Filesystem describes a mounted filesystem. */
+    message Filesystem {
+        /* source is the mount source. */
+        string source = 1 [(validate.rules).string.max_len = 4096];
+        /* target is the mount point. */
+        string target = 2 [(validate.rules).string.max_len = 4096];
+        /* type is filesystem type. */
+        string type = 3 [(validate.rules).string.max_len = 128];
+        /* total_bytes is filesystem size. */
+        uint64 total_bytes = 4;
+        /* available_bytes is available space for unprivileged writes. */
+        uint64 available_bytes = 5;
+        /* used_bytes is used filesystem space. */
+        uint64 used_bytes = 6;
+        /* read_only is true for read-only mounts. */
+        bool read_only = 7;
+    }
+
+    /* BlockDevice describes a block device as reported by the host. */
+    message BlockDevice {
+        /* name is block device name. */
+        string name = 1 [(validate.rules).string.max_len = 256];
+        /* path is block device path. */
+        string path = 2 [(validate.rules).string.max_len = 4096];
+        /* type is block device type. */
+        string type = 3 [(validate.rules).string.max_len = 64];
+        /* model is block device model. */
+        string model = 4 [(validate.rules).string.max_len = 256];
+        /* serial is block device serial number. */
+        string serial = 5 [(validate.rules).string.max_len = 256];
+        /* size_bytes is block device size. */
+        uint64 size_bytes = 6;
+        /* rotational is true for rotational media. */
+        bool rotational = 7;
+        /* mountpoints lists visible mount points for this device. */
+        repeated string mountpoints = 8 [(validate.rules).repeated.max_items = 128];
+    }
+
+    /* NetworkInterface describes a network interface and assigned addresses. */
+    message NetworkInterface {
+        /* name is interface name. */
+        string name = 1 [(validate.rules).string = {min_len: 1, max_len: 256}];
+        /* index is kernel interface index. */
+        uint32 index = 2;
+        /* mac_address is link-layer MAC address. */
+        string mac_address = 3 [(validate.rules).string.max_len = 64];
+        /* mtu is interface MTU. */
+        uint32 mtu = 4;
+        /* up is true when the interface is administratively up. */
+        bool up = 5;
+        /* loopback is true for loopback interfaces. */
+        bool loopback = 6;
+        /* speed_mbps is reported link speed. */
+        uint64 speed_mbps = 7;
+        /* addresses contains assigned IP addresses. */
+        repeated system.IpAddress addresses = 8 [(validate.rules).repeated.max_items = 128];
+    }
+}

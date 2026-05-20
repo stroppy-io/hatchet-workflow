@@ -22,7 +22,7 @@ require (
 	github.com/samber/lo v1.52.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
-	github.com/stroppy-io/stroppy v1.2.0-dev9.0.20260408121705-83c882f8d7f3
+	github.com/stroppy-io/stroppy v1.2.0-dev9.0.20260506135830-4d20e0b232d9
 	github.com/valkey-io/valkey-go v1.0.71
 	github.com/valkey-io/valkey-go/valkeyotel v1.0.71
 	go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws v0.65.0
@@ -97,6 +97,8 @@ require (
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
+	github.com/yaroher/protoc-gen-go-plain v0.7.26 // indirect
+	github.com/yaroher/ratel v0.4.25 // indirect
 	github.com/zclconf/go-cty v1.17.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0 // indirect

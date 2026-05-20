@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.primitive;
+
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive";
+
+enum Status {
+    /* UNSPECIFIED is invalid. */
+    STATUS_UNSPECIFIED = 0;
+    /*
+        Statuses for DAG.Node
+    */
+    /* PENDING means the node is waiting for dependencies or admission. */
+    STATUS_PENDING = 1;
+    /* RUNNING means execution is in progress. */
+    STATUS_RUNNING = 2;
+    /* RETRY_WAIT means the node failed and waits until retry.next_run_at. */
+    STATUS_RETRY_WAIT = 5;
+    /* COMPLETED means execution finished successfully. */
+    STATUS_COMPLETED = 3;
+    /* FAILED means execution finished unsuccessfully. */
+    STATUS_FAILED = 4;
+    /* SKIPPED means the node was intentionally not executed. */
+    STATUS_SKIPPED = 6;
+    /*
+        Statuses for DAG
+    */
+    /* CANCELLING means cancellation has been requested. */
+    STATUS_CANCELLING = 7;
+    /* CANCELLED means cancellation completed. */
+    STATUS_CANCELLED = 8;
+}

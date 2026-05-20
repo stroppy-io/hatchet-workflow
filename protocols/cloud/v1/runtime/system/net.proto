@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.system;
+
+import "google/protobuf/duration.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/system";
+
+message Net {
+    /* Protocol is the wire format on an edge. */
+    enum Protocol {
+        PROTOCOL_UNSPECIFIED = 0;
+        /* TCP is plain TCP/IP traffic. */
+        PROTOCOL_TCP = 1;
+        /* GRPC is gRPC. */
+        PROTOCOL_GRPC = 2;
+        /* HTTP is HTTP/HTTPS. */
+        PROTOCOL_HTTP = 3;
+        /* REPLICATION is a DB-engine replication stream. */
+        PROTOCOL_REPLICATION = 4;
+        /* POOL is a pooled connection (pgbouncer, proxysql). */
+        PROTOCOL_POOL = 5;
+        /* CONTROL is a control-plane protocol (DCS, raft). */
+        PROTOCOL_CONTROL = 6;
+        /* OTLP is a metrics/logs/traces scrape. */
+        PROTOCOL_OTLP = 7;
+        /* PROTOCOL_PROMETHEUS_REMOTE_WRITE a metrics*/
+        PROTOCOL_PROMETHEUS_REMOTE_WRITE = 8;
+        /*PROTOCOL_PROMETHEUS_REMOTE_WRITE pull metric */
+        PROTOCOL_PROMETHEUS_PULL = 9;
+    }
+    /* Mode is the traffic character on an edge. */
+    enum Mode {
+        MODE_UNSPECIFIED = 0;
+        /* REQUEST is request/response. */
+        MODE_REQUEST = 1;
+        /* STREAM is a continuous one-way data stream. */
+        MODE_STREAM = 2;
+        /* SYNC is bidirectional state synchronization. */
+        MODE_SYNC = 3;
+        /* HEARTBEAT is periodic liveness/keepalive. */
+        MODE_HEARTBEAT = 4;
+        /* BROADCAST is one-to-many fanout. */
+        MODE_BROADCAST = 5;
+    }
+}
+
+
+

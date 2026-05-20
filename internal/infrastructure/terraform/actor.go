@@ -179,7 +179,15 @@ func (w *WorkdirWithParams) CreateDir() error {
 
 func (w *WorkdirWithParams) WriteFiles() error {
 	for _, file := range w.tfFiles {
-		err := os.WriteFile(path.Join(string(w.workdirPath), file.Name()), file.Content(), os.ModePerm)
+		dst := path.Join(string(w.workdirPath), file.Name())
+		// File name may contain subpath (e.g. "modules/network/main.tf") when
+		// the embed bundles child modules — ensure the parent dir exists.
+		if dir := path.Dir(dst); dir != string(w.workdirPath) {
+			if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+				return fmt.Errorf("error creating tf file dir: %s", err)
+			}
+		}
+		err := os.WriteFile(dst, file.Content(), os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("error writing tf file: %s", err)
 		}

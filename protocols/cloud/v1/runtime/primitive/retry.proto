@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.primitive;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive";
+
+/*
+    Retry mirrors the serializable surface of avast/retry-go.
+    Non-serializable options such as OnRetry, RetryIf, Context, and
+    WrapContextErrorWithLastError stay code-side.
+ */
+message Retry {
+    /* DelayType selects how retry delay is calculated. */
+    enum DelayType {
+        /* UNSPECIFIED is invalid. */
+        DELAY_TYPE_UNSPECIFIED = 0;
+        /* FIXED uses retry.FixedDelay. */
+        DELAY_TYPE_FIXED = 1;
+        /* BACKOFF uses retry.BackOffDelay. */
+        DELAY_TYPE_BACKOFF = 2;
+        /* RANDOM uses retry.RandomDelay. */
+        DELAY_TYPE_RANDOM = 3;
+        /* BACKOFF_JITTER combines exponential backoff with jitter. */
+        DELAY_TYPE_BACKOFF_JITTER = 4;
+    }
+
+    /* Policy describes retry behavior. */
+    message Policy {
+        /* attempts is max attempts including the first. 0 with until_succeeded means infinite. */
+        uint32 attempts = 1 [(validate.rules).uint32.lte = 1000];
+        /* delay is the base retry delay. */
+        google.protobuf.Duration delay = 2 [(validate.rules).duration = {
+            gte: {seconds: 0},
+            lte: {seconds: 3600}
+        }];
+        /* max_delay caps calculated delay. */
+        google.protobuf.Duration max_delay = 3 [(validate.rules).duration = {
+            gte: {seconds: 0},
+            lte: {seconds: 86400}
+        }];
+        /* max_jitter caps random jitter. */
+        google.protobuf.Duration max_jitter = 4 [(validate.rules).duration = {
+            gte: {seconds: 0},
+            lte: {seconds: 3600}
+        }];
+        /* delay_type selects delay calculation strategy. */
+        DelayType delay_type = 5 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        /* last_error_only stores only the last error after retries. */
+        bool last_error_only = 6;
+        /* until_succeeded retries until success, ignoring attempts when attempts is zero. */
+        bool until_succeeded = 7;
+    }
+
+    /* State stores current retry progress. */
+    message State {
+        /* attempt is the current attempt number. */
+        uint32 attempt = 1 [(validate.rules).uint32.lte = 1000];
+        /* next_run_at is the next scheduled attempt time. */
+        google.protobuf.Timestamp next_run_at = 2 [(validate.rules).timestamp.required = true];
+        /* current_delay is the delay selected for the next attempt. */
+        google.protobuf.Duration current_delay = 3 [(validate.rules).duration = {
+            gte: {seconds: 0},
+            lte: {seconds: 86400}
+        }];
+        /* last_error contains the last observed retry error. */
+        string last_error = 4 [(validate.rules).string.max_len = 8192];
+        /* first_attempt_at is timestamp of the first attempt. */
+        google.protobuf.Timestamp first_attempt_at = 5;
+        /* last_attempt_at is timestamp of the most recent attempt. */
+        google.protobuf.Timestamp last_attempt_at = 6;
+    }
+
+    /* policy describes retry behavior. */
+    Policy policy = 1 [(validate.rules).message.required = true];
+    /* state stores current retry progress. */
+    State state = 2 [(validate.rules).message.required = true];
+}

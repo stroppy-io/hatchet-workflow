@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.primitive;
+
+import "cloud/v1/runtime/primitive/retry.proto";
+import "cloud/v1/runtime/primitive/status.proto";
+import "google/protobuf/any.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive";
+
+
+/*
+    Dag is a stateful execution snapshot for a directed acyclic graph.
+
+    The scheduler loads and saves the whole Dag aggregate as one unit. A
+    top-level Dag is persisted in the dags table; a sub-Dag is embedded in its
+    owning node and is not persisted as a separate database row.
+
+    Execution model:
+    - a node becomes ready when its incoming edges are satisfied according to
+      the node join policy;
+    - an edge without a condition is satisfied when the source node reaches
+      STATUS_COMPLETED;
+    - an edge with on_status is satisfied when the source node reaches that
+      terminal status;
+    - an edge with predicate_name is satisfied when the registered predicate
+      returns true after the source node reaches a terminal status;
+    - ready nodes are admitted by Dag.Scheduling.max_parallelism and then by
+      node priority;
+    - a task node executes its TaskState payload;
+    - a sub-Dag node executes the nested Dag and mirrors its terminal result
+      into the owning node status;
+    - Dag.Scheduling.on_node_failure controls whether ordinary pending nodes
+      continue to be admitted after a node fails;
+    - Node.Scheduling.always_run nodes are reserved for cleanup/teardown and
+      may still run after failure or cancellation.
+
+    Cross-boundary edges are not allowed: edges inside a Dag may reference only
+    nodes from that same Dag. Parent Dag edges depend on the owning sub-Dag node,
+    not on nodes inside the nested Dag.
+*/
+message Dag {
+    /* Node is a single schedulable unit inside a Dag. */
+    message Node {
+        /* TaskState contains opaque task input and produced task output. */
+        message TaskState {
+            /* input is the typed payload consumed by the task executor. */
+            google.protobuf.Any input = 4 [(validate.rules).any.required = true];
+            /* output is the typed payload produced after task completion. */
+            google.protobuf.Any output = 5;
+        }
+
+        /* Scheduling controls admission and dependency merge behavior for one node. */
+        message Scheduling {
+            /* JoinPolicy defines how incoming edges are merged before this node becomes ready. */
+            enum JoinPolicy {
+                /* UNSPECIFIED defaults to JOIN_POLICY_ALL. */
+                JOIN_POLICY_UNSPECIFIED = 0;
+                /* ALL requires every incoming edge to be satisfied. */
+                JOIN_POLICY_ALL = 1;
+                /* ANY requires at least one incoming edge to be satisfied. */
+                JOIN_POLICY_ANY = 2;
+            }
+
+            /* retry stores retry policy and retry state for this node. */
+            primitive.Retry retry = 4 [(validate.rules).message.required = true];
+            /* always_run allows cleanup nodes to run after failure or cancellation. */
+            bool always_run = 5;
+            /* priority orders ready nodes when max_parallelism leaves limited slots. Higher runs earlier. */
+            int32 priority = 6;
+            /* join_policy controls how incoming edges are joined. UNSPECIFIED defaults to ALL. */
+            JoinPolicy join_policy = 7 [(validate.rules).enum.defined_only = true];
+        }
+
+        /* id is unique within this Dag and is the address used by edges. */
+        string id = 1 [(validate.rules).string.min_len = 1];
+        /* status is the current node execution state. */
+        primitive.Status status = 2 [(validate.rules).enum = {defined_only: true, not_in: [0, 7]}];
+        /* scheduling contains node-local retry, priority, and join settings. */
+        Scheduling scheduling = 3 [(validate.rules).message.required = true];
+        /* metadata contains node labels and executor-specific annotations. */
+        map<string, string> metadata = 4;
+
+        /* variant selects whether this node executes a task or a nested Dag. */
+        oneof variant {
+            option (validate.required) = true;
+            /* task_state executes a single task implementation. */
+            TaskState task_state = 10 [(validate.rules).message.required = true];
+            /* sub_dag executes an embedded Dag snapshot. It is not a separate database row. */
+            Dag sub_dag = 11 [(validate.rules).message.required = true];
+        }
+    }
+
+    /* Edge is a dependency from source node to target node. */
+    message Edge {
+        /* id is unique within this Dag. */
+        string id = 1 [(validate.rules).string.uuid = true];
+        /* source references the upstream node id in the same Dag. */
+        string source = 2 [(validate.rules).string.uuid = true];
+        /* target references the downstream node id in the same Dag. */
+        string target = 3 [(validate.rules).string.uuid = true];
+
+        /* condition defines when this edge is satisfied. Empty condition means source STATUS_COMPLETED. */
+        oneof condition {
+            /* predicate_name identifies a registered Go predicate evaluated after source termination. */
+            string predicate_name = 10;
+            /* on_status satisfies this edge when source reaches the selected terminal status. */
+            primitive.Status on_status = 11 [
+                (validate.rules).enum = {defined_only: true, not_in: [0, 1, 2, 5, 7]}
+            ];
+        }
+    }
+
+    /* id is the persistent aggregate id for a top-level Dag. */
+    string id = 1 [(validate.rules).string.uuid = true];
+    /* status is the current aggregate execution state. */
+    primitive.Status status = 3 [
+        (validate.rules).enum = {defined_only: true, not_in: [0, 5, 6]}
+    ];
+
+    /* nodes contains all nodes that belong directly to this Dag. */
+    repeated Node nodes = 4 [(validate.rules).repeated.min_items = 1];
+    /* edges contains dependencies between nodes that belong directly to this Dag. */
+    repeated Edge edges = 5;
+    /* input is the opaque payload consumed by this Dag or by its first tasks. */
+    google.protobuf.Any input = 6;
+
+    /* Scheduling controls graph-level admission and failure behavior. */
+    message Scheduling {
+        /* OnNodeFailure controls whether failed nodes stop admission of ordinary pending nodes. */
+        enum OnNodeFailure {
+            /* UNSPECIFIED is reserved; callers must select CONTINUE or STOP. */
+            ON_NODE_FAILURE_UNSPECIFIED = 0;
+            /* CONTINUE allows independent ready nodes to keep running after a node fails. */
+            ON_NODE_FAILURE_CONTINUE = 1;
+            /* STOP prevents new ordinary nodes from starting after a node fails. */
+            ON_NODE_FAILURE_STOP = 2;
+        }
+
+        /* max_parallelism limits concurrently running ready nodes within this Dag. 0 means unlimited. */
+        uint32 max_parallelism = 1 [(validate.rules).uint32.lte = 1024];
+        /* on_node_failure selects graph-level behavior after a node reaches STATUS_FAILED. */
+        OnNodeFailure on_node_failure = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        /* is_sub_dag marks embedded Dags that must not be persisted independently. */
+        bool is_sub_dag = 3;
+    }
+
+    /* scheduling contains graph-level parallelism and failure policy. */
+    Scheduling scheduling = 7 [(validate.rules).message.required = true];
+    /* metadata contains Dag labels and scheduler-specific annotations. */
+    map<string, string> metadata = 8;
+}

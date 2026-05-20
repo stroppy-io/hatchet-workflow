@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/models/common.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+
+message Account {
+    message List {repeated Account accounts = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "accounts"
+        virtual_columns: [
+            {sql_name: "password_hash", sql_type: "TEXT", is_nullable: false}
+        ]
+    };
+    models.Entity entity = 1 [(goplain.field).embed = true];
+    string email = 4 [(validate.rules).string = {min_len: 5, max_len: 255, email: true}];
+    string nickname = 5 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-zA-Z0-9_.-]+$"}];
+}

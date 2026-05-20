@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "google/protobuf/timestamp.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+message Ulid {
+    option (goplain.message) = {generate: true, type_alias: true};
+    string value = 1 [(validate.rules).string.len = 26];
+}
+
+message AccountId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
+message TenantId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
+message TenantMemberId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
+
+message DatabasePresetId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
+message WorkloadPresetId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
+
+message TestRunId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
+
+
+/* Timestamps — universal audit fields. Imported by both system and domain
+   layers so neither depends on the other. */
+message Timestamps {
+    google.protobuf.Timestamp created_at = 1 [
+        (ratel.column) = {constraints: {default_value: "now()"}},
+        (validate.rules).timestamp = {required: true, lt_now: true}
+    ];
+    google.protobuf.Timestamp updated_at = 2 [
+        (ratel.column) = {constraints: {default_value: "now()"}},
+        (validate.rules).timestamp = {required: true, lt_now: true}
+    ];
+
+}
+
+message Entity {
+    Ulid id = 1 [(ratel.column) = {
+        constraints: {primary_key: true}
+    }];
+    Timestamps timestamps = 3 [(goplain.field).embed = true];
+}
+
+message SoftDeleteEntity {
+    Entity entity = 1 [(goplain.field).embed = true];
+    optional google.protobuf.Timestamp deleted_at = 3 [
+        (ratel.column) = {constraints: {default_value: "null"}},
+        (validate.rules).timestamp.lt_now = true
+    ];
+}

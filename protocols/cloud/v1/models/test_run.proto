@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/models/common.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+message TestRun {
+    message List {repeated TestRun test_runs = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "test_runs"
+    };
+    models.Entity entity = 1 [(goplain.field).embed = true];
+    models.TenantId tenant_id = 2 [(ratel.column).constraints = {
+        references_table: "tenants"
+        references_column: "id"
+        on_delete: CASCADE
+    }];
+    models.AccountId started_by = 3 [(ratel.column).constraints = {
+        references_table: "accounts"
+        references_column: "id"
+        on_delete: CASCADE
+    }];
+    optional string name = 4 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    optional string description = 5 [(validate.rules).string.max_len = 1024];
+}
