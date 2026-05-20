@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.agent;
+
+import "cloud/v1/runtime/ops/operation.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent";
+
+/*
+    Target identifies where an agent command is delivered and which topology
+    component it acts on.
+
+    machine_id references cloud.v1.domain.Topology.Machine.id. agent_component_id
+    references a Topology.Component with kind=KIND_AGENT. target_component_id
+    references the component configured or observed by the command.
+ */
+message Target {
+    string machine_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    string agent_component_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    string target_component_id = 3 [(validate.rules).string.max_len = 128];
+}
+
+/* AgentStatus is the observed lifecycle state of an agent process. */
+enum AgentStatus {
+    AGENT_STATUS_UNSPECIFIED = 0;
+    AGENT_STATUS_REGISTERED = 1;
+    AGENT_STATUS_READY = 2;
+    AGENT_STATUS_BUSY = 3;
+    AGENT_STATUS_OFFLINE = 4;
+    AGENT_STATUS_FAILED = 5;
+}
+
+/* CommandStatus is the agent-observed execution result for one command. */
+enum CommandStatus {
+    COMMAND_STATUS_UNSPECIFIED = 0;
+    COMMAND_STATUS_RUNNING = 1;
+    COMMAND_STATUS_COMPLETED = 2;
+    COMMAND_STATUS_FAILED = 3;
+    COMMAND_STATUS_CANCELLED = 4;
+}
+
+/* Agent is the runtime control-plane view of a topology agent component. */
+message Agent {
+    Target target = 1 [(validate.rules).message.required = true];
+    AgentStatus status = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    string host = 3 [(validate.rules).string.max_len = 255];
+    uint32 port = 4 [(validate.rules).uint32.lte = 65535];
+    string version = 5 [(validate.rules).string.max_len = 128];
+    string boot_id = 6 [(validate.rules).string.max_len = 128];
+    google.protobuf.Timestamp registered_at = 7;
+    google.protobuf.Timestamp last_seen_at = 8;
+    google.protobuf.Timestamp lease_expires_at = 9;
+    string error = 10 [(validate.rules).string.max_len = 8192];
+}
+
+/*
+    Command is the control-plane envelope delivered to an agent.
+
+    Operation describes what to do; Command describes where and under which
+    topology context it should be done.
+ */
+message Command {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    Target target = 2 [(validate.rules).message.required = true];
+    runtime.ops.Operation operation = 3 [(validate.rules).message.required = true];
+}
+
+/* Report is the agent response for a Command. */
+message Report {
+    string command_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    Target target = 2 [(validate.rules).message.required = true];
+    CommandStatus status = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    runtime.ops.Operation.Result result = 4;
+    string error = 5 [(validate.rules).string.max_len = 8192];
+    google.protobuf.Timestamp reported_at = 6;
+}
+
+/* LogLine is one streamed or batched command log line from an agent. */
+message LogLine {
+    string command_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    Target target = 2 [(validate.rules).message.required = true];
+
+    enum Stream {
+        STREAM_UNSPECIFIED = 0;
+        STREAM_STDOUT = 1;
+        STREAM_STDERR = 2;
+    }
+    Stream stream = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    string line = 4 [(validate.rules).string.max_len = 65536];
+    google.protobuf.Timestamp observed_at = 5;
+}

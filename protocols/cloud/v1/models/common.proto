@@ -5,7 +5,6 @@ package cloud.v1.models;
 import "google/protobuf/timestamp.proto";
 import "goplain/goplain.proto";
 import "ratelproto/ratelproto.proto";
-import "test/full/showcase.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
@@ -26,6 +25,7 @@ message TestRunId {option (goplain.message) = {generate: true, type_alias: true}
 message SuiteId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
 message SuiteRunId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
 message DagId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
+message AgentId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
 
 
 /* Timestamps — universal audit fields. Imported by both system and domain

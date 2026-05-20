@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package cloud.v1.api.agent;
+
+import "cloud/v1/models/agent.proto";
+import "cloud/v1/models/common.proto";
+import "cloud/v1/runtime/agent/agent.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/agent";
+
+message RegisterRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    runtime.agent.Target target = 2 [(validate.rules).message.required = true];
+    string host = 3 [(validate.rules).string.max_len = 255];
+    uint32 port = 4 [(validate.rules).uint32.lte = 65535];
+    string version = 5 [(validate.rules).string.max_len = 128];
+    string boot_id = 6 [(validate.rules).string.max_len = 128];
+}
+
+message HeartbeatRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    runtime.agent.Target target = 2 [(validate.rules).message.required = true];
+    runtime.agent.AgentStatus status = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+}
+
+message PollRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    runtime.agent.Target target = 2 [(validate.rules).message.required = true];
+    string host = 3 [(validate.rules).string.max_len = 255];
+    uint32 port = 4 [(validate.rules).uint32.lte = 65535];
+}
+
+message PollResponse {
+    optional CommandLease lease = 1;
+}
+
+message NodeAddress {
+    models.DagId dag_id = 1 [(validate.rules).message.required = true];
+    string node_execution_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+}
+
+message CommandLease {
+    NodeAddress address = 1 [(validate.rules).message.required = true];
+    runtime.agent.Command command = 2 [(validate.rules).message.required = true];
+    google.protobuf.Timestamp lease_expires_at = 3;
+}
+
+message ReportRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    NodeAddress address = 2 [(validate.rules).message.required = true];
+    runtime.agent.Report report = 3 [(validate.rules).message.required = true];
+}
+
+message SendLogsRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    repeated runtime.agent.LogLine lines = 2 [(validate.rules).repeated.max_items = 1024];
+}
+
+message ListAgentsRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.CommonQuery query = 2;
+}
+
+service AgentService {
+    /* Agent-facing registration and liveness. */
+    rpc Register (RegisterRequest) returns (models.Agent) {option idempotency_level = IDEMPOTENT;};
+    rpc Heartbeat (HeartbeatRequest) returns (models.Agent) {option idempotency_level = IDEMPOTENT;};
+    /* Agent-facing long poll for the next queued command. */
+    rpc Poll (PollRequest) returns (PollResponse) {option idempotency_level = NO_SIDE_EFFECTS;};
+    /* Agent-facing command result and logs. */
+    rpc Report (ReportRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;};
+    rpc SendLogs (SendLogsRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;};
+
+    /* Control-plane agent observability API. Commands are persisted as DAG nodes. */
+    rpc ListAgents (ListAgentsRequest) returns (models.Agent.List) {option idempotency_level = NO_SIDE_EFFECTS;};
+    rpc GetAgent (models.AgentId) returns (models.Agent) {option idempotency_level = NO_SIDE_EFFECTS;};
+}

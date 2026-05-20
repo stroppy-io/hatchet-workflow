@@ -85,7 +85,7 @@ message SuiteRuns {
     ];
     repeated models.TestRun test_runs = 8 [(ratel.relation) = {
         one_to_many: {
-            ref_name: "user_id"
+            ref_name: "suite_run_id"
             on_delete_cascade: true
         }
     }];

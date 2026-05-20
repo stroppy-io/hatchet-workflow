@@ -635,6 +635,17 @@ func (m *Dag_Node) validate(all bool) error {
 
 	// no validation rules for Metadata
 
+	if l := utf8.RuneCountInString(m.GetExecutionId()); l < 1 || l > 128 {
+		err := Dag_NodeValidationError{
+			field:  "ExecutionId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if all {
 		switch v := interface{}(m.GetExecution()).(type) {
 		case interface{ ValidateAll() error }:

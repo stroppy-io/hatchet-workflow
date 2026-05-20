@@ -17,16 +17,44 @@ message Topology {
    */
     message Component {
         string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
-        runtime.render.Config config = 2 [(validate.rules).message.required = true];
-        common.Tags tags = 3;
+
+        /*
+            Kind classifies what the component is inside topology.
+
+            Agents are modeled as regular control-plane components that live on
+            machines, not as deployment provider output. Runtime commands are
+            delivered to an AGENT component and may target another component on
+            the same machine.
+         */
+        enum Kind {
+            KIND_UNSPECIFIED = 0;
+            KIND_AGENT = 1;
+            KIND_DATABASE = 2;
+            KIND_MONITOR = 3;
+            KIND_STROPPY = 4;
+            KIND_PROXY = 5;
+            KIND_COORDINATOR = 6;
+            KIND_ADDON = 7;
+        }
+        Kind kind = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        runtime.render.Config config = 3 [(validate.rules).message.required = true];
+        common.Tags tags = 4;
     }
     message Machine {
-        /* cores is VM vCPU count. */
-        uint32 cores = 1 [(validate.rules).uint32.gt = 0];
-        /* memory_gb is VM RAM in GiB. */
-        uint64 memory_gb = 2 [(validate.rules).uint64.gt = 0];
+        /*
+            id is the stable topology machine id.
 
-        repeated Component components = 3 [(validate.rules).repeated.min_items = 1];
+            Deployment materializers must pass this id into provider resources
+            and into the agent environment as STROPPY_MACHINE_ID.
+         */
+        string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+        /* cores is VM vCPU count. */
+        uint32 cores = 2 [(validate.rules).uint32.gt = 0];
+        /* memory_gb is VM RAM in GiB. */
+        uint64 memory_gb = 3 [(validate.rules).uint64.gt = 0];
+
+        repeated Component components = 4 [(validate.rules).repeated.min_items = 1];
+        common.Tags tags = 5;
     }
     repeated Machine machines = 2 [(validate.rules).repeated.min_items = 1];
     /*

@@ -9,7 +9,6 @@ package models
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	_ "github.com/yaroher/protoc-gen-go-plain/goplain"
-	_ "github.com/yaroher/protoc-gen-go-plain/test/full"
 	_ "github.com/yaroher/ratel/ratelproto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -72,7 +71,7 @@ func (x CommonQuery_Sort_Direction) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use CommonQuery_Sort_Direction.Descriptor instead.
 func (CommonQuery_Sort_Direction) EnumDescriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{13, 0, 0}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{14, 0, 0}
 }
 
 type CommonQuery_Filter_Operator int32
@@ -151,7 +150,7 @@ func (x CommonQuery_Filter_Operator) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use CommonQuery_Filter_Operator.Descriptor instead.
 func (CommonQuery_Filter_Operator) EnumDescriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{13, 1, 0}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{14, 1, 0}
 }
 
 type Ulid struct {
@@ -594,6 +593,50 @@ func (x *DagId) GetValue() string {
 	return ""
 }
 
+type AgentId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AgentId) Reset() {
+	*x = AgentId{}
+	mi := &file_cloud_v1_models_common_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AgentId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AgentId) ProtoMessage() {}
+
+func (x *AgentId) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_common_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AgentId.ProtoReflect.Descriptor instead.
+func (*AgentId) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *AgentId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
 // Timestamps — universal audit fields. Imported by both system and domain
 // layers so neither depends on the other.
 type Timestamps struct {
@@ -607,7 +650,7 @@ type Timestamps struct {
 
 func (x *Timestamps) Reset() {
 	*x = Timestamps{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[10]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -619,7 +662,7 @@ func (x *Timestamps) String() string {
 func (*Timestamps) ProtoMessage() {}
 
 func (x *Timestamps) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[10]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -632,7 +675,7 @@ func (x *Timestamps) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Timestamps.ProtoReflect.Descriptor instead.
 func (*Timestamps) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{10}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *Timestamps) GetCreatedAt() *timestamppb.Timestamp {
@@ -666,7 +709,7 @@ type Entity struct {
 
 func (x *Entity) Reset() {
 	*x = Entity{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[11]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -678,7 +721,7 @@ func (x *Entity) String() string {
 func (*Entity) ProtoMessage() {}
 
 func (x *Entity) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[11]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -691,7 +734,7 @@ func (x *Entity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Entity.ProtoReflect.Descriptor instead.
 func (*Entity) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{11}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Entity) GetId() *Ulid {
@@ -718,7 +761,7 @@ type Own struct {
 
 func (x *Own) Reset() {
 	*x = Own{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[12]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -730,7 +773,7 @@ func (x *Own) String() string {
 func (*Own) ProtoMessage() {}
 
 func (x *Own) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[12]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -743,7 +786,7 @@ func (x *Own) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Own.ProtoReflect.Descriptor instead.
 func (*Own) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{12}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Own) GetOwnerAccountId() *AccountId {
@@ -775,7 +818,7 @@ type CommonQuery struct {
 
 func (x *CommonQuery) Reset() {
 	*x = CommonQuery{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[13]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -787,7 +830,7 @@ func (x *CommonQuery) String() string {
 func (*CommonQuery) ProtoMessage() {}
 
 func (x *CommonQuery) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[13]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -800,7 +843,7 @@ func (x *CommonQuery) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommonQuery.ProtoReflect.Descriptor instead.
 func (*CommonQuery) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{13}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *CommonQuery) GetFilter() []*CommonQuery_Filter {
@@ -841,7 +884,7 @@ type PageInfo struct {
 
 func (x *PageInfo) Reset() {
 	*x = PageInfo{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[14]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -853,7 +896,7 @@ func (x *PageInfo) String() string {
 func (*PageInfo) ProtoMessage() {}
 
 func (x *PageInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[14]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -866,7 +909,7 @@ func (x *PageInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PageInfo.ProtoReflect.Descriptor instead.
 func (*PageInfo) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{14}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *PageInfo) GetNextToken() string {
@@ -900,7 +943,7 @@ type CommonQuery_Sort struct {
 
 func (x *CommonQuery_Sort) Reset() {
 	*x = CommonQuery_Sort{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[15]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -912,7 +955,7 @@ func (x *CommonQuery_Sort) String() string {
 func (*CommonQuery_Sort) ProtoMessage() {}
 
 func (x *CommonQuery_Sort) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[15]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -925,7 +968,7 @@ func (x *CommonQuery_Sort) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommonQuery_Sort.ProtoReflect.Descriptor instead.
 func (*CommonQuery_Sort) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{13, 0}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{14, 0}
 }
 
 func (x *CommonQuery_Sort) GetField() string {
@@ -958,7 +1001,7 @@ type CommonQuery_Filter struct {
 
 func (x *CommonQuery_Filter) Reset() {
 	*x = CommonQuery_Filter{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[16]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -970,7 +1013,7 @@ func (x *CommonQuery_Filter) String() string {
 func (*CommonQuery_Filter) ProtoMessage() {}
 
 func (x *CommonQuery_Filter) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[16]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -983,7 +1026,7 @@ func (x *CommonQuery_Filter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommonQuery_Filter.ProtoReflect.Descriptor instead.
 func (*CommonQuery_Filter) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{13, 1}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{14, 1}
 }
 
 func (x *CommonQuery_Filter) GetField() string {
@@ -1020,7 +1063,7 @@ type CommonQuery_Page struct {
 
 func (x *CommonQuery_Page) Reset() {
 	*x = CommonQuery_Page{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[17]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1032,7 +1075,7 @@ func (x *CommonQuery_Page) String() string {
 func (*CommonQuery_Page) ProtoMessage() {}
 
 func (x *CommonQuery_Page) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[17]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1045,7 +1088,7 @@ func (x *CommonQuery_Page) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommonQuery_Page.ProtoReflect.Descriptor instead.
 func (*CommonQuery_Page) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{13, 2}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{14, 2}
 }
 
 func (x *CommonQuery_Page) GetSize() uint32 {
@@ -1066,7 +1109,7 @@ var File_cloud_v1_models_common_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_common_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccloud/v1/models/common.proto\x12\x0fcloud.v1.models\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x18test/full/showcase.proto\x1a\x17validate/validate.proto\"0\n" +
+	"\x1ccloud/v1/models/common.proto\x12\x0fcloud.v1.models\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"0\n" +
 	"\x04Ulid\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"5\n" +
 	"\tAccountId\x12\x1e\n" +
@@ -1087,6 +1130,8 @@ const file_cloud_v1_models_common_proto_rawDesc = "" +
 	"SuiteRunId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"1\n" +
 	"\x05DagId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"3\n" +
+	"\aAgentId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"\x99\x02\n" +
 	"\n" +
 	"Timestamps\x12R\n" +
@@ -1160,7 +1205,7 @@ func file_cloud_v1_models_common_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_models_common_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_cloud_v1_models_common_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_cloud_v1_models_common_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_cloud_v1_models_common_proto_goTypes = []any{
 	(CommonQuery_Sort_Direction)(0),  // 0: cloud.v1.models.CommonQuery.Sort.Direction
 	(CommonQuery_Filter_Operator)(0), // 1: cloud.v1.models.CommonQuery.Filter.Operator
@@ -1174,27 +1219,28 @@ var file_cloud_v1_models_common_proto_goTypes = []any{
 	(*SuiteId)(nil),                  // 9: cloud.v1.models.SuiteId
 	(*SuiteRunId)(nil),               // 10: cloud.v1.models.SuiteRunId
 	(*DagId)(nil),                    // 11: cloud.v1.models.DagId
-	(*Timestamps)(nil),               // 12: cloud.v1.models.Timestamps
-	(*Entity)(nil),                   // 13: cloud.v1.models.Entity
-	(*Own)(nil),                      // 14: cloud.v1.models.Own
-	(*CommonQuery)(nil),              // 15: cloud.v1.models.CommonQuery
-	(*PageInfo)(nil),                 // 16: cloud.v1.models.PageInfo
-	(*CommonQuery_Sort)(nil),         // 17: cloud.v1.models.CommonQuery.Sort
-	(*CommonQuery_Filter)(nil),       // 18: cloud.v1.models.CommonQuery.Filter
-	(*CommonQuery_Page)(nil),         // 19: cloud.v1.models.CommonQuery.Page
-	(*timestamppb.Timestamp)(nil),    // 20: google.protobuf.Timestamp
+	(*AgentId)(nil),                  // 12: cloud.v1.models.AgentId
+	(*Timestamps)(nil),               // 13: cloud.v1.models.Timestamps
+	(*Entity)(nil),                   // 14: cloud.v1.models.Entity
+	(*Own)(nil),                      // 15: cloud.v1.models.Own
+	(*CommonQuery)(nil),              // 16: cloud.v1.models.CommonQuery
+	(*PageInfo)(nil),                 // 17: cloud.v1.models.PageInfo
+	(*CommonQuery_Sort)(nil),         // 18: cloud.v1.models.CommonQuery.Sort
+	(*CommonQuery_Filter)(nil),       // 19: cloud.v1.models.CommonQuery.Filter
+	(*CommonQuery_Page)(nil),         // 20: cloud.v1.models.CommonQuery.Page
+	(*timestamppb.Timestamp)(nil),    // 21: google.protobuf.Timestamp
 }
 var file_cloud_v1_models_common_proto_depIdxs = []int32{
-	20, // 0: cloud.v1.models.Timestamps.created_at:type_name -> google.protobuf.Timestamp
-	20, // 1: cloud.v1.models.Timestamps.updated_at:type_name -> google.protobuf.Timestamp
-	20, // 2: cloud.v1.models.Timestamps.deleted_at:type_name -> google.protobuf.Timestamp
+	21, // 0: cloud.v1.models.Timestamps.created_at:type_name -> google.protobuf.Timestamp
+	21, // 1: cloud.v1.models.Timestamps.updated_at:type_name -> google.protobuf.Timestamp
+	21, // 2: cloud.v1.models.Timestamps.deleted_at:type_name -> google.protobuf.Timestamp
 	2,  // 3: cloud.v1.models.Entity.id:type_name -> cloud.v1.models.Ulid
-	12, // 4: cloud.v1.models.Entity.timestamps:type_name -> cloud.v1.models.Timestamps
+	13, // 4: cloud.v1.models.Entity.timestamps:type_name -> cloud.v1.models.Timestamps
 	3,  // 5: cloud.v1.models.Own.owner_account_id:type_name -> cloud.v1.models.AccountId
 	4,  // 6: cloud.v1.models.Own.tenant_id:type_name -> cloud.v1.models.TenantId
-	18, // 7: cloud.v1.models.CommonQuery.filter:type_name -> cloud.v1.models.CommonQuery.Filter
-	17, // 8: cloud.v1.models.CommonQuery.sort:type_name -> cloud.v1.models.CommonQuery.Sort
-	19, // 9: cloud.v1.models.CommonQuery.page:type_name -> cloud.v1.models.CommonQuery.Page
+	19, // 7: cloud.v1.models.CommonQuery.filter:type_name -> cloud.v1.models.CommonQuery.Filter
+	18, // 8: cloud.v1.models.CommonQuery.sort:type_name -> cloud.v1.models.CommonQuery.Sort
+	20, // 9: cloud.v1.models.CommonQuery.page:type_name -> cloud.v1.models.CommonQuery.Page
 	0,  // 10: cloud.v1.models.CommonQuery.Sort.direction:type_name -> cloud.v1.models.CommonQuery.Sort.Direction
 	1,  // 11: cloud.v1.models.CommonQuery.Filter.operator:type_name -> cloud.v1.models.CommonQuery.Filter.Operator
 	12, // [12:12] is the sub-list for method output_type
@@ -1209,15 +1255,15 @@ func file_cloud_v1_models_common_proto_init() {
 	if File_cloud_v1_models_common_proto != nil {
 		return
 	}
-	file_cloud_v1_models_common_proto_msgTypes[10].OneofWrappers = []any{}
-	file_cloud_v1_models_common_proto_msgTypes[14].OneofWrappers = []any{}
+	file_cloud_v1_models_common_proto_msgTypes[11].OneofWrappers = []any{}
+	file_cloud_v1_models_common_proto_msgTypes[15].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_models_common_proto_rawDesc), len(file_cloud_v1_models_common_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   18,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

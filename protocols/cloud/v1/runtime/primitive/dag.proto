@@ -14,6 +14,102 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
 /*
     Dag is a stateful execution snapshot for a directed acyclic graph.
 
+    Architecture decision: everything executable is represented as a Dag.
+
+    The runtime does not know about domain entities such as suites, tests,
+    deployments, Terraform runs, machines, or agents. Domain layers compile
+    those entities into Dag payloads, and the runtime only executes nodes,
+    edges, retry policy, cancellation, failure propagation, and persistence
+    snapshots.
+
+    Common shapes:
+
+    1. Suite run
+
+        A suite run is a top-level persisted Dag whose nodes represent the
+        suite workflow. Test runs may be embedded when they are small and must
+        be part of the same persisted snapshot, or referenced when they need
+        their own lifecycle, processor lease, admission policy, or independent
+        observability.
+
+        Example:
+
+            Dag(id = suite_run_dag)
+              node prepare_environment: task_state
+              node test_a: dag_ref(test_a_dag)
+              node test_b: dag_ref(test_b_dag)
+              node cleanup: task_state, always_run = true
+
+            edges:
+              prepare_environment -> test_a
+              prepare_environment -> test_b
+              test_a -> cleanup
+              test_b -> cleanup
+
+    2. Test run
+
+        A test run is also a Dag. It can contain provisioning, configuration,
+        workload execution, result collection, and cleanup. If a part must be
+        executed as an ordered command stream on an agent, that part is modeled
+        as an embedded command Dag.
+
+        Example:
+
+            Dag(id = test_run_dag)
+              node render_config: task_state
+              node terraform_apply: task_state
+              node install_and_run: sub_dag(commands_dag)
+              node collect_results: task_state
+              node terraform_destroy: task_state, always_run = true
+
+            edges:
+              render_config -> terraform_apply
+              terraform_apply -> install_and_run
+              install_and_run -> collect_results
+              terraform_apply -> terraform_destroy
+              install_and_run -> terraform_destroy
+
+    3. Agent command queue
+
+        There is no separate durable agent command queue table. A command queue
+        is an embedded Dag: the parent node owns a sub-Dag, and each command is
+        a task node inside that sub-Dag. The task input contains a typed
+        runtime.agent.Command wrapped in google.protobuf.Any. Node status,
+        retry state, failures, timestamps, and logs are correlated through the
+        node execution_id.
+
+        Example:
+
+            node install_and_run: sub_dag(commands_dag)
+
+            commands_dag:
+              node install_packages:
+                execution_id = cmd_install_packages
+                task_state.handler_name = "agent.command"
+                task_state.input = Any(runtime.agent.Command)
+
+              node render_service:
+                execution_id = cmd_render_service
+                task_state.handler_name = "agent.command"
+                task_state.input = Any(runtime.agent.Command)
+
+              node start_service:
+                execution_id = cmd_start_service
+                task_state.handler_name = "agent.command"
+                task_state.input = Any(runtime.agent.Command)
+
+            edges:
+              install_packages -> render_service
+              render_service -> start_service
+
+        The agent API leases and reports a command by:
+
+            DagId + Node.execution_id
+
+        It must not use structural paths. Node.id is local to one Dag and is
+        used by edges. Node.execution_id is the stable external identity inside
+        the persisted top-level Dag aggregate, including embedded sub-Dags.
+
     The scheduler loads and saves the whole Dag aggregate as one unit. A
     top-level Dag is persisted in the dags table; a sub-Dag is embedded in its
     owning node and is not persisted as a separate database row. A dag_ref node
@@ -160,7 +256,7 @@ message Dag {
             google.protobuf.Timestamp finished_at = 6;
         }
 
-        /* id is unique within this Dag and is the address used by edges. */
+        /* id is unique within this Dag and is the local address used by edges in this Dag. */
         string id = 1 [(validate.rules).string.min_len = 1];
         /* status is the current node execution state. */
         primitive.Status status = 2 [(validate.rules).enum = {defined_only: true, not_in: [0, 7]}];
@@ -168,6 +264,17 @@ message Dag {
         Scheduling scheduling = 3 [(validate.rules).message.required = true];
         /* metadata contains node labels and executor-specific annotations. */
         map<string, string> metadata = 4;
+        /*
+            execution_id is the immutable external identity of this node inside
+            the persisted top-level Dag aggregate.
+
+            Unlike id, it is not a graph-local edge address. It must remain
+            stable when a node is moved into or out of an embedded sub-Dag, and
+            it must be unique across the whole persisted Dag payload, including
+            embedded sub-Dags. External APIs, leases, reports, and logs should
+            use execution_id instead of a structural path.
+         */
+        string execution_id = 5 [(validate.rules).string = {min_len: 1, max_len: 128}];
 
         /* variant selects whether this node executes a task, an embedded Dag, or a persisted Dag ref. */
         oneof variant {

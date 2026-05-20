@@ -100,6 +100,7 @@ func (e *Executor) Run(ctx context.Context, dag *primitive.Dag) error {
 	if dag == nil {
 		return fmt.Errorf("dag is nil")
 	}
+	normalizeDag(dag)
 	if err := ValidateDag(dag); err != nil {
 		failure := FailureFromError(err, FailureSourceRuntime, FailurePhaseDag, FailureCodeDagInvalid, 0, false, nil)
 		setDagFailed(dag, "", failure, e.now())
@@ -153,6 +154,13 @@ func (e *Executor) Run(ctx context.Context, dag *primitive.Dag) error {
 		ready := e.readyNodes(dag, false)
 		if len(ready) == 0 {
 			if ordinaryNodesTerminal(dag) {
+				if hasOrdinaryTerminalFailure(dag) {
+					// always_run teardown runs after any failure/cancellation,
+					// independent of on_node_failure policy.
+					if err := e.runAlwaysRun(ctx, dag); err != nil {
+						return err
+					}
+				}
 				skipPendingAlwaysRun(dag, e.now())
 				finalizeDag(dag, e.now())
 				if err := e.saveDag(ctx, dag); err != nil {
@@ -245,7 +253,8 @@ func recoverNodeExecution(dag *primitive.Dag, node *primitive.Dag_Node, now time
 		Retryable:  true,
 		OccurredAt: timestamppb.New(now),
 		Metadata: map[string]string{
-			"node_id": node.GetId(),
+			"node_id":           node.GetId(),
+			"node_execution_id": node.GetExecutionId(),
 		},
 	}
 	if handler := node.GetTaskState().GetHandlerName(); handler != "" {
@@ -334,6 +343,7 @@ type nodeResult struct {
 	nodeID    string
 	taskState *primitive.Dag_Node_TaskState
 	subDag    *primitive.Dag
+	cancelled bool
 	err       error
 }
 
@@ -344,55 +354,90 @@ func (e *Executor) executeNode(ctx context.Context, node *primitive.Dag_Node) no
 		return nodeResult{nodeID: node.GetId(), taskState: state, err: err}
 	case *primitive.Dag_Node_SubDag:
 		sub := proto.Clone(v.SubDag).(*primitive.Dag)
-		err := e.Run(ctx, sub)
-		if err != nil {
-			err = NewFailureError(err, &primitive.Dag_Failure{
-				Message: err.Error(),
-				Code:    FailureCodeSubDagFailed,
-				Source:  FailureSourceRuntime,
-				Phase:   FailurePhaseSubDag,
-			})
-		}
-		return nodeResult{nodeID: node.GetId(), subDag: sub, err: err}
-	case *primitive.Dag_Node_DagRef_:
-		if e.dagRefs == nil {
-			err := fmt.Errorf("node %q references dag %q but no dag ref runner is configured", node.GetId(), v.DagRef.GetDagId())
-			return nodeResult{nodeID: node.GetId(), err: NewFailureError(err, &primitive.Dag_Failure{
-				Message: err.Error(),
-				Code:    FailureCodeDagRefRunnerMissing,
-				Source:  FailureSourceRuntime,
-				Phase:   FailurePhaseDagRef,
-				Metadata: map[string]string{
-					"dag_id": v.DagRef.GetDagId(),
-				},
-			})}
-		}
-		child, err := e.dagRefs.RunDagRef(ctx, v.DagRef)
-		if err == nil && child != nil {
-			switch child.GetStatus() {
-			case primitive.Status_STATUS_FAILED, primitive.Status_STATUS_CANCELLED:
-				err = terminalError(child)
+		runErr := e.Run(ctx, sub)
+		res := nodeResult{nodeID: node.GetId(), subDag: sub}
+		switch sub.GetStatus() {
+		case primitive.Status_STATUS_COMPLETED:
+			// success; terminal result mirrored into owning node
+		case primitive.Status_STATUS_CANCELLED:
+			res.cancelled = true
+		default:
+			if runErr == nil {
+				runErr = fmt.Errorf("sub-dag %q ended in status %s", sub.GetId(), sub.GetStatus())
 			}
-		}
-		if err != nil {
-			err = NewFailureError(err, &primitive.Dag_Failure{
-				Message: err.Error(),
-				Code:    FailureCodeDagRefFailed,
-				Source:  FailureSourceRuntime,
-				Phase:   FailurePhaseDagRef,
-				Metadata: map[string]string{
-					"dag_id": v.DagRef.GetDagId(),
-				},
+			res.err = NewFailureError(runErr, &primitive.Dag_Failure{
+				Code:      FailureCodeSubDagFailed,
+				Source:    FailureSourceRuntime,
+				Phase:     FailurePhaseSubDag,
+				Retryable: true,
 			})
 		}
-		return nodeResult{nodeID: node.GetId(), err: err}
+		return res
+	case *primitive.Dag_Node_DagRef_:
+		return e.executeDagRef(ctx, node, v.DagRef)
 	default:
 		err := fmt.Errorf("node %q has no executable variant", node.GetId())
 		return nodeResult{nodeID: node.GetId(), err: NewFailureError(err, &primitive.Dag_Failure{
-			Message: err.Error(),
-			Code:    FailureCodeDagInvalid,
-			Source:  FailureSourceRuntime,
-			Phase:   FailurePhaseDag,
+			Code:   FailureCodeDagInvalid,
+			Source: FailureSourceRuntime,
+			Phase:  FailurePhaseDag,
+		})}
+	}
+}
+
+func (e *Executor) executeDagRef(ctx context.Context, node *primitive.Dag_Node, ref *primitive.Dag_Node_DagRef) nodeResult {
+	id := node.GetId()
+	meta := map[string]string{"dag_id": ref.GetDagId()}
+	if e.dagRefs == nil {
+		err := fmt.Errorf("node %q references dag %q but no dag ref runner is configured", id, ref.GetDagId())
+		return nodeResult{nodeID: id, err: NewFailureError(err, &primitive.Dag_Failure{
+			Code:     FailureCodeDagRefRunnerMissing,
+			Source:   FailureSourceRuntime,
+			Phase:    FailurePhaseDagRef,
+			Metadata: meta,
+		})}
+	}
+	child, err := e.dagRefs.RunDagRef(ctx, ref)
+	if err != nil {
+		return nodeResult{nodeID: id, err: NewFailureError(err, &primitive.Dag_Failure{
+			Code:      FailureCodeDagRefFailed,
+			Source:    FailureSourceRuntime,
+			Phase:     FailurePhaseDagRef,
+			Retryable: true,
+			Metadata:  meta,
+		})}
+	}
+	if child == nil {
+		err := fmt.Errorf("dag ref %q runner returned no dag", ref.GetDagId())
+		return nodeResult{nodeID: id, err: NewFailureError(err, &primitive.Dag_Failure{
+			Code:     FailureCodeDagRefFailed,
+			Source:   FailureSourceRuntime,
+			Phase:    FailurePhaseDagRef,
+			Metadata: meta,
+		})}
+	}
+	switch child.GetStatus() {
+	case primitive.Status_STATUS_COMPLETED:
+		return nodeResult{nodeID: id}
+	case primitive.Status_STATUS_CANCELLED:
+		return nodeResult{nodeID: id, cancelled: true}
+	case primitive.Status_STATUS_FAILED:
+		return nodeResult{nodeID: id, err: NewFailureError(terminalError(child), &primitive.Dag_Failure{
+			Code:      FailureCodeDagRefFailed,
+			Source:    FailureSourceRuntime,
+			Phase:     FailurePhaseDagRef,
+			Retryable: true,
+			Metadata:  meta,
+		})}
+	default:
+		// Child not terminal yet: wait by re-polling under the node retry policy.
+		err := fmt.Errorf("dag ref %q not terminal: status %s", ref.GetDagId(), child.GetStatus())
+		return nodeResult{nodeID: id, err: NewFailureError(err, &primitive.Dag_Failure{
+			Code:      FailureCodeDagRefPending,
+			Source:    FailureSourceRuntime,
+			Phase:     FailurePhaseDagRef,
+			Retryable: true,
+			Metadata:  meta,
 		})}
 	}
 }
@@ -405,6 +450,19 @@ func (e *Executor) applyNodeResult(dag *primitive.Dag, result nodeResult) {
 	if result.subDag != nil {
 		node.Variant = &primitive.Dag_Node_SubDag{SubDag: result.subDag}
 	}
+	if result.cancelled {
+		failure := FailureFromError(
+			fmt.Errorf("node %q cancelled by terminal child", node.GetId()),
+			FailureSourceRuntime, phaseForNode(node), FailureCodeDagCancelled,
+			node.GetExecution().GetRetryState().GetAttempt(), false, nodeFailureMetadata(node),
+		)
+		recordNodeFailure(node, failure)
+		markNodeCancelled(node, failure, e.now())
+		if dag.GetExecution().GetFailedNodeId() == "" {
+			recordDagFailure(dag, node.GetId(), failure, e.now())
+		}
+		return
+	}
 	if result.err == nil {
 		if result.taskState != nil {
 			node.Variant = &primitive.Dag_Node_TaskState_{TaskState: result.taskState}
@@ -416,19 +474,13 @@ func (e *Executor) applyNodeResult(dag *primitive.Dag, result nodeResult) {
 	exec := ensureNodeExecution(node)
 	state := ensureRetryState(exec)
 	attempt := state.GetAttempt()
-	retryable := canRetry(node.GetScheduling().GetRetryPolicy(), attempt)
-	failure := FailureFromError(result.err, FailureSourceTask, FailurePhaseTaskCall, FailureCodeTaskFailed, attempt, retryable, map[string]string{
-		"node_id": node.GetId(),
-	})
-	if handlerName := node.GetTaskState().GetHandlerName(); handlerName != "" {
-		failure.Metadata["handler_name"] = handlerName
-	}
-	if dagID := node.GetDagRef().GetDagId(); dagID != "" {
-		failure.Metadata["dag_id"] = dagID
-	}
+	// opinion is the executor/task verdict on retryability, recorded on the
+	// failure before retry policy budget is applied (proto Failure.retryable).
+	opinion := errorRetryableOpinion(result.err)
+	failure := FailureFromError(result.err, FailureSourceTask, FailurePhaseTaskCall, FailureCodeTaskFailed, attempt, opinion, nodeFailureMetadata(node))
 	recordNodeFailure(node, failure)
 
-	if retryable {
+	if opinion && canRetry(node.GetScheduling().GetRetryPolicy(), attempt) {
 		delay := nextDelay(node.GetScheduling().GetRetryPolicy(), state.GetCurrentDelay())
 		nextRun := e.now().Add(delay)
 		node.Status = primitive.Status_STATUS_RETRY_WAIT
@@ -443,6 +495,31 @@ func (e *Executor) applyNodeResult(dag *primitive.Dag, result nodeResult) {
 	markNodeFailed(node, failure, e.now())
 	if dag.GetExecution().GetFailedNodeId() == "" {
 		recordDagFailure(dag, node.GetId(), failure, e.now())
+	}
+}
+
+func nodeFailureMetadata(node *primitive.Dag_Node) map[string]string {
+	meta := map[string]string{
+		"node_id":           node.GetId(),
+		"node_execution_id": node.GetExecutionId(),
+	}
+	if handlerName := node.GetTaskState().GetHandlerName(); handlerName != "" {
+		meta["handler_name"] = handlerName
+	}
+	if dagID := node.GetDagRef().GetDagId(); dagID != "" {
+		meta["dag_id"] = dagID
+	}
+	return meta
+}
+
+func phaseForNode(node *primitive.Dag_Node) string {
+	switch {
+	case node.GetSubDag() != nil:
+		return FailurePhaseSubDag
+	case node.GetDagRef() != nil:
+		return FailurePhaseDagRef
+	default:
+		return FailurePhaseDag
 	}
 }
 
@@ -502,6 +579,10 @@ func (e *Executor) saveDag(ctx context.Context, dag *primitive.Dag) error {
 }
 
 func ValidateDag(dag *primitive.Dag) error {
+	return validateDag(dag, make(map[string]string))
+}
+
+func validateDag(dag *primitive.Dag, executionIDs map[string]string) error {
 	if dag == nil {
 		return fmt.Errorf("dag is nil")
 	}
@@ -519,11 +600,23 @@ func ValidateDag(dag *primitive.Dag) error {
 		if _, exists := nodes[node.GetId()]; exists {
 			return fmt.Errorf("dag %q contains duplicate node %q", dag.GetId(), node.GetId())
 		}
+		if node.GetExecutionId() == "" {
+			return fmt.Errorf("dag %q node %q execution_id is required", dag.GetId(), node.GetId())
+		}
+		if owner, exists := executionIDs[node.GetExecutionId()]; exists {
+			return fmt.Errorf("dag %q node %q has duplicate execution_id %q already used by %s", dag.GetId(), node.GetId(), node.GetExecutionId(), owner)
+		}
+		executionIDs[node.GetExecutionId()] = fmt.Sprintf("dag %q node %q", dag.GetId(), node.GetId())
 		if node.GetScheduling() == nil {
 			return fmt.Errorf("node %q scheduling is required", node.GetId())
 		}
 		if node.GetVariant() == nil {
 			return fmt.Errorf("node %q variant is required", node.GetId())
+		}
+		if sub := node.GetSubDag(); sub != nil {
+			if err := validateDag(sub, executionIDs); err != nil {
+				return err
+			}
 		}
 		nodes[node.GetId()] = node
 	}
@@ -575,6 +668,10 @@ func detectCycle(dag *primitive.Dag, nodes map[string]*primitive.Dag_Node) error
 }
 
 func normalizeDag(dag *primitive.Dag) {
+	normalizeDagWithPrefix(dag, dag.GetId())
+}
+
+func normalizeDagWithPrefix(dag *primitive.Dag, prefix string) {
 	if dag.Scheduling == nil {
 		dag.Scheduling = &primitive.Dag_Scheduling{
 			OnNodeFailure: primitive.Dag_Scheduling_ON_NODE_FAILURE_STOP,
@@ -593,6 +690,9 @@ func normalizeDag(dag *primitive.Dag) {
 		dag.Execution.Status = dag.Status
 	}
 	for _, node := range dag.GetNodes() {
+		if node.ExecutionId == "" {
+			node.ExecutionId = defaultNodeExecutionID(prefix, node.GetId())
+		}
 		if node.Scheduling == nil {
 			node.Scheduling = &primitive.Dag_Node_Scheduling{}
 		}
@@ -608,9 +708,20 @@ func normalizeDag(dag *primitive.Dag) {
 		}
 		ensureRetryState(exec)
 		if sub := node.GetSubDag(); sub != nil {
-			normalizeDag(sub)
+			normalizeDagWithPrefix(sub, node.GetExecutionId())
+			sub.Scheduling.IsSubDag = true
 		}
 	}
+}
+
+func defaultNodeExecutionID(prefix, nodeID string) string {
+	if prefix == "" {
+		return nodeID
+	}
+	if nodeID == "" {
+		return prefix
+	}
+	return prefix + "." + nodeID
 }
 
 func setDagStatus(dag *primitive.Dag, status primitive.Status, now time.Time) {
@@ -750,6 +861,11 @@ func markNodeSkipped(node *primitive.Dag_Node, now time.Time) {
 func recordNodeFailure(node *primitive.Dag_Node, failure *primitive.Dag_Failure) {
 	exec := ensureNodeExecution(node)
 	exec.Failure = proto.Clone(failure).(*primitive.Dag_Failure)
+	if node.GetScheduling().GetRetryPolicy().GetLastErrorOnly() {
+		// Keep only the most recent attempt failure.
+		exec.Failures = []*primitive.Dag_Failure{proto.Clone(failure).(*primitive.Dag_Failure)}
+		return
+	}
 	exec.Failures = append(exec.Failures, proto.Clone(failure).(*primitive.Dag_Failure))
 }
 
@@ -781,6 +897,10 @@ func canRetry(policy *primitive.Retry_Policy, attempt uint32) bool {
 	return attempt < attempts
 }
 
+// maxBackoffDuration is the largest delay that can still be doubled without
+// overflowing time.Duration (int64 nanoseconds).
+const maxBackoffDuration = time.Duration(1) << 62
+
 func nextDelay(policy *primitive.Retry_Policy, current *durationpb.Duration) time.Duration {
 	if policy == nil {
 		return 0
@@ -791,17 +911,18 @@ func nextDelay(policy *primitive.Retry_Policy, current *durationpb.Duration) tim
 	switch policy.GetDelayType() {
 	case primitive.Retry_DELAY_TYPE_BACKOFF, primitive.Retry_DELAY_TYPE_BACKOFF_JITTER:
 		prev := pbDuration(current)
-		if prev <= 0 {
+		switch {
+		case prev <= 0:
 			delay = base
-		} else {
+		case prev > maxBackoffDuration:
+			// Doubling would overflow time.Duration; hold at the previous delay.
+			delay = prev
+		default:
 			delay = prev * 2
 		}
 	case primitive.Retry_DELAY_TYPE_RANDOM:
-		if maxDelay > 0 {
-			delay = randomDuration(base, maxDelay)
-		} else {
-			delay = base
-		}
+		// retry-go RandomDelay draws uniformly from [0, max_jitter).
+		delay = randomDuration(0, pbDuration(policy.GetMaxJitter()))
 	default:
 		delay = base
 	}
@@ -843,6 +964,27 @@ func findNode(dag *primitive.Dag, id string) *primitive.Dag_Node {
 	return nil
 }
 
+// FindNodeByExecutionID returns a node from the persisted Dag aggregate by its
+// immutable external identity. It traverses embedded sub-Dags as part of the
+// same aggregate; dag_ref children are separate persisted aggregates and are
+// intentionally not followed here.
+func FindNodeByExecutionID(dag *primitive.Dag, executionID string) *primitive.Dag_Node {
+	if dag == nil || executionID == "" {
+		return nil
+	}
+	for _, node := range dag.GetNodes() {
+		if node.GetExecutionId() == executionID {
+			return node
+		}
+		if sub := node.GetSubDag(); sub != nil {
+			if found := FindNodeByExecutionID(sub, executionID); found != nil {
+				return found
+			}
+		}
+	}
+	return nil
+}
+
 func isRunnableStatus(status primitive.Status) bool {
 	return status == primitive.Status_STATUS_PENDING || status == primitive.Status_STATUS_RETRY_WAIT
 }
@@ -875,6 +1017,19 @@ func ordinaryNodesTerminal(dag *primitive.Dag) bool {
 		}
 	}
 	return true
+}
+
+func hasOrdinaryTerminalFailure(dag *primitive.Dag) bool {
+	for _, node := range dag.GetNodes() {
+		if node.GetScheduling().GetAlwaysRun() {
+			continue
+		}
+		switch node.GetStatus() {
+		case primitive.Status_STATUS_FAILED, primitive.Status_STATUS_CANCELLED:
+			return true
+		}
+	}
+	return false
 }
 
 func skipPendingAlwaysRun(dag *primitive.Dag, now time.Time) {

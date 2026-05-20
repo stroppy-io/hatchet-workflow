@@ -25,6 +25,76 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Kind classifies what the component is inside topology.
+//
+// Agents are modeled as regular control-plane components that live on
+// machines, not as deployment provider output. Runtime commands are
+// delivered to an AGENT component and may target another component on
+// the same machine.
+type Topology_Component_Kind int32
+
+const (
+	Topology_Component_KIND_UNSPECIFIED Topology_Component_Kind = 0
+	Topology_Component_KIND_AGENT       Topology_Component_Kind = 1
+	Topology_Component_KIND_DATABASE    Topology_Component_Kind = 2
+	Topology_Component_KIND_MONITOR     Topology_Component_Kind = 3
+	Topology_Component_KIND_STROPPY     Topology_Component_Kind = 4
+	Topology_Component_KIND_PROXY       Topology_Component_Kind = 5
+	Topology_Component_KIND_COORDINATOR Topology_Component_Kind = 6
+	Topology_Component_KIND_ADDON       Topology_Component_Kind = 7
+)
+
+// Enum value maps for Topology_Component_Kind.
+var (
+	Topology_Component_Kind_name = map[int32]string{
+		0: "KIND_UNSPECIFIED",
+		1: "KIND_AGENT",
+		2: "KIND_DATABASE",
+		3: "KIND_MONITOR",
+		4: "KIND_STROPPY",
+		5: "KIND_PROXY",
+		6: "KIND_COORDINATOR",
+		7: "KIND_ADDON",
+	}
+	Topology_Component_Kind_value = map[string]int32{
+		"KIND_UNSPECIFIED": 0,
+		"KIND_AGENT":       1,
+		"KIND_DATABASE":    2,
+		"KIND_MONITOR":     3,
+		"KIND_STROPPY":     4,
+		"KIND_PROXY":       5,
+		"KIND_COORDINATOR": 6,
+		"KIND_ADDON":       7,
+	}
+)
+
+func (x Topology_Component_Kind) Enum() *Topology_Component_Kind {
+	p := new(Topology_Component_Kind)
+	*p = x
+	return p
+}
+
+func (x Topology_Component_Kind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Topology_Component_Kind) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_domain_topology_proto_enumTypes[0].Descriptor()
+}
+
+func (Topology_Component_Kind) Type() protoreflect.EnumType {
+	return &file_cloud_v1_domain_topology_proto_enumTypes[0]
+}
+
+func (x Topology_Component_Kind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Topology_Component_Kind.Descriptor instead.
+func (Topology_Component_Kind) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_topology_proto_rawDescGZIP(), []int{0, 0, 0}
+}
+
 // Kind is the interaction pattern on this edge.
 type Topology_Connection_Kind int32
 
@@ -77,11 +147,11 @@ func (x Topology_Connection_Kind) String() string {
 }
 
 func (Topology_Connection_Kind) Descriptor() protoreflect.EnumDescriptor {
-	return file_cloud_v1_domain_topology_proto_enumTypes[0].Descriptor()
+	return file_cloud_v1_domain_topology_proto_enumTypes[1].Descriptor()
 }
 
 func (Topology_Connection_Kind) Type() protoreflect.EnumType {
-	return &file_cloud_v1_domain_topology_proto_enumTypes[0]
+	return &file_cloud_v1_domain_topology_proto_enumTypes[1]
 }
 
 func (x Topology_Connection_Kind) Number() protoreflect.EnumNumber {
@@ -157,10 +227,11 @@ func (x *Topology) GetTags() *common.Tags {
 // It is a collection of configs and tags.
 // It is a reference to a deployment machine or addon.
 type Topology_Component struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Config        *render.Config         `protobuf:"bytes,2,opt,name=config,proto3" json:"config,omitempty"`
-	Tags          *common.Tags           `protobuf:"bytes,3,opt,name=tags,proto3" json:"tags,omitempty"`
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	Id            string                  `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Kind          Topology_Component_Kind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.domain.Topology_Component_Kind" json:"kind,omitempty"`
+	Config        *render.Config          `protobuf:"bytes,3,opt,name=config,proto3" json:"config,omitempty"`
+	Tags          *common.Tags            `protobuf:"bytes,4,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -202,6 +273,13 @@ func (x *Topology_Component) GetId() string {
 	return ""
 }
 
+func (x *Topology_Component) GetKind() Topology_Component_Kind {
+	if x != nil {
+		return x.Kind
+	}
+	return Topology_Component_KIND_UNSPECIFIED
+}
+
 func (x *Topology_Component) GetConfig() *render.Config {
 	if x != nil {
 		return x.Config
@@ -218,11 +296,17 @@ func (x *Topology_Component) GetTags() *common.Tags {
 
 type Topology_Machine struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the stable topology machine id.
+	//
+	// Deployment materializers must pass this id into provider resources
+	// and into the agent environment as STROPPY_MACHINE_ID.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// cores is VM vCPU count.
-	Cores uint32 `protobuf:"varint,1,opt,name=cores,proto3" json:"cores,omitempty"`
+	Cores uint32 `protobuf:"varint,2,opt,name=cores,proto3" json:"cores,omitempty"`
 	// memory_gb is VM RAM in GiB.
-	MemoryGb      uint64                `protobuf:"varint,2,opt,name=memory_gb,json=memoryGb,proto3" json:"memory_gb,omitempty"`
-	Components    []*Topology_Component `protobuf:"bytes,3,rep,name=components,proto3" json:"components,omitempty"`
+	MemoryGb      uint64                `protobuf:"varint,3,opt,name=memory_gb,json=memoryGb,proto3" json:"memory_gb,omitempty"`
+	Components    []*Topology_Component `protobuf:"bytes,4,rep,name=components,proto3" json:"components,omitempty"`
+	Tags          *common.Tags          `protobuf:"bytes,5,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -257,6 +341,13 @@ func (*Topology_Machine) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_domain_topology_proto_rawDescGZIP(), []int{0, 1}
 }
 
+func (x *Topology_Machine) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
 func (x *Topology_Machine) GetCores() uint32 {
 	if x != nil {
 		return x.Cores
@@ -274,6 +365,13 @@ func (x *Topology_Machine) GetMemoryGb() uint64 {
 func (x *Topology_Machine) GetComponents() []*Topology_Component {
 	if x != nil {
 		return x.Components
+	}
+	return nil
+}
+
+func (x *Topology_Machine) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
 	}
 	return nil
 }
@@ -375,22 +473,40 @@ var File_cloud_v1_domain_topology_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_topology_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/domain/topology.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a$cloud/v1/runtime/render/config.proto\x1a!cloud/v1/runtime/system/net.proto\x1a\x17validate/validate.proto\"\xdc\a\n" +
+	"\x1ecloud/v1/domain/topology.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a$cloud/v1/runtime/render/config.proto\x1a!cloud/v1/runtime/system/net.proto\x1a\x17validate/validate.proto\"\x89\n" +
+	"\n" +
 	"\bTopology\x12G\n" +
 	"\bmachines\x18\x02 \x03(\v2!.cloud.v1.domain.Topology.MachineB\b\xfaB\x05\x92\x01\x02\b\x01R\bmachines\x12P\n" +
 	"\vconnections\x18\x06 \x03(\v2$.cloud.v1.domain.Topology.ConnectionB\b\xfaB\x05\x92\x01\x02\b\x01R\vconnections\x12)\n" +
-	"\x04tags\x18\x03 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\x95\x01\n" +
+	"\x04tags\x18\x03 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\xfb\x02\n" +
 	"\tComponent\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12A\n" +
-	"\x06config\x18\x02 \x01(\v2\x1f.cloud.v1.runtime.render.ConfigB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06config\x12)\n" +
-	"\x04tags\x18\x03 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\x9d\x01\n" +
-	"\aMachine\x12\x1d\n" +
-	"\x05cores\x18\x01 \x01(\rB\a\xfaB\x04*\x02 \x00R\x05cores\x12$\n" +
-	"\tmemory_gb\x18\x02 \x01(\x04B\a\xfaB\x042\x02 \x00R\bmemoryGb\x12M\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12H\n" +
+	"\x04kind\x18\x02 \x01(\x0e2(.cloud.v1.domain.Topology.Component.KindB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04kind\x12A\n" +
+	"\x06config\x18\x03 \x01(\v2\x1f.cloud.v1.runtime.render.ConfigB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06config\x12)\n" +
+	"\x04tags\x18\x04 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"\x99\x01\n" +
+	"\x04Kind\x12\x14\n" +
+	"\x10KIND_UNSPECIFIED\x10\x00\x12\x0e\n" +
 	"\n" +
-	"components\x18\x03 \x03(\v2#.cloud.v1.domain.Topology.ComponentB\b\xfaB\x05\x92\x01\x02\b\x01R\n" +
-	"components\x1a\xd1\x03\n" +
+	"KIND_AGENT\x10\x01\x12\x11\n" +
+	"\rKIND_DATABASE\x10\x02\x12\x10\n" +
+	"\fKIND_MONITOR\x10\x03\x12\x10\n" +
+	"\fKIND_STROPPY\x10\x04\x12\x0e\n" +
+	"\n" +
+	"KIND_PROXY\x10\x05\x12\x14\n" +
+	"\x10KIND_COORDINATOR\x10\x06\x12\x0e\n" +
+	"\n" +
+	"KIND_ADDON\x10\a\x1a\xe4\x01\n" +
+	"\aMachine\x12\x1a\n" +
+	"\x02id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12\x1d\n" +
+	"\x05cores\x18\x02 \x01(\rB\a\xfaB\x04*\x02 \x00R\x05cores\x12$\n" +
+	"\tmemory_gb\x18\x03 \x01(\x04B\a\xfaB\x042\x02 \x00R\bmemoryGb\x12M\n" +
+	"\n" +
+	"components\x18\x04 \x03(\v2#.cloud.v1.domain.Topology.ComponentB\b\xfaB\x05\x92\x01\x02\b\x01R\n" +
+	"components\x12)\n" +
+	"\x04tags\x18\x05 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\xd1\x03\n" +
 	"\n" +
 	"Connection\x12\x1e\n" +
 	"\x04from\x18\x01 \x01(\tB\n" +
@@ -423,34 +539,37 @@ func file_cloud_v1_domain_topology_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_domain_topology_proto_rawDescData
 }
 
-var file_cloud_v1_domain_topology_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cloud_v1_domain_topology_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_cloud_v1_domain_topology_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_cloud_v1_domain_topology_proto_goTypes = []any{
-	(Topology_Connection_Kind)(0), // 0: cloud.v1.domain.Topology.Connection.Kind
-	(*Topology)(nil),              // 1: cloud.v1.domain.Topology
-	(*Topology_Component)(nil),    // 2: cloud.v1.domain.Topology.Component
-	(*Topology_Machine)(nil),      // 3: cloud.v1.domain.Topology.Machine
-	(*Topology_Connection)(nil),   // 4: cloud.v1.domain.Topology.Connection
-	(*common.Tags)(nil),           // 5: cloud.v1.common.Tags
-	(*render.Config)(nil),         // 6: cloud.v1.runtime.render.Config
-	(system.Net_Protocol)(0),      // 7: cloud.v1.runtime.system.Net.Protocol
-	(system.Net_Mode)(0),          // 8: cloud.v1.runtime.system.Net.Mode
+	(Topology_Component_Kind)(0),  // 0: cloud.v1.domain.Topology.Component.Kind
+	(Topology_Connection_Kind)(0), // 1: cloud.v1.domain.Topology.Connection.Kind
+	(*Topology)(nil),              // 2: cloud.v1.domain.Topology
+	(*Topology_Component)(nil),    // 3: cloud.v1.domain.Topology.Component
+	(*Topology_Machine)(nil),      // 4: cloud.v1.domain.Topology.Machine
+	(*Topology_Connection)(nil),   // 5: cloud.v1.domain.Topology.Connection
+	(*common.Tags)(nil),           // 6: cloud.v1.common.Tags
+	(*render.Config)(nil),         // 7: cloud.v1.runtime.render.Config
+	(system.Net_Protocol)(0),      // 8: cloud.v1.runtime.system.Net.Protocol
+	(system.Net_Mode)(0),          // 9: cloud.v1.runtime.system.Net.Mode
 }
 var file_cloud_v1_domain_topology_proto_depIdxs = []int32{
-	3, // 0: cloud.v1.domain.Topology.machines:type_name -> cloud.v1.domain.Topology.Machine
-	4, // 1: cloud.v1.domain.Topology.connections:type_name -> cloud.v1.domain.Topology.Connection
-	5, // 2: cloud.v1.domain.Topology.tags:type_name -> cloud.v1.common.Tags
-	6, // 3: cloud.v1.domain.Topology.Component.config:type_name -> cloud.v1.runtime.render.Config
-	5, // 4: cloud.v1.domain.Topology.Component.tags:type_name -> cloud.v1.common.Tags
-	2, // 5: cloud.v1.domain.Topology.Machine.components:type_name -> cloud.v1.domain.Topology.Component
-	7, // 6: cloud.v1.domain.Topology.Connection.protocol:type_name -> cloud.v1.runtime.system.Net.Protocol
-	8, // 7: cloud.v1.domain.Topology.Connection.mode:type_name -> cloud.v1.runtime.system.Net.Mode
-	0, // 8: cloud.v1.domain.Topology.Connection.kind:type_name -> cloud.v1.domain.Topology.Connection.Kind
-	9, // [9:9] is the sub-list for method output_type
-	9, // [9:9] is the sub-list for method input_type
-	9, // [9:9] is the sub-list for extension type_name
-	9, // [9:9] is the sub-list for extension extendee
-	0, // [0:9] is the sub-list for field type_name
+	4,  // 0: cloud.v1.domain.Topology.machines:type_name -> cloud.v1.domain.Topology.Machine
+	5,  // 1: cloud.v1.domain.Topology.connections:type_name -> cloud.v1.domain.Topology.Connection
+	6,  // 2: cloud.v1.domain.Topology.tags:type_name -> cloud.v1.common.Tags
+	0,  // 3: cloud.v1.domain.Topology.Component.kind:type_name -> cloud.v1.domain.Topology.Component.Kind
+	7,  // 4: cloud.v1.domain.Topology.Component.config:type_name -> cloud.v1.runtime.render.Config
+	6,  // 5: cloud.v1.domain.Topology.Component.tags:type_name -> cloud.v1.common.Tags
+	3,  // 6: cloud.v1.domain.Topology.Machine.components:type_name -> cloud.v1.domain.Topology.Component
+	6,  // 7: cloud.v1.domain.Topology.Machine.tags:type_name -> cloud.v1.common.Tags
+	8,  // 8: cloud.v1.domain.Topology.Connection.protocol:type_name -> cloud.v1.runtime.system.Net.Protocol
+	9,  // 9: cloud.v1.domain.Topology.Connection.mode:type_name -> cloud.v1.runtime.system.Net.Mode
+	1,  // 10: cloud.v1.domain.Topology.Connection.kind:type_name -> cloud.v1.domain.Topology.Connection.Kind
+	11, // [11:11] is the sub-list for method output_type
+	11, // [11:11] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_domain_topology_proto_init() }
@@ -463,7 +582,7 @@ func file_cloud_v1_domain_topology_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_domain_topology_proto_rawDesc), len(file_cloud_v1_domain_topology_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,

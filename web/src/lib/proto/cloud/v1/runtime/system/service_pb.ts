@@ -98,7 +98,7 @@ export type Service_Systemd = Message<"cloud.v1.runtime.system.Service.Systemd">
   /**
    *
    * drop_in_files contains files usually placed under
-   * /etc/systemd/system/<unit>.d/*.conf.
+   * /etc/systemd/system/<unit>.d/ drop-in files.
    *
    * @generated from field: repeated cloud.v1.runtime.system.File drop_in_files = 4;
    */
@@ -158,7 +158,7 @@ export type Service_SystemdJson = {
   /**
    *
    * drop_in_files contains files usually placed under
-   * /etc/systemd/system/<unit>.d/*.conf.
+   * /etc/systemd/system/<unit>.d/ drop-in files.
    *
    * @generated from field: repeated cloud.v1.runtime.system.File drop_in_files = 4;
    */

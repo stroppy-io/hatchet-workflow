@@ -643,7 +643,7 @@ var SuiteRunsTestRuns = schema.HasMany[
 ](
 	SuiteRunsAliasName,
 	TestRunsRef,
-	TestRunColumnUserId,
+	TestRunColumnSuiteRunId,
 	SuiteRunsColumnId,
 )
 

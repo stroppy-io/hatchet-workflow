@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/models/common.proto";
+import "cloud/v1/runtime/agent/agent.proto";
+import "goplain/goplain.proto";
+import "google/protobuf/timestamp.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+/* Agent is a persisted runtime agent registration bound to a topology machine. */
+message Agent {
+    message List {repeated Agent agents = 1;}
+
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "agents"
+        indexes: [
+            {name: "agents_tenant_machine_idx", columns: ["tenant_id", "machine_id"]},
+            {name: "agents_status_seen_idx", columns: ["status", "last_seen_at"]}
+        ]
+    };
+
+    AgentId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message.required = true
+    ];
+    models.Own owned = 2 [(goplain.field).embed = true];
+    models.Timestamps timestamps = 3 [(goplain.field).embed = true];
+
+    /* machine_id references cloud.v1.domain.Topology.Machine.id. */
+    string machine_id = 4 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /* agent_component_id references a Topology.Component with kind=KIND_AGENT. */
+    string agent_component_id = 5 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    runtime.agent.AgentStatus status = 6 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    string host = 7 [(validate.rules).string.max_len = 255];
+    uint32 port = 8 [(validate.rules).uint32.lte = 65535];
+    string version = 9 [(validate.rules).string.max_len = 128];
+    string boot_id = 10 [(validate.rules).string.max_len = 128];
+    google.protobuf.Timestamp registered_at = 11;
+    google.protobuf.Timestamp last_seen_at = 12;
+    google.protobuf.Timestamp lease_expires_at = 13;
+    string error = 14 [(validate.rules).string.max_len = 8192];
+
+    /* runtime stores the full runtime.agent.Agent snapshot as JSONB. */
+    runtime.agent.Agent runtime = 20 [
+        (goplain.field).serialize = true,
+        (ratel.column).constraints.default_value = "'{}'::jsonb"
+    ];
+}

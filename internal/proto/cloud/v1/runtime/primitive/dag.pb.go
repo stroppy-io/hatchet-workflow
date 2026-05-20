@@ -132,6 +132,102 @@ func (Dag_Scheduling_OnNodeFailure) EnumDescriptor() ([]byte, []int) {
 
 // Dag is a stateful execution snapshot for a directed acyclic graph.
 //
+// Architecture decision: everything executable is represented as a Dag.
+//
+// The runtime does not know about domain entities such as suites, tests,
+// deployments, Terraform runs, machines, or agents. Domain layers compile
+// those entities into Dag payloads, and the runtime only executes nodes,
+// edges, retry policy, cancellation, failure propagation, and persistence
+// snapshots.
+//
+// Common shapes:
+//
+// 1. Suite run
+//
+// A suite run is a top-level persisted Dag whose nodes represent the
+// suite workflow. Test runs may be embedded when they are small and must
+// be part of the same persisted snapshot, or referenced when they need
+// their own lifecycle, processor lease, admission policy, or independent
+// observability.
+//
+// Example:
+//
+// Dag(id = suite_run_dag)
+// node prepare_environment: task_state
+// node test_a: dag_ref(test_a_dag)
+// node test_b: dag_ref(test_b_dag)
+// node cleanup: task_state, always_run = true
+//
+// edges:
+// prepare_environment -> test_a
+// prepare_environment -> test_b
+// test_a -> cleanup
+// test_b -> cleanup
+//
+// 2. Test run
+//
+// A test run is also a Dag. It can contain provisioning, configuration,
+// workload execution, result collection, and cleanup. If a part must be
+// executed as an ordered command stream on an agent, that part is modeled
+// as an embedded command Dag.
+//
+// Example:
+//
+// Dag(id = test_run_dag)
+// node render_config: task_state
+// node terraform_apply: task_state
+// node install_and_run: sub_dag(commands_dag)
+// node collect_results: task_state
+// node terraform_destroy: task_state, always_run = true
+//
+// edges:
+// render_config -> terraform_apply
+// terraform_apply -> install_and_run
+// install_and_run -> collect_results
+// terraform_apply -> terraform_destroy
+// install_and_run -> terraform_destroy
+//
+// 3. Agent command queue
+//
+// There is no separate durable agent command queue table. A command queue
+// is an embedded Dag: the parent node owns a sub-Dag, and each command is
+// a task node inside that sub-Dag. The task input contains a typed
+// runtime.agent.Command wrapped in google.protobuf.Any. Node status,
+// retry state, failures, timestamps, and logs are correlated through the
+// node execution_id.
+//
+// Example:
+//
+// node install_and_run: sub_dag(commands_dag)
+//
+// commands_dag:
+// node install_packages:
+// execution_id = cmd_install_packages
+// task_state.handler_name = "agent.command"
+// task_state.input = Any(runtime.agent.Command)
+//
+// node render_service:
+// execution_id = cmd_render_service
+// task_state.handler_name = "agent.command"
+// task_state.input = Any(runtime.agent.Command)
+//
+// node start_service:
+// execution_id = cmd_start_service
+// task_state.handler_name = "agent.command"
+// task_state.input = Any(runtime.agent.Command)
+//
+// edges:
+// install_packages -> render_service
+// render_service -> start_service
+//
+// The agent API leases and reports a command by:
+//
+// DagId + Node.execution_id
+//
+// It must not use structural paths. Node.id is local to one Dag and is
+// used by edges. Node.execution_id is the stable external identity inside
+// the persisted top-level Dag aggregate, including embedded sub-Dags.
+//
 // The scheduler loads and saves the whole Dag aggregate as one unit. A
 // top-level Dag is persisted in the dags table; a sub-Dag is embedded in its
 // owning node and is not persisted as a separate database row. A dag_ref node
@@ -392,7 +488,7 @@ func (x *Dag_Failure) GetMetadata() map[string]string {
 // Node is a single schedulable unit inside a Dag.
 type Dag_Node struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// id is unique within this Dag and is the address used by edges.
+	// id is unique within this Dag and is the local address used by edges in this Dag.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// status is the current node execution state.
 	Status Status `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.runtime.primitive.Status" json:"status,omitempty"`
@@ -400,6 +496,15 @@ type Dag_Node struct {
 	Scheduling *Dag_Node_Scheduling `protobuf:"bytes,3,opt,name=scheduling,proto3" json:"scheduling,omitempty"`
 	// metadata contains node labels and executor-specific annotations.
 	Metadata map[string]string `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// execution_id is the immutable external identity of this node inside
+	// the persisted top-level Dag aggregate.
+	//
+	// Unlike id, it is not a graph-local edge address. It must remain
+	// stable when a node is moved into or out of an embedded sub-Dag, and
+	// it must be unique across the whole persisted Dag payload, including
+	// embedded sub-Dags. External APIs, leases, reports, and logs should
+	// use execution_id instead of a structural path.
+	ExecutionId string `protobuf:"bytes,5,opt,name=execution_id,json=executionId,proto3" json:"execution_id,omitempty"`
 	// variant selects whether this node executes a task, an embedded Dag, or a persisted Dag ref.
 	// Types that are valid to be assigned to Variant:
 	//
@@ -469,6 +574,13 @@ func (x *Dag_Node) GetMetadata() map[string]string {
 		return x.Metadata
 	}
 	return nil
+}
+
+func (x *Dag_Node) GetExecutionId() string {
+	if x != nil {
+		return x.ExecutionId
+	}
+	return ""
 }
 
 func (x *Dag_Node) GetVariant() isDag_Node_Variant {
@@ -1096,7 +1208,7 @@ var File_cloud_v1_runtime_primitive_dag_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_runtime_primitive_dag_proto_rawDesc = "" +
 	"\n" +
-	"$cloud/v1/runtime/primitive/dag.proto\x12\x1acloud.v1.runtime.primitive\x1a&cloud/v1/runtime/primitive/retry.proto\x1a'cloud/v1/runtime/primitive/status.proto\x1a\x19google/protobuf/any.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xa4\x1c\n" +
+	"$cloud/v1/runtime/primitive/dag.proto\x12\x1acloud.v1.runtime.primitive\x1a&cloud/v1/runtime/primitive/retry.proto\x1a'cloud/v1/runtime/primitive/status.proto\x1a\x19google/protobuf/any.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xd3\x1c\n" +
 	"\x03Dag\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12J\n" +
@@ -1122,14 +1234,16 @@ const file_cloud_v1_runtime_primitive_dag_proto_rawDesc = "" +
 	"\bmetadata\x18\b \x03(\v25.cloud.v1.runtime.primitive.Dag.Failure.MetadataEntryB\b\xfaB\x05\x9a\x01\x02\x10@R\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a\xf7\f\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a\xa6\r\n" +
 	"\x04Node\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12H\n" +
 	"\x06status\x18\x02 \x01(\x0e2\".cloud.v1.runtime.primitive.StatusB\f\xfaB\t\x82\x01\x06\x10\x01 \x00 \aR\x06status\x12Y\n" +
 	"\n" +
 	"scheduling\x18\x03 \x01(\v2/.cloud.v1.runtime.primitive.Dag.Node.SchedulingB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
 	"scheduling\x12N\n" +
-	"\bmetadata\x18\x04 \x03(\v22.cloud.v1.runtime.primitive.Dag.Node.MetadataEntryR\bmetadata\x12Y\n" +
+	"\bmetadata\x18\x04 \x03(\v22.cloud.v1.runtime.primitive.Dag.Node.MetadataEntryR\bmetadata\x12-\n" +
+	"\fexecution_id\x18\x05 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\vexecutionId\x12Y\n" +
 	"\n" +
 	"task_state\x18\n" +
 	" \x01(\v2..cloud.v1.runtime.primitive.Dag.Node.TaskStateB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\ttaskState\x12D\n" +

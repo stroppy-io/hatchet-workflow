@@ -8,7 +8,6 @@ import type { Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_goplain_goplain } from "../../../goplain/goplain_pb.ts";
 import { file_ratelproto_ratelproto } from "../../../ratelproto/ratelproto_pb.ts";
-import { file_test_full_showcase } from "../../../test/full/showcase_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -16,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/common.proto.
  */
 export const file_cloud_v1_models_common: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS9tb2RlbHMvY29tbW9uLnByb3RvEg9jbG91ZC52MS5tb2RlbHMiKQoEVWxpZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIi4KCUFjY291bnRJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIi0KCFRlbmFudElkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBAgBEAEiMwoOVGVuYW50TWVtYmVySWQSFwoFdmFsdWUYASABKAlCCPpCBXIDmAEaOgiCph0ECAEQASI1ChBEYXRhYmFzZVByZXNldElkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBBABCAEiNQoQV29ya2xvYWRQcmVzZXRJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIi4KCVRlc3RSdW5JZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIiwKB1N1aXRlSWQSFwoFdmFsdWUYASABKAlCCPpCBXIDmAEaOgiCph0ECAEQASIvCgpTdWl0ZVJ1bklkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBAgBEAEiKgoFRGFnSWQSFwoFdmFsdWUYASABKAlCCPpCBXIDmAEaOgiCph0ECAEQASL4AQoKVGltZXN0YW1wcxJHCgpjcmVhdGVkX2F0GAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIX+kIHsgEEOAEIAZq1GAkSBxoFbm93KCkSRwoKdXBkYXRlZF9hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCF/pCB7IBBAgBOAGatRgJEgcaBW5vdygpEkkKCmRlbGV0ZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQhT6QgWyAQI4AZq1GAgSBhoEbnVsbEgAiAEBQg0KC19kZWxldGVkX2F0Im4KBkVudGl0eRIrCgJpZBgBIAEoCzIVLmNsb3VkLnYxLm1vZGVscy5VbGlkQgiatRgEEgIQARI3Cgp0aW1lc3RhbXBzGAMgASgLMhsuY2xvdWQudjEubW9kZWxzLlRpbWVzdGFtcHNCBoKmHQIgASKgAQoDT3duEkwKEG93bmVyX2FjY291bnRfaWQYAiABKAsyGi5jbG91ZC52MS5tb2RlbHMuQWNjb3VudElkQhaatRgSEhAyCGFjY291bnRzOgJpZEABEksKCXRlbmFudF9pZBgDIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEId+kIFigECEAGatRgREg8yB3RlbmFudHM6AmlkQAEimQUKC0NvbW1vblF1ZXJ5EjMKBmZpbHRlchgBIAMoCzIjLmNsb3VkLnYxLm1vZGVscy5Db21tb25RdWVyeS5GaWx0ZXISLwoEc29ydBgCIAMoCzIhLmNsb3VkLnYxLm1vZGVscy5Db21tb25RdWVyeS5Tb3J0Ei8KBHBhZ2UYAyABKAsyIS5jbG91ZC52MS5tb2RlbHMuQ29tbW9uUXVlcnkuUGFnZRqjAQoEU29ydBIWCgVmaWVsZBgBIAEoCUIH+kIEcgIQARJICglkaXJlY3Rpb24YAiABKA4yKy5jbG91ZC52MS5tb2RlbHMuQ29tbW9uUXVlcnkuU29ydC5EaXJlY3Rpb25CCPpCBYIBAhABIjkKCURpcmVjdGlvbhIZChVESVJFQ1RJT05fVU5TUEVDSUZJRUQQABIHCgNBU0MQARIICgRERVNDEAIanQIKBkZpbHRlchIWCgVmaWVsZBgBIAEoCUIH+kIEcgIQARJKCghvcGVyYXRvchgCIAEoDjIsLmNsb3VkLnYxLm1vZGVscy5Db21tb25RdWVyeS5GaWx0ZXIuT3BlcmF0b3JCCvpCB4IBBBABIAASDgoGdmFsdWVzGAMgAygJIp4BCghPcGVyYXRvchIYChRPUEVSQVRPUl9VTlNQRUNJRklFRBAAEgYKAkVREAESBwoDTkVREAISBgoCR1QQAxIHCgNHVEUQBBIGCgJMVBAFEgcKA0xURRAGEggKBExJS0UQBxIJCgVJTElLRRAIEgYKAklOEAkSCgoGTk9UX0lOEAoSCwoHSVNfTlVMTBALEg8KC0lTX05PVF9OVUxMEAwaLQoEUGFnZRIWCgRzaXplGAEgASgNQgj6QgUqAxjoBxINCgV0b2tlbhgCIAEoCSJOCghQYWdlSW5mbxISCgpuZXh0X3Rva2VuGAEgASgJEhAKCGhhc19tb3JlGAIgASgIEhIKBXRvdGFsGAMgASgESACIAQFCCAoGX3RvdGFsQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_google_protobuf_timestamp, file_goplain_goplain, file_ratelproto_ratelproto, file_test_full_showcase, file_validate_validate]);
+  fileDesc("ChxjbG91ZC92MS9tb2RlbHMvY29tbW9uLnByb3RvEg9jbG91ZC52MS5tb2RlbHMiKQoEVWxpZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIi4KCUFjY291bnRJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQQAQgBIi0KCFRlbmFudElkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBAgBEAEiMwoOVGVuYW50TWVtYmVySWQSFwoFdmFsdWUYASABKAlCCPpCBXIDmAEaOgiCph0ECAEQASI1ChBEYXRhYmFzZVByZXNldElkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBAgBEAEiNQoQV29ya2xvYWRQcmVzZXRJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQQAQgBIi4KCVRlc3RSdW5JZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIiwKB1N1aXRlSWQSFwoFdmFsdWUYASABKAlCCPpCBXIDmAEaOgiCph0ECAEQASIvCgpTdWl0ZVJ1bklkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBAgBEAEiKgoFRGFnSWQSFwoFdmFsdWUYASABKAlCCPpCBXIDmAEaOgiCph0ECAEQASIsCgdBZ2VudElkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBBABCAEi+AEKClRpbWVzdGFtcHMSRwoKY3JlYXRlZF9hdBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCF/pCB7IBBAgBOAGatRgJEgcaBW5vdygpEkcKCnVwZGF0ZWRfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQhf6QgeyAQQIATgBmrUYCRIHGgVub3coKRJJCgpkZWxldGVkX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIU+kIFsgECOAGatRgIEgYaBG51bGxIAIgBAUINCgtfZGVsZXRlZF9hdCJuCgZFbnRpdHkSKwoCaWQYASABKAsyFS5jbG91ZC52MS5tb2RlbHMuVWxpZEIImrUYBBICEAESNwoKdGltZXN0YW1wcxgDIAEoCzIbLmNsb3VkLnYxLm1vZGVscy5UaW1lc3RhbXBzQgaCph0CIAEioAEKA093bhJMChBvd25lcl9hY2NvdW50X2lkGAIgASgLMhouY2xvdWQudjEubW9kZWxzLkFjY291bnRJZEIWmrUYEhIQMghhY2NvdW50czoCaWRAARJLCgl0ZW5hbnRfaWQYAyABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCHfpCBYoBAhABmrUYERIPMgd0ZW5hbnRzOgJpZEABIpkFCgtDb21tb25RdWVyeRIzCgZmaWx0ZXIYASADKAsyIy5jbG91ZC52MS5tb2RlbHMuQ29tbW9uUXVlcnkuRmlsdGVyEi8KBHNvcnQYAiADKAsyIS5jbG91ZC52MS5tb2RlbHMuQ29tbW9uUXVlcnkuU29ydBIvCgRwYWdlGAMgASgLMiEuY2xvdWQudjEubW9kZWxzLkNvbW1vblF1ZXJ5LlBhZ2UaowEKBFNvcnQSFgoFZmllbGQYASABKAlCB/pCBHICEAESSAoJZGlyZWN0aW9uGAIgASgOMisuY2xvdWQudjEubW9kZWxzLkNvbW1vblF1ZXJ5LlNvcnQuRGlyZWN0aW9uQgj6QgWCAQIQASI5CglEaXJlY3Rpb24SGQoVRElSRUNUSU9OX1VOU1BFQ0lGSUVEEAASBwoDQVNDEAESCAoEREVTQxACGp0CCgZGaWx0ZXISFgoFZmllbGQYASABKAlCB/pCBHICEAESSgoIb3BlcmF0b3IYAiABKA4yLC5jbG91ZC52MS5tb2RlbHMuQ29tbW9uUXVlcnkuRmlsdGVyLk9wZXJhdG9yQgr6QgeCAQQgABABEg4KBnZhbHVlcxgDIAMoCSKeAQoIT3BlcmF0b3ISGAoUT1BFUkFUT1JfVU5TUEVDSUZJRUQQABIGCgJFURABEgcKA05FURACEgYKAkdUEAMSBwoDR1RFEAQSBgoCTFQQBRIHCgNMVEUQBhIICgRMSUtFEAcSCQoFSUxJS0UQCBIGCgJJThAJEgoKBk5PVF9JThAKEgsKB0lTX05VTEwQCxIPCgtJU19OT1RfTlVMTBAMGi0KBFBhZ2USFgoEc2l6ZRgBIAEoDUII+kIFKgMY6AcSDQoFdG9rZW4YAiABKAkiTgoIUGFnZUluZm8SEgoKbmV4dF90b2tlbhgBIAEoCRIQCghoYXNfbW9yZRgCIAEoCBISCgV0b3RhbBgDIAEoBEgAiAEBQggKBl90b3RhbEJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9tb2RlbHNiBnByb3RvMw", [file_google_protobuf_timestamp, file_goplain_goplain, file_ratelproto_ratelproto, file_validate_validate]);
 
 /**
  * @generated from message cloud.v1.models.Ulid
@@ -309,6 +308,35 @@ export const DagIdSchema: GenMessage<DagId, {jsonType: DagIdJson, validType: Dag
   messageDesc(file_cloud_v1_models_common, 9);
 
 /**
+ * @generated from message cloud.v1.models.AgentId
+ */
+export type AgentId = Message<"cloud.v1.models.AgentId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * @generated from message cloud.v1.models.AgentId
+ */
+export type AgentIdJson = {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value?: string;
+};
+
+export type AgentIdValid = AgentId;
+
+/**
+ * Describes the message cloud.v1.models.AgentId.
+ * Use `create(AgentIdSchema)` to create a new message.
+ */
+export const AgentIdSchema: GenMessage<AgentId, {jsonType: AgentIdJson, validType: AgentIdValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_common, 10);
+
+/**
  * Timestamps — universal audit fields. Imported by both system and domain
  * layers so neither depends on the other. 
  *
@@ -361,7 +389,7 @@ export type TimestampsValid = Timestamps;
  * Use `create(TimestampsSchema)` to create a new message.
  */
 export const TimestampsSchema: GenMessage<Timestamps, {jsonType: TimestampsJson, validType: TimestampsValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_common, 10);
+  messageDesc(file_cloud_v1_models_common, 11);
 
 /**
  * @generated from message cloud.v1.models.Entity
@@ -400,7 +428,7 @@ export type EntityValid = Entity;
  * Use `create(EntitySchema)` to create a new message.
  */
 export const EntitySchema: GenMessage<Entity, {jsonType: EntityJson, validType: EntityValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_common, 11);
+  messageDesc(file_cloud_v1_models_common, 12);
 
 /**
  * @generated from message cloud.v1.models.Own
@@ -439,7 +467,7 @@ export type OwnValid = Own;
  * Use `create(OwnSchema)` to create a new message.
  */
 export const OwnSchema: GenMessage<Own, {jsonType: OwnJson, validType: OwnValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_common, 12);
+  messageDesc(file_cloud_v1_models_common, 13);
 
 /**
  * CommonQuery — reusable list query: filter + sort + cursor pagination.
@@ -498,7 +526,7 @@ export type CommonQueryValid = CommonQuery;
  * Use `create(CommonQuerySchema)` to create a new message.
  */
 export const CommonQuerySchema: GenMessage<CommonQuery, {jsonType: CommonQueryJson, validType: CommonQueryValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_common, 13);
+  messageDesc(file_cloud_v1_models_common, 14);
 
 /**
  * @generated from message cloud.v1.models.CommonQuery.Sort
@@ -537,7 +565,7 @@ export type CommonQuery_SortValid = CommonQuery_Sort;
  * Use `create(CommonQuery_SortSchema)` to create a new message.
  */
 export const CommonQuery_SortSchema: GenMessage<CommonQuery_Sort, {jsonType: CommonQuery_SortJson, validType: CommonQuery_SortValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_common, 13, 0);
+  messageDesc(file_cloud_v1_models_common, 14, 0);
 
 /**
  * @generated from enum cloud.v1.models.CommonQuery.Sort.Direction
@@ -568,7 +596,7 @@ export type CommonQuery_Sort_DirectionJson = "DIRECTION_UNSPECIFIED" | "ASC" | "
  * Describes the enum cloud.v1.models.CommonQuery.Sort.Direction.
  */
 export const CommonQuery_Sort_DirectionSchema: GenEnum<CommonQuery_Sort_Direction, CommonQuery_Sort_DirectionJson> = /*@__PURE__*/
-  enumDesc(file_cloud_v1_models_common, 13, 0, 0);
+  enumDesc(file_cloud_v1_models_common, 14, 0, 0);
 
 /**
  * Filter — one predicate over a single field. Combined with other
@@ -631,7 +659,7 @@ export type CommonQuery_FilterValid = CommonQuery_Filter;
  * Use `create(CommonQuery_FilterSchema)` to create a new message.
  */
 export const CommonQuery_FilterSchema: GenMessage<CommonQuery_Filter, {jsonType: CommonQuery_FilterJson, validType: CommonQuery_FilterValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_common, 13, 1);
+  messageDesc(file_cloud_v1_models_common, 14, 1);
 
 /**
  * @generated from enum cloud.v1.models.CommonQuery.Filter.Operator
@@ -736,7 +764,7 @@ export type CommonQuery_Filter_OperatorJson = "OPERATOR_UNSPECIFIED" | "EQ" | "N
  * Describes the enum cloud.v1.models.CommonQuery.Filter.Operator.
  */
 export const CommonQuery_Filter_OperatorSchema: GenEnum<CommonQuery_Filter_Operator, CommonQuery_Filter_OperatorJson> = /*@__PURE__*/
-  enumDesc(file_cloud_v1_models_common, 13, 1, 0);
+  enumDesc(file_cloud_v1_models_common, 14, 1, 0);
 
 /**
  * Page — cursor-based pagination request. 
@@ -787,7 +815,7 @@ export type CommonQuery_PageValid = CommonQuery_Page;
  * Use `create(CommonQuery_PageSchema)` to create a new message.
  */
 export const CommonQuery_PageSchema: GenMessage<CommonQuery_Page, {jsonType: CommonQuery_PageJson, validType: CommonQuery_PageValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_common, 13, 2);
+  messageDesc(file_cloud_v1_models_common, 14, 2);
 
 /**
  * PageInfo — pagination metadata returned alongside a list result.
@@ -856,5 +884,5 @@ export type PageInfoValid = PageInfo;
  * Use `create(PageInfoSchema)` to create a new message.
  */
 export const PageInfoSchema: GenMessage<PageInfo, {jsonType: PageInfoJson, validType: PageInfoValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_common, 14);
+  messageDesc(file_cloud_v1_models_common, 15);
 

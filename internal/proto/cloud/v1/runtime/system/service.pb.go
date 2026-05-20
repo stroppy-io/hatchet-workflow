@@ -230,7 +230,7 @@ type Service_Systemd struct {
 	// The file content is already rendered and can be previewed or overridden before apply.
 	UnitFile *File `protobuf:"bytes,3,opt,name=unit_file,json=unitFile,proto3" json:"unit_file,omitempty"`
 	// drop_in_files contains files usually placed under
-	// /etc/systemd/system/<unit>.d/*.conf.
+	// /etc/systemd/system/<unit>.d/ drop-in files.
 	DropInFiles []*File `protobuf:"bytes,4,rep,name=drop_in_files,json=dropInFiles,proto3" json:"drop_in_files,omitempty"`
 	// desired_state is persistent enablement state requested after files are applied.
 	DesiredState Service_Systemd_DesiredState `protobuf:"varint,5,opt,name=desired_state,json=desiredState,proto3,enum=cloud.v1.runtime.system.Service_Systemd_DesiredState" json:"desired_state,omitempty"`

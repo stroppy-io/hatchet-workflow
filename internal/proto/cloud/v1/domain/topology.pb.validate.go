@@ -290,6 +290,28 @@ func (m *Topology_Component) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if _, ok := _Topology_Component_Kind_NotInLookup[m.GetKind()]; ok {
+		err := Topology_ComponentValidationError{
+			field:  "Kind",
+			reason: "value must not be in list [KIND_UNSPECIFIED]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := Topology_Component_Kind_name[int32(m.GetKind())]; !ok {
+		err := Topology_ComponentValidationError{
+			field:  "Kind",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if m.GetConfig() == nil {
 		err := Topology_ComponentValidationError{
 			field:  "Config",
@@ -439,6 +461,10 @@ var _ interface {
 	ErrorName() string
 } = Topology_ComponentValidationError{}
 
+var _Topology_Component_Kind_NotInLookup = map[Topology_Component_Kind]struct{}{
+	0: {},
+}
+
 // Validate checks the field values on Topology_Machine with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -460,6 +486,17 @@ func (m *Topology_Machine) validate(all bool) error {
 	}
 
 	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 128 {
+		err := Topology_MachineValidationError{
+			field:  "Id",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if m.GetCores() <= 0 {
 		err := Topology_MachineValidationError{
@@ -526,6 +563,35 @@ func (m *Topology_Machine) validate(all bool) error {
 			}
 		}
 
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Topology_MachineValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Topology_MachineValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Topology_MachineValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	if len(errors) > 0 {

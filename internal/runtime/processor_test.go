@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -10,6 +11,21 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+type failingListStorage struct{}
+
+func (failingListStorage) ListDagsByStatus(context.Context, []primitive.Status) ([]*primitive.Dag, error) {
+	return nil, errors.New("list boom")
+}
+
+func (failingListStorage) SaveDag(context.Context, *primitive.Dag) error { return nil }
+
+func TestProcessorStartReturnsStorageError(t *testing.T) {
+	p := NewDagProcessor(failingListStorage{}, NewTaskRegistry())
+	if err := p.Start(context.Background()); err == nil {
+		t.Fatal("Start() must propagate ListDagsByStatus error")
+	}
+}
 
 type memoryProcessorStorage struct {
 	mu   sync.Mutex
@@ -259,4 +275,30 @@ func TestProcessorStartIdempotent(t *testing.T) {
 		t.Fatalf("second Start() error = %v", err)
 	}
 	p.Stop()
+}
+
+func TestProcessorAddDagRejectsNilAndInvalid(t *testing.T) {
+	p := NewDagProcessor(newMemoryProcessorStorage(), NewTaskRegistry())
+
+	if err := p.AddDag(context.Background(), nil); err == nil {
+		t.Fatal("AddDag(nil) must error")
+	}
+	bad := testDag("bad", testNode(t, "a", "x", nil))
+	bad.Edges = []*primitive.Dag_Edge{{Id: "e", Source: "a", Target: "ghost"}}
+	if err := p.AddDag(context.Background(), bad); err == nil {
+		t.Fatal("AddDag with invalid dag must error")
+	}
+}
+
+func TestProcessorProcessAllRemovesTerminalDag(t *testing.T) {
+	p := NewDagProcessor(newMemoryProcessorStorage(), NewTaskRegistry())
+	done := testDag("term", testNode(t, "a", "x", nil))
+	done.Status = primitive.Status_STATUS_COMPLETED
+	p.dags.Set("term", done)
+
+	p.processAll(context.Background())
+
+	if _, ok := p.dags.Get("term"); ok {
+		t.Fatal("terminal dag must be dropped from the active set")
+	}
 }

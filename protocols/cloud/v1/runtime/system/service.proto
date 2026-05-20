@@ -52,7 +52,7 @@ message Service {
         File unit_file = 3 [(validate.rules).message.required = true];
         /*
             drop_in_files contains files usually placed under
-            /etc/systemd/system/<unit>.d/*.conf.
+            /etc/systemd/system/<unit>.d/ drop-in files.
          */
         repeated File drop_in_files = 4 [(validate.rules).repeated.max_items = 128];
 

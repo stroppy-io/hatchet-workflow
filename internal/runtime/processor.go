@@ -3,6 +3,7 @@ package runtime
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -176,6 +177,13 @@ func (p *DagProcessor) Start(ctx context.Context) error {
 }
 
 func (p *DagProcessor) AddDag(ctx context.Context, dag *primitive.Dag) error {
+	if dag == nil {
+		return fmt.Errorf("dag is nil")
+	}
+	normalizeDag(dag)
+	if err := ValidateDag(dag); err != nil {
+		return err
+	}
 	id := dag.GetId()
 	p.mu.Lock()
 	if _, ok := p.active[id]; ok {

@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/domain/topology.proto.
  */
 export const file_cloud_v1_domain_topology: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9kb21haW4vdG9wb2xvZ3kucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiLqBgoIVG9wb2xvZ3kSPQoIbWFjaGluZXMYAiADKAsyIS5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3kuTWFjaGluZUII+kIFkgECCAESQwoLY29ubmVjdGlvbnMYBiADKAsyJC5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3kuQ29ubmVjdGlvbkII+kIFkgECCAESIwoEdGFncxgDIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGoMBCglDb21wb25lbnQSFgoCaWQYASABKAlCCvpCB3IFEAEYgAESOQoGY29uZmlnGAIgASgLMh8uY2xvdWQudjEucnVudGltZS5yZW5kZXIuQ29uZmlnQgj6QgWKAQIQARIjCgR0YWdzGAMgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MagAEKB01hY2hpbmUSFgoFY29yZXMYASABKA1CB/pCBCoCIAASGgoJbWVtb3J5X2diGAIgASgEQgf6QgQyAiAAEkEKCmNvbXBvbmVudHMYAyADKAsyIy5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3kuQ29tcG9uZW50Qgj6QgWSAQIIARqrAwoKQ29ubmVjdGlvbhIYCgRmcm9tGAEgASgJQgr6QgdyBRABGIABEhYKAnRvGAIgASgJQgr6QgdyBRABGIABEkEKCHByb3RvY29sGAMgASgOMiUuY2xvdWQudjEucnVudGltZS5zeXN0ZW0uTmV0LlByb3RvY29sQgj6QgWCAQIQARI5CgRtb2RlGAQgASgOMiEuY2xvdWQudjEucnVudGltZS5zeXN0ZW0uTmV0Lk1vZGVCCPpCBYIBAhABEkEKBGtpbmQYBSABKA4yKS5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3kuQ29ubmVjdGlvbi5LaW5kQgj6QgWCAQIQARIXCgRwb3J0GAYgASgNQgn6QgYqBBj//wMikAEKBEtpbmQSFAoQS0lORF9VTlNQRUNJRklFRBAAEg0KCUtJTkRfRkxPVxABEg4KCktJTkRfUFJPWFkQAhIUChBLSU5EX1JFUExJQ0FUSU9OEAMSFQoRS0lORF9DT09SRElOQVRJT04QBBIUChBLSU5EX09CU0VSVkFUSU9OEAUSEAoMS0lORF9TVVBQT1JUEAZCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZG9tYWluYgZwcm90bzM", [file_cloud_v1_common_tags, file_cloud_v1_runtime_render_config, file_cloud_v1_runtime_system_net, file_validate_validate]);
+  fileDesc("Ch5jbG91ZC92MS9kb21haW4vdG9wb2xvZ3kucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiKHCQoIVG9wb2xvZ3kSPQoIbWFjaGluZXMYAiADKAsyIS5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3kuTWFjaGluZUII+kIFkgECCAESQwoLY29ubmVjdGlvbnMYBiADKAsyJC5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3kuQ29ubmVjdGlvbkII+kIFkgECCAESIwoEdGFncxgDIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGuMCCglDb21wb25lbnQSFgoCaWQYASABKAlCCvpCB3IFEAEYgAESQgoEa2luZBgCIAEoDjIoLmNsb3VkLnYxLmRvbWFpbi5Ub3BvbG9neS5Db21wb25lbnQuS2luZEIK+kIHggEEEAEgABI5CgZjb25maWcYAyABKAsyHy5jbG91ZC52MS5ydW50aW1lLnJlbmRlci5Db25maWdCCPpCBYoBAhABEiMKBHRhZ3MYBCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncyKZAQoES2luZBIUChBLSU5EX1VOU1BFQ0lGSUVEEAASDgoKS0lORF9BR0VOVBABEhEKDUtJTkRfREFUQUJBU0UQAhIQCgxLSU5EX01PTklUT1IQAxIQCgxLSU5EX1NUUk9QUFkQBBIOCgpLSU5EX1BST1hZEAUSFAoQS0lORF9DT09SRElOQVRPUhAGEg4KCktJTkRfQURET04QBxq9AQoHTWFjaGluZRIWCgJpZBgBIAEoCUIK+kIHcgUQARiAARIWCgVjb3JlcxgCIAEoDUIH+kIEKgIgABIaCgltZW1vcnlfZ2IYAyABKARCB/pCBDICIAASQQoKY29tcG9uZW50cxgEIAMoCzIjLmNsb3VkLnYxLmRvbWFpbi5Ub3BvbG9neS5Db21wb25lbnRCCPpCBZIBAggBEiMKBHRhZ3MYBSABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxqrAwoKQ29ubmVjdGlvbhIYCgRmcm9tGAEgASgJQgr6QgdyBRABGIABEhYKAnRvGAIgASgJQgr6QgdyBRABGIABEkEKCHByb3RvY29sGAMgASgOMiUuY2xvdWQudjEucnVudGltZS5zeXN0ZW0uTmV0LlByb3RvY29sQgj6QgWCAQIQARI5CgRtb2RlGAQgASgOMiEuY2xvdWQudjEucnVudGltZS5zeXN0ZW0uTmV0Lk1vZGVCCPpCBYIBAhABEkEKBGtpbmQYBSABKA4yKS5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3kuQ29ubmVjdGlvbi5LaW5kQgj6QgWCAQIQARIXCgRwb3J0GAYgASgNQgn6QgYqBBj//wMikAEKBEtpbmQSFAoQS0lORF9VTlNQRUNJRklFRBAAEg0KCUtJTkRfRkxPVxABEg4KCktJTkRfUFJPWFkQAhIUChBLSU5EX1JFUExJQ0FUSU9OEAMSFQoRS0lORF9DT09SRElOQVRJT04QBBIUChBLSU5EX09CU0VSVkFUSU9OEAUSEAoMS0lORF9TVVBQT1JUEAZCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZG9tYWluYgZwcm90bzM", [file_cloud_v1_common_tags, file_cloud_v1_runtime_render_config, file_cloud_v1_runtime_system_net, file_validate_validate]);
 
 /**
  * @generated from message cloud.v1.domain.Topology
@@ -83,12 +83,17 @@ export type Topology_Component = Message<"cloud.v1.domain.Topology.Component"> &
   id: string;
 
   /**
-   * @generated from field: cloud.v1.runtime.render.Config config = 2;
+   * @generated from field: cloud.v1.domain.Topology.Component.Kind kind = 2;
+   */
+  kind: Topology_Component_Kind;
+
+  /**
+   * @generated from field: cloud.v1.runtime.render.Config config = 3;
    */
   config?: Config;
 
   /**
-   * @generated from field: cloud.v1.common.Tags tags = 3;
+   * @generated from field: cloud.v1.common.Tags tags = 4;
    */
   tags?: Tags;
 };
@@ -108,12 +113,17 @@ export type Topology_ComponentJson = {
   id?: string;
 
   /**
-   * @generated from field: cloud.v1.runtime.render.Config config = 2;
+   * @generated from field: cloud.v1.domain.Topology.Component.Kind kind = 2;
+   */
+  kind?: Topology_Component_KindJson;
+
+  /**
+   * @generated from field: cloud.v1.runtime.render.Config config = 3;
    */
   config?: ConfigJson;
 
   /**
-   * @generated from field: cloud.v1.common.Tags tags = 3;
+   * @generated from field: cloud.v1.common.Tags tags = 4;
    */
   tags?: TagsJson;
 };
@@ -128,27 +138,115 @@ export const Topology_ComponentSchema: GenMessage<Topology_Component, {jsonType:
   messageDesc(file_cloud_v1_domain_topology, 0, 0);
 
 /**
+ *
+ * Kind classifies what the component is inside topology.
+ *
+ * Agents are modeled as regular control-plane components that live on
+ * machines, not as deployment provider output. Runtime commands are
+ * delivered to an AGENT component and may target another component on
+ * the same machine.
+ *
+ * @generated from enum cloud.v1.domain.Topology.Component.Kind
+ */
+export enum Topology_Component_Kind {
+  /**
+   * @generated from enum value: KIND_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: KIND_AGENT = 1;
+   */
+  AGENT = 1,
+
+  /**
+   * @generated from enum value: KIND_DATABASE = 2;
+   */
+  DATABASE = 2,
+
+  /**
+   * @generated from enum value: KIND_MONITOR = 3;
+   */
+  MONITOR = 3,
+
+  /**
+   * @generated from enum value: KIND_STROPPY = 4;
+   */
+  STROPPY = 4,
+
+  /**
+   * @generated from enum value: KIND_PROXY = 5;
+   */
+  PROXY = 5,
+
+  /**
+   * @generated from enum value: KIND_COORDINATOR = 6;
+   */
+  COORDINATOR = 6,
+
+  /**
+   * @generated from enum value: KIND_ADDON = 7;
+   */
+  ADDON = 7,
+}
+
+/**
+ *
+ * Kind classifies what the component is inside topology.
+ *
+ * Agents are modeled as regular control-plane components that live on
+ * machines, not as deployment provider output. Runtime commands are
+ * delivered to an AGENT component and may target another component on
+ * the same machine.
+ *
+ * @generated from enum cloud.v1.domain.Topology.Component.Kind
+ */
+export type Topology_Component_KindJson = "KIND_UNSPECIFIED" | "KIND_AGENT" | "KIND_DATABASE" | "KIND_MONITOR" | "KIND_STROPPY" | "KIND_PROXY" | "KIND_COORDINATOR" | "KIND_ADDON";
+
+/**
+ * Describes the enum cloud.v1.domain.Topology.Component.Kind.
+ */
+export const Topology_Component_KindSchema: GenEnum<Topology_Component_Kind, Topology_Component_KindJson> = /*@__PURE__*/
+  enumDesc(file_cloud_v1_domain_topology, 0, 0, 0);
+
+/**
  * @generated from message cloud.v1.domain.Topology.Machine
  */
 export type Topology_Machine = Message<"cloud.v1.domain.Topology.Machine"> & {
   /**
+   *
+   * id is the stable topology machine id.
+   *
+   * Deployment materializers must pass this id into provider resources
+   * and into the agent environment as STROPPY_MACHINE_ID.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
    * cores is VM vCPU count. 
    *
-   * @generated from field: uint32 cores = 1;
+   * @generated from field: uint32 cores = 2;
    */
   cores: number;
 
   /**
    * memory_gb is VM RAM in GiB. 
    *
-   * @generated from field: uint64 memory_gb = 2;
+   * @generated from field: uint64 memory_gb = 3;
    */
   memoryGb: bigint;
 
   /**
-   * @generated from field: repeated cloud.v1.domain.Topology.Component components = 3;
+   * @generated from field: repeated cloud.v1.domain.Topology.Component components = 4;
    */
   components: Topology_Component[];
+
+  /**
+   * @generated from field: cloud.v1.common.Tags tags = 5;
+   */
+  tags?: Tags;
 };
 
 /**
@@ -156,23 +254,39 @@ export type Topology_Machine = Message<"cloud.v1.domain.Topology.Machine"> & {
  */
 export type Topology_MachineJson = {
   /**
+   *
+   * id is the stable topology machine id.
+   *
+   * Deployment materializers must pass this id into provider resources
+   * and into the agent environment as STROPPY_MACHINE_ID.
+   *
+   * @generated from field: string id = 1;
+   */
+  id?: string;
+
+  /**
    * cores is VM vCPU count. 
    *
-   * @generated from field: uint32 cores = 1;
+   * @generated from field: uint32 cores = 2;
    */
   cores?: number;
 
   /**
    * memory_gb is VM RAM in GiB. 
    *
-   * @generated from field: uint64 memory_gb = 2;
+   * @generated from field: uint64 memory_gb = 3;
    */
   memoryGb?: string;
 
   /**
-   * @generated from field: repeated cloud.v1.domain.Topology.Component components = 3;
+   * @generated from field: repeated cloud.v1.domain.Topology.Component components = 4;
    */
   components?: Topology_ComponentJson[];
+
+  /**
+   * @generated from field: cloud.v1.common.Tags tags = 5;
+   */
+  tags?: TagsJson;
 };
 
 export type Topology_MachineValid = Topology_Machine;

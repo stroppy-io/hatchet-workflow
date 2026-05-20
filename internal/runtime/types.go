@@ -120,6 +120,7 @@ const (
 	FailureCodeTaskFailed          = "TASK_FAILED"
 	FailureCodeSubDagFailed        = "SUB_DAG_FAILED"
 	FailureCodeDagRefFailed        = "DAG_REF_FAILED"
+	FailureCodeDagRefPending       = "DAG_REF_PENDING"
 	FailureCodeDagRefRunnerMissing = "DAG_REF_RUNNER_MISSING"
 	FailureCodeDagInvalid          = "DAG_INVALID"
 	FailureCodeDagCancelled        = "DAG_CANCELLED"
@@ -163,6 +164,18 @@ func (e *FailureError) Failure() *primitive.Dag_Failure {
 		return nil
 	}
 	return proto.Clone(e.failure).(*primitive.Dag_Failure)
+}
+
+// errorRetryableOpinion reports the executor/task opinion on whether an error
+// is retryable, independent of retry policy budget. A structured *FailureError
+// carries the opinion in its Failure.retryable; a plain error is assumed
+// transient (retryable) until proven otherwise.
+func errorRetryableOpinion(err error) bool {
+	var fe *FailureError
+	if errors.As(err, &fe) {
+		return fe.Failure().GetRetryable()
+	}
+	return true
 }
 
 func FailureFromError(err error, source, phase, code string, attempt uint32, retryable bool, metadata map[string]string) *primitive.Dag_Failure {
