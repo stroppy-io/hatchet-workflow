@@ -34,16 +34,11 @@ type DatabasePresetColumnAlias string
 func (c DatabasePresetColumnAlias) String() string { return string(c) }
 
 const (
-	DatabasePresetColumnId               DatabasePresetColumnAlias = "id"
-	DatabasePresetColumnCreatedAt        DatabasePresetColumnAlias = "created_at"
-	DatabasePresetColumnUpdatedAt        DatabasePresetColumnAlias = "updated_at"
-	DatabasePresetColumnOwnerAccountId   DatabasePresetColumnAlias = "owner_account_id"
-	DatabasePresetColumnKind             DatabasePresetColumnAlias = "kind"
-	DatabasePresetColumnVersion          DatabasePresetColumnAlias = "version"
-	DatabasePresetColumnConfig           DatabasePresetColumnAlias = "config"
-	DatabasePresetColumnTarget           DatabasePresetColumnAlias = "target"
-	DatabasePresetColumnOptions          DatabasePresetColumnAlias = "options"
-	DatabasePresetColumnDeploymentIntent DatabasePresetColumnAlias = "deployment_intent"
+	DatabasePresetColumnId             DatabasePresetColumnAlias = "id"
+	DatabasePresetColumnCreatedAt      DatabasePresetColumnAlias = "created_at"
+	DatabasePresetColumnUpdatedAt      DatabasePresetColumnAlias = "updated_at"
+	DatabasePresetColumnOwnerAccountId DatabasePresetColumnAlias = "owner_account_id"
+	DatabasePresetColumnDatabase       DatabasePresetColumnAlias = "database"
 )
 
 func (s *DatabasePresetScanner) GetTarget(col string) func() any {
@@ -56,18 +51,8 @@ func (s *DatabasePresetScanner) GetTarget(col string) func() any {
 		return func() any { return &s.UpdatedAt }
 	case DatabasePresetColumnOwnerAccountId:
 		return func() any { return &s.OwnerAccountId }
-	case DatabasePresetColumnKind:
-		return func() any { return &s.Kind }
-	case DatabasePresetColumnVersion:
-		return func() any { return &s.Version }
-	case DatabasePresetColumnConfig:
-		return func() any { return &s.Config }
-	case DatabasePresetColumnTarget:
-		return func() any { return &s.Target }
-	case DatabasePresetColumnOptions:
-		return func() any { return &s.Options }
-	case DatabasePresetColumnDeploymentIntent:
-		return func() any { return &s.DeploymentIntent }
+	case DatabasePresetColumnDatabase:
+		return func() any { return &s.Database }
 	default:
 		panic("unknown field: " + col)
 	}
@@ -83,18 +68,8 @@ func (s *DatabasePresetScanner) GetSetter(f DatabasePresetColumnAlias) func() se
 		return func() set.ValueSetter[DatabasePresetColumnAlias] { return set.NewSetter(f, &s.UpdatedAt) }
 	case DatabasePresetColumnOwnerAccountId:
 		return func() set.ValueSetter[DatabasePresetColumnAlias] { return set.NewSetter(f, &s.OwnerAccountId) }
-	case DatabasePresetColumnKind:
-		return func() set.ValueSetter[DatabasePresetColumnAlias] { return set.NewSetter(f, &s.Kind) }
-	case DatabasePresetColumnVersion:
-		return func() set.ValueSetter[DatabasePresetColumnAlias] { return set.NewSetter(f, &s.Version) }
-	case DatabasePresetColumnConfig:
-		return func() set.ValueSetter[DatabasePresetColumnAlias] { return set.NewSetter(f, &s.Config) }
-	case DatabasePresetColumnTarget:
-		return func() set.ValueSetter[DatabasePresetColumnAlias] { return set.NewSetter(f, &s.Target) }
-	case DatabasePresetColumnOptions:
-		return func() set.ValueSetter[DatabasePresetColumnAlias] { return set.NewSetter(f, &s.Options) }
-	case DatabasePresetColumnDeploymentIntent:
-		return func() set.ValueSetter[DatabasePresetColumnAlias] { return set.NewSetter(f, &s.DeploymentIntent) }
+	case DatabasePresetColumnDatabase:
+		return func() set.ValueSetter[DatabasePresetColumnAlias] { return set.NewSetter(f, &s.Database) }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -110,18 +85,8 @@ func (s *DatabasePresetScanner) GetValue(f DatabasePresetColumnAlias) func() any
 		return func() any { return s.UpdatedAt }
 	case DatabasePresetColumnOwnerAccountId:
 		return func() any { return s.OwnerAccountId }
-	case DatabasePresetColumnKind:
-		return func() any { return s.Kind }
-	case DatabasePresetColumnVersion:
-		return func() any { return s.Version }
-	case DatabasePresetColumnConfig:
-		return func() any { return s.Config }
-	case DatabasePresetColumnTarget:
-		return func() any { return s.Target }
-	case DatabasePresetColumnOptions:
-		return func() any { return s.Options }
-	case DatabasePresetColumnDeploymentIntent:
-		return func() any { return s.DeploymentIntent }
+	case DatabasePresetColumnDatabase:
+		return func() any { return s.Database }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -133,12 +98,7 @@ func (s *DatabasePresetScanner) AllSetters() []set.ValueSetter[DatabasePresetCol
 		set.NewSetter[DatabasePresetColumnAlias](DatabasePresetColumnCreatedAt, s.CreatedAt),
 		set.NewSetter[DatabasePresetColumnAlias](DatabasePresetColumnUpdatedAt, s.UpdatedAt),
 		set.NewSetter[DatabasePresetColumnAlias](DatabasePresetColumnOwnerAccountId, s.OwnerAccountId),
-		set.NewSetter[DatabasePresetColumnAlias](DatabasePresetColumnKind, s.Kind),
-		set.NewSetter[DatabasePresetColumnAlias](DatabasePresetColumnVersion, s.Version),
-		set.NewSetter[DatabasePresetColumnAlias](DatabasePresetColumnConfig, s.Config),
-		set.NewSetter[DatabasePresetColumnAlias](DatabasePresetColumnTarget, s.Target),
-		set.NewSetter[DatabasePresetColumnAlias](DatabasePresetColumnOptions, s.Options),
-		set.NewSetter[DatabasePresetColumnAlias](DatabasePresetColumnDeploymentIntent, s.DeploymentIntent),
+		set.NewSetter[DatabasePresetColumnAlias](DatabasePresetColumnDatabase, s.Database),
 	}
 }
 
@@ -150,16 +110,11 @@ func (s *DatabasePresetScanner) Relations() []exec.RelationLoader[*DatabasePrese
 // DatabasePresetsTable represents the database_presets table with its columns
 type DatabasePresetsTable struct {
 	*schema.Table[DatabasePresetAlias, DatabasePresetColumnAlias, *DatabasePresetScanner]
-	Id               schema.TextColumnI[DatabasePresetColumnAlias]
-	CreatedAt        schema.TimestamptzColumnI[DatabasePresetColumnAlias]
-	UpdatedAt        schema.TimestamptzColumnI[DatabasePresetColumnAlias]
-	OwnerAccountId   schema.TextColumnI[DatabasePresetColumnAlias]
-	Kind             schema.TextColumnI[DatabasePresetColumnAlias]
-	Version          schema.TextColumnI[DatabasePresetColumnAlias]
-	Config           schema.TextColumnI[DatabasePresetColumnAlias]
-	Target           schema.TextColumnI[DatabasePresetColumnAlias]
-	Options          schema.TextColumnI[DatabasePresetColumnAlias]
-	DeploymentIntent schema.NullTextColumnI[DatabasePresetColumnAlias]
+	Id             schema.TextColumnI[DatabasePresetColumnAlias]
+	CreatedAt      schema.TimestamptzColumnI[DatabasePresetColumnAlias]
+	UpdatedAt      schema.TimestamptzColumnI[DatabasePresetColumnAlias]
+	OwnerAccountId schema.TextColumnI[DatabasePresetColumnAlias]
+	Database       schema.TextColumnI[DatabasePresetColumnAlias]
 }
 
 // DatabasePresets is the global database_presets table instance
@@ -168,12 +123,7 @@ var DatabasePresets = func() DatabasePresetsTable {
 	createdAtCol := schema.TimestamptzColumn(DatabasePresetColumnCreatedAt, ddl.WithDefault[DatabasePresetColumnAlias]("now()"), ddl.WithNotNull[DatabasePresetColumnAlias]())
 	updatedAtCol := schema.TimestamptzColumn(DatabasePresetColumnUpdatedAt, ddl.WithDefault[DatabasePresetColumnAlias]("now()"), ddl.WithNotNull[DatabasePresetColumnAlias]())
 	ownerAccountIdCol := schema.TextColumn(DatabasePresetColumnOwnerAccountId, ddl.WithReferences[DatabasePresetColumnAlias]("accounts", "id"), ddl.WithOnDelete[DatabasePresetColumnAlias]("CASCADE"), ddl.WithNotNull[DatabasePresetColumnAlias]())
-	kindCol := schema.TextColumn(DatabasePresetColumnKind, ddl.WithNotNull[DatabasePresetColumnAlias]())
-	versionCol := schema.TextColumn(DatabasePresetColumnVersion, ddl.WithNotNull[DatabasePresetColumnAlias]())
-	configCol := schema.TextColumn(DatabasePresetColumnConfig, ddl.WithNotNull[DatabasePresetColumnAlias]())
-	targetCol := schema.TextColumn(DatabasePresetColumnTarget, ddl.WithNotNull[DatabasePresetColumnAlias]())
-	optionsCol := schema.TextColumn(DatabasePresetColumnOptions, ddl.WithNotNull[DatabasePresetColumnAlias]())
-	deploymentIntentCol := schema.NullTextColumn(DatabasePresetColumnDeploymentIntent)
+	databaseCol := schema.TextColumn(DatabasePresetColumnDatabase, ddl.WithNotNull[DatabasePresetColumnAlias]())
 
 	return DatabasePresetsTable{
 		Table: schema.NewTable[DatabasePresetAlias, DatabasePresetColumnAlias, *DatabasePresetScanner](
@@ -184,24 +134,14 @@ var DatabasePresets = func() DatabasePresetsTable {
 				createdAtCol.DDL(),
 				updatedAtCol.DDL(),
 				ownerAccountIdCol.DDL(),
-				kindCol.DDL(),
-				versionCol.DDL(),
-				configCol.DDL(),
-				targetCol.DDL(),
-				optionsCol.DDL(),
-				deploymentIntentCol.DDL(),
+				databaseCol.DDL(),
 			},
 		),
-		Id:               idCol,
-		CreatedAt:        createdAtCol,
-		UpdatedAt:        updatedAtCol,
-		OwnerAccountId:   ownerAccountIdCol,
-		Kind:             kindCol,
-		Version:          versionCol,
-		Config:           configCol,
-		Target:           targetCol,
-		Options:          optionsCol,
-		DeploymentIntent: deploymentIntentCol,
+		Id:             idCol,
+		CreatedAt:      createdAtCol,
+		UpdatedAt:      updatedAtCol,
+		OwnerAccountId: ownerAccountIdCol,
+		Database:       databaseCol,
 	}
 }()
 

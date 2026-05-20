@@ -93,7 +93,7 @@ const file_cloud_v1_models_database_preset_proto_rawDesc = "" +
 	"\x0eDatabasePreset\x127\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x12\\\n" +
 	"\x10owner_account_id\x18\x02 \x01(\v2\x1a.cloud.v1.models.AccountIdB\x16\x9a\xb5\x18\x12\x12\x102\baccounts:\x02id@\x01R\x0eownerAccountId\x12E\n" +
-	"\bdatabase\x18\x03 \x01(\v2\x19.cloud.v1.domain.DatabaseB\x0e\xfaB\x05\x8a\x01\x02\x10\x01\x82\xa6\x1d\x02 \x01R\bdatabase:\x1e\x92\xb5\x18\x14\b\x01\x12\x10database_presets\x82\xa6\x1d\x02\b\x01BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
+	"\bdatabase\x18\x03 \x01(\v2\x19.cloud.v1.domain.DatabaseB\x0e\xfaB\x05\x8a\x01\x02\x10\x01\x82\xa6\x1d\x02\x10\x01R\bdatabase:\x1e\x92\xb5\x18\x14\b\x01\x12\x10database_presets\x82\xa6\x1d\x02\b\x01BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
 
 var (
 	file_cloud_v1_models_database_preset_proto_rawDescOnce sync.Once

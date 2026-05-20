@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package cloud.v1.api.ui;
+
+import "cloud/v1/models/tenant.proto";
+import "google/protobuf/empty.proto";
+
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui";
+
+service TenantService {
+    rpc ListMyTenants (google.protobuf.Empty) returns (models.Tenant.List) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+    }
+}

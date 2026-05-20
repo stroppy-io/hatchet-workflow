@@ -38,13 +38,7 @@ const (
 	WorkloadPresetColumnCreatedAt      WorkloadPresetColumnAlias = "created_at"
 	WorkloadPresetColumnUpdatedAt      WorkloadPresetColumnAlias = "updated_at"
 	WorkloadPresetColumnOwnerAccountId WorkloadPresetColumnAlias = "owner_account_id"
-	WorkloadPresetColumnStroppyVersion WorkloadPresetColumnAlias = "stroppy_version"
-	WorkloadPresetColumnScript         WorkloadPresetColumnAlias = "script"
-	WorkloadPresetColumnSql            WorkloadPresetColumnAlias = "sql"
-	WorkloadPresetColumnProtocol       WorkloadPresetColumnAlias = "protocol"
-	WorkloadPresetColumnExecution      WorkloadPresetColumnAlias = "execution"
-	WorkloadPresetColumnParameters     WorkloadPresetColumnAlias = "parameters"
-	WorkloadPresetColumnFiles          WorkloadPresetColumnAlias = "files"
+	WorkloadPresetColumnWorkload       WorkloadPresetColumnAlias = "workload"
 )
 
 func (s *WorkloadPresetScanner) GetTarget(col string) func() any {
@@ -57,20 +51,8 @@ func (s *WorkloadPresetScanner) GetTarget(col string) func() any {
 		return func() any { return &s.UpdatedAt }
 	case WorkloadPresetColumnOwnerAccountId:
 		return func() any { return &s.OwnerAccountId }
-	case WorkloadPresetColumnStroppyVersion:
-		return func() any { return &s.StroppyVersion }
-	case WorkloadPresetColumnScript:
-		return func() any { return &s.Script }
-	case WorkloadPresetColumnSql:
-		return func() any { return &s.Sql }
-	case WorkloadPresetColumnProtocol:
-		return func() any { return &s.Protocol }
-	case WorkloadPresetColumnExecution:
-		return func() any { return &s.Execution }
-	case WorkloadPresetColumnParameters:
-		return func() any { return &s.Parameters }
-	case WorkloadPresetColumnFiles:
-		return func() any { return &s.Files }
+	case WorkloadPresetColumnWorkload:
+		return func() any { return &s.Workload }
 	default:
 		panic("unknown field: " + col)
 	}
@@ -86,20 +68,8 @@ func (s *WorkloadPresetScanner) GetSetter(f WorkloadPresetColumnAlias) func() se
 		return func() set.ValueSetter[WorkloadPresetColumnAlias] { return set.NewSetter(f, &s.UpdatedAt) }
 	case WorkloadPresetColumnOwnerAccountId:
 		return func() set.ValueSetter[WorkloadPresetColumnAlias] { return set.NewSetter(f, &s.OwnerAccountId) }
-	case WorkloadPresetColumnStroppyVersion:
-		return func() set.ValueSetter[WorkloadPresetColumnAlias] { return set.NewSetter(f, &s.StroppyVersion) }
-	case WorkloadPresetColumnScript:
-		return func() set.ValueSetter[WorkloadPresetColumnAlias] { return set.NewSetter(f, &s.Script) }
-	case WorkloadPresetColumnSql:
-		return func() set.ValueSetter[WorkloadPresetColumnAlias] { return set.NewSetter(f, &s.Sql) }
-	case WorkloadPresetColumnProtocol:
-		return func() set.ValueSetter[WorkloadPresetColumnAlias] { return set.NewSetter(f, &s.Protocol) }
-	case WorkloadPresetColumnExecution:
-		return func() set.ValueSetter[WorkloadPresetColumnAlias] { return set.NewSetter(f, &s.Execution) }
-	case WorkloadPresetColumnParameters:
-		return func() set.ValueSetter[WorkloadPresetColumnAlias] { return set.NewSetter(f, &s.Parameters) }
-	case WorkloadPresetColumnFiles:
-		return func() set.ValueSetter[WorkloadPresetColumnAlias] { return set.NewSetter(f, &s.Files) }
+	case WorkloadPresetColumnWorkload:
+		return func() set.ValueSetter[WorkloadPresetColumnAlias] { return set.NewSetter(f, &s.Workload) }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -115,20 +85,8 @@ func (s *WorkloadPresetScanner) GetValue(f WorkloadPresetColumnAlias) func() any
 		return func() any { return s.UpdatedAt }
 	case WorkloadPresetColumnOwnerAccountId:
 		return func() any { return s.OwnerAccountId }
-	case WorkloadPresetColumnStroppyVersion:
-		return func() any { return s.StroppyVersion }
-	case WorkloadPresetColumnScript:
-		return func() any { return s.Script }
-	case WorkloadPresetColumnSql:
-		return func() any { return s.Sql }
-	case WorkloadPresetColumnProtocol:
-		return func() any { return s.Protocol }
-	case WorkloadPresetColumnExecution:
-		return func() any { return s.Execution }
-	case WorkloadPresetColumnParameters:
-		return func() any { return s.Parameters }
-	case WorkloadPresetColumnFiles:
-		return func() any { return s.Files }
+	case WorkloadPresetColumnWorkload:
+		return func() any { return s.Workload }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -140,13 +98,7 @@ func (s *WorkloadPresetScanner) AllSetters() []set.ValueSetter[WorkloadPresetCol
 		set.NewSetter[WorkloadPresetColumnAlias](WorkloadPresetColumnCreatedAt, s.CreatedAt),
 		set.NewSetter[WorkloadPresetColumnAlias](WorkloadPresetColumnUpdatedAt, s.UpdatedAt),
 		set.NewSetter[WorkloadPresetColumnAlias](WorkloadPresetColumnOwnerAccountId, s.OwnerAccountId),
-		set.NewSetter[WorkloadPresetColumnAlias](WorkloadPresetColumnStroppyVersion, s.StroppyVersion),
-		set.NewSetter[WorkloadPresetColumnAlias](WorkloadPresetColumnScript, s.Script),
-		set.NewSetter[WorkloadPresetColumnAlias](WorkloadPresetColumnSql, s.Sql),
-		set.NewSetter[WorkloadPresetColumnAlias](WorkloadPresetColumnProtocol, s.Protocol),
-		set.NewSetter[WorkloadPresetColumnAlias](WorkloadPresetColumnExecution, s.Execution),
-		set.NewSetter[WorkloadPresetColumnAlias](WorkloadPresetColumnParameters, s.Parameters),
-		set.NewSetter[WorkloadPresetColumnAlias](WorkloadPresetColumnFiles, s.Files),
+		set.NewSetter[WorkloadPresetColumnAlias](WorkloadPresetColumnWorkload, s.Workload),
 	}
 }
 
@@ -162,13 +114,7 @@ type WorkloadPresetsTable struct {
 	CreatedAt      schema.TimestamptzColumnI[WorkloadPresetColumnAlias]
 	UpdatedAt      schema.TimestamptzColumnI[WorkloadPresetColumnAlias]
 	OwnerAccountId schema.TextColumnI[WorkloadPresetColumnAlias]
-	StroppyVersion schema.TextColumnI[WorkloadPresetColumnAlias]
-	Script         schema.TextColumnI[WorkloadPresetColumnAlias]
-	Sql            schema.TextColumnI[WorkloadPresetColumnAlias]
-	Protocol       schema.TextColumnI[WorkloadPresetColumnAlias]
-	Execution      schema.TextColumnI[WorkloadPresetColumnAlias]
-	Parameters     schema.TextColumnI[WorkloadPresetColumnAlias]
-	Files          schema.TextArrayColumnI[WorkloadPresetColumnAlias]
+	Workload       schema.TextColumnI[WorkloadPresetColumnAlias]
 }
 
 // WorkloadPresets is the global workload_presets table instance
@@ -177,13 +123,7 @@ var WorkloadPresets = func() WorkloadPresetsTable {
 	createdAtCol := schema.TimestamptzColumn(WorkloadPresetColumnCreatedAt, ddl.WithDefault[WorkloadPresetColumnAlias]("now()"), ddl.WithNotNull[WorkloadPresetColumnAlias]())
 	updatedAtCol := schema.TimestamptzColumn(WorkloadPresetColumnUpdatedAt, ddl.WithDefault[WorkloadPresetColumnAlias]("now()"), ddl.WithNotNull[WorkloadPresetColumnAlias]())
 	ownerAccountIdCol := schema.TextColumn(WorkloadPresetColumnOwnerAccountId, ddl.WithReferences[WorkloadPresetColumnAlias]("accounts", "id"), ddl.WithOnDelete[WorkloadPresetColumnAlias]("CASCADE"), ddl.WithNotNull[WorkloadPresetColumnAlias]())
-	stroppyVersionCol := schema.TextColumn(WorkloadPresetColumnStroppyVersion, ddl.WithNotNull[WorkloadPresetColumnAlias]())
-	scriptCol := schema.TextColumn(WorkloadPresetColumnScript, ddl.WithNotNull[WorkloadPresetColumnAlias]())
-	sqlCol := schema.TextColumn(WorkloadPresetColumnSql, ddl.WithNotNull[WorkloadPresetColumnAlias]())
-	protocolCol := schema.TextColumn(WorkloadPresetColumnProtocol, ddl.WithNotNull[WorkloadPresetColumnAlias]())
-	executionCol := schema.TextColumn(WorkloadPresetColumnExecution, ddl.WithNotNull[WorkloadPresetColumnAlias]())
-	parametersCol := schema.TextColumn(WorkloadPresetColumnParameters, ddl.WithNotNull[WorkloadPresetColumnAlias]())
-	filesCol := schema.TextArrayColumn(WorkloadPresetColumnFiles, ddl.WithNotNull[WorkloadPresetColumnAlias]())
+	workloadCol := schema.TextColumn(WorkloadPresetColumnWorkload, ddl.WithNotNull[WorkloadPresetColumnAlias]())
 
 	return WorkloadPresetsTable{
 		Table: schema.NewTable[WorkloadPresetAlias, WorkloadPresetColumnAlias, *WorkloadPresetScanner](
@@ -194,26 +134,14 @@ var WorkloadPresets = func() WorkloadPresetsTable {
 				createdAtCol.DDL(),
 				updatedAtCol.DDL(),
 				ownerAccountIdCol.DDL(),
-				stroppyVersionCol.DDL(),
-				scriptCol.DDL(),
-				sqlCol.DDL(),
-				protocolCol.DDL(),
-				executionCol.DDL(),
-				parametersCol.DDL(),
-				filesCol.DDL(),
+				workloadCol.DDL(),
 			},
 		),
 		Id:             idCol,
 		CreatedAt:      createdAtCol,
 		UpdatedAt:      updatedAtCol,
 		OwnerAccountId: ownerAccountIdCol,
-		StroppyVersion: stroppyVersionCol,
-		Script:         scriptCol,
-		Sql:            sqlCol,
-		Protocol:       protocolCol,
-		Execution:      executionCol,
-		Parameters:     parametersCol,
-		Files:          filesCol,
+		Workload:       workloadCol,
 	}
 }()
 

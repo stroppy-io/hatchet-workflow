@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package cloud.v1.api.admin;
+
+import "cloud/v1/models/common.proto";
+import "cloud/v1/models/tenant.proto";
+import "google/protobuf/field_mask.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/admin";
+
+message CreateTenantRequest {
+    models.Tenant tenant = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpdateTenantRequest {
+    models.Tenant tenant = 1 [(validate.rules).message = {required: true}];
+    google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
+}
+
+message AddMemberRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.AccountId account_id = 2 [(validate.rules).message.required = true];
+}
+
+message RemoveMemberRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.AccountId account_id = 2 [(validate.rules).message.required = true];
+}
+
+service TenantAdminService {
+    rpc CreateTenant (CreateTenantRequest) returns (models.Tenant) {
+        option idempotency_level = IDEMPOTENT;
+    }
+    rpc UpdateTenant (UpdateTenantRequest) returns (models.Tenant) {
+        option idempotency_level = IDEMPOTENT;
+    }
+    rpc DeleteTenant (models.TenantId) returns (models.Tenant) {
+        option idempotency_level = IDEMPOTENT;
+    }
+    rpc AddMemberToTenant (AddMemberRequest) returns (models.TenantMember) {
+        option idempotency_level = IDEMPOTENT;
+    }
+    rpc RemoveMemberFromTenant (RemoveMemberRequest) returns (models.TenantMember) {
+        option idempotency_level = IDEMPOTENT;
+    }
+}

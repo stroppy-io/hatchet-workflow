@@ -210,39 +210,6 @@ func (m *Database) validate(all bool) error {
 		}
 	}
 
-	if m.DeploymentIntent != nil {
-
-		if all {
-			switch v := interface{}(m.GetDeploymentIntent()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, DatabaseValidationError{
-						field:  "DeploymentIntent",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, DatabaseValidationError{
-						field:  "DeploymentIntent",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetDeploymentIntent()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return DatabaseValidationError{
-					field:  "DeploymentIntent",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
 	if len(errors) > 0 {
 		return DatabaseMultiError(errors)
 	}

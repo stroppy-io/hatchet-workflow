@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/deployment/docker.proto.
  */
 export const file_cloud_v1_deployment_docker: GenFile = /*@__PURE__*/
-  fileDesc("CiBjbG91ZC92MS9kZXBsb3ltZW50L2RvY2tlci5wcm90bxITY2xvdWQudjEuZGVwbG95bWVudCKaFgoGRG9ja2VyEjoKBWlucHV0GAEgASgLMiEuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuSW5wdXRCCPpCBYoBAhABEjIKBm91dHB1dBgCIAEoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLk91dHB1dBrJAQoNQ29udGFpbmVyU3BlYxI4CglyZXNvdXJjZXMYASABKAsyJS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5SZXNvdXJjZXMSTwoGbGFiZWxzGAIgAygLMjUuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuQ29udGFpbmVyU3BlYy5MYWJlbHNFbnRyeUII+kIFmgECEEAaLQoLTGFiZWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARryAQoFSW5wdXQSPgoHbmV0d29yaxgBIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLk5ldHdvcmtCCPpCBYoBAhABEk8KCmNvbnRhaW5lcnMYAiADKAsyMS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5JbnB1dC5Db250YWluZXJzRW50cnlCCPpCBZoBAggBGlgKD0NvbnRhaW5lcnNFbnRyeRILCgNrZXkYASABKAkSNAoFdmFsdWUYAiABKAsyJS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5Db250YWluZXI6AjgBGjgKB05ldHdvcmsSFgoEbmFtZRgBIAEoCUII+kIFcgMY/wESFQoDZG5zGAIgAygJQgj6QgWSAQIQCBrdBwoJQ29udGFpbmVyEhYKBWltYWdlGAEgASgJQgf6QgRyAhABEhYKDmZhbGxiYWNrX2ltYWdlGAIgASgJEhoKCGhvc3RuYW1lGAMgASgJQgj6QgVyAxj9ARIcCgplbnRyeXBvaW50GAQgAygJQgj6QgWSAQIQQBIVCgNjbWQYBSADKAlCCPpCBZIBAhBAEkYKA2VudhgGIAMoCzIuLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLkNvbnRhaW5lci5FbnZFbnRyeUIJ+kIGmgEDEIACEksKBmxhYmVscxgHIAMoCzIxLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLkNvbnRhaW5lci5MYWJlbHNFbnRyeUII+kIFmgECEEASEgoKcHJpdmlsZWdlZBgIIAEoCBIVCg1jZ3JvdXBuc19tb2RlGAkgASgJEkkKBXRtcGZzGAogAygLMjAuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuQ29udGFpbmVyLlRtcGZzRW50cnlCCPpCBZoBAhAgEhcKBWJpbmRzGAsgAygJQgj6QgWSAQIQQBJCCgd2b2x1bWVzGAwgAygLMicuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuVm9sdW1lTW91bnRCCPpCBZIBAhBAEkAKBXBvcnRzGA0gAygLMicuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuUG9ydEJpbmRpbmdCCPpCBZIBAhBAEjkKBWZpbGVzGA4gAygLMiAuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuRmlsZUII+kIFkgECEEASSwoOcmVzdGFydF9wb2xpY3kYDyABKA4yKS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5SZXN0YXJ0UG9saWN5Qgj6QgWCAQIQARIcCgpkZXBlbmRzX29uGBAgAygJQgj6QgWSAQIQIBI8CgtoZWFsdGhjaGVjaxgRIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLkhlYWx0aGNoZWNrEjgKCXJlc291cmNlcxgSIAEoCzIlLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLlJlc291cmNlcxoqCghFbnZFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGi0KC0xhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaLAoKVG1wZnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGlAKC1ZvbHVtZU1vdW50EhUKBG5hbWUYASABKAlCB/pCBHICEAESFwoGdGFyZ2V0GAIgASgJQgf6QgRyAhABEhEKCXJlYWRfb25seRgDIAEoCBqjAQoLUG9ydEJpbmRpbmcSIwoOY29udGFpbmVyX3BvcnQYASABKA1CC/pCCCoGIAAY//8DEhwKCWhvc3RfcG9ydBgCIAEoDUIJ+kIGKgQY//8DEg8KB2hvc3RfaXAYAyABKAkSQAoIcHJvdG9jb2wYBCABKA4yJC5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5Qcm90b2NvbEII+kIFggECEAEaRgoERmlsZRIVCgRwYXRoGAEgASgJQgf6QgRyAhABEg8KB2NvbnRlbnQYAiABKAwSFgoEbW9kZRgDIAEoDUII+kIFKgMY/wMahwEKC0hlYWx0aGNoZWNrEhYKBHRlc3QYASADKAlCCPpCBZIBAggBEhgKEGludGVydmFsX3NlY29uZHMYAiABKA0SFwoPdGltZW91dF9zZWNvbmRzGAMgASgNEg8KB3JldHJpZXMYBCABKA0SHAoUc3RhcnRfcGVyaW9kX3NlY29uZHMYBSABKA0aVQoJUmVzb3VyY2VzEiEKCWNwdV9jb3JlcxgBIAEoAUIO+kILEgkpAAAAAAAAAAASEQoJbWVtb3J5X21iGAIgASgEEhIKCnBpZHNfbGltaXQYAyABKAQaxAEKBk91dHB1dBJGCgpjb250YWluZXJzGAEgAygLMjIuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuT3V0cHV0LkNvbnRhaW5lcnNFbnRyeRISCgpuZXR3b3JrX2lkGAIgASgJGl4KD0NvbnRhaW5lcnNFbnRyeRILCgNrZXkYASABKAkSOgoFdmFsdWUYAiABKAsyKy5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5Db250YWluZXJPdXRwdXQ6AjgBGuwBCg9Db250YWluZXJPdXRwdXQSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRITCgtpbnRlcm5hbF9pcBgDIAEoCRJSCgxtYXBwZWRfcG9ydHMYBCADKAsyPC5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5Db250YWluZXJPdXRwdXQuTWFwcGVkUG9ydHNFbnRyeRIOCgZzdGF0dXMYBSABKAkSEgoKc3RhcnRlZF9hdBgGIAEoCRoyChBNYXBwZWRQb3J0c0VudHJ5EgsKA2tleRgBIAEoDRINCgV2YWx1ZRgCIAEoDToCOAEiSAoIUHJvdG9jb2wSGAoUUFJPVE9DT0xfVU5TUEVDSUZJRUQQABIQCgxQUk9UT0NPTF9UQ1AQARIQCgxQUk9UT0NPTF9VRFAQAiKjAQoNUmVzdGFydFBvbGljeRIeChpSRVNUQVJUX1BPTElDWV9VTlNQRUNJRklFRBAAEhUKEVJFU1RBUlRfUE9MSUNZX05PEAESHQoZUkVTVEFSVF9QT0xJQ1lfT05fRkFJTFVSRRACEhkKFVJFU1RBUlRfUE9MSUNZX0FMV0FZUxADEiEKHVJFU1RBUlRfUE9MSUNZX1VOTEVTU19TVE9QUEVEEARCSFpGZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZGVwbG95bWVudGIGcHJvdG8z", [file_validate_validate]);
+  fileDesc("CiBjbG91ZC92MS9kZXBsb3ltZW50L2RvY2tlci5wcm90bxITY2xvdWQudjEuZGVwbG95bWVudCLOFAoGRG9ja2VyEjoKBWlucHV0GAEgASgLMiEuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuSW5wdXRCCPpCBYoBAhABEjIKBm91dHB1dBgCIAEoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLk91dHB1dBryAQoFSW5wdXQSPgoHbmV0d29yaxgBIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLk5ldHdvcmtCCPpCBYoBAhABEk8KCmNvbnRhaW5lcnMYAiADKAsyMS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5JbnB1dC5Db250YWluZXJzRW50cnlCCPpCBZoBAggBGlgKD0NvbnRhaW5lcnNFbnRyeRILCgNrZXkYASABKAkSNAoFdmFsdWUYAiABKAsyJS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5Db250YWluZXI6AjgBGjgKB05ldHdvcmsSFgoEbmFtZRgBIAEoCUII+kIFcgMY/wESFQoDZG5zGAIgAygJQgj6QgWSAQIQCBrdBwoJQ29udGFpbmVyEhYKBWltYWdlGAEgASgJQgf6QgRyAhABEhYKDmZhbGxiYWNrX2ltYWdlGAIgASgJEhoKCGhvc3RuYW1lGAMgASgJQgj6QgVyAxj9ARIcCgplbnRyeXBvaW50GAQgAygJQgj6QgWSAQIQQBIVCgNjbWQYBSADKAlCCPpCBZIBAhBAEkYKA2VudhgGIAMoCzIuLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLkNvbnRhaW5lci5FbnZFbnRyeUIJ+kIGmgEDEIACEksKBmxhYmVscxgHIAMoCzIxLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLkNvbnRhaW5lci5MYWJlbHNFbnRyeUII+kIFmgECEEASEgoKcHJpdmlsZWdlZBgIIAEoCBIVCg1jZ3JvdXBuc19tb2RlGAkgASgJEkkKBXRtcGZzGAogAygLMjAuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuQ29udGFpbmVyLlRtcGZzRW50cnlCCPpCBZoBAhAgEhcKBWJpbmRzGAsgAygJQgj6QgWSAQIQQBJCCgd2b2x1bWVzGAwgAygLMicuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuVm9sdW1lTW91bnRCCPpCBZIBAhBAEkAKBXBvcnRzGA0gAygLMicuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuUG9ydEJpbmRpbmdCCPpCBZIBAhBAEjkKBWZpbGVzGA4gAygLMiAuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuRmlsZUII+kIFkgECEEASSwoOcmVzdGFydF9wb2xpY3kYDyABKA4yKS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5SZXN0YXJ0UG9saWN5Qgj6QgWCAQIQARIcCgpkZXBlbmRzX29uGBAgAygJQgj6QgWSAQIQIBI8CgtoZWFsdGhjaGVjaxgRIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLkhlYWx0aGNoZWNrEjgKCXJlc291cmNlcxgSIAEoCzIlLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLlJlc291cmNlcxoqCghFbnZFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGi0KC0xhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaLAoKVG1wZnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGlAKC1ZvbHVtZU1vdW50EhUKBG5hbWUYASABKAlCB/pCBHICEAESFwoGdGFyZ2V0GAIgASgJQgf6QgRyAhABEhEKCXJlYWRfb25seRgDIAEoCBqjAQoLUG9ydEJpbmRpbmcSIwoOY29udGFpbmVyX3BvcnQYASABKA1CC/pCCCoGGP//AyAAEhwKCWhvc3RfcG9ydBgCIAEoDUIJ+kIGKgQY//8DEg8KB2hvc3RfaXAYAyABKAkSQAoIcHJvdG9jb2wYBCABKA4yJC5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5Qcm90b2NvbEII+kIFggECEAEaRgoERmlsZRIVCgRwYXRoGAEgASgJQgf6QgRyAhABEg8KB2NvbnRlbnQYAiABKAwSFgoEbW9kZRgDIAEoDUII+kIFKgMY/wMahwEKC0hlYWx0aGNoZWNrEhYKBHRlc3QYASADKAlCCPpCBZIBAggBEhgKEGludGVydmFsX3NlY29uZHMYAiABKA0SFwoPdGltZW91dF9zZWNvbmRzGAMgASgNEg8KB3JldHJpZXMYBCABKA0SHAoUc3RhcnRfcGVyaW9kX3NlY29uZHMYBSABKA0aVQoJUmVzb3VyY2VzEiEKCWNwdV9jb3JlcxgBIAEoAUIO+kILEgkpAAAAAAAAAAASEQoJbWVtb3J5X21iGAIgASgEEhIKCnBpZHNfbGltaXQYAyABKAQaxAEKBk91dHB1dBJGCgpjb250YWluZXJzGAEgAygLMjIuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuT3V0cHV0LkNvbnRhaW5lcnNFbnRyeRISCgpuZXR3b3JrX2lkGAIgASgJGl4KD0NvbnRhaW5lcnNFbnRyeRILCgNrZXkYASABKAkSOgoFdmFsdWUYAiABKAsyKy5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5Db250YWluZXJPdXRwdXQ6AjgBGuwBCg9Db250YWluZXJPdXRwdXQSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRITCgtpbnRlcm5hbF9pcBgDIAEoCRJSCgxtYXBwZWRfcG9ydHMYBCADKAsyPC5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5Db250YWluZXJPdXRwdXQuTWFwcGVkUG9ydHNFbnRyeRIOCgZzdGF0dXMYBSABKAkSEgoKc3RhcnRlZF9hdBgGIAEoCRoyChBNYXBwZWRQb3J0c0VudHJ5EgsKA2tleRgBIAEoDRINCgV2YWx1ZRgCIAEoDToCOAEiSAoIUHJvdG9jb2wSGAoUUFJPVE9DT0xfVU5TUEVDSUZJRUQQABIQCgxQUk9UT0NPTF9UQ1AQARIQCgxQUk9UT0NPTF9VRFAQAiKjAQoNUmVzdGFydFBvbGljeRIeChpSRVNUQVJUX1BPTElDWV9VTlNQRUNJRklFRBAAEhUKEVJFU1RBUlRfUE9MSUNZX05PEAESHQoZUkVTVEFSVF9QT0xJQ1lfT05fRkFJTFVSRRACEhkKFVJFU1RBUlRfUE9MSUNZX0FMV0FZUxADEiEKHVJFU1RBUlRfUE9MSUNZX1VOTEVTU19TVE9QUEVEEARCSFpGZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZGVwbG95bWVudGIGcHJvdG8z", [file_validate_validate]);
 
 /**
  *
@@ -71,59 +71,6 @@ export const DockerSchema: GenMessage<Docker, {jsonType: DockerJson, validType: 
   messageDesc(file_cloud_v1_deployment_docker, 0);
 
 /**
- * ContainerSpec is the user-facing container intent.
- * The orchestrator materializes it into Container. 
- *
- * @generated from message cloud.v1.deployment.Docker.ContainerSpec
- */
-export type Docker_ContainerSpec = Message<"cloud.v1.deployment.Docker.ContainerSpec"> & {
-  /**
-   * resources limits CPU and memory. 
-   *
-   * @generated from field: cloud.v1.deployment.Docker.Resources resources = 1;
-   */
-  resources?: Docker_Resources;
-
-  /**
-   * labels are user labels copied to the container. 
-   *
-   * @generated from field: map<string, string> labels = 2;
-   */
-  labels: { [key: string]: string };
-};
-
-/**
- * ContainerSpec is the user-facing container intent.
- * The orchestrator materializes it into Container. 
- *
- * @generated from message cloud.v1.deployment.Docker.ContainerSpec
- */
-export type Docker_ContainerSpecJson = {
-  /**
-   * resources limits CPU and memory. 
-   *
-   * @generated from field: cloud.v1.deployment.Docker.Resources resources = 1;
-   */
-  resources?: Docker_ResourcesJson;
-
-  /**
-   * labels are user labels copied to the container. 
-   *
-   * @generated from field: map<string, string> labels = 2;
-   */
-  labels?: { [key: string]: string };
-};
-
-export type Docker_ContainerSpecValid = Docker_ContainerSpec;
-
-/**
- * Describes the message cloud.v1.deployment.Docker.ContainerSpec.
- * Use `create(Docker_ContainerSpecSchema)` to create a new message.
- */
-export const Docker_ContainerSpecSchema: GenMessage<Docker_ContainerSpec, {jsonType: Docker_ContainerSpecJson, validType: Docker_ContainerSpecValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_docker, 0, 0);
-
-/**
  * Input contains runtime parameters passed to the Docker deployer. 
  *
  * @generated from message cloud.v1.deployment.Docker.Input
@@ -172,7 +119,7 @@ export type Docker_InputValid = Docker_Input;
  * Use `create(Docker_InputSchema)` to create a new message.
  */
 export const Docker_InputSchema: GenMessage<Docker_Input, {jsonType: Docker_InputJson, validType: Docker_InputValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_docker, 0, 1);
+  messageDesc(file_cloud_v1_deployment_docker, 0, 0);
 
 /**
  * Network describes the Docker network attached to containers. 
@@ -223,7 +170,7 @@ export type Docker_NetworkValid = Docker_Network;
  * Use `create(Docker_NetworkSchema)` to create a new message.
  */
 export const Docker_NetworkSchema: GenMessage<Docker_Network, {jsonType: Docker_NetworkJson, validType: Docker_NetworkValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_docker, 0, 2);
+  messageDesc(file_cloud_v1_deployment_docker, 0, 1);
 
 /**
  * Container is the runtime container spec consumed by the Docker daemon. 
@@ -498,7 +445,7 @@ export type Docker_ContainerValid = Docker_Container;
  * Use `create(Docker_ContainerSchema)` to create a new message.
  */
 export const Docker_ContainerSchema: GenMessage<Docker_Container, {jsonType: Docker_ContainerJson, validType: Docker_ContainerValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_docker, 0, 3);
+  messageDesc(file_cloud_v1_deployment_docker, 0, 2);
 
 /**
  * VolumeMount describes a named volume attached to a container. 
@@ -563,7 +510,7 @@ export type Docker_VolumeMountValid = Docker_VolumeMount;
  * Use `create(Docker_VolumeMountSchema)` to create a new message.
  */
 export const Docker_VolumeMountSchema: GenMessage<Docker_VolumeMount, {jsonType: Docker_VolumeMountJson, validType: Docker_VolumeMountValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_docker, 0, 4);
+  messageDesc(file_cloud_v1_deployment_docker, 0, 3);
 
 /**
  * PortBinding maps a container port to the host. 
@@ -642,7 +589,7 @@ export type Docker_PortBindingValid = Docker_PortBinding;
  * Use `create(Docker_PortBindingSchema)` to create a new message.
  */
 export const Docker_PortBindingSchema: GenMessage<Docker_PortBinding, {jsonType: Docker_PortBindingJson, validType: Docker_PortBindingValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_docker, 0, 5);
+  messageDesc(file_cloud_v1_deployment_docker, 0, 4);
 
 /**
  * File describes a file written into the container before start. 
@@ -707,7 +654,7 @@ export type Docker_FileValid = Docker_File;
  * Use `create(Docker_FileSchema)` to create a new message.
  */
 export const Docker_FileSchema: GenMessage<Docker_File, {jsonType: Docker_FileJson, validType: Docker_FileValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_docker, 0, 6);
+  messageDesc(file_cloud_v1_deployment_docker, 0, 5);
 
 /**
  * Healthcheck overrides image-level healthcheck. 
@@ -780,7 +727,7 @@ export type Docker_HealthcheckValid = Docker_Healthcheck;
  * Use `create(Docker_HealthcheckSchema)` to create a new message.
  */
 export const Docker_HealthcheckSchema: GenMessage<Docker_Healthcheck, {jsonType: Docker_HealthcheckJson, validType: Docker_HealthcheckValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_docker, 0, 7);
+  messageDesc(file_cloud_v1_deployment_docker, 0, 6);
 
 /**
  * Resources limits container CPU and memory. 
@@ -845,7 +792,7 @@ export type Docker_ResourcesValid = Docker_Resources;
  * Use `create(Docker_ResourcesSchema)` to create a new message.
  */
 export const Docker_ResourcesSchema: GenMessage<Docker_Resources, {jsonType: Docker_ResourcesJson, validType: Docker_ResourcesValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_docker, 0, 8);
+  messageDesc(file_cloud_v1_deployment_docker, 0, 7);
 
 /**
  * Output mirrors created Docker containers. 
@@ -896,7 +843,7 @@ export type Docker_OutputValid = Docker_Output;
  * Use `create(Docker_OutputSchema)` to create a new message.
  */
 export const Docker_OutputSchema: GenMessage<Docker_Output, {jsonType: Docker_OutputJson, validType: Docker_OutputValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_docker, 0, 9);
+  messageDesc(file_cloud_v1_deployment_docker, 0, 8);
 
 /**
  * ContainerOutput describes one created container. 
@@ -979,7 +926,7 @@ export type Docker_ContainerOutputValid = Docker_ContainerOutput;
  * Use `create(Docker_ContainerOutputSchema)` to create a new message.
  */
 export const Docker_ContainerOutputSchema: GenMessage<Docker_ContainerOutput, {jsonType: Docker_ContainerOutputJson, validType: Docker_ContainerOutputValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_docker, 0, 10);
+  messageDesc(file_cloud_v1_deployment_docker, 0, 9);
 
 /**
  * Protocol maps to Docker port protocol. 

@@ -814,6 +814,116 @@ var _ interface {
 	ErrorName() string
 } = TestRunIdValidationError{}
 
+// Validate checks the field values on DagId with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *DagId) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DagId with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in DagIdMultiError, or nil if none found.
+func (m *DagId) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DagId) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetValue()) != 26 {
+		err := DagIdValidationError{
+			field:  "Value",
+			reason: "value length must be 26 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+
+	}
+
+	if len(errors) > 0 {
+		return DagIdMultiError(errors)
+	}
+
+	return nil
+}
+
+// DagIdMultiError is an error wrapping multiple validation errors returned by
+// DagId.ValidateAll() if the designated constraints aren't met.
+type DagIdMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DagIdMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DagIdMultiError) AllErrors() []error { return m }
+
+// DagIdValidationError is the validation error returned by DagId.Validate if
+// the designated constraints aren't met.
+type DagIdValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DagIdValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DagIdValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DagIdValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DagIdValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DagIdValidationError) ErrorName() string { return "DagIdValidationError" }
+
+// Error satisfies the builtin error interface
+func (e DagIdValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDagId.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DagIdValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DagIdValidationError{}
+
 // Validate checks the field values on Timestamps with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.

@@ -6,9 +6,9 @@ import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2"
 import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Tags, TagsJson } from "../common/tags_pb.ts";
 import { file_cloud_v1_common_tags } from "../common/tags_pb.ts";
-import type { Docker, Docker_ContainerSpec, Docker_ContainerSpecJson, DockerJson } from "./docker_pb.ts";
+import type { Docker, Docker_Container, Docker_ContainerJson, DockerJson } from "./docker_pb.ts";
 import { file_cloud_v1_deployment_docker } from "./docker_pb.ts";
-import type { Yandex, Yandex_ManagedYdbSpec, Yandex_ManagedYdbSpecJson, Yandex_VmSpec, Yandex_VmSpecJson, YandexJson } from "./yandex_pb.ts";
+import type { Yandex, Yandex_ManagedYdb, Yandex_ManagedYdbJson, Yandex_Vm, Yandex_VmJson, YandexJson } from "./yandex_pb.ts";
 import { file_cloud_v1_deployment_yandex } from "./yandex_pb.ts";
 import type { Network, NetworkJson } from "../runtime/system/ip_pb.ts";
 import { file_cloud_v1_runtime_system_ip } from "../runtime/system/ip_pb.ts";
@@ -19,7 +19,54 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/deployment/deployment.proto.
  */
 export const file_cloud_v1_deployment_deployment: GenFile = /*@__PURE__*/
-  fileDesc("CiRjbG91ZC92MS9kZXBsb3ltZW50L2RlcGxveW1lbnQucHJvdG8SE2Nsb3VkLnYxLmRlcGxveW1lbnQijgMKEERlcGxveW1lbnRJbnRlbnQSRgoFc3BlY3MYASADKAsyKi5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRJbnRlbnQuU3BlY0IL+kIIkgEFCAEQgAESIwoEdGFncxgDIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGowCCgRTcGVjEhYKAmlkGAEgASgJQgr6QgdyBRiAARABEkEKCXlhbmRleF92bRgKIAEoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4LlZtU3BlY0II+kIFigECEAFIABJLCgttYW5hZ2VkX3lkYhgLIAEoCzIqLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk1hbmFnZWRZZGJTcGVjQgj6QgWKAQIQAUgAEk8KEGRvY2tlcl9jb250YWluZXIYDCABKAsyKS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5Db250YWluZXJTcGVjQgj6QgWKAQIQAUgAQgsKBHNwZWMSA/hCASLtAQoKRGVwbG95bWVudBI7Cghwcm92aWRlchgBIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXJCCvpCB4IBBCAAEAESMQoHbmV0d29yaxgCIAEoCzIgLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLk5ldHdvcmsSLQoGZG9ja2VyGAogASgLMhsuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXJIABItCgZ5YW5kZXgYCyABKAsyGy5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleEgAQhEKCmRlcGxveW1lbnQSA/hCASpOCghQcm92aWRlchIYChRQUk9WSURFUl9VTlNQRUNJRklFRBAAEhMKD1BST1ZJREVSX0RPQ0tFUhABEhMKD1BST1ZJREVSX1lBTkRFWBACQkhaRmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RlcGxveW1lbnRiBnByb3RvMw", [file_cloud_v1_common_tags, file_cloud_v1_deployment_docker, file_cloud_v1_deployment_yandex, file_cloud_v1_runtime_system_ip, file_validate_validate]);
+  fileDesc("CiRjbG91ZC92MS9kZXBsb3ltZW50L2RlcGxveW1lbnQucHJvdG8SE2Nsb3VkLnYxLmRlcGxveW1lbnQiPQoHTWFjaGluZRIWCgVjb3JlcxgBIAEoDUIH+kIEKgIgABIaCgltZW1vcnlfZ2IYAiABKARCB/pCBDICIAAiggMKEERlcGxveW1lbnRJbnRlbnQSRgoFc3BlY3MYASADKAsyKi5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRJbnRlbnQuU3BlY0IL+kIIkgEFCAEQgAESIwoEdGFncxgDIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGoACCgRTcGVjEhYKAmlkGAEgASgJQgr6QgdyBRABGIABEj0KCXlhbmRleF92bRgKIAEoCzIeLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4LlZtQgj6QgWKAQIQAUgAEkcKC21hbmFnZWRfeWRiGAsgASgLMiYuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguTWFuYWdlZFlkYkII+kIFigECEAFIABJLChBkb2NrZXJfY29udGFpbmVyGAwgASgLMiUuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuQ29udGFpbmVyQgj6QgWKAQIQAUgAQgsKBHNwZWMSA/hCASLtAQoKRGVwbG95bWVudBI7Cghwcm92aWRlchgBIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXJCCvpCB4IBBBABIAASMQoHbmV0d29yaxgCIAEoCzIgLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLk5ldHdvcmsSLQoGZG9ja2VyGAogASgLMhsuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXJIABItCgZ5YW5kZXgYCyABKAsyGy5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleEgAQhEKCmRlcGxveW1lbnQSA/hCASpOCghQcm92aWRlchIYChRQUk9WSURFUl9VTlNQRUNJRklFRBAAEhMKD1BST1ZJREVSX0RPQ0tFUhABEhMKD1BST1ZJREVSX1lBTkRFWBACQkhaRmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RlcGxveW1lbnRiBnByb3RvMw", [file_cloud_v1_common_tags, file_cloud_v1_deployment_docker, file_cloud_v1_deployment_yandex, file_cloud_v1_runtime_system_ip, file_validate_validate]);
+
+/**
+ * @generated from message cloud.v1.deployment.Machine
+ */
+export type Machine = Message<"cloud.v1.deployment.Machine"> & {
+  /**
+   * cores is VM vCPU count. 
+   *
+   * @generated from field: uint32 cores = 1;
+   */
+  cores: number;
+
+  /**
+   * memory_gb is VM RAM in GiB. 
+   *
+   * @generated from field: uint64 memory_gb = 2;
+   */
+  memoryGb: bigint;
+};
+
+/**
+ * @generated from message cloud.v1.deployment.Machine
+ */
+export type MachineJson = {
+  /**
+   * cores is VM vCPU count. 
+   *
+   * @generated from field: uint32 cores = 1;
+   */
+  cores?: number;
+
+  /**
+   * memory_gb is VM RAM in GiB. 
+   *
+   * @generated from field: uint64 memory_gb = 2;
+   */
+  memoryGb?: string;
+};
+
+export type MachineValid = Machine;
+
+/**
+ * Describes the message cloud.v1.deployment.Machine.
+ * Use `create(MachineSchema)` to create a new message.
+ */
+export const MachineSchema: GenMessage<Machine, {jsonType: MachineJson, validType: MachineValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_deployment_deployment, 0);
 
 /**
  *
@@ -64,7 +111,7 @@ export type DeploymentIntentValid = DeploymentIntent;
  * Use `create(DeploymentIntentSchema)` to create a new message.
  */
 export const DeploymentIntentSchema: GenMessage<DeploymentIntent, {jsonType: DeploymentIntentJson, validType: DeploymentIntentValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_deployment, 0);
+  messageDesc(file_cloud_v1_deployment_deployment, 1);
 
 /**
  * @generated from message cloud.v1.deployment.DeploymentIntent.Spec
@@ -80,21 +127,21 @@ export type DeploymentIntent_Spec = Message<"cloud.v1.deployment.DeploymentInten
    */
   spec: {
     /**
-     * @generated from field: cloud.v1.deployment.Yandex.VmSpec yandex_vm = 10;
+     * @generated from field: cloud.v1.deployment.Yandex.Vm yandex_vm = 10;
      */
-    value: Yandex_VmSpec;
+    value: Yandex_Vm;
     case: "yandexVm";
   } | {
     /**
-     * @generated from field: cloud.v1.deployment.Yandex.ManagedYdbSpec managed_ydb = 11;
+     * @generated from field: cloud.v1.deployment.Yandex.ManagedYdb managed_ydb = 11;
      */
-    value: Yandex_ManagedYdbSpec;
+    value: Yandex_ManagedYdb;
     case: "managedYdb";
   } | {
     /**
-     * @generated from field: cloud.v1.deployment.Docker.ContainerSpec docker_container = 12;
+     * @generated from field: cloud.v1.deployment.Docker.Container docker_container = 12;
      */
-    value: Docker_ContainerSpec;
+    value: Docker_Container;
     case: "dockerContainer";
   } | { case: undefined; value?: undefined };
 };
@@ -109,19 +156,19 @@ export type DeploymentIntent_SpecJson = {
   id?: string;
 
   /**
-   * @generated from field: cloud.v1.deployment.Yandex.VmSpec yandex_vm = 10;
+   * @generated from field: cloud.v1.deployment.Yandex.Vm yandex_vm = 10;
    */
-  yandexVm?: Yandex_VmSpecJson;
+  yandexVm?: Yandex_VmJson;
 
   /**
-   * @generated from field: cloud.v1.deployment.Yandex.ManagedYdbSpec managed_ydb = 11;
+   * @generated from field: cloud.v1.deployment.Yandex.ManagedYdb managed_ydb = 11;
    */
-  managedYdb?: Yandex_ManagedYdbSpecJson;
+  managedYdb?: Yandex_ManagedYdbJson;
 
   /**
-   * @generated from field: cloud.v1.deployment.Docker.ContainerSpec docker_container = 12;
+   * @generated from field: cloud.v1.deployment.Docker.Container docker_container = 12;
    */
-  dockerContainer?: Docker_ContainerSpecJson;
+  dockerContainer?: Docker_ContainerJson;
 };
 
 export type DeploymentIntent_SpecValid = DeploymentIntent_Spec;
@@ -131,7 +178,7 @@ export type DeploymentIntent_SpecValid = DeploymentIntent_Spec;
  * Use `create(DeploymentIntent_SpecSchema)` to create a new message.
  */
 export const DeploymentIntent_SpecSchema: GenMessage<DeploymentIntent_Spec, {jsonType: DeploymentIntent_SpecJson, validType: DeploymentIntent_SpecValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_deployment, 0, 0);
+  messageDesc(file_cloud_v1_deployment_deployment, 1, 0);
 
 /**
  * Deployment is the runtime+output bundle produced after apply. 
@@ -201,7 +248,7 @@ export type DeploymentValid = Deployment;
  * Use `create(DeploymentSchema)` to create a new message.
  */
 export const DeploymentSchema: GenMessage<Deployment, {jsonType: DeploymentJson, validType: DeploymentValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_deployment, 1);
+  messageDesc(file_cloud_v1_deployment_deployment, 2);
 
 /**
  * @generated from enum cloud.v1.deployment.Provider

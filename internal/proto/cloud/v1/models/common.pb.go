@@ -333,6 +333,50 @@ func (x *TestRunId) GetValue() string {
 	return ""
 }
 
+type DagId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DagId) Reset() {
+	*x = DagId{}
+	mi := &file_cloud_v1_models_common_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DagId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DagId) ProtoMessage() {}
+
+func (x *DagId) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_common_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DagId.ProtoReflect.Descriptor instead.
+func (*DagId) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *DagId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
 // Timestamps — universal audit fields. Imported by both system and domain
 // layers so neither depends on the other.
 type Timestamps struct {
@@ -345,7 +389,7 @@ type Timestamps struct {
 
 func (x *Timestamps) Reset() {
 	*x = Timestamps{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[7]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -357,7 +401,7 @@ func (x *Timestamps) String() string {
 func (*Timestamps) ProtoMessage() {}
 
 func (x *Timestamps) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[7]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -370,7 +414,7 @@ func (x *Timestamps) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Timestamps.ProtoReflect.Descriptor instead.
 func (*Timestamps) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{7}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Timestamps) GetCreatedAt() *timestamppb.Timestamp {
@@ -397,7 +441,7 @@ type Entity struct {
 
 func (x *Entity) Reset() {
 	*x = Entity{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[8]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -409,7 +453,7 @@ func (x *Entity) String() string {
 func (*Entity) ProtoMessage() {}
 
 func (x *Entity) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[8]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -422,7 +466,7 @@ func (x *Entity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Entity.ProtoReflect.Descriptor instead.
 func (*Entity) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{8}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Entity) GetId() *Ulid {
@@ -449,7 +493,7 @@ type SoftDeleteEntity struct {
 
 func (x *SoftDeleteEntity) Reset() {
 	*x = SoftDeleteEntity{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[9]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -461,7 +505,7 @@ func (x *SoftDeleteEntity) String() string {
 func (*SoftDeleteEntity) ProtoMessage() {}
 
 func (x *SoftDeleteEntity) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[9]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -474,7 +518,7 @@ func (x *SoftDeleteEntity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SoftDeleteEntity.ProtoReflect.Descriptor instead.
 func (*SoftDeleteEntity) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{9}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *SoftDeleteEntity) GetEntity() *Entity {
@@ -509,6 +553,8 @@ const file_cloud_v1_models_common_proto_rawDesc = "" +
 	"\x10WorkloadPresetId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"5\n" +
 	"\tTestRunId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"1\n" +
+	"\x05DagId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"\xb4\x01\n" +
 	"\n" +
 	"Timestamps\x12R\n" +
@@ -539,7 +585,7 @@ func file_cloud_v1_models_common_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_models_common_proto_rawDescData
 }
 
-var file_cloud_v1_models_common_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_cloud_v1_models_common_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_cloud_v1_models_common_proto_goTypes = []any{
 	(*Ulid)(nil),                  // 0: cloud.v1.models.Ulid
 	(*AccountId)(nil),             // 1: cloud.v1.models.AccountId
@@ -548,18 +594,19 @@ var file_cloud_v1_models_common_proto_goTypes = []any{
 	(*DatabasePresetId)(nil),      // 4: cloud.v1.models.DatabasePresetId
 	(*WorkloadPresetId)(nil),      // 5: cloud.v1.models.WorkloadPresetId
 	(*TestRunId)(nil),             // 6: cloud.v1.models.TestRunId
-	(*Timestamps)(nil),            // 7: cloud.v1.models.Timestamps
-	(*Entity)(nil),                // 8: cloud.v1.models.Entity
-	(*SoftDeleteEntity)(nil),      // 9: cloud.v1.models.SoftDeleteEntity
-	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
+	(*DagId)(nil),                 // 7: cloud.v1.models.DagId
+	(*Timestamps)(nil),            // 8: cloud.v1.models.Timestamps
+	(*Entity)(nil),                // 9: cloud.v1.models.Entity
+	(*SoftDeleteEntity)(nil),      // 10: cloud.v1.models.SoftDeleteEntity
+	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
 }
 var file_cloud_v1_models_common_proto_depIdxs = []int32{
-	10, // 0: cloud.v1.models.Timestamps.created_at:type_name -> google.protobuf.Timestamp
-	10, // 1: cloud.v1.models.Timestamps.updated_at:type_name -> google.protobuf.Timestamp
+	11, // 0: cloud.v1.models.Timestamps.created_at:type_name -> google.protobuf.Timestamp
+	11, // 1: cloud.v1.models.Timestamps.updated_at:type_name -> google.protobuf.Timestamp
 	0,  // 2: cloud.v1.models.Entity.id:type_name -> cloud.v1.models.Ulid
-	7,  // 3: cloud.v1.models.Entity.timestamps:type_name -> cloud.v1.models.Timestamps
-	8,  // 4: cloud.v1.models.SoftDeleteEntity.entity:type_name -> cloud.v1.models.Entity
-	10, // 5: cloud.v1.models.SoftDeleteEntity.deleted_at:type_name -> google.protobuf.Timestamp
+	8,  // 3: cloud.v1.models.Entity.timestamps:type_name -> cloud.v1.models.Timestamps
+	9,  // 4: cloud.v1.models.SoftDeleteEntity.entity:type_name -> cloud.v1.models.Entity
+	11, // 5: cloud.v1.models.SoftDeleteEntity.deleted_at:type_name -> google.protobuf.Timestamp
 	6,  // [6:6] is the sub-list for method output_type
 	6,  // [6:6] is the sub-list for method input_type
 	6,  // [6:6] is the sub-list for extension type_name
@@ -572,14 +619,14 @@ func file_cloud_v1_models_common_proto_init() {
 	if File_cloud_v1_models_common_proto != nil {
 		return
 	}
-	file_cloud_v1_models_common_proto_msgTypes[9].OneofWrappers = []any{}
+	file_cloud_v1_models_common_proto_msgTypes[10].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_models_common_proto_rawDesc), len(file_cloud_v1_models_common_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

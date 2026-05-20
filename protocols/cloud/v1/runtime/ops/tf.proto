@@ -1,0 +1,166 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.ops;
+
+import "cloud/v1/runtime/system/cmd.proto";
+import "cloud/v1/runtime/system/dir.proto";
+import "cloud/v1/runtime/system/file.proto";
+import "cloud/v1/runtime/primitive/status.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/ops";
+
+/*
+    TfOperation describes one Terraform lifecycle action.
+    Current runtime usage writes embedded .tf files and terraform.tfvars.json
+    into /tmp/stroppy-terraform/<workdir_id>, runs init/apply with a fixed
+    parallelism, stores workdir_id before apply for crash-safe destroy, and
+    exposes Terraform outputs as raw JSON values after apply.
+ */
+message TfOperation {
+    /* input contains everything needed to start or recover a Terraform action. */
+    Input input = 1 [(validate.rules).message.required = true];
+    /* output is filled by the executor while/after the action runs. */
+    optional Output output = 2;
+
+    /* Action selects the Terraform lifecycle command represented by input. */
+    enum Action {
+        /* ACTION_UNSPECIFIED is invalid. */
+        ACTION_UNSPECIFIED = 0;
+        /* ACTION_APPLY prepares the workdir, runs init/apply/output. */
+        ACTION_APPLY = 1;
+        /* ACTION_DESTROY destroys resources from an existing workdir state. */
+        ACTION_DESTROY = 2;
+    }
+
+    /* Input is the desired Terraform execution state. */
+    message Input {
+        /* action is the lifecycle command to execute. */
+        Action action = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        /*
+            workdir_id is the stable id under the Terraform root directory.
+            The current implementation uses run_id and persists it before
+            apply so teardown can recover after a process crash.
+         */
+        string workdir_id = 2 [(validate.rules).string = {min_len: 1, max_len: 256}];
+        /*
+            workdir optionally records the resolved on-disk directory.
+            Empty means executor derives /tmp/stroppy-terraform/<workdir_id>.
+         */
+        system.Dir workdir = 3;
+        /*
+            files are Terraform source files written into workdir before apply.
+            File paths are workdir-relative in current embedded-module usage.
+         */
+        repeated system.File files = 4 [(validate.rules).repeated = {min_items: 1, max_items: 512}];
+        /*
+            var_file is the rendered terraform.tfvars.json payload.
+            Required for apply; destroy may omit it when recovering from an
+            existing workdir and terraform.tfstate.
+         */
+        system.File var_file = 5;
+        /*
+            env contains provider credentials and Terraform env overrides.
+            Current Yandex runs pass YC_TOKEN, YC_CLOUD_ID, YC_FOLDER_ID,
+            YC_ZONE, while the executor adds TF_CLI_CONFIG_FILE.
+         */
+        map<string, string> env = 6 [(validate.rules).map.max_pairs = 128];
+        /*
+            parallelism is passed to terraform apply/destroy.
+            Zero means executor default; current runtime default is 10.
+         */
+        uint32 parallelism = 7 [(validate.rules).uint32.lte = 1024];
+        /*
+            preserve_existing_state keeps an existing terraform.tfstate when
+            preparing the workdir. This is required for idempotent recovered
+            apply and prevents orphaned cloud resources.
+         */
+        bool preserve_existing_state = 8;
+        /*
+            destroy_on_apply_error requests rollback with terraform destroy
+            when apply or output fails after Terraform has been initialized.
+         */
+        bool destroy_on_apply_error = 9;
+        /*
+            terraform_exec_path optionally records the Terraform binary path.
+            Empty means executor default, currently TERRAFORM_EXEC_PATH or
+            /usr/local/bin/terraform.
+         */
+        string terraform_exec_path = 10 [(validate.rules).string.max_len = 4096];
+    }
+
+    /* Output is the observed Terraform execution state. */
+    message Output {
+        /* status is the current/final lifecycle state. */
+        primitive.Status status = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        /* workdir_id echoes the input id for snapshot and log correlation. */
+        string workdir_id = 2 [(validate.rules).string = {min_len: 1, max_len: 256}];
+        /* workdir is the resolved on-disk directory used by Terraform. */
+        system.Dir workdir = 3;
+        /* state_file_present records whether terraform.tfstate exists after the action. */
+        bool state_file_present = 4;
+        /* state_preserved records that an existing state file was kept before apply. */
+        bool state_preserved = 5;
+        /*
+            outputs_json stores terraform output values by output name.
+            Each value is the raw JSON value returned by terraform output.
+         */
+        map<string, bytes> outputs_json = 6 [(validate.rules).map.max_pairs = 256];
+        /* rollback records destroy execution triggered by apply/output failure. */
+        Rollback rollback = 7;
+        /* steps contains coarse progress for init/apply/output/destroy. */
+        repeated Step steps = 8 [(validate.rules).repeated.max_items = 64];
+        /* error contains the terminal error for failed/cancelled actions. */
+        string error = 9 [(validate.rules).string.max_len = 8192];
+        /* started_at is the first observed execution timestamp. */
+        google.protobuf.Timestamp started_at = 10;
+        /* finished_at is the terminal execution timestamp. */
+        google.protobuf.Timestamp finished_at = 11;
+    }
+
+    /* Rollback records best-effort destroy after a failed apply/output path. */
+    message Rollback {
+        /* attempted is true when destroy was invoked as rollback. */
+        bool attempted = 1;
+        /* status is rollback progress/final state. */
+        primitive.Status status = 2 [(validate.rules).enum.defined_only = true];
+        /* error contains rollback failure details, if any. */
+        string error = 3 [(validate.rules).string.max_len = 8192];
+    }
+
+    /* Step records progress for one coarse Terraform executor phase. */
+    message Step {
+        /* Phase identifies the Terraform executor phase. */
+        enum Phase {
+            /* PHASE_UNSPECIFIED is invalid. */
+            PHASE_UNSPECIFIED = 0;
+            /* PHASE_PREPARE_WORKDIR creates or reuses the workdir. */
+            PHASE_PREPARE_WORKDIR = 1;
+            /* PHASE_WRITE_FILES writes .tf files and terraform.tfvars.json. */
+            PHASE_WRITE_FILES = 2;
+            /* PHASE_INIT runs terraform init. */
+            PHASE_INIT = 3;
+            /* PHASE_APPLY runs terraform apply. */
+            PHASE_APPLY = 4;
+            /* PHASE_OUTPUT reads terraform output. */
+            PHASE_OUTPUT = 5;
+            /* PHASE_DESTROY runs terraform destroy. */
+            PHASE_DESTROY = 6;
+        }
+
+        /* phase is the executor phase. */
+        Phase phase = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        /* status is the current/final phase state. */
+        primitive.Status status = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        /* command_result stores process output when the executor captures it. */
+        system.Cmd.Result command_result = 3;
+        /* error contains phase failure details, if any. */
+        string error = 4 [(validate.rules).string.max_len = 8192];
+        /* started_at is the first observed phase timestamp. */
+        google.protobuf.Timestamp started_at = 5;
+        /* finished_at is the terminal phase timestamp. */
+        google.protobuf.Timestamp finished_at = 6;
+    }
+
+}

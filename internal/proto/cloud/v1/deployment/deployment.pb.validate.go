@@ -35,6 +35,126 @@ var (
 	_ = sort.Sort
 )
 
+// Validate checks the field values on Machine with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Machine) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Machine with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in MachineMultiError, or nil if none found.
+func (m *Machine) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Machine) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetCores() <= 0 {
+		err := MachineValidationError{
+			field:  "Cores",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetMemoryGb() <= 0 {
+		err := MachineValidationError{
+			field:  "MemoryGb",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return MachineMultiError(errors)
+	}
+
+	return nil
+}
+
+// MachineMultiError is an error wrapping multiple validation errors returned
+// by Machine.ValidateAll() if the designated constraints aren't met.
+type MachineMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m MachineMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m MachineMultiError) AllErrors() []error { return m }
+
+// MachineValidationError is the validation error returned by Machine.Validate
+// if the designated constraints aren't met.
+type MachineValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MachineValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MachineValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MachineValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MachineValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MachineValidationError) ErrorName() string { return "MachineValidationError" }
+
+// Error satisfies the builtin error interface
+func (e MachineValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMachine.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MachineValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MachineValidationError{}
+
 // Validate checks the field values on DeploymentIntent with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.

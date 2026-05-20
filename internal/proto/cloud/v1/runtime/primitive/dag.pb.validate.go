@@ -35,9 +35,6 @@ var (
 	_ = sort.Sort
 )
 
-// define the regex for a UUID once up-front
-var _dag_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
 // Validate checks the field values on Dag with the rules defined in the proto
 // definition for this message. If any rules are violated, the first error
 // encountered is returned, or nil if there are no violations.
@@ -59,11 +56,10 @@ func (m *Dag) validate(all bool) error {
 
 	var errors []error
 
-	if err := m._validateUuid(m.GetId()); err != nil {
-		err = DagValidationError{
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 128 {
+		err := DagValidationError{
 			field:  "Id",
-			reason: "value must be a valid UUID",
-			cause:  err,
+			reason: "value length must be between 1 and 128 runes, inclusive",
 		}
 		if !all {
 			return err
@@ -243,16 +239,37 @@ func (m *Dag) validate(all bool) error {
 
 	// no validation rules for Metadata
 
-	if len(errors) > 0 {
-		return DagMultiError(errors)
+	if all {
+		switch v := interface{}(m.GetExecution()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DagValidationError{
+					field:  "Execution",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DagValidationError{
+					field:  "Execution",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetExecution()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DagValidationError{
+				field:  "Execution",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
-	return nil
-}
-
-func (m *Dag) _validateUuid(uuid string) error {
-	if matched := _dag_uuidPattern.MatchString(uuid); !matched {
-		return errors.New("invalid uuid format")
+	if len(errors) > 0 {
+		return DagMultiError(errors)
 	}
 
 	return nil
@@ -333,6 +350,193 @@ var _Dag_Status_NotInLookup = map[Status]struct{}{
 	5: {},
 	6: {},
 }
+
+// Validate checks the field values on Dag_Failure with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Dag_Failure) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Dag_Failure with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in Dag_FailureMultiError, or
+// nil if none found.
+func (m *Dag_Failure) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Dag_Failure) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetMessage()); l < 1 || l > 8192 {
+		err := Dag_FailureValidationError{
+			field:  "Message",
+			reason: "value length must be between 1 and 8192 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetCode()) > 128 {
+		err := Dag_FailureValidationError{
+			field:  "Code",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetSource()) > 128 {
+		err := Dag_FailureValidationError{
+			field:  "Source",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetPhase()) > 128 {
+		err := Dag_FailureValidationError{
+			field:  "Phase",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Attempt
+
+	// no validation rules for Retryable
+
+	if all {
+		switch v := interface{}(m.GetOccurredAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Dag_FailureValidationError{
+					field:  "OccurredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Dag_FailureValidationError{
+					field:  "OccurredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetOccurredAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Dag_FailureValidationError{
+				field:  "OccurredAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(m.GetMetadata()) > 64 {
+		err := Dag_FailureValidationError{
+			field:  "Metadata",
+			reason: "value must contain no more than 64 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return Dag_FailureMultiError(errors)
+	}
+
+	return nil
+}
+
+// Dag_FailureMultiError is an error wrapping multiple validation errors
+// returned by Dag_Failure.ValidateAll() if the designated constraints aren't met.
+type Dag_FailureMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Dag_FailureMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Dag_FailureMultiError) AllErrors() []error { return m }
+
+// Dag_FailureValidationError is the validation error returned by
+// Dag_Failure.Validate if the designated constraints aren't met.
+type Dag_FailureValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Dag_FailureValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Dag_FailureValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Dag_FailureValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Dag_FailureValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Dag_FailureValidationError) ErrorName() string { return "Dag_FailureValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Dag_FailureValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDag_Failure.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Dag_FailureValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Dag_FailureValidationError{}
 
 // Validate checks the field values on Dag_Node with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -430,6 +634,35 @@ func (m *Dag_Node) validate(all bool) error {
 	}
 
 	// no validation rules for Metadata
+
+	if all {
+		switch v := interface{}(m.GetExecution()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Dag_NodeValidationError{
+					field:  "Execution",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Dag_NodeValidationError{
+					field:  "Execution",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetExecution()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Dag_NodeValidationError{
+				field:  "Execution",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	oneofVariantPresent := false
 	switch v := m.Variant.(type) {
@@ -533,6 +766,59 @@ func (m *Dag_Node) validate(all bool) error {
 			if err := v.Validate(); err != nil {
 				return Dag_NodeValidationError{
 					field:  "SubDag",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Dag_Node_DagRef_:
+		if v == nil {
+			err := Dag_NodeValidationError{
+				field:  "Variant",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofVariantPresent = true
+
+		if m.GetDagRef() == nil {
+			err := Dag_NodeValidationError{
+				field:  "DagRef",
+				reason: "value is required",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if all {
+			switch v := interface{}(m.GetDagRef()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Dag_NodeValidationError{
+						field:  "DagRef",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Dag_NodeValidationError{
+						field:  "DagRef",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetDagRef()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Dag_NodeValidationError{
+					field:  "DagRef",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -657,11 +943,10 @@ func (m *Dag_Edge) validate(all bool) error {
 
 	var errors []error
 
-	if err := m._validateUuid(m.GetId()); err != nil {
-		err = Dag_EdgeValidationError{
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 128 {
+		err := Dag_EdgeValidationError{
 			field:  "Id",
-			reason: "value must be a valid UUID",
-			cause:  err,
+			reason: "value length must be between 1 and 128 runes, inclusive",
 		}
 		if !all {
 			return err
@@ -669,11 +954,10 @@ func (m *Dag_Edge) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if err := m._validateUuid(m.GetSource()); err != nil {
-		err = Dag_EdgeValidationError{
+	if l := utf8.RuneCountInString(m.GetSource()); l < 1 || l > 256 {
+		err := Dag_EdgeValidationError{
 			field:  "Source",
-			reason: "value must be a valid UUID",
-			cause:  err,
+			reason: "value length must be between 1 and 256 runes, inclusive",
 		}
 		if !all {
 			return err
@@ -681,11 +965,10 @@ func (m *Dag_Edge) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if err := m._validateUuid(m.GetTarget()); err != nil {
-		err = Dag_EdgeValidationError{
+	if l := utf8.RuneCountInString(m.GetTarget()); l < 1 || l > 256 {
+		err := Dag_EdgeValidationError{
 			field:  "Target",
-			reason: "value must be a valid UUID",
-			cause:  err,
+			reason: "value length must be between 1 and 256 runes, inclusive",
 		}
 		if !all {
 			return err
@@ -746,14 +1029,6 @@ func (m *Dag_Edge) validate(all bool) error {
 
 	if len(errors) > 0 {
 		return Dag_EdgeMultiError(errors)
-	}
-
-	return nil
-}
-
-func (m *Dag_Edge) _validateUuid(uuid string) error {
-	if matched := _dag_uuidPattern.MatchString(uuid); !matched {
-		return errors.New("invalid uuid format")
 	}
 
 	return nil
@@ -835,6 +1110,277 @@ var _Dag_Edge_OnStatus_NotInLookup = map[Status]struct{}{
 	2: {},
 	5: {},
 	7: {},
+}
+
+// Validate checks the field values on Dag_Execution with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Dag_Execution) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Dag_Execution with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in Dag_ExecutionMultiError, or
+// nil if none found.
+func (m *Dag_Execution) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Dag_Execution) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if _, ok := _Dag_Execution_Status_NotInLookup[m.GetStatus()]; ok {
+		err := Dag_ExecutionValidationError{
+			field:  "Status",
+			reason: "value must not be in list [STATUS_UNSPECIFIED STATUS_RETRY_WAIT STATUS_SKIPPED]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := Status_name[int32(m.GetStatus())]; !ok {
+		err := Dag_ExecutionValidationError{
+			field:  "Status",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetFailedNodeId()) > 256 {
+		err := Dag_ExecutionValidationError{
+			field:  "FailedNodeId",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetFailure()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Dag_ExecutionValidationError{
+					field:  "Failure",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Dag_ExecutionValidationError{
+					field:  "Failure",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFailure()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Dag_ExecutionValidationError{
+				field:  "Failure",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(m.GetFailures()) > 128 {
+		err := Dag_ExecutionValidationError{
+			field:  "Failures",
+			reason: "value must contain no more than 128 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetFailures() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Dag_ExecutionValidationError{
+						field:  fmt.Sprintf("Failures[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Dag_ExecutionValidationError{
+						field:  fmt.Sprintf("Failures[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Dag_ExecutionValidationError{
+					field:  fmt.Sprintf("Failures[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetStartedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Dag_ExecutionValidationError{
+					field:  "StartedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Dag_ExecutionValidationError{
+					field:  "StartedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetStartedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Dag_ExecutionValidationError{
+				field:  "StartedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetFinishedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Dag_ExecutionValidationError{
+					field:  "FinishedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Dag_ExecutionValidationError{
+					field:  "FinishedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFinishedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Dag_ExecutionValidationError{
+				field:  "FinishedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Dag_ExecutionMultiError(errors)
+	}
+
+	return nil
+}
+
+// Dag_ExecutionMultiError is an error wrapping multiple validation errors
+// returned by Dag_Execution.ValidateAll() if the designated constraints
+// aren't met.
+type Dag_ExecutionMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Dag_ExecutionMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Dag_ExecutionMultiError) AllErrors() []error { return m }
+
+// Dag_ExecutionValidationError is the validation error returned by
+// Dag_Execution.Validate if the designated constraints aren't met.
+type Dag_ExecutionValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Dag_ExecutionValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Dag_ExecutionValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Dag_ExecutionValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Dag_ExecutionValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Dag_ExecutionValidationError) ErrorName() string { return "Dag_ExecutionValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Dag_ExecutionValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDag_Execution.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Dag_ExecutionValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Dag_ExecutionValidationError{}
+
+var _Dag_Execution_Status_NotInLookup = map[Status]struct{}{
+	0: {},
+	5: {},
+	6: {},
 }
 
 // Validate checks the field values on Dag_Scheduling with the rules defined in
@@ -998,6 +1544,17 @@ func (m *Dag_Node_TaskState) validate(all bool) error {
 
 	var errors []error
 
+	if utf8.RuneCountInString(m.GetHandlerName()) < 1 {
+		err := Dag_Node_TaskStateValidationError{
+			field:  "HandlerName",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if m.GetInput() == nil {
 		err := Dag_Node_TaskStateValidationError{
 			field:  "Input",
@@ -1122,6 +1679,117 @@ var _ interface {
 	ErrorName() string
 } = Dag_Node_TaskStateValidationError{}
 
+// Validate checks the field values on Dag_Node_DagRef with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Dag_Node_DagRef) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Dag_Node_DagRef with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Dag_Node_DagRefMultiError, or nil if none found.
+func (m *Dag_Node_DagRef) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Dag_Node_DagRef) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetDagId()); l < 1 || l > 128 {
+		err := Dag_Node_DagRefValidationError{
+			field:  "DagId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return Dag_Node_DagRefMultiError(errors)
+	}
+
+	return nil
+}
+
+// Dag_Node_DagRefMultiError is an error wrapping multiple validation errors
+// returned by Dag_Node_DagRef.ValidateAll() if the designated constraints
+// aren't met.
+type Dag_Node_DagRefMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Dag_Node_DagRefMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Dag_Node_DagRefMultiError) AllErrors() []error { return m }
+
+// Dag_Node_DagRefValidationError is the validation error returned by
+// Dag_Node_DagRef.Validate if the designated constraints aren't met.
+type Dag_Node_DagRefValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Dag_Node_DagRefValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Dag_Node_DagRefValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Dag_Node_DagRefValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Dag_Node_DagRefValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Dag_Node_DagRefValidationError) ErrorName() string { return "Dag_Node_DagRefValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Dag_Node_DagRefValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDag_Node_DagRef.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Dag_Node_DagRefValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Dag_Node_DagRefValidationError{}
+
 // Validate checks the field values on Dag_Node_Scheduling with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -1144,9 +1812,9 @@ func (m *Dag_Node_Scheduling) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetRetry() == nil {
+	if m.GetRetryPolicy() == nil {
 		err := Dag_Node_SchedulingValidationError{
-			field:  "Retry",
+			field:  "RetryPolicy",
 			reason: "value is required",
 		}
 		if !all {
@@ -1156,11 +1824,11 @@ func (m *Dag_Node_Scheduling) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetRetry()).(type) {
+		switch v := interface{}(m.GetRetryPolicy()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, Dag_Node_SchedulingValidationError{
-					field:  "Retry",
+					field:  "RetryPolicy",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -1168,16 +1836,16 @@ func (m *Dag_Node_Scheduling) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, Dag_Node_SchedulingValidationError{
-					field:  "Retry",
+					field:  "RetryPolicy",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetRetry()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetRetryPolicy()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return Dag_Node_SchedulingValidationError{
-				field:  "Retry",
+				field:  "RetryPolicy",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -1278,3 +1946,293 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = Dag_Node_SchedulingValidationError{}
+
+// Validate checks the field values on Dag_Node_Execution with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Dag_Node_Execution) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Dag_Node_Execution with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Dag_Node_ExecutionMultiError, or nil if none found.
+func (m *Dag_Node_Execution) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Dag_Node_Execution) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if _, ok := _Dag_Node_Execution_Status_NotInLookup[m.GetStatus()]; ok {
+		err := Dag_Node_ExecutionValidationError{
+			field:  "Status",
+			reason: "value must not be in list [STATUS_UNSPECIFIED STATUS_CANCELLING]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := Status_name[int32(m.GetStatus())]; !ok {
+		err := Dag_Node_ExecutionValidationError{
+			field:  "Status",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetRetryState()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Dag_Node_ExecutionValidationError{
+					field:  "RetryState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Dag_Node_ExecutionValidationError{
+					field:  "RetryState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRetryState()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Dag_Node_ExecutionValidationError{
+				field:  "RetryState",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetFailure()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Dag_Node_ExecutionValidationError{
+					field:  "Failure",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Dag_Node_ExecutionValidationError{
+					field:  "Failure",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFailure()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Dag_Node_ExecutionValidationError{
+				field:  "Failure",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(m.GetFailures()) > 128 {
+		err := Dag_Node_ExecutionValidationError{
+			field:  "Failures",
+			reason: "value must contain no more than 128 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetFailures() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Dag_Node_ExecutionValidationError{
+						field:  fmt.Sprintf("Failures[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Dag_Node_ExecutionValidationError{
+						field:  fmt.Sprintf("Failures[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Dag_Node_ExecutionValidationError{
+					field:  fmt.Sprintf("Failures[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetStartedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Dag_Node_ExecutionValidationError{
+					field:  "StartedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Dag_Node_ExecutionValidationError{
+					field:  "StartedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetStartedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Dag_Node_ExecutionValidationError{
+				field:  "StartedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetFinishedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Dag_Node_ExecutionValidationError{
+					field:  "FinishedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Dag_Node_ExecutionValidationError{
+					field:  "FinishedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFinishedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Dag_Node_ExecutionValidationError{
+				field:  "FinishedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Dag_Node_ExecutionMultiError(errors)
+	}
+
+	return nil
+}
+
+// Dag_Node_ExecutionMultiError is an error wrapping multiple validation errors
+// returned by Dag_Node_Execution.ValidateAll() if the designated constraints
+// aren't met.
+type Dag_Node_ExecutionMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Dag_Node_ExecutionMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Dag_Node_ExecutionMultiError) AllErrors() []error { return m }
+
+// Dag_Node_ExecutionValidationError is the validation error returned by
+// Dag_Node_Execution.Validate if the designated constraints aren't met.
+type Dag_Node_ExecutionValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Dag_Node_ExecutionValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Dag_Node_ExecutionValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Dag_Node_ExecutionValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Dag_Node_ExecutionValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Dag_Node_ExecutionValidationError) ErrorName() string {
+	return "Dag_Node_ExecutionValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Dag_Node_ExecutionValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDag_Node_Execution.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Dag_Node_ExecutionValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Dag_Node_ExecutionValidationError{}
+
+var _Dag_Node_Execution_Status_NotInLookup = map[Status]struct{}{
+	0: {},
+	7: {},
+}

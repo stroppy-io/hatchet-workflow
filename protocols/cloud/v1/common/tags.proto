@@ -5,6 +5,5 @@ package cloud.v1.common;
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
 
 message Tags {
-    map<string, string> tags = 1;
-    repeated string labels = 2;
+    repeated string tags = 1;
 }

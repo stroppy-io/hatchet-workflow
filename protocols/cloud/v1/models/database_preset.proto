@@ -2,7 +2,9 @@ syntax = "proto3";
 
 package cloud.v1.models;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/domain/database.proto";
+import "cloud/v1/domain/topology.proto";
 import "cloud/v1/models/common.proto";
 import "goplain/goplain.proto";
 import "ratelproto/ratelproto.proto";
@@ -17,13 +19,17 @@ message DatabasePreset {
         table_name: "database_presets"
     };
     models.Entity entity = 1 [(goplain.field).embed = true];
-    models.AccountId owner_account_id = 2 [(ratel.column).constraints = {
-        references_table: "accounts"
-        references_column: "id"
-        on_delete: CASCADE
-    }];
-    domain.Database database = 3 [
-        (goplain.field).embed = true,
+    models.Own owned = 2 [(goplain.field).embed = true];
+    common.Tags tags = 3 [
+        (goplain.field).embed = true
+    ];
+    domain.Database.Kind kind = 4;
+    domain.Database database = 5 [
+        (goplain.field).serialize = true,
+        (validate.rules).message.required = true
+    ];
+    domain.Topology topology = 6 [
+        (goplain.field).serialize = true,
         (validate.rules).message.required = true
     ];
 }

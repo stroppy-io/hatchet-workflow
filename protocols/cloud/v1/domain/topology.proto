@@ -9,7 +9,6 @@ import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
-
 message Topology {
     /*
       Component is a runtime+output bundle.
@@ -21,11 +20,15 @@ message Topology {
         runtime.render.Config config = 2 [(validate.rules).message.required = true];
         common.Tags tags = 3;
     }
-    repeated Component items = 4 [(validate.rules).repeated.min_items = 1];
-    message PlacementGroup {
-        repeated string component_ids = 1 [(validate.rules).repeated.min_items = 1];
+    message Machine {
+        /* cores is VM vCPU count. */
+        uint32 cores = 1 [(validate.rules).uint32.gt = 0];
+        /* memory_gb is VM RAM in GiB. */
+        uint64 memory_gb = 2 [(validate.rules).uint64.gt = 0];
+
+        repeated Component components = 3 [(validate.rules).repeated.min_items = 1];
     }
-    repeated PlacementGroup placement_groups = 5 [(validate.rules).repeated.min_items = 1];
+    repeated Machine machines = 2 [(validate.rules).repeated.min_items = 1];
     /*
         Connection is a directed edge between two components.
         Kind encodes the whole interaction pattern (both endpoints' roles).

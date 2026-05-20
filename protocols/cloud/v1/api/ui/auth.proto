@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package cloud.v1.api.ui;
+
+import "cloud/v1/models/account.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui";
+
+message TokenPair {
+    string access_token = 1;
+    string refresh_token = 2;
+    /* Access-token lifetime; client uses for proactive refresh. */
+    google.protobuf.Duration access_token_expires_in = 3;
+    /* Refresh-token lifetime. */
+    google.protobuf.Duration refresh_token_expires_in = 4;
+}
+
+message LoginRequest {
+    /* email — accepts either an email address (must contain "@") or a
+       bare nickname/username. Server-side resolution picks the right
+       column. Validation only enforces a non-empty short string. */
+    string email = 1 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    string password = 2 [(validate.rules).string.min_len = 1];
+}
+message LoginResponse {TokenPair tokens = 1;}
+
+message RefreshTokenRequest {
+    /* refresh_token — optional. Frontend leaves empty and relies on the
+       HttpOnly cookie set by the server on Login/Refresh. CLI/SDK clients
+       send the opaque token explicitly. */
+    string refresh_token = 1 [(validate.rules).string.max_len = 128];
+}
+message RefreshTokenResponse {TokenPair tokens = 1;}
+
+message LogoutRequest {
+    /* refresh_token — optional; falls back to the HttpOnly cookie. */
+    string refresh_token = 1 [(validate.rules).string.max_len = 128];
+}
+
+service AuthService {
+    rpc Login (LoginRequest) returns (LoginResponse) {option idempotency_level = IDEMPOTENT;}
+    rpc RefreshTokens (RefreshTokenRequest) returns (RefreshTokenResponse) {option idempotency_level = IDEMPOTENT;}
+    rpc Logout (LogoutRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;}
+    rpc Me (google.protobuf.Empty) returns (models.Account) {option idempotency_level = NO_SIDE_EFFECTS;}
+}

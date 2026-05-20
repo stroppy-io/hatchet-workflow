@@ -4,24 +4,18 @@
 package models
 
 import (
-	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
-	render "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/render"
 	ratelcast "github.com/yaroher/ratel/pkg/ratelcast"
+	protojson "google.golang.org/protobuf/encoding/protojson"
 	time "time"
 )
 
 type DatabasePresetScanner struct {
-	Id               string                       `json:"id"` // origin: embed, empath: id
-	CreatedAt        time.Time                    `json:"createdAt"`
-	UpdatedAt        time.Time                    `json:"updatedAt"`
-	OwnerAccountId   string                       `json:"ownerAccountId"` // origin: type_alias, empath: owner_account_id
-	Kind             string                       `json:"kind"`
-	Version          string                       `json:"version"`
-	Config           *render.Config               `json:"config"`
-	Target           *domain.Database_Target      `json:"target"`
-	Options          *domain.Database_Options     `json:"options"`
-	DeploymentIntent *deployment.DeploymentIntent `json:"deploymentIntent,omitempty"`
+	Id             string    `json:"id"` // origin: embed, empath: id
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+	OwnerAccountId string    `json:"ownerAccountId"` // origin: type_alias, empath: owner_account_id
+	Database       []byte    `json:"database"`       // origin: serialized, empath: database
 }
 
 // IntoPlain converts protobuf message to plain struct
@@ -47,29 +41,13 @@ func (pb *DatabasePreset) IntoPlain() *DatabasePresetScanner {
 	if pb.GetOwnerAccountId() != nil {
 		p.OwnerAccountId = pb.GetOwnerAccountId().GetValue()
 	}
-	// Kind from
-	if pb.GetDatabase() != nil {
-		p.Kind = pb.GetDatabase().GetKind().String()
-	}
-	// Version from
-	if pb.GetDatabase() != nil {
-		p.Version = pb.GetDatabase().GetVersion()
-	}
-	// Config from
-	if pb.GetDatabase() != nil && pb.GetDatabase().GetConfig() != nil {
-		p.Config = pb.GetDatabase().GetConfig()
-	}
-	// Target from
-	if pb.GetDatabase() != nil && pb.GetDatabase().GetTarget() != nil {
-		p.Target = pb.GetDatabase().GetTarget()
-	}
-	// Options from
-	if pb.GetDatabase() != nil && pb.GetDatabase().GetOptions() != nil {
-		p.Options = pb.GetDatabase().GetOptions()
-	}
-	// DeploymentIntent from
-	if pb.GetDatabase() != nil && pb.GetDatabase().GetDeploymentIntent() != nil {
-		p.DeploymentIntent = pb.GetDatabase().GetDeploymentIntent()
+	// Database serialized from database
+	if pb.Database != nil {
+		if data, err := protojson.Marshal(pb.Database); err == nil {
+			p.Database = data
+		}
+	} else {
+		p.Database = []byte{}
 	}
 	return p
 }
@@ -111,47 +89,12 @@ func (p *DatabasePresetScanner) IntoPb() *DatabasePreset {
 	if p.OwnerAccountId != "" {
 		pb.OwnerAccountId = &AccountId{Value: p.OwnerAccountId}
 	}
-	// Kind ->
-	if p.Kind != "" {
-		if pb.Database == nil {
-			pb.Database = &domain.Database{}
+	// Database deserialize -> database
+	if len(p.Database) > 0 {
+		var msg domain.Database
+		if err := protojson.Unmarshal(p.Database, &msg); err == nil {
+			pb.Database = &msg
 		}
-		pb.Database.Kind = p.Kind
-	}
-	// Version ->
-	if p.Version != "" {
-		if pb.Database == nil {
-			pb.Database = &domain.Database{}
-		}
-		pb.Database.Version = p.Version
-	}
-	// Config ->
-	if p.Config != nil {
-		if pb.Database == nil {
-			pb.Database = &domain.Database{}
-		}
-		pb.Database.Config = p.Config
-	}
-	// Target ->
-	if p.Target != nil {
-		if pb.Database == nil {
-			pb.Database = &domain.Database{}
-		}
-		pb.Database.Target = p.Target
-	}
-	// Options ->
-	if p.Options != nil {
-		if pb.Database == nil {
-			pb.Database = &domain.Database{}
-		}
-		pb.Database.Options = p.Options
-	}
-	// DeploymentIntent ->
-	if p.DeploymentIntent != nil {
-		if pb.Database == nil {
-			pb.Database = &domain.Database{}
-		}
-		pb.Database.DeploymentIntent = p.DeploymentIntent
 	}
 	return pb
 }

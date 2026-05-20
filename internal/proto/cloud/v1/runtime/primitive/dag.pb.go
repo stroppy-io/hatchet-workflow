@@ -11,6 +11,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	anypb "google.golang.org/protobuf/types/known/anypb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -73,7 +74,7 @@ func (x Dag_Node_Scheduling_JoinPolicy) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Dag_Node_Scheduling_JoinPolicy.Descriptor instead.
 func (Dag_Node_Scheduling_JoinPolicy) EnumDescriptor() ([]byte, []int) {
-	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 0, 1, 0}
+	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 1, 2, 0}
 }
 
 // OnNodeFailure controls whether failed nodes stop admission of ordinary pending nodes.
@@ -126,14 +127,16 @@ func (x Dag_Scheduling_OnNodeFailure) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Dag_Scheduling_OnNodeFailure.Descriptor instead.
 func (Dag_Scheduling_OnNodeFailure) EnumDescriptor() ([]byte, []int) {
-	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 2, 0}
+	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 4, 0}
 }
 
 // Dag is a stateful execution snapshot for a directed acyclic graph.
 //
 // The scheduler loads and saves the whole Dag aggregate as one unit. A
 // top-level Dag is persisted in the dags table; a sub-Dag is embedded in its
-// owning node and is not persisted as a separate database row.
+// owning node and is not persisted as a separate database row. A dag_ref node
+// points at another persisted Dag and lets parent Dags orchestrate independent
+// child Dags without embedding their full payload.
 //
 // Execution model:
 // - a node becomes ready when its incoming edges are satisfied according to
@@ -149,6 +152,9 @@ func (Dag_Scheduling_OnNodeFailure) EnumDescriptor() ([]byte, []int) {
 // - a task node executes its TaskState payload;
 // - a sub-Dag node executes the nested Dag and mirrors its terminal result
 // into the owning node status;
+// - a dag_ref node executes or waits for another persisted Dag through the
+// runtime's DagRefRunner and mirrors its terminal result into the owning
+// node status;
 // - Dag.Scheduling.on_node_failure controls whether ordinary pending nodes
 // continue to be admitted after a node fails;
 // - Node.Scheduling.always_run nodes are reserved for cleanup/teardown and
@@ -172,7 +178,9 @@ type Dag struct {
 	// scheduling contains graph-level parallelism and failure policy.
 	Scheduling *Dag_Scheduling `protobuf:"bytes,7,opt,name=scheduling,proto3" json:"scheduling,omitempty"`
 	// metadata contains Dag labels and scheduler-specific annotations.
-	Metadata      map[string]string `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Metadata map[string]string `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// execution stores aggregate progress and root failure diagnostics.
+	Execution     *Dag_Execution `protobuf:"bytes,20,opt,name=execution,proto3" json:"execution,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -256,6 +264,131 @@ func (x *Dag) GetMetadata() map[string]string {
 	return nil
 }
 
+func (x *Dag) GetExecution() *Dag_Execution {
+	if x != nil {
+		return x.Execution
+	}
+	return nil
+}
+
+// Failure is a normalized execution error.
+//
+// Plain error strings are enough for logs, but not enough for UI filters,
+// retry decisions, grouping, or root-cause navigation. This record keeps
+// both human-readable text and stable machine-readable context.
+type Dag_Failure struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// message is the human-readable error text.
+	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	// code is a stable machine-readable error class.
+	// Examples: TERRAFORM_APPLY_FAILED, AGENT_UNREACHABLE,
+	// COMMAND_EXIT_FAILED, CONFIG_RENDER_FAILED, DAG_CANCELLED.
+	Code string `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
+	// source identifies the subsystem that produced the error.
+	// Examples: dag_executor, terraform, agent, docker, ssh, stroppy.
+	Source string `protobuf:"bytes,3,opt,name=source,proto3" json:"source,omitempty"`
+	// phase identifies where inside the node/task the error happened.
+	// Examples: terraform_apply, install_package, render_config,
+	// start_service, run_stroppy.
+	Phase string `protobuf:"bytes,4,opt,name=phase,proto3" json:"phase,omitempty"`
+	// attempt is the node attempt that produced this failure. First attempt is 1.
+	Attempt uint32 `protobuf:"varint,5,opt,name=attempt,proto3" json:"attempt,omitempty"`
+	// retryable is the executor/task opinion before retry policy limits are applied.
+	Retryable bool `protobuf:"varint,6,opt,name=retryable,proto3" json:"retryable,omitempty"`
+	// occurred_at is when this failure was observed.
+	OccurredAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=occurred_at,json=occurredAt,proto3" json:"occurred_at,omitempty"`
+	// metadata stores small diagnostic labels such as workdir_id, machine_id, or command.
+	Metadata      map[string]string `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Dag_Failure) Reset() {
+	*x = Dag_Failure{}
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Dag_Failure) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Dag_Failure) ProtoMessage() {}
+
+func (x *Dag_Failure) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Dag_Failure.ProtoReflect.Descriptor instead.
+func (*Dag_Failure) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 0}
+}
+
+func (x *Dag_Failure) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *Dag_Failure) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *Dag_Failure) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *Dag_Failure) GetPhase() string {
+	if x != nil {
+		return x.Phase
+	}
+	return ""
+}
+
+func (x *Dag_Failure) GetAttempt() uint32 {
+	if x != nil {
+		return x.Attempt
+	}
+	return 0
+}
+
+func (x *Dag_Failure) GetRetryable() bool {
+	if x != nil {
+		return x.Retryable
+	}
+	return false
+}
+
+func (x *Dag_Failure) GetOccurredAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.OccurredAt
+	}
+	return nil
+}
+
+func (x *Dag_Failure) GetMetadata() map[string]string {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
 // Node is a single schedulable unit inside a Dag.
 type Dag_Node struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -267,19 +400,22 @@ type Dag_Node struct {
 	Scheduling *Dag_Node_Scheduling `protobuf:"bytes,3,opt,name=scheduling,proto3" json:"scheduling,omitempty"`
 	// metadata contains node labels and executor-specific annotations.
 	Metadata map[string]string `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// variant selects whether this node executes a task or a nested Dag.
+	// variant selects whether this node executes a task, an embedded Dag, or a persisted Dag ref.
 	// Types that are valid to be assigned to Variant:
 	//
 	//	*Dag_Node_TaskState_
 	//	*Dag_Node_SubDag
-	Variant       isDag_Node_Variant `protobuf_oneof:"variant"`
+	//	*Dag_Node_DagRef_
+	Variant isDag_Node_Variant `protobuf_oneof:"variant"`
+	// execution stores runtime progress and diagnostics for this node.
+	Execution     *Dag_Node_Execution `protobuf:"bytes,20,opt,name=execution,proto3" json:"execution,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Dag_Node) Reset() {
 	*x = Dag_Node{}
-	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[1]
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -291,7 +427,7 @@ func (x *Dag_Node) String() string {
 func (*Dag_Node) ProtoMessage() {}
 
 func (x *Dag_Node) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[1]
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -304,7 +440,7 @@ func (x *Dag_Node) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Dag_Node.ProtoReflect.Descriptor instead.
 func (*Dag_Node) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 0}
+	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *Dag_Node) GetId() string {
@@ -360,6 +496,22 @@ func (x *Dag_Node) GetSubDag() *Dag {
 	return nil
 }
 
+func (x *Dag_Node) GetDagRef() *Dag_Node_DagRef {
+	if x != nil {
+		if x, ok := x.Variant.(*Dag_Node_DagRef_); ok {
+			return x.DagRef
+		}
+	}
+	return nil
+}
+
+func (x *Dag_Node) GetExecution() *Dag_Node_Execution {
+	if x != nil {
+		return x.Execution
+	}
+	return nil
+}
+
 type isDag_Node_Variant interface {
 	isDag_Node_Variant()
 }
@@ -374,9 +526,16 @@ type Dag_Node_SubDag struct {
 	SubDag *Dag `protobuf:"bytes,11,opt,name=sub_dag,json=subDag,proto3,oneof"`
 }
 
+type Dag_Node_DagRef_ struct {
+	// dag_ref executes or waits for a separate persisted Dag.
+	DagRef *Dag_Node_DagRef `protobuf:"bytes,12,opt,name=dag_ref,json=dagRef,proto3,oneof"`
+}
+
 func (*Dag_Node_TaskState_) isDag_Node_Variant() {}
 
 func (*Dag_Node_SubDag) isDag_Node_Variant() {}
+
+func (*Dag_Node_DagRef_) isDag_Node_Variant() {}
 
 // Edge is a dependency from source node to target node.
 type Dag_Edge struct {
@@ -399,7 +558,7 @@ type Dag_Edge struct {
 
 func (x *Dag_Edge) Reset() {
 	*x = Dag_Edge{}
-	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[2]
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -411,7 +570,7 @@ func (x *Dag_Edge) String() string {
 func (*Dag_Edge) ProtoMessage() {}
 
 func (x *Dag_Edge) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[2]
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -424,7 +583,7 @@ func (x *Dag_Edge) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Dag_Edge.ProtoReflect.Descriptor instead.
 func (*Dag_Edge) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 1}
+	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 2}
 }
 
 func (x *Dag_Edge) GetId() string {
@@ -491,6 +650,100 @@ func (*Dag_Edge_PredicateName) isDag_Edge_Condition() {}
 
 func (*Dag_Edge_OnStatus) isDag_Edge_Condition() {}
 
+// Execution stores aggregate runtime state for the whole Dag.
+//
+// Detailed retry history stays on Node.Execution. This block is for
+// quick overview, terminal status, and root-cause navigation.
+type Dag_Execution struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// status mirrors Dag.status so consumers can read one complete runtime block.
+	Status Status `protobuf:"varint,1,opt,name=status,proto3,enum=cloud.v1.runtime.primitive.Status" json:"status,omitempty"`
+	// failed_node_id points to the first/root failed node, when known.
+	FailedNodeId string `protobuf:"bytes,2,opt,name=failed_node_id,json=failedNodeId,proto3" json:"failed_node_id,omitempty"`
+	// failure is the root Dag failure, usually copied from the failed node.
+	Failure *Dag_Failure `protobuf:"bytes,3,opt,name=failure,proto3" json:"failure,omitempty"`
+	// failures contains compact terminal/root failures, not every retry attempt.
+	Failures []*Dag_Failure `protobuf:"bytes,4,rep,name=failures,proto3" json:"failures,omitempty"`
+	// started_at is when the Dag first entered STATUS_RUNNING.
+	StartedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// finished_at is when the Dag reached a terminal status.
+	FinishedAt    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Dag_Execution) Reset() {
+	*x = Dag_Execution{}
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Dag_Execution) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Dag_Execution) ProtoMessage() {}
+
+func (x *Dag_Execution) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Dag_Execution.ProtoReflect.Descriptor instead.
+func (*Dag_Execution) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 3}
+}
+
+func (x *Dag_Execution) GetStatus() Status {
+	if x != nil {
+		return x.Status
+	}
+	return Status_STATUS_UNSPECIFIED
+}
+
+func (x *Dag_Execution) GetFailedNodeId() string {
+	if x != nil {
+		return x.FailedNodeId
+	}
+	return ""
+}
+
+func (x *Dag_Execution) GetFailure() *Dag_Failure {
+	if x != nil {
+		return x.Failure
+	}
+	return nil
+}
+
+func (x *Dag_Execution) GetFailures() []*Dag_Failure {
+	if x != nil {
+		return x.Failures
+	}
+	return nil
+}
+
+func (x *Dag_Execution) GetStartedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartedAt
+	}
+	return nil
+}
+
+func (x *Dag_Execution) GetFinishedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.FinishedAt
+	}
+	return nil
+}
+
 // Scheduling controls graph-level admission and failure behavior.
 type Dag_Scheduling struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -506,7 +759,7 @@ type Dag_Scheduling struct {
 
 func (x *Dag_Scheduling) Reset() {
 	*x = Dag_Scheduling{}
-	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[3]
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -518,7 +771,7 @@ func (x *Dag_Scheduling) String() string {
 func (*Dag_Scheduling) ProtoMessage() {}
 
 func (x *Dag_Scheduling) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[3]
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -531,7 +784,7 @@ func (x *Dag_Scheduling) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Dag_Scheduling.ProtoReflect.Descriptor instead.
 func (*Dag_Scheduling) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 2}
+	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 4}
 }
 
 func (x *Dag_Scheduling) GetMaxParallelism() uint32 {
@@ -558,17 +811,19 @@ func (x *Dag_Scheduling) GetIsSubDag() bool {
 // TaskState contains opaque task input and produced task output.
 type Dag_Node_TaskState struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is unique within this Dag and is the address used by edges.
+	HandlerName string `protobuf:"bytes,1,opt,name=handler_name,json=handlerName,proto3" json:"handler_name,omitempty"`
 	// input is the typed payload consumed by the task executor.
-	Input *anypb.Any `protobuf:"bytes,4,opt,name=input,proto3" json:"input,omitempty"`
+	Input *anypb.Any `protobuf:"bytes,2,opt,name=input,proto3" json:"input,omitempty"`
 	// output is the typed payload produced after task completion.
-	Output        *anypb.Any `protobuf:"bytes,5,opt,name=output,proto3" json:"output,omitempty"`
+	Output        *anypb.Any `protobuf:"bytes,3,opt,name=output,proto3" json:"output,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Dag_Node_TaskState) Reset() {
 	*x = Dag_Node_TaskState{}
-	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[5]
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -580,7 +835,7 @@ func (x *Dag_Node_TaskState) String() string {
 func (*Dag_Node_TaskState) ProtoMessage() {}
 
 func (x *Dag_Node_TaskState) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[5]
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -593,7 +848,14 @@ func (x *Dag_Node_TaskState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Dag_Node_TaskState.ProtoReflect.Descriptor instead.
 func (*Dag_Node_TaskState) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 0, 0}
+	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 1, 0}
+}
+
+func (x *Dag_Node_TaskState) GetHandlerName() string {
+	if x != nil {
+		return x.HandlerName
+	}
+	return ""
 }
 
 func (x *Dag_Node_TaskState) GetInput() *anypb.Any {
@@ -610,11 +872,62 @@ func (x *Dag_Node_TaskState) GetOutput() *anypb.Any {
 	return nil
 }
 
+// DagRef points at another persisted Dag.
+//
+// This is intentionally a plain string rather than models.DagId so the
+// runtime primitive package stays independent from database models.
+// Persisted implementations should store a cloud.v1.models.DagId value.
+type Dag_Node_DagRef struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// dag_id is the id of the persisted child Dag.
+	DagId         string `protobuf:"bytes,1,opt,name=dag_id,json=dagId,proto3" json:"dag_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Dag_Node_DagRef) Reset() {
+	*x = Dag_Node_DagRef{}
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Dag_Node_DagRef) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Dag_Node_DagRef) ProtoMessage() {}
+
+func (x *Dag_Node_DagRef) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Dag_Node_DagRef.ProtoReflect.Descriptor instead.
+func (*Dag_Node_DagRef) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 1, 1}
+}
+
+func (x *Dag_Node_DagRef) GetDagId() string {
+	if x != nil {
+		return x.DagId
+	}
+	return ""
+}
+
 // Scheduling controls admission and dependency merge behavior for one node.
 type Dag_Node_Scheduling struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// retry stores retry policy and retry state for this node.
-	Retry *Retry `protobuf:"bytes,4,opt,name=retry,proto3" json:"retry,omitempty"`
+	// retry_policy stores static retry configuration for this node.
+	// Runtime retry progress lives in Node.Execution.retry_state.
+	RetryPolicy *Retry_Policy `protobuf:"bytes,4,opt,name=retry_policy,json=retryPolicy,proto3" json:"retry_policy,omitempty"`
 	// always_run allows cleanup nodes to run after failure or cancellation.
 	AlwaysRun bool `protobuf:"varint,5,opt,name=always_run,json=alwaysRun,proto3" json:"always_run,omitempty"`
 	// priority orders ready nodes when max_parallelism leaves limited slots. Higher runs earlier.
@@ -627,7 +940,7 @@ type Dag_Node_Scheduling struct {
 
 func (x *Dag_Node_Scheduling) Reset() {
 	*x = Dag_Node_Scheduling{}
-	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[6]
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -639,7 +952,7 @@ func (x *Dag_Node_Scheduling) String() string {
 func (*Dag_Node_Scheduling) ProtoMessage() {}
 
 func (x *Dag_Node_Scheduling) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[6]
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -652,12 +965,12 @@ func (x *Dag_Node_Scheduling) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Dag_Node_Scheduling.ProtoReflect.Descriptor instead.
 func (*Dag_Node_Scheduling) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 0, 1}
+	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 1, 2}
 }
 
-func (x *Dag_Node_Scheduling) GetRetry() *Retry {
+func (x *Dag_Node_Scheduling) GetRetryPolicy() *Retry_Policy {
 	if x != nil {
-		return x.Retry
+		return x.RetryPolicy
 	}
 	return nil
 }
@@ -683,13 +996,110 @@ func (x *Dag_Node_Scheduling) GetJoinPolicy() Dag_Node_Scheduling_JoinPolicy {
 	return Dag_Node_Scheduling_JOIN_POLICY_UNSPECIFIED
 }
 
+// Execution stores node-local runtime state.
+//
+// Scheduling answers "how may this node run"; Execution answers
+// "what actually happened while it was running".
+type Dag_Node_Execution struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// status mirrors Node.status so consumers can read one complete runtime block.
+	Status Status `protobuf:"varint,1,opt,name=status,proto3,enum=cloud.v1.runtime.primitive.Status" json:"status,omitempty"`
+	// retry_state stores runtime retry progress: current attempt,
+	// next retry time, current delay, last error, and attempt timestamps.
+	RetryState *Retry_State `protobuf:"bytes,2,opt,name=retry_state,json=retryState,proto3" json:"retry_state,omitempty"`
+	// failure is the current/final root failure for this node.
+	// For STATUS_RETRY_WAIT this is the latest failure.
+	Failure *Dag_Failure `protobuf:"bytes,3,opt,name=failure,proto3" json:"failure,omitempty"`
+	// failures keeps structured attempt-level failure history.
+	Failures []*Dag_Failure `protobuf:"bytes,4,rep,name=failures,proto3" json:"failures,omitempty"`
+	// started_at is when the node first entered STATUS_RUNNING.
+	StartedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// finished_at is when the node reached a terminal status.
+	FinishedAt    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Dag_Node_Execution) Reset() {
+	*x = Dag_Node_Execution{}
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Dag_Node_Execution) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Dag_Node_Execution) ProtoMessage() {}
+
+func (x *Dag_Node_Execution) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_runtime_primitive_dag_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Dag_Node_Execution.ProtoReflect.Descriptor instead.
+func (*Dag_Node_Execution) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 1, 3}
+}
+
+func (x *Dag_Node_Execution) GetStatus() Status {
+	if x != nil {
+		return x.Status
+	}
+	return Status_STATUS_UNSPECIFIED
+}
+
+func (x *Dag_Node_Execution) GetRetryState() *Retry_State {
+	if x != nil {
+		return x.RetryState
+	}
+	return nil
+}
+
+func (x *Dag_Node_Execution) GetFailure() *Dag_Failure {
+	if x != nil {
+		return x.Failure
+	}
+	return nil
+}
+
+func (x *Dag_Node_Execution) GetFailures() []*Dag_Failure {
+	if x != nil {
+		return x.Failures
+	}
+	return nil
+}
+
+func (x *Dag_Node_Execution) GetStartedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartedAt
+	}
+	return nil
+}
+
+func (x *Dag_Node_Execution) GetFinishedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.FinishedAt
+	}
+	return nil
+}
+
 var File_cloud_v1_runtime_primitive_dag_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_runtime_primitive_dag_proto_rawDesc = "" +
 	"\n" +
-	"$cloud/v1/runtime/primitive/dag.proto\x12\x1acloud.v1.runtime.primitive\x1a&cloud/v1/runtime/primitive/retry.proto\x1a'cloud/v1/runtime/primitive/status.proto\x1a\x19google/protobuf/any.proto\x1a\x17validate/validate.proto\"\xe2\x0f\n" +
-	"\x03Dag\x12\x18\n" +
-	"\x02id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\xb0\x01\x01R\x02id\x12J\n" +
+	"$cloud/v1/runtime/primitive/dag.proto\x12\x1acloud.v1.runtime.primitive\x1a&cloud/v1/runtime/primitive/retry.proto\x1a'cloud/v1/runtime/primitive/status.proto\x1a\x19google/protobuf/any.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xa4\x1c\n" +
+	"\x03Dag\x12\x1a\n" +
+	"\x02id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12J\n" +
 	"\x06status\x18\x03 \x01(\x0e2\".cloud.v1.runtime.primitive.StatusB\x0e\xfaB\v\x82\x01\b\x10\x01 \x00 \x05 \x06R\x06status\x12D\n" +
 	"\x05nodes\x18\x04 \x03(\v2$.cloud.v1.runtime.primitive.Dag.NodeB\b\xfaB\x05\x92\x01\x02\b\x01R\x05nodes\x12:\n" +
 	"\x05edges\x18\x05 \x03(\v2$.cloud.v1.runtime.primitive.Dag.EdgeR\x05edges\x12*\n" +
@@ -697,7 +1107,22 @@ const file_cloud_v1_runtime_primitive_dag_proto_rawDesc = "" +
 	"\n" +
 	"scheduling\x18\a \x01(\v2*.cloud.v1.runtime.primitive.Dag.SchedulingB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
 	"scheduling\x12I\n" +
-	"\bmetadata\x18\b \x03(\v2-.cloud.v1.runtime.primitive.Dag.MetadataEntryR\bmetadata\x1a\xbc\a\n" +
+	"\bmetadata\x18\b \x03(\v2-.cloud.v1.runtime.primitive.Dag.MetadataEntryR\bmetadata\x12G\n" +
+	"\texecution\x18\x14 \x01(\v2).cloud.v1.runtime.primitive.Dag.ExecutionR\texecution\x1a\x9e\x03\n" +
+	"\aFailure\x12$\n" +
+	"\amessage\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80@R\amessage\x12\x1c\n" +
+	"\x04code\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x04code\x12 \n" +
+	"\x06source\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x06source\x12\x1e\n" +
+	"\x05phase\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x05phase\x12\x18\n" +
+	"\aattempt\x18\x05 \x01(\rR\aattempt\x12\x1c\n" +
+	"\tretryable\x18\x06 \x01(\bR\tretryable\x12;\n" +
+	"\voccurred_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"occurredAt\x12[\n" +
+	"\bmetadata\x18\b \x03(\v25.cloud.v1.runtime.primitive.Dag.Failure.MetadataEntryB\b\xfaB\x05\x9a\x01\x02\x10@R\bmetadata\x1a;\n" +
+	"\rMetadataEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a\xf7\f\n" +
 	"\x04Node\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12H\n" +
 	"\x06status\x18\x02 \x01(\x0e2\".cloud.v1.runtime.primitive.StatusB\f\xfaB\t\x82\x01\x06\x10\x01 \x00 \aR\x06status\x12Y\n" +
@@ -708,13 +1133,19 @@ const file_cloud_v1_runtime_primitive_dag_proto_rawDesc = "" +
 	"\n" +
 	"task_state\x18\n" +
 	" \x01(\v2..cloud.v1.runtime.primitive.Dag.Node.TaskStateB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\ttaskState\x12D\n" +
-	"\asub_dag\x18\v \x01(\v2\x1f.cloud.v1.runtime.primitive.DagB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\x06subDag\x1ao\n" +
-	"\tTaskState\x124\n" +
-	"\x05input\x18\x04 \x01(\v2\x14.google.protobuf.AnyB\b\xfaB\x05\xa2\x01\x02\b\x01R\x05input\x12,\n" +
-	"\x06output\x18\x05 \x01(\v2\x14.google.protobuf.AnyR\x06output\x1a\xc6\x02\n" +
+	"\asub_dag\x18\v \x01(\v2\x1f.cloud.v1.runtime.primitive.DagB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\x06subDag\x12P\n" +
+	"\adag_ref\x18\f \x01(\v2+.cloud.v1.runtime.primitive.Dag.Node.DagRefB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\x06dagRef\x12L\n" +
+	"\texecution\x18\x14 \x01(\v2..cloud.v1.runtime.primitive.Dag.Node.ExecutionR\texecution\x1a\x9b\x01\n" +
+	"\tTaskState\x12*\n" +
+	"\fhandler_name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\vhandlerName\x124\n" +
+	"\x05input\x18\x02 \x01(\v2\x14.google.protobuf.AnyB\b\xfaB\x05\xa2\x01\x02\b\x01R\x05input\x12,\n" +
+	"\x06output\x18\x03 \x01(\v2\x14.google.protobuf.AnyR\x06output\x1a+\n" +
+	"\x06DagRef\x12!\n" +
+	"\x06dag_id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05dagId\x1a\xda\x02\n" +
 	"\n" +
-	"Scheduling\x12A\n" +
-	"\x05retry\x18\x04 \x01(\v2!.cloud.v1.runtime.primitive.RetryB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05retry\x12\x1d\n" +
+	"Scheduling\x12U\n" +
+	"\fretry_policy\x18\x04 \x01(\v2(.cloud.v1.runtime.primitive.Retry.PolicyB\b\xfaB\x05\x8a\x01\x02\x10\x01R\vretryPolicy\x12\x1d\n" +
 	"\n" +
 	"always_run\x18\x05 \x01(\bR\talwaysRun\x12\x1a\n" +
 	"\bpriority\x18\x06 \x01(\x05R\bpriority\x12e\n" +
@@ -724,19 +1155,41 @@ const file_cloud_v1_runtime_primitive_dag_proto_rawDesc = "" +
 	"JoinPolicy\x12\x1b\n" +
 	"\x17JOIN_POLICY_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fJOIN_POLICY_ALL\x10\x01\x12\x13\n" +
-	"\x0fJOIN_POLICY_ANY\x10\x02\x1a;\n" +
+	"\x0fJOIN_POLICY_ANY\x10\x02\x1a\xaa\x03\n" +
+	"\tExecution\x12H\n" +
+	"\x06status\x18\x01 \x01(\x0e2\".cloud.v1.runtime.primitive.StatusB\f\xfaB\t\x82\x01\x06\x10\x01 \x00 \aR\x06status\x12H\n" +
+	"\vretry_state\x18\x02 \x01(\v2'.cloud.v1.runtime.primitive.Retry.StateR\n" +
+	"retryState\x12A\n" +
+	"\afailure\x18\x03 \x01(\v2'.cloud.v1.runtime.primitive.Dag.FailureR\afailure\x12N\n" +
+	"\bfailures\x18\x04 \x03(\v2'.cloud.v1.runtime.primitive.Dag.FailureB\t\xfaB\x06\x92\x01\x03\x10\x80\x01R\bfailures\x129\n" +
+	"\n" +
+	"started_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12;\n" +
+	"\vfinished_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"finishedAt\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x0e\n" +
-	"\avariant\x12\x03\xf8B\x01\x1a\xf1\x01\n" +
-	"\x04Edge\x12\x18\n" +
-	"\x02id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\xb0\x01\x01R\x02id\x12 \n" +
-	"\x06source\x18\x02 \x01(\tB\b\xfaB\x05r\x03\xb0\x01\x01R\x06source\x12 \n" +
-	"\x06target\x18\x03 \x01(\tB\b\xfaB\x05r\x03\xb0\x01\x01R\x06target\x12'\n" +
+	"\avariant\x12\x03\xf8B\x01\x1a\xf7\x01\n" +
+	"\x04Edge\x12\x1a\n" +
+	"\x02id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12\"\n" +
+	"\x06source\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x02R\x06source\x12\"\n" +
+	"\x06target\x18\x03 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x02R\x06target\x12'\n" +
 	"\x0epredicate_name\x18\n" +
 	" \x01(\tH\x00R\rpredicateName\x12U\n" +
 	"\ton_status\x18\v \x01(\x0e2\".cloud.v1.runtime.primitive.StatusB\x12\xfaB\x0f\x82\x01\f\x10\x01 \x00 \x01 \x02 \x05 \aH\x00R\bonStatusB\v\n" +
-	"\tcondition\x1a\xb5\x02\n" +
+	"\tcondition\x1a\x92\x03\n" +
+	"\tExecution\x12J\n" +
+	"\x06status\x18\x01 \x01(\x0e2\".cloud.v1.runtime.primitive.StatusB\x0e\xfaB\v\x82\x01\b\x10\x01 \x00 \x05 \x06R\x06status\x12.\n" +
+	"\x0efailed_node_id\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\ffailedNodeId\x12A\n" +
+	"\afailure\x18\x03 \x01(\v2'.cloud.v1.runtime.primitive.Dag.FailureR\afailure\x12N\n" +
+	"\bfailures\x18\x04 \x03(\v2'.cloud.v1.runtime.primitive.Dag.FailureB\t\xfaB\x06\x92\x01\x03\x10\x80\x01R\bfailures\x129\n" +
+	"\n" +
+	"started_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12;\n" +
+	"\vfinished_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"finishedAt\x1a\xb5\x02\n" +
 	"\n" +
 	"Scheduling\x121\n" +
 	"\x0fmax_parallelism\x18\x01 \x01(\rB\b\xfaB\x05*\x03\x18\x80\bR\x0emaxParallelism\x12l\n" +
@@ -765,45 +1218,68 @@ func file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_runtime_primitive_dag_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_cloud_v1_runtime_primitive_dag_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_cloud_v1_runtime_primitive_dag_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_cloud_v1_runtime_primitive_dag_proto_goTypes = []any{
 	(Dag_Node_Scheduling_JoinPolicy)(0), // 0: cloud.v1.runtime.primitive.Dag.Node.Scheduling.JoinPolicy
 	(Dag_Scheduling_OnNodeFailure)(0),   // 1: cloud.v1.runtime.primitive.Dag.Scheduling.OnNodeFailure
 	(*Dag)(nil),                         // 2: cloud.v1.runtime.primitive.Dag
-	(*Dag_Node)(nil),                    // 3: cloud.v1.runtime.primitive.Dag.Node
-	(*Dag_Edge)(nil),                    // 4: cloud.v1.runtime.primitive.Dag.Edge
-	(*Dag_Scheduling)(nil),              // 5: cloud.v1.runtime.primitive.Dag.Scheduling
-	nil,                                 // 6: cloud.v1.runtime.primitive.Dag.MetadataEntry
-	(*Dag_Node_TaskState)(nil),          // 7: cloud.v1.runtime.primitive.Dag.Node.TaskState
-	(*Dag_Node_Scheduling)(nil),         // 8: cloud.v1.runtime.primitive.Dag.Node.Scheduling
-	nil,                                 // 9: cloud.v1.runtime.primitive.Dag.Node.MetadataEntry
-	(Status)(0),                         // 10: cloud.v1.runtime.primitive.Status
-	(*anypb.Any)(nil),                   // 11: google.protobuf.Any
-	(*Retry)(nil),                       // 12: cloud.v1.runtime.primitive.Retry
+	(*Dag_Failure)(nil),                 // 3: cloud.v1.runtime.primitive.Dag.Failure
+	(*Dag_Node)(nil),                    // 4: cloud.v1.runtime.primitive.Dag.Node
+	(*Dag_Edge)(nil),                    // 5: cloud.v1.runtime.primitive.Dag.Edge
+	(*Dag_Execution)(nil),               // 6: cloud.v1.runtime.primitive.Dag.Execution
+	(*Dag_Scheduling)(nil),              // 7: cloud.v1.runtime.primitive.Dag.Scheduling
+	nil,                                 // 8: cloud.v1.runtime.primitive.Dag.MetadataEntry
+	nil,                                 // 9: cloud.v1.runtime.primitive.Dag.Failure.MetadataEntry
+	(*Dag_Node_TaskState)(nil),          // 10: cloud.v1.runtime.primitive.Dag.Node.TaskState
+	(*Dag_Node_DagRef)(nil),             // 11: cloud.v1.runtime.primitive.Dag.Node.DagRef
+	(*Dag_Node_Scheduling)(nil),         // 12: cloud.v1.runtime.primitive.Dag.Node.Scheduling
+	(*Dag_Node_Execution)(nil),          // 13: cloud.v1.runtime.primitive.Dag.Node.Execution
+	nil,                                 // 14: cloud.v1.runtime.primitive.Dag.Node.MetadataEntry
+	(Status)(0),                         // 15: cloud.v1.runtime.primitive.Status
+	(*anypb.Any)(nil),                   // 16: google.protobuf.Any
+	(*timestamppb.Timestamp)(nil),       // 17: google.protobuf.Timestamp
+	(*Retry_Policy)(nil),                // 18: cloud.v1.runtime.primitive.Retry.Policy
+	(*Retry_State)(nil),                 // 19: cloud.v1.runtime.primitive.Retry.State
 }
 var file_cloud_v1_runtime_primitive_dag_proto_depIdxs = []int32{
-	10, // 0: cloud.v1.runtime.primitive.Dag.status:type_name -> cloud.v1.runtime.primitive.Status
-	3,  // 1: cloud.v1.runtime.primitive.Dag.nodes:type_name -> cloud.v1.runtime.primitive.Dag.Node
-	4,  // 2: cloud.v1.runtime.primitive.Dag.edges:type_name -> cloud.v1.runtime.primitive.Dag.Edge
-	11, // 3: cloud.v1.runtime.primitive.Dag.input:type_name -> google.protobuf.Any
-	5,  // 4: cloud.v1.runtime.primitive.Dag.scheduling:type_name -> cloud.v1.runtime.primitive.Dag.Scheduling
-	6,  // 5: cloud.v1.runtime.primitive.Dag.metadata:type_name -> cloud.v1.runtime.primitive.Dag.MetadataEntry
-	10, // 6: cloud.v1.runtime.primitive.Dag.Node.status:type_name -> cloud.v1.runtime.primitive.Status
-	8,  // 7: cloud.v1.runtime.primitive.Dag.Node.scheduling:type_name -> cloud.v1.runtime.primitive.Dag.Node.Scheduling
-	9,  // 8: cloud.v1.runtime.primitive.Dag.Node.metadata:type_name -> cloud.v1.runtime.primitive.Dag.Node.MetadataEntry
-	7,  // 9: cloud.v1.runtime.primitive.Dag.Node.task_state:type_name -> cloud.v1.runtime.primitive.Dag.Node.TaskState
-	2,  // 10: cloud.v1.runtime.primitive.Dag.Node.sub_dag:type_name -> cloud.v1.runtime.primitive.Dag
-	10, // 11: cloud.v1.runtime.primitive.Dag.Edge.on_status:type_name -> cloud.v1.runtime.primitive.Status
-	1,  // 12: cloud.v1.runtime.primitive.Dag.Scheduling.on_node_failure:type_name -> cloud.v1.runtime.primitive.Dag.Scheduling.OnNodeFailure
-	11, // 13: cloud.v1.runtime.primitive.Dag.Node.TaskState.input:type_name -> google.protobuf.Any
-	11, // 14: cloud.v1.runtime.primitive.Dag.Node.TaskState.output:type_name -> google.protobuf.Any
-	12, // 15: cloud.v1.runtime.primitive.Dag.Node.Scheduling.retry:type_name -> cloud.v1.runtime.primitive.Retry
-	0,  // 16: cloud.v1.runtime.primitive.Dag.Node.Scheduling.join_policy:type_name -> cloud.v1.runtime.primitive.Dag.Node.Scheduling.JoinPolicy
-	17, // [17:17] is the sub-list for method output_type
-	17, // [17:17] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	15, // 0: cloud.v1.runtime.primitive.Dag.status:type_name -> cloud.v1.runtime.primitive.Status
+	4,  // 1: cloud.v1.runtime.primitive.Dag.nodes:type_name -> cloud.v1.runtime.primitive.Dag.Node
+	5,  // 2: cloud.v1.runtime.primitive.Dag.edges:type_name -> cloud.v1.runtime.primitive.Dag.Edge
+	16, // 3: cloud.v1.runtime.primitive.Dag.input:type_name -> google.protobuf.Any
+	7,  // 4: cloud.v1.runtime.primitive.Dag.scheduling:type_name -> cloud.v1.runtime.primitive.Dag.Scheduling
+	8,  // 5: cloud.v1.runtime.primitive.Dag.metadata:type_name -> cloud.v1.runtime.primitive.Dag.MetadataEntry
+	6,  // 6: cloud.v1.runtime.primitive.Dag.execution:type_name -> cloud.v1.runtime.primitive.Dag.Execution
+	17, // 7: cloud.v1.runtime.primitive.Dag.Failure.occurred_at:type_name -> google.protobuf.Timestamp
+	9,  // 8: cloud.v1.runtime.primitive.Dag.Failure.metadata:type_name -> cloud.v1.runtime.primitive.Dag.Failure.MetadataEntry
+	15, // 9: cloud.v1.runtime.primitive.Dag.Node.status:type_name -> cloud.v1.runtime.primitive.Status
+	12, // 10: cloud.v1.runtime.primitive.Dag.Node.scheduling:type_name -> cloud.v1.runtime.primitive.Dag.Node.Scheduling
+	14, // 11: cloud.v1.runtime.primitive.Dag.Node.metadata:type_name -> cloud.v1.runtime.primitive.Dag.Node.MetadataEntry
+	10, // 12: cloud.v1.runtime.primitive.Dag.Node.task_state:type_name -> cloud.v1.runtime.primitive.Dag.Node.TaskState
+	2,  // 13: cloud.v1.runtime.primitive.Dag.Node.sub_dag:type_name -> cloud.v1.runtime.primitive.Dag
+	11, // 14: cloud.v1.runtime.primitive.Dag.Node.dag_ref:type_name -> cloud.v1.runtime.primitive.Dag.Node.DagRef
+	13, // 15: cloud.v1.runtime.primitive.Dag.Node.execution:type_name -> cloud.v1.runtime.primitive.Dag.Node.Execution
+	15, // 16: cloud.v1.runtime.primitive.Dag.Edge.on_status:type_name -> cloud.v1.runtime.primitive.Status
+	15, // 17: cloud.v1.runtime.primitive.Dag.Execution.status:type_name -> cloud.v1.runtime.primitive.Status
+	3,  // 18: cloud.v1.runtime.primitive.Dag.Execution.failure:type_name -> cloud.v1.runtime.primitive.Dag.Failure
+	3,  // 19: cloud.v1.runtime.primitive.Dag.Execution.failures:type_name -> cloud.v1.runtime.primitive.Dag.Failure
+	17, // 20: cloud.v1.runtime.primitive.Dag.Execution.started_at:type_name -> google.protobuf.Timestamp
+	17, // 21: cloud.v1.runtime.primitive.Dag.Execution.finished_at:type_name -> google.protobuf.Timestamp
+	1,  // 22: cloud.v1.runtime.primitive.Dag.Scheduling.on_node_failure:type_name -> cloud.v1.runtime.primitive.Dag.Scheduling.OnNodeFailure
+	16, // 23: cloud.v1.runtime.primitive.Dag.Node.TaskState.input:type_name -> google.protobuf.Any
+	16, // 24: cloud.v1.runtime.primitive.Dag.Node.TaskState.output:type_name -> google.protobuf.Any
+	18, // 25: cloud.v1.runtime.primitive.Dag.Node.Scheduling.retry_policy:type_name -> cloud.v1.runtime.primitive.Retry.Policy
+	0,  // 26: cloud.v1.runtime.primitive.Dag.Node.Scheduling.join_policy:type_name -> cloud.v1.runtime.primitive.Dag.Node.Scheduling.JoinPolicy
+	15, // 27: cloud.v1.runtime.primitive.Dag.Node.Execution.status:type_name -> cloud.v1.runtime.primitive.Status
+	19, // 28: cloud.v1.runtime.primitive.Dag.Node.Execution.retry_state:type_name -> cloud.v1.runtime.primitive.Retry.State
+	3,  // 29: cloud.v1.runtime.primitive.Dag.Node.Execution.failure:type_name -> cloud.v1.runtime.primitive.Dag.Failure
+	3,  // 30: cloud.v1.runtime.primitive.Dag.Node.Execution.failures:type_name -> cloud.v1.runtime.primitive.Dag.Failure
+	17, // 31: cloud.v1.runtime.primitive.Dag.Node.Execution.started_at:type_name -> google.protobuf.Timestamp
+	17, // 32: cloud.v1.runtime.primitive.Dag.Node.Execution.finished_at:type_name -> google.protobuf.Timestamp
+	33, // [33:33] is the sub-list for method output_type
+	33, // [33:33] is the sub-list for method input_type
+	33, // [33:33] is the sub-list for extension type_name
+	33, // [33:33] is the sub-list for extension extendee
+	0,  // [0:33] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_runtime_primitive_dag_proto_init() }
@@ -813,11 +1289,12 @@ func file_cloud_v1_runtime_primitive_dag_proto_init() {
 	}
 	file_cloud_v1_runtime_primitive_retry_proto_init()
 	file_cloud_v1_runtime_primitive_status_proto_init()
-	file_cloud_v1_runtime_primitive_dag_proto_msgTypes[1].OneofWrappers = []any{
+	file_cloud_v1_runtime_primitive_dag_proto_msgTypes[2].OneofWrappers = []any{
 		(*Dag_Node_TaskState_)(nil),
 		(*Dag_Node_SubDag)(nil),
+		(*Dag_Node_DagRef_)(nil),
 	}
-	file_cloud_v1_runtime_primitive_dag_proto_msgTypes[2].OneofWrappers = []any{
+	file_cloud_v1_runtime_primitive_dag_proto_msgTypes[3].OneofWrappers = []any{
 		(*Dag_Edge_PredicateName)(nil),
 		(*Dag_Edge_OnStatus)(nil),
 	}
@@ -827,7 +1304,7 @@ func file_cloud_v1_runtime_primitive_dag_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_runtime_primitive_dag_proto_rawDesc), len(file_cloud_v1_runtime_primitive_dag_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   8,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

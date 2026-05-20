@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.domain;
 
-import "cloud/v1/deployment/deployment.proto";
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/runtime/render/config.proto";
 import "validate/validate.proto";
 

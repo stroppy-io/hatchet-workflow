@@ -6,21 +6,16 @@ package models
 import (
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	ratelcast "github.com/yaroher/ratel/pkg/ratelcast"
+	protojson "google.golang.org/protobuf/encoding/protojson"
 	time "time"
 )
 
 type WorkloadPresetScanner struct {
-	Id             string                          `json:"id"` // origin: embed, empath: id
-	CreatedAt      time.Time                       `json:"createdAt"`
-	UpdatedAt      time.Time                       `json:"updatedAt"`
-	OwnerAccountId string                          `json:"ownerAccountId"` // origin: type_alias, empath: owner_account_id
-	StroppyVersion string                          `json:"stroppyVersion"`
-	Script         string                          `json:"script"`
-	Sql            string                          `json:"sql"`
-	Protocol       string                          `json:"protocol"`
-	Execution      *domain.Workload_Execution      `json:"execution"`
-	Parameters     *domain.Workload_Parameters     `json:"parameters"`
-	Files          []*domain.Workload_WorkloadFile `json:"files"`
+	Id             string    `json:"id"` // origin: embed, empath: id
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+	OwnerAccountId string    `json:"ownerAccountId"` // origin: type_alias, empath: owner_account_id
+	Workload       []byte    `json:"workload"`       // origin: serialized, empath: workload
 }
 
 // IntoPlain converts protobuf message to plain struct
@@ -46,37 +41,13 @@ func (pb *WorkloadPreset) IntoPlain() *WorkloadPresetScanner {
 	if pb.GetOwnerAccountId() != nil {
 		p.OwnerAccountId = pb.GetOwnerAccountId().GetValue()
 	}
-	// StroppyVersion from
-	if pb.GetWorkload() != nil {
-		p.StroppyVersion = pb.GetWorkload().GetStroppyVersion()
-	}
-	// Script from
-	if pb.GetWorkload() != nil {
-		p.Script = pb.GetWorkload().GetScript()
-	}
-	// Sql from
-	if pb.GetWorkload() != nil {
-		p.Sql = pb.GetWorkload().GetSql()
-	}
-	// Protocol from
-	if pb.GetWorkload() != nil {
-		p.Protocol = pb.GetWorkload().GetProtocol().String()
-	}
-	// Execution from
-	if pb.GetWorkload() != nil && pb.GetWorkload().GetExecution() != nil {
-		p.Execution = pb.GetWorkload().GetExecution()
-	}
-	// Parameters from
-	if pb.GetWorkload() != nil && pb.GetWorkload().GetParameters() != nil {
-		p.Parameters = pb.GetWorkload().GetParameters()
-	}
-	// Files from
-	if pb.GetWorkload() != nil && pb.GetWorkload().GetFiles() != nil {
-		if len(pb.GetWorkload().GetFiles()) > 0 {
-			p.Files = pb.GetWorkload().GetFiles()
-		} else {
-			p.Files = []*domain.Workload_WorkloadFile{}
+	// Workload serialized from workload
+	if pb.Workload != nil {
+		if data, err := protojson.Marshal(pb.Workload); err == nil {
+			p.Workload = data
 		}
+	} else {
+		p.Workload = []byte{}
 	}
 	return p
 }
@@ -118,54 +89,12 @@ func (p *WorkloadPresetScanner) IntoPb() *WorkloadPreset {
 	if p.OwnerAccountId != "" {
 		pb.OwnerAccountId = &AccountId{Value: p.OwnerAccountId}
 	}
-	// StroppyVersion ->
-	if p.StroppyVersion != "" {
-		if pb.Workload == nil {
-			pb.Workload = &domain.Workload{}
+	// Workload deserialize -> workload
+	if len(p.Workload) > 0 {
+		var msg domain.Workload
+		if err := protojson.Unmarshal(p.Workload, &msg); err == nil {
+			pb.Workload = &msg
 		}
-		pb.Workload.StroppyVersion = p.StroppyVersion
-	}
-	// Script ->
-	if p.Script != "" {
-		if pb.Workload == nil {
-			pb.Workload = &domain.Workload{}
-		}
-		pb.Workload.Script = p.Script
-	}
-	// Sql ->
-	if p.Sql != "" {
-		if pb.Workload == nil {
-			pb.Workload = &domain.Workload{}
-		}
-		pb.Workload.Sql = p.Sql
-	}
-	// Protocol ->
-	if p.Protocol != "" {
-		if pb.Workload == nil {
-			pb.Workload = &domain.Workload{}
-		}
-		pb.Workload.Protocol = p.Protocol
-	}
-	// Execution ->
-	if p.Execution != nil {
-		if pb.Workload == nil {
-			pb.Workload = &domain.Workload{}
-		}
-		pb.Workload.Execution = p.Execution
-	}
-	// Parameters ->
-	if p.Parameters != nil {
-		if pb.Workload == nil {
-			pb.Workload = &domain.Workload{}
-		}
-		pb.Workload.Parameters = p.Parameters
-	}
-	// Files ->
-	if p.Files != nil {
-		if pb.Workload == nil {
-			pb.Workload = &domain.Workload{}
-		}
-		pb.Workload.Files = p.Files
 	}
 	return pb
 }

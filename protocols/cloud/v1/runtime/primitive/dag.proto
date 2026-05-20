@@ -5,6 +5,7 @@ package cloud.v1.runtime.primitive;
 import "cloud/v1/runtime/primitive/retry.proto";
 import "cloud/v1/runtime/primitive/status.proto";
 import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive";
@@ -15,7 +16,9 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
 
     The scheduler loads and saves the whole Dag aggregate as one unit. A
     top-level Dag is persisted in the dags table; a sub-Dag is embedded in its
-    owning node and is not persisted as a separate database row.
+    owning node and is not persisted as a separate database row. A dag_ref node
+    points at another persisted Dag and lets parent Dags orchestrate independent
+    child Dags without embedding their full payload.
 
     Execution model:
     - a node becomes ready when its incoming edges are satisfied according to
@@ -31,6 +34,9 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     - a task node executes its TaskState payload;
     - a sub-Dag node executes the nested Dag and mirrors its terminal result
       into the owning node status;
+    - a dag_ref node executes or waits for another persisted Dag through the
+      runtime's DagRefRunner and mirrors its terminal result into the owning
+      node status;
     - Dag.Scheduling.on_node_failure controls whether ordinary pending nodes
       continue to be admitted after a node fails;
     - Node.Scheduling.always_run nodes are reserved for cleanup/teardown and
@@ -41,14 +47,65 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     not on nodes inside the nested Dag.
 */
 message Dag {
+    /*
+        Failure is a normalized execution error.
+
+        Plain error strings are enough for logs, but not enough for UI filters,
+        retry decisions, grouping, or root-cause navigation. This record keeps
+        both human-readable text and stable machine-readable context.
+     */
+    message Failure {
+        /* message is the human-readable error text. */
+        string message = 1 [(validate.rules).string = {min_len: 1, max_len: 8192}];
+        /*
+            code is a stable machine-readable error class.
+            Examples: TERRAFORM_APPLY_FAILED, AGENT_UNREACHABLE,
+            COMMAND_EXIT_FAILED, CONFIG_RENDER_FAILED, DAG_CANCELLED.
+         */
+        string code = 2 [(validate.rules).string.max_len = 128];
+        /*
+            source identifies the subsystem that produced the error.
+            Examples: dag_executor, terraform, agent, docker, ssh, stroppy.
+         */
+        string source = 3 [(validate.rules).string.max_len = 128];
+        /*
+            phase identifies where inside the node/task the error happened.
+            Examples: terraform_apply, install_package, render_config,
+            start_service, run_stroppy.
+         */
+        string phase = 4 [(validate.rules).string.max_len = 128];
+        /* attempt is the node attempt that produced this failure. First attempt is 1. */
+        uint32 attempt = 5;
+        /* retryable is the executor/task opinion before retry policy limits are applied. */
+        bool retryable = 6;
+        /* occurred_at is when this failure was observed. */
+        google.protobuf.Timestamp occurred_at = 7;
+        /* metadata stores small diagnostic labels such as workdir_id, machine_id, or command. */
+        map<string, string> metadata = 8 [(validate.rules).map.max_pairs = 64];
+    }
+
     /* Node is a single schedulable unit inside a Dag. */
     message Node {
         /* TaskState contains opaque task input and produced task output. */
         message TaskState {
+            /* id is unique within this Dag and is the address used by edges. */
+            string handler_name = 1 [(validate.rules).string.min_len = 1];
             /* input is the typed payload consumed by the task executor. */
-            google.protobuf.Any input = 4 [(validate.rules).any.required = true];
+            google.protobuf.Any input = 2 [(validate.rules).any.required = true];
             /* output is the typed payload produced after task completion. */
-            google.protobuf.Any output = 5;
+            google.protobuf.Any output = 3;
+        }
+
+        /*
+            DagRef points at another persisted Dag.
+
+            This is intentionally a plain string rather than models.DagId so the
+            runtime primitive package stays independent from database models.
+            Persisted implementations should store a cloud.v1.models.DagId value.
+         */
+        message DagRef {
+            /* dag_id is the id of the persisted child Dag. */
+            string dag_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
         }
 
         /* Scheduling controls admission and dependency merge behavior for one node. */
@@ -63,14 +120,44 @@ message Dag {
                 JOIN_POLICY_ANY = 2;
             }
 
-            /* retry stores retry policy and retry state for this node. */
-            primitive.Retry retry = 4 [(validate.rules).message.required = true];
+            /*
+                retry_policy stores static retry configuration for this node.
+                Runtime retry progress lives in Node.Execution.retry_state.
+             */
+            primitive.Retry.Policy retry_policy = 4 [(validate.rules).message.required = true];
             /* always_run allows cleanup nodes to run after failure or cancellation. */
             bool always_run = 5;
             /* priority orders ready nodes when max_parallelism leaves limited slots. Higher runs earlier. */
             int32 priority = 6;
             /* join_policy controls how incoming edges are joined. UNSPECIFIED defaults to ALL. */
             JoinPolicy join_policy = 7 [(validate.rules).enum.defined_only = true];
+        }
+
+        /*
+            Execution stores node-local runtime state.
+
+            Scheduling answers "how may this node run"; Execution answers
+            "what actually happened while it was running".
+         */
+        message Execution {
+            /* status mirrors Node.status so consumers can read one complete runtime block. */
+            primitive.Status status = 1 [(validate.rules).enum = {defined_only: true, not_in: [0, 7]}];
+            /*
+                retry_state stores runtime retry progress: current attempt,
+                next retry time, current delay, last error, and attempt timestamps.
+             */
+            primitive.Retry.State retry_state = 2;
+            /*
+                failure is the current/final root failure for this node.
+                For STATUS_RETRY_WAIT this is the latest failure.
+             */
+            Failure failure = 3;
+            /* failures keeps structured attempt-level failure history. */
+            repeated Failure failures = 4 [(validate.rules).repeated.max_items = 128];
+            /* started_at is when the node first entered STATUS_RUNNING. */
+            google.protobuf.Timestamp started_at = 5;
+            /* finished_at is when the node reached a terminal status. */
+            google.protobuf.Timestamp finished_at = 6;
         }
 
         /* id is unique within this Dag and is the address used by edges. */
@@ -82,24 +169,28 @@ message Dag {
         /* metadata contains node labels and executor-specific annotations. */
         map<string, string> metadata = 4;
 
-        /* variant selects whether this node executes a task or a nested Dag. */
+        /* variant selects whether this node executes a task, an embedded Dag, or a persisted Dag ref. */
         oneof variant {
             option (validate.required) = true;
             /* task_state executes a single task implementation. */
             TaskState task_state = 10 [(validate.rules).message.required = true];
             /* sub_dag executes an embedded Dag snapshot. It is not a separate database row. */
             Dag sub_dag = 11 [(validate.rules).message.required = true];
+            /* dag_ref executes or waits for a separate persisted Dag. */
+            DagRef dag_ref = 12 [(validate.rules).message.required = true];
         }
+        /* execution stores runtime progress and diagnostics for this node. */
+        Execution execution = 20;
     }
 
     /* Edge is a dependency from source node to target node. */
     message Edge {
         /* id is unique within this Dag. */
-        string id = 1 [(validate.rules).string.uuid = true];
+        string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
         /* source references the upstream node id in the same Dag. */
-        string source = 2 [(validate.rules).string.uuid = true];
+        string source = 2 [(validate.rules).string = {min_len: 1, max_len: 256}];
         /* target references the downstream node id in the same Dag. */
-        string target = 3 [(validate.rules).string.uuid = true];
+        string target = 3 [(validate.rules).string = {min_len: 1, max_len: 256}];
 
         /* condition defines when this edge is satisfied. Empty condition means source STATUS_COMPLETED. */
         oneof condition {
@@ -113,7 +204,7 @@ message Dag {
     }
 
     /* id is the persistent aggregate id for a top-level Dag. */
-    string id = 1 [(validate.rules).string.uuid = true];
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
     /* status is the current aggregate execution state. */
     primitive.Status status = 3 [
         (validate.rules).enum = {defined_only: true, not_in: [0, 5, 6]}
@@ -125,6 +216,27 @@ message Dag {
     repeated Edge edges = 5;
     /* input is the opaque payload consumed by this Dag or by its first tasks. */
     google.protobuf.Any input = 6;
+
+    /*
+        Execution stores aggregate runtime state for the whole Dag.
+
+        Detailed retry history stays on Node.Execution. This block is for
+        quick overview, terminal status, and root-cause navigation.
+     */
+    message Execution {
+        /* status mirrors Dag.status so consumers can read one complete runtime block. */
+        primitive.Status status = 1 [(validate.rules).enum = {defined_only: true, not_in: [0, 5, 6]}];
+        /* failed_node_id points to the first/root failed node, when known. */
+        string failed_node_id = 2 [(validate.rules).string.max_len = 256];
+        /* failure is the root Dag failure, usually copied from the failed node. */
+        Failure failure = 3;
+        /* failures contains compact terminal/root failures, not every retry attempt. */
+        repeated Failure failures = 4 [(validate.rules).repeated.max_items = 128];
+        /* started_at is when the Dag first entered STATUS_RUNNING. */
+        google.protobuf.Timestamp started_at = 5;
+        /* finished_at is when the Dag reached a terminal status. */
+        google.protobuf.Timestamp finished_at = 6;
+    }
 
     /* Scheduling controls graph-level admission and failure behavior. */
     message Scheduling {
@@ -150,4 +262,6 @@ message Dag {
     Scheduling scheduling = 7 [(validate.rules).message.required = true];
     /* metadata contains Dag labels and scheduler-specific annotations. */
     map<string, string> metadata = 8;
+    /* execution stores aggregate progress and root failure diagnostics. */
+    Execution execution = 20;
 }

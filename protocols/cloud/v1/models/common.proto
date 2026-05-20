@@ -22,6 +22,7 @@ message DatabasePresetId {option (goplain.message) = {generate: true, type_alias
 message WorkloadPresetId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
 
 message TestRunId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
+message DagId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
 
 
 /* Timestamps — universal audit fields. Imported by both system and domain
@@ -50,5 +51,22 @@ message SoftDeleteEntity {
     optional google.protobuf.Timestamp deleted_at = 3 [
         (ratel.column) = {constraints: {default_value: "null"}},
         (validate.rules).timestamp.lt_now = true
+    ];
+}
+
+
+message Own {
+    models.AccountId owner_account_id = 2 [(ratel.column).constraints = {
+        references_table: "accounts"
+        references_column: "id"
+        on_delete: CASCADE
+    }];
+    models.TenantId tenant_id = 3 [
+        (ratel.column).constraints = {
+            references_table: "tenants"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
     ];
 }

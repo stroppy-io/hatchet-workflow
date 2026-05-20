@@ -8,7 +8,7 @@ package domain
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
-	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	render "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/render"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -747,16 +747,14 @@ func (Database_Options_Ydb_Managed_FamilyCompression) EnumDescriptor() ([]byte, 
 // 5. Backend re-renders preview with overrides.
 // 6. Planner converts final intent + overrides into runtime.ops and DAG nodes.
 type Database struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	Kind    Database_Kind          `protobuf:"varint,1,opt,name=kind,proto3,enum=cloud.v1.domain.Database_Kind" json:"kind,omitempty"`
-	Version string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
-	Config  *render.Config         `protobuf:"bytes,3,opt,name=config,proto3" json:"config,omitempty"`
-	Target  *Database_Target       `protobuf:"bytes,4,opt,name=target,proto3" json:"target,omitempty"`
-	Options *Database_Options      `protobuf:"bytes,5,opt,name=options,proto3" json:"options,omitempty"`
-	// REQUIRED validated that spec is sufficient for database
-	DeploymentIntent *deployment.DeploymentIntent `protobuf:"bytes,6,opt,name=deployment_intent,json=deploymentIntent,proto3,oneof" json:"deployment_intent,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Kind          Database_Kind          `protobuf:"varint,1,opt,name=kind,proto3,enum=cloud.v1.domain.Database_Kind" json:"kind,omitempty"`
+	Version       string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	Config        *render.Config         `protobuf:"bytes,3,opt,name=config,proto3" json:"config,omitempty"`
+	Target        *Database_Target       `protobuf:"bytes,4,opt,name=target,proto3" json:"target,omitempty"`
+	Options       *Database_Options      `protobuf:"bytes,5,opt,name=options,proto3" json:"options,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Database) Reset() {
@@ -820,13 +818,6 @@ func (x *Database) GetTarget() *Database_Target {
 func (x *Database) GetOptions() *Database_Options {
 	if x != nil {
 		return x.Options
-	}
-	return nil
-}
-
-func (x *Database) GetDeploymentIntent() *deployment.DeploymentIntent {
-	if x != nil {
-		return x.DeploymentIntent
 	}
 	return nil
 }
@@ -2275,15 +2266,14 @@ var File_cloud_v1_domain_database_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/domain/database.proto\x12\x0fcloud.v1.domain\x1a$cloud/v1/deployment/deployment.proto\x1a$cloud/v1/runtime/render/config.proto\x1a\x17validate/validate.proto\"\xf38\n" +
+	"\x1ecloud/v1/domain/database.proto\x12\x0fcloud.v1.domain\x1a$cloud/v1/deployment/deployment.proto\x1a$cloud/v1/runtime/render/config.proto\x1a\x17validate/validate.proto\"\x848\n" +
 	"\bDatabase\x12>\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x1e.cloud.v1.domain.Database.KindB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04kind\x12!\n" +
 	"\aversion\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\aversion\x12A\n" +
 	"\x06config\x18\x03 \x01(\v2\x1f.cloud.v1.runtime.render.ConfigB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06config\x12B\n" +
 	"\x06target\x18\x04 \x01(\v2 .cloud.v1.domain.Database.TargetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06target\x12E\n" +
-	"\aoptions\x18\x05 \x01(\v2!.cloud.v1.domain.Database.OptionsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\aoptions\x12W\n" +
-	"\x11deployment_intent\x18\x06 \x01(\v2%.cloud.v1.deployment.DeploymentIntentH\x00R\x10deploymentIntent\x88\x01\x01\x1a\xb2\x04\n" +
+	"\aoptions\x18\x05 \x01(\v2!.cloud.v1.domain.Database.OptionsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\aoptions\x1a\xb2\x04\n" +
 	"\x06Target\x12N\n" +
 	"\vself_hosted\x18\x01 \x01(\v2+.cloud.v1.domain.Database.Target.SelfHostedH\x00R\n" +
 	"selfHosted\x12G\n" +
@@ -2499,8 +2489,7 @@ const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"\fKIND_MARIADB\x10\x03\x12\f\n" +
 	"\bKIND_YDB\x10\x04\x12\x12\n" +
 	"\x0eKIND_COCKROACH\x10\x05\x12\x11\n" +
-	"\rKIND_PICODATA\x10\x06B\x14\n" +
-	"\x12_deployment_intent\"\x9b\x01\n" +
+	"\rKIND_PICODATA\x10\x06\"\x9b\x01\n" +
 	"\x10DatabaseOrPreset\x127\n" +
 	"\x12database_preset_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01H\x00R\x10databasePresetId\x12A\n" +
 	"\bdatabase\x18\x02 \x01(\v2\x19.cloud.v1.domain.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\bdatabaseB\v\n" +
@@ -2562,52 +2551,50 @@ var file_cloud_v1_domain_database_proto_goTypes = []any{
 	(*Database_Options_Picodata_Tier)(nil),   // 38: cloud.v1.domain.Database.Options.Picodata.Tier
 	(*Database_Options_Picodata_Access)(nil), // 39: cloud.v1.domain.Database.Options.Picodata.Access
 	(*render.Config)(nil),                    // 40: cloud.v1.runtime.render.Config
-	(*deployment.DeploymentIntent)(nil),      // 41: cloud.v1.deployment.DeploymentIntent
 }
 var file_cloud_v1_domain_database_proto_depIdxs = []int32{
 	0,  // 0: cloud.v1.domain.Database.kind:type_name -> cloud.v1.domain.Database.Kind
 	40, // 1: cloud.v1.domain.Database.config:type_name -> cloud.v1.runtime.render.Config
 	15, // 2: cloud.v1.domain.Database.target:type_name -> cloud.v1.domain.Database.Target
 	16, // 3: cloud.v1.domain.Database.options:type_name -> cloud.v1.domain.Database.Options
-	41, // 4: cloud.v1.domain.Database.deployment_intent:type_name -> cloud.v1.deployment.DeploymentIntent
-	13, // 5: cloud.v1.domain.DatabaseOrPreset.database:type_name -> cloud.v1.domain.Database
-	18, // 6: cloud.v1.domain.Database.Target.self_hosted:type_name -> cloud.v1.domain.Database.Target.SelfHosted
-	17, // 7: cloud.v1.domain.Database.Target.external:type_name -> cloud.v1.domain.Database.Target.External
-	20, // 8: cloud.v1.domain.Database.Options.postgres:type_name -> cloud.v1.domain.Database.Options.Postgres
-	21, // 9: cloud.v1.domain.Database.Options.mysql:type_name -> cloud.v1.domain.Database.Options.Mysql
-	22, // 10: cloud.v1.domain.Database.Options.ydb:type_name -> cloud.v1.domain.Database.Options.Ydb
-	23, // 11: cloud.v1.domain.Database.Options.cockroach:type_name -> cloud.v1.domain.Database.Options.Cockroach
-	24, // 12: cloud.v1.domain.Database.Options.picodata:type_name -> cloud.v1.domain.Database.Options.Picodata
-	19, // 13: cloud.v1.domain.Database.Target.External.extra_params:type_name -> cloud.v1.domain.Database.Target.External.ExtraParamsEntry
-	26, // 14: cloud.v1.domain.Database.Options.Postgres.replication:type_name -> cloud.v1.domain.Database.Options.Postgres.Replication
-	27, // 15: cloud.v1.domain.Database.Options.Postgres.access:type_name -> cloud.v1.domain.Database.Options.Postgres.Access
-	25, // 16: cloud.v1.domain.Database.Options.Postgres.parameters:type_name -> cloud.v1.domain.Database.Options.Postgres.ParametersEntry
-	29, // 17: cloud.v1.domain.Database.Options.Mysql.replication:type_name -> cloud.v1.domain.Database.Options.Mysql.Replication
-	30, // 18: cloud.v1.domain.Database.Options.Mysql.access:type_name -> cloud.v1.domain.Database.Options.Mysql.Access
-	28, // 19: cloud.v1.domain.Database.Options.Mysql.parameters:type_name -> cloud.v1.domain.Database.Options.Mysql.ParametersEntry
-	32, // 20: cloud.v1.domain.Database.Options.Ydb.self_hosted:type_name -> cloud.v1.domain.Database.Options.Ydb.SelfHosted
-	33, // 21: cloud.v1.domain.Database.Options.Ydb.managed:type_name -> cloud.v1.domain.Database.Options.Ydb.Managed
-	34, // 22: cloud.v1.domain.Database.Options.Ydb.access:type_name -> cloud.v1.domain.Database.Options.Ydb.Access
-	31, // 23: cloud.v1.domain.Database.Options.Ydb.parameters:type_name -> cloud.v1.domain.Database.Options.Ydb.ParametersEntry
-	36, // 24: cloud.v1.domain.Database.Options.Cockroach.parameters:type_name -> cloud.v1.domain.Database.Options.Cockroach.ParametersEntry
-	38, // 25: cloud.v1.domain.Database.Options.Picodata.tiers:type_name -> cloud.v1.domain.Database.Options.Picodata.Tier
-	39, // 26: cloud.v1.domain.Database.Options.Picodata.access:type_name -> cloud.v1.domain.Database.Options.Picodata.Access
-	37, // 27: cloud.v1.domain.Database.Options.Picodata.parameters:type_name -> cloud.v1.domain.Database.Options.Picodata.ParametersEntry
-	1,  // 28: cloud.v1.domain.Database.Options.Postgres.Replication.mode:type_name -> cloud.v1.domain.Database.Options.Postgres.Replication.Mode
-	2,  // 29: cloud.v1.domain.Database.Options.Mysql.Replication.mode:type_name -> cloud.v1.domain.Database.Options.Mysql.Replication.Mode
-	3,  // 30: cloud.v1.domain.Database.Options.Ydb.SelfHosted.fault_tolerance:type_name -> cloud.v1.domain.Database.Options.Ydb.SelfHosted.FaultTolerance
-	4,  // 31: cloud.v1.domain.Database.Options.Ydb.SelfHosted.failure_domain:type_name -> cloud.v1.domain.Database.Options.Ydb.SelfHosted.FailureDomain
-	5,  // 32: cloud.v1.domain.Database.Options.Ydb.Managed.kind:type_name -> cloud.v1.domain.Database.Options.Ydb.Managed.Kind
-	6,  // 33: cloud.v1.domain.Database.Options.Ydb.Managed.compute_type:type_name -> cloud.v1.domain.Database.Options.Ydb.Managed.ComputeType
-	7,  // 34: cloud.v1.domain.Database.Options.Ydb.Managed.resource_preset_id:type_name -> cloud.v1.domain.Database.Options.Ydb.Managed.ResourcePresetId
-	8,  // 35: cloud.v1.domain.Database.Options.Ydb.Managed.storage_type_id:type_name -> cloud.v1.domain.Database.Options.Ydb.Managed.StorageTypeId
-	35, // 36: cloud.v1.domain.Database.Options.Ydb.Managed.auto_scale:type_name -> cloud.v1.domain.Database.Options.Ydb.Managed.AutoScale
-	9,  // 37: cloud.v1.domain.Database.Options.Ydb.Managed.location_id:type_name -> cloud.v1.domain.Database.Options.Ydb.Managed.LocationId
-	38, // [38:38] is the sub-list for method output_type
-	38, // [38:38] is the sub-list for method input_type
-	38, // [38:38] is the sub-list for extension type_name
-	38, // [38:38] is the sub-list for extension extendee
-	0,  // [0:38] is the sub-list for field type_name
+	13, // 4: cloud.v1.domain.DatabaseOrPreset.database:type_name -> cloud.v1.domain.Database
+	18, // 5: cloud.v1.domain.Database.Target.self_hosted:type_name -> cloud.v1.domain.Database.Target.SelfHosted
+	17, // 6: cloud.v1.domain.Database.Target.external:type_name -> cloud.v1.domain.Database.Target.External
+	20, // 7: cloud.v1.domain.Database.Options.postgres:type_name -> cloud.v1.domain.Database.Options.Postgres
+	21, // 8: cloud.v1.domain.Database.Options.mysql:type_name -> cloud.v1.domain.Database.Options.Mysql
+	22, // 9: cloud.v1.domain.Database.Options.ydb:type_name -> cloud.v1.domain.Database.Options.Ydb
+	23, // 10: cloud.v1.domain.Database.Options.cockroach:type_name -> cloud.v1.domain.Database.Options.Cockroach
+	24, // 11: cloud.v1.domain.Database.Options.picodata:type_name -> cloud.v1.domain.Database.Options.Picodata
+	19, // 12: cloud.v1.domain.Database.Target.External.extra_params:type_name -> cloud.v1.domain.Database.Target.External.ExtraParamsEntry
+	26, // 13: cloud.v1.domain.Database.Options.Postgres.replication:type_name -> cloud.v1.domain.Database.Options.Postgres.Replication
+	27, // 14: cloud.v1.domain.Database.Options.Postgres.access:type_name -> cloud.v1.domain.Database.Options.Postgres.Access
+	25, // 15: cloud.v1.domain.Database.Options.Postgres.parameters:type_name -> cloud.v1.domain.Database.Options.Postgres.ParametersEntry
+	29, // 16: cloud.v1.domain.Database.Options.Mysql.replication:type_name -> cloud.v1.domain.Database.Options.Mysql.Replication
+	30, // 17: cloud.v1.domain.Database.Options.Mysql.access:type_name -> cloud.v1.domain.Database.Options.Mysql.Access
+	28, // 18: cloud.v1.domain.Database.Options.Mysql.parameters:type_name -> cloud.v1.domain.Database.Options.Mysql.ParametersEntry
+	32, // 19: cloud.v1.domain.Database.Options.Ydb.self_hosted:type_name -> cloud.v1.domain.Database.Options.Ydb.SelfHosted
+	33, // 20: cloud.v1.domain.Database.Options.Ydb.managed:type_name -> cloud.v1.domain.Database.Options.Ydb.Managed
+	34, // 21: cloud.v1.domain.Database.Options.Ydb.access:type_name -> cloud.v1.domain.Database.Options.Ydb.Access
+	31, // 22: cloud.v1.domain.Database.Options.Ydb.parameters:type_name -> cloud.v1.domain.Database.Options.Ydb.ParametersEntry
+	36, // 23: cloud.v1.domain.Database.Options.Cockroach.parameters:type_name -> cloud.v1.domain.Database.Options.Cockroach.ParametersEntry
+	38, // 24: cloud.v1.domain.Database.Options.Picodata.tiers:type_name -> cloud.v1.domain.Database.Options.Picodata.Tier
+	39, // 25: cloud.v1.domain.Database.Options.Picodata.access:type_name -> cloud.v1.domain.Database.Options.Picodata.Access
+	37, // 26: cloud.v1.domain.Database.Options.Picodata.parameters:type_name -> cloud.v1.domain.Database.Options.Picodata.ParametersEntry
+	1,  // 27: cloud.v1.domain.Database.Options.Postgres.Replication.mode:type_name -> cloud.v1.domain.Database.Options.Postgres.Replication.Mode
+	2,  // 28: cloud.v1.domain.Database.Options.Mysql.Replication.mode:type_name -> cloud.v1.domain.Database.Options.Mysql.Replication.Mode
+	3,  // 29: cloud.v1.domain.Database.Options.Ydb.SelfHosted.fault_tolerance:type_name -> cloud.v1.domain.Database.Options.Ydb.SelfHosted.FaultTolerance
+	4,  // 30: cloud.v1.domain.Database.Options.Ydb.SelfHosted.failure_domain:type_name -> cloud.v1.domain.Database.Options.Ydb.SelfHosted.FailureDomain
+	5,  // 31: cloud.v1.domain.Database.Options.Ydb.Managed.kind:type_name -> cloud.v1.domain.Database.Options.Ydb.Managed.Kind
+	6,  // 32: cloud.v1.domain.Database.Options.Ydb.Managed.compute_type:type_name -> cloud.v1.domain.Database.Options.Ydb.Managed.ComputeType
+	7,  // 33: cloud.v1.domain.Database.Options.Ydb.Managed.resource_preset_id:type_name -> cloud.v1.domain.Database.Options.Ydb.Managed.ResourcePresetId
+	8,  // 34: cloud.v1.domain.Database.Options.Ydb.Managed.storage_type_id:type_name -> cloud.v1.domain.Database.Options.Ydb.Managed.StorageTypeId
+	35, // 35: cloud.v1.domain.Database.Options.Ydb.Managed.auto_scale:type_name -> cloud.v1.domain.Database.Options.Ydb.Managed.AutoScale
+	9,  // 36: cloud.v1.domain.Database.Options.Ydb.Managed.location_id:type_name -> cloud.v1.domain.Database.Options.Ydb.Managed.LocationId
+	37, // [37:37] is the sub-list for method output_type
+	37, // [37:37] is the sub-list for method input_type
+	37, // [37:37] is the sub-list for extension type_name
+	37, // [37:37] is the sub-list for extension extendee
+	0,  // [0:37] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_domain_database_proto_init() }
@@ -2615,7 +2602,6 @@ func file_cloud_v1_domain_database_proto_init() {
 	if File_cloud_v1_domain_database_proto != nil {
 		return
 	}
-	file_cloud_v1_domain_database_proto_msgTypes[0].OneofWrappers = []any{}
 	file_cloud_v1_domain_database_proto_msgTypes[1].OneofWrappers = []any{
 		(*DatabaseOrPreset_DatabasePresetId)(nil),
 		(*DatabaseOrPreset_Database)(nil),

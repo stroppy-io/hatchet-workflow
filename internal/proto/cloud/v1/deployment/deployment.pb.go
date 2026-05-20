@@ -73,6 +73,60 @@ func (Provider) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{0}
 }
 
+type Machine struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// cores is VM vCPU count.
+	Cores uint32 `protobuf:"varint,1,opt,name=cores,proto3" json:"cores,omitempty"`
+	// memory_gb is VM RAM in GiB.
+	MemoryGb      uint64 `protobuf:"varint,2,opt,name=memory_gb,json=memoryGb,proto3" json:"memory_gb,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Machine) Reset() {
+	*x = Machine{}
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Machine) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Machine) ProtoMessage() {}
+
+func (x *Machine) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Machine.ProtoReflect.Descriptor instead.
+func (*Machine) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Machine) GetCores() uint32 {
+	if x != nil {
+		return x.Cores
+	}
+	return 0
+}
+
+func (x *Machine) GetMemoryGb() uint64 {
+	if x != nil {
+		return x.MemoryGb
+	}
+	return 0
+}
+
 // REQUIRED VALIDATE TO ALL SPEC FROM OneOff is one Provider Kind
 type DeploymentIntent struct {
 	state         protoimpl.MessageState   `protogen:"open.v1"`
@@ -84,7 +138,7 @@ type DeploymentIntent struct {
 
 func (x *DeploymentIntent) Reset() {
 	*x = DeploymentIntent{}
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[0]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -96,7 +150,7 @@ func (x *DeploymentIntent) String() string {
 func (*DeploymentIntent) ProtoMessage() {}
 
 func (x *DeploymentIntent) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[0]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -109,7 +163,7 @@ func (x *DeploymentIntent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeploymentIntent.ProtoReflect.Descriptor instead.
 func (*DeploymentIntent) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{0}
+	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *DeploymentIntent) GetSpecs() []*DeploymentIntent_Spec {
@@ -142,7 +196,7 @@ type Deployment struct {
 
 func (x *Deployment) Reset() {
 	*x = Deployment{}
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[1]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -154,7 +208,7 @@ func (x *Deployment) String() string {
 func (*Deployment) ProtoMessage() {}
 
 func (x *Deployment) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[1]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -167,7 +221,7 @@ func (x *Deployment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Deployment.ProtoReflect.Descriptor instead.
 func (*Deployment) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{1}
+	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Deployment) GetProvider() Provider {
@@ -240,7 +294,7 @@ type DeploymentIntent_Spec struct {
 
 func (x *DeploymentIntent_Spec) Reset() {
 	*x = DeploymentIntent_Spec{}
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[2]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -252,7 +306,7 @@ func (x *DeploymentIntent_Spec) String() string {
 func (*DeploymentIntent_Spec) ProtoMessage() {}
 
 func (x *DeploymentIntent_Spec) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[2]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -265,7 +319,7 @@ func (x *DeploymentIntent_Spec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeploymentIntent_Spec.ProtoReflect.Descriptor instead.
 func (*DeploymentIntent_Spec) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{0, 0}
+	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{1, 0}
 }
 
 func (x *DeploymentIntent_Spec) GetId() string {
@@ -282,7 +336,7 @@ func (x *DeploymentIntent_Spec) GetSpec() isDeploymentIntent_Spec_Spec {
 	return nil
 }
 
-func (x *DeploymentIntent_Spec) GetYandexVm() *Yandex_VmSpec {
+func (x *DeploymentIntent_Spec) GetYandexVm() *Yandex_Vm {
 	if x != nil {
 		if x, ok := x.Spec.(*DeploymentIntent_Spec_YandexVm); ok {
 			return x.YandexVm
@@ -291,7 +345,7 @@ func (x *DeploymentIntent_Spec) GetYandexVm() *Yandex_VmSpec {
 	return nil
 }
 
-func (x *DeploymentIntent_Spec) GetManagedYdb() *Yandex_ManagedYdbSpec {
+func (x *DeploymentIntent_Spec) GetManagedYdb() *Yandex_ManagedYdb {
 	if x != nil {
 		if x, ok := x.Spec.(*DeploymentIntent_Spec_ManagedYdb); ok {
 			return x.ManagedYdb
@@ -300,7 +354,7 @@ func (x *DeploymentIntent_Spec) GetManagedYdb() *Yandex_ManagedYdbSpec {
 	return nil
 }
 
-func (x *DeploymentIntent_Spec) GetDockerContainer() *Docker_ContainerSpec {
+func (x *DeploymentIntent_Spec) GetDockerContainer() *Docker_Container {
 	if x != nil {
 		if x, ok := x.Spec.(*DeploymentIntent_Spec_DockerContainer); ok {
 			return x.DockerContainer
@@ -314,15 +368,15 @@ type isDeploymentIntent_Spec_Spec interface {
 }
 
 type DeploymentIntent_Spec_YandexVm struct {
-	YandexVm *Yandex_VmSpec `protobuf:"bytes,10,opt,name=yandex_vm,json=yandexVm,proto3,oneof"`
+	YandexVm *Yandex_Vm `protobuf:"bytes,10,opt,name=yandex_vm,json=yandexVm,proto3,oneof"`
 }
 
 type DeploymentIntent_Spec_ManagedYdb struct {
-	ManagedYdb *Yandex_ManagedYdbSpec `protobuf:"bytes,11,opt,name=managed_ydb,json=managedYdb,proto3,oneof"`
+	ManagedYdb *Yandex_ManagedYdb `protobuf:"bytes,11,opt,name=managed_ydb,json=managedYdb,proto3,oneof"`
 }
 
 type DeploymentIntent_Spec_DockerContainer struct {
-	DockerContainer *Docker_ContainerSpec `protobuf:"bytes,12,opt,name=docker_container,json=dockerContainer,proto3,oneof"`
+	DockerContainer *Docker_Container `protobuf:"bytes,12,opt,name=docker_container,json=dockerContainer,proto3,oneof"`
 }
 
 func (*DeploymentIntent_Spec_YandexVm) isDeploymentIntent_Spec_Spec() {}
@@ -335,18 +389,21 @@ var File_cloud_v1_deployment_deployment_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_deployment_deployment_proto_rawDesc = "" +
 	"\n" +
-	"$cloud/v1/deployment/deployment.proto\x12\x13cloud.v1.deployment\x1a\x1acloud/v1/common/tags.proto\x1a cloud/v1/deployment/docker.proto\x1a cloud/v1/deployment/yandex.proto\x1a cloud/v1/runtime/system/ip.proto\x1a\x17validate/validate.proto\"\xc6\x03\n" +
+	"$cloud/v1/deployment/deployment.proto\x12\x13cloud.v1.deployment\x1a\x1acloud/v1/common/tags.proto\x1a cloud/v1/deployment/docker.proto\x1a cloud/v1/deployment/yandex.proto\x1a cloud/v1/runtime/system/ip.proto\x1a\x17validate/validate.proto\"N\n" +
+	"\aMachine\x12\x1d\n" +
+	"\x05cores\x18\x01 \x01(\rB\a\xfaB\x04*\x02 \x00R\x05cores\x12$\n" +
+	"\tmemory_gb\x18\x02 \x01(\x04B\a\xfaB\x042\x02 \x00R\bmemoryGb\"\xba\x03\n" +
 	"\x10DeploymentIntent\x12M\n" +
 	"\x05specs\x18\x01 \x03(\v2*.cloud.v1.deployment.DeploymentIntent.SpecB\v\xfaB\b\x92\x01\x05\b\x01\x10\x80\x01R\x05specs\x12)\n" +
-	"\x04tags\x18\x03 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\xb7\x02\n" +
+	"\x04tags\x18\x03 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\xab\x02\n" +
 	"\x04Spec\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12K\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12G\n" +
 	"\tyandex_vm\x18\n" +
-	" \x01(\v2\".cloud.v1.deployment.Yandex.VmSpecB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\byandexVm\x12W\n" +
-	"\vmanaged_ydb\x18\v \x01(\v2*.cloud.v1.deployment.Yandex.ManagedYdbSpecB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\n" +
-	"managedYdb\x12`\n" +
-	"\x10docker_container\x18\f \x01(\v2).cloud.v1.deployment.Docker.ContainerSpecB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\x0fdockerContainerB\v\n" +
+	" \x01(\v2\x1e.cloud.v1.deployment.Yandex.VmB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\byandexVm\x12S\n" +
+	"\vmanaged_ydb\x18\v \x01(\v2&.cloud.v1.deployment.Yandex.ManagedYdbB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\n" +
+	"managedYdb\x12\\\n" +
+	"\x10docker_container\x18\f \x01(\v2%.cloud.v1.deployment.Docker.ContainerB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\x0fdockerContainerB\v\n" +
 	"\x04spec\x12\x03\xf8B\x01\"\x90\x02\n" +
 	"\n" +
 	"Deployment\x12E\n" +
@@ -376,30 +433,31 @@ func file_cloud_v1_deployment_deployment_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_deployment_deployment_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_deployment_deployment_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_cloud_v1_deployment_deployment_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_cloud_v1_deployment_deployment_proto_goTypes = []any{
 	(Provider)(0),                 // 0: cloud.v1.deployment.Provider
-	(*DeploymentIntent)(nil),      // 1: cloud.v1.deployment.DeploymentIntent
-	(*Deployment)(nil),            // 2: cloud.v1.deployment.Deployment
-	(*DeploymentIntent_Spec)(nil), // 3: cloud.v1.deployment.DeploymentIntent.Spec
-	(*common.Tags)(nil),           // 4: cloud.v1.common.Tags
-	(*system.Network)(nil),        // 5: cloud.v1.runtime.system.Network
-	(*Docker)(nil),                // 6: cloud.v1.deployment.Docker
-	(*Yandex)(nil),                // 7: cloud.v1.deployment.Yandex
-	(*Yandex_VmSpec)(nil),         // 8: cloud.v1.deployment.Yandex.VmSpec
-	(*Yandex_ManagedYdbSpec)(nil), // 9: cloud.v1.deployment.Yandex.ManagedYdbSpec
-	(*Docker_ContainerSpec)(nil),  // 10: cloud.v1.deployment.Docker.ContainerSpec
+	(*Machine)(nil),               // 1: cloud.v1.deployment.Machine
+	(*DeploymentIntent)(nil),      // 2: cloud.v1.deployment.DeploymentIntent
+	(*Deployment)(nil),            // 3: cloud.v1.deployment.Deployment
+	(*DeploymentIntent_Spec)(nil), // 4: cloud.v1.deployment.DeploymentIntent.Spec
+	(*common.Tags)(nil),           // 5: cloud.v1.common.Tags
+	(*system.Network)(nil),        // 6: cloud.v1.runtime.system.Network
+	(*Docker)(nil),                // 7: cloud.v1.deployment.Docker
+	(*Yandex)(nil),                // 8: cloud.v1.deployment.Yandex
+	(*Yandex_Vm)(nil),             // 9: cloud.v1.deployment.Yandex.Vm
+	(*Yandex_ManagedYdb)(nil),     // 10: cloud.v1.deployment.Yandex.ManagedYdb
+	(*Docker_Container)(nil),      // 11: cloud.v1.deployment.Docker.Container
 }
 var file_cloud_v1_deployment_deployment_proto_depIdxs = []int32{
-	3,  // 0: cloud.v1.deployment.DeploymentIntent.specs:type_name -> cloud.v1.deployment.DeploymentIntent.Spec
-	4,  // 1: cloud.v1.deployment.DeploymentIntent.tags:type_name -> cloud.v1.common.Tags
+	4,  // 0: cloud.v1.deployment.DeploymentIntent.specs:type_name -> cloud.v1.deployment.DeploymentIntent.Spec
+	5,  // 1: cloud.v1.deployment.DeploymentIntent.tags:type_name -> cloud.v1.common.Tags
 	0,  // 2: cloud.v1.deployment.Deployment.provider:type_name -> cloud.v1.deployment.Provider
-	5,  // 3: cloud.v1.deployment.Deployment.network:type_name -> cloud.v1.runtime.system.Network
-	6,  // 4: cloud.v1.deployment.Deployment.docker:type_name -> cloud.v1.deployment.Docker
-	7,  // 5: cloud.v1.deployment.Deployment.yandex:type_name -> cloud.v1.deployment.Yandex
-	8,  // 6: cloud.v1.deployment.DeploymentIntent.Spec.yandex_vm:type_name -> cloud.v1.deployment.Yandex.VmSpec
-	9,  // 7: cloud.v1.deployment.DeploymentIntent.Spec.managed_ydb:type_name -> cloud.v1.deployment.Yandex.ManagedYdbSpec
-	10, // 8: cloud.v1.deployment.DeploymentIntent.Spec.docker_container:type_name -> cloud.v1.deployment.Docker.ContainerSpec
+	6,  // 3: cloud.v1.deployment.Deployment.network:type_name -> cloud.v1.runtime.system.Network
+	7,  // 4: cloud.v1.deployment.Deployment.docker:type_name -> cloud.v1.deployment.Docker
+	8,  // 5: cloud.v1.deployment.Deployment.yandex:type_name -> cloud.v1.deployment.Yandex
+	9,  // 6: cloud.v1.deployment.DeploymentIntent.Spec.yandex_vm:type_name -> cloud.v1.deployment.Yandex.Vm
+	10, // 7: cloud.v1.deployment.DeploymentIntent.Spec.managed_ydb:type_name -> cloud.v1.deployment.Yandex.ManagedYdb
+	11, // 8: cloud.v1.deployment.DeploymentIntent.Spec.docker_container:type_name -> cloud.v1.deployment.Docker.Container
 	9,  // [9:9] is the sub-list for method output_type
 	9,  // [9:9] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
@@ -414,11 +472,11 @@ func file_cloud_v1_deployment_deployment_proto_init() {
 	}
 	file_cloud_v1_deployment_docker_proto_init()
 	file_cloud_v1_deployment_yandex_proto_init()
-	file_cloud_v1_deployment_deployment_proto_msgTypes[1].OneofWrappers = []any{
+	file_cloud_v1_deployment_deployment_proto_msgTypes[2].OneofWrappers = []any{
 		(*Deployment_Docker)(nil),
 		(*Deployment_Yandex)(nil),
 	}
-	file_cloud_v1_deployment_deployment_proto_msgTypes[2].OneofWrappers = []any{
+	file_cloud_v1_deployment_deployment_proto_msgTypes[3].OneofWrappers = []any{
 		(*DeploymentIntent_Spec_YandexVm)(nil),
 		(*DeploymentIntent_Spec_ManagedYdb)(nil),
 		(*DeploymentIntent_Spec_DockerContainer)(nil),
@@ -429,7 +487,7 @@ func file_cloud_v1_deployment_deployment_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_deployment_deployment_proto_rawDesc), len(file_cloud_v1_deployment_deployment_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

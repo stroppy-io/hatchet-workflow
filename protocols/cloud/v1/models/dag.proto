@@ -1,0 +1,132 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/models/common.proto";
+import "cloud/v1/runtime/primitive/dag.proto";
+import "cloud/v1/runtime/primitive/status.proto";
+import "google/protobuf/timestamp.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+/*
+    Dag is the database-facing record for one runtime DAG snapshot.
+
+    The runtime DAG itself is stored as one JSONB document in payload. Scalar
+    columns such as id, tenant_id, status, and timestamps exist for ownership,
+    indexing, and processor queries; payload remains the source of truth for
+    nodes, edges, retry state, execution failures, and sub-DAG snapshots.
+ */
+message Dag {
+    message List {repeated Dag dags = 1;}
+
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "dags"
+        indexes: [
+            {name: "dags_tenant_status_idx", columns: ["tenant_id", "status"]},
+            {name: "dags_status_updated_at_idx", columns: ["status", "updated_at"]},
+            {name: "dags_claim_idx", columns: ["status", "not_before", "lease_expires_at", "claim_priority"]}
+        ]
+    };
+
+    /*
+        Processor is generic worker ownership metadata.
+
+        It is intentionally domain-free: no TestRun, Suite, preset, or user ids.
+        A DagProcessor uses this block to lease a persisted DAG, heartbeat it,
+        recover stale owners, and avoid two servers executing the same DAG.
+     */
+    message Processor {
+        /* claimed_by identifies the server/processor instance that owns the current lease. */
+        optional string claimed_by = 1 [(validate.rules).string.max_len = 256];
+        /* claimed_at is when the current lease owner claimed the DAG. */
+        optional google.protobuf.Timestamp claimed_at = 2;
+        /* heartbeat_at is periodically refreshed while the owner is executing this DAG. */
+        optional google.protobuf.Timestamp heartbeat_at = 3;
+        /* lease_expires_at allows another processor to recover this DAG after owner death. */
+        optional google.protobuf.Timestamp lease_expires_at = 4;
+        /*
+            generation is incremented by claim/requeue writes so stale processors
+            cannot overwrite a newer persisted DAG snapshot.
+         */
+        uint64 generation = 5;
+    }
+
+    /*
+        Admission is generic queue metadata evaluated before a processor claims a DAG.
+
+        Domain-specific policies such as suite ordering or quota accounting are
+        implemented outside this message by admission services. This block only
+        carries generic scheduling facts that apply to any persisted DAG.
+     */
+    message Admission {
+        /*
+            kind is a generic classifier for admission plugins and observability.
+            Examples: test_run, suite, maintenance.
+         */
+        string kind = 1 [(validate.rules).string.max_len = 128];
+        /*
+            labels are small generic selectors for admission plugins.
+            Domain identities still belong in domain tables that reference DagId.
+         */
+        map<string, string> labels = 2 [(validate.rules).map.max_pairs = 64];
+    }
+
+    /* id is the persistent DAG record id. */
+    DagId id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).message = {required: true}
+    ];
+    /* tenant_id owns the DAG record and scopes processor/list queries. */
+    TenantId tenant_id = 2 [
+        (ratel.column).constraints = {
+            references_table: "tenants"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+    /* timestamps contains created_at and updated_at columns. */
+    Timestamps timestamps = 3 [(goplain.field).embed = true];
+    /*
+        status mirrors payload.status for indexed processor queries.
+        Save paths must derive this value from payload.status.
+     */
+    runtime.primitive.Status status = 4 [
+        (validate.rules).enum = {defined_only: true, not_in: [0]}
+    ];
+    /*
+        payload stores the full runtime DAG aggregate as JSONB.
+        It contains nodes, edges, task input/output, execution state,
+        failures, retry state, and embedded sub-DAGs.
+     */
+    runtime.primitive.Dag payload = 5 [
+        (goplain.field).serialize = true,
+        (ratel.column).constraints.default_value = "'{}'::jsonb",
+        (validate.rules).message.required = true
+    ];
+    /* processor stores generic worker lease/heartbeat metadata. */
+    Processor processor = 6 [
+        (goplain.field).serialize = true,
+        (ratel.column).constraints.default_value = "'{}'::jsonb"
+    ];
+    /* admission stores generic queue metadata used before claim. */
+    Admission admission = 7 [
+        (goplain.field).serialize = true,
+        (ratel.column).constraints.default_value = "'{}'::jsonb"
+    ];
+    /* not_before delays claim/execution until this time. Empty means immediately claimable. */
+    optional google.protobuf.Timestamp not_before = 8;
+    /* claim_priority orders claimable DAGs. Higher values are preferred first. */
+    int32 claim_priority = 9;
+    /*
+        Mirrors processor.lease_expires_at as a scalar indexed column.
+        Save paths must derive this value from processor.lease_expires_at.
+     */
+    optional google.protobuf.Timestamp lease_expires_at = 10;
+}

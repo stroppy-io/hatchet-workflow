@@ -4,12 +4,12 @@
 
 import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Retry, RetryJson } from "./retry_pb.ts";
+import type { Retry_Policy, Retry_PolicyJson, Retry_State, Retry_StateJson } from "./retry_pb.ts";
 import { file_cloud_v1_runtime_primitive_retry } from "./retry_pb.ts";
 import type { Status, StatusJson } from "./status_pb.ts";
 import { file_cloud_v1_runtime_primitive_status } from "./status_pb.ts";
-import type { Any, AnyJson } from "@bufbuild/protobuf/wkt";
-import { file_google_protobuf_any } from "@bufbuild/protobuf/wkt";
+import type { Any, AnyJson, Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_any, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_validate_validate } from "../../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/runtime/primitive/dag.proto.
  */
 export const file_cloud_v1_runtime_primitive_dag: GenFile = /*@__PURE__*/
-  fileDesc("CiRjbG91ZC92MS9ydW50aW1lL3ByaW1pdGl2ZS9kYWcucHJvdG8SGmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlItENCgNEYWcSFAoCaWQYASABKAlCCPpCBXIDsAEBEkIKBnN0YXR1cxgDIAEoDjIiLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLlN0YXR1c0IO+kILggEIEAEgACAFIAYSPQoFbm9kZXMYBCADKAsyJC5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuTm9kZUII+kIFkgECCAESMwoFZWRnZXMYBSADKAsyJC5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuRWRnZRIjCgVpbnB1dBgGIAEoCzIULmdvb2dsZS5wcm90b2J1Zi5BbnkSSAoKc2NoZWR1bGluZxgHIAEoCzIqLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5TY2hlZHVsaW5nQgj6QgWKAQIQARI/CghtZXRhZGF0YRgIIAMoCzItLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5NZXRhZGF0YUVudHJ5GsQGCgROb2RlEhMKAmlkGAEgASgJQgf6QgRyAhABEkAKBnN0YXR1cxgCIAEoDjIiLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLlN0YXR1c0IM+kIJggEGEAEgACAHEk0KCnNjaGVkdWxpbmcYAyABKAsyLy5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuTm9kZS5TY2hlZHVsaW5nQgj6QgWKAQIQARJECghtZXRhZGF0YRgEIAMoCzIyLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5Ob2RlLk1ldGFkYXRhRW50cnkSTgoKdGFza19zdGF0ZRgKIAEoCzIuLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5Ob2RlLlRhc2tTdGF0ZUII+kIFigECEAFIABI8CgdzdWJfZGFnGAsgASgLMh8uY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnQgj6QgWKAQIQAUgAGmAKCVRhc2tTdGF0ZRItCgVpbnB1dBgEIAEoCzIULmdvb2dsZS5wcm90b2J1Zi5BbnlCCPpCBaIBAggBEiQKBm91dHB1dBgFIAEoCzIULmdvb2dsZS5wcm90b2J1Zi5BbnkangIKClNjaGVkdWxpbmcSOgoFcmV0cnkYBCABKAsyIS5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5SZXRyeUII+kIFigECEAESEgoKYWx3YXlzX3J1bhgFIAEoCBIQCghwcmlvcml0eRgGIAEoBRJZCgtqb2luX3BvbGljeRgHIAEoDjI6LmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5Ob2RlLlNjaGVkdWxpbmcuSm9pblBvbGljeUII+kIFggECEAEiUwoKSm9pblBvbGljeRIbChdKT0lOX1BPTElDWV9VTlNQRUNJRklFRBAAEhMKD0pPSU5fUE9MSUNZX0FMTBABEhMKD0pPSU5fUE9MSUNZX0FOWRACGi8KDU1ldGFkYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIOCgd2YXJpYW50EgP4QgEaxAEKBEVkZ2USFAoCaWQYASABKAlCCPpCBXIDsAEBEhgKBnNvdXJjZRgCIAEoCUII+kIFcgOwAQESGAoGdGFyZ2V0GAMgASgJQgj6QgVyA7ABARIYCg5wcmVkaWNhdGVfbmFtZRgKIAEoCUgAEksKCW9uX3N0YXR1cxgLIAEoDjIiLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLlN0YXR1c0IS+kIPggEMEAEgACABIAIgBSAHSABCCwoJY29uZGl0aW9uGowCCgpTY2hlZHVsaW5nEiEKD21heF9wYXJhbGxlbGlzbRgBIAEoDUII+kIFKgMYgAgSXQoPb25fbm9kZV9mYWlsdXJlGAIgASgOMjguY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLlNjaGVkdWxpbmcuT25Ob2RlRmFpbHVyZUIK+kIHggEEIAAQARISCgppc19zdWJfZGFnGAMgASgIImgKDU9uTm9kZUZhaWx1cmUSHwobT05fTk9ERV9GQUlMVVJFX1VOU1BFQ0lGSUVEEAASHAoYT05fTk9ERV9GQUlMVVJFX0NPTlRJTlVFEAESGAoUT05fTk9ERV9GQUlMVVJFX1NUT1AQAhovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCT1pNZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvcnVudGltZS9wcmltaXRpdmViBnByb3RvMw", [file_cloud_v1_runtime_primitive_retry, file_cloud_v1_runtime_primitive_status, file_google_protobuf_any, file_validate_validate]);
+  fileDesc("CiRjbG91ZC92MS9ydW50aW1lL3ByaW1pdGl2ZS9kYWcucHJvdG8SGmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlIpAXCgNEYWcSFAoCaWQYASABKAlCCPpCBXIDsAEBEkIKBnN0YXR1cxgDIAEoDjIiLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLlN0YXR1c0IO+kILggEIEAEgACAFIAYSPQoFbm9kZXMYBCADKAsyJC5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuTm9kZUII+kIFkgECCAESMwoFZWRnZXMYBSADKAsyJC5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuRWRnZRIjCgVpbnB1dBgGIAEoCzIULmdvb2dsZS5wcm90b2J1Zi5BbnkSSAoKc2NoZWR1bGluZxgHIAEoCzIqLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5TY2hlZHVsaW5nQgj6QgWKAQIQARI/CghtZXRhZGF0YRgIIAMoCzItLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5NZXRhZGF0YUVudHJ5EjwKCWV4ZWN1dGlvbhgUIAEoCzIpLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5FeGVjdXRpb24aygIKB0ZhaWx1cmUSGwoHbWVzc2FnZRgBIAEoCUIK+kIHcgUQARiAQBIWCgRjb2RlGAIgASgJQgj6QgVyAxiAARIYCgZzb3VyY2UYAyABKAlCCPpCBXIDGIABEhcKBXBoYXNlGAQgASgJQgj6QgVyAxiAARIPCgdhdHRlbXB0GAUgASgNEhEKCXJldHJ5YWJsZRgGIAEoCBIvCgtvY2N1cnJlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASUQoIbWV0YWRhdGEYCCADKAsyNS5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuRmFpbHVyZS5NZXRhZGF0YUVudHJ5Qgj6QgWaAQIQQBovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaowoKBE5vZGUSEwoCaWQYASABKAlCB/pCBHICEAESQAoGc3RhdHVzGAIgASgOMiIuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuU3RhdHVzQgz6QgmCAQYQASAAIAcSTQoKc2NoZWR1bGluZxgDIAEoCzIvLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5Ob2RlLlNjaGVkdWxpbmdCCPpCBYoBAhABEkQKCG1ldGFkYXRhGAQgAygLMjIuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLk5vZGUuTWV0YWRhdGFFbnRyeRJOCgp0YXNrX3N0YXRlGAogASgLMi4uY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLk5vZGUuVGFza1N0YXRlQgj6QgWKAQIQAUgAEjwKB3N1Yl9kYWcYCyABKAsyHy5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWdCCPpCBYoBAhABSAASQQoJZXhlY3V0aW9uGBQgASgLMi4uY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLk5vZGUuRXhlY3V0aW9uGn8KCVRhc2tTdGF0ZRIdCgxoYW5kbGVyX25hbWUYASABKAlCB/pCBHICEAESLQoFaW5wdXQYAiABKAsyFC5nb29nbGUucHJvdG9idWYuQW55Qgj6QgWiAQIIARIkCgZvdXRwdXQYAyABKAsyFC5nb29nbGUucHJvdG9idWYuQW55GqwCCgpTY2hlZHVsaW5nEkgKDHJldHJ5X3BvbGljeRgEIAEoCzIoLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLlJldHJ5LlBvbGljeUII+kIFigECEAESEgoKYWx3YXlzX3J1bhgFIAEoCBIQCghwcmlvcml0eRgGIAEoBRJZCgtqb2luX3BvbGljeRgHIAEoDjI6LmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5Ob2RlLlNjaGVkdWxpbmcuSm9pblBvbGljeUII+kIFggECEAEiUwoKSm9pblBvbGljeRIbChdKT0lOX1BPTElDWV9VTlNQRUNJRklFRBAAEhMKD0pPSU5fUE9MSUNZX0FMTBABEhMKD0pPSU5fUE9MSUNZX0FOWRACGuwCCglFeGVjdXRpb24SQAoGc3RhdHVzGAEgASgOMiIuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuU3RhdHVzQgz6QgmCAQYQASAAIAcSPAoLcmV0cnlfc3RhdGUYAiABKAsyJy5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5SZXRyeS5TdGF0ZRI4CgdmYWlsdXJlGAMgASgLMicuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLkZhaWx1cmUSRAoIZmFpbHVyZXMYBCADKAsyJy5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuRmFpbHVyZUIJ+kIGkgEDEIABEi4KCnN0YXJ0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCDgoHdmFyaWFudBID+EIBGsQBCgRFZGdlEhQKAmlkGAEgASgJQgj6QgVyA7ABARIYCgZzb3VyY2UYAiABKAlCCPpCBXIDsAEBEhgKBnRhcmdldBgDIAEoCUII+kIFcgOwAQESGAoOcHJlZGljYXRlX25hbWUYCiABKAlIABJLCglvbl9zdGF0dXMYCyABKA4yIi5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5TdGF0dXNCEvpCD4IBDBABIAAgASACIAUgB0gAQgsKCWNvbmRpdGlvbhrSAgoJRXhlY3V0aW9uEkIKBnN0YXR1cxgBIAEoDjIiLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLlN0YXR1c0IO+kILggEIEAEgACAFIAYSIAoOZmFpbGVkX25vZGVfaWQYAiABKAlCCPpCBXIDGIACEjgKB2ZhaWx1cmUYAyABKAsyJy5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuRmFpbHVyZRJECghmYWlsdXJlcxgEIAMoCzInLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5GYWlsdXJlQgn6QgaSAQMQgAESLgoKc3RhcnRlZF9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZmluaXNoZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wGowCCgpTY2hlZHVsaW5nEiEKD21heF9wYXJhbGxlbGlzbRgBIAEoDUII+kIFKgMYgAgSXQoPb25fbm9kZV9mYWlsdXJlGAIgASgOMjguY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLlNjaGVkdWxpbmcuT25Ob2RlRmFpbHVyZUIK+kIHggEEEAEgABISCgppc19zdWJfZGFnGAMgASgIImgKDU9uTm9kZUZhaWx1cmUSHwobT05fTk9ERV9GQUlMVVJFX1VOU1BFQ0lGSUVEEAASHAoYT05fTk9ERV9GQUlMVVJFX0NPTlRJTlVFEAESGAoUT05fTk9ERV9GQUlMVVJFX1NUT1AQAhovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCT1pNZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvcnVudGltZS9wcmltaXRpdmViBnByb3RvMw", [file_cloud_v1_runtime_primitive_retry, file_cloud_v1_runtime_primitive_status, file_google_protobuf_any, file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  *
@@ -101,6 +101,13 @@ export type Dag = Message<"cloud.v1.runtime.primitive.Dag"> & {
    * @generated from field: map<string, string> metadata = 8;
    */
   metadata: { [key: string]: string };
+
+  /**
+   * execution stores aggregate progress and root failure diagnostics. 
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Dag.Execution execution = 20;
+   */
+  execution?: Dag_Execution;
 };
 
 /**
@@ -185,6 +192,13 @@ export type DagJson = {
    * @generated from field: map<string, string> metadata = 8;
    */
   metadata?: { [key: string]: string };
+
+  /**
+   * execution stores aggregate progress and root failure diagnostics. 
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Dag.Execution execution = 20;
+   */
+  execution?: Dag_ExecutionJson;
 };
 
 export type DagValid = Dag;
@@ -195,6 +209,167 @@ export type DagValid = Dag;
  */
 export const DagSchema: GenMessage<Dag, {jsonType: DagJson, validType: DagValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_runtime_primitive_dag, 0);
+
+/**
+ *
+ * Failure is a normalized execution error.
+ *
+ * Plain error strings are enough for logs, but not enough for UI filters,
+ * retry decisions, grouping, or root-cause navigation. This record keeps
+ * both human-readable text and stable machine-readable context.
+ *
+ * @generated from message cloud.v1.runtime.primitive.Dag.Failure
+ */
+export type Dag_Failure = Message<"cloud.v1.runtime.primitive.Dag.Failure"> & {
+  /**
+   * message is the human-readable error text. 
+   *
+   * @generated from field: string message = 1;
+   */
+  message: string;
+
+  /**
+   *
+   * code is a stable machine-readable error class.
+   * Examples: TERRAFORM_APPLY_FAILED, AGENT_UNREACHABLE,
+   * COMMAND_EXIT_FAILED, CONFIG_RENDER_FAILED, DAG_CANCELLED.
+   *
+   * @generated from field: string code = 2;
+   */
+  code: string;
+
+  /**
+   *
+   * source identifies the subsystem that produced the error.
+   * Examples: dag_executor, terraform, agent, docker, ssh, stroppy.
+   *
+   * @generated from field: string source = 3;
+   */
+  source: string;
+
+  /**
+   *
+   * phase identifies where inside the node/task the error happened.
+   * Examples: terraform_apply, install_package, render_config,
+   * start_service, run_stroppy.
+   *
+   * @generated from field: string phase = 4;
+   */
+  phase: string;
+
+  /**
+   * attempt is the node attempt that produced this failure. First attempt is 1. 
+   *
+   * @generated from field: uint32 attempt = 5;
+   */
+  attempt: number;
+
+  /**
+   * retryable is the executor/task opinion before retry policy limits are applied. 
+   *
+   * @generated from field: bool retryable = 6;
+   */
+  retryable: boolean;
+
+  /**
+   * occurred_at is when this failure was observed. 
+   *
+   * @generated from field: google.protobuf.Timestamp occurred_at = 7;
+   */
+  occurredAt?: Timestamp;
+
+  /**
+   * metadata stores small diagnostic labels such as workdir_id, machine_id, or command. 
+   *
+   * @generated from field: map<string, string> metadata = 8;
+   */
+  metadata: { [key: string]: string };
+};
+
+/**
+ *
+ * Failure is a normalized execution error.
+ *
+ * Plain error strings are enough for logs, but not enough for UI filters,
+ * retry decisions, grouping, or root-cause navigation. This record keeps
+ * both human-readable text and stable machine-readable context.
+ *
+ * @generated from message cloud.v1.runtime.primitive.Dag.Failure
+ */
+export type Dag_FailureJson = {
+  /**
+   * message is the human-readable error text. 
+   *
+   * @generated from field: string message = 1;
+   */
+  message?: string;
+
+  /**
+   *
+   * code is a stable machine-readable error class.
+   * Examples: TERRAFORM_APPLY_FAILED, AGENT_UNREACHABLE,
+   * COMMAND_EXIT_FAILED, CONFIG_RENDER_FAILED, DAG_CANCELLED.
+   *
+   * @generated from field: string code = 2;
+   */
+  code?: string;
+
+  /**
+   *
+   * source identifies the subsystem that produced the error.
+   * Examples: dag_executor, terraform, agent, docker, ssh, stroppy.
+   *
+   * @generated from field: string source = 3;
+   */
+  source?: string;
+
+  /**
+   *
+   * phase identifies where inside the node/task the error happened.
+   * Examples: terraform_apply, install_package, render_config,
+   * start_service, run_stroppy.
+   *
+   * @generated from field: string phase = 4;
+   */
+  phase?: string;
+
+  /**
+   * attempt is the node attempt that produced this failure. First attempt is 1. 
+   *
+   * @generated from field: uint32 attempt = 5;
+   */
+  attempt?: number;
+
+  /**
+   * retryable is the executor/task opinion before retry policy limits are applied. 
+   *
+   * @generated from field: bool retryable = 6;
+   */
+  retryable?: boolean;
+
+  /**
+   * occurred_at is when this failure was observed. 
+   *
+   * @generated from field: google.protobuf.Timestamp occurred_at = 7;
+   */
+  occurredAt?: TimestampJson;
+
+  /**
+   * metadata stores small diagnostic labels such as workdir_id, machine_id, or command. 
+   *
+   * @generated from field: map<string, string> metadata = 8;
+   */
+  metadata?: { [key: string]: string };
+};
+
+export type Dag_FailureValid = Dag_Failure;
+
+/**
+ * Describes the message cloud.v1.runtime.primitive.Dag.Failure.
+ * Use `create(Dag_FailureSchema)` to create a new message.
+ */
+export const Dag_FailureSchema: GenMessage<Dag_Failure, {jsonType: Dag_FailureJson, validType: Dag_FailureValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_runtime_primitive_dag, 0, 0);
 
 /**
  * Node is a single schedulable unit inside a Dag. 
@@ -252,6 +427,13 @@ export type Dag_Node = Message<"cloud.v1.runtime.primitive.Dag.Node"> & {
     value: Dag;
     case: "subDag";
   } | { case: undefined; value?: undefined };
+
+  /**
+   * execution stores runtime progress and diagnostics for this node. 
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Dag.Node.Execution execution = 20;
+   */
+  execution?: Dag_Node_Execution;
 };
 
 /**
@@ -301,6 +483,13 @@ export type Dag_NodeJson = {
    * @generated from field: cloud.v1.runtime.primitive.Dag sub_dag = 11;
    */
   subDag?: DagJson;
+
+  /**
+   * execution stores runtime progress and diagnostics for this node. 
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Dag.Node.Execution execution = 20;
+   */
+  execution?: Dag_Node_ExecutionJson;
 };
 
 export type Dag_NodeValid = Dag_Node;
@@ -310,7 +499,7 @@ export type Dag_NodeValid = Dag_Node;
  * Use `create(Dag_NodeSchema)` to create a new message.
  */
 export const Dag_NodeSchema: GenMessage<Dag_Node, {jsonType: Dag_NodeJson, validType: Dag_NodeValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_runtime_primitive_dag, 0, 0);
+  messageDesc(file_cloud_v1_runtime_primitive_dag, 0, 1);
 
 /**
  * TaskState contains opaque task input and produced task output. 
@@ -319,16 +508,23 @@ export const Dag_NodeSchema: GenMessage<Dag_Node, {jsonType: Dag_NodeJson, valid
  */
 export type Dag_Node_TaskState = Message<"cloud.v1.runtime.primitive.Dag.Node.TaskState"> & {
   /**
+   * id is unique within this Dag and is the address used by edges. 
+   *
+   * @generated from field: string handler_name = 1;
+   */
+  handlerName: string;
+
+  /**
    * input is the typed payload consumed by the task executor. 
    *
-   * @generated from field: google.protobuf.Any input = 4;
+   * @generated from field: google.protobuf.Any input = 2;
    */
   input?: Any;
 
   /**
    * output is the typed payload produced after task completion. 
    *
-   * @generated from field: google.protobuf.Any output = 5;
+   * @generated from field: google.protobuf.Any output = 3;
    */
   output?: Any;
 };
@@ -340,16 +536,23 @@ export type Dag_Node_TaskState = Message<"cloud.v1.runtime.primitive.Dag.Node.Ta
  */
 export type Dag_Node_TaskStateJson = {
   /**
+   * id is unique within this Dag and is the address used by edges. 
+   *
+   * @generated from field: string handler_name = 1;
+   */
+  handlerName?: string;
+
+  /**
    * input is the typed payload consumed by the task executor. 
    *
-   * @generated from field: google.protobuf.Any input = 4;
+   * @generated from field: google.protobuf.Any input = 2;
    */
   input?: AnyJson;
 
   /**
    * output is the typed payload produced after task completion. 
    *
-   * @generated from field: google.protobuf.Any output = 5;
+   * @generated from field: google.protobuf.Any output = 3;
    */
   output?: AnyJson;
 };
@@ -361,7 +564,7 @@ export type Dag_Node_TaskStateValid = Dag_Node_TaskState;
  * Use `create(Dag_Node_TaskStateSchema)` to create a new message.
  */
 export const Dag_Node_TaskStateSchema: GenMessage<Dag_Node_TaskState, {jsonType: Dag_Node_TaskStateJson, validType: Dag_Node_TaskStateValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_runtime_primitive_dag, 0, 0, 0);
+  messageDesc(file_cloud_v1_runtime_primitive_dag, 0, 1, 0);
 
 /**
  * Scheduling controls admission and dependency merge behavior for one node. 
@@ -370,11 +573,13 @@ export const Dag_Node_TaskStateSchema: GenMessage<Dag_Node_TaskState, {jsonType:
  */
 export type Dag_Node_Scheduling = Message<"cloud.v1.runtime.primitive.Dag.Node.Scheduling"> & {
   /**
-   * retry stores retry policy and retry state for this node. 
    *
-   * @generated from field: cloud.v1.runtime.primitive.Retry retry = 4;
+   * retry_policy stores static retry configuration for this node.
+   * Runtime retry progress lives in Node.Execution.retry_state.
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Retry.Policy retry_policy = 4;
    */
-  retry?: Retry;
+  retryPolicy?: Retry_Policy;
 
   /**
    * always_run allows cleanup nodes to run after failure or cancellation. 
@@ -405,11 +610,13 @@ export type Dag_Node_Scheduling = Message<"cloud.v1.runtime.primitive.Dag.Node.S
  */
 export type Dag_Node_SchedulingJson = {
   /**
-   * retry stores retry policy and retry state for this node. 
    *
-   * @generated from field: cloud.v1.runtime.primitive.Retry retry = 4;
+   * retry_policy stores static retry configuration for this node.
+   * Runtime retry progress lives in Node.Execution.retry_state.
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Retry.Policy retry_policy = 4;
    */
-  retry?: RetryJson;
+  retryPolicy?: Retry_PolicyJson;
 
   /**
    * always_run allows cleanup nodes to run after failure or cancellation. 
@@ -440,7 +647,7 @@ export type Dag_Node_SchedulingValid = Dag_Node_Scheduling;
  * Use `create(Dag_Node_SchedulingSchema)` to create a new message.
  */
 export const Dag_Node_SchedulingSchema: GenMessage<Dag_Node_Scheduling, {jsonType: Dag_Node_SchedulingJson, validType: Dag_Node_SchedulingValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_runtime_primitive_dag, 0, 0, 1);
+  messageDesc(file_cloud_v1_runtime_primitive_dag, 0, 1, 1);
 
 /**
  * JoinPolicy defines how incoming edges are merged before this node becomes ready. 
@@ -481,7 +688,130 @@ export type Dag_Node_Scheduling_JoinPolicyJson = "JOIN_POLICY_UNSPECIFIED" | "JO
  * Describes the enum cloud.v1.runtime.primitive.Dag.Node.Scheduling.JoinPolicy.
  */
 export const Dag_Node_Scheduling_JoinPolicySchema: GenEnum<Dag_Node_Scheduling_JoinPolicy, Dag_Node_Scheduling_JoinPolicyJson> = /*@__PURE__*/
-  enumDesc(file_cloud_v1_runtime_primitive_dag, 0, 0, 1, 0);
+  enumDesc(file_cloud_v1_runtime_primitive_dag, 0, 1, 1, 0);
+
+/**
+ *
+ * Execution stores node-local runtime state.
+ *
+ * Scheduling answers "how may this node run"; Execution answers
+ * "what actually happened while it was running".
+ *
+ * @generated from message cloud.v1.runtime.primitive.Dag.Node.Execution
+ */
+export type Dag_Node_Execution = Message<"cloud.v1.runtime.primitive.Dag.Node.Execution"> & {
+  /**
+   * status mirrors Node.status so consumers can read one complete runtime block. 
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Status status = 1;
+   */
+  status: Status;
+
+  /**
+   *
+   * retry_state stores runtime retry progress: current attempt,
+   * next retry time, current delay, last error, and attempt timestamps.
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Retry.State retry_state = 2;
+   */
+  retryState?: Retry_State;
+
+  /**
+   *
+   * failure is the current/final root failure for this node.
+   * For STATUS_RETRY_WAIT this is the latest failure.
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Dag.Failure failure = 3;
+   */
+  failure?: Dag_Failure;
+
+  /**
+   * failures keeps structured attempt-level failure history. 
+   *
+   * @generated from field: repeated cloud.v1.runtime.primitive.Dag.Failure failures = 4;
+   */
+  failures: Dag_Failure[];
+
+  /**
+   * started_at is when the node first entered STATUS_RUNNING. 
+   *
+   * @generated from field: google.protobuf.Timestamp started_at = 5;
+   */
+  startedAt?: Timestamp;
+
+  /**
+   * finished_at is when the node reached a terminal status. 
+   *
+   * @generated from field: google.protobuf.Timestamp finished_at = 6;
+   */
+  finishedAt?: Timestamp;
+};
+
+/**
+ *
+ * Execution stores node-local runtime state.
+ *
+ * Scheduling answers "how may this node run"; Execution answers
+ * "what actually happened while it was running".
+ *
+ * @generated from message cloud.v1.runtime.primitive.Dag.Node.Execution
+ */
+export type Dag_Node_ExecutionJson = {
+  /**
+   * status mirrors Node.status so consumers can read one complete runtime block. 
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Status status = 1;
+   */
+  status?: StatusJson;
+
+  /**
+   *
+   * retry_state stores runtime retry progress: current attempt,
+   * next retry time, current delay, last error, and attempt timestamps.
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Retry.State retry_state = 2;
+   */
+  retryState?: Retry_StateJson;
+
+  /**
+   *
+   * failure is the current/final root failure for this node.
+   * For STATUS_RETRY_WAIT this is the latest failure.
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Dag.Failure failure = 3;
+   */
+  failure?: Dag_FailureJson;
+
+  /**
+   * failures keeps structured attempt-level failure history. 
+   *
+   * @generated from field: repeated cloud.v1.runtime.primitive.Dag.Failure failures = 4;
+   */
+  failures?: Dag_FailureJson[];
+
+  /**
+   * started_at is when the node first entered STATUS_RUNNING. 
+   *
+   * @generated from field: google.protobuf.Timestamp started_at = 5;
+   */
+  startedAt?: TimestampJson;
+
+  /**
+   * finished_at is when the node reached a terminal status. 
+   *
+   * @generated from field: google.protobuf.Timestamp finished_at = 6;
+   */
+  finishedAt?: TimestampJson;
+};
+
+export type Dag_Node_ExecutionValid = Dag_Node_Execution;
+
+/**
+ * Describes the message cloud.v1.runtime.primitive.Dag.Node.Execution.
+ * Use `create(Dag_Node_ExecutionSchema)` to create a new message.
+ */
+export const Dag_Node_ExecutionSchema: GenMessage<Dag_Node_Execution, {jsonType: Dag_Node_ExecutionJson, validType: Dag_Node_ExecutionValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_runtime_primitive_dag, 0, 1, 2);
 
 /**
  * Edge is a dependency from source node to target node. 
@@ -583,7 +913,122 @@ export type Dag_EdgeValid = Dag_Edge;
  * Use `create(Dag_EdgeSchema)` to create a new message.
  */
 export const Dag_EdgeSchema: GenMessage<Dag_Edge, {jsonType: Dag_EdgeJson, validType: Dag_EdgeValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_runtime_primitive_dag, 0, 1);
+  messageDesc(file_cloud_v1_runtime_primitive_dag, 0, 2);
+
+/**
+ *
+ * Execution stores aggregate runtime state for the whole Dag.
+ *
+ * Detailed retry history stays on Node.Execution. This block is for
+ * quick overview, terminal status, and root-cause navigation.
+ *
+ * @generated from message cloud.v1.runtime.primitive.Dag.Execution
+ */
+export type Dag_Execution = Message<"cloud.v1.runtime.primitive.Dag.Execution"> & {
+  /**
+   * status mirrors Dag.status so consumers can read one complete runtime block. 
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Status status = 1;
+   */
+  status: Status;
+
+  /**
+   * failed_node_id points to the first/root failed node, when known. 
+   *
+   * @generated from field: string failed_node_id = 2;
+   */
+  failedNodeId: string;
+
+  /**
+   * failure is the root Dag failure, usually copied from the failed node. 
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Dag.Failure failure = 3;
+   */
+  failure?: Dag_Failure;
+
+  /**
+   * failures contains compact terminal/root failures, not every retry attempt. 
+   *
+   * @generated from field: repeated cloud.v1.runtime.primitive.Dag.Failure failures = 4;
+   */
+  failures: Dag_Failure[];
+
+  /**
+   * started_at is when the Dag first entered STATUS_RUNNING. 
+   *
+   * @generated from field: google.protobuf.Timestamp started_at = 5;
+   */
+  startedAt?: Timestamp;
+
+  /**
+   * finished_at is when the Dag reached a terminal status. 
+   *
+   * @generated from field: google.protobuf.Timestamp finished_at = 6;
+   */
+  finishedAt?: Timestamp;
+};
+
+/**
+ *
+ * Execution stores aggregate runtime state for the whole Dag.
+ *
+ * Detailed retry history stays on Node.Execution. This block is for
+ * quick overview, terminal status, and root-cause navigation.
+ *
+ * @generated from message cloud.v1.runtime.primitive.Dag.Execution
+ */
+export type Dag_ExecutionJson = {
+  /**
+   * status mirrors Dag.status so consumers can read one complete runtime block. 
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Status status = 1;
+   */
+  status?: StatusJson;
+
+  /**
+   * failed_node_id points to the first/root failed node, when known. 
+   *
+   * @generated from field: string failed_node_id = 2;
+   */
+  failedNodeId?: string;
+
+  /**
+   * failure is the root Dag failure, usually copied from the failed node. 
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Dag.Failure failure = 3;
+   */
+  failure?: Dag_FailureJson;
+
+  /**
+   * failures contains compact terminal/root failures, not every retry attempt. 
+   *
+   * @generated from field: repeated cloud.v1.runtime.primitive.Dag.Failure failures = 4;
+   */
+  failures?: Dag_FailureJson[];
+
+  /**
+   * started_at is when the Dag first entered STATUS_RUNNING. 
+   *
+   * @generated from field: google.protobuf.Timestamp started_at = 5;
+   */
+  startedAt?: TimestampJson;
+
+  /**
+   * finished_at is when the Dag reached a terminal status. 
+   *
+   * @generated from field: google.protobuf.Timestamp finished_at = 6;
+   */
+  finishedAt?: TimestampJson;
+};
+
+export type Dag_ExecutionValid = Dag_Execution;
+
+/**
+ * Describes the message cloud.v1.runtime.primitive.Dag.Execution.
+ * Use `create(Dag_ExecutionSchema)` to create a new message.
+ */
+export const Dag_ExecutionSchema: GenMessage<Dag_Execution, {jsonType: Dag_ExecutionJson, validType: Dag_ExecutionValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_runtime_primitive_dag, 0, 3);
 
 /**
  * Scheduling controls graph-level admission and failure behavior. 
@@ -648,7 +1093,7 @@ export type Dag_SchedulingValid = Dag_Scheduling;
  * Use `create(Dag_SchedulingSchema)` to create a new message.
  */
 export const Dag_SchedulingSchema: GenMessage<Dag_Scheduling, {jsonType: Dag_SchedulingJson, validType: Dag_SchedulingValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_runtime_primitive_dag, 0, 2);
+  messageDesc(file_cloud_v1_runtime_primitive_dag, 0, 4);
 
 /**
  * OnNodeFailure controls whether failed nodes stop admission of ordinary pending nodes. 
@@ -689,5 +1134,5 @@ export type Dag_Scheduling_OnNodeFailureJson = "ON_NODE_FAILURE_UNSPECIFIED" | "
  * Describes the enum cloud.v1.runtime.primitive.Dag.Scheduling.OnNodeFailure.
  */
 export const Dag_Scheduling_OnNodeFailureSchema: GenEnum<Dag_Scheduling_OnNodeFailure, Dag_Scheduling_OnNodeFailureJson> = /*@__PURE__*/
-  enumDesc(file_cloud_v1_runtime_primitive_dag, 0, 2, 0);
+  enumDesc(file_cloud_v1_runtime_primitive_dag, 0, 4, 0);
 

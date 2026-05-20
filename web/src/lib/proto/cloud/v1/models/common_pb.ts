@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/common.proto.
  */
 export const file_cloud_v1_models_common: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS9tb2RlbHMvY29tbW9uLnByb3RvEg9jbG91ZC52MS5tb2RlbHMiKQoEVWxpZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIi4KCUFjY291bnRJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIi0KCFRlbmFudElkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBAgBEAEiMwoOVGVuYW50TWVtYmVySWQSFwoFdmFsdWUYASABKAlCCPpCBXIDmAEaOgiCph0ECAEQASI1ChBEYXRhYmFzZVByZXNldElkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBBABCAEiNQoQV29ya2xvYWRQcmVzZXRJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQQAQgBIi4KCVRlc3RSdW5JZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIp4BCgpUaW1lc3RhbXBzEkcKCmNyZWF0ZWRfYXQYASABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQhf6QgeyAQQIATgBmrUYCRIHGgVub3coKRJHCgp1cGRhdGVkX2F0GAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIX+kIHsgEECAE4AZq1GAkSBxoFbm93KCkibgoGRW50aXR5EisKAmlkGAEgASgLMhUuY2xvdWQudjEubW9kZWxzLlVsaWRCCJq1GAQSAhABEjcKCnRpbWVzdGFtcHMYAyABKAsyGy5jbG91ZC52MS5tb2RlbHMuVGltZXN0YW1wc0IGgqYdAiABIp0BChBTb2Z0RGVsZXRlRW50aXR5Ei8KBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLm1vZGVscy5FbnRpdHlCBoKmHQIgARJJCgpkZWxldGVkX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIU+kIFsgECOAGatRgIEgYaBG51bGxIAIgBAUINCgtfZGVsZXRlZF9hdEJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9tb2RlbHNiBnByb3RvMw", [file_google_protobuf_timestamp, file_goplain_goplain, file_ratelproto_ratelproto, file_validate_validate]);
+  fileDesc("ChxjbG91ZC92MS9tb2RlbHMvY29tbW9uLnByb3RvEg9jbG91ZC52MS5tb2RlbHMiKQoEVWxpZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIi4KCUFjY291bnRJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQQAQgBIi0KCFRlbmFudElkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBAgBEAEiMwoOVGVuYW50TWVtYmVySWQSFwoFdmFsdWUYASABKAlCCPpCBXIDmAEaOgiCph0EEAEIASI1ChBEYXRhYmFzZVByZXNldElkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBAgBEAEiNQoQV29ya2xvYWRQcmVzZXRJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIi4KCVRlc3RSdW5JZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIioKBURhZ0lkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBAgBEAEingEKClRpbWVzdGFtcHMSRwoKY3JlYXRlZF9hdBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCF/pCB7IBBAgBOAGatRgJEgcaBW5vdygpEkcKCnVwZGF0ZWRfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQhf6QgeyAQQIATgBmrUYCRIHGgVub3coKSJuCgZFbnRpdHkSKwoCaWQYASABKAsyFS5jbG91ZC52MS5tb2RlbHMuVWxpZEIImrUYBBICEAESNwoKdGltZXN0YW1wcxgDIAEoCzIbLmNsb3VkLnYxLm1vZGVscy5UaW1lc3RhbXBzQgaCph0CIAEinQEKEFNvZnREZWxldGVFbnRpdHkSLwoGZW50aXR5GAEgASgLMhcuY2xvdWQudjEubW9kZWxzLkVudGl0eUIGgqYdAiABEkkKCmRlbGV0ZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQhT6QgWyAQI4AZq1GAgSBhoEbnVsbEgAiAEBQg0KC19kZWxldGVkX2F0QkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_google_protobuf_timestamp, file_goplain_goplain, file_ratelproto_ratelproto, file_validate_validate]);
 
 /**
  * @generated from message cloud.v1.models.Ulid
@@ -221,6 +221,35 @@ export const TestRunIdSchema: GenMessage<TestRunId, {jsonType: TestRunIdJson, va
   messageDesc(file_cloud_v1_models_common, 6);
 
 /**
+ * @generated from message cloud.v1.models.DagId
+ */
+export type DagId = Message<"cloud.v1.models.DagId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * @generated from message cloud.v1.models.DagId
+ */
+export type DagIdJson = {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value?: string;
+};
+
+export type DagIdValid = DagId;
+
+/**
+ * Describes the message cloud.v1.models.DagId.
+ * Use `create(DagIdSchema)` to create a new message.
+ */
+export const DagIdSchema: GenMessage<DagId, {jsonType: DagIdJson, validType: DagIdValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_common, 7);
+
+/**
  * Timestamps — universal audit fields. Imported by both system and domain
  * layers so neither depends on the other. 
  *
@@ -263,7 +292,7 @@ export type TimestampsValid = Timestamps;
  * Use `create(TimestampsSchema)` to create a new message.
  */
 export const TimestampsSchema: GenMessage<Timestamps, {jsonType: TimestampsJson, validType: TimestampsValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_common, 7);
+  messageDesc(file_cloud_v1_models_common, 8);
 
 /**
  * @generated from message cloud.v1.models.Entity
@@ -302,7 +331,7 @@ export type EntityValid = Entity;
  * Use `create(EntitySchema)` to create a new message.
  */
 export const EntitySchema: GenMessage<Entity, {jsonType: EntityJson, validType: EntityValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_common, 8);
+  messageDesc(file_cloud_v1_models_common, 9);
 
 /**
  * @generated from message cloud.v1.models.SoftDeleteEntity
@@ -341,5 +370,5 @@ export type SoftDeleteEntityValid = SoftDeleteEntity;
  * Use `create(SoftDeleteEntitySchema)` to create a new message.
  */
 export const SoftDeleteEntitySchema: GenMessage<SoftDeleteEntity, {jsonType: SoftDeleteEntityJson, validType: SoftDeleteEntityValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_common, 9);
+  messageDesc(file_cloud_v1_models_common, 10);
 
