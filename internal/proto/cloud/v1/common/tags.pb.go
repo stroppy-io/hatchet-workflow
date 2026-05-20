@@ -23,8 +23,7 @@ const (
 
 type Tags struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tags          map[string]string      `protobuf:"bytes,1,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Labels        []string               `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty"`
+	Tags          []string               `protobuf:"bytes,1,rep,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -59,16 +58,9 @@ func (*Tags) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_common_tags_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Tags) GetTags() map[string]string {
+func (x *Tags) GetTags() []string {
 	if x != nil {
 		return x.Tags
-	}
-	return nil
-}
-
-func (x *Tags) GetLabels() []string {
-	if x != nil {
-		return x.Labels
 	}
 	return nil
 }
@@ -77,13 +69,9 @@ var File_cloud_v1_common_tags_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_common_tags_proto_rawDesc = "" +
 	"\n" +
-	"\x1acloud/v1/common/tags.proto\x12\x0fcloud.v1.common\"\x8c\x01\n" +
-	"\x04Tags\x123\n" +
-	"\x04tags\x18\x01 \x03(\v2\x1f.cloud.v1.common.Tags.TagsEntryR\x04tags\x12\x16\n" +
-	"\x06labels\x18\x02 \x03(\tR\x06labels\x1a7\n" +
-	"\tTagsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/commonb\x06proto3"
+	"\x1acloud/v1/common/tags.proto\x12\x0fcloud.v1.common\"\x1a\n" +
+	"\x04Tags\x12\x12\n" +
+	"\x04tags\x18\x01 \x03(\tR\x04tagsBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/commonb\x06proto3"
 
 var (
 	file_cloud_v1_common_tags_proto_rawDescOnce sync.Once
@@ -97,18 +85,16 @@ func file_cloud_v1_common_tags_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_common_tags_proto_rawDescData
 }
 
-var file_cloud_v1_common_tags_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_cloud_v1_common_tags_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_cloud_v1_common_tags_proto_goTypes = []any{
 	(*Tags)(nil), // 0: cloud.v1.common.Tags
-	nil,          // 1: cloud.v1.common.Tags.TagsEntry
 }
 var file_cloud_v1_common_tags_proto_depIdxs = []int32{
-	1, // 0: cloud.v1.common.Tags.tags:type_name -> cloud.v1.common.Tags.TagsEntry
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	0, // [0:0] is the sub-list for method output_type
+	0, // [0:0] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_common_tags_proto_init() }
@@ -122,7 +108,7 @@ func file_cloud_v1_common_tags_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_common_tags_proto_rawDesc), len(file_cloud_v1_common_tags_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

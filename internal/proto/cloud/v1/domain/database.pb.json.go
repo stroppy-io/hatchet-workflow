@@ -328,7 +328,7 @@ func (msg *Database_Options_Picodata_Access) UnmarshalJSON(b []byte) error {
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *DatabaseOrPreset) MarshalJSON() ([]byte, error) {
+func (msg *DatabasePreset) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -337,7 +337,7 @@ func (msg *DatabaseOrPreset) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *DatabaseOrPreset) UnmarshalJSON(b []byte) error {
+func (msg *DatabasePreset) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)

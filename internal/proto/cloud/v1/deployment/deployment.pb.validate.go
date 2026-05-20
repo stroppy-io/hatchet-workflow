@@ -35,126 +35,6 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on Machine with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *Machine) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Machine with the rules defined in the
-// proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in MachineMultiError, or nil if none found.
-func (m *Machine) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Machine) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if m.GetCores() <= 0 {
-		err := MachineValidationError{
-			field:  "Cores",
-			reason: "value must be greater than 0",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if m.GetMemoryGb() <= 0 {
-		err := MachineValidationError{
-			field:  "MemoryGb",
-			reason: "value must be greater than 0",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return MachineMultiError(errors)
-	}
-
-	return nil
-}
-
-// MachineMultiError is an error wrapping multiple validation errors returned
-// by Machine.ValidateAll() if the designated constraints aren't met.
-type MachineMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m MachineMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m MachineMultiError) AllErrors() []error { return m }
-
-// MachineValidationError is the validation error returned by Machine.Validate
-// if the designated constraints aren't met.
-type MachineValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e MachineValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e MachineValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e MachineValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e MachineValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e MachineValidationError) ErrorName() string { return "MachineValidationError" }
-
-// Error satisfies the builtin error interface
-func (e MachineValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sMachine.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = MachineValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = MachineValidationError{}
-
 // Validate checks the field values on DeploymentIntent with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -176,6 +56,28 @@ func (m *DeploymentIntent) validate(all bool) error {
 	}
 
 	var errors []error
+
+	if _, ok := _DeploymentIntent_Provider_NotInLookup[m.GetProvider()]; ok {
+		err := DeploymentIntentValidationError{
+			field:  "Provider",
+			reason: "value must not be in list [PROVIDER_UNSPECIFIED]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := Provider_name[int32(m.GetProvider())]; !ok {
+		err := DeploymentIntentValidationError{
+			field:  "Provider",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if l := len(m.GetSpecs()); l < 1 || l > 128 {
 		err := DeploymentIntentValidationError{
@@ -329,6 +231,325 @@ var _ interface {
 	ErrorName() string
 } = DeploymentIntentValidationError{}
 
+var _DeploymentIntent_Provider_NotInLookup = map[Provider]struct{}{
+	0: {},
+}
+
+// Validate checks the field values on QuotaRequest with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *QuotaRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on QuotaRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in QuotaRequestMultiError, or
+// nil if none found.
+func (m *QuotaRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *QuotaRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if _, ok := _QuotaRequest_Provider_NotInLookup[m.GetProvider()]; ok {
+		err := QuotaRequestValidationError{
+			field:  "Provider",
+			reason: "value must not be in list [PROVIDER_UNSPECIFIED]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := Provider_name[int32(m.GetProvider())]; !ok {
+		err := QuotaRequestValidationError{
+			field:  "Provider",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetQuotaName()); l < 1 || l > 128 {
+		err := QuotaRequestValidationError{
+			field:  "QuotaName",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetRequested() < 1 {
+		err := QuotaRequestValidationError{
+			field:  "Requested",
+			reason: "value must be greater than or equal to 1",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return QuotaRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// QuotaRequestMultiError is an error wrapping multiple validation errors
+// returned by QuotaRequest.ValidateAll() if the designated constraints aren't met.
+type QuotaRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m QuotaRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m QuotaRequestMultiError) AllErrors() []error { return m }
+
+// QuotaRequestValidationError is the validation error returned by
+// QuotaRequest.Validate if the designated constraints aren't met.
+type QuotaRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QuotaRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QuotaRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QuotaRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QuotaRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QuotaRequestValidationError) ErrorName() string { return "QuotaRequestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e QuotaRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQuotaRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QuotaRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QuotaRequestValidationError{}
+
+var _QuotaRequest_Provider_NotInLookup = map[Provider]struct{}{
+	0: {},
+}
+
+// Validate checks the field values on Quota with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Quota) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Quota with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in QuotaMultiError, or nil if none found.
+func (m *Quota) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Quota) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if _, ok := _Quota_Provider_NotInLookup[m.GetProvider()]; ok {
+		err := QuotaValidationError{
+			field:  "Provider",
+			reason: "value must not be in list [PROVIDER_UNSPECIFIED]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := Provider_name[int32(m.GetProvider())]; !ok {
+		err := QuotaValidationError{
+			field:  "Provider",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetQuotaName()); l < 1 || l > 128 {
+		err := QuotaValidationError{
+			field:  "QuotaName",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetLimit() < 1 {
+		err := QuotaValidationError{
+			field:  "Limit",
+			reason: "value must be greater than or equal to 1",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetUsed() < 0 {
+		err := QuotaValidationError{
+			field:  "Used",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetAvailable() < 0 {
+		err := QuotaValidationError{
+			field:  "Available",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return QuotaMultiError(errors)
+	}
+
+	return nil
+}
+
+// QuotaMultiError is an error wrapping multiple validation errors returned by
+// Quota.ValidateAll() if the designated constraints aren't met.
+type QuotaMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m QuotaMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m QuotaMultiError) AllErrors() []error { return m }
+
+// QuotaValidationError is the validation error returned by Quota.Validate if
+// the designated constraints aren't met.
+type QuotaValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QuotaValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QuotaValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QuotaValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QuotaValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QuotaValidationError) ErrorName() string { return "QuotaValidationError" }
+
+// Error satisfies the builtin error interface
+func (e QuotaValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQuota.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QuotaValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QuotaValidationError{}
+
+var _Quota_Provider_NotInLookup = map[Provider]struct{}{
+	0: {},
+}
+
 // Validate checks the field values on Deployment with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -400,6 +621,42 @@ func (m *Deployment) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	// no validation rules for Deployed
+
+	for idx, item := range m.GetQuotaRequests() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DeploymentValidationError{
+						field:  fmt.Sprintf("QuotaRequests[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DeploymentValidationError{
+						field:  fmt.Sprintf("QuotaRequests[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DeploymentValidationError{
+					field:  fmt.Sprintf("QuotaRequests[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
 	}
 
 	oneofDeploymentPresent := false

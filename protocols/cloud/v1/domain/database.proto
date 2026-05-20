@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.domain;
 
-import "cloud/v1/common/tags.proto";
+import "cloud/v1/domain/topology.proto";
 import "cloud/v1/runtime/render/config.proto";
 import "validate/validate.proto";
 
@@ -278,10 +278,7 @@ message Database {
     Options options = 5 [(validate.rules).message.required = true];
 }
 
-message DatabaseOrPreset {
-    oneof kind {
-        option (validate.required) = true;
-        string database_preset_id = 1 [(validate.rules).string = {min_len: 1}];
-        Database database = 2 [(validate.rules).message.required = true];
-    }
+message DatabasePreset {
+    domain.Database workload = 1 [(validate.rules).message.required = true];
+    domain.Topology topology = 2 [(validate.rules).message.required = true];
 }

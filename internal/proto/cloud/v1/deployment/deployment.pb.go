@@ -73,64 +73,11 @@ func (Provider) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{0}
 }
 
-type Machine struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// cores is VM vCPU count.
-	Cores uint32 `protobuf:"varint,1,opt,name=cores,proto3" json:"cores,omitempty"`
-	// memory_gb is VM RAM in GiB.
-	MemoryGb      uint64 `protobuf:"varint,2,opt,name=memory_gb,json=memoryGb,proto3" json:"memory_gb,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Machine) Reset() {
-	*x = Machine{}
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Machine) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Machine) ProtoMessage() {}
-
-func (x *Machine) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Machine.ProtoReflect.Descriptor instead.
-func (*Machine) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *Machine) GetCores() uint32 {
-	if x != nil {
-		return x.Cores
-	}
-	return 0
-}
-
-func (x *Machine) GetMemoryGb() uint64 {
-	if x != nil {
-		return x.MemoryGb
-	}
-	return 0
-}
-
 // REQUIRED VALIDATE TO ALL SPEC FROM OneOff is one Provider Kind
 type DeploymentIntent struct {
 	state         protoimpl.MessageState   `protogen:"open.v1"`
-	Specs         []*DeploymentIntent_Spec `protobuf:"bytes,1,rep,name=specs,proto3" json:"specs,omitempty"`
+	Provider      Provider                 `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	Specs         []*DeploymentIntent_Spec `protobuf:"bytes,2,rep,name=specs,proto3" json:"specs,omitempty"`
 	Tags          *common.Tags             `protobuf:"bytes,3,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -138,7 +85,7 @@ type DeploymentIntent struct {
 
 func (x *DeploymentIntent) Reset() {
 	*x = DeploymentIntent{}
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[1]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -150,7 +97,7 @@ func (x *DeploymentIntent) String() string {
 func (*DeploymentIntent) ProtoMessage() {}
 
 func (x *DeploymentIntent) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[1]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -163,7 +110,14 @@ func (x *DeploymentIntent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeploymentIntent.ProtoReflect.Descriptor instead.
 func (*DeploymentIntent) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{1}
+	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *DeploymentIntent) GetProvider() Provider {
+	if x != nil {
+		return x.Provider
+	}
+	return Provider_PROVIDER_UNSPECIFIED
 }
 
 func (x *DeploymentIntent) GetSpecs() []*DeploymentIntent_Spec {
@@ -180,11 +134,150 @@ func (x *DeploymentIntent) GetTags() *common.Tags {
 	return nil
 }
 
-// Deployment is the runtime+output bundle produced after apply.
-type Deployment struct {
+type QuotaRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Provider      Provider               `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	QuotaName     string                 `protobuf:"bytes,2,opt,name=quota_name,json=quotaName,proto3" json:"quota_name,omitempty"`
+	Requested     uint64                 `protobuf:"varint,3,opt,name=requested,proto3" json:"requested,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuotaRequest) Reset() {
+	*x = QuotaRequest{}
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuotaRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuotaRequest) ProtoMessage() {}
+
+func (x *QuotaRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuotaRequest.ProtoReflect.Descriptor instead.
+func (*QuotaRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *QuotaRequest) GetProvider() Provider {
+	if x != nil {
+		return x.Provider
+	}
+	return Provider_PROVIDER_UNSPECIFIED
+}
+
+func (x *QuotaRequest) GetQuotaName() string {
+	if x != nil {
+		return x.QuotaName
+	}
+	return ""
+}
+
+func (x *QuotaRequest) GetRequested() uint64 {
+	if x != nil {
+		return x.Requested
+	}
+	return 0
+}
+
+type Quota struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	Provider Provider               `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	Network  *system.Network        `protobuf:"bytes,2,opt,name=network,proto3" json:"network,omitempty"`
+	// TODO: Convert to enum by providers
+	QuotaName     string `protobuf:"bytes,2,opt,name=quota_name,json=quotaName,proto3" json:"quota_name,omitempty"`
+	Limit         uint64 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	Used          uint64 `protobuf:"varint,4,opt,name=used,proto3" json:"used,omitempty"`
+	Available     uint64 `protobuf:"varint,5,opt,name=available,proto3" json:"available,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Quota) Reset() {
+	*x = Quota{}
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Quota) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Quota) ProtoMessage() {}
+
+func (x *Quota) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Quota.ProtoReflect.Descriptor instead.
+func (*Quota) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Quota) GetProvider() Provider {
+	if x != nil {
+		return x.Provider
+	}
+	return Provider_PROVIDER_UNSPECIFIED
+}
+
+func (x *Quota) GetQuotaName() string {
+	if x != nil {
+		return x.QuotaName
+	}
+	return ""
+}
+
+func (x *Quota) GetLimit() uint64 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *Quota) GetUsed() uint64 {
+	if x != nil {
+		return x.Used
+	}
+	return 0
+}
+
+func (x *Quota) GetAvailable() uint64 {
+	if x != nil {
+		return x.Available
+	}
+	return 0
+}
+
+// Deployment is the runtime+output bundle produced after apply.
+type Deployment struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Provider      Provider               `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	Network       *system.Network        `protobuf:"bytes,2,opt,name=network,proto3" json:"network,omitempty"`
+	Deployed      bool                   `protobuf:"varint,3,opt,name=deployed,proto3" json:"deployed,omitempty"`
+	QuotaRequests []*QuotaRequest        `protobuf:"bytes,4,rep,name=quota_requests,json=quotaRequests,proto3" json:"quota_requests,omitempty"`
 	// Types that are valid to be assigned to Deployment:
 	//
 	//	*Deployment_Docker
@@ -196,7 +289,7 @@ type Deployment struct {
 
 func (x *Deployment) Reset() {
 	*x = Deployment{}
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[2]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -208,7 +301,7 @@ func (x *Deployment) String() string {
 func (*Deployment) ProtoMessage() {}
 
 func (x *Deployment) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[2]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -221,7 +314,7 @@ func (x *Deployment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Deployment.ProtoReflect.Descriptor instead.
 func (*Deployment) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{2}
+	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Deployment) GetProvider() Provider {
@@ -234,6 +327,20 @@ func (x *Deployment) GetProvider() Provider {
 func (x *Deployment) GetNetwork() *system.Network {
 	if x != nil {
 		return x.Network
+	}
+	return nil
+}
+
+func (x *Deployment) GetDeployed() bool {
+	if x != nil {
+		return x.Deployed
+	}
+	return false
+}
+
+func (x *Deployment) GetQuotaRequests() []*QuotaRequest {
+	if x != nil {
+		return x.QuotaRequests
 	}
 	return nil
 }
@@ -294,7 +401,7 @@ type DeploymentIntent_Spec struct {
 
 func (x *DeploymentIntent_Spec) Reset() {
 	*x = DeploymentIntent_Spec{}
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[3]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -306,7 +413,7 @@ func (x *DeploymentIntent_Spec) String() string {
 func (*DeploymentIntent_Spec) ProtoMessage() {}
 
 func (x *DeploymentIntent_Spec) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[3]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -319,7 +426,7 @@ func (x *DeploymentIntent_Spec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeploymentIntent_Spec.ProtoReflect.Descriptor instead.
 func (*DeploymentIntent_Spec) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{1, 0}
+	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *DeploymentIntent_Spec) GetId() string {
@@ -389,12 +496,11 @@ var File_cloud_v1_deployment_deployment_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_deployment_deployment_proto_rawDesc = "" +
 	"\n" +
-	"$cloud/v1/deployment/deployment.proto\x12\x13cloud.v1.deployment\x1a\x1acloud/v1/common/tags.proto\x1a cloud/v1/deployment/docker.proto\x1a cloud/v1/deployment/yandex.proto\x1a cloud/v1/runtime/system/ip.proto\x1a\x17validate/validate.proto\"N\n" +
-	"\aMachine\x12\x1d\n" +
-	"\x05cores\x18\x01 \x01(\rB\a\xfaB\x04*\x02 \x00R\x05cores\x12$\n" +
-	"\tmemory_gb\x18\x02 \x01(\x04B\a\xfaB\x042\x02 \x00R\bmemoryGb\"\xba\x03\n" +
-	"\x10DeploymentIntent\x12M\n" +
-	"\x05specs\x18\x01 \x03(\v2*.cloud.v1.deployment.DeploymentIntent.SpecB\v\xfaB\b\x92\x01\x05\b\x01\x10\x80\x01R\x05specs\x12)\n" +
+	"$cloud/v1/deployment/deployment.proto\x12\x13cloud.v1.deployment\x1a\x1acloud/v1/common/tags.proto\x1a cloud/v1/deployment/docker.proto\x1a cloud/v1/deployment/yandex.proto\x1a cloud/v1/runtime/system/ip.proto\x1a\x17validate/validate.proto\"\x81\x04\n" +
+	"\x10DeploymentIntent\x12E\n" +
+	"\bprovider\x18\x01 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x12M\n" +
+	"\x05specs\x18\x02 \x03(\v2*.cloud.v1.deployment.DeploymentIntent.SpecB\v\xfaB\b\x92\x01\x05\b\x01\x10\x80\x01R\x05specs\x12)\n" +
 	"\x04tags\x18\x03 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\xab\x02\n" +
 	"\x04Spec\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
@@ -404,12 +510,30 @@ const file_cloud_v1_deployment_deployment_proto_rawDesc = "" +
 	"\vmanaged_ydb\x18\v \x01(\v2&.cloud.v1.deployment.Yandex.ManagedYdbB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\n" +
 	"managedYdb\x12\\\n" +
 	"\x10docker_container\x18\f \x01(\v2%.cloud.v1.deployment.Docker.ContainerB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\x0fdockerContainerB\v\n" +
-	"\x04spec\x12\x03\xf8B\x01\"\x90\x02\n" +
+	"\x04spec\x12\x03\xf8B\x01\"\xa7\x01\n" +
+	"\fQuotaRequest\x12E\n" +
+	"\bprovider\x18\x01 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x12)\n" +
+	"\n" +
+	"quota_name\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\tquotaName\x12%\n" +
+	"\trequested\x18\x03 \x01(\x04B\a\xfaB\x042\x02(\x01R\trequested\"\xdc\x01\n" +
+	"\x05Quota\x12E\n" +
+	"\bprovider\x18\x01 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x12)\n" +
+	"\n" +
+	"quota_name\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\tquotaName\x12\x1d\n" +
+	"\x05limit\x18\x03 \x01(\x04B\a\xfaB\x042\x02(\x01R\x05limit\x12\x1b\n" +
+	"\x04used\x18\x04 \x01(\x04B\a\xfaB\x042\x02(\x00R\x04used\x12%\n" +
+	"\tavailable\x18\x05 \x01(\x04B\a\xfaB\x042\x02(\x00R\tavailable\"\xf6\x02\n" +
 	"\n" +
 	"Deployment\x12E\n" +
 	"\bprovider\x18\x01 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x12:\n" +
-	"\anetwork\x18\x02 \x01(\v2 .cloud.v1.runtime.system.NetworkR\anetwork\x125\n" +
+	"\anetwork\x18\x02 \x01(\v2 .cloud.v1.runtime.system.NetworkR\anetwork\x12\x1a\n" +
+	"\bdeployed\x18\x03 \x01(\bR\bdeployed\x12H\n" +
+	"\x0equota_requests\x18\x04 \x03(\v2!.cloud.v1.deployment.QuotaRequestR\rquotaRequests\x125\n" +
 	"\x06docker\x18\n" +
 	" \x01(\v2\x1b.cloud.v1.deployment.DockerH\x00R\x06docker\x125\n" +
 	"\x06yandex\x18\v \x01(\v2\x1b.cloud.v1.deployment.YandexH\x00R\x06yandexB\x11\n" +
@@ -433,36 +557,41 @@ func file_cloud_v1_deployment_deployment_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_deployment_deployment_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_deployment_deployment_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_cloud_v1_deployment_deployment_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_cloud_v1_deployment_deployment_proto_goTypes = []any{
 	(Provider)(0),                 // 0: cloud.v1.deployment.Provider
-	(*Machine)(nil),               // 1: cloud.v1.deployment.Machine
-	(*DeploymentIntent)(nil),      // 2: cloud.v1.deployment.DeploymentIntent
-	(*Deployment)(nil),            // 3: cloud.v1.deployment.Deployment
-	(*DeploymentIntent_Spec)(nil), // 4: cloud.v1.deployment.DeploymentIntent.Spec
-	(*common.Tags)(nil),           // 5: cloud.v1.common.Tags
-	(*system.Network)(nil),        // 6: cloud.v1.runtime.system.Network
-	(*Docker)(nil),                // 7: cloud.v1.deployment.Docker
-	(*Yandex)(nil),                // 8: cloud.v1.deployment.Yandex
-	(*Yandex_Vm)(nil),             // 9: cloud.v1.deployment.Yandex.Vm
-	(*Yandex_ManagedYdb)(nil),     // 10: cloud.v1.deployment.Yandex.ManagedYdb
-	(*Docker_Container)(nil),      // 11: cloud.v1.deployment.Docker.Container
+	(*DeploymentIntent)(nil),      // 1: cloud.v1.deployment.DeploymentIntent
+	(*QuotaRequest)(nil),          // 2: cloud.v1.deployment.QuotaRequest
+	(*Quota)(nil),                 // 3: cloud.v1.deployment.Quota
+	(*Deployment)(nil),            // 4: cloud.v1.deployment.Deployment
+	(*DeploymentIntent_Spec)(nil), // 5: cloud.v1.deployment.DeploymentIntent.Spec
+	(*common.Tags)(nil),           // 6: cloud.v1.common.Tags
+	(*system.Network)(nil),        // 7: cloud.v1.runtime.system.Network
+	(*Docker)(nil),                // 8: cloud.v1.deployment.Docker
+	(*Yandex)(nil),                // 9: cloud.v1.deployment.Yandex
+	(*Yandex_Vm)(nil),             // 10: cloud.v1.deployment.Yandex.Vm
+	(*Yandex_ManagedYdb)(nil),     // 11: cloud.v1.deployment.Yandex.ManagedYdb
+	(*Docker_Container)(nil),      // 12: cloud.v1.deployment.Docker.Container
 }
 var file_cloud_v1_deployment_deployment_proto_depIdxs = []int32{
-	4,  // 0: cloud.v1.deployment.DeploymentIntent.specs:type_name -> cloud.v1.deployment.DeploymentIntent.Spec
-	5,  // 1: cloud.v1.deployment.DeploymentIntent.tags:type_name -> cloud.v1.common.Tags
-	0,  // 2: cloud.v1.deployment.Deployment.provider:type_name -> cloud.v1.deployment.Provider
-	6,  // 3: cloud.v1.deployment.Deployment.network:type_name -> cloud.v1.runtime.system.Network
-	7,  // 4: cloud.v1.deployment.Deployment.docker:type_name -> cloud.v1.deployment.Docker
-	8,  // 5: cloud.v1.deployment.Deployment.yandex:type_name -> cloud.v1.deployment.Yandex
-	9,  // 6: cloud.v1.deployment.DeploymentIntent.Spec.yandex_vm:type_name -> cloud.v1.deployment.Yandex.Vm
-	10, // 7: cloud.v1.deployment.DeploymentIntent.Spec.managed_ydb:type_name -> cloud.v1.deployment.Yandex.ManagedYdb
-	11, // 8: cloud.v1.deployment.DeploymentIntent.Spec.docker_container:type_name -> cloud.v1.deployment.Docker.Container
-	9,  // [9:9] is the sub-list for method output_type
-	9,  // [9:9] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	0,  // 0: cloud.v1.deployment.DeploymentIntent.provider:type_name -> cloud.v1.deployment.Provider
+	5,  // 1: cloud.v1.deployment.DeploymentIntent.specs:type_name -> cloud.v1.deployment.DeploymentIntent.Spec
+	6,  // 2: cloud.v1.deployment.DeploymentIntent.tags:type_name -> cloud.v1.common.Tags
+	0,  // 3: cloud.v1.deployment.QuotaRequest.provider:type_name -> cloud.v1.deployment.Provider
+	0,  // 4: cloud.v1.deployment.Quota.provider:type_name -> cloud.v1.deployment.Provider
+	0,  // 5: cloud.v1.deployment.Deployment.provider:type_name -> cloud.v1.deployment.Provider
+	7,  // 6: cloud.v1.deployment.Deployment.network:type_name -> cloud.v1.runtime.system.Network
+	2,  // 7: cloud.v1.deployment.Deployment.quota_requests:type_name -> cloud.v1.deployment.QuotaRequest
+	8,  // 8: cloud.v1.deployment.Deployment.docker:type_name -> cloud.v1.deployment.Docker
+	9,  // 9: cloud.v1.deployment.Deployment.yandex:type_name -> cloud.v1.deployment.Yandex
+	10, // 10: cloud.v1.deployment.DeploymentIntent.Spec.yandex_vm:type_name -> cloud.v1.deployment.Yandex.Vm
+	11, // 11: cloud.v1.deployment.DeploymentIntent.Spec.managed_ydb:type_name -> cloud.v1.deployment.Yandex.ManagedYdb
+	12, // 12: cloud.v1.deployment.DeploymentIntent.Spec.docker_container:type_name -> cloud.v1.deployment.Docker.Container
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_deployment_deployment_proto_init() }
@@ -472,11 +601,11 @@ func file_cloud_v1_deployment_deployment_proto_init() {
 	}
 	file_cloud_v1_deployment_docker_proto_init()
 	file_cloud_v1_deployment_yandex_proto_init()
-	file_cloud_v1_deployment_deployment_proto_msgTypes[2].OneofWrappers = []any{
+	file_cloud_v1_deployment_deployment_proto_msgTypes[3].OneofWrappers = []any{
 		(*Deployment_Docker)(nil),
 		(*Deployment_Yandex)(nil),
 	}
-	file_cloud_v1_deployment_deployment_proto_msgTypes[3].OneofWrappers = []any{
+	file_cloud_v1_deployment_deployment_proto_msgTypes[4].OneofWrappers = []any{
 		(*DeploymentIntent_Spec_YandexVm)(nil),
 		(*DeploymentIntent_Spec_ManagedYdb)(nil),
 		(*DeploymentIntent_Spec_DockerContainer)(nil),
@@ -487,7 +616,7 @@ func file_cloud_v1_deployment_deployment_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_deployment_deployment_proto_rawDesc), len(file_cloud_v1_deployment_deployment_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

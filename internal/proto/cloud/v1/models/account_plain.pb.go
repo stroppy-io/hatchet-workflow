@@ -9,12 +9,13 @@ import (
 )
 
 type AccountScanner struct {
-	Id           string    `json:"id"` // origin: embed, empath: id
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-	Email        string    `json:"email"`
-	Nickname     string    `json:"nickname"`
-	PasswordHash string    `json:"passwordHash"` // origin: virtual, empath: virtual
+	Id           string     `json:"id"` // origin: embed, empath: id
+	CreatedAt    time.Time  `json:"createdAt"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
+	DeletedAt    *time.Time `json:"deletedAt,omitempty"`
+	Email        string     `json:"email"`
+	Nickname     string     `json:"nickname"`
+	PasswordHash string     `json:"passwordHash"` // origin: virtual, empath: virtual
 }
 
 // IntoPlain converts protobuf message to plain struct
@@ -35,6 +36,11 @@ func (pb *Account) IntoPlain() *AccountScanner {
 	// UpdatedAt from
 	if pb.GetEntity() != nil && pb.GetEntity().GetTimestamps() != nil && pb.GetEntity().GetTimestamps().GetUpdatedAt() != nil {
 		p.UpdatedAt = ratelcast.TimestampToTime(pb.GetEntity().GetTimestamps().GetUpdatedAt())
+	}
+	// DeletedAt from
+	if pb.GetEntity() != nil && pb.GetEntity().GetTimestamps() != nil && pb.GetEntity().GetTimestamps().GetDeletedAt() != nil {
+		_tmp := ratelcast.TimestampToTime(pb.GetEntity().GetTimestamps().GetDeletedAt())
+		p.DeletedAt = &_tmp
 	}
 	p.Email = pb.Email
 	p.Nickname = pb.Nickname
@@ -75,6 +81,16 @@ func (p *AccountScanner) IntoPb() *Account {
 		pb.Entity.Timestamps = &Timestamps{}
 	}
 	pb.Entity.Timestamps.UpdatedAt = ratelcast.TimeToTimestamp(p.UpdatedAt)
+	// DeletedAt ->
+	if p.DeletedAt != nil {
+		if pb.Entity == nil {
+			pb.Entity = &Entity{}
+		}
+		if pb.Entity.Timestamps == nil {
+			pb.Entity.Timestamps = &Timestamps{}
+		}
+		pb.Entity.Timestamps.DeletedAt = ratelcast.TimeToTimestamp(*p.DeletedAt)
+	}
 	pb.Email = p.Email
 	pb.Nickname = p.Nickname
 	// PasswordHash is virtual, skipping

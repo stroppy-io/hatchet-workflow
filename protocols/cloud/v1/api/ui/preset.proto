@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package cloud.v1.api.ui;
+
+import "cloud/v1/models/common.proto";
+import "cloud/v1/models/preset.proto";
+import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui";
+
+message ListPresetRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.Preset.Kind kind = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+}
+
+service PresetService {
+    rpc ListPresets (ListPresetRequest) returns (models.Preset.List) {option idempotency_level = NO_SIDE_EFFECTS;};
+    rpc CreatePreset (models.Preset) returns (models.Preset) {option idempotency_level = NO_SIDE_EFFECTS;};
+    rpc UpdatePreset (models.Preset) returns (models.Preset) {option idempotency_level = IDEMPOTENT;};
+    rpc DeletePreset (models.DatabasePresetId) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;};
+    rpc ClonePreset (models.DatabasePresetId) returns (models.Preset) {option idempotency_level = NO_SIDE_EFFECTS;};
+}

@@ -38,6 +38,7 @@ const (
 	SettingsItemColumnTenantId  SettingsItemColumnAlias = "tenant_id"
 	SettingsItemColumnCreatedAt SettingsItemColumnAlias = "created_at"
 	SettingsItemColumnUpdatedAt SettingsItemColumnAlias = "updated_at"
+	SettingsItemColumnDeletedAt SettingsItemColumnAlias = "deleted_at"
 	SettingsItemColumnPart      SettingsItemColumnAlias = "part"
 	SettingsItemColumnKey       SettingsItemColumnAlias = "key"
 	SettingsItemColumnValue     SettingsItemColumnAlias = "value"
@@ -53,6 +54,8 @@ func (s *SettingsItemScanner) GetTarget(col string) func() any {
 		return func() any { return &s.CreatedAt }
 	case SettingsItemColumnUpdatedAt:
 		return func() any { return &s.UpdatedAt }
+	case SettingsItemColumnDeletedAt:
+		return func() any { return &s.DeletedAt }
 	case SettingsItemColumnPart:
 		return func() any { return &s.Part }
 	case SettingsItemColumnKey:
@@ -74,6 +77,8 @@ func (s *SettingsItemScanner) GetSetter(f SettingsItemColumnAlias) func() set.Va
 		return func() set.ValueSetter[SettingsItemColumnAlias] { return set.NewSetter(f, &s.CreatedAt) }
 	case SettingsItemColumnUpdatedAt:
 		return func() set.ValueSetter[SettingsItemColumnAlias] { return set.NewSetter(f, &s.UpdatedAt) }
+	case SettingsItemColumnDeletedAt:
+		return func() set.ValueSetter[SettingsItemColumnAlias] { return set.NewSetter(f, &s.DeletedAt) }
 	case SettingsItemColumnPart:
 		return func() set.ValueSetter[SettingsItemColumnAlias] { return set.NewSetter(f, &s.Part) }
 	case SettingsItemColumnKey:
@@ -95,6 +100,8 @@ func (s *SettingsItemScanner) GetValue(f SettingsItemColumnAlias) func() any {
 		return func() any { return s.CreatedAt }
 	case SettingsItemColumnUpdatedAt:
 		return func() any { return s.UpdatedAt }
+	case SettingsItemColumnDeletedAt:
+		return func() any { return s.DeletedAt }
 	case SettingsItemColumnPart:
 		return func() any { return s.Part }
 	case SettingsItemColumnKey:
@@ -112,6 +119,7 @@ func (s *SettingsItemScanner) AllSetters() []set.ValueSetter[SettingsItemColumnA
 		set.NewSetter[SettingsItemColumnAlias](SettingsItemColumnTenantId, s.TenantId),
 		set.NewSetter[SettingsItemColumnAlias](SettingsItemColumnCreatedAt, s.CreatedAt),
 		set.NewSetter[SettingsItemColumnAlias](SettingsItemColumnUpdatedAt, s.UpdatedAt),
+		set.NewSetter[SettingsItemColumnAlias](SettingsItemColumnDeletedAt, s.DeletedAt),
 		set.NewSetter[SettingsItemColumnAlias](SettingsItemColumnPart, s.Part),
 		set.NewSetter[SettingsItemColumnAlias](SettingsItemColumnKey, s.Key),
 		set.NewSetter[SettingsItemColumnAlias](SettingsItemColumnValue, s.Value),
@@ -130,6 +138,7 @@ type SettingsItemsTable struct {
 	TenantId  schema.TextColumnI[SettingsItemColumnAlias]
 	CreatedAt schema.TimestamptzColumnI[SettingsItemColumnAlias]
 	UpdatedAt schema.TimestamptzColumnI[SettingsItemColumnAlias]
+	DeletedAt schema.NullTimestamptzColumnI[SettingsItemColumnAlias]
 	Part      schema.TextColumnI[SettingsItemColumnAlias]
 	Key       schema.TextColumnI[SettingsItemColumnAlias]
 	Value     schema.TextColumnI[SettingsItemColumnAlias]
@@ -141,6 +150,7 @@ var SettingsItems = func() SettingsItemsTable {
 	tenantIdCol := schema.TextColumn(SettingsItemColumnTenantId, ddl.WithReferences[SettingsItemColumnAlias]("tenants", "id"), ddl.WithOnDelete[SettingsItemColumnAlias]("CASCADE"), ddl.WithNotNull[SettingsItemColumnAlias]())
 	createdAtCol := schema.TimestamptzColumn(SettingsItemColumnCreatedAt, ddl.WithDefault[SettingsItemColumnAlias]("now()"), ddl.WithNotNull[SettingsItemColumnAlias]())
 	updatedAtCol := schema.TimestamptzColumn(SettingsItemColumnUpdatedAt, ddl.WithDefault[SettingsItemColumnAlias]("now()"), ddl.WithNotNull[SettingsItemColumnAlias]())
+	deletedAtCol := schema.NullTimestamptzColumn(SettingsItemColumnDeletedAt, ddl.WithDefault[SettingsItemColumnAlias]("null"))
 	partCol := schema.TextColumn(SettingsItemColumnPart, ddl.WithNotNull[SettingsItemColumnAlias]())
 	keyCol := schema.TextColumn(SettingsItemColumnKey, ddl.WithNotNull[SettingsItemColumnAlias]())
 	valueCol := schema.TextColumn(SettingsItemColumnValue, ddl.WithDefault[SettingsItemColumnAlias]("'{}'::jsonb"), ddl.WithNotNull[SettingsItemColumnAlias]())
@@ -157,6 +167,7 @@ var SettingsItems = func() SettingsItemsTable {
 				tenantIdCol.DDL(),
 				createdAtCol.DDL(),
 				updatedAtCol.DDL(),
+				deletedAtCol.DDL(),
 				partCol.DDL(),
 				keyCol.DDL(),
 				valueCol.DDL(),
@@ -169,6 +180,7 @@ var SettingsItems = func() SettingsItemsTable {
 		TenantId:  tenantIdCol,
 		CreatedAt: createdAtCol,
 		UpdatedAt: updatedAtCol,
+		DeletedAt: deletedAtCol,
 		Part:      partCol,
 		Key:       keyCol,
 		Value:     valueCol,

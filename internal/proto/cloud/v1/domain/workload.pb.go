@@ -196,31 +196,28 @@ func (x *Workload) GetFiles() []*Workload_WorkloadFile {
 	return nil
 }
 
-type WorkloadOrPreset struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Kind:
-	//
-	//	*WorkloadOrPreset_PresetId
-	//	*WorkloadOrPreset_Workload
-	Kind          isWorkloadOrPreset_Kind `protobuf_oneof:"kind"`
+type WorkloadPreset struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Workload      *Workload              `protobuf:"bytes,4,opt,name=workload,proto3" json:"workload,omitempty"`
+	Topology      *Topology              `protobuf:"bytes,5,opt,name=topology,proto3" json:"topology,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *WorkloadOrPreset) Reset() {
-	*x = WorkloadOrPreset{}
+func (x *WorkloadPreset) Reset() {
+	*x = WorkloadPreset{}
 	mi := &file_cloud_v1_domain_workload_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *WorkloadOrPreset) String() string {
+func (x *WorkloadPreset) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*WorkloadOrPreset) ProtoMessage() {}
+func (*WorkloadPreset) ProtoMessage() {}
 
-func (x *WorkloadOrPreset) ProtoReflect() protoreflect.Message {
+func (x *WorkloadPreset) ProtoReflect() protoreflect.Message {
 	mi := &file_cloud_v1_domain_workload_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -232,51 +229,24 @@ func (x *WorkloadOrPreset) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use WorkloadOrPreset.ProtoReflect.Descriptor instead.
-func (*WorkloadOrPreset) Descriptor() ([]byte, []int) {
+// Deprecated: Use WorkloadPreset.ProtoReflect.Descriptor instead.
+func (*WorkloadPreset) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_domain_workload_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *WorkloadOrPreset) GetKind() isWorkloadOrPreset_Kind {
+func (x *WorkloadPreset) GetWorkload() *Workload {
 	if x != nil {
-		return x.Kind
+		return x.Workload
 	}
 	return nil
 }
 
-func (x *WorkloadOrPreset) GetPresetId() string {
+func (x *WorkloadPreset) GetTopology() *Topology {
 	if x != nil {
-		if x, ok := x.Kind.(*WorkloadOrPreset_PresetId); ok {
-			return x.PresetId
-		}
-	}
-	return ""
-}
-
-func (x *WorkloadOrPreset) GetWorkload() *Workload {
-	if x != nil {
-		if x, ok := x.Kind.(*WorkloadOrPreset_Workload); ok {
-			return x.Workload
-		}
+		return x.Topology
 	}
 	return nil
 }
-
-type isWorkloadOrPreset_Kind interface {
-	isWorkloadOrPreset_Kind()
-}
-
-type WorkloadOrPreset_PresetId struct {
-	PresetId string `protobuf:"bytes,1,opt,name=preset_id,json=presetId,proto3,oneof"`
-}
-
-type WorkloadOrPreset_Workload struct {
-	Workload *Workload `protobuf:"bytes,2,opt,name=workload,proto3,oneof"` // Inline workload definition.
-}
-
-func (*WorkloadOrPreset_PresetId) isWorkloadOrPreset_Kind() {}
-
-func (*WorkloadOrPreset_Workload) isWorkloadOrPreset_Kind() {}
 
 // Execution is the k6 execution profile. Limit is exclusive: duration OR
 // iterations.
@@ -553,7 +523,7 @@ var File_cloud_v1_domain_workload_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/domain/workload.proto\x12\x0fcloud.v1.domain\x1a\x17validate/validate.proto\"\x8a\v\n" +
+	"\x1ecloud/v1/domain/workload.proto\x12\x0fcloud.v1.domain\x1a\x17validate/validate.proto\x1a\x1ecloud/v1/domain/topology.proto\"\x8a\v\n" +
 	"\bWorkload\x120\n" +
 	"\x0fstroppy_version\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\x0estroppyVersion\x12\"\n" +
 	"\x06script\x18\x02 \x01(\tB\n" +
@@ -597,11 +567,10 @@ const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"\x11PROTOCOL_PICODATA\x10\x03\x12\x15\n" +
 	"\x11PROTOCOL_YDB_GRPC\x10\x04\x12\x16\n" +
 	"\x12PROTOCOL_YDB_GRPCS\x10\x05\x12\x16\n" +
-	"\x12PROTOCOL_COCKROACH\x10\a\"\x8a\x01\n" +
-	"\x10WorkloadOrPreset\x12&\n" +
-	"\tpreset_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01H\x00R\bpresetId\x12A\n" +
-	"\bworkload\x18\x02 \x01(\v2\x19.cloud.v1.domain.WorkloadB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\bworkloadB\v\n" +
-	"\x04kind\x12\x03\xf8B\x01BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domainb\x06proto3"
+	"\x12PROTOCOL_COCKROACH\x10\a\"\x92\x01\n" +
+	"\x0eWorkloadPreset\x12?\n" +
+	"\bworkload\x18\x04 \x01(\v2\x19.cloud.v1.domain.WorkloadB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bworkload\x12?\n" +
+	"\btopology\x18\x05 \x01(\v2\x19.cloud.v1.domain.TopologyB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btopologyBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domainb\x06proto3"
 
 var (
 	file_cloud_v1_domain_workload_proto_rawDescOnce sync.Once
@@ -620,24 +589,26 @@ var file_cloud_v1_domain_workload_proto_msgTypes = make([]protoimpl.MessageInfo,
 var file_cloud_v1_domain_workload_proto_goTypes = []any{
 	(Workload_Protocol)(0),        // 0: cloud.v1.domain.Workload.Protocol
 	(*Workload)(nil),              // 1: cloud.v1.domain.Workload
-	(*WorkloadOrPreset)(nil),      // 2: cloud.v1.domain.WorkloadOrPreset
+	(*WorkloadPreset)(nil),        // 2: cloud.v1.domain.WorkloadPreset
 	(*Workload_Execution)(nil),    // 3: cloud.v1.domain.Workload.Execution
 	(*Workload_Parameters)(nil),   // 4: cloud.v1.domain.Workload.Parameters
 	(*Workload_WorkloadFile)(nil), // 5: cloud.v1.domain.Workload.WorkloadFile
 	nil,                           // 6: cloud.v1.domain.Workload.Parameters.EnvEntry
+	(*Topology)(nil),              // 7: cloud.v1.domain.Topology
 }
 var file_cloud_v1_domain_workload_proto_depIdxs = []int32{
 	0, // 0: cloud.v1.domain.Workload.protocol:type_name -> cloud.v1.domain.Workload.Protocol
 	3, // 1: cloud.v1.domain.Workload.execution:type_name -> cloud.v1.domain.Workload.Execution
 	4, // 2: cloud.v1.domain.Workload.parameters:type_name -> cloud.v1.domain.Workload.Parameters
 	5, // 3: cloud.v1.domain.Workload.files:type_name -> cloud.v1.domain.Workload.WorkloadFile
-	1, // 4: cloud.v1.domain.WorkloadOrPreset.workload:type_name -> cloud.v1.domain.Workload
-	6, // 5: cloud.v1.domain.Workload.Parameters.env:type_name -> cloud.v1.domain.Workload.Parameters.EnvEntry
-	6, // [6:6] is the sub-list for method output_type
-	6, // [6:6] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	1, // 4: cloud.v1.domain.WorkloadPreset.workload:type_name -> cloud.v1.domain.Workload
+	7, // 5: cloud.v1.domain.WorkloadPreset.topology:type_name -> cloud.v1.domain.Topology
+	6, // 6: cloud.v1.domain.Workload.Parameters.env:type_name -> cloud.v1.domain.Workload.Parameters.EnvEntry
+	7, // [7:7] is the sub-list for method output_type
+	7, // [7:7] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_domain_workload_proto_init() }
@@ -645,10 +616,7 @@ func file_cloud_v1_domain_workload_proto_init() {
 	if File_cloud_v1_domain_workload_proto != nil {
 		return
 	}
-	file_cloud_v1_domain_workload_proto_msgTypes[1].OneofWrappers = []any{
-		(*WorkloadOrPreset_PresetId)(nil),
-		(*WorkloadOrPreset_Workload)(nil),
-	}
+	file_cloud_v1_domain_topology_proto_init()
 	file_cloud_v1_domain_workload_proto_msgTypes[2].OneofWrappers = []any{
 		(*Workload_Execution_Duration)(nil),
 		(*Workload_Execution_Iterations)(nil),

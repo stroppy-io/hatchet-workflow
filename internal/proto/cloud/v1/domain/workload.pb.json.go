@@ -72,7 +72,7 @@ func (msg *Workload_WorkloadFile) UnmarshalJSON(b []byte) error {
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *WorkloadOrPreset) MarshalJSON() ([]byte, error) {
+func (msg *WorkloadPreset) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -81,7 +81,7 @@ func (msg *WorkloadOrPreset) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *WorkloadOrPreset) UnmarshalJSON(b []byte) error {
+func (msg *WorkloadPreset) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)

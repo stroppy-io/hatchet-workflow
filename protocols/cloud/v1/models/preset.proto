@@ -4,7 +4,7 @@ package cloud.v1.models;
 
 import "cloud/v1/common/tags.proto";
 import "cloud/v1/domain/database.proto";
-import "cloud/v1/domain/topology.proto";
+import "cloud/v1/domain/test.proto";
 import "cloud/v1/domain/workload.proto";
 import "cloud/v1/models/common.proto";
 import "goplain/goplain.proto";
@@ -15,6 +15,7 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
 
 
 message Preset {
+    message List {repeated Preset presets = 1;}
     option (goplain.message).generate = true;
     option (ratel.table) = {
         generate: true
@@ -25,22 +26,27 @@ message Preset {
     common.Tags tags = 3 [
         (goplain.field).embed = true
     ];
-    message WorkloadPreset {
-        domain.Workload workload = 4 [(validate.rules).message.required = true];
-        domain.Topology topology = 5 [(validate.rules).message.required = true];
+
+    enum Kind {
+        KIND_UNSPECIFIED = 0;
+        KIND_WORKLOAD = 1;
+        KIND_DATABASE = 2;
+        KIND_TEST = 3;
     }
-    message DatabasePreset {
-        domain.Database workload = 4 [(validate.rules).message.required = true];
-        domain.Topology topology = 5 [(validate.rules).message.required = true];
-    }
+    Kind kind = 4 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+
     oneof preset {
         option (goplain.oneof).embed = true;
         option (validate.required) = true;
-        WorkloadPreset workload_preset = 4 [
+        domain.WorkloadPreset workload_preset = 10 [
             (goplain.field).serialize = true,
             (validate.rules).message.required = true
         ];
-        DatabasePreset database_preset = 5 [
+        domain.DatabasePreset database_preset = 11 [
+            (goplain.field).serialize = true,
+            (validate.rules).message.required = true
+        ];
+        domain.TestPreset test_preset = 12 [
             (goplain.field).serialize = true,
             (validate.rules).message.required = true
         ];

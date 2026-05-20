@@ -291,113 +291,31 @@ var _Database_Kind_NotInLookup = map[Database_Kind]struct{}{
 	0: {},
 }
 
-// Validate checks the field values on DatabaseOrPreset with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *DatabaseOrPreset) Validate() error {
+// Validate checks the field values on DatabasePreset with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *DatabasePreset) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on DatabaseOrPreset with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// DatabaseOrPresetMultiError, or nil if none found.
-func (m *DatabaseOrPreset) ValidateAll() error {
+// ValidateAll checks the field values on DatabasePreset with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in DatabasePresetMultiError,
+// or nil if none found.
+func (m *DatabasePreset) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *DatabaseOrPreset) validate(all bool) error {
+func (m *DatabasePreset) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	oneofKindPresent := false
-	switch v := m.Kind.(type) {
-	case *DatabaseOrPreset_DatabasePresetId:
-		if v == nil {
-			err := DatabaseOrPresetValidationError{
-				field:  "Kind",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofKindPresent = true
-
-		if utf8.RuneCountInString(m.GetDatabasePresetId()) < 1 {
-			err := DatabaseOrPresetValidationError{
-				field:  "DatabasePresetId",
-				reason: "value length must be at least 1 runes",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-
-	case *DatabaseOrPreset_Database:
-		if v == nil {
-			err := DatabaseOrPresetValidationError{
-				field:  "Kind",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofKindPresent = true
-
-		if m.GetDatabase() == nil {
-			err := DatabaseOrPresetValidationError{
-				field:  "Database",
-				reason: "value is required",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-
-		if all {
-			switch v := interface{}(m.GetDatabase()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, DatabaseOrPresetValidationError{
-						field:  "Database",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, DatabaseOrPresetValidationError{
-						field:  "Database",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetDatabase()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return DatabaseOrPresetValidationError{
-					field:  "Database",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	default:
-		_ = v // ensures v is used
-	}
-	if !oneofKindPresent {
-		err := DatabaseOrPresetValidationError{
-			field:  "Kind",
+	if m.GetWorkload() == nil {
+		err := DatabasePresetValidationError{
+			field:  "Workload",
 			reason: "value is required",
 		}
 		if !all {
@@ -406,20 +324,89 @@ func (m *DatabaseOrPreset) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if all {
+		switch v := interface{}(m.GetWorkload()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DatabasePresetValidationError{
+					field:  "Workload",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DatabasePresetValidationError{
+					field:  "Workload",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWorkload()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DatabasePresetValidationError{
+				field:  "Workload",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetTopology() == nil {
+		err := DatabasePresetValidationError{
+			field:  "Topology",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopology()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DatabasePresetValidationError{
+					field:  "Topology",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DatabasePresetValidationError{
+					field:  "Topology",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopology()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DatabasePresetValidationError{
+				field:  "Topology",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
-		return DatabaseOrPresetMultiError(errors)
+		return DatabasePresetMultiError(errors)
 	}
 
 	return nil
 }
 
-// DatabaseOrPresetMultiError is an error wrapping multiple validation errors
-// returned by DatabaseOrPreset.ValidateAll() if the designated constraints
+// DatabasePresetMultiError is an error wrapping multiple validation errors
+// returned by DatabasePreset.ValidateAll() if the designated constraints
 // aren't met.
-type DatabaseOrPresetMultiError []error
+type DatabasePresetMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m DatabaseOrPresetMultiError) Error() string {
+func (m DatabasePresetMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -428,11 +415,11 @@ func (m DatabaseOrPresetMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m DatabaseOrPresetMultiError) AllErrors() []error { return m }
+func (m DatabasePresetMultiError) AllErrors() []error { return m }
 
-// DatabaseOrPresetValidationError is the validation error returned by
-// DatabaseOrPreset.Validate if the designated constraints aren't met.
-type DatabaseOrPresetValidationError struct {
+// DatabasePresetValidationError is the validation error returned by
+// DatabasePreset.Validate if the designated constraints aren't met.
+type DatabasePresetValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -440,22 +427,22 @@ type DatabaseOrPresetValidationError struct {
 }
 
 // Field function returns field value.
-func (e DatabaseOrPresetValidationError) Field() string { return e.field }
+func (e DatabasePresetValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e DatabaseOrPresetValidationError) Reason() string { return e.reason }
+func (e DatabasePresetValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e DatabaseOrPresetValidationError) Cause() error { return e.cause }
+func (e DatabasePresetValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e DatabaseOrPresetValidationError) Key() bool { return e.key }
+func (e DatabasePresetValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e DatabaseOrPresetValidationError) ErrorName() string { return "DatabaseOrPresetValidationError" }
+func (e DatabasePresetValidationError) ErrorName() string { return "DatabasePresetValidationError" }
 
 // Error satisfies the builtin error interface
-func (e DatabaseOrPresetValidationError) Error() string {
+func (e DatabasePresetValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -467,14 +454,14 @@ func (e DatabaseOrPresetValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sDatabaseOrPreset.%s: %s%s",
+		"invalid %sDatabasePreset.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = DatabaseOrPresetValidationError{}
+var _ error = DatabasePresetValidationError{}
 
 var _ interface {
 	Field() string
@@ -482,7 +469,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = DatabaseOrPresetValidationError{}
+} = DatabasePresetValidationError{}
 
 // Validate checks the field values on Database_Target with the rules defined
 // in the proto definition for this message. If any rules are violated, the

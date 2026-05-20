@@ -61,9 +61,9 @@ func (m *Topology) validate(all bool) error {
 
 	var errors []error
 
-	if len(m.GetItems()) < 1 {
+	if len(m.GetMachines()) < 1 {
 		err := TopologyValidationError{
-			field:  "Items",
+			field:  "Machines",
 			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
@@ -72,7 +72,7 @@ func (m *Topology) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	for idx, item := range m.GetItems() {
+	for idx, item := range m.GetMachines() {
 		_, _ = idx, item
 
 		if all {
@@ -80,7 +80,7 @@ func (m *Topology) validate(all bool) error {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, TopologyValidationError{
-						field:  fmt.Sprintf("Items[%v]", idx),
+						field:  fmt.Sprintf("Machines[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -88,7 +88,7 @@ func (m *Topology) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, TopologyValidationError{
-						field:  fmt.Sprintf("Items[%v]", idx),
+						field:  fmt.Sprintf("Machines[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -97,52 +97,7 @@ func (m *Topology) validate(all bool) error {
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return TopologyValidationError{
-					field:  fmt.Sprintf("Items[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if len(m.GetPlacementGroups()) < 1 {
-		err := TopologyValidationError{
-			field:  "PlacementGroups",
-			reason: "value must contain at least 1 item(s)",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	for idx, item := range m.GetPlacementGroups() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, TopologyValidationError{
-						field:  fmt.Sprintf("PlacementGroups[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, TopologyValidationError{
-						field:  fmt.Sprintf("PlacementGroups[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return TopologyValidationError{
-					field:  fmt.Sprintf("PlacementGroups[%v]", idx),
+					field:  fmt.Sprintf("Machines[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -484,31 +439,53 @@ var _ interface {
 	ErrorName() string
 } = Topology_ComponentValidationError{}
 
-// Validate checks the field values on Topology_PlacementGroup with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Topology_PlacementGroup) Validate() error {
+// Validate checks the field values on Topology_Machine with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Topology_Machine) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Topology_PlacementGroup with the
-// rules defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on Topology_Machine with the rules
+// defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// Topology_PlacementGroupMultiError, or nil if none found.
-func (m *Topology_PlacementGroup) ValidateAll() error {
+// Topology_MachineMultiError, or nil if none found.
+func (m *Topology_Machine) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Topology_PlacementGroup) validate(all bool) error {
+func (m *Topology_Machine) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	if len(m.GetComponentIds()) < 1 {
-		err := Topology_PlacementGroupValidationError{
-			field:  "ComponentIds",
+	if m.GetCores() <= 0 {
+		err := Topology_MachineValidationError{
+			field:  "Cores",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetMemoryGb() <= 0 {
+		err := Topology_MachineValidationError{
+			field:  "MemoryGb",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetComponents()) < 1 {
+		err := Topology_MachineValidationError{
+			field:  "Components",
 			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
@@ -517,20 +494,54 @@ func (m *Topology_PlacementGroup) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	for idx, item := range m.GetComponents() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Topology_MachineValidationError{
+						field:  fmt.Sprintf("Components[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Topology_MachineValidationError{
+						field:  fmt.Sprintf("Components[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Topology_MachineValidationError{
+					field:  fmt.Sprintf("Components[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if len(errors) > 0 {
-		return Topology_PlacementGroupMultiError(errors)
+		return Topology_MachineMultiError(errors)
 	}
 
 	return nil
 }
 
-// Topology_PlacementGroupMultiError is an error wrapping multiple validation
-// errors returned by Topology_PlacementGroup.ValidateAll() if the designated
-// constraints aren't met.
-type Topology_PlacementGroupMultiError []error
+// Topology_MachineMultiError is an error wrapping multiple validation errors
+// returned by Topology_Machine.ValidateAll() if the designated constraints
+// aren't met.
+type Topology_MachineMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Topology_PlacementGroupMultiError) Error() string {
+func (m Topology_MachineMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -539,11 +550,11 @@ func (m Topology_PlacementGroupMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Topology_PlacementGroupMultiError) AllErrors() []error { return m }
+func (m Topology_MachineMultiError) AllErrors() []error { return m }
 
-// Topology_PlacementGroupValidationError is the validation error returned by
-// Topology_PlacementGroup.Validate if the designated constraints aren't met.
-type Topology_PlacementGroupValidationError struct {
+// Topology_MachineValidationError is the validation error returned by
+// Topology_Machine.Validate if the designated constraints aren't met.
+type Topology_MachineValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -551,24 +562,22 @@ type Topology_PlacementGroupValidationError struct {
 }
 
 // Field function returns field value.
-func (e Topology_PlacementGroupValidationError) Field() string { return e.field }
+func (e Topology_MachineValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Topology_PlacementGroupValidationError) Reason() string { return e.reason }
+func (e Topology_MachineValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Topology_PlacementGroupValidationError) Cause() error { return e.cause }
+func (e Topology_MachineValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Topology_PlacementGroupValidationError) Key() bool { return e.key }
+func (e Topology_MachineValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Topology_PlacementGroupValidationError) ErrorName() string {
-	return "Topology_PlacementGroupValidationError"
-}
+func (e Topology_MachineValidationError) ErrorName() string { return "Topology_MachineValidationError" }
 
 // Error satisfies the builtin error interface
-func (e Topology_PlacementGroupValidationError) Error() string {
+func (e Topology_MachineValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -580,14 +589,14 @@ func (e Topology_PlacementGroupValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sTopology_PlacementGroup.%s: %s%s",
+		"invalid %sTopology_Machine.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Topology_PlacementGroupValidationError{}
+var _ error = Topology_MachineValidationError{}
 
 var _ interface {
 	Field() string
@@ -595,7 +604,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Topology_PlacementGroupValidationError{}
+} = Topology_MachineValidationError{}
 
 // Validate checks the field values on Topology_Connection with the rules
 // defined in the proto definition for this message. If any rules are

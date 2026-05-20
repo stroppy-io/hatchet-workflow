@@ -37,6 +37,7 @@ const (
 	AccountColumnId           AccountColumnAlias = "id"
 	AccountColumnCreatedAt    AccountColumnAlias = "created_at"
 	AccountColumnUpdatedAt    AccountColumnAlias = "updated_at"
+	AccountColumnDeletedAt    AccountColumnAlias = "deleted_at"
 	AccountColumnEmail        AccountColumnAlias = "email"
 	AccountColumnNickname     AccountColumnAlias = "nickname"
 	AccountColumnPasswordHash AccountColumnAlias = "password_hash"
@@ -50,6 +51,8 @@ func (s *AccountScanner) GetTarget(col string) func() any {
 		return func() any { return &s.CreatedAt }
 	case AccountColumnUpdatedAt:
 		return func() any { return &s.UpdatedAt }
+	case AccountColumnDeletedAt:
+		return func() any { return &s.DeletedAt }
 	case AccountColumnEmail:
 		return func() any { return &s.Email }
 	case AccountColumnNickname:
@@ -69,6 +72,8 @@ func (s *AccountScanner) GetSetter(f AccountColumnAlias) func() set.ValueSetter[
 		return func() set.ValueSetter[AccountColumnAlias] { return set.NewSetter(f, &s.CreatedAt) }
 	case AccountColumnUpdatedAt:
 		return func() set.ValueSetter[AccountColumnAlias] { return set.NewSetter(f, &s.UpdatedAt) }
+	case AccountColumnDeletedAt:
+		return func() set.ValueSetter[AccountColumnAlias] { return set.NewSetter(f, &s.DeletedAt) }
 	case AccountColumnEmail:
 		return func() set.ValueSetter[AccountColumnAlias] { return set.NewSetter(f, &s.Email) }
 	case AccountColumnNickname:
@@ -88,6 +93,8 @@ func (s *AccountScanner) GetValue(f AccountColumnAlias) func() any {
 		return func() any { return s.CreatedAt }
 	case AccountColumnUpdatedAt:
 		return func() any { return s.UpdatedAt }
+	case AccountColumnDeletedAt:
+		return func() any { return s.DeletedAt }
 	case AccountColumnEmail:
 		return func() any { return s.Email }
 	case AccountColumnNickname:
@@ -104,6 +111,7 @@ func (s *AccountScanner) AllSetters() []set.ValueSetter[AccountColumnAlias] {
 		set.NewSetter[AccountColumnAlias](AccountColumnId, s.Id),
 		set.NewSetter[AccountColumnAlias](AccountColumnCreatedAt, s.CreatedAt),
 		set.NewSetter[AccountColumnAlias](AccountColumnUpdatedAt, s.UpdatedAt),
+		set.NewSetter[AccountColumnAlias](AccountColumnDeletedAt, s.DeletedAt),
 		set.NewSetter[AccountColumnAlias](AccountColumnEmail, s.Email),
 		set.NewSetter[AccountColumnAlias](AccountColumnNickname, s.Nickname),
 		set.NewSetter[AccountColumnAlias](AccountColumnPasswordHash, s.PasswordHash),
@@ -121,6 +129,7 @@ type AccountsTable struct {
 	Id           schema.TextColumnI[AccountColumnAlias]
 	CreatedAt    schema.TimestamptzColumnI[AccountColumnAlias]
 	UpdatedAt    schema.TimestamptzColumnI[AccountColumnAlias]
+	DeletedAt    schema.NullTimestamptzColumnI[AccountColumnAlias]
 	Email        schema.TextColumnI[AccountColumnAlias]
 	Nickname     schema.TextColumnI[AccountColumnAlias]
 	PasswordHash schema.TextColumnI[AccountColumnAlias]
@@ -131,6 +140,7 @@ var Accounts = func() AccountsTable {
 	idCol := schema.TextColumn(AccountColumnId, ddl.WithPrimaryKey[AccountColumnAlias]())
 	createdAtCol := schema.TimestamptzColumn(AccountColumnCreatedAt, ddl.WithDefault[AccountColumnAlias]("now()"), ddl.WithNotNull[AccountColumnAlias]())
 	updatedAtCol := schema.TimestamptzColumn(AccountColumnUpdatedAt, ddl.WithDefault[AccountColumnAlias]("now()"), ddl.WithNotNull[AccountColumnAlias]())
+	deletedAtCol := schema.NullTimestamptzColumn(AccountColumnDeletedAt, ddl.WithDefault[AccountColumnAlias]("null"))
 	emailCol := schema.TextColumn(AccountColumnEmail, ddl.WithNotNull[AccountColumnAlias]())
 	nicknameCol := schema.TextColumn(AccountColumnNickname, ddl.WithNotNull[AccountColumnAlias]())
 	passwordHashCol := schema.TextColumn(AccountColumnPasswordHash, ddl.WithNotNull[AccountColumnAlias]())
@@ -143,6 +153,7 @@ var Accounts = func() AccountsTable {
 				idCol.DDL(),
 				createdAtCol.DDL(),
 				updatedAtCol.DDL(),
+				deletedAtCol.DDL(),
 				emailCol.DDL(),
 				nicknameCol.DDL(),
 				passwordHashCol.DDL(),
@@ -151,6 +162,7 @@ var Accounts = func() AccountsTable {
 		Id:           idCol,
 		CreatedAt:    createdAtCol,
 		UpdatedAt:    updatedAtCol,
+		DeletedAt:    deletedAtCol,
 		Email:        emailCol,
 		Nickname:     nicknameCol,
 		PasswordHash: passwordHashCol,

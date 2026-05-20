@@ -94,13 +94,12 @@ func (Topology_Connection_Kind) EnumDescriptor() ([]byte, []int) {
 }
 
 type Topology struct {
-	state           protoimpl.MessageState     `protogen:"open.v1"`
-	Items           []*Topology_Component      `protobuf:"bytes,4,rep,name=items,proto3" json:"items,omitempty"`
-	PlacementGroups []*Topology_PlacementGroup `protobuf:"bytes,5,rep,name=placement_groups,json=placementGroups,proto3" json:"placement_groups,omitempty"`
-	Connections     []*Topology_Connection     `protobuf:"bytes,6,rep,name=connections,proto3" json:"connections,omitempty"`
-	Tags            *common.Tags               `protobuf:"bytes,3,opt,name=tags,proto3" json:"tags,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Machines      []*Topology_Machine    `protobuf:"bytes,2,rep,name=machines,proto3" json:"machines,omitempty"`
+	Connections   []*Topology_Connection `protobuf:"bytes,6,rep,name=connections,proto3" json:"connections,omitempty"`
+	Tags          *common.Tags           `protobuf:"bytes,3,opt,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Topology) Reset() {
@@ -133,16 +132,9 @@ func (*Topology) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_domain_topology_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Topology) GetItems() []*Topology_Component {
+func (x *Topology) GetMachines() []*Topology_Machine {
 	if x != nil {
-		return x.Items
-	}
-	return nil
-}
-
-func (x *Topology) GetPlacementGroups() []*Topology_PlacementGroup {
-	if x != nil {
-		return x.PlacementGroups
+		return x.Machines
 	}
 	return nil
 }
@@ -224,27 +216,31 @@ func (x *Topology_Component) GetTags() *common.Tags {
 	return nil
 }
 
-type Topology_PlacementGroup struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ComponentIds  []string               `protobuf:"bytes,1,rep,name=component_ids,json=componentIds,proto3" json:"component_ids,omitempty"`
+type Topology_Machine struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// cores is VM vCPU count.
+	Cores uint32 `protobuf:"varint,1,opt,name=cores,proto3" json:"cores,omitempty"`
+	// memory_gb is VM RAM in GiB.
+	MemoryGb      uint64                `protobuf:"varint,2,opt,name=memory_gb,json=memoryGb,proto3" json:"memory_gb,omitempty"`
+	Components    []*Topology_Component `protobuf:"bytes,3,rep,name=components,proto3" json:"components,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Topology_PlacementGroup) Reset() {
-	*x = Topology_PlacementGroup{}
+func (x *Topology_Machine) Reset() {
+	*x = Topology_Machine{}
 	mi := &file_cloud_v1_domain_topology_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Topology_PlacementGroup) String() string {
+func (x *Topology_Machine) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Topology_PlacementGroup) ProtoMessage() {}
+func (*Topology_Machine) ProtoMessage() {}
 
-func (x *Topology_PlacementGroup) ProtoReflect() protoreflect.Message {
+func (x *Topology_Machine) ProtoReflect() protoreflect.Message {
 	mi := &file_cloud_v1_domain_topology_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -256,14 +252,28 @@ func (x *Topology_PlacementGroup) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Topology_PlacementGroup.ProtoReflect.Descriptor instead.
-func (*Topology_PlacementGroup) Descriptor() ([]byte, []int) {
+// Deprecated: Use Topology_Machine.ProtoReflect.Descriptor instead.
+func (*Topology_Machine) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_domain_topology_proto_rawDescGZIP(), []int{0, 1}
 }
 
-func (x *Topology_PlacementGroup) GetComponentIds() []string {
+func (x *Topology_Machine) GetCores() uint32 {
 	if x != nil {
-		return x.ComponentIds
+		return x.Cores
+	}
+	return 0
+}
+
+func (x *Topology_Machine) GetMemoryGb() uint64 {
+	if x != nil {
+		return x.MemoryGb
+	}
+	return 0
+}
+
+func (x *Topology_Machine) GetComponents() []*Topology_Component {
+	if x != nil {
+		return x.Components
 	}
 	return nil
 }
@@ -365,19 +375,22 @@ var File_cloud_v1_domain_topology_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_topology_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/domain/topology.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a$cloud/v1/runtime/render/config.proto\x1a!cloud/v1/runtime/system/net.proto\x1a\x17validate/validate.proto\"\xd8\a\n" +
-	"\bTopology\x12C\n" +
-	"\x05items\x18\x04 \x03(\v2#.cloud.v1.domain.Topology.ComponentB\b\xfaB\x05\x92\x01\x02\b\x01R\x05items\x12]\n" +
-	"\x10placement_groups\x18\x05 \x03(\v2(.cloud.v1.domain.Topology.PlacementGroupB\b\xfaB\x05\x92\x01\x02\b\x01R\x0fplacementGroups\x12P\n" +
+	"\x1ecloud/v1/domain/topology.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a$cloud/v1/runtime/render/config.proto\x1a!cloud/v1/runtime/system/net.proto\x1a\x17validate/validate.proto\"\xdc\a\n" +
+	"\bTopology\x12G\n" +
+	"\bmachines\x18\x02 \x03(\v2!.cloud.v1.domain.Topology.MachineB\b\xfaB\x05\x92\x01\x02\b\x01R\bmachines\x12P\n" +
 	"\vconnections\x18\x06 \x03(\v2$.cloud.v1.domain.Topology.ConnectionB\b\xfaB\x05\x92\x01\x02\b\x01R\vconnections\x12)\n" +
 	"\x04tags\x18\x03 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\x95\x01\n" +
 	"\tComponent\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12A\n" +
 	"\x06config\x18\x02 \x01(\v2\x1f.cloud.v1.runtime.render.ConfigB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06config\x12)\n" +
-	"\x04tags\x18\x03 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a?\n" +
-	"\x0ePlacementGroup\x12-\n" +
-	"\rcomponent_ids\x18\x01 \x03(\tB\b\xfaB\x05\x92\x01\x02\b\x01R\fcomponentIds\x1a\xd1\x03\n" +
+	"\x04tags\x18\x03 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\x9d\x01\n" +
+	"\aMachine\x12\x1d\n" +
+	"\x05cores\x18\x01 \x01(\rB\a\xfaB\x04*\x02 \x00R\x05cores\x12$\n" +
+	"\tmemory_gb\x18\x02 \x01(\x04B\a\xfaB\x042\x02 \x00R\bmemoryGb\x12M\n" +
+	"\n" +
+	"components\x18\x03 \x03(\v2#.cloud.v1.domain.Topology.ComponentB\b\xfaB\x05\x92\x01\x02\b\x01R\n" +
+	"components\x1a\xd1\x03\n" +
 	"\n" +
 	"Connection\x12\x1e\n" +
 	"\x04from\x18\x01 \x01(\tB\n" +
@@ -413,23 +426,23 @@ func file_cloud_v1_domain_topology_proto_rawDescGZIP() []byte {
 var file_cloud_v1_domain_topology_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_cloud_v1_domain_topology_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_cloud_v1_domain_topology_proto_goTypes = []any{
-	(Topology_Connection_Kind)(0),   // 0: cloud.v1.domain.Topology.Connection.Kind
-	(*Topology)(nil),                // 1: cloud.v1.domain.Topology
-	(*Topology_Component)(nil),      // 2: cloud.v1.domain.Topology.Component
-	(*Topology_PlacementGroup)(nil), // 3: cloud.v1.domain.Topology.PlacementGroup
-	(*Topology_Connection)(nil),     // 4: cloud.v1.domain.Topology.Connection
-	(*common.Tags)(nil),             // 5: cloud.v1.common.Tags
-	(*render.Config)(nil),           // 6: cloud.v1.runtime.render.Config
-	(system.Net_Protocol)(0),        // 7: cloud.v1.runtime.system.Net.Protocol
-	(system.Net_Mode)(0),            // 8: cloud.v1.runtime.system.Net.Mode
+	(Topology_Connection_Kind)(0), // 0: cloud.v1.domain.Topology.Connection.Kind
+	(*Topology)(nil),              // 1: cloud.v1.domain.Topology
+	(*Topology_Component)(nil),    // 2: cloud.v1.domain.Topology.Component
+	(*Topology_Machine)(nil),      // 3: cloud.v1.domain.Topology.Machine
+	(*Topology_Connection)(nil),   // 4: cloud.v1.domain.Topology.Connection
+	(*common.Tags)(nil),           // 5: cloud.v1.common.Tags
+	(*render.Config)(nil),         // 6: cloud.v1.runtime.render.Config
+	(system.Net_Protocol)(0),      // 7: cloud.v1.runtime.system.Net.Protocol
+	(system.Net_Mode)(0),          // 8: cloud.v1.runtime.system.Net.Mode
 }
 var file_cloud_v1_domain_topology_proto_depIdxs = []int32{
-	2, // 0: cloud.v1.domain.Topology.items:type_name -> cloud.v1.domain.Topology.Component
-	3, // 1: cloud.v1.domain.Topology.placement_groups:type_name -> cloud.v1.domain.Topology.PlacementGroup
-	4, // 2: cloud.v1.domain.Topology.connections:type_name -> cloud.v1.domain.Topology.Connection
-	5, // 3: cloud.v1.domain.Topology.tags:type_name -> cloud.v1.common.Tags
-	6, // 4: cloud.v1.domain.Topology.Component.config:type_name -> cloud.v1.runtime.render.Config
-	5, // 5: cloud.v1.domain.Topology.Component.tags:type_name -> cloud.v1.common.Tags
+	3, // 0: cloud.v1.domain.Topology.machines:type_name -> cloud.v1.domain.Topology.Machine
+	4, // 1: cloud.v1.domain.Topology.connections:type_name -> cloud.v1.domain.Topology.Connection
+	5, // 2: cloud.v1.domain.Topology.tags:type_name -> cloud.v1.common.Tags
+	6, // 3: cloud.v1.domain.Topology.Component.config:type_name -> cloud.v1.runtime.render.Config
+	5, // 4: cloud.v1.domain.Topology.Component.tags:type_name -> cloud.v1.common.Tags
+	2, // 5: cloud.v1.domain.Topology.Machine.components:type_name -> cloud.v1.domain.Topology.Component
 	7, // 6: cloud.v1.domain.Topology.Connection.protocol:type_name -> cloud.v1.runtime.system.Net.Protocol
 	8, // 7: cloud.v1.domain.Topology.Connection.mode:type_name -> cloud.v1.runtime.system.Net.Mode
 	0, // 8: cloud.v1.domain.Topology.Connection.kind:type_name -> cloud.v1.domain.Topology.Connection.Kind

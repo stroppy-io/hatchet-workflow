@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/domain/suite.proto";
+import "cloud/v1/domain/test.proto";
+import "cloud/v1/models/common.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+message TestRun {
+    message List {repeated TestRun test_runs = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "test_runs"
+    };
+    models.Entity entity = 1 [(goplain.field).embed = true];
+    models.Own owned = 2 [(goplain.field).embed = true];
+    optional string name = 3 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    optional string description = 4 [(validate.rules).string.max_len = 1024];
+
+    domain.TestPreset test_preset = 5 [(goplain.field).serialize = true,
+        (validate.rules).message.required = true
+    ];
+
+    models.DagId dag = 6 [
+        (ratel.column).constraints = {
+            references_table: "dags"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message.required = true
+    ];
+
+    optional SuiteRunId suite_run_id = 7 [(ratel.column).constraints = {
+        references_table: "suite_runs"
+        references_column: "id"
+        on_delete: CASCADE
+    }];
+}
+
+message Suite {
+    message List {repeated SuiteRuns test_runs = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "suites"
+    };
+    models.Entity entity = 1 [(goplain.field).embed = true];
+    models.Own owned = 2 [(goplain.field).embed = true];
+    optional string name = 3 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    optional string description = 4 [(validate.rules).string.max_len = 1024];
+    domain.SuitePreset preset = 5 [
+        (goplain.field).serialize = true,
+        (validate.rules).message.required = true
+    ];
+}
+
+message SuiteRuns {
+    message List {repeated SuiteRuns test_runs = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "suite_runs"
+    };
+    models.Entity entity = 1 [(goplain.field).embed = true];
+    models.Own owned = 2 [(goplain.field).embed = true];
+    models.SuiteId suite_id = 3 [(ratel.column).constraints = {
+        references_table: "suites"
+        references_column: "id"
+        on_delete: CASCADE
+    }];
+    models.DagId dag = 6 [
+        (ratel.column).constraints = {
+            references_table: "dags"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message.required = true
+    ];
+    repeated models.TestRun test_runs = 8 [(ratel.relation) = {
+        one_to_many: {
+            ref_name: "user_id"
+            on_delete_cascade: true
+        }
+    }];
+}

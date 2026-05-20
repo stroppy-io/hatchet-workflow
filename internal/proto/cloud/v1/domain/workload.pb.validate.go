@@ -292,113 +292,31 @@ var _ interface {
 	ErrorName() string
 } = WorkloadValidationError{}
 
-// Validate checks the field values on WorkloadOrPreset with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *WorkloadOrPreset) Validate() error {
+// Validate checks the field values on WorkloadPreset with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *WorkloadPreset) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on WorkloadOrPreset with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// WorkloadOrPresetMultiError, or nil if none found.
-func (m *WorkloadOrPreset) ValidateAll() error {
+// ValidateAll checks the field values on WorkloadPreset with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in WorkloadPresetMultiError,
+// or nil if none found.
+func (m *WorkloadPreset) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *WorkloadOrPreset) validate(all bool) error {
+func (m *WorkloadPreset) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	oneofKindPresent := false
-	switch v := m.Kind.(type) {
-	case *WorkloadOrPreset_PresetId:
-		if v == nil {
-			err := WorkloadOrPresetValidationError{
-				field:  "Kind",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofKindPresent = true
-
-		if utf8.RuneCountInString(m.GetPresetId()) < 1 {
-			err := WorkloadOrPresetValidationError{
-				field:  "PresetId",
-				reason: "value length must be at least 1 runes",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-
-	case *WorkloadOrPreset_Workload:
-		if v == nil {
-			err := WorkloadOrPresetValidationError{
-				field:  "Kind",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofKindPresent = true
-
-		if m.GetWorkload() == nil {
-			err := WorkloadOrPresetValidationError{
-				field:  "Workload",
-				reason: "value is required",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-
-		if all {
-			switch v := interface{}(m.GetWorkload()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, WorkloadOrPresetValidationError{
-						field:  "Workload",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, WorkloadOrPresetValidationError{
-						field:  "Workload",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetWorkload()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return WorkloadOrPresetValidationError{
-					field:  "Workload",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	default:
-		_ = v // ensures v is used
-	}
-	if !oneofKindPresent {
-		err := WorkloadOrPresetValidationError{
-			field:  "Kind",
+	if m.GetWorkload() == nil {
+		err := WorkloadPresetValidationError{
+			field:  "Workload",
 			reason: "value is required",
 		}
 		if !all {
@@ -407,20 +325,89 @@ func (m *WorkloadOrPreset) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if all {
+		switch v := interface{}(m.GetWorkload()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, WorkloadPresetValidationError{
+					field:  "Workload",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, WorkloadPresetValidationError{
+					field:  "Workload",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWorkload()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return WorkloadPresetValidationError{
+				field:  "Workload",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetTopology() == nil {
+		err := WorkloadPresetValidationError{
+			field:  "Topology",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopology()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, WorkloadPresetValidationError{
+					field:  "Topology",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, WorkloadPresetValidationError{
+					field:  "Topology",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopology()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return WorkloadPresetValidationError{
+				field:  "Topology",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
-		return WorkloadOrPresetMultiError(errors)
+		return WorkloadPresetMultiError(errors)
 	}
 
 	return nil
 }
 
-// WorkloadOrPresetMultiError is an error wrapping multiple validation errors
-// returned by WorkloadOrPreset.ValidateAll() if the designated constraints
+// WorkloadPresetMultiError is an error wrapping multiple validation errors
+// returned by WorkloadPreset.ValidateAll() if the designated constraints
 // aren't met.
-type WorkloadOrPresetMultiError []error
+type WorkloadPresetMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m WorkloadOrPresetMultiError) Error() string {
+func (m WorkloadPresetMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -429,11 +416,11 @@ func (m WorkloadOrPresetMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m WorkloadOrPresetMultiError) AllErrors() []error { return m }
+func (m WorkloadPresetMultiError) AllErrors() []error { return m }
 
-// WorkloadOrPresetValidationError is the validation error returned by
-// WorkloadOrPreset.Validate if the designated constraints aren't met.
-type WorkloadOrPresetValidationError struct {
+// WorkloadPresetValidationError is the validation error returned by
+// WorkloadPreset.Validate if the designated constraints aren't met.
+type WorkloadPresetValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -441,22 +428,22 @@ type WorkloadOrPresetValidationError struct {
 }
 
 // Field function returns field value.
-func (e WorkloadOrPresetValidationError) Field() string { return e.field }
+func (e WorkloadPresetValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e WorkloadOrPresetValidationError) Reason() string { return e.reason }
+func (e WorkloadPresetValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e WorkloadOrPresetValidationError) Cause() error { return e.cause }
+func (e WorkloadPresetValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e WorkloadOrPresetValidationError) Key() bool { return e.key }
+func (e WorkloadPresetValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e WorkloadOrPresetValidationError) ErrorName() string { return "WorkloadOrPresetValidationError" }
+func (e WorkloadPresetValidationError) ErrorName() string { return "WorkloadPresetValidationError" }
 
 // Error satisfies the builtin error interface
-func (e WorkloadOrPresetValidationError) Error() string {
+func (e WorkloadPresetValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -468,14 +455,14 @@ func (e WorkloadOrPresetValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sWorkloadOrPreset.%s: %s%s",
+		"invalid %sWorkloadPreset.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = WorkloadOrPresetValidationError{}
+var _ error = WorkloadPresetValidationError{}
 
 var _ interface {
 	Field() string
@@ -483,7 +470,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = WorkloadOrPresetValidationError{}
+} = WorkloadPresetValidationError{}
 
 // Validate checks the field values on Workload_Execution with the rules
 // defined in the proto definition for this message. If any rules are

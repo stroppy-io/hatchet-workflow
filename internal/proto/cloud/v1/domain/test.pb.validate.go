@@ -17,10 +17,6 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
-
-	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
-
-	primitive "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
 )
 
 // ensure the imports are used
@@ -37,28 +33,24 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
-
-	_ = deployment.Provider(0)
-
-	_ = primitive.Dag_Scheduling_OnNodeFailure(0)
 )
 
-// Validate checks the field values on DatabaseWithDeploymentIntent with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *DatabaseWithDeploymentIntent) Validate() error {
+// Validate checks the field values on TestPreset with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *TestPreset) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on DatabaseWithDeploymentIntent with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// DatabaseWithDeploymentIntentMultiError, or nil if none found.
-func (m *DatabaseWithDeploymentIntent) ValidateAll() error {
+// ValidateAll checks the field values on TestPreset with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in TestPresetMultiError, or
+// nil if none found.
+func (m *TestPreset) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *DatabaseWithDeploymentIntent) validate(all bool) error {
+func (m *TestPreset) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -66,7 +58,7 @@ func (m *DatabaseWithDeploymentIntent) validate(all bool) error {
 	var errors []error
 
 	if m.GetDatabase() == nil {
-		err := DatabaseWithDeploymentIntentValidationError{
+		err := TestPresetValidationError{
 			field:  "Database",
 			reason: "value is required",
 		}
@@ -80,7 +72,7 @@ func (m *DatabaseWithDeploymentIntent) validate(all bool) error {
 		switch v := interface{}(m.GetDatabase()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, DatabaseWithDeploymentIntentValidationError{
+				errors = append(errors, TestPresetValidationError{
 					field:  "Database",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -88,7 +80,7 @@ func (m *DatabaseWithDeploymentIntent) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, DatabaseWithDeploymentIntentValidationError{
+				errors = append(errors, TestPresetValidationError{
 					field:  "Database",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -97,7 +89,7 @@ func (m *DatabaseWithDeploymentIntent) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetDatabase()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return DatabaseWithDeploymentIntentValidationError{
+			return TestPresetValidationError{
 				field:  "Database",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -105,155 +97,8 @@ func (m *DatabaseWithDeploymentIntent) validate(all bool) error {
 		}
 	}
 
-	if m.DeploymentIntent != nil {
-
-		if m.GetDeploymentIntent() == nil {
-			err := DatabaseWithDeploymentIntentValidationError{
-				field:  "DeploymentIntent",
-				reason: "value is required",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-
-		if all {
-			switch v := interface{}(m.GetDeploymentIntent()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, DatabaseWithDeploymentIntentValidationError{
-						field:  "DeploymentIntent",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, DatabaseWithDeploymentIntentValidationError{
-						field:  "DeploymentIntent",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetDeploymentIntent()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return DatabaseWithDeploymentIntentValidationError{
-					field:  "DeploymentIntent",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if len(errors) > 0 {
-		return DatabaseWithDeploymentIntentMultiError(errors)
-	}
-
-	return nil
-}
-
-// DatabaseWithDeploymentIntentMultiError is an error wrapping multiple
-// validation errors returned by DatabaseWithDeploymentIntent.ValidateAll() if
-// the designated constraints aren't met.
-type DatabaseWithDeploymentIntentMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m DatabaseWithDeploymentIntentMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m DatabaseWithDeploymentIntentMultiError) AllErrors() []error { return m }
-
-// DatabaseWithDeploymentIntentValidationError is the validation error returned
-// by DatabaseWithDeploymentIntent.Validate if the designated constraints
-// aren't met.
-type DatabaseWithDeploymentIntentValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e DatabaseWithDeploymentIntentValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e DatabaseWithDeploymentIntentValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e DatabaseWithDeploymentIntentValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e DatabaseWithDeploymentIntentValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e DatabaseWithDeploymentIntentValidationError) ErrorName() string {
-	return "DatabaseWithDeploymentIntentValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e DatabaseWithDeploymentIntentValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sDatabaseWithDeploymentIntent.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = DatabaseWithDeploymentIntentValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = DatabaseWithDeploymentIntentValidationError{}
-
-// Validate checks the field values on WorkloadWithDeploymentIntent with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *WorkloadWithDeploymentIntent) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on WorkloadWithDeploymentIntent with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// WorkloadWithDeploymentIntentMultiError, or nil if none found.
-func (m *WorkloadWithDeploymentIntent) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *WorkloadWithDeploymentIntent) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
 	if m.GetWorkload() == nil {
-		err := WorkloadWithDeploymentIntentValidationError{
+		err := TestPresetValidationError{
 			field:  "Workload",
 			reason: "value is required",
 		}
@@ -267,7 +112,7 @@ func (m *WorkloadWithDeploymentIntent) validate(all bool) error {
 		switch v := interface{}(m.GetWorkload()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, WorkloadWithDeploymentIntentValidationError{
+				errors = append(errors, TestPresetValidationError{
 					field:  "Workload",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -275,230 +120,7 @@ func (m *WorkloadWithDeploymentIntent) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, WorkloadWithDeploymentIntentValidationError{
-					field:  "Workload",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetWorkload()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return WorkloadWithDeploymentIntentValidationError{
-				field:  "Workload",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if m.GetDeploymentIntent() == nil {
-		err := WorkloadWithDeploymentIntentValidationError{
-			field:  "DeploymentIntent",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetDeploymentIntent()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, WorkloadWithDeploymentIntentValidationError{
-					field:  "DeploymentIntent",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, WorkloadWithDeploymentIntentValidationError{
-					field:  "DeploymentIntent",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetDeploymentIntent()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return WorkloadWithDeploymentIntentValidationError{
-				field:  "DeploymentIntent",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return WorkloadWithDeploymentIntentMultiError(errors)
-	}
-
-	return nil
-}
-
-// WorkloadWithDeploymentIntentMultiError is an error wrapping multiple
-// validation errors returned by WorkloadWithDeploymentIntent.ValidateAll() if
-// the designated constraints aren't met.
-type WorkloadWithDeploymentIntentMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m WorkloadWithDeploymentIntentMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m WorkloadWithDeploymentIntentMultiError) AllErrors() []error { return m }
-
-// WorkloadWithDeploymentIntentValidationError is the validation error returned
-// by WorkloadWithDeploymentIntent.Validate if the designated constraints
-// aren't met.
-type WorkloadWithDeploymentIntentValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e WorkloadWithDeploymentIntentValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e WorkloadWithDeploymentIntentValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e WorkloadWithDeploymentIntentValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e WorkloadWithDeploymentIntentValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e WorkloadWithDeploymentIntentValidationError) ErrorName() string {
-	return "WorkloadWithDeploymentIntentValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e WorkloadWithDeploymentIntentValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sWorkloadWithDeploymentIntent.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = WorkloadWithDeploymentIntentValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = WorkloadWithDeploymentIntentValidationError{}
-
-// Validate checks the field values on TestIntent with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *TestIntent) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on TestIntent with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in TestIntentMultiError, or
-// nil if none found.
-func (m *TestIntent) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *TestIntent) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if _, ok := _TestIntent_Provider_NotInLookup[m.GetProvider()]; ok {
-		err := TestIntentValidationError{
-			field:  "Provider",
-			reason: "value must not be in list [PROVIDER_UNSPECIFIED]",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if _, ok := deployment.Provider_name[int32(m.GetProvider())]; !ok {
-		err := TestIntentValidationError{
-			field:  "Provider",
-			reason: "value must be one of the defined enum values",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetDatabase()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, TestIntentValidationError{
-					field:  "Database",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, TestIntentValidationError{
-					field:  "Database",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetDatabase()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return TestIntentValidationError{
-				field:  "Database",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if all {
-		switch v := interface{}(m.GetWorkload()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, TestIntentValidationError{
-					field:  "Workload",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, TestIntentValidationError{
+				errors = append(errors, TestPresetValidationError{
 					field:  "Workload",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -507,7 +129,7 @@ func (m *TestIntent) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetWorkload()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return TestIntentValidationError{
+			return TestPresetValidationError{
 				field:  "Workload",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -515,188 +137,22 @@ func (m *TestIntent) validate(all bool) error {
 		}
 	}
 
-	if len(errors) > 0 {
-		return TestIntentMultiError(errors)
-	}
-
-	return nil
-}
-
-// TestIntentMultiError is an error wrapping multiple validation errors
-// returned by TestIntent.ValidateAll() if the designated constraints aren't met.
-type TestIntentMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m TestIntentMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m TestIntentMultiError) AllErrors() []error { return m }
-
-// TestIntentValidationError is the validation error returned by
-// TestIntent.Validate if the designated constraints aren't met.
-type TestIntentValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e TestIntentValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e TestIntentValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e TestIntentValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e TestIntentValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e TestIntentValidationError) ErrorName() string { return "TestIntentValidationError" }
-
-// Error satisfies the builtin error interface
-func (e TestIntentValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sTestIntent.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = TestIntentValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = TestIntentValidationError{}
-
-var _TestIntent_Provider_NotInLookup = map[deployment.Provider]struct{}{
-	0: {},
-}
-
-// Validate checks the field values on MaterializedTest with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *MaterializedTest) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on MaterializedTest with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// MaterializedTestMultiError, or nil if none found.
-func (m *MaterializedTest) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *MaterializedTest) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if m.GetIntent() == nil {
-		err := MaterializedTestValidationError{
-			field:  "Intent",
+	if m.GetTopology() == nil {
+		err := TestPresetValidationError{
+			field:  "Topology",
 			reason: "value is required",
 		}
 		if !all {
 			return err
 		}
 		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetIntent()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, MaterializedTestValidationError{
-					field:  "Intent",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, MaterializedTestValidationError{
-					field:  "Intent",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetIntent()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return MaterializedTestValidationError{
-				field:  "Intent",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	for idx, item := range m.GetQuotaRequests() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, MaterializedTestValidationError{
-						field:  fmt.Sprintf("QuotaRequests[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, MaterializedTestValidationError{
-						field:  fmt.Sprintf("QuotaRequests[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return MaterializedTestValidationError{
-					field:  fmt.Sprintf("QuotaRequests[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
 	}
 
 	if all {
 		switch v := interface{}(m.GetTopology()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, MaterializedTestValidationError{
+				errors = append(errors, TestPresetValidationError{
 					field:  "Topology",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -704,7 +160,7 @@ func (m *MaterializedTest) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, MaterializedTestValidationError{
+				errors = append(errors, TestPresetValidationError{
 					field:  "Topology",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -713,7 +169,7 @@ func (m *MaterializedTest) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetTopology()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return MaterializedTestValidationError{
+			return TestPresetValidationError{
 				field:  "Topology",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -721,160 +177,9 @@ func (m *MaterializedTest) validate(all bool) error {
 		}
 	}
 
-	if all {
-		switch v := interface{}(m.GetDag()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, MaterializedTestValidationError{
-					field:  "Dag",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, MaterializedTestValidationError{
-					field:  "Dag",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetDag()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return MaterializedTestValidationError{
-				field:  "Dag",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return MaterializedTestMultiError(errors)
-	}
-
-	return nil
-}
-
-// MaterializedTestMultiError is an error wrapping multiple validation errors
-// returned by MaterializedTest.ValidateAll() if the designated constraints
-// aren't met.
-type MaterializedTestMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m MaterializedTestMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m MaterializedTestMultiError) AllErrors() []error { return m }
-
-// MaterializedTestValidationError is the validation error returned by
-// MaterializedTest.Validate if the designated constraints aren't met.
-type MaterializedTestValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e MaterializedTestValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e MaterializedTestValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e MaterializedTestValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e MaterializedTestValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e MaterializedTestValidationError) ErrorName() string { return "MaterializedTestValidationError" }
-
-// Error satisfies the builtin error interface
-func (e MaterializedTestValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sMaterializedTest.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = MaterializedTestValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = MaterializedTestValidationError{}
-
-// Validate checks the field values on SuiteIntent with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *SuiteIntent) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on SuiteIntent with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in SuiteIntentMultiError, or
-// nil if none found.
-func (m *SuiteIntent) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *SuiteIntent) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if _, ok := _SuiteIntent_Provider_NotInLookup[m.GetProvider()]; ok {
-		err := SuiteIntentValidationError{
-			field:  "Provider",
-			reason: "value must not be in list [PROVIDER_UNSPECIFIED]",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if _, ok := deployment.Provider_name[int32(m.GetProvider())]; !ok {
-		err := SuiteIntentValidationError{
-			field:  "Provider",
-			reason: "value must be one of the defined enum values",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if m.GetScheduling() == nil {
-		err := SuiteIntentValidationError{
-			field:  "Scheduling",
+	if m.GetDeployment() == nil {
+		err := TestPresetValidationError{
+			field:  "Deployment",
 			reason: "value is required",
 		}
 		if !all {
@@ -884,68 +189,28 @@ func (m *SuiteIntent) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetScheduling()).(type) {
+		switch v := interface{}(m.GetDeployment()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, SuiteIntentValidationError{
-					field:  "Scheduling",
+				errors = append(errors, TestPresetValidationError{
+					field:  "Deployment",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, SuiteIntentValidationError{
-					field:  "Scheduling",
+				errors = append(errors, TestPresetValidationError{
+					field:  "Deployment",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetScheduling()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetDeployment()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return SuiteIntentValidationError{
-				field:  "Scheduling",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if m.GetMatrix() == nil {
-		err := SuiteIntentValidationError{
-			field:  "Matrix",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetMatrix()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, SuiteIntentValidationError{
-					field:  "Matrix",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, SuiteIntentValidationError{
-					field:  "Matrix",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetMatrix()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return SuiteIntentValidationError{
-				field:  "Matrix",
+			return TestPresetValidationError{
+				field:  "Deployment",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -953,18 +218,18 @@ func (m *SuiteIntent) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return SuiteIntentMultiError(errors)
+		return TestPresetMultiError(errors)
 	}
 
 	return nil
 }
 
-// SuiteIntentMultiError is an error wrapping multiple validation errors
-// returned by SuiteIntent.ValidateAll() if the designated constraints aren't met.
-type SuiteIntentMultiError []error
+// TestPresetMultiError is an error wrapping multiple validation errors
+// returned by TestPreset.ValidateAll() if the designated constraints aren't met.
+type TestPresetMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m SuiteIntentMultiError) Error() string {
+func (m TestPresetMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -973,11 +238,11 @@ func (m SuiteIntentMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m SuiteIntentMultiError) AllErrors() []error { return m }
+func (m TestPresetMultiError) AllErrors() []error { return m }
 
-// SuiteIntentValidationError is the validation error returned by
-// SuiteIntent.Validate if the designated constraints aren't met.
-type SuiteIntentValidationError struct {
+// TestPresetValidationError is the validation error returned by
+// TestPreset.Validate if the designated constraints aren't met.
+type TestPresetValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -985,22 +250,22 @@ type SuiteIntentValidationError struct {
 }
 
 // Field function returns field value.
-func (e SuiteIntentValidationError) Field() string { return e.field }
+func (e TestPresetValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e SuiteIntentValidationError) Reason() string { return e.reason }
+func (e TestPresetValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e SuiteIntentValidationError) Cause() error { return e.cause }
+func (e TestPresetValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e SuiteIntentValidationError) Key() bool { return e.key }
+func (e TestPresetValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e SuiteIntentValidationError) ErrorName() string { return "SuiteIntentValidationError" }
+func (e TestPresetValidationError) ErrorName() string { return "TestPresetValidationError" }
 
 // Error satisfies the builtin error interface
-func (e SuiteIntentValidationError) Error() string {
+func (e TestPresetValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1012,14 +277,14 @@ func (e SuiteIntentValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sSuiteIntent.%s: %s%s",
+		"invalid %sTestPreset.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = SuiteIntentValidationError{}
+var _ error = TestPresetValidationError{}
 
 var _ interface {
 	Field() string
@@ -1027,469 +292,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = SuiteIntentValidationError{}
-
-var _SuiteIntent_Provider_NotInLookup = map[deployment.Provider]struct{}{
-	0: {},
-}
-
-// Validate checks the field values on SuiteIntent_Scheduling with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *SuiteIntent_Scheduling) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on SuiteIntent_Scheduling with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// SuiteIntent_SchedulingMultiError, or nil if none found.
-func (m *SuiteIntent_Scheduling) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *SuiteIntent_Scheduling) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for OnNodeFailure
-
-	oneofModePresent := false
-	switch v := m.Mode.(type) {
-	case *SuiteIntent_Scheduling_Sequential:
-		if v == nil {
-			err := SuiteIntent_SchedulingValidationError{
-				field:  "Mode",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofModePresent = true
-		// no validation rules for Sequential
-	case *SuiteIntent_Scheduling_Parallel_:
-		if v == nil {
-			err := SuiteIntent_SchedulingValidationError{
-				field:  "Mode",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-		oneofModePresent = true
-
-		if m.GetParallel() == nil {
-			err := SuiteIntent_SchedulingValidationError{
-				field:  "Parallel",
-				reason: "value is required",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-
-		if all {
-			switch v := interface{}(m.GetParallel()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, SuiteIntent_SchedulingValidationError{
-						field:  "Parallel",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, SuiteIntent_SchedulingValidationError{
-						field:  "Parallel",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetParallel()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return SuiteIntent_SchedulingValidationError{
-					field:  "Parallel",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	default:
-		_ = v // ensures v is used
-	}
-	if !oneofModePresent {
-		err := SuiteIntent_SchedulingValidationError{
-			field:  "Mode",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return SuiteIntent_SchedulingMultiError(errors)
-	}
-
-	return nil
-}
-
-// SuiteIntent_SchedulingMultiError is an error wrapping multiple validation
-// errors returned by SuiteIntent_Scheduling.ValidateAll() if the designated
-// constraints aren't met.
-type SuiteIntent_SchedulingMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m SuiteIntent_SchedulingMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m SuiteIntent_SchedulingMultiError) AllErrors() []error { return m }
-
-// SuiteIntent_SchedulingValidationError is the validation error returned by
-// SuiteIntent_Scheduling.Validate if the designated constraints aren't met.
-type SuiteIntent_SchedulingValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e SuiteIntent_SchedulingValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e SuiteIntent_SchedulingValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e SuiteIntent_SchedulingValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e SuiteIntent_SchedulingValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e SuiteIntent_SchedulingValidationError) ErrorName() string {
-	return "SuiteIntent_SchedulingValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e SuiteIntent_SchedulingValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sSuiteIntent_Scheduling.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = SuiteIntent_SchedulingValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = SuiteIntent_SchedulingValidationError{}
-
-// Validate checks the field values on SuiteIntent_Matrix with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *SuiteIntent_Matrix) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on SuiteIntent_Matrix with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// SuiteIntent_MatrixMultiError, or nil if none found.
-func (m *SuiteIntent_Matrix) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *SuiteIntent_Matrix) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	for idx, item := range m.GetDatabase() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, SuiteIntent_MatrixValidationError{
-						field:  fmt.Sprintf("Database[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, SuiteIntent_MatrixValidationError{
-						field:  fmt.Sprintf("Database[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return SuiteIntent_MatrixValidationError{
-					field:  fmt.Sprintf("Database[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	for idx, item := range m.GetWorkload() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, SuiteIntent_MatrixValidationError{
-						field:  fmt.Sprintf("Workload[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, SuiteIntent_MatrixValidationError{
-						field:  fmt.Sprintf("Workload[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return SuiteIntent_MatrixValidationError{
-					field:  fmt.Sprintf("Workload[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if len(errors) > 0 {
-		return SuiteIntent_MatrixMultiError(errors)
-	}
-
-	return nil
-}
-
-// SuiteIntent_MatrixMultiError is an error wrapping multiple validation errors
-// returned by SuiteIntent_Matrix.ValidateAll() if the designated constraints
-// aren't met.
-type SuiteIntent_MatrixMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m SuiteIntent_MatrixMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m SuiteIntent_MatrixMultiError) AllErrors() []error { return m }
-
-// SuiteIntent_MatrixValidationError is the validation error returned by
-// SuiteIntent_Matrix.Validate if the designated constraints aren't met.
-type SuiteIntent_MatrixValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e SuiteIntent_MatrixValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e SuiteIntent_MatrixValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e SuiteIntent_MatrixValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e SuiteIntent_MatrixValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e SuiteIntent_MatrixValidationError) ErrorName() string {
-	return "SuiteIntent_MatrixValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e SuiteIntent_MatrixValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sSuiteIntent_Matrix.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = SuiteIntent_MatrixValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = SuiteIntent_MatrixValidationError{}
-
-// Validate checks the field values on SuiteIntent_Scheduling_Parallel with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *SuiteIntent_Scheduling_Parallel) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on SuiteIntent_Scheduling_Parallel with
-// the rules defined in the proto definition for this message. If any rules
-// are violated, the result is a list of violation errors wrapped in
-// SuiteIntent_Scheduling_ParallelMultiError, or nil if none found.
-func (m *SuiteIntent_Scheduling_Parallel) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *SuiteIntent_Scheduling_Parallel) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for MaxParallel
-
-	if len(errors) > 0 {
-		return SuiteIntent_Scheduling_ParallelMultiError(errors)
-	}
-
-	return nil
-}
-
-// SuiteIntent_Scheduling_ParallelMultiError is an error wrapping multiple
-// validation errors returned by SuiteIntent_Scheduling_Parallel.ValidateAll()
-// if the designated constraints aren't met.
-type SuiteIntent_Scheduling_ParallelMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m SuiteIntent_Scheduling_ParallelMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m SuiteIntent_Scheduling_ParallelMultiError) AllErrors() []error { return m }
-
-// SuiteIntent_Scheduling_ParallelValidationError is the validation error
-// returned by SuiteIntent_Scheduling_Parallel.Validate if the designated
-// constraints aren't met.
-type SuiteIntent_Scheduling_ParallelValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e SuiteIntent_Scheduling_ParallelValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e SuiteIntent_Scheduling_ParallelValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e SuiteIntent_Scheduling_ParallelValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e SuiteIntent_Scheduling_ParallelValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e SuiteIntent_Scheduling_ParallelValidationError) ErrorName() string {
-	return "SuiteIntent_Scheduling_ParallelValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e SuiteIntent_Scheduling_ParallelValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sSuiteIntent_Scheduling_Parallel.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = SuiteIntent_Scheduling_ParallelValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = SuiteIntent_Scheduling_ParallelValidationError{}
+} = TestPresetValidationError{}

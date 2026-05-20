@@ -20,24 +20,41 @@ enum Provider {
     REQUIRED VALIDATE TO ALL SPEC FROM OneOff is one Provider Kind
 */
 message DeploymentIntent {
-    Provider provider = 1 [(validate.rules).message.required = true];
+    Provider provider = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
     message Spec {
         string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
         oneof spec {
             option (validate.required) = true;
             deployment.Yandex.Vm yandex_vm = 10 [(validate.rules).message.required = true];
             deployment.Yandex.ManagedYdb managed_ydb = 11 [(validate.rules).message.required = true];
-            deployment.Docker.Container docker_container= 12 [(validate.rules).message.required = true];
+            deployment.Docker.Container docker_container = 12 [(validate.rules).message.required = true];
         }
     }
     repeated Spec specs = 2 [(validate.rules).repeated = {min_items: 1, max_items: 128}];
     common.Tags tags = 3;
 }
 
+message QuotaRequest {
+    deployment.Provider provider = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    string quota_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    uint64 requested = 3 [(validate.rules).uint64 = {gte: 1}];
+}
+
+message Quota {
+    deployment.Provider provider = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    // TODO: Convert to enum by providers
+    string quota_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    uint64 limit = 3 [(validate.rules).uint64 = {gte: 1}];
+    uint64 used = 4 [(validate.rules).uint64 = {gte: 0}];
+    uint64 available = 5 [(validate.rules).uint64 = {gte: 0}];
+}
+
 /* Deployment is the runtime+output bundle produced after apply. */
 message Deployment {
     Provider provider = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
     runtime.system.Network network = 2;
+    bool deployed = 3;
+    repeated deployment.QuotaRequest quota_requests = 4;
     oneof deployment {
         option (validate.required) = true;
         deployment.Docker docker = 10;

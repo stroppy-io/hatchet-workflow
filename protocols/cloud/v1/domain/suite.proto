@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package cloud.v1.domain;
+
+import "cloud/v1/deployment/deployment.proto";
+import "cloud/v1/domain/test.proto";
+import "cloud/v1/runtime/primitive/dag.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
+
+message SuitePreset {
+    message Scheduling {
+        runtime.primitive.Dag.Scheduling.OnNodeFailure on_node_failure = 1;
+        message Parallel {
+            uint32 max_parallel = 1;
+        }
+        oneof mode {
+            option (validate.required) = true;
+            bool sequential = 10;
+            Parallel parallel = 11 [(validate.rules).message.required = true];
+        }
+    }
+    deployment.Provider provider = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    Scheduling scheduling = 2 [(validate.rules).message.required = true];
+    repeated domain.TestPreset tests = 3 [(validate.rules).repeated.min_items = 1];
+}

@@ -37,6 +37,7 @@ const (
 	TenantColumnId             TenantColumnAlias = "id"
 	TenantColumnCreatedAt      TenantColumnAlias = "created_at"
 	TenantColumnUpdatedAt      TenantColumnAlias = "updated_at"
+	TenantColumnDeletedAt      TenantColumnAlias = "deleted_at"
 	TenantColumnOwnerAccountId TenantColumnAlias = "owner_account_id"
 )
 
@@ -48,6 +49,8 @@ func (s *TenantScanner) GetTarget(col string) func() any {
 		return func() any { return &s.CreatedAt }
 	case TenantColumnUpdatedAt:
 		return func() any { return &s.UpdatedAt }
+	case TenantColumnDeletedAt:
+		return func() any { return &s.DeletedAt }
 	case TenantColumnOwnerAccountId:
 		return func() any { return &s.OwnerAccountId }
 	default:
@@ -63,6 +66,8 @@ func (s *TenantScanner) GetSetter(f TenantColumnAlias) func() set.ValueSetter[Te
 		return func() set.ValueSetter[TenantColumnAlias] { return set.NewSetter(f, &s.CreatedAt) }
 	case TenantColumnUpdatedAt:
 		return func() set.ValueSetter[TenantColumnAlias] { return set.NewSetter(f, &s.UpdatedAt) }
+	case TenantColumnDeletedAt:
+		return func() set.ValueSetter[TenantColumnAlias] { return set.NewSetter(f, &s.DeletedAt) }
 	case TenantColumnOwnerAccountId:
 		return func() set.ValueSetter[TenantColumnAlias] { return set.NewSetter(f, &s.OwnerAccountId) }
 	default:
@@ -78,6 +83,8 @@ func (s *TenantScanner) GetValue(f TenantColumnAlias) func() any {
 		return func() any { return s.CreatedAt }
 	case TenantColumnUpdatedAt:
 		return func() any { return s.UpdatedAt }
+	case TenantColumnDeletedAt:
+		return func() any { return s.DeletedAt }
 	case TenantColumnOwnerAccountId:
 		return func() any { return s.OwnerAccountId }
 	default:
@@ -90,6 +97,7 @@ func (s *TenantScanner) AllSetters() []set.ValueSetter[TenantColumnAlias] {
 		set.NewSetter[TenantColumnAlias](TenantColumnId, s.Id),
 		set.NewSetter[TenantColumnAlias](TenantColumnCreatedAt, s.CreatedAt),
 		set.NewSetter[TenantColumnAlias](TenantColumnUpdatedAt, s.UpdatedAt),
+		set.NewSetter[TenantColumnAlias](TenantColumnDeletedAt, s.DeletedAt),
 		set.NewSetter[TenantColumnAlias](TenantColumnOwnerAccountId, s.OwnerAccountId),
 	}
 }
@@ -161,6 +169,7 @@ type TenantsTable struct {
 	Id             schema.TextColumnI[TenantColumnAlias]
 	CreatedAt      schema.TimestamptzColumnI[TenantColumnAlias]
 	UpdatedAt      schema.TimestamptzColumnI[TenantColumnAlias]
+	DeletedAt      schema.NullTimestamptzColumnI[TenantColumnAlias]
 	OwnerAccountId schema.TextColumnI[TenantColumnAlias]
 }
 
@@ -169,6 +178,7 @@ var Tenants = func() TenantsTable {
 	idCol := schema.TextColumn(TenantColumnId, ddl.WithPrimaryKey[TenantColumnAlias]())
 	createdAtCol := schema.TimestamptzColumn(TenantColumnCreatedAt, ddl.WithDefault[TenantColumnAlias]("now()"), ddl.WithNotNull[TenantColumnAlias]())
 	updatedAtCol := schema.TimestamptzColumn(TenantColumnUpdatedAt, ddl.WithDefault[TenantColumnAlias]("now()"), ddl.WithNotNull[TenantColumnAlias]())
+	deletedAtCol := schema.NullTimestamptzColumn(TenantColumnDeletedAt, ddl.WithDefault[TenantColumnAlias]("null"))
 	ownerAccountIdCol := schema.TextColumn(TenantColumnOwnerAccountId, ddl.WithReferences[TenantColumnAlias]("accounts", "id"), ddl.WithOnDelete[TenantColumnAlias]("CASCADE"), ddl.WithNotNull[TenantColumnAlias]())
 
 	return TenantsTable{
@@ -179,12 +189,14 @@ var Tenants = func() TenantsTable {
 				idCol.DDL(),
 				createdAtCol.DDL(),
 				updatedAtCol.DDL(),
+				deletedAtCol.DDL(),
 				ownerAccountIdCol.DDL(),
 			},
 		),
 		Id:             idCol,
 		CreatedAt:      createdAtCol,
 		UpdatedAt:      updatedAtCol,
+		DeletedAt:      deletedAtCol,
 		OwnerAccountId: ownerAccountIdCol,
 	}
 }()
@@ -214,6 +226,7 @@ const (
 	TenantMemberColumnId        TenantMemberColumnAlias = "id"
 	TenantMemberColumnCreatedAt TenantMemberColumnAlias = "created_at"
 	TenantMemberColumnUpdatedAt TenantMemberColumnAlias = "updated_at"
+	TenantMemberColumnDeletedAt TenantMemberColumnAlias = "deleted_at"
 	TenantMemberColumnTenantId  TenantMemberColumnAlias = "tenant_id"
 	TenantMemberColumnAccountId TenantMemberColumnAlias = "account_id"
 	TenantMemberColumnRole      TenantMemberColumnAlias = "role"
@@ -227,6 +240,8 @@ func (s *TenantMemberScanner) GetTarget(col string) func() any {
 		return func() any { return &s.CreatedAt }
 	case TenantMemberColumnUpdatedAt:
 		return func() any { return &s.UpdatedAt }
+	case TenantMemberColumnDeletedAt:
+		return func() any { return &s.DeletedAt }
 	case TenantMemberColumnTenantId:
 		return func() any { return &s.TenantId }
 	case TenantMemberColumnAccountId:
@@ -246,6 +261,8 @@ func (s *TenantMemberScanner) GetSetter(f TenantMemberColumnAlias) func() set.Va
 		return func() set.ValueSetter[TenantMemberColumnAlias] { return set.NewSetter(f, &s.CreatedAt) }
 	case TenantMemberColumnUpdatedAt:
 		return func() set.ValueSetter[TenantMemberColumnAlias] { return set.NewSetter(f, &s.UpdatedAt) }
+	case TenantMemberColumnDeletedAt:
+		return func() set.ValueSetter[TenantMemberColumnAlias] { return set.NewSetter(f, &s.DeletedAt) }
 	case TenantMemberColumnTenantId:
 		return func() set.ValueSetter[TenantMemberColumnAlias] { return set.NewSetter(f, &s.TenantId) }
 	case TenantMemberColumnAccountId:
@@ -265,6 +282,8 @@ func (s *TenantMemberScanner) GetValue(f TenantMemberColumnAlias) func() any {
 		return func() any { return s.CreatedAt }
 	case TenantMemberColumnUpdatedAt:
 		return func() any { return s.UpdatedAt }
+	case TenantMemberColumnDeletedAt:
+		return func() any { return s.DeletedAt }
 	case TenantMemberColumnTenantId:
 		return func() any { return s.TenantId }
 	case TenantMemberColumnAccountId:
@@ -281,6 +300,7 @@ func (s *TenantMemberScanner) AllSetters() []set.ValueSetter[TenantMemberColumnA
 		set.NewSetter[TenantMemberColumnAlias](TenantMemberColumnId, s.Id),
 		set.NewSetter[TenantMemberColumnAlias](TenantMemberColumnCreatedAt, s.CreatedAt),
 		set.NewSetter[TenantMemberColumnAlias](TenantMemberColumnUpdatedAt, s.UpdatedAt),
+		set.NewSetter[TenantMemberColumnAlias](TenantMemberColumnDeletedAt, s.DeletedAt),
 		set.NewSetter[TenantMemberColumnAlias](TenantMemberColumnTenantId, s.TenantId),
 		set.NewSetter[TenantMemberColumnAlias](TenantMemberColumnAccountId, s.AccountId),
 		set.NewSetter[TenantMemberColumnAlias](TenantMemberColumnRole, s.Role),
@@ -298,6 +318,7 @@ type TenantMembersTable struct {
 	Id        schema.TextColumnI[TenantMemberColumnAlias]
 	CreatedAt schema.TimestamptzColumnI[TenantMemberColumnAlias]
 	UpdatedAt schema.TimestamptzColumnI[TenantMemberColumnAlias]
+	DeletedAt schema.NullTimestamptzColumnI[TenantMemberColumnAlias]
 	TenantId  schema.TextColumnI[TenantMemberColumnAlias]
 	AccountId schema.TextColumnI[TenantMemberColumnAlias]
 	Role      schema.TextColumnI[TenantMemberColumnAlias]
@@ -308,6 +329,7 @@ var TenantMembers = func() TenantMembersTable {
 	idCol := schema.TextColumn(TenantMemberColumnId, ddl.WithPrimaryKey[TenantMemberColumnAlias]())
 	createdAtCol := schema.TimestamptzColumn(TenantMemberColumnCreatedAt, ddl.WithDefault[TenantMemberColumnAlias]("now()"), ddl.WithNotNull[TenantMemberColumnAlias]())
 	updatedAtCol := schema.TimestamptzColumn(TenantMemberColumnUpdatedAt, ddl.WithDefault[TenantMemberColumnAlias]("now()"), ddl.WithNotNull[TenantMemberColumnAlias]())
+	deletedAtCol := schema.NullTimestamptzColumn(TenantMemberColumnDeletedAt, ddl.WithDefault[TenantMemberColumnAlias]("null"))
 	tenantIdCol := schema.TextColumn(TenantMemberColumnTenantId, ddl.WithReferences[TenantMemberColumnAlias]("tenants", "id"), ddl.WithOnDelete[TenantMemberColumnAlias]("CASCADE"), ddl.WithNotNull[TenantMemberColumnAlias]())
 	accountIdCol := schema.TextColumn(TenantMemberColumnAccountId, ddl.WithReferences[TenantMemberColumnAlias]("accounts", "id"), ddl.WithOnDelete[TenantMemberColumnAlias]("CASCADE"), ddl.WithNotNull[TenantMemberColumnAlias]())
 	roleCol := schema.TextColumn(TenantMemberColumnRole, ddl.WithNotNull[TenantMemberColumnAlias]())
@@ -320,6 +342,7 @@ var TenantMembers = func() TenantMembersTable {
 				idCol.DDL(),
 				createdAtCol.DDL(),
 				updatedAtCol.DDL(),
+				deletedAtCol.DDL(),
 				tenantIdCol.DDL(),
 				accountIdCol.DDL(),
 				roleCol.DDL(),
@@ -328,6 +351,7 @@ var TenantMembers = func() TenantMembersTable {
 		Id:        idCol,
 		CreatedAt: createdAtCol,
 		UpdatedAt: updatedAtCol,
+		DeletedAt: deletedAtCol,
 		TenantId:  tenantIdCol,
 		AccountId: accountIdCol,
 		Role:      roleCol,

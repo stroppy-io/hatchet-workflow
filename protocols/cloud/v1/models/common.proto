@@ -5,6 +5,7 @@ package cloud.v1.models;
 import "google/protobuf/timestamp.proto";
 import "goplain/goplain.proto";
 import "ratelproto/ratelproto.proto";
+import "test/full/showcase.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
@@ -22,6 +23,8 @@ message DatabasePresetId {option (goplain.message) = {generate: true, type_alias
 message WorkloadPresetId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
 
 message TestRunId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
+message SuiteId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
+message SuiteRunId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
 message DagId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
 
 
@@ -36,7 +39,10 @@ message Timestamps {
         (ratel.column) = {constraints: {default_value: "now()"}},
         (validate.rules).timestamp = {required: true, lt_now: true}
     ];
-
+    optional google.protobuf.Timestamp deleted_at = 3 [
+        (ratel.column) = {constraints: {default_value: "null"}},
+        (validate.rules).timestamp.lt_now = true
+    ];
 }
 
 message Entity {
@@ -45,15 +51,6 @@ message Entity {
     }];
     Timestamps timestamps = 3 [(goplain.field).embed = true];
 }
-
-message SoftDeleteEntity {
-    Entity entity = 1 [(goplain.field).embed = true];
-    optional google.protobuf.Timestamp deleted_at = 3 [
-        (ratel.column) = {constraints: {default_value: "null"}},
-        (validate.rules).timestamp.lt_now = true
-    ];
-}
-
 
 message Own {
     models.AccountId owner_account_id = 2 [(ratel.column).constraints = {
@@ -69,4 +66,70 @@ message Own {
         },
         (validate.rules).message = {required: true}
     ];
+}
+
+/* CommonQuery — reusable list query: filter + sort + cursor pagination.
+   Filters in `filter` are combined with logical AND. Pagination is
+   cursor-based: client passes back `page.token` from the previous
+   PageInfo to fetch the next page. */
+message CommonQuery {
+    message Sort {
+        enum Direction {
+            DIRECTION_UNSPECIFIED = 0;
+            ASC = 1;
+            DESC = 2;
+        }
+        string field = 1 [(validate.rules).string.min_len = 1];
+        Direction direction = 2 [(validate.rules).enum.defined_only = true];
+    }
+
+    /* Filter — one predicate over a single field. Combined with other
+       filters via AND. For UNARY operators (IS_NULL/IS_NOT_NULL) `values`
+       must be empty; for IN/NOT_IN it may hold many; otherwise exactly one. */
+    message Filter {
+        enum Operator {
+            OPERATOR_UNSPECIFIED = 0;
+            EQ = 1;          // field = value
+            NEQ = 2;         // field != value
+            GT = 3;          // field > value
+            GTE = 4;         // field >= value
+            LT = 5;          // field < value
+            LTE = 6;         // field <= value
+            LIKE = 7;        // case-sensitive pattern match
+            ILIKE = 8;       // case-insensitive pattern match
+            IN = 9;          // field IN (values...)
+            NOT_IN = 10;     // field NOT IN (values...)
+            IS_NULL = 11;    // field IS NULL (no value)
+            IS_NOT_NULL = 12;// field IS NOT NULL (no value)
+        }
+        string field = 1 [(validate.rules).string.min_len = 1];
+        Operator operator = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        // String-encoded operands; the field's real type is resolved by the
+        // server. Multiple entries only make sense for IN/NOT_IN.
+        repeated string values = 3;
+    }
+
+    /* Page — cursor-based pagination request. */
+    message Page {
+        // Max items to return. 0 = server default.
+        uint32 size = 1 [(validate.rules).uint32 = {lte: 1000}];
+        // Opaque cursor from a previous PageInfo.next_token. Empty = first page.
+        string token = 2;
+    }
+
+    repeated Filter filter = 1;
+    repeated Sort sort = 2;
+    Page page = 3;
+}
+
+/* PageInfo — pagination metadata returned alongside a list result.
+   Embed in list responses next to the repeated items. */
+message PageInfo {
+    // Opaque cursor to pass as CommonQuery.page.token for the next page.
+    // Empty when there are no more pages.
+    string next_token = 1;
+    // True when another page exists (next_token is non-empty).
+    bool has_more = 2;
+    // Total matching rows ignoring pagination, when the server can compute it.
+    optional uint64 total = 3;
 }

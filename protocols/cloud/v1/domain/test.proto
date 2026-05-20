@@ -3,55 +3,19 @@ syntax = "proto3";
 package cloud.v1.domain;
 
 import "cloud/v1/deployment/deployment.proto";
-import "cloud/v1/deployment/quota.proto";
 import "cloud/v1/domain/database.proto";
-import "cloud/v1/domain/topology.proto";
 import "cloud/v1/domain/workload.proto";
+import "cloud/v1/domain/topology.proto";
 import "cloud/v1/runtime/primitive/dag.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
-message DatabaseWithDeploymentIntent {
-    domain.DatabaseOrPreset database = 1 [(validate.rules).message.required = true];
-    optional deployment.DeploymentIntent deployment_intent = 2 [(validate.rules).message.required = true];
-}
-
-message WorkloadWithDeploymentIntent {
-    domain.WorkloadOrPreset workload = 1 [(validate.rules).message.required = true];
-    deployment.DeploymentIntent deployment_intent = 2 [(validate.rules).message.required = true];
-}
-
-message TestIntent {
-    deployment.Provider provider = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
-    DatabaseWithDeploymentIntent database = 2;
-    WorkloadWithDeploymentIntent workload = 3;
-}
-
-message MaterializedTest {
-    TestIntent intent = 1 [(validate.rules).message.required = true];
-    repeated deployment.QuotaRequest quota_requests = 2;
-    domain.Topology topology = 3;
-    runtime.primitive.Dag dag = 4;
-}
-
-message SuiteIntent {
-    deployment.Provider provider = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
-    message Scheduling {
-        runtime.primitive.Dag.Scheduling.OnNodeFailure on_node_failure = 1;
-        message Parallel {
-            uint32 max_parallel = 1;
-        }
-        oneof mode {
-            option (validate.required) = true;
-            bool sequential = 10;
-            Parallel parallel = 11 [(validate.rules).message.required = true];
-        }
-    }
-    Scheduling scheduling = 2 [(validate.rules).message.required = true];
-    message Matrix {
-        repeated DatabaseWithDeploymentIntent database = 2;
-        repeated WorkloadWithDeploymentIntent workload = 3;
-    }
-    Matrix matrix = 3 [(validate.rules).message.required = true];
+message TestPreset {
+    domain.Database database = 1 [(validate.rules).message.required = true];
+    domain.Workload workload = 2 [(validate.rules).message.required = true];
+    /* Merged topology from database and workload */
+    domain.Topology topology = 3 [(validate.rules).message.required = true];
+    /* Materialized from topology */
+    deployment.DeploymentIntent deployment = 4 [(validate.rules).message.required = true];
 }

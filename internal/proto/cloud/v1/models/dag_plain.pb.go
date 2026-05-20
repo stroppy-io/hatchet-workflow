@@ -21,6 +21,7 @@ type DagScanner struct {
 	TenantId       string     `json:"tenantId"` // origin: type_alias, empath: tenant_id
 	CreatedAt      time.Time  `json:"createdAt"`
 	UpdatedAt      time.Time  `json:"updatedAt"`
+	DeletedAt      *time.Time `json:"deletedAt,omitempty"`
 	Status         string     `json:"status"`
 	Payload        []byte     `json:"payload"`   // origin: serialized, empath: payload
 	Processor      []byte     `json:"processor"` // origin: serialized, empath: processor
@@ -52,6 +53,11 @@ func (pb *Dag) IntoPlain() *DagScanner {
 	// UpdatedAt from
 	if pb.GetTimestamps() != nil && pb.GetTimestamps().GetUpdatedAt() != nil {
 		p.UpdatedAt = ratelcast.TimestampToTime(pb.GetTimestamps().GetUpdatedAt())
+	}
+	// DeletedAt from
+	if pb.GetTimestamps() != nil && pb.GetTimestamps().GetDeletedAt() != nil {
+		_tmp := ratelcast.TimestampToTime(pb.GetTimestamps().GetDeletedAt())
+		p.DeletedAt = &_tmp
 	}
 	p.Status = pb.Status.String()
 	// Payload serialized from payload
@@ -115,6 +121,13 @@ func (p *DagScanner) IntoPb() *Dag {
 		pb.Timestamps = &Timestamps{}
 	}
 	pb.Timestamps.UpdatedAt = ratelcast.TimeToTimestamp(p.UpdatedAt)
+	// DeletedAt ->
+	if p.DeletedAt != nil {
+		if pb.Timestamps == nil {
+			pb.Timestamps = &Timestamps{}
+		}
+		pb.Timestamps.DeletedAt = ratelcast.TimeToTimestamp(*p.DeletedAt)
+	}
 	pb.Status = primitive.Status(primitive.Status_value[p.Status])
 	// Payload deserialize -> payload
 	if len(p.Payload) > 0 {

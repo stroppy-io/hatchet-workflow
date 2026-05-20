@@ -40,7 +40,7 @@ func (msg *Topology_Component) UnmarshalJSON(b []byte) error {
 }
 
 // MarshalJSON implements json.Marshaler
-func (msg *Topology_PlacementGroup) MarshalJSON() ([]byte, error) {
+func (msg *Topology_Machine) MarshalJSON() ([]byte, error) {
 	return protojson.MarshalOptions{
 		UseEnumNumbers:  false,
 		EmitUnpopulated: false,
@@ -49,7 +49,7 @@ func (msg *Topology_PlacementGroup) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (msg *Topology_PlacementGroup) UnmarshalJSON(b []byte) error {
+func (msg *Topology_Machine) UnmarshalJSON(b []byte) error {
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}.Unmarshal(b, msg)

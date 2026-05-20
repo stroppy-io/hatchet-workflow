@@ -3,6 +3,7 @@ syntax = "proto3";
 package cloud.v1.domain;
 
 import "validate/validate.proto";
+import "cloud/v1/domain/topology.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
@@ -123,10 +124,7 @@ message Workload {
     repeated WorkloadFile files = 7 [(validate.rules).repeated.max_items = 64];
 }
 
-message WorkloadOrPreset {
-    oneof kind {
-        option (validate.required) = true;
-        string preset_id = 1 [(validate.rules).string = {min_len: 1}];
-        Workload workload = 2 [(validate.rules).message.required = true]; // Inline workload definition.
-    }
+message WorkloadPreset {
+    domain.Workload workload = 4 [(validate.rules).message.required = true];
+    domain.Topology topology = 5 [(validate.rules).message.required = true];
 }

@@ -13,6 +13,7 @@ type TenantScanner struct {
 	Id             string                `json:"id"` // origin: embed, empath: id
 	CreatedAt      time.Time             `json:"createdAt"`
 	UpdatedAt      time.Time             `json:"updatedAt"`
+	DeletedAt      *time.Time            `json:"deletedAt,omitempty"`
 	OwnerAccountId string                `json:"ownerAccountId"` // origin: type_alias, empath: owner_account_id
 	Members        []TenantMemberScanner `json:"members"`
 }
@@ -35,6 +36,11 @@ func (pb *Tenant) IntoPlain() *TenantScanner {
 	// UpdatedAt from
 	if pb.GetEntity() != nil && pb.GetEntity().GetTimestamps() != nil && pb.GetEntity().GetTimestamps().GetUpdatedAt() != nil {
 		p.UpdatedAt = ratelcast.TimestampToTime(pb.GetEntity().GetTimestamps().GetUpdatedAt())
+	}
+	// DeletedAt from
+	if pb.GetEntity() != nil && pb.GetEntity().GetTimestamps() != nil && pb.GetEntity().GetTimestamps().GetDeletedAt() != nil {
+		_tmp := ratelcast.TimestampToTime(pb.GetEntity().GetTimestamps().GetDeletedAt())
+		p.DeletedAt = &_tmp
 	}
 	// OwnerAccountId type alias from owner_account_id
 	if pb.GetOwnerAccountId() != nil {
@@ -86,6 +92,16 @@ func (p *TenantScanner) IntoPb() *Tenant {
 		pb.Entity.Timestamps = &Timestamps{}
 	}
 	pb.Entity.Timestamps.UpdatedAt = ratelcast.TimeToTimestamp(p.UpdatedAt)
+	// DeletedAt ->
+	if p.DeletedAt != nil {
+		if pb.Entity == nil {
+			pb.Entity = &Entity{}
+		}
+		if pb.Entity.Timestamps == nil {
+			pb.Entity.Timestamps = &Timestamps{}
+		}
+		pb.Entity.Timestamps.DeletedAt = ratelcast.TimeToTimestamp(*p.DeletedAt)
+	}
 	// OwnerAccountId type alias -> owner_account_id
 	if p.OwnerAccountId != "" {
 		pb.OwnerAccountId = &AccountId{Value: p.OwnerAccountId}
@@ -101,12 +117,13 @@ func (p *TenantScanner) IntoPb() *Tenant {
 
 // Root tenant entity representing an isolated workspace.
 type TenantMemberScanner struct {
-	Id        string    `json:"id"` // origin: embed, empath: id
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-	TenantId  string    `json:"tenantId"`  // origin: type_alias, empath: tenant_id
-	AccountId string    `json:"accountId"` // origin: type_alias, empath: account_id
-	Role      string    `json:"role"`
+	Id        string     `json:"id"` // origin: embed, empath: id
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+	DeletedAt *time.Time `json:"deletedAt,omitempty"`
+	TenantId  string     `json:"tenantId"`  // origin: type_alias, empath: tenant_id
+	AccountId string     `json:"accountId"` // origin: type_alias, empath: account_id
+	Role      string     `json:"role"`
 }
 
 // IntoPlain converts protobuf message to plain struct
@@ -127,6 +144,11 @@ func (pb *TenantMember) IntoPlain() *TenantMemberScanner {
 	// UpdatedAt from
 	if pb.GetEntity() != nil && pb.GetEntity().GetTimestamps() != nil && pb.GetEntity().GetTimestamps().GetUpdatedAt() != nil {
 		p.UpdatedAt = ratelcast.TimestampToTime(pb.GetEntity().GetTimestamps().GetUpdatedAt())
+	}
+	// DeletedAt from
+	if pb.GetEntity() != nil && pb.GetEntity().GetTimestamps() != nil && pb.GetEntity().GetTimestamps().GetDeletedAt() != nil {
+		_tmp := ratelcast.TimestampToTime(pb.GetEntity().GetTimestamps().GetDeletedAt())
+		p.DeletedAt = &_tmp
 	}
 	// TenantId type alias from tenant_id
 	if pb.GetTenantId() != nil {
@@ -173,6 +195,16 @@ func (p *TenantMemberScanner) IntoPb() *TenantMember {
 		pb.Entity.Timestamps = &Timestamps{}
 	}
 	pb.Entity.Timestamps.UpdatedAt = ratelcast.TimeToTimestamp(p.UpdatedAt)
+	// DeletedAt ->
+	if p.DeletedAt != nil {
+		if pb.Entity == nil {
+			pb.Entity = &Entity{}
+		}
+		if pb.Entity.Timestamps == nil {
+			pb.Entity.Timestamps = &Timestamps{}
+		}
+		pb.Entity.Timestamps.DeletedAt = ratelcast.TimeToTimestamp(*p.DeletedAt)
+	}
 	// TenantId type alias -> tenant_id
 	if p.TenantId != "" {
 		pb.TenantId = &TenantId{Value: p.TenantId}

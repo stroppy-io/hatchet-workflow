@@ -10,13 +10,14 @@ import (
 )
 
 type SettingsItemScanner struct {
-	Id        string    `json:"id"`       // origin: type_alias, empath: id
-	TenantId  string    `json:"tenantId"` // origin: type_alias, empath: tenant_id
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-	Part      string    `json:"part"`
-	Key       string    `json:"key"`
-	Value     []byte    `json:"value"` // origin: serialized, empath: value
+	Id        string     `json:"id"`       // origin: type_alias, empath: id
+	TenantId  string     `json:"tenantId"` // origin: type_alias, empath: tenant_id
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+	DeletedAt *time.Time `json:"deletedAt,omitempty"`
+	Part      string     `json:"part"`
+	Key       string     `json:"key"`
+	Value     []byte     `json:"value"` // origin: serialized, empath: value
 }
 
 // IntoPlain converts protobuf message to plain struct
@@ -41,6 +42,11 @@ func (pb *SettingsItem) IntoPlain() *SettingsItemScanner {
 	// UpdatedAt from
 	if pb.GetTimestamps() != nil && pb.GetTimestamps().GetUpdatedAt() != nil {
 		p.UpdatedAt = ratelcast.TimestampToTime(pb.GetTimestamps().GetUpdatedAt())
+	}
+	// DeletedAt from
+	if pb.GetTimestamps() != nil && pb.GetTimestamps().GetDeletedAt() != nil {
+		_tmp := ratelcast.TimestampToTime(pb.GetTimestamps().GetDeletedAt())
+		p.DeletedAt = &_tmp
 	}
 	p.Part = pb.Part.String()
 	p.Key = pb.Key.String()
@@ -80,6 +86,13 @@ func (p *SettingsItemScanner) IntoPb() *SettingsItem {
 		pb.Timestamps = &Timestamps{}
 	}
 	pb.Timestamps.UpdatedAt = ratelcast.TimeToTimestamp(p.UpdatedAt)
+	// DeletedAt ->
+	if p.DeletedAt != nil {
+		if pb.Timestamps == nil {
+			pb.Timestamps = &Timestamps{}
+		}
+		pb.Timestamps.DeletedAt = ratelcast.TimeToTimestamp(*p.DeletedAt)
+	}
 	pb.Part = SettingsItem_Part(SettingsItem_Part_value[p.Part])
 	pb.Key = SettingsItem_Key(SettingsItem_Key_value[p.Key])
 	// Value deserialize -> value

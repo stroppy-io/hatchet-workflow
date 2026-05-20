@@ -9,6 +9,7 @@ package models
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	_ "github.com/yaroher/protoc-gen-go-plain/goplain"
+	_ "github.com/yaroher/protoc-gen-go-plain/test/full"
 	_ "github.com/yaroher/ratel/ratelproto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -24,6 +25,134 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+type CommonQuery_Sort_Direction int32
+
+const (
+	CommonQuery_Sort_DIRECTION_UNSPECIFIED CommonQuery_Sort_Direction = 0
+	CommonQuery_Sort_ASC                   CommonQuery_Sort_Direction = 1
+	CommonQuery_Sort_DESC                  CommonQuery_Sort_Direction = 2
+)
+
+// Enum value maps for CommonQuery_Sort_Direction.
+var (
+	CommonQuery_Sort_Direction_name = map[int32]string{
+		0: "DIRECTION_UNSPECIFIED",
+		1: "ASC",
+		2: "DESC",
+	}
+	CommonQuery_Sort_Direction_value = map[string]int32{
+		"DIRECTION_UNSPECIFIED": 0,
+		"ASC":                   1,
+		"DESC":                  2,
+	}
+)
+
+func (x CommonQuery_Sort_Direction) Enum() *CommonQuery_Sort_Direction {
+	p := new(CommonQuery_Sort_Direction)
+	*p = x
+	return p
+}
+
+func (x CommonQuery_Sort_Direction) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CommonQuery_Sort_Direction) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_models_common_proto_enumTypes[0].Descriptor()
+}
+
+func (CommonQuery_Sort_Direction) Type() protoreflect.EnumType {
+	return &file_cloud_v1_models_common_proto_enumTypes[0]
+}
+
+func (x CommonQuery_Sort_Direction) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use CommonQuery_Sort_Direction.Descriptor instead.
+func (CommonQuery_Sort_Direction) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{13, 0, 0}
+}
+
+type CommonQuery_Filter_Operator int32
+
+const (
+	CommonQuery_Filter_OPERATOR_UNSPECIFIED CommonQuery_Filter_Operator = 0
+	CommonQuery_Filter_EQ                   CommonQuery_Filter_Operator = 1  // field = value
+	CommonQuery_Filter_NEQ                  CommonQuery_Filter_Operator = 2  // field != value
+	CommonQuery_Filter_GT                   CommonQuery_Filter_Operator = 3  // field > value
+	CommonQuery_Filter_GTE                  CommonQuery_Filter_Operator = 4  // field >= value
+	CommonQuery_Filter_LT                   CommonQuery_Filter_Operator = 5  // field < value
+	CommonQuery_Filter_LTE                  CommonQuery_Filter_Operator = 6  // field <= value
+	CommonQuery_Filter_LIKE                 CommonQuery_Filter_Operator = 7  // case-sensitive pattern match
+	CommonQuery_Filter_ILIKE                CommonQuery_Filter_Operator = 8  // case-insensitive pattern match
+	CommonQuery_Filter_IN                   CommonQuery_Filter_Operator = 9  // field IN (values...)
+	CommonQuery_Filter_NOT_IN               CommonQuery_Filter_Operator = 10 // field NOT IN (values...)
+	CommonQuery_Filter_IS_NULL              CommonQuery_Filter_Operator = 11 // field IS NULL (no value)
+	CommonQuery_Filter_IS_NOT_NULL          CommonQuery_Filter_Operator = 12 // field IS NOT NULL (no value)
+)
+
+// Enum value maps for CommonQuery_Filter_Operator.
+var (
+	CommonQuery_Filter_Operator_name = map[int32]string{
+		0:  "OPERATOR_UNSPECIFIED",
+		1:  "EQ",
+		2:  "NEQ",
+		3:  "GT",
+		4:  "GTE",
+		5:  "LT",
+		6:  "LTE",
+		7:  "LIKE",
+		8:  "ILIKE",
+		9:  "IN",
+		10: "NOT_IN",
+		11: "IS_NULL",
+		12: "IS_NOT_NULL",
+	}
+	CommonQuery_Filter_Operator_value = map[string]int32{
+		"OPERATOR_UNSPECIFIED": 0,
+		"EQ":                   1,
+		"NEQ":                  2,
+		"GT":                   3,
+		"GTE":                  4,
+		"LT":                   5,
+		"LTE":                  6,
+		"LIKE":                 7,
+		"ILIKE":                8,
+		"IN":                   9,
+		"NOT_IN":               10,
+		"IS_NULL":              11,
+		"IS_NOT_NULL":          12,
+	}
+)
+
+func (x CommonQuery_Filter_Operator) Enum() *CommonQuery_Filter_Operator {
+	p := new(CommonQuery_Filter_Operator)
+	*p = x
+	return p
+}
+
+func (x CommonQuery_Filter_Operator) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CommonQuery_Filter_Operator) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_models_common_proto_enumTypes[1].Descriptor()
+}
+
+func (CommonQuery_Filter_Operator) Type() protoreflect.EnumType {
+	return &file_cloud_v1_models_common_proto_enumTypes[1]
+}
+
+func (x CommonQuery_Filter_Operator) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use CommonQuery_Filter_Operator.Descriptor instead.
+func (CommonQuery_Filter_Operator) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{13, 1, 0}
+}
 
 type Ulid struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -333,6 +462,94 @@ func (x *TestRunId) GetValue() string {
 	return ""
 }
 
+type SuiteId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SuiteId) Reset() {
+	*x = SuiteId{}
+	mi := &file_cloud_v1_models_common_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuiteId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuiteId) ProtoMessage() {}
+
+func (x *SuiteId) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_common_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SuiteId.ProtoReflect.Descriptor instead.
+func (*SuiteId) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *SuiteId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type SuiteRunId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SuiteRunId) Reset() {
+	*x = SuiteRunId{}
+	mi := &file_cloud_v1_models_common_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuiteRunId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuiteRunId) ProtoMessage() {}
+
+func (x *SuiteRunId) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_common_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SuiteRunId.ProtoReflect.Descriptor instead.
+func (*SuiteRunId) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *SuiteRunId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
 type DagId struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
@@ -342,7 +559,7 @@ type DagId struct {
 
 func (x *DagId) Reset() {
 	*x = DagId{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[7]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -354,7 +571,7 @@ func (x *DagId) String() string {
 func (*DagId) ProtoMessage() {}
 
 func (x *DagId) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[7]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -367,7 +584,7 @@ func (x *DagId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DagId.ProtoReflect.Descriptor instead.
 func (*DagId) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{7}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DagId) GetValue() string {
@@ -383,13 +600,14 @@ type Timestamps struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	DeletedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=deleted_at,json=deletedAt,proto3,oneof" json:"deleted_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Timestamps) Reset() {
 	*x = Timestamps{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[8]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -401,7 +619,7 @@ func (x *Timestamps) String() string {
 func (*Timestamps) ProtoMessage() {}
 
 func (x *Timestamps) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[8]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -414,7 +632,7 @@ func (x *Timestamps) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Timestamps.ProtoReflect.Descriptor instead.
 func (*Timestamps) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{8}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Timestamps) GetCreatedAt() *timestamppb.Timestamp {
@@ -431,6 +649,13 @@ func (x *Timestamps) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Timestamps) GetDeletedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DeletedAt
+	}
+	return nil
+}
+
 type Entity struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            *Ulid                  `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -441,7 +666,7 @@ type Entity struct {
 
 func (x *Entity) Reset() {
 	*x = Entity{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[9]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -453,7 +678,7 @@ func (x *Entity) String() string {
 func (*Entity) ProtoMessage() {}
 
 func (x *Entity) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[9]
+	mi := &file_cloud_v1_models_common_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -466,7 +691,7 @@ func (x *Entity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Entity.ProtoReflect.Descriptor instead.
 func (*Entity) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{9}
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *Entity) GetId() *Ulid {
@@ -483,29 +708,29 @@ func (x *Entity) GetTimestamps() *Timestamps {
 	return nil
 }
 
-type SoftDeleteEntity struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entity        *Entity                `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	DeletedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=deleted_at,json=deletedAt,proto3,oneof" json:"deleted_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+type Own struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	OwnerAccountId *AccountId             `protobuf:"bytes,2,opt,name=owner_account_id,json=ownerAccountId,proto3" json:"owner_account_id,omitempty"`
+	TenantId       *TenantId              `protobuf:"bytes,3,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
-func (x *SoftDeleteEntity) Reset() {
-	*x = SoftDeleteEntity{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[10]
+func (x *Own) Reset() {
+	*x = Own{}
+	mi := &file_cloud_v1_models_common_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SoftDeleteEntity) String() string {
+func (x *Own) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SoftDeleteEntity) ProtoMessage() {}
+func (*Own) ProtoMessage() {}
 
-func (x *SoftDeleteEntity) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[10]
+func (x *Own) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_common_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -516,30 +741,332 @@ func (x *SoftDeleteEntity) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SoftDeleteEntity.ProtoReflect.Descriptor instead.
-func (*SoftDeleteEntity) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{10}
+// Deprecated: Use Own.ProtoReflect.Descriptor instead.
+func (*Own) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *SoftDeleteEntity) GetEntity() *Entity {
+func (x *Own) GetOwnerAccountId() *AccountId {
 	if x != nil {
-		return x.Entity
+		return x.OwnerAccountId
 	}
 	return nil
 }
 
-func (x *SoftDeleteEntity) GetDeletedAt() *timestamppb.Timestamp {
+func (x *Own) GetTenantId() *TenantId {
 	if x != nil {
-		return x.DeletedAt
+		return x.TenantId
 	}
 	return nil
+}
+
+// CommonQuery — reusable list query: filter + sort + cursor pagination.
+// Filters in `filter` are combined with logical AND. Pagination is
+// cursor-based: client passes back `page.token` from the previous
+// PageInfo to fetch the next page.
+type CommonQuery struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Filter        []*CommonQuery_Filter  `protobuf:"bytes,1,rep,name=filter,proto3" json:"filter,omitempty"`
+	Sort          []*CommonQuery_Sort    `protobuf:"bytes,2,rep,name=sort,proto3" json:"sort,omitempty"`
+	Page          *CommonQuery_Page      `protobuf:"bytes,3,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CommonQuery) Reset() {
+	*x = CommonQuery{}
+	mi := &file_cloud_v1_models_common_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CommonQuery) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CommonQuery) ProtoMessage() {}
+
+func (x *CommonQuery) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_common_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CommonQuery.ProtoReflect.Descriptor instead.
+func (*CommonQuery) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *CommonQuery) GetFilter() []*CommonQuery_Filter {
+	if x != nil {
+		return x.Filter
+	}
+	return nil
+}
+
+func (x *CommonQuery) GetSort() []*CommonQuery_Sort {
+	if x != nil {
+		return x.Sort
+	}
+	return nil
+}
+
+func (x *CommonQuery) GetPage() *CommonQuery_Page {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+// PageInfo — pagination metadata returned alongside a list result.
+// Embed in list responses next to the repeated items.
+type PageInfo struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Opaque cursor to pass as CommonQuery.page.token for the next page.
+	// Empty when there are no more pages.
+	NextToken string `protobuf:"bytes,1,opt,name=next_token,json=nextToken,proto3" json:"next_token,omitempty"`
+	// True when another page exists (next_token is non-empty).
+	HasMore bool `protobuf:"varint,2,opt,name=has_more,json=hasMore,proto3" json:"has_more,omitempty"`
+	// Total matching rows ignoring pagination, when the server can compute it.
+	Total         *uint64 `protobuf:"varint,3,opt,name=total,proto3,oneof" json:"total,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PageInfo) Reset() {
+	*x = PageInfo{}
+	mi := &file_cloud_v1_models_common_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PageInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PageInfo) ProtoMessage() {}
+
+func (x *PageInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_common_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PageInfo.ProtoReflect.Descriptor instead.
+func (*PageInfo) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *PageInfo) GetNextToken() string {
+	if x != nil {
+		return x.NextToken
+	}
+	return ""
+}
+
+func (x *PageInfo) GetHasMore() bool {
+	if x != nil {
+		return x.HasMore
+	}
+	return false
+}
+
+func (x *PageInfo) GetTotal() uint64 {
+	if x != nil && x.Total != nil {
+		return *x.Total
+	}
+	return 0
+}
+
+type CommonQuery_Sort struct {
+	state         protoimpl.MessageState     `protogen:"open.v1"`
+	Field         string                     `protobuf:"bytes,1,opt,name=field,proto3" json:"field,omitempty"`
+	Direction     CommonQuery_Sort_Direction `protobuf:"varint,2,opt,name=direction,proto3,enum=cloud.v1.models.CommonQuery_Sort_Direction" json:"direction,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CommonQuery_Sort) Reset() {
+	*x = CommonQuery_Sort{}
+	mi := &file_cloud_v1_models_common_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CommonQuery_Sort) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CommonQuery_Sort) ProtoMessage() {}
+
+func (x *CommonQuery_Sort) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_common_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CommonQuery_Sort.ProtoReflect.Descriptor instead.
+func (*CommonQuery_Sort) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{13, 0}
+}
+
+func (x *CommonQuery_Sort) GetField() string {
+	if x != nil {
+		return x.Field
+	}
+	return ""
+}
+
+func (x *CommonQuery_Sort) GetDirection() CommonQuery_Sort_Direction {
+	if x != nil {
+		return x.Direction
+	}
+	return CommonQuery_Sort_DIRECTION_UNSPECIFIED
+}
+
+// Filter — one predicate over a single field. Combined with other
+// filters via AND. For UNARY operators (IS_NULL/IS_NOT_NULL) `values`
+// must be empty; for IN/NOT_IN it may hold many; otherwise exactly one.
+type CommonQuery_Filter struct {
+	state    protoimpl.MessageState      `protogen:"open.v1"`
+	Field    string                      `protobuf:"bytes,1,opt,name=field,proto3" json:"field,omitempty"`
+	Operator CommonQuery_Filter_Operator `protobuf:"varint,2,opt,name=operator,proto3,enum=cloud.v1.models.CommonQuery_Filter_Operator" json:"operator,omitempty"`
+	// String-encoded operands; the field's real type is resolved by the
+	// server. Multiple entries only make sense for IN/NOT_IN.
+	Values        []string `protobuf:"bytes,3,rep,name=values,proto3" json:"values,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CommonQuery_Filter) Reset() {
+	*x = CommonQuery_Filter{}
+	mi := &file_cloud_v1_models_common_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CommonQuery_Filter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CommonQuery_Filter) ProtoMessage() {}
+
+func (x *CommonQuery_Filter) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_common_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CommonQuery_Filter.ProtoReflect.Descriptor instead.
+func (*CommonQuery_Filter) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{13, 1}
+}
+
+func (x *CommonQuery_Filter) GetField() string {
+	if x != nil {
+		return x.Field
+	}
+	return ""
+}
+
+func (x *CommonQuery_Filter) GetOperator() CommonQuery_Filter_Operator {
+	if x != nil {
+		return x.Operator
+	}
+	return CommonQuery_Filter_OPERATOR_UNSPECIFIED
+}
+
+func (x *CommonQuery_Filter) GetValues() []string {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
+// Page — cursor-based pagination request.
+type CommonQuery_Page struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Max items to return. 0 = server default.
+	Size uint32 `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
+	// Opaque cursor from a previous PageInfo.next_token. Empty = first page.
+	Token         string `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CommonQuery_Page) Reset() {
+	*x = CommonQuery_Page{}
+	mi := &file_cloud_v1_models_common_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CommonQuery_Page) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CommonQuery_Page) ProtoMessage() {}
+
+func (x *CommonQuery_Page) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_common_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CommonQuery_Page.ProtoReflect.Descriptor instead.
+func (*CommonQuery_Page) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{13, 2}
+}
+
+func (x *CommonQuery_Page) GetSize() uint32 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+func (x *CommonQuery_Page) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
 }
 
 var File_cloud_v1_models_common_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_common_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccloud/v1/models/common.proto\x12\x0fcloud.v1.models\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"0\n" +
+	"\x1ccloud/v1/models/common.proto\x12\x0fcloud.v1.models\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x18test/full/showcase.proto\x1a\x17validate/validate.proto\"0\n" +
 	"\x04Ulid\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"5\n" +
 	"\tAccountId\x12\x1e\n" +
@@ -553,25 +1080,72 @@ const file_cloud_v1_models_common_proto_rawDesc = "" +
 	"\x10WorkloadPresetId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"5\n" +
 	"\tTestRunId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"3\n" +
+	"\aSuiteId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"6\n" +
+	"\n" +
+	"SuiteRunId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"1\n" +
 	"\x05DagId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"\xb4\x01\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"\x99\x02\n" +
 	"\n" +
 	"Timestamps\x12R\n" +
 	"\n" +
 	"created_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x17\xfaB\a\xb2\x01\x04\b\x018\x01\x9a\xb5\x18\t\x12\a\x1a\x05now()R\tcreatedAt\x12R\n" +
 	"\n" +
-	"updated_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x17\xfaB\a\xb2\x01\x04\b\x018\x01\x9a\xb5\x18\t\x12\a\x1a\x05now()R\tupdatedAt\"~\n" +
+	"updated_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x17\xfaB\a\xb2\x01\x04\b\x018\x01\x9a\xb5\x18\t\x12\a\x1a\x05now()R\tupdatedAt\x12T\n" +
+	"\n" +
+	"deleted_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x14\xfaB\x05\xb2\x01\x028\x01\x9a\xb5\x18\b\x12\x06\x1a\x04nullH\x00R\tdeletedAt\x88\x01\x01B\r\n" +
+	"\v_deleted_at\"~\n" +
 	"\x06Entity\x12/\n" +
 	"\x02id\x18\x01 \x01(\v2\x15.cloud.v1.models.UlidB\b\x9a\xb5\x18\x04\x12\x02\x10\x01R\x02id\x12C\n" +
 	"\n" +
 	"timestamps\x18\x03 \x01(\v2\x1b.cloud.v1.models.TimestampsB\x06\x82\xa6\x1d\x02 \x01R\n" +
-	"timestamps\"\xb0\x01\n" +
-	"\x10SoftDeleteEntity\x127\n" +
-	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x12T\n" +
+	"timestamps\"\xba\x01\n" +
+	"\x03Own\x12\\\n" +
+	"\x10owner_account_id\x18\x02 \x01(\v2\x1a.cloud.v1.models.AccountIdB\x16\x9a\xb5\x18\x12\x12\x102\baccounts:\x02id@\x01R\x0eownerAccountId\x12U\n" +
+	"\ttenant_id\x18\x03 \x01(\v2\x19.cloud.v1.models.TenantIdB\x1d\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x11\x12\x0f2\atenants:\x02id@\x01R\btenantId\"\xe5\x05\n" +
+	"\vCommonQuery\x12;\n" +
+	"\x06filter\x18\x01 \x03(\v2#.cloud.v1.models.CommonQuery.FilterR\x06filter\x125\n" +
+	"\x04sort\x18\x02 \x03(\v2!.cloud.v1.models.CommonQuery.SortR\x04sort\x125\n" +
+	"\x04page\x18\x03 \x01(\v2!.cloud.v1.models.CommonQuery.PageR\x04page\x1a\xb5\x01\n" +
+	"\x04Sort\x12\x1d\n" +
+	"\x05field\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05field\x12S\n" +
+	"\tdirection\x18\x02 \x01(\x0e2+.cloud.v1.models.CommonQuery.Sort.DirectionB\b\xfaB\x05\x82\x01\x02\x10\x01R\tdirection\"9\n" +
+	"\tDirection\x12\x19\n" +
+	"\x15DIRECTION_UNSPECIFIED\x10\x00\x12\a\n" +
+	"\x03ASC\x10\x01\x12\b\n" +
+	"\x04DESC\x10\x02\x1a\xb6\x02\n" +
+	"\x06Filter\x12\x1d\n" +
+	"\x05field\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05field\x12T\n" +
+	"\boperator\x18\x02 \x01(\x0e2,.cloud.v1.models.CommonQuery.Filter.OperatorB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\boperator\x12\x16\n" +
+	"\x06values\x18\x03 \x03(\tR\x06values\"\x9e\x01\n" +
+	"\bOperator\x12\x18\n" +
+	"\x14OPERATOR_UNSPECIFIED\x10\x00\x12\x06\n" +
+	"\x02EQ\x10\x01\x12\a\n" +
+	"\x03NEQ\x10\x02\x12\x06\n" +
+	"\x02GT\x10\x03\x12\a\n" +
+	"\x03GTE\x10\x04\x12\x06\n" +
+	"\x02LT\x10\x05\x12\a\n" +
+	"\x03LTE\x10\x06\x12\b\n" +
+	"\x04LIKE\x10\a\x12\t\n" +
+	"\x05ILIKE\x10\b\x12\x06\n" +
+	"\x02IN\x10\t\x12\n" +
 	"\n" +
-	"deleted_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x14\xfaB\x05\xb2\x01\x028\x01\x9a\xb5\x18\b\x12\x06\x1a\x04nullH\x00R\tdeletedAt\x88\x01\x01B\r\n" +
-	"\v_deleted_atBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
+	"\x06NOT_IN\x10\n" +
+	"\x12\v\n" +
+	"\aIS_NULL\x10\v\x12\x0f\n" +
+	"\vIS_NOT_NULL\x10\f\x1a:\n" +
+	"\x04Page\x12\x1c\n" +
+	"\x04size\x18\x01 \x01(\rB\b\xfaB\x05*\x03\x18\xe8\aR\x04size\x12\x14\n" +
+	"\x05token\x18\x02 \x01(\tR\x05token\"i\n" +
+	"\bPageInfo\x12\x1d\n" +
+	"\n" +
+	"next_token\x18\x01 \x01(\tR\tnextToken\x12\x19\n" +
+	"\bhas_more\x18\x02 \x01(\bR\ahasMore\x12\x19\n" +
+	"\x05total\x18\x03 \x01(\x04H\x00R\x05total\x88\x01\x01B\b\n" +
+	"\x06_totalBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
 
 var (
 	file_cloud_v1_models_common_proto_rawDescOnce sync.Once
@@ -585,33 +1159,49 @@ func file_cloud_v1_models_common_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_models_common_proto_rawDescData
 }
 
-var file_cloud_v1_models_common_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_cloud_v1_models_common_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_cloud_v1_models_common_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_cloud_v1_models_common_proto_goTypes = []any{
-	(*Ulid)(nil),                  // 0: cloud.v1.models.Ulid
-	(*AccountId)(nil),             // 1: cloud.v1.models.AccountId
-	(*TenantId)(nil),              // 2: cloud.v1.models.TenantId
-	(*TenantMemberId)(nil),        // 3: cloud.v1.models.TenantMemberId
-	(*DatabasePresetId)(nil),      // 4: cloud.v1.models.DatabasePresetId
-	(*WorkloadPresetId)(nil),      // 5: cloud.v1.models.WorkloadPresetId
-	(*TestRunId)(nil),             // 6: cloud.v1.models.TestRunId
-	(*DagId)(nil),                 // 7: cloud.v1.models.DagId
-	(*Timestamps)(nil),            // 8: cloud.v1.models.Timestamps
-	(*Entity)(nil),                // 9: cloud.v1.models.Entity
-	(*SoftDeleteEntity)(nil),      // 10: cloud.v1.models.SoftDeleteEntity
-	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
+	(CommonQuery_Sort_Direction)(0),  // 0: cloud.v1.models.CommonQuery.Sort.Direction
+	(CommonQuery_Filter_Operator)(0), // 1: cloud.v1.models.CommonQuery.Filter.Operator
+	(*Ulid)(nil),                     // 2: cloud.v1.models.Ulid
+	(*AccountId)(nil),                // 3: cloud.v1.models.AccountId
+	(*TenantId)(nil),                 // 4: cloud.v1.models.TenantId
+	(*TenantMemberId)(nil),           // 5: cloud.v1.models.TenantMemberId
+	(*DatabasePresetId)(nil),         // 6: cloud.v1.models.DatabasePresetId
+	(*WorkloadPresetId)(nil),         // 7: cloud.v1.models.WorkloadPresetId
+	(*TestRunId)(nil),                // 8: cloud.v1.models.TestRunId
+	(*SuiteId)(nil),                  // 9: cloud.v1.models.SuiteId
+	(*SuiteRunId)(nil),               // 10: cloud.v1.models.SuiteRunId
+	(*DagId)(nil),                    // 11: cloud.v1.models.DagId
+	(*Timestamps)(nil),               // 12: cloud.v1.models.Timestamps
+	(*Entity)(nil),                   // 13: cloud.v1.models.Entity
+	(*Own)(nil),                      // 14: cloud.v1.models.Own
+	(*CommonQuery)(nil),              // 15: cloud.v1.models.CommonQuery
+	(*PageInfo)(nil),                 // 16: cloud.v1.models.PageInfo
+	(*CommonQuery_Sort)(nil),         // 17: cloud.v1.models.CommonQuery.Sort
+	(*CommonQuery_Filter)(nil),       // 18: cloud.v1.models.CommonQuery.Filter
+	(*CommonQuery_Page)(nil),         // 19: cloud.v1.models.CommonQuery.Page
+	(*timestamppb.Timestamp)(nil),    // 20: google.protobuf.Timestamp
 }
 var file_cloud_v1_models_common_proto_depIdxs = []int32{
-	11, // 0: cloud.v1.models.Timestamps.created_at:type_name -> google.protobuf.Timestamp
-	11, // 1: cloud.v1.models.Timestamps.updated_at:type_name -> google.protobuf.Timestamp
-	0,  // 2: cloud.v1.models.Entity.id:type_name -> cloud.v1.models.Ulid
-	8,  // 3: cloud.v1.models.Entity.timestamps:type_name -> cloud.v1.models.Timestamps
-	9,  // 4: cloud.v1.models.SoftDeleteEntity.entity:type_name -> cloud.v1.models.Entity
-	11, // 5: cloud.v1.models.SoftDeleteEntity.deleted_at:type_name -> google.protobuf.Timestamp
-	6,  // [6:6] is the sub-list for method output_type
-	6,  // [6:6] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	20, // 0: cloud.v1.models.Timestamps.created_at:type_name -> google.protobuf.Timestamp
+	20, // 1: cloud.v1.models.Timestamps.updated_at:type_name -> google.protobuf.Timestamp
+	20, // 2: cloud.v1.models.Timestamps.deleted_at:type_name -> google.protobuf.Timestamp
+	2,  // 3: cloud.v1.models.Entity.id:type_name -> cloud.v1.models.Ulid
+	12, // 4: cloud.v1.models.Entity.timestamps:type_name -> cloud.v1.models.Timestamps
+	3,  // 5: cloud.v1.models.Own.owner_account_id:type_name -> cloud.v1.models.AccountId
+	4,  // 6: cloud.v1.models.Own.tenant_id:type_name -> cloud.v1.models.TenantId
+	18, // 7: cloud.v1.models.CommonQuery.filter:type_name -> cloud.v1.models.CommonQuery.Filter
+	17, // 8: cloud.v1.models.CommonQuery.sort:type_name -> cloud.v1.models.CommonQuery.Sort
+	19, // 9: cloud.v1.models.CommonQuery.page:type_name -> cloud.v1.models.CommonQuery.Page
+	0,  // 10: cloud.v1.models.CommonQuery.Sort.direction:type_name -> cloud.v1.models.CommonQuery.Sort.Direction
+	1,  // 11: cloud.v1.models.CommonQuery.Filter.operator:type_name -> cloud.v1.models.CommonQuery.Filter.Operator
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_common_proto_init() }
@@ -620,18 +1210,20 @@ func file_cloud_v1_models_common_proto_init() {
 		return
 	}
 	file_cloud_v1_models_common_proto_msgTypes[10].OneofWrappers = []any{}
+	file_cloud_v1_models_common_proto_msgTypes[14].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_models_common_proto_rawDesc), len(file_cloud_v1_models_common_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   11,
+			NumEnums:      2,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_cloud_v1_models_common_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_models_common_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_models_common_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_models_common_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_models_common_proto = out.File

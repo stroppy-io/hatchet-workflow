@@ -38,6 +38,7 @@ const (
 	DagColumnTenantId       DagColumnAlias = "tenant_id"
 	DagColumnCreatedAt      DagColumnAlias = "created_at"
 	DagColumnUpdatedAt      DagColumnAlias = "updated_at"
+	DagColumnDeletedAt      DagColumnAlias = "deleted_at"
 	DagColumnStatus         DagColumnAlias = "status"
 	DagColumnPayload        DagColumnAlias = "payload"
 	DagColumnProcessor      DagColumnAlias = "processor"
@@ -57,6 +58,8 @@ func (s *DagScanner) GetTarget(col string) func() any {
 		return func() any { return &s.CreatedAt }
 	case DagColumnUpdatedAt:
 		return func() any { return &s.UpdatedAt }
+	case DagColumnDeletedAt:
+		return func() any { return &s.DeletedAt }
 	case DagColumnStatus:
 		return func() any { return &s.Status }
 	case DagColumnPayload:
@@ -86,6 +89,8 @@ func (s *DagScanner) GetSetter(f DagColumnAlias) func() set.ValueSetter[DagColum
 		return func() set.ValueSetter[DagColumnAlias] { return set.NewSetter(f, &s.CreatedAt) }
 	case DagColumnUpdatedAt:
 		return func() set.ValueSetter[DagColumnAlias] { return set.NewSetter(f, &s.UpdatedAt) }
+	case DagColumnDeletedAt:
+		return func() set.ValueSetter[DagColumnAlias] { return set.NewSetter(f, &s.DeletedAt) }
 	case DagColumnStatus:
 		return func() set.ValueSetter[DagColumnAlias] { return set.NewSetter(f, &s.Status) }
 	case DagColumnPayload:
@@ -115,6 +120,8 @@ func (s *DagScanner) GetValue(f DagColumnAlias) func() any {
 		return func() any { return s.CreatedAt }
 	case DagColumnUpdatedAt:
 		return func() any { return s.UpdatedAt }
+	case DagColumnDeletedAt:
+		return func() any { return s.DeletedAt }
 	case DagColumnStatus:
 		return func() any { return s.Status }
 	case DagColumnPayload:
@@ -140,6 +147,7 @@ func (s *DagScanner) AllSetters() []set.ValueSetter[DagColumnAlias] {
 		set.NewSetter[DagColumnAlias](DagColumnTenantId, s.TenantId),
 		set.NewSetter[DagColumnAlias](DagColumnCreatedAt, s.CreatedAt),
 		set.NewSetter[DagColumnAlias](DagColumnUpdatedAt, s.UpdatedAt),
+		set.NewSetter[DagColumnAlias](DagColumnDeletedAt, s.DeletedAt),
 		set.NewSetter[DagColumnAlias](DagColumnStatus, s.Status),
 		set.NewSetter[DagColumnAlias](DagColumnPayload, s.Payload),
 		set.NewSetter[DagColumnAlias](DagColumnProcessor, s.Processor),
@@ -162,6 +170,7 @@ type DagsTable struct {
 	TenantId       schema.TextColumnI[DagColumnAlias]
 	CreatedAt      schema.TimestamptzColumnI[DagColumnAlias]
 	UpdatedAt      schema.TimestamptzColumnI[DagColumnAlias]
+	DeletedAt      schema.NullTimestamptzColumnI[DagColumnAlias]
 	Status         schema.TextColumnI[DagColumnAlias]
 	Payload        schema.TextColumnI[DagColumnAlias]
 	Processor      schema.TextColumnI[DagColumnAlias]
@@ -177,6 +186,7 @@ var Dags = func() DagsTable {
 	tenantIdCol := schema.TextColumn(DagColumnTenantId, ddl.WithReferences[DagColumnAlias]("tenants", "id"), ddl.WithOnDelete[DagColumnAlias]("CASCADE"), ddl.WithNotNull[DagColumnAlias]())
 	createdAtCol := schema.TimestamptzColumn(DagColumnCreatedAt, ddl.WithDefault[DagColumnAlias]("now()"), ddl.WithNotNull[DagColumnAlias]())
 	updatedAtCol := schema.TimestamptzColumn(DagColumnUpdatedAt, ddl.WithDefault[DagColumnAlias]("now()"), ddl.WithNotNull[DagColumnAlias]())
+	deletedAtCol := schema.NullTimestamptzColumn(DagColumnDeletedAt, ddl.WithDefault[DagColumnAlias]("null"))
 	statusCol := schema.TextColumn(DagColumnStatus, ddl.WithNotNull[DagColumnAlias]())
 	payloadCol := schema.TextColumn(DagColumnPayload, ddl.WithDefault[DagColumnAlias]("'{}'::jsonb"), ddl.WithNotNull[DagColumnAlias]())
 	processorCol := schema.TextColumn(DagColumnProcessor, ddl.WithDefault[DagColumnAlias]("'{}'::jsonb"), ddl.WithNotNull[DagColumnAlias]())
@@ -198,6 +208,7 @@ var Dags = func() DagsTable {
 				tenantIdCol.DDL(),
 				createdAtCol.DDL(),
 				updatedAtCol.DDL(),
+				deletedAtCol.DDL(),
 				statusCol.DDL(),
 				payloadCol.DDL(),
 				processorCol.DDL(),
@@ -216,6 +227,7 @@ var Dags = func() DagsTable {
 		TenantId:       tenantIdCol,
 		CreatedAt:      createdAtCol,
 		UpdatedAt:      updatedAtCol,
+		DeletedAt:      deletedAtCol,
 		Status:         statusCol,
 		Payload:        payloadCol,
 		Processor:      processorCol,
