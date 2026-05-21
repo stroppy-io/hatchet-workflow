@@ -153,6 +153,16 @@ func (e *Executor) Run(ctx context.Context, dag *primitive.Dag) error {
 
 		ready := e.readyNodes(dag, false)
 		if len(ready) == 0 {
+			if anyNodeRunning(dag) {
+				// Only externally-driven work remains in flight (agent-locus nodes
+				// leased out, or sub-dags awaiting agents). Yield: the processor
+				// re-runs this Dag after a Report advances a node. The server never
+				// blocks waiting for an agent.
+				if err := e.saveDag(ctx, dag); err != nil {
+					return err
+				}
+				return nil
+			}
 			if ordinaryNodesTerminal(dag) {
 				if hasOrdinaryTerminalFailure(dag) {
 					// always_run teardown runs after any failure/cancellation,
@@ -235,6 +245,13 @@ func recoverDagExecution(dag *primitive.Dag, now time.Time) {
 
 func recoverNodeExecution(dag *primitive.Dag, node *primitive.Dag_Node, now time.Time) {
 	if node.GetStatus() != primitive.Status_STATUS_RUNNING {
+		return
+	}
+	if nodeIsAgentLocus(node) {
+		// Agent-locus liveness is governed by the lease (CommandQueue), not by
+		// crash recovery — a validly-leased command keeps running across restarts.
+		// TODO(runtime): a sub-dag node merely AWAITING agents is still reset here
+		// (it self-heals by re-running + re-parking, with churn). Distinguish it.
 		return
 	}
 	exec := ensureNodeExecution(node)
@@ -344,12 +361,22 @@ type nodeResult struct {
 	taskState *primitive.Dag_Node_TaskState
 	subDag    *primitive.Dag
 	cancelled bool
-	err       error
+	// parked marks externally-driven work that has not finished in-process: an
+	// agent-locus node (leased out via Poll, advanced by Report) or a sub-dag that
+	// yielded while waiting on agents. The node stays RUNNING and the executor
+	// yields; the processor re-runs it after a Report advances a node.
+	parked bool
+	err    error
 }
 
 func (e *Executor) executeNode(ctx context.Context, node *primitive.Dag_Node) nodeResult {
 	switch v := node.GetVariant().(type) {
 	case *primitive.Dag_Node_TaskState_:
+		if nodeIsAgentLocus(node) {
+			// Agent-locus: never executed by the server. The agent leases it via
+			// Poll and Reports terminal status. Park it (stays RUNNING) and yield.
+			return nodeResult{nodeID: node.GetId(), parked: true}
+		}
 		state, err := RunTask(v.TaskState, e.tasks)
 		return nodeResult{nodeID: node.GetId(), taskState: state, err: err}
 	case *primitive.Dag_Node_SubDag:
@@ -361,6 +388,9 @@ func (e *Executor) executeNode(ctx context.Context, node *primitive.Dag_Node) no
 			// success; terminal result mirrored into owning node
 		case primitive.Status_STATUS_CANCELLED:
 			res.cancelled = true
+		case primitive.Status_STATUS_RUNNING, primitive.Status_STATUS_PENDING:
+			// sub-dag yielded while waiting on agent commands; re-runs next tick.
+			res.parked = true
 		default:
 			if runErr == nil {
 				runErr = fmt.Errorf("sub-dag %q ended in status %s", sub.GetId(), sub.GetStatus())
@@ -447,6 +477,14 @@ func (e *Executor) applyNodeResult(dag *primitive.Dag, result nodeResult) {
 	if node == nil {
 		return
 	}
+	if result.parked {
+		// Externally-driven work: leave the node RUNNING (set by runBatch). For a
+		// parked sub-dag, mirror the latest embedded snapshot so progress persists.
+		if result.subDag != nil {
+			node.Variant = &primitive.Dag_Node_SubDag{SubDag: result.subDag}
+		}
+		return
+	}
 	if result.subDag != nil {
 		node.Variant = &primitive.Dag_Node_SubDag{SubDag: result.subDag}
 	}
@@ -510,6 +548,24 @@ func nodeFailureMetadata(node *primitive.Dag_Node) map[string]string {
 		meta["dag_id"] = dagID
 	}
 	return meta
+}
+
+// nodeIsAgentLocus reports whether the node is an agent-locus task — leased out
+// to an agent via Poll and never executed by the server.
+func nodeIsAgentLocus(node *primitive.Dag_Node) bool {
+	return node.GetTaskState().GetLocus() == primitive.Dag_Node_TaskState_EXECUTION_LOCUS_AGENT
+}
+
+// anyNodeRunning reports whether any direct node is RUNNING. Server task nodes
+// finish in-process within a batch, so a RUNNING node between iterations means
+// externally-driven (agent / awaiting-agent sub-dag) work is in flight.
+func anyNodeRunning(dag *primitive.Dag) bool {
+	for _, node := range dag.GetNodes() {
+		if node.GetStatus() == primitive.Status_STATUS_RUNNING {
+			return true
+		}
+	}
+	return false
 }
 
 func phaseForNode(node *primitive.Dag_Node) string {

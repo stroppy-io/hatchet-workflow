@@ -3,23 +3,11 @@ package tracing
 import (
 	"context"
 
-	"github.com/naukograd-software/komeet-backend/internal/core/logger"
-	"github.com/uptrace/opentelemetry-go-extra/otelzap"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
-
-func GetTraceLogger(name string) *otelzap.Logger {
-	l := logger.Global().Named(name)
-	return otelzap.New(
-		l,
-		otelzap.WithCaller(l.Level() == zap.DebugLevel),
-		otelzap.WithStackTrace(l.Level() == zap.DebugLevel),
-	)
-}
 
 func handelErr(span trace.Span, err error, opts *traceOptions) error {
 	if err != nil && opts.errorFilter(err) {

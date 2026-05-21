@@ -38,7 +38,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/naukograd-software/komeet-backend/internal/core/build"
+	"github.com/stroppy-io/stroppy-cloud/internal/build"
 	"go.opentelemetry.io/contrib/instrumentation/host"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
