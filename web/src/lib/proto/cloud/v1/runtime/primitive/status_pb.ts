@@ -12,6 +12,25 @@ export const file_cloud_v1_runtime_primitive_status: GenFile = /*@__PURE__*/
   fileDesc("CidjbG91ZC92MS9ydW50aW1lL3ByaW1pdGl2ZS9zdGF0dXMucHJvdG8SGmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlKskBCgZTdGF0dXMSFgoSU1RBVFVTX1VOU1BFQ0lGSUVEEAASEgoOU1RBVFVTX1BFTkRJTkcQARISCg5TVEFUVVNfUlVOTklORxACEhUKEVNUQVRVU19SRVRSWV9XQUlUEAUSFAoQU1RBVFVTX0NPTVBMRVRFRBADEhEKDVNUQVRVU19GQUlMRUQQBBISCg5TVEFUVVNfU0tJUFBFRBAGEhUKEVNUQVRVU19DQU5DRUxMSU5HEAcSFAoQU1RBVFVTX0NBTkNFTExFRBAIQk9aTWdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3J1bnRpbWUvcHJpbWl0aXZlYgZwcm90bzM");
 
 /**
+ *
+ * BDD decisions (D14/D15, features/engine/lifecycle-scheduling.feature):
+ *
+ * - the run lifecycle IS the Dag.status; there is no separate job_runs state
+ * machine. Old queued -> PENDING, running -> RUNNING, finished -> COMPLETED,
+ * failed -> FAILED, cancelled -> CANCELLED.
+ * - multi-server: the authoritative claim/lease is in Postgres — see
+ * models.Dag.Processor (claimed_by, lease_expires_at, generation) and the
+ * dags_claim_idx index for SKIP LOCKED claim; the agent lease is on
+ * models.Agent. An expired lease lets another server take over, replacing the
+ * old reaper. (G3: Valkey is at most an optional fast advisory lock/cache, not
+ * the source of truth — corrects the earlier "Valkey lease" note.)
+ * - cross-tenant quotas/admission are decided by an admission controller
+ * before start (PENDING -> RUNNING); the runtime engine stays domain-
+ * agnostic and never sees quotas.
+ * - recovery relies on the always_run teardown firing structurally when an
+ * inflight Dag is re-read on restart; no provider-specific RecoverChecker in
+ * the engine (reachability is a domain predicate).
+ *
  * @generated from enum cloud.v1.runtime.primitive.Status
  */
 export enum Status {
@@ -86,6 +105,25 @@ export enum Status {
 }
 
 /**
+ *
+ * BDD decisions (D14/D15, features/engine/lifecycle-scheduling.feature):
+ *
+ * - the run lifecycle IS the Dag.status; there is no separate job_runs state
+ * machine. Old queued -> PENDING, running -> RUNNING, finished -> COMPLETED,
+ * failed -> FAILED, cancelled -> CANCELLED.
+ * - multi-server: the authoritative claim/lease is in Postgres — see
+ * models.Dag.Processor (claimed_by, lease_expires_at, generation) and the
+ * dags_claim_idx index for SKIP LOCKED claim; the agent lease is on
+ * models.Agent. An expired lease lets another server take over, replacing the
+ * old reaper. (G3: Valkey is at most an optional fast advisory lock/cache, not
+ * the source of truth — corrects the earlier "Valkey lease" note.)
+ * - cross-tenant quotas/admission are decided by an admission controller
+ * before start (PENDING -> RUNNING); the runtime engine stays domain-
+ * agnostic and never sees quotas.
+ * - recovery relies on the always_run teardown firing structurally when an
+ * inflight Dag is re-read on restart; no provider-specific RecoverChecker in
+ * the engine (reachability is a domain predicate).
+ *
  * @generated from enum cloud.v1.runtime.primitive.Status
  */
 export type StatusJson = "STATUS_UNSPECIFIED" | "STATUS_PENDING" | "STATUS_RUNNING" | "STATUS_RETRY_WAIT" | "STATUS_COMPLETED" | "STATUS_FAILED" | "STATUS_SKIPPED" | "STATUS_CANCELLING" | "STATUS_CANCELLED";

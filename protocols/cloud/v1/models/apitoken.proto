@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/models/common.proto";
+import "cloud/v1/models/tenant.proto";
+import "google/protobuf/timestamp.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+/*
+    ApiToken is a long-lived, tenant-scoped programmatic credential (CI/SDK), the
+    third auth principal alongside Account login (JWT) and the agent machine JWT.
+    Recast of the old tenant_api_tokens.
+
+    - only the sha256 HASH is stored (token_hash virtual column, write-only); the
+      plaintext is returned ONCE at creation and never persisted.
+    - role is capped to <= ADMIN (never OWNER): a CI key must not change settings,
+      members, or mint tokens. Enforced by validate not_in:[0,3].
+    - minted/revoked by tenant OWNER only (centralized); see ApiTokenService.
+    - presented as a Bearer token in Authorization, same as JWT; auth tries JWT
+      first, then an ApiToken hash lookup -> principal {tenant_id, role}.
+ */
+message ApiToken {
+    message List {repeated ApiToken api_tokens = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "api_tokens"
+        virtual_columns: [
+            {sql_name: "token_hash", sql_type: "TEXT", is_nullable: false}
+        ]
+        indexes: [
+            {name: "api_tokens_hash_uniq", columns: ["token_hash"], unique: true}
+        ]
+    };
+
+    models.Entity entity = 1 [(goplain.field).embed = true];
+    models.Own owned = 2 [(goplain.field).embed = true];
+    /* name is a human label for the token. */
+    string name = 3 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    /* role the token authenticates as. Capped <= ADMIN (no OWNER). */
+    TenantMember.Role role = 4 [(validate.rules).enum = {defined_only: true, not_in: [0, 3]}];
+    /* expires_at optionally limits the token lifetime; absent = no expiry. */
+    optional google.protobuf.Timestamp expires_at = 5;
+}

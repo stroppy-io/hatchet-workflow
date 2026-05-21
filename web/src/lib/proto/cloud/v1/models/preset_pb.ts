@@ -23,7 +23,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/preset.proto.
  */
 export const file_cloud_v1_models_preset: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS9tb2RlbHMvcHJlc2V0LnByb3RvEg9jbG91ZC52MS5tb2RlbHMi2AQKBlByZXNldBIvCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5tb2RlbHMuRW50aXR5QgaCph0CIAESKwoFb3duZWQYAiABKAsyFC5jbG91ZC52MS5tb2RlbHMuT3duQgaCph0CIAESKwoEdGFncxgDIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzQgaCph0CIAESNgoEa2luZBgEIAEoDjIcLmNsb3VkLnYxLm1vZGVscy5QcmVzZXQuS2luZEIK+kIHggEEIAAQARJKCg93b3JrbG9hZF9wcmVzZXQYCiABKAsyHy5jbG91ZC52MS5kb21haW4uV29ya2xvYWRQcmVzZXRCDvpCBYoBAhABgqYdAhABSAASSgoPZGF0YWJhc2VfcHJlc2V0GAsgASgLMh8uY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlUHJlc2V0Qg76QgWKAQIQAYKmHQIQAUgAEkIKC3Rlc3RfcHJlc2V0GAwgASgLMhsuY2xvdWQudjEuZG9tYWluLlRlc3RQcmVzZXRCDvpCBYoBAhABgqYdAhABSAAaMAoETGlzdBIoCgdwcmVzZXRzGAEgAygLMhcuY2xvdWQudjEubW9kZWxzLlByZXNldCJRCgRLaW5kEhQKEEtJTkRfVU5TUEVDSUZJRUQQABIRCg1LSU5EX1dPUktMT0FEEAESEQoNS0lORF9EQVRBQkFTRRACEg0KCUtJTkRfVEVTVBADOhWStRgLCAESB3ByZXNldHOCph0CCAFCEwoGcHJlc2V0Egn4QgGCtRgCCAFCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_common_tags, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_models_common, file_goplain_goplain, file_ratelproto_ratelproto, file_validate_validate]);
+  fileDesc("ChxjbG91ZC92MS9tb2RlbHMvcHJlc2V0LnByb3RvEg9jbG91ZC52MS5tb2RlbHMi2AQKBlByZXNldBIvCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5tb2RlbHMuRW50aXR5QgaCph0CIAESKwoFb3duZWQYAiABKAsyFC5jbG91ZC52MS5tb2RlbHMuT3duQgaCph0CIAESKwoEdGFncxgDIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzQgaCph0CIAESNgoEa2luZBgEIAEoDjIcLmNsb3VkLnYxLm1vZGVscy5QcmVzZXQuS2luZEIK+kIHggEEEAEgABJKCg93b3JrbG9hZF9wcmVzZXQYCiABKAsyHy5jbG91ZC52MS5kb21haW4uV29ya2xvYWRQcmVzZXRCDvpCBYoBAhABgqYdAhABSAASSgoPZGF0YWJhc2VfcHJlc2V0GAsgASgLMh8uY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlUHJlc2V0Qg76QgWKAQIQAYKmHQIQAUgAEkIKC3Rlc3RfcHJlc2V0GAwgASgLMhsuY2xvdWQudjEuZG9tYWluLlRlc3RQcmVzZXRCDvpCBYoBAhABgqYdAhABSAAaMAoETGlzdBIoCgdwcmVzZXRzGAEgAygLMhcuY2xvdWQudjEubW9kZWxzLlByZXNldCJRCgRLaW5kEhQKEEtJTkRfVU5TUEVDSUZJRUQQABIRCg1LSU5EX1dPUktMT0FEEAESEQoNS0lORF9EQVRBQkFTRRACEg0KCUtJTkRfVEVTVBADOhWStRgLEgdwcmVzZXRzCAGCph0CCAFCEwoGcHJlc2V0Egn4QgGCtRgCCAFCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_common_tags, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_models_common, file_goplain_goplain, file_ratelproto_ratelproto, file_validate_validate]);
 
 /**
  * @generated from message cloud.v1.models.Preset
@@ -152,6 +152,12 @@ export const Preset_ListSchema: GenMessage<Preset_List, {jsonType: Preset_ListJs
   messageDesc(file_cloud_v1_models_preset, 0, 0);
 
 /**
+ *
+ * BDD decision (B6): kind is kept alongside the oneof discriminator below
+ * as a cheap DB filter/index (list "all DATABASE presets" without parsing
+ * the oneof). Validation MUST enforce that kind matches the selected oneof
+ * branch (KIND_DATABASE <-> database_preset, etc.); a mismatch is rejected.
+ *
  * @generated from enum cloud.v1.models.Preset.Kind
  */
 export enum Preset_Kind {
@@ -177,6 +183,12 @@ export enum Preset_Kind {
 }
 
 /**
+ *
+ * BDD decision (B6): kind is kept alongside the oneof discriminator below
+ * as a cheap DB filter/index (list "all DATABASE presets" without parsing
+ * the oneof). Validation MUST enforce that kind matches the selected oneof
+ * branch (KIND_DATABASE <-> database_preset, etc.); a mismatch is rejected.
+ *
  * @generated from enum cloud.v1.models.Preset.Kind
  */
 export type Preset_KindJson = "KIND_UNSPECIFIED" | "KIND_WORKLOAD" | "KIND_DATABASE" | "KIND_TEST";

@@ -4,7 +4,6 @@
 
 import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import { file_google_protobuf_duration } from "@bufbuild/protobuf/wkt";
 import { file_validate_validate } from "../../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -12,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/runtime/system/ip.proto.
  */
 export const file_cloud_v1_runtime_system_ip: GenFile = /*@__PURE__*/
-  fileDesc("CiBjbG91ZC92MS9ydW50aW1lL3N5c3RlbS9pcC5wcm90bxIXY2xvdWQudjEucnVudGltZS5zeXN0ZW0i5QEKCUlwQWRkcmVzcxJDCgZmYW1pbHkYASABKA4yKS5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5JcEFkZHJlc3MuRmFtaWx5Qgj6QgWCAQIQARIZCgdhZGRyZXNzGAIgASgJQgj6QgVyAxiAARIcCgpwcmVmaXhfbGVuGAMgASgNQgj6QgUqAxiAARIWCgVzY29wZRgEIAEoCUIH+kIEcgIYQCJCCgZGYW1pbHkSFgoSRkFNSUxZX1VOU1BFQ0lGSUVEEAASDwoLRkFNSUxZX0lQVjQQARIPCgtGQU1JTFlfSVBWNhACIh4KBENpZHISFgoFdmFsdWUYASABKAlCB/pCBHICEAEiggEKB05ldHdvcmsSNgoFY2lkcnMYASADKAsyHS5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5DaWRyQgj6QgWSAQIIARI/CglhZGRyZXNzZXMYAiADKAsyIi5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5JcEFkZHJlc3NCCPpCBZIBAggBQkxaSmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3J1bnRpbWUvc3lzdGVtYgZwcm90bzM", [file_google_protobuf_duration, file_validate_validate]);
+  fileDesc("CiBjbG91ZC92MS9ydW50aW1lL3N5c3RlbS9pcC5wcm90bxIXY2xvdWQudjEucnVudGltZS5zeXN0ZW0i5QEKCUlwQWRkcmVzcxJDCgZmYW1pbHkYASABKA4yKS5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5JcEFkZHJlc3MuRmFtaWx5Qgj6QgWCAQIQARIZCgdhZGRyZXNzGAIgASgJQgj6QgVyAxiAARIcCgpwcmVmaXhfbGVuGAMgASgNQgj6QgUqAxiAARIWCgVzY29wZRgEIAEoCUIH+kIEcgIYQCJCCgZGYW1pbHkSFgoSRkFNSUxZX1VOU1BFQ0lGSUVEEAASDwoLRkFNSUxZX0lQVjQQARIPCgtGQU1JTFlfSVBWNhACIh4KBENpZHISFgoFdmFsdWUYASABKAlCB/pCBHICEAEiggEKB05ldHdvcmsSNgoFY2lkcnMYASADKAsyHS5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5DaWRyQgj6QgWSAQIIARI/CglhZGRyZXNzZXMYAiADKAsyIi5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5JcEFkZHJlc3NCCPpCBZIBAggBQkxaSmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3J1bnRpbWUvc3lzdGVtYgZwcm90bzM", [file_validate_validate]);
 
 /**
  * IpAddress describes an address assigned to a network interface. 

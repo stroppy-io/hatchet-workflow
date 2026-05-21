@@ -453,6 +453,35 @@ func (m *Suite) validate(all bool) error {
 		}
 	}
 
+	if all {
+		switch v := interface{}(m.GetCron()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SuiteValidationError{
+					field:  "Cron",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SuiteValidationError{
+					field:  "Cron",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCron()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SuiteValidationError{
+				field:  "Cron",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if m.Name != nil {
 
 		if l := utf8.RuneCountInString(m.GetName()); l < 1 || l > 255 {
@@ -479,6 +508,39 @@ func (m *Suite) validate(all bool) error {
 				return err
 			}
 			errors = append(errors, err)
+		}
+
+	}
+
+	if m.NextFireAt != nil {
+
+		if all {
+			switch v := interface{}(m.GetNextFireAt()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SuiteValidationError{
+						field:  "NextFireAt",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SuiteValidationError{
+						field:  "NextFireAt",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetNextFireAt()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SuiteValidationError{
+					field:  "NextFireAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
 		}
 
 	}
@@ -560,22 +622,22 @@ var _ interface {
 	ErrorName() string
 } = SuiteValidationError{}
 
-// Validate checks the field values on SuiteRuns with the rules defined in the
+// Validate checks the field values on SuiteRun with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *SuiteRuns) Validate() error {
+func (m *SuiteRun) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on SuiteRuns with the rules defined in
+// ValidateAll checks the field values on SuiteRun with the rules defined in
 // the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in SuiteRunsMultiError, or nil
+// result is a list of violation errors wrapped in SuiteRunMultiError, or nil
 // if none found.
-func (m *SuiteRuns) ValidateAll() error {
+func (m *SuiteRun) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *SuiteRuns) validate(all bool) error {
+func (m *SuiteRun) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -586,7 +648,7 @@ func (m *SuiteRuns) validate(all bool) error {
 		switch v := interface{}(m.GetEntity()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, SuiteRunsValidationError{
+				errors = append(errors, SuiteRunValidationError{
 					field:  "Entity",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -594,7 +656,7 @@ func (m *SuiteRuns) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, SuiteRunsValidationError{
+				errors = append(errors, SuiteRunValidationError{
 					field:  "Entity",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -603,7 +665,7 @@ func (m *SuiteRuns) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetEntity()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return SuiteRunsValidationError{
+			return SuiteRunValidationError{
 				field:  "Entity",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -615,7 +677,7 @@ func (m *SuiteRuns) validate(all bool) error {
 		switch v := interface{}(m.GetOwned()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, SuiteRunsValidationError{
+				errors = append(errors, SuiteRunValidationError{
 					field:  "Owned",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -623,7 +685,7 @@ func (m *SuiteRuns) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, SuiteRunsValidationError{
+				errors = append(errors, SuiteRunValidationError{
 					field:  "Owned",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -632,7 +694,7 @@ func (m *SuiteRuns) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetOwned()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return SuiteRunsValidationError{
+			return SuiteRunValidationError{
 				field:  "Owned",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -644,7 +706,7 @@ func (m *SuiteRuns) validate(all bool) error {
 		switch v := interface{}(m.GetSuiteId()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, SuiteRunsValidationError{
+				errors = append(errors, SuiteRunValidationError{
 					field:  "SuiteId",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -652,7 +714,7 @@ func (m *SuiteRuns) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, SuiteRunsValidationError{
+				errors = append(errors, SuiteRunValidationError{
 					field:  "SuiteId",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -661,7 +723,7 @@ func (m *SuiteRuns) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetSuiteId()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return SuiteRunsValidationError{
+			return SuiteRunValidationError{
 				field:  "SuiteId",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -670,7 +732,7 @@ func (m *SuiteRuns) validate(all bool) error {
 	}
 
 	if m.GetDag() == nil {
-		err := SuiteRunsValidationError{
+		err := SuiteRunValidationError{
 			field:  "Dag",
 			reason: "value is required",
 		}
@@ -684,7 +746,7 @@ func (m *SuiteRuns) validate(all bool) error {
 		switch v := interface{}(m.GetDag()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, SuiteRunsValidationError{
+				errors = append(errors, SuiteRunValidationError{
 					field:  "Dag",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -692,7 +754,7 @@ func (m *SuiteRuns) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, SuiteRunsValidationError{
+				errors = append(errors, SuiteRunValidationError{
 					field:  "Dag",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -701,7 +763,7 @@ func (m *SuiteRuns) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetDag()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return SuiteRunsValidationError{
+			return SuiteRunValidationError{
 				field:  "Dag",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -716,7 +778,7 @@ func (m *SuiteRuns) validate(all bool) error {
 			switch v := interface{}(item).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, SuiteRunsValidationError{
+					errors = append(errors, SuiteRunValidationError{
 						field:  fmt.Sprintf("TestRuns[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -724,7 +786,7 @@ func (m *SuiteRuns) validate(all bool) error {
 				}
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
-					errors = append(errors, SuiteRunsValidationError{
+					errors = append(errors, SuiteRunValidationError{
 						field:  fmt.Sprintf("TestRuns[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -733,7 +795,7 @@ func (m *SuiteRuns) validate(all bool) error {
 			}
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return SuiteRunsValidationError{
+				return SuiteRunValidationError{
 					field:  fmt.Sprintf("TestRuns[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -744,18 +806,18 @@ func (m *SuiteRuns) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return SuiteRunsMultiError(errors)
+		return SuiteRunMultiError(errors)
 	}
 
 	return nil
 }
 
-// SuiteRunsMultiError is an error wrapping multiple validation errors returned
-// by SuiteRuns.ValidateAll() if the designated constraints aren't met.
-type SuiteRunsMultiError []error
+// SuiteRunMultiError is an error wrapping multiple validation errors returned
+// by SuiteRun.ValidateAll() if the designated constraints aren't met.
+type SuiteRunMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m SuiteRunsMultiError) Error() string {
+func (m SuiteRunMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -764,11 +826,11 @@ func (m SuiteRunsMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m SuiteRunsMultiError) AllErrors() []error { return m }
+func (m SuiteRunMultiError) AllErrors() []error { return m }
 
-// SuiteRunsValidationError is the validation error returned by
-// SuiteRuns.Validate if the designated constraints aren't met.
-type SuiteRunsValidationError struct {
+// SuiteRunValidationError is the validation error returned by
+// SuiteRun.Validate if the designated constraints aren't met.
+type SuiteRunValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -776,22 +838,22 @@ type SuiteRunsValidationError struct {
 }
 
 // Field function returns field value.
-func (e SuiteRunsValidationError) Field() string { return e.field }
+func (e SuiteRunValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e SuiteRunsValidationError) Reason() string { return e.reason }
+func (e SuiteRunValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e SuiteRunsValidationError) Cause() error { return e.cause }
+func (e SuiteRunValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e SuiteRunsValidationError) Key() bool { return e.key }
+func (e SuiteRunValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e SuiteRunsValidationError) ErrorName() string { return "SuiteRunsValidationError" }
+func (e SuiteRunValidationError) ErrorName() string { return "SuiteRunValidationError" }
 
 // Error satisfies the builtin error interface
-func (e SuiteRunsValidationError) Error() string {
+func (e SuiteRunValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -803,14 +865,14 @@ func (e SuiteRunsValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sSuiteRuns.%s: %s%s",
+		"invalid %sSuiteRun.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = SuiteRunsValidationError{}
+var _ error = SuiteRunValidationError{}
 
 var _ interface {
 	Field() string
@@ -818,7 +880,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = SuiteRunsValidationError{}
+} = SuiteRunValidationError{}
 
 // Validate checks the field values on TestRun_List with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -975,7 +1037,7 @@ func (m *Suite_List) validate(all bool) error {
 
 	var errors []error
 
-	for idx, item := range m.GetTestRuns() {
+	for idx, item := range m.GetSuites() {
 		_, _ = idx, item
 
 		if all {
@@ -983,7 +1045,7 @@ func (m *Suite_List) validate(all bool) error {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, Suite_ListValidationError{
-						field:  fmt.Sprintf("TestRuns[%v]", idx),
+						field:  fmt.Sprintf("Suites[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -991,7 +1053,7 @@ func (m *Suite_List) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, Suite_ListValidationError{
-						field:  fmt.Sprintf("TestRuns[%v]", idx),
+						field:  fmt.Sprintf("Suites[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -1000,7 +1062,7 @@ func (m *Suite_List) validate(all bool) error {
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return Suite_ListValidationError{
-					field:  fmt.Sprintf("TestRuns[%v]", idx),
+					field:  fmt.Sprintf("Suites[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -1086,76 +1148,85 @@ var _ interface {
 	ErrorName() string
 } = Suite_ListValidationError{}
 
-// Validate checks the field values on SuiteRuns_List with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
+// Validate checks the field values on Suite_Cron with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *SuiteRuns_List) Validate() error {
+func (m *Suite_Cron) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on SuiteRuns_List with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in SuiteRuns_ListMultiError,
-// or nil if none found.
-func (m *SuiteRuns_List) ValidateAll() error {
+// ValidateAll checks the field values on Suite_Cron with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in Suite_CronMultiError, or
+// nil if none found.
+func (m *Suite_Cron) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *SuiteRuns_List) validate(all bool) error {
+func (m *Suite_Cron) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	for idx, item := range m.GetTestRuns() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, SuiteRuns_ListValidationError{
-						field:  fmt.Sprintf("TestRuns[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, SuiteRuns_ListValidationError{
-						field:  fmt.Sprintf("TestRuns[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return SuiteRuns_ListValidationError{
-					field:  fmt.Sprintf("TestRuns[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
+	if l := utf8.RuneCountInString(m.GetExpr()); l < 1 || l > 128 {
+		err := Suite_CronValidationError{
+			field:  "Expr",
+			reason: "value length must be between 1 and 128 runes, inclusive",
 		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
+	if utf8.RuneCountInString(m.GetTimezone()) > 64 {
+		err := Suite_CronValidationError{
+			field:  "Timezone",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := Suite_Cron_Catchup_name[int32(m.GetCatchup())]; !ok {
+		err := Suite_CronValidationError{
+			field:  "Catchup",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := Suite_Cron_Concurrent_name[int32(m.GetConcurrent())]; !ok {
+		err := Suite_CronValidationError{
+			field:  "Concurrent",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	if len(errors) > 0 {
-		return SuiteRuns_ListMultiError(errors)
+		return Suite_CronMultiError(errors)
 	}
 
 	return nil
 }
 
-// SuiteRuns_ListMultiError is an error wrapping multiple validation errors
-// returned by SuiteRuns_List.ValidateAll() if the designated constraints
-// aren't met.
-type SuiteRuns_ListMultiError []error
+// Suite_CronMultiError is an error wrapping multiple validation errors
+// returned by Suite_Cron.ValidateAll() if the designated constraints aren't met.
+type Suite_CronMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m SuiteRuns_ListMultiError) Error() string {
+func (m Suite_CronMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1164,11 +1235,11 @@ func (m SuiteRuns_ListMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m SuiteRuns_ListMultiError) AllErrors() []error { return m }
+func (m Suite_CronMultiError) AllErrors() []error { return m }
 
-// SuiteRuns_ListValidationError is the validation error returned by
-// SuiteRuns_List.Validate if the designated constraints aren't met.
-type SuiteRuns_ListValidationError struct {
+// Suite_CronValidationError is the validation error returned by
+// Suite_Cron.Validate if the designated constraints aren't met.
+type Suite_CronValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1176,22 +1247,22 @@ type SuiteRuns_ListValidationError struct {
 }
 
 // Field function returns field value.
-func (e SuiteRuns_ListValidationError) Field() string { return e.field }
+func (e Suite_CronValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e SuiteRuns_ListValidationError) Reason() string { return e.reason }
+func (e Suite_CronValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e SuiteRuns_ListValidationError) Cause() error { return e.cause }
+func (e Suite_CronValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e SuiteRuns_ListValidationError) Key() bool { return e.key }
+func (e Suite_CronValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e SuiteRuns_ListValidationError) ErrorName() string { return "SuiteRuns_ListValidationError" }
+func (e Suite_CronValidationError) ErrorName() string { return "Suite_CronValidationError" }
 
 // Error satisfies the builtin error interface
-func (e SuiteRuns_ListValidationError) Error() string {
+func (e Suite_CronValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1203,14 +1274,14 @@ func (e SuiteRuns_ListValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sSuiteRuns_List.%s: %s%s",
+		"invalid %sSuite_Cron.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = SuiteRuns_ListValidationError{}
+var _ error = Suite_CronValidationError{}
 
 var _ interface {
 	Field() string
@@ -1218,4 +1289,138 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = SuiteRuns_ListValidationError{}
+} = Suite_CronValidationError{}
+
+// Validate checks the field values on SuiteRun_List with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *SuiteRun_List) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SuiteRun_List with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in SuiteRun_ListMultiError, or
+// nil if none found.
+func (m *SuiteRun_List) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SuiteRun_List) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetSuiteRuns() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SuiteRun_ListValidationError{
+						field:  fmt.Sprintf("SuiteRuns[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SuiteRun_ListValidationError{
+						field:  fmt.Sprintf("SuiteRuns[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SuiteRun_ListValidationError{
+					field:  fmt.Sprintf("SuiteRuns[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return SuiteRun_ListMultiError(errors)
+	}
+
+	return nil
+}
+
+// SuiteRun_ListMultiError is an error wrapping multiple validation errors
+// returned by SuiteRun_List.ValidateAll() if the designated constraints
+// aren't met.
+type SuiteRun_ListMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SuiteRun_ListMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SuiteRun_ListMultiError) AllErrors() []error { return m }
+
+// SuiteRun_ListValidationError is the validation error returned by
+// SuiteRun_List.Validate if the designated constraints aren't met.
+type SuiteRun_ListValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SuiteRun_ListValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SuiteRun_ListValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SuiteRun_ListValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SuiteRun_ListValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SuiteRun_ListValidationError) ErrorName() string { return "SuiteRun_ListValidationError" }
+
+// Error satisfies the builtin error interface
+func (e SuiteRun_ListValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSuiteRun_List.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SuiteRun_ListValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SuiteRun_ListValidationError{}

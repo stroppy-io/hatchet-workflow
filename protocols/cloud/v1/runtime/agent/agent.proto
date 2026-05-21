@@ -67,6 +67,13 @@ message Command {
     runtime.ops.Operation operation = 3 [(validate.rules).message.required = true];
 }
 
+/*
+    BDD note (D16): Report{COMMAND_STATUS_RUNNING} is both a progress signal and
+    a lease keepalive — each one pushes the command's lease_expires_at forward,
+    so a multi-hour command (run_stroppy) does not lose its lease. Terminal
+    statuses (COMPLETED/FAILED/CANCELLED) drive the owning Dag node to its
+    terminal status and carry Operation.Result.
+ */
 /* Report is the agent response for a Command. */
 message Report {
     string command_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];

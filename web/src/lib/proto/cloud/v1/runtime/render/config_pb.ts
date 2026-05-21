@@ -21,7 +21,7 @@ import type { JsonObject, Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/runtime/render/config.proto.
  */
 export const file_cloud_v1_runtime_render_config: GenFile = /*@__PURE__*/
-  fileDesc("CiRjbG91ZC92MS9ydW50aW1lL3JlbmRlci9jb25maWcucHJvdG8SF2Nsb3VkLnYxLnJ1bnRpbWUucmVuZGVyIpMBCghDZmdWYWx1ZRIrCgRmaWxlGAogASgLMh0uY2xvdWQudjEucnVudGltZS5zeXN0ZW0uRmlsZRIxCgdzZXJ2aWNlGAwgASgLMiAuY2xvdWQudjEucnVudGltZS5zeXN0ZW0uU2VydmljZRInCgZzdHJ1Y3QYDiABKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0IuoICgZDb25maWcSFgoCaWQYASABKAlCCvpCB3IFEAEYgAESPgoFaXRlbXMYAiADKAsyJC5jbG91ZC52MS5ydW50aW1lLnJlbmRlci5Db25maWcuSXRlbUIJ+kIGkgEDEIAIEkYKCW92ZXJyaWRlcxgDIAMoCzIoLmNsb3VkLnYxLnJ1bnRpbWUucmVuZGVyLkNvbmZpZy5PdmVycmlkZUIJ+kIGkgEDEIACGr0CCgRJdGVtEhYKAmlkGAEgASgJQgr6QgdyBRABGIACEhIKCm92ZXJyaWRkZW4YBSABKAgSLQoEZmlsZRgKIAEoCzIdLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLkZpbGVIABIzCgtlbnZpcm9ubWVudBgLIAEoCzIcLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLkVudkgAEjMKB3NlcnZpY2UYDCABKAsyIC5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5TZXJ2aWNlSAASNAoHY29tbWFuZBgNIAEoCzIhLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLkNtZC5TcGVjSAASKQoGc3RydWN0GA4gASgLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdEgAQg8KCHJlbmRlcmVkEgP4QgEa/wQKCE92ZXJyaWRlEhsKB2l0ZW1faWQYASABKAlCCvpCB3IFGIACEAESLQoEZmlsZRgKIAEoCzIdLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLkZpbGVIABIzCgtlbnZpcm9ubWVudBgLIAEoCzIcLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLkVudkgAEjMKB3NlcnZpY2UYDCABKAsyIC5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5TZXJ2aWNlSAASNAoHY29tbWFuZBgNIAEoCzIhLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLkNtZC5TcGVjSAASSAoKdGV4dF9wYXRjaBgUIAEoCzIyLmNsb3VkLnYxLnJ1bnRpbWUucmVuZGVyLkNvbmZpZy5PdmVycmlkZS5UZXh0UGF0Y2hIABJRCg9rZXlfdmFsdWVfcGF0Y2gYFSABKAsyNi5jbG91ZC52MS5ydW50aW1lLnJlbmRlci5Db25maWcuT3ZlcnJpZGUuS2V5VmFsdWVQYXRjaEgAGicKCVRleHRQYXRjaBIaCgdjb250ZW50GAEgASgJQgn6QgZyBCiAgEAarwEKDUtleVZhbHVlUGF0Y2gSVwoDc2V0GAEgAygLMj8uY2xvdWQudjEucnVudGltZS5yZW5kZXIuQ29uZmlnLk92ZXJyaWRlLktleVZhbHVlUGF0Y2guU2V0RW50cnlCCfpCBpoBAxCAAhIZCgZyZW1vdmUYAiADKAlCCfpCBpIBAxCAAhoqCghTZXRFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQg8KCG92ZXJyaWRlEgP4QgFCTFpKZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvcnVudGltZS9yZW5kZXJiBnByb3RvMw", [file_cloud_v1_runtime_system_cmd, file_cloud_v1_runtime_system_env, file_cloud_v1_runtime_system_file, file_cloud_v1_runtime_system_service, file_validate_validate, file_google_protobuf_struct]);
+  fileDesc("CiRjbG91ZC92MS9ydW50aW1lL3JlbmRlci9jb25maWcucHJvdG8SF2Nsb3VkLnYxLnJ1bnRpbWUucmVuZGVyIpMBCghDZmdWYWx1ZRIrCgRmaWxlGAogASgLMh0uY2xvdWQudjEucnVudGltZS5zeXN0ZW0uRmlsZRIxCgdzZXJ2aWNlGAwgASgLMiAuY2xvdWQudjEucnVudGltZS5zeXN0ZW0uU2VydmljZRInCgZzdHJ1Y3QYDiABKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0IpIKCgZDb25maWcSFgoCaWQYASABKAlCCvpCB3IFEAEYgAESPgoFaXRlbXMYAiADKAsyJC5jbG91ZC52MS5ydW50aW1lLnJlbmRlci5Db25maWcuSXRlbUIJ+kIGkgEDEIAIEkYKCW92ZXJyaWRlcxgDIAMoCzIoLmNsb3VkLnYxLnJ1bnRpbWUucmVuZGVyLkNvbmZpZy5PdmVycmlkZUIJ+kIGkgEDEIACGmAKB0JpbmRpbmcSGQoFdG9rZW4YASABKAlCCvpCB3IFEAEYgAISIQoNY29tcG9uZW50X2lkcxgCIAMoCUIK+kIHkgEEEEAIARIXCgRhdHRyGAMgASgJQgn6QgZyBBABGEAagwMKBEl0ZW0SFgoCaWQYASABKAlCCvpCB3IFEAEYgAISEgoKb3ZlcnJpZGRlbhgFIAEoCBJECghiaW5kaW5ncxgGIAMoCzInLmNsb3VkLnYxLnJ1bnRpbWUucmVuZGVyLkNvbmZpZy5CaW5kaW5nQgn6QgaSAQMQgAISLQoEZmlsZRgKIAEoCzIdLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLkZpbGVIABIzCgtlbnZpcm9ubWVudBgLIAEoCzIcLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLkVudkgAEjMKB3NlcnZpY2UYDCABKAsyIC5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5TZXJ2aWNlSAASNAoHY29tbWFuZBgNIAEoCzIhLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLkNtZC5TcGVjSAASKQoGc3RydWN0GA4gASgLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdEgAQg8KCHJlbmRlcmVkEgP4QgEa/wQKCE92ZXJyaWRlEhsKB2l0ZW1faWQYASABKAlCCvpCB3IFEAEYgAISLQoEZmlsZRgKIAEoCzIdLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLkZpbGVIABIzCgtlbnZpcm9ubWVudBgLIAEoCzIcLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLkVudkgAEjMKB3NlcnZpY2UYDCABKAsyIC5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5TZXJ2aWNlSAASNAoHY29tbWFuZBgNIAEoCzIhLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLkNtZC5TcGVjSAASSAoKdGV4dF9wYXRjaBgUIAEoCzIyLmNsb3VkLnYxLnJ1bnRpbWUucmVuZGVyLkNvbmZpZy5PdmVycmlkZS5UZXh0UGF0Y2hIABJRCg9rZXlfdmFsdWVfcGF0Y2gYFSABKAsyNi5jbG91ZC52MS5ydW50aW1lLnJlbmRlci5Db25maWcuT3ZlcnJpZGUuS2V5VmFsdWVQYXRjaEgAGicKCVRleHRQYXRjaBIaCgdjb250ZW50GAEgASgJQgn6QgZyBCiAgEAarwEKDUtleVZhbHVlUGF0Y2gSVwoDc2V0GAEgAygLMj8uY2xvdWQudjEucnVudGltZS5yZW5kZXIuQ29uZmlnLk92ZXJyaWRlLktleVZhbHVlUGF0Y2guU2V0RW50cnlCCfpCBpoBAxCAAhIZCgZyZW1vdmUYAiADKAlCCfpCBpIBAxCAAhoqCghTZXRFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQg8KCG92ZXJyaWRlEgP4QgFCTFpKZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvcnVudGltZS9yZW5kZXJiBnByb3RvMw", [file_cloud_v1_runtime_system_cmd, file_cloud_v1_runtime_system_env, file_cloud_v1_runtime_system_file, file_cloud_v1_runtime_system_service, file_validate_validate, file_google_protobuf_struct]);
 
 /**
  * @generated from message cloud.v1.runtime.render.CfgValue
@@ -79,6 +79,28 @@ export const CfgValueSchema: GenMessage<CfgValue, {jsonType: CfgValueJson, valid
  * execution plan. A planner later converts accepted rendered items into
  * runtime.ops and DAG nodes.
  *
+ * BDD decision (B3, features/catalog/database-render.feature):
+ *
+ * Invariant "preview == execution": the same renderer feeds both the wizard
+ * preview and the on-host artifact. The preview Item content is byte-for-byte
+ * equal to the WRITE_FILE operation the agent receives, EXCEPT for the
+ * explicitly declared set of runtime bindings. No other divergence is allowed.
+ *
+ * Runtime values (real IPs, hostnames, etcd endpoints, connect_address) are
+ * known only after provisioning. They are NOT magic string placeholders.
+ * They are modeled as a typed render.Binding on an Item and resolved at the
+ * plan->execute seam from semantic topology coordinates.
+ *
+ * Anti-leak rules:
+ * - down: system.File / ops / agent / primitive.Dag only ever see resolved
+ * values; a WRITE_FILE carrying an unresolved binding is invalid.
+ * - up: domain.* never references render.Binding; bindings are an artifact of
+ * rendering, not of intent.
+ *
+ * ADDED (H4): the typed Config.Item.Binding below — token + component_ids
+ * (plain string ids, runtime-pure) + a free-string attr (no enum, self-
+ * describing). Replaces the old dbconfig Substitute*Placeholders string magic.
+ *
  * @generated from message cloud.v1.runtime.render.Config
  */
 export type Config = Message<"cloud.v1.runtime.render.Config"> & {
@@ -110,6 +132,28 @@ export type Config = Message<"cloud.v1.runtime.render.Config"> & {
  * It contains generated artifacts and user overrides, but it is not an
  * execution plan. A planner later converts accepted rendered items into
  * runtime.ops and DAG nodes.
+ *
+ * BDD decision (B3, features/catalog/database-render.feature):
+ *
+ * Invariant "preview == execution": the same renderer feeds both the wizard
+ * preview and the on-host artifact. The preview Item content is byte-for-byte
+ * equal to the WRITE_FILE operation the agent receives, EXCEPT for the
+ * explicitly declared set of runtime bindings. No other divergence is allowed.
+ *
+ * Runtime values (real IPs, hostnames, etcd endpoints, connect_address) are
+ * known only after provisioning. They are NOT magic string placeholders.
+ * They are modeled as a typed render.Binding on an Item and resolved at the
+ * plan->execute seam from semantic topology coordinates.
+ *
+ * Anti-leak rules:
+ * - down: system.File / ops / agent / primitive.Dag only ever see resolved
+ * values; a WRITE_FILE carrying an unresolved binding is invalid.
+ * - up: domain.* never references render.Binding; bindings are an artifact of
+ * rendering, not of intent.
+ *
+ * ADDED (H4): the typed Config.Item.Binding below — token + component_ids
+ * (plain string ids, runtime-pure) + a free-string attr (no enum, self-
+ * describing). Replaces the old dbconfig Substitute*Placeholders string magic.
  *
  * @generated from message cloud.v1.runtime.render.Config
  */
@@ -146,6 +190,97 @@ export const ConfigSchema: GenMessage<Config, {jsonType: ConfigJson, validType: 
   messageDesc(file_cloud_v1_runtime_render_config, 1);
 
 /**
+ *
+ * Binding is a typed runtime late-binding hole in an item's content (B3,
+ * H4). The renderer leaves `token` in the rendered bytes; at the
+ * plan->execute seam the resolver replaces it with the runtime value of
+ * `attr` for the referenced topology component(s), read from
+ * Deployment.Output (D18). Replaces the old string placeholders.
+ *
+ * - component_ids is repeated to support multi-component values (e.g. an
+ * etcd HOSTS list); a single value is a one-element list.
+ * - attr is a free STRING, not an enum (self-describing, like metrics
+ * H46): the resolver interprets it ("private_ip", "public_ip",
+ * "endpoint", "port", "hosts", ...); a new attr needs no proto change.
+ * - kept independent of domain/models: component reference is a plain
+ * string id (like DagRef), so render stays runtime-pure.
+ *
+ * @generated from message cloud.v1.runtime.render.Config.Binding
+ */
+export type Config_Binding = Message<"cloud.v1.runtime.render.Config.Binding"> & {
+  /**
+   * token is the placeholder substring inside the item content. 
+   *
+   * @generated from field: string token = 1;
+   */
+  token: string;
+
+  /**
+   * component_ids are the topology component ids whose runtime value to resolve. 
+   *
+   * @generated from field: repeated string component_ids = 2;
+   */
+  componentIds: string[];
+
+  /**
+   * attr is the free-string runtime attribute to resolve (no enum). 
+   *
+   * @generated from field: string attr = 3;
+   */
+  attr: string;
+};
+
+/**
+ *
+ * Binding is a typed runtime late-binding hole in an item's content (B3,
+ * H4). The renderer leaves `token` in the rendered bytes; at the
+ * plan->execute seam the resolver replaces it with the runtime value of
+ * `attr` for the referenced topology component(s), read from
+ * Deployment.Output (D18). Replaces the old string placeholders.
+ *
+ * - component_ids is repeated to support multi-component values (e.g. an
+ * etcd HOSTS list); a single value is a one-element list.
+ * - attr is a free STRING, not an enum (self-describing, like metrics
+ * H46): the resolver interprets it ("private_ip", "public_ip",
+ * "endpoint", "port", "hosts", ...); a new attr needs no proto change.
+ * - kept independent of domain/models: component reference is a plain
+ * string id (like DagRef), so render stays runtime-pure.
+ *
+ * @generated from message cloud.v1.runtime.render.Config.Binding
+ */
+export type Config_BindingJson = {
+  /**
+   * token is the placeholder substring inside the item content. 
+   *
+   * @generated from field: string token = 1;
+   */
+  token?: string;
+
+  /**
+   * component_ids are the topology component ids whose runtime value to resolve. 
+   *
+   * @generated from field: repeated string component_ids = 2;
+   */
+  componentIds?: string[];
+
+  /**
+   * attr is the free-string runtime attribute to resolve (no enum). 
+   *
+   * @generated from field: string attr = 3;
+   */
+  attr?: string;
+};
+
+export type Config_BindingValid = Config_Binding;
+
+/**
+ * Describes the message cloud.v1.runtime.render.Config.Binding.
+ * Use `create(Config_BindingSchema)` to create a new message.
+ */
+export const Config_BindingSchema: GenMessage<Config_Binding, {jsonType: Config_BindingJson, validType: Config_BindingValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_runtime_render_config, 1, 0);
+
+/**
  * Item is one rendered artifact visible to the user. 
  *
  * @generated from message cloud.v1.runtime.render.Config.Item
@@ -164,6 +299,13 @@ export type Config_Item = Message<"cloud.v1.runtime.render.Config.Item"> & {
    * @generated from field: bool overridden = 5;
    */
   overridden: boolean;
+
+  /**
+   * bindings are the runtime late-binding holes in this item's content. 
+   *
+   * @generated from field: repeated cloud.v1.runtime.render.Config.Binding bindings = 6;
+   */
+  bindings: Config_Binding[];
 
   /**
    * @generated from oneof cloud.v1.runtime.render.Config.Item.rendered
@@ -232,6 +374,13 @@ export type Config_ItemJson = {
   overridden?: boolean;
 
   /**
+   * bindings are the runtime late-binding holes in this item's content. 
+   *
+   * @generated from field: repeated cloud.v1.runtime.render.Config.Binding bindings = 6;
+   */
+  bindings?: Config_BindingJson[];
+
+  /**
    * file contains rendered file content and metadata. 
    *
    * @generated from field: cloud.v1.runtime.system.File file = 10;
@@ -274,7 +423,7 @@ export type Config_ItemValid = Config_Item;
  * Use `create(Config_ItemSchema)` to create a new message.
  */
 export const Config_ItemSchema: GenMessage<Config_Item, {jsonType: Config_ItemJson, validType: Config_ItemValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_runtime_render_config, 1, 0);
+  messageDesc(file_cloud_v1_runtime_render_config, 1, 1);
 
 /**
  * Override is a user change applied to one rendered item. 
@@ -406,7 +555,7 @@ export type Config_OverrideValid = Config_Override;
  * Use `create(Config_OverrideSchema)` to create a new message.
  */
 export const Config_OverrideSchema: GenMessage<Config_Override, {jsonType: Config_OverrideJson, validType: Config_OverrideValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_runtime_render_config, 1, 1);
+  messageDesc(file_cloud_v1_runtime_render_config, 1, 2);
 
 /**
  * TextPatch replaces text content for a rendered item. 
@@ -443,7 +592,7 @@ export type Config_Override_TextPatchValid = Config_Override_TextPatch;
  * Use `create(Config_Override_TextPatchSchema)` to create a new message.
  */
 export const Config_Override_TextPatchSchema: GenMessage<Config_Override_TextPatch, {jsonType: Config_Override_TextPatchJson, validType: Config_Override_TextPatchValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_runtime_render_config, 1, 1, 0);
+  messageDesc(file_cloud_v1_runtime_render_config, 1, 2, 0);
 
 /**
  * KeyValuePatch updates key-value rendered content. 
@@ -494,5 +643,5 @@ export type Config_Override_KeyValuePatchValid = Config_Override_KeyValuePatch;
  * Use `create(Config_Override_KeyValuePatchSchema)` to create a new message.
  */
 export const Config_Override_KeyValuePatchSchema: GenMessage<Config_Override_KeyValuePatch, {jsonType: Config_Override_KeyValuePatchJson, validType: Config_Override_KeyValuePatchValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_runtime_render_config, 1, 1, 1);
+  messageDesc(file_cloud_v1_runtime_render_config, 1, 2, 1);
 

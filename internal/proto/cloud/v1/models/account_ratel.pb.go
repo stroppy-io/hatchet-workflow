@@ -40,6 +40,7 @@ const (
 	AccountColumnDeletedAt    AccountColumnAlias = "deleted_at"
 	AccountColumnEmail        AccountColumnAlias = "email"
 	AccountColumnNickname     AccountColumnAlias = "nickname"
+	AccountColumnIsAdmin      AccountColumnAlias = "is_admin"
 	AccountColumnPasswordHash AccountColumnAlias = "password_hash"
 )
 
@@ -57,6 +58,8 @@ func (s *AccountScanner) GetTarget(col string) func() any {
 		return func() any { return &s.Email }
 	case AccountColumnNickname:
 		return func() any { return &s.Nickname }
+	case AccountColumnIsAdmin:
+		return func() any { return &s.IsAdmin }
 	case AccountColumnPasswordHash:
 		return func() any { return &s.PasswordHash }
 	default:
@@ -78,6 +81,8 @@ func (s *AccountScanner) GetSetter(f AccountColumnAlias) func() set.ValueSetter[
 		return func() set.ValueSetter[AccountColumnAlias] { return set.NewSetter(f, &s.Email) }
 	case AccountColumnNickname:
 		return func() set.ValueSetter[AccountColumnAlias] { return set.NewSetter(f, &s.Nickname) }
+	case AccountColumnIsAdmin:
+		return func() set.ValueSetter[AccountColumnAlias] { return set.NewSetter(f, &s.IsAdmin) }
 	case AccountColumnPasswordHash:
 		return func() set.ValueSetter[AccountColumnAlias] { return set.NewSetter(f, &s.PasswordHash) }
 	default:
@@ -99,6 +104,8 @@ func (s *AccountScanner) GetValue(f AccountColumnAlias) func() any {
 		return func() any { return s.Email }
 	case AccountColumnNickname:
 		return func() any { return s.Nickname }
+	case AccountColumnIsAdmin:
+		return func() any { return s.IsAdmin }
 	case AccountColumnPasswordHash:
 		return func() any { return s.PasswordHash }
 	default:
@@ -114,6 +121,7 @@ func (s *AccountScanner) AllSetters() []set.ValueSetter[AccountColumnAlias] {
 		set.NewSetter[AccountColumnAlias](AccountColumnDeletedAt, s.DeletedAt),
 		set.NewSetter[AccountColumnAlias](AccountColumnEmail, s.Email),
 		set.NewSetter[AccountColumnAlias](AccountColumnNickname, s.Nickname),
+		set.NewSetter[AccountColumnAlias](AccountColumnIsAdmin, s.IsAdmin),
 		set.NewSetter[AccountColumnAlias](AccountColumnPasswordHash, s.PasswordHash),
 	}
 }
@@ -132,6 +140,7 @@ type AccountsTable struct {
 	DeletedAt    schema.NullTimestamptzColumnI[AccountColumnAlias]
 	Email        schema.TextColumnI[AccountColumnAlias]
 	Nickname     schema.TextColumnI[AccountColumnAlias]
+	IsAdmin      schema.BooleanColumnI[AccountColumnAlias]
 	PasswordHash schema.TextColumnI[AccountColumnAlias]
 }
 
@@ -143,6 +152,7 @@ var Accounts = func() AccountsTable {
 	deletedAtCol := schema.NullTimestamptzColumn(AccountColumnDeletedAt, ddl.WithDefault[AccountColumnAlias]("null"))
 	emailCol := schema.TextColumn(AccountColumnEmail, ddl.WithNotNull[AccountColumnAlias]())
 	nicknameCol := schema.TextColumn(AccountColumnNickname, ddl.WithNotNull[AccountColumnAlias]())
+	isAdminCol := schema.BooleanColumn(AccountColumnIsAdmin, ddl.WithNotNull[AccountColumnAlias]())
 	passwordHashCol := schema.TextColumn(AccountColumnPasswordHash, ddl.WithNotNull[AccountColumnAlias]())
 
 	return AccountsTable{
@@ -156,6 +166,7 @@ var Accounts = func() AccountsTable {
 				deletedAtCol.DDL(),
 				emailCol.DDL(),
 				nicknameCol.DDL(),
+				isAdminCol.DDL(),
 				passwordHashCol.DDL(),
 			},
 		),
@@ -165,6 +176,7 @@ var Accounts = func() AccountsTable {
 		DeletedAt:    deletedAtCol,
 		Email:        emailCol,
 		Nickname:     nicknameCol,
+		IsAdmin:      isAdminCol,
 		PasswordHash: passwordHashCol,
 	}
 }()

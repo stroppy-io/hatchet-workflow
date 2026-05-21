@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package cloud.v1.api.ui;
+
+import "cloud/v1/models/apitoken.proto";
+import "cloud/v1/models/common.proto";
+import "cloud/v1/models/tenant.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui";
+
+/*
+    ApiTokenService manages tenant API tokens (CI/SDK creds). Minted/revoked by the
+    tenant OWNER only (centralized, like SettingsService); every request carries
+    tenant_id (A). The role is capped <= ADMIN. The plaintext token is returned ONCE
+    in CreateApiTokenResponse.secret and never again.
+ */
+message CreateApiTokenRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    string name = 2 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    /* role the token will authenticate as; capped <= ADMIN (no OWNER). */
+    models.TenantMember.Role role = 3 [(validate.rules).enum = {defined_only: true, not_in: [0, 3]}];
+    /* expires_at optionally limits lifetime; absent = no expiry. */
+    optional google.protobuf.Timestamp expires_at = 4;
+}
+message CreateApiTokenResponse {
+    /* token is the created record (metadata; no secret). */
+    models.ApiToken token = 1;
+    /* secret is the plaintext token — returned ONCE, never stored or shown again. */
+    string secret = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+}
+message ListApiTokensRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+}
+message RevokeApiTokenRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.Ulid id = 2 [(validate.rules).message.required = true];
+}
+
+service ApiTokenService {
+    rpc CreateApiToken (CreateApiTokenRequest) returns (CreateApiTokenResponse) {option idempotency_level = IDEMPOTENT;}
+    rpc ListApiTokens (ListApiTokensRequest) returns (models.ApiToken.List) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc RevokeApiToken (RevokeApiTokenRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;}
+}

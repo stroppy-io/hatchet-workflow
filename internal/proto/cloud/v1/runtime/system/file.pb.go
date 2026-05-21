@@ -280,6 +280,10 @@ func (*File_Content_Bytes) isFile_Content_Content() {}
 // Ref identifies file content stored outside the current message. The
 // resolver can map refs to object storage, artifact storage, uploaded
 // files, or generated outputs without changing the file metadata model.
+//
+// BDD decision (G2): large files (uploaded .deb, artifacts) live in S3, not
+// inline in the Dag. uri = s3://...; the resolver issues a presigned GET URL
+// that the agent downloads via RUN_CMD (ties to the custom-.deb path in D17).
 type File_Ref struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// uri identifies external file content.

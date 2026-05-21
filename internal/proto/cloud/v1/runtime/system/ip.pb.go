@@ -10,7 +10,6 @@ import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/durationpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -249,7 +248,7 @@ var File_cloud_v1_runtime_system_ip_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_runtime_system_ip_proto_rawDesc = "" +
 	"\n" +
-	" cloud/v1/runtime/system/ip.proto\x12\x17cloud.v1.runtime.system\x1a\x1egoogle/protobuf/duration.proto\x1a\x17validate/validate.proto\"\x88\x02\n" +
+	" cloud/v1/runtime/system/ip.proto\x12\x17cloud.v1.runtime.system\x1a\x17validate/validate.proto\"\x88\x02\n" +
 	"\tIpAddress\x12K\n" +
 	"\x06family\x18\x01 \x01(\x0e2).cloud.v1.runtime.system.IpAddress.FamilyB\b\xfaB\x05\x82\x01\x02\x10\x01R\x06family\x12\"\n" +
 	"\aaddress\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\aaddress\x12'\n" +

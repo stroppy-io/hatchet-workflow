@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/models/common.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+/*
+    Webhook is a tenant-scoped notification endpoint (H51). On run/suite events the
+    backend POSTs a signed payload to url. Event types are a CLOSED system set, so
+    an enum is appropriate here (unlike open-set metric names).
+ */
+message Webhook {
+    message List {repeated Webhook webhooks = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "webhooks"
+        virtual_columns: [
+            {sql_name: "secret", sql_type: "TEXT", is_nullable: true}
+        ]
+    };
+
+    /* Event is a closed set of system events a webhook may subscribe to. */
+    enum Event {
+        EVENT_UNSPECIFIED = 0;
+        EVENT_RUN_COMPLETED = 1;
+        EVENT_RUN_FAILED = 2;
+        EVENT_SUITE_COMPLETED = 3;
+        EVENT_SUITE_FAILED = 4;
+    }
+
+    models.Entity entity = 1 [(goplain.field).embed = true];
+    models.Own owned = 2 [(goplain.field).embed = true];
+    /* url is the POST target. */
+    string url = 3 [(validate.rules).string = {min_len: 8, max_len: 2048, uri: true}];
+    /* events the webhook subscribes to. */
+    repeated Event events = 4 [(validate.rules).repeated = {min_items: 1, max_items: 16, items: {enum: {defined_only: true, not_in: [0]}}}];
+    /* enabled toggles delivery without deleting the config. */
+    bool enabled = 5;
+}

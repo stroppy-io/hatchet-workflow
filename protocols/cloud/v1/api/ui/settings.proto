@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package cloud.v1.api.ui;
+
+import "cloud/v1/models/common.proto";
+import "cloud/v1/models/settings.proto";
+import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui";
+
+/*
+    SettingsService manages PER-TENANT settings — e.g. each tenant's own Yandex
+    Cloud provider credentials (models.SettingsItem is already tenant-scoped:
+    unique (tenant_id, part, key)). Authorized by TenantMember.Role OWNER for the
+    request's tenant_id (NOT only platform admin); Account.is_admin also passes.
+    Every request carries tenant_id (A). Different tenants can hold different
+    provider settings.
+ */
+message ListSettingsItemsRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+}
+message GetSettingsItemRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.SettingsItemId settings_item_id = 2 [(validate.rules).message.required = true];
+}
+/* SetSettingsItem upserts by the unique (tenant_id, part, key). */
+message SetSettingsItemRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.SettingsItem.Part part = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    models.SettingsItem.Key key = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    models.SettingsItem.Value value = 4 [(validate.rules).message.required = true];
+}
+message DeleteSettingsItemRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.SettingsItemId settings_item_id = 2 [(validate.rules).message.required = true];
+}
+
+service SettingsService {
+    rpc ListSettingsItems (ListSettingsItemsRequest) returns (models.SettingsItem.List) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc GetSettingsItem (GetSettingsItemRequest) returns (models.SettingsItem) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc SetSettingsItem (SetSettingsItemRequest) returns (models.SettingsItem) {option idempotency_level = IDEMPOTENT;}
+    rpc DeleteSettingsItem (DeleteSettingsItemRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;}
+}

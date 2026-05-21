@@ -68,6 +68,20 @@ message Own {
     ];
 }
 
+/*
+    BDD decision (G1, features/infra/persistence.feature): the generic stringly-
+    typed CommonQuery filter is NOT used. Each queryable model gets its own typed
+    query/list-request message (type-safe, allowlisted fields, injection-safe).
+    CommonQuery is kept only for Sort/Page reuse, if at all — its Filter is a
+    candidate for removal, and api requests that embed CommonQuery (e.g.
+    ListAgentsRequest) should move to per-model typed queries.
+
+    Persistence pattern (G1): aggregates are stored as JSONB payload; only
+    indexed/queried fields are promoted to scalar mirror columns (see models.Dag:
+    payload JSONB + status/lease_expires_at scalars). Schema is derived from the
+    ratel.table/ratel.column annotations; migrations are generated via ratel diff,
+    not hand-written.
+ */
 /* CommonQuery — reusable list query: filter + sort + cursor pagination.
    Filters in `filter` are combined with logical AND. Pagination is
    cursor-based: client passes back `page.token` from the previous

@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/runtime/system/service.proto.
  */
 export const file_cloud_v1_runtime_system_service: GenFile = /*@__PURE__*/
-  fileDesc("CiVjbG91ZC92MS9ydW50aW1lL3N5c3RlbS9zZXJ2aWNlLnByb3RvEhdjbG91ZC52MS5ydW50aW1lLnN5c3RlbSL3BQoHU2VydmljZRJFCgdzeXN0ZW1kGAEgASgLMiguY2xvdWQudjEucnVudGltZS5zeXN0ZW0uU2VydmljZS5TeXN0ZW1kQgj6QgWKAQIQAUgAGpQFCgdTeXN0ZW1kEhgKBHVuaXQYASABKAlCCvpCB3IFEAEYgAISSwoEdHlwZRgCIAEoDjIxLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLlNlcnZpY2UuU3lzdGVtZC5Vbml0VHlwZUIK+kIHggEEIAAQARI6Cgl1bml0X2ZpbGUYAyABKAsyHS5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5GaWxlQgj6QgWKAQIQARI/Cg1kcm9wX2luX2ZpbGVzGAQgAygLMh0uY2xvdWQudjEucnVudGltZS5zeXN0ZW0uRmlsZUIJ+kIGkgEDEIABElYKDWRlc2lyZWRfc3RhdGUYBSABKA4yNS5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5TZXJ2aWNlLlN5c3RlbWQuRGVzaXJlZFN0YXRlQgj6QgWCAQIQARINCgVzdGFydBgGIAEoCBIVCg1kYWVtb25fcmVsb2FkGAcgASgIIqYBCghVbml0VHlwZRIZChVVTklUX1RZUEVfVU5TUEVDSUZJRUQQABIVChFVTklUX1RZUEVfU0VSVklDRRABEhQKEFVOSVRfVFlQRV9TT0NLRVQQAhITCg9VTklUX1RZUEVfVElNRVIQAxIUChBVTklUX1RZUEVfVEFSR0VUEAQSEgoOVU5JVF9UWVBFX1BBVEgQBRITCg9VTklUX1RZUEVfTU9VTlQQBiJ+CgxEZXNpcmVkU3RhdGUSHQoZREVTSVJFRF9TVEFURV9VTlNQRUNJRklFRBAAEhoKFkRFU0lSRURfU1RBVEVfRElTQUJMRUQQARIZChVERVNJUkVEX1NUQVRFX0VOQUJMRUQQAhIYChRERVNJUkVEX1NUQVRFX01BU0tFRBADQg4KB21hbmFnZXISA/hCAUJMWkpnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9ydW50aW1lL3N5c3RlbWIGcHJvdG8z", [file_cloud_v1_runtime_system_file, file_validate_validate]);
+  fileDesc("CiVjbG91ZC92MS9ydW50aW1lL3N5c3RlbS9zZXJ2aWNlLnByb3RvEhdjbG91ZC52MS5ydW50aW1lLnN5c3RlbSL3BQoHU2VydmljZRJFCgdzeXN0ZW1kGAEgASgLMiguY2xvdWQudjEucnVudGltZS5zeXN0ZW0uU2VydmljZS5TeXN0ZW1kQgj6QgWKAQIQAUgAGpQFCgdTeXN0ZW1kEhgKBHVuaXQYASABKAlCCvpCB3IFEAEYgAISSwoEdHlwZRgCIAEoDjIxLmNsb3VkLnYxLnJ1bnRpbWUuc3lzdGVtLlNlcnZpY2UuU3lzdGVtZC5Vbml0VHlwZUIK+kIHggEEEAEgABI6Cgl1bml0X2ZpbGUYAyABKAsyHS5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5GaWxlQgj6QgWKAQIQARI/Cg1kcm9wX2luX2ZpbGVzGAQgAygLMh0uY2xvdWQudjEucnVudGltZS5zeXN0ZW0uRmlsZUIJ+kIGkgEDEIABElYKDWRlc2lyZWRfc3RhdGUYBSABKA4yNS5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5TZXJ2aWNlLlN5c3RlbWQuRGVzaXJlZFN0YXRlQgj6QgWCAQIQARINCgVzdGFydBgGIAEoCBIVCg1kYWVtb25fcmVsb2FkGAcgASgIIqYBCghVbml0VHlwZRIZChVVTklUX1RZUEVfVU5TUEVDSUZJRUQQABIVChFVTklUX1RZUEVfU0VSVklDRRABEhQKEFVOSVRfVFlQRV9TT0NLRVQQAhITCg9VTklUX1RZUEVfVElNRVIQAxIUChBVTklUX1RZUEVfVEFSR0VUEAQSEgoOVU5JVF9UWVBFX1BBVEgQBRITCg9VTklUX1RZUEVfTU9VTlQQBiJ+CgxEZXNpcmVkU3RhdGUSHQoZREVTSVJFRF9TVEFURV9VTlNQRUNJRklFRBAAEhoKFkRFU0lSRURfU1RBVEVfRElTQUJMRUQQARIZChVERVNJUkVEX1NUQVRFX0VOQUJMRUQQAhIYChRERVNJUkVEX1NUQVRFX01BU0tFRBADQg4KB21hbmFnZXISA/hCAUJMWkpnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9ydW50aW1lL3N5c3RlbWIGcHJvdG8z", [file_cloud_v1_runtime_system_file, file_validate_validate]);
 
 /**
  *
@@ -21,6 +21,10 @@ export const file_cloud_v1_runtime_system_service: GenFile = /*@__PURE__*/
  * It is intentionally not an operation: applying the files, running
  * daemon-reload, enabling, starting, stopping, or restarting the service should
  * be decomposed into runtime ops.
+ *
+ * BDD decision (D17): the PLANNER does this decomposition — a render Service
+ * item compiles into WRITE_FILE(unit_file) -> RUN_CMD(systemctl daemon-reload)
+ * -> RUN_CMD(systemctl enable/start). The agent never interprets a Service.
  *
  * @generated from message cloud.v1.runtime.system.Service
  */
@@ -45,6 +49,10 @@ export type Service = Message<"cloud.v1.runtime.system.Service"> & {
  * It is intentionally not an operation: applying the files, running
  * daemon-reload, enabling, starting, stopping, or restarting the service should
  * be decomposed into runtime ops.
+ *
+ * BDD decision (D17): the PLANNER does this decomposition — a render Service
+ * item compiles into WRITE_FILE(unit_file) -> RUN_CMD(systemctl daemon-reload)
+ * -> RUN_CMD(systemctl enable/start). The agent never interprets a Service.
  *
  * @generated from message cloud.v1.runtime.system.Service
  */

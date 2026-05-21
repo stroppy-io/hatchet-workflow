@@ -163,13 +163,46 @@ func (Topology_Connection_Kind) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_domain_topology_proto_rawDescGZIP(), []int{0, 2, 0}
 }
 
+// BDD decisions (B5, features/catalog/topology.feature):
+//
+// - Topology is a provider-agnostic graph: machines host components (Kind),
+// components are joined by typed connections. Per-engine topology structs
+// from the old code dissolve into Database.Options + this generic graph.
+// - cluster shapes single/ha/replica/scale are NOT an enum; they emerge
+// structurally from the graph (replication mode + replicas + access proxies
+// in Database.Options). The wizard/planner builds the graph ("merged
+// topology" in domain/test.proto TestPreset).
+// - machine sizing lives on Machine.cores/memory_gb and is edited directly by
+// the wizard. There is no separate MachineOverride entity; Topology is the
+// single source of truth (old BakeMachineOverrideIntoTopology invariant
+// becomes trivial).
+// - placement/zones live in the deployment layer (deployment/yandex.proto),
+// NOT here. Topology -> DeploymentIntent materialization applies zone
+// round-robin (old placement.go).
+// - AGENT-per-machine invariant: commands are delivered to a KIND_AGENT
+// component, so every machine that runs commands carries an AGENT component.
+// - render.Binding (database/workload render) resolves from Deployment.Output
+// (Yandex.VmOutput.internal_ip/public_ip, ManagedYdbOutput endpoints).
+//
+// OPEN HOLE — external (BYOD) DATABASE component has no machine, but a Component
+// only exists inside Machine.components[] (no top-level component list; both
+// machines and components have min_items>=1; Machine sizing is gt:0). A
+// machine-less component has nowhere to live. Proposed fix: add a top-level
+// `repeated Component external_components` to Topology (unprovisioned targets),
+// or a Machine EXTERNAL marker without sizing. To be finalized.
 type Topology struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Machines      []*Topology_Machine    `protobuf:"bytes,2,rep,name=machines,proto3" json:"machines,omitempty"`
-	Connections   []*Topology_Connection `protobuf:"bytes,6,rep,name=connections,proto3" json:"connections,omitempty"`
-	Tags          *common.Tags           `protobuf:"bytes,3,opt,name=tags,proto3" json:"tags,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Machines    []*Topology_Machine    `protobuf:"bytes,2,rep,name=machines,proto3" json:"machines,omitempty"`
+	Connections []*Topology_Connection `protobuf:"bytes,6,rep,name=connections,proto3" json:"connections,omitempty"`
+	// external_components are machine-less, reference-only components (H7),
+	// e.g. a BYOD external DATABASE: cloud does not provision or run an agent
+	// for them, but connections may target them by id (endpoint comes from the
+	// Database.Target.External intent). They live here because Component
+	// otherwise exists only inside Machine.components[].
+	ExternalComponents []*Topology_Component `protobuf:"bytes,7,rep,name=external_components,json=externalComponents,proto3" json:"external_components,omitempty"`
+	Tags               *common.Tags          `protobuf:"bytes,3,opt,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *Topology) Reset() {
@@ -212,6 +245,13 @@ func (x *Topology) GetMachines() []*Topology_Machine {
 func (x *Topology) GetConnections() []*Topology_Connection {
 	if x != nil {
 		return x.Connections
+	}
+	return nil
+}
+
+func (x *Topology) GetExternalComponents() []*Topology_Component {
+	if x != nil {
+		return x.ExternalComponents
 	}
 	return nil
 }
@@ -294,6 +334,14 @@ func (x *Topology_Component) GetTags() *common.Tags {
 	return nil
 }
 
+// BDD decision (C9): Machine should also carry a provider-agnostic disk
+// size-intent (capacity GB) alongside cores/memory_gb. The wizard DEFAULTS
+// that capacity from the workload scale_factor (sensible default, user-
+// overridable in preview) — "auto-size" is wizard behavior, not a stored
+// flag (the old Database.Options.Ydb.auto_size_pdisks is removed). Provider-
+// specific disk type and io-m3/93 GiB rounding stay in the deployment layer
+// (D18). This keeps provider params out of Topology while giving a sane
+// single sizing surface.
 type Topology_Machine struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// id is the stable topology machine id.
@@ -304,9 +352,17 @@ type Topology_Machine struct {
 	// cores is VM vCPU count.
 	Cores uint32 `protobuf:"varint,2,opt,name=cores,proto3" json:"cores,omitempty"`
 	// memory_gb is VM RAM in GiB.
-	MemoryGb      uint64                `protobuf:"varint,3,opt,name=memory_gb,json=memoryGb,proto3" json:"memory_gb,omitempty"`
-	Components    []*Topology_Component `protobuf:"bytes,4,rep,name=components,proto3" json:"components,omitempty"`
-	Tags          *common.Tags          `protobuf:"bytes,5,opt,name=tags,proto3" json:"tags,omitempty"`
+	MemoryGb   uint64                `protobuf:"varint,3,opt,name=memory_gb,json=memoryGb,proto3" json:"memory_gb,omitempty"`
+	Components []*Topology_Component `protobuf:"bytes,4,rep,name=components,proto3" json:"components,omitempty"`
+	Tags       *common.Tags          `protobuf:"bytes,5,opt,name=tags,proto3" json:"tags,omitempty"`
+	// disk_gb is the provider-agnostic boot/primary disk capacity intent
+	// (H49/C9). The wizard defaults it from the workload scale; disk TYPE
+	// and io-m3 rounding are applied at the deployment layer (D18).
+	DiskGb uint64 `protobuf:"varint,6,opt,name=disk_gb,json=diskGb,proto3" json:"disk_gb,omitempty"`
+	// data_disks_gb are additional data disks, each a capacity (GB), e.g.
+	// YDB storage pdisks (multi-disk). Provider-agnostic; type/rounding at
+	// deployment.
+	DataDisksGb   []uint64 `protobuf:"varint,7,rep,packed,name=data_disks_gb,json=dataDisksGb,proto3" json:"data_disks_gb,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -372,6 +428,20 @@ func (x *Topology_Machine) GetComponents() []*Topology_Component {
 func (x *Topology_Machine) GetTags() *common.Tags {
 	if x != nil {
 		return x.Tags
+	}
+	return nil
+}
+
+func (x *Topology_Machine) GetDiskGb() uint64 {
+	if x != nil {
+		return x.DiskGb
+	}
+	return 0
+}
+
+func (x *Topology_Machine) GetDataDisksGb() []uint64 {
+	if x != nil {
+		return x.DataDisksGb
 	}
 	return nil
 }
@@ -473,11 +543,11 @@ var File_cloud_v1_domain_topology_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_topology_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/domain/topology.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a$cloud/v1/runtime/render/config.proto\x1a!cloud/v1/runtime/system/net.proto\x1a\x17validate/validate.proto\"\x89\n" +
-	"\n" +
+	"\x1ecloud/v1/domain/topology.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a$cloud/v1/runtime/render/config.proto\x1a!cloud/v1/runtime/system/net.proto\x1a\x17validate/validate.proto\"\xb9\v\n" +
 	"\bTopology\x12G\n" +
 	"\bmachines\x18\x02 \x03(\v2!.cloud.v1.domain.Topology.MachineB\b\xfaB\x05\x92\x01\x02\b\x01R\bmachines\x12P\n" +
-	"\vconnections\x18\x06 \x03(\v2$.cloud.v1.domain.Topology.ConnectionB\b\xfaB\x05\x92\x01\x02\b\x01R\vconnections\x12)\n" +
+	"\vconnections\x18\x06 \x03(\v2$.cloud.v1.domain.Topology.ConnectionB\b\xfaB\x05\x92\x01\x02\b\x01R\vconnections\x12^\n" +
+	"\x13external_components\x18\a \x03(\v2#.cloud.v1.domain.Topology.ComponentB\b\xfaB\x05\x92\x01\x02\x10@R\x12externalComponents\x12)\n" +
 	"\x04tags\x18\x03 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\xfb\x02\n" +
 	"\tComponent\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
@@ -497,7 +567,7 @@ const file_cloud_v1_domain_topology_proto_rawDesc = "" +
 	"KIND_PROXY\x10\x05\x12\x14\n" +
 	"\x10KIND_COORDINATOR\x10\x06\x12\x0e\n" +
 	"\n" +
-	"KIND_ADDON\x10\a\x1a\xe4\x01\n" +
+	"KIND_ADDON\x10\a\x1a\xb4\x02\n" +
 	"\aMachine\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12\x1d\n" +
@@ -506,7 +576,9 @@ const file_cloud_v1_domain_topology_proto_rawDesc = "" +
 	"\n" +
 	"components\x18\x04 \x03(\v2#.cloud.v1.domain.Topology.ComponentB\b\xfaB\x05\x92\x01\x02\b\x01R\n" +
 	"components\x12)\n" +
-	"\x04tags\x18\x05 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\xd1\x03\n" +
+	"\x04tags\x18\x05 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x12 \n" +
+	"\adisk_gb\x18\x06 \x01(\x04B\a\xfaB\x042\x02 \x00R\x06diskGb\x12,\n" +
+	"\rdata_disks_gb\x18\a \x03(\x04B\b\xfaB\x05\x92\x01\x02\x10@R\vdataDisksGb\x1a\xd1\x03\n" +
 	"\n" +
 	"Connection\x12\x1e\n" +
 	"\x04from\x18\x01 \x01(\tB\n" +
@@ -556,20 +628,21 @@ var file_cloud_v1_domain_topology_proto_goTypes = []any{
 var file_cloud_v1_domain_topology_proto_depIdxs = []int32{
 	4,  // 0: cloud.v1.domain.Topology.machines:type_name -> cloud.v1.domain.Topology.Machine
 	5,  // 1: cloud.v1.domain.Topology.connections:type_name -> cloud.v1.domain.Topology.Connection
-	6,  // 2: cloud.v1.domain.Topology.tags:type_name -> cloud.v1.common.Tags
-	0,  // 3: cloud.v1.domain.Topology.Component.kind:type_name -> cloud.v1.domain.Topology.Component.Kind
-	7,  // 4: cloud.v1.domain.Topology.Component.config:type_name -> cloud.v1.runtime.render.Config
-	6,  // 5: cloud.v1.domain.Topology.Component.tags:type_name -> cloud.v1.common.Tags
-	3,  // 6: cloud.v1.domain.Topology.Machine.components:type_name -> cloud.v1.domain.Topology.Component
-	6,  // 7: cloud.v1.domain.Topology.Machine.tags:type_name -> cloud.v1.common.Tags
-	8,  // 8: cloud.v1.domain.Topology.Connection.protocol:type_name -> cloud.v1.runtime.system.Net.Protocol
-	9,  // 9: cloud.v1.domain.Topology.Connection.mode:type_name -> cloud.v1.runtime.system.Net.Mode
-	1,  // 10: cloud.v1.domain.Topology.Connection.kind:type_name -> cloud.v1.domain.Topology.Connection.Kind
-	11, // [11:11] is the sub-list for method output_type
-	11, // [11:11] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	3,  // 2: cloud.v1.domain.Topology.external_components:type_name -> cloud.v1.domain.Topology.Component
+	6,  // 3: cloud.v1.domain.Topology.tags:type_name -> cloud.v1.common.Tags
+	0,  // 4: cloud.v1.domain.Topology.Component.kind:type_name -> cloud.v1.domain.Topology.Component.Kind
+	7,  // 5: cloud.v1.domain.Topology.Component.config:type_name -> cloud.v1.runtime.render.Config
+	6,  // 6: cloud.v1.domain.Topology.Component.tags:type_name -> cloud.v1.common.Tags
+	3,  // 7: cloud.v1.domain.Topology.Machine.components:type_name -> cloud.v1.domain.Topology.Component
+	6,  // 8: cloud.v1.domain.Topology.Machine.tags:type_name -> cloud.v1.common.Tags
+	8,  // 9: cloud.v1.domain.Topology.Connection.protocol:type_name -> cloud.v1.runtime.system.Net.Protocol
+	9,  // 10: cloud.v1.domain.Topology.Connection.mode:type_name -> cloud.v1.runtime.system.Net.Mode
+	1,  // 11: cloud.v1.domain.Topology.Connection.kind:type_name -> cloud.v1.domain.Topology.Connection.Kind
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_domain_topology_proto_init() }

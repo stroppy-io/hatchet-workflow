@@ -26,6 +26,10 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// BDD decision (B6): kind is kept alongside the oneof discriminator below
+// as a cheap DB filter/index (list "all DATABASE presets" without parsing
+// the oneof). Validation MUST enforce that kind matches the selected oneof
+// branch (KIND_DATABASE <-> database_preset, etc.); a mismatch is rejected.
 type Preset_Kind int32
 
 const (

@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package cloud.v1.api.ui;
+
+import "cloud/v1/domain/suite.proto";
+import "cloud/v1/models/common.proto";
+import "cloud/v1/models/testing.proto";
+import "cloud/v1/runtime/primitive/status.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui";
+
+/*
+    SuiteService manages suites and launches suite runs (F). Every request carries
+    tenant_id; the server validates membership + TenantMember.Role and scopes by
+    it (A). A SuiteRun is a models.Dag whose nodes dag_ref the per-test Dags;
+    scheduling comes from SuitePreset.Scheduling (B6); status = Dag.status (D14).
+    Cron schedule lives on models.Suite.Cron (H51).
+ */
+message CreateSuiteRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    domain.SuitePreset preset = 2 [(validate.rules).message.required = true];
+    optional string name = 3 [(validate.rules).string.max_len = 255];
+    optional string description = 4 [(validate.rules).string.max_len = 1024];
+}
+
+message GetSuiteRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.SuiteId suite_id = 2 [(validate.rules).message.required = true];
+}
+
+message LaunchSuiteRunRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.SuiteId suite_id = 2 [(validate.rules).message.required = true];
+}
+
+message GetSuiteRunRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.SuiteRunId suite_run_id = 2 [(validate.rules).message.required = true];
+}
+
+message ListSuiteRunsRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    optional runtime.primitive.Status status = 2 [(validate.rules).enum.defined_only = true];
+    uint32 page_size = 3 [(validate.rules).uint32.lte = 1000];
+    string page_token = 4 [(validate.rules).string.max_len = 256];
+}
+
+message CancelSuiteRunRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.SuiteRunId suite_run_id = 2 [(validate.rules).message.required = true];
+}
+
+service SuiteService {
+    rpc CreateSuite (CreateSuiteRequest) returns (models.Suite) {option idempotency_level = IDEMPOTENT;}
+    rpc GetSuite (GetSuiteRequest) returns (models.Suite) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc LaunchSuiteRun (LaunchSuiteRunRequest) returns (models.SuiteRun) {option idempotency_level = IDEMPOTENT;}
+    rpc GetSuiteRun (GetSuiteRunRequest) returns (models.SuiteRun) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc ListSuiteRuns (ListSuiteRunsRequest) returns (models.SuiteRun.List) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc CancelSuiteRun (CancelSuiteRunRequest) returns (models.SuiteRun) {option idempotency_level = IDEMPOTENT;}
+}

@@ -33,6 +33,29 @@ const (
 // AgentServiceClient is the client API for AgentService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// BDD decisions (D16, features/agent/lifecycle.feature) — fully pull lifecycle,
+// replaces the old PollClient (blocking Send + agent_commands table + reaper):
+//
+// - the command queue IS the set of Dag agent.command nodes; there is no
+// separate durable command table. Poll surfaces the next ready command node
+// for the agent's machine and returns a CommandLease (NodeAddress + Command +
+// lease_expires_at).
+// - the server never blocks waiting for an agent; a leased node stays
+// STATUS_RUNNING and only advances when a Report arrives.
+// - a long-running command (e.g. run_stroppy) keeps its lease alive by sending
+// periodic Report{RUNNING}; each one pushes lease_expires_at forward (Report
+// RUNNING = progress + keepalive).
+// - recovery: an expired lease returns its node to the pool (replaces the
+// orphan-reaper). On Register with a new boot_id, the agent's in-flight
+// leases are invalidated immediately so reboots recover fast.
+// - addressing is strictly NodeAddress (dag_id + node_execution_id); no
+// structural paths or machine-id parsing.
+// - Poll offers ONLY agent-locus task nodes (see ExecutionLocus in dag.proto,
+// D18). Server-locus nodes (terraform/docker/render/collect) run on the
+// control-plane and are never leased to agents.
+// - bootstrap auth: a fresh VM carries a per-machine JWT in cloud-init
+// (Yandex.Vm.user_data); the agent authenticates its first Register with it.
 type AgentServiceClient interface {
 	// Agent-facing registration and liveness.
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*models.Agent, error)
@@ -128,6 +151,29 @@ func (c *agentServiceClient) GetAgent(ctx context.Context, in *models.AgentId, o
 // AgentServiceServer is the server API for AgentService service.
 // All implementations must embed UnimplementedAgentServiceServer
 // for forward compatibility.
+//
+// BDD decisions (D16, features/agent/lifecycle.feature) — fully pull lifecycle,
+// replaces the old PollClient (blocking Send + agent_commands table + reaper):
+//
+// - the command queue IS the set of Dag agent.command nodes; there is no
+// separate durable command table. Poll surfaces the next ready command node
+// for the agent's machine and returns a CommandLease (NodeAddress + Command +
+// lease_expires_at).
+// - the server never blocks waiting for an agent; a leased node stays
+// STATUS_RUNNING and only advances when a Report arrives.
+// - a long-running command (e.g. run_stroppy) keeps its lease alive by sending
+// periodic Report{RUNNING}; each one pushes lease_expires_at forward (Report
+// RUNNING = progress + keepalive).
+// - recovery: an expired lease returns its node to the pool (replaces the
+// orphan-reaper). On Register with a new boot_id, the agent's in-flight
+// leases are invalidated immediately so reboots recover fast.
+// - addressing is strictly NodeAddress (dag_id + node_execution_id); no
+// structural paths or machine-id parsing.
+// - Poll offers ONLY agent-locus task nodes (see ExecutionLocus in dag.proto,
+// D18). Server-locus nodes (terraform/docker/render/collect) run on the
+// control-plane and are never leased to agents.
+// - bootstrap auth: a fresh VM carries a per-machine JWT in cloud-init
+// (Yandex.Vm.user_data); the agent authenticates its first Register with it.
 type AgentServiceServer interface {
 	// Agent-facing registration and liveness.
 	Register(context.Context, *RegisterRequest) (*models.Agent, error)

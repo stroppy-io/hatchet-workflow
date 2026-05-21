@@ -307,7 +307,7 @@ const file_cloud_v1_models_tenant_proto_rawDesc = "" +
 	"\x0f\n" +
 	"\ttenant_id\x18\x01 \x01R\amembers\x1a9\n" +
 	"\x04List\x121\n" +
-	"\atenants\x18\x01 \x03(\v2\x17.cloud.v1.models.TenantR\atenants:\x15\x92\xb5\x18\v\b\x01\x12\atenants\x82\xa6\x1d\x02\b\x01\"\xe1\x03\n" +
+	"\atenants\x18\x01 \x03(\v2\x17.cloud.v1.models.TenantR\atenants:\x15\x92\xb5\x18\v\b\x01\x12\atenants\x82\xa6\x1d\x02\b\x01\"\xe8\x03\n" +
 	"\fTenantMember\x127\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x12M\n" +
 	"\ttenant_id\x18\x02 \x01(\v2\x19.cloud.v1.models.TenantIdB\x15\x9a\xb5\x18\x11\x12\x0f2\atenants:\x02id@\x01R\btenantId\x12Q\n" +
@@ -323,7 +323,7 @@ const file_cloud_v1_models_tenant_proto_rawDesc = "" +
 	"\n" +
 	"ROLE_ADMIN\x10\x02\x12\x0e\n" +
 	"\n" +
-	"ROLE_OWNER\x10\x03:\x15\x92\xb5\x18\v\b\x01\x12\atenants\x82\xa6\x1d\x02\b\x01BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
+	"ROLE_OWNER\x10\x03:\x1c\x92\xb5\x18\x12\b\x01\x12\x0etenant_members\x82\xa6\x1d\x02\b\x01BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
 
 var (
 	file_cloud_v1_models_tenant_proto_rawDescOnce sync.Once

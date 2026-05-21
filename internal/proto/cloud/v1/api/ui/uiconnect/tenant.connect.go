@@ -38,11 +38,20 @@ const (
 	// TenantServiceListMyTenantsProcedure is the fully-qualified name of the TenantService's
 	// ListMyTenants RPC.
 	TenantServiceListMyTenantsProcedure = "/cloud.v1.api.ui.TenantService/ListMyTenants"
+	// TenantServiceAddMemberToTenantProcedure is the fully-qualified name of the TenantService's
+	// AddMemberToTenant RPC.
+	TenantServiceAddMemberToTenantProcedure = "/cloud.v1.api.ui.TenantService/AddMemberToTenant"
+	// TenantServiceRemoveMemberFromTenantProcedure is the fully-qualified name of the TenantService's
+	// RemoveMemberFromTenant RPC.
+	TenantServiceRemoveMemberFromTenantProcedure = "/cloud.v1.api.ui.TenantService/RemoveMemberFromTenant"
 )
 
 // TenantServiceClient is a client for the cloud.v1.api.ui.TenantService service.
 type TenantServiceClient interface {
 	ListMyTenants(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[models.Tenant_List], error)
+	// AddMemberToTenant / RemoveMemberFromTenant require OWNER of the tenant.
+	AddMemberToTenant(context.Context, *connect.Request[ui.AddMemberRequest]) (*connect.Response[models.TenantMember], error)
+	RemoveMemberFromTenant(context.Context, *connect.Request[ui.RemoveMemberRequest]) (*connect.Response[models.TenantMember], error)
 }
 
 // NewTenantServiceClient constructs a client for the cloud.v1.api.ui.TenantService service. By
@@ -63,12 +72,28 @@ func NewTenantServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
+		addMemberToTenant: connect.NewClient[ui.AddMemberRequest, models.TenantMember](
+			httpClient,
+			baseURL+TenantServiceAddMemberToTenantProcedure,
+			connect.WithSchema(tenantServiceMethods.ByName("AddMemberToTenant")),
+			connect.WithIdempotency(connect.IdempotencyIdempotent),
+			connect.WithClientOptions(opts...),
+		),
+		removeMemberFromTenant: connect.NewClient[ui.RemoveMemberRequest, models.TenantMember](
+			httpClient,
+			baseURL+TenantServiceRemoveMemberFromTenantProcedure,
+			connect.WithSchema(tenantServiceMethods.ByName("RemoveMemberFromTenant")),
+			connect.WithIdempotency(connect.IdempotencyIdempotent),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // tenantServiceClient implements TenantServiceClient.
 type tenantServiceClient struct {
-	listMyTenants *connect.Client[emptypb.Empty, models.Tenant_List]
+	listMyTenants          *connect.Client[emptypb.Empty, models.Tenant_List]
+	addMemberToTenant      *connect.Client[ui.AddMemberRequest, models.TenantMember]
+	removeMemberFromTenant *connect.Client[ui.RemoveMemberRequest, models.TenantMember]
 }
 
 // ListMyTenants calls cloud.v1.api.ui.TenantService.ListMyTenants.
@@ -76,9 +101,22 @@ func (c *tenantServiceClient) ListMyTenants(ctx context.Context, req *connect.Re
 	return c.listMyTenants.CallUnary(ctx, req)
 }
 
+// AddMemberToTenant calls cloud.v1.api.ui.TenantService.AddMemberToTenant.
+func (c *tenantServiceClient) AddMemberToTenant(ctx context.Context, req *connect.Request[ui.AddMemberRequest]) (*connect.Response[models.TenantMember], error) {
+	return c.addMemberToTenant.CallUnary(ctx, req)
+}
+
+// RemoveMemberFromTenant calls cloud.v1.api.ui.TenantService.RemoveMemberFromTenant.
+func (c *tenantServiceClient) RemoveMemberFromTenant(ctx context.Context, req *connect.Request[ui.RemoveMemberRequest]) (*connect.Response[models.TenantMember], error) {
+	return c.removeMemberFromTenant.CallUnary(ctx, req)
+}
+
 // TenantServiceHandler is an implementation of the cloud.v1.api.ui.TenantService service.
 type TenantServiceHandler interface {
 	ListMyTenants(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[models.Tenant_List], error)
+	// AddMemberToTenant / RemoveMemberFromTenant require OWNER of the tenant.
+	AddMemberToTenant(context.Context, *connect.Request[ui.AddMemberRequest]) (*connect.Response[models.TenantMember], error)
+	RemoveMemberFromTenant(context.Context, *connect.Request[ui.RemoveMemberRequest]) (*connect.Response[models.TenantMember], error)
 }
 
 // NewTenantServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -95,10 +133,28 @@ func NewTenantServiceHandler(svc TenantServiceHandler, opts ...connect.HandlerOp
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
+	tenantServiceAddMemberToTenantHandler := connect.NewUnaryHandler(
+		TenantServiceAddMemberToTenantProcedure,
+		svc.AddMemberToTenant,
+		connect.WithSchema(tenantServiceMethods.ByName("AddMemberToTenant")),
+		connect.WithIdempotency(connect.IdempotencyIdempotent),
+		connect.WithHandlerOptions(opts...),
+	)
+	tenantServiceRemoveMemberFromTenantHandler := connect.NewUnaryHandler(
+		TenantServiceRemoveMemberFromTenantProcedure,
+		svc.RemoveMemberFromTenant,
+		connect.WithSchema(tenantServiceMethods.ByName("RemoveMemberFromTenant")),
+		connect.WithIdempotency(connect.IdempotencyIdempotent),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cloud.v1.api.ui.TenantService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case TenantServiceListMyTenantsProcedure:
 			tenantServiceListMyTenantsHandler.ServeHTTP(w, r)
+		case TenantServiceAddMemberToTenantProcedure:
+			tenantServiceAddMemberToTenantHandler.ServeHTTP(w, r)
+		case TenantServiceRemoveMemberFromTenantProcedure:
+			tenantServiceRemoveMemberFromTenantHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -110,4 +166,12 @@ type UnimplementedTenantServiceHandler struct{}
 
 func (UnimplementedTenantServiceHandler) ListMyTenants(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[models.Tenant_List], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.TenantService.ListMyTenants is not implemented"))
+}
+
+func (UnimplementedTenantServiceHandler) AddMemberToTenant(context.Context, *connect.Request[ui.AddMemberRequest]) (*connect.Response[models.TenantMember], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.TenantService.AddMemberToTenant is not implemented"))
+}
+
+func (UnimplementedTenantServiceHandler) RemoveMemberFromTenant(context.Context, *connect.Request[ui.RemoveMemberRequest]) (*connect.Response[models.TenantMember], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.TenantService.RemoveMemberFromTenant is not implemented"))
 }

@@ -10,6 +10,11 @@ import (
 	time "time"
 )
 
+// BDD notes (B6):
+// - TestRun embeds test_preset by value (immutable snapshot) and owns one Dag.
+// A SuiteRun owns a suite Dag whose nodes dag_ref/sub_dag the TestRun Dags.
+// - naming holes RESOLVED (H10): SuiteRuns -> SuiteRun (singular instance);
+// Suite.List now holds Suite under `suites`; SuiteRun.List uses `suite_runs`.
 type TestRunScanner struct {
 	Id             string     `json:"id"` // origin: embed, empath: id
 	CreatedAt      time.Time  `json:"createdAt"`
@@ -171,6 +176,8 @@ type SuiteScanner struct {
 	Name           *string    `json:"name,omitempty"`
 	Description    *string    `json:"description,omitempty"`
 	Preset         []byte     `json:"preset"` // origin: serialized, empath: preset
+	Cron           []byte     `json:"cron"`   // origin: serialized, empath: cron
+	NextFireAt     *time.Time `json:"nextFireAt,omitempty"`
 }
 
 // IntoPlain converts protobuf message to plain struct
@@ -214,6 +221,18 @@ func (pb *Suite) IntoPlain() *SuiteScanner {
 		}
 	} else {
 		p.Preset = []byte{}
+	}
+	// Cron serialized from cron
+	if pb.Cron != nil {
+		if data, err := protojson.Marshal(pb.Cron); err == nil {
+			p.Cron = data
+		}
+	} else {
+		p.Cron = []byte{}
+	}
+	if pb.NextFireAt != nil {
+		_tmp := ratelcast.TimestampToTime(pb.NextFireAt)
+		p.NextFireAt = &_tmp
 	}
 	return p
 }
@@ -290,10 +309,20 @@ func (p *SuiteScanner) IntoPb() *Suite {
 			pb.Preset = &msg
 		}
 	}
+	// Cron deserialize -> cron
+	if len(p.Cron) > 0 {
+		var msg Suite_Cron
+		if err := protojson.Unmarshal(p.Cron, &msg); err == nil {
+			pb.Cron = &msg
+		}
+	}
+	if p.NextFireAt != nil {
+		pb.NextFireAt = ratelcast.TimeToTimestamp(*p.NextFireAt)
+	}
 	return pb
 }
 
-type SuiteRunsScanner struct {
+type SuiteRunScanner struct {
 	Id             string           `json:"id"` // origin: embed, empath: id
 	CreatedAt      time.Time        `json:"createdAt"`
 	UpdatedAt      time.Time        `json:"updatedAt"`
@@ -306,11 +335,11 @@ type SuiteRunsScanner struct {
 }
 
 // IntoPlain converts protobuf message to plain struct
-func (pb *SuiteRuns) IntoPlain() *SuiteRunsScanner {
+func (pb *SuiteRun) IntoPlain() *SuiteRunScanner {
 	if pb == nil {
 		return nil
 	}
-	p := &SuiteRunsScanner{}
+	p := &SuiteRunScanner{}
 
 	// Id from id
 	if pb.GetEntity() != nil && pb.GetEntity().GetId() != nil {
@@ -359,11 +388,11 @@ func (pb *SuiteRuns) IntoPlain() *SuiteRunsScanner {
 }
 
 // IntoPb converts plain struct to protobuf message
-func (p *SuiteRunsScanner) IntoPb() *SuiteRuns {
+func (p *SuiteRunScanner) IntoPb() *SuiteRun {
 	if p == nil {
 		return nil
 	}
-	pb := &SuiteRuns{}
+	pb := &SuiteRun{}
 
 	// Id -> id
 	if p.Id != "" {

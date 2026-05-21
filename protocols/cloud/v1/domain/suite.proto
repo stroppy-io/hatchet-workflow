@@ -9,6 +9,12 @@ import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
+/*
+    BDD decision (B6): SuitePreset.Scheduling compiles directly into the suite
+    Dag.Scheduling — sequential -> max_parallelism = 1, parallel{N} ->
+    max_parallelism = N, on_node_failure passes straight through. This is the
+    bridge from catalog to the runtime engine.
+ */
 message SuitePreset {
     message Scheduling {
         runtime.primitive.Dag.Scheduling.OnNodeFailure on_node_failure = 1;

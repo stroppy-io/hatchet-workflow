@@ -9,15 +9,28 @@ import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui";
 
+/*
+    PresetService — every request carries tenant_id (A). Create/Update pass a
+    models.Preset which already embeds Own.tenant_id; the bare-id RPCs use
+    wrappers so they carry tenant_id too.
+ */
 message ListPresetRequest {
     models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
     models.Preset.Kind kind = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+}
+message DeletePresetRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.DatabasePresetId id = 2 [(validate.rules).message.required = true];
+}
+message ClonePresetRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.DatabasePresetId id = 2 [(validate.rules).message.required = true];
 }
 
 service PresetService {
     rpc ListPresets (ListPresetRequest) returns (models.Preset.List) {option idempotency_level = NO_SIDE_EFFECTS;};
     rpc CreatePreset (models.Preset) returns (models.Preset) {option idempotency_level = NO_SIDE_EFFECTS;};
     rpc UpdatePreset (models.Preset) returns (models.Preset) {option idempotency_level = IDEMPOTENT;};
-    rpc DeletePreset (models.DatabasePresetId) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;};
-    rpc ClonePreset (models.DatabasePresetId) returns (models.Preset) {option idempotency_level = NO_SIDE_EFFECTS;};
+    rpc DeletePreset (DeletePresetRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;};
+    rpc ClonePreset (ClonePresetRequest) returns (models.Preset) {option idempotency_level = NO_SIDE_EFFECTS;};
 }

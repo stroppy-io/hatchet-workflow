@@ -57,8 +57,8 @@ type PresetServiceClient interface {
 	ListPresets(context.Context, *connect.Request[ui.ListPresetRequest]) (*connect.Response[models.Preset_List], error)
 	CreatePreset(context.Context, *connect.Request[models.Preset]) (*connect.Response[models.Preset], error)
 	UpdatePreset(context.Context, *connect.Request[models.Preset]) (*connect.Response[models.Preset], error)
-	DeletePreset(context.Context, *connect.Request[models.DatabasePresetId]) (*connect.Response[emptypb.Empty], error)
-	ClonePreset(context.Context, *connect.Request[models.DatabasePresetId]) (*connect.Response[models.Preset], error)
+	DeletePreset(context.Context, *connect.Request[ui.DeletePresetRequest]) (*connect.Response[emptypb.Empty], error)
+	ClonePreset(context.Context, *connect.Request[ui.ClonePresetRequest]) (*connect.Response[models.Preset], error)
 }
 
 // NewPresetServiceClient constructs a client for the cloud.v1.api.ui.PresetService service. By
@@ -93,14 +93,14 @@ func NewPresetServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithIdempotency(connect.IdempotencyIdempotent),
 			connect.WithClientOptions(opts...),
 		),
-		deletePreset: connect.NewClient[models.DatabasePresetId, emptypb.Empty](
+		deletePreset: connect.NewClient[ui.DeletePresetRequest, emptypb.Empty](
 			httpClient,
 			baseURL+PresetServiceDeletePresetProcedure,
 			connect.WithSchema(presetServiceMethods.ByName("DeletePreset")),
 			connect.WithIdempotency(connect.IdempotencyIdempotent),
 			connect.WithClientOptions(opts...),
 		),
-		clonePreset: connect.NewClient[models.DatabasePresetId, models.Preset](
+		clonePreset: connect.NewClient[ui.ClonePresetRequest, models.Preset](
 			httpClient,
 			baseURL+PresetServiceClonePresetProcedure,
 			connect.WithSchema(presetServiceMethods.ByName("ClonePreset")),
@@ -115,8 +115,8 @@ type presetServiceClient struct {
 	listPresets  *connect.Client[ui.ListPresetRequest, models.Preset_List]
 	createPreset *connect.Client[models.Preset, models.Preset]
 	updatePreset *connect.Client[models.Preset, models.Preset]
-	deletePreset *connect.Client[models.DatabasePresetId, emptypb.Empty]
-	clonePreset  *connect.Client[models.DatabasePresetId, models.Preset]
+	deletePreset *connect.Client[ui.DeletePresetRequest, emptypb.Empty]
+	clonePreset  *connect.Client[ui.ClonePresetRequest, models.Preset]
 }
 
 // ListPresets calls cloud.v1.api.ui.PresetService.ListPresets.
@@ -135,12 +135,12 @@ func (c *presetServiceClient) UpdatePreset(ctx context.Context, req *connect.Req
 }
 
 // DeletePreset calls cloud.v1.api.ui.PresetService.DeletePreset.
-func (c *presetServiceClient) DeletePreset(ctx context.Context, req *connect.Request[models.DatabasePresetId]) (*connect.Response[emptypb.Empty], error) {
+func (c *presetServiceClient) DeletePreset(ctx context.Context, req *connect.Request[ui.DeletePresetRequest]) (*connect.Response[emptypb.Empty], error) {
 	return c.deletePreset.CallUnary(ctx, req)
 }
 
 // ClonePreset calls cloud.v1.api.ui.PresetService.ClonePreset.
-func (c *presetServiceClient) ClonePreset(ctx context.Context, req *connect.Request[models.DatabasePresetId]) (*connect.Response[models.Preset], error) {
+func (c *presetServiceClient) ClonePreset(ctx context.Context, req *connect.Request[ui.ClonePresetRequest]) (*connect.Response[models.Preset], error) {
 	return c.clonePreset.CallUnary(ctx, req)
 }
 
@@ -149,8 +149,8 @@ type PresetServiceHandler interface {
 	ListPresets(context.Context, *connect.Request[ui.ListPresetRequest]) (*connect.Response[models.Preset_List], error)
 	CreatePreset(context.Context, *connect.Request[models.Preset]) (*connect.Response[models.Preset], error)
 	UpdatePreset(context.Context, *connect.Request[models.Preset]) (*connect.Response[models.Preset], error)
-	DeletePreset(context.Context, *connect.Request[models.DatabasePresetId]) (*connect.Response[emptypb.Empty], error)
-	ClonePreset(context.Context, *connect.Request[models.DatabasePresetId]) (*connect.Response[models.Preset], error)
+	DeletePreset(context.Context, *connect.Request[ui.DeletePresetRequest]) (*connect.Response[emptypb.Empty], error)
+	ClonePreset(context.Context, *connect.Request[ui.ClonePresetRequest]) (*connect.Response[models.Preset], error)
 }
 
 // NewPresetServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -228,10 +228,10 @@ func (UnimplementedPresetServiceHandler) UpdatePreset(context.Context, *connect.
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.PresetService.UpdatePreset is not implemented"))
 }
 
-func (UnimplementedPresetServiceHandler) DeletePreset(context.Context, *connect.Request[models.DatabasePresetId]) (*connect.Response[emptypb.Empty], error) {
+func (UnimplementedPresetServiceHandler) DeletePreset(context.Context, *connect.Request[ui.DeletePresetRequest]) (*connect.Response[emptypb.Empty], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.PresetService.DeletePreset is not implemented"))
 }
 
-func (UnimplementedPresetServiceHandler) ClonePreset(context.Context, *connect.Request[models.DatabasePresetId]) (*connect.Response[models.Preset], error) {
+func (UnimplementedPresetServiceHandler) ClonePreset(context.Context, *connect.Request[ui.ClonePresetRequest]) (*connect.Response[models.Preset], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.PresetService.ClonePreset is not implemented"))
 }

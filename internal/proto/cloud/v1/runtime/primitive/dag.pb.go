@@ -24,6 +24,59 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// ExecutionLocus marks where this task runs (H26/D18): SERVER tasks
+// run on the control-plane (terraform, docker, render, collect);
+// AGENT tasks are leased by an agent via Poll (on-host ops). The
+// Poll handler offers only AGENT nodes. UNSPECIFIED defaults to SERVER.
+type Dag_Node_TaskState_ExecutionLocus int32
+
+const (
+	Dag_Node_TaskState_EXECUTION_LOCUS_UNSPECIFIED Dag_Node_TaskState_ExecutionLocus = 0
+	Dag_Node_TaskState_EXECUTION_LOCUS_SERVER      Dag_Node_TaskState_ExecutionLocus = 1
+	Dag_Node_TaskState_EXECUTION_LOCUS_AGENT       Dag_Node_TaskState_ExecutionLocus = 2
+)
+
+// Enum value maps for Dag_Node_TaskState_ExecutionLocus.
+var (
+	Dag_Node_TaskState_ExecutionLocus_name = map[int32]string{
+		0: "EXECUTION_LOCUS_UNSPECIFIED",
+		1: "EXECUTION_LOCUS_SERVER",
+		2: "EXECUTION_LOCUS_AGENT",
+	}
+	Dag_Node_TaskState_ExecutionLocus_value = map[string]int32{
+		"EXECUTION_LOCUS_UNSPECIFIED": 0,
+		"EXECUTION_LOCUS_SERVER":      1,
+		"EXECUTION_LOCUS_AGENT":       2,
+	}
+)
+
+func (x Dag_Node_TaskState_ExecutionLocus) Enum() *Dag_Node_TaskState_ExecutionLocus {
+	p := new(Dag_Node_TaskState_ExecutionLocus)
+	*p = x
+	return p
+}
+
+func (x Dag_Node_TaskState_ExecutionLocus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Dag_Node_TaskState_ExecutionLocus) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_runtime_primitive_dag_proto_enumTypes[0].Descriptor()
+}
+
+func (Dag_Node_TaskState_ExecutionLocus) Type() protoreflect.EnumType {
+	return &file_cloud_v1_runtime_primitive_dag_proto_enumTypes[0]
+}
+
+func (x Dag_Node_TaskState_ExecutionLocus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Dag_Node_TaskState_ExecutionLocus.Descriptor instead.
+func (Dag_Node_TaskState_ExecutionLocus) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 1, 0, 0}
+}
+
 // JoinPolicy defines how incoming edges are merged before this node becomes ready.
 type Dag_Node_Scheduling_JoinPolicy int32
 
@@ -61,11 +114,11 @@ func (x Dag_Node_Scheduling_JoinPolicy) String() string {
 }
 
 func (Dag_Node_Scheduling_JoinPolicy) Descriptor() protoreflect.EnumDescriptor {
-	return file_cloud_v1_runtime_primitive_dag_proto_enumTypes[0].Descriptor()
+	return file_cloud_v1_runtime_primitive_dag_proto_enumTypes[1].Descriptor()
 }
 
 func (Dag_Node_Scheduling_JoinPolicy) Type() protoreflect.EnumType {
-	return &file_cloud_v1_runtime_primitive_dag_proto_enumTypes[0]
+	return &file_cloud_v1_runtime_primitive_dag_proto_enumTypes[1]
 }
 
 func (x Dag_Node_Scheduling_JoinPolicy) Number() protoreflect.EnumNumber {
@@ -114,11 +167,11 @@ func (x Dag_Scheduling_OnNodeFailure) String() string {
 }
 
 func (Dag_Scheduling_OnNodeFailure) Descriptor() protoreflect.EnumDescriptor {
-	return file_cloud_v1_runtime_primitive_dag_proto_enumTypes[1].Descriptor()
+	return file_cloud_v1_runtime_primitive_dag_proto_enumTypes[2].Descriptor()
 }
 
 func (Dag_Scheduling_OnNodeFailure) Type() protoreflect.EnumType {
-	return &file_cloud_v1_runtime_primitive_dag_proto_enumTypes[1]
+	return &file_cloud_v1_runtime_primitive_dag_proto_enumTypes[2]
 }
 
 func (x Dag_Scheduling_OnNodeFailure) Number() protoreflect.EnumNumber {
@@ -130,135 +183,36 @@ func (Dag_Scheduling_OnNodeFailure) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP(), []int{0, 4, 0}
 }
 
-// Dag is a stateful execution snapshot for a directed acyclic graph.
+// BDD decisions (C12, features/orchestration/compile-to-dag.feature) — how the
+// planner compiles a TestPreset snapshot into a Dag (replaces run.builder.Build):
 //
-// Architecture decision: everything executable is represented as a Dag.
+// - graph shape is emergent from Database.Options (etcd/patroni/proxy nodes
+// appear only when the options require them).
+// - on-host agent work is a per-command sub_dag: each WRITE_FILE / RUN_CMD /
+// start-service is its own node with its own retry and execution_id; the
+// agent leases and reports by DagId + Node.execution_id.
+// - old phase Deps become edges; old AlwaysRun becomes Node.Scheduling.always_run.
+// - no shared mutable State: values flow via Node TaskState.output and
+// render.Binding (resolved from Deployment.Output). The Dag is a
+// self-contained reproducible snapshot.
+// - old MustComplete (provision must finish/roll back even on cancel) is
+// expressed as an always_run teardown node with edges from provision; no new
+// flag. UI TODO: cancel/teardown behavior must be drawable as a distinct
+// state (separate task).
 //
-// The runtime does not know about domain entities such as suites, tests,
-// deployments, Terraform runs, machines, or agents. Domain layers compile
-// those entities into Dag payloads, and the runtime only executes nodes,
-// edges, retry policy, cancellation, failure propagation, and persistence
-// snapshots.
+// BDD decision (D18): a task node needs an explicit execution-locus marker so
+// the agent Poll handler offers only agent nodes and the server runs the rest
+// (terraform/docker need control-plane creds + daemon). PROPOSED:
 //
-// Common shapes:
+// enum ExecutionLocus {
+// EXECUTION_LOCUS_UNSPECIFIED = 0;  // defaults to SERVER
+// EXECUTION_LOCUS_SERVER = 1;       // control-plane handler (tf, docker, render, collect)
+// EXECUTION_LOCUS_AGENT  = 2;       // leased by an agent via Poll (on-host ops)
+// }
+// // Node.TaskState gains: ExecutionLocus locus = 4;
 //
-// 1. Suite run
-//
-// A suite run is a top-level persisted Dag whose nodes represent the
-// suite workflow. Test runs may be embedded when they are small and must
-// be part of the same persisted snapshot, or referenced when they need
-// their own lifecycle, processor lease, admission policy, or independent
-// observability.
-//
-// Example:
-//
-// Dag(id = suite_run_dag)
-// node prepare_environment: task_state
-// node test_a: dag_ref(test_a_dag)
-// node test_b: dag_ref(test_b_dag)
-// node cleanup: task_state, always_run = true
-//
-// edges:
-// prepare_environment -> test_a
-// prepare_environment -> test_b
-// test_a -> cleanup
-// test_b -> cleanup
-//
-// 2. Test run
-//
-// A test run is also a Dag. It can contain provisioning, configuration,
-// workload execution, result collection, and cleanup. If a part must be
-// executed as an ordered command stream on an agent, that part is modeled
-// as an embedded command Dag.
-//
-// Example:
-//
-// Dag(id = test_run_dag)
-// node render_config: task_state
-// node terraform_apply: task_state
-// node install_and_run: sub_dag(commands_dag)
-// node collect_results: task_state
-// node terraform_destroy: task_state, always_run = true
-//
-// edges:
-// render_config -> terraform_apply
-// terraform_apply -> install_and_run
-// install_and_run -> collect_results
-// terraform_apply -> terraform_destroy
-// install_and_run -> terraform_destroy
-//
-// 3. Agent command queue
-//
-// There is no separate durable agent command queue table. A command queue
-// is an embedded Dag: the parent node owns a sub-Dag, and each command is
-// a task node inside that sub-Dag. The task input contains a typed
-// runtime.agent.Command wrapped in google.protobuf.Any. Node status,
-// retry state, failures, timestamps, and logs are correlated through the
-// node execution_id.
-//
-// Example:
-//
-// node install_and_run: sub_dag(commands_dag)
-//
-// commands_dag:
-// node install_packages:
-// execution_id = cmd_install_packages
-// task_state.handler_name = "agent.command"
-// task_state.input = Any(runtime.agent.Command)
-//
-// node render_service:
-// execution_id = cmd_render_service
-// task_state.handler_name = "agent.command"
-// task_state.input = Any(runtime.agent.Command)
-//
-// node start_service:
-// execution_id = cmd_start_service
-// task_state.handler_name = "agent.command"
-// task_state.input = Any(runtime.agent.Command)
-//
-// edges:
-// install_packages -> render_service
-// render_service -> start_service
-//
-// The agent API leases and reports a command by:
-//
-// DagId + Node.execution_id
-//
-// It must not use structural paths. Node.id is local to one Dag and is
-// used by edges. Node.execution_id is the stable external identity inside
-// the persisted top-level Dag aggregate, including embedded sub-Dags.
-//
-// The scheduler loads and saves the whole Dag aggregate as one unit. A
-// top-level Dag is persisted in the dags table; a sub-Dag is embedded in its
-// owning node and is not persisted as a separate database row. A dag_ref node
-// points at another persisted Dag and lets parent Dags orchestrate independent
-// child Dags without embedding their full payload.
-//
-// Execution model:
-// - a node becomes ready when its incoming edges are satisfied according to
-// the node join policy;
-// - an edge without a condition is satisfied when the source node reaches
-// STATUS_COMPLETED;
-// - an edge with on_status is satisfied when the source node reaches that
-// terminal status;
-// - an edge with predicate_name is satisfied when the registered predicate
-// returns true after the source node reaches a terminal status;
-// - ready nodes are admitted by Dag.Scheduling.max_parallelism and then by
-// node priority;
-// - a task node executes its TaskState payload;
-// - a sub-Dag node executes the nested Dag and mirrors its terminal result
-// into the owning node status;
-// - a dag_ref node executes or waits for another persisted Dag through the
-// runtime's DagRefRunner and mirrors its terminal result into the owning
-// node status;
-// - Dag.Scheduling.on_node_failure controls whether ordinary pending nodes
-// continue to be admitted after a node fails;
-// - Node.Scheduling.always_run nodes are reserved for cleanup/teardown and
-// may still run after failure or cancellation.
-//
-// Cross-boundary edges are not allowed: edges inside a Dag may reference only
-// nodes from that same Dag. Parent Dag edges depend on the owning sub-Dag node,
-// not on nodes inside the nested Dag.
+// Today the split is implicit via handler_name "agent.command"; the enum makes
+// it explicit.
 type Dag struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// id is the persistent aggregate id for a top-level Dag.
@@ -928,7 +882,9 @@ type Dag_Node_TaskState struct {
 	// input is the typed payload consumed by the task executor.
 	Input *anypb.Any `protobuf:"bytes,2,opt,name=input,proto3" json:"input,omitempty"`
 	// output is the typed payload produced after task completion.
-	Output        *anypb.Any `protobuf:"bytes,3,opt,name=output,proto3" json:"output,omitempty"`
+	Output *anypb.Any `protobuf:"bytes,3,opt,name=output,proto3" json:"output,omitempty"`
+	// locus marks server-plane vs agent execution.
+	Locus         Dag_Node_TaskState_ExecutionLocus `protobuf:"varint,4,opt,name=locus,proto3,enum=cloud.v1.runtime.primitive.Dag_Node_TaskState_ExecutionLocus" json:"locus,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -982,6 +938,13 @@ func (x *Dag_Node_TaskState) GetOutput() *anypb.Any {
 		return x.Output
 	}
 	return nil
+}
+
+func (x *Dag_Node_TaskState) GetLocus() Dag_Node_TaskState_ExecutionLocus {
+	if x != nil {
+		return x.Locus
+	}
+	return Dag_Node_TaskState_EXECUTION_LOCUS_UNSPECIFIED
 }
 
 // DagRef points at another persisted Dag.
@@ -1208,7 +1171,7 @@ var File_cloud_v1_runtime_primitive_dag_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_runtime_primitive_dag_proto_rawDesc = "" +
 	"\n" +
-	"$cloud/v1/runtime/primitive/dag.proto\x12\x1acloud.v1.runtime.primitive\x1a&cloud/v1/runtime/primitive/retry.proto\x1a'cloud/v1/runtime/primitive/status.proto\x1a\x19google/protobuf/any.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xd3\x1c\n" +
+	"$cloud/v1/runtime/primitive/dag.proto\x12\x1acloud.v1.runtime.primitive\x1a&cloud/v1/runtime/primitive/retry.proto\x1a'cloud/v1/runtime/primitive/status.proto\x1a\x19google/protobuf/any.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\x9c\x1e\n" +
 	"\x03Dag\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12J\n" +
@@ -1234,7 +1197,7 @@ const file_cloud_v1_runtime_primitive_dag_proto_rawDesc = "" +
 	"\bmetadata\x18\b \x03(\v25.cloud.v1.runtime.primitive.Dag.Failure.MetadataEntryB\b\xfaB\x05\x9a\x01\x02\x10@R\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a\xa6\r\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a\xef\x0e\n" +
 	"\x04Node\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12H\n" +
 	"\x06status\x18\x02 \x01(\x0e2\".cloud.v1.runtime.primitive.StatusB\f\xfaB\t\x82\x01\x06\x10\x01 \x00 \aR\x06status\x12Y\n" +
@@ -1249,11 +1212,16 @@ const file_cloud_v1_runtime_primitive_dag_proto_rawDesc = "" +
 	" \x01(\v2..cloud.v1.runtime.primitive.Dag.Node.TaskStateB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\ttaskState\x12D\n" +
 	"\asub_dag\x18\v \x01(\v2\x1f.cloud.v1.runtime.primitive.DagB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\x06subDag\x12P\n" +
 	"\adag_ref\x18\f \x01(\v2+.cloud.v1.runtime.primitive.Dag.Node.DagRefB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\x06dagRef\x12L\n" +
-	"\texecution\x18\x14 \x01(\v2..cloud.v1.runtime.primitive.Dag.Node.ExecutionR\texecution\x1a\x9b\x01\n" +
+	"\texecution\x18\x14 \x01(\v2..cloud.v1.runtime.primitive.Dag.Node.ExecutionR\texecution\x1a\xe4\x02\n" +
 	"\tTaskState\x12*\n" +
 	"\fhandler_name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\vhandlerName\x124\n" +
 	"\x05input\x18\x02 \x01(\v2\x14.google.protobuf.AnyB\b\xfaB\x05\xa2\x01\x02\b\x01R\x05input\x12,\n" +
-	"\x06output\x18\x03 \x01(\v2\x14.google.protobuf.AnyR\x06output\x1a+\n" +
+	"\x06output\x18\x03 \x01(\v2\x14.google.protobuf.AnyR\x06output\x12]\n" +
+	"\x05locus\x18\x04 \x01(\x0e2=.cloud.v1.runtime.primitive.Dag.Node.TaskState.ExecutionLocusB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05locus\"h\n" +
+	"\x0eExecutionLocus\x12\x1f\n" +
+	"\x1bEXECUTION_LOCUS_UNSPECIFIED\x10\x00\x12\x1a\n" +
+	"\x16EXECUTION_LOCUS_SERVER\x10\x01\x12\x19\n" +
+	"\x15EXECUTION_LOCUS_AGENT\x10\x02\x1a+\n" +
 	"\x06DagRef\x12!\n" +
 	"\x06dag_id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05dagId\x1a\xda\x02\n" +
@@ -1331,69 +1299,71 @@ func file_cloud_v1_runtime_primitive_dag_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_runtime_primitive_dag_proto_rawDescData
 }
 
-var file_cloud_v1_runtime_primitive_dag_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_cloud_v1_runtime_primitive_dag_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_cloud_v1_runtime_primitive_dag_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_cloud_v1_runtime_primitive_dag_proto_goTypes = []any{
-	(Dag_Node_Scheduling_JoinPolicy)(0), // 0: cloud.v1.runtime.primitive.Dag.Node.Scheduling.JoinPolicy
-	(Dag_Scheduling_OnNodeFailure)(0),   // 1: cloud.v1.runtime.primitive.Dag.Scheduling.OnNodeFailure
-	(*Dag)(nil),                         // 2: cloud.v1.runtime.primitive.Dag
-	(*Dag_Failure)(nil),                 // 3: cloud.v1.runtime.primitive.Dag.Failure
-	(*Dag_Node)(nil),                    // 4: cloud.v1.runtime.primitive.Dag.Node
-	(*Dag_Edge)(nil),                    // 5: cloud.v1.runtime.primitive.Dag.Edge
-	(*Dag_Execution)(nil),               // 6: cloud.v1.runtime.primitive.Dag.Execution
-	(*Dag_Scheduling)(nil),              // 7: cloud.v1.runtime.primitive.Dag.Scheduling
-	nil,                                 // 8: cloud.v1.runtime.primitive.Dag.MetadataEntry
-	nil,                                 // 9: cloud.v1.runtime.primitive.Dag.Failure.MetadataEntry
-	(*Dag_Node_TaskState)(nil),          // 10: cloud.v1.runtime.primitive.Dag.Node.TaskState
-	(*Dag_Node_DagRef)(nil),             // 11: cloud.v1.runtime.primitive.Dag.Node.DagRef
-	(*Dag_Node_Scheduling)(nil),         // 12: cloud.v1.runtime.primitive.Dag.Node.Scheduling
-	(*Dag_Node_Execution)(nil),          // 13: cloud.v1.runtime.primitive.Dag.Node.Execution
-	nil,                                 // 14: cloud.v1.runtime.primitive.Dag.Node.MetadataEntry
-	(Status)(0),                         // 15: cloud.v1.runtime.primitive.Status
-	(*anypb.Any)(nil),                   // 16: google.protobuf.Any
-	(*timestamppb.Timestamp)(nil),       // 17: google.protobuf.Timestamp
-	(*Retry_Policy)(nil),                // 18: cloud.v1.runtime.primitive.Retry.Policy
-	(*Retry_State)(nil),                 // 19: cloud.v1.runtime.primitive.Retry.State
+	(Dag_Node_TaskState_ExecutionLocus)(0), // 0: cloud.v1.runtime.primitive.Dag.Node.TaskState.ExecutionLocus
+	(Dag_Node_Scheduling_JoinPolicy)(0),    // 1: cloud.v1.runtime.primitive.Dag.Node.Scheduling.JoinPolicy
+	(Dag_Scheduling_OnNodeFailure)(0),      // 2: cloud.v1.runtime.primitive.Dag.Scheduling.OnNodeFailure
+	(*Dag)(nil),                            // 3: cloud.v1.runtime.primitive.Dag
+	(*Dag_Failure)(nil),                    // 4: cloud.v1.runtime.primitive.Dag.Failure
+	(*Dag_Node)(nil),                       // 5: cloud.v1.runtime.primitive.Dag.Node
+	(*Dag_Edge)(nil),                       // 6: cloud.v1.runtime.primitive.Dag.Edge
+	(*Dag_Execution)(nil),                  // 7: cloud.v1.runtime.primitive.Dag.Execution
+	(*Dag_Scheduling)(nil),                 // 8: cloud.v1.runtime.primitive.Dag.Scheduling
+	nil,                                    // 9: cloud.v1.runtime.primitive.Dag.MetadataEntry
+	nil,                                    // 10: cloud.v1.runtime.primitive.Dag.Failure.MetadataEntry
+	(*Dag_Node_TaskState)(nil),             // 11: cloud.v1.runtime.primitive.Dag.Node.TaskState
+	(*Dag_Node_DagRef)(nil),                // 12: cloud.v1.runtime.primitive.Dag.Node.DagRef
+	(*Dag_Node_Scheduling)(nil),            // 13: cloud.v1.runtime.primitive.Dag.Node.Scheduling
+	(*Dag_Node_Execution)(nil),             // 14: cloud.v1.runtime.primitive.Dag.Node.Execution
+	nil,                                    // 15: cloud.v1.runtime.primitive.Dag.Node.MetadataEntry
+	(Status)(0),                            // 16: cloud.v1.runtime.primitive.Status
+	(*anypb.Any)(nil),                      // 17: google.protobuf.Any
+	(*timestamppb.Timestamp)(nil),          // 18: google.protobuf.Timestamp
+	(*Retry_Policy)(nil),                   // 19: cloud.v1.runtime.primitive.Retry.Policy
+	(*Retry_State)(nil),                    // 20: cloud.v1.runtime.primitive.Retry.State
 }
 var file_cloud_v1_runtime_primitive_dag_proto_depIdxs = []int32{
-	15, // 0: cloud.v1.runtime.primitive.Dag.status:type_name -> cloud.v1.runtime.primitive.Status
-	4,  // 1: cloud.v1.runtime.primitive.Dag.nodes:type_name -> cloud.v1.runtime.primitive.Dag.Node
-	5,  // 2: cloud.v1.runtime.primitive.Dag.edges:type_name -> cloud.v1.runtime.primitive.Dag.Edge
-	16, // 3: cloud.v1.runtime.primitive.Dag.input:type_name -> google.protobuf.Any
-	7,  // 4: cloud.v1.runtime.primitive.Dag.scheduling:type_name -> cloud.v1.runtime.primitive.Dag.Scheduling
-	8,  // 5: cloud.v1.runtime.primitive.Dag.metadata:type_name -> cloud.v1.runtime.primitive.Dag.MetadataEntry
-	6,  // 6: cloud.v1.runtime.primitive.Dag.execution:type_name -> cloud.v1.runtime.primitive.Dag.Execution
-	17, // 7: cloud.v1.runtime.primitive.Dag.Failure.occurred_at:type_name -> google.protobuf.Timestamp
-	9,  // 8: cloud.v1.runtime.primitive.Dag.Failure.metadata:type_name -> cloud.v1.runtime.primitive.Dag.Failure.MetadataEntry
-	15, // 9: cloud.v1.runtime.primitive.Dag.Node.status:type_name -> cloud.v1.runtime.primitive.Status
-	12, // 10: cloud.v1.runtime.primitive.Dag.Node.scheduling:type_name -> cloud.v1.runtime.primitive.Dag.Node.Scheduling
-	14, // 11: cloud.v1.runtime.primitive.Dag.Node.metadata:type_name -> cloud.v1.runtime.primitive.Dag.Node.MetadataEntry
-	10, // 12: cloud.v1.runtime.primitive.Dag.Node.task_state:type_name -> cloud.v1.runtime.primitive.Dag.Node.TaskState
-	2,  // 13: cloud.v1.runtime.primitive.Dag.Node.sub_dag:type_name -> cloud.v1.runtime.primitive.Dag
-	11, // 14: cloud.v1.runtime.primitive.Dag.Node.dag_ref:type_name -> cloud.v1.runtime.primitive.Dag.Node.DagRef
-	13, // 15: cloud.v1.runtime.primitive.Dag.Node.execution:type_name -> cloud.v1.runtime.primitive.Dag.Node.Execution
-	15, // 16: cloud.v1.runtime.primitive.Dag.Edge.on_status:type_name -> cloud.v1.runtime.primitive.Status
-	15, // 17: cloud.v1.runtime.primitive.Dag.Execution.status:type_name -> cloud.v1.runtime.primitive.Status
-	3,  // 18: cloud.v1.runtime.primitive.Dag.Execution.failure:type_name -> cloud.v1.runtime.primitive.Dag.Failure
-	3,  // 19: cloud.v1.runtime.primitive.Dag.Execution.failures:type_name -> cloud.v1.runtime.primitive.Dag.Failure
-	17, // 20: cloud.v1.runtime.primitive.Dag.Execution.started_at:type_name -> google.protobuf.Timestamp
-	17, // 21: cloud.v1.runtime.primitive.Dag.Execution.finished_at:type_name -> google.protobuf.Timestamp
-	1,  // 22: cloud.v1.runtime.primitive.Dag.Scheduling.on_node_failure:type_name -> cloud.v1.runtime.primitive.Dag.Scheduling.OnNodeFailure
-	16, // 23: cloud.v1.runtime.primitive.Dag.Node.TaskState.input:type_name -> google.protobuf.Any
-	16, // 24: cloud.v1.runtime.primitive.Dag.Node.TaskState.output:type_name -> google.protobuf.Any
-	18, // 25: cloud.v1.runtime.primitive.Dag.Node.Scheduling.retry_policy:type_name -> cloud.v1.runtime.primitive.Retry.Policy
-	0,  // 26: cloud.v1.runtime.primitive.Dag.Node.Scheduling.join_policy:type_name -> cloud.v1.runtime.primitive.Dag.Node.Scheduling.JoinPolicy
-	15, // 27: cloud.v1.runtime.primitive.Dag.Node.Execution.status:type_name -> cloud.v1.runtime.primitive.Status
-	19, // 28: cloud.v1.runtime.primitive.Dag.Node.Execution.retry_state:type_name -> cloud.v1.runtime.primitive.Retry.State
-	3,  // 29: cloud.v1.runtime.primitive.Dag.Node.Execution.failure:type_name -> cloud.v1.runtime.primitive.Dag.Failure
-	3,  // 30: cloud.v1.runtime.primitive.Dag.Node.Execution.failures:type_name -> cloud.v1.runtime.primitive.Dag.Failure
-	17, // 31: cloud.v1.runtime.primitive.Dag.Node.Execution.started_at:type_name -> google.protobuf.Timestamp
-	17, // 32: cloud.v1.runtime.primitive.Dag.Node.Execution.finished_at:type_name -> google.protobuf.Timestamp
-	33, // [33:33] is the sub-list for method output_type
-	33, // [33:33] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	16, // 0: cloud.v1.runtime.primitive.Dag.status:type_name -> cloud.v1.runtime.primitive.Status
+	5,  // 1: cloud.v1.runtime.primitive.Dag.nodes:type_name -> cloud.v1.runtime.primitive.Dag.Node
+	6,  // 2: cloud.v1.runtime.primitive.Dag.edges:type_name -> cloud.v1.runtime.primitive.Dag.Edge
+	17, // 3: cloud.v1.runtime.primitive.Dag.input:type_name -> google.protobuf.Any
+	8,  // 4: cloud.v1.runtime.primitive.Dag.scheduling:type_name -> cloud.v1.runtime.primitive.Dag.Scheduling
+	9,  // 5: cloud.v1.runtime.primitive.Dag.metadata:type_name -> cloud.v1.runtime.primitive.Dag.MetadataEntry
+	7,  // 6: cloud.v1.runtime.primitive.Dag.execution:type_name -> cloud.v1.runtime.primitive.Dag.Execution
+	18, // 7: cloud.v1.runtime.primitive.Dag.Failure.occurred_at:type_name -> google.protobuf.Timestamp
+	10, // 8: cloud.v1.runtime.primitive.Dag.Failure.metadata:type_name -> cloud.v1.runtime.primitive.Dag.Failure.MetadataEntry
+	16, // 9: cloud.v1.runtime.primitive.Dag.Node.status:type_name -> cloud.v1.runtime.primitive.Status
+	13, // 10: cloud.v1.runtime.primitive.Dag.Node.scheduling:type_name -> cloud.v1.runtime.primitive.Dag.Node.Scheduling
+	15, // 11: cloud.v1.runtime.primitive.Dag.Node.metadata:type_name -> cloud.v1.runtime.primitive.Dag.Node.MetadataEntry
+	11, // 12: cloud.v1.runtime.primitive.Dag.Node.task_state:type_name -> cloud.v1.runtime.primitive.Dag.Node.TaskState
+	3,  // 13: cloud.v1.runtime.primitive.Dag.Node.sub_dag:type_name -> cloud.v1.runtime.primitive.Dag
+	12, // 14: cloud.v1.runtime.primitive.Dag.Node.dag_ref:type_name -> cloud.v1.runtime.primitive.Dag.Node.DagRef
+	14, // 15: cloud.v1.runtime.primitive.Dag.Node.execution:type_name -> cloud.v1.runtime.primitive.Dag.Node.Execution
+	16, // 16: cloud.v1.runtime.primitive.Dag.Edge.on_status:type_name -> cloud.v1.runtime.primitive.Status
+	16, // 17: cloud.v1.runtime.primitive.Dag.Execution.status:type_name -> cloud.v1.runtime.primitive.Status
+	4,  // 18: cloud.v1.runtime.primitive.Dag.Execution.failure:type_name -> cloud.v1.runtime.primitive.Dag.Failure
+	4,  // 19: cloud.v1.runtime.primitive.Dag.Execution.failures:type_name -> cloud.v1.runtime.primitive.Dag.Failure
+	18, // 20: cloud.v1.runtime.primitive.Dag.Execution.started_at:type_name -> google.protobuf.Timestamp
+	18, // 21: cloud.v1.runtime.primitive.Dag.Execution.finished_at:type_name -> google.protobuf.Timestamp
+	2,  // 22: cloud.v1.runtime.primitive.Dag.Scheduling.on_node_failure:type_name -> cloud.v1.runtime.primitive.Dag.Scheduling.OnNodeFailure
+	17, // 23: cloud.v1.runtime.primitive.Dag.Node.TaskState.input:type_name -> google.protobuf.Any
+	17, // 24: cloud.v1.runtime.primitive.Dag.Node.TaskState.output:type_name -> google.protobuf.Any
+	0,  // 25: cloud.v1.runtime.primitive.Dag.Node.TaskState.locus:type_name -> cloud.v1.runtime.primitive.Dag.Node.TaskState.ExecutionLocus
+	19, // 26: cloud.v1.runtime.primitive.Dag.Node.Scheduling.retry_policy:type_name -> cloud.v1.runtime.primitive.Retry.Policy
+	1,  // 27: cloud.v1.runtime.primitive.Dag.Node.Scheduling.join_policy:type_name -> cloud.v1.runtime.primitive.Dag.Node.Scheduling.JoinPolicy
+	16, // 28: cloud.v1.runtime.primitive.Dag.Node.Execution.status:type_name -> cloud.v1.runtime.primitive.Status
+	20, // 29: cloud.v1.runtime.primitive.Dag.Node.Execution.retry_state:type_name -> cloud.v1.runtime.primitive.Retry.State
+	4,  // 30: cloud.v1.runtime.primitive.Dag.Node.Execution.failure:type_name -> cloud.v1.runtime.primitive.Dag.Failure
+	4,  // 31: cloud.v1.runtime.primitive.Dag.Node.Execution.failures:type_name -> cloud.v1.runtime.primitive.Dag.Failure
+	18, // 32: cloud.v1.runtime.primitive.Dag.Node.Execution.started_at:type_name -> google.protobuf.Timestamp
+	18, // 33: cloud.v1.runtime.primitive.Dag.Node.Execution.finished_at:type_name -> google.protobuf.Timestamp
+	34, // [34:34] is the sub-list for method output_type
+	34, // [34:34] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_runtime_primitive_dag_proto_init() }
@@ -1417,7 +1387,7 @@ func file_cloud_v1_runtime_primitive_dag_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_runtime_primitive_dag_proto_rawDesc), len(file_cloud_v1_runtime_primitive_dag_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      3,
 			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,

@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package cloud.v1.api.ui;
+
+import "cloud/v1/deployment/deployment.proto";
+import "cloud/v1/models/common.proto";
+import "cloud/v1/models/network.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui";
+
+/*
+    CloudInventoryService is the TENANT view of real cloud state (D19/D20, H39).
+    Authorized by TenantMember.Role OWNER for the request's tenant_id (NOT only
+    platform admin); Account.is_admin also passes. Quotas/allocations are computed
+    against the tenant's own provider settings. The cloud is the source of truth;
+    Reconcile syncs quotas + network occupancy. Every request carries tenant_id (A).
+ */
+message FetchQuotasRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    deployment.Provider provider = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /* live forces a live provider query instead of the cached snapshot. */
+    bool live = 3;
+}
+
+/* Typed per-model query (H42). */
+message ListNetworkAllocationsRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    deployment.Provider provider = 2 [(validate.rules).enum.defined_only = true];
+    uint32 page_size = 3 [(validate.rules).uint32.lte = 1000];
+    string page_token = 4 [(validate.rules).string.max_len = 256];
+}
+
+message ReconcileRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    deployment.Provider provider = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+}
+message ReconcileResponse {
+    uint32 quotas_refreshed = 1;
+    uint32 allocations_reconciled = 2;
+    uint32 orphans_released = 3;
+}
+
+service CloudInventoryService {
+    rpc FetchQuotas (FetchQuotasRequest) returns (deployment.QuotaInventory) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc ListNetworkAllocations (ListNetworkAllocationsRequest) returns (models.NetworkAllocation.List) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc Reconcile (ReconcileRequest) returns (ReconcileResponse) {option idempotency_level = IDEMPOTENT;}
+}

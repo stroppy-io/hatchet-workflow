@@ -4,7 +4,7 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { DatabasePresetIdSchema, TenantId, TenantIdJson } from "../../models/common_pb.ts";
+import type { DatabasePresetId, DatabasePresetIdJson, TenantId, TenantIdJson } from "../../models/common_pb.ts";
 import { file_cloud_v1_models_common } from "../../models/common_pb.ts";
 import type { Preset_Kind, Preset_KindJson, Preset_ListSchema, PresetSchema } from "../../models/preset_pb.ts";
 import { file_cloud_v1_models_preset } from "../../models/preset_pb.ts";
@@ -17,9 +17,14 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/ui/preset.proto.
  */
 export const file_cloud_v1_api_ui_preset: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS9hcGkvdWkvcHJlc2V0LnByb3RvEg9jbG91ZC52MS5hcGkudWkigwEKEUxpc3RQcmVzZXRSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESNgoEa2luZBgCIAEoDjIcLmNsb3VkLnYxLm1vZGVscy5QcmVzZXQuS2luZEIK+kIHggEEEAEgADKTAwoNUHJlc2V0U2VydmljZRJUCgtMaXN0UHJlc2V0cxIiLmNsb3VkLnYxLmFwaS51aS5MaXN0UHJlc2V0UmVxdWVzdBocLmNsb3VkLnYxLm1vZGVscy5QcmVzZXQuTGlzdCIDkAIBEkUKDENyZWF0ZVByZXNldBIXLmNsb3VkLnYxLm1vZGVscy5QcmVzZXQaFy5jbG91ZC52MS5tb2RlbHMuUHJlc2V0IgOQAgESRQoMVXBkYXRlUHJlc2V0EhcuY2xvdWQudjEubW9kZWxzLlByZXNldBoXLmNsb3VkLnYxLm1vZGVscy5QcmVzZXQiA5ACAhJOCgxEZWxldGVQcmVzZXQSIS5jbG91ZC52MS5tb2RlbHMuRGF0YWJhc2VQcmVzZXRJZBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIDkAICEk4KC0Nsb25lUHJlc2V0EiEuY2xvdWQudjEubW9kZWxzLkRhdGFiYXNlUHJlc2V0SWQaFy5jbG91ZC52MS5tb2RlbHMuUHJlc2V0IgOQAgFCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBpL3VpYgZwcm90bzM", [file_cloud_v1_models_common, file_cloud_v1_models_preset, file_google_protobuf_empty, file_validate_validate]);
+  fileDesc("ChxjbG91ZC92MS9hcGkvdWkvcHJlc2V0LnByb3RvEg9jbG91ZC52MS5hcGkudWkigwEKEUxpc3RQcmVzZXRSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESNgoEa2luZBgCIAEoDjIcLmNsb3VkLnYxLm1vZGVscy5QcmVzZXQuS2luZEIK+kIHggEEEAEgACKGAQoTRGVsZXRlUHJlc2V0UmVxdWVzdBI2Cgl0ZW5hbnRfaWQYASABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCCPpCBYoBAhABEjcKAmlkGAIgASgLMiEuY2xvdWQudjEubW9kZWxzLkRhdGFiYXNlUHJlc2V0SWRCCPpCBYoBAhABIoUBChJDbG9uZVByZXNldFJlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARI3CgJpZBgCIAEoCzIhLmNsb3VkLnYxLm1vZGVscy5EYXRhYmFzZVByZXNldElkQgj6QgWKAQIQATKYAwoNUHJlc2V0U2VydmljZRJUCgtMaXN0UHJlc2V0cxIiLmNsb3VkLnYxLmFwaS51aS5MaXN0UHJlc2V0UmVxdWVzdBocLmNsb3VkLnYxLm1vZGVscy5QcmVzZXQuTGlzdCIDkAIBEkUKDENyZWF0ZVByZXNldBIXLmNsb3VkLnYxLm1vZGVscy5QcmVzZXQaFy5jbG91ZC52MS5tb2RlbHMuUHJlc2V0IgOQAgESRQoMVXBkYXRlUHJlc2V0EhcuY2xvdWQudjEubW9kZWxzLlByZXNldBoXLmNsb3VkLnYxLm1vZGVscy5QcmVzZXQiA5ACAhJRCgxEZWxldGVQcmVzZXQSJC5jbG91ZC52MS5hcGkudWkuRGVsZXRlUHJlc2V0UmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIDkAICElAKC0Nsb25lUHJlc2V0EiMuY2xvdWQudjEuYXBpLnVpLkNsb25lUHJlc2V0UmVxdWVzdBoXLmNsb3VkLnYxLm1vZGVscy5QcmVzZXQiA5ACAUJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGkvdWliBnByb3RvMw", [file_cloud_v1_models_common, file_cloud_v1_models_preset, file_google_protobuf_empty, file_validate_validate]);
 
 /**
+ *
+ * PresetService — every request carries tenant_id (A). Create/Update pass a
+ * models.Preset which already embeds Own.tenant_id; the bare-id RPCs use
+ * wrappers so they carry tenant_id too.
+ *
  * @generated from message cloud.v1.api.ui.ListPresetRequest
  */
 export type ListPresetRequest = Message<"cloud.v1.api.ui.ListPresetRequest"> & {
@@ -35,6 +40,11 @@ export type ListPresetRequest = Message<"cloud.v1.api.ui.ListPresetRequest"> & {
 };
 
 /**
+ *
+ * PresetService — every request carries tenant_id (A). Create/Update pass a
+ * models.Preset which already embeds Own.tenant_id; the bare-id RPCs use
+ * wrappers so they carry tenant_id too.
+ *
  * @generated from message cloud.v1.api.ui.ListPresetRequest
  */
 export type ListPresetRequestJson = {
@@ -57,6 +67,84 @@ export type ListPresetRequestValid = ListPresetRequest;
  */
 export const ListPresetRequestSchema: GenMessage<ListPresetRequest, {jsonType: ListPresetRequestJson, validType: ListPresetRequestValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_api_ui_preset, 0);
+
+/**
+ * @generated from message cloud.v1.api.ui.DeletePresetRequest
+ */
+export type DeletePresetRequest = Message<"cloud.v1.api.ui.DeletePresetRequest"> & {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantId;
+
+  /**
+   * @generated from field: cloud.v1.models.DatabasePresetId id = 2;
+   */
+  id?: DatabasePresetId;
+};
+
+/**
+ * @generated from message cloud.v1.api.ui.DeletePresetRequest
+ */
+export type DeletePresetRequestJson = {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantIdJson;
+
+  /**
+   * @generated from field: cloud.v1.models.DatabasePresetId id = 2;
+   */
+  id?: DatabasePresetIdJson;
+};
+
+export type DeletePresetRequestValid = DeletePresetRequest;
+
+/**
+ * Describes the message cloud.v1.api.ui.DeletePresetRequest.
+ * Use `create(DeletePresetRequestSchema)` to create a new message.
+ */
+export const DeletePresetRequestSchema: GenMessage<DeletePresetRequest, {jsonType: DeletePresetRequestJson, validType: DeletePresetRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_ui_preset, 1);
+
+/**
+ * @generated from message cloud.v1.api.ui.ClonePresetRequest
+ */
+export type ClonePresetRequest = Message<"cloud.v1.api.ui.ClonePresetRequest"> & {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantId;
+
+  /**
+   * @generated from field: cloud.v1.models.DatabasePresetId id = 2;
+   */
+  id?: DatabasePresetId;
+};
+
+/**
+ * @generated from message cloud.v1.api.ui.ClonePresetRequest
+ */
+export type ClonePresetRequestJson = {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantIdJson;
+
+  /**
+   * @generated from field: cloud.v1.models.DatabasePresetId id = 2;
+   */
+  id?: DatabasePresetIdJson;
+};
+
+export type ClonePresetRequestValid = ClonePresetRequest;
+
+/**
+ * Describes the message cloud.v1.api.ui.ClonePresetRequest.
+ * Use `create(ClonePresetRequestSchema)` to create a new message.
+ */
+export const ClonePresetRequestSchema: GenMessage<ClonePresetRequest, {jsonType: ClonePresetRequestJson, validType: ClonePresetRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_ui_preset, 2);
 
 /**
  * @generated from service cloud.v1.api.ui.PresetService
@@ -91,7 +179,7 @@ export const PresetService: GenService<{
    */
   deletePreset: {
     methodKind: "unary";
-    input: typeof DatabasePresetIdSchema;
+    input: typeof DeletePresetRequestSchema;
     output: typeof EmptySchema;
   },
   /**
@@ -99,7 +187,7 @@ export const PresetService: GenService<{
    */
   clonePreset: {
     methodKind: "unary";
-    input: typeof DatabasePresetIdSchema;
+    input: typeof ClonePresetRequestSchema;
     output: typeof PresetSchema;
   },
 }> = /*@__PURE__*/

@@ -40,7 +40,7 @@ message TenantMember {
     option (goplain.message).generate = true;
     option (ratel.table) = {
         generate: true
-        table_name: "tenants"
+        table_name: "tenant_members"
     };
     models.Entity entity = 1 [(goplain.field).embed = true];
     models.TenantId tenant_id = 2 [(ratel.column).constraints = {

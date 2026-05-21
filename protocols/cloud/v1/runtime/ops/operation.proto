@@ -16,6 +16,21 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     machine, create directories, and run commands. Complex scenarios such as
     package installation, systemctl, cleanup, chmod/chown of existing paths, or
     daemon lifecycle are represented as a sequence/DAG of these primitives.
+
+    BDD decisions (D17, features/agent/command-execution.feature):
+    - the agent is a GENERIC executor of these 6 ops and carries NO per-engine
+      knowledge. The old per-component install / config Go functions disappear;
+      every component recipe (postgres, patroni, etcd, proxy, ydb, cockroach,
+      monitor) becomes planner DATA expanded into a sequence of these ops inside
+      a command sub_dag.
+    - systemd Service (system.Service) is decomposed by the PLANNER into ops
+      (WRITE_FILE unit_file -> RUN_CMD daemon-reload -> RUN_CMD enable/start);
+      there is intentionally no apply-service operation here.
+    - host bootstrap (apt-lock handling, base deps) is an explicit first command
+      node (preamble) in the Dag, visible and retryable; later install nodes
+      depend on it.
+    - ops should be idempotent for safe node retry; RUN_CMD uses
+      expected_exit_codes to treat "already done" as success.
  */
 message Operation {
     /* id identifies this operation inside a sequence, DAG, or execution log. */

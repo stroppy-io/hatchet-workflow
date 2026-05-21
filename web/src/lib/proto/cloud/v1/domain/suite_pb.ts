@@ -20,6 +20,12 @@ export const file_cloud_v1_domain_suite: GenFile = /*@__PURE__*/
   fileDesc("ChtjbG91ZC92MS9kb21haW4vc3VpdGUucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiK+AwoLU3VpdGVQcmVzZXQSOwoIcHJvdmlkZXIYASABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyQgr6QgeCAQQQASAAEkUKCnNjaGVkdWxpbmcYAiABKAsyJy5jbG91ZC52MS5kb21haW4uU3VpdGVQcmVzZXQuU2NoZWR1bGluZ0II+kIFigECEAESNAoFdGVzdHMYAyADKAsyGy5jbG91ZC52MS5kb21haW4uVGVzdFByZXNldEII+kIFkgECCAEa9AEKClNjaGVkdWxpbmcSUQoPb25fbm9kZV9mYWlsdXJlGAEgASgOMjguY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLlNjaGVkdWxpbmcuT25Ob2RlRmFpbHVyZRIUCgpzZXF1ZW50aWFsGAogASgISAASTgoIcGFyYWxsZWwYCyABKAsyMC5jbG91ZC52MS5kb21haW4uU3VpdGVQcmVzZXQuU2NoZWR1bGluZy5QYXJhbGxlbEII+kIFigECEAFIABogCghQYXJhbGxlbBIUCgxtYXhfcGFyYWxsZWwYASABKA1CCwoEbW9kZRID+EIBQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RvbWFpbmIGcHJvdG8z", [file_cloud_v1_deployment_deployment, file_cloud_v1_domain_test, file_cloud_v1_runtime_primitive_dag, file_validate_validate]);
 
 /**
+ *
+ * BDD decision (B6): SuitePreset.Scheduling compiles directly into the suite
+ * Dag.Scheduling — sequential -> max_parallelism = 1, parallel{N} ->
+ * max_parallelism = N, on_node_failure passes straight through. This is the
+ * bridge from catalog to the runtime engine.
+ *
  * @generated from message cloud.v1.domain.SuitePreset
  */
 export type SuitePreset = Message<"cloud.v1.domain.SuitePreset"> & {
@@ -40,6 +46,12 @@ export type SuitePreset = Message<"cloud.v1.domain.SuitePreset"> & {
 };
 
 /**
+ *
+ * BDD decision (B6): SuitePreset.Scheduling compiles directly into the suite
+ * Dag.Scheduling — sequential -> max_parallelism = 1, parallel{N} ->
+ * max_parallelism = N, on_node_failure passes straight through. This is the
+ * bridge from catalog to the runtime engine.
+ *
  * @generated from message cloud.v1.domain.SuitePreset
  */
 export type SuitePresetJson = {

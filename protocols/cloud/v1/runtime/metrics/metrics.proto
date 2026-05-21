@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.metrics;
+
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/metrics";
+
+/*
+    Runtime metric result types (E). These are runtime observations, NOT
+    persisted entities — they are queried live from VictoriaMetrics and may be
+    snapshotted into a share record. So they live under runtime/, not models/.
+
+    Like runtime/primitive (DagRef), this package stays independent of database
+    models: run identity is a plain string, not models.TestRunId. The API layer
+    maps it to/from the typed id.
+
+    Self-describing by design: there is NO enum of metric names/kinds. The
+    backend supplies every field the UI needs to render a metric generically
+    (name, unit, group, direction); adding a metric is a backend-data change only.
+
+    Cost is intentionally NOT here: a run's resource cost is exactly its
+    deployment.QuotaRequest set (D19).
+
+    Two independent consumers of the SAME VictoriaMetrics (single source of truth):
+    1. the embedded Grafana dashboards query VictoriaMetrics DIRECTLY over HTTP via
+       its Prometheus datasource (vmselect multitenant) — this path is UNCHANGED
+       and must stay HTTP for Grafana to work; it is not proxied through proto.
+    2. our UI uses these summary DTOs (RunService.GetRunMetrics/CompareRuns).
+    The proto surface is additive, not a replacement for Grafana. Our UI keeps its
+    own log/metric viewer; deep-linking into Grafana is not done for now.
+ */
+
+/* TimeRange is the [start, end] window the metrics cover. */
+message TimeRange {
+    google.protobuf.Timestamp start = 1 [(validate.rules).timestamp.required = true];
+    google.protobuf.Timestamp end = 2 [(validate.rules).timestamp.required = true];
+}
+
+/* MetricSummary is one aggregated metric series for a run. */
+message MetricSummary {
+    /* key is the stable metric key (PromQL series identity). Free string, not an enum. */
+    string key = 1 [(validate.rules).string = {min_len: 1, max_len: 256}];
+    /* name is the human-readable metric name supplied by the backend. */
+    string name = 2 [(validate.rules).string.max_len = 256];
+    /* unit is the metric unit, e.g. "ms", "ops/s". */
+    string unit = 3 [(validate.rules).string.max_len = 32];
+    double avg = 4;
+    double min = 5;
+    double max = 6;
+    /* last is the most recent observed value. */
+    double last = 7;
+    /* higher_is_better is the comparison direction as DATA (not an enum of metric meaning). */
+    bool higher_is_better = 8;
+    /* description is an optional human tooltip supplied by the backend. */
+    string description = 9 [(validate.rules).string.max_len = 1024];
+    /* group is an optional generic UI grouping label (e.g. "throughput", "latency"). */
+    string group = 10 [(validate.rules).string.max_len = 64];
+}
+
+/* RunMetrics is the collected metric summary set for one run. */
+message RunMetrics {
+    /* run_id is the plain run identity (string, keeps runtime models-independent). */
+    string run_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    TimeRange range = 2 [(validate.rules).message.required = true];
+    repeated MetricSummary metrics = 3 [(validate.rules).repeated.max_items = 512];
+}
+
+/* MetricDiff compares one metric across two runs. */
+message MetricDiff {
+    string key = 1 [(validate.rules).string = {min_len: 1, max_len: 256}];
+    string name = 2 [(validate.rules).string.max_len = 256];
+    string unit = 3 [(validate.rules).string.max_len = 32];
+    double avg_a = 4;
+    double avg_b = 5;
+    double max_a = 6;
+    double max_b = 7;
+    /* diff_avg_pct is (B - A) / A * 100; positive means B is higher. */
+    double diff_avg_pct = 8;
+    double diff_max_pct = 9;
+
+    /* Verdict classifies the per-metric change against the threshold. */
+    enum Verdict {
+        VERDICT_UNSPECIFIED = 0;
+        VERDICT_BETTER = 1;
+        VERDICT_WORSE = 2;
+        VERDICT_SAME = 3;
+    }
+    Verdict verdict = 10 [(validate.rules).enum.defined_only = true];
+}
+
+/* Comparison is the metric-by-metric diff of two runs with a roll-up verdict. */
+message Comparison {
+    string run_a = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    string run_b = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    TimeRange range = 3;
+    repeated MetricDiff metrics = 4 [(validate.rules).repeated.max_items = 512];
+
+    /* Summary rolls up per-metric verdicts. */
+    message Summary {
+        uint32 better = 1;
+        uint32 worse = 2;
+        uint32 same = 3;
+    }
+    Summary summary = 5;
+}

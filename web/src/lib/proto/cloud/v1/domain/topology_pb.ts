@@ -17,9 +17,38 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/domain/topology.proto.
  */
 export const file_cloud_v1_domain_topology: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9kb21haW4vdG9wb2xvZ3kucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiKHCQoIVG9wb2xvZ3kSPQoIbWFjaGluZXMYAiADKAsyIS5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3kuTWFjaGluZUII+kIFkgECCAESQwoLY29ubmVjdGlvbnMYBiADKAsyJC5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3kuQ29ubmVjdGlvbkII+kIFkgECCAESIwoEdGFncxgDIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGuMCCglDb21wb25lbnQSFgoCaWQYASABKAlCCvpCB3IFEAEYgAESQgoEa2luZBgCIAEoDjIoLmNsb3VkLnYxLmRvbWFpbi5Ub3BvbG9neS5Db21wb25lbnQuS2luZEIK+kIHggEEEAEgABI5CgZjb25maWcYAyABKAsyHy5jbG91ZC52MS5ydW50aW1lLnJlbmRlci5Db25maWdCCPpCBYoBAhABEiMKBHRhZ3MYBCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncyKZAQoES2luZBIUChBLSU5EX1VOU1BFQ0lGSUVEEAASDgoKS0lORF9BR0VOVBABEhEKDUtJTkRfREFUQUJBU0UQAhIQCgxLSU5EX01PTklUT1IQAxIQCgxLSU5EX1NUUk9QUFkQBBIOCgpLSU5EX1BST1hZEAUSFAoQS0lORF9DT09SRElOQVRPUhAGEg4KCktJTkRfQURET04QBxq9AQoHTWFjaGluZRIWCgJpZBgBIAEoCUIK+kIHcgUQARiAARIWCgVjb3JlcxgCIAEoDUIH+kIEKgIgABIaCgltZW1vcnlfZ2IYAyABKARCB/pCBDICIAASQQoKY29tcG9uZW50cxgEIAMoCzIjLmNsb3VkLnYxLmRvbWFpbi5Ub3BvbG9neS5Db21wb25lbnRCCPpCBZIBAggBEiMKBHRhZ3MYBSABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxqrAwoKQ29ubmVjdGlvbhIYCgRmcm9tGAEgASgJQgr6QgdyBRABGIABEhYKAnRvGAIgASgJQgr6QgdyBRABGIABEkEKCHByb3RvY29sGAMgASgOMiUuY2xvdWQudjEucnVudGltZS5zeXN0ZW0uTmV0LlByb3RvY29sQgj6QgWCAQIQARI5CgRtb2RlGAQgASgOMiEuY2xvdWQudjEucnVudGltZS5zeXN0ZW0uTmV0Lk1vZGVCCPpCBYIBAhABEkEKBGtpbmQYBSABKA4yKS5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3kuQ29ubmVjdGlvbi5LaW5kQgj6QgWCAQIQARIXCgRwb3J0GAYgASgNQgn6QgYqBBj//wMikAEKBEtpbmQSFAoQS0lORF9VTlNQRUNJRklFRBAAEg0KCUtJTkRfRkxPVxABEg4KCktJTkRfUFJPWFkQAhIUChBLSU5EX1JFUExJQ0FUSU9OEAMSFQoRS0lORF9DT09SRElOQVRJT04QBBIUChBLSU5EX09CU0VSVkFUSU9OEAUSEAoMS0lORF9TVVBQT1JUEAZCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZG9tYWluYgZwcm90bzM", [file_cloud_v1_common_tags, file_cloud_v1_runtime_render_config, file_cloud_v1_runtime_system_net, file_validate_validate]);
+  fileDesc("Ch5jbG91ZC92MS9kb21haW4vdG9wb2xvZ3kucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiKOCgoIVG9wb2xvZ3kSPQoIbWFjaGluZXMYAiADKAsyIS5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3kuTWFjaGluZUII+kIFkgECCAESQwoLY29ubmVjdGlvbnMYBiADKAsyJC5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3kuQ29ubmVjdGlvbkII+kIFkgECCAESSgoTZXh0ZXJuYWxfY29tcG9uZW50cxgHIAMoCzIjLmNsb3VkLnYxLmRvbWFpbi5Ub3BvbG9neS5Db21wb25lbnRCCPpCBZIBAhBAEiMKBHRhZ3MYAyABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxrjAgoJQ29tcG9uZW50EhYKAmlkGAEgASgJQgr6QgdyBRiAARABEkIKBGtpbmQYAiABKA4yKC5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3kuQ29tcG9uZW50LktpbmRCCvpCB4IBBBABIAASOQoGY29uZmlnGAMgASgLMh8uY2xvdWQudjEucnVudGltZS5yZW5kZXIuQ29uZmlnQgj6QgWKAQIQARIjCgR0YWdzGAQgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MimQEKBEtpbmQSFAoQS0lORF9VTlNQRUNJRklFRBAAEg4KCktJTkRfQUdFTlQQARIRCg1LSU5EX0RBVEFCQVNFEAISEAoMS0lORF9NT05JVE9SEAMSEAoMS0lORF9TVFJPUFBZEAQSDgoKS0lORF9QUk9YWRAFEhQKEEtJTkRfQ09PUkRJTkFUT1IQBhIOCgpLSU5EX0FERE9OEAca+AEKB01hY2hpbmUSFgoCaWQYASABKAlCCvpCB3IFEAEYgAESFgoFY29yZXMYAiABKA1CB/pCBCoCIAASGgoJbWVtb3J5X2diGAMgASgEQgf6QgQyAiAAEkEKCmNvbXBvbmVudHMYBCADKAsyIy5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3kuQ29tcG9uZW50Qgj6QgWSAQIIARIjCgR0YWdzGAUgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MSGAoHZGlza19nYhgGIAEoBEIH+kIEMgIgABIfCg1kYXRhX2Rpc2tzX2diGAcgAygEQgj6QgWSAQIQQBqrAwoKQ29ubmVjdGlvbhIYCgRmcm9tGAEgASgJQgr6QgdyBRABGIABEhYKAnRvGAIgASgJQgr6QgdyBRABGIABEkEKCHByb3RvY29sGAMgASgOMiUuY2xvdWQudjEucnVudGltZS5zeXN0ZW0uTmV0LlByb3RvY29sQgj6QgWCAQIQARI5CgRtb2RlGAQgASgOMiEuY2xvdWQudjEucnVudGltZS5zeXN0ZW0uTmV0Lk1vZGVCCPpCBYIBAhABEkEKBGtpbmQYBSABKA4yKS5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3kuQ29ubmVjdGlvbi5LaW5kQgj6QgWCAQIQARIXCgRwb3J0GAYgASgNQgn6QgYqBBj//wMikAEKBEtpbmQSFAoQS0lORF9VTlNQRUNJRklFRBAAEg0KCUtJTkRfRkxPVxABEg4KCktJTkRfUFJPWFkQAhIUChBLSU5EX1JFUExJQ0FUSU9OEAMSFQoRS0lORF9DT09SRElOQVRJT04QBBIUChBLSU5EX09CU0VSVkFUSU9OEAUSEAoMS0lORF9TVVBQT1JUEAZCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZG9tYWluYgZwcm90bzM", [file_cloud_v1_common_tags, file_cloud_v1_runtime_render_config, file_cloud_v1_runtime_system_net, file_validate_validate]);
 
 /**
+ *
+ * BDD decisions (B5, features/catalog/topology.feature):
+ *
+ * - Topology is a provider-agnostic graph: machines host components (Kind),
+ * components are joined by typed connections. Per-engine topology structs
+ * from the old code dissolve into Database.Options + this generic graph.
+ * - cluster shapes single/ha/replica/scale are NOT an enum; they emerge
+ * structurally from the graph (replication mode + replicas + access proxies
+ * in Database.Options). The wizard/planner builds the graph ("merged
+ * topology" in domain/test.proto TestPreset).
+ * - machine sizing lives on Machine.cores/memory_gb and is edited directly by
+ * the wizard. There is no separate MachineOverride entity; Topology is the
+ * single source of truth (old BakeMachineOverrideIntoTopology invariant
+ * becomes trivial).
+ * - placement/zones live in the deployment layer (deployment/yandex.proto),
+ * NOT here. Topology -> DeploymentIntent materialization applies zone
+ * round-robin (old placement.go).
+ * - AGENT-per-machine invariant: commands are delivered to a KIND_AGENT
+ * component, so every machine that runs commands carries an AGENT component.
+ * - render.Binding (database/workload render) resolves from Deployment.Output
+ * (Yandex.VmOutput.internal_ip/public_ip, ManagedYdbOutput endpoints).
+ *
+ * OPEN HOLE — external (BYOD) DATABASE component has no machine, but a Component
+ * only exists inside Machine.components[] (no top-level component list; both
+ * machines and components have min_items>=1; Machine sizing is gt:0). A
+ * machine-less component has nowhere to live. Proposed fix: add a top-level
+ * `repeated Component external_components` to Topology (unprovisioned targets),
+ * or a Machine EXTERNAL marker without sizing. To be finalized.
+ *
  * @generated from message cloud.v1.domain.Topology
  */
 export type Topology = Message<"cloud.v1.domain.Topology"> & {
@@ -34,12 +63,53 @@ export type Topology = Message<"cloud.v1.domain.Topology"> & {
   connections: Topology_Connection[];
 
   /**
+   *
+   * external_components are machine-less, reference-only components (H7),
+   * e.g. a BYOD external DATABASE: cloud does not provision or run an agent
+   * for them, but connections may target them by id (endpoint comes from the
+   * Database.Target.External intent). They live here because Component
+   * otherwise exists only inside Machine.components[].
+   *
+   * @generated from field: repeated cloud.v1.domain.Topology.Component external_components = 7;
+   */
+  externalComponents: Topology_Component[];
+
+  /**
    * @generated from field: cloud.v1.common.Tags tags = 3;
    */
   tags?: Tags;
 };
 
 /**
+ *
+ * BDD decisions (B5, features/catalog/topology.feature):
+ *
+ * - Topology is a provider-agnostic graph: machines host components (Kind),
+ * components are joined by typed connections. Per-engine topology structs
+ * from the old code dissolve into Database.Options + this generic graph.
+ * - cluster shapes single/ha/replica/scale are NOT an enum; they emerge
+ * structurally from the graph (replication mode + replicas + access proxies
+ * in Database.Options). The wizard/planner builds the graph ("merged
+ * topology" in domain/test.proto TestPreset).
+ * - machine sizing lives on Machine.cores/memory_gb and is edited directly by
+ * the wizard. There is no separate MachineOverride entity; Topology is the
+ * single source of truth (old BakeMachineOverrideIntoTopology invariant
+ * becomes trivial).
+ * - placement/zones live in the deployment layer (deployment/yandex.proto),
+ * NOT here. Topology -> DeploymentIntent materialization applies zone
+ * round-robin (old placement.go).
+ * - AGENT-per-machine invariant: commands are delivered to a KIND_AGENT
+ * component, so every machine that runs commands carries an AGENT component.
+ * - render.Binding (database/workload render) resolves from Deployment.Output
+ * (Yandex.VmOutput.internal_ip/public_ip, ManagedYdbOutput endpoints).
+ *
+ * OPEN HOLE — external (BYOD) DATABASE component has no machine, but a Component
+ * only exists inside Machine.components[] (no top-level component list; both
+ * machines and components have min_items>=1; Machine sizing is gt:0). A
+ * machine-less component has nowhere to live. Proposed fix: add a top-level
+ * `repeated Component external_components` to Topology (unprovisioned targets),
+ * or a Machine EXTERNAL marker without sizing. To be finalized.
+ *
  * @generated from message cloud.v1.domain.Topology
  */
 export type TopologyJson = {
@@ -52,6 +122,18 @@ export type TopologyJson = {
    * @generated from field: repeated cloud.v1.domain.Topology.Connection connections = 6;
    */
   connections?: Topology_ConnectionJson[];
+
+  /**
+   *
+   * external_components are machine-less, reference-only components (H7),
+   * e.g. a BYOD external DATABASE: cloud does not provision or run an agent
+   * for them, but connections may target them by id (endpoint comes from the
+   * Database.Target.External intent). They live here because Component
+   * otherwise exists only inside Machine.components[].
+   *
+   * @generated from field: repeated cloud.v1.domain.Topology.Component external_components = 7;
+   */
+  externalComponents?: Topology_ComponentJson[];
 
   /**
    * @generated from field: cloud.v1.common.Tags tags = 3;
@@ -210,6 +292,16 @@ export const Topology_Component_KindSchema: GenEnum<Topology_Component_Kind, Top
   enumDesc(file_cloud_v1_domain_topology, 0, 0, 0);
 
 /**
+ *
+ * BDD decision (C9): Machine should also carry a provider-agnostic disk
+ * size-intent (capacity GB) alongside cores/memory_gb. The wizard DEFAULTS
+ * that capacity from the workload scale_factor (sensible default, user-
+ * overridable in preview) — "auto-size" is wizard behavior, not a stored
+ * flag (the old Database.Options.Ydb.auto_size_pdisks is removed). Provider-
+ * specific disk type and io-m3/93 GiB rounding stay in the deployment layer
+ * (D18). This keeps provider params out of Topology while giving a sane
+ * single sizing surface.
+ *
  * @generated from message cloud.v1.domain.Topology.Machine
  */
 export type Topology_Machine = Message<"cloud.v1.domain.Topology.Machine"> & {
@@ -247,9 +339,39 @@ export type Topology_Machine = Message<"cloud.v1.domain.Topology.Machine"> & {
    * @generated from field: cloud.v1.common.Tags tags = 5;
    */
   tags?: Tags;
+
+  /**
+   *
+   * disk_gb is the provider-agnostic boot/primary disk capacity intent
+   * (H49/C9). The wizard defaults it from the workload scale; disk TYPE
+   * and io-m3 rounding are applied at the deployment layer (D18).
+   *
+   * @generated from field: uint64 disk_gb = 6;
+   */
+  diskGb: bigint;
+
+  /**
+   *
+   * data_disks_gb are additional data disks, each a capacity (GB), e.g.
+   * YDB storage pdisks (multi-disk). Provider-agnostic; type/rounding at
+   * deployment.
+   *
+   * @generated from field: repeated uint64 data_disks_gb = 7;
+   */
+  dataDisksGb: bigint[];
 };
 
 /**
+ *
+ * BDD decision (C9): Machine should also carry a provider-agnostic disk
+ * size-intent (capacity GB) alongside cores/memory_gb. The wizard DEFAULTS
+ * that capacity from the workload scale_factor (sensible default, user-
+ * overridable in preview) — "auto-size" is wizard behavior, not a stored
+ * flag (the old Database.Options.Ydb.auto_size_pdisks is removed). Provider-
+ * specific disk type and io-m3/93 GiB rounding stay in the deployment layer
+ * (D18). This keeps provider params out of Topology while giving a sane
+ * single sizing surface.
+ *
  * @generated from message cloud.v1.domain.Topology.Machine
  */
 export type Topology_MachineJson = {
@@ -287,6 +409,26 @@ export type Topology_MachineJson = {
    * @generated from field: cloud.v1.common.Tags tags = 5;
    */
   tags?: TagsJson;
+
+  /**
+   *
+   * disk_gb is the provider-agnostic boot/primary disk capacity intent
+   * (H49/C9). The wizard defaults it from the workload scale; disk TYPE
+   * and io-m3 rounding are applied at the deployment layer (D18).
+   *
+   * @generated from field: uint64 disk_gb = 6;
+   */
+  diskGb?: string;
+
+  /**
+   *
+   * data_disks_gb are additional data disks, each a capacity (GB), e.g.
+   * YDB storage pdisks (multi-disk). Provider-agnostic; type/rounding at
+   * deployment.
+   *
+   * @generated from field: repeated uint64 data_disks_gb = 7;
+   */
+  dataDisksGb?: string[];
 };
 
 export type Topology_MachineValid = Topology_Machine;

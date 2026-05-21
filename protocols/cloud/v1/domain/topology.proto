@@ -9,6 +9,35 @@ import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
+/*
+    BDD decisions (B5, features/catalog/topology.feature):
+
+    - Topology is a provider-agnostic graph: machines host components (Kind),
+      components are joined by typed connections. Per-engine topology structs
+      from the old code dissolve into Database.Options + this generic graph.
+    - cluster shapes single/ha/replica/scale are NOT an enum; they emerge
+      structurally from the graph (replication mode + replicas + access proxies
+      in Database.Options). The wizard/planner builds the graph ("merged
+      topology" in domain/test.proto TestPreset).
+    - machine sizing lives on Machine.cores/memory_gb and is edited directly by
+      the wizard. There is no separate MachineOverride entity; Topology is the
+      single source of truth (old BakeMachineOverrideIntoTopology invariant
+      becomes trivial).
+    - placement/zones live in the deployment layer (deployment/yandex.proto),
+      NOT here. Topology -> DeploymentIntent materialization applies zone
+      round-robin (old placement.go).
+    - AGENT-per-machine invariant: commands are delivered to a KIND_AGENT
+      component, so every machine that runs commands carries an AGENT component.
+    - render.Binding (database/workload render) resolves from Deployment.Output
+      (Yandex.VmOutput.internal_ip/public_ip, ManagedYdbOutput endpoints).
+
+    OPEN HOLE — external (BYOD) DATABASE component has no machine, but a Component
+    only exists inside Machine.components[] (no top-level component list; both
+    machines and components have min_items>=1; Machine sizing is gt:0). A
+    machine-less component has nowhere to live. Proposed fix: add a top-level
+    `repeated Component external_components` to Topology (unprovisioned targets),
+    or a Machine EXTERNAL marker without sizing. To be finalized.
+ */
 message Topology {
     /*
       Component is a runtime+output bundle.
@@ -40,6 +69,16 @@ message Topology {
         runtime.render.Config config = 3 [(validate.rules).message.required = true];
         common.Tags tags = 4;
     }
+    /*
+        BDD decision (C9): Machine should also carry a provider-agnostic disk
+        size-intent (capacity GB) alongside cores/memory_gb. The wizard DEFAULTS
+        that capacity from the workload scale_factor (sensible default, user-
+        overridable in preview) — "auto-size" is wizard behavior, not a stored
+        flag (the old Database.Options.Ydb.auto_size_pdisks is removed). Provider-
+        specific disk type and io-m3/93 GiB rounding stay in the deployment layer
+        (D18). This keeps provider params out of Topology while giving a sane
+        single sizing surface.
+     */
     message Machine {
         /*
             id is the stable topology machine id.
@@ -55,6 +94,18 @@ message Topology {
 
         repeated Component components = 4 [(validate.rules).repeated.min_items = 1];
         common.Tags tags = 5;
+        /*
+            disk_gb is the provider-agnostic boot/primary disk capacity intent
+            (H49/C9). The wizard defaults it from the workload scale; disk TYPE
+            and io-m3 rounding are applied at the deployment layer (D18).
+         */
+        uint64 disk_gb = 6 [(validate.rules).uint64.gt = 0];
+        /*
+            data_disks_gb are additional data disks, each a capacity (GB), e.g.
+            YDB storage pdisks (multi-disk). Provider-agnostic; type/rounding at
+            deployment.
+         */
+        repeated uint64 data_disks_gb = 7 [(validate.rules).repeated.max_items = 64];
     }
     repeated Machine machines = 2 [(validate.rules).repeated.min_items = 1];
     /*
@@ -94,5 +145,13 @@ message Topology {
         uint32 port = 6 [(validate.rules).uint32.lte = 65535];
     }
     repeated Connection connections = 6 [(validate.rules).repeated.min_items = 1];
+    /*
+        external_components are machine-less, reference-only components (H7),
+        e.g. a BYOD external DATABASE: cloud does not provision or run an agent
+        for them, but connections may target them by id (endpoint comes from the
+        Database.Target.External intent). They live here because Component
+        otherwise exists only inside Machine.components[].
+     */
+    repeated Component external_components = 7 [(validate.rules).repeated.max_items = 64];
     common.Tags tags = 3;
 }

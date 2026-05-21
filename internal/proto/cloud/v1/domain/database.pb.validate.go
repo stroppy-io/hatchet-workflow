@@ -313,9 +313,9 @@ func (m *DatabasePreset) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetWorkload() == nil {
+	if m.GetDatabase() == nil {
 		err := DatabasePresetValidationError{
-			field:  "Workload",
+			field:  "Database",
 			reason: "value is required",
 		}
 		if !all {
@@ -325,11 +325,11 @@ func (m *DatabasePreset) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetWorkload()).(type) {
+		switch v := interface{}(m.GetDatabase()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, DatabasePresetValidationError{
-					field:  "Workload",
+					field:  "Database",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -337,16 +337,16 @@ func (m *DatabasePreset) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, DatabasePresetValidationError{
-					field:  "Workload",
+					field:  "Database",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetWorkload()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetDatabase()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return DatabasePresetValidationError{
-				field:  "Workload",
+				field:  "Database",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -2752,8 +2752,6 @@ func (m *Database_Options_Ydb_SelfHosted) validate(all bool) error {
 		}
 		errors = append(errors, err)
 	}
-
-	// no validation rules for AutoSizePdisks
 
 	if _, ok := Database_Options_Ydb_SelfHosted_FaultTolerance_name[int32(m.GetFaultTolerance())]; !ok {
 		err := Database_Options_Ydb_SelfHostedValidationError{

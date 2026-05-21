@@ -95,6 +95,25 @@ func (Workload_Protocol) EnumDescriptor() ([]byte, []int) {
 // Workload is the cloud-facing workload DTO sent by the wizard. The backend
 // renders it into stroppy/proto/stroppy.RunConfig protojson before launching
 // stroppy.
+//
+// BDD decisions (B4, features/catalog/workload-render.feature):
+//
+// Scope: Workload is ONLY the load (script, protocol, k6 profile, parameters,
+// run-scoped files). DB engine install and packages are NOT here — they belong
+// to the Database intent and provisioning. stroppy_version below is just a
+// selector for which stroppy the load needs; the install itself is a
+// provisioning op on the stroppy component.
+//
+// - protocol/driverType/URL mapping is a backend registry (old
+// types.ProtocolMeta). URL host/port are unknown until provisioning, so they
+// are render.Binding values, not literals. Same preview==execution invariant
+// as the DB config render (see render/config.proto).
+// - protocol x engine support and the (kind, protocol, script) compatibility
+// matrix (old types.KindProtocols / ScriptCompat) stay backend data +
+// validation, enforced when a TestPreset binds Database.Kind to
+// Workload.Protocol. They are intentionally NOT modeled in proto.
+// - Managed YDB (Database.Options.Ydb.managed) maps to PROTOCOL_YDB_GRPCS,
+// port 2135, with a dynamic database path resolved via binding.
 type Workload struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// stroppy_version is the stroppy binary version/tag to install.

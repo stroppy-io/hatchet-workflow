@@ -88,6 +88,28 @@ func (x *CfgValue) GetStruct() *structpb.Struct {
 // It contains generated artifacts and user overrides, but it is not an
 // execution plan. A planner later converts accepted rendered items into
 // runtime.ops and DAG nodes.
+//
+// BDD decision (B3, features/catalog/database-render.feature):
+//
+// Invariant "preview == execution": the same renderer feeds both the wizard
+// preview and the on-host artifact. The preview Item content is byte-for-byte
+// equal to the WRITE_FILE operation the agent receives, EXCEPT for the
+// explicitly declared set of runtime bindings. No other divergence is allowed.
+//
+// Runtime values (real IPs, hostnames, etcd endpoints, connect_address) are
+// known only after provisioning. They are NOT magic string placeholders.
+// They are modeled as a typed render.Binding on an Item and resolved at the
+// plan->execute seam from semantic topology coordinates.
+//
+// Anti-leak rules:
+// - down: system.File / ops / agent / primitive.Dag only ever see resolved
+// values; a WRITE_FILE carrying an unresolved binding is invalid.
+// - up: domain.* never references render.Binding; bindings are an artifact of
+// rendering, not of intent.
+//
+// ADDED (H4): the typed Config.Item.Binding below — token + component_ids
+// (plain string ids, runtime-pure) + a free-string attr (no enum, self-
+// describing). Replaces the old dbconfig Substitute*Placeholders string magic.
 type Config struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// id identifies this render result.
@@ -151,6 +173,82 @@ func (x *Config) GetOverrides() []*Config_Override {
 	return nil
 }
 
+// Binding is a typed runtime late-binding hole in an item's content (B3,
+// H4). The renderer leaves `token` in the rendered bytes; at the
+// plan->execute seam the resolver replaces it with the runtime value of
+// `attr` for the referenced topology component(s), read from
+// Deployment.Output (D18). Replaces the old string placeholders.
+//
+// - component_ids is repeated to support multi-component values (e.g. an
+// etcd HOSTS list); a single value is a one-element list.
+// - attr is a free STRING, not an enum (self-describing, like metrics
+// H46): the resolver interprets it ("private_ip", "public_ip",
+// "endpoint", "port", "hosts", ...); a new attr needs no proto change.
+// - kept independent of domain/models: component reference is a plain
+// string id (like DagRef), so render stays runtime-pure.
+type Config_Binding struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// token is the placeholder substring inside the item content.
+	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	// component_ids are the topology component ids whose runtime value to resolve.
+	ComponentIds []string `protobuf:"bytes,2,rep,name=component_ids,json=componentIds,proto3" json:"component_ids,omitempty"`
+	// attr is the free-string runtime attribute to resolve (no enum).
+	Attr          string `protobuf:"bytes,3,opt,name=attr,proto3" json:"attr,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Config_Binding) Reset() {
+	*x = Config_Binding{}
+	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Config_Binding) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Config_Binding) ProtoMessage() {}
+
+func (x *Config_Binding) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Config_Binding.ProtoReflect.Descriptor instead.
+func (*Config_Binding) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_runtime_render_config_proto_rawDescGZIP(), []int{1, 0}
+}
+
+func (x *Config_Binding) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *Config_Binding) GetComponentIds() []string {
+	if x != nil {
+		return x.ComponentIds
+	}
+	return nil
+}
+
+func (x *Config_Binding) GetAttr() string {
+	if x != nil {
+		return x.Attr
+	}
+	return ""
+}
+
 // Item is one rendered artifact visible to the user.
 type Config_Item struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -158,6 +256,8 @@ type Config_Item struct {
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// overridden is true when the item includes a user override.
 	Overridden bool `protobuf:"varint,5,opt,name=overridden,proto3" json:"overridden,omitempty"`
+	// bindings are the runtime late-binding holes in this item's content.
+	Bindings []*Config_Binding `protobuf:"bytes,6,rep,name=bindings,proto3" json:"bindings,omitempty"`
 	// Types that are valid to be assigned to Rendered:
 	//
 	//	*Config_Item_File
@@ -172,7 +272,7 @@ type Config_Item struct {
 
 func (x *Config_Item) Reset() {
 	*x = Config_Item{}
-	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[2]
+	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -184,7 +284,7 @@ func (x *Config_Item) String() string {
 func (*Config_Item) ProtoMessage() {}
 
 func (x *Config_Item) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[2]
+	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -197,7 +297,7 @@ func (x *Config_Item) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Config_Item.ProtoReflect.Descriptor instead.
 func (*Config_Item) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_runtime_render_config_proto_rawDescGZIP(), []int{1, 0}
+	return file_cloud_v1_runtime_render_config_proto_rawDescGZIP(), []int{1, 1}
 }
 
 func (x *Config_Item) GetId() string {
@@ -212,6 +312,13 @@ func (x *Config_Item) GetOverridden() bool {
 		return x.Overridden
 	}
 	return false
+}
+
+func (x *Config_Item) GetBindings() []*Config_Binding {
+	if x != nil {
+		return x.Bindings
+	}
+	return nil
 }
 
 func (x *Config_Item) GetRendered() isConfig_Item_Rendered {
@@ -325,7 +432,7 @@ type Config_Override struct {
 
 func (x *Config_Override) Reset() {
 	*x = Config_Override{}
-	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[3]
+	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -337,7 +444,7 @@ func (x *Config_Override) String() string {
 func (*Config_Override) ProtoMessage() {}
 
 func (x *Config_Override) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[3]
+	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -350,7 +457,7 @@ func (x *Config_Override) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Config_Override.ProtoReflect.Descriptor instead.
 func (*Config_Override) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_runtime_render_config_proto_rawDescGZIP(), []int{1, 1}
+	return file_cloud_v1_runtime_render_config_proto_rawDescGZIP(), []int{1, 2}
 }
 
 func (x *Config_Override) GetItemId() string {
@@ -478,7 +585,7 @@ type Config_Override_TextPatch struct {
 
 func (x *Config_Override_TextPatch) Reset() {
 	*x = Config_Override_TextPatch{}
-	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[4]
+	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -490,7 +597,7 @@ func (x *Config_Override_TextPatch) String() string {
 func (*Config_Override_TextPatch) ProtoMessage() {}
 
 func (x *Config_Override_TextPatch) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[4]
+	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -503,7 +610,7 @@ func (x *Config_Override_TextPatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Config_Override_TextPatch.ProtoReflect.Descriptor instead.
 func (*Config_Override_TextPatch) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_runtime_render_config_proto_rawDescGZIP(), []int{1, 1, 0}
+	return file_cloud_v1_runtime_render_config_proto_rawDescGZIP(), []int{1, 2, 0}
 }
 
 func (x *Config_Override_TextPatch) GetContent() string {
@@ -526,7 +633,7 @@ type Config_Override_KeyValuePatch struct {
 
 func (x *Config_Override_KeyValuePatch) Reset() {
 	*x = Config_Override_KeyValuePatch{}
-	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[5]
+	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -538,7 +645,7 @@ func (x *Config_Override_KeyValuePatch) String() string {
 func (*Config_Override_KeyValuePatch) ProtoMessage() {}
 
 func (x *Config_Override_KeyValuePatch) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[5]
+	mi := &file_cloud_v1_runtime_render_config_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -551,7 +658,7 @@ func (x *Config_Override_KeyValuePatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Config_Override_KeyValuePatch.ProtoReflect.Descriptor instead.
 func (*Config_Override_KeyValuePatch) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_runtime_render_config_proto_rawDescGZIP(), []int{1, 1, 1}
+	return file_cloud_v1_runtime_render_config_proto_rawDescGZIP(), []int{1, 2, 1}
 }
 
 func (x *Config_Override_KeyValuePatch) GetSet() map[string]string {
@@ -577,19 +684,25 @@ const file_cloud_v1_runtime_render_config_proto_rawDesc = "" +
 	"\x04file\x18\n" +
 	" \x01(\v2\x1d.cloud.v1.runtime.system.FileR\x04file\x12:\n" +
 	"\aservice\x18\f \x01(\v2 .cloud.v1.runtime.system.ServiceR\aservice\x12/\n" +
-	"\x06struct\x18\x0e \x01(\v2\x17.google.protobuf.StructR\x06struct\"\xa6\n" +
-	"\n" +
+	"\x06struct\x18\x0e \x01(\v2\x17.google.protobuf.StructR\x06struct\"\xf3\v\n" +
 	"\x06Config\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12E\n" +
 	"\x05items\x18\x02 \x03(\v2$.cloud.v1.runtime.render.Config.ItemB\t\xfaB\x06\x92\x01\x03\x10\x80\bR\x05items\x12Q\n" +
-	"\toverrides\x18\x03 \x03(\v2(.cloud.v1.runtime.render.Config.OverrideB\t\xfaB\x06\x92\x01\x03\x10\x80\x02R\toverrides\x1a\xfa\x02\n" +
+	"\toverrides\x18\x03 \x03(\v2(.cloud.v1.runtime.render.Config.OverrideB\t\xfaB\x06\x92\x01\x03\x10\x80\x02R\toverrides\x1a{\n" +
+	"\aBinding\x12 \n" +
+	"\x05token\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x02R\x05token\x12/\n" +
+	"\rcomponent_ids\x18\x02 \x03(\tB\n" +
+	"\xfaB\a\x92\x01\x04\b\x01\x10@R\fcomponentIds\x12\x1d\n" +
+	"\x04attr\x18\x03 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x04attr\x1a\xca\x03\n" +
 	"\x04Item\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x02R\x02id\x12\x1e\n" +
 	"\n" +
 	"overridden\x18\x05 \x01(\bR\n" +
-	"overridden\x123\n" +
+	"overridden\x12N\n" +
+	"\bbindings\x18\x06 \x03(\v2'.cloud.v1.runtime.render.Config.BindingB\t\xfaB\x06\x92\x01\x03\x10\x80\x02R\bbindings\x123\n" +
 	"\x04file\x18\n" +
 	" \x01(\v2\x1d.cloud.v1.runtime.system.FileH\x00R\x04file\x12@\n" +
 	"\venvironment\x18\v \x01(\v2\x1c.cloud.v1.runtime.system.EnvH\x00R\venvironment\x12<\n" +
@@ -630,44 +743,46 @@ func file_cloud_v1_runtime_render_config_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_runtime_render_config_proto_rawDescData
 }
 
-var file_cloud_v1_runtime_render_config_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_cloud_v1_runtime_render_config_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_cloud_v1_runtime_render_config_proto_goTypes = []any{
 	(*CfgValue)(nil),                      // 0: cloud.v1.runtime.render.CfgValue
 	(*Config)(nil),                        // 1: cloud.v1.runtime.render.Config
-	(*Config_Item)(nil),                   // 2: cloud.v1.runtime.render.Config.Item
-	(*Config_Override)(nil),               // 3: cloud.v1.runtime.render.Config.Override
-	(*Config_Override_TextPatch)(nil),     // 4: cloud.v1.runtime.render.Config.Override.TextPatch
-	(*Config_Override_KeyValuePatch)(nil), // 5: cloud.v1.runtime.render.Config.Override.KeyValuePatch
-	nil,                                   // 6: cloud.v1.runtime.render.Config.Override.KeyValuePatch.SetEntry
-	(*system.File)(nil),                   // 7: cloud.v1.runtime.system.File
-	(*system.Service)(nil),                // 8: cloud.v1.runtime.system.Service
-	(*structpb.Struct)(nil),               // 9: google.protobuf.Struct
-	(*system.Env)(nil),                    // 10: cloud.v1.runtime.system.Env
-	(*system.Cmd_Spec)(nil),               // 11: cloud.v1.runtime.system.Cmd.Spec
+	(*Config_Binding)(nil),                // 2: cloud.v1.runtime.render.Config.Binding
+	(*Config_Item)(nil),                   // 3: cloud.v1.runtime.render.Config.Item
+	(*Config_Override)(nil),               // 4: cloud.v1.runtime.render.Config.Override
+	(*Config_Override_TextPatch)(nil),     // 5: cloud.v1.runtime.render.Config.Override.TextPatch
+	(*Config_Override_KeyValuePatch)(nil), // 6: cloud.v1.runtime.render.Config.Override.KeyValuePatch
+	nil,                                   // 7: cloud.v1.runtime.render.Config.Override.KeyValuePatch.SetEntry
+	(*system.File)(nil),                   // 8: cloud.v1.runtime.system.File
+	(*system.Service)(nil),                // 9: cloud.v1.runtime.system.Service
+	(*structpb.Struct)(nil),               // 10: google.protobuf.Struct
+	(*system.Env)(nil),                    // 11: cloud.v1.runtime.system.Env
+	(*system.Cmd_Spec)(nil),               // 12: cloud.v1.runtime.system.Cmd.Spec
 }
 var file_cloud_v1_runtime_render_config_proto_depIdxs = []int32{
-	7,  // 0: cloud.v1.runtime.render.CfgValue.file:type_name -> cloud.v1.runtime.system.File
-	8,  // 1: cloud.v1.runtime.render.CfgValue.service:type_name -> cloud.v1.runtime.system.Service
-	9,  // 2: cloud.v1.runtime.render.CfgValue.struct:type_name -> google.protobuf.Struct
-	2,  // 3: cloud.v1.runtime.render.Config.items:type_name -> cloud.v1.runtime.render.Config.Item
-	3,  // 4: cloud.v1.runtime.render.Config.overrides:type_name -> cloud.v1.runtime.render.Config.Override
-	7,  // 5: cloud.v1.runtime.render.Config.Item.file:type_name -> cloud.v1.runtime.system.File
-	10, // 6: cloud.v1.runtime.render.Config.Item.environment:type_name -> cloud.v1.runtime.system.Env
-	8,  // 7: cloud.v1.runtime.render.Config.Item.service:type_name -> cloud.v1.runtime.system.Service
-	11, // 8: cloud.v1.runtime.render.Config.Item.command:type_name -> cloud.v1.runtime.system.Cmd.Spec
-	9,  // 9: cloud.v1.runtime.render.Config.Item.struct:type_name -> google.protobuf.Struct
-	7,  // 10: cloud.v1.runtime.render.Config.Override.file:type_name -> cloud.v1.runtime.system.File
-	10, // 11: cloud.v1.runtime.render.Config.Override.environment:type_name -> cloud.v1.runtime.system.Env
-	8,  // 12: cloud.v1.runtime.render.Config.Override.service:type_name -> cloud.v1.runtime.system.Service
-	11, // 13: cloud.v1.runtime.render.Config.Override.command:type_name -> cloud.v1.runtime.system.Cmd.Spec
-	4,  // 14: cloud.v1.runtime.render.Config.Override.text_patch:type_name -> cloud.v1.runtime.render.Config.Override.TextPatch
-	5,  // 15: cloud.v1.runtime.render.Config.Override.key_value_patch:type_name -> cloud.v1.runtime.render.Config.Override.KeyValuePatch
-	6,  // 16: cloud.v1.runtime.render.Config.Override.KeyValuePatch.set:type_name -> cloud.v1.runtime.render.Config.Override.KeyValuePatch.SetEntry
-	17, // [17:17] is the sub-list for method output_type
-	17, // [17:17] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	8,  // 0: cloud.v1.runtime.render.CfgValue.file:type_name -> cloud.v1.runtime.system.File
+	9,  // 1: cloud.v1.runtime.render.CfgValue.service:type_name -> cloud.v1.runtime.system.Service
+	10, // 2: cloud.v1.runtime.render.CfgValue.struct:type_name -> google.protobuf.Struct
+	3,  // 3: cloud.v1.runtime.render.Config.items:type_name -> cloud.v1.runtime.render.Config.Item
+	4,  // 4: cloud.v1.runtime.render.Config.overrides:type_name -> cloud.v1.runtime.render.Config.Override
+	2,  // 5: cloud.v1.runtime.render.Config.Item.bindings:type_name -> cloud.v1.runtime.render.Config.Binding
+	8,  // 6: cloud.v1.runtime.render.Config.Item.file:type_name -> cloud.v1.runtime.system.File
+	11, // 7: cloud.v1.runtime.render.Config.Item.environment:type_name -> cloud.v1.runtime.system.Env
+	9,  // 8: cloud.v1.runtime.render.Config.Item.service:type_name -> cloud.v1.runtime.system.Service
+	12, // 9: cloud.v1.runtime.render.Config.Item.command:type_name -> cloud.v1.runtime.system.Cmd.Spec
+	10, // 10: cloud.v1.runtime.render.Config.Item.struct:type_name -> google.protobuf.Struct
+	8,  // 11: cloud.v1.runtime.render.Config.Override.file:type_name -> cloud.v1.runtime.system.File
+	11, // 12: cloud.v1.runtime.render.Config.Override.environment:type_name -> cloud.v1.runtime.system.Env
+	9,  // 13: cloud.v1.runtime.render.Config.Override.service:type_name -> cloud.v1.runtime.system.Service
+	12, // 14: cloud.v1.runtime.render.Config.Override.command:type_name -> cloud.v1.runtime.system.Cmd.Spec
+	5,  // 15: cloud.v1.runtime.render.Config.Override.text_patch:type_name -> cloud.v1.runtime.render.Config.Override.TextPatch
+	6,  // 16: cloud.v1.runtime.render.Config.Override.key_value_patch:type_name -> cloud.v1.runtime.render.Config.Override.KeyValuePatch
+	7,  // 17: cloud.v1.runtime.render.Config.Override.KeyValuePatch.set:type_name -> cloud.v1.runtime.render.Config.Override.KeyValuePatch.SetEntry
+	18, // [18:18] is the sub-list for method output_type
+	18, // [18:18] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_runtime_render_config_proto_init() }
@@ -675,14 +790,14 @@ func file_cloud_v1_runtime_render_config_proto_init() {
 	if File_cloud_v1_runtime_render_config_proto != nil {
 		return
 	}
-	file_cloud_v1_runtime_render_config_proto_msgTypes[2].OneofWrappers = []any{
+	file_cloud_v1_runtime_render_config_proto_msgTypes[3].OneofWrappers = []any{
 		(*Config_Item_File)(nil),
 		(*Config_Item_Environment)(nil),
 		(*Config_Item_Service)(nil),
 		(*Config_Item_Command)(nil),
 		(*Config_Item_Struct)(nil),
 	}
-	file_cloud_v1_runtime_render_config_proto_msgTypes[3].OneofWrappers = []any{
+	file_cloud_v1_runtime_render_config_proto_msgTypes[4].OneofWrappers = []any{
 		(*Config_Override_File)(nil),
 		(*Config_Override_Environment)(nil),
 		(*Config_Override_Service)(nil),
@@ -696,7 +811,7 @@ func file_cloud_v1_runtime_render_config_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_runtime_render_config_proto_rawDesc), len(file_cloud_v1_runtime_render_config_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

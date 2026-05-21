@@ -27,6 +27,12 @@ message Preset {
         (goplain.field).embed = true
     ];
 
+    /*
+        BDD decision (B6): kind is kept alongside the oneof discriminator below
+        as a cheap DB filter/index (list "all DATABASE presets" without parsing
+        the oneof). Validation MUST enforce that kind matches the selected oneof
+        branch (KIND_DATABASE <-> database_preset, etc.); a mismatch is rejected.
+     */
     enum Kind {
         KIND_UNSPECIFIED = 0;
         KIND_WORKLOAD = 1;

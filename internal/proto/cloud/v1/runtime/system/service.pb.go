@@ -152,6 +152,10 @@ func (Service_Systemd_DesiredState) EnumDescriptor() ([]byte, []int) {
 // It is intentionally not an operation: applying the files, running
 // daemon-reload, enabling, starting, stopping, or restarting the service should
 // be decomposed into runtime ops.
+//
+// BDD decision (D17): the PLANNER does this decomposition — a render Service
+// item compiles into WRITE_FILE(unit_file) -> RUN_CMD(systemctl daemon-reload)
+// -> RUN_CMD(systemctl enable/start). The agent never interprets a Service.
 type Service struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Manager:

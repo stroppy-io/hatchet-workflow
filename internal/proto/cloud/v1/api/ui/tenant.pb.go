@@ -7,11 +7,13 @@
 package ui
 
 import (
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
+	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -22,26 +24,183 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// TenantService is the tenant-scoped membership surface. A tenant OWNER manages
+// their own tenant's members (A); platform tenant create/update/delete stays in
+// admin TenantAdminService (is_admin). ListMyTenants is available to any
+// authenticated account (its own memberships).
+type AddMemberRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	TenantId  *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	AccountId *models.AccountId      `protobuf:"bytes,2,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	// role to grant the member.
+	Role          models.TenantMember_Role `protobuf:"varint,3,opt,name=role,proto3,enum=cloud.v1.models.TenantMember_Role" json:"role,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddMemberRequest) Reset() {
+	*x = AddMemberRequest{}
+	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddMemberRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddMemberRequest) ProtoMessage() {}
+
+func (x *AddMemberRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddMemberRequest.ProtoReflect.Descriptor instead.
+func (*AddMemberRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_tenant_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *AddMemberRequest) GetTenantId() *models.TenantId {
+	if x != nil {
+		return x.TenantId
+	}
+	return nil
+}
+
+func (x *AddMemberRequest) GetAccountId() *models.AccountId {
+	if x != nil {
+		return x.AccountId
+	}
+	return nil
+}
+
+func (x *AddMemberRequest) GetRole() models.TenantMember_Role {
+	if x != nil {
+		return x.Role
+	}
+	return models.TenantMember_Role(0)
+}
+
+type RemoveMemberRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	AccountId     *models.AccountId      `protobuf:"bytes,2,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveMemberRequest) Reset() {
+	*x = RemoveMemberRequest{}
+	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveMemberRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveMemberRequest) ProtoMessage() {}
+
+func (x *RemoveMemberRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveMemberRequest.ProtoReflect.Descriptor instead.
+func (*RemoveMemberRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_tenant_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *RemoveMemberRequest) GetTenantId() *models.TenantId {
+	if x != nil {
+		return x.TenantId
+	}
+	return nil
+}
+
+func (x *RemoveMemberRequest) GetAccountId() *models.AccountId {
+	if x != nil {
+		return x.AccountId
+	}
+	return nil
+}
+
 var File_cloud_v1_api_ui_tenant_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_ui_tenant_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccloud/v1/api/ui/tenant.proto\x12\x0fcloud.v1.api.ui\x1a\x1ccloud/v1/models/tenant.proto\x1a\x1bgoogle/protobuf/empty.proto2[\n" +
+	"\x1ccloud/v1/api/ui/tenant.proto\x12\x0fcloud.v1.api.ui\x1a\x1ccloud/v1/models/common.proto\x1a\x1ccloud/v1/models/tenant.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x17validate/validate.proto\"\xdd\x01\n" +
+	"\x10AddMemberRequest\x12@\n" +
+	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12C\n" +
+	"\n" +
+	"account_id\x18\x02 \x01(\v2\x1a.cloud.v1.models.AccountIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\taccountId\x12B\n" +
+	"\x04role\x18\x03 \x01(\x0e2\".cloud.v1.models.TenantMember.RoleB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04role\"\x9c\x01\n" +
+	"\x13RemoveMemberRequest\x12@\n" +
+	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12C\n" +
+	"\n" +
+	"account_id\x18\x02 \x01(\v2\x1a.cloud.v1.models.AccountIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\taccountId2\x9b\x02\n" +
 	"\rTenantService\x12J\n" +
-	"\rListMyTenants\x12\x16.google.protobuf.Empty\x1a\x1c.cloud.v1.models.Tenant.List\"\x03\x90\x02\x01BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/uib\x06proto3"
+	"\rListMyTenants\x12\x16.google.protobuf.Empty\x1a\x1c.cloud.v1.models.Tenant.List\"\x03\x90\x02\x01\x12Z\n" +
+	"\x11AddMemberToTenant\x12!.cloud.v1.api.ui.AddMemberRequest\x1a\x1d.cloud.v1.models.TenantMember\"\x03\x90\x02\x02\x12b\n" +
+	"\x16RemoveMemberFromTenant\x12$.cloud.v1.api.ui.RemoveMemberRequest\x1a\x1d.cloud.v1.models.TenantMember\"\x03\x90\x02\x02BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/uib\x06proto3"
 
+var (
+	file_cloud_v1_api_ui_tenant_proto_rawDescOnce sync.Once
+	file_cloud_v1_api_ui_tenant_proto_rawDescData []byte
+)
+
+func file_cloud_v1_api_ui_tenant_proto_rawDescGZIP() []byte {
+	file_cloud_v1_api_ui_tenant_proto_rawDescOnce.Do(func() {
+		file_cloud_v1_api_ui_tenant_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_cloud_v1_api_ui_tenant_proto_rawDesc), len(file_cloud_v1_api_ui_tenant_proto_rawDesc)))
+	})
+	return file_cloud_v1_api_ui_tenant_proto_rawDescData
+}
+
+var file_cloud_v1_api_ui_tenant_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_cloud_v1_api_ui_tenant_proto_goTypes = []any{
-	(*emptypb.Empty)(nil),      // 0: google.protobuf.Empty
-	(*models.Tenant_List)(nil), // 1: cloud.v1.models.Tenant.List
+	(*AddMemberRequest)(nil),      // 0: cloud.v1.api.ui.AddMemberRequest
+	(*RemoveMemberRequest)(nil),   // 1: cloud.v1.api.ui.RemoveMemberRequest
+	(*models.TenantId)(nil),       // 2: cloud.v1.models.TenantId
+	(*models.AccountId)(nil),      // 3: cloud.v1.models.AccountId
+	(models.TenantMember_Role)(0), // 4: cloud.v1.models.TenantMember.Role
+	(*emptypb.Empty)(nil),         // 5: google.protobuf.Empty
+	(*models.Tenant_List)(nil),    // 6: cloud.v1.models.Tenant.List
+	(*models.TenantMember)(nil),   // 7: cloud.v1.models.TenantMember
 }
 var file_cloud_v1_api_ui_tenant_proto_depIdxs = []int32{
-	0, // 0: cloud.v1.api.ui.TenantService.ListMyTenants:input_type -> google.protobuf.Empty
-	1, // 1: cloud.v1.api.ui.TenantService.ListMyTenants:output_type -> cloud.v1.models.Tenant.List
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	2, // 0: cloud.v1.api.ui.AddMemberRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	3, // 1: cloud.v1.api.ui.AddMemberRequest.account_id:type_name -> cloud.v1.models.AccountId
+	4, // 2: cloud.v1.api.ui.AddMemberRequest.role:type_name -> cloud.v1.models.TenantMember.Role
+	2, // 3: cloud.v1.api.ui.RemoveMemberRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	3, // 4: cloud.v1.api.ui.RemoveMemberRequest.account_id:type_name -> cloud.v1.models.AccountId
+	5, // 5: cloud.v1.api.ui.TenantService.ListMyTenants:input_type -> google.protobuf.Empty
+	0, // 6: cloud.v1.api.ui.TenantService.AddMemberToTenant:input_type -> cloud.v1.api.ui.AddMemberRequest
+	1, // 7: cloud.v1.api.ui.TenantService.RemoveMemberFromTenant:input_type -> cloud.v1.api.ui.RemoveMemberRequest
+	6, // 8: cloud.v1.api.ui.TenantService.ListMyTenants:output_type -> cloud.v1.models.Tenant.List
+	7, // 9: cloud.v1.api.ui.TenantService.AddMemberToTenant:output_type -> cloud.v1.models.TenantMember
+	7, // 10: cloud.v1.api.ui.TenantService.RemoveMemberFromTenant:output_type -> cloud.v1.models.TenantMember
+	8, // [8:11] is the sub-list for method output_type
+	5, // [5:8] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_ui_tenant_proto_init() }
@@ -55,12 +214,13 @@ func file_cloud_v1_api_ui_tenant_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_ui_tenant_proto_rawDesc), len(file_cloud_v1_api_ui_tenant_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   0,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_cloud_v1_api_ui_tenant_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_api_ui_tenant_proto_depIdxs,
+		MessageInfos:      file_cloud_v1_api_ui_tenant_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_api_ui_tenant_proto = out.File
 	file_cloud_v1_api_ui_tenant_proto_goTypes = nil

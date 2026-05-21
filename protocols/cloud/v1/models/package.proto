@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/models/common.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+/*
+    Package is a tenant-scoped CUSTOM database package (uploaded .deb) catalog
+    record (H51/B4). Builtin recipes are backend data (not stored). A run that
+    uses a custom package references its deb_object_uri as a render File.Ref
+    (G2, resolved to a presigned download for the agent).
+ */
+message Package {
+    message List {repeated Package packages = 1;}
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "packages"
+    };
+    models.Entity entity = 1 [(goplain.field).embed = true];
+    models.Own owned = 2 [(goplain.field).embed = true];
+    /* name is the catalog display name. */
+    string name = 3 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    /* db_kind / db_version classify what the package installs (free strings). */
+    string db_kind = 4 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string db_version = 5 [(validate.rules).string.max_len = 64];
+    /* deb_object_uri is the S3 ref to the uploaded .deb (G2 File.Ref source). */
+    string deb_object_uri = 6 [(validate.rules).string.max_len = 4096];
+    /* checksum verifies the uploaded artifact. */
+    string checksum = 7 [(validate.rules).string.max_len = 256];
+    /* is_builtin is true only for backend-provided recipes surfaced in listings. */
+    bool is_builtin = 8;
+}

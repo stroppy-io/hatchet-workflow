@@ -5,6 +5,25 @@ package cloud.v1.runtime.primitive;
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive";
 
+/*
+    BDD decisions (D14/D15, features/engine/lifecycle-scheduling.feature):
+
+    - the run lifecycle IS the Dag.status; there is no separate job_runs state
+      machine. Old queued -> PENDING, running -> RUNNING, finished -> COMPLETED,
+      failed -> FAILED, cancelled -> CANCELLED.
+    - multi-server: the authoritative claim/lease is in Postgres — see
+      models.Dag.Processor (claimed_by, lease_expires_at, generation) and the
+      dags_claim_idx index for SKIP LOCKED claim; the agent lease is on
+      models.Agent. An expired lease lets another server take over, replacing the
+      old reaper. (G3: Valkey is at most an optional fast advisory lock/cache, not
+      the source of truth — corrects the earlier "Valkey lease" note.)
+    - cross-tenant quotas/admission are decided by an admission controller
+      before start (PENDING -> RUNNING); the runtime engine stays domain-
+      agnostic and never sees quotas.
+    - recovery relies on the always_run teardown firing structurally when an
+      inflight Dag is re-read on restart; no provider-specific RecoverChecker in
+      the engine (reachability is a domain predicate).
+ */
 enum Status {
     /* UNSPECIFIED is invalid. */
     STATUS_UNSPECIFIED = 0;

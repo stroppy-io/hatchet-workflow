@@ -13,6 +13,7 @@ import (
 	_ "github.com/yaroher/ratel/ratelproto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -25,6 +26,113 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Catchup controls behavior after missed windows.
+type Suite_Cron_Catchup int32
+
+const (
+	Suite_Cron_CATCHUP_UNSPECIFIED Suite_Cron_Catchup = 0
+	// SKIP advances the schedule without firing missed windows.
+	Suite_Cron_CATCHUP_SKIP Suite_Cron_Catchup = 1
+	// ONCE fires a single batch then advances.
+	Suite_Cron_CATCHUP_ONCE Suite_Cron_Catchup = 2
+)
+
+// Enum value maps for Suite_Cron_Catchup.
+var (
+	Suite_Cron_Catchup_name = map[int32]string{
+		0: "CATCHUP_UNSPECIFIED",
+		1: "CATCHUP_SKIP",
+		2: "CATCHUP_ONCE",
+	}
+	Suite_Cron_Catchup_value = map[string]int32{
+		"CATCHUP_UNSPECIFIED": 0,
+		"CATCHUP_SKIP":        1,
+		"CATCHUP_ONCE":        2,
+	}
+)
+
+func (x Suite_Cron_Catchup) Enum() *Suite_Cron_Catchup {
+	p := new(Suite_Cron_Catchup)
+	*p = x
+	return p
+}
+
+func (x Suite_Cron_Catchup) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Suite_Cron_Catchup) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_models_testing_proto_enumTypes[0].Descriptor()
+}
+
+func (Suite_Cron_Catchup) Type() protoreflect.EnumType {
+	return &file_cloud_v1_models_testing_proto_enumTypes[0]
+}
+
+func (x Suite_Cron_Catchup) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Suite_Cron_Catchup.Descriptor instead.
+func (Suite_Cron_Catchup) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_models_testing_proto_rawDescGZIP(), []int{1, 1, 0}
+}
+
+// Concurrent controls overlap with an in-flight run of the same suite.
+type Suite_Cron_Concurrent int32
+
+const (
+	Suite_Cron_CONCURRENT_UNSPECIFIED Suite_Cron_Concurrent = 0
+	Suite_Cron_CONCURRENT_ALLOW       Suite_Cron_Concurrent = 1
+	Suite_Cron_CONCURRENT_FORBID      Suite_Cron_Concurrent = 2
+)
+
+// Enum value maps for Suite_Cron_Concurrent.
+var (
+	Suite_Cron_Concurrent_name = map[int32]string{
+		0: "CONCURRENT_UNSPECIFIED",
+		1: "CONCURRENT_ALLOW",
+		2: "CONCURRENT_FORBID",
+	}
+	Suite_Cron_Concurrent_value = map[string]int32{
+		"CONCURRENT_UNSPECIFIED": 0,
+		"CONCURRENT_ALLOW":       1,
+		"CONCURRENT_FORBID":      2,
+	}
+)
+
+func (x Suite_Cron_Concurrent) Enum() *Suite_Cron_Concurrent {
+	p := new(Suite_Cron_Concurrent)
+	*p = x
+	return p
+}
+
+func (x Suite_Cron_Concurrent) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Suite_Cron_Concurrent) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_models_testing_proto_enumTypes[1].Descriptor()
+}
+
+func (Suite_Cron_Concurrent) Type() protoreflect.EnumType {
+	return &file_cloud_v1_models_testing_proto_enumTypes[1]
+}
+
+func (x Suite_Cron_Concurrent) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Suite_Cron_Concurrent.Descriptor instead.
+func (Suite_Cron_Concurrent) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_models_testing_proto_rawDescGZIP(), []int{1, 1, 1}
+}
+
+// BDD notes (B6):
+// - TestRun embeds test_preset by value (immutable snapshot) and owns one Dag.
+// A SuiteRun owns a suite Dag whose nodes dag_ref/sub_dag the TestRun Dags.
+// - naming holes RESOLVED (H10): SuiteRuns -> SuiteRun (singular instance);
+// Suite.List now holds Suite under `suites`; SuiteRun.List uses `suite_runs`.
 type TestRun struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Entity        *Entity                `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
@@ -118,12 +226,17 @@ func (x *TestRun) GetSuiteRunId() *SuiteRunId {
 }
 
 type Suite struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entity        *Entity                `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	Owned         *Own                   `protobuf:"bytes,2,opt,name=owned,proto3" json:"owned,omitempty"`
-	Name          *string                `protobuf:"bytes,3,opt,name=name,proto3,oneof" json:"name,omitempty"`
-	Description   *string                `protobuf:"bytes,4,opt,name=description,proto3,oneof" json:"description,omitempty"`
-	Preset        *domain.SuitePreset    `protobuf:"bytes,5,opt,name=preset,proto3" json:"preset,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Entity      *Entity                `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	Owned       *Own                   `protobuf:"bytes,2,opt,name=owned,proto3" json:"owned,omitempty"`
+	Name        *string                `protobuf:"bytes,3,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	Description *string                `protobuf:"bytes,4,opt,name=description,proto3,oneof" json:"description,omitempty"`
+	Preset      *domain.SuitePreset    `protobuf:"bytes,5,opt,name=preset,proto3" json:"preset,omitempty"`
+	// cron is the recurring schedule; nil/empty means manual launch only.
+	Cron *Suite_Cron `protobuf:"bytes,6,opt,name=cron,proto3" json:"cron,omitempty"`
+	// next_fire_at is the next scheduled firing instant, indexed for the cron
+	// loop. The per-fire lease lives in Valkey (G3), not here.
+	NextFireAt    *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=next_fire_at,json=nextFireAt,proto3,oneof" json:"next_fire_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -193,7 +306,21 @@ func (x *Suite) GetPreset() *domain.SuitePreset {
 	return nil
 }
 
-type SuiteRuns struct {
+func (x *Suite) GetCron() *Suite_Cron {
+	if x != nil {
+		return x.Cron
+	}
+	return nil
+}
+
+func (x *Suite) GetNextFireAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.NextFireAt
+	}
+	return nil
+}
+
+type SuiteRun struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Entity        *Entity                `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
 	Owned         *Own                   `protobuf:"bytes,2,opt,name=owned,proto3" json:"owned,omitempty"`
@@ -204,20 +331,20 @@ type SuiteRuns struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SuiteRuns) Reset() {
-	*x = SuiteRuns{}
+func (x *SuiteRun) Reset() {
+	*x = SuiteRun{}
 	mi := &file_cloud_v1_models_testing_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SuiteRuns) String() string {
+func (x *SuiteRun) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SuiteRuns) ProtoMessage() {}
+func (*SuiteRun) ProtoMessage() {}
 
-func (x *SuiteRuns) ProtoReflect() protoreflect.Message {
+func (x *SuiteRun) ProtoReflect() protoreflect.Message {
 	mi := &file_cloud_v1_models_testing_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -229,40 +356,40 @@ func (x *SuiteRuns) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SuiteRuns.ProtoReflect.Descriptor instead.
-func (*SuiteRuns) Descriptor() ([]byte, []int) {
+// Deprecated: Use SuiteRun.ProtoReflect.Descriptor instead.
+func (*SuiteRun) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_models_testing_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *SuiteRuns) GetEntity() *Entity {
+func (x *SuiteRun) GetEntity() *Entity {
 	if x != nil {
 		return x.Entity
 	}
 	return nil
 }
 
-func (x *SuiteRuns) GetOwned() *Own {
+func (x *SuiteRun) GetOwned() *Own {
 	if x != nil {
 		return x.Owned
 	}
 	return nil
 }
 
-func (x *SuiteRuns) GetSuiteId() *SuiteId {
+func (x *SuiteRun) GetSuiteId() *SuiteId {
 	if x != nil {
 		return x.SuiteId
 	}
 	return nil
 }
 
-func (x *SuiteRuns) GetDag() *DagId {
+func (x *SuiteRun) GetDag() *DagId {
 	if x != nil {
 		return x.Dag
 	}
 	return nil
 }
 
-func (x *SuiteRuns) GetTestRuns() []*TestRun {
+func (x *SuiteRun) GetTestRuns() []*TestRun {
 	if x != nil {
 		return x.TestRuns
 	}
@@ -315,7 +442,7 @@ func (x *TestRun_List) GetTestRuns() []*TestRun {
 
 type Suite_List struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TestRuns      []*SuiteRuns           `protobuf:"bytes,1,rep,name=test_runs,json=testRuns,proto3" json:"test_runs,omitempty"`
+	Suites        []*Suite               `protobuf:"bytes,1,rep,name=suites,proto3" json:"suites,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -350,34 +477,40 @@ func (*Suite_List) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_models_testing_proto_rawDescGZIP(), []int{1, 0}
 }
 
-func (x *Suite_List) GetTestRuns() []*SuiteRuns {
+func (x *Suite_List) GetSuites() []*Suite {
 	if x != nil {
-		return x.TestRuns
+		return x.Suites
 	}
 	return nil
 }
 
-type SuiteRuns_List struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TestRuns      []*SuiteRuns           `protobuf:"bytes,1,rep,name=test_runs,json=testRuns,proto3" json:"test_runs,omitempty"`
+// Cron is the optional schedule for recurring suite runs (H51).
+type Suite_Cron struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// expr is a cron expression.
+	Expr string `protobuf:"bytes,1,opt,name=expr,proto3" json:"expr,omitempty"`
+	// timezone is an IANA tz name, e.g. "Europe/Moscow".
+	Timezone      string                `protobuf:"bytes,2,opt,name=timezone,proto3" json:"timezone,omitempty"`
+	Catchup       Suite_Cron_Catchup    `protobuf:"varint,3,opt,name=catchup,proto3,enum=cloud.v1.models.Suite_Cron_Catchup" json:"catchup,omitempty"`
+	Concurrent    Suite_Cron_Concurrent `protobuf:"varint,4,opt,name=concurrent,proto3,enum=cloud.v1.models.Suite_Cron_Concurrent" json:"concurrent,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SuiteRuns_List) Reset() {
-	*x = SuiteRuns_List{}
+func (x *Suite_Cron) Reset() {
+	*x = Suite_Cron{}
 	mi := &file_cloud_v1_models_testing_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SuiteRuns_List) String() string {
+func (x *Suite_Cron) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SuiteRuns_List) ProtoMessage() {}
+func (*Suite_Cron) ProtoMessage() {}
 
-func (x *SuiteRuns_List) ProtoReflect() protoreflect.Message {
+func (x *Suite_Cron) ProtoReflect() protoreflect.Message {
 	mi := &file_cloud_v1_models_testing_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -389,14 +522,79 @@ func (x *SuiteRuns_List) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SuiteRuns_List.ProtoReflect.Descriptor instead.
-func (*SuiteRuns_List) Descriptor() ([]byte, []int) {
+// Deprecated: Use Suite_Cron.ProtoReflect.Descriptor instead.
+func (*Suite_Cron) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_testing_proto_rawDescGZIP(), []int{1, 1}
+}
+
+func (x *Suite_Cron) GetExpr() string {
+	if x != nil {
+		return x.Expr
+	}
+	return ""
+}
+
+func (x *Suite_Cron) GetTimezone() string {
+	if x != nil {
+		return x.Timezone
+	}
+	return ""
+}
+
+func (x *Suite_Cron) GetCatchup() Suite_Cron_Catchup {
+	if x != nil {
+		return x.Catchup
+	}
+	return Suite_Cron_CATCHUP_UNSPECIFIED
+}
+
+func (x *Suite_Cron) GetConcurrent() Suite_Cron_Concurrent {
+	if x != nil {
+		return x.Concurrent
+	}
+	return Suite_Cron_CONCURRENT_UNSPECIFIED
+}
+
+type SuiteRun_List struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SuiteRuns     []*SuiteRun            `protobuf:"bytes,1,rep,name=suite_runs,json=suiteRuns,proto3" json:"suite_runs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SuiteRun_List) Reset() {
+	*x = SuiteRun_List{}
+	mi := &file_cloud_v1_models_testing_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuiteRun_List) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuiteRun_List) ProtoMessage() {}
+
+func (x *SuiteRun_List) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_testing_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SuiteRun_List.ProtoReflect.Descriptor instead.
+func (*SuiteRun_List) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_models_testing_proto_rawDescGZIP(), []int{2, 0}
 }
 
-func (x *SuiteRuns_List) GetTestRuns() []*SuiteRuns {
+func (x *SuiteRun_List) GetSuiteRuns() []*SuiteRun {
 	if x != nil {
-		return x.TestRuns
+		return x.SuiteRuns
 	}
 	return nil
 }
@@ -405,7 +603,7 @@ var File_cloud_v1_models_testing_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_testing_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcloud/v1/models/testing.proto\x12\x0fcloud.v1.models\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xc0\x04\n" +
+	"\x1dcloud/v1/models/testing.proto\x12\x0fcloud.v1.models\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xc0\x04\n" +
 	"\aTestRun\x127\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x122\n" +
 	"\x05owned\x18\x02 \x01(\v2\x14.cloud.v1.models.OwnB\x06\x82\xa6\x1d\x02 \x01R\x05owned\x12#\n" +
@@ -422,29 +620,51 @@ const file_cloud_v1_models_testing_proto_rawDesc = "" +
 	"\ttest_runs\x18\x01 \x03(\v2\x18.cloud.v1.models.TestRunR\btestRuns:\x17\x92\xb5\x18\r\b\x01\x12\ttest_runs\x82\xa6\x1d\x02\b\x01B\a\n" +
 	"\x05_nameB\x0e\n" +
 	"\f_descriptionB\x0f\n" +
-	"\r_suite_run_id\"\x80\x03\n" +
+	"\r_suite_run_id\"\xad\a\n" +
 	"\x05Suite\x127\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x122\n" +
 	"\x05owned\x18\x02 \x01(\v2\x14.cloud.v1.models.OwnB\x06\x82\xa6\x1d\x02 \x01R\x05owned\x12#\n" +
 	"\x04name\x18\x03 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\xff\x01H\x00R\x04name\x88\x01\x01\x12/\n" +
 	"\vdescription\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80\bH\x01R\vdescription\x88\x01\x01\x12D\n" +
-	"\x06preset\x18\x05 \x01(\v2\x1c.cloud.v1.domain.SuitePresetB\x0e\xfaB\x05\x8a\x01\x02\x10\x01\x82\xa6\x1d\x02\x10\x01R\x06preset\x1a?\n" +
-	"\x04List\x127\n" +
-	"\ttest_runs\x18\x01 \x03(\v2\x1a.cloud.v1.models.SuiteRunsR\btestRuns:\x14\x92\xb5\x18\n" +
-	"\b\x01\x12\x06suites\x82\xa6\x1d\x02\b\x01B\a\n" +
+	"\x06preset\x18\x05 \x01(\v2\x1c.cloud.v1.domain.SuitePresetB\x0e\xfaB\x05\x8a\x01\x02\x10\x01\x82\xa6\x1d\x02\x10\x01R\x06preset\x127\n" +
+	"\x04cron\x18\x06 \x01(\v2\x1b.cloud.v1.models.Suite.CronB\x06\x82\xa6\x1d\x02\x10\x01R\x04cron\x12A\n" +
+	"\fnext_fire_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampH\x02R\n" +
+	"nextFireAt\x88\x01\x01\x1a6\n" +
+	"\x04List\x12.\n" +
+	"\x06suites\x18\x01 \x03(\v2\x16.cloud.v1.models.SuiteR\x06suites\x1a\x85\x03\n" +
+	"\x04Cron\x12\x1e\n" +
+	"\x04expr\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x04expr\x12#\n" +
+	"\btimezone\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\btimezone\x12G\n" +
+	"\acatchup\x18\x03 \x01(\x0e2#.cloud.v1.models.Suite.Cron.CatchupB\b\xfaB\x05\x82\x01\x02\x10\x01R\acatchup\x12P\n" +
+	"\n" +
+	"concurrent\x18\x04 \x01(\x0e2&.cloud.v1.models.Suite.Cron.ConcurrentB\b\xfaB\x05\x82\x01\x02\x10\x01R\n" +
+	"concurrent\"F\n" +
+	"\aCatchup\x12\x17\n" +
+	"\x13CATCHUP_UNSPECIFIED\x10\x00\x12\x10\n" +
+	"\fCATCHUP_SKIP\x10\x01\x12\x10\n" +
+	"\fCATCHUP_ONCE\x10\x02\"U\n" +
+	"\n" +
+	"Concurrent\x12\x1a\n" +
+	"\x16CONCURRENT_UNSPECIFIED\x10\x00\x12\x14\n" +
+	"\x10CONCURRENT_ALLOW\x10\x01\x12\x15\n" +
+	"\x11CONCURRENT_FORBID\x10\x02:5\x92\xb5\x18+\b\x01\x12\x06suites*\x1f\n" +
+	"\x0fsuites_cron_idx\x12\fnext_fire_at\x82\xa6\x1d\x02\b\x01B\a\n" +
 	"\x05_nameB\x0e\n" +
-	"\f_description\"\xb3\x03\n" +
-	"\tSuiteRuns\x127\n" +
+	"\f_descriptionB\x0f\n" +
+	"\r_next_fire_at\"\xb3\x03\n" +
+	"\bSuiteRun\x127\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x122\n" +
 	"\x05owned\x18\x02 \x01(\v2\x14.cloud.v1.models.OwnB\x06\x82\xa6\x1d\x02 \x01R\x05owned\x12I\n" +
 	"\bsuite_id\x18\x03 \x01(\v2\x18.cloud.v1.models.SuiteIdB\x14\x9a\xb5\x18\x10\x12\x0e2\x06suites:\x02id@\x01R\asuiteId\x12D\n" +
 	"\x03dag\x18\x06 \x01(\v2\x16.cloud.v1.models.DagIdB\x1a\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x0e\x12\f2\x04dags:\x02id@\x01R\x03dag\x12M\n" +
 	"\ttest_runs\x18\b \x03(\v2\x18.cloud.v1.models.TestRunB\x16\xa2\xb5\x18\x12\n" +
 	"\x10\n" +
-	"\fsuite_run_id\x18\x01R\btestRuns\x1a?\n" +
-	"\x04List\x127\n" +
-	"\ttest_runs\x18\x01 \x03(\v2\x1a.cloud.v1.models.SuiteRunsR\btestRuns:\x18\x92\xb5\x18\x0e\b\x01\x12\n" +
+	"\fsuite_run_id\x18\x01R\btestRuns\x1a@\n" +
+	"\x04List\x128\n" +
+	"\n" +
+	"suite_runs\x18\x01 \x03(\v2\x19.cloud.v1.models.SuiteRunR\tsuiteRuns:\x18\x92\xb5\x18\x0e\b\x01\x12\n" +
 	"suite_runs\x82\xa6\x1d\x02\b\x01BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
 
 var (
@@ -459,44 +679,53 @@ func file_cloud_v1_models_testing_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_models_testing_proto_rawDescData
 }
 
-var file_cloud_v1_models_testing_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_cloud_v1_models_testing_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_cloud_v1_models_testing_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_cloud_v1_models_testing_proto_goTypes = []any{
-	(*TestRun)(nil),            // 0: cloud.v1.models.TestRun
-	(*Suite)(nil),              // 1: cloud.v1.models.Suite
-	(*SuiteRuns)(nil),          // 2: cloud.v1.models.SuiteRuns
-	(*TestRun_List)(nil),       // 3: cloud.v1.models.TestRun.List
-	(*Suite_List)(nil),         // 4: cloud.v1.models.Suite.List
-	(*SuiteRuns_List)(nil),     // 5: cloud.v1.models.SuiteRuns.List
-	(*Entity)(nil),             // 6: cloud.v1.models.Entity
-	(*Own)(nil),                // 7: cloud.v1.models.Own
-	(*domain.TestPreset)(nil),  // 8: cloud.v1.domain.TestPreset
-	(*DagId)(nil),              // 9: cloud.v1.models.DagId
-	(*SuiteRunId)(nil),         // 10: cloud.v1.models.SuiteRunId
-	(*domain.SuitePreset)(nil), // 11: cloud.v1.domain.SuitePreset
-	(*SuiteId)(nil),            // 12: cloud.v1.models.SuiteId
+	(Suite_Cron_Catchup)(0),       // 0: cloud.v1.models.Suite.Cron.Catchup
+	(Suite_Cron_Concurrent)(0),    // 1: cloud.v1.models.Suite.Cron.Concurrent
+	(*TestRun)(nil),               // 2: cloud.v1.models.TestRun
+	(*Suite)(nil),                 // 3: cloud.v1.models.Suite
+	(*SuiteRun)(nil),              // 4: cloud.v1.models.SuiteRun
+	(*TestRun_List)(nil),          // 5: cloud.v1.models.TestRun.List
+	(*Suite_List)(nil),            // 6: cloud.v1.models.Suite.List
+	(*Suite_Cron)(nil),            // 7: cloud.v1.models.Suite.Cron
+	(*SuiteRun_List)(nil),         // 8: cloud.v1.models.SuiteRun.List
+	(*Entity)(nil),                // 9: cloud.v1.models.Entity
+	(*Own)(nil),                   // 10: cloud.v1.models.Own
+	(*domain.TestPreset)(nil),     // 11: cloud.v1.domain.TestPreset
+	(*DagId)(nil),                 // 12: cloud.v1.models.DagId
+	(*SuiteRunId)(nil),            // 13: cloud.v1.models.SuiteRunId
+	(*domain.SuitePreset)(nil),    // 14: cloud.v1.domain.SuitePreset
+	(*timestamppb.Timestamp)(nil), // 15: google.protobuf.Timestamp
+	(*SuiteId)(nil),               // 16: cloud.v1.models.SuiteId
 }
 var file_cloud_v1_models_testing_proto_depIdxs = []int32{
-	6,  // 0: cloud.v1.models.TestRun.entity:type_name -> cloud.v1.models.Entity
-	7,  // 1: cloud.v1.models.TestRun.owned:type_name -> cloud.v1.models.Own
-	8,  // 2: cloud.v1.models.TestRun.test_preset:type_name -> cloud.v1.domain.TestPreset
-	9,  // 3: cloud.v1.models.TestRun.dag:type_name -> cloud.v1.models.DagId
-	10, // 4: cloud.v1.models.TestRun.suite_run_id:type_name -> cloud.v1.models.SuiteRunId
-	6,  // 5: cloud.v1.models.Suite.entity:type_name -> cloud.v1.models.Entity
-	7,  // 6: cloud.v1.models.Suite.owned:type_name -> cloud.v1.models.Own
-	11, // 7: cloud.v1.models.Suite.preset:type_name -> cloud.v1.domain.SuitePreset
-	6,  // 8: cloud.v1.models.SuiteRuns.entity:type_name -> cloud.v1.models.Entity
-	7,  // 9: cloud.v1.models.SuiteRuns.owned:type_name -> cloud.v1.models.Own
-	12, // 10: cloud.v1.models.SuiteRuns.suite_id:type_name -> cloud.v1.models.SuiteId
-	9,  // 11: cloud.v1.models.SuiteRuns.dag:type_name -> cloud.v1.models.DagId
-	0,  // 12: cloud.v1.models.SuiteRuns.test_runs:type_name -> cloud.v1.models.TestRun
-	0,  // 13: cloud.v1.models.TestRun.List.test_runs:type_name -> cloud.v1.models.TestRun
-	2,  // 14: cloud.v1.models.Suite.List.test_runs:type_name -> cloud.v1.models.SuiteRuns
-	2,  // 15: cloud.v1.models.SuiteRuns.List.test_runs:type_name -> cloud.v1.models.SuiteRuns
-	16, // [16:16] is the sub-list for method output_type
-	16, // [16:16] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	9,  // 0: cloud.v1.models.TestRun.entity:type_name -> cloud.v1.models.Entity
+	10, // 1: cloud.v1.models.TestRun.owned:type_name -> cloud.v1.models.Own
+	11, // 2: cloud.v1.models.TestRun.test_preset:type_name -> cloud.v1.domain.TestPreset
+	12, // 3: cloud.v1.models.TestRun.dag:type_name -> cloud.v1.models.DagId
+	13, // 4: cloud.v1.models.TestRun.suite_run_id:type_name -> cloud.v1.models.SuiteRunId
+	9,  // 5: cloud.v1.models.Suite.entity:type_name -> cloud.v1.models.Entity
+	10, // 6: cloud.v1.models.Suite.owned:type_name -> cloud.v1.models.Own
+	14, // 7: cloud.v1.models.Suite.preset:type_name -> cloud.v1.domain.SuitePreset
+	7,  // 8: cloud.v1.models.Suite.cron:type_name -> cloud.v1.models.Suite.Cron
+	15, // 9: cloud.v1.models.Suite.next_fire_at:type_name -> google.protobuf.Timestamp
+	9,  // 10: cloud.v1.models.SuiteRun.entity:type_name -> cloud.v1.models.Entity
+	10, // 11: cloud.v1.models.SuiteRun.owned:type_name -> cloud.v1.models.Own
+	16, // 12: cloud.v1.models.SuiteRun.suite_id:type_name -> cloud.v1.models.SuiteId
+	12, // 13: cloud.v1.models.SuiteRun.dag:type_name -> cloud.v1.models.DagId
+	2,  // 14: cloud.v1.models.SuiteRun.test_runs:type_name -> cloud.v1.models.TestRun
+	2,  // 15: cloud.v1.models.TestRun.List.test_runs:type_name -> cloud.v1.models.TestRun
+	3,  // 16: cloud.v1.models.Suite.List.suites:type_name -> cloud.v1.models.Suite
+	0,  // 17: cloud.v1.models.Suite.Cron.catchup:type_name -> cloud.v1.models.Suite.Cron.Catchup
+	1,  // 18: cloud.v1.models.Suite.Cron.concurrent:type_name -> cloud.v1.models.Suite.Cron.Concurrent
+	4,  // 19: cloud.v1.models.SuiteRun.List.suite_runs:type_name -> cloud.v1.models.SuiteRun
+	20, // [20:20] is the sub-list for method output_type
+	20, // [20:20] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_testing_proto_init() }
@@ -512,13 +741,14 @@ func file_cloud_v1_models_testing_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_models_testing_proto_rawDesc), len(file_cloud_v1_models_testing_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   6,
+			NumEnums:      2,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_cloud_v1_models_testing_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_models_testing_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_models_testing_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_models_testing_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_models_testing_proto = out.File

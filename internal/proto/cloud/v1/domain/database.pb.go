@@ -740,11 +740,21 @@ func (Database_Options_Ydb_Managed_FamilyCompression) EnumDescriptor() ([]byte, 
 //
 // Flow:
 // 1. UI sends Database intent.
-// 2. Backend renders RenderedDatabaseConfig as a preview.
+// 2. Backend renders render.Config as a preview.
 // 3. UI shows generated render items.
 // 4. User can add render.Config.Override patches.
 // 5. Backend re-renders preview with overrides.
 // 6. Planner converts final intent + overrides into runtime.ops and DAG nodes.
+//
+// BDD note (B4) — package install belongs HERE, not in Workload:
+//   - builtin install recipe (apt packages, repo setup, pre-install) is backend
+//     data keyed by (Kind, version); the planner emits RUN_CMD/WRITE_FILE ops.
+//     Not a proto entity — planner knowledge, like the protocol/script matrices.
+//   - a custom .deb (BYO package) fits into Database.config (render.Config):
+//     the .deb is a render Item File.Ref{uri,checksum} (Ref already covers
+//     "uploaded files"); install is a render Item Cmd (dpkg -i); the download
+//     auth token is a render.Binding (runtime secret). No new entity needed.
+//     Details to be finalized under provisioning (D17/D18).
 type Database struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Kind          Database_Kind          `protobuf:"varint,1,opt,name=kind,proto3,enum=cloud.v1.domain.Database_Kind" json:"kind,omitempty"`
@@ -821,9 +831,10 @@ func (x *Database) GetOptions() *Database_Options {
 	return nil
 }
 
+// BDD H1/H2 resolved: field renamed workload->database; docstring uses render.Config.
 type DatabasePreset struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Workload      *Database              `protobuf:"bytes,1,opt,name=workload,proto3" json:"workload,omitempty"`
+	Database      *Database              `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
 	Topology      *Topology              `protobuf:"bytes,2,opt,name=topology,proto3" json:"topology,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -859,9 +870,9 @@ func (*DatabasePreset) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *DatabasePreset) GetWorkload() *Database {
+func (x *DatabasePreset) GetDatabase() *Database {
 	if x != nil {
-		return x.Workload
+		return x.Database
 	}
 	return nil
 }
@@ -1792,9 +1803,8 @@ type Database_Options_Ydb_SelfHosted struct {
 	StorageNodes   uint32                                         `protobuf:"varint,1,opt,name=storage_nodes,json=storageNodes,proto3" json:"storage_nodes,omitempty"`
 	DatabaseNodes  uint32                                         `protobuf:"varint,2,opt,name=database_nodes,json=databaseNodes,proto3" json:"database_nodes,omitempty"`
 	StorageGroups  uint32                                         `protobuf:"varint,3,opt,name=storage_groups,json=storageGroups,proto3" json:"storage_groups,omitempty"`
-	AutoSizePdisks bool                                           `protobuf:"varint,4,opt,name=auto_size_pdisks,json=autoSizePdisks,proto3" json:"auto_size_pdisks,omitempty"`
-	FaultTolerance Database_Options_Ydb_SelfHosted_FaultTolerance `protobuf:"varint,5,opt,name=fault_tolerance,json=faultTolerance,proto3,enum=cloud.v1.domain.Database_Options_Ydb_SelfHosted_FaultTolerance" json:"fault_tolerance,omitempty"`
-	FailureDomain  Database_Options_Ydb_SelfHosted_FailureDomain  `protobuf:"varint,6,opt,name=failure_domain,json=failureDomain,proto3,enum=cloud.v1.domain.Database_Options_Ydb_SelfHosted_FailureDomain" json:"failure_domain,omitempty"`
+	FaultTolerance Database_Options_Ydb_SelfHosted_FaultTolerance `protobuf:"varint,4,opt,name=fault_tolerance,json=faultTolerance,proto3,enum=cloud.v1.domain.Database_Options_Ydb_SelfHosted_FaultTolerance" json:"fault_tolerance,omitempty"`
+	FailureDomain  Database_Options_Ydb_SelfHosted_FailureDomain  `protobuf:"varint,5,opt,name=failure_domain,json=failureDomain,proto3,enum=cloud.v1.domain.Database_Options_Ydb_SelfHosted_FailureDomain" json:"failure_domain,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -1848,13 +1858,6 @@ func (x *Database_Options_Ydb_SelfHosted) GetStorageGroups() uint32 {
 		return x.StorageGroups
 	}
 	return 0
-}
-
-func (x *Database_Options_Ydb_SelfHosted) GetAutoSizePdisks() bool {
-	if x != nil {
-		return x.AutoSizePdisks
-	}
-	return false
 }
 
 func (x *Database_Options_Ydb_SelfHosted) GetFaultTolerance() Database_Options_Ydb_SelfHosted_FaultTolerance {
@@ -2235,7 +2238,7 @@ var File_cloud_v1_domain_database_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/domain/database.proto\x12\x0fcloud.v1.domain\x1a\x1ecloud/v1/domain/topology.proto\x1a$cloud/v1/runtime/render/config.proto\x1a\x17validate/validate.proto\"\x848\n" +
+	"\x1ecloud/v1/domain/database.proto\x12\x0fcloud.v1.domain\x1a\x1ecloud/v1/domain/topology.proto\x1a$cloud/v1/runtime/render/config.proto\x1a\x17validate/validate.proto\"\xda7\n" +
 	"\bDatabase\x12>\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x1e.cloud.v1.domain.Database.KindB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04kind\x12!\n" +
@@ -2261,7 +2264,7 @@ const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a\f\n" +
 	"\n" +
 	"SelfHostedB\r\n" +
-	"\x06target\x12\x03\xf8B\x01\x1a\x880\n" +
+	"\x06target\x12\x03\xf8B\x01\x1a\xde/\n" +
 	"\aOptions\x12H\n" +
 	"\bpostgres\x18\x01 \x01(\v2*.cloud.v1.domain.Database.Options.PostgresH\x00R\bpostgres\x12?\n" +
 	"\x05mysql\x18\x02 \x01(\v2'.cloud.v1.domain.Database.Options.MysqlH\x00R\x05mysql\x129\n" +
@@ -2314,7 +2317,7 @@ const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"\x0eMODE_SEMI_SYNC\x10\x03\x12\x1a\n" +
 	"\x16MODE_GROUP_REPLICATION\x10\x04\x1a$\n" +
 	"\x06Access\x12\x1a\n" +
-	"\bproxysql\x18\x01 \x01(\bR\bproxysql\x1a\xfa\x1b\n" +
+	"\bproxysql\x18\x01 \x01(\bR\bproxysql\x1a\xd0\x1b\n" +
 	"\x03Ydb\x12S\n" +
 	"\vself_hosted\x18\x01 \x01(\v20.cloud.v1.domain.Database.Options.Ydb.SelfHostedH\x00R\n" +
 	"selfHosted\x12I\n" +
@@ -2327,15 +2330,14 @@ const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"parameters\x1a=\n" +
 	"\x0fParametersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a\xd6\x05\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a\xac\x05\n" +
 	"\n" +
 	"SelfHosted\x12-\n" +
 	"\rstorage_nodes\x18\x01 \x01(\rB\b\xfaB\x05*\x03\x18\x80\bR\fstorageNodes\x12/\n" +
 	"\x0edatabase_nodes\x18\x02 \x01(\rB\b\xfaB\x05*\x03\x18\x80\bR\rdatabaseNodes\x12/\n" +
-	"\x0estorage_groups\x18\x03 \x01(\rB\b\xfaB\x05*\x03\x18\x80\x02R\rstorageGroups\x12(\n" +
-	"\x10auto_size_pdisks\x18\x04 \x01(\bR\x0eautoSizePdisks\x12r\n" +
-	"\x0ffault_tolerance\x18\x05 \x01(\x0e2?.cloud.v1.domain.Database.Options.Ydb.SelfHosted.FaultToleranceB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0efaultTolerance\x12o\n" +
-	"\x0efailure_domain\x18\x06 \x01(\x0e2>.cloud.v1.domain.Database.Options.Ydb.SelfHosted.FailureDomainB\b\xfaB\x05\x82\x01\x02\x10\x01R\rfailureDomain\"\x8b\x01\n" +
+	"\x0estorage_groups\x18\x03 \x01(\rB\b\xfaB\x05*\x03\x18\x80\x02R\rstorageGroups\x12r\n" +
+	"\x0ffault_tolerance\x18\x04 \x01(\x0e2?.cloud.v1.domain.Database.Options.Ydb.SelfHosted.FaultToleranceB\b\xfaB\x05\x82\x01\x02\x10\x01R\x0efaultTolerance\x12o\n" +
+	"\x0efailure_domain\x18\x05 \x01(\x0e2>.cloud.v1.domain.Database.Options.Ydb.SelfHosted.FailureDomainB\b\xfaB\x05\x82\x01\x02\x10\x01R\rfailureDomain\"\x8b\x01\n" +
 	"\x0eFaultTolerance\x12\x1f\n" +
 	"\x1bFAULT_TOLERANCE_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14FAULT_TOLERANCE_NONE\x10\x01\x12\x1d\n" +
@@ -2460,7 +2462,7 @@ const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"\x0eKIND_COCKROACH\x10\x05\x12\x11\n" +
 	"\rKIND_PICODATA\x10\x06\"\x92\x01\n" +
 	"\x0eDatabasePreset\x12?\n" +
-	"\bworkload\x18\x01 \x01(\v2\x19.cloud.v1.domain.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bworkload\x12?\n" +
+	"\bdatabase\x18\x01 \x01(\v2\x19.cloud.v1.domain.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x12?\n" +
 	"\btopology\x18\x02 \x01(\v2\x19.cloud.v1.domain.TopologyB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btopologyBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domainb\x06proto3"
 
 var (
@@ -2526,7 +2528,7 @@ var file_cloud_v1_domain_database_proto_depIdxs = []int32{
 	40, // 1: cloud.v1.domain.Database.config:type_name -> cloud.v1.runtime.render.Config
 	15, // 2: cloud.v1.domain.Database.target:type_name -> cloud.v1.domain.Database.Target
 	16, // 3: cloud.v1.domain.Database.options:type_name -> cloud.v1.domain.Database.Options
-	13, // 4: cloud.v1.domain.DatabasePreset.workload:type_name -> cloud.v1.domain.Database
+	13, // 4: cloud.v1.domain.DatabasePreset.database:type_name -> cloud.v1.domain.Database
 	41, // 5: cloud.v1.domain.DatabasePreset.topology:type_name -> cloud.v1.domain.Topology
 	18, // 6: cloud.v1.domain.Database.Target.self_hosted:type_name -> cloud.v1.domain.Database.Target.SelfHosted
 	17, // 7: cloud.v1.domain.Database.Target.external:type_name -> cloud.v1.domain.Database.Target.External

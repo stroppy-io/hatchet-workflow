@@ -151,6 +151,51 @@ func (m *Topology) validate(all bool) error {
 
 	}
 
+	if len(m.GetExternalComponents()) > 64 {
+		err := TopologyValidationError{
+			field:  "ExternalComponents",
+			reason: "value must contain no more than 64 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetExternalComponents() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, TopologyValidationError{
+						field:  fmt.Sprintf("ExternalComponents[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, TopologyValidationError{
+						field:  fmt.Sprintf("ExternalComponents[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TopologyValidationError{
+					field:  fmt.Sprintf("ExternalComponents[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if all {
 		switch v := interface{}(m.GetTags()).(type) {
 		case interface{ ValidateAll() error }:
@@ -592,6 +637,28 @@ func (m *Topology_Machine) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	if m.GetDiskGb() <= 0 {
+		err := Topology_MachineValidationError{
+			field:  "DiskGb",
+			reason: "value must be greater than 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetDataDisksGb()) > 64 {
+		err := Topology_MachineValidationError{
+			field:  "DataDisksGb",
+			reason: "value must contain no more than 64 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	if len(errors) > 0 {

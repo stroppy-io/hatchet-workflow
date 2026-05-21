@@ -12,6 +12,10 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     It is intentionally not an operation: applying the files, running
     daemon-reload, enabling, starting, stopping, or restarting the service should
     be decomposed into runtime ops.
+
+    BDD decision (D17): the PLANNER does this decomposition — a render Service
+    item compiles into WRITE_FILE(unit_file) -> RUN_CMD(systemctl daemon-reload)
+    -> RUN_CMD(systemctl enable/start). The agent never interprets a Service.
  */
 message Service {
     oneof manager {

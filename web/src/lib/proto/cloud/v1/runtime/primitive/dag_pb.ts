@@ -17,139 +17,40 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/runtime/primitive/dag.proto.
  */
 export const file_cloud_v1_runtime_primitive_dag: GenFile = /*@__PURE__*/
-  fileDesc("CiRjbG91ZC92MS9ydW50aW1lL3ByaW1pdGl2ZS9kYWcucHJvdG8SGmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlIqoYCgNEYWcSFgoCaWQYASABKAlCCvpCB3IFEAEYgAESQgoGc3RhdHVzGAMgASgOMiIuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuU3RhdHVzQg76QguCAQgQASAAIAUgBhI9CgVub2RlcxgEIAMoCzIkLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5Ob2RlQgj6QgWSAQIIARIzCgVlZGdlcxgFIAMoCzIkLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5FZGdlEiMKBWlucHV0GAYgASgLMhQuZ29vZ2xlLnByb3RvYnVmLkFueRJICgpzY2hlZHVsaW5nGAcgASgLMiouY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLlNjaGVkdWxpbmdCCPpCBYoBAhABEj8KCG1ldGFkYXRhGAggAygLMi0uY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLk1ldGFkYXRhRW50cnkSPAoJZXhlY3V0aW9uGBQgASgLMikuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLkV4ZWN1dGlvbhrKAgoHRmFpbHVyZRIbCgdtZXNzYWdlGAEgASgJQgr6QgdyBRABGIBAEhYKBGNvZGUYAiABKAlCCPpCBXIDGIABEhgKBnNvdXJjZRgDIAEoCUII+kIFcgMYgAESFwoFcGhhc2UYBCABKAlCCPpCBXIDGIABEg8KB2F0dGVtcHQYBSABKA0SEQoJcmV0cnlhYmxlGAYgASgIEi8KC29jY3VycmVkX2F0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBJRCghtZXRhZGF0YRgIIAMoCzI1LmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5GYWlsdXJlLk1ldGFkYXRhRW50cnlCCPpCBZoBAhBAGi8KDU1ldGFkYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARq1CwoETm9kZRITCgJpZBgBIAEoCUIH+kIEcgIQARJACgZzdGF0dXMYAiABKA4yIi5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5TdGF0dXNCDPpCCYIBBhABIAAgBxJNCgpzY2hlZHVsaW5nGAMgASgLMi8uY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLk5vZGUuU2NoZWR1bGluZ0II+kIFigECEAESRAoIbWV0YWRhdGEYBCADKAsyMi5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuTm9kZS5NZXRhZGF0YUVudHJ5EiAKDGV4ZWN1dGlvbl9pZBgFIAEoCUIK+kIHcgUQARiAARJOCgp0YXNrX3N0YXRlGAogASgLMi4uY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLk5vZGUuVGFza1N0YXRlQgj6QgWKAQIQAUgAEjwKB3N1Yl9kYWcYCyABKAsyHy5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWdCCPpCBYoBAhABSAASSAoHZGFnX3JlZhgMIAEoCzIrLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5Ob2RlLkRhZ1JlZkII+kIFigECEAFIABJBCglleGVjdXRpb24YFCABKAsyLi5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuTm9kZS5FeGVjdXRpb24afwoJVGFza1N0YXRlEh0KDGhhbmRsZXJfbmFtZRgBIAEoCUIH+kIEcgIQARItCgVpbnB1dBgCIAEoCzIULmdvb2dsZS5wcm90b2J1Zi5BbnlCCPpCBaIBAggBEiQKBm91dHB1dBgDIAEoCzIULmdvb2dsZS5wcm90b2J1Zi5BbnkaJAoGRGFnUmVmEhoKBmRhZ19pZBgBIAEoCUIK+kIHcgUQARiAARqsAgoKU2NoZWR1bGluZxJICgxyZXRyeV9wb2xpY3kYBCABKAsyKC5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5SZXRyeS5Qb2xpY3lCCPpCBYoBAhABEhIKCmFsd2F5c19ydW4YBSABKAgSEAoIcHJpb3JpdHkYBiABKAUSWQoLam9pbl9wb2xpY3kYByABKA4yOi5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuTm9kZS5TY2hlZHVsaW5nLkpvaW5Qb2xpY3lCCPpCBYIBAhABIlMKCkpvaW5Qb2xpY3kSGwoXSk9JTl9QT0xJQ1lfVU5TUEVDSUZJRUQQABITCg9KT0lOX1BPTElDWV9BTEwQARITCg9KT0lOX1BPTElDWV9BTlkQAhrsAgoJRXhlY3V0aW9uEkAKBnN0YXR1cxgBIAEoDjIiLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLlN0YXR1c0IM+kIJggEGEAEgACAHEjwKC3JldHJ5X3N0YXRlGAIgASgLMicuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuUmV0cnkuU3RhdGUSOAoHZmFpbHVyZRgDIAEoCzInLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5GYWlsdXJlEkQKCGZhaWx1cmVzGAQgAygLMicuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLkZhaWx1cmVCCfpCBpIBAxCAARIuCgpzdGFydGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtmaW5pc2hlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQg4KB3ZhcmlhbnQSA/hCARrKAQoERWRnZRIWCgJpZBgBIAEoCUIK+kIHcgUQARiAARIaCgZzb3VyY2UYAiABKAlCCvpCB3IFEAEYgAISGgoGdGFyZ2V0GAMgASgJQgr6QgdyBRABGIACEhgKDnByZWRpY2F0ZV9uYW1lGAogASgJSAASSwoJb25fc3RhdHVzGAsgASgOMiIuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuU3RhdHVzQhL6Qg+CAQwQASAAIAEgAiAFIAdIAEILCgljb25kaXRpb24a0gIKCUV4ZWN1dGlvbhJCCgZzdGF0dXMYASABKA4yIi5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5TdGF0dXNCDvpCC4IBCBABIAAgBSAGEiAKDmZhaWxlZF9ub2RlX2lkGAIgASgJQgj6QgVyAxiAAhI4CgdmYWlsdXJlGAMgASgLMicuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLkZhaWx1cmUSRAoIZmFpbHVyZXMYBCADKAsyJy5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuRmFpbHVyZUIJ+kIGkgEDEIABEi4KCnN0YXJ0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBqMAgoKU2NoZWR1bGluZxIhCg9tYXhfcGFyYWxsZWxpc20YASABKA1CCPpCBSoDGIAIEl0KD29uX25vZGVfZmFpbHVyZRgCIAEoDjI4LmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5TY2hlZHVsaW5nLk9uTm9kZUZhaWx1cmVCCvpCB4IBBBABIAASEgoKaXNfc3ViX2RhZxgDIAEoCCJoCg1Pbk5vZGVGYWlsdXJlEh8KG09OX05PREVfRkFJTFVSRV9VTlNQRUNJRklFRBAAEhwKGE9OX05PREVfRkFJTFVSRV9DT05USU5VRRABEhgKFE9OX05PREVfRkFJTFVSRV9TVE9QEAIaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQk9aTWdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3J1bnRpbWUvcHJpbWl0aXZlYgZwcm90bzM", [file_cloud_v1_runtime_primitive_retry, file_cloud_v1_runtime_primitive_status, file_google_protobuf_any, file_google_protobuf_timestamp, file_validate_validate]);
+  fileDesc("CiRjbG91ZC92MS9ydW50aW1lL3ByaW1pdGl2ZS9kYWcucHJvdG8SGmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlIu0ZCgNEYWcSFgoCaWQYASABKAlCCvpCB3IFGIABEAESQgoGc3RhdHVzGAMgASgOMiIuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuU3RhdHVzQg76QguCAQgQASAAIAUgBhI9CgVub2RlcxgEIAMoCzIkLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5Ob2RlQgj6QgWSAQIIARIzCgVlZGdlcxgFIAMoCzIkLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5FZGdlEiMKBWlucHV0GAYgASgLMhQuZ29vZ2xlLnByb3RvYnVmLkFueRJICgpzY2hlZHVsaW5nGAcgASgLMiouY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLlNjaGVkdWxpbmdCCPpCBYoBAhABEj8KCG1ldGFkYXRhGAggAygLMi0uY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLk1ldGFkYXRhRW50cnkSPAoJZXhlY3V0aW9uGBQgASgLMikuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLkV4ZWN1dGlvbhrKAgoHRmFpbHVyZRIbCgdtZXNzYWdlGAEgASgJQgr6QgdyBRABGIBAEhYKBGNvZGUYAiABKAlCCPpCBXIDGIABEhgKBnNvdXJjZRgDIAEoCUII+kIFcgMYgAESFwoFcGhhc2UYBCABKAlCCPpCBXIDGIABEg8KB2F0dGVtcHQYBSABKA0SEQoJcmV0cnlhYmxlGAYgASgIEi8KC29jY3VycmVkX2F0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBJRCghtZXRhZGF0YRgIIAMoCzI1LmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5GYWlsdXJlLk1ldGFkYXRhRW50cnlCCPpCBZoBAhBAGi8KDU1ldGFkYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARr4DAoETm9kZRITCgJpZBgBIAEoCUIH+kIEcgIQARJACgZzdGF0dXMYAiABKA4yIi5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5TdGF0dXNCDPpCCYIBBhABIAAgBxJNCgpzY2hlZHVsaW5nGAMgASgLMi8uY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLk5vZGUuU2NoZWR1bGluZ0II+kIFigECEAESRAoIbWV0YWRhdGEYBCADKAsyMi5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuTm9kZS5NZXRhZGF0YUVudHJ5EiAKDGV4ZWN1dGlvbl9pZBgFIAEoCUIK+kIHcgUQARiAARJOCgp0YXNrX3N0YXRlGAogASgLMi4uY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLk5vZGUuVGFza1N0YXRlQgj6QgWKAQIQAUgAEjwKB3N1Yl9kYWcYCyABKAsyHy5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWdCCPpCBYoBAhABSAASSAoHZGFnX3JlZhgMIAEoCzIrLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5Ob2RlLkRhZ1JlZkII+kIFigECEAFIABJBCglleGVjdXRpb24YFCABKAsyLi5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuTm9kZS5FeGVjdXRpb24awQIKCVRhc2tTdGF0ZRIdCgxoYW5kbGVyX25hbWUYASABKAlCB/pCBHICEAESLQoFaW5wdXQYAiABKAsyFC5nb29nbGUucHJvdG9idWYuQW55Qgj6QgWiAQIIARIkCgZvdXRwdXQYAyABKAsyFC5nb29nbGUucHJvdG9idWYuQW55ElYKBWxvY3VzGAQgASgOMj0uY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLk5vZGUuVGFza1N0YXRlLkV4ZWN1dGlvbkxvY3VzQgj6QgWCAQIQASJoCg5FeGVjdXRpb25Mb2N1cxIfChtFWEVDVVRJT05fTE9DVVNfVU5TUEVDSUZJRUQQABIaChZFWEVDVVRJT05fTE9DVVNfU0VSVkVSEAESGQoVRVhFQ1VUSU9OX0xPQ1VTX0FHRU5UEAIaJAoGRGFnUmVmEhoKBmRhZ19pZBgBIAEoCUIK+kIHcgUQARiAARqsAgoKU2NoZWR1bGluZxJICgxyZXRyeV9wb2xpY3kYBCABKAsyKC5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5SZXRyeS5Qb2xpY3lCCPpCBYoBAhABEhIKCmFsd2F5c19ydW4YBSABKAgSEAoIcHJpb3JpdHkYBiABKAUSWQoLam9pbl9wb2xpY3kYByABKA4yOi5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuTm9kZS5TY2hlZHVsaW5nLkpvaW5Qb2xpY3lCCPpCBYIBAhABIlMKCkpvaW5Qb2xpY3kSGwoXSk9JTl9QT0xJQ1lfVU5TUEVDSUZJRUQQABITCg9KT0lOX1BPTElDWV9BTEwQARITCg9KT0lOX1BPTElDWV9BTlkQAhrsAgoJRXhlY3V0aW9uEkAKBnN0YXR1cxgBIAEoDjIiLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLlN0YXR1c0IM+kIJggEGEAEgACAHEjwKC3JldHJ5X3N0YXRlGAIgASgLMicuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuUmV0cnkuU3RhdGUSOAoHZmFpbHVyZRgDIAEoCzInLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5GYWlsdXJlEkQKCGZhaWx1cmVzGAQgAygLMicuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLkZhaWx1cmVCCfpCBpIBAxCAARIuCgpzdGFydGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtmaW5pc2hlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQg4KB3ZhcmlhbnQSA/hCARrKAQoERWRnZRIWCgJpZBgBIAEoCUIK+kIHcgUQARiAARIaCgZzb3VyY2UYAiABKAlCCvpCB3IFEAEYgAISGgoGdGFyZ2V0GAMgASgJQgr6QgdyBRiAAhABEhgKDnByZWRpY2F0ZV9uYW1lGAogASgJSAASSwoJb25fc3RhdHVzGAsgASgOMiIuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuU3RhdHVzQhL6Qg+CAQwQASAAIAEgAiAFIAdIAEILCgljb25kaXRpb24a0gIKCUV4ZWN1dGlvbhJCCgZzdGF0dXMYASABKA4yIi5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5TdGF0dXNCDvpCC4IBCCAAIAUgBhABEiAKDmZhaWxlZF9ub2RlX2lkGAIgASgJQgj6QgVyAxiAAhI4CgdmYWlsdXJlGAMgASgLMicuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuRGFnLkZhaWx1cmUSRAoIZmFpbHVyZXMYBCADKAsyJy5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5EYWcuRmFpbHVyZUIJ+kIGkgEDEIABEi4KCnN0YXJ0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBqMAgoKU2NoZWR1bGluZxIhCg9tYXhfcGFyYWxsZWxpc20YASABKA1CCPpCBSoDGIAIEl0KD29uX25vZGVfZmFpbHVyZRgCIAEoDjI4LmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZy5TY2hlZHVsaW5nLk9uTm9kZUZhaWx1cmVCCvpCB4IBBBABIAASEgoKaXNfc3ViX2RhZxgDIAEoCCJoCg1Pbk5vZGVGYWlsdXJlEh8KG09OX05PREVfRkFJTFVSRV9VTlNQRUNJRklFRBAAEhwKGE9OX05PREVfRkFJTFVSRV9DT05USU5VRRABEhgKFE9OX05PREVfRkFJTFVSRV9TVE9QEAIaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQk9aTWdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3J1bnRpbWUvcHJpbWl0aXZlYgZwcm90bzM", [file_cloud_v1_runtime_primitive_retry, file_cloud_v1_runtime_primitive_status, file_google_protobuf_any, file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  *
- * Dag is a stateful execution snapshot for a directed acyclic graph.
+ * BDD decisions (C12, features/orchestration/compile-to-dag.feature) — how the
+ * planner compiles a TestPreset snapshot into a Dag (replaces run.builder.Build):
  *
- * Architecture decision: everything executable is represented as a Dag.
+ * - graph shape is emergent from Database.Options (etcd/patroni/proxy nodes
+ * appear only when the options require them).
+ * - on-host agent work is a per-command sub_dag: each WRITE_FILE / RUN_CMD /
+ * start-service is its own node with its own retry and execution_id; the
+ * agent leases and reports by DagId + Node.execution_id.
+ * - old phase Deps become edges; old AlwaysRun becomes Node.Scheduling.always_run.
+ * - no shared mutable State: values flow via Node TaskState.output and
+ * render.Binding (resolved from Deployment.Output). The Dag is a
+ * self-contained reproducible snapshot.
+ * - old MustComplete (provision must finish/roll back even on cancel) is
+ * expressed as an always_run teardown node with edges from provision; no new
+ * flag. UI TODO: cancel/teardown behavior must be drawable as a distinct
+ * state (separate task).
  *
- * The runtime does not know about domain entities such as suites, tests,
- * deployments, Terraform runs, machines, or agents. Domain layers compile
- * those entities into Dag payloads, and the runtime only executes nodes,
- * edges, retry policy, cancellation, failure propagation, and persistence
- * snapshots.
+ * BDD decision (D18): a task node needs an explicit execution-locus marker so
+ * the agent Poll handler offers only agent nodes and the server runs the rest
+ * (terraform/docker need control-plane creds + daemon). PROPOSED:
  *
- * Common shapes:
+ * enum ExecutionLocus {
+ * EXECUTION_LOCUS_UNSPECIFIED = 0;  // defaults to SERVER
+ * EXECUTION_LOCUS_SERVER = 1;       // control-plane handler (tf, docker, render, collect)
+ * EXECUTION_LOCUS_AGENT  = 2;       // leased by an agent via Poll (on-host ops)
+ * }
+ * // Node.TaskState gains: ExecutionLocus locus = 4;
  *
- * 1. Suite run
- *
- * A suite run is a top-level persisted Dag whose nodes represent the
- * suite workflow. Test runs may be embedded when they are small and must
- * be part of the same persisted snapshot, or referenced when they need
- * their own lifecycle, processor lease, admission policy, or independent
- * observability.
- *
- * Example:
- *
- * Dag(id = suite_run_dag)
- * node prepare_environment: task_state
- * node test_a: dag_ref(test_a_dag)
- * node test_b: dag_ref(test_b_dag)
- * node cleanup: task_state, always_run = true
- *
- * edges:
- * prepare_environment -> test_a
- * prepare_environment -> test_b
- * test_a -> cleanup
- * test_b -> cleanup
- *
- * 2. Test run
- *
- * A test run is also a Dag. It can contain provisioning, configuration,
- * workload execution, result collection, and cleanup. If a part must be
- * executed as an ordered command stream on an agent, that part is modeled
- * as an embedded command Dag.
- *
- * Example:
- *
- * Dag(id = test_run_dag)
- * node render_config: task_state
- * node terraform_apply: task_state
- * node install_and_run: sub_dag(commands_dag)
- * node collect_results: task_state
- * node terraform_destroy: task_state, always_run = true
- *
- * edges:
- * render_config -> terraform_apply
- * terraform_apply -> install_and_run
- * install_and_run -> collect_results
- * terraform_apply -> terraform_destroy
- * install_and_run -> terraform_destroy
- *
- * 3. Agent command queue
- *
- * There is no separate durable agent command queue table. A command queue
- * is an embedded Dag: the parent node owns a sub-Dag, and each command is
- * a task node inside that sub-Dag. The task input contains a typed
- * runtime.agent.Command wrapped in google.protobuf.Any. Node status,
- * retry state, failures, timestamps, and logs are correlated through the
- * node execution_id.
- *
- * Example:
- *
- * node install_and_run: sub_dag(commands_dag)
- *
- * commands_dag:
- * node install_packages:
- * execution_id = cmd_install_packages
- * task_state.handler_name = "agent.command"
- * task_state.input = Any(runtime.agent.Command)
- *
- * node render_service:
- * execution_id = cmd_render_service
- * task_state.handler_name = "agent.command"
- * task_state.input = Any(runtime.agent.Command)
- *
- * node start_service:
- * execution_id = cmd_start_service
- * task_state.handler_name = "agent.command"
- * task_state.input = Any(runtime.agent.Command)
- *
- * edges:
- * install_packages -> render_service
- * render_service -> start_service
- *
- * The agent API leases and reports a command by:
- *
- * DagId + Node.execution_id
- *
- * It must not use structural paths. Node.id is local to one Dag and is
- * used by edges. Node.execution_id is the stable external identity inside
- * the persisted top-level Dag aggregate, including embedded sub-Dags.
- *
- * The scheduler loads and saves the whole Dag aggregate as one unit. A
- * top-level Dag is persisted in the dags table; a sub-Dag is embedded in its
- * owning node and is not persisted as a separate database row. A dag_ref node
- * points at another persisted Dag and lets parent Dags orchestrate independent
- * child Dags without embedding their full payload.
- *
- * Execution model:
- * - a node becomes ready when its incoming edges are satisfied according to
- * the node join policy;
- * - an edge without a condition is satisfied when the source node reaches
- * STATUS_COMPLETED;
- * - an edge with on_status is satisfied when the source node reaches that
- * terminal status;
- * - an edge with predicate_name is satisfied when the registered predicate
- * returns true after the source node reaches a terminal status;
- * - ready nodes are admitted by Dag.Scheduling.max_parallelism and then by
- * node priority;
- * - a task node executes its TaskState payload;
- * - a sub-Dag node executes the nested Dag and mirrors its terminal result
- * into the owning node status;
- * - a dag_ref node executes or waits for another persisted Dag through the
- * runtime's DagRefRunner and mirrors its terminal result into the owning
- * node status;
- * - Dag.Scheduling.on_node_failure controls whether ordinary pending nodes
- * continue to be admitted after a node fails;
- * - Node.Scheduling.always_run nodes are reserved for cleanup/teardown and
- * may still run after failure or cancellation.
- *
- * Cross-boundary edges are not allowed: edges inside a Dag may reference only
- * nodes from that same Dag. Parent Dag edges depend on the owning sub-Dag node,
- * not on nodes inside the nested Dag.
+ * Today the split is implicit via handler_name "agent.command"; the enum makes
+ * it explicit.
  *
  * @generated from message cloud.v1.runtime.primitive.Dag
  */
@@ -213,135 +114,36 @@ export type Dag = Message<"cloud.v1.runtime.primitive.Dag"> & {
 
 /**
  *
- * Dag is a stateful execution snapshot for a directed acyclic graph.
+ * BDD decisions (C12, features/orchestration/compile-to-dag.feature) — how the
+ * planner compiles a TestPreset snapshot into a Dag (replaces run.builder.Build):
  *
- * Architecture decision: everything executable is represented as a Dag.
+ * - graph shape is emergent from Database.Options (etcd/patroni/proxy nodes
+ * appear only when the options require them).
+ * - on-host agent work is a per-command sub_dag: each WRITE_FILE / RUN_CMD /
+ * start-service is its own node with its own retry and execution_id; the
+ * agent leases and reports by DagId + Node.execution_id.
+ * - old phase Deps become edges; old AlwaysRun becomes Node.Scheduling.always_run.
+ * - no shared mutable State: values flow via Node TaskState.output and
+ * render.Binding (resolved from Deployment.Output). The Dag is a
+ * self-contained reproducible snapshot.
+ * - old MustComplete (provision must finish/roll back even on cancel) is
+ * expressed as an always_run teardown node with edges from provision; no new
+ * flag. UI TODO: cancel/teardown behavior must be drawable as a distinct
+ * state (separate task).
  *
- * The runtime does not know about domain entities such as suites, tests,
- * deployments, Terraform runs, machines, or agents. Domain layers compile
- * those entities into Dag payloads, and the runtime only executes nodes,
- * edges, retry policy, cancellation, failure propagation, and persistence
- * snapshots.
+ * BDD decision (D18): a task node needs an explicit execution-locus marker so
+ * the agent Poll handler offers only agent nodes and the server runs the rest
+ * (terraform/docker need control-plane creds + daemon). PROPOSED:
  *
- * Common shapes:
+ * enum ExecutionLocus {
+ * EXECUTION_LOCUS_UNSPECIFIED = 0;  // defaults to SERVER
+ * EXECUTION_LOCUS_SERVER = 1;       // control-plane handler (tf, docker, render, collect)
+ * EXECUTION_LOCUS_AGENT  = 2;       // leased by an agent via Poll (on-host ops)
+ * }
+ * // Node.TaskState gains: ExecutionLocus locus = 4;
  *
- * 1. Suite run
- *
- * A suite run is a top-level persisted Dag whose nodes represent the
- * suite workflow. Test runs may be embedded when they are small and must
- * be part of the same persisted snapshot, or referenced when they need
- * their own lifecycle, processor lease, admission policy, or independent
- * observability.
- *
- * Example:
- *
- * Dag(id = suite_run_dag)
- * node prepare_environment: task_state
- * node test_a: dag_ref(test_a_dag)
- * node test_b: dag_ref(test_b_dag)
- * node cleanup: task_state, always_run = true
- *
- * edges:
- * prepare_environment -> test_a
- * prepare_environment -> test_b
- * test_a -> cleanup
- * test_b -> cleanup
- *
- * 2. Test run
- *
- * A test run is also a Dag. It can contain provisioning, configuration,
- * workload execution, result collection, and cleanup. If a part must be
- * executed as an ordered command stream on an agent, that part is modeled
- * as an embedded command Dag.
- *
- * Example:
- *
- * Dag(id = test_run_dag)
- * node render_config: task_state
- * node terraform_apply: task_state
- * node install_and_run: sub_dag(commands_dag)
- * node collect_results: task_state
- * node terraform_destroy: task_state, always_run = true
- *
- * edges:
- * render_config -> terraform_apply
- * terraform_apply -> install_and_run
- * install_and_run -> collect_results
- * terraform_apply -> terraform_destroy
- * install_and_run -> terraform_destroy
- *
- * 3. Agent command queue
- *
- * There is no separate durable agent command queue table. A command queue
- * is an embedded Dag: the parent node owns a sub-Dag, and each command is
- * a task node inside that sub-Dag. The task input contains a typed
- * runtime.agent.Command wrapped in google.protobuf.Any. Node status,
- * retry state, failures, timestamps, and logs are correlated through the
- * node execution_id.
- *
- * Example:
- *
- * node install_and_run: sub_dag(commands_dag)
- *
- * commands_dag:
- * node install_packages:
- * execution_id = cmd_install_packages
- * task_state.handler_name = "agent.command"
- * task_state.input = Any(runtime.agent.Command)
- *
- * node render_service:
- * execution_id = cmd_render_service
- * task_state.handler_name = "agent.command"
- * task_state.input = Any(runtime.agent.Command)
- *
- * node start_service:
- * execution_id = cmd_start_service
- * task_state.handler_name = "agent.command"
- * task_state.input = Any(runtime.agent.Command)
- *
- * edges:
- * install_packages -> render_service
- * render_service -> start_service
- *
- * The agent API leases and reports a command by:
- *
- * DagId + Node.execution_id
- *
- * It must not use structural paths. Node.id is local to one Dag and is
- * used by edges. Node.execution_id is the stable external identity inside
- * the persisted top-level Dag aggregate, including embedded sub-Dags.
- *
- * The scheduler loads and saves the whole Dag aggregate as one unit. A
- * top-level Dag is persisted in the dags table; a sub-Dag is embedded in its
- * owning node and is not persisted as a separate database row. A dag_ref node
- * points at another persisted Dag and lets parent Dags orchestrate independent
- * child Dags without embedding their full payload.
- *
- * Execution model:
- * - a node becomes ready when its incoming edges are satisfied according to
- * the node join policy;
- * - an edge without a condition is satisfied when the source node reaches
- * STATUS_COMPLETED;
- * - an edge with on_status is satisfied when the source node reaches that
- * terminal status;
- * - an edge with predicate_name is satisfied when the registered predicate
- * returns true after the source node reaches a terminal status;
- * - ready nodes are admitted by Dag.Scheduling.max_parallelism and then by
- * node priority;
- * - a task node executes its TaskState payload;
- * - a sub-Dag node executes the nested Dag and mirrors its terminal result
- * into the owning node status;
- * - a dag_ref node executes or waits for another persisted Dag through the
- * runtime's DagRefRunner and mirrors its terminal result into the owning
- * node status;
- * - Dag.Scheduling.on_node_failure controls whether ordinary pending nodes
- * continue to be admitted after a node fails;
- * - Node.Scheduling.always_run nodes are reserved for cleanup/teardown and
- * may still run after failure or cancellation.
- *
- * Cross-boundary edges are not allowed: edges inside a Dag may reference only
- * nodes from that same Dag. Parent Dag edges depend on the owning sub-Dag node,
- * not on nodes inside the nested Dag.
+ * Today the split is implicit via handler_name "agent.command"; the enum makes
+ * it explicit.
  *
  * @generated from message cloud.v1.runtime.primitive.Dag
  */
@@ -774,6 +576,13 @@ export type Dag_Node_TaskState = Message<"cloud.v1.runtime.primitive.Dag.Node.Ta
    * @generated from field: google.protobuf.Any output = 3;
    */
   output?: Any;
+
+  /**
+   * locus marks server-plane vs agent execution. 
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Dag.Node.TaskState.ExecutionLocus locus = 4;
+   */
+  locus: Dag_Node_TaskState_ExecutionLocus;
 };
 
 /**
@@ -802,6 +611,13 @@ export type Dag_Node_TaskStateJson = {
    * @generated from field: google.protobuf.Any output = 3;
    */
   output?: AnyJson;
+
+  /**
+   * locus marks server-plane vs agent execution. 
+   *
+   * @generated from field: cloud.v1.runtime.primitive.Dag.Node.TaskState.ExecutionLocus locus = 4;
+   */
+  locus?: Dag_Node_TaskState_ExecutionLocusJson;
 };
 
 export type Dag_Node_TaskStateValid = Dag_Node_TaskState;
@@ -812,6 +628,49 @@ export type Dag_Node_TaskStateValid = Dag_Node_TaskState;
  */
 export const Dag_Node_TaskStateSchema: GenMessage<Dag_Node_TaskState, {jsonType: Dag_Node_TaskStateJson, validType: Dag_Node_TaskStateValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_runtime_primitive_dag, 0, 1, 0);
+
+/**
+ *
+ * ExecutionLocus marks where this task runs (H26/D18): SERVER tasks
+ * run on the control-plane (terraform, docker, render, collect);
+ * AGENT tasks are leased by an agent via Poll (on-host ops). The
+ * Poll handler offers only AGENT nodes. UNSPECIFIED defaults to SERVER.
+ *
+ * @generated from enum cloud.v1.runtime.primitive.Dag.Node.TaskState.ExecutionLocus
+ */
+export enum Dag_Node_TaskState_ExecutionLocus {
+  /**
+   * @generated from enum value: EXECUTION_LOCUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: EXECUTION_LOCUS_SERVER = 1;
+   */
+  SERVER = 1,
+
+  /**
+   * @generated from enum value: EXECUTION_LOCUS_AGENT = 2;
+   */
+  AGENT = 2,
+}
+
+/**
+ *
+ * ExecutionLocus marks where this task runs (H26/D18): SERVER tasks
+ * run on the control-plane (terraform, docker, render, collect);
+ * AGENT tasks are leased by an agent via Poll (on-host ops). The
+ * Poll handler offers only AGENT nodes. UNSPECIFIED defaults to SERVER.
+ *
+ * @generated from enum cloud.v1.runtime.primitive.Dag.Node.TaskState.ExecutionLocus
+ */
+export type Dag_Node_TaskState_ExecutionLocusJson = "EXECUTION_LOCUS_UNSPECIFIED" | "EXECUTION_LOCUS_SERVER" | "EXECUTION_LOCUS_AGENT";
+
+/**
+ * Describes the enum cloud.v1.runtime.primitive.Dag.Node.TaskState.ExecutionLocus.
+ */
+export const Dag_Node_TaskState_ExecutionLocusSchema: GenEnum<Dag_Node_TaskState_ExecutionLocus, Dag_Node_TaskState_ExecutionLocusJson> = /*@__PURE__*/
+  enumDesc(file_cloud_v1_runtime_primitive_dag, 0, 1, 0, 0);
 
 /**
  *

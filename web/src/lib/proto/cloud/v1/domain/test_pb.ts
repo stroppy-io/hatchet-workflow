@@ -23,6 +23,23 @@ export const file_cloud_v1_domain_test: GenFile = /*@__PURE__*/
   fileDesc("ChpjbG91ZC92MS9kb21haW4vdGVzdC5wcm90bxIPY2xvdWQudjEuZG9tYWluIvYBCgpUZXN0UHJlc2V0EjUKCGRhdGFiYXNlGAEgASgLMhkuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlQgj6QgWKAQIQARI1Cgh3b3JrbG9hZBgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZEII+kIFigECEAESNQoIdG9wb2xvZ3kYAyABKAsyGS5jbG91ZC52MS5kb21haW4uVG9wb2xvZ3lCCPpCBYoBAhABEkMKCmRlcGxveW1lbnQYBCABKAsyJS5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRJbnRlbnRCCPpCBYoBAhABQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RvbWFpbmIGcHJvdG8z", [file_cloud_v1_deployment_deployment, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_domain_topology, file_cloud_v1_runtime_primitive_dag, file_validate_validate]);
 
 /**
+ *
+ * BDD decisions (B6, features/catalog/test-suite-preset.feature):
+ *
+ * - TestPreset is the assembly point and an IMMUTABLE SNAPSHOT: database,
+ * workload, the merged topology, and the materialized deployment are stored
+ * inline (by value), not by reference to catalog presets. Editing a catalog
+ * preset later does not change an already-assembled TestPreset, so a run
+ * stays reproducible.
+ * - cross-entity validation (old run.ValidateConfig) happens HERE, where
+ * Database.Kind meets Workload.Protocol: script x (kind, protocol) via the
+ * backend compat matrices, stroppy_version >= minimum (commit:<sha> bypasses
+ * semver), and engine relational rules (e.g. YDB mirror-3-dc + disk needs
+ * >=3 storage nodes and >=3 secondary disks). These are backend validation,
+ * not proto rules.
+ * - the old "kind X but non-X topology set" check is gone: Database.Options is
+ * a oneof, so a mismatched engine topology is structurally impossible.
+ *
  * @generated from message cloud.v1.domain.TestPreset
  */
 export type TestPreset = Message<"cloud.v1.domain.TestPreset"> & {
@@ -52,6 +69,23 @@ export type TestPreset = Message<"cloud.v1.domain.TestPreset"> & {
 };
 
 /**
+ *
+ * BDD decisions (B6, features/catalog/test-suite-preset.feature):
+ *
+ * - TestPreset is the assembly point and an IMMUTABLE SNAPSHOT: database,
+ * workload, the merged topology, and the materialized deployment are stored
+ * inline (by value), not by reference to catalog presets. Editing a catalog
+ * preset later does not change an already-assembled TestPreset, so a run
+ * stays reproducible.
+ * - cross-entity validation (old run.ValidateConfig) happens HERE, where
+ * Database.Kind meets Workload.Protocol: script x (kind, protocol) via the
+ * backend compat matrices, stroppy_version >= minimum (commit:<sha> bypasses
+ * semver), and engine relational rules (e.g. YDB mirror-3-dc + disk needs
+ * >=3 storage nodes and >=3 secondary disks). These are backend validation,
+ * not proto rules.
+ * - the old "kind X but non-X topology set" check is gone: Database.Options is
+ * a oneof, so a mismatched engine topology is structurally impossible.
+ *
  * @generated from message cloud.v1.domain.TestPreset
  */
 export type TestPresetJson = {

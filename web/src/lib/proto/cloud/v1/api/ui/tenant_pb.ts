@@ -2,18 +2,126 @@
 // @generated from file cloud/v1/api/ui/tenant.proto (package cloud.v1.api.ui, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Tenant_ListSchema } from "../../models/tenant_pb.ts";
+import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { AccountId, AccountIdJson, TenantId, TenantIdJson } from "../../models/common_pb.ts";
+import { file_cloud_v1_models_common } from "../../models/common_pb.ts";
+import type { Tenant_ListSchema, TenantMember_Role, TenantMember_RoleJson, TenantMemberSchema } from "../../models/tenant_pb.ts";
 import { file_cloud_v1_models_tenant } from "../../models/tenant_pb.ts";
 import type { EmptySchema } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty } from "@bufbuild/protobuf/wkt";
+import { file_validate_validate } from "../../../../validate/validate_pb.ts";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cloud/v1/api/ui/tenant.proto.
  */
 export const file_cloud_v1_api_ui_tenant: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS9hcGkvdWkvdGVuYW50LnByb3RvEg9jbG91ZC52MS5hcGkudWkyWwoNVGVuYW50U2VydmljZRJKCg1MaXN0TXlUZW5hbnRzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhwuY2xvdWQudjEubW9kZWxzLlRlbmFudC5MaXN0IgOQAgFCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBpL3VpYgZwcm90bzM", [file_cloud_v1_models_tenant, file_google_protobuf_empty]);
+  fileDesc("ChxjbG91ZC92MS9hcGkvdWkvdGVuYW50LnByb3RvEg9jbG91ZC52MS5hcGkudWkiwgEKEEFkZE1lbWJlclJlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARI4CgphY2NvdW50X2lkGAIgASgLMhouY2xvdWQudjEubW9kZWxzLkFjY291bnRJZEII+kIFigECEAESPAoEcm9sZRgDIAEoDjIiLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRNZW1iZXIuUm9sZUIK+kIHggEEIAAQASKHAQoTUmVtb3ZlTWVtYmVyUmVxdWVzdBI2Cgl0ZW5hbnRfaWQYASABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCCPpCBYoBAhABEjgKCmFjY291bnRfaWQYAiABKAsyGi5jbG91ZC52MS5tb2RlbHMuQWNjb3VudElkQgj6QgWKAQIQATKbAgoNVGVuYW50U2VydmljZRJKCg1MaXN0TXlUZW5hbnRzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhwuY2xvdWQudjEubW9kZWxzLlRlbmFudC5MaXN0IgOQAgESWgoRQWRkTWVtYmVyVG9UZW5hbnQSIS5jbG91ZC52MS5hcGkudWkuQWRkTWVtYmVyUmVxdWVzdBodLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRNZW1iZXIiA5ACAhJiChZSZW1vdmVNZW1iZXJGcm9tVGVuYW50EiQuY2xvdWQudjEuYXBpLnVpLlJlbW92ZU1lbWJlclJlcXVlc3QaHS5jbG91ZC52MS5tb2RlbHMuVGVuYW50TWVtYmVyIgOQAgJCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBpL3VpYgZwcm90bzM", [file_cloud_v1_models_common, file_cloud_v1_models_tenant, file_google_protobuf_empty, file_validate_validate]);
+
+/**
+ *
+ * TenantService is the tenant-scoped membership surface. A tenant OWNER manages
+ * their own tenant's members (A); platform tenant create/update/delete stays in
+ * admin TenantAdminService (is_admin). ListMyTenants is available to any
+ * authenticated account (its own memberships).
+ *
+ * @generated from message cloud.v1.api.ui.AddMemberRequest
+ */
+export type AddMemberRequest = Message<"cloud.v1.api.ui.AddMemberRequest"> & {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantId;
+
+  /**
+   * @generated from field: cloud.v1.models.AccountId account_id = 2;
+   */
+  accountId?: AccountId;
+
+  /**
+   * role to grant the member. 
+   *
+   * @generated from field: cloud.v1.models.TenantMember.Role role = 3;
+   */
+  role: TenantMember_Role;
+};
+
+/**
+ *
+ * TenantService is the tenant-scoped membership surface. A tenant OWNER manages
+ * their own tenant's members (A); platform tenant create/update/delete stays in
+ * admin TenantAdminService (is_admin). ListMyTenants is available to any
+ * authenticated account (its own memberships).
+ *
+ * @generated from message cloud.v1.api.ui.AddMemberRequest
+ */
+export type AddMemberRequestJson = {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantIdJson;
+
+  /**
+   * @generated from field: cloud.v1.models.AccountId account_id = 2;
+   */
+  accountId?: AccountIdJson;
+
+  /**
+   * role to grant the member. 
+   *
+   * @generated from field: cloud.v1.models.TenantMember.Role role = 3;
+   */
+  role?: TenantMember_RoleJson;
+};
+
+export type AddMemberRequestValid = AddMemberRequest;
+
+/**
+ * Describes the message cloud.v1.api.ui.AddMemberRequest.
+ * Use `create(AddMemberRequestSchema)` to create a new message.
+ */
+export const AddMemberRequestSchema: GenMessage<AddMemberRequest, {jsonType: AddMemberRequestJson, validType: AddMemberRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_ui_tenant, 0);
+
+/**
+ * @generated from message cloud.v1.api.ui.RemoveMemberRequest
+ */
+export type RemoveMemberRequest = Message<"cloud.v1.api.ui.RemoveMemberRequest"> & {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantId;
+
+  /**
+   * @generated from field: cloud.v1.models.AccountId account_id = 2;
+   */
+  accountId?: AccountId;
+};
+
+/**
+ * @generated from message cloud.v1.api.ui.RemoveMemberRequest
+ */
+export type RemoveMemberRequestJson = {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantIdJson;
+
+  /**
+   * @generated from field: cloud.v1.models.AccountId account_id = 2;
+   */
+  accountId?: AccountIdJson;
+};
+
+export type RemoveMemberRequestValid = RemoveMemberRequest;
+
+/**
+ * Describes the message cloud.v1.api.ui.RemoveMemberRequest.
+ * Use `create(RemoveMemberRequestSchema)` to create a new message.
+ */
+export const RemoveMemberRequestSchema: GenMessage<RemoveMemberRequest, {jsonType: RemoveMemberRequestJson, validType: RemoveMemberRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_ui_tenant, 1);
 
 /**
  * @generated from service cloud.v1.api.ui.TenantService
@@ -26,6 +134,24 @@ export const TenantService: GenService<{
     methodKind: "unary";
     input: typeof EmptySchema;
     output: typeof Tenant_ListSchema;
+  },
+  /**
+   * AddMemberToTenant / RemoveMemberFromTenant require OWNER of the tenant. 
+   *
+   * @generated from rpc cloud.v1.api.ui.TenantService.AddMemberToTenant
+   */
+  addMemberToTenant: {
+    methodKind: "unary";
+    input: typeof AddMemberRequestSchema;
+    output: typeof TenantMemberSchema;
+  },
+  /**
+   * @generated from rpc cloud.v1.api.ui.TenantService.RemoveMemberFromTenant
+   */
+  removeMemberFromTenant: {
+    methodKind: "unary";
+    input: typeof RemoveMemberRequestSchema;
+    output: typeof TenantMemberSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_cloud_v1_api_ui_tenant, 0);

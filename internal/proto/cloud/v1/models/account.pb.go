@@ -25,10 +25,14 @@ const (
 )
 
 type Account struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entity        *Entity                `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	Email         string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
-	Nickname      string                 `protobuf:"bytes,5,opt,name=nickname,proto3" json:"nickname,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Entity   *Entity                `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	Email    string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
+	Nickname string                 `protobuf:"bytes,5,opt,name=nickname,proto3" json:"nickname,omitempty"`
+	// is_admin grants platform-level authority (AccountAdminService /
+	// TenantAdminService), independent of per-tenant TenantMember.Role.
+	// BDD decision (A, features/tenancy/auth.feature).
+	IsAdmin       bool `protobuf:"varint,6,opt,name=is_admin,json=isAdmin,proto3" json:"is_admin,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -84,6 +88,13 @@ func (x *Account) GetNickname() string {
 	return ""
 }
 
+func (x *Account) GetIsAdmin() bool {
+	if x != nil {
+		return x.IsAdmin
+	}
+	return false
+}
+
 type Account_List struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Accounts      []*Account             `protobuf:"bytes,1,rep,name=accounts,proto3" json:"accounts,omitempty"`
@@ -132,11 +143,12 @@ var File_cloud_v1_models_account_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_account_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcloud/v1/models/account.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/models/common.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\x8d\x02\n" +
+	"\x1dcloud/v1/models/account.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/models/common.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xa8\x02\n" +
 	"\aAccount\x127\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x12\"\n" +
 	"\x05email\x18\x04 \x01(\tB\f\xfaB\tr\a\x10\x05\x18\xff\x01`\x01R\x05email\x128\n" +
-	"\bnickname\x18\x05 \x01(\tB\x1c\xfaB\x19r\x17\x10\x03\x18@2\x11^[a-zA-Z0-9_.-]+$R\bnickname\x1a<\n" +
+	"\bnickname\x18\x05 \x01(\tB\x1c\xfaB\x19r\x17\x10\x03\x18@2\x11^[a-zA-Z0-9_.-]+$R\bnickname\x12\x19\n" +
+	"\bis_admin\x18\x06 \x01(\bR\aisAdmin\x1a<\n" +
 	"\x04List\x124\n" +
 	"\baccounts\x18\x01 \x03(\v2\x18.cloud.v1.models.AccountR\baccounts:-\x92\xb5\x18#\b\x01\x12\baccounts\x1a\x15\n" +
 	"\rpassword_hash\x12\x04TEXT\x82\xa6\x1d\x02\b\x01BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"

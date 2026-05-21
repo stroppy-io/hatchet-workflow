@@ -152,6 +152,16 @@ func (TfOperation_Step_Phase) EnumDescriptor() ([]byte, []int) {
 // into /tmp/stroppy-terraform/<workdir_id>, runs init/apply with a fixed
 // parallelism, stores workdir_id before apply for crash-safe destroy, and
 // exposes Terraform outputs as raw JSON values after apply.
+//
+// BDD decisions (D18, features/provisioning/provisioning.feature):
+// - this runs on the control-plane (server-locus task node), never on an agent,
+// because it needs provider creds + tf state on the server.
+// - Output.outputs_json is the keystone runtime fact: render.Binding values
+// (PRIVATE_IP/PUBLIC_IP/ENDPOINT for a component/role) resolve from it, so
+// on-host WRITE_FILE ops get real addresses. This closes the render loop.
+// - workdir_id is persisted in the owning Dag node before apply; teardown is an
+// always_run TfOperation(DESTROY) using preserve_existing_state for crash-safe
+// recovery. Replaces the old State.SetTerraformWdId + SaveSnapshot dance.
 type TfOperation struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// input contains everything needed to start or recover a Terraform action.

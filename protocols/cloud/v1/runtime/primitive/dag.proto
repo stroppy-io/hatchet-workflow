@@ -142,6 +142,38 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     nodes from that same Dag. Parent Dag edges depend on the owning sub-Dag node,
     not on nodes inside the nested Dag.
 */
+/*
+    BDD decisions (C12, features/orchestration/compile-to-dag.feature) — how the
+    planner compiles a TestPreset snapshot into a Dag (replaces run.builder.Build):
+
+    - graph shape is emergent from Database.Options (etcd/patroni/proxy nodes
+      appear only when the options require them).
+    - on-host agent work is a per-command sub_dag: each WRITE_FILE / RUN_CMD /
+      start-service is its own node with its own retry and execution_id; the
+      agent leases and reports by DagId + Node.execution_id.
+    - old phase Deps become edges; old AlwaysRun becomes Node.Scheduling.always_run.
+    - no shared mutable State: values flow via Node TaskState.output and
+      render.Binding (resolved from Deployment.Output). The Dag is a
+      self-contained reproducible snapshot.
+    - old MustComplete (provision must finish/roll back even on cancel) is
+      expressed as an always_run teardown node with edges from provision; no new
+      flag. UI TODO: cancel/teardown behavior must be drawable as a distinct
+      state (separate task).
+
+    BDD decision (D18): a task node needs an explicit execution-locus marker so
+    the agent Poll handler offers only agent nodes and the server runs the rest
+    (terraform/docker need control-plane creds + daemon). PROPOSED:
+
+        enum ExecutionLocus {
+          EXECUTION_LOCUS_UNSPECIFIED = 0;  // defaults to SERVER
+          EXECUTION_LOCUS_SERVER = 1;       // control-plane handler (tf, docker, render, collect)
+          EXECUTION_LOCUS_AGENT  = 2;       // leased by an agent via Poll (on-host ops)
+        }
+        // Node.TaskState gains: ExecutionLocus locus = 4;
+
+    Today the split is implicit via handler_name "agent.command"; the enum makes
+    it explicit.
+ */
 message Dag {
     /*
         Failure is a normalized execution error.
@@ -184,12 +216,25 @@ message Dag {
     message Node {
         /* TaskState contains opaque task input and produced task output. */
         message TaskState {
+            /*
+                ExecutionLocus marks where this task runs (H26/D18): SERVER tasks
+                run on the control-plane (terraform, docker, render, collect);
+                AGENT tasks are leased by an agent via Poll (on-host ops). The
+                Poll handler offers only AGENT nodes. UNSPECIFIED defaults to SERVER.
+             */
+            enum ExecutionLocus {
+                EXECUTION_LOCUS_UNSPECIFIED = 0;
+                EXECUTION_LOCUS_SERVER = 1;
+                EXECUTION_LOCUS_AGENT = 2;
+            }
             /* id is unique within this Dag and is the address used by edges. */
             string handler_name = 1 [(validate.rules).string.min_len = 1];
             /* input is the typed payload consumed by the task executor. */
             google.protobuf.Any input = 2 [(validate.rules).any.required = true];
             /* output is the typed payload produced after task completion. */
             google.protobuf.Any output = 3;
+            /* locus marks server-plane vs agent execution. */
+            ExecutionLocus locus = 4 [(validate.rules).enum.defined_only = true];
         }
 
         /*

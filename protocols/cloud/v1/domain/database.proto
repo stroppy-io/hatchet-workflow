@@ -19,11 +19,21 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
  *
  * Flow:
  * 1. UI sends Database intent.
- * 2. Backend renders RenderedDatabaseConfig as a preview.
+ * 2. Backend renders render.Config as a preview.
  * 3. UI shows generated render items.
  * 4. User can add render.Config.Override patches.
  * 5. Backend re-renders preview with overrides.
  * 6. Planner converts final intent + overrides into runtime.ops and DAG nodes.
+ *
+ * BDD note (B4) — package install belongs HERE, not in Workload:
+ * - builtin install recipe (apt packages, repo setup, pre-install) is backend
+ *   data keyed by (Kind, version); the planner emits RUN_CMD/WRITE_FILE ops.
+ *   Not a proto entity — planner knowledge, like the protocol/script matrices.
+ * - a custom .deb (BYO package) fits into Database.config (render.Config):
+ *   the .deb is a render Item File.Ref{uri,checksum} (Ref already covers
+ *   "uploaded files"); install is a render Item Cmd (dpkg -i); the download
+ *   auth token is a render.Binding (runtime secret). No new entity needed.
+ *   Details to be finalized under provisioning (D17/D18).
  */
 message Database {
     enum Kind {
@@ -136,9 +146,8 @@ message Database {
                 uint32 storage_nodes = 1 [(validate.rules).uint32.lte = 1024];
                 uint32 database_nodes = 2 [(validate.rules).uint32.lte = 1024];
                 uint32 storage_groups = 3 [(validate.rules).uint32.lte = 256];
-                bool auto_size_pdisks = 4;
-                FaultTolerance fault_tolerance = 5 [(validate.rules).enum.defined_only = true];
-                FailureDomain failure_domain = 6 [(validate.rules).enum.defined_only = true];
+                FaultTolerance fault_tolerance = 4 [(validate.rules).enum.defined_only = true];
+                FailureDomain failure_domain = 5 [(validate.rules).enum.defined_only = true];
 
                 enum FaultTolerance {
                     FAULT_TOLERANCE_UNSPECIFIED = 0;
@@ -278,7 +287,8 @@ message Database {
     Options options = 5 [(validate.rules).message.required = true];
 }
 
+/* BDD H1/H2 resolved: field renamed workload->database; docstring uses render.Config. */
 message DatabasePreset {
-    domain.Database workload = 1 [(validate.rules).message.required = true];
+    domain.Database database = 1 [(validate.rules).message.required = true];
     domain.Topology topology = 2 [(validate.rules).message.required = true];
 }

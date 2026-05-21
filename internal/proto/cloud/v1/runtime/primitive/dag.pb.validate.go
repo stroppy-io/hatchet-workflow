@@ -1610,6 +1610,17 @@ func (m *Dag_Node_TaskState) validate(all bool) error {
 		}
 	}
 
+	if _, ok := Dag_Node_TaskState_ExecutionLocus_name[int32(m.GetLocus())]; !ok {
+		err := Dag_Node_TaskStateValidationError{
+			field:  "Locus",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return Dag_Node_TaskStateMultiError(errors)
 	}

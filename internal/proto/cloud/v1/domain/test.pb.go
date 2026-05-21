@@ -24,6 +24,21 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// BDD decisions (B6, features/catalog/test-suite-preset.feature):
+//
+// - TestPreset is the assembly point and an IMMUTABLE SNAPSHOT: database,
+// workload, the merged topology, and the materialized deployment are stored
+// inline (by value), not by reference to catalog presets. Editing a catalog
+// preset later does not change an already-assembled TestPreset, so a run
+// stays reproducible.
+// - cross-entity validation (old run.ValidateConfig) happens HERE, where
+// Database.Kind meets Workload.Protocol: script x (kind, protocol) via the
+// backend compat matrices, stroppy_version >= minimum (commit:<sha> bypasses
+// semver), and engine relational rules (e.g. YDB mirror-3-dc + disk needs
+// >=3 storage nodes and >=3 secondary disks). These are backend validation,
+// not proto rules.
+// - the old "kind X but non-X topology set" check is gone: Database.Options is
+// a oneof, so a mismatched engine topology is structurally impossible.
 type TestPreset struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	Database *Database              `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`

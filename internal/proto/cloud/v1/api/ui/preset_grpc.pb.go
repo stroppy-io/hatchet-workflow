@@ -35,8 +35,8 @@ type PresetServiceClient interface {
 	ListPresets(ctx context.Context, in *ListPresetRequest, opts ...grpc.CallOption) (*models.Preset_List, error)
 	CreatePreset(ctx context.Context, in *models.Preset, opts ...grpc.CallOption) (*models.Preset, error)
 	UpdatePreset(ctx context.Context, in *models.Preset, opts ...grpc.CallOption) (*models.Preset, error)
-	DeletePreset(ctx context.Context, in *models.DatabasePresetId, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	ClonePreset(ctx context.Context, in *models.DatabasePresetId, opts ...grpc.CallOption) (*models.Preset, error)
+	DeletePreset(ctx context.Context, in *DeletePresetRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ClonePreset(ctx context.Context, in *ClonePresetRequest, opts ...grpc.CallOption) (*models.Preset, error)
 }
 
 type presetServiceClient struct {
@@ -77,7 +77,7 @@ func (c *presetServiceClient) UpdatePreset(ctx context.Context, in *models.Prese
 	return out, nil
 }
 
-func (c *presetServiceClient) DeletePreset(ctx context.Context, in *models.DatabasePresetId, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *presetServiceClient) DeletePreset(ctx context.Context, in *DeletePresetRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, PresetService_DeletePreset_FullMethodName, in, out, cOpts...)
@@ -87,7 +87,7 @@ func (c *presetServiceClient) DeletePreset(ctx context.Context, in *models.Datab
 	return out, nil
 }
 
-func (c *presetServiceClient) ClonePreset(ctx context.Context, in *models.DatabasePresetId, opts ...grpc.CallOption) (*models.Preset, error) {
+func (c *presetServiceClient) ClonePreset(ctx context.Context, in *ClonePresetRequest, opts ...grpc.CallOption) (*models.Preset, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(models.Preset)
 	err := c.cc.Invoke(ctx, PresetService_ClonePreset_FullMethodName, in, out, cOpts...)
@@ -104,8 +104,8 @@ type PresetServiceServer interface {
 	ListPresets(context.Context, *ListPresetRequest) (*models.Preset_List, error)
 	CreatePreset(context.Context, *models.Preset) (*models.Preset, error)
 	UpdatePreset(context.Context, *models.Preset) (*models.Preset, error)
-	DeletePreset(context.Context, *models.DatabasePresetId) (*emptypb.Empty, error)
-	ClonePreset(context.Context, *models.DatabasePresetId) (*models.Preset, error)
+	DeletePreset(context.Context, *DeletePresetRequest) (*emptypb.Empty, error)
+	ClonePreset(context.Context, *ClonePresetRequest) (*models.Preset, error)
 	mustEmbedUnimplementedPresetServiceServer()
 }
 
@@ -125,10 +125,10 @@ func (UnimplementedPresetServiceServer) CreatePreset(context.Context, *models.Pr
 func (UnimplementedPresetServiceServer) UpdatePreset(context.Context, *models.Preset) (*models.Preset, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdatePreset not implemented")
 }
-func (UnimplementedPresetServiceServer) DeletePreset(context.Context, *models.DatabasePresetId) (*emptypb.Empty, error) {
+func (UnimplementedPresetServiceServer) DeletePreset(context.Context, *DeletePresetRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeletePreset not implemented")
 }
-func (UnimplementedPresetServiceServer) ClonePreset(context.Context, *models.DatabasePresetId) (*models.Preset, error) {
+func (UnimplementedPresetServiceServer) ClonePreset(context.Context, *ClonePresetRequest) (*models.Preset, error) {
 	return nil, status.Error(codes.Unimplemented, "method ClonePreset not implemented")
 }
 func (UnimplementedPresetServiceServer) mustEmbedUnimplementedPresetServiceServer() {}
@@ -207,7 +207,7 @@ func _PresetService_UpdatePreset_Handler(srv interface{}, ctx context.Context, d
 }
 
 func _PresetService_DeletePreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(models.DatabasePresetId)
+	in := new(DeletePresetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -219,13 +219,13 @@ func _PresetService_DeletePreset_Handler(srv interface{}, ctx context.Context, d
 		FullMethod: PresetService_DeletePreset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PresetServiceServer).DeletePreset(ctx, req.(*models.DatabasePresetId))
+		return srv.(PresetServiceServer).DeletePreset(ctx, req.(*DeletePresetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _PresetService_ClonePreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(models.DatabasePresetId)
+	in := new(ClonePresetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -237,7 +237,7 @@ func _PresetService_ClonePreset_Handler(srv interface{}, ctx context.Context, de
 		FullMethod: PresetService_ClonePreset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PresetServiceServer).ClonePreset(ctx, req.(*models.DatabasePresetId))
+		return srv.(PresetServiceServer).ClonePreset(ctx, req.(*ClonePresetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

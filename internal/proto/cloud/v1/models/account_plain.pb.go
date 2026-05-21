@@ -15,6 +15,7 @@ type AccountScanner struct {
 	DeletedAt    *time.Time `json:"deletedAt,omitempty"`
 	Email        string     `json:"email"`
 	Nickname     string     `json:"nickname"`
+	IsAdmin      bool       `json:"isAdmin"`
 	PasswordHash string     `json:"passwordHash"` // origin: virtual, empath: virtual
 }
 
@@ -44,6 +45,7 @@ func (pb *Account) IntoPlain() *AccountScanner {
 	}
 	p.Email = pb.Email
 	p.Nickname = pb.Nickname
+	p.IsAdmin = pb.IsAdmin
 	// PasswordHash is virtual, no source in protobuf
 	return p
 }
@@ -93,6 +95,7 @@ func (p *AccountScanner) IntoPb() *Account {
 	}
 	pb.Email = p.Email
 	pb.Nickname = p.Nickname
+	pb.IsAdmin = p.IsAdmin
 	// PasswordHash is virtual, skipping
 	return pb
 }

@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package cloud.v1.api.ui;
+
+import "cloud/v1/models/common.proto";
+import "cloud/v1/models/package.proto";
+import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui";
+
+/*
+    PackageService manages the package catalog (H51). Every request carries
+    tenant_id (membership + role validated; scoped by it, A). ListPackages merges
+    backend builtin recipes with the tenant's custom uploads. Uploading a .deb does
+    NOT stream bytes through the API: RequestPackageUpload creates the record and
+    returns a presigned PUT URL; the client uploads to S3 directly (G2).
+ */
+message ListPackagesRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+}
+message RequestPackageUploadRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    string name = 2 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    string db_kind = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string db_version = 4 [(validate.rules).string.max_len = 64];
+    /* deb_filename is the original file name (for content-type / extension). */
+    string deb_filename = 5 [(validate.rules).string = {min_len: 1, max_len: 255}];
+}
+message RequestPackageUploadResponse {
+    /* package is the created catalog record (deb_object_uri set, awaiting upload). */
+    models.Package package = 1;
+    /* upload_url is a presigned PUT URL the client uploads the .deb to. */
+    string upload_url = 2 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+}
+message DeletePackageRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.Ulid id = 2 [(validate.rules).message.required = true];
+}
+
+service PackageService {
+    rpc ListPackages (ListPackagesRequest) returns (models.Package.List) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc RequestPackageUpload (RequestPackageUploadRequest) returns (RequestPackageUploadResponse) {option idempotency_level = IDEMPOTENT;}
+    rpc DeletePackage (DeletePackageRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;}
+}

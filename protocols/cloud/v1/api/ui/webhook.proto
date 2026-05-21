@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package cloud.v1.api.ui;
+
+import "cloud/v1/models/common.proto";
+import "cloud/v1/models/webhook.proto";
+import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui";
+
+/*
+    WebhookService manages tenant-scoped notification endpoints (H51). Every
+    request carries tenant_id (membership + role validated; scoped by it, A). The
+    secret is write-only (set on create/update, never returned).
+ */
+message CreateWebhookRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.Webhook webhook = 2 [(validate.rules).message.required = true];
+    /* secret is the write-only HMAC signing secret. */
+    string secret = 3 [(validate.rules).string.max_len = 512];
+}
+message UpdateWebhookRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.Webhook webhook = 2 [(validate.rules).message.required = true];
+    /* secret optionally rotates the signing secret; empty leaves it unchanged. */
+    string secret = 3 [(validate.rules).string.max_len = 512];
+}
+message ListWebhooksRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+}
+message DeleteWebhookRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.Ulid id = 2 [(validate.rules).message.required = true];
+}
+message TestWebhookRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.Ulid id = 2 [(validate.rules).message.required = true];
+}
+
+service WebhookService {
+    rpc CreateWebhook (CreateWebhookRequest) returns (models.Webhook) {option idempotency_level = IDEMPOTENT;}
+    rpc ListWebhooks (ListWebhooksRequest) returns (models.Webhook.List) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc UpdateWebhook (UpdateWebhookRequest) returns (models.Webhook) {option idempotency_level = IDEMPOTENT;}
+    rpc DeleteWebhook (DeleteWebhookRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;}
+    rpc TestWebhook (TestWebhookRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;}
+}

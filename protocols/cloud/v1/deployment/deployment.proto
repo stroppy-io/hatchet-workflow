@@ -6,6 +6,7 @@ import "cloud/v1/common/tags.proto";
 import "cloud/v1/deployment/docker.proto";
 import "cloud/v1/deployment/yandex.proto";
 import "cloud/v1/runtime/system/ip.proto";
+import "google/protobuf/timestamp.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment";
@@ -17,7 +18,39 @@ enum Provider {
 }
 
 /*
+    QuotaResource is the typed class of a provider quota (D19). It normalizes
+    common resource classes across providers; provider-specific raw names are
+    kept in provider_quota_id on QuotaRequest/Quota.
+ */
+enum QuotaResource {
+    QUOTA_RESOURCE_UNSPECIFIED = 0;
+    /* CORES is total vCPU count. */
+    QUOTA_RESOURCE_CORES = 1;
+    /* MEMORY_GB is total RAM in GiB. */
+    QUOTA_RESOURCE_MEMORY_GB = 2;
+    /* SSD_GB is total network-SSD disk in GiB. */
+    QUOTA_RESOURCE_SSD_GB = 3;
+    /* HDD_GB is total network-HDD disk in GiB. */
+    QUOTA_RESOURCE_HDD_GB = 4;
+    /* INSTANCES is total compute instance count. */
+    QUOTA_RESOURCE_INSTANCES = 5;
+    /* EXTERNAL_IPS is total external/NAT IP count. */
+    QUOTA_RESOURCE_EXTERNAL_IPS = 6;
+    /* NETWORKS is total VPC network count. */
+    QUOTA_RESOURCE_NETWORKS = 7;
+    /* SUBNETS is total subnet count. */
+    QUOTA_RESOURCE_SUBNETS = 8;
+}
+
+/*
     REQUIRED VALIDATE TO ALL SPEC FROM OneOff is one Provider Kind
+
+    BDD note (B5): placement/zones live in this deployment layer, not in
+    domain.Topology. The planner materializes a provider-agnostic Topology into
+    DeploymentIntent.Spec[] per Provider, applying zone round-robin (old
+    placement.go: ru-central1-a/-b/-d). After apply, Deployment / Yandex.Output
+    (VmOutput.internal_ip/public_ip, ManagedYdbOutput endpoints) are the runtime
+    facts that resolve render.Binding values from the database/workload render.
 */
 message DeploymentIntent {
     Provider provider = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
@@ -34,19 +67,62 @@ message DeploymentIntent {
     common.Tags tags = 3;
 }
 
+/*
+    BDD decisions (D19/D20, features/provisioning/cloud-quota-network.feature):
+    - cloud-provider quota is a provisioning admission gate AFTER the tenant
+      quota (D14). QuotaRequest values are summed from the DeploymentIntent VM
+      resources and checked against fetched Quota.available.
+    - source of truth is the real cloud (an internal ledger drifts: manual
+      changes, leaked teardown). Hybrid: a cached inventory fast-rejects, a live
+      provider query confirms available before terraform apply.
+    - networks/subnets are pre-allocated and leased BEFORE the run (collision-
+      safe via internal/core/ips over the real VPC occupancy), replacing the old
+      hash(run_id)->CIDR collision. Deployment.quota_requests records the audit.
+
+    PROPOSED proto additions still needed for D19/D20 (not yet generated):
+    - Quota.quota_name -> a typed enum of provider quota classes (CORES, MEMORY,
+      SSD, HDD, INSTANCES, EXTERNAL_IPS, ...). Closes the existing TODO below.
+    - a cloud quota INVENTORY snapshot + fetch surface: e.g.
+        message QuotaInventory { Provider provider = 1; repeated Quota quotas = 2;
+                                 google.protobuf.Timestamp fetched_at = 3; }
+      plus a fetch RPC, so the hybrid cache (fast-reject) + live confirm can read
+      a freshness-stamped snapshot.
+    - a persisted models.NetworkAllocation ratel table (mirrors models.Dag): the
+      leased CIDR, zone, owning DagId, lease_expires_at, provider — so subnet
+      pre-allocation is collision-safe and recoverable.
+    - a cloud inventory/reconcile representation of real occupied networks +
+      quotas synced from the provider (cloud = source of truth).
+ */
 message QuotaRequest {
     deployment.Provider provider = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
-    string quota_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /* resource is the typed quota class being requested. */
+    QuotaResource resource = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
     uint64 requested = 3 [(validate.rules).uint64 = {gte: 1}];
+    /* provider_quota_id optionally records the raw provider quota name. */
+    string provider_quota_id = 4 [(validate.rules).string.max_len = 128];
 }
 
 message Quota {
     deployment.Provider provider = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
-    // TODO: Convert to enum by providers
-    string quota_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /* resource is the typed quota class. */
+    QuotaResource resource = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
     uint64 limit = 3 [(validate.rules).uint64 = {gte: 1}];
     uint64 used = 4 [(validate.rules).uint64 = {gte: 0}];
     uint64 available = 5 [(validate.rules).uint64 = {gte: 0}];
+    /* provider_quota_id optionally records the raw provider quota name. */
+    string provider_quota_id = 6 [(validate.rules).string.max_len = 128];
+}
+
+/*
+    QuotaInventory is a freshness-stamped snapshot of a provider's real quotas,
+    fetched from the cloud. The admission controller (D14/D19) reads it as the
+    cached fast-reject layer; a live fetch confirms available before apply.
+ */
+message QuotaInventory {
+    deployment.Provider provider = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    repeated Quota quotas = 2 [(validate.rules).repeated.max_items = 256];
+    /* fetched_at is when these values were read from the provider. */
+    google.protobuf.Timestamp fetched_at = 3 [(validate.rules).timestamp.required = true];
 }
 
 /* Deployment is the runtime+output bundle produced after apply. */

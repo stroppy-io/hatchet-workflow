@@ -12,6 +12,7 @@ import (
 	system "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/system"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -73,7 +74,92 @@ func (Provider) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{0}
 }
 
+// QuotaResource is the typed class of a provider quota (D19). It normalizes
+// common resource classes across providers; provider-specific raw names are
+// kept in provider_quota_id on QuotaRequest/Quota.
+type QuotaResource int32
+
+const (
+	QuotaResource_QUOTA_RESOURCE_UNSPECIFIED QuotaResource = 0
+	// CORES is total vCPU count.
+	QuotaResource_QUOTA_RESOURCE_CORES QuotaResource = 1
+	// MEMORY_GB is total RAM in GiB.
+	QuotaResource_QUOTA_RESOURCE_MEMORY_GB QuotaResource = 2
+	// SSD_GB is total network-SSD disk in GiB.
+	QuotaResource_QUOTA_RESOURCE_SSD_GB QuotaResource = 3
+	// HDD_GB is total network-HDD disk in GiB.
+	QuotaResource_QUOTA_RESOURCE_HDD_GB QuotaResource = 4
+	// INSTANCES is total compute instance count.
+	QuotaResource_QUOTA_RESOURCE_INSTANCES QuotaResource = 5
+	// EXTERNAL_IPS is total external/NAT IP count.
+	QuotaResource_QUOTA_RESOURCE_EXTERNAL_IPS QuotaResource = 6
+	// NETWORKS is total VPC network count.
+	QuotaResource_QUOTA_RESOURCE_NETWORKS QuotaResource = 7
+	// SUBNETS is total subnet count.
+	QuotaResource_QUOTA_RESOURCE_SUBNETS QuotaResource = 8
+)
+
+// Enum value maps for QuotaResource.
+var (
+	QuotaResource_name = map[int32]string{
+		0: "QUOTA_RESOURCE_UNSPECIFIED",
+		1: "QUOTA_RESOURCE_CORES",
+		2: "QUOTA_RESOURCE_MEMORY_GB",
+		3: "QUOTA_RESOURCE_SSD_GB",
+		4: "QUOTA_RESOURCE_HDD_GB",
+		5: "QUOTA_RESOURCE_INSTANCES",
+		6: "QUOTA_RESOURCE_EXTERNAL_IPS",
+		7: "QUOTA_RESOURCE_NETWORKS",
+		8: "QUOTA_RESOURCE_SUBNETS",
+	}
+	QuotaResource_value = map[string]int32{
+		"QUOTA_RESOURCE_UNSPECIFIED":  0,
+		"QUOTA_RESOURCE_CORES":        1,
+		"QUOTA_RESOURCE_MEMORY_GB":    2,
+		"QUOTA_RESOURCE_SSD_GB":       3,
+		"QUOTA_RESOURCE_HDD_GB":       4,
+		"QUOTA_RESOURCE_INSTANCES":    5,
+		"QUOTA_RESOURCE_EXTERNAL_IPS": 6,
+		"QUOTA_RESOURCE_NETWORKS":     7,
+		"QUOTA_RESOURCE_SUBNETS":      8,
+	}
+)
+
+func (x QuotaResource) Enum() *QuotaResource {
+	p := new(QuotaResource)
+	*p = x
+	return p
+}
+
+func (x QuotaResource) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (QuotaResource) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_deployment_deployment_proto_enumTypes[1].Descriptor()
+}
+
+func (QuotaResource) Type() protoreflect.EnumType {
+	return &file_cloud_v1_deployment_deployment_proto_enumTypes[1]
+}
+
+func (x QuotaResource) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use QuotaResource.Descriptor instead.
+func (QuotaResource) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{1}
+}
+
 // REQUIRED VALIDATE TO ALL SPEC FROM OneOff is one Provider Kind
+//
+// BDD note (B5): placement/zones live in this deployment layer, not in
+// domain.Topology. The planner materializes a provider-agnostic Topology into
+// DeploymentIntent.Spec[] per Provider, applying zone round-robin (old
+// placement.go: ru-central1-a/-b/-d). After apply, Deployment / Yandex.Output
+// (VmOutput.internal_ip/public_ip, ManagedYdbOutput endpoints) are the runtime
+// facts that resolve render.Binding values from the database/workload render.
 type DeploymentIntent struct {
 	state         protoimpl.MessageState   `protogen:"open.v1"`
 	Provider      Provider                 `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
@@ -134,13 +220,40 @@ func (x *DeploymentIntent) GetTags() *common.Tags {
 	return nil
 }
 
+// BDD decisions (D19/D20, features/provisioning/cloud-quota-network.feature):
+// - cloud-provider quota is a provisioning admission gate AFTER the tenant
+// quota (D14). QuotaRequest values are summed from the DeploymentIntent VM
+// resources and checked against fetched Quota.available.
+// - source of truth is the real cloud (an internal ledger drifts: manual
+// changes, leaked teardown). Hybrid: a cached inventory fast-rejects, a live
+// provider query confirms available before terraform apply.
+// - networks/subnets are pre-allocated and leased BEFORE the run (collision-
+// safe via internal/core/ips over the real VPC occupancy), replacing the old
+// hash(run_id)->CIDR collision. Deployment.quota_requests records the audit.
+//
+// PROPOSED proto additions still needed for D19/D20 (not yet generated):
+// - Quota.quota_name -> a typed enum of provider quota classes (CORES, MEMORY,
+// SSD, HDD, INSTANCES, EXTERNAL_IPS, ...). Closes the existing TODO below.
+// - a cloud quota INVENTORY snapshot + fetch surface: e.g.
+// message QuotaInventory { Provider provider = 1; repeated Quota quotas = 2;
+// google.protobuf.Timestamp fetched_at = 3; }
+// plus a fetch RPC, so the hybrid cache (fast-reject) + live confirm can read
+// a freshness-stamped snapshot.
+// - a persisted models.NetworkAllocation ratel table (mirrors models.Dag): the
+// leased CIDR, zone, owning DagId, lease_expires_at, provider — so subnet
+// pre-allocation is collision-safe and recoverable.
+// - a cloud inventory/reconcile representation of real occupied networks +
+// quotas synced from the provider (cloud = source of truth).
 type QuotaRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Provider      Provider               `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	QuotaName     string                 `protobuf:"bytes,2,opt,name=quota_name,json=quotaName,proto3" json:"quota_name,omitempty"`
-	Requested     uint64                 `protobuf:"varint,3,opt,name=requested,proto3" json:"requested,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Provider Provider               `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	// resource is the typed quota class being requested.
+	Resource  QuotaResource `protobuf:"varint,2,opt,name=resource,proto3,enum=cloud.v1.deployment.QuotaResource" json:"resource,omitempty"`
+	Requested uint64        `protobuf:"varint,3,opt,name=requested,proto3" json:"requested,omitempty"`
+	// provider_quota_id optionally records the raw provider quota name.
+	ProviderQuotaId string `protobuf:"bytes,4,opt,name=provider_quota_id,json=providerQuotaId,proto3" json:"provider_quota_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *QuotaRequest) Reset() {
@@ -180,11 +293,11 @@ func (x *QuotaRequest) GetProvider() Provider {
 	return Provider_PROVIDER_UNSPECIFIED
 }
 
-func (x *QuotaRequest) GetQuotaName() string {
+func (x *QuotaRequest) GetResource() QuotaResource {
 	if x != nil {
-		return x.QuotaName
+		return x.Resource
 	}
-	return ""
+	return QuotaResource_QUOTA_RESOURCE_UNSPECIFIED
 }
 
 func (x *QuotaRequest) GetRequested() uint64 {
@@ -194,16 +307,25 @@ func (x *QuotaRequest) GetRequested() uint64 {
 	return 0
 }
 
+func (x *QuotaRequest) GetProviderQuotaId() string {
+	if x != nil {
+		return x.ProviderQuotaId
+	}
+	return ""
+}
+
 type Quota struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	Provider Provider               `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	// TODO: Convert to enum by providers
-	QuotaName     string `protobuf:"bytes,2,opt,name=quota_name,json=quotaName,proto3" json:"quota_name,omitempty"`
-	Limit         uint64 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
-	Used          uint64 `protobuf:"varint,4,opt,name=used,proto3" json:"used,omitempty"`
-	Available     uint64 `protobuf:"varint,5,opt,name=available,proto3" json:"available,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// resource is the typed quota class.
+	Resource  QuotaResource `protobuf:"varint,2,opt,name=resource,proto3,enum=cloud.v1.deployment.QuotaResource" json:"resource,omitempty"`
+	Limit     uint64        `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	Used      uint64        `protobuf:"varint,4,opt,name=used,proto3" json:"used,omitempty"`
+	Available uint64        `protobuf:"varint,5,opt,name=available,proto3" json:"available,omitempty"`
+	// provider_quota_id optionally records the raw provider quota name.
+	ProviderQuotaId string `protobuf:"bytes,6,opt,name=provider_quota_id,json=providerQuotaId,proto3" json:"provider_quota_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Quota) Reset() {
@@ -243,11 +365,11 @@ func (x *Quota) GetProvider() Provider {
 	return Provider_PROVIDER_UNSPECIFIED
 }
 
-func (x *Quota) GetQuotaName() string {
+func (x *Quota) GetResource() QuotaResource {
 	if x != nil {
-		return x.QuotaName
+		return x.Resource
 	}
-	return ""
+	return QuotaResource_QUOTA_RESOURCE_UNSPECIFIED
 }
 
 func (x *Quota) GetLimit() uint64 {
@@ -271,6 +393,77 @@ func (x *Quota) GetAvailable() uint64 {
 	return 0
 }
 
+func (x *Quota) GetProviderQuotaId() string {
+	if x != nil {
+		return x.ProviderQuotaId
+	}
+	return ""
+}
+
+// QuotaInventory is a freshness-stamped snapshot of a provider's real quotas,
+// fetched from the cloud. The admission controller (D14/D19) reads it as the
+// cached fast-reject layer; a live fetch confirms available before apply.
+type QuotaInventory struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Provider Provider               `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	Quotas   []*Quota               `protobuf:"bytes,2,rep,name=quotas,proto3" json:"quotas,omitempty"`
+	// fetched_at is when these values were read from the provider.
+	FetchedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=fetched_at,json=fetchedAt,proto3" json:"fetched_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuotaInventory) Reset() {
+	*x = QuotaInventory{}
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuotaInventory) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuotaInventory) ProtoMessage() {}
+
+func (x *QuotaInventory) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuotaInventory.ProtoReflect.Descriptor instead.
+func (*QuotaInventory) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *QuotaInventory) GetProvider() Provider {
+	if x != nil {
+		return x.Provider
+	}
+	return Provider_PROVIDER_UNSPECIFIED
+}
+
+func (x *QuotaInventory) GetQuotas() []*Quota {
+	if x != nil {
+		return x.Quotas
+	}
+	return nil
+}
+
+func (x *QuotaInventory) GetFetchedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.FetchedAt
+	}
+	return nil
+}
+
 // Deployment is the runtime+output bundle produced after apply.
 type Deployment struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -289,7 +482,7 @@ type Deployment struct {
 
 func (x *Deployment) Reset() {
 	*x = Deployment{}
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[3]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -301,7 +494,7 @@ func (x *Deployment) String() string {
 func (*Deployment) ProtoMessage() {}
 
 func (x *Deployment) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[3]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -314,7 +507,7 @@ func (x *Deployment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Deployment.ProtoReflect.Descriptor instead.
 func (*Deployment) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{3}
+	return file_cloud_v1_deployment_deployment_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Deployment) GetProvider() Provider {
@@ -401,7 +594,7 @@ type DeploymentIntent_Spec struct {
 
 func (x *DeploymentIntent_Spec) Reset() {
 	*x = DeploymentIntent_Spec{}
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[4]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -413,7 +606,7 @@ func (x *DeploymentIntent_Spec) String() string {
 func (*DeploymentIntent_Spec) ProtoMessage() {}
 
 func (x *DeploymentIntent_Spec) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[4]
+	mi := &file_cloud_v1_deployment_deployment_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -496,7 +689,7 @@ var File_cloud_v1_deployment_deployment_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_deployment_deployment_proto_rawDesc = "" +
 	"\n" +
-	"$cloud/v1/deployment/deployment.proto\x12\x13cloud.v1.deployment\x1a\x1acloud/v1/common/tags.proto\x1a cloud/v1/deployment/docker.proto\x1a cloud/v1/deployment/yandex.proto\x1a cloud/v1/runtime/system/ip.proto\x1a\x17validate/validate.proto\"\x81\x04\n" +
+	"$cloud/v1/deployment/deployment.proto\x12\x13cloud.v1.deployment\x1a\x1acloud/v1/common/tags.proto\x1a cloud/v1/deployment/docker.proto\x1a cloud/v1/deployment/yandex.proto\x1a cloud/v1/runtime/system/ip.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\x81\x04\n" +
 	"\x10DeploymentIntent\x12E\n" +
 	"\bprovider\x18\x01 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x12M\n" +
@@ -510,23 +703,29 @@ const file_cloud_v1_deployment_deployment_proto_rawDesc = "" +
 	"\vmanaged_ydb\x18\v \x01(\v2&.cloud.v1.deployment.Yandex.ManagedYdbB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\n" +
 	"managedYdb\x12\\\n" +
 	"\x10docker_container\x18\f \x01(\v2%.cloud.v1.deployment.Docker.ContainerB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\x0fdockerContainerB\v\n" +
-	"\x04spec\x12\x03\xf8B\x01\"\xa7\x01\n" +
+	"\x04spec\x12\x03\xf8B\x01\"\xfe\x01\n" +
 	"\fQuotaRequest\x12E\n" +
 	"\bprovider\x18\x01 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
-	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x12)\n" +
-	"\n" +
-	"quota_name\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\tquotaName\x12%\n" +
-	"\trequested\x18\x03 \x01(\x04B\a\xfaB\x042\x02(\x01R\trequested\"\xdc\x01\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x12J\n" +
+	"\bresource\x18\x02 \x01(\x0e2\".cloud.v1.deployment.QuotaResourceB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bresource\x12%\n" +
+	"\trequested\x18\x03 \x01(\x04B\a\xfaB\x042\x02(\x01R\trequested\x124\n" +
+	"\x11provider_quota_id\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x0fproviderQuotaId\"\xb3\x02\n" +
 	"\x05Quota\x12E\n" +
 	"\bprovider\x18\x01 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
-	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x12)\n" +
-	"\n" +
-	"quota_name\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\tquotaName\x12\x1d\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x12J\n" +
+	"\bresource\x18\x02 \x01(\x0e2\".cloud.v1.deployment.QuotaResourceB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bresource\x12\x1d\n" +
 	"\x05limit\x18\x03 \x01(\x04B\a\xfaB\x042\x02(\x01R\x05limit\x12\x1b\n" +
 	"\x04used\x18\x04 \x01(\x04B\a\xfaB\x042\x02(\x00R\x04used\x12%\n" +
-	"\tavailable\x18\x05 \x01(\x04B\a\xfaB\x042\x02(\x00R\tavailable\"\xf6\x02\n" +
+	"\tavailable\x18\x05 \x01(\x04B\a\xfaB\x042\x02(\x00R\tavailable\x124\n" +
+	"\x11provider_quota_id\x18\x06 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x0fproviderQuotaId\"\xdb\x01\n" +
+	"\x0eQuotaInventory\x12E\n" +
+	"\bprovider\x18\x01 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x12=\n" +
+	"\x06quotas\x18\x02 \x03(\v2\x1a.cloud.v1.deployment.QuotaB\t\xfaB\x06\x92\x01\x03\x10\x80\x02R\x06quotas\x12C\n" +
+	"\n" +
+	"fetched_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\b\xfaB\x05\xb2\x01\x02\b\x01R\tfetchedAt\"\xf6\x02\n" +
 	"\n" +
 	"Deployment\x12E\n" +
 	"\bprovider\x18\x01 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
@@ -542,7 +741,17 @@ const file_cloud_v1_deployment_deployment_proto_rawDesc = "" +
 	"\bProvider\x12\x18\n" +
 	"\x14PROVIDER_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fPROVIDER_DOCKER\x10\x01\x12\x13\n" +
-	"\x0fPROVIDER_YANDEX\x10\x02BHZFgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deploymentb\x06proto3"
+	"\x0fPROVIDER_YANDEX\x10\x02*\x95\x02\n" +
+	"\rQuotaResource\x12\x1e\n" +
+	"\x1aQUOTA_RESOURCE_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14QUOTA_RESOURCE_CORES\x10\x01\x12\x1c\n" +
+	"\x18QUOTA_RESOURCE_MEMORY_GB\x10\x02\x12\x19\n" +
+	"\x15QUOTA_RESOURCE_SSD_GB\x10\x03\x12\x19\n" +
+	"\x15QUOTA_RESOURCE_HDD_GB\x10\x04\x12\x1c\n" +
+	"\x18QUOTA_RESOURCE_INSTANCES\x10\x05\x12\x1f\n" +
+	"\x1bQUOTA_RESOURCE_EXTERNAL_IPS\x10\x06\x12\x1b\n" +
+	"\x17QUOTA_RESOURCE_NETWORKS\x10\a\x12\x1a\n" +
+	"\x16QUOTA_RESOURCE_SUBNETS\x10\bBHZFgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deploymentb\x06proto3"
 
 var (
 	file_cloud_v1_deployment_deployment_proto_rawDescOnce sync.Once
@@ -556,42 +765,50 @@ func file_cloud_v1_deployment_deployment_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_deployment_deployment_proto_rawDescData
 }
 
-var file_cloud_v1_deployment_deployment_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_deployment_deployment_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_cloud_v1_deployment_deployment_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_cloud_v1_deployment_deployment_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_cloud_v1_deployment_deployment_proto_goTypes = []any{
 	(Provider)(0),                 // 0: cloud.v1.deployment.Provider
-	(*DeploymentIntent)(nil),      // 1: cloud.v1.deployment.DeploymentIntent
-	(*QuotaRequest)(nil),          // 2: cloud.v1.deployment.QuotaRequest
-	(*Quota)(nil),                 // 3: cloud.v1.deployment.Quota
-	(*Deployment)(nil),            // 4: cloud.v1.deployment.Deployment
-	(*DeploymentIntent_Spec)(nil), // 5: cloud.v1.deployment.DeploymentIntent.Spec
-	(*common.Tags)(nil),           // 6: cloud.v1.common.Tags
-	(*system.Network)(nil),        // 7: cloud.v1.runtime.system.Network
-	(*Docker)(nil),                // 8: cloud.v1.deployment.Docker
-	(*Yandex)(nil),                // 9: cloud.v1.deployment.Yandex
-	(*Yandex_Vm)(nil),             // 10: cloud.v1.deployment.Yandex.Vm
-	(*Yandex_ManagedYdb)(nil),     // 11: cloud.v1.deployment.Yandex.ManagedYdb
-	(*Docker_Container)(nil),      // 12: cloud.v1.deployment.Docker.Container
+	(QuotaResource)(0),            // 1: cloud.v1.deployment.QuotaResource
+	(*DeploymentIntent)(nil),      // 2: cloud.v1.deployment.DeploymentIntent
+	(*QuotaRequest)(nil),          // 3: cloud.v1.deployment.QuotaRequest
+	(*Quota)(nil),                 // 4: cloud.v1.deployment.Quota
+	(*QuotaInventory)(nil),        // 5: cloud.v1.deployment.QuotaInventory
+	(*Deployment)(nil),            // 6: cloud.v1.deployment.Deployment
+	(*DeploymentIntent_Spec)(nil), // 7: cloud.v1.deployment.DeploymentIntent.Spec
+	(*common.Tags)(nil),           // 8: cloud.v1.common.Tags
+	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
+	(*system.Network)(nil),        // 10: cloud.v1.runtime.system.Network
+	(*Docker)(nil),                // 11: cloud.v1.deployment.Docker
+	(*Yandex)(nil),                // 12: cloud.v1.deployment.Yandex
+	(*Yandex_Vm)(nil),             // 13: cloud.v1.deployment.Yandex.Vm
+	(*Yandex_ManagedYdb)(nil),     // 14: cloud.v1.deployment.Yandex.ManagedYdb
+	(*Docker_Container)(nil),      // 15: cloud.v1.deployment.Docker.Container
 }
 var file_cloud_v1_deployment_deployment_proto_depIdxs = []int32{
 	0,  // 0: cloud.v1.deployment.DeploymentIntent.provider:type_name -> cloud.v1.deployment.Provider
-	5,  // 1: cloud.v1.deployment.DeploymentIntent.specs:type_name -> cloud.v1.deployment.DeploymentIntent.Spec
-	6,  // 2: cloud.v1.deployment.DeploymentIntent.tags:type_name -> cloud.v1.common.Tags
+	7,  // 1: cloud.v1.deployment.DeploymentIntent.specs:type_name -> cloud.v1.deployment.DeploymentIntent.Spec
+	8,  // 2: cloud.v1.deployment.DeploymentIntent.tags:type_name -> cloud.v1.common.Tags
 	0,  // 3: cloud.v1.deployment.QuotaRequest.provider:type_name -> cloud.v1.deployment.Provider
-	0,  // 4: cloud.v1.deployment.Quota.provider:type_name -> cloud.v1.deployment.Provider
-	0,  // 5: cloud.v1.deployment.Deployment.provider:type_name -> cloud.v1.deployment.Provider
-	7,  // 6: cloud.v1.deployment.Deployment.network:type_name -> cloud.v1.runtime.system.Network
-	2,  // 7: cloud.v1.deployment.Deployment.quota_requests:type_name -> cloud.v1.deployment.QuotaRequest
-	8,  // 8: cloud.v1.deployment.Deployment.docker:type_name -> cloud.v1.deployment.Docker
-	9,  // 9: cloud.v1.deployment.Deployment.yandex:type_name -> cloud.v1.deployment.Yandex
-	10, // 10: cloud.v1.deployment.DeploymentIntent.Spec.yandex_vm:type_name -> cloud.v1.deployment.Yandex.Vm
-	11, // 11: cloud.v1.deployment.DeploymentIntent.Spec.managed_ydb:type_name -> cloud.v1.deployment.Yandex.ManagedYdb
-	12, // 12: cloud.v1.deployment.DeploymentIntent.Spec.docker_container:type_name -> cloud.v1.deployment.Docker.Container
-	13, // [13:13] is the sub-list for method output_type
-	13, // [13:13] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	1,  // 4: cloud.v1.deployment.QuotaRequest.resource:type_name -> cloud.v1.deployment.QuotaResource
+	0,  // 5: cloud.v1.deployment.Quota.provider:type_name -> cloud.v1.deployment.Provider
+	1,  // 6: cloud.v1.deployment.Quota.resource:type_name -> cloud.v1.deployment.QuotaResource
+	0,  // 7: cloud.v1.deployment.QuotaInventory.provider:type_name -> cloud.v1.deployment.Provider
+	4,  // 8: cloud.v1.deployment.QuotaInventory.quotas:type_name -> cloud.v1.deployment.Quota
+	9,  // 9: cloud.v1.deployment.QuotaInventory.fetched_at:type_name -> google.protobuf.Timestamp
+	0,  // 10: cloud.v1.deployment.Deployment.provider:type_name -> cloud.v1.deployment.Provider
+	10, // 11: cloud.v1.deployment.Deployment.network:type_name -> cloud.v1.runtime.system.Network
+	3,  // 12: cloud.v1.deployment.Deployment.quota_requests:type_name -> cloud.v1.deployment.QuotaRequest
+	11, // 13: cloud.v1.deployment.Deployment.docker:type_name -> cloud.v1.deployment.Docker
+	12, // 14: cloud.v1.deployment.Deployment.yandex:type_name -> cloud.v1.deployment.Yandex
+	13, // 15: cloud.v1.deployment.DeploymentIntent.Spec.yandex_vm:type_name -> cloud.v1.deployment.Yandex.Vm
+	14, // 16: cloud.v1.deployment.DeploymentIntent.Spec.managed_ydb:type_name -> cloud.v1.deployment.Yandex.ManagedYdb
+	15, // 17: cloud.v1.deployment.DeploymentIntent.Spec.docker_container:type_name -> cloud.v1.deployment.Docker.Container
+	18, // [18:18] is the sub-list for method output_type
+	18, // [18:18] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_deployment_deployment_proto_init() }
@@ -601,11 +818,11 @@ func file_cloud_v1_deployment_deployment_proto_init() {
 	}
 	file_cloud_v1_deployment_docker_proto_init()
 	file_cloud_v1_deployment_yandex_proto_init()
-	file_cloud_v1_deployment_deployment_proto_msgTypes[3].OneofWrappers = []any{
+	file_cloud_v1_deployment_deployment_proto_msgTypes[4].OneofWrappers = []any{
 		(*Deployment_Docker)(nil),
 		(*Deployment_Yandex)(nil),
 	}
-	file_cloud_v1_deployment_deployment_proto_msgTypes[4].OneofWrappers = []any{
+	file_cloud_v1_deployment_deployment_proto_msgTypes[5].OneofWrappers = []any{
 		(*DeploymentIntent_Spec_YandexVm)(nil),
 		(*DeploymentIntent_Spec_ManagedYdb)(nil),
 		(*DeploymentIntent_Spec_DockerContainer)(nil),
@@ -615,8 +832,8 @@ func file_cloud_v1_deployment_deployment_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_deployment_deployment_proto_rawDesc), len(file_cloud_v1_deployment_deployment_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   5,
+			NumEnums:      2,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

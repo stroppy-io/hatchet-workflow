@@ -248,6 +248,8 @@ const (
 	SuiteColumnName           SuiteColumnAlias = "name"
 	SuiteColumnDescription    SuiteColumnAlias = "description"
 	SuiteColumnPreset         SuiteColumnAlias = "preset"
+	SuiteColumnCron           SuiteColumnAlias = "cron"
+	SuiteColumnNextFireAt     SuiteColumnAlias = "next_fire_at"
 )
 
 func (s *SuiteScanner) GetTarget(col string) func() any {
@@ -270,6 +272,10 @@ func (s *SuiteScanner) GetTarget(col string) func() any {
 		return func() any { return &s.Description }
 	case SuiteColumnPreset:
 		return func() any { return &s.Preset }
+	case SuiteColumnCron:
+		return func() any { return &s.Cron }
+	case SuiteColumnNextFireAt:
+		return func() any { return &s.NextFireAt }
 	default:
 		panic("unknown field: " + col)
 	}
@@ -295,6 +301,10 @@ func (s *SuiteScanner) GetSetter(f SuiteColumnAlias) func() set.ValueSetter[Suit
 		return func() set.ValueSetter[SuiteColumnAlias] { return set.NewSetter(f, &s.Description) }
 	case SuiteColumnPreset:
 		return func() set.ValueSetter[SuiteColumnAlias] { return set.NewSetter(f, &s.Preset) }
+	case SuiteColumnCron:
+		return func() set.ValueSetter[SuiteColumnAlias] { return set.NewSetter(f, &s.Cron) }
+	case SuiteColumnNextFireAt:
+		return func() set.ValueSetter[SuiteColumnAlias] { return set.NewSetter(f, &s.NextFireAt) }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -320,6 +330,10 @@ func (s *SuiteScanner) GetValue(f SuiteColumnAlias) func() any {
 		return func() any { return s.Description }
 	case SuiteColumnPreset:
 		return func() any { return s.Preset }
+	case SuiteColumnCron:
+		return func() any { return s.Cron }
+	case SuiteColumnNextFireAt:
+		return func() any { return s.NextFireAt }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -336,6 +350,8 @@ func (s *SuiteScanner) AllSetters() []set.ValueSetter[SuiteColumnAlias] {
 		set.NewSetter[SuiteColumnAlias](SuiteColumnName, s.Name),
 		set.NewSetter[SuiteColumnAlias](SuiteColumnDescription, s.Description),
 		set.NewSetter[SuiteColumnAlias](SuiteColumnPreset, s.Preset),
+		set.NewSetter[SuiteColumnAlias](SuiteColumnCron, s.Cron),
+		set.NewSetter[SuiteColumnAlias](SuiteColumnNextFireAt, s.NextFireAt),
 	}
 }
 
@@ -356,6 +372,8 @@ type SuitesTable struct {
 	Name           schema.NullTextColumnI[SuiteColumnAlias]
 	Description    schema.NullTextColumnI[SuiteColumnAlias]
 	Preset         schema.TextColumnI[SuiteColumnAlias]
+	Cron           schema.TextColumnI[SuiteColumnAlias]
+	NextFireAt     schema.NullTimestamptzColumnI[SuiteColumnAlias]
 }
 
 // Suites is the global suites table instance
@@ -369,6 +387,10 @@ var Suites = func() SuitesTable {
 	nameCol := schema.NullTextColumn(SuiteColumnName)
 	descriptionCol := schema.NullTextColumn(SuiteColumnDescription)
 	presetCol := schema.TextColumn(SuiteColumnPreset, ddl.WithNotNull[SuiteColumnAlias]())
+	cronCol := schema.TextColumn(SuiteColumnCron, ddl.WithNotNull[SuiteColumnAlias]())
+	nextFireAtCol := schema.NullTimestamptzColumn(SuiteColumnNextFireAt)
+
+	idx0 := ddl.NewIndex[SuiteAlias, SuiteColumnAlias]("suites_cron_idx", SuiteAliasName).OnColumns(SuiteColumnNextFireAt)
 
 	return SuitesTable{
 		Table: schema.NewTable[SuiteAlias, SuiteColumnAlias, *SuiteScanner](
@@ -384,7 +406,12 @@ var Suites = func() SuitesTable {
 				nameCol.DDL(),
 				descriptionCol.DDL(),
 				presetCol.DDL(),
+				cronCol.DDL(),
+				nextFireAtCol.DDL(),
 			},
+			ddl.WithIndexes[SuiteAlias, SuiteColumnAlias](
+				idx0,
+			),
 		),
 		Id:             idCol,
 		CreatedAt:      createdAtCol,
@@ -395,6 +422,8 @@ var Suites = func() SuitesTable {
 		Name:           nameCol,
 		Description:    descriptionCol,
 		Preset:         presetCol,
+		Cron:           cronCol,
+		NextFireAt:     nextFireAtCol,
 	}
 }()
 
@@ -407,119 +436,119 @@ var SuiteConverter = repository.Converter[*SuiteScanner, *Suite]{
 	ToProto:   (*SuiteScanner).IntoPb,
 }
 
-// SuiteRunsAlias is the table alias type for the suite_runs table
-type SuiteRunsAlias string
+// SuiteRunAlias is the table alias type for the suite_runs table
+type SuiteRunAlias string
 
-func (a SuiteRunsAlias) String() string { return string(a) }
+func (a SuiteRunAlias) String() string { return string(a) }
 
-const SuiteRunsAliasName SuiteRunsAlias = "suite_runs"
+const SuiteRunAliasName SuiteRunAlias = "suite_runs"
 
-// SuiteRunsColumnAlias represents column names for the suite_runs table
-type SuiteRunsColumnAlias string
+// SuiteRunColumnAlias represents column names for the suite_runs table
+type SuiteRunColumnAlias string
 
-func (c SuiteRunsColumnAlias) String() string { return string(c) }
+func (c SuiteRunColumnAlias) String() string { return string(c) }
 
 const (
-	SuiteRunsColumnId             SuiteRunsColumnAlias = "id"
-	SuiteRunsColumnCreatedAt      SuiteRunsColumnAlias = "created_at"
-	SuiteRunsColumnUpdatedAt      SuiteRunsColumnAlias = "updated_at"
-	SuiteRunsColumnDeletedAt      SuiteRunsColumnAlias = "deleted_at"
-	SuiteRunsColumnOwnerAccountId SuiteRunsColumnAlias = "owner_account_id"
-	SuiteRunsColumnTenantId       SuiteRunsColumnAlias = "tenant_id"
-	SuiteRunsColumnSuiteId        SuiteRunsColumnAlias = "suite_id"
-	SuiteRunsColumnDag            SuiteRunsColumnAlias = "dag"
+	SuiteRunColumnId             SuiteRunColumnAlias = "id"
+	SuiteRunColumnCreatedAt      SuiteRunColumnAlias = "created_at"
+	SuiteRunColumnUpdatedAt      SuiteRunColumnAlias = "updated_at"
+	SuiteRunColumnDeletedAt      SuiteRunColumnAlias = "deleted_at"
+	SuiteRunColumnOwnerAccountId SuiteRunColumnAlias = "owner_account_id"
+	SuiteRunColumnTenantId       SuiteRunColumnAlias = "tenant_id"
+	SuiteRunColumnSuiteId        SuiteRunColumnAlias = "suite_id"
+	SuiteRunColumnDag            SuiteRunColumnAlias = "dag"
 )
 
-func (s *SuiteRunsScanner) GetTarget(col string) func() any {
-	switch SuiteRunsColumnAlias(col) {
-	case SuiteRunsColumnId:
+func (s *SuiteRunScanner) GetTarget(col string) func() any {
+	switch SuiteRunColumnAlias(col) {
+	case SuiteRunColumnId:
 		return func() any { return &s.Id }
-	case SuiteRunsColumnCreatedAt:
+	case SuiteRunColumnCreatedAt:
 		return func() any { return &s.CreatedAt }
-	case SuiteRunsColumnUpdatedAt:
+	case SuiteRunColumnUpdatedAt:
 		return func() any { return &s.UpdatedAt }
-	case SuiteRunsColumnDeletedAt:
+	case SuiteRunColumnDeletedAt:
 		return func() any { return &s.DeletedAt }
-	case SuiteRunsColumnOwnerAccountId:
+	case SuiteRunColumnOwnerAccountId:
 		return func() any { return &s.OwnerAccountId }
-	case SuiteRunsColumnTenantId:
+	case SuiteRunColumnTenantId:
 		return func() any { return &s.TenantId }
-	case SuiteRunsColumnSuiteId:
+	case SuiteRunColumnSuiteId:
 		return func() any { return &s.SuiteId }
-	case SuiteRunsColumnDag:
+	case SuiteRunColumnDag:
 		return func() any { return &s.Dag }
 	default:
 		panic("unknown field: " + col)
 	}
 }
 
-func (s *SuiteRunsScanner) GetSetter(f SuiteRunsColumnAlias) func() set.ValueSetter[SuiteRunsColumnAlias] {
+func (s *SuiteRunScanner) GetSetter(f SuiteRunColumnAlias) func() set.ValueSetter[SuiteRunColumnAlias] {
 	switch f {
-	case SuiteRunsColumnId:
-		return func() set.ValueSetter[SuiteRunsColumnAlias] { return set.NewSetter(f, &s.Id) }
-	case SuiteRunsColumnCreatedAt:
-		return func() set.ValueSetter[SuiteRunsColumnAlias] { return set.NewSetter(f, &s.CreatedAt) }
-	case SuiteRunsColumnUpdatedAt:
-		return func() set.ValueSetter[SuiteRunsColumnAlias] { return set.NewSetter(f, &s.UpdatedAt) }
-	case SuiteRunsColumnDeletedAt:
-		return func() set.ValueSetter[SuiteRunsColumnAlias] { return set.NewSetter(f, &s.DeletedAt) }
-	case SuiteRunsColumnOwnerAccountId:
-		return func() set.ValueSetter[SuiteRunsColumnAlias] { return set.NewSetter(f, &s.OwnerAccountId) }
-	case SuiteRunsColumnTenantId:
-		return func() set.ValueSetter[SuiteRunsColumnAlias] { return set.NewSetter(f, &s.TenantId) }
-	case SuiteRunsColumnSuiteId:
-		return func() set.ValueSetter[SuiteRunsColumnAlias] { return set.NewSetter(f, &s.SuiteId) }
-	case SuiteRunsColumnDag:
-		return func() set.ValueSetter[SuiteRunsColumnAlias] { return set.NewSetter(f, &s.Dag) }
+	case SuiteRunColumnId:
+		return func() set.ValueSetter[SuiteRunColumnAlias] { return set.NewSetter(f, &s.Id) }
+	case SuiteRunColumnCreatedAt:
+		return func() set.ValueSetter[SuiteRunColumnAlias] { return set.NewSetter(f, &s.CreatedAt) }
+	case SuiteRunColumnUpdatedAt:
+		return func() set.ValueSetter[SuiteRunColumnAlias] { return set.NewSetter(f, &s.UpdatedAt) }
+	case SuiteRunColumnDeletedAt:
+		return func() set.ValueSetter[SuiteRunColumnAlias] { return set.NewSetter(f, &s.DeletedAt) }
+	case SuiteRunColumnOwnerAccountId:
+		return func() set.ValueSetter[SuiteRunColumnAlias] { return set.NewSetter(f, &s.OwnerAccountId) }
+	case SuiteRunColumnTenantId:
+		return func() set.ValueSetter[SuiteRunColumnAlias] { return set.NewSetter(f, &s.TenantId) }
+	case SuiteRunColumnSuiteId:
+		return func() set.ValueSetter[SuiteRunColumnAlias] { return set.NewSetter(f, &s.SuiteId) }
+	case SuiteRunColumnDag:
+		return func() set.ValueSetter[SuiteRunColumnAlias] { return set.NewSetter(f, &s.Dag) }
 	default:
 		panic("unknown field: " + string(f))
 	}
 }
 
-func (s *SuiteRunsScanner) GetValue(f SuiteRunsColumnAlias) func() any {
+func (s *SuiteRunScanner) GetValue(f SuiteRunColumnAlias) func() any {
 	switch f {
-	case SuiteRunsColumnId:
+	case SuiteRunColumnId:
 		return func() any { return s.Id }
-	case SuiteRunsColumnCreatedAt:
+	case SuiteRunColumnCreatedAt:
 		return func() any { return s.CreatedAt }
-	case SuiteRunsColumnUpdatedAt:
+	case SuiteRunColumnUpdatedAt:
 		return func() any { return s.UpdatedAt }
-	case SuiteRunsColumnDeletedAt:
+	case SuiteRunColumnDeletedAt:
 		return func() any { return s.DeletedAt }
-	case SuiteRunsColumnOwnerAccountId:
+	case SuiteRunColumnOwnerAccountId:
 		return func() any { return s.OwnerAccountId }
-	case SuiteRunsColumnTenantId:
+	case SuiteRunColumnTenantId:
 		return func() any { return s.TenantId }
-	case SuiteRunsColumnSuiteId:
+	case SuiteRunColumnSuiteId:
 		return func() any { return s.SuiteId }
-	case SuiteRunsColumnDag:
+	case SuiteRunColumnDag:
 		return func() any { return s.Dag }
 	default:
 		panic("unknown field: " + string(f))
 	}
 }
 
-func (s *SuiteRunsScanner) AllSetters() []set.ValueSetter[SuiteRunsColumnAlias] {
-	return []set.ValueSetter[SuiteRunsColumnAlias]{
-		set.NewSetter[SuiteRunsColumnAlias](SuiteRunsColumnId, s.Id),
-		set.NewSetter[SuiteRunsColumnAlias](SuiteRunsColumnCreatedAt, s.CreatedAt),
-		set.NewSetter[SuiteRunsColumnAlias](SuiteRunsColumnUpdatedAt, s.UpdatedAt),
-		set.NewSetter[SuiteRunsColumnAlias](SuiteRunsColumnDeletedAt, s.DeletedAt),
-		set.NewSetter[SuiteRunsColumnAlias](SuiteRunsColumnOwnerAccountId, s.OwnerAccountId),
-		set.NewSetter[SuiteRunsColumnAlias](SuiteRunsColumnTenantId, s.TenantId),
-		set.NewSetter[SuiteRunsColumnAlias](SuiteRunsColumnSuiteId, s.SuiteId),
-		set.NewSetter[SuiteRunsColumnAlias](SuiteRunsColumnDag, s.Dag),
+func (s *SuiteRunScanner) AllSetters() []set.ValueSetter[SuiteRunColumnAlias] {
+	return []set.ValueSetter[SuiteRunColumnAlias]{
+		set.NewSetter[SuiteRunColumnAlias](SuiteRunColumnId, s.Id),
+		set.NewSetter[SuiteRunColumnAlias](SuiteRunColumnCreatedAt, s.CreatedAt),
+		set.NewSetter[SuiteRunColumnAlias](SuiteRunColumnUpdatedAt, s.UpdatedAt),
+		set.NewSetter[SuiteRunColumnAlias](SuiteRunColumnDeletedAt, s.DeletedAt),
+		set.NewSetter[SuiteRunColumnAlias](SuiteRunColumnOwnerAccountId, s.OwnerAccountId),
+		set.NewSetter[SuiteRunColumnAlias](SuiteRunColumnTenantId, s.TenantId),
+		set.NewSetter[SuiteRunColumnAlias](SuiteRunColumnSuiteId, s.SuiteId),
+		set.NewSetter[SuiteRunColumnAlias](SuiteRunColumnDag, s.Dag),
 	}
 }
 
 // Relations returns the relation loaders for the suite_runs table
-func (s *SuiteRunsScanner) Relations() []exec.RelationLoader[*SuiteRunsScanner] {
-	return []exec.RelationLoader[*SuiteRunsScanner]{
+func (s *SuiteRunScanner) Relations() []exec.RelationLoader[*SuiteRunScanner] {
+	return []exec.RelationLoader[*SuiteRunScanner]{
 		schema.HasManyLoad(
-			SuiteRunsTestRuns,
+			SuiteRunTestRuns,
 			TestRuns.Table,
-			SuiteRunsColumnId,
-			func(base *SuiteRunsScanner, related []*TestRunScanner) {
+			SuiteRunColumnId,
+			func(base *SuiteRunScanner, related []*TestRunScanner) {
 				base.TestRuns = make([]TestRunScanner, len(related))
 				for i, r := range related {
 					if r != nil {
@@ -532,17 +561,17 @@ func (s *SuiteRunsScanner) Relations() []exec.RelationLoader[*SuiteRunsScanner] 
 }
 
 // ============================================================================
-// SuiteRuns Relation Query Options
+// SuiteRun Relation Query Options
 // ============================================================================
 
-// SuiteRunssWithTestRuns returns a QueryOption to load TestRuns relation
-func SuiteRunssWithTestRuns() exec.QueryOption[SuiteRunsColumnAlias, *SuiteRunsScanner] {
-	return exec.WithRelationLoaders[SuiteRunsColumnAlias, *SuiteRunsScanner](
+// SuiteRunsWithTestRuns returns a QueryOption to load TestRuns relation
+func SuiteRunsWithTestRuns() exec.QueryOption[SuiteRunColumnAlias, *SuiteRunScanner] {
+	return exec.WithRelationLoaders[SuiteRunColumnAlias, *SuiteRunScanner](
 		schema.HasManyLoad(
-			SuiteRunsTestRuns,
+			SuiteRunTestRuns,
 			TestRuns.Table,
-			SuiteRunsColumnId,
-			func(base *SuiteRunsScanner, related []*TestRunScanner) {
+			SuiteRunColumnId,
+			func(base *SuiteRunScanner, related []*TestRunScanner) {
 				base.TestRuns = make([]TestRunScanner, len(related))
 				for i, r := range related {
 					if r != nil {
@@ -554,14 +583,14 @@ func SuiteRunssWithTestRuns() exec.QueryOption[SuiteRunsColumnAlias, *SuiteRunsS
 	)
 }
 
-// SuiteRunssWithAllRelations returns a QueryOption to load all relations
-func SuiteRunssWithAllRelations() exec.QueryOption[SuiteRunsColumnAlias, *SuiteRunsScanner] {
-	return exec.WithRelationLoaders[SuiteRunsColumnAlias, *SuiteRunsScanner](
+// SuiteRunsWithAllRelations returns a QueryOption to load all relations
+func SuiteRunsWithAllRelations() exec.QueryOption[SuiteRunColumnAlias, *SuiteRunScanner] {
+	return exec.WithRelationLoaders[SuiteRunColumnAlias, *SuiteRunScanner](
 		schema.HasManyLoad(
-			SuiteRunsTestRuns,
+			SuiteRunTestRuns,
 			TestRuns.Table,
-			SuiteRunsColumnId,
-			func(base *SuiteRunsScanner, related []*TestRunScanner) {
+			SuiteRunColumnId,
+			func(base *SuiteRunScanner, related []*TestRunScanner) {
 				base.TestRuns = make([]TestRunScanner, len(related))
 				for i, r := range related {
 					if r != nil {
@@ -573,35 +602,35 @@ func SuiteRunssWithAllRelations() exec.QueryOption[SuiteRunsColumnAlias, *SuiteR
 	)
 }
 
-// SuiteRunssTable represents the suite_runs table with its columns
-type SuiteRunssTable struct {
-	*schema.Table[SuiteRunsAlias, SuiteRunsColumnAlias, *SuiteRunsScanner]
-	Id             schema.TextColumnI[SuiteRunsColumnAlias]
-	CreatedAt      schema.TimestamptzColumnI[SuiteRunsColumnAlias]
-	UpdatedAt      schema.TimestamptzColumnI[SuiteRunsColumnAlias]
-	DeletedAt      schema.NullTimestamptzColumnI[SuiteRunsColumnAlias]
-	OwnerAccountId schema.TextColumnI[SuiteRunsColumnAlias]
-	TenantId       schema.TextColumnI[SuiteRunsColumnAlias]
-	SuiteId        schema.TextColumnI[SuiteRunsColumnAlias]
-	Dag            schema.TextColumnI[SuiteRunsColumnAlias]
+// SuiteRunsTable represents the suite_runs table with its columns
+type SuiteRunsTable struct {
+	*schema.Table[SuiteRunAlias, SuiteRunColumnAlias, *SuiteRunScanner]
+	Id             schema.TextColumnI[SuiteRunColumnAlias]
+	CreatedAt      schema.TimestamptzColumnI[SuiteRunColumnAlias]
+	UpdatedAt      schema.TimestamptzColumnI[SuiteRunColumnAlias]
+	DeletedAt      schema.NullTimestamptzColumnI[SuiteRunColumnAlias]
+	OwnerAccountId schema.TextColumnI[SuiteRunColumnAlias]
+	TenantId       schema.TextColumnI[SuiteRunColumnAlias]
+	SuiteId        schema.TextColumnI[SuiteRunColumnAlias]
+	Dag            schema.TextColumnI[SuiteRunColumnAlias]
 }
 
-// SuiteRunss is the global suite_runs table instance
-var SuiteRunss = func() SuiteRunssTable {
-	idCol := schema.TextColumn(SuiteRunsColumnId, ddl.WithPrimaryKey[SuiteRunsColumnAlias]())
-	createdAtCol := schema.TimestamptzColumn(SuiteRunsColumnCreatedAt, ddl.WithDefault[SuiteRunsColumnAlias]("now()"), ddl.WithNotNull[SuiteRunsColumnAlias]())
-	updatedAtCol := schema.TimestamptzColumn(SuiteRunsColumnUpdatedAt, ddl.WithDefault[SuiteRunsColumnAlias]("now()"), ddl.WithNotNull[SuiteRunsColumnAlias]())
-	deletedAtCol := schema.NullTimestamptzColumn(SuiteRunsColumnDeletedAt, ddl.WithDefault[SuiteRunsColumnAlias]("null"))
-	ownerAccountIdCol := schema.TextColumn(SuiteRunsColumnOwnerAccountId, ddl.WithReferences[SuiteRunsColumnAlias]("accounts", "id"), ddl.WithOnDelete[SuiteRunsColumnAlias]("CASCADE"), ddl.WithNotNull[SuiteRunsColumnAlias]())
-	tenantIdCol := schema.TextColumn(SuiteRunsColumnTenantId, ddl.WithReferences[SuiteRunsColumnAlias]("tenants", "id"), ddl.WithOnDelete[SuiteRunsColumnAlias]("CASCADE"), ddl.WithNotNull[SuiteRunsColumnAlias]())
-	suiteIdCol := schema.TextColumn(SuiteRunsColumnSuiteId, ddl.WithReferences[SuiteRunsColumnAlias]("suites", "id"), ddl.WithOnDelete[SuiteRunsColumnAlias]("CASCADE"), ddl.WithNotNull[SuiteRunsColumnAlias]())
-	dagCol := schema.TextColumn(SuiteRunsColumnDag, ddl.WithReferences[SuiteRunsColumnAlias]("dags", "id"), ddl.WithOnDelete[SuiteRunsColumnAlias]("CASCADE"), ddl.WithNotNull[SuiteRunsColumnAlias]())
+// SuiteRuns is the global suite_runs table instance
+var SuiteRuns = func() SuiteRunsTable {
+	idCol := schema.TextColumn(SuiteRunColumnId, ddl.WithPrimaryKey[SuiteRunColumnAlias]())
+	createdAtCol := schema.TimestamptzColumn(SuiteRunColumnCreatedAt, ddl.WithDefault[SuiteRunColumnAlias]("now()"), ddl.WithNotNull[SuiteRunColumnAlias]())
+	updatedAtCol := schema.TimestamptzColumn(SuiteRunColumnUpdatedAt, ddl.WithDefault[SuiteRunColumnAlias]("now()"), ddl.WithNotNull[SuiteRunColumnAlias]())
+	deletedAtCol := schema.NullTimestamptzColumn(SuiteRunColumnDeletedAt, ddl.WithDefault[SuiteRunColumnAlias]("null"))
+	ownerAccountIdCol := schema.TextColumn(SuiteRunColumnOwnerAccountId, ddl.WithReferences[SuiteRunColumnAlias]("accounts", "id"), ddl.WithOnDelete[SuiteRunColumnAlias]("CASCADE"), ddl.WithNotNull[SuiteRunColumnAlias]())
+	tenantIdCol := schema.TextColumn(SuiteRunColumnTenantId, ddl.WithReferences[SuiteRunColumnAlias]("tenants", "id"), ddl.WithOnDelete[SuiteRunColumnAlias]("CASCADE"), ddl.WithNotNull[SuiteRunColumnAlias]())
+	suiteIdCol := schema.TextColumn(SuiteRunColumnSuiteId, ddl.WithReferences[SuiteRunColumnAlias]("suites", "id"), ddl.WithOnDelete[SuiteRunColumnAlias]("CASCADE"), ddl.WithNotNull[SuiteRunColumnAlias]())
+	dagCol := schema.TextColumn(SuiteRunColumnDag, ddl.WithReferences[SuiteRunColumnAlias]("dags", "id"), ddl.WithOnDelete[SuiteRunColumnAlias]("CASCADE"), ddl.WithNotNull[SuiteRunColumnAlias]())
 
-	return SuiteRunssTable{
-		Table: schema.NewTable[SuiteRunsAlias, SuiteRunsColumnAlias, *SuiteRunsScanner](
-			SuiteRunsAliasName,
-			func() *SuiteRunsScanner { return &SuiteRunsScanner{} },
-			[]*ddl.ColumnDDL[SuiteRunsColumnAlias]{
+	return SuiteRunsTable{
+		Table: schema.NewTable[SuiteRunAlias, SuiteRunColumnAlias, *SuiteRunScanner](
+			SuiteRunAliasName,
+			func() *SuiteRunScanner { return &SuiteRunScanner{} },
+			[]*ddl.ColumnDDL[SuiteRunColumnAlias]{
 				idCol.DDL(),
 				createdAtCol.DDL(),
 				updatedAtCol.DDL(),
@@ -623,28 +652,28 @@ var SuiteRunss = func() SuiteRunssTable {
 	}
 }()
 
-// SuiteRunssRef is a reference to the suite_runs table for relations
-var SuiteRunssRef schema.RelationTableAlias[SuiteRunsAlias] = SuiteRunss.Table
+// SuiteRunsRef is a reference to the suite_runs table for relations
+var SuiteRunsRef schema.RelationTableAlias[SuiteRunAlias] = SuiteRuns.Table
 
-// SuiteRunsConverter provides conversion between SuiteRuns and SuiteRunsScanner
-var SuiteRunsConverter = repository.Converter[*SuiteRunsScanner, *SuiteRuns]{
-	ToScanner: (*SuiteRuns).IntoPlain,
-	ToProto:   (*SuiteRunsScanner).IntoPb,
+// SuiteRunConverter provides conversion between SuiteRun and SuiteRunScanner
+var SuiteRunConverter = repository.Converter[*SuiteRunScanner, *SuiteRun]{
+	ToScanner: (*SuiteRun).IntoPlain,
+	ToProto:   (*SuiteRunScanner).IntoPb,
 }
 
 // ============================================================================
-// SuiteRuns Relations
+// SuiteRun Relations
 // ============================================================================
 
-// SuiteRunsTestRuns defines the one-to-many relationship: SuiteRuns has many TestRun
-var SuiteRunsTestRuns = schema.HasMany[
-	SuiteRunsAlias, SuiteRunsColumnAlias, *SuiteRunsScanner,
+// SuiteRunTestRuns defines the one-to-many relationship: SuiteRun has many TestRun
+var SuiteRunTestRuns = schema.HasMany[
+	SuiteRunAlias, SuiteRunColumnAlias, *SuiteRunScanner,
 	TestRunAlias, TestRunColumnAlias, *TestRunScanner,
 ](
-	SuiteRunsAliasName,
+	SuiteRunAliasName,
 	TestRunsRef,
 	TestRunColumnSuiteRunId,
-	SuiteRunsColumnId,
+	SuiteRunColumnId,
 )
 
 // ============================================================================
@@ -652,9 +681,9 @@ var SuiteRunsTestRuns = schema.HasMany[
 // ============================================================================
 
 const (
-	TestRunConstraintPkey   = "test_runs_pkey"
-	SuiteConstraintPkey     = "suites_pkey"
-	SuiteRunsConstraintPkey = "suite_runs_pkey"
+	TestRunConstraintPkey  = "test_runs_pkey"
+	SuiteConstraintPkey    = "suites_pkey"
+	SuiteRunConstraintPkey = "suite_runs_pkey"
 )
 
 // ============================================================================
@@ -662,9 +691,9 @@ const (
 // ============================================================================
 
 var (
-	ErrTestRunPrimaryKey   = errors.New("primary key constraint violated: test_runs_pkey")
-	ErrSuitePrimaryKey     = errors.New("primary key constraint violated: suites_pkey")
-	ErrSuiteRunsPrimaryKey = errors.New("primary key constraint violated: suite_runs_pkey")
+	ErrTestRunPrimaryKey  = errors.New("primary key constraint violated: test_runs_pkey")
+	ErrSuitePrimaryKey    = errors.New("primary key constraint violated: suites_pkey")
+	ErrSuiteRunPrimaryKey = errors.New("primary key constraint violated: suite_runs_pkey")
 )
 
 // ============================================================================
@@ -681,7 +710,7 @@ func IsSuitePrimaryKeyError(err error) bool {
 	return sqlerr.IsConstraintNamed(err, SuiteConstraintPkey)
 }
 
-// IsSuiteRunsPrimaryKeyError checks if the error is a primary_key constraint violation on suite_runs
-func IsSuiteRunsPrimaryKeyError(err error) bool {
-	return sqlerr.IsConstraintNamed(err, SuiteRunsConstraintPkey)
+// IsSuiteRunPrimaryKeyError checks if the error is a primary_key constraint violation on suite_runs
+func IsSuiteRunPrimaryKeyError(err error) bool {
+	return sqlerr.IsConstraintNamed(err, SuiteRunConstraintPkey)
 }

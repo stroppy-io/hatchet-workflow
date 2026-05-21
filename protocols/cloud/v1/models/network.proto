@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/common/tags.proto";
+import "cloud/v1/deployment/deployment.proto";
+import "cloud/v1/models/common.proto";
+import "cloud/v1/runtime/system/ip.proto";
+import "google/protobuf/timestamp.proto";
+import "goplain/goplain.proto";
+import "ratelproto/ratelproto.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+/*
+    NetworkAllocation is the database-facing reservation of a subnet CIDR for a
+    run (D20). It makes subnet pre-allocation collision-safe and recoverable:
+    a free CIDR is chosen (internal/core/ips over the real VPC occupancy),
+    reserved here under a lease BEFORE terraform apply, and released on teardown.
+
+    Mirrors the models.Dag pattern: scalar columns for ownership/indexing, a
+    lease for multi-server safety. (provider, cidr) must be unique so two
+    concurrent runs never get the same subnet — replaces the old
+    hash(run_id)->CIDR collision.
+ */
+message NetworkAllocation {
+    message List {repeated NetworkAllocation network_allocations = 1;}
+
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "network_allocations"
+        indexes: [
+            {name: "netalloc_tenant_idx", columns: ["tenant_id"]},
+            {name: "netalloc_provider_idx", columns: ["provider"]},
+            {name: "netalloc_lease_idx", columns: ["lease_expires_at"]}
+        ]
+    };
+
+    /* id is the persistent allocation record id (ULID). */
+    string id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).string = {len: 26}
+    ];
+    /* tenant_id owns the allocation and scopes list queries. */
+    TenantId tenant_id = 2 [
+        (ratel.column).constraints = {
+            references_table: "tenants"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+    /* dag_id is the run DAG that holds this reservation. */
+    DagId dag_id = 3 [
+        (ratel.column).constraints = {
+            references_table: "dags"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
+    /* provider scopes the CIDR namespace. */
+    deployment.Provider provider = 4 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /*
+        cidr is the reserved subnet CIDR, e.g. 10.42.0.0/24 — the ready-made
+        typed system.Cidr (same type the runtime/occupancy view uses, e.g.
+        system.Network.cidrs). Collision-safety on (provider, cidr) is enforced
+        by the allocation logic over the cloud-synced occupancy + the lease, not
+        by a scalar DB index.
+     */
+    runtime.system.Cidr cidr = 5 [
+        (goplain.field).serialize = true,
+        (validate.rules).message.required = true
+    ];
+    /* zone is the provider availability zone for the subnet, when applicable. */
+    string zone = 6 [(validate.rules).string.max_len = 64];
+    /* timestamps contains created_at and updated_at columns. */
+    Timestamps timestamps = 7 [(goplain.field).embed = true];
+    /*
+        lease_expires_at lets a recovered server reclaim a reservation whose
+        owner died before apply. Cleared/extended while the run is active.
+     */
+    optional google.protobuf.Timestamp lease_expires_at = 8;
+    /* tags carries small generic labels for reconcile/observability. */
+    common.Tags tags = 9;
+}

@@ -23,6 +23,28 @@ message CfgValue {
     It contains generated artifacts and user overrides, but it is not an
     execution plan. A planner later converts accepted rendered items into
     runtime.ops and DAG nodes.
+
+    BDD decision (B3, features/catalog/database-render.feature):
+
+    Invariant "preview == execution": the same renderer feeds both the wizard
+    preview and the on-host artifact. The preview Item content is byte-for-byte
+    equal to the WRITE_FILE operation the agent receives, EXCEPT for the
+    explicitly declared set of runtime bindings. No other divergence is allowed.
+
+    Runtime values (real IPs, hostnames, etcd endpoints, connect_address) are
+    known only after provisioning. They are NOT magic string placeholders.
+    They are modeled as a typed render.Binding on an Item and resolved at the
+    plan->execute seam from semantic topology coordinates.
+
+    Anti-leak rules:
+    - down: system.File / ops / agent / primitive.Dag only ever see resolved
+      values; a WRITE_FILE carrying an unresolved binding is invalid.
+    - up: domain.* never references render.Binding; bindings are an artifact of
+      rendering, not of intent.
+
+    ADDED (H4): the typed Config.Item.Binding below — token + component_ids
+    (plain string ids, runtime-pure) + a free-string attr (no enum, self-
+    describing). Replaces the old dbconfig Substitute*Placeholders string magic.
  */
 message Config {
     /* id identifies this render result. */
@@ -32,12 +54,38 @@ message Config {
     /* overrides contains user changes applied on top of generated defaults. */
     repeated Override overrides = 3 [(validate.rules).repeated.max_items = 256];
 
+    /*
+        Binding is a typed runtime late-binding hole in an item's content (B3,
+        H4). The renderer leaves `token` in the rendered bytes; at the
+        plan->execute seam the resolver replaces it with the runtime value of
+        `attr` for the referenced topology component(s), read from
+        Deployment.Output (D18). Replaces the old string placeholders.
+
+        - component_ids is repeated to support multi-component values (e.g. an
+          etcd HOSTS list); a single value is a one-element list.
+        - attr is a free STRING, not an enum (self-describing, like metrics
+          H46): the resolver interprets it ("private_ip", "public_ip",
+          "endpoint", "port", "hosts", ...); a new attr needs no proto change.
+        - kept independent of domain/models: component reference is a plain
+          string id (like DagRef), so render stays runtime-pure.
+     */
+    message Binding {
+        /* token is the placeholder substring inside the item content. */
+        string token = 1 [(validate.rules).string = {min_len: 1, max_len: 256}];
+        /* component_ids are the topology component ids whose runtime value to resolve. */
+        repeated string component_ids = 2 [(validate.rules).repeated = {min_items: 1, max_items: 64}];
+        /* attr is the free-string runtime attribute to resolve (no enum). */
+        string attr = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    }
+
     /* Item is one rendered artifact visible to the user. */
     message Item {
         /* id is stable across re-renders and is used by overrides. */
         string id = 1 [(validate.rules).string = {min_len: 1, max_len: 256}];
         /* overridden is true when the item includes a user override. */
         bool overridden = 5;
+        /* bindings are the runtime late-binding holes in this item's content. */
+        repeated Binding bindings = 6 [(validate.rules).repeated.max_items = 256];
 
         oneof rendered {
             option (validate.required) = true;

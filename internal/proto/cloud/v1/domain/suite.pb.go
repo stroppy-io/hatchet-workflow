@@ -24,6 +24,10 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// BDD decision (B6): SuitePreset.Scheduling compiles directly into the suite
+// Dag.Scheduling — sequential -> max_parallelism = 1, parallel{N} ->
+// max_parallelism = N, on_node_failure passes straight through. This is the
+// bridge from catalog to the runtime engine.
 type SuitePreset struct {
 	state         protoimpl.MessageState  `protogen:"open.v1"`
 	Provider      deployment.Provider     `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`

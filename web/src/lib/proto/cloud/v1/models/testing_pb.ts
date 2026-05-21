@@ -2,14 +2,16 @@
 // @generated from file cloud/v1/models/testing.proto (package cloud.v1.models, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { SuitePreset, SuitePresetJson } from "../domain/suite_pb.ts";
 import { file_cloud_v1_domain_suite } from "../domain/suite_pb.ts";
 import type { TestPreset, TestPresetJson } from "../domain/test_pb.ts";
 import { file_cloud_v1_domain_test } from "../domain/test_pb.ts";
 import type { DagId, DagIdJson, Entity, EntityJson, Own, OwnJson, SuiteId, SuiteIdJson, SuiteRunId, SuiteRunIdJson } from "./common_pb.ts";
 import { file_cloud_v1_models_common } from "./common_pb.ts";
+import type { Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_goplain_goplain } from "../../../goplain/goplain_pb.ts";
 import { file_ratelproto_ratelproto } from "../../../ratelproto/ratelproto_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
@@ -19,9 +21,16 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/testing.proto.
  */
 export const file_cloud_v1_models_testing: GenFile = /*@__PURE__*/
-  fileDesc("Ch1jbG91ZC92MS9tb2RlbHMvdGVzdGluZy5wcm90bxIPY2xvdWQudjEubW9kZWxzIvcDCgdUZXN0UnVuEi8KBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLm1vZGVscy5FbnRpdHlCBoKmHQIgARIrCgVvd25lZBgCIAEoCzIULmNsb3VkLnYxLm1vZGVscy5Pd25CBoKmHQIgARIdCgRuYW1lGAMgASgJQgr6QgdyBRj/ARABSACIAQESIgoLZGVzY3JpcHRpb24YBCABKAlCCPpCBXIDGIAISAGIAQESQAoLdGVzdF9wcmVzZXQYBSABKAsyGy5jbG91ZC52MS5kb21haW4uVGVzdFByZXNldEIO+kIFigECEAGCph0CEAESPwoDZGFnGAYgASgLMhYuY2xvdWQudjEubW9kZWxzLkRhZ0lkQhr6QgWKAQIQAZq1GA4SDEABMgRkYWdzOgJpZBJQCgxzdWl0ZV9ydW5faWQYByABKAsyGy5jbG91ZC52MS5tb2RlbHMuU3VpdGVSdW5JZEIYmrUYFBISMgpzdWl0ZV9ydW5zOgJpZEABSAKIAQEaMwoETGlzdBIrCgl0ZXN0X3J1bnMYASADKAsyGC5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1bjoXkrUYDQgBEgl0ZXN0X3J1bnOCph0CCAFCBwoFX25hbWVCDgoMX2Rlc2NyaXB0aW9uQg8KDV9zdWl0ZV9ydW5faWQizAIKBVN1aXRlEi8KBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLm1vZGVscy5FbnRpdHlCBoKmHQIgARIrCgVvd25lZBgCIAEoCzIULmNsb3VkLnYxLm1vZGVscy5Pd25CBoKmHQIgARIdCgRuYW1lGAMgASgJQgr6QgdyBRj/ARABSACIAQESIgoLZGVzY3JpcHRpb24YBCABKAlCCPpCBXIDGIAISAGIAQESPAoGcHJlc2V0GAUgASgLMhwuY2xvdWQudjEuZG9tYWluLlN1aXRlUHJlc2V0Qg76QgWKAQIQAYKmHQIQARo1CgRMaXN0Ei0KCXRlc3RfcnVucxgBIAMoCzIaLmNsb3VkLnYxLm1vZGVscy5TdWl0ZVJ1bnM6FJK1GAoIARIGc3VpdGVzgqYdAggBQgcKBV9uYW1lQg4KDF9kZXNjcmlwdGlvbiKCAwoJU3VpdGVSdW5zEi8KBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLm1vZGVscy5FbnRpdHlCBoKmHQIgARIrCgVvd25lZBgCIAEoCzIULmNsb3VkLnYxLm1vZGVscy5Pd25CBoKmHQIgARJACghzdWl0ZV9pZBgDIAEoCzIYLmNsb3VkLnYxLm1vZGVscy5TdWl0ZUlkQhSatRgQEg4yBnN1aXRlczoCaWRAARI/CgNkYWcYBiABKAsyFi5jbG91ZC52MS5tb2RlbHMuRGFnSWRCGvpCBYoBAhABmrUYDhIMOgJpZEABMgRkYWdzEkMKCXRlc3RfcnVucxgIIAMoCzIYLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuQhaitRgSChAYAQoMc3VpdGVfcnVuX2lkGjUKBExpc3QSLQoJdGVzdF9ydW5zGAEgAygLMhouY2xvdWQudjEubW9kZWxzLlN1aXRlUnVuczoYkrUYDggBEgpzdWl0ZV9ydW5zgqYdAggBQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_models_common, file_goplain_goplain, file_ratelproto_ratelproto, file_validate_validate]);
+  fileDesc("Ch1jbG91ZC92MS9tb2RlbHMvdGVzdGluZy5wcm90bxIPY2xvdWQudjEubW9kZWxzIvcDCgdUZXN0UnVuEi8KBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLm1vZGVscy5FbnRpdHlCBoKmHQIgARIrCgVvd25lZBgCIAEoCzIULmNsb3VkLnYxLm1vZGVscy5Pd25CBoKmHQIgARIdCgRuYW1lGAMgASgJQgr6QgdyBRABGP8BSACIAQESIgoLZGVzY3JpcHRpb24YBCABKAlCCPpCBXIDGIAISAGIAQESQAoLdGVzdF9wcmVzZXQYBSABKAsyGy5jbG91ZC52MS5kb21haW4uVGVzdFByZXNldEIO+kIFigECEAGCph0CEAESPwoDZGFnGAYgASgLMhYuY2xvdWQudjEubW9kZWxzLkRhZ0lkQhr6QgWKAQIQAZq1GA4SDDIEZGFnczoCaWRAARJQCgxzdWl0ZV9ydW5faWQYByABKAsyGy5jbG91ZC52MS5tb2RlbHMuU3VpdGVSdW5JZEIYmrUYFBISMgpzdWl0ZV9ydW5zOgJpZEABSAKIAQEaMwoETGlzdBIrCgl0ZXN0X3J1bnMYASADKAsyGC5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1bjoXkrUYDQgBEgl0ZXN0X3J1bnOCph0CCAFCBwoFX25hbWVCDgoMX2Rlc2NyaXB0aW9uQg8KDV9zdWl0ZV9ydW5faWQixAYKBVN1aXRlEi8KBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLm1vZGVscy5FbnRpdHlCBoKmHQIgARIrCgVvd25lZBgCIAEoCzIULmNsb3VkLnYxLm1vZGVscy5Pd25CBoKmHQIgARIdCgRuYW1lGAMgASgJQgr6QgdyBRABGP8BSACIAQESIgoLZGVzY3JpcHRpb24YBCABKAlCCPpCBXIDGIAISAGIAQESPAoGcHJlc2V0GAUgASgLMhwuY2xvdWQudjEuZG9tYWluLlN1aXRlUHJlc2V0Qg76QgWKAQIQAYKmHQIQARIxCgRjcm9uGAYgASgLMhsuY2xvdWQudjEubW9kZWxzLlN1aXRlLkNyb25CBoKmHQIQARI1CgxuZXh0X2ZpcmVfYXQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSAKIAQEaLgoETGlzdBImCgZzdWl0ZXMYASADKAsyFi5jbG91ZC52MS5tb2RlbHMuU3VpdGUa4AIKBENyb24SGAoEZXhwchgBIAEoCUIK+kIHcgUQARiAARIZCgh0aW1lem9uZRgCIAEoCUIH+kIEcgIYQBI+CgdjYXRjaHVwGAMgASgOMiMuY2xvdWQudjEubW9kZWxzLlN1aXRlLkNyb24uQ2F0Y2h1cEII+kIFggECEAESRAoKY29uY3VycmVudBgEIAEoDjImLmNsb3VkLnYxLm1vZGVscy5TdWl0ZS5Dcm9uLkNvbmN1cnJlbnRCCPpCBYIBAhABIkYKB0NhdGNodXASFwoTQ0FUQ0hVUF9VTlNQRUNJRklFRBAAEhAKDENBVENIVVBfU0tJUBABEhAKDENBVENIVVBfT05DRRACIlUKCkNvbmN1cnJlbnQSGgoWQ09OQ1VSUkVOVF9VTlNQRUNJRklFRBAAEhQKEENPTkNVUlJFTlRfQUxMT1cQARIVChFDT05DVVJSRU5UX0ZPUkJJRBACOjWStRgrCAESBnN1aXRlcyofCg9zdWl0ZXNfY3Jvbl9pZHgSDG5leHRfZmlyZV9hdIKmHQIIAUIHCgVfbmFtZUIOCgxfZGVzY3JpcHRpb25CDwoNX25leHRfZmlyZV9hdCKBAwoIU3VpdGVSdW4SLwoGZW50aXR5GAEgASgLMhcuY2xvdWQudjEubW9kZWxzLkVudGl0eUIGgqYdAiABEisKBW93bmVkGAIgASgLMhQuY2xvdWQudjEubW9kZWxzLk93bkIGgqYdAiABEkAKCHN1aXRlX2lkGAMgASgLMhguY2xvdWQudjEubW9kZWxzLlN1aXRlSWRCFJq1GBASDjIGc3VpdGVzOgJpZEABEj8KA2RhZxgGIAEoCzIWLmNsb3VkLnYxLm1vZGVscy5EYWdJZEIa+kIFigECEAGatRgOEgw6AmlkQAEyBGRhZ3MSQwoJdGVzdF9ydW5zGAggAygLMhguY2xvdWQudjEubW9kZWxzLlRlc3RSdW5CFqK1GBIKEAoMc3VpdGVfcnVuX2lkGAEaNQoETGlzdBItCgpzdWl0ZV9ydW5zGAEgAygLMhkuY2xvdWQudjEubW9kZWxzLlN1aXRlUnVuOhiStRgOCAESCnN1aXRlX3J1bnOCph0CCAFCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_models_common, file_google_protobuf_timestamp, file_goplain_goplain, file_ratelproto_ratelproto, file_validate_validate]);
 
 /**
+ *
+ * BDD notes (B6):
+ * - TestRun embeds test_preset by value (immutable snapshot) and owns one Dag.
+ * A SuiteRun owns a suite Dag whose nodes dag_ref/sub_dag the TestRun Dags.
+ * - naming holes RESOLVED (H10): SuiteRuns -> SuiteRun (singular instance);
+ * Suite.List now holds Suite under `suites`; SuiteRun.List uses `suite_runs`.
+ *
  * @generated from message cloud.v1.models.TestRun
  */
 export type TestRun = Message<"cloud.v1.models.TestRun"> & {
@@ -62,6 +71,13 @@ export type TestRun = Message<"cloud.v1.models.TestRun"> & {
 };
 
 /**
+ *
+ * BDD notes (B6):
+ * - TestRun embeds test_preset by value (immutable snapshot) and owns one Dag.
+ * A SuiteRun owns a suite Dag whose nodes dag_ref/sub_dag the TestRun Dags.
+ * - naming holes RESOLVED (H10): SuiteRuns -> SuiteRun (singular instance);
+ * Suite.List now holds Suite under `suites`; SuiteRun.List uses `suite_runs`.
+ *
  * @generated from message cloud.v1.models.TestRun
  */
 export type TestRunJson = {
@@ -167,6 +183,22 @@ export type Suite = Message<"cloud.v1.models.Suite"> & {
    * @generated from field: cloud.v1.domain.SuitePreset preset = 5;
    */
   preset?: SuitePreset;
+
+  /**
+   * cron is the recurring schedule; nil/empty means manual launch only. 
+   *
+   * @generated from field: cloud.v1.models.Suite.Cron cron = 6;
+   */
+  cron?: Suite_Cron;
+
+  /**
+   *
+   * next_fire_at is the next scheduled firing instant, indexed for the cron
+   * loop. The per-fire lease lives in Valkey (G3), not here.
+   *
+   * @generated from field: optional google.protobuf.Timestamp next_fire_at = 7;
+   */
+  nextFireAt?: Timestamp;
 };
 
 /**
@@ -197,6 +229,22 @@ export type SuiteJson = {
    * @generated from field: cloud.v1.domain.SuitePreset preset = 5;
    */
   preset?: SuitePresetJson;
+
+  /**
+   * cron is the recurring schedule; nil/empty means manual launch only. 
+   *
+   * @generated from field: cloud.v1.models.Suite.Cron cron = 6;
+   */
+  cron?: Suite_CronJson;
+
+  /**
+   *
+   * next_fire_at is the next scheduled firing instant, indexed for the cron
+   * loop. The per-fire lease lives in Valkey (G3), not here.
+   *
+   * @generated from field: optional google.protobuf.Timestamp next_fire_at = 7;
+   */
+  nextFireAt?: TimestampJson;
 };
 
 export type SuiteValid = Suite;
@@ -213,9 +261,9 @@ export const SuiteSchema: GenMessage<Suite, {jsonType: SuiteJson, validType: Sui
  */
 export type Suite_List = Message<"cloud.v1.models.Suite.List"> & {
   /**
-   * @generated from field: repeated cloud.v1.models.SuiteRuns test_runs = 1;
+   * @generated from field: repeated cloud.v1.models.Suite suites = 1;
    */
-  testRuns: SuiteRuns[];
+  suites: Suite[];
 };
 
 /**
@@ -223,9 +271,9 @@ export type Suite_List = Message<"cloud.v1.models.Suite.List"> & {
  */
 export type Suite_ListJson = {
   /**
-   * @generated from field: repeated cloud.v1.models.SuiteRuns test_runs = 1;
+   * @generated from field: repeated cloud.v1.models.Suite suites = 1;
    */
-  testRuns?: SuiteRunsJson[];
+  suites?: SuiteJson[];
 };
 
 export type Suite_ListValid = Suite_List;
@@ -238,9 +286,154 @@ export const Suite_ListSchema: GenMessage<Suite_List, {jsonType: Suite_ListJson,
   messageDesc(file_cloud_v1_models_testing, 1, 0);
 
 /**
- * @generated from message cloud.v1.models.SuiteRuns
+ * Cron is the optional schedule for recurring suite runs (H51). 
+ *
+ * @generated from message cloud.v1.models.Suite.Cron
  */
-export type SuiteRuns = Message<"cloud.v1.models.SuiteRuns"> & {
+export type Suite_Cron = Message<"cloud.v1.models.Suite.Cron"> & {
+  /**
+   * expr is a cron expression. 
+   *
+   * @generated from field: string expr = 1;
+   */
+  expr: string;
+
+  /**
+   * timezone is an IANA tz name, e.g. "Europe/Moscow". 
+   *
+   * @generated from field: string timezone = 2;
+   */
+  timezone: string;
+
+  /**
+   * @generated from field: cloud.v1.models.Suite.Cron.Catchup catchup = 3;
+   */
+  catchup: Suite_Cron_Catchup;
+
+  /**
+   * @generated from field: cloud.v1.models.Suite.Cron.Concurrent concurrent = 4;
+   */
+  concurrent: Suite_Cron_Concurrent;
+};
+
+/**
+ * Cron is the optional schedule for recurring suite runs (H51). 
+ *
+ * @generated from message cloud.v1.models.Suite.Cron
+ */
+export type Suite_CronJson = {
+  /**
+   * expr is a cron expression. 
+   *
+   * @generated from field: string expr = 1;
+   */
+  expr?: string;
+
+  /**
+   * timezone is an IANA tz name, e.g. "Europe/Moscow". 
+   *
+   * @generated from field: string timezone = 2;
+   */
+  timezone?: string;
+
+  /**
+   * @generated from field: cloud.v1.models.Suite.Cron.Catchup catchup = 3;
+   */
+  catchup?: Suite_Cron_CatchupJson;
+
+  /**
+   * @generated from field: cloud.v1.models.Suite.Cron.Concurrent concurrent = 4;
+   */
+  concurrent?: Suite_Cron_ConcurrentJson;
+};
+
+export type Suite_CronValid = Suite_Cron;
+
+/**
+ * Describes the message cloud.v1.models.Suite.Cron.
+ * Use `create(Suite_CronSchema)` to create a new message.
+ */
+export const Suite_CronSchema: GenMessage<Suite_Cron, {jsonType: Suite_CronJson, validType: Suite_CronValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_testing, 1, 1);
+
+/**
+ * Catchup controls behavior after missed windows. 
+ *
+ * @generated from enum cloud.v1.models.Suite.Cron.Catchup
+ */
+export enum Suite_Cron_Catchup {
+  /**
+   * @generated from enum value: CATCHUP_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * SKIP advances the schedule without firing missed windows. 
+   *
+   * @generated from enum value: CATCHUP_SKIP = 1;
+   */
+  SKIP = 1,
+
+  /**
+   * ONCE fires a single batch then advances. 
+   *
+   * @generated from enum value: CATCHUP_ONCE = 2;
+   */
+  ONCE = 2,
+}
+
+/**
+ * Catchup controls behavior after missed windows. 
+ *
+ * @generated from enum cloud.v1.models.Suite.Cron.Catchup
+ */
+export type Suite_Cron_CatchupJson = "CATCHUP_UNSPECIFIED" | "CATCHUP_SKIP" | "CATCHUP_ONCE";
+
+/**
+ * Describes the enum cloud.v1.models.Suite.Cron.Catchup.
+ */
+export const Suite_Cron_CatchupSchema: GenEnum<Suite_Cron_Catchup, Suite_Cron_CatchupJson> = /*@__PURE__*/
+  enumDesc(file_cloud_v1_models_testing, 1, 1, 0);
+
+/**
+ * Concurrent controls overlap with an in-flight run of the same suite. 
+ *
+ * @generated from enum cloud.v1.models.Suite.Cron.Concurrent
+ */
+export enum Suite_Cron_Concurrent {
+  /**
+   * @generated from enum value: CONCURRENT_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: CONCURRENT_ALLOW = 1;
+   */
+  ALLOW = 1,
+
+  /**
+   * @generated from enum value: CONCURRENT_FORBID = 2;
+   */
+  FORBID = 2,
+}
+
+/**
+ * Concurrent controls overlap with an in-flight run of the same suite. 
+ *
+ * @generated from enum cloud.v1.models.Suite.Cron.Concurrent
+ */
+export type Suite_Cron_ConcurrentJson = "CONCURRENT_UNSPECIFIED" | "CONCURRENT_ALLOW" | "CONCURRENT_FORBID";
+
+/**
+ * Describes the enum cloud.v1.models.Suite.Cron.Concurrent.
+ */
+export const Suite_Cron_ConcurrentSchema: GenEnum<Suite_Cron_Concurrent, Suite_Cron_ConcurrentJson> = /*@__PURE__*/
+  enumDesc(file_cloud_v1_models_testing, 1, 1, 1);
+
+/**
+ * @generated from message cloud.v1.models.SuiteRun
+ */
+export type SuiteRun = Message<"cloud.v1.models.SuiteRun"> & {
   /**
    * @generated from field: cloud.v1.models.Entity entity = 1;
    */
@@ -268,9 +461,9 @@ export type SuiteRuns = Message<"cloud.v1.models.SuiteRuns"> & {
 };
 
 /**
- * @generated from message cloud.v1.models.SuiteRuns
+ * @generated from message cloud.v1.models.SuiteRun
  */
-export type SuiteRunsJson = {
+export type SuiteRunJson = {
   /**
    * @generated from field: cloud.v1.models.Entity entity = 1;
    */
@@ -297,41 +490,41 @@ export type SuiteRunsJson = {
   testRuns?: TestRunJson[];
 };
 
-export type SuiteRunsValid = SuiteRuns;
+export type SuiteRunValid = SuiteRun;
 
 /**
- * Describes the message cloud.v1.models.SuiteRuns.
- * Use `create(SuiteRunsSchema)` to create a new message.
+ * Describes the message cloud.v1.models.SuiteRun.
+ * Use `create(SuiteRunSchema)` to create a new message.
  */
-export const SuiteRunsSchema: GenMessage<SuiteRuns, {jsonType: SuiteRunsJson, validType: SuiteRunsValid}> = /*@__PURE__*/
+export const SuiteRunSchema: GenMessage<SuiteRun, {jsonType: SuiteRunJson, validType: SuiteRunValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_models_testing, 2);
 
 /**
- * @generated from message cloud.v1.models.SuiteRuns.List
+ * @generated from message cloud.v1.models.SuiteRun.List
  */
-export type SuiteRuns_List = Message<"cloud.v1.models.SuiteRuns.List"> & {
+export type SuiteRun_List = Message<"cloud.v1.models.SuiteRun.List"> & {
   /**
-   * @generated from field: repeated cloud.v1.models.SuiteRuns test_runs = 1;
+   * @generated from field: repeated cloud.v1.models.SuiteRun suite_runs = 1;
    */
-  testRuns: SuiteRuns[];
+  suiteRuns: SuiteRun[];
 };
 
 /**
- * @generated from message cloud.v1.models.SuiteRuns.List
+ * @generated from message cloud.v1.models.SuiteRun.List
  */
-export type SuiteRuns_ListJson = {
+export type SuiteRun_ListJson = {
   /**
-   * @generated from field: repeated cloud.v1.models.SuiteRuns test_runs = 1;
+   * @generated from field: repeated cloud.v1.models.SuiteRun suite_runs = 1;
    */
-  testRuns?: SuiteRunsJson[];
+  suiteRuns?: SuiteRunJson[];
 };
 
-export type SuiteRuns_ListValid = SuiteRuns_List;
+export type SuiteRun_ListValid = SuiteRun_List;
 
 /**
- * Describes the message cloud.v1.models.SuiteRuns.List.
- * Use `create(SuiteRuns_ListSchema)` to create a new message.
+ * Describes the message cloud.v1.models.SuiteRun.List.
+ * Use `create(SuiteRun_ListSchema)` to create a new message.
  */
-export const SuiteRuns_ListSchema: GenMessage<SuiteRuns_List, {jsonType: SuiteRuns_ListJson, validType: SuiteRuns_ListValid}> = /*@__PURE__*/
+export const SuiteRun_ListSchema: GenMessage<SuiteRun_List, {jsonType: SuiteRun_ListJson, validType: SuiteRun_ListValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_models_testing, 2, 0);
 

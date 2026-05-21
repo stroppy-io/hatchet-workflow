@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.logs;
+
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/logs";
+
+/*
+    Unified runtime log model (logs feature). Generalizes the two old ingest paths
+    into one queried shape: agent command stdout/stderr AND component/DB logs
+    (Vector: journald + DB log files). Logs are runtime observations (queried from
+    VictoriaLogs, not a DB entity) → runtime/, like runtime/metrics. Ids are plain
+    strings (runtime stays independent of models, like DagRef).
+
+    Two axes coexist via labels: per-DAG-stage (node_execution_id) and per-component
+    (component_id). Command logs carry both (stage + target component); continuous
+    component/DB logs carry component_id (+ machine_id) only.
+ */
+
+/* Source is where a log line came from. */
+enum Source {
+    SOURCE_UNSPECIFIED = 0;
+    /* COMMAND is agent command stdout/stderr (a DAG node op). */
+    SOURCE_COMMAND = 1;
+    /* JOURNALD is a systemd-managed service's stdout/stderr. */
+    SOURCE_JOURNALD = 2;
+    /* FILE is a tailed log file (e.g. a postgresql log under /var/log/postgresql). */
+    SOURCE_FILE = 3;
+}
+
+/* Stream is the std stream. */
+enum Stream {
+    STREAM_UNSPECIFIED = 0;
+    STREAM_STDOUT = 1;
+    STREAM_STDERR = 2;
+}
+
+/*
+    LogCursor anchors an exact line: the precise observed_at plus a per-timestamp
+    sequence ordinal (provider-agnostic, stable, dedups equal timestamps).
+ */
+message LogCursor {
+    google.protobuf.Timestamp observed_at = 1 [(validate.rules).timestamp.required = true];
+    uint64 seq = 2;
+}
+
+/* LogLine is one unified log record returned from a query or stream. */
+message LogLine {
+    google.protobuf.Timestamp observed_at = 1 [(validate.rules).timestamp.required = true];
+    /* dag_id is the run's Dag id (plain string, runtime-pure). */
+    string dag_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /* node_execution_id is the owning DAG stage, when the line came from a node op. */
+    string node_execution_id = 3 [(validate.rules).string.max_len = 128];
+    /* component_id is the topology component the line is about. */
+    string component_id = 4 [(validate.rules).string.max_len = 128];
+    /* machine_id is the host. */
+    string machine_id = 5 [(validate.rules).string.max_len = 128];
+    Source source = 6 [(validate.rules).enum.defined_only = true];
+    /* unit is the systemd unit or file path for JOURNALD/FILE sources. */
+    string unit = 7 [(validate.rules).string.max_len = 256];
+    Stream stream = 8 [(validate.rules).enum.defined_only = true];
+    string line = 9 [(validate.rules).string.max_len = 65536];
+    /* cursor anchors this exact line for deep-linking. */
+    LogCursor cursor = 10;
+}
+
+/*
+    LogRef is a shareable handle to a log slice (the link). Resolved by the backend
+    into a LogsQL query + a deep-link URL. component_id alone = a component's logs;
+    node_execution_id = a stage's logs; cursor = a specific line anchor.
+ */
+message LogRef {
+    string dag_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    optional string node_execution_id = 2 [(validate.rules).string.max_len = 128];
+    optional string component_id = 3 [(validate.rules).string.max_len = 128];
+    optional google.protobuf.Timestamp start = 4;
+    optional google.protobuf.Timestamp end = 5;
+    /* cursor pins a specific line (deep-link to line). */
+    optional LogCursor cursor = 6;
+}
+
+/* LogPage is a page of query results with a forward cursor token. */
+message LogPage {
+    repeated LogLine lines = 1 [(validate.rules).repeated.max_items = 10000];
+    /* next_token continues the query; empty when no more. */
+    string next_token = 2 [(validate.rules).string.max_len = 256];
+}

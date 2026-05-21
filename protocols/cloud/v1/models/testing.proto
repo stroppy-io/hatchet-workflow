@@ -5,6 +5,7 @@ package cloud.v1.models;
 import "cloud/v1/domain/suite.proto";
 import "cloud/v1/domain/test.proto";
 import "cloud/v1/models/common.proto";
+import "google/protobuf/timestamp.proto";
 import "goplain/goplain.proto";
 import "ratelproto/ratelproto.proto";
 import "validate/validate.proto";
@@ -12,6 +13,13 @@ import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
 
+/*
+    BDD notes (B6):
+    - TestRun embeds test_preset by value (immutable snapshot) and owns one Dag.
+      A SuiteRun owns a suite Dag whose nodes dag_ref/sub_dag the TestRun Dags.
+    - naming holes RESOLVED (H10): SuiteRuns -> SuiteRun (singular instance);
+      Suite.List now holds Suite under `suites`; SuiteRun.List uses `suite_runs`.
+ */
 message TestRun {
     message List {repeated TestRun test_runs = 1;}
     option (goplain.message).generate = true;
@@ -45,12 +53,40 @@ message TestRun {
 }
 
 message Suite {
-    message List {repeated SuiteRuns test_runs = 1;}
+    message List {repeated Suite suites = 1;}
     option (goplain.message).generate = true;
     option (ratel.table) = {
         generate: true
         table_name: "suites"
+        indexes: [
+            {name: "suites_cron_idx", columns: ["next_fire_at"]}
+        ]
     };
+
+    /* Cron is the optional schedule for recurring suite runs (H51). */
+    message Cron {
+        /* expr is a cron expression. */
+        string expr = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+        /* timezone is an IANA tz name, e.g. "Europe/Moscow". */
+        string timezone = 2 [(validate.rules).string.max_len = 64];
+        /* Catchup controls behavior after missed windows. */
+        enum Catchup {
+            CATCHUP_UNSPECIFIED = 0;
+            /* SKIP advances the schedule without firing missed windows. */
+            CATCHUP_SKIP = 1;
+            /* ONCE fires a single batch then advances. */
+            CATCHUP_ONCE = 2;
+        }
+        Catchup catchup = 3 [(validate.rules).enum.defined_only = true];
+        /* Concurrent controls overlap with an in-flight run of the same suite. */
+        enum Concurrent {
+            CONCURRENT_UNSPECIFIED = 0;
+            CONCURRENT_ALLOW = 1;
+            CONCURRENT_FORBID = 2;
+        }
+        Concurrent concurrent = 4 [(validate.rules).enum.defined_only = true];
+    }
+
     models.Entity entity = 1 [(goplain.field).embed = true];
     models.Own owned = 2 [(goplain.field).embed = true];
     optional string name = 3 [(validate.rules).string = {min_len: 1, max_len: 255}];
@@ -59,10 +95,17 @@ message Suite {
         (goplain.field).serialize = true,
         (validate.rules).message.required = true
     ];
+    /* cron is the recurring schedule; nil/empty means manual launch only. */
+    Cron cron = 6 [(goplain.field).serialize = true];
+    /*
+        next_fire_at is the next scheduled firing instant, indexed for the cron
+        loop. The per-fire lease lives in Valkey (G3), not here.
+     */
+    optional google.protobuf.Timestamp next_fire_at = 7;
 }
 
-message SuiteRuns {
-    message List {repeated SuiteRuns test_runs = 1;}
+message SuiteRun {
+    message List {repeated SuiteRun suite_runs = 1;}
     option (goplain.message).generate = true;
     option (ratel.table) = {
         generate: true

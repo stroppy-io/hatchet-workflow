@@ -12,6 +12,8 @@ import type { Yandex, Yandex_ManagedYdb, Yandex_ManagedYdbJson, Yandex_Vm, Yande
 import { file_cloud_v1_deployment_yandex } from "./yandex_pb.ts";
 import type { Network, NetworkJson } from "../runtime/system/ip_pb.ts";
 import { file_cloud_v1_runtime_system_ip } from "../runtime/system/ip_pb.ts";
+import type { Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -19,11 +21,18 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/deployment/deployment.proto.
  */
 export const file_cloud_v1_deployment_deployment: GenFile = /*@__PURE__*/
-  fileDesc("CiRjbG91ZC92MS9kZXBsb3ltZW50L2RlcGxveW1lbnQucHJvdG8SE2Nsb3VkLnYxLmRlcGxveW1lbnQivwMKEERlcGxveW1lbnRJbnRlbnQSOwoIcHJvdmlkZXIYASABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyQgr6QgeCAQQgABABEkYKBXNwZWNzGAIgAygLMiouY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50SW50ZW50LlNwZWNCC/pCCJIBBQgBEIABEiMKBHRhZ3MYAyABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxqAAgoEU3BlYxIWCgJpZBgBIAEoCUIK+kIHcgUQARiAARI9Cgl5YW5kZXhfdm0YCiABKAsyHi5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleC5WbUII+kIFigECEAFIABJHCgttYW5hZ2VkX3lkYhgLIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk1hbmFnZWRZZGJCCPpCBYoBAhABSAASSwoQZG9ja2VyX2NvbnRhaW5lchgMIAEoCzIlLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLkNvbnRhaW5lckII+kIFigECEAFIAEILCgRzcGVjEgP4QgEihwEKDFF1b3RhUmVxdWVzdBI7Cghwcm92aWRlchgBIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXJCCvpCB4IBBBABIAASHgoKcXVvdGFfbmFtZRgCIAEoCUIK+kIHcgUQARiAARIaCglyZXF1ZXN0ZWQYAyABKARCB/pCBDICKAEirwEKBVF1b3RhEjsKCHByb3ZpZGVyGAEgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlckIK+kIHggEEEAEgABIeCgpxdW90YV9uYW1lGAIgASgJQgr6QgdyBRABGIABEhYKBWxpbWl0GAMgASgEQgf6QgQyAigBEhUKBHVzZWQYBCABKARCB/pCBDICKAASGgoJYXZhaWxhYmxlGAUgASgEQgf6QgQyAigAIroCCgpEZXBsb3ltZW50EjsKCHByb3ZpZGVyGAEgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlckIK+kIHggEEEAEgABIxCgduZXR3b3JrGAIgASgLMiAuY2xvdWQudjEucnVudGltZS5zeXN0ZW0uTmV0d29yaxIQCghkZXBsb3llZBgDIAEoCBI5Cg5xdW90YV9yZXF1ZXN0cxgEIAMoCzIhLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGFSZXF1ZXN0Ei0KBmRvY2tlchgKIAEoCzIbLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VySAASLQoGeWFuZGV4GAsgASgLMhsuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXhIAEIRCgpkZXBsb3ltZW50EgP4QgEqTgoIUHJvdmlkZXISGAoUUFJPVklERVJfVU5TUEVDSUZJRUQQABITCg9QUk9WSURFUl9ET0NLRVIQARITCg9QUk9WSURFUl9ZQU5ERVgQAkJIWkZnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9kZXBsb3ltZW50YgZwcm90bzM", [file_cloud_v1_common_tags, file_cloud_v1_deployment_docker, file_cloud_v1_deployment_yandex, file_cloud_v1_runtime_system_ip, file_validate_validate]);
+  fileDesc("CiRjbG91ZC92MS9kZXBsb3ltZW50L2RlcGxveW1lbnQucHJvdG8SE2Nsb3VkLnYxLmRlcGxveW1lbnQivwMKEERlcGxveW1lbnRJbnRlbnQSOwoIcHJvdmlkZXIYASABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyQgr6QgeCAQQgABABEkYKBXNwZWNzGAIgAygLMiouY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50SW50ZW50LlNwZWNCC/pCCJIBBQgBEIABEiMKBHRhZ3MYAyABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxqAAgoEU3BlYxIWCgJpZBgBIAEoCUIK+kIHcgUQARiAARI9Cgl5YW5kZXhfdm0YCiABKAsyHi5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleC5WbUII+kIFigECEAFIABJHCgttYW5hZ2VkX3lkYhgLIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk1hbmFnZWRZZGJCCPpCBYoBAhABSAASSwoQZG9ja2VyX2NvbnRhaW5lchgMIAEoCzIlLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLkNvbnRhaW5lckII+kIFigECEAFIAEILCgRzcGVjEgP4QgEizgEKDFF1b3RhUmVxdWVzdBI7Cghwcm92aWRlchgBIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXJCCvpCB4IBBCAAEAESQAoIcmVzb3VyY2UYAiABKA4yIi5jbG91ZC52MS5kZXBsb3ltZW50LlF1b3RhUmVzb3VyY2VCCvpCB4IBBBABIAASGgoJcmVxdWVzdGVkGAMgASgEQgf6QgQyAigBEiMKEXByb3ZpZGVyX3F1b3RhX2lkGAQgASgJQgj6QgVyAxiAASL2AQoFUXVvdGESOwoIcHJvdmlkZXIYASABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyQgr6QgeCAQQgABABEkAKCHJlc291cmNlGAIgASgOMiIuY2xvdWQudjEuZGVwbG95bWVudC5RdW90YVJlc291cmNlQgr6QgeCAQQQASAAEhYKBWxpbWl0GAMgASgEQgf6QgQyAigBEhUKBHVzZWQYBCABKARCB/pCBDICKAASGgoJYXZhaWxhYmxlGAUgASgEQgf6QgQyAigAEiMKEXByb3ZpZGVyX3F1b3RhX2lkGAYgASgJQgj6QgVyAxiAASK+AQoOUXVvdGFJbnZlbnRvcnkSOwoIcHJvdmlkZXIYASABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyQgr6QgeCAQQQASAAEjUKBnF1b3RhcxgCIAMoCzIaLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGFCCfpCBpIBAxCAAhI4CgpmZXRjaGVkX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEII+kIFsgECCAEiugIKCkRlcGxveW1lbnQSOwoIcHJvdmlkZXIYASABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyQgr6QgeCAQQQASAAEjEKB25ldHdvcmsYAiABKAsyIC5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5OZXR3b3JrEhAKCGRlcGxveWVkGAMgASgIEjkKDnF1b3RhX3JlcXVlc3RzGAQgAygLMiEuY2xvdWQudjEuZGVwbG95bWVudC5RdW90YVJlcXVlc3QSLQoGZG9ja2VyGAogASgLMhsuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXJIABItCgZ5YW5kZXgYCyABKAsyGy5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleEgAQhEKCmRlcGxveW1lbnQSA/hCASpOCghQcm92aWRlchIYChRQUk9WSURFUl9VTlNQRUNJRklFRBAAEhMKD1BST1ZJREVSX0RPQ0tFUhABEhMKD1BST1ZJREVSX1lBTkRFWBACKpUCCg1RdW90YVJlc291cmNlEh4KGlFVT1RBX1JFU09VUkNFX1VOU1BFQ0lGSUVEEAASGAoUUVVPVEFfUkVTT1VSQ0VfQ09SRVMQARIcChhRVU9UQV9SRVNPVVJDRV9NRU1PUllfR0IQAhIZChVRVU9UQV9SRVNPVVJDRV9TU0RfR0IQAxIZChVRVU9UQV9SRVNPVVJDRV9IRERfR0IQBBIcChhRVU9UQV9SRVNPVVJDRV9JTlNUQU5DRVMQBRIfChtRVU9UQV9SRVNPVVJDRV9FWFRFUk5BTF9JUFMQBhIbChdRVU9UQV9SRVNPVVJDRV9ORVRXT1JLUxAHEhoKFlFVT1RBX1JFU09VUkNFX1NVQk5FVFMQCEJIWkZnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9kZXBsb3ltZW50YgZwcm90bzM", [file_cloud_v1_common_tags, file_cloud_v1_deployment_docker, file_cloud_v1_deployment_yandex, file_cloud_v1_runtime_system_ip, file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  *
  * REQUIRED VALIDATE TO ALL SPEC FROM OneOff is one Provider Kind
+ *
+ * BDD note (B5): placement/zones live in this deployment layer, not in
+ * domain.Topology. The planner materializes a provider-agnostic Topology into
+ * DeploymentIntent.Spec[] per Provider, applying zone round-robin (old
+ * placement.go: ru-central1-a/-b/-d). After apply, Deployment / Yandex.Output
+ * (VmOutput.internal_ip/public_ip, ManagedYdbOutput endpoints) are the runtime
+ * facts that resolve render.Binding values from the database/workload render.
  *
  * @generated from message cloud.v1.deployment.DeploymentIntent
  */
@@ -47,6 +56,13 @@ export type DeploymentIntent = Message<"cloud.v1.deployment.DeploymentIntent"> &
 /**
  *
  * REQUIRED VALIDATE TO ALL SPEC FROM OneOff is one Provider Kind
+ *
+ * BDD note (B5): placement/zones live in this deployment layer, not in
+ * domain.Topology. The planner materializes a provider-agnostic Topology into
+ * DeploymentIntent.Spec[] per Provider, applying zone round-robin (old
+ * placement.go: ru-central1-a/-b/-d). After apply, Deployment / Yandex.Output
+ * (VmOutput.internal_ip/public_ip, ManagedYdbOutput endpoints) are the runtime
+ * facts that resolve render.Binding values from the database/workload render.
  *
  * @generated from message cloud.v1.deployment.DeploymentIntent
  */
@@ -144,6 +160,32 @@ export const DeploymentIntent_SpecSchema: GenMessage<DeploymentIntent_Spec, {jso
   messageDesc(file_cloud_v1_deployment_deployment, 0, 0);
 
 /**
+ *
+ * BDD decisions (D19/D20, features/provisioning/cloud-quota-network.feature):
+ * - cloud-provider quota is a provisioning admission gate AFTER the tenant
+ * quota (D14). QuotaRequest values are summed from the DeploymentIntent VM
+ * resources and checked against fetched Quota.available.
+ * - source of truth is the real cloud (an internal ledger drifts: manual
+ * changes, leaked teardown). Hybrid: a cached inventory fast-rejects, a live
+ * provider query confirms available before terraform apply.
+ * - networks/subnets are pre-allocated and leased BEFORE the run (collision-
+ * safe via internal/core/ips over the real VPC occupancy), replacing the old
+ * hash(run_id)->CIDR collision. Deployment.quota_requests records the audit.
+ *
+ * PROPOSED proto additions still needed for D19/D20 (not yet generated):
+ * - Quota.quota_name -> a typed enum of provider quota classes (CORES, MEMORY,
+ * SSD, HDD, INSTANCES, EXTERNAL_IPS, ...). Closes the existing TODO below.
+ * - a cloud quota INVENTORY snapshot + fetch surface: e.g.
+ * message QuotaInventory { Provider provider = 1; repeated Quota quotas = 2;
+ * google.protobuf.Timestamp fetched_at = 3; }
+ * plus a fetch RPC, so the hybrid cache (fast-reject) + live confirm can read
+ * a freshness-stamped snapshot.
+ * - a persisted models.NetworkAllocation ratel table (mirrors models.Dag): the
+ * leased CIDR, zone, owning DagId, lease_expires_at, provider — so subnet
+ * pre-allocation is collision-safe and recoverable.
+ * - a cloud inventory/reconcile representation of real occupied networks +
+ * quotas synced from the provider (cloud = source of truth).
+ *
  * @generated from message cloud.v1.deployment.QuotaRequest
  */
 export type QuotaRequest = Message<"cloud.v1.deployment.QuotaRequest"> & {
@@ -153,17 +195,52 @@ export type QuotaRequest = Message<"cloud.v1.deployment.QuotaRequest"> & {
   provider: Provider;
 
   /**
-   * @generated from field: string quota_name = 2;
+   * resource is the typed quota class being requested. 
+   *
+   * @generated from field: cloud.v1.deployment.QuotaResource resource = 2;
    */
-  quotaName: string;
+  resource: QuotaResource;
 
   /**
    * @generated from field: uint64 requested = 3;
    */
   requested: bigint;
+
+  /**
+   * provider_quota_id optionally records the raw provider quota name. 
+   *
+   * @generated from field: string provider_quota_id = 4;
+   */
+  providerQuotaId: string;
 };
 
 /**
+ *
+ * BDD decisions (D19/D20, features/provisioning/cloud-quota-network.feature):
+ * - cloud-provider quota is a provisioning admission gate AFTER the tenant
+ * quota (D14). QuotaRequest values are summed from the DeploymentIntent VM
+ * resources and checked against fetched Quota.available.
+ * - source of truth is the real cloud (an internal ledger drifts: manual
+ * changes, leaked teardown). Hybrid: a cached inventory fast-rejects, a live
+ * provider query confirms available before terraform apply.
+ * - networks/subnets are pre-allocated and leased BEFORE the run (collision-
+ * safe via internal/core/ips over the real VPC occupancy), replacing the old
+ * hash(run_id)->CIDR collision. Deployment.quota_requests records the audit.
+ *
+ * PROPOSED proto additions still needed for D19/D20 (not yet generated):
+ * - Quota.quota_name -> a typed enum of provider quota classes (CORES, MEMORY,
+ * SSD, HDD, INSTANCES, EXTERNAL_IPS, ...). Closes the existing TODO below.
+ * - a cloud quota INVENTORY snapshot + fetch surface: e.g.
+ * message QuotaInventory { Provider provider = 1; repeated Quota quotas = 2;
+ * google.protobuf.Timestamp fetched_at = 3; }
+ * plus a fetch RPC, so the hybrid cache (fast-reject) + live confirm can read
+ * a freshness-stamped snapshot.
+ * - a persisted models.NetworkAllocation ratel table (mirrors models.Dag): the
+ * leased CIDR, zone, owning DagId, lease_expires_at, provider — so subnet
+ * pre-allocation is collision-safe and recoverable.
+ * - a cloud inventory/reconcile representation of real occupied networks +
+ * quotas synced from the provider (cloud = source of truth).
+ *
  * @generated from message cloud.v1.deployment.QuotaRequest
  */
 export type QuotaRequestJson = {
@@ -173,14 +250,23 @@ export type QuotaRequestJson = {
   provider?: ProviderJson;
 
   /**
-   * @generated from field: string quota_name = 2;
+   * resource is the typed quota class being requested. 
+   *
+   * @generated from field: cloud.v1.deployment.QuotaResource resource = 2;
    */
-  quotaName?: string;
+  resource?: QuotaResourceJson;
 
   /**
    * @generated from field: uint64 requested = 3;
    */
   requested?: string;
+
+  /**
+   * provider_quota_id optionally records the raw provider quota name. 
+   *
+   * @generated from field: string provider_quota_id = 4;
+   */
+  providerQuotaId?: string;
 };
 
 export type QuotaRequestValid = QuotaRequest;
@@ -202,11 +288,11 @@ export type Quota = Message<"cloud.v1.deployment.Quota"> & {
   provider: Provider;
 
   /**
-   * TODO: Convert to enum by providers
+   * resource is the typed quota class. 
    *
-   * @generated from field: string quota_name = 2;
+   * @generated from field: cloud.v1.deployment.QuotaResource resource = 2;
    */
-  quotaName: string;
+  resource: QuotaResource;
 
   /**
    * @generated from field: uint64 limit = 3;
@@ -222,6 +308,13 @@ export type Quota = Message<"cloud.v1.deployment.Quota"> & {
    * @generated from field: uint64 available = 5;
    */
   available: bigint;
+
+  /**
+   * provider_quota_id optionally records the raw provider quota name. 
+   *
+   * @generated from field: string provider_quota_id = 6;
+   */
+  providerQuotaId: string;
 };
 
 /**
@@ -234,11 +327,11 @@ export type QuotaJson = {
   provider?: ProviderJson;
 
   /**
-   * TODO: Convert to enum by providers
+   * resource is the typed quota class. 
    *
-   * @generated from field: string quota_name = 2;
+   * @generated from field: cloud.v1.deployment.QuotaResource resource = 2;
    */
-  quotaName?: string;
+  resource?: QuotaResourceJson;
 
   /**
    * @generated from field: uint64 limit = 3;
@@ -254,6 +347,13 @@ export type QuotaJson = {
    * @generated from field: uint64 available = 5;
    */
   available?: string;
+
+  /**
+   * provider_quota_id optionally records the raw provider quota name. 
+   *
+   * @generated from field: string provider_quota_id = 6;
+   */
+  providerQuotaId?: string;
 };
 
 export type QuotaValid = Quota;
@@ -264,6 +364,69 @@ export type QuotaValid = Quota;
  */
 export const QuotaSchema: GenMessage<Quota, {jsonType: QuotaJson, validType: QuotaValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_deployment_deployment, 2);
+
+/**
+ *
+ * QuotaInventory is a freshness-stamped snapshot of a provider's real quotas,
+ * fetched from the cloud. The admission controller (D14/D19) reads it as the
+ * cached fast-reject layer; a live fetch confirms available before apply.
+ *
+ * @generated from message cloud.v1.deployment.QuotaInventory
+ */
+export type QuotaInventory = Message<"cloud.v1.deployment.QuotaInventory"> & {
+  /**
+   * @generated from field: cloud.v1.deployment.Provider provider = 1;
+   */
+  provider: Provider;
+
+  /**
+   * @generated from field: repeated cloud.v1.deployment.Quota quotas = 2;
+   */
+  quotas: Quota[];
+
+  /**
+   * fetched_at is when these values were read from the provider. 
+   *
+   * @generated from field: google.protobuf.Timestamp fetched_at = 3;
+   */
+  fetchedAt?: Timestamp;
+};
+
+/**
+ *
+ * QuotaInventory is a freshness-stamped snapshot of a provider's real quotas,
+ * fetched from the cloud. The admission controller (D14/D19) reads it as the
+ * cached fast-reject layer; a live fetch confirms available before apply.
+ *
+ * @generated from message cloud.v1.deployment.QuotaInventory
+ */
+export type QuotaInventoryJson = {
+  /**
+   * @generated from field: cloud.v1.deployment.Provider provider = 1;
+   */
+  provider?: ProviderJson;
+
+  /**
+   * @generated from field: repeated cloud.v1.deployment.Quota quotas = 2;
+   */
+  quotas?: QuotaJson[];
+
+  /**
+   * fetched_at is when these values were read from the provider. 
+   *
+   * @generated from field: google.protobuf.Timestamp fetched_at = 3;
+   */
+  fetchedAt?: TimestampJson;
+};
+
+export type QuotaInventoryValid = QuotaInventory;
+
+/**
+ * Describes the message cloud.v1.deployment.QuotaInventory.
+ * Use `create(QuotaInventorySchema)` to create a new message.
+ */
+export const QuotaInventorySchema: GenMessage<QuotaInventory, {jsonType: QuotaInventoryJson, validType: QuotaInventoryValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_deployment_deployment, 3);
 
 /**
  * Deployment is the runtime+output bundle produced after apply. 
@@ -353,7 +516,7 @@ export type DeploymentValid = Deployment;
  * Use `create(DeploymentSchema)` to create a new message.
  */
 export const DeploymentSchema: GenMessage<Deployment, {jsonType: DeploymentJson, validType: DeploymentValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_deployment, 3);
+  messageDesc(file_cloud_v1_deployment_deployment, 4);
 
 /**
  * @generated from enum cloud.v1.deployment.Provider
@@ -385,4 +548,91 @@ export type ProviderJson = "PROVIDER_UNSPECIFIED" | "PROVIDER_DOCKER" | "PROVIDE
  */
 export const ProviderSchema: GenEnum<Provider, ProviderJson> = /*@__PURE__*/
   enumDesc(file_cloud_v1_deployment_deployment, 0);
+
+/**
+ *
+ * QuotaResource is the typed class of a provider quota (D19). It normalizes
+ * common resource classes across providers; provider-specific raw names are
+ * kept in provider_quota_id on QuotaRequest/Quota.
+ *
+ * @generated from enum cloud.v1.deployment.QuotaResource
+ */
+export enum QuotaResource {
+  /**
+   * @generated from enum value: QUOTA_RESOURCE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * CORES is total vCPU count. 
+   *
+   * @generated from enum value: QUOTA_RESOURCE_CORES = 1;
+   */
+  CORES = 1,
+
+  /**
+   * MEMORY_GB is total RAM in GiB. 
+   *
+   * @generated from enum value: QUOTA_RESOURCE_MEMORY_GB = 2;
+   */
+  MEMORY_GB = 2,
+
+  /**
+   * SSD_GB is total network-SSD disk in GiB. 
+   *
+   * @generated from enum value: QUOTA_RESOURCE_SSD_GB = 3;
+   */
+  SSD_GB = 3,
+
+  /**
+   * HDD_GB is total network-HDD disk in GiB. 
+   *
+   * @generated from enum value: QUOTA_RESOURCE_HDD_GB = 4;
+   */
+  HDD_GB = 4,
+
+  /**
+   * INSTANCES is total compute instance count. 
+   *
+   * @generated from enum value: QUOTA_RESOURCE_INSTANCES = 5;
+   */
+  INSTANCES = 5,
+
+  /**
+   * EXTERNAL_IPS is total external/NAT IP count. 
+   *
+   * @generated from enum value: QUOTA_RESOURCE_EXTERNAL_IPS = 6;
+   */
+  EXTERNAL_IPS = 6,
+
+  /**
+   * NETWORKS is total VPC network count. 
+   *
+   * @generated from enum value: QUOTA_RESOURCE_NETWORKS = 7;
+   */
+  NETWORKS = 7,
+
+  /**
+   * SUBNETS is total subnet count. 
+   *
+   * @generated from enum value: QUOTA_RESOURCE_SUBNETS = 8;
+   */
+  SUBNETS = 8,
+}
+
+/**
+ *
+ * QuotaResource is the typed class of a provider quota (D19). It normalizes
+ * common resource classes across providers; provider-specific raw names are
+ * kept in provider_quota_id on QuotaRequest/Quota.
+ *
+ * @generated from enum cloud.v1.deployment.QuotaResource
+ */
+export type QuotaResourceJson = "QUOTA_RESOURCE_UNSPECIFIED" | "QUOTA_RESOURCE_CORES" | "QUOTA_RESOURCE_MEMORY_GB" | "QUOTA_RESOURCE_SSD_GB" | "QUOTA_RESOURCE_HDD_GB" | "QUOTA_RESOURCE_INSTANCES" | "QUOTA_RESOURCE_EXTERNAL_IPS" | "QUOTA_RESOURCE_NETWORKS" | "QUOTA_RESOURCE_SUBNETS";
+
+/**
+ * Describes the enum cloud.v1.deployment.QuotaResource.
+ */
+export const QuotaResourceSchema: GenEnum<QuotaResource, QuotaResourceJson> = /*@__PURE__*/
+  enumDesc(file_cloud_v1_deployment_deployment, 1);
 

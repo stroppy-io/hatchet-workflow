@@ -13,13 +13,32 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/domain/workload.proto.
  */
 export const file_cloud_v1_domain_workload: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9kb21haW4vd29ya2xvYWQucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiKyCQoIV29ya2xvYWQSIAoPc3Ryb3BweV92ZXJzaW9uGAEgASgJQgf6QgRyAhhAEhoKBnNjcmlwdBgCIAEoCUIK+kIHcgUYgAQQARIVCgNzcWwYAyABKAlCCPpCBXIDGIAEEj4KCHByb3RvY29sGAQgASgOMiIuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlByb3RvY29sQgj6QgWCAQIQARJACglleGVjdXRpb24YBSABKAsyIy5jbG91ZC52MS5kb21haW4uV29ya2xvYWQuRXhlY3V0aW9uQgj6QgWKAQIQARI4CgpwYXJhbWV0ZXJzGAYgASgLMiQuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlBhcmFtZXRlcnMSPwoFZmlsZXMYByADKAsyJi5jbG91ZC52MS5kb21haW4uV29ya2xvYWQuV29ya2xvYWRGaWxlQgj6QgWSAQIQQBqyAQoJRXhlY3V0aW9uEhgKA3Z1cxgBIAEoDUIL+kIIKgYoARigjQYSOAoIZHVyYXRpb24YAiABKAlCJPpCIXIfGCAyG14oWzAtOV0rKG5zfHVzfG1zfHN8bXxoKSkrJEgAEh0KCml0ZXJhdGlvbnMYAyABKA1CB/pCBCoCKAFIABINCgVxdWlldBgEIAEoCBIVCg1ub190aHJlc2hvbGRzGAUgASgIQgwKBWxpbWl0EgP4QgEagwMKClBhcmFtZXRlcnMSHAoJcG9vbF9zaXplGAEgASgNQgn6QgYqBBj//wMSLQoMc2NhbGVfZmFjdG9yGAIgASgBQhf6QhQSEiEAAAAAAAAAABkAAAAAAGr4QBImChVkZWZhdWx0X2luc2VydF9tZXRob2QYAyABKAlCB/pCBHICGEASaQoDZW52GAQgAygLMi0uY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlBhcmFtZXRlcnMuRW52RW50cnlCLfpCKpoBJxCAAiIbchkQARiAAjISXltBLVpfXVtBLVowLTlfXSokKgVyAxiAQBIyCgVzdGVwcxgFIAMoCUIj+kIgkgEdECAiGXIXEAEYQDIRXlthLXpdW2EtejAtOV9dKiQSNQoIbm9fc3RlcHMYBiADKAlCI/pCIJIBHSIZchcYQDIRXlthLXpdW2EtejAtOV9dKiQQARAgGioKCEVudkVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEabwoMV29ya2xvYWRGaWxlEisKBG5hbWUYASABKAlCHfpCGnIYMhFeW0EtWmEtejAtOS5fLV0rJBABGIACEhUKBGtpbmQYAiABKAlCB/pCBHICGCASGwoHY29udGVudBgDIAEoCUIK+kIHcgUogICAAiKnAQoIUHJvdG9jb2wSGAoUUFJPVE9DT0xfVU5TUEVDSUZJRUQQABIPCgtQUk9UT0NPTF9QRxABEhIKDlBST1RPQ09MX01ZU1FMEAISFQoRUFJPVE9DT0xfUElDT0RBVEEQAxIVChFQUk9UT0NPTF9ZREJfR1JQQxAEEhYKElBST1RPQ09MX1lEQl9HUlBDUxAFEhYKElBST1RPQ09MX0NPQ0tST0FDSBAHIn4KDldvcmtsb2FkUHJlc2V0EjUKCHdvcmtsb2FkGAQgASgLMhkuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkQgj6QgWKAQIQARI1Cgh0b3BvbG9neRgFIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5Ub3BvbG9neUII+kIFigECEAFCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZG9tYWluYgZwcm90bzM", [file_validate_validate, file_cloud_v1_domain_topology]);
+  fileDesc("Ch5jbG91ZC92MS9kb21haW4vd29ya2xvYWQucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiKyCQoIV29ya2xvYWQSIAoPc3Ryb3BweV92ZXJzaW9uGAEgASgJQgf6QgRyAhhAEhoKBnNjcmlwdBgCIAEoCUIK+kIHcgUYgAQQARIVCgNzcWwYAyABKAlCCPpCBXIDGIAEEj4KCHByb3RvY29sGAQgASgOMiIuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlByb3RvY29sQgj6QgWCAQIQARJACglleGVjdXRpb24YBSABKAsyIy5jbG91ZC52MS5kb21haW4uV29ya2xvYWQuRXhlY3V0aW9uQgj6QgWKAQIQARI4CgpwYXJhbWV0ZXJzGAYgASgLMiQuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlBhcmFtZXRlcnMSPwoFZmlsZXMYByADKAsyJi5jbG91ZC52MS5kb21haW4uV29ya2xvYWQuV29ya2xvYWRGaWxlQgj6QgWSAQIQQBqyAQoJRXhlY3V0aW9uEhgKA3Z1cxgBIAEoDUIL+kIIKgYoARigjQYSOAoIZHVyYXRpb24YAiABKAlCJPpCIXIfGCAyG14oWzAtOV0rKG5zfHVzfG1zfHN8bXxoKSkrJEgAEh0KCml0ZXJhdGlvbnMYAyABKA1CB/pCBCoCKAFIABINCgVxdWlldBgEIAEoCBIVCg1ub190aHJlc2hvbGRzGAUgASgIQgwKBWxpbWl0EgP4QgEagwMKClBhcmFtZXRlcnMSHAoJcG9vbF9zaXplGAEgASgNQgn6QgYqBBj//wMSLQoMc2NhbGVfZmFjdG9yGAIgASgBQhf6QhQSEiEAAAAAAAAAABkAAAAAAGr4QBImChVkZWZhdWx0X2luc2VydF9tZXRob2QYAyABKAlCB/pCBHICGEASaQoDZW52GAQgAygLMi0uY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlBhcmFtZXRlcnMuRW52RW50cnlCLfpCKpoBJxCAAiIbchkQARiAAjISXltBLVpfXVtBLVowLTlfXSokKgVyAxiAQBIyCgVzdGVwcxgFIAMoCUIj+kIgkgEdECAiGXIXMhFeW2Etel1bYS16MC05X10qJBABGEASNQoIbm9fc3RlcHMYBiADKAlCI/pCIJIBHRAgIhlyFxABGEAyEV5bYS16XVthLXowLTlfXSokGioKCEVudkVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEabwoMV29ya2xvYWRGaWxlEisKBG5hbWUYASABKAlCHfpCGnIYEAEYgAIyEV5bQS1aYS16MC05Ll8tXSskEhUKBGtpbmQYAiABKAlCB/pCBHICGCASGwoHY29udGVudBgDIAEoCUIK+kIHcgUogICAAiKnAQoIUHJvdG9jb2wSGAoUUFJPVE9DT0xfVU5TUEVDSUZJRUQQABIPCgtQUk9UT0NPTF9QRxABEhIKDlBST1RPQ09MX01ZU1FMEAISFQoRUFJPVE9DT0xfUElDT0RBVEEQAxIVChFQUk9UT0NPTF9ZREJfR1JQQxAEEhYKElBST1RPQ09MX1lEQl9HUlBDUxAFEhYKElBST1RPQ09MX0NPQ0tST0FDSBAHIn4KDldvcmtsb2FkUHJlc2V0EjUKCHdvcmtsb2FkGAQgASgLMhkuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkQgj6QgWKAQIQARI1Cgh0b3BvbG9neRgFIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5Ub3BvbG9neUII+kIFigECEAFCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZG9tYWluYgZwcm90bzM", [file_validate_validate, file_cloud_v1_domain_topology]);
 
 /**
  *
  * Workload is the cloud-facing workload DTO sent by the wizard. The backend
  * renders it into stroppy/proto/stroppy.RunConfig protojson before launching
  * stroppy.
+ *
+ * BDD decisions (B4, features/catalog/workload-render.feature):
+ *
+ * Scope: Workload is ONLY the load (script, protocol, k6 profile, parameters,
+ * run-scoped files). DB engine install and packages are NOT here — they belong
+ * to the Database intent and provisioning. stroppy_version below is just a
+ * selector for which stroppy the load needs; the install itself is a
+ * provisioning op on the stroppy component.
+ *
+ * - protocol/driverType/URL mapping is a backend registry (old
+ * types.ProtocolMeta). URL host/port are unknown until provisioning, so they
+ * are render.Binding values, not literals. Same preview==execution invariant
+ * as the DB config render (see render/config.proto).
+ * - protocol x engine support and the (kind, protocol, script) compatibility
+ * matrix (old types.KindProtocols / ScriptCompat) stay backend data +
+ * validation, enforced when a TestPreset binds Database.Kind to
+ * Workload.Protocol. They are intentionally NOT modeled in proto.
+ * - Managed YDB (Database.Options.Ydb.managed) maps to PROTOCOL_YDB_GRPCS,
+ * port 2135, with a dynamic database path resolved via binding.
  *
  * @generated from message cloud.v1.domain.Workload
  */
@@ -82,6 +101,25 @@ export type Workload = Message<"cloud.v1.domain.Workload"> & {
  * Workload is the cloud-facing workload DTO sent by the wizard. The backend
  * renders it into stroppy/proto/stroppy.RunConfig protojson before launching
  * stroppy.
+ *
+ * BDD decisions (B4, features/catalog/workload-render.feature):
+ *
+ * Scope: Workload is ONLY the load (script, protocol, k6 profile, parameters,
+ * run-scoped files). DB engine install and packages are NOT here — they belong
+ * to the Database intent and provisioning. stroppy_version below is just a
+ * selector for which stroppy the load needs; the install itself is a
+ * provisioning op on the stroppy component.
+ *
+ * - protocol/driverType/URL mapping is a backend registry (old
+ * types.ProtocolMeta). URL host/port are unknown until provisioning, so they
+ * are render.Binding values, not literals. Same preview==execution invariant
+ * as the DB config render (see render/config.proto).
+ * - protocol x engine support and the (kind, protocol, script) compatibility
+ * matrix (old types.KindProtocols / ScriptCompat) stay backend data +
+ * validation, enforced when a TestPreset binds Database.Kind to
+ * Workload.Protocol. They are intentionally NOT modeled in proto.
+ * - Managed YDB (Database.Options.Ydb.managed) maps to PROTOCOL_YDB_GRPCS,
+ * port 2135, with a dynamic database path resolved via binding.
  *
  * @generated from message cloud.v1.domain.Workload
  */

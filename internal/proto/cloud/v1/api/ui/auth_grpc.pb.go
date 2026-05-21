@@ -30,6 +30,32 @@ const (
 // AuthServiceClient is the client API for AuthService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// BDD decisions (A, features/tenancy/auth.feature):
+// - access + refresh TokenPair (was a single JWT). refresh tokens / sessions
+// are stored in Valkey with TTL (G3 ephemeral) so Logout/refresh revocation
+// works; the access token stays a short-lived stateless JWT.
+// - authorization is per-tenant via TenantMember.Role (VIEWER/ADMIN/OWNER) in
+// the target tenant; platform-level admin authority is the Account.is_admin
+// flag (cross-tenant platform ops only).
+// - EVERY ui request carries an explicit tenant_id (the tenant context the
+// account acts in, since an account may belong to several tenants). The
+// server validates membership + role for THAT tenant_id and scopes all
+// entities by it. Exceptions: auth RPCs, TenantService.ListMyTenants, and the
+// public RunService.GetSharedRun (token only).
+// - OWNER (not only is_admin) manages per-tenant settings (each tenant has its
+// own provider credentials) and per-tenant cloud inventory / quotas /
+// reconcile. So SettingsService and CloudInventoryService are tenant-scoped
+// ui services, authorized by OWNER (is_admin also passes).
+// - tenant isolation: every Own entity is scoped by tenant_id and a request to
+// a tenant the caller is not a member of is denied.
+// - agents are a separate machine principal (per-machine JWT from D18 cloud-
+// init), not an Account; limited to AgentService RPCs.
+// - API tokens are the third principal (CI/SDK): a long-lived, tenant-scoped
+// Bearer credential (models.ApiToken). Auth tries JWT first, then an ApiToken
+// sha256-hash lookup -> principal {tenant_id, role}. Only the hash is stored;
+// plaintext is shown once. Role capped <= ADMIN (never OWNER); minted/revoked
+// by OWNER only via ApiTokenService.
 type AuthServiceClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	RefreshTokens(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
@@ -88,6 +114,32 @@ func (c *authServiceClient) Me(ctx context.Context, in *emptypb.Empty, opts ...g
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
+//
+// BDD decisions (A, features/tenancy/auth.feature):
+// - access + refresh TokenPair (was a single JWT). refresh tokens / sessions
+// are stored in Valkey with TTL (G3 ephemeral) so Logout/refresh revocation
+// works; the access token stays a short-lived stateless JWT.
+// - authorization is per-tenant via TenantMember.Role (VIEWER/ADMIN/OWNER) in
+// the target tenant; platform-level admin authority is the Account.is_admin
+// flag (cross-tenant platform ops only).
+// - EVERY ui request carries an explicit tenant_id (the tenant context the
+// account acts in, since an account may belong to several tenants). The
+// server validates membership + role for THAT tenant_id and scopes all
+// entities by it. Exceptions: auth RPCs, TenantService.ListMyTenants, and the
+// public RunService.GetSharedRun (token only).
+// - OWNER (not only is_admin) manages per-tenant settings (each tenant has its
+// own provider credentials) and per-tenant cloud inventory / quotas /
+// reconcile. So SettingsService and CloudInventoryService are tenant-scoped
+// ui services, authorized by OWNER (is_admin also passes).
+// - tenant isolation: every Own entity is scoped by tenant_id and a request to
+// a tenant the caller is not a member of is denied.
+// - agents are a separate machine principal (per-machine JWT from D18 cloud-
+// init), not an Account; limited to AgentService RPCs.
+// - API tokens are the third principal (CI/SDK): a long-lived, tenant-scoped
+// Bearer credential (models.ApiToken). Auth tries JWT first, then an ApiToken
+// sha256-hash lookup -> principal {tenant_id, role}. Only the hash is stored;
+// plaintext is shown once. Role capped <= ADMIN (never OWNER); minted/revoked
+// by OWNER only via ApiTokenService.
 type AuthServiceServer interface {
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	RefreshTokens(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)

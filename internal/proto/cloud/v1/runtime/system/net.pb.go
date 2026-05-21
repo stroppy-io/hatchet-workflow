@@ -7,10 +7,8 @@
 package system
 
 import (
-	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/durationpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -207,7 +205,7 @@ var File_cloud_v1_runtime_system_net_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_runtime_system_net_proto_rawDesc = "" +
 	"\n" +
-	"!cloud/v1/runtime/system/net.proto\x12\x17cloud.v1.runtime.system\x1a\x1egoogle/protobuf/duration.proto\x1a\x17validate/validate.proto\"\xf6\x02\n" +
+	"!cloud/v1/runtime/system/net.proto\x12\x17cloud.v1.runtime.system\"\xf6\x02\n" +
 	"\x03Net\"\xf6\x01\n" +
 	"\bProtocol\x12\x18\n" +
 	"\x14PROTOCOL_UNSPECIFIED\x10\x00\x12\x10\n" +

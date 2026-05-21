@@ -210,14 +210,14 @@ var TenantConverter = repository.Converter[*TenantScanner, *Tenant]{
 	ToProto:   (*TenantScanner).IntoPb,
 }
 
-// TenantMemberAlias is the table alias type for the tenants table
+// TenantMemberAlias is the table alias type for the tenant_members table
 type TenantMemberAlias string
 
 func (a TenantMemberAlias) String() string { return string(a) }
 
-const TenantMemberAliasName TenantMemberAlias = "tenants"
+const TenantMemberAliasName TenantMemberAlias = "tenant_members"
 
-// TenantMemberColumnAlias represents column names for the tenants table
+// TenantMemberColumnAlias represents column names for the tenant_members table
 type TenantMemberColumnAlias string
 
 func (c TenantMemberColumnAlias) String() string { return string(c) }
@@ -307,12 +307,12 @@ func (s *TenantMemberScanner) AllSetters() []set.ValueSetter[TenantMemberColumnA
 	}
 }
 
-// Relations returns the relation loaders for the tenants table
+// Relations returns the relation loaders for the tenant_members table
 func (s *TenantMemberScanner) Relations() []exec.RelationLoader[*TenantMemberScanner] {
 	return nil
 }
 
-// TenantMembersTable represents the tenants table with its columns
+// TenantMembersTable represents the tenant_members table with its columns
 type TenantMembersTable struct {
 	*schema.Table[TenantMemberAlias, TenantMemberColumnAlias, *TenantMemberScanner]
 	Id        schema.TextColumnI[TenantMemberColumnAlias]
@@ -324,7 +324,7 @@ type TenantMembersTable struct {
 	Role      schema.TextColumnI[TenantMemberColumnAlias]
 }
 
-// TenantMembers is the global tenants table instance
+// TenantMembers is the global tenant_members table instance
 var TenantMembers = func() TenantMembersTable {
 	idCol := schema.TextColumn(TenantMemberColumnId, ddl.WithPrimaryKey[TenantMemberColumnAlias]())
 	createdAtCol := schema.TimestamptzColumn(TenantMemberColumnCreatedAt, ddl.WithDefault[TenantMemberColumnAlias]("now()"), ddl.WithNotNull[TenantMemberColumnAlias]())
@@ -358,7 +358,7 @@ var TenantMembers = func() TenantMembersTable {
 	}
 }()
 
-// TenantMembersRef is a reference to the tenants table for relations
+// TenantMembersRef is a reference to the tenant_members table for relations
 var TenantMembersRef schema.RelationTableAlias[TenantMemberAlias] = TenantMembers.Table
 
 // TenantMemberConverter provides conversion between TenantMember and TenantMemberScanner
@@ -388,7 +388,7 @@ var TenantTenantMembers = schema.HasMany[
 
 const (
 	TenantConstraintPkey       = "tenants_pkey"
-	TenantMemberConstraintPkey = "tenants_pkey"
+	TenantMemberConstraintPkey = "tenant_members_pkey"
 )
 
 // ============================================================================
@@ -397,7 +397,7 @@ const (
 
 var (
 	ErrTenantPrimaryKey       = errors.New("primary key constraint violated: tenants_pkey")
-	ErrTenantMemberPrimaryKey = errors.New("primary key constraint violated: tenants_pkey")
+	ErrTenantMemberPrimaryKey = errors.New("primary key constraint violated: tenant_members_pkey")
 )
 
 // ============================================================================
@@ -409,7 +409,7 @@ func IsTenantPrimaryKeyError(err error) bool {
 	return sqlerr.IsConstraintNamed(err, TenantConstraintPkey)
 }
 
-// IsTenantMemberPrimaryKeyError checks if the error is a primary_key constraint violation on tenants
+// IsTenantMemberPrimaryKeyError checks if the error is a primary_key constraint violation on tenant_members
 func IsTenantMemberPrimaryKeyError(err error) bool {
 	return sqlerr.IsConstraintNamed(err, TenantMemberConstraintPkey)
 }

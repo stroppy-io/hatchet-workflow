@@ -206,3 +206,367 @@ var _ interface {
 var _ListPresetRequest_Kind_NotInLookup = map[models.Preset_Kind]struct{}{
 	0: {},
 }
+
+// Validate checks the field values on DeletePresetRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DeletePresetRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DeletePresetRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DeletePresetRequestMultiError, or nil if none found.
+func (m *DeletePresetRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DeletePresetRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetTenantId() == nil {
+		err := DeletePresetRequestValidationError{
+			field:  "TenantId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTenantId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DeletePresetRequestValidationError{
+					field:  "TenantId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DeletePresetRequestValidationError{
+					field:  "TenantId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTenantId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DeletePresetRequestValidationError{
+				field:  "TenantId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetId() == nil {
+		err := DeletePresetRequestValidationError{
+			field:  "Id",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DeletePresetRequestValidationError{
+					field:  "Id",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DeletePresetRequestValidationError{
+					field:  "Id",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DeletePresetRequestValidationError{
+				field:  "Id",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return DeletePresetRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// DeletePresetRequestMultiError is an error wrapping multiple validation
+// errors returned by DeletePresetRequest.ValidateAll() if the designated
+// constraints aren't met.
+type DeletePresetRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DeletePresetRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DeletePresetRequestMultiError) AllErrors() []error { return m }
+
+// DeletePresetRequestValidationError is the validation error returned by
+// DeletePresetRequest.Validate if the designated constraints aren't met.
+type DeletePresetRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DeletePresetRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DeletePresetRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DeletePresetRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DeletePresetRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DeletePresetRequestValidationError) ErrorName() string {
+	return "DeletePresetRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DeletePresetRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDeletePresetRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DeletePresetRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DeletePresetRequestValidationError{}
+
+// Validate checks the field values on ClonePresetRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ClonePresetRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ClonePresetRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ClonePresetRequestMultiError, or nil if none found.
+func (m *ClonePresetRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ClonePresetRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetTenantId() == nil {
+		err := ClonePresetRequestValidationError{
+			field:  "TenantId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTenantId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ClonePresetRequestValidationError{
+					field:  "TenantId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ClonePresetRequestValidationError{
+					field:  "TenantId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTenantId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ClonePresetRequestValidationError{
+				field:  "TenantId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetId() == nil {
+		err := ClonePresetRequestValidationError{
+			field:  "Id",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ClonePresetRequestValidationError{
+					field:  "Id",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ClonePresetRequestValidationError{
+					field:  "Id",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ClonePresetRequestValidationError{
+				field:  "Id",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ClonePresetRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ClonePresetRequestMultiError is an error wrapping multiple validation errors
+// returned by ClonePresetRequest.ValidateAll() if the designated constraints
+// aren't met.
+type ClonePresetRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ClonePresetRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ClonePresetRequestMultiError) AllErrors() []error { return m }
+
+// ClonePresetRequestValidationError is the validation error returned by
+// ClonePresetRequest.Validate if the designated constraints aren't met.
+type ClonePresetRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ClonePresetRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ClonePresetRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ClonePresetRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ClonePresetRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ClonePresetRequestValidationError) ErrorName() string {
+	return "ClonePresetRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ClonePresetRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sClonePresetRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ClonePresetRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ClonePresetRequestValidationError{}
