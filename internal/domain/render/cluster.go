@@ -291,7 +291,7 @@ func renderMySQLComponent(c *domain.Topology_Component, topo *domain.Topology, t
 	conf["log_bin"] = "mysql-bin"
 	conf["log_replica_updates"] = "ON"
 
-	items := []*renderpb.Config_Item{fileItem("my.cnf", "/etc/mysql/my.cnf", formatMysqld(conf, totalMemoryMB))}
+	items := []*renderpb.Config_Item{fileItem("my.cnf", "/etc/mysql/conf.d/stroppy.cnf", formatMysqld(conf, totalMemoryMB))}
 	if primary := replicationSource(topo, c.GetId()); primary != "" {
 		tok := "__PRIMARY_IP__"
 		sql := `mysql -e "CHANGE REPLICATION SOURCE TO SOURCE_HOST='` + tok +
