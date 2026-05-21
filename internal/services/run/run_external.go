@@ -37,14 +37,12 @@ type DagStore interface {
 	GetDag(ctx context.Context, id string) (*primitive.Dag, error)
 }
 
-// LogsClient serves run logs from the log store (VictoriaLogs, H54).
-//
-// TODO(run): no implementation yet — needs a VictoriaLogs query/stream client +
-// LogRef link building. Reported.
+// LogsClient serves run logs from the log store (VictoriaLogs, H54), addressed by
+// dag id (RunService resolves run_id -> dag_id). Implemented by internal/services/logs.
 type LogsClient interface {
-	QueryRunLogs(ctx context.Context, req *uipb.QueryRunLogsRequest) (*logs.LogPage, error)
-	StreamTestRunLogs(req *uipb.StreamTestRunLogsRequest, stream grpc.ServerStreamingServer[logs.LogLine]) error
-	BuildLogLink(ctx context.Context, req *uipb.BuildLogLinkRequest) (string, error)
+	QueryRunLogs(ctx context.Context, dagID string, req *uipb.QueryRunLogsRequest) (*logs.LogPage, error)
+	StreamRunLogs(ctx context.Context, dagID, nodeExecutionID, componentID string, stream grpc.ServerStreamingServer[logs.LogLine]) error
+	BuildLogLink(ctx context.Context, dagID string, req *uipb.BuildLogLinkRequest) (string, error)
 }
 
 // MetricsClient serves run metric summaries (VictoriaMetrics, E19).
@@ -72,7 +70,11 @@ func (s *RunService) StreamTestRunLogs(req *uipb.StreamTestRunLogsRequest, strea
 			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
 				return err
 			}
-			return s.logs.StreamTestRunLogs(req, stream)
+			run, err := s.loadRun(ctx, req.GetTenantId().GetValue(), req.GetId().GetValue())
+			if err != nil {
+				return err
+			}
+			return s.logs.StreamRunLogs(ctx, run.GetDag().GetValue(), req.GetNodeExecutionId(), req.GetComponentId(), stream)
 		})
 }
 
@@ -83,7 +85,11 @@ func (s *RunService) QueryRunLogs(ctx context.Context, req *uipb.QueryRunLogsReq
 			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
 				return nil, err
 			}
-			return s.logs.QueryRunLogs(ctx, req)
+			run, err := s.loadRun(ctx, req.GetTenantId().GetValue(), req.GetRunId().GetValue())
+			if err != nil {
+				return nil, err
+			}
+			return s.logs.QueryRunLogs(ctx, run.GetDag().GetValue(), req)
 		})
 }
 
@@ -94,7 +100,11 @@ func (s *RunService) BuildLogLink(ctx context.Context, req *uipb.BuildLogLinkReq
 			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
 				return nil, err
 			}
-			url, err := s.logs.BuildLogLink(ctx, req)
+			run, err := s.loadRun(ctx, req.GetTenantId().GetValue(), req.GetRunId().GetValue())
+			if err != nil {
+				return nil, err
+			}
+			url, err := s.logs.BuildLogLink(ctx, run.GetDag().GetValue(), req)
 			if err != nil {
 				return nil, err
 			}

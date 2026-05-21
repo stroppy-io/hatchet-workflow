@@ -7,6 +7,7 @@ package agent
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/gopherex/xlog"
@@ -28,6 +29,14 @@ type Client interface {
 	Poll(ctx context.Context, req *agentpb.PollRequest) (*agentpb.PollResponse, error)
 	Report(ctx context.Context, req *agentpb.ReportRequest) (*emptypb.Empty, error)
 	SendLogs(ctx context.Context, req *agentpb.SendLogsRequest) (*emptypb.Empty, error)
+}
+
+// LogIngester ships command output to the log store with full dag labels (the
+// agent knows dag_id/node_execution_id from the lease). Optional; nil disables
+// direct ingest. Implemented by internal/infrastructure/victoria.LogsClient via
+// a thin adapter at wiring.
+type LogIngester interface {
+	Ingest(ctx context.Context, records []map[string]any) error
 }
 
 // Config identifies this agent and tunes the loop cadence.
@@ -63,15 +72,17 @@ type Agent struct {
 	*tracing.Entity
 	client Client
 	exec   *opexec.Executor
+	logs   LogIngester
 	cfg    Config
 }
 
-// New builds an Agent.
-func New(logger *xlog.Logger, client Client, cfg Config) *Agent {
+// New builds an Agent. logs may be nil (direct log ingest disabled).
+func New(logger *xlog.Logger, client Client, logs LogIngester, cfg Config) *Agent {
 	return &Agent{
 		Entity: tracing.NewEntity(logger.AppendName("Agent")),
 		client: client,
 		exec:   opexec.New(),
+		logs:   logs,
 		cfg:    cfg.withDefaults(),
 	}
 }
@@ -168,6 +179,7 @@ func (a *Agent) handleLease(ctx context.Context, lease *agentpb.CommandLease) {
 			if o.err != nil {
 				a.report(ctx, lease, agent.CommandStatus_COMMAND_STATUS_FAILED, nil, o.err.Error())
 			} else {
+				a.ingestLogs(ctx, lease, o.result)
 				a.report(ctx, lease, agent.CommandStatus_COMMAND_STATUS_COMPLETED, o.result, "")
 			}
 			return
@@ -189,6 +201,44 @@ func (a *Agent) report(ctx context.Context, lease *agentpb.CommandLease, st agen
 		},
 	}); err != nil {
 		a.Logger().Warn("report failed", xlog.Error("error", err))
+	}
+}
+
+// ingestLogs ships a finished command's stdout/stderr to the log store, labeled
+// with the dag/node from the lease so the control plane can query by run.
+func (a *Agent) ingestLogs(ctx context.Context, lease *agentpb.CommandLease, result *ops.Operation_Result) {
+	if a.logs == nil {
+		return
+	}
+	cmd := result.GetRunCmd()
+	if cmd == nil {
+		return
+	}
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	addr := lease.GetAddress()
+	var records []map[string]any
+	emit := func(data []byte, stream string) {
+		for _, line := range strings.Split(strings.TrimRight(string(data), "\n"), "\n") {
+			if line == "" {
+				continue
+			}
+			records = append(records, map[string]any{
+				"_msg":              line,
+				"_time":             now,
+				"dag_id":            addr.GetDagId().GetValue(),
+				"node_execution_id": addr.GetNodeExecutionId(),
+				"machine_id":        a.cfg.MachineID,
+				"stream":            stream,
+			})
+		}
+	}
+	emit(cmd.GetStdout(), "stdout")
+	emit(cmd.GetStderr(), "stderr")
+	if len(records) == 0 {
+		return
+	}
+	if err := a.logs.Ingest(ctx, records); err != nil {
+		a.Logger().Warn("log ingest failed", xlog.Error("error", err))
 	}
 }
 
