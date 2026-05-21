@@ -81,8 +81,8 @@ test-db: ## Run DB-backed integration tests (auto-starts postgres if needed)
 test-full: test-unit test-db ## Full Go test sweep (unit + DB-backed integration)
 	@echo "All Go tests passed."
 
-test-integration: build ## Run integration tests (requires Docker)
-	go test -tags=integration -timeout 30m -v ./tests/
+test-integration: ## Run service integration tests in Docker (testcontainers, requires Docker)
+	go test -mod=mod -tags=integration -timeout 20m ./internal/services/...
 
 test-e2e: build ## Run E2E tests for all databases
 	go test -tags=integration -timeout 60m -v ./tests/ -run TestE2E
