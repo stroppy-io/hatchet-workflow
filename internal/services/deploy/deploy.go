@@ -24,14 +24,13 @@ import (
 )
 
 // NetworkInventory reports the IPs already in use in a tenant's subnet so the
-// allocator does not collide with existing VMs. Per the docs (H33) this MUST be
-// backed by provider-side checks (live VPC and/or the NetworkAllocation mirror) —
-// the subnet is never assumed empty.
-//
-// TODO(deploy): NO implementation yet — needs the cloud network inventory /
-// reconcile layer (Yandex VPC + models.NetworkAllocation mirror, D19/D20).
+// allocator does not collide with existing VMs (the subnet is never assumed
+// empty, H33), and reserves the IPs it hands out. Implemented by
+// internal/services/netinventory (persisted mirror); a live-VPC reconcile layer
+// (cloud as source of truth) can wrap it later.
 type NetworkInventory interface {
 	UsedIPs(ctx context.Context, tenantID, subnetCIDR string) ([]string, error)
+	Reserve(ctx context.Context, tenantID string, ips []string) error
 }
 
 // Config supplies cloud-init + agent-token settings.
@@ -86,8 +85,14 @@ func (r *Resolver) Resolve(ctx context.Context, tenantID string, topo *domain.To
 			return nil, status.Errorf(codes.ResourceExhausted, "allocate ips: %v", err)
 		}
 		params.MachineInternalIP = ips
-		// TODO(deploy): persist a models.NetworkAllocation lease so concurrent runs
-		// observe these IPs as used (D20 mirror).
+		// Reserve the assigned IPs so concurrent/later runs observe them as used.
+		assigned := make([]string, 0, len(ips))
+		for _, ip := range ips {
+			assigned = append(assigned, ip)
+		}
+		if err := r.inventory.Reserve(ctx, tenantID, assigned); err != nil {
+			return nil, status.Errorf(codes.Internal, "reserve ips: %v", err)
+		}
 	}
 
 	// Cloud-init: per-machine agent JWT + bootstrap user-data (D18).
