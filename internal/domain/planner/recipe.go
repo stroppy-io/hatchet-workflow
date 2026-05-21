@@ -59,11 +59,11 @@ var recipes = map[string]recipe{
 		},
 		startScript: `cockroach start-single-node --insecure --background --listen-addr=0.0.0.0:26257 --sql-addr=0.0.0.0:5432`,
 	},
-	"ydb/25.3": {
+	"ydb/24.2": {
 		preInstall: []string{
 			"apt-get update",
 			"apt-get install -y curl ca-certificates tar",
-			`curl -fsSL https://binaries.ydb.tech/release/25.3.0/ydbd-25.3.0-linux-amd64.tar.gz -o /tmp/ydbd.tgz`,
+			`curl -fsSL https://binaries.ydb.tech/release/24.2.7/ydbd-24.2.7-linux-amd64.tar.gz -o /tmp/ydbd.tgz`,
 			`mkdir -p /opt/ydb && tar -xzf /tmp/ydbd.tgz -C /opt/ydb --strip-components=1`,
 			`ln -sf /opt/ydb/bin/ydbd /usr/local/bin/ydbd`,
 		},
@@ -75,7 +75,7 @@ var recipes = map[string]recipe{
 // defaultVersion picks a version when the preset omits one.
 var defaultVersion = map[string]string{
 	"postgres": "16", "mysql": "8.4", "mariadb": "11.4", "picodata": "25.3",
-	"cockroach": "24.2", "ydb": "25.3",
+	"cockroach": "24.2", "ydb": "24.2",
 }
 
 // ubuntuUniversePreInstall refreshes the package lists and enables universe (a

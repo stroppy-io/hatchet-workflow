@@ -151,6 +151,33 @@ func TestPostgresSingleFullPipeline(t *testing.T) {
 	t.Logf("shared_buffers = %s", sb)
 }
 
+// TestYDBSingleFullPipeline runs the ydb binary recipe (download + file-pdisk
+// static config + storage start + blobstorage/database init) in a systemd host and
+// asserts the storage grpc endpoint is serving and the database was created.
+func TestYDBSingleFullPipeline(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	preset := &domain.TestPreset{
+		Database: &domain.Database{Kind: domain.Database_KIND_YDB, Version: "24.2"},
+		Topology: &domain.Topology{Machines: []*domain.Topology_Machine{{
+			Id: "m1", Cores: 2, MemoryGb: 4,
+			Components: []*domain.Topology_Component{{Id: "db", Kind: domain.Topology_Component_KIND_DATABASE}},
+		}}},
+	}
+	dag, err := planner.New().Compile(preset, nil)
+	require.NoError(t, err)
+
+	host := startSystemdHost(t, ctx)
+	// The chain's wait_ready only passes once ydbd storage serves grpc (the static
+	// config self-bootstraps the cluster + /Root domain).
+	host.runComponentChain(t, ctx, dag, "db")
+
+	// Confirm the storage grpc endpoint is still serving.
+	code, _ := host.c2(ctx, []string{"bash", "-lc", "timeout 4 bash -c '</dev/tcp/localhost/2135' 2>/dev/null && echo ok"})
+	require.Equal(t, 0, code, "ydb storage grpc (2135) not serving")
+}
+
 // TestCockroachSingleFullPipeline runs the cockroach binary recipe (download +
 // start-single-node via flags, no config file) in a systemd host and asserts SQL.
 func TestCockroachSingleFullPipeline(t *testing.T) {
