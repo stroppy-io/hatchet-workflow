@@ -95,7 +95,7 @@ func renderPostgresConf(version string, totalMemoryMB int) string {
 func renderMySQL(_ *domain.Database, totalMemoryMB int) *renderpb.Config {
 	return &renderpb.Config{
 		Id:    "mysql-config",
-		Items: []*renderpb.Config_Item{fileItem("my.cnf", "/etc/mysql/conf.d/stroppy.cnf", renderMyCnf(totalMemoryMB))},
+		Items: []*renderpb.Config_Item{fileItem("my.cnf", "/etc/mysql/mysql.conf.d/zz-stroppy.cnf", renderMyCnf(totalMemoryMB))},
 	}
 }
 

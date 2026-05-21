@@ -100,10 +100,18 @@ func TestRenderMySQLReplicaGetsChangeMaster(t *testing.T) {
 	}
 
 	primary, _ := RenderComponent(comp("db1", domain.Topology_Component_KIND_DATABASE), db, topo, 4096)
+	var primaryCmd *renderpb.Config_Item
 	for _, it := range primary.GetItems() {
 		if it.GetCommand() != nil {
-			t.Error("primary should not get a replica setup command")
+			primaryCmd = it
 		}
+	}
+	// The primary provisions the replication user, not a CHANGE SOURCE.
+	if primaryCmd == nil || primaryCmd.GetId() != "create_replica_user" {
+		t.Errorf("primary should provision the replication user, got %v", primaryCmd.GetId())
+	}
+	if strings.Contains(primaryCmd.GetCommand().GetScript().GetText(), "CHANGE REPLICATION SOURCE") {
+		t.Error("primary must not run CHANGE REPLICATION SOURCE")
 	}
 }
 

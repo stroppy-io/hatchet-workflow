@@ -43,7 +43,11 @@ var recipes = map[string]recipe{
 			`echo "deb https://download.picodata.io/tarantool-picodata/ubuntu/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/picodata.list`,
 			"apt-get update",
 		},
-		aptPackages: []string{"picodata"}, serviceName: "picodata",
+		aptPackages: []string{"picodata"},
+		// picodata has no package systemd unit — run it via a transient unit with our
+		// config (cluster peers come from instance.peer in the yaml).
+		startScript: "install -d -o picodata -g picodata /var/lib/picodata 2>/dev/null || install -d /var/lib/picodata; " +
+			"systemd-run --unit=stroppy-picodata --collect picodata run --config /etc/picodata/picodata.yaml --instance-dir /var/lib/picodata",
 	},
 	"cockroach/24.2": {
 		preInstall: []string{

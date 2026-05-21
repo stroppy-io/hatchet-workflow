@@ -37,7 +37,7 @@ func mysqlConfigBootCase(t *testing.T, image, client string, db *domain.Database
 			},
 			Files: []testcontainers.ContainerFile{{
 				HostFilePath:      confPath,
-				ContainerFilePath: "/etc/mysql/conf.d/stroppy.cnf",
+				ContainerFilePath: "/etc/mysql/mysql.conf.d/zz-stroppy.cnf",
 				FileMode:          0o644,
 			}},
 			WaitingFor: wait.ForLog("ready for connections").

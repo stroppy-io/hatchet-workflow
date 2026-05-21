@@ -313,7 +313,7 @@ func renderMySQLComponent(c *domain.Topology_Component, topo *domain.Topology, t
 	conf["log_bin"] = "mysql-bin"
 	conf["log_replica_updates"] = "ON"
 
-	items := []*renderpb.Config_Item{fileItem("my.cnf", "/etc/mysql/conf.d/stroppy.cnf", formatMysqld(conf, totalMemoryMB))}
+	items := []*renderpb.Config_Item{fileItem("my.cnf", "/etc/mysql/mysql.conf.d/zz-stroppy.cnf", formatMysqld(conf, totalMemoryMB))}
 
 	if primary := replicationSource(topo, c.GetId()); primary != "" {
 		// This node is a replica: point it at the primary's ip (late binding).

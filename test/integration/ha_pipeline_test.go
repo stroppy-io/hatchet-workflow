@@ -185,6 +185,81 @@ func TestPGHAFullPipeline(t *testing.T) {
 	require.True(t, leader, "patroni cluster never elected a leader")
 }
 
+// TestMySQLReplicationFullPipeline brings up a 2-node mysql 8.0 primary/replica
+// (GTID) via the recipe across systemd hosts, then asserts a row written on the
+// primary replicates to the replica.
+func TestMySQLReplicationFullPipeline(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	net, err := network.New(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = net.Remove(ctx) })
+
+	componentMachine := map[string]string{"db1": "m-db1", "db2": "m-db2"}
+	hosts := map[string]*systemdHost{}
+	machineIP := map[string]string{}
+	for compID, m := range componentMachine {
+		h, ip := startSystemdHostOnNetwork(t, ctx, net.Name)
+		hosts[compID] = h
+		machineIP[m] = ip
+	}
+	resolved := render.Resolved{}
+	for compID, m := range componentMachine {
+		resolved[compID] = map[string]string{render.AttrPrivateIP: machineIP[m], render.AttrEndpoint: machineIP[m]}
+	}
+	resolver := render.NewResolver(resolved)
+
+	comp := func(id string, k domain.Topology_Component_Kind) *domain.Topology_Component {
+		return &domain.Topology_Component{Id: id, Kind: k}
+	}
+	preset := &domain.TestPreset{
+		Database: &domain.Database{Kind: domain.Database_KIND_MYSQL, Version: "8.0"},
+		Topology: &domain.Topology{
+			Machines: []*domain.Topology_Machine{
+				{Id: "m-db1", Cores: 2, MemoryGb: 4, Components: []*domain.Topology_Component{comp("db1", domain.Topology_Component_KIND_DATABASE)}},
+				{Id: "m-db2", Cores: 2, MemoryGb: 4, Components: []*domain.Topology_Component{comp("db2", domain.Topology_Component_KIND_DATABASE)}},
+			},
+			Connections: []*domain.Topology_Connection{{From: "db1", To: "db2", Kind: domain.Topology_Connection_KIND_REPLICATION}},
+		},
+	}
+	dag, err := planner.New().Compile(preset, nil)
+	require.NoError(t, err)
+	sub := findSubDag(t, dag, "install_and_run")
+
+	for _, compID := range []string{"db1", "db2"} {
+		host := hosts[compID]
+		for _, n := range sub.GetNodes() {
+			if !hasPrefix(n.GetId(), compID+".") {
+				continue
+			}
+			var cmd rtagent.Command
+			require.NoError(t, n.GetTaskState().GetInput().UnmarshalTo(&cmd))
+			t.Logf("[%s] exec %s", compID, n.GetId())
+			host.execOpResolved(t, ctx, n, cmd.GetOperation(), resolver)
+		}
+	}
+
+	// Write on the primary, expect it on the replica.
+	code, out := hosts["db1"].sh(t, ctx, `mysql -e "CREATE DATABASE repltest; CREATE TABLE repltest.t(id INT PRIMARY KEY); INSERT INTO repltest.t VALUES (42);"`)
+	require.Equalf(t, 0, code, "primary write failed: %s", out)
+
+	replicated := false
+	for range 24 {
+		code, out = hosts["db2"].c2(ctx, []string{"bash", "-lc", `timeout 8 mysql -N -e "SELECT id FROM repltest.t" 2>/dev/null || true`})
+		if code == 0 && strings.Contains(out, "42") {
+			replicated = true
+			break
+		}
+		time.Sleep(5 * time.Second)
+	}
+	if !replicated {
+		_, st := hosts["db2"].c2(ctx, []string{"bash", "-lc", `timeout 8 mysql -e "SHOW REPLICA STATUS\G" 2>&1 | grep -iE 'Running|Last_.*Error' | head`})
+		t.Logf("db2 replica status:\n%s", st)
+	}
+	require.True(t, replicated, "row never replicated to the replica")
+}
+
 func hasPrefix(s, p string) bool { return len(s) >= len(p) && s[:len(p)] == p }
 
 // c2 runs a command (demuxed) returning code + output without failing the test.
