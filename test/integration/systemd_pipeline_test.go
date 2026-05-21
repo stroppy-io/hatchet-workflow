@@ -5,6 +5,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
+	tcexec "github.com/testcontainers/testcontainers-go/exec"
 	"github.com/testcontainers/testcontainers-go/wait"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/planner"
@@ -53,9 +55,10 @@ func startSystemdHost(t *testing.T, ctx context.Context) *systemdHost {
 }
 
 // sh runs a shell command in the host, returning exit code + combined output.
+// tcexec.Multiplexed() demuxes docker's stream framing so the output is clean text.
 func (h *systemdHost) sh(t *testing.T, ctx context.Context, script string) (int, string) {
 	t.Helper()
-	code, reader, err := h.c.Exec(ctx, []string{"bash", "-lc", script})
+	code, reader, err := h.c.Exec(ctx, []string{"bash", "-lc", script}, tcexec.Multiplexed())
 	require.NoError(t, err)
 	return code, readAll(reader)
 }
@@ -146,4 +149,49 @@ func TestPostgresSingleFullPipeline(t *testing.T) {
 	sb := strings.TrimSpace(out)
 	require.NotEqual(t, "128MB", sb, "rendered config not applied — got engine default")
 	t.Logf("shared_buffers = %s", sb)
+}
+
+// TestMariaDBSingleFullPipeline compiles a single-mariadb preset, runs the rendered
+// install recipe (mariadb repo_setup + apt install + conf.d write + start) in a
+// systemd host, and asserts mariadb is up AND the rendered tuning is applied (innodb
+// buffer pool above the engine default).
+func TestMariaDBSingleFullPipeline(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	preset := &domain.TestPreset{
+		Database: &domain.Database{Kind: domain.Database_KIND_MARIADB, Version: "11.4"},
+		Topology: &domain.Topology{Machines: []*domain.Topology_Machine{{
+			Id: "m1", Cores: 2, MemoryGb: 4,
+			Components: []*domain.Topology_Component{{Id: "db", Kind: domain.Topology_Component_KIND_DATABASE}},
+		}}},
+	}
+	dag, err := planner.New().Compile(preset, nil)
+	require.NoError(t, err)
+
+	host := startSystemdHost(t, ctx)
+	host.runComponentChain(t, ctx, dag, "db")
+
+	// mariadb up + answers (root via unix_socket after apt install).
+	code, out := host.sh(t, ctx, `mariadb -e "SELECT 1"`)
+	require.Equalf(t, 0, code, "mariadb not ready: %s", out)
+
+	// rendered innodb_buffer_pool_size (50% of 4GB, capped 2GB) must beat the
+	// 128MiB engine default.
+	code, out = host.sh(t, ctx, `mariadb -N -e "SELECT @@innodb_buffer_pool_size"`)
+	require.Equalf(t, 0, code, "mariadb query failed: %s", out)
+	bytesVal, perr := strconv.ParseInt(strings.TrimSpace(out), 10, 64)
+	require.NoError(t, perr, "buffer pool size: %q", out)
+	require.Greater(t, bytesVal, int64(134217728), "rendered innodb_buffer_pool_size not applied")
+	t.Logf("innodb_buffer_pool_size = %d", bytesVal)
+}
+
+// TestMySQLSingleFullPipeline is skipped: the MySQL community APT repo GPG key
+// (RPM-GPG-KEY-mysql-2023) is EXPIRED upstream (EXPKEYSIG B7B3B788A8D3785C), so
+// apt-get update on the mysql.com repo fails. This is a real recipe-maintenance
+// issue (prod apt install of mysql-server would fail too) — the mysql recipe needs
+// the current key or the mysql-apt-config package. Config-validation
+// (TestMySQLSingleConfigBoots) still covers the rendered my.cnf against mysql:8.x.
+func TestMySQLSingleFullPipeline(t *testing.T) {
+	t.Skip("mysql.com APT repo GPG key expired upstream — see comment; recipe needs key refresh")
 }
