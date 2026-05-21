@@ -37,6 +37,8 @@ var recipes = map[string]recipe{
 	"mariadb/11.4":  {preInstall: mariadbPreInstall("11.4"), aptPackages: []string{"mariadb-server", "mariadb-client"}, serviceName: "mariadb"},
 	"picodata/25.3": {
 		preInstall: []string{
+			"apt-get update",
+			"apt-get install -y curl gnupg ca-certificates",
 			`curl -fsSL https://download.picodata.io/tarantool-picodata/picodata.gpg.key | gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/picodata.gpg --import && chmod 644 /etc/apt/trusted.gpg.d/picodata.gpg`,
 			`echo "deb https://download.picodata.io/tarantool-picodata/ubuntu/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/picodata.list`,
 			"apt-get update",
@@ -45,6 +47,8 @@ var recipes = map[string]recipe{
 	},
 	"cockroach/24.2": {
 		preInstall: []string{
+			"apt-get update",
+			"apt-get install -y curl ca-certificates tar",
 			`curl -fsSL https://binaries.cockroachdb.com/cockroach-v24.2.0.linux-amd64.tgz -o /tmp/cockroach.tgz`,
 			`tar -xzf /tmp/cockroach.tgz -C /tmp`,
 			`install /tmp/cockroach-v24.2.0.linux-amd64/cockroach /usr/local/bin/cockroach`,
@@ -53,6 +57,8 @@ var recipes = map[string]recipe{
 	},
 	"ydb/25.3": {
 		preInstall: []string{
+			"apt-get update",
+			"apt-get install -y curl ca-certificates tar",
 			`curl -fsSL https://binaries.ydb.tech/release/25.3.0/ydbd-25.3.0-linux-amd64.tar.gz -o /tmp/ydbd.tgz`,
 			`mkdir -p /opt/ydb && tar -xzf /tmp/ydbd.tgz -C /opt/ydb --strip-components=1`,
 			`ln -sf /opt/ydb/bin/ydbd /usr/local/bin/ydbd`,

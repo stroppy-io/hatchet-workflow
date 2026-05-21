@@ -151,6 +151,39 @@ func TestPostgresSingleFullPipeline(t *testing.T) {
 	t.Logf("shared_buffers = %s", sb)
 }
 
+// TestCockroachSingleFullPipeline runs the cockroach binary recipe (download +
+// start-single-node via flags, no config file) in a systemd host and asserts SQL.
+func TestCockroachSingleFullPipeline(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	preset := &domain.TestPreset{
+		Database: &domain.Database{Kind: domain.Database_KIND_COCKROACH, Version: "24.2"},
+		Topology: &domain.Topology{Machines: []*domain.Topology_Machine{{
+			Id: "m1", Cores: 2, MemoryGb: 4,
+			Components: []*domain.Topology_Component{{Id: "db", Kind: domain.Topology_Component_KIND_DATABASE}},
+		}}},
+	}
+	dag, err := planner.New().Compile(preset, nil)
+	require.NoError(t, err)
+
+	host := startSystemdHost(t, ctx)
+	host.runComponentChain(t, ctx, dag, "db")
+
+	var ok bool
+	var out string
+	for range 20 {
+		code, o := host.sh(t, ctx, `cockroach sql --insecure --host=localhost:5432 -e "SELECT 1" 2>&1`)
+		if code == 0 {
+			ok = true
+			break
+		}
+		out = o
+		time.Sleep(2 * time.Second)
+	}
+	require.Truef(t, ok, "cockroach SQL never succeeded: %s", out)
+}
+
 // TestMariaDBSingleFullPipeline compiles a single-mariadb preset, runs the rendered
 // install recipe (mariadb repo_setup + apt install + conf.d write + start) in a
 // systemd host, and asserts mariadb is up AND the rendered tuning is applied (innodb

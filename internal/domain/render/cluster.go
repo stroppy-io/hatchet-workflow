@@ -314,14 +314,31 @@ func renderMySQLComponent(c *domain.Topology_Component, topo *domain.Topology, t
 	conf["log_replica_updates"] = "ON"
 
 	items := []*renderpb.Config_Item{fileItem("my.cnf", "/etc/mysql/conf.d/stroppy.cnf", formatMysqld(conf, totalMemoryMB))}
+
 	if primary := replicationSource(topo, c.GetId()); primary != "" {
+		// This node is a replica: point it at the primary's ip (late binding).
 		tok := "__PRIMARY_IP__"
 		sql := `mysql -e "CHANGE REPLICATION SOURCE TO SOURCE_HOST='` + tok +
-			`', SOURCE_USER='repl', SOURCE_PASSWORD='repl', SOURCE_AUTO_POSITION=1; START REPLICA;"`
+			`', SOURCE_USER='repl', SOURCE_PASSWORD='repl', SOURCE_AUTO_POSITION=1, GET_SOURCE_PUBLIC_KEY=1; START REPLICA;"`
 		items = append(items, commandItem("setup_replica", sql,
 			[]*renderpb.Config_Binding{{Token: tok, ComponentIds: []string{primary}, Attr: AttrPrivateIP}}))
+	} else if isReplicationPrimary(topo, c.GetId()) {
+		// This node is the primary of a replica: provision the replication user.
+		items = append(items, commandItem("create_replica_user",
+			`mysql -e "CREATE USER IF NOT EXISTS 'repl'@'%' IDENTIFIED WITH mysql_native_password BY 'repl'; `+
+				`GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%'; FLUSH PRIVILEGES;"`, nil))
 	}
 	return &renderpb.Config{Id: "mysql", Items: items}
+}
+
+// isReplicationPrimary reports whether id is the source of any REPLICATION edge.
+func isReplicationPrimary(topo *domain.Topology, id string) bool {
+	for _, conn := range topo.GetConnections() {
+		if conn.GetKind() == domain.Topology_Connection_KIND_REPLICATION && conn.GetFrom() == id {
+			return true
+		}
+	}
+	return false
 }
 
 // ─── picodata cluster ─────────────────────────────────────────────────────────
