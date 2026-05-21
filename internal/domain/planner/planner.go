@@ -242,6 +242,7 @@ func componentChain(c *domain.Topology_Component, db *domain.Database, topo *dom
 			return nil, err
 		}
 	}
+	// Config FILE items are written before the service starts.
 	for _, item := range config.GetItems() {
 		if item.GetFile() == nil {
 			continue
@@ -257,6 +258,17 @@ func componentChain(c *domain.Topology_Component, db *domain.Database, topo *dom
 		}
 	case rec.startScript != "":
 		if err := add("start_service", scriptOp(rec.startScript), nil); err != nil {
+			return nil, err
+		}
+	}
+	// Config COMMAND items run after the service is up (e.g. CHANGE MASTER TO on a
+	// replica, with a late binding to the primary's ip).
+	for _, item := range config.GetItems() {
+		if item.GetCommand() == nil {
+			continue
+		}
+		op := &ops.Operation{Kind: ops.Operation_KIND_RUN_CMD, Operation: &ops.Operation_RunCmd{RunCmd: item.GetCommand()}}
+		if err := add("cmd_"+item.GetId(), op, item.GetBindings()); err != nil {
 			return nil, err
 		}
 	}

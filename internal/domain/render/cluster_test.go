@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	renderpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/render"
 )
 
 func comp(id string, k domain.Topology_Component_Kind) *domain.Topology_Component {
@@ -62,6 +63,63 @@ func TestRenderHAProxyBindsDatabases(t *testing.T) {
 	}
 	if !tokens["__DB_db1__"] || !tokens["__DB_db2__"] {
 		t.Errorf("haproxy missing db bindings: %v", tokens)
+	}
+}
+
+func mysqlReplTopo() *domain.Topology {
+	return &domain.Topology{
+		Machines: []*domain.Topology_Machine{
+			{Id: "m1", Components: []*domain.Topology_Component{comp("db1", domain.Topology_Component_KIND_DATABASE)}},
+			{Id: "m2", Components: []*domain.Topology_Component{comp("db2", domain.Topology_Component_KIND_DATABASE)}},
+		},
+		Connections: []*domain.Topology_Connection{
+			{From: "db1", To: "db2", Kind: domain.Topology_Connection_KIND_REPLICATION},
+		},
+	}
+}
+
+func TestRenderMySQLReplicaGetsChangeMaster(t *testing.T) {
+	db := &domain.Database{Kind: domain.Database_KIND_MYSQL}
+	topo := mysqlReplTopo()
+
+	replica, err := RenderComponent(comp("db2", domain.Topology_Component_KIND_DATABASE), db, topo, 4096)
+	if err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	var cmd *renderpb.Config_Item
+	for _, it := range replica.GetItems() {
+		if it.GetCommand() != nil {
+			cmd = it
+		}
+	}
+	if cmd == nil {
+		t.Fatal("replica missing CHANGE REPLICATION SOURCE command")
+	}
+	if cmd.GetBindings()[0].GetComponentIds()[0] != "db1" {
+		t.Errorf("replica command not bound to primary db1: %v", cmd.GetBindings())
+	}
+
+	primary, _ := RenderComponent(comp("db1", domain.Topology_Component_KIND_DATABASE), db, topo, 4096)
+	for _, it := range primary.GetItems() {
+		if it.GetCommand() != nil {
+			t.Error("primary should not get a replica setup command")
+		}
+	}
+}
+
+func TestRenderPicodataPeers(t *testing.T) {
+	topo := &domain.Topology{Machines: []*domain.Topology_Machine{
+		{Id: "m1", Components: []*domain.Topology_Component{comp("pd1", domain.Topology_Component_KIND_DATABASE)}},
+		{Id: "m2", Components: []*domain.Topology_Component{comp("pd2", domain.Topology_Component_KIND_DATABASE)}},
+	}}
+	cfg, err := RenderComponent(comp("pd1", domain.Topology_Component_KIND_DATABASE),
+		&domain.Database{Kind: domain.Database_KIND_PICODATA}, topo, 4096)
+	if err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	body := cfg.GetItems()[0].GetFile().GetContent().GetText()
+	if !strings.Contains(body, "__SELF_IP__:3301") || !strings.Contains(body, "__PD_pd2__:3301") {
+		t.Errorf("picodata peers unexpected:\n%s", body)
 	}
 }
 
