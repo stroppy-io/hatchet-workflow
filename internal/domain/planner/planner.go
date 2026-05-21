@@ -145,7 +145,7 @@ func componentSubDag(preset *domain.TestPreset) (*primitive.Dag_Node, error) {
 	byID := map[string]*componentGroup{}
 	for _, m := range topo.GetMachines() {
 		for _, c := range m.GetComponents() {
-			nodes, err := componentChain(c, db, topo)
+			nodes, err := componentChain(c, db, topo, int(m.GetMemoryGb())*1024)
 			if err != nil {
 				return nil, err
 			}
@@ -202,7 +202,7 @@ func componentSubDag(preset *domain.TestPreset) (*primitive.Dag_Node, error) {
 
 // componentChain builds one component's ordered agent.command nodes. STROPPY is a
 // single run node; AGENT/ADDON contribute nothing.
-func componentChain(c *domain.Topology_Component, db *domain.Database, topo *domain.Topology) ([]*primitive.Dag_Node, error) {
+func componentChain(c *domain.Topology_Component, db *domain.Database, topo *domain.Topology, memoryMB int) ([]*primitive.Dag_Node, error) {
 	switch c.GetKind() {
 	case domain.Topology_Component_KIND_STROPPY:
 		n, err := stroppyNode(c, db, topo)
@@ -214,6 +214,10 @@ func componentChain(c *domain.Topology_Component, db *domain.Database, topo *dom
 		return nil, nil
 	}
 
+	config, err := componentConfig(c, db, topo, memoryMB)
+	if err != nil {
+		return nil, err
+	}
 	rec := recipeForComponent(c, db)
 	prefix := c.GetId()
 	var nodes []*primitive.Dag_Node
@@ -238,7 +242,7 @@ func componentChain(c *domain.Topology_Component, db *domain.Database, topo *dom
 			return nil, err
 		}
 	}
-	for _, item := range c.GetConfig().GetItems() {
+	for _, item := range config.GetItems() {
 		if item.GetFile() == nil {
 			continue
 		}

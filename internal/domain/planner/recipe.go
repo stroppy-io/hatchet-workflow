@@ -205,17 +205,12 @@ func viewTopology(topo *domain.Topology) topologyView {
 	return v
 }
 
-// databaseConfig returns the rendered DB config: the intent's pre-rendered
-// Database.config when present (wizard, preview==execution), else rendered on the
-// fly. Returns an empty Config (no config writes) for engines the renderer does
-// not support yet.
-func databaseConfig(db *domain.Database, memoryMB int) *renderpb.Config {
-	if cfg := db.GetConfig(); len(cfg.GetItems()) > 0 {
-		return cfg
+// componentConfig returns a component's on-host config: the pre-rendered
+// Component.config when present (wizard, preview==execution), else rendered on the
+// fly by the shared render layer (same artifact either way, B3).
+func componentConfig(c *domain.Topology_Component, db *domain.Database, topo *domain.Topology, memoryMB int) (*renderpb.Config, error) {
+	if cfg := c.GetConfig(); len(cfg.GetItems()) > 0 {
+		return cfg, nil
 	}
-	cfg, err := render.RenderDatabase(db, memoryMB)
-	if err != nil {
-		return &renderpb.Config{} // TODO(planner): non-postgres engines
-	}
-	return cfg
+	return render.RenderComponent(c, db, topo, memoryMB)
 }
