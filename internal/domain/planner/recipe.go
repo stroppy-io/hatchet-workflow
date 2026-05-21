@@ -50,11 +50,10 @@ var recipes = map[string]recipe{
 		preInstall: []string{
 			`curl -fsSL https://binaries.ydb.tech/release/25.3.0/ydbd-25.3.0-linux-amd64.tar.gz -o /tmp/ydbd.tgz`,
 			`mkdir -p /opt/ydb && tar -xzf /tmp/ydbd.tgz -C /opt/ydb --strip-components=1`,
+			`ln -sf /opt/ydb/bin/ydbd /usr/local/bin/ydbd`,
 		},
-		// TODO(planner): single-node YDB also needs a static storage config + blobstorage
-		// bootstrap (ydbd admin blobstorage init) — not a single start command. Recast
-		// the old setup_ydb static/dynamic node sequence.
-		startScript: `echo "TODO: ydb single-node bootstrap not implemented"`,
+		// Start + cluster/database bootstrap are render COMMAND items (config.yaml +
+		// ydbd storage start + blobstorage/database init), so no service/startScript here.
 	},
 }
 

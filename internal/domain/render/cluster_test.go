@@ -123,6 +123,39 @@ func TestRenderPicodataPeers(t *testing.T) {
 	}
 }
 
+func TestRenderYDBClusterInitsOnFirstNode(t *testing.T) {
+	topo := &domain.Topology{Machines: []*domain.Topology_Machine{
+		{Id: "m1", Components: []*domain.Topology_Component{comp("ydb1", domain.Topology_Component_KIND_DATABASE)}},
+		{Id: "m2", Components: []*domain.Topology_Component{comp("ydb2", domain.Topology_Component_KIND_DATABASE)}},
+		{Id: "m3", Components: []*domain.Topology_Component{comp("ydb3", domain.Topology_Component_KIND_DATABASE)}},
+	}}
+	db := &domain.Database{Kind: domain.Database_KIND_YDB}
+
+	cmdIDs := func(cfg *renderpb.Config) map[string]bool {
+		out := map[string]bool{}
+		for _, it := range cfg.GetItems() {
+			if it.GetCommand() != nil {
+				out[it.GetId()] = true
+			}
+		}
+		return out
+	}
+
+	first, _ := RenderComponent(comp("ydb1", domain.Topology_Component_KIND_DATABASE), db, topo, 8192)
+	fc := cmdIDs(first)
+	if !fc["start_storage"] || !fc["blobstorage_init"] || !fc["database_init"] {
+		t.Errorf("first node missing init commands: %v", fc)
+	}
+	second, _ := RenderComponent(comp("ydb2", domain.Topology_Component_KIND_DATABASE), db, topo, 8192)
+	sc := cmdIDs(second)
+	if !sc["start_storage"] {
+		t.Error("second node missing start_storage")
+	}
+	if sc["blobstorage_init"] || sc["database_init"] {
+		t.Errorf("only the first node should bootstrap the cluster: %v", sc)
+	}
+}
+
 func TestRenderEtcdInitialCluster(t *testing.T) {
 	cfg := renderEtcd(comp("etcd1", domain.Topology_Component_KIND_COORDINATOR), haTopo())
 	body := cfg.GetItems()[0].GetFile().GetContent().GetText()
