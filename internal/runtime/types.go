@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/core/protohelp"
-	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
+	"github.com/stroppy-io/stroppy-cloud/internal/utils/protohelp"
 )
 
 type Task[I, O proto.Message] interface {
