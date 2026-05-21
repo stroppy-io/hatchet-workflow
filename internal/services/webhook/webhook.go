@@ -4,6 +4,7 @@ package webhook
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/gopherex/pgtx/pkg/tx"
@@ -24,6 +25,12 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/utils/tracing"
 )
 
+// Sender delivers a webhook payload to a URL, signing it with the secret.
+// Implemented by internal/infrastructure/webhooksender.
+type Sender interface {
+	Send(ctx context.Context, url, secret string, payload []byte) error
+}
+
 // WebhookService implements ui.WebhookActions.
 type WebhookService struct {
 	*tracing.Entity
@@ -33,22 +40,24 @@ type WebhookService struct {
 		*models.WebhookScanner,
 		*models.Webhook,
 	]
-	authz *authz.Authz
-	txm   tx.Trm
+	sender Sender
+	authz  *authz.Authz
+	txm    tx.Trm
 }
 
 var _ uiapi.WebhookActions = (*WebhookService)(nil)
 
 // NewWebhookService builds the service.
-func NewWebhookService(logger *xlog.Logger, executor exec.DB, txm tx.Trm, az *authz.Authz) *WebhookService {
+func NewWebhookService(logger *xlog.Logger, executor exec.DB, txm tx.Trm, az *authz.Authz, sender Sender) *WebhookService {
 	return &WebhookService{
 		Entity: tracing.NewEntity(logger.AppendName("WebhookService")),
 		hooks: repository.NewProtoRepository(
 			repository.NewScannerRepository(models.Webhooks.Table, executor),
 			models.WebhookConverter,
 		),
-		authz: az,
-		txm:   txm,
+		sender: sender,
+		authz:  az,
+		txm:    txm,
 	}
 }
 
@@ -157,17 +166,32 @@ func (s *WebhookService) DeleteWebhook(ctx context.Context, req *uipb.DeleteWebh
 		})
 }
 
-// TestWebhook sends a test delivery.
-//
-// TODO(webhook): delivery is NOT implemented — needs an HTTP sender with HMAC
-// signing (using the stored secret) and retry/backoff. Returns Unimplemented for
-// now. Reported.
+// TestWebhook delivers a test payload to the webhook, signed with its secret.
 func (s *WebhookService) TestWebhook(ctx context.Context, req *uipb.TestWebhookRequest) (*emptypb.Empty, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "TestWebhook",
 		func(ctx context.Context, _ trace.Span) (*emptypb.Empty, error) {
 			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_ADMIN); err != nil {
 				return nil, err
 			}
-			return nil, status.Error(codes.Unimplemented, "webhook delivery not yet implemented")
+			hook, err := s.hooks.QueryRow(ctx, models.Webhooks.SelectAll().Where(
+				models.Webhooks.Id.Eq(req.GetId().GetValue()),
+				models.Webhooks.TenantId.Eq(req.GetTenantId().GetValue()),
+				models.Webhooks.DeletedAt.IsNull(),
+			))
+			if err != nil {
+				return nil, svcutil.NotFound(err, "webhook")
+			}
+			// secret is write-only (not on the proto) — read it from the scanner.
+			secret, err := s.hooks.Scanner().QueryRow(ctx, models.Webhooks.Select(models.WebhookColumnSecret).Where(
+				models.Webhooks.Id.Eq(req.GetId().GetValue()),
+			))
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "load secret: %v", err)
+			}
+			payload := []byte(fmt.Sprintf(`{"event":"test","webhook_id":%q}`, req.GetId().GetValue()))
+			if err := s.sender.Send(ctx, hook.GetUrl(), secret.Secret, payload); err != nil {
+				return nil, status.Errorf(codes.Unavailable, "deliver test webhook: %v", err)
+			}
+			return &emptypb.Empty{}, nil
 		})
 }

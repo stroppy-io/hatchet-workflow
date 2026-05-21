@@ -6,6 +6,7 @@ import (
 
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	rtagent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/ops"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
 	"github.com/stroppy-io/stroppy-cloud/internal/runtime"
@@ -13,9 +14,13 @@ import (
 
 func singlePreset() *domain.TestPreset {
 	return &domain.TestPreset{
+		Database: &domain.Database{Kind: domain.Database_KIND_POSTGRES, Version: "16"},
 		Topology: &domain.Topology{
 			Machines: []*domain.Topology_Machine{
-				{Id: "db-1", Cores: 4, MemoryGb: 16, DiskGb: 100, DataDisksGb: []uint64{200}},
+				{
+					Id: "db-1", Cores: 4, MemoryGb: 16, DiskGb: 100, DataDisksGb: []uint64{200},
+					Components: []*domain.Topology_Component{{Id: "pg", Kind: domain.Topology_Component_KIND_DATABASE}},
+				},
 			},
 		},
 	}
@@ -108,6 +113,30 @@ func TestTfvarsFromParamsUseProtoNames(t *testing.T) {
 	}
 	if strings.Contains(vars, "networkId") {
 		t.Errorf("tfvars used lowerCamel (want proto snake_case):\n%s", vars)
+	}
+}
+
+func TestRecipeProducesRealCommands(t *testing.T) {
+	dag, err := New().Compile(singlePreset(), nil)
+	if err != nil {
+		t.Fatalf("compile: %v", err)
+	}
+	sub := findNode(dag, "install_and_run").GetSubDag()
+	var scripts []string
+	for _, n := range sub.GetNodes() {
+		var cmd rtagent.Command
+		if err := n.GetTaskState().GetInput().UnmarshalTo(&cmd); err != nil {
+			continue
+		}
+		if s := cmd.GetOperation().GetRunCmd().GetScript(); s != nil {
+			scripts = append(scripts, s.GetText())
+		}
+	}
+	all := strings.Join(scripts, "\n")
+	for _, want := range []string{"postgresql-16", "apt-get install", "systemctl enable --now postgresql"} {
+		if !strings.Contains(all, want) {
+			t.Errorf("install recipe missing %q:\n%s", want, all)
+		}
 	}
 }
 

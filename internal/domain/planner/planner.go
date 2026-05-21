@@ -14,6 +14,7 @@ package planner
 
 import (
 	"fmt"
+	"strings"
 
 	"google.golang.org/protobuf/types/known/anypb"
 
@@ -107,10 +108,11 @@ func singleTemplate(preset *domain.TestPreset, params *DeploymentParams) (*primi
 
 	view := viewTopology(preset.GetTopology())
 	config := databaseConfig(preset.GetDatabase(), view.dbMemoryMB)
+	rec := recipeFor(preset.GetDatabase())
 
 	renderNode := serverTask("render_config", HandlerRenderConfig)
 	apply := serverTaskInput("terraform_apply", HandlerTerraformApply, applyInput)
-	install, err := installAndRunSubDag(config, view.dbComponentID)
+	install, err := installAndRunSubDag(config, view.dbComponentID, rec)
 	if err != nil {
 		return nil, err
 	}
@@ -137,10 +139,10 @@ func singleTemplate(preset *domain.TestPreset, params *DeploymentParams) (*primi
 }
 
 // installAndRunSubDag is the agent's on-host work — one node per command, each a
-// task handler="agent.command" carrying an ops.Operation (D17, H19). The rendered
-// database config files become WRITE_FILE commands; run_stroppy carries a late
-// binding to the database's private ip (resolved at the plan->execute seam).
-func installAndRunSubDag(config *renderpb.Config, dbComponentID string) (*primitive.Dag_Node, error) {
+// task handler="agent.command" carrying an ops.Operation (D17, H19). Built from
+// the engine recipe (repo setup + apt install + service start) + the rendered
+// config files; run_stroppy carries a late binding to the database's private ip.
+func installAndRunSubDag(config *renderpb.Config, dbComponentID string, rec recipe) (*primitive.Dag_Node, error) {
 	var nodes []*primitive.Dag_Node
 	add := func(id string, op *ops.Operation, bindings []*renderpb.Config_Binding) error {
 		n, err := agentCommand(id, op)
@@ -152,12 +154,20 @@ func installAndRunSubDag(config *renderpb.Config, dbComponentID string) (*primit
 		return nil
 	}
 
-	if err := add("write_sources_list", writeFileOp(), nil); err != nil {
-		return nil, err
+	// 1. repo / pre-install setup (shell scripts).
+	for i, cmd := range rec.preInstall {
+		if err := add(fmt.Sprintf("pre_install_%d", i), scriptOp(cmd), nil); err != nil {
+			return nil, err
+		}
 	}
-	if err := add("apt_install", runCmdOp(), nil); err != nil {
-		return nil, err
+	// 2. apt install the engine packages.
+	if len(rec.aptPackages) > 0 {
+		if err := add("apt_install",
+			scriptOp("DEBIAN_FRONTEND=noninteractive apt-get install -y "+strings.Join(rec.aptPackages, " ")), nil); err != nil {
+			return nil, err
+		}
 	}
+	// 3. rendered config files (WRITE_FILE), with their late bindings.
 	for _, item := range config.GetItems() {
 		file := item.GetFile()
 		if file == nil {
@@ -167,9 +177,19 @@ func installAndRunSubDag(config *renderpb.Config, dbComponentID string) (*primit
 			return nil, err
 		}
 	}
-	if err := add("start_service", runCmdOp(), nil); err != nil {
-		return nil, err
+	// 4. start the database: a systemd service (apt engines) or a start script
+	// (binary engines like cockroach/ydb).
+	switch {
+	case rec.serviceName != "":
+		if err := add("start_service", scriptOp("systemctl enable --now "+rec.serviceName), nil); err != nil {
+			return nil, err
+		}
+	case rec.startScript != "":
+		if err := add("start_service", scriptOp(rec.startScript), nil); err != nil {
+			return nil, err
+		}
 	}
+	// 5. run the workload (stroppy), with the DB-host late binding.
 	var stroppyBindings []*renderpb.Config_Binding
 	if dbComponentID != "" {
 		stroppyBindings = []*renderpb.Config_Binding{{
@@ -252,14 +272,12 @@ func edge(source, target *primitive.Dag_Node) *primitive.Dag_Edge {
 	}
 }
 
-// TODO(planner): placeholder operations — the real per-engine recipe (file paths,
-// package install, config, service start, stroppy invocation) is backend data.
-func writeFileOp() *ops.Operation {
-	return &ops.Operation{Kind: ops.Operation_KIND_WRITE_FILE, Operation: &ops.Operation_WriteFile{WriteFile: &system.File{}}}
-}
-
-func runCmdOp() *ops.Operation {
-	return &ops.Operation{Kind: ops.Operation_KIND_RUN_CMD, Operation: &ops.Operation_RunCmd{RunCmd: &system.Cmd_Spec{}}}
+// scriptOp wraps a shell script into a RUN_CMD operation (recipe steps use shell
+// features — pipes, $(...) — so they run via the shell, not argv).
+func scriptOp(text string) *ops.Operation {
+	return &ops.Operation{Kind: ops.Operation_KIND_RUN_CMD, Operation: &ops.Operation_RunCmd{RunCmd: &system.Cmd_Spec{
+		Command: &system.Cmd_Spec_Script{Script: &system.Cmd_Script{Text: text, Shell: "/bin/bash"}},
+	}}}
 }
 
 // writeFileOpFor wraps a rendered config file into a WRITE_FILE operation.

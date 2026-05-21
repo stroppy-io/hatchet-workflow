@@ -33,8 +33,19 @@ func TestRenderDatabasePostgres(t *testing.T) {
 	}
 }
 
+func TestRenderDatabaseMySQL(t *testing.T) {
+	cfg, err := RenderDatabase(&domain.Database{Kind: domain.Database_KIND_MYSQL, Version: "8.4"}, 4096)
+	if err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	conf := cfg.GetItems()[0].GetFile().GetContent().GetText()
+	if !strings.Contains(conf, "[mysqld]") || !strings.Contains(conf, "innodb_buffer_pool_size = 2048M") {
+		t.Errorf("unexpected my.cnf:\n%s", conf)
+	}
+}
+
 func TestRenderDatabaseUnsupported(t *testing.T) {
-	if _, err := RenderDatabase(&domain.Database{Kind: domain.Database_KIND_COCKROACH}, 1024); err == nil {
-		t.Fatal("expected error for unsupported kind")
+	if _, err := RenderDatabase(&domain.Database{Kind: domain.Database_KIND_UNSPECIFIED}, 1024); err == nil {
+		t.Fatal("expected error for unspecified kind")
 	}
 }
