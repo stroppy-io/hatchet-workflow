@@ -4,6 +4,7 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -19,11 +20,11 @@ import (
 // mysqlConfigBootCase renders the single config for a mysql-family engine, drops
 // it into the image's conf.d, and asserts the server boots with it and answers a
 // query (run via the image's own client, so no Go driver dependency).
-func mysqlConfigBootCase(t *testing.T, image, client string, db *domain.Database) {
+func mysqlConfigBootCase(t *testing.T, image, client string, db *domain.Database, memMB int) {
 	t.Helper()
 	ctx := context.Background()
 
-	cfg, err := render.RenderDatabase(db, 4096)
+	cfg, err := render.RenderDatabase(db, memMB)
 	require.NoError(t, err)
 	confPath := writeConfigItem(t, cfg, "my.cnf")
 
@@ -65,12 +66,28 @@ func mysqlConfigBootCase(t *testing.T, image, client string, db *domain.Database
 
 func TestMySQLSingleConfigBoots(t *testing.T) {
 	t.Parallel()
-	mysqlConfigBootCase(t, "mysql:8.4", "mysql", &domain.Database{Kind: domain.Database_KIND_MYSQL, Version: "8.4"})
+	for _, ver := range []string{"8.0", "8.4"} {
+		for _, mem := range []int{2048, 16384} {
+			t.Run(fmt.Sprintf("mysql%s_%dMB", ver, mem), func(t *testing.T) {
+				t.Parallel()
+				mysqlConfigBootCase(t, "mysql:"+ver, "mysql",
+					&domain.Database{Kind: domain.Database_KIND_MYSQL, Version: ver}, mem)
+			})
+		}
+	}
 }
 
 func TestMariaDBSingleConfigBoots(t *testing.T) {
 	t.Parallel()
-	mysqlConfigBootCase(t, "mariadb:11.4", "mariadb", &domain.Database{Kind: domain.Database_KIND_MARIADB, Version: "11.4"})
+	for _, ver := range []string{"10.11", "11.4"} {
+		for _, mem := range []int{2048, 16384} {
+			t.Run(fmt.Sprintf("mariadb%s_%dMB", ver, mem), func(t *testing.T) {
+				t.Parallel()
+				mysqlConfigBootCase(t, "mariadb:"+ver, "mariadb",
+					&domain.Database{Kind: domain.Database_KIND_MARIADB, Version: ver}, mem)
+			})
+		}
+	}
 }
 
 // readAll drains an exec output reader (used only for diagnostics on failure).
