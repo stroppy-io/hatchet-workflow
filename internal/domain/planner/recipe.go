@@ -88,6 +88,66 @@ func mariadbPreInstall(version string) []string {
 	}
 }
 
+// Per-kind recipes for the non-DATABASE components of an emergent HA/cluster
+// topology. Configs are data (component.config); these carry only install+service.
+var (
+	etcdRecipe     = recipe{aptPackages: []string{"etcd-server", "etcd-client"}, serviceName: "etcd"}
+	haproxyRecipe  = recipe{aptPackages: []string{"haproxy"}, serviceName: "haproxy"}
+	proxysqlRecipe = recipe{
+		preInstall: []string{
+			`apt-get install -y curl ca-certificates gnupg`,
+			`install -d /etc/apt/keyrings`,
+			`curl -fsSL https://repo.proxysql.com/ProxySQL/proxysql-2.x/repo_pub_key | gpg --dearmor -o /etc/apt/keyrings/proxysql.gpg`,
+			`bash -c 'echo "deb [signed-by=/etc/apt/keyrings/proxysql.gpg] https://repo.proxysql.com/ProxySQL/proxysql-2.x/$(lsb_release -cs)/ ./" > /etc/apt/sources.list.d/proxysql.list'`,
+			`apt-get update`,
+		},
+		aptPackages: []string{"proxysql"}, serviceName: "proxysql",
+	}
+	monitorRecipe = recipe{aptPackages: []string{"prometheus-node-exporter"}, serviceName: "prometheus-node-exporter"}
+)
+
+// recipeForComponent resolves the install recipe for one topology component. The
+// DATABASE recipe varies with the engine's replication mode (e.g. Patroni manages
+// postgres, so the started service is patroni, not postgresql).
+func recipeForComponent(c *domain.Topology_Component, db *domain.Database) recipe {
+	switch c.GetKind() {
+	case domain.Topology_Component_KIND_DATABASE:
+		return databaseRecipe(db)
+	case domain.Topology_Component_KIND_COORDINATOR:
+		return etcdRecipe
+	case domain.Topology_Component_KIND_PROXY:
+		return proxyRecipe(db)
+	case domain.Topology_Component_KIND_MONITOR:
+		return monitorRecipe
+	default:
+		// STROPPY (workload binary preinstalled in the agent image), AGENT, ADDON:
+		// no install steps; STROPPY contributes the run_stroppy command instead.
+		return recipe{}
+	}
+}
+
+// databaseRecipe is the engine recipe, adjusted for the replication mode.
+func databaseRecipe(db *domain.Database) recipe {
+	r := recipeFor(db)
+	if db.GetKind() == domain.Database_KIND_POSTGRES &&
+		db.GetOptions().GetPostgres().GetReplication().GetMode() == domain.Database_Options_Postgres_Replication_MODE_PATRONI {
+		// Patroni supervises postgres + talks to etcd; it is the started service.
+		r.aptPackages = append(append([]string{}, r.aptPackages...), "patroni", "python3-etcd")
+		r.serviceName = "patroni"
+	}
+	return r
+}
+
+// proxyRecipe picks the proxy engine: haproxy for postgres, proxysql for mysql/mariadb.
+func proxyRecipe(db *domain.Database) recipe {
+	switch db.GetKind() {
+	case domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
+		return proxysqlRecipe
+	default:
+		return haproxyRecipe
+	}
+}
+
 // recipeFor resolves the install recipe for a database (by kind+version, falling
 // back to the kind default). An unknown engine yields an empty recipe (no install
 // steps) — TODO(planner): ydb/cockroach binary install.

@@ -1,15 +1,16 @@
 // Package planner compiles a domain TestPreset into an executable primitive.Dag
-// (the Plan phase, C12). The graph is STATIC per shape (engine x topology — a
-// finite set of forms); only node inputs vary (render config baked at Plan,
-// endpoints via render.Binding at Execute). So the planner is a template registry
-// + parameterization, not a general graph compiler. Canon:
-// runtime/primitive/dag.proto, features/orchestration/compile-to-dag.feature.
+// (the Plan phase, C12). Cluster shapes (single/ha/replica/scale) are NOT an enum:
+// they emerge structurally from the topology graph (component kinds + connections
+// + Database.Options). One graph-driven template compiles any topology — a per-
+// component install chain (recipe + rendered config writes + start), ordered by
+// kind rank + REPLICATION connections, with run_stroppy bound to its FLOW target.
+// Endpoints resolve via render.Binding at Execute. Canon: runtime/primitive/
+// dag.proto, domain/topology.proto, features/orchestration/compile-to-dag.feature.
 //
-// TODO(planner): only the linear single shape exists. NOT implemented and
-// reported: emergent HA (patroni/etcd/proxy) / replica / external shapes;
-// real node-input parameterization from the preset (render configs, machine
-// specs, render.Binding wiring); recipes as backend data (H29). The agent
-// commands carry placeholder Operations — fill the real per-engine recipe.
+// TODO(planner): component.config is consumed as-is — the HA config renderers
+// (patroni/haproxy/etcd/mysql-repl/picodata/ydb, in internal/domain/render) that
+// populate empty component configs + their bindings are the next piece. ydb/
+// cockroach binary recipes are minimal (single-node).
 package planner
 
 import (
@@ -39,54 +40,26 @@ const (
 	HandlerAgentCommand = "agent.command"
 )
 
-// Shape is a finite Dag form. The graph is fixed per shape; inputs vary.
-type Shape string
+// Compiler compiles a TestPreset's topology graph into a Dag. Cluster shapes
+// (single / ha / replica / scale) are NOT enumerated — they emerge structurally
+// from the graph (component kinds + connections + Database.Options), so one
+// graph-driven template handles every shape (topology.proto C-note).
+type Compiler struct{}
 
-const (
-	ShapeSingle Shape = "single"
-	// TODO(planner): ShapeHA / ShapeReplica / ShapeExternal — emergent from Options.
-)
+// New builds a Compiler.
+func New() *Compiler { return &Compiler{} }
 
-// Template builds the Dag for a shape from a preset + resolved deployment params.
-type Template func(preset *domain.TestPreset, params *DeploymentParams) (*primitive.Dag, error)
-
-// Compiler selects and instantiates Dag templates.
-type Compiler struct {
-	templates map[Shape]Template
-}
-
-// New builds a Compiler with the known templates.
-func New() *Compiler {
-	return &Compiler{templates: map[Shape]Template{
-		ShapeSingle: singleTemplate,
-	}}
-}
-
-// Compile detects the shape of the preset and instantiates its template with the
-// resolved deployment params (nil is treated as empty).
+// Compile builds the Dag for a preset with resolved deployment params (nil = empty).
 func (c *Compiler) Compile(preset *domain.TestPreset, params *DeploymentParams) (*primitive.Dag, error) {
 	if params == nil {
 		params = &DeploymentParams{}
 	}
-	shape := shapeOf(preset)
-	tmpl, ok := c.templates[shape]
-	if !ok {
-		return nil, fmt.Errorf("planner: no template for shape %q", shape)
-	}
-	return tmpl(preset, params)
+	return graphTemplate(preset, params)
 }
 
-// shapeOf picks the Dag form from the preset.
-//
-// TODO(planner): detect HA/replica/external from Database.Options + Topology; for
-// now everything maps to the single linear shape.
-func shapeOf(_ *domain.TestPreset) Shape {
-	return ShapeSingle
-}
-
-// singleTemplate: render_config -> terraform_apply -> install_and_run(sub_dag) ->
+// graphTemplate: render_config -> terraform_apply -> install_and_run(sub_dag) ->
 // collect_results -> terraform_destroy(always_run). apply/destroy share a workdir.
-func singleTemplate(preset *domain.TestPreset, params *DeploymentParams) (*primitive.Dag, error) {
+func graphTemplate(preset *domain.TestPreset, params *DeploymentParams) (*primitive.Dag, error) {
 	workdirID := ids.New()
 
 	applyOp, err := buildTfOperation(ops.TfOperation_ACTION_APPLY, workdirID, preset, params)
@@ -107,12 +80,10 @@ func singleTemplate(preset *domain.TestPreset, params *DeploymentParams) (*primi
 	}
 
 	view := viewTopology(preset.GetTopology())
-	config := databaseConfig(preset.GetDatabase(), view.dbMemoryMB)
-	rec := recipeFor(preset.GetDatabase())
 
 	renderNode := serverTask("render_config", HandlerRenderConfig)
 	apply := serverTaskInput("terraform_apply", HandlerTerraformApply, applyInput)
-	install, err := installAndRunSubDag(config, view.dbComponentID, rec)
+	install, err := componentSubDag(preset)
 	if err != nil {
 		return nil, err
 	}
@@ -138,14 +109,116 @@ func singleTemplate(preset *domain.TestPreset, params *DeploymentParams) (*primi
 	}, nil
 }
 
-// installAndRunSubDag is the agent's on-host work — one node per command, each a
-// task handler="agent.command" carrying an ops.Operation (D17, H19). Built from
-// the engine recipe (repo setup + apt install + service start) + the rendered
-// config files; run_stroppy carries a late binding to the database's private ip.
-func installAndRunSubDag(config *renderpb.Config, dbComponentID string, rec recipe) (*primitive.Dag_Node, error) {
+// kindRank orders component install across the topology: coordinators (etcd) come
+// up first, then databases, then proxies/monitors, then the workload.
+func kindRank(k domain.Topology_Component_Kind) int {
+	switch k {
+	case domain.Topology_Component_KIND_COORDINATOR:
+		return 0
+	case domain.Topology_Component_KIND_DATABASE:
+		return 1
+	case domain.Topology_Component_KIND_PROXY, domain.Topology_Component_KIND_MONITOR:
+		return 2
+	case domain.Topology_Component_KIND_STROPPY:
+		return 3
+	default:
+		return 1
+	}
+}
+
+// componentGroup is one component's node chain plus its install rank.
+type componentGroup struct {
+	id    string
+	rank  int
+	nodes []*primitive.Dag_Node
+}
+
+// componentSubDag is the agent's on-host work for the whole topology: a per-
+// component chain (install recipe + rendered config writes + start), ordered by
+// kind rank and by REPLICATION connections (primary before replica). Each node is
+// an agent.command carrying an ops.Operation (D17/H19).
+func componentSubDag(preset *domain.TestPreset) (*primitive.Dag_Node, error) {
+	topo := preset.GetTopology()
+	db := preset.GetDatabase()
+
+	var groups []componentGroup
+	byID := map[string]*componentGroup{}
+	for _, m := range topo.GetMachines() {
+		for _, c := range m.GetComponents() {
+			nodes, err := componentChain(c, db, topo)
+			if err != nil {
+				return nil, err
+			}
+			if len(nodes) == 0 {
+				continue // AGENT/ADDON, or a component with nothing to do
+			}
+			groups = append(groups, componentGroup{id: c.GetId(), rank: kindRank(c.GetKind()), nodes: nodes})
+			byID[c.GetId()] = &groups[len(groups)-1]
+		}
+	}
+
+	var allNodes []*primitive.Dag_Node
+	var edges []*primitive.Dag_Edge
+	byRank := map[int][]*componentGroup{}
+	for i := range groups {
+		g := &groups[i]
+		allNodes = append(allNodes, g.nodes...)
+		for j := 1; j < len(g.nodes); j++ {
+			edges = append(edges, edge(g.nodes[j-1], g.nodes[j])) // intra-component chain
+		}
+		byRank[g.rank] = append(byRank[g.rank], g)
+	}
+
+	// Cross-rank ordering: every component of rank r must finish before any
+	// component of the next present rank starts.
+	ranks := presentRanks(byRank)
+	for i := 1; i < len(ranks); i++ {
+		for _, prev := range byRank[ranks[i-1]] {
+			for _, cur := range byRank[ranks[i]] {
+				edges = append(edges, edge(last(prev.nodes), cur.nodes[0]))
+			}
+		}
+	}
+	// REPLICATION connections refine intra-database order: source (primary) before target.
+	for _, conn := range topo.GetConnections() {
+		if conn.GetKind() != domain.Topology_Connection_KIND_REPLICATION {
+			continue
+		}
+		src, okS := byID[conn.GetFrom()]
+		tgt, okT := byID[conn.GetTo()]
+		if okS && okT && src.rank == tgt.rank {
+			edges = append(edges, edge(last(src.nodes), tgt.nodes[0]))
+		}
+	}
+
+	sub := &primitive.Dag{
+		Id:     ids.New(),
+		Status: primitive.Status_STATUS_PENDING,
+		Nodes:  allNodes,
+		Edges:  edges,
+	}
+	return subDagNode("install_and_run", sub), nil
+}
+
+// componentChain builds one component's ordered agent.command nodes. STROPPY is a
+// single run node; AGENT/ADDON contribute nothing.
+func componentChain(c *domain.Topology_Component, db *domain.Database, topo *domain.Topology) ([]*primitive.Dag_Node, error) {
+	switch c.GetKind() {
+	case domain.Topology_Component_KIND_STROPPY:
+		n, err := stroppyNode(c, db, topo)
+		if err != nil {
+			return nil, err
+		}
+		return []*primitive.Dag_Node{n}, nil
+	case domain.Topology_Component_KIND_AGENT, domain.Topology_Component_KIND_ADDON:
+		return nil, nil
+	}
+
+	rec := recipeForComponent(c, db)
+	prefix := c.GetId()
 	var nodes []*primitive.Dag_Node
-	add := func(id string, op *ops.Operation, bindings []*renderpb.Config_Binding) error {
-		n, err := agentCommand(id, op)
+	add := func(suffix string, op *ops.Operation, bindings []*renderpb.Config_Binding) error {
+		n, err := agentCommand(prefix+"."+suffix, op)
 		if err != nil {
 			return err
 		}
@@ -154,31 +227,25 @@ func installAndRunSubDag(config *renderpb.Config, dbComponentID string, rec reci
 		return nil
 	}
 
-	// 1. repo / pre-install setup (shell scripts).
 	for i, cmd := range rec.preInstall {
 		if err := add(fmt.Sprintf("pre_install_%d", i), scriptOp(cmd), nil); err != nil {
 			return nil, err
 		}
 	}
-	// 2. apt install the engine packages.
 	if len(rec.aptPackages) > 0 {
 		if err := add("apt_install",
 			scriptOp("DEBIAN_FRONTEND=noninteractive apt-get install -y "+strings.Join(rec.aptPackages, " ")), nil); err != nil {
 			return nil, err
 		}
 	}
-	// 3. rendered config files (WRITE_FILE), with their late bindings.
-	for _, item := range config.GetItems() {
-		file := item.GetFile()
-		if file == nil {
+	for _, item := range c.GetConfig().GetItems() {
+		if item.GetFile() == nil {
 			continue
 		}
-		if err := add("write_"+item.GetId(), writeFileOpFor(file), item.GetBindings()); err != nil {
+		if err := add("write_"+item.GetId(), writeFileOpFor(item.GetFile()), item.GetBindings()); err != nil {
 			return nil, err
 		}
 	}
-	// 4. start the database: a systemd service (apt engines) or a start script
-	// (binary engines like cockroach/ydb).
 	switch {
 	case rec.serviceName != "":
 		if err := add("start_service", scriptOp("systemctl enable --now "+rec.serviceName), nil); err != nil {
@@ -189,31 +256,60 @@ func installAndRunSubDag(config *renderpb.Config, dbComponentID string, rec reci
 			return nil, err
 		}
 	}
-	// 5. run the workload (stroppy), with the DB-host late binding.
-	var stroppyBindings []*renderpb.Config_Binding
-	if dbComponentID != "" {
-		stroppyBindings = []*renderpb.Config_Binding{{
-			Token:        stroppyDBHostToken,
-			ComponentIds: []string{dbComponentID},
-			Attr:         render.AttrPrivateIP,
-		}}
-	}
-	if err := add("run_stroppy", runStroppyOp(), stroppyBindings); err != nil {
+	return nodes, nil
+}
+
+// stroppyNode is the workload command: stroppy run against its FLOW target (the
+// proxy if present, else the primary database), via a late-binding host token.
+func stroppyNode(c *domain.Topology_Component, db *domain.Database, topo *domain.Topology) (*primitive.Dag_Node, error) {
+	target := flowTarget(c.GetId(), topo)
+	n, err := agentCommand(c.GetId()+".run_stroppy", runStroppyOp(db))
+	if err != nil {
 		return nil, err
 	}
-
-	edges := make([]*primitive.Dag_Edge, 0, len(nodes))
-	for i := 1; i < len(nodes); i++ {
-		edges = append(edges, edge(nodes[i-1], nodes[i]))
+	if target != "" {
+		render.AttachBindings(n, []*renderpb.Config_Binding{{
+			Token:        stroppyDBHostToken,
+			ComponentIds: []string{target},
+			Attr:         render.AttrPrivateIP,
+		}})
 	}
-	sub := &primitive.Dag{
-		Id:     ids.New(),
-		Status: primitive.Status_STATUS_PENDING,
-		Nodes:  nodes,
-		Edges:  edges,
-	}
-	return subDagNode("install_and_run", sub), nil
+	return n, nil
 }
+
+// flowTarget is the component the STROPPY load points at: its FLOW connection
+// target, else the first PROXY, else the first DATABASE.
+func flowTarget(stroppyID string, topo *domain.Topology) string {
+	for _, conn := range topo.GetConnections() {
+		if conn.GetKind() == domain.Topology_Connection_KIND_FLOW && conn.GetFrom() == stroppyID {
+			return conn.GetTo()
+		}
+	}
+	var firstDB string
+	for _, m := range topo.GetMachines() {
+		for _, c := range m.GetComponents() {
+			if c.GetKind() == domain.Topology_Component_KIND_PROXY {
+				return c.GetId()
+			}
+			if firstDB == "" && c.GetKind() == domain.Topology_Component_KIND_DATABASE {
+				firstDB = c.GetId()
+			}
+		}
+	}
+	return firstDB
+}
+
+func presentRanks(byRank map[int][]*componentGroup) []int {
+	var ranks []int
+	for r := 0; r <= 3; r++ {
+		if len(byRank[r]) > 0 {
+			ranks = append(ranks, r)
+		}
+	}
+	return ranks
+}
+
+func last(nodes []*primitive.Dag_Node) *primitive.Dag_Node { return nodes[len(nodes)-1] }
 
 // serverTaskInput is a server task node carrying a typed input payload.
 func serverTaskInput(id, handler string, input *anypb.Any) *primitive.Dag_Node {
@@ -286,11 +382,24 @@ func writeFileOpFor(file *system.File) *ops.Operation {
 }
 
 // runStroppyOp builds the workload command. The DB host is a late-binding token
-// resolved to the database component's private ip at the plan->execute seam.
-func runStroppyOp() *ops.Operation {
+// resolved to the target component's private ip at the plan->execute seam; the URL
+// scheme + port follow the engine.
+func runStroppyOp(db *domain.Database) *ops.Operation {
 	return &ops.Operation{Kind: ops.Operation_KIND_RUN_CMD, Operation: &ops.Operation_RunCmd{RunCmd: &system.Cmd_Spec{
 		Command: &system.Cmd_Spec_Argv{Argv: &system.Cmd_Argv{
-			Args: []string{"stroppy", "run", "--url", "postgres://stroppy@" + stroppyDBHostToken + ":5432/stroppy"},
+			Args: []string{"stroppy", "run", "--url", stroppyURL(db)},
 		}},
 	}}}
+}
+
+// stroppyURL is the engine-specific connection URL with the late-binding host token.
+func stroppyURL(db *domain.Database) string {
+	switch db.GetKind() {
+	case domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
+		return "mysql://stroppy@" + stroppyDBHostToken + ":3306/stroppy"
+	case domain.Database_KIND_COCKROACH:
+		return "postgres://stroppy@" + stroppyDBHostToken + ":26257/stroppy"
+	default:
+		return "postgres://stroppy@" + stroppyDBHostToken + ":5432/stroppy"
+	}
 }

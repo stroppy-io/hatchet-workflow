@@ -37,7 +37,10 @@ func TestLeaseResolvesBindings(t *testing.T) {
 		Database: &domain.Database{Kind: domain.Database_KIND_POSTGRES, Version: "16"},
 		Topology: &domain.Topology{Machines: []*domain.Topology_Machine{{
 			Id: "db-1", Cores: 4, MemoryGb: 16, DiskGb: 100,
-			Components: []*domain.Topology_Component{{Id: "pg", Kind: domain.Topology_Component_KIND_DATABASE}},
+			Components: []*domain.Topology_Component{
+				{Id: "pg", Kind: domain.Topology_Component_KIND_DATABASE},
+				{Id: "load", Kind: domain.Topology_Component_KIND_STROPPY},
+			},
 		}}},
 	}
 	dag, err := planner.New().Compile(preset, nil)
@@ -55,7 +58,7 @@ func TestLeaseResolvesBindings(t *testing.T) {
 	findByExecutionID(dag, "terraform_apply").GetTaskState().Output = out
 
 	// Park the agent command (the executor would have set it RUNNING).
-	stroppy := findByExecutionID(dag, "install_and_run.run_stroppy")
+	stroppy := findByExecutionID(dag, "install_and_run.load.run_stroppy")
 	if stroppy == nil {
 		t.Fatal("run_stroppy node not found")
 	}
