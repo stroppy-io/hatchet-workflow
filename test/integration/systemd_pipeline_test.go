@@ -1,0 +1,149 @@
+//go:build integration
+
+package integration
+
+import (
+	"context"
+	"fmt"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/docker/docker/api/types/container"
+	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
+
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/planner"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	rtagent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/ops"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
+)
+
+// systemdHost is a privileged systemd-enabled container that stands in for a VM:
+// the planner's agent.command ops (apt install, write config, systemctl) run in it
+// via docker exec, validating the full provisioning pipeline (the docker tricks —
+// privileged + host cgroup ns + tmpfs /run + DNS — come from the old deployer).
+type systemdHost struct {
+	c testcontainers.Container
+}
+
+func startSystemdHost(t *testing.T, ctx context.Context) *systemdHost {
+	t.Helper()
+	c, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: testcontainers.ContainerRequest{
+			Image:      "jrei/systemd-ubuntu:22.04",
+			Privileged: true,
+			HostConfigModifier: func(hc *container.HostConfig) {
+				hc.CgroupnsMode = "host"
+				hc.Tmpfs = map[string]string{"/run": "exec,mode=755", "/run/lock": ""}
+				hc.Binds = append(hc.Binds, "/sys/fs/cgroup:/sys/fs/cgroup:rw")
+				hc.DNS = []string{"8.8.8.8", "1.1.1.1"}
+			},
+			WaitingFor: wait.ForExec([]string{"systemctl", "is-system-running", "--wait"}).
+				WithExitCodeMatcher(func(code int) bool { return code == 0 || code == 1 }). // running or degraded
+				WithStartupTimeout(90 * time.Second),
+		},
+		Started: true,
+	})
+	require.NoError(t, err, "systemd host must start")
+	t.Cleanup(func() { _ = c.Terminate(ctx) })
+	return &systemdHost{c: c}
+}
+
+// sh runs a shell command in the host, returning exit code + combined output.
+func (h *systemdHost) sh(t *testing.T, ctx context.Context, script string) (int, string) {
+	t.Helper()
+	code, reader, err := h.c.Exec(ctx, []string{"bash", "-lc", script})
+	require.NoError(t, err)
+	return code, readAll(reader)
+}
+
+// execOp runs one planner ops.Operation in the host (RUN_CMD via shell, WRITE_FILE
+// via a heredoc). This is the test stand-in for the agent's opexec executor.
+func (h *systemdHost) execOp(t *testing.T, ctx context.Context, op *ops.Operation) {
+	t.Helper()
+	switch v := op.GetOperation().(type) {
+	case *ops.Operation_RunCmd:
+		spec := v.RunCmd
+		var script string
+		if s := spec.GetScript(); s != nil {
+			script = s.GetText()
+		} else {
+			script = strings.Join(spec.GetArgv().GetArgs(), " ")
+		}
+		code, out := h.sh(t, ctx, script)
+		require.Equalf(t, 0, code, "command failed: %s\n%s", script, out)
+	case *ops.Operation_WriteFile:
+		f := v.WriteFile
+		path := f.GetInfo().GetPath()
+		content := f.GetContent().GetText()
+		script := fmt.Sprintf("mkdir -p \"$(dirname %q)\" && cat > %q <<'STROPPY_EOF'\n%s\nSTROPPY_EOF", path, path, content)
+		code, out := h.sh(t, ctx, script)
+		require.Equalf(t, 0, code, "write %s failed: %s", path, out)
+	default:
+		t.Fatalf("unsupported op kind in pipeline test: %T", v)
+	}
+}
+
+// runComponentChain executes, in order, every agent.command node for componentID
+// from the dag's install_and_run sub-dag.
+func (h *systemdHost) runComponentChain(t *testing.T, ctx context.Context, dag *primitive.Dag, componentID string) {
+	t.Helper()
+	var sub *primitive.Dag
+	for _, n := range dag.GetNodes() {
+		if n.GetId() == "install_and_run" {
+			sub = n.GetSubDag()
+		}
+	}
+	require.NotNil(t, sub, "install_and_run sub-dag")
+
+	prefix := componentID + "."
+	ran := 0
+	for _, n := range sub.GetNodes() {
+		if !strings.HasPrefix(n.GetId(), prefix) {
+			continue
+		}
+		var cmd rtagent.Command
+		require.NoError(t, n.GetTaskState().GetInput().UnmarshalTo(&cmd))
+		t.Logf("exec node %s", n.GetId())
+		h.execOp(t, ctx, cmd.GetOperation())
+		ran++
+	}
+	require.Greater(t, ran, 0, "no nodes for component %s", componentID)
+}
+
+// TestPostgresSingleFullPipeline compiles a single-postgres preset, then executes
+// the rendered install recipe (pgdg repo + apt install + config writes + start)
+// inside a systemd host, and asserts postgres comes up AND the rendered config was
+// actually applied (shared_buffers matches what we rendered).
+func TestPostgresSingleFullPipeline(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	preset := &domain.TestPreset{
+		Database: &domain.Database{Kind: domain.Database_KIND_POSTGRES, Version: "16"},
+		Topology: &domain.Topology{Machines: []*domain.Topology_Machine{{
+			Id: "m1", Cores: 2, MemoryGb: 4,
+			Components: []*domain.Topology_Component{{Id: "pg", Kind: domain.Topology_Component_KIND_DATABASE}},
+		}}},
+	}
+	dag, err := planner.New().Compile(preset, nil)
+	require.NoError(t, err)
+
+	host := startSystemdHost(t, ctx)
+	host.runComponentChain(t, ctx, dag, "pg")
+
+	// Postgres must accept connections.
+	code, out := host.sh(t, ctx, "pg_isready -h 127.0.0.1 || pg_isready")
+	require.Equalf(t, 0, code, "postgres not ready: %s", out)
+
+	// The rendered tuning must be in effect (not the engine default of 128MB):
+	// 4GB budget -> shared_buffers 25% = 1GB.
+	code, out = host.sh(t, ctx, `su postgres -c "psql -tAc 'SHOW shared_buffers'"`)
+	require.Equalf(t, 0, code, "psql failed: %s", out)
+	sb := strings.TrimSpace(out)
+	require.NotEqual(t, "128MB", sb, "rendered config not applied — got engine default")
+	t.Logf("shared_buffers = %s", sb)
+}

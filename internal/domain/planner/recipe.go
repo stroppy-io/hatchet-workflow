@@ -64,13 +64,18 @@ var defaultVersion = map[string]string{
 }
 
 var pgPreInstall = []string{
+	// Prereqs: a minimal base image lacks wget/gnupg/lsb-release (a cloud VM has
+	// them, a fresh container does not) — install before adding the pgdg repo.
+	"apt-get update",
+	"apt-get install -y wget gnupg lsb-release ca-certificates",
 	`sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
-	"wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -",
+	"sh -c 'wget --quiet -O /etc/apt/trusted.gpg.d/pgdg.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc'",
 	"apt-get update",
 }
 
 func mysqlPreInstall(component string) []string {
 	return []string{
+		`apt-get update`,
 		`apt-get install -y curl gnupg lsb-release ca-certificates`,
 		`install -d /etc/apt/keyrings`,
 		`curl -fsSL https://repo.mysql.com/RPM-GPG-KEY-mysql-2023 | gpg --dearmor -o /etc/apt/keyrings/mysql.gpg`,
@@ -81,6 +86,8 @@ func mysqlPreInstall(component string) []string {
 
 func mariadbPreInstall(version string) []string {
 	return []string{
+		`apt-get update`,
+		`apt-get install -y curl ca-certificates`,
 		`curl -fsSL https://r.mariadb.com/downloads/mariadb_repo_setup -o /tmp/mariadb_repo_setup`,
 		`bash /tmp/mariadb_repo_setup --mariadb-server-version=` + version,
 		`apt-get update`,

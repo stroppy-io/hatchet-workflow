@@ -35,11 +35,21 @@ func RenderDatabase(db *domain.Database, totalMemoryMB int) (*renderpb.Config, e
 }
 
 func renderPostgres(db *domain.Database, totalMemoryMB int) *renderpb.Config {
+	// Debian/Ubuntu pgdg packages keep per-version config under
+	// /etc/postgresql/<version>/main — writing to a bare /main is ignored.
+	version := db.GetVersion()
+	if version == "" {
+		version = "16"
+	}
+	dir := "/etc/postgresql/" + version + "/main/"
 	return &renderpb.Config{
 		Id: "postgres-config",
 		Items: []*renderpb.Config_Item{
-			fileItem("postgresql.conf", "/etc/postgresql/main/postgresql.conf", renderPostgresConf(db.GetVersion(), totalMemoryMB)),
-			fileItem("pg_hba.conf", "/etc/postgresql/main/pg_hba.conf", postgresPgHbaConf),
+			// Tuning goes into conf.d/ (Debian's postgresql.conf has include_dir
+			// 'conf.d') so the package's data_directory/hba_file stay intact;
+			// pg_hba is a full file we own.
+			fileItem("postgresql.conf", dir+"conf.d/stroppy.conf", renderPostgresConf(version, totalMemoryMB)),
+			fileItem("pg_hba.conf", dir+"pg_hba.conf", postgresPgHbaConf),
 		},
 	}
 }
