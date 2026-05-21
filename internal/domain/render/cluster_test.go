@@ -149,18 +149,20 @@ func TestRenderYDBClusterInitsOnFirstNode(t *testing.T) {
 		return out
 	}
 
+	// Every node starts storage; only the first waits for the cluster to be ready
+	// (the static config self-bootstraps — no separate blobstorage/database init).
 	first, _ := RenderComponent(comp("ydb1", domain.Topology_Component_KIND_DATABASE), db, topo, 8192)
 	fc := cmdIDs(first)
-	if !fc["start_storage"] || !fc["blobstorage_init"] || !fc["database_init"] {
-		t.Errorf("first node missing init commands: %v", fc)
+	if !fc["start_storage"] || !fc["wait_ready"] {
+		t.Errorf("first node missing storage/wait commands: %v", fc)
 	}
 	second, _ := RenderComponent(comp("ydb2", domain.Topology_Component_KIND_DATABASE), db, topo, 8192)
 	sc := cmdIDs(second)
 	if !sc["start_storage"] {
 		t.Error("second node missing start_storage")
 	}
-	if sc["blobstorage_init"] || sc["database_init"] {
-		t.Errorf("only the first node should bootstrap the cluster: %v", sc)
+	if sc["wait_ready"] {
+		t.Errorf("only the first node waits for cluster readiness: %v", sc)
 	}
 }
 
