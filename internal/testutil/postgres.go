@@ -1,11 +1,13 @@
 // Package testutil provides the integration-test harness: a throwaway PostgreSQL
-// testcontainer with the full ratel schema applied to a template database, cloned
-// per test (~10ms) for isolation. Mirrors komeet-backend/internal/testutil.
+// testcontainer with the production migrations applied to a template database,
+// cloned per test (~10ms) for isolation. Mirrors komeet-backend/internal/testutil.
 package testutil
 
 import (
 	"context"
 	"fmt"
+	"io/fs"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -15,9 +17,8 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	pgmodule "github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"github.com/yaroher/ratel/pkg/ddl"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/migrations"
 )
 
 const (
@@ -26,18 +27,6 @@ const (
 )
 
 const maxConcurrentClones = 8
-
-// schemaTables are every ratel table, in no particular order; SchemaSortedStatements
-// resolves the FK dependency order. Add new model tables here.
-func schemaTables() []ddl.SchemaSqler {
-	return []ddl.SchemaSqler{
-		models.Tenants, models.Accounts, models.TenantMembers,
-		models.SettingsItems, models.Webhooks, models.ApiTokens,
-		models.Packages, models.Presets, models.Suites,
-		models.TestRuns, models.SuiteRuns, models.Dags,
-		models.NetworkAllocations, models.Agents,
-	}
-}
 
 // PostgresContainer wraps a testcontainer with an admin pool + template DB support.
 type PostgresContainer struct {
@@ -85,26 +74,37 @@ func NewPostgresContainer(ctx context.Context) (*PostgresContainer, error) {
 	}, nil
 }
 
-// CreateTemplateDB builds a template database with the full ratel schema, used by
-// NewTestDB to clone per-test databases. Call once in TestMain.
+// CreateTemplateDB builds a template database by applying the production migrations
+// (internal/infrastructure/postgres/migrations/*.sql, the same schema prod runs),
+// used by NewTestDB to clone per-test databases. Call once in TestMain.
 func (c *PostgresContainer) CreateTemplateDB(ctx context.Context) error {
 	_, _ = c.Pool.Exec(ctx, "DROP DATABASE IF EXISTS "+templateDBName)
 	if _, err := c.Pool.Exec(ctx, "CREATE DATABASE "+templateDBName); err != nil {
 		return fmt.Errorf("create template db: %w", err)
 	}
 
-	stmts, err := ddl.SchemaSortedStatements(schemaTables()...)
+	sqlFiles, err := fs.Glob(migrations.Content, "*.sql")
 	if err != nil {
-		return fmt.Errorf("build schema: %w", err)
+		return fmt.Errorf("list migrations: %w", err)
 	}
+	if len(sqlFiles) == 0 {
+		return fmt.Errorf("no migration .sql files embedded — run `make migrate-gen`")
+	}
+	sort.Strings(sqlFiles) // timestamp-prefixed -> chronological order
+
 	tmplPool, err := pgxpool.New(ctx, replaceDBName(c.connStr, templateDBName))
 	if err != nil {
 		return fmt.Errorf("connect template db: %w", err)
 	}
-	for _, s := range stmts {
-		if _, err := tmplPool.Exec(ctx, s); err != nil {
+	for _, f := range sqlFiles {
+		body, rerr := migrations.Content.ReadFile(f)
+		if rerr != nil {
 			tmplPool.Close()
-			return fmt.Errorf("apply schema stmt %q: %w", s, err)
+			return fmt.Errorf("read migration %s: %w", f, rerr)
+		}
+		if _, eerr := tmplPool.Exec(ctx, string(body)); eerr != nil {
+			tmplPool.Close()
+			return fmt.Errorf("apply migration %s: %w", f, eerr)
 		}
 	}
 	tmplPool.Close() // PG requires 0 connections to use a db as template.

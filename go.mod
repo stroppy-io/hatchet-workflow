@@ -43,7 +43,7 @@ require (
 	github.com/yandex-cloud/go-genproto v0.46.0
 	github.com/yandex-cloud/go-sdk v0.31.0
 	github.com/yaroher/protoc-gen-go-plain v0.7.26
-	github.com/yaroher/ratel v0.4.25
+	github.com/yaroher/ratel v0.4.26
 	go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws v0.65.0
 	go.opentelemetry.io/contrib/instrumentation/host v0.68.0
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.68.0
