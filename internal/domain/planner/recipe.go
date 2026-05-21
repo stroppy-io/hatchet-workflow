@@ -26,9 +26,12 @@ type recipe struct {
 }
 
 var recipes = map[string]recipe{
-	"postgres/16":   {preInstall: pgPreInstall, aptPackages: []string{"postgresql-16", "postgresql-client-16"}, serviceName: "postgresql"},
-	"postgres/17":   {preInstall: pgPreInstall, aptPackages: []string{"postgresql-17", "postgresql-client-17"}, serviceName: "postgresql"},
-	"mysql/8.0":     {preInstall: mysqlPreInstall("mysql-8.0"), aptPackages: []string{"mysql-server-8.0", "mysql-client"}, serviceName: "mysql"},
+	"postgres/16": {preInstall: pgPreInstall, aptPackages: []string{"postgresql-16", "postgresql-client-16"}, serviceName: "postgresql"},
+	"postgres/17": {preInstall: pgPreInstall, aptPackages: []string{"postgresql-17", "postgresql-client-17"}, serviceName: "postgresql"},
+	// 8.0 ships in the Ubuntu archive (universe) — no third-party repo/key needed.
+	"mysql/8.0": {preInstall: ubuntuUniversePreInstall, aptPackages: []string{"mysql-server"}, serviceName: "mysql"},
+	// 8.4 only exists in the upstream mysql.com APT repo (note: its GPG key has
+	// expired upstream — apt-get update can fail until mysql publishes a new key).
 	"mysql/8.4":     {preInstall: mysqlPreInstall("mysql-8.4-lts"), aptPackages: []string{"mysql-server-8.4", "mysql-client"}, serviceName: "mysql"},
 	"mariadb/10.11": {preInstall: mariadbPreInstall("10.11"), aptPackages: []string{"mariadb-server", "mariadb-client"}, serviceName: "mariadb"},
 	"mariadb/11.4":  {preInstall: mariadbPreInstall("11.4"), aptPackages: []string{"mariadb-server", "mariadb-client"}, serviceName: "mariadb"},
@@ -63,6 +66,15 @@ var recipes = map[string]recipe{
 var defaultVersion = map[string]string{
 	"postgres": "16", "mysql": "8.4", "mariadb": "11.4", "picodata": "25.3",
 	"cockroach": "24.2", "ydb": "25.3",
+}
+
+// ubuntuUniversePreInstall refreshes the package lists and enables universe (a
+// minimal base image ships neither) for archive packages like mysql-server.
+var ubuntuUniversePreInstall = []string{
+	"apt-get update",
+	"apt-get install -y software-properties-common",
+	"add-apt-repository -y universe",
+	"apt-get update",
 }
 
 var pgPreInstall = []string{

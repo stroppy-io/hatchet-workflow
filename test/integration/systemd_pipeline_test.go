@@ -186,12 +186,35 @@ func TestMariaDBSingleFullPipeline(t *testing.T) {
 	t.Logf("innodb_buffer_pool_size = %d", bytesVal)
 }
 
-// TestMySQLSingleFullPipeline is skipped: the MySQL community APT repo GPG key
-// (RPM-GPG-KEY-mysql-2023) is EXPIRED upstream (EXPKEYSIG B7B3B788A8D3785C), so
-// apt-get update on the mysql.com repo fails. This is a real recipe-maintenance
-// issue (prod apt install of mysql-server would fail too) — the mysql recipe needs
-// the current key or the mysql-apt-config package. Config-validation
-// (TestMySQLSingleConfigBoots) still covers the rendered my.cnf against mysql:8.x.
+// TestMySQLSingleFullPipeline: mysql 8.0 from the Ubuntu archive (universe) — runs
+// the recipe (no third-party repo/key), writes the conf.d tuning, starts mysql,
+// and asserts it is up with the rendered innodb buffer pool. (mysql 8.4 needs the
+// upstream mysql.com repo whose GPG key is expired — TestMySQLSingleConfigBoots
+// still covers 8.4's rendered config against the official image.)
 func TestMySQLSingleFullPipeline(t *testing.T) {
-	t.Skip("mysql.com APT repo GPG key expired upstream — see comment; recipe needs key refresh")
+	t.Parallel()
+	ctx := context.Background()
+
+	preset := &domain.TestPreset{
+		Database: &domain.Database{Kind: domain.Database_KIND_MYSQL, Version: "8.0"},
+		Topology: &domain.Topology{Machines: []*domain.Topology_Machine{{
+			Id: "m1", Cores: 2, MemoryGb: 4,
+			Components: []*domain.Topology_Component{{Id: "db", Kind: domain.Topology_Component_KIND_DATABASE}},
+		}}},
+	}
+	dag, err := planner.New().Compile(preset, nil)
+	require.NoError(t, err)
+
+	host := startSystemdHost(t, ctx)
+	host.runComponentChain(t, ctx, dag, "db")
+
+	code, out := host.sh(t, ctx, `mysql -e "SELECT 1"`)
+	require.Equalf(t, 0, code, "mysql not ready: %s", out)
+
+	code, out = host.sh(t, ctx, `mysql -N -e "SELECT @@innodb_buffer_pool_size"`)
+	require.Equalf(t, 0, code, "mysql query failed: %s", out)
+	bytesVal, perr := strconv.ParseInt(strings.TrimSpace(out), 10, 64)
+	require.NoError(t, perr, "buffer pool size: %q", out)
+	require.Greater(t, bytesVal, int64(134217728), "rendered innodb_buffer_pool_size not applied")
+	t.Logf("innodb_buffer_pool_size = %d", bytesVal)
 }
