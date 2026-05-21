@@ -1,6 +1,8 @@
 package planner
 
 import (
+	"strings"
+
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/render"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	renderpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/render"
@@ -97,8 +99,13 @@ func mariadbPreInstall(version string) []string {
 // Per-kind recipes for the non-DATABASE components of an emergent HA/cluster
 // topology. Configs are data (component.config); these carry only install+service.
 var (
-	etcdRecipe     = recipe{aptPackages: []string{"etcd-server", "etcd-client"}, serviceName: "etcd"}
-	haproxyRecipe  = recipe{aptPackages: []string{"haproxy"}, serviceName: "haproxy"}
+	// etcd/haproxy/node-exporter live in the distro repos; refresh the package
+	// lists first (a minimal base image ships none) + enable universe for etcd.
+	etcdRecipe = recipe{
+		preInstall:  []string{"apt-get update", "apt-get install -y software-properties-common", "add-apt-repository -y universe", "apt-get update"},
+		aptPackages: []string{"etcd-server", "etcd-client"}, serviceName: "etcd",
+	}
+	haproxyRecipe  = recipe{preInstall: []string{"apt-get update"}, aptPackages: []string{"haproxy"}, serviceName: "haproxy"}
 	proxysqlRecipe = recipe{
 		preInstall: []string{
 			`apt-get install -y curl ca-certificates gnupg`,
@@ -109,7 +116,7 @@ var (
 		},
 		aptPackages: []string{"proxysql"}, serviceName: "proxysql",
 	}
-	monitorRecipe = recipe{aptPackages: []string{"prometheus-node-exporter"}, serviceName: "prometheus-node-exporter"}
+	monitorRecipe = recipe{preInstall: []string{"apt-get update"}, aptPackages: []string{"prometheus-node-exporter"}, serviceName: "prometheus-node-exporter"}
 )
 
 // recipeForComponent resolves the install recipe for one topology component. The
@@ -137,11 +144,33 @@ func databaseRecipe(db *domain.Database) recipe {
 	r := recipeFor(db)
 	if db.GetKind() == domain.Database_KIND_POSTGRES &&
 		db.GetOptions().GetPostgres().GetReplication().GetMode() == domain.Database_Options_Postgres_Replication_MODE_PATRONI {
-		// Patroni supervises postgres + talks to etcd; it is the started service.
+		// Patroni supervises postgres + talks to etcd. Install patroni + the etcd
+		// client; the start script drops the auto-created default cluster (patroni
+		// initdb's its own), stops the package's postgresql service, and runs patroni
+		// as the postgres user with OUR config (the debian unit hard-codes a
+		// different config path) via a transient systemd unit.
+		ver := pgVersion(db.GetVersion())
 		r.aptPackages = append(append([]string{}, r.aptPackages...), "patroni", "python3-etcd")
-		r.serviceName = "patroni"
+		r.serviceName = ""
+		r.startScript = strings.Join([]string{
+			"pg_dropcluster --stop " + ver + " main >/dev/null 2>&1 || true",
+			"systemctl disable --now postgresql >/dev/null 2>&1 || true",
+			"install -d -o postgres -g postgres /var/lib/postgresql/" + ver + "/main",
+			"chown -R postgres:postgres /etc/patroni",
+			"systemd-run --unit=stroppy-patroni --uid=postgres --gid=postgres " +
+				"--setenv=PATH=/usr/lib/postgresql/" + ver + "/bin:/usr/local/bin:/usr/bin:/bin " +
+				"--collect /usr/bin/patroni /etc/patroni/patroni.yml",
+		}, " && ")
 	}
 	return r
+}
+
+// pgVersion defaults the postgres major version.
+func pgVersion(v string) string {
+	if v == "" {
+		return "16"
+	}
+	return v
 }
 
 // proxyRecipe picks the proxy engine: haproxy for postgres, proxysql for mysql/mariadb.

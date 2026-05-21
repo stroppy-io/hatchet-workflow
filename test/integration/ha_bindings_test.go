@@ -106,7 +106,7 @@ func TestPGHABindingsResolveOnRealNetwork(t *testing.T) {
 			require.Contains(t, out, machineIP["m-db1"]+":8008", "patroni self connect_address")
 		}
 		// etcd config on etcd1 must list its own peer at the resolved self IP.
-		if n.GetId() == "etcd1.write_etcd.conf.yml" {
+		if n.GetId() == "etcd1.write_etcd-default" {
 			require.Contains(t, out, machineIP["m-etcd"], "etcd advertise IP")
 		}
 	}
