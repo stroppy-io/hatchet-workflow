@@ -95,8 +95,10 @@ func (s *PresetService) CreatePreset(ctx context.Context, preset *models.Preset)
 			preset.Entity = ids.NewEntity()
 			preset.Owned = &models.Own{OwnerAccountId: c.AccountID, TenantId: tenantID}
 			return tx.DoReadCommittedRet(ctx, s.txm, func(ctx context.Context) (*models.Preset, error) {
+				scanner := preset.IntoPlain()
+				nilEmptyPresetJSONB(scanner)
 				if _, err := s.presets.Execute(ctx,
-					models.Presets.Insert().From(preset.IntoPlain().AllSetters()...)); err != nil {
+					models.Presets.Insert().From(scanner.AllSetters()...)); err != nil {
 					return nil, status.Errorf(codes.Internal, "insert preset: %v", err)
 				}
 				return preset, nil
@@ -129,6 +131,7 @@ func (s *PresetService) UpdatePreset(ctx context.Context, preset *models.Preset)
 			preset.Entity.Id = existing.GetEntity().GetId()
 			preset.Entity.Timestamps = existing.GetEntity().GetTimestamps()
 			scanner := preset.IntoPlain()
+			nilEmptyPresetJSONB(scanner)
 			scanner.UpdatedAt = time.Now()
 			updated, err := s.presets.QueryRow(ctx,
 				models.Presets.Update().Set(scanner.AllSetters()...).
@@ -182,11 +185,28 @@ func (s *PresetService) ClonePreset(ctx context.Context, req *uipb.ClonePresetRe
 			src.Entity = ids.NewEntity()
 			src.Owned = &models.Own{OwnerAccountId: c.AccountID, TenantId: req.GetTenantId()}
 			return tx.DoReadCommittedRet(ctx, s.txm, func(ctx context.Context) (*models.Preset, error) {
+				scanner := src.IntoPlain()
+				nilEmptyPresetJSONB(scanner)
 				if _, err := s.presets.Execute(ctx,
-					models.Presets.Insert().From(src.IntoPlain().AllSetters()...)); err != nil {
+					models.Presets.Insert().From(scanner.AllSetters()...)); err != nil {
 					return nil, status.Errorf(codes.Internal, "clone preset: %v", err)
 				}
 				return src, nil
 			})
 		})
+}
+
+// nilEmptyPresetJSONB normalizes the preset's nullable JSONB columns: the generated
+// IntoPlain writes []byte{} (not nil) for absent oneof bodies, which Postgres
+// rejects as invalid jsonb ("", 22P02). Bind nil so they store as NULL.
+func nilEmptyPresetJSONB(s *models.PresetScanner) {
+	if len(s.PresetWorkloadPreset) == 0 {
+		s.PresetWorkloadPreset = nil
+	}
+	if len(s.PresetDatabasePreset) == 0 {
+		s.PresetDatabasePreset = nil
+	}
+	if len(s.PresetTestPreset) == 0 {
+		s.PresetTestPreset = nil
+	}
 }

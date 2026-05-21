@@ -56,6 +56,8 @@ func (m *Tags) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for Labels
+
 	if len(errors) > 0 {
 		return TagsMultiError(errors)
 	}

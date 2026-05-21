@@ -19,6 +19,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/ids"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/system"
 	"github.com/stroppy-io/stroppy-cloud/internal/utils/tracing"
@@ -90,6 +91,7 @@ func (i *Inventory) Reserve(ctx context.Context, tenantID string, ips []string) 
 			Cidr:           &system.Cidr{Value: ip + "/32"},
 			LeaseExpiresAt: expires,
 			Timestamps:     &models.Timestamps{CreatedAt: timestamppb.Now(), UpdatedAt: timestamppb.Now()},
+			Tags:           &common.Tags{}, // default empty tags -> "{}" (NOT NULL serialized column)
 		}
 		scanner := na.IntoPlain()
 		if _, err := i.repo.Scanner().Execute(ctx,

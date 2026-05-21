@@ -22,17 +22,17 @@ import (
 // concurrent runs never get the same subnet — replaces the old
 // hash(run_id)->CIDR collision.
 type NetworkAllocationScanner struct {
-	Id             string       `json:"id"`
-	TenantId       string       `json:"tenantId"` // origin: type_alias, empath: tenant_id
-	DagId          string       `json:"dagId"`    // origin: type_alias, empath: dag_id
-	Provider       string       `json:"provider"`
-	Cidr           []byte       `json:"cidr"` // origin: serialized, empath: cidr
-	Zone           string       `json:"zone"`
-	CreatedAt      time.Time    `json:"createdAt"`
-	UpdatedAt      time.Time    `json:"updatedAt"`
-	DeletedAt      *time.Time   `json:"deletedAt,omitempty"`
-	LeaseExpiresAt *time.Time   `json:"leaseExpiresAt,omitempty"`
-	Tags           *common.Tags `json:"tags"`
+	Id             string     `json:"id"`
+	TenantId       string     `json:"tenantId"` // origin: type_alias, empath: tenant_id
+	DagId          string     `json:"dagId"`    // origin: type_alias, empath: dag_id
+	Provider       string     `json:"provider"`
+	Cidr           []byte     `json:"cidr"` // origin: serialized, empath: cidr
+	Zone           string     `json:"zone"`
+	CreatedAt      time.Time  `json:"createdAt"`
+	UpdatedAt      time.Time  `json:"updatedAt"`
+	DeletedAt      *time.Time `json:"deletedAt,omitempty"`
+	LeaseExpiresAt *time.Time `json:"leaseExpiresAt,omitempty"`
+	Tags           []byte     `json:"tags"` // origin: serialized, empath: tags
 }
 
 // IntoPlain converts protobuf message to plain struct
@@ -78,7 +78,14 @@ func (pb *NetworkAllocation) IntoPlain() *NetworkAllocationScanner {
 		_tmp := ratelcast.TimestampToTime(pb.LeaseExpiresAt)
 		p.LeaseExpiresAt = &_tmp
 	}
-	p.Tags = pb.Tags
+	// Tags serialized from tags
+	if pb.Tags != nil {
+		if data, err := protojson.Marshal(pb.Tags); err == nil {
+			p.Tags = data
+		}
+	} else {
+		p.Tags = []byte{}
+	}
 	return p
 }
 
@@ -127,6 +134,12 @@ func (p *NetworkAllocationScanner) IntoPb() *NetworkAllocation {
 	if p.LeaseExpiresAt != nil {
 		pb.LeaseExpiresAt = ratelcast.TimeToTimestamp(*p.LeaseExpiresAt)
 	}
-	pb.Tags = p.Tags
+	// Tags deserialize -> tags
+	if len(p.Tags) > 0 {
+		var msg common.Tags
+		if err := protojson.Unmarshal(p.Tags, &msg); err == nil {
+			pb.Tags = &msg
+		}
+	}
 	return pb
 }

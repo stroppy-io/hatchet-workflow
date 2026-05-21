@@ -192,31 +192,28 @@ func TestSettingsItemRoundTrip(t *testing.T) {
 }
 
 // TestSettingsUpsertSameKeyIsBroken documents a real defect surfaced by this
-// integration test: SetSettingsItem on an existing (tenant, part, key) reuses the
-// row id and issues Insert().OnConflict(id).ReturningAll() WITHOUT a DoUpdate/
-// DoNothing clause. With ratel v0.4.25 that omits the ON CONFLICT clause entirely,
-// so the re-insert violates the primary key. The update-by-upsert path therefore
-// fails today. Asserting it pins the behavior until settings.go is fixed.
-func TestSettingsUpsertSameKeyIsBroken(t *testing.T) {
+// TestSettingsUpsertSameKeyUpdates: re-setting an existing (tenant, part, key)
+// updates the value in place (OnConflict DoUpdate), no PK violation.
+func TestSettingsUpsertSameKeyUpdates(t *testing.T) {
 	f := newFixture(t)
 	ctx := f.ownerCtx()
 
-	_, err := f.svc.SetSettingsItem(ctx, &uipb.SetSettingsItemRequest{
-		TenantId: f.tenantID,
-		Part:     models.SettingsItem_PART_YANDEX_CLOUD,
-		Key:      models.SettingsItem_KEY_YANDEX_CLOUD_TOKEN,
-		Value:    &models.SettingsItem_Value{Value: &models.SettingsItem_Value_StringValue{StringValue: "tok-1"}},
-	})
-	require.NoError(t, err)
+	set := func(val string) error {
+		_, err := f.svc.SetSettingsItem(ctx, &uipb.SetSettingsItemRequest{
+			TenantId: f.tenantID,
+			Part:     models.SettingsItem_PART_YANDEX_CLOUD,
+			Key:      models.SettingsItem_KEY_YANDEX_CLOUD_TOKEN,
+			Value:    &models.SettingsItem_Value{Value: &models.SettingsItem_Value_StringValue{StringValue: val}},
+		})
+		return err
+	}
+	require.NoError(t, set("tok-1"))
+	require.NoError(t, set("tok-2"), "re-upsert of an existing (part,key) must update, not violate PK")
 
-	_, err = f.svc.SetSettingsItem(ctx, &uipb.SetSettingsItemRequest{
-		TenantId: f.tenantID,
-		Part:     models.SettingsItem_PART_YANDEX_CLOUD,
-		Key:      models.SettingsItem_KEY_YANDEX_CLOUD_TOKEN,
-		Value:    &models.SettingsItem_Value{Value: &models.SettingsItem_Value_StringValue{StringValue: "tok-2"}},
-	})
-	require.Error(t, err, "upsert into an existing (part,key) currently fails (PK violation)")
-	require.Equal(t, codes.Internal, status.Code(err))
+	list, err := f.svc.ListSettingsItems(ctx, &uipb.ListSettingsItemsRequest{TenantId: f.tenantID})
+	require.NoError(t, err)
+	require.Len(t, list.GetSettingsItems(), 1, "upsert must update in place, not insert a duplicate")
+	require.Equal(t, "tok-2", list.GetSettingsItems()[0].GetValue().GetStringValue())
 }
 
 // TestSettingsRBACDenied: a non-member account is denied (no TenantMember row), and

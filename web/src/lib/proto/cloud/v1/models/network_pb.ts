@@ -23,7 +23,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/network.proto.
  */
 export const file_cloud_v1_models_network: GenFile = /*@__PURE__*/
-  fileDesc("Ch1jbG91ZC92MS9tb2RlbHMvbmV0d29yay5wcm90bxIPY2xvdWQudjEubW9kZWxzItwFChFOZXR3b3JrQWxsb2NhdGlvbhIcCgJpZBgBIAEoCUIQ+kIFcgOYARqatRgEEgIQARJLCgl0ZW5hbnRfaWQYAiABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCHfpCBYoBAhABmrUYERIPMgd0ZW5hbnRzOgJpZEABEkIKBmRhZ19pZBgDIAEoCzIWLmNsb3VkLnYxLm1vZGVscy5EYWdJZEIa+kIFigECEAGatRgOEgwyBGRhZ3M6AmlkQAESOwoIcHJvdmlkZXIYBCABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyQgr6QgeCAQQgABABEjsKBGNpZHIYBSABKAsyHS5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5DaWRyQg76QgWKAQIQAYKmHQIQARIVCgR6b25lGAYgASgJQgf6QgRyAhhAEjcKCnRpbWVzdGFtcHMYByABKAsyGy5jbG91ZC52MS5tb2RlbHMuVGltZXN0YW1wc0IGgqYdAiABEjkKEGxlYXNlX2V4cGlyZXNfYXQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSACIAQESIwoEdGFncxgJIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGkcKBExpc3QSPwoTbmV0d29ya19hbGxvY2F0aW9ucxgBIAMoCzIiLmNsb3VkLnYxLm1vZGVscy5OZXR3b3JrQWxsb2NhdGlvbjqPAZK1GIQBKiAKE25ldGFsbG9jX3RlbmFudF9pZHgSCXRlbmFudF9pZCohChVuZXRhbGxvY19wcm92aWRlcl9pZHgSCHByb3ZpZGVyKiYKEm5ldGFsbG9jX2xlYXNlX2lkeBIQbGVhc2VfZXhwaXJlc19hdAgBEhNuZXR3b3JrX2FsbG9jYXRpb25zgqYdAggBQhMKEV9sZWFzZV9leHBpcmVzX2F0QkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_cloud_v1_common_tags, file_cloud_v1_deployment_deployment, file_cloud_v1_models_common, file_cloud_v1_runtime_system_ip, file_google_protobuf_timestamp, file_goplain_goplain, file_ratelproto_ratelproto, file_validate_validate]);
+  fileDesc("Ch1jbG91ZC92MS9tb2RlbHMvbmV0d29yay5wcm90bxIPY2xvdWQudjEubW9kZWxzIuQFChFOZXR3b3JrQWxsb2NhdGlvbhIcCgJpZBgBIAEoCUIQ+kIFcgOYARqatRgEEgIQARJLCgl0ZW5hbnRfaWQYAiABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCHfpCBYoBAhABmrUYERIPMgd0ZW5hbnRzOgJpZEABEkIKBmRhZ19pZBgDIAEoCzIWLmNsb3VkLnYxLm1vZGVscy5EYWdJZEIa+kIFigECEAGatRgOEgwyBGRhZ3M6AmlkQAESOwoIcHJvdmlkZXIYBCABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyQgr6QgeCAQQQASAAEjsKBGNpZHIYBSABKAsyHS5jbG91ZC52MS5ydW50aW1lLnN5c3RlbS5DaWRyQg76QgWKAQIQAYKmHQIQARIVCgR6b25lGAYgASgJQgf6QgRyAhhAEjcKCnRpbWVzdGFtcHMYByABKAsyGy5jbG91ZC52MS5tb2RlbHMuVGltZXN0YW1wc0IGgqYdAiABEjkKEGxlYXNlX2V4cGlyZXNfYXQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSACIAQESKwoEdGFncxgJIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzQgaCph0CEAEaRwoETGlzdBI/ChNuZXR3b3JrX2FsbG9jYXRpb25zGAEgAygLMiIuY2xvdWQudjEubW9kZWxzLk5ldHdvcmtBbGxvY2F0aW9uOo8BkrUYhAESE25ldHdvcmtfYWxsb2NhdGlvbnMqIAoTbmV0YWxsb2NfdGVuYW50X2lkeBIJdGVuYW50X2lkKiEKFW5ldGFsbG9jX3Byb3ZpZGVyX2lkeBIIcHJvdmlkZXIqJgoSbmV0YWxsb2NfbGVhc2VfaWR4EhBsZWFzZV9leHBpcmVzX2F0CAGCph0CCAFCEwoRX2xlYXNlX2V4cGlyZXNfYXRCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_common_tags, file_cloud_v1_deployment_deployment, file_cloud_v1_models_common, file_cloud_v1_runtime_system_ip, file_google_protobuf_timestamp, file_goplain_goplain, file_ratelproto_ratelproto, file_validate_validate]);
 
 /**
  *
@@ -104,7 +104,11 @@ export type NetworkAllocation = Message<"cloud.v1.models.NetworkAllocation"> & {
   leaseExpiresAt?: Timestamp;
 
   /**
-   * tags carries small generic labels for reconcile/observability. 
+   *
+   * tags carries small generic labels for reconcile/observability. Serialized
+   * (protojson []byte column, like cidr) so it round-trips through pgx, and
+   * optional so a reservation without tags stores NULL rather than violating a
+   * NOT NULL constraint.
    *
    * @generated from field: cloud.v1.common.Tags tags = 9;
    */
@@ -190,7 +194,11 @@ export type NetworkAllocationJson = {
   leaseExpiresAt?: TimestampJson;
 
   /**
-   * tags carries small generic labels for reconcile/observability. 
+   *
+   * tags carries small generic labels for reconcile/observability. Serialized
+   * (protojson []byte column, like cidr) so it round-trips through pgx, and
+   * optional so a reservation without tags stores NULL rather than violating a
+   * NOT NULL constraint.
    *
    * @generated from field: cloud.v1.common.Tags tags = 9;
    */

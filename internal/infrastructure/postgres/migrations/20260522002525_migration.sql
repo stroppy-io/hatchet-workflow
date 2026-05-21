@@ -119,7 +119,7 @@ CREATE TABLE "public"."presets" (
   "deleted_at" timestamptz,
   "owner_account_id" text NOT NULL,
   "tenant_id" text NOT NULL,
-  "tags" _text NOT NULL,
+  "tags" text NOT NULL,
   "kind" text NOT NULL,
   PRIMARY KEY ("id"),
   FOREIGN KEY ("owner_account_id") REFERENCES "public"."accounts" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,

@@ -24,7 +24,7 @@ message Preset {
     models.Entity entity = 1 [(goplain.field).embed = true];
     models.Own owned = 2 [(goplain.field).embed = true];
     common.Tags tags = 3 [
-        (goplain.field).embed = true
+        (goplain.field).serialize = true
     ];
 
     /*

@@ -5,5 +5,9 @@ package cloud.v1.common;
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
 
 message Tags {
+    // tags is a flat label set.
     repeated string tags = 1;
+    // labels is arbitrary key/value metadata (reconcile/observability) — free to
+    // extend since Tags is always serialized as a single column.
+    map<string, string> labels = 2;
 }

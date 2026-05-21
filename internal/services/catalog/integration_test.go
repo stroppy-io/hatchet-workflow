@@ -212,29 +212,28 @@ func TestPresetRoundTrip(t *testing.T) {
 	require.Equal(t, idB, list.GetPresets()[0].GetEntity().GetId().GetValue())
 }
 
-// TestPresetCreateIsBroken documents a real defect surfaced by this integration
-// test: CreatePreset serializes the preset via IntoPlain(), which writes empty
-// (non-nil) []byte to the three nullable preset_* JSONB columns whenever a oneof
-// body is absent. Postgres rejects an empty string as jsonb (SQLSTATE 22P02), so
-// CreatePreset (and likewise UpdatePreset/ClonePreset, which re-serialize the same
-// way) fails for every input today. Asserting it pins the behavior until the
-// generated IntoPlain emits nil for absent oneof bodies.
-func TestPresetCreateIsBroken(t *testing.T) {
+// TestPresetCreateAndClone: CreatePreset persists (absent oneof bodies bind NULL,
+// not invalid empty jsonb) and the row reads back; ClonePreset re-serializes the
+// same way and also succeeds.
+func TestPresetCreateAndClone(t *testing.T) {
 	f := newFixture(t)
 	ctx := f.adminCtx()
 
-	_, err := f.svc.CreatePreset(ctx, f.newPreset("alpha"))
-	require.Error(t, err, "CreatePreset currently fails: empty []byte -> invalid jsonb")
-	require.Equal(t, codes.Internal, status.Code(err))
+	created, err := f.svc.CreatePreset(ctx, f.newPreset("alpha"))
+	require.NoError(t, err, "CreatePreset must persist (NULL for absent oneof bodies)")
+	require.NotEmpty(t, created.GetEntity().GetId().GetValue())
 
-	// Clone of a seeded row hits the same re-serialization defect.
+	list, err := f.svc.ListPresets(ctx, &uipb.ListPresetRequest{TenantId: f.tenantID, Kind: models.Preset_KIND_DATABASE})
+	require.NoError(t, err)
+	require.Len(t, list.GetPresets(), 1)
+
 	id := f.seedPreset(t, models.Preset_KIND_DATABASE, "src")
-	_, err = f.svc.ClonePreset(ctx, &uipb.ClonePresetRequest{
+	cloned, err := f.svc.ClonePreset(ctx, &uipb.ClonePresetRequest{
 		TenantId: f.tenantID,
 		Id:       &models.DatabasePresetId{Value: id},
 	})
-	require.Error(t, err)
-	require.Equal(t, codes.Internal, status.Code(err))
+	require.NoError(t, err, "ClonePreset must persist")
+	require.NotEqual(t, id, cloned.GetEntity().GetId().GetValue())
 }
 
 // TestPresetRBAC covers the role boundaries: list needs VIEWER, write needs ADMIN.

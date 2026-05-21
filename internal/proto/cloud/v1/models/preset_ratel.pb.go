@@ -176,7 +176,7 @@ type PresetsTable struct {
 	DeletedAt            schema.NullTimestamptzColumnI[PresetColumnAlias]
 	OwnerAccountId       schema.TextColumnI[PresetColumnAlias]
 	TenantId             schema.TextColumnI[PresetColumnAlias]
-	Tags                 schema.TextArrayColumnI[PresetColumnAlias]
+	Tags                 schema.TextColumnI[PresetColumnAlias]
 	Kind                 schema.TextColumnI[PresetColumnAlias]
 }
 
@@ -192,7 +192,7 @@ var Presets = func() PresetsTable {
 	deletedAtCol := schema.NullTimestamptzColumn(PresetColumnDeletedAt, ddl.WithDefault[PresetColumnAlias]("null"))
 	ownerAccountIdCol := schema.TextColumn(PresetColumnOwnerAccountId, ddl.WithReferences[PresetColumnAlias]("accounts", "id"), ddl.WithOnDelete[PresetColumnAlias]("CASCADE"), ddl.WithNotNull[PresetColumnAlias]())
 	tenantIdCol := schema.TextColumn(PresetColumnTenantId, ddl.WithReferences[PresetColumnAlias]("tenants", "id"), ddl.WithOnDelete[PresetColumnAlias]("CASCADE"), ddl.WithNotNull[PresetColumnAlias]())
-	tagsCol := schema.TextArrayColumn(PresetColumnTags, ddl.WithNotNull[PresetColumnAlias]())
+	tagsCol := schema.TextColumn(PresetColumnTags, ddl.WithNotNull[PresetColumnAlias]())
 	kindCol := schema.TextColumn(PresetColumnKind, ddl.WithNotNull[PresetColumnAlias]())
 
 	return PresetsTable{

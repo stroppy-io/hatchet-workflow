@@ -18,7 +18,7 @@ type PresetScanner struct {
 	DeletedAt            *time.Time `json:"deletedAt,omitempty"`
 	OwnerAccountId       string     `json:"ownerAccountId"` // origin: embed, empath: owner_account_id
 	TenantId             string     `json:"tenantId"`       // origin: embed, empath: tenant_id
-	Tags                 []string   `json:"tags"`
+	Tags                 []byte     `json:"tags"`           // origin: serialized, empath: tags
 	Kind                 string     `json:"kind"`
 	PresetWorkloadPreset []byte     `json:"presetWorkloadPreset"` // origin: serialized, empath: preset.workload_preset
 	PresetDatabasePreset []byte     `json:"presetDatabasePreset"` // origin: serialized, empath: preset.database_preset
@@ -69,13 +69,13 @@ func (pb *Preset) IntoPlain() *PresetScanner {
 	if pb.GetOwned() != nil && pb.GetOwned().GetTenantId() != nil {
 		p.TenantId = pb.GetOwned().GetTenantId().GetValue()
 	}
-	// Tags from
-	if pb.GetTags() != nil {
-		if len(pb.GetTags().GetTags()) > 0 {
-			p.Tags = pb.GetTags().GetTags()
-		} else {
-			p.Tags = []string{}
+	// Tags serialized from tags
+	if pb.Tags != nil {
+		if data, err := protojson.Marshal(pb.Tags); err == nil {
+			p.Tags = data
 		}
+	} else {
+		p.Tags = []byte{}
 	}
 	p.Kind = pb.Kind.String()
 	// PresetWorkloadPreset serialized from preset.workload_preset
@@ -168,12 +168,12 @@ func (p *PresetScanner) IntoPb() *Preset {
 		}
 		pb.Owned.TenantId.Value = p.TenantId
 	}
-	// Tags ->
+	// Tags deserialize -> tags
 	if len(p.Tags) > 0 {
-		if pb.Tags == nil {
-			pb.Tags = &common.Tags{}
+		var msg common.Tags
+		if err := protojson.Unmarshal(p.Tags, &msg); err == nil {
+			pb.Tags = &msg
 		}
-		pb.Tags.Tags = p.Tags
 	}
 	pb.Kind = Preset_Kind(Preset_Kind_value[p.Kind])
 	// PresetWorkloadPreset deserialize -> preset.workload_preset

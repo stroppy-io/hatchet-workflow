@@ -121,7 +121,9 @@ func (s *SettingsService) SetSettingsItem(ctx context.Context, req *uipb.SetSett
 				scanner.UpdatedAt = time.Now()
 				updated, err := s.items.QueryRow(ctx,
 					models.SettingsItems.Insert().From(scanner.AllSetters()...).
-						OnConflict(models.SettingsItemColumnId).ReturningAll())
+						OnConflict(models.SettingsItemColumnId).
+						DoUpdate(models.SettingsItemColumnValue, models.SettingsItemColumnUpdatedAt).
+						ReturningAll())
 				if err != nil {
 					return nil, status.Errorf(codes.Internal, "upsert settings item: %v", err)
 				}

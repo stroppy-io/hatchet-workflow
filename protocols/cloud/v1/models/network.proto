@@ -83,6 +83,11 @@ message NetworkAllocation {
         owner died before apply. Cleared/extended while the run is active.
      */
     optional google.protobuf.Timestamp lease_expires_at = 8;
-    /* tags carries small generic labels for reconcile/observability. */
-    common.Tags tags = 9;
+    /*
+        tags carries small generic labels for reconcile/observability. Serialized
+        (protojson []byte column, like cidr) so it round-trips through pgx, and
+        optional so a reservation without tags stores NULL rather than violating a
+        NOT NULL constraint.
+     */
+    common.Tags tags = 9 [(goplain.field).serialize = true];
 }

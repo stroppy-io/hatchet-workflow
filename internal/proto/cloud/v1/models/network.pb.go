@@ -60,7 +60,10 @@ type NetworkAllocation struct {
 	// lease_expires_at lets a recovered server reclaim a reservation whose
 	// owner died before apply. Cleared/extended while the run is active.
 	LeaseExpiresAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=lease_expires_at,json=leaseExpiresAt,proto3,oneof" json:"lease_expires_at,omitempty"`
-	// tags carries small generic labels for reconcile/observability.
+	// tags carries small generic labels for reconcile/observability. Serialized
+	// (protojson []byte column, like cidr) so it round-trips through pgx, and
+	// optional so a reservation without tags stores NULL rather than violating a
+	// NOT NULL constraint.
 	Tags          *common.Tags `protobuf:"bytes,9,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -207,7 +210,7 @@ var File_cloud_v1_models_network_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_network_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcloud/v1/models/network.proto\x12\x0fcloud.v1.models\x1a\x1acloud/v1/common/tags.proto\x1a$cloud/v1/deployment/deployment.proto\x1a\x1ccloud/v1/models/common.proto\x1a cloud/v1/runtime/system/ip.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xbd\x06\n" +
+	"\x1dcloud/v1/models/network.proto\x12\x0fcloud.v1.models\x1a\x1acloud/v1/common/tags.proto\x1a$cloud/v1/deployment/deployment.proto\x1a\x1ccloud/v1/models/common.proto\x1a cloud/v1/runtime/system/ip.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xc5\x06\n" +
 	"\x11NetworkAllocation\x12 \n" +
 	"\x02id\x18\x01 \x01(\tB\x10\xfaB\x05r\x03\x98\x01\x1a\x9a\xb5\x18\x04\x12\x02\x10\x01R\x02id\x12U\n" +
 	"\ttenant_id\x18\x02 \x01(\v2\x19.cloud.v1.models.TenantIdB\x1d\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x11\x12\x0f2\atenants:\x02id@\x01R\btenantId\x12I\n" +
@@ -219,8 +222,8 @@ const file_cloud_v1_models_network_proto_rawDesc = "" +
 	"\n" +
 	"timestamps\x18\a \x01(\v2\x1b.cloud.v1.models.TimestampsB\x06\x82\xa6\x1d\x02 \x01R\n" +
 	"timestamps\x12I\n" +
-	"\x10lease_expires_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x0eleaseExpiresAt\x88\x01\x01\x12)\n" +
-	"\x04tags\x18\t \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a[\n" +
+	"\x10lease_expires_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x0eleaseExpiresAt\x88\x01\x01\x121\n" +
+	"\x04tags\x18\t \x01(\v2\x15.cloud.v1.common.TagsB\x06\x82\xa6\x1d\x02\x10\x01R\x04tags\x1a[\n" +
 	"\x04List\x12S\n" +
 	"\x13network_allocations\x18\x01 \x03(\v2\".cloud.v1.models.NetworkAllocationR\x12networkAllocations:\x8f\x01\x92\xb5\x18\x84\x01\b\x01\x12\x13network_allocations* \n" +
 	"\x13netalloc_tenant_idx\x12\ttenant_id*!\n" +
