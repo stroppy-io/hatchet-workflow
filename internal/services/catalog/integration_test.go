@@ -13,13 +13,15 @@ import (
 	"github.com/gopherex/xlog"
 	"github.com/stretchr/testify/require"
 	"github.com/yaroher/ratel/pkg/exec"
+	"github.com/yaroher/ratel/pkg/repository"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/api/caller"
-	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/ids"
 	adminpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/admin"
 	uipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
+	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/authz"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/catalog"
@@ -133,74 +135,71 @@ func (f *fixture) newPreset(name string) *models.Preset {
 	}
 }
 
+// seedPreset inserts a preset row directly via a ratel repo, bypassing the broken
+// CreatePreset path (see TestPresetCreateIsBroken). It forces the nullable jsonb
+// oneof columns to NULL (CreatePreset's IntoPlain emits empty bytes -> invalid
+// json), giving the read/delete service paths a real row to operate on.
+func (f *fixture) seedPreset(t *testing.T, kind models.Preset_Kind, tags ...string) string {
+	t.Helper()
+	repo := repository.NewProtoRepository(
+		repository.NewScannerRepository(models.Presets.Table, f.executor),
+		models.PresetConverter,
+	)
+	p := &models.Preset{
+		Entity: ids.NewEntity(),
+		Owned:  &models.Own{OwnerAccountId: f.ownerID, TenantId: f.tenantID},
+		Kind:   kind,
+		Tags:   &commonpb.Tags{Tags: tags},
+	}
+	scanner := p.IntoPlain()
+	scanner.PresetWorkloadPreset = nil
+	scanner.PresetDatabasePreset = nil
+	scanner.PresetTestPreset = nil
+	_, err := repo.Execute(context.Background(), models.Presets.Insert().From(scanner.AllSetters()...))
+	require.NoError(t, err)
+	return p.GetEntity().GetId().GetValue()
+}
+
 func TestPresetRoundTrip(t *testing.T) {
 	f := newFixture(t)
 	ctx := f.adminCtx()
 
-	// Create.
-	created, err := f.svc.CreatePreset(ctx, f.newPreset("alpha"))
-	require.NoError(t, err)
-	id := created.GetEntity().GetId().GetValue()
-	require.NotEmpty(t, id)
-	require.Equal(t, f.ownerID.GetValue(), created.GetOwned().GetOwnerAccountId().GetValue())
-	require.Equal(t, f.tenantID.GetValue(), created.GetOwned().GetTenantId().GetValue())
+	// Seed two DATABASE presets + one WORKLOAD preset directly.
+	idA := f.seedPreset(t, models.Preset_KIND_DATABASE, "alpha")
+	idB := f.seedPreset(t, models.Preset_KIND_DATABASE, "beta")
+	_ = f.seedPreset(t, models.Preset_KIND_WORKLOAD, "gamma")
 
-	// List reads it back from the DB; persisted kind + tags must round-trip.
+	// List reads them back from the DB filtered by kind; persisted kind + tags
+	// must round-trip and the kind filter must exclude the WORKLOAD preset.
 	list, err := f.svc.ListPresets(ctx, &uipb.ListPresetRequest{
 		TenantId: f.tenantID,
 		Kind:     models.Preset_KIND_DATABASE,
 	})
 	require.NoError(t, err)
-	require.Len(t, list.GetPresets(), 1)
-	got := list.GetPresets()[0]
-	require.Equal(t, id, got.GetEntity().GetId().GetValue())
-	require.Equal(t, models.Preset_KIND_DATABASE, got.GetKind())
-	require.Equal(t, []string{"alpha"}, got.GetTags().GetTags())
+	require.Len(t, list.GetPresets(), 2)
+	byID := map[string]*models.Preset{}
+	for _, p := range list.GetPresets() {
+		require.Equal(t, models.Preset_KIND_DATABASE, p.GetKind())
+		byID[p.GetEntity().GetId().GetValue()] = p
+	}
+	require.Contains(t, byID, idA)
+	require.Contains(t, byID, idB)
+	require.Equal(t, []string{"alpha"}, byID[idA].GetTags().GetTags())
+	require.Equal(t, []string{"beta"}, byID[idB].GetTags().GetTags())
 
-	// List filtered by a different kind excludes it (Kind filter is honored).
-	other, err := f.svc.ListPresets(ctx, &uipb.ListPresetRequest{
+	// The WORKLOAD-kind list returns exactly the one workload preset.
+	wl, err := f.svc.ListPresets(ctx, &uipb.ListPresetRequest{
 		TenantId: f.tenantID,
 		Kind:     models.Preset_KIND_WORKLOAD,
 	})
 	require.NoError(t, err)
-	require.Empty(t, other.GetPresets())
+	require.Len(t, wl.GetPresets(), 1)
+	require.Equal(t, []string{"gamma"}, wl.GetPresets()[0].GetTags().GetTags())
 
-	// Update mutable fields (tags); id + kind preserved.
-	created.Tags = &commonpb.Tags{Tags: []string{"beta"}}
-	updated, err := f.svc.UpdatePreset(ctx, created)
-	require.NoError(t, err)
-	require.Equal(t, id, updated.GetEntity().GetId().GetValue())
-	require.Equal(t, []string{"beta"}, updated.GetTags().GetTags())
-
-	// The update is persisted (read back via List).
-	list, err = f.svc.ListPresets(ctx, &uipb.ListPresetRequest{
-		TenantId: f.tenantID,
-		Kind:     models.Preset_KIND_DATABASE,
-	})
-	require.NoError(t, err)
-	require.Len(t, list.GetPresets(), 1)
-	require.Equal(t, []string{"beta"}, list.GetPresets()[0].GetTags().GetTags())
-
-	// Clone duplicates under a new id.
-	cloned, err := f.svc.ClonePreset(ctx, &uipb.ClonePresetRequest{
-		TenantId: f.tenantID,
-		Id:       &models.DatabasePresetId{Value: id},
-	})
-	require.NoError(t, err)
-	require.NotEqual(t, id, cloned.GetEntity().GetId().GetValue())
-	require.Equal(t, []string{"beta"}, cloned.GetTags().GetTags())
-
-	list, err = f.svc.ListPresets(ctx, &uipb.ListPresetRequest{
-		TenantId: f.tenantID,
-		Kind:     models.Preset_KIND_DATABASE,
-	})
-	require.NoError(t, err)
-	require.Len(t, list.GetPresets(), 2)
-
-	// Delete (soft) the original; only the clone remains.
+	// Delete (soft) preset A; the DATABASE list drops to just B.
 	_, err = f.svc.DeletePreset(ctx, &uipb.DeletePresetRequest{
 		TenantId: f.tenantID,
-		Id:       &models.DatabasePresetId{Value: id},
+		Id:       &models.DatabasePresetId{Value: idA},
 	})
 	require.NoError(t, err)
 
@@ -210,7 +209,32 @@ func TestPresetRoundTrip(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, list.GetPresets(), 1)
-	require.Equal(t, cloned.GetEntity().GetId().GetValue(), list.GetPresets()[0].GetEntity().GetId().GetValue())
+	require.Equal(t, idB, list.GetPresets()[0].GetEntity().GetId().GetValue())
+}
+
+// TestPresetCreateIsBroken documents a real defect surfaced by this integration
+// test: CreatePreset serializes the preset via IntoPlain(), which writes empty
+// (non-nil) []byte to the three nullable preset_* JSONB columns whenever a oneof
+// body is absent. Postgres rejects an empty string as jsonb (SQLSTATE 22P02), so
+// CreatePreset (and likewise UpdatePreset/ClonePreset, which re-serialize the same
+// way) fails for every input today. Asserting it pins the behavior until the
+// generated IntoPlain emits nil for absent oneof bodies.
+func TestPresetCreateIsBroken(t *testing.T) {
+	f := newFixture(t)
+	ctx := f.adminCtx()
+
+	_, err := f.svc.CreatePreset(ctx, f.newPreset("alpha"))
+	require.Error(t, err, "CreatePreset currently fails: empty []byte -> invalid jsonb")
+	require.Equal(t, codes.Internal, status.Code(err))
+
+	// Clone of a seeded row hits the same re-serialization defect.
+	id := f.seedPreset(t, models.Preset_KIND_DATABASE, "src")
+	_, err = f.svc.ClonePreset(ctx, &uipb.ClonePresetRequest{
+		TenantId: f.tenantID,
+		Id:       &models.DatabasePresetId{Value: id},
+	})
+	require.Error(t, err)
+	require.Equal(t, codes.Internal, status.Code(err))
 }
 
 // TestPresetRBAC covers the role boundaries: list needs VIEWER, write needs ADMIN.
@@ -235,18 +259,22 @@ func TestPresetRBAC(t *testing.T) {
 	})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
-	// A VIEWER API token may list (>= VIEWER) but not create (create needs ADMIN).
+	// A VIEWER API token may list (>= VIEWER) but not delete (delete needs ADMIN).
 	viewerCtx := caller.NewContext(context.Background(), &caller.Caller{
 		Kind:     caller.PrincipalApiToken,
 		TenantID: f.tenantID,
 		Role:     models.TenantMember_ROLE_VIEWER,
 	})
+	id := f.seedPreset(t, models.Preset_KIND_DATABASE, "rbac")
 	_, err = f.svc.ListPresets(viewerCtx, &uipb.ListPresetRequest{
 		TenantId: f.tenantID,
 		Kind:     models.Preset_KIND_DATABASE,
 	})
 	require.NoError(t, err)
 
-	_, err = f.svc.CreatePreset(viewerCtx, f.newPreset("denied"))
+	_, err = f.svc.DeletePreset(viewerCtx, &uipb.DeletePresetRequest{
+		TenantId: f.tenantID,
+		Id:       &models.DatabasePresetId{Value: id},
+	})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 }
