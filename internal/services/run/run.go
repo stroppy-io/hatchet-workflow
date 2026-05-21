@@ -37,25 +37,27 @@ type RunService struct {
 		*models.TestRunScanner,
 		*models.TestRun,
 	]
-	planner Planner
-	store   DagStore
-	logs    LogsClient
-	metrics MetricsClient
-	share   ShareStore
-	authz   *authz.Authz
-	txm     tx.Trm
+	planner  Planner
+	provider ProviderResolver
+	store    DagStore
+	logs     LogsClient
+	metrics  MetricsClient
+	share    ShareStore
+	authz    *authz.Authz
+	txm      tx.Trm
 }
 
 var _ uiapi.RunActions = (*RunService)(nil)
 
-// New builds a RunService. planner/store drive the lifecycle; logs/metrics/share
-// are injected clients (impls pending — see the interface docs in run_external.go).
+// New builds a RunService. planner/provider/store drive the lifecycle;
+// logs/metrics/share are injected clients (impls pending — see run_external.go).
 func New(
 	logger *xlog.Logger,
 	executor exec.DB,
 	txm tx.Trm,
 	az *authz.Authz,
 	planner Planner,
+	provider ProviderResolver,
 	store DagStore,
 	logs LogsClient,
 	metrics MetricsClient,
@@ -67,13 +69,14 @@ func New(
 			repository.NewScannerRepository(models.TestRuns.Table, executor),
 			models.TestRunConverter,
 		),
-		planner: planner,
-		store:   store,
-		logs:    logs,
-		metrics: metrics,
-		share:   share,
-		authz:   az,
-		txm:     txm,
+		planner:  planner,
+		provider: provider,
+		store:    store,
+		logs:     logs,
+		metrics:  metrics,
+		share:    share,
+		authz:    az,
+		txm:      txm,
 	}
 }
 
@@ -86,7 +89,11 @@ func (s *RunService) SubmitTestRun(ctx context.Context, req *uipb.SubmitTestRunR
 			if err := s.authz.Require(ctx, c, req.GetTenantId(), models.TenantMember_ROLE_ADMIN); err != nil {
 				return nil, err
 			}
-			dag, err := s.planner.Compile(req.GetTestPreset())
+			params, err := s.provider.Resolve(ctx, req.GetTenantId().GetValue(), req.GetTestPreset().GetTopology())
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "resolve provider settings: %v", err)
+			}
+			dag, err := s.planner.Compile(req.GetTestPreset(), params)
 			if err != nil {
 				return nil, status.Errorf(codes.InvalidArgument, "compile preset: %v", err)
 			}

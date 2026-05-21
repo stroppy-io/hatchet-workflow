@@ -13,12 +13,15 @@ import (
 	"github.com/gopherex/xlog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/render"
 	agentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	rtagent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/ops"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/utils/tracing"
@@ -76,16 +79,22 @@ func (q *Queue) Lease(ctx context.Context, tenantID string, target *rtagent.Targ
 		if node == nil {
 			continue
 		}
-		expires := now.Add(q.ttl)
-		setLease(node, target.GetMachineId(), expires)
-		if err := q.store.SaveDag(ctx, dag); err != nil {
-			return nil, status.Errorf(codes.Internal, "save lease: %v", err)
-		}
 		cmd := &rtagent.Command{}
 		if input := node.GetTaskState().GetInput(); input != nil {
 			if err := input.UnmarshalTo(cmd); err != nil {
 				return nil, status.Errorf(codes.Internal, "decode command: %v", err)
 			}
+		}
+		// Resolve render bindings (DB ip etc) from the run's terraform output
+		// BEFORE leasing — anti-leak: never hand out an unresolved command.
+		cmd, err = resolveCommand(dag, node, cmd)
+		if err != nil {
+			return nil, status.Errorf(codes.FailedPrecondition, "resolve command bindings: %v", err)
+		}
+		expires := now.Add(q.ttl)
+		setLease(node, target.GetMachineId(), expires)
+		if err := q.store.SaveDag(ctx, dag); err != nil {
+			return nil, status.Errorf(codes.Internal, "save lease: %v", err)
 		}
 		return &agentpb.CommandLease{
 			Address:        &agentpb.NodeAddress{DagId: &models.DagId{Value: dag.GetId()}, NodeExecutionId: node.GetExecutionId()},
@@ -94,6 +103,59 @@ func (q *Queue) Lease(ctx context.Context, tenantID string, target *rtagent.Targ
 		}, nil
 	}
 	return nil, nil
+}
+
+// resolveCommand substitutes the node's render bindings in the command, reading
+// runtime values from the dag's terraform output + component->machine map. A
+// command with no bindings is returned unchanged.
+func resolveCommand(dag *primitive.Dag, node *primitive.Dag_Node, cmd *rtagent.Command) (*rtagent.Command, error) {
+	bindings, err := render.NodeBindings(node)
+	if err != nil {
+		return nil, err
+	}
+	if len(bindings) == 0 {
+		return cmd, nil
+	}
+	resolved, err := render.FromTerraform(findTerraformOutput(dag), render.DecodeComponentMachine(dag.GetMetadata()[render.ComponentMachineMetaKey]))
+	if err != nil {
+		return nil, err
+	}
+	data, err := protojson.Marshal(cmd)
+	if err != nil {
+		return nil, err
+	}
+	out, err := render.NewResolver(resolved).ResolveText(string(data), bindings)
+	if err != nil {
+		return nil, err
+	}
+	fresh := &rtagent.Command{}
+	if err := protojson.Unmarshal([]byte(out), fresh); err != nil {
+		return nil, err
+	}
+	return fresh, nil
+}
+
+// findTerraformOutput returns the first node output that decodes to a non-empty
+// TfOperation.Output (the terraform_apply result), recursing into sub-dags.
+func findTerraformOutput(dag *primitive.Dag) map[string][]byte {
+	var outputs map[string][]byte
+	walkNodes(dag, func(n *primitive.Dag_Node) {
+		if outputs != nil {
+			return
+		}
+		raw := n.GetTaskState().GetOutput()
+		if raw == nil {
+			return
+		}
+		var tfOut ops.TfOperation_Output
+		if err := raw.UnmarshalTo(&tfOut); err != nil {
+			return
+		}
+		if len(tfOut.GetOutputsJson()) > 0 {
+			outputs = tfOut.GetOutputsJson()
+		}
+	})
+	return outputs
 }
 
 // Report applies a command report to the addressed node and persists the dag.

@@ -18,10 +18,12 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/ids"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/render"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	rtagent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/ops"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
+	renderpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/render"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/system"
 )
 
@@ -44,8 +46,8 @@ const (
 	// TODO(planner): ShapeHA / ShapeReplica / ShapeExternal — emergent from Options.
 )
 
-// Template builds the Dag for a shape from a preset.
-type Template func(preset *domain.TestPreset) (*primitive.Dag, error)
+// Template builds the Dag for a shape from a preset + resolved deployment params.
+type Template func(preset *domain.TestPreset, params *DeploymentParams) (*primitive.Dag, error)
 
 // Compiler selects and instantiates Dag templates.
 type Compiler struct {
@@ -59,14 +61,18 @@ func New() *Compiler {
 	}}
 }
 
-// Compile detects the shape of the preset and instantiates its template.
-func (c *Compiler) Compile(preset *domain.TestPreset) (*primitive.Dag, error) {
+// Compile detects the shape of the preset and instantiates its template with the
+// resolved deployment params (nil is treated as empty).
+func (c *Compiler) Compile(preset *domain.TestPreset, params *DeploymentParams) (*primitive.Dag, error) {
+	if params == nil {
+		params = &DeploymentParams{}
+	}
 	shape := shapeOf(preset)
 	tmpl, ok := c.templates[shape]
 	if !ok {
 		return nil, fmt.Errorf("planner: no template for shape %q", shape)
 	}
-	return tmpl(preset)
+	return tmpl(preset, params)
 }
 
 // shapeOf picks the Dag form from the preset.
@@ -78,59 +84,108 @@ func shapeOf(_ *domain.TestPreset) Shape {
 }
 
 // singleTemplate: render_config -> terraform_apply -> install_and_run(sub_dag) ->
-// collect_results -> terraform_destroy(always_run).
-func singleTemplate(_ *domain.TestPreset) (*primitive.Dag, error) {
-	render := serverTask("render_config", HandlerRenderConfig)
-	apply := serverTask("terraform_apply", HandlerTerraformApply)
-	install, err := installAndRunSubDag()
+// collect_results -> terraform_destroy(always_run). apply/destroy share a workdir.
+func singleTemplate(preset *domain.TestPreset, params *DeploymentParams) (*primitive.Dag, error) {
+	workdirID := ids.New()
+
+	applyOp, err := buildTfOperation(ops.TfOperation_ACTION_APPLY, workdirID, preset, params)
+	if err != nil {
+		return nil, err
+	}
+	applyInput, err := anypb.New(applyOp)
+	if err != nil {
+		return nil, fmt.Errorf("planner: wrap apply op: %w", err)
+	}
+	destroyOp, err := buildTfOperation(ops.TfOperation_ACTION_DESTROY, workdirID, preset, params)
+	if err != nil {
+		return nil, err
+	}
+	destroyInput, err := anypb.New(destroyOp)
+	if err != nil {
+		return nil, fmt.Errorf("planner: wrap destroy op: %w", err)
+	}
+
+	view := viewTopology(preset.GetTopology())
+	config := databaseConfig(preset.GetDatabase(), view.dbMemoryMB)
+
+	renderNode := serverTask("render_config", HandlerRenderConfig)
+	apply := serverTaskInput("terraform_apply", HandlerTerraformApply, applyInput)
+	install, err := installAndRunSubDag(config, view.dbComponentID)
 	if err != nil {
 		return nil, err
 	}
 	collect := serverTask("collect_results", HandlerCollectResults)
-	destroy := serverTask("terraform_destroy", HandlerTerraformDestroy)
+	destroy := serverTaskInput("terraform_destroy", HandlerTerraformDestroy, destroyInput)
 	destroy.Scheduling.AlwaysRun = true // teardown runs on failure/cancel too (H58)
 
 	return &primitive.Dag{
 		Id:     ids.New(),
 		Status: primitive.Status_STATUS_PENDING,
-		Nodes:  []*primitive.Dag_Node{render, apply, install, collect, destroy},
+		Nodes:  []*primitive.Dag_Node{renderNode, apply, install, collect, destroy},
 		Edges: []*primitive.Dag_Edge{
-			edge(render, apply),
+			edge(renderNode, apply),
 			edge(apply, install),
 			edge(install, collect),
 			edge(collect, destroy), // success path; always_run covers failure
 		},
-		Metadata: map[string]string{},
+		// component->machine lets the execute-seam resolver map binding component
+		// ids to terraform vm outputs.
+		Metadata: map[string]string{
+			render.ComponentMachineMetaKey: render.EncodeComponentMachine(view.componentToMachine),
+		},
 	}, nil
 }
 
 // installAndRunSubDag is the agent's on-host work — one node per command, each a
-// task handler="agent.command" carrying an ops.Operation (D17, H19).
-func installAndRunSubDag() (*primitive.Dag_Node, error) {
-	steps := []struct {
-		id string
-		op *ops.Operation
-	}{
-		{"write_sources_list", writeFileOp()},
-		{"apt_install", runCmdOp()},
-		{"write_config", writeFileOp()},
-		{"start_service", runCmdOp()},
-		{"run_stroppy", runCmdOp()},
+// task handler="agent.command" carrying an ops.Operation (D17, H19). The rendered
+// database config files become WRITE_FILE commands; run_stroppy carries a late
+// binding to the database's private ip (resolved at the plan->execute seam).
+func installAndRunSubDag(config *renderpb.Config, dbComponentID string) (*primitive.Dag_Node, error) {
+	var nodes []*primitive.Dag_Node
+	add := func(id string, op *ops.Operation, bindings []*renderpb.Config_Binding) error {
+		n, err := agentCommand(id, op)
+		if err != nil {
+			return err
+		}
+		render.AttachBindings(n, bindings)
+		nodes = append(nodes, n)
+		return nil
 	}
 
-	nodes := make([]*primitive.Dag_Node, 0, len(steps))
-	edges := make([]*primitive.Dag_Edge, 0, len(steps))
-	for i, st := range steps {
-		node, err := agentCommand(st.id, st.op)
-		if err != nil {
+	if err := add("write_sources_list", writeFileOp(), nil); err != nil {
+		return nil, err
+	}
+	if err := add("apt_install", runCmdOp(), nil); err != nil {
+		return nil, err
+	}
+	for _, item := range config.GetItems() {
+		file := item.GetFile()
+		if file == nil {
+			continue
+		}
+		if err := add("write_"+item.GetId(), writeFileOpFor(file), item.GetBindings()); err != nil {
 			return nil, err
 		}
-		nodes = append(nodes, node)
-		if i > 0 {
-			edges = append(edges, edge(nodes[i-1], node))
-		}
+	}
+	if err := add("start_service", runCmdOp(), nil); err != nil {
+		return nil, err
+	}
+	var stroppyBindings []*renderpb.Config_Binding
+	if dbComponentID != "" {
+		stroppyBindings = []*renderpb.Config_Binding{{
+			Token:        stroppyDBHostToken,
+			ComponentIds: []string{dbComponentID},
+			Attr:         render.AttrPrivateIP,
+		}}
+	}
+	if err := add("run_stroppy", runStroppyOp(), stroppyBindings); err != nil {
+		return nil, err
 	}
 
+	edges := make([]*primitive.Dag_Edge, 0, len(nodes))
+	for i := 1; i < len(nodes); i++ {
+		edges = append(edges, edge(nodes[i-1], nodes[i]))
+	}
 	sub := &primitive.Dag{
 		Id:     ids.New(),
 		Status: primitive.Status_STATUS_PENDING,
@@ -138,6 +193,13 @@ func installAndRunSubDag() (*primitive.Dag_Node, error) {
 		Edges:  edges,
 	}
 	return subDagNode("install_and_run", sub), nil
+}
+
+// serverTaskInput is a server task node carrying a typed input payload.
+func serverTaskInput(id, handler string, input *anypb.Any) *primitive.Dag_Node {
+	node := serverTask(id, handler)
+	node.GetTaskState().Input = input
+	return node
 }
 
 func serverTask(id, handler string) *primitive.Dag_Node {
@@ -198,4 +260,19 @@ func writeFileOp() *ops.Operation {
 
 func runCmdOp() *ops.Operation {
 	return &ops.Operation{Kind: ops.Operation_KIND_RUN_CMD, Operation: &ops.Operation_RunCmd{RunCmd: &system.Cmd_Spec{}}}
+}
+
+// writeFileOpFor wraps a rendered config file into a WRITE_FILE operation.
+func writeFileOpFor(file *system.File) *ops.Operation {
+	return &ops.Operation{Kind: ops.Operation_KIND_WRITE_FILE, Operation: &ops.Operation_WriteFile{WriteFile: file}}
+}
+
+// runStroppyOp builds the workload command. The DB host is a late-binding token
+// resolved to the database component's private ip at the plan->execute seam.
+func runStroppyOp() *ops.Operation {
+	return &ops.Operation{Kind: ops.Operation_KIND_RUN_CMD, Operation: &ops.Operation_RunCmd{RunCmd: &system.Cmd_Spec{
+		Command: &system.Cmd_Spec_Argv{Argv: &system.Cmd_Argv{
+			Args: []string{"stroppy", "run", "--url", "postgres://stroppy@" + stroppyDBHostToken + ":5432/stroppy"},
+		}},
+	}}}
 }

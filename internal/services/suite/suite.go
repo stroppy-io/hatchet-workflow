@@ -18,6 +18,7 @@ import (
 
 	uiapi "github.com/stroppy-io/stroppy-cloud/internal/api/ui"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/ids"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/planner"
 	uipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -30,9 +31,14 @@ import (
 
 const metadataTenantID = "tenant_id"
 
-// Planner compiles a TestPreset into a Dag (C12).
+// Planner compiles a TestPreset (+ deployment params) into a Dag (C12).
 type Planner interface {
-	Compile(preset *domain.TestPreset) (*primitive.Dag, error)
+	Compile(preset *domain.TestPreset, params *planner.DeploymentParams) (*primitive.Dag, error)
+}
+
+// ProviderResolver resolves a tenant's deployment params for a topology.
+type ProviderResolver interface {
+	Resolve(ctx context.Context, tenantID string, topo *domain.Topology) (*planner.DeploymentParams, error)
 }
 
 // DagStore persists Dag aggregates.
@@ -53,22 +59,24 @@ type SuiteService struct {
 	testRuns *repository.ProtoRepository[
 		models.TestRunAlias, models.TestRunColumnAlias, *models.TestRunScanner, *models.TestRun,
 	]
-	planner Planner
-	store   DagStore
-	authz   *authz.Authz
-	txm     tx.Trm
+	planner  Planner
+	provider ProviderResolver
+	store    DagStore
+	authz    *authz.Authz
+	txm      tx.Trm
 }
 
 var _ uiapi.SuiteActions = (*SuiteService)(nil)
 
 // New builds a SuiteService.
-func New(logger *xlog.Logger, executor exec.DB, txm tx.Trm, az *authz.Authz, planner Planner, store DagStore) *SuiteService {
+func New(logger *xlog.Logger, executor exec.DB, txm tx.Trm, az *authz.Authz, planner Planner, provider ProviderResolver, store DagStore) *SuiteService {
 	return &SuiteService{
 		Entity:    tracing.NewEntity(logger.AppendName("SuiteService")),
 		suites:    repository.NewProtoRepository(repository.NewScannerRepository(models.Suites.Table, executor), models.SuiteConverter),
 		suiteRuns: repository.NewProtoRepository(repository.NewScannerRepository(models.SuiteRuns.Table, executor), models.SuiteRunConverter),
 		testRuns:  repository.NewProtoRepository(repository.NewScannerRepository(models.TestRuns.Table, executor), models.TestRunConverter),
 		planner:   planner,
+		provider:  provider,
 		store:     store,
 		authz:     az,
 		txm:       txm,
@@ -149,11 +157,18 @@ func (s *SuiteService) LaunchSuiteRun(ctx context.Context, req *uipb.LaunchSuite
 			var refNodes []*primitive.Dag_Node
 
 			for i, tp := range suite.GetPreset().GetTests() {
-				dag, err := s.planner.Compile(tp)
+				params, err := s.provider.Resolve(ctx, tenant.GetValue(), tp.GetTopology())
+				if err != nil {
+					return nil, status.Errorf(codes.Internal, "resolve deployment %d: %v", i, err)
+				}
+				dag, err := s.planner.Compile(tp, params)
 				if err != nil {
 					return nil, status.Errorf(codes.InvalidArgument, "compile test %d: %v", i, err)
 				}
-				dag.Metadata = map[string]string{metadataTenantID: tenant.GetValue()}
+				if dag.Metadata == nil {
+					dag.Metadata = map[string]string{}
+				}
+				dag.Metadata[metadataTenantID] = tenant.GetValue()
 				if err := runtime.ValidateDag(dag); err != nil {
 					return nil, status.Errorf(codes.Internal, "invalid dag for test %d: %v", i, err)
 				}
