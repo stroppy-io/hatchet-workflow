@@ -38,7 +38,7 @@ var recipes = map[string]recipe{
 	"picodata/25.3": {
 		preInstall: []string{
 			"apt-get update",
-			"apt-get install -y curl gnupg ca-certificates",
+			"apt-get install -y curl gnupg ca-certificates lsb-release",
 			`curl -fsSL https://download.picodata.io/tarantool-picodata/picodata.gpg.key | gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/picodata.gpg --import && chmod 644 /etc/apt/trusted.gpg.d/picodata.gpg`,
 			`echo "deb https://download.picodata.io/tarantool-picodata/ubuntu/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/picodata.list`,
 			"apt-get update",

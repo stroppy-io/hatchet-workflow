@@ -260,6 +260,78 @@ func TestMySQLReplicationFullPipeline(t *testing.T) {
 	require.True(t, replicated, "row never replicated to the replica")
 }
 
+// TestPicodataClusterFullPipeline brings up a 2-instance picodata cluster via the
+// recipe across systemd hosts (peers from the rendered picodata.yaml), then asserts
+// both instances are up and the pg-wire port accepts connections.
+func TestPicodataClusterFullPipeline(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	net, err := network.New(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = net.Remove(ctx) })
+
+	componentMachine := map[string]string{"pd1": "m-pd1", "pd2": "m-pd2"}
+	hosts := map[string]*systemdHost{}
+	machineIP := map[string]string{}
+	for compID, m := range componentMachine {
+		h, ip := startSystemdHostOnNetwork(t, ctx, net.Name)
+		hosts[compID] = h
+		machineIP[m] = ip
+	}
+	resolved := render.Resolved{}
+	for compID, m := range componentMachine {
+		resolved[compID] = map[string]string{render.AttrPrivateIP: machineIP[m], render.AttrEndpoint: machineIP[m]}
+	}
+	resolver := render.NewResolver(resolved)
+
+	comp := func(id string, k domain.Topology_Component_Kind) *domain.Topology_Component {
+		return &domain.Topology_Component{Id: id, Kind: k}
+	}
+	preset := &domain.TestPreset{
+		Database: &domain.Database{Kind: domain.Database_KIND_PICODATA, Version: "25.3"},
+		Topology: &domain.Topology{
+			Machines: []*domain.Topology_Machine{
+				{Id: "m-pd1", Cores: 2, MemoryGb: 4, Components: []*domain.Topology_Component{comp("pd1", domain.Topology_Component_KIND_DATABASE)}},
+				{Id: "m-pd2", Cores: 2, MemoryGb: 4, Components: []*domain.Topology_Component{comp("pd2", domain.Topology_Component_KIND_DATABASE)}},
+			},
+			Connections: []*domain.Topology_Connection{{From: "pd1", To: "pd2", Kind: domain.Topology_Connection_KIND_COORDINATION}},
+		},
+	}
+	dag, err := planner.New().Compile(preset, nil)
+	require.NoError(t, err)
+	sub := findSubDag(t, dag, "install_and_run")
+
+	for _, compID := range []string{"pd1", "pd2"} {
+		host := hosts[compID]
+		for _, n := range sub.GetNodes() {
+			if !hasPrefix(n.GetId(), compID+".") {
+				continue
+			}
+			var cmd rtagent.Command
+			require.NoError(t, n.GetTaskState().GetInput().UnmarshalTo(&cmd))
+			t.Logf("[%s] exec %s", compID, n.GetId())
+			host.execOpResolved(t, ctx, n, cmd.GetOperation(), resolver)
+		}
+	}
+
+	// pg-wire (5432) must accept a connection on pd1 — the cluster bootstrapped.
+	up := false
+	for range 24 {
+		code, _ := hosts["pd1"].c2(ctx, []string{"bash", "-lc", "timeout 4 bash -c '</dev/tcp/localhost/5432' 2>/dev/null && echo ok"})
+		if code == 0 {
+			up = true
+			break
+		}
+		time.Sleep(5 * time.Second)
+	}
+	if !up {
+		_, st := hosts["pd1"].c2(ctx, []string{"bash", "-lc", "echo '== is-active =='; timeout 4 systemctl is-active stroppy-picodata; echo '== journal =='; timeout 6 journalctl -u stroppy-picodata --no-pager 2>&1 | tail -30"})
+		t.Logf("pd1 picodata diagnostics:\n%s", st)
+	}
+	require.True(t, up, "picodata pg-wire never came up")
+}
+
 func hasPrefix(s, p string) bool { return len(s) >= len(p) && s[:len(p)] == p }
 
 // c2 runs a command (demuxed) returning code + output without failing the test.
