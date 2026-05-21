@@ -231,14 +231,14 @@ func componentChain(c *domain.Topology_Component, db *domain.Database, topo *dom
 		return nil
 	}
 
-	for i, cmd := range rec.preInstall {
+	for i, cmd := range rec.PreInstall {
 		if err := add(fmt.Sprintf("pre_install_%d", i), scriptOp(cmd), nil); err != nil {
 			return nil, err
 		}
 	}
-	if len(rec.aptPackages) > 0 {
+	if len(rec.AptPackages) > 0 {
 		if err := add("apt_install",
-			scriptOp("DEBIAN_FRONTEND=noninteractive apt-get install -y "+strings.Join(rec.aptPackages, " ")), nil); err != nil {
+			scriptOp("DEBIAN_FRONTEND=noninteractive apt-get install -y "+strings.Join(rec.AptPackages, " ")), nil); err != nil {
 			return nil, err
 		}
 	}
@@ -252,12 +252,12 @@ func componentChain(c *domain.Topology_Component, db *domain.Database, topo *dom
 		}
 	}
 	switch {
-	case rec.serviceName != "":
-		if err := add("start_service", scriptOp("systemctl enable --now "+rec.serviceName), nil); err != nil {
+	case rec.ServiceName != "":
+		if err := add("start_service", scriptOp("systemctl enable --now "+rec.ServiceName), nil); err != nil {
 			return nil, err
 		}
-	case rec.startScript != "":
-		if err := add("start_service", scriptOp(rec.startScript), nil); err != nil {
+	case rec.StartScript != "":
+		if err := add("start_service", scriptOp(rec.StartScript), nil); err != nil {
 			return nil, err
 		}
 	}
