@@ -31,7 +31,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SettingsServiceClient interface {
-	ListSettingsItems(ctx context.Context, in *ListSettingsItemsRequest, opts ...grpc.CallOption) (*models.SettingsItem_List, error)
+	ListSettingsItems(ctx context.Context, in *ListSettingsItemsRequest, opts ...grpc.CallOption) (*ListSettingsItemsResponse, error)
 	GetSettingsItem(ctx context.Context, in *GetSettingsItemRequest, opts ...grpc.CallOption) (*models.SettingsItem, error)
 	SetSettingsItem(ctx context.Context, in *SetSettingsItemRequest, opts ...grpc.CallOption) (*models.SettingsItem, error)
 	DeleteSettingsItem(ctx context.Context, in *DeleteSettingsItemRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -45,9 +45,9 @@ func NewSettingsServiceClient(cc grpc.ClientConnInterface) SettingsServiceClient
 	return &settingsServiceClient{cc}
 }
 
-func (c *settingsServiceClient) ListSettingsItems(ctx context.Context, in *ListSettingsItemsRequest, opts ...grpc.CallOption) (*models.SettingsItem_List, error) {
+func (c *settingsServiceClient) ListSettingsItems(ctx context.Context, in *ListSettingsItemsRequest, opts ...grpc.CallOption) (*ListSettingsItemsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(models.SettingsItem_List)
+	out := new(ListSettingsItemsResponse)
 	err := c.cc.Invoke(ctx, SettingsService_ListSettingsItems_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (c *settingsServiceClient) DeleteSettingsItem(ctx context.Context, in *Dele
 // All implementations must embed UnimplementedSettingsServiceServer
 // for forward compatibility.
 type SettingsServiceServer interface {
-	ListSettingsItems(context.Context, *ListSettingsItemsRequest) (*models.SettingsItem_List, error)
+	ListSettingsItems(context.Context, *ListSettingsItemsRequest) (*ListSettingsItemsResponse, error)
 	GetSettingsItem(context.Context, *GetSettingsItemRequest) (*models.SettingsItem, error)
 	SetSettingsItem(context.Context, *SetSettingsItemRequest) (*models.SettingsItem, error)
 	DeleteSettingsItem(context.Context, *DeleteSettingsItemRequest) (*emptypb.Empty, error)
@@ -103,7 +103,7 @@ type SettingsServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSettingsServiceServer struct{}
 
-func (UnimplementedSettingsServiceServer) ListSettingsItems(context.Context, *ListSettingsItemsRequest) (*models.SettingsItem_List, error) {
+func (UnimplementedSettingsServiceServer) ListSettingsItems(context.Context, *ListSettingsItemsRequest) (*ListSettingsItemsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListSettingsItems not implemented")
 }
 func (UnimplementedSettingsServiceServer) GetSettingsItem(context.Context, *GetSettingsItemRequest) (*models.SettingsItem, error) {

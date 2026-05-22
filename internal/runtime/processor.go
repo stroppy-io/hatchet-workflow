@@ -176,7 +176,11 @@ func (p *DagProcessor) refreshFromStorage(ctx context.Context) {
 	}
 	for _, dag := range dags {
 		id := dag.GetId()
-		if p.dags.Has(id) || p.isActive(id) {
+		// Skip a dag that is mid-flight (a processOne goroutine owns it) to avoid
+		// clobbering its in-progress snapshot. Otherwise (re)load the storage copy
+		// every tick: it is the source of truth and carries agent Reports applied
+		// out-of-band by the CommandQueue, which the cached in-memory copy lacks.
+		if p.isActive(id) {
 			continue
 		}
 		p.dags.Set(id, dag)

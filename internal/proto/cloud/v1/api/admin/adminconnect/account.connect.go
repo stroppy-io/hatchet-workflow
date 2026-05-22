@@ -35,6 +35,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// AccountAdminServiceListAccountsProcedure is the fully-qualified name of the AccountAdminService's
+	// ListAccounts RPC.
+	AccountAdminServiceListAccountsProcedure = "/cloud.v1.api.admin.AccountAdminService/ListAccounts"
 	// AccountAdminServiceCreateAccountProcedure is the fully-qualified name of the
 	// AccountAdminService's CreateAccount RPC.
 	AccountAdminServiceCreateAccountProcedure = "/cloud.v1.api.admin.AccountAdminService/CreateAccount"
@@ -51,6 +54,7 @@ const (
 
 // AccountAdminServiceClient is a client for the cloud.v1.api.admin.AccountAdminService service.
 type AccountAdminServiceClient interface {
+	ListAccounts(context.Context, *admin.ListAccountsRequest) (*admin.ListAccountsResponse, error)
 	CreateAccount(context.Context, *admin.CreateAccountRequest) (*models.Account, error)
 	UpdateAccount(context.Context, *admin.UpdateAccountRequest) (*emptypb.Empty, error)
 	DeleteAccount(context.Context, *models.AccountId) (*emptypb.Empty, error)
@@ -68,6 +72,13 @@ func NewAccountAdminServiceClient(httpClient connect.HTTPClient, baseURL string,
 	baseURL = strings.TrimRight(baseURL, "/")
 	accountAdminServiceMethods := admin.File_cloud_v1_api_admin_account_proto.Services().ByName("AccountAdminService").Methods()
 	return &accountAdminServiceClient{
+		listAccounts: connect.NewClient[admin.ListAccountsRequest, admin.ListAccountsResponse](
+			httpClient,
+			baseURL+AccountAdminServiceListAccountsProcedure,
+			connect.WithSchema(accountAdminServiceMethods.ByName("ListAccounts")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
 		createAccount: connect.NewClient[admin.CreateAccountRequest, models.Account](
 			httpClient,
 			baseURL+AccountAdminServiceCreateAccountProcedure,
@@ -101,10 +112,20 @@ func NewAccountAdminServiceClient(httpClient connect.HTTPClient, baseURL string,
 
 // accountAdminServiceClient implements AccountAdminServiceClient.
 type accountAdminServiceClient struct {
+	listAccounts   *connect.Client[admin.ListAccountsRequest, admin.ListAccountsResponse]
 	createAccount  *connect.Client[admin.CreateAccountRequest, models.Account]
 	updateAccount  *connect.Client[admin.UpdateAccountRequest, emptypb.Empty]
 	deleteAccount  *connect.Client[models.AccountId, emptypb.Empty]
 	updatePassword *connect.Client[admin.UpdatePasswordRequest, emptypb.Empty]
+}
+
+// ListAccounts calls cloud.v1.api.admin.AccountAdminService.ListAccounts.
+func (c *accountAdminServiceClient) ListAccounts(ctx context.Context, req *admin.ListAccountsRequest) (*admin.ListAccountsResponse, error) {
+	response, err := c.listAccounts.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // CreateAccount calls cloud.v1.api.admin.AccountAdminService.CreateAccount.
@@ -146,6 +167,7 @@ func (c *accountAdminServiceClient) UpdatePassword(ctx context.Context, req *adm
 // AccountAdminServiceHandler is an implementation of the cloud.v1.api.admin.AccountAdminService
 // service.
 type AccountAdminServiceHandler interface {
+	ListAccounts(context.Context, *admin.ListAccountsRequest) (*admin.ListAccountsResponse, error)
 	CreateAccount(context.Context, *admin.CreateAccountRequest) (*models.Account, error)
 	UpdateAccount(context.Context, *admin.UpdateAccountRequest) (*emptypb.Empty, error)
 	DeleteAccount(context.Context, *models.AccountId) (*emptypb.Empty, error)
@@ -159,6 +181,13 @@ type AccountAdminServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewAccountAdminServiceHandler(svc AccountAdminServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	accountAdminServiceMethods := admin.File_cloud_v1_api_admin_account_proto.Services().ByName("AccountAdminService").Methods()
+	accountAdminServiceListAccountsHandler := connect.NewUnaryHandlerSimple(
+		AccountAdminServiceListAccountsProcedure,
+		svc.ListAccounts,
+		connect.WithSchema(accountAdminServiceMethods.ByName("ListAccounts")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
 	accountAdminServiceCreateAccountHandler := connect.NewUnaryHandlerSimple(
 		AccountAdminServiceCreateAccountProcedure,
 		svc.CreateAccount,
@@ -189,6 +218,8 @@ func NewAccountAdminServiceHandler(svc AccountAdminServiceHandler, opts ...conne
 	)
 	return "/cloud.v1.api.admin.AccountAdminService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case AccountAdminServiceListAccountsProcedure:
+			accountAdminServiceListAccountsHandler.ServeHTTP(w, r)
 		case AccountAdminServiceCreateAccountProcedure:
 			accountAdminServiceCreateAccountHandler.ServeHTTP(w, r)
 		case AccountAdminServiceUpdateAccountProcedure:
@@ -205,6 +236,10 @@ func NewAccountAdminServiceHandler(svc AccountAdminServiceHandler, opts ...conne
 
 // UnimplementedAccountAdminServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedAccountAdminServiceHandler struct{}
+
+func (UnimplementedAccountAdminServiceHandler) ListAccounts(context.Context, *admin.ListAccountsRequest) (*admin.ListAccountsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.admin.AccountAdminService.ListAccounts is not implemented"))
+}
 
 func (UnimplementedAccountAdminServiceHandler) CreateAccount(context.Context, *admin.CreateAccountRequest) (*models.Account, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.admin.AccountAdminService.CreateAccount is not implemented"))

@@ -3,9 +3,9 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateAccountRequest, UpdateAccountRequest, UpdatePasswordRequest } from "./account_pbts";
-import { Account } from "../../models/account_pbts";
+import { CreateAccountRequest, ListAccountsRequest, ListAccountsResponse, UpdateAccountRequest, UpdatePasswordRequest } from "./account_pbts";
 import { Empty, MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
+import { Account } from "../../models/account_pbts";
 import { AccountId } from "../../models/common_pbts";
 
 /**
@@ -14,6 +14,16 @@ import { AccountId } from "../../models/common_pbts";
 export const AccountAdminService = {
   typeName: "cloud.v1.api.admin.AccountAdminService",
   methods: {
+    /**
+     * @generated from rpc cloud.v1.api.admin.AccountAdminService.ListAccounts
+     */
+    listAccounts: {
+      name: "ListAccounts",
+      I: ListAccountsRequest,
+      O: ListAccountsResponse,
+      kind: MethodKind.Unary,
+      idempotency: MethodIdempotency.NoSideEffects,
+    },
     /**
      * @generated from rpc cloud.v1.api.admin.AccountAdminService.CreateAccount
      */

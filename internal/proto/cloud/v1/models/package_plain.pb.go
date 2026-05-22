@@ -4,7 +4,9 @@
 package models
 
 import (
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	ratelcast "github.com/yaroher/ratel/pkg/ratelcast"
+	protojson "google.golang.org/protobuf/encoding/protojson"
 	time "time"
 )
 
@@ -25,6 +27,7 @@ type PackageScanner struct {
 	DebObjectUri   string     `json:"debObjectUri"`
 	Checksum       string     `json:"checksum"`
 	IsBuiltin      bool       `json:"isBuiltin"`
+	Tags           []byte     `json:"tags"` // origin: serialized, empath: tags
 }
 
 // IntoPlain converts protobuf message to plain struct
@@ -65,6 +68,14 @@ func (pb *Package) IntoPlain() *PackageScanner {
 	p.DebObjectUri = pb.DebObjectUri
 	p.Checksum = pb.Checksum
 	p.IsBuiltin = pb.IsBuiltin
+	// Tags serialized from tags
+	if pb.Tags != nil {
+		if data, err := protojson.Marshal(pb.Tags); err == nil {
+			p.Tags = data
+		}
+	} else {
+		p.Tags = []byte{}
+	}
 	return p
 }
 
@@ -137,5 +148,12 @@ func (p *PackageScanner) IntoPb() *Package {
 	pb.DebObjectUri = p.DebObjectUri
 	pb.Checksum = p.Checksum
 	pb.IsBuiltin = p.IsBuiltin
+	// Tags deserialize -> tags
+	if len(p.Tags) > 0 {
+		var msg common.Tags
+		if err := protojson.Unmarshal(p.Tags, &msg); err == nil {
+			pb.Tags = &msg
+		}
+	}
 	return pb
 }

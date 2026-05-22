@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.api.ui;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/models/common.proto";
 import "cloud/v1/models/preset.proto";
 import "google/protobuf/empty.proto";
@@ -15,8 +16,29 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     wrappers so they carry tenant_id too.
  */
 message ListPresetRequest {
+    /* SortField — typed sortable columns (no arbitrary strings). */
+    enum SortField {
+        SORT_FIELD_UNSPECIFIED = 0;
+        SORT_FIELD_CREATED_AT = 1;
+        SORT_FIELD_NAME = 2;
+        SORT_FIELD_KIND = 3;
+    }
     models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
-    models.Preset.Kind kind = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /* kinds filters by preset kind; empty = all kinds (single catalog table). */
+    repeated models.Preset.Kind kinds = 2 [(validate.rules).repeated.items.enum = {defined_only: true, not_in: [0]}];
+    /* search filters by preset name (free text). */
+    optional string search = 3 [(validate.rules).string.max_len = 256];
+    /* tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter. */
+    common.Tags tags = 4;
+    SortField sort_field = 5 [(validate.rules).enum.defined_only = true];
+    models.SortOrder order = 6 [(validate.rules).enum.defined_only = true];
+    models.Page page = 7;
+}
+
+/* ListPresetsResponse — rows plus pagination metadata (H42). */
+message ListPresetsResponse {
+    repeated models.Preset presets = 1;
+    models.PageInfo page_info = 2;
 }
 message DeletePresetRequest {
     models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
@@ -28,7 +50,7 @@ message ClonePresetRequest {
 }
 
 service PresetService {
-    rpc ListPresets (ListPresetRequest) returns (models.Preset.List) {option idempotency_level = NO_SIDE_EFFECTS;};
+    rpc ListPresets (ListPresetRequest) returns (ListPresetsResponse) {option idempotency_level = NO_SIDE_EFFECTS;};
     rpc CreatePreset (models.Preset) returns (models.Preset) {option idempotency_level = NO_SIDE_EFFECTS;};
     rpc UpdatePreset (models.Preset) returns (models.Preset) {option idempotency_level = IDEMPOTENT;};
     rpc DeletePreset (DeletePresetRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;};

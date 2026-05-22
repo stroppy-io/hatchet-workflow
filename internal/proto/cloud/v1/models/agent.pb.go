@@ -8,6 +8,7 @@ package models
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	agent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent"
 	_ "github.com/yaroher/protoc-gen-go-plain/goplain"
 	_ "github.com/yaroher/ratel/ratelproto"
@@ -28,10 +29,13 @@ const (
 
 // Agent is a persisted runtime agent registration bound to a topology machine.
 type Agent struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	Id         *AgentId               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Owned      *Own                   `protobuf:"bytes,2,opt,name=owned,proto3" json:"owned,omitempty"`
-	Timestamps *Timestamps            `protobuf:"bytes,3,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    *AgentId               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// tenant_id scopes the agent to a tenant. An agent is a self-registering
+	// machine (machine-principal JWT) — it has NO owning account, so it carries
+	// tenant_id directly instead of the account-owned Own.
+	TenantId   *TenantId   `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Timestamps *Timestamps `protobuf:"bytes,3,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
 	// machine_id references cloud.v1.domain.Topology.Machine.id.
 	MachineId string `protobuf:"bytes,4,opt,name=machine_id,json=machineId,proto3" json:"machine_id,omitempty"`
 	// agent_component_id references a Topology.Component with kind=KIND_AGENT.
@@ -45,6 +49,8 @@ type Agent struct {
 	LastSeenAt       *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=last_seen_at,json=lastSeenAt,proto3" json:"last_seen_at,omitempty"`
 	LeaseExpiresAt   *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=lease_expires_at,json=leaseExpiresAt,proto3" json:"lease_expires_at,omitempty"`
 	Error            string                 `protobuf:"bytes,14,opt,name=error,proto3" json:"error,omitempty"`
+	// tags is a free label set for filtering/grouping.
+	Tags *common.Tags `protobuf:"bytes,15,opt,name=tags,proto3" json:"tags,omitempty"`
 	// runtime stores the full runtime.agent.Agent snapshot as JSONB.
 	Runtime       *agent.Agent `protobuf:"bytes,20,opt,name=runtime,proto3" json:"runtime,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -88,9 +94,9 @@ func (x *Agent) GetId() *AgentId {
 	return nil
 }
 
-func (x *Agent) GetOwned() *Own {
+func (x *Agent) GetTenantId() *TenantId {
 	if x != nil {
-		return x.Owned
+		return x.TenantId
 	}
 	return nil
 }
@@ -179,6 +185,13 @@ func (x *Agent) GetError() string {
 	return ""
 }
 
+func (x *Agent) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
 func (x *Agent) GetRuntime() *agent.Agent {
 	if x != nil {
 		return x.Runtime
@@ -234,10 +247,10 @@ var File_cloud_v1_models_agent_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/models/agent.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/models/common.proto\x1a\"cloud/v1/runtime/agent/agent.proto\x1a\x15goplain/goplain.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xd9\a\n" +
+	"\x1bcloud/v1/models/agent.proto\x12\x0fcloud.v1.models\x1a\x1acloud/v1/common/tags.proto\x1a\x1ccloud/v1/models/common.proto\x1a\"cloud/v1/runtime/agent/agent.proto\x1a\x15goplain/goplain.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xaf\b\n" +
 	"\x05Agent\x12:\n" +
-	"\x02id\x18\x01 \x01(\v2\x18.cloud.v1.models.AgentIdB\x10\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x04\x12\x02\x10\x01R\x02id\x122\n" +
-	"\x05owned\x18\x02 \x01(\v2\x14.cloud.v1.models.OwnB\x06\x82\xa6\x1d\x02 \x01R\x05owned\x12C\n" +
+	"\x02id\x18\x01 \x01(\v2\x18.cloud.v1.models.AgentIdB\x10\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x04\x12\x02\x10\x01R\x02id\x12U\n" +
+	"\ttenant_id\x18\x02 \x01(\v2\x19.cloud.v1.models.TenantIdB\x1d\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x11\x12\x0f2\atenants:\x02id@\x01R\btenantId\x12C\n" +
 	"\n" +
 	"timestamps\x18\x03 \x01(\v2\x1b.cloud.v1.models.TimestampsB\x06\x82\xa6\x1d\x02 \x01R\n" +
 	"timestamps\x12)\n" +
@@ -257,7 +270,8 @@ const file_cloud_v1_models_agent_proto_rawDesc = "" +
 	"\flast_seen_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"lastSeenAt\x12D\n" +
 	"\x10lease_expires_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\x0eleaseExpiresAt\x12\x1e\n" +
-	"\x05error\x18\x0e \x01(\tB\b\xfaB\x05r\x03\x18\x80@R\x05error\x12R\n" +
+	"\x05error\x18\x0e \x01(\tB\b\xfaB\x05r\x03\x18\x80@R\x05error\x121\n" +
+	"\x04tags\x18\x0f \x01(\v2\x15.cloud.v1.common.TagsB\x06\x82\xa6\x1d\x02\x10\x01R\x04tags\x12R\n" +
 	"\aruntime\x18\x14 \x01(\v2\x1d.cloud.v1.runtime.agent.AgentB\x19\x9a\xb5\x18\x0f\x12\r\x1a\v'{}'::jsonb\x82\xa6\x1d\x02\x10\x01R\aruntime\x1a6\n" +
 	"\x04List\x12.\n" +
 	"\x06agents\x18\x01 \x03(\v2\x16.cloud.v1.models.AgentR\x06agents:x\x92\xb5\x18n\b\x01\x12\x06agents*2\n" +
@@ -282,27 +296,29 @@ var file_cloud_v1_models_agent_proto_goTypes = []any{
 	(*Agent)(nil),                 // 0: cloud.v1.models.Agent
 	(*Agent_List)(nil),            // 1: cloud.v1.models.Agent.List
 	(*AgentId)(nil),               // 2: cloud.v1.models.AgentId
-	(*Own)(nil),                   // 3: cloud.v1.models.Own
+	(*TenantId)(nil),              // 3: cloud.v1.models.TenantId
 	(*Timestamps)(nil),            // 4: cloud.v1.models.Timestamps
 	(agent.AgentStatus)(0),        // 5: cloud.v1.runtime.agent.AgentStatus
 	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
-	(*agent.Agent)(nil),           // 7: cloud.v1.runtime.agent.Agent
+	(*common.Tags)(nil),           // 7: cloud.v1.common.Tags
+	(*agent.Agent)(nil),           // 8: cloud.v1.runtime.agent.Agent
 }
 var file_cloud_v1_models_agent_proto_depIdxs = []int32{
-	2, // 0: cloud.v1.models.Agent.id:type_name -> cloud.v1.models.AgentId
-	3, // 1: cloud.v1.models.Agent.owned:type_name -> cloud.v1.models.Own
-	4, // 2: cloud.v1.models.Agent.timestamps:type_name -> cloud.v1.models.Timestamps
-	5, // 3: cloud.v1.models.Agent.status:type_name -> cloud.v1.runtime.agent.AgentStatus
-	6, // 4: cloud.v1.models.Agent.registered_at:type_name -> google.protobuf.Timestamp
-	6, // 5: cloud.v1.models.Agent.last_seen_at:type_name -> google.protobuf.Timestamp
-	6, // 6: cloud.v1.models.Agent.lease_expires_at:type_name -> google.protobuf.Timestamp
-	7, // 7: cloud.v1.models.Agent.runtime:type_name -> cloud.v1.runtime.agent.Agent
-	0, // 8: cloud.v1.models.Agent.List.agents:type_name -> cloud.v1.models.Agent
-	9, // [9:9] is the sub-list for method output_type
-	9, // [9:9] is the sub-list for method input_type
-	9, // [9:9] is the sub-list for extension type_name
-	9, // [9:9] is the sub-list for extension extendee
-	0, // [0:9] is the sub-list for field type_name
+	2,  // 0: cloud.v1.models.Agent.id:type_name -> cloud.v1.models.AgentId
+	3,  // 1: cloud.v1.models.Agent.tenant_id:type_name -> cloud.v1.models.TenantId
+	4,  // 2: cloud.v1.models.Agent.timestamps:type_name -> cloud.v1.models.Timestamps
+	5,  // 3: cloud.v1.models.Agent.status:type_name -> cloud.v1.runtime.agent.AgentStatus
+	6,  // 4: cloud.v1.models.Agent.registered_at:type_name -> google.protobuf.Timestamp
+	6,  // 5: cloud.v1.models.Agent.last_seen_at:type_name -> google.protobuf.Timestamp
+	6,  // 6: cloud.v1.models.Agent.lease_expires_at:type_name -> google.protobuf.Timestamp
+	7,  // 7: cloud.v1.models.Agent.tags:type_name -> cloud.v1.common.Tags
+	8,  // 8: cloud.v1.models.Agent.runtime:type_name -> cloud.v1.runtime.agent.Agent
+	0,  // 9: cloud.v1.models.Agent.List.agents:type_name -> cloud.v1.models.Agent
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_agent_proto_init() }

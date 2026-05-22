@@ -3,8 +3,8 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { BuildLogLinkRequest, BuildLogLinkResponse, CancelTestRunRequest, CompareRunsRequest, CreateShareLinkRequest, CreateShareLinkResponse, GetRunMetricsRequest, GetSharedRunRequest, GetSharedRunResponse, GetTestRunRequest, ListTestRunsRequest, QueryRunLogsRequest, StreamTestRunLogsRequest, SubmitTestRunRequest } from "./run_pbts";
-import { TestRun, TestRun_List } from "../../models/testing_pbts";
+import { BuildLogLinkRequest, BuildLogLinkResponse, CancelTestRunRequest, CompareRunsRequest, CreateShareLinkRequest, CreateShareLinkResponse, GetRunMetricsRequest, GetSharedRunRequest, GetSharedRunResponse, GetTestRunRequest, ListTestRunsRequest, ListTestRunsResponse, QueryRunLogsRequest, StreamTestRunLogsRequest, SubmitTestRunRequest } from "./run_pbts";
+import { TestRun } from "../../models/testing_pbts";
 import { MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
 import { LogLine, LogPage } from "../../runtime/logs/logs_pbts";
 import { Comparison, RunMetrics } from "../../runtime/metrics/metrics_pbts";
@@ -43,7 +43,7 @@ export const RunService = {
     listTestRuns: {
       name: "ListTestRuns",
       I: ListTestRunsRequest,
-      O: TestRun_List,
+      O: ListTestRunsResponse,
       kind: MethodKind.Unary,
       idempotency: MethodIdempotency.NoSideEffects,
     },

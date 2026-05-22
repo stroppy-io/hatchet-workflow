@@ -8,7 +8,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	uipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
-	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/utils/tracing"
 )
 
@@ -16,7 +15,7 @@ import (
 // API token lifecycle (3rd auth principal, OWNER-only). internal/services implements it.
 type ApiTokenActions interface {
 	CreateApiToken(ctx context.Context, req *uipb.CreateApiTokenRequest) (*uipb.CreateApiTokenResponse, error)
-	ListApiTokens(ctx context.Context, req *uipb.ListApiTokensRequest) (*models.ApiToken_List, error)
+	ListApiTokens(ctx context.Context, req *uipb.ListApiTokensRequest) (*uipb.ListApiTokensResponse, error)
 	RevokeApiToken(ctx context.Context, req *uipb.RevokeApiTokenRequest) (*emptypb.Empty, error)
 }
 
@@ -44,9 +43,9 @@ func (s *ApiTokenService) CreateApiToken(ctx context.Context, req *uipb.CreateAp
 		})
 }
 
-func (s *ApiTokenService) ListApiTokens(ctx context.Context, req *uipb.ListApiTokensRequest) (*models.ApiToken_List, error) {
+func (s *ApiTokenService) ListApiTokens(ctx context.Context, req *uipb.ListApiTokensRequest) (*uipb.ListApiTokensResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListApiTokens",
-		func(ctx context.Context, _ trace.Span) (*models.ApiToken_List, error) {
+		func(ctx context.Context, _ trace.Span) (*uipb.ListApiTokensResponse, error) {
 			return s.svc.ListApiTokens(ctx, req)
 		})
 }

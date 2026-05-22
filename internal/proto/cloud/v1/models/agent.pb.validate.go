@@ -100,12 +100,23 @@ func (m *Agent) validate(all bool) error {
 		}
 	}
 
+	if m.GetTenantId() == nil {
+		err := AgentValidationError{
+			field:  "TenantId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if all {
-		switch v := interface{}(m.GetOwned()).(type) {
+		switch v := interface{}(m.GetTenantId()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, AgentValidationError{
-					field:  "Owned",
+					field:  "TenantId",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -113,16 +124,16 @@ func (m *Agent) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, AgentValidationError{
-					field:  "Owned",
+					field:  "TenantId",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetOwned()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetTenantId()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return AgentValidationError{
-				field:  "Owned",
+				field:  "TenantId",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -342,6 +353,35 @@ func (m *Agent) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, AgentValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, AgentValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return AgentValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	if all {

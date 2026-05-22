@@ -8,6 +8,7 @@ package admin
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -23,6 +24,56 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// SortField — typed sortable columns (no arbitrary strings).
+type ListTenantsRequest_SortField int32
+
+const (
+	ListTenantsRequest_SORT_FIELD_UNSPECIFIED ListTenantsRequest_SortField = 0
+	ListTenantsRequest_SORT_FIELD_CREATED_AT  ListTenantsRequest_SortField = 1
+	ListTenantsRequest_SORT_FIELD_NAME        ListTenantsRequest_SortField = 2
+)
+
+// Enum value maps for ListTenantsRequest_SortField.
+var (
+	ListTenantsRequest_SortField_name = map[int32]string{
+		0: "SORT_FIELD_UNSPECIFIED",
+		1: "SORT_FIELD_CREATED_AT",
+		2: "SORT_FIELD_NAME",
+	}
+	ListTenantsRequest_SortField_value = map[string]int32{
+		"SORT_FIELD_UNSPECIFIED": 0,
+		"SORT_FIELD_CREATED_AT":  1,
+		"SORT_FIELD_NAME":        2,
+	}
+)
+
+func (x ListTenantsRequest_SortField) Enum() *ListTenantsRequest_SortField {
+	p := new(ListTenantsRequest_SortField)
+	*p = x
+	return p
+}
+
+func (x ListTenantsRequest_SortField) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ListTenantsRequest_SortField) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_api_admin_tenant_proto_enumTypes[0].Descriptor()
+}
+
+func (ListTenantsRequest_SortField) Type() protoreflect.EnumType {
+	return &file_cloud_v1_api_admin_tenant_proto_enumTypes[0]
+}
+
+func (x ListTenantsRequest_SortField) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ListTenantsRequest_SortField.Descriptor instead.
+func (ListTenantsRequest_SortField) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_api_admin_tenant_proto_rawDescGZIP(), []int{2, 0}
+}
 
 // TenantAdminService is platform-level (is_admin): create/update/delete tenants
 // across the platform. Per-tenant membership (Add/RemoveMember) moved to the
@@ -123,18 +174,188 @@ func (x *UpdateTenantRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
 	return nil
 }
 
+// ListTenantsRequest is the platform-admin tenants table contract (is_admin).
+type ListTenantsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id is the acting tenant context (every request carries it); the
+	// platform-admin (is_admin) tenants listing itself is cross-tenant.
+	TenantId *models.TenantId `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// search filters by tenant name (free text).
+	Search *string `protobuf:"bytes,2,opt,name=search,proto3,oneof" json:"search,omitempty"`
+	// owner_account_id filters tenants by their owner account.
+	OwnerAccountId *models.AccountId            `protobuf:"bytes,3,opt,name=owner_account_id,json=ownerAccountId,proto3,oneof" json:"owner_account_id,omitempty"`
+	SortField      ListTenantsRequest_SortField `protobuf:"varint,4,opt,name=sort_field,json=sortField,proto3,enum=cloud.v1.api.admin.ListTenantsRequest_SortField" json:"sort_field,omitempty"`
+	Order          models.SortOrder             `protobuf:"varint,5,opt,name=order,proto3,enum=cloud.v1.models.SortOrder" json:"order,omitempty"`
+	Page           *models.Page                 `protobuf:"bytes,6,opt,name=page,proto3" json:"page,omitempty"`
+	// tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter.
+	Tags          *common.Tags `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTenantsRequest) Reset() {
+	*x = ListTenantsRequest{}
+	mi := &file_cloud_v1_api_admin_tenant_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTenantsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTenantsRequest) ProtoMessage() {}
+
+func (x *ListTenantsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_admin_tenant_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTenantsRequest.ProtoReflect.Descriptor instead.
+func (*ListTenantsRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_admin_tenant_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ListTenantsRequest) GetTenantId() *models.TenantId {
+	if x != nil {
+		return x.TenantId
+	}
+	return nil
+}
+
+func (x *ListTenantsRequest) GetSearch() string {
+	if x != nil && x.Search != nil {
+		return *x.Search
+	}
+	return ""
+}
+
+func (x *ListTenantsRequest) GetOwnerAccountId() *models.AccountId {
+	if x != nil {
+		return x.OwnerAccountId
+	}
+	return nil
+}
+
+func (x *ListTenantsRequest) GetSortField() ListTenantsRequest_SortField {
+	if x != nil {
+		return x.SortField
+	}
+	return ListTenantsRequest_SORT_FIELD_UNSPECIFIED
+}
+
+func (x *ListTenantsRequest) GetOrder() models.SortOrder {
+	if x != nil {
+		return x.Order
+	}
+	return models.SortOrder(0)
+}
+
+func (x *ListTenantsRequest) GetPage() *models.Page {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+func (x *ListTenantsRequest) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// ListTenantsResponse — rows plus pagination metadata (H42).
+type ListTenantsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tenants       []*models.Tenant       `protobuf:"bytes,1,rep,name=tenants,proto3" json:"tenants,omitempty"`
+	PageInfo      *models.PageInfo       `protobuf:"bytes,2,opt,name=page_info,json=pageInfo,proto3" json:"page_info,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTenantsResponse) Reset() {
+	*x = ListTenantsResponse{}
+	mi := &file_cloud_v1_api_admin_tenant_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTenantsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTenantsResponse) ProtoMessage() {}
+
+func (x *ListTenantsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_admin_tenant_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTenantsResponse.ProtoReflect.Descriptor instead.
+func (*ListTenantsResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_admin_tenant_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ListTenantsResponse) GetTenants() []*models.Tenant {
+	if x != nil {
+		return x.Tenants
+	}
+	return nil
+}
+
+func (x *ListTenantsResponse) GetPageInfo() *models.PageInfo {
+	if x != nil {
+		return x.PageInfo
+	}
+	return nil
+}
+
 var File_cloud_v1_api_admin_tenant_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_admin_tenant_proto_rawDesc = "" +
 	"\n" +
-	"\x1fcloud/v1/api/admin/tenant.proto\x12\x12cloud.v1.api.admin\x1a\x1ccloud/v1/models/common.proto\x1a\x1ccloud/v1/models/tenant.proto\x1a google/protobuf/field_mask.proto\x1a\x17validate/validate.proto\"P\n" +
+	"\x1fcloud/v1/api/admin/tenant.proto\x12\x12cloud.v1.api.admin\x1a\x1acloud/v1/common/tags.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1ccloud/v1/models/tenant.proto\x1a google/protobuf/field_mask.proto\x1a\x17validate/validate.proto\"P\n" +
 	"\x13CreateTenantRequest\x129\n" +
 	"\x06tenant\x18\x01 \x01(\v2\x17.cloud.v1.models.TenantB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06tenant\"\x97\x01\n" +
 	"\x13UpdateTenantRequest\x129\n" +
 	"\x06tenant\x18\x01 \x01(\v2\x17.cloud.v1.models.TenantB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06tenant\x12E\n" +
 	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
-	"updateMask2\x8b\x02\n" +
-	"\x12TenantAdminService\x12U\n" +
+	"updateMask\"\xae\x04\n" +
+	"\x12ListTenantsRequest\x12@\n" +
+	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12%\n" +
+	"\x06search\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02H\x00R\x06search\x88\x01\x01\x12I\n" +
+	"\x10owner_account_id\x18\x03 \x01(\v2\x1a.cloud.v1.models.AccountIdH\x01R\x0eownerAccountId\x88\x01\x01\x12Y\n" +
+	"\n" +
+	"sort_field\x18\x04 \x01(\x0e20.cloud.v1.api.admin.ListTenantsRequest.SortFieldB\b\xfaB\x05\x82\x01\x02\x10\x01R\tsortField\x12:\n" +
+	"\x05order\x18\x05 \x01(\x0e2\x1a.cloud.v1.models.SortOrderB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05order\x12)\n" +
+	"\x04page\x18\x06 \x01(\v2\x15.cloud.v1.models.PageR\x04page\x12)\n" +
+	"\x04tags\x18\a \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"W\n" +
+	"\tSortField\x12\x1a\n" +
+	"\x16SORT_FIELD_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15SORT_FIELD_CREATED_AT\x10\x01\x12\x13\n" +
+	"\x0fSORT_FIELD_NAME\x10\x02B\t\n" +
+	"\a_searchB\x13\n" +
+	"\x11_owner_account_id\"\x80\x01\n" +
+	"\x13ListTenantsResponse\x121\n" +
+	"\atenants\x18\x01 \x03(\v2\x17.cloud.v1.models.TenantR\atenants\x126\n" +
+	"\tpage_info\x18\x02 \x01(\v2\x19.cloud.v1.models.PageInfoR\bpageInfo2\xf0\x02\n" +
+	"\x12TenantAdminService\x12c\n" +
+	"\vListTenants\x12&.cloud.v1.api.admin.ListTenantsRequest\x1a'.cloud.v1.api.admin.ListTenantsResponse\"\x03\x90\x02\x01\x12U\n" +
 	"\fCreateTenant\x12'.cloud.v1.api.admin.CreateTenantRequest\x1a\x17.cloud.v1.models.Tenant\"\x03\x90\x02\x02\x12U\n" +
 	"\fUpdateTenant\x12'.cloud.v1.api.admin.UpdateTenantRequest\x1a\x17.cloud.v1.models.Tenant\"\x03\x90\x02\x02\x12G\n" +
 	"\fDeleteTenant\x12\x19.cloud.v1.models.TenantId\x1a\x17.cloud.v1.models.Tenant\"\x03\x90\x02\x02BGZEgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/adminb\x06proto3"
@@ -151,29 +372,48 @@ func file_cloud_v1_api_admin_tenant_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_admin_tenant_proto_rawDescData
 }
 
-var file_cloud_v1_api_admin_tenant_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_cloud_v1_api_admin_tenant_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cloud_v1_api_admin_tenant_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_cloud_v1_api_admin_tenant_proto_goTypes = []any{
-	(*CreateTenantRequest)(nil),   // 0: cloud.v1.api.admin.CreateTenantRequest
-	(*UpdateTenantRequest)(nil),   // 1: cloud.v1.api.admin.UpdateTenantRequest
-	(*models.Tenant)(nil),         // 2: cloud.v1.models.Tenant
-	(*fieldmaskpb.FieldMask)(nil), // 3: google.protobuf.FieldMask
-	(*models.TenantId)(nil),       // 4: cloud.v1.models.TenantId
+	(ListTenantsRequest_SortField)(0), // 0: cloud.v1.api.admin.ListTenantsRequest.SortField
+	(*CreateTenantRequest)(nil),       // 1: cloud.v1.api.admin.CreateTenantRequest
+	(*UpdateTenantRequest)(nil),       // 2: cloud.v1.api.admin.UpdateTenantRequest
+	(*ListTenantsRequest)(nil),        // 3: cloud.v1.api.admin.ListTenantsRequest
+	(*ListTenantsResponse)(nil),       // 4: cloud.v1.api.admin.ListTenantsResponse
+	(*models.Tenant)(nil),             // 5: cloud.v1.models.Tenant
+	(*fieldmaskpb.FieldMask)(nil),     // 6: google.protobuf.FieldMask
+	(*models.TenantId)(nil),           // 7: cloud.v1.models.TenantId
+	(*models.AccountId)(nil),          // 8: cloud.v1.models.AccountId
+	(models.SortOrder)(0),             // 9: cloud.v1.models.SortOrder
+	(*models.Page)(nil),               // 10: cloud.v1.models.Page
+	(*common.Tags)(nil),               // 11: cloud.v1.common.Tags
+	(*models.PageInfo)(nil),           // 12: cloud.v1.models.PageInfo
 }
 var file_cloud_v1_api_admin_tenant_proto_depIdxs = []int32{
-	2, // 0: cloud.v1.api.admin.CreateTenantRequest.tenant:type_name -> cloud.v1.models.Tenant
-	2, // 1: cloud.v1.api.admin.UpdateTenantRequest.tenant:type_name -> cloud.v1.models.Tenant
-	3, // 2: cloud.v1.api.admin.UpdateTenantRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0, // 3: cloud.v1.api.admin.TenantAdminService.CreateTenant:input_type -> cloud.v1.api.admin.CreateTenantRequest
-	1, // 4: cloud.v1.api.admin.TenantAdminService.UpdateTenant:input_type -> cloud.v1.api.admin.UpdateTenantRequest
-	4, // 5: cloud.v1.api.admin.TenantAdminService.DeleteTenant:input_type -> cloud.v1.models.TenantId
-	2, // 6: cloud.v1.api.admin.TenantAdminService.CreateTenant:output_type -> cloud.v1.models.Tenant
-	2, // 7: cloud.v1.api.admin.TenantAdminService.UpdateTenant:output_type -> cloud.v1.models.Tenant
-	2, // 8: cloud.v1.api.admin.TenantAdminService.DeleteTenant:output_type -> cloud.v1.models.Tenant
-	6, // [6:9] is the sub-list for method output_type
-	3, // [3:6] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	5,  // 0: cloud.v1.api.admin.CreateTenantRequest.tenant:type_name -> cloud.v1.models.Tenant
+	5,  // 1: cloud.v1.api.admin.UpdateTenantRequest.tenant:type_name -> cloud.v1.models.Tenant
+	6,  // 2: cloud.v1.api.admin.UpdateTenantRequest.update_mask:type_name -> google.protobuf.FieldMask
+	7,  // 3: cloud.v1.api.admin.ListTenantsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	8,  // 4: cloud.v1.api.admin.ListTenantsRequest.owner_account_id:type_name -> cloud.v1.models.AccountId
+	0,  // 5: cloud.v1.api.admin.ListTenantsRequest.sort_field:type_name -> cloud.v1.api.admin.ListTenantsRequest.SortField
+	9,  // 6: cloud.v1.api.admin.ListTenantsRequest.order:type_name -> cloud.v1.models.SortOrder
+	10, // 7: cloud.v1.api.admin.ListTenantsRequest.page:type_name -> cloud.v1.models.Page
+	11, // 8: cloud.v1.api.admin.ListTenantsRequest.tags:type_name -> cloud.v1.common.Tags
+	5,  // 9: cloud.v1.api.admin.ListTenantsResponse.tenants:type_name -> cloud.v1.models.Tenant
+	12, // 10: cloud.v1.api.admin.ListTenantsResponse.page_info:type_name -> cloud.v1.models.PageInfo
+	3,  // 11: cloud.v1.api.admin.TenantAdminService.ListTenants:input_type -> cloud.v1.api.admin.ListTenantsRequest
+	1,  // 12: cloud.v1.api.admin.TenantAdminService.CreateTenant:input_type -> cloud.v1.api.admin.CreateTenantRequest
+	2,  // 13: cloud.v1.api.admin.TenantAdminService.UpdateTenant:input_type -> cloud.v1.api.admin.UpdateTenantRequest
+	7,  // 14: cloud.v1.api.admin.TenantAdminService.DeleteTenant:input_type -> cloud.v1.models.TenantId
+	4,  // 15: cloud.v1.api.admin.TenantAdminService.ListTenants:output_type -> cloud.v1.api.admin.ListTenantsResponse
+	5,  // 16: cloud.v1.api.admin.TenantAdminService.CreateTenant:output_type -> cloud.v1.models.Tenant
+	5,  // 17: cloud.v1.api.admin.TenantAdminService.UpdateTenant:output_type -> cloud.v1.models.Tenant
+	5,  // 18: cloud.v1.api.admin.TenantAdminService.DeleteTenant:output_type -> cloud.v1.models.Tenant
+	15, // [15:19] is the sub-list for method output_type
+	11, // [11:15] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_admin_tenant_proto_init() }
@@ -181,18 +421,20 @@ func file_cloud_v1_api_admin_tenant_proto_init() {
 	if File_cloud_v1_api_admin_tenant_proto != nil {
 		return
 	}
+	file_cloud_v1_api_admin_tenant_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_admin_tenant_proto_rawDesc), len(file_cloud_v1_api_admin_tenant_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   2,
+			NumEnums:      1,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_cloud_v1_api_admin_tenant_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_api_admin_tenant_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_api_admin_tenant_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_api_admin_tenant_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_api_admin_tenant_proto = out.File

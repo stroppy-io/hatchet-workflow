@@ -4,6 +4,7 @@
 package models
 
 import (
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	ratelcast "github.com/yaroher/ratel/pkg/ratelcast"
 	protojson "google.golang.org/protobuf/encoding/protojson"
 	time "time"
@@ -89,6 +90,7 @@ type SettingsItemScanner struct {
 	Part      string     `json:"part"`
 	Key       string     `json:"key"`
 	Value     []byte     `json:"value"` // origin: serialized, empath: value
+	Tags      []byte     `json:"tags"`  // origin: serialized, empath: tags
 }
 
 // IntoPlain converts protobuf message to plain struct
@@ -128,6 +130,14 @@ func (pb *SettingsItem) IntoPlain() *SettingsItemScanner {
 		}
 	} else {
 		p.Value = []byte{}
+	}
+	// Tags serialized from tags
+	if pb.Tags != nil {
+		if data, err := protojson.Marshal(pb.Tags); err == nil {
+			p.Tags = data
+		}
+	} else {
+		p.Tags = []byte{}
 	}
 	return p
 }
@@ -171,6 +181,13 @@ func (p *SettingsItemScanner) IntoPb() *SettingsItem {
 		var msg SettingsItem_Value
 		if err := protojson.Unmarshal(p.Value, &msg); err == nil {
 			pb.Value = &msg
+		}
+	}
+	// Tags deserialize -> tags
+	if len(p.Tags) > 0 {
+		var msg common.Tags
+		if err := protojson.Unmarshal(p.Tags, &msg); err == nil {
+			pb.Tags = &msg
 		}
 	}
 	return pb

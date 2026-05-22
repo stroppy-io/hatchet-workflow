@@ -1039,6 +1039,28 @@ func (m *LogLine) validate(all bool) error {
 		}
 	}
 
+	if utf8.RuneCountInString(m.GetDagId()) > 128 {
+		err := LogLineValidationError{
+			field:  "DagId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetNodeExecutionId()) > 256 {
+		err := LogLineValidationError{
+			field:  "NodeExecutionId",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return LogLineMultiError(errors)
 	}

@@ -8,6 +8,7 @@ package ui
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -23,6 +24,62 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// SortField — typed sortable columns (no arbitrary strings).
+type ListNetworkAllocationsRequest_SortField int32
+
+const (
+	ListNetworkAllocationsRequest_SORT_FIELD_UNSPECIFIED      ListNetworkAllocationsRequest_SortField = 0
+	ListNetworkAllocationsRequest_SORT_FIELD_CREATED_AT       ListNetworkAllocationsRequest_SortField = 1
+	ListNetworkAllocationsRequest_SORT_FIELD_CIDR             ListNetworkAllocationsRequest_SortField = 2
+	ListNetworkAllocationsRequest_SORT_FIELD_ZONE             ListNetworkAllocationsRequest_SortField = 3
+	ListNetworkAllocationsRequest_SORT_FIELD_LEASE_EXPIRES_AT ListNetworkAllocationsRequest_SortField = 4
+)
+
+// Enum value maps for ListNetworkAllocationsRequest_SortField.
+var (
+	ListNetworkAllocationsRequest_SortField_name = map[int32]string{
+		0: "SORT_FIELD_UNSPECIFIED",
+		1: "SORT_FIELD_CREATED_AT",
+		2: "SORT_FIELD_CIDR",
+		3: "SORT_FIELD_ZONE",
+		4: "SORT_FIELD_LEASE_EXPIRES_AT",
+	}
+	ListNetworkAllocationsRequest_SortField_value = map[string]int32{
+		"SORT_FIELD_UNSPECIFIED":      0,
+		"SORT_FIELD_CREATED_AT":       1,
+		"SORT_FIELD_CIDR":             2,
+		"SORT_FIELD_ZONE":             3,
+		"SORT_FIELD_LEASE_EXPIRES_AT": 4,
+	}
+)
+
+func (x ListNetworkAllocationsRequest_SortField) Enum() *ListNetworkAllocationsRequest_SortField {
+	p := new(ListNetworkAllocationsRequest_SortField)
+	*p = x
+	return p
+}
+
+func (x ListNetworkAllocationsRequest_SortField) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ListNetworkAllocationsRequest_SortField) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_api_ui_inventory_proto_enumTypes[0].Descriptor()
+}
+
+func (ListNetworkAllocationsRequest_SortField) Type() protoreflect.EnumType {
+	return &file_cloud_v1_api_ui_inventory_proto_enumTypes[0]
+}
+
+func (x ListNetworkAllocationsRequest_SortField) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ListNetworkAllocationsRequest_SortField.Descriptor instead.
+func (ListNetworkAllocationsRequest_SortField) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_inventory_proto_rawDescGZIP(), []int{1, 0}
+}
 
 // CloudInventoryService is the TENANT view of real cloud state (D19/D20, H39).
 // Authorized by TenantMember.Role OWNER for the request's tenant_id (NOT only
@@ -92,11 +149,20 @@ func (x *FetchQuotasRequest) GetLive() bool {
 
 // Typed per-model query (H42).
 type ListNetworkAllocationsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Provider      deployment.Provider    `protobuf:"varint,2,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	PageSize      uint32                 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken     string                 `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	TenantId *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Provider deployment.Provider    `protobuf:"varint,2,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	// search filters by CIDR text.
+	Search *string `protobuf:"bytes,3,opt,name=search,proto3,oneof" json:"search,omitempty"`
+	// zone filters by provider availability zone.
+	Zone *string `protobuf:"bytes,4,opt,name=zone,proto3,oneof" json:"zone,omitempty"`
+	// leased tri-state: unset = all, true = active lease, false = no/expired lease.
+	Leased    *bool                                   `protobuf:"varint,5,opt,name=leased,proto3,oneof" json:"leased,omitempty"`
+	SortField ListNetworkAllocationsRequest_SortField `protobuf:"varint,6,opt,name=sort_field,json=sortField,proto3,enum=cloud.v1.api.ui.ListNetworkAllocationsRequest_SortField" json:"sort_field,omitempty"`
+	Order     models.SortOrder                        `protobuf:"varint,7,opt,name=order,proto3,enum=cloud.v1.models.SortOrder" json:"order,omitempty"`
+	Page      *models.Page                            `protobuf:"bytes,8,opt,name=page,proto3" json:"page,omitempty"`
+	// tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter.
+	Tags          *common.Tags `protobuf:"bytes,9,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -145,18 +211,106 @@ func (x *ListNetworkAllocationsRequest) GetProvider() deployment.Provider {
 	return deployment.Provider(0)
 }
 
-func (x *ListNetworkAllocationsRequest) GetPageSize() uint32 {
-	if x != nil {
-		return x.PageSize
-	}
-	return 0
-}
-
-func (x *ListNetworkAllocationsRequest) GetPageToken() string {
-	if x != nil {
-		return x.PageToken
+func (x *ListNetworkAllocationsRequest) GetSearch() string {
+	if x != nil && x.Search != nil {
+		return *x.Search
 	}
 	return ""
+}
+
+func (x *ListNetworkAllocationsRequest) GetZone() string {
+	if x != nil && x.Zone != nil {
+		return *x.Zone
+	}
+	return ""
+}
+
+func (x *ListNetworkAllocationsRequest) GetLeased() bool {
+	if x != nil && x.Leased != nil {
+		return *x.Leased
+	}
+	return false
+}
+
+func (x *ListNetworkAllocationsRequest) GetSortField() ListNetworkAllocationsRequest_SortField {
+	if x != nil {
+		return x.SortField
+	}
+	return ListNetworkAllocationsRequest_SORT_FIELD_UNSPECIFIED
+}
+
+func (x *ListNetworkAllocationsRequest) GetOrder() models.SortOrder {
+	if x != nil {
+		return x.Order
+	}
+	return models.SortOrder(0)
+}
+
+func (x *ListNetworkAllocationsRequest) GetPage() *models.Page {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+func (x *ListNetworkAllocationsRequest) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// ListNetworkAllocationsResponse — rows plus pagination metadata (H42).
+type ListNetworkAllocationsResponse struct {
+	state              protoimpl.MessageState      `protogen:"open.v1"`
+	NetworkAllocations []*models.NetworkAllocation `protobuf:"bytes,1,rep,name=network_allocations,json=networkAllocations,proto3" json:"network_allocations,omitempty"`
+	PageInfo           *models.PageInfo            `protobuf:"bytes,2,opt,name=page_info,json=pageInfo,proto3" json:"page_info,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *ListNetworkAllocationsResponse) Reset() {
+	*x = ListNetworkAllocationsResponse{}
+	mi := &file_cloud_v1_api_ui_inventory_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListNetworkAllocationsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListNetworkAllocationsResponse) ProtoMessage() {}
+
+func (x *ListNetworkAllocationsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_ui_inventory_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListNetworkAllocationsResponse.ProtoReflect.Descriptor instead.
+func (*ListNetworkAllocationsResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_inventory_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ListNetworkAllocationsResponse) GetNetworkAllocations() []*models.NetworkAllocation {
+	if x != nil {
+		return x.NetworkAllocations
+	}
+	return nil
+}
+
+func (x *ListNetworkAllocationsResponse) GetPageInfo() *models.PageInfo {
+	if x != nil {
+		return x.PageInfo
+	}
+	return nil
 }
 
 type ReconcileRequest struct {
@@ -169,7 +323,7 @@ type ReconcileRequest struct {
 
 func (x *ReconcileRequest) Reset() {
 	*x = ReconcileRequest{}
-	mi := &file_cloud_v1_api_ui_inventory_proto_msgTypes[2]
+	mi := &file_cloud_v1_api_ui_inventory_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -181,7 +335,7 @@ func (x *ReconcileRequest) String() string {
 func (*ReconcileRequest) ProtoMessage() {}
 
 func (x *ReconcileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_inventory_proto_msgTypes[2]
+	mi := &file_cloud_v1_api_ui_inventory_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -194,7 +348,7 @@ func (x *ReconcileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReconcileRequest.ProtoReflect.Descriptor instead.
 func (*ReconcileRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_inventory_proto_rawDescGZIP(), []int{2}
+	return file_cloud_v1_api_ui_inventory_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ReconcileRequest) GetTenantId() *models.TenantId {
@@ -222,7 +376,7 @@ type ReconcileResponse struct {
 
 func (x *ReconcileResponse) Reset() {
 	*x = ReconcileResponse{}
-	mi := &file_cloud_v1_api_ui_inventory_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_ui_inventory_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -234,7 +388,7 @@ func (x *ReconcileResponse) String() string {
 func (*ReconcileResponse) ProtoMessage() {}
 
 func (x *ReconcileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_inventory_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_ui_inventory_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -247,7 +401,7 @@ func (x *ReconcileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReconcileResponse.ProtoReflect.Descriptor instead.
 func (*ReconcileResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_inventory_proto_rawDescGZIP(), []int{3}
+	return file_cloud_v1_api_ui_inventory_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ReconcileResponse) GetQuotasRefreshed() uint32 {
@@ -275,18 +429,35 @@ var File_cloud_v1_api_ui_inventory_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_ui_inventory_proto_rawDesc = "" +
 	"\n" +
-	"\x1fcloud/v1/api/ui/inventory.proto\x12\x0fcloud.v1.api.ui\x1a$cloud/v1/deployment/deployment.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1dcloud/v1/models/network.proto\x1a\x17validate/validate.proto\"\xb1\x01\n" +
+	"\x1fcloud/v1/api/ui/inventory.proto\x12\x0fcloud.v1.api.ui\x1a\x1acloud/v1/common/tags.proto\x1a$cloud/v1/deployment/deployment.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1dcloud/v1/models/network.proto\x1a\x17validate/validate.proto\"\xb1\x01\n" +
 	"\x12FetchQuotasRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12E\n" +
 	"\bprovider\x18\x02 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x12\x12\n" +
-	"\x04live\x18\x03 \x01(\bR\x04live\"\xf6\x01\n" +
+	"\x04live\x18\x03 \x01(\bR\x04live\"\xaf\x05\n" +
 	"\x1dListNetworkAllocationsRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12C\n" +
-	"\bprovider\x18\x02 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\b\xfaB\x05\x82\x01\x02\x10\x01R\bprovider\x12%\n" +
-	"\tpage_size\x18\x03 \x01(\rB\b\xfaB\x05*\x03\x18\xe8\aR\bpageSize\x12'\n" +
+	"\bprovider\x18\x02 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\b\xfaB\x05\x82\x01\x02\x10\x01R\bprovider\x12$\n" +
+	"\x06search\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@H\x00R\x06search\x88\x01\x01\x12 \n" +
+	"\x04zone\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x18@H\x01R\x04zone\x88\x01\x01\x12\x1b\n" +
+	"\x06leased\x18\x05 \x01(\bH\x02R\x06leased\x88\x01\x01\x12a\n" +
 	"\n" +
-	"page_token\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\tpageToken\"\x9b\x01\n" +
+	"sort_field\x18\x06 \x01(\x0e28.cloud.v1.api.ui.ListNetworkAllocationsRequest.SortFieldB\b\xfaB\x05\x82\x01\x02\x10\x01R\tsortField\x12:\n" +
+	"\x05order\x18\a \x01(\x0e2\x1a.cloud.v1.models.SortOrderB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05order\x12)\n" +
+	"\x04page\x18\b \x01(\v2\x15.cloud.v1.models.PageR\x04page\x12)\n" +
+	"\x04tags\x18\t \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"\x8d\x01\n" +
+	"\tSortField\x12\x1a\n" +
+	"\x16SORT_FIELD_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15SORT_FIELD_CREATED_AT\x10\x01\x12\x13\n" +
+	"\x0fSORT_FIELD_CIDR\x10\x02\x12\x13\n" +
+	"\x0fSORT_FIELD_ZONE\x10\x03\x12\x1f\n" +
+	"\x1bSORT_FIELD_LEASE_EXPIRES_AT\x10\x04B\t\n" +
+	"\a_searchB\a\n" +
+	"\x05_zoneB\t\n" +
+	"\a_leased\"\xad\x01\n" +
+	"\x1eListNetworkAllocationsResponse\x12S\n" +
+	"\x13network_allocations\x18\x01 \x03(\v2\".cloud.v1.models.NetworkAllocationR\x12networkAllocations\x126\n" +
+	"\tpage_info\x18\x02 \x01(\v2\x19.cloud.v1.models.PageInfoR\bpageInfo\"\x9b\x01\n" +
 	"\x10ReconcileRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12E\n" +
 	"\bprovider\x18\x02 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
@@ -294,10 +465,10 @@ const file_cloud_v1_api_ui_inventory_proto_rawDesc = "" +
 	"\x11ReconcileResponse\x12)\n" +
 	"\x10quotas_refreshed\x18\x01 \x01(\rR\x0fquotasRefreshed\x125\n" +
 	"\x16allocations_reconciled\x18\x02 \x01(\rR\x15allocationsReconciled\x12)\n" +
-	"\x10orphans_released\x18\x03 \x01(\rR\x0forphansReleased2\xc6\x02\n" +
+	"\x10orphans_released\x18\x03 \x01(\rR\x0forphansReleased2\xce\x02\n" +
 	"\x15CloudInventoryService\x12\\\n" +
-	"\vFetchQuotas\x12#.cloud.v1.api.ui.FetchQuotasRequest\x1a#.cloud.v1.deployment.QuotaInventory\"\x03\x90\x02\x01\x12v\n" +
-	"\x16ListNetworkAllocations\x12..cloud.v1.api.ui.ListNetworkAllocationsRequest\x1a'.cloud.v1.models.NetworkAllocation.List\"\x03\x90\x02\x01\x12W\n" +
+	"\vFetchQuotas\x12#.cloud.v1.api.ui.FetchQuotasRequest\x1a#.cloud.v1.deployment.QuotaInventory\"\x03\x90\x02\x01\x12~\n" +
+	"\x16ListNetworkAllocations\x12..cloud.v1.api.ui.ListNetworkAllocationsRequest\x1a/.cloud.v1.api.ui.ListNetworkAllocationsResponse\"\x03\x90\x02\x01\x12W\n" +
 	"\tReconcile\x12!.cloud.v1.api.ui.ReconcileRequest\x1a\".cloud.v1.api.ui.ReconcileResponse\"\x03\x90\x02\x02BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/uib\x06proto3"
 
 var (
@@ -312,35 +483,48 @@ func file_cloud_v1_api_ui_inventory_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_ui_inventory_proto_rawDescData
 }
 
-var file_cloud_v1_api_ui_inventory_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_cloud_v1_api_ui_inventory_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cloud_v1_api_ui_inventory_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_cloud_v1_api_ui_inventory_proto_goTypes = []any{
-	(*FetchQuotasRequest)(nil),            // 0: cloud.v1.api.ui.FetchQuotasRequest
-	(*ListNetworkAllocationsRequest)(nil), // 1: cloud.v1.api.ui.ListNetworkAllocationsRequest
-	(*ReconcileRequest)(nil),              // 2: cloud.v1.api.ui.ReconcileRequest
-	(*ReconcileResponse)(nil),             // 3: cloud.v1.api.ui.ReconcileResponse
-	(*models.TenantId)(nil),               // 4: cloud.v1.models.TenantId
-	(deployment.Provider)(0),              // 5: cloud.v1.deployment.Provider
-	(*deployment.QuotaInventory)(nil),     // 6: cloud.v1.deployment.QuotaInventory
-	(*models.NetworkAllocation_List)(nil), // 7: cloud.v1.models.NetworkAllocation.List
+	(ListNetworkAllocationsRequest_SortField)(0), // 0: cloud.v1.api.ui.ListNetworkAllocationsRequest.SortField
+	(*FetchQuotasRequest)(nil),                   // 1: cloud.v1.api.ui.FetchQuotasRequest
+	(*ListNetworkAllocationsRequest)(nil),        // 2: cloud.v1.api.ui.ListNetworkAllocationsRequest
+	(*ListNetworkAllocationsResponse)(nil),       // 3: cloud.v1.api.ui.ListNetworkAllocationsResponse
+	(*ReconcileRequest)(nil),                     // 4: cloud.v1.api.ui.ReconcileRequest
+	(*ReconcileResponse)(nil),                    // 5: cloud.v1.api.ui.ReconcileResponse
+	(*models.TenantId)(nil),                      // 6: cloud.v1.models.TenantId
+	(deployment.Provider)(0),                     // 7: cloud.v1.deployment.Provider
+	(models.SortOrder)(0),                        // 8: cloud.v1.models.SortOrder
+	(*models.Page)(nil),                          // 9: cloud.v1.models.Page
+	(*common.Tags)(nil),                          // 10: cloud.v1.common.Tags
+	(*models.NetworkAllocation)(nil),             // 11: cloud.v1.models.NetworkAllocation
+	(*models.PageInfo)(nil),                      // 12: cloud.v1.models.PageInfo
+	(*deployment.QuotaInventory)(nil),            // 13: cloud.v1.deployment.QuotaInventory
 }
 var file_cloud_v1_api_ui_inventory_proto_depIdxs = []int32{
-	4, // 0: cloud.v1.api.ui.FetchQuotasRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	5, // 1: cloud.v1.api.ui.FetchQuotasRequest.provider:type_name -> cloud.v1.deployment.Provider
-	4, // 2: cloud.v1.api.ui.ListNetworkAllocationsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	5, // 3: cloud.v1.api.ui.ListNetworkAllocationsRequest.provider:type_name -> cloud.v1.deployment.Provider
-	4, // 4: cloud.v1.api.ui.ReconcileRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	5, // 5: cloud.v1.api.ui.ReconcileRequest.provider:type_name -> cloud.v1.deployment.Provider
-	0, // 6: cloud.v1.api.ui.CloudInventoryService.FetchQuotas:input_type -> cloud.v1.api.ui.FetchQuotasRequest
-	1, // 7: cloud.v1.api.ui.CloudInventoryService.ListNetworkAllocations:input_type -> cloud.v1.api.ui.ListNetworkAllocationsRequest
-	2, // 8: cloud.v1.api.ui.CloudInventoryService.Reconcile:input_type -> cloud.v1.api.ui.ReconcileRequest
-	6, // 9: cloud.v1.api.ui.CloudInventoryService.FetchQuotas:output_type -> cloud.v1.deployment.QuotaInventory
-	7, // 10: cloud.v1.api.ui.CloudInventoryService.ListNetworkAllocations:output_type -> cloud.v1.models.NetworkAllocation.List
-	3, // 11: cloud.v1.api.ui.CloudInventoryService.Reconcile:output_type -> cloud.v1.api.ui.ReconcileResponse
-	9, // [9:12] is the sub-list for method output_type
-	6, // [6:9] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	6,  // 0: cloud.v1.api.ui.FetchQuotasRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	7,  // 1: cloud.v1.api.ui.FetchQuotasRequest.provider:type_name -> cloud.v1.deployment.Provider
+	6,  // 2: cloud.v1.api.ui.ListNetworkAllocationsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	7,  // 3: cloud.v1.api.ui.ListNetworkAllocationsRequest.provider:type_name -> cloud.v1.deployment.Provider
+	0,  // 4: cloud.v1.api.ui.ListNetworkAllocationsRequest.sort_field:type_name -> cloud.v1.api.ui.ListNetworkAllocationsRequest.SortField
+	8,  // 5: cloud.v1.api.ui.ListNetworkAllocationsRequest.order:type_name -> cloud.v1.models.SortOrder
+	9,  // 6: cloud.v1.api.ui.ListNetworkAllocationsRequest.page:type_name -> cloud.v1.models.Page
+	10, // 7: cloud.v1.api.ui.ListNetworkAllocationsRequest.tags:type_name -> cloud.v1.common.Tags
+	11, // 8: cloud.v1.api.ui.ListNetworkAllocationsResponse.network_allocations:type_name -> cloud.v1.models.NetworkAllocation
+	12, // 9: cloud.v1.api.ui.ListNetworkAllocationsResponse.page_info:type_name -> cloud.v1.models.PageInfo
+	6,  // 10: cloud.v1.api.ui.ReconcileRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	7,  // 11: cloud.v1.api.ui.ReconcileRequest.provider:type_name -> cloud.v1.deployment.Provider
+	1,  // 12: cloud.v1.api.ui.CloudInventoryService.FetchQuotas:input_type -> cloud.v1.api.ui.FetchQuotasRequest
+	2,  // 13: cloud.v1.api.ui.CloudInventoryService.ListNetworkAllocations:input_type -> cloud.v1.api.ui.ListNetworkAllocationsRequest
+	4,  // 14: cloud.v1.api.ui.CloudInventoryService.Reconcile:input_type -> cloud.v1.api.ui.ReconcileRequest
+	13, // 15: cloud.v1.api.ui.CloudInventoryService.FetchQuotas:output_type -> cloud.v1.deployment.QuotaInventory
+	3,  // 16: cloud.v1.api.ui.CloudInventoryService.ListNetworkAllocations:output_type -> cloud.v1.api.ui.ListNetworkAllocationsResponse
+	5,  // 17: cloud.v1.api.ui.CloudInventoryService.Reconcile:output_type -> cloud.v1.api.ui.ReconcileResponse
+	15, // [15:18] is the sub-list for method output_type
+	12, // [12:15] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_ui_inventory_proto_init() }
@@ -348,18 +532,20 @@ func file_cloud_v1_api_ui_inventory_proto_init() {
 	if File_cloud_v1_api_ui_inventory_proto != nil {
 		return
 	}
+	file_cloud_v1_api_ui_inventory_proto_msgTypes[1].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_ui_inventory_proto_rawDesc), len(file_cloud_v1_api_ui_inventory_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   4,
+			NumEnums:      1,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_cloud_v1_api_ui_inventory_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_api_ui_inventory_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_api_ui_inventory_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_api_ui_inventory_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_api_ui_inventory_proto = out.File

@@ -10,9 +10,9 @@ import (
 	"github.com/yaroher/ratel/pkg/ddl"
 	"github.com/yaroher/ratel/pkg/dml/set"
 	"github.com/yaroher/ratel/pkg/exec"
-	"github.com/yaroher/ratel/pkg/sqlerr"
 	"github.com/yaroher/ratel/pkg/repository"
 	"github.com/yaroher/ratel/pkg/schema"
+	"github.com/yaroher/ratel/pkg/sqlerr"
 )
 
 var (
@@ -39,6 +39,8 @@ const (
 	TenantColumnUpdatedAt      TenantColumnAlias = "updated_at"
 	TenantColumnDeletedAt      TenantColumnAlias = "deleted_at"
 	TenantColumnOwnerAccountId TenantColumnAlias = "owner_account_id"
+	TenantColumnName           TenantColumnAlias = "name"
+	TenantColumnTags           TenantColumnAlias = "tags"
 )
 
 func (s *TenantScanner) GetTarget(col string) func() any {
@@ -53,6 +55,10 @@ func (s *TenantScanner) GetTarget(col string) func() any {
 		return func() any { return &s.DeletedAt }
 	case TenantColumnOwnerAccountId:
 		return func() any { return &s.OwnerAccountId }
+	case TenantColumnName:
+		return func() any { return &s.Name }
+	case TenantColumnTags:
+		return func() any { return &s.Tags }
 	default:
 		panic("unknown field: " + col)
 	}
@@ -70,6 +76,10 @@ func (s *TenantScanner) GetSetter(f TenantColumnAlias) func() set.ValueSetter[Te
 		return func() set.ValueSetter[TenantColumnAlias] { return set.NewSetter(f, &s.DeletedAt) }
 	case TenantColumnOwnerAccountId:
 		return func() set.ValueSetter[TenantColumnAlias] { return set.NewSetter(f, &s.OwnerAccountId) }
+	case TenantColumnName:
+		return func() set.ValueSetter[TenantColumnAlias] { return set.NewSetter(f, &s.Name) }
+	case TenantColumnTags:
+		return func() set.ValueSetter[TenantColumnAlias] { return set.NewSetter(f, &s.Tags) }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -87,6 +97,10 @@ func (s *TenantScanner) GetValue(f TenantColumnAlias) func() any {
 		return func() any { return s.DeletedAt }
 	case TenantColumnOwnerAccountId:
 		return func() any { return s.OwnerAccountId }
+	case TenantColumnName:
+		return func() any { return s.Name }
+	case TenantColumnTags:
+		return func() any { return s.Tags }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -99,6 +113,8 @@ func (s *TenantScanner) AllSetters() []set.ValueSetter[TenantColumnAlias] {
 		set.NewSetter[TenantColumnAlias](TenantColumnUpdatedAt, s.UpdatedAt),
 		set.NewSetter[TenantColumnAlias](TenantColumnDeletedAt, s.DeletedAt),
 		set.NewSetter[TenantColumnAlias](TenantColumnOwnerAccountId, s.OwnerAccountId),
+		set.NewSetter[TenantColumnAlias](TenantColumnName, s.Name),
+		set.NewSetter[TenantColumnAlias](TenantColumnTags, s.Tags),
 	}
 }
 
@@ -171,6 +187,8 @@ type TenantsTable struct {
 	UpdatedAt      schema.TimestamptzColumnI[TenantColumnAlias]
 	DeletedAt      schema.NullTimestamptzColumnI[TenantColumnAlias]
 	OwnerAccountId schema.TextColumnI[TenantColumnAlias]
+	Name           schema.NullTextColumnI[TenantColumnAlias]
+	Tags           schema.TextColumnI[TenantColumnAlias]
 }
 
 // Tenants is the global tenants table instance
@@ -180,6 +198,8 @@ var Tenants = func() TenantsTable {
 	updatedAtCol := schema.TimestamptzColumn(TenantColumnUpdatedAt, ddl.WithDefault[TenantColumnAlias]("now()"), ddl.WithNotNull[TenantColumnAlias]())
 	deletedAtCol := schema.NullTimestamptzColumn(TenantColumnDeletedAt, ddl.WithDefault[TenantColumnAlias]("null"))
 	ownerAccountIdCol := schema.TextColumn(TenantColumnOwnerAccountId, ddl.WithReferences[TenantColumnAlias]("accounts", "id"), ddl.WithOnDelete[TenantColumnAlias]("CASCADE"), ddl.WithNotNull[TenantColumnAlias]())
+	nameCol := schema.NullTextColumn(TenantColumnName)
+	tagsCol := schema.TextColumn(TenantColumnTags, ddl.WithNotNull[TenantColumnAlias]())
 
 	return TenantsTable{
 		Table: schema.NewTable[TenantAlias, TenantColumnAlias, *TenantScanner](
@@ -191,6 +211,8 @@ var Tenants = func() TenantsTable {
 				updatedAtCol.DDL(),
 				deletedAtCol.DDL(),
 				ownerAccountIdCol.DDL(),
+				nameCol.DDL(),
+				tagsCol.DDL(),
 			},
 		),
 		Id:             idCol,
@@ -198,6 +220,8 @@ var Tenants = func() TenantsTable {
 		UpdatedAt:      updatedAtCol,
 		DeletedAt:      deletedAtCol,
 		OwnerAccountId: ownerAccountIdCol,
+		Name:           nameCol,
+		Tags:           tagsCol,
 	}
 }()
 
@@ -230,6 +254,7 @@ const (
 	TenantMemberColumnTenantId  TenantMemberColumnAlias = "tenant_id"
 	TenantMemberColumnAccountId TenantMemberColumnAlias = "account_id"
 	TenantMemberColumnRole      TenantMemberColumnAlias = "role"
+	TenantMemberColumnTags      TenantMemberColumnAlias = "tags"
 )
 
 func (s *TenantMemberScanner) GetTarget(col string) func() any {
@@ -248,6 +273,8 @@ func (s *TenantMemberScanner) GetTarget(col string) func() any {
 		return func() any { return &s.AccountId }
 	case TenantMemberColumnRole:
 		return func() any { return &s.Role }
+	case TenantMemberColumnTags:
+		return func() any { return &s.Tags }
 	default:
 		panic("unknown field: " + col)
 	}
@@ -269,6 +296,8 @@ func (s *TenantMemberScanner) GetSetter(f TenantMemberColumnAlias) func() set.Va
 		return func() set.ValueSetter[TenantMemberColumnAlias] { return set.NewSetter(f, &s.AccountId) }
 	case TenantMemberColumnRole:
 		return func() set.ValueSetter[TenantMemberColumnAlias] { return set.NewSetter(f, &s.Role) }
+	case TenantMemberColumnTags:
+		return func() set.ValueSetter[TenantMemberColumnAlias] { return set.NewSetter(f, &s.Tags) }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -290,6 +319,8 @@ func (s *TenantMemberScanner) GetValue(f TenantMemberColumnAlias) func() any {
 		return func() any { return s.AccountId }
 	case TenantMemberColumnRole:
 		return func() any { return s.Role }
+	case TenantMemberColumnTags:
+		return func() any { return s.Tags }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -304,6 +335,7 @@ func (s *TenantMemberScanner) AllSetters() []set.ValueSetter[TenantMemberColumnA
 		set.NewSetter[TenantMemberColumnAlias](TenantMemberColumnTenantId, s.TenantId),
 		set.NewSetter[TenantMemberColumnAlias](TenantMemberColumnAccountId, s.AccountId),
 		set.NewSetter[TenantMemberColumnAlias](TenantMemberColumnRole, s.Role),
+		set.NewSetter[TenantMemberColumnAlias](TenantMemberColumnTags, s.Tags),
 	}
 }
 
@@ -322,6 +354,7 @@ type TenantMembersTable struct {
 	TenantId  schema.TextColumnI[TenantMemberColumnAlias]
 	AccountId schema.TextColumnI[TenantMemberColumnAlias]
 	Role      schema.TextColumnI[TenantMemberColumnAlias]
+	Tags      schema.TextColumnI[TenantMemberColumnAlias]
 }
 
 // TenantMembers is the global tenant_members table instance
@@ -333,6 +366,7 @@ var TenantMembers = func() TenantMembersTable {
 	tenantIdCol := schema.TextColumn(TenantMemberColumnTenantId, ddl.WithReferences[TenantMemberColumnAlias]("tenants", "id"), ddl.WithOnDelete[TenantMemberColumnAlias]("CASCADE"), ddl.WithNotNull[TenantMemberColumnAlias]())
 	accountIdCol := schema.TextColumn(TenantMemberColumnAccountId, ddl.WithReferences[TenantMemberColumnAlias]("accounts", "id"), ddl.WithOnDelete[TenantMemberColumnAlias]("CASCADE"), ddl.WithNotNull[TenantMemberColumnAlias]())
 	roleCol := schema.TextColumn(TenantMemberColumnRole, ddl.WithNotNull[TenantMemberColumnAlias]())
+	tagsCol := schema.TextColumn(TenantMemberColumnTags, ddl.WithNotNull[TenantMemberColumnAlias]())
 
 	return TenantMembersTable{
 		Table: schema.NewTable[TenantMemberAlias, TenantMemberColumnAlias, *TenantMemberScanner](
@@ -346,6 +380,7 @@ var TenantMembers = func() TenantMembersTable {
 				tenantIdCol.DDL(),
 				accountIdCol.DDL(),
 				roleCol.DDL(),
+				tagsCol.DDL(),
 			},
 		),
 		Id:        idCol,
@@ -355,6 +390,7 @@ var TenantMembers = func() TenantMembersTable {
 		TenantId:  tenantIdCol,
 		AccountId: accountIdCol,
 		Role:      roleCol,
+		Tags:      tagsCol,
 	}
 }()
 

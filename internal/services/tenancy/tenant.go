@@ -2,12 +2,10 @@ package tenancy
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/gopherex/pgtx/pkg/tx"
 	"github.com/gopherex/xlog"
-	"github.com/jackc/pgx/v5"
 	"github.com/yaroher/ratel/pkg/exec"
 	"github.com/yaroher/ratel/pkg/repository"
 	"go.opentelemetry.io/otel/trace"
@@ -21,6 +19,7 @@ import (
 	uipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/authz"
+	"github.com/stroppy-io/stroppy-cloud/internal/services/svcutil"
 	"github.com/stroppy-io/stroppy-cloud/internal/utils/tracing"
 )
 
@@ -41,6 +40,12 @@ type TenantService struct {
 		*models.TenantMemberScanner,
 		*models.TenantMember,
 	]
+	accounts *repository.ProtoRepository[
+		models.AccountAlias,
+		models.AccountColumnAlias,
+		*models.AccountScanner,
+		*models.Account,
+	]
 	authz *authz.Authz
 	txm   tx.Trm
 }
@@ -59,15 +64,55 @@ func NewTenantService(logger *xlog.Logger, executor exec.DB, txm tx.Trm, az *aut
 			repository.NewScannerRepository(models.TenantMembers.Table, executor),
 			models.TenantMemberConverter,
 		),
+		accounts: repository.NewProtoRepository(
+			repository.NewScannerRepository(models.Accounts.Table, executor),
+			models.AccountConverter,
+		),
 		authz: az,
 		txm:   txm,
 	}
 }
 
-// ListMyTenants returns the tenants the calling account is a member of.
-//
-// TODO(tenancy): loads tenants one-by-one (N+1) — no IN-clause helper wired yet.
-// Batch with a single WHERE id IN (...) once available. Reported.
+// loadAccounts hydrates the member accounts referenced by page in a single
+// WHERE id IN (...) query, keyed by account id (no N+1). Soft-deleted accounts
+// are skipped (the row's Account stays nil).
+func (s *TenantService) loadAccounts(ctx context.Context, page []*models.TenantMember) (map[string]*models.Account, error) {
+	if len(page) == 0 {
+		return nil, nil
+	}
+	ids := make([]string, 0, len(page))
+	seen := make(map[string]struct{}, len(page))
+	for _, m := range page {
+		id := m.GetAccountId().GetValue()
+		if id == "" {
+			continue
+		}
+		if _, dup := seen[id]; dup {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	accounts, err := s.accounts.Query(ctx,
+		models.Accounts.SelectAll().Where(
+			models.Accounts.Id.In(ids...),
+			models.Accounts.DeletedAt.IsNull(),
+		))
+	if err != nil {
+		return nil, err
+	}
+	byID := make(map[string]*models.Account, len(accounts))
+	for _, a := range accounts {
+		byID[a.GetEntity().GetId().GetValue()] = a
+	}
+	return byID, nil
+}
+
+// ListMyTenants returns the tenants the calling account is a member of, loaded
+// in a single WHERE id IN (...) query (no N+1).
 func (s *TenantService) ListMyTenants(ctx context.Context, _ *emptypb.Empty) (*models.Tenant_List, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListMyTenants",
 		func(ctx context.Context, _ trace.Span) (*models.Tenant_List, error) {
@@ -84,21 +129,95 @@ func (s *TenantService) ListMyTenants(ctx context.Context, _ *emptypb.Empty) (*m
 				return nil, status.Errorf(codes.Internal, "list memberships: %v", err)
 			}
 			out := &models.Tenant_List{Tenants: make([]*models.Tenant, 0, len(memberships))}
-			for _, m := range memberships {
-				tenant, err := s.tenants.QueryRow(ctx,
-					models.Tenants.SelectAll().Where(
-						models.Tenants.Id.Eq(m.GetTenantId().GetValue()),
-						models.Tenants.DeletedAt.IsNull(),
-					))
-				if err != nil {
-					if errors.Is(err, pgx.ErrNoRows) {
-						continue
-					}
-					return nil, status.Errorf(codes.Internal, "load tenant: %v", err)
-				}
-				out.Tenants = append(out.Tenants, tenant)
+			if len(memberships) == 0 {
+				return out, nil
 			}
+			ids := make([]string, 0, len(memberships))
+			seen := make(map[string]struct{}, len(memberships))
+			for _, m := range memberships {
+				id := m.GetTenantId().GetValue()
+				if _, dup := seen[id]; dup {
+					continue
+				}
+				seen[id] = struct{}{}
+				ids = append(ids, id)
+			}
+			tenants, err := s.tenants.Query(ctx,
+				models.Tenants.SelectAll().Where(
+					models.Tenants.Id.In(ids...),
+					models.Tenants.DeletedAt.IsNull(),
+				))
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "load tenants: %v", err)
+			}
+			out.Tenants = tenants
 			return out, nil
+		})
+}
+
+// ListTenantMembers returns the tenant's members with cursor pagination
+// (newest-first by default), optionally filtered by role. Read requires VIEWER.
+func (s *TenantService) ListTenantMembers(ctx context.Context, req *uipb.ListTenantMembersRequest) (*uipb.ListTenantMembersResponse, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListTenantMembers",
+		func(ctx context.Context, _ trace.Span) (*uipb.ListTenantMembersResponse, error) {
+			c, _ := caller.FromContext(ctx)
+			if err := s.authz.Require(ctx, c, req.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
+				return nil, err
+			}
+			size := svcutil.PageSize(req.GetPage())
+			desc := svcutil.CursorDesc(req.GetOrder())
+			q := models.TenantMembers.SelectAll().Where(
+				models.TenantMembers.TenantId.Eq(req.GetTenantId().GetValue()),
+				models.TenantMembers.DeletedAt.IsNull(),
+			)
+			if req.Role != nil {
+				// Role is stored as the enum String() value (tenant_plain converter).
+				q = q.Where(models.TenantMembers.Role.Eq(req.GetRole().String()))
+			}
+			// search has no backing column on tenant_members (members are
+			// account_id + role only); name/email search would require hydrating
+			// the joined Account — tracked with the hydration follow-up below.
+			// tags: Tags is serialized JSON of common.Tags (a TEXT column) — match
+			// each requested free tag and key=value label as a substring.
+			for _, tag := range req.GetTags().GetTags() {
+				q = q.Where(models.TenantMembers.Tags.ILike("%" + tag + "%"))
+			}
+			for k, v := range req.GetTags().GetLabels() {
+				q = q.Where(models.TenantMembers.Tags.ILike("%" + k + "%" + v + "%"))
+			}
+			if tok := req.GetPage().GetToken(); tok != "" {
+				if desc {
+					q = q.Where(models.TenantMembers.Id.Lt(tok))
+				} else {
+					q = q.Where(models.TenantMembers.Id.Gt(tok))
+				}
+			}
+			if desc {
+				q = q.OrderByDESC(models.TenantMemberColumnId)
+			} else {
+				q = q.OrderByASC(models.TenantMemberColumnId)
+			}
+			members, err := s.members.Query(ctx, q.Limit(size+1))
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "list tenant members: %v", err)
+			}
+			page, pageInfo := svcutil.Paginate(members, size, func(m *models.TenantMember) string {
+				return m.GetEntity().GetId().GetValue()
+			})
+			// Hydrate TenantMemberRow.Account (email/nickname) for display: load
+			// all referenced accounts in a single WHERE id IN (...) query (no N+1).
+			accByID, err := s.loadAccounts(ctx, page)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "hydrate member accounts: %v", err)
+			}
+			rows := make([]*uipb.TenantMemberRow, 0, len(page))
+			for _, m := range page {
+				rows = append(rows, &uipb.TenantMemberRow{
+					Member:  m,
+					Account: accByID[m.GetAccountId().GetValue()],
+				})
+			}
+			return &uipb.ListTenantMembersResponse{Members: rows, PageInfo: pageInfo}, nil
 		})
 }
 

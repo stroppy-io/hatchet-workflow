@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.models;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/models/common.proto";
 import "goplain/goplain.proto";
 import "ratelproto/ratelproto.proto";
@@ -120,6 +121,8 @@ message SettingsItem {
         (goplain.field).serialize = true,
         (ratel.column).constraints.default_value = "'{}'::jsonb"
     ];
+    /* tags is a free label set for filtering/grouping. */
+    common.Tags tags = 13 [(goplain.field).serialize = true];
 }
 
 

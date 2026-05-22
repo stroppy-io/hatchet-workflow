@@ -4,6 +4,7 @@
 package models
 
 import (
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	agent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent"
 	ratelcast "github.com/yaroher/ratel/pkg/ratelcast"
 	protojson "google.golang.org/protobuf/encoding/protojson"
@@ -12,9 +13,8 @@ import (
 
 // Agent is a persisted runtime agent registration bound to a topology machine.
 type AgentScanner struct {
-	Id               string     `json:"id"`             // origin: type_alias, empath: id
-	OwnerAccountId   string     `json:"ownerAccountId"` // origin: embed, empath: owner_account_id
-	TenantId         string     `json:"tenantId"`       // origin: embed, empath: tenant_id
+	Id               string     `json:"id"`       // origin: type_alias, empath: id
+	TenantId         string     `json:"tenantId"` // origin: type_alias, empath: tenant_id
 	CreatedAt        time.Time  `json:"createdAt"`
 	UpdatedAt        time.Time  `json:"updatedAt"`
 	DeletedAt        *time.Time `json:"deletedAt,omitempty"`
@@ -29,6 +29,7 @@ type AgentScanner struct {
 	LastSeenAt       time.Time  `json:"lastSeenAt"`
 	LeaseExpiresAt   time.Time  `json:"leaseExpiresAt"`
 	Error            string     `json:"error"`
+	Tags             []byte     `json:"tags"`    // origin: serialized, empath: tags
 	Runtime          []byte     `json:"runtime"` // origin: serialized, empath: runtime
 }
 
@@ -43,13 +44,9 @@ func (pb *Agent) IntoPlain() *AgentScanner {
 	if pb.GetId() != nil {
 		p.Id = pb.GetId().GetValue()
 	}
-	// OwnerAccountId from owner_account_id
-	if pb.GetOwned() != nil && pb.GetOwned().GetOwnerAccountId() != nil {
-		p.OwnerAccountId = pb.GetOwned().GetOwnerAccountId().GetValue()
-	}
-	// TenantId from tenant_id
-	if pb.GetOwned() != nil && pb.GetOwned().GetTenantId() != nil {
-		p.TenantId = pb.GetOwned().GetTenantId().GetValue()
+	// TenantId type alias from tenant_id
+	if pb.GetTenantId() != nil {
+		p.TenantId = pb.GetTenantId().GetValue()
 	}
 	// CreatedAt from
 	if pb.GetTimestamps() != nil && pb.GetTimestamps().GetCreatedAt() != nil {
@@ -81,6 +78,14 @@ func (pb *Agent) IntoPlain() *AgentScanner {
 		p.LeaseExpiresAt = ratelcast.TimestampToTime(pb.LeaseExpiresAt)
 	}
 	p.Error = pb.Error
+	// Tags serialized from tags
+	if pb.Tags != nil {
+		if data, err := protojson.Marshal(pb.Tags); err == nil {
+			p.Tags = data
+		}
+	} else {
+		p.Tags = []byte{}
+	}
 	// Runtime serialized from runtime
 	if pb.Runtime != nil {
 		if data, err := protojson.Marshal(pb.Runtime); err == nil {
@@ -103,25 +108,9 @@ func (p *AgentScanner) IntoPb() *Agent {
 	if p.Id != "" {
 		pb.Id = &AgentId{Value: p.Id}
 	}
-	// OwnerAccountId -> owner_account_id
-	if p.OwnerAccountId != "" {
-		if pb.Owned == nil {
-			pb.Owned = &Own{}
-		}
-		if pb.Owned.OwnerAccountId == nil {
-			pb.Owned.OwnerAccountId = &AccountId{}
-		}
-		pb.Owned.OwnerAccountId.Value = p.OwnerAccountId
-	}
-	// TenantId -> tenant_id
+	// TenantId type alias -> tenant_id
 	if p.TenantId != "" {
-		if pb.Owned == nil {
-			pb.Owned = &Own{}
-		}
-		if pb.Owned.TenantId == nil {
-			pb.Owned.TenantId = &TenantId{}
-		}
-		pb.Owned.TenantId.Value = p.TenantId
+		pb.TenantId = &TenantId{Value: p.TenantId}
 	}
 	// CreatedAt ->
 	if pb.Timestamps == nil {
@@ -151,6 +140,13 @@ func (p *AgentScanner) IntoPb() *Agent {
 	pb.LastSeenAt = ratelcast.TimeToTimestamp(p.LastSeenAt)
 	pb.LeaseExpiresAt = ratelcast.TimeToTimestamp(p.LeaseExpiresAt)
 	pb.Error = p.Error
+	// Tags deserialize -> tags
+	if len(p.Tags) > 0 {
+		var msg common.Tags
+		if err := protojson.Unmarshal(p.Tags, &msg); err == nil {
+			pb.Tags = &msg
+		}
+	}
 	// Runtime deserialize -> runtime
 	if len(p.Runtime) > 0 {
 		var msg agent.Agent

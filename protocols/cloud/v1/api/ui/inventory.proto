@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.api.ui;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/deployment/deployment.proto";
 import "cloud/v1/models/common.proto";
 import "cloud/v1/models/network.proto";
@@ -25,10 +26,33 @@ message FetchQuotasRequest {
 
 /* Typed per-model query (H42). */
 message ListNetworkAllocationsRequest {
+    /* SortField — typed sortable columns (no arbitrary strings). */
+    enum SortField {
+        SORT_FIELD_UNSPECIFIED = 0;
+        SORT_FIELD_CREATED_AT = 1;
+        SORT_FIELD_CIDR = 2;
+        SORT_FIELD_ZONE = 3;
+        SORT_FIELD_LEASE_EXPIRES_AT = 4;
+    }
     models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
     deployment.Provider provider = 2 [(validate.rules).enum.defined_only = true];
-    uint32 page_size = 3 [(validate.rules).uint32.lte = 1000];
-    string page_token = 4 [(validate.rules).string.max_len = 256];
+    /* search filters by CIDR text. */
+    optional string search = 3 [(validate.rules).string.max_len = 64];
+    /* zone filters by provider availability zone. */
+    optional string zone = 4 [(validate.rules).string.max_len = 64];
+    /* leased tri-state: unset = all, true = active lease, false = no/expired lease. */
+    optional bool leased = 5;
+    SortField sort_field = 6 [(validate.rules).enum.defined_only = true];
+    models.SortOrder order = 7 [(validate.rules).enum.defined_only = true];
+    models.Page page = 8;
+    /* tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter. */
+    common.Tags tags = 9;
+}
+
+/* ListNetworkAllocationsResponse — rows plus pagination metadata (H42). */
+message ListNetworkAllocationsResponse {
+    repeated models.NetworkAllocation network_allocations = 1;
+    models.PageInfo page_info = 2;
 }
 
 message ReconcileRequest {
@@ -43,6 +67,6 @@ message ReconcileResponse {
 
 service CloudInventoryService {
     rpc FetchQuotas (FetchQuotasRequest) returns (deployment.QuotaInventory) {option idempotency_level = NO_SIDE_EFFECTS;}
-    rpc ListNetworkAllocations (ListNetworkAllocationsRequest) returns (models.NetworkAllocation.List) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc ListNetworkAllocations (ListNetworkAllocationsRequest) returns (ListNetworkAllocationsResponse) {option idempotency_level = NO_SIDE_EFFECTS;}
     rpc Reconcile (ReconcileRequest) returns (ReconcileResponse) {option idempotency_level = IDEMPOTENT;}
 }

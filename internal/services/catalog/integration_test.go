@@ -173,7 +173,7 @@ func TestPresetRoundTrip(t *testing.T) {
 	// must round-trip and the kind filter must exclude the WORKLOAD preset.
 	list, err := f.svc.ListPresets(ctx, &uipb.ListPresetRequest{
 		TenantId: f.tenantID,
-		Kind:     models.Preset_KIND_DATABASE,
+		Kinds:    []models.Preset_Kind{models.Preset_KIND_DATABASE},
 	})
 	require.NoError(t, err)
 	require.Len(t, list.GetPresets(), 2)
@@ -190,7 +190,7 @@ func TestPresetRoundTrip(t *testing.T) {
 	// The WORKLOAD-kind list returns exactly the one workload preset.
 	wl, err := f.svc.ListPresets(ctx, &uipb.ListPresetRequest{
 		TenantId: f.tenantID,
-		Kind:     models.Preset_KIND_WORKLOAD,
+		Kinds:    []models.Preset_Kind{models.Preset_KIND_WORKLOAD},
 	})
 	require.NoError(t, err)
 	require.Len(t, wl.GetPresets(), 1)
@@ -205,7 +205,7 @@ func TestPresetRoundTrip(t *testing.T) {
 
 	list, err = f.svc.ListPresets(ctx, &uipb.ListPresetRequest{
 		TenantId: f.tenantID,
-		Kind:     models.Preset_KIND_DATABASE,
+		Kinds:    []models.Preset_Kind{models.Preset_KIND_DATABASE},
 	})
 	require.NoError(t, err)
 	require.Len(t, list.GetPresets(), 1)
@@ -223,7 +223,7 @@ func TestPresetCreateAndClone(t *testing.T) {
 	require.NoError(t, err, "CreatePreset must persist (NULL for absent oneof bodies)")
 	require.NotEmpty(t, created.GetEntity().GetId().GetValue())
 
-	list, err := f.svc.ListPresets(ctx, &uipb.ListPresetRequest{TenantId: f.tenantID, Kind: models.Preset_KIND_DATABASE})
+	list, err := f.svc.ListPresets(ctx, &uipb.ListPresetRequest{TenantId: f.tenantID, Kinds: []models.Preset_Kind{models.Preset_KIND_DATABASE}})
 	require.NoError(t, err)
 	require.Len(t, list.GetPresets(), 1)
 
@@ -243,7 +243,7 @@ func TestPresetRBAC(t *testing.T) {
 	// Anonymous (no caller) -> Unauthenticated on list.
 	_, err := f.svc.ListPresets(context.Background(), &uipb.ListPresetRequest{
 		TenantId: f.tenantID,
-		Kind:     models.Preset_KIND_DATABASE,
+		Kinds:    []models.Preset_Kind{models.Preset_KIND_DATABASE},
 	})
 	require.Equal(t, codes.Unauthenticated, status.Code(err))
 
@@ -254,7 +254,7 @@ func TestPresetRBAC(t *testing.T) {
 	})
 	_, err = f.svc.ListPresets(strangerCtx, &uipb.ListPresetRequest{
 		TenantId: f.tenantID,
-		Kind:     models.Preset_KIND_DATABASE,
+		Kinds:    []models.Preset_Kind{models.Preset_KIND_DATABASE},
 	})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
@@ -267,7 +267,7 @@ func TestPresetRBAC(t *testing.T) {
 	id := f.seedPreset(t, models.Preset_KIND_DATABASE, "rbac")
 	_, err = f.svc.ListPresets(viewerCtx, &uipb.ListPresetRequest{
 		TenantId: f.tenantID,
-		Kind:     models.Preset_KIND_DATABASE,
+		Kinds:    []models.Preset_Kind{models.Preset_KIND_DATABASE},
 	})
 	require.NoError(t, err)
 

@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.api.ui;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/models/common.proto";
 import "cloud/v1/models/package.proto";
 import "google/protobuf/empty.proto";
@@ -17,7 +18,33 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     returns a presigned PUT URL; the client uploads to S3 directly (G2).
  */
 message ListPackagesRequest {
+    /* SortField — typed sortable columns (no arbitrary strings). */
+    enum SortField {
+        SORT_FIELD_UNSPECIFIED = 0;
+        SORT_FIELD_CREATED_AT = 1;
+        SORT_FIELD_NAME = 2;
+        SORT_FIELD_DB_KIND = 3;
+    }
     models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    /* search filters by package name (free text). */
+    optional string search = 2 [(validate.rules).string.max_len = 256];
+    /* db_kind filters by database kind (e.g. "postgresql"). */
+    optional string db_kind = 3 [(validate.rules).string.max_len = 64];
+    /* db_version filters by database version string. */
+    optional string db_version = 4 [(validate.rules).string.max_len = 64];
+    /* is_builtin tri-state: unset = all, true = builtin recipes, false = custom uploads. */
+    optional bool is_builtin = 5;
+    SortField sort_field = 6 [(validate.rules).enum.defined_only = true];
+    models.SortOrder order = 7 [(validate.rules).enum.defined_only = true];
+    models.Page page = 8;
+    /* tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter. */
+    common.Tags tags = 9;
+}
+
+/* ListPackagesResponse — rows plus pagination metadata (H42). */
+message ListPackagesResponse {
+    repeated models.Package packages = 1;
+    models.PageInfo page_info = 2;
 }
 message RequestPackageUploadRequest {
     models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
@@ -39,7 +66,7 @@ message DeletePackageRequest {
 }
 
 service PackageService {
-    rpc ListPackages (ListPackagesRequest) returns (models.Package.List) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc ListPackages (ListPackagesRequest) returns (ListPackagesResponse) {option idempotency_level = NO_SIDE_EFFECTS;}
     rpc RequestPackageUpload (RequestPackageUploadRequest) returns (RequestPackageUploadResponse) {option idempotency_level = IDEMPOTENT;}
     rpc DeletePackage (DeletePackageRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;}
 }

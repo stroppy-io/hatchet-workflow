@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.models;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/models/common.proto";
 import "cloud/v1/runtime/agent/agent.proto";
 import "goplain/goplain.proto";
@@ -29,7 +30,17 @@ message Agent {
         (ratel.column) = {constraints: {primary_key: true}},
         (validate.rules).message.required = true
     ];
-    models.Own owned = 2 [(goplain.field).embed = true];
+    /* tenant_id scopes the agent to a tenant. An agent is a self-registering
+       machine (machine-principal JWT) — it has NO owning account, so it carries
+       tenant_id directly instead of the account-owned Own. */
+    models.TenantId tenant_id = 2 [
+        (ratel.column).constraints = {
+            references_table: "tenants"
+            references_column: "id"
+            on_delete: CASCADE
+        },
+        (validate.rules).message = {required: true}
+    ];
     models.Timestamps timestamps = 3 [(goplain.field).embed = true];
 
     /* machine_id references cloud.v1.domain.Topology.Machine.id. */
@@ -45,6 +56,8 @@ message Agent {
     google.protobuf.Timestamp last_seen_at = 12;
     google.protobuf.Timestamp lease_expires_at = 13;
     string error = 14 [(validate.rules).string.max_len = 8192];
+    /* tags is a free label set for filtering/grouping. */
+    common.Tags tags = 15 [(goplain.field).serialize = true];
 
     /* runtime stores the full runtime.agent.Agent snapshot as JSONB. */
     runtime.agent.Agent runtime = 20 [

@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.api.admin;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/models/account.proto";
 import "cloud/v1/models/common.proto";
 import "google/protobuf/empty.proto";
@@ -22,10 +23,42 @@ message UpdateAccountRequest {
 }
 
 message UpdatePasswordRequest {
+    /* account_id is the target account whose password is reset (platform-admin). */
+    models.AccountId account_id = 1 [(validate.rules).message = {required: true}];
     string new_password = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
 }
 
+/* ListAccountsRequest is the platform-admin accounts table contract (is_admin). */
+message ListAccountsRequest {
+    /* SortField — typed sortable columns (no arbitrary strings). */
+    enum SortField {
+        SORT_FIELD_UNSPECIFIED = 0;
+        SORT_FIELD_CREATED_AT = 1;
+        SORT_FIELD_EMAIL = 2;
+        SORT_FIELD_NICKNAME = 3;
+    }
+    /* tenant_id is the acting tenant context (every request carries it); the
+       platform-admin (is_admin) accounts listing itself is cross-tenant. */
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    /* search filters by account email/nickname (free text). */
+    optional string search = 2 [(validate.rules).string.max_len = 256];
+    /* is_admin tri-state: unset = all, true/false matches the platform-admin flag. */
+    optional bool is_admin = 3;
+    SortField sort_field = 4 [(validate.rules).enum.defined_only = true];
+    models.SortOrder order = 5 [(validate.rules).enum.defined_only = true];
+    models.Page page = 6;
+    /* tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter. */
+    common.Tags tags = 7;
+}
+
+/* ListAccountsResponse — rows plus pagination metadata (H42). */
+message ListAccountsResponse {
+    repeated models.Account accounts = 1;
+    models.PageInfo page_info = 2;
+}
+
 service AccountAdminService {
+    rpc ListAccounts (ListAccountsRequest) returns (ListAccountsResponse) {option idempotency_level = NO_SIDE_EFFECTS;}
     rpc CreateAccount (CreateAccountRequest) returns (models.Account) {option idempotency_level = IDEMPOTENT;}
     rpc UpdateAccount (UpdateAccountRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;}
     rpc DeleteAccount (models.AccountId) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;}

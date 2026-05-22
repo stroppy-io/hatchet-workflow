@@ -12,16 +12,11 @@ import (
 )
 
 // CommandQueue is the runtime command-queue seam: the queue IS the set of ready
-// agent-locus Dag nodes (no separate table, H19). Implemented later over the
-// runtime + dagstore.
-//
-// TODO(agent): NO implementation yet — this is the core node-leasing engine and
-// needs: select the next ready AGENT-locus node for the agent's machine across
-// the tenant's running Dags; lease it (NodeAddress + lease_expires_at) returning
-// only AGENT nodes (H26); Report{RUNNING} keepalive pushes the lease forward,
-// terminal Report moves the node (executor advances the graph); expired lease
-// returns the node to the pool (no reaper); a new boot_id invalidates in-flight
-// leases (H20/H21). Reported.
+// agent-locus Dag nodes (no separate table, H19). Implemented by services/agentqueue
+// over the dagstore: it selects the next ready AGENT-locus node for the machine
+// across the tenant's running Dags, leases it (NodeAddress + lease_expires_at),
+// resolves binding holes from the deployment Output, advances the node on Report,
+// and invalidates in-flight leases on a new boot_id (H20/H21/H26).
 type CommandQueue interface {
 	// Lease hands out the next ready command for the target machine, or (nil, nil)
 	// when there is no work (long-poll timeout).
@@ -32,10 +27,8 @@ type CommandQueue interface {
 	InvalidateLeases(ctx context.Context, tenantID, machineID string) error
 }
 
-// LogsSink ingests agent-shipped log lines into the log store.
-//
-// TODO(agent): NO implementation yet — needs a VictoriaLogs ingest path (H54/H55).
-// Reported.
+// LogsSink ingests agent-shipped log lines into the log store. Implemented by
+// services/logs over the VictoriaLogs JSON-stream ingest path (H54/H55).
 type LogsSink interface {
 	SendLogs(ctx context.Context, tenantID string, lines []*rtagent.LogLine) error
 }

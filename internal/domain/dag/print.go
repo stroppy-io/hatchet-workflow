@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-func pprintDag(dag *primitive.Dag, full bool) {
+func PprintDag(dag *primitive.Dag, full bool) {
 	if dag == nil {
 		fmt.Println("<nil dag>")
 		return

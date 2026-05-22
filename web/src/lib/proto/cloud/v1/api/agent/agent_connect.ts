@@ -3,8 +3,8 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { HeartbeatRequest, ListAgentsRequest, PollRequest, PollResponse, RegisterRequest, ReportRequest, SendLogsRequest } from "./agent_pbts";
-import { Agent, Agent_List } from "../../models/agent_pbts";
+import { HeartbeatRequest, ListAgentsRequest, ListAgentsResponse, PollRequest, PollResponse, RegisterRequest, ReportRequest, SendLogsRequest } from "./agent_pbts";
+import { Agent } from "../../models/agent_pbts";
 import { Empty, MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
 import { AgentId } from "../../models/common_pbts";
 
@@ -102,7 +102,7 @@ export const AgentService = {
     listAgents: {
       name: "ListAgents",
       I: ListAgentsRequest,
-      O: Agent_List,
+      O: ListAgentsResponse,
       kind: MethodKind.Unary,
       idempotency: MethodIdempotency.NoSideEffects,
     },

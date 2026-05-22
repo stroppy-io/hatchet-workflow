@@ -1,6 +1,8 @@
-// Package provider resolves a tenant's provider settings (SettingsService) into
-// dag.DeploymentParams — the terraform variables the dag compiler needs. Settings
-// enums (platform/zone) are translated to the terraform string forms here.
+// Package provider resolves a tenant's Yandex Cloud settings (SettingsService) into
+// the proto deployment.Yandex pieces (Network + Compute + a per-VM defaults template)
+// — the Yandex.Input proto IS the terraform variables (deployment/yandex.proto).
+// Settings enums (platform/zone/disk/accel) are translated to the terraform string
+// forms here via the yandex module's canonical mappers.
 package provider
 
 import (
@@ -11,7 +13,7 @@ import (
 	"github.com/yaroher/ratel/pkg/exec"
 	"github.com/yaroher/ratel/pkg/repository"
 
-	dagdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/dag"
+	"github.com/stroppy-io/stroppy-cloud/deployments/terraform/yandex"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/utils/tracing"
@@ -39,50 +41,64 @@ func New(logger *xlog.Logger, executor exec.DB) *Resolver {
 	}
 }
 
-// Resolve builds DeploymentParams from the tenant's Yandex Cloud settings.
-//
-// TODO(provider): per-machine internal_ip (subnet network allocation, D20) and
-// user_data (agent cloud-init JWT, D18) are left empty — wire them when those land.
-func (r *Resolver) Resolve(ctx context.Context, tenantID string) (*dagdomain.DeploymentParams, error) {
+// Resolve reads the tenant's Yandex Cloud settings and returns the deployment.Yandex
+// pieces: the Network, the Compute base (platform/image), and a per-VM defaults
+// template (zone/boot-disk-type/network-acceleration/public-ip) that services/deploy
+// clones per machine (filling cores/mem/disk + internal_ip + user_data). The
+// Yandex.Input proto these compose IS the terraform tfvars.
+func (r *Resolver) Resolve(ctx context.Context, tenantID string) (*deployment.Yandex_Network, *deployment.Yandex_Compute, *deployment.Yandex_Vm, error) {
 	items, err := r.items.Query(ctx, models.SettingsItems.SelectAll().Where(
 		models.SettingsItems.TenantId.Eq(tenantID),
 		models.SettingsItems.DeletedAt.IsNull(),
 	))
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
-	p := &dagdomain.DeploymentParams{
-		MachineInternalIP: map[string]string{},
-		MachineUserData:   map[string]string{},
-	}
+
+	var (
+		netName, netID, cidr, imageID string
+		zoneEnum                      deployment.Yandex_Zone
+		platformEnum                  deployment.Yandex_PlatformId
+		accel                         deployment.Yandex_NetworkAcceleration
+		publicIP                      bool
+	)
 	for _, it := range items {
 		v := it.GetValue()
 		switch it.GetKey() {
 		case models.SettingsItem_KEY_YANDEX_CLOUD_NETWORK_ID:
-			p.NetworkID = v.GetStringValue()
+			netID = v.GetStringValue()
 		case models.SettingsItem_KEY_YANDEX_CLOUD_NETWORK_NAME:
-			p.NetworkName = v.GetStringValue()
+			netName = v.GetStringValue()
 		case models.SettingsItem_KEY_YANDEX_CLOUD_SUBNET_CIDR:
-			p.NetworkCIDR = v.GetStringValue()
+			cidr = v.GetStringValue()
 		case models.SettingsItem_KEY_YANDEX_CLOUD_IMAGE_ID:
-			p.ImageID = v.GetStringValue()
+			imageID = v.GetStringValue()
 		case models.SettingsItem_KEY_YANDEX_CLOUD_ASSIGN_PUBLIC_IP:
-			p.AssignPublicIP = v.GetBoolValue()
+			publicIP = v.GetBoolValue()
 		case models.SettingsItem_KEY_YANDEX_CLOUD_SOFTWARE_ACCELERATED_NETWORK:
 			if v.GetBoolValue() {
-				p.NetworkAcceleration = deployment.Yandex_NETWORK_ACCELERATION_SOFTWARE_ACCELERATED
+				accel = deployment.Yandex_NETWORK_ACCELERATION_SOFTWARE_ACCELERATED
 			}
 		case models.SettingsItem_KEY_YANDEX_CLOUD_PLATFORM_ID:
-			platform, err := mapPlatform(v.GetYandexCloudPlatformId())
+			platformEnum, err = mapPlatform(v.GetYandexCloudPlatformId())
 			if err != nil {
-				return nil, err
+				return nil, nil, nil, err
 			}
-			p.Platform = platform
 		case models.SettingsItem_KEY_YANDEX_CLOUD_ZONE:
-			p.Zone = mapZone(v.GetYandexCloudZone())
+			zoneEnum = mapZone(v.GetYandexCloudZone())
 		}
 	}
-	return p, nil
+
+	zone := yandex.ZoneString(zoneEnum)
+	network := &deployment.Yandex_Network{Name: netName, NetworkId: netID, Cidr: cidr, Zone: zone}
+	compute := &deployment.Yandex_Compute{PlatformId: yandex.PlatformIDString(platformEnum), ImageId: imageID}
+	vmDefaults := &deployment.Yandex_Vm{
+		Zone:                zone,
+		BootDiskType:        yandex.DiskTypeString(deployment.Yandex_DISK_TYPE_NETWORK_SSD),
+		NetworkAcceleration: yandex.NetworkAccelerationString(accel),
+		PublicIp:            publicIP,
+	}
+	return network, compute, vmDefaults, nil
 }
 
 // mapPlatform maps the settings platform enum to the deployment platform enum.

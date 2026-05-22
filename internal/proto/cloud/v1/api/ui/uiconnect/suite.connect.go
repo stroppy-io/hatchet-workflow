@@ -39,6 +39,8 @@ const (
 	SuiteServiceCreateSuiteProcedure = "/cloud.v1.api.ui.SuiteService/CreateSuite"
 	// SuiteServiceGetSuiteProcedure is the fully-qualified name of the SuiteService's GetSuite RPC.
 	SuiteServiceGetSuiteProcedure = "/cloud.v1.api.ui.SuiteService/GetSuite"
+	// SuiteServiceListSuitesProcedure is the fully-qualified name of the SuiteService's ListSuites RPC.
+	SuiteServiceListSuitesProcedure = "/cloud.v1.api.ui.SuiteService/ListSuites"
 	// SuiteServiceLaunchSuiteRunProcedure is the fully-qualified name of the SuiteService's
 	// LaunchSuiteRun RPC.
 	SuiteServiceLaunchSuiteRunProcedure = "/cloud.v1.api.ui.SuiteService/LaunchSuiteRun"
@@ -57,9 +59,10 @@ const (
 type SuiteServiceClient interface {
 	CreateSuite(context.Context, *ui.CreateSuiteRequest) (*models.Suite, error)
 	GetSuite(context.Context, *ui.GetSuiteRequest) (*models.Suite, error)
+	ListSuites(context.Context, *ui.ListSuitesRequest) (*ui.ListSuitesResponse, error)
 	LaunchSuiteRun(context.Context, *ui.LaunchSuiteRunRequest) (*models.SuiteRun, error)
 	GetSuiteRun(context.Context, *ui.GetSuiteRunRequest) (*models.SuiteRun, error)
-	ListSuiteRuns(context.Context, *ui.ListSuiteRunsRequest) (*models.SuiteRun_List, error)
+	ListSuiteRuns(context.Context, *ui.ListSuiteRunsRequest) (*ui.ListSuiteRunsResponse, error)
 	CancelSuiteRun(context.Context, *ui.CancelSuiteRunRequest) (*models.SuiteRun, error)
 }
 
@@ -88,6 +91,13 @@ func NewSuiteServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
+		listSuites: connect.NewClient[ui.ListSuitesRequest, ui.ListSuitesResponse](
+			httpClient,
+			baseURL+SuiteServiceListSuitesProcedure,
+			connect.WithSchema(suiteServiceMethods.ByName("ListSuites")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
 		launchSuiteRun: connect.NewClient[ui.LaunchSuiteRunRequest, models.SuiteRun](
 			httpClient,
 			baseURL+SuiteServiceLaunchSuiteRunProcedure,
@@ -102,7 +112,7 @@ func NewSuiteServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
-		listSuiteRuns: connect.NewClient[ui.ListSuiteRunsRequest, models.SuiteRun_List](
+		listSuiteRuns: connect.NewClient[ui.ListSuiteRunsRequest, ui.ListSuiteRunsResponse](
 			httpClient,
 			baseURL+SuiteServiceListSuiteRunsProcedure,
 			connect.WithSchema(suiteServiceMethods.ByName("ListSuiteRuns")),
@@ -123,9 +133,10 @@ func NewSuiteServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 type suiteServiceClient struct {
 	createSuite    *connect.Client[ui.CreateSuiteRequest, models.Suite]
 	getSuite       *connect.Client[ui.GetSuiteRequest, models.Suite]
+	listSuites     *connect.Client[ui.ListSuitesRequest, ui.ListSuitesResponse]
 	launchSuiteRun *connect.Client[ui.LaunchSuiteRunRequest, models.SuiteRun]
 	getSuiteRun    *connect.Client[ui.GetSuiteRunRequest, models.SuiteRun]
-	listSuiteRuns  *connect.Client[ui.ListSuiteRunsRequest, models.SuiteRun_List]
+	listSuiteRuns  *connect.Client[ui.ListSuiteRunsRequest, ui.ListSuiteRunsResponse]
 	cancelSuiteRun *connect.Client[ui.CancelSuiteRunRequest, models.SuiteRun]
 }
 
@@ -141,6 +152,15 @@ func (c *suiteServiceClient) CreateSuite(ctx context.Context, req *ui.CreateSuit
 // GetSuite calls cloud.v1.api.ui.SuiteService.GetSuite.
 func (c *suiteServiceClient) GetSuite(ctx context.Context, req *ui.GetSuiteRequest) (*models.Suite, error) {
 	response, err := c.getSuite.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// ListSuites calls cloud.v1.api.ui.SuiteService.ListSuites.
+func (c *suiteServiceClient) ListSuites(ctx context.Context, req *ui.ListSuitesRequest) (*ui.ListSuitesResponse, error) {
+	response, err := c.listSuites.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -166,7 +186,7 @@ func (c *suiteServiceClient) GetSuiteRun(ctx context.Context, req *ui.GetSuiteRu
 }
 
 // ListSuiteRuns calls cloud.v1.api.ui.SuiteService.ListSuiteRuns.
-func (c *suiteServiceClient) ListSuiteRuns(ctx context.Context, req *ui.ListSuiteRunsRequest) (*models.SuiteRun_List, error) {
+func (c *suiteServiceClient) ListSuiteRuns(ctx context.Context, req *ui.ListSuiteRunsRequest) (*ui.ListSuiteRunsResponse, error) {
 	response, err := c.listSuiteRuns.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -187,9 +207,10 @@ func (c *suiteServiceClient) CancelSuiteRun(ctx context.Context, req *ui.CancelS
 type SuiteServiceHandler interface {
 	CreateSuite(context.Context, *ui.CreateSuiteRequest) (*models.Suite, error)
 	GetSuite(context.Context, *ui.GetSuiteRequest) (*models.Suite, error)
+	ListSuites(context.Context, *ui.ListSuitesRequest) (*ui.ListSuitesResponse, error)
 	LaunchSuiteRun(context.Context, *ui.LaunchSuiteRunRequest) (*models.SuiteRun, error)
 	GetSuiteRun(context.Context, *ui.GetSuiteRunRequest) (*models.SuiteRun, error)
-	ListSuiteRuns(context.Context, *ui.ListSuiteRunsRequest) (*models.SuiteRun_List, error)
+	ListSuiteRuns(context.Context, *ui.ListSuiteRunsRequest) (*ui.ListSuiteRunsResponse, error)
 	CancelSuiteRun(context.Context, *ui.CancelSuiteRunRequest) (*models.SuiteRun, error)
 }
 
@@ -211,6 +232,13 @@ func NewSuiteServiceHandler(svc SuiteServiceHandler, opts ...connect.HandlerOpti
 		SuiteServiceGetSuiteProcedure,
 		svc.GetSuite,
 		connect.WithSchema(suiteServiceMethods.ByName("GetSuite")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
+	suiteServiceListSuitesHandler := connect.NewUnaryHandlerSimple(
+		SuiteServiceListSuitesProcedure,
+		svc.ListSuites,
+		connect.WithSchema(suiteServiceMethods.ByName("ListSuites")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
@@ -248,6 +276,8 @@ func NewSuiteServiceHandler(svc SuiteServiceHandler, opts ...connect.HandlerOpti
 			suiteServiceCreateSuiteHandler.ServeHTTP(w, r)
 		case SuiteServiceGetSuiteProcedure:
 			suiteServiceGetSuiteHandler.ServeHTTP(w, r)
+		case SuiteServiceListSuitesProcedure:
+			suiteServiceListSuitesHandler.ServeHTTP(w, r)
 		case SuiteServiceLaunchSuiteRunProcedure:
 			suiteServiceLaunchSuiteRunHandler.ServeHTTP(w, r)
 		case SuiteServiceGetSuiteRunProcedure:
@@ -273,6 +303,10 @@ func (UnimplementedSuiteServiceHandler) GetSuite(context.Context, *ui.GetSuiteRe
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.SuiteService.GetSuite is not implemented"))
 }
 
+func (UnimplementedSuiteServiceHandler) ListSuites(context.Context, *ui.ListSuitesRequest) (*ui.ListSuitesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.SuiteService.ListSuites is not implemented"))
+}
+
 func (UnimplementedSuiteServiceHandler) LaunchSuiteRun(context.Context, *ui.LaunchSuiteRunRequest) (*models.SuiteRun, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.SuiteService.LaunchSuiteRun is not implemented"))
 }
@@ -281,7 +315,7 @@ func (UnimplementedSuiteServiceHandler) GetSuiteRun(context.Context, *ui.GetSuit
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.SuiteService.GetSuiteRun is not implemented"))
 }
 
-func (UnimplementedSuiteServiceHandler) ListSuiteRuns(context.Context, *ui.ListSuiteRunsRequest) (*models.SuiteRun_List, error) {
+func (UnimplementedSuiteServiceHandler) ListSuiteRuns(context.Context, *ui.ListSuiteRunsRequest) (*ui.ListSuiteRunsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.SuiteService.ListSuiteRuns is not implemented"))
 }
 

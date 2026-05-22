@@ -30,8 +30,8 @@ type RecipeInstallBuilder struct{}
 
 var _ InstallBuilder = RecipeInstallBuilder{}
 
-func (RecipeInstallBuilder) Build(preset *domain.TestPreset) *primitive.Dag {
-	sub, err := BuildInstallDag(preset)
+func (RecipeInstallBuilder) Build(preset *domain.TestPreset, runID string) *primitive.Dag {
+	sub, err := BuildInstallDag(preset, runID)
 	if err != nil {
 		// Real callers validate the preset at plan time; an empty sub-dag keeps the
 		// surrounding deploy/teardown dag well-formed for illustration.
@@ -68,15 +68,22 @@ type componentGroup struct {
 // chains (kind-ranked, replication-ordered) plus the run_stroppy workload node —
 // all agent-locus nodes the agent leases and runs on its host. This is the concrete
 // "install the databases + run stroppy" code reused by the dag blueprint.
-func BuildInstallDag(preset *domain.TestPreset) (*primitive.Dag, error) {
+// BuildInstallDag builds the per-component install/run sub-dag. runID is the OWNING
+// run's dag id — it labels every metric (vmagent/stroppy run_id) and every Vector log
+// line (dag_id), so QueryRunLogs/GetRunMetrics (which key on the run's dag id)
+// correlate logs + metrics to the run across agent-command output AND Vector/vmagent.
+func BuildInstallDag(preset *domain.TestPreset, runID string) (*primitive.Dag, error) {
 	topo := preset.GetTopology()
 	db := preset.GetDatabase()
+	if runID == "" {
+		runID = ids.New()
+	}
 
 	var groups []componentGroup
 	byID := map[string]*componentGroup{}
 	for _, m := range topo.GetMachines() {
 		for _, c := range m.GetComponents() {
-			nodes, err := componentChain(c, db, topo, int(m.GetMemoryGb())*1024)
+			nodes, err := componentChain(c, db, preset.GetWorkload(), topo, runID, int(m.GetMemoryGb())*1024)
 			if err != nil {
 				return nil, err
 			}
@@ -90,6 +97,22 @@ func BuildInstallDag(preset *domain.TestPreset) (*primitive.Dag, error) {
 
 	var allNodes []*primitive.Dag_Node
 	var edges []*primitive.Dag_Edge
+
+	// Per-MACHINE monitoring chain: node_exporter + (DB exporter) + vmagent on
+	// every host, remote_writing to the server's VictoriaMetrics ingest. Monitoring
+	// runs in PARALLEL with the component install (no cross edge to the DB) — vmagent
+	// retries scraping a not-yet-up exporter, so there is no hard ordering need.
+	for _, m := range topo.GetMachines() {
+		monNodes, err := monitorChain(m, db, runID)
+		if err != nil {
+			return nil, err
+		}
+		allNodes = append(allNodes, monNodes...)
+		for j := 1; j < len(monNodes); j++ {
+			edges = append(edges, chainEdge(monNodes[j-1], monNodes[j])) // sequential within the machine
+		}
+	}
+
 	byRank := map[int][]*componentGroup{}
 	for i := range groups {
 		g := &groups[i]
@@ -133,10 +156,10 @@ func BuildInstallDag(preset *domain.TestPreset) (*primitive.Dag, error) {
 
 // componentChain builds one component's ordered agent.command nodes. STROPPY is a
 // single run node; AGENT/ADDON contribute nothing.
-func componentChain(c *domain.Topology_Component, db *domain.Database, topo *domain.Topology, memoryMB int) ([]*primitive.Dag_Node, error) {
+func componentChain(c *domain.Topology_Component, db *domain.Database, wl *domain.Workload, topo *domain.Topology, runID string, memoryMB int) ([]*primitive.Dag_Node, error) {
 	switch c.GetKind() {
 	case domain.Topology_Component_KIND_STROPPY:
-		n, err := stroppyNode(c, db, topo)
+		n, err := stroppyNode(c, db, wl, topo, runID)
 		if err != nil {
 			return nil, err
 		}
@@ -208,9 +231,9 @@ func componentChain(c *domain.Topology_Component, db *domain.Database, topo *dom
 
 // stroppyNode is the workload command: stroppy run against its FLOW target (the
 // proxy if present, else the primary database), via a late-binding host token.
-func stroppyNode(c *domain.Topology_Component, db *domain.Database, topo *domain.Topology) (*primitive.Dag_Node, error) {
+func stroppyNode(c *domain.Topology_Component, db *domain.Database, wl *domain.Workload, topo *domain.Topology, runID string) (*primitive.Dag_Node, error) {
 	target := flowTarget(c.GetId(), topo)
-	n, err := agentCommand(c.GetId()+".run_stroppy", runStroppyOp(db))
+	n, err := agentCommand(c.GetId()+".run_stroppy", runStroppyOp(db, wl, runID))
 	if err != nil {
 		return nil, err
 	}
@@ -299,15 +322,345 @@ func writeFileOpFor(file *system.File) *ops.Operation {
 	return &ops.Operation{Kind: ops.Operation_KIND_WRITE_FILE, Operation: &ops.Operation_WriteFile{WriteFile: file}}
 }
 
-// runStroppyOp builds the workload command. The DB host is a late-binding token
-// resolved to the target component's private ip at the plan->execute seam; the URL
-// scheme + port follow the engine.
-func runStroppyOp(db *domain.Database) *ops.Operation {
-	return &ops.Operation{Kind: ops.Operation_KIND_RUN_CMD, Operation: &ops.Operation_RunCmd{RunCmd: &system.Cmd_Spec{
-		Command: &system.Cmd_Spec_Argv{Argv: &system.Cmd_Argv{
-			Args: []string{"stroppy", "run", "--url", stroppyURL(db)},
-		}},
-	}}}
+// runStroppyOp builds the workload command. stroppy v5 is k6-based and takes a run
+// config file (`stroppy run -f <config>`), NOT --url flags. The script writes the
+// stroppy RunConfig JSON (driver type + url + script) then runs stroppy against it.
+// The DB host in the url is a late-binding token resolved to the target component's
+// private ip at the plan->execute seam. OTEL_EXPORTER_OTLP_ENDPOINT (expanded by the
+// agent shell) points stroppy's metrics at the server's VictoriaMetrics ingest (/vm)
+// so workload metrics land alongside the vmagent-scraped host/DB metrics.
+func runStroppyOp(db *domain.Database, wl *domain.Workload, runID string) *ops.Operation {
+	script, sql := stroppyScriptPaths(wl.GetScript(), db.GetKind())
+	sqlField := ""
+	if sql != "" {
+		sqlField = fmt.Sprintf(`"sql":%q,`, sql)
+	}
+	// stroppy RunConfig (protojson): script + driver + an OTLP exporter that pushes
+	// workload metrics to the server's VictoriaMetrics (cluster vminsert OTLP via the
+	// /vm proxy → vmauth), prefixed `stroppy_` and tagged via OTEL_RESOURCE_ATTRIBUTES
+	// run_id=<dag id> so GetRunMetrics correlates. Mirrors old injectOTLP.
+	// k6's OTLP/HTTP output wants endpoint = host:port ONLY (no scheme/path); the path
+	// is separate. STROPPY_AGENT_SERVER is the grpc/host:port the agent already knows.
+	global := `"global":{"exporter":{"otlp_export":{` +
+		`"otlp_http_endpoint":"${STROPPY_AGENT_SERVER}",` +
+		`"otlp_http_exporter_url_path":"/vm/insert/0/opentelemetry/api/v1/push",` +
+		`"otlp_endpoint_insecure":true,` +
+		`"otlp_metrics_prefix":"stroppy_"}}},`
+	env := fmt.Sprintf(`"env":{"OTEL_RESOURCE_ATTRIBUTES":"service.name=stroppy,run_id=%s"},`, runID)
+	cfg := fmt.Sprintf(`{"version":"1","script":%q,%s%s%s"drivers":{"0":{"driver_type":%q,"url":%q}}}`,
+		script, sqlField, global, env, stroppyDriverType(db.GetKind()), stroppyURL(db))
+	// Fetch the pinned stroppy from the server cache (not the image bake), so the
+	// version (with its embedded workloads) is identical on local Docker and YC VMs.
+	ver := strings.TrimPrefix(wl.GetStroppyVersion(), "v")
+	if ver == "" {
+		ver = "5.1.3"
+	}
+	// Unquoted heredoc so the agent shell expands ${STROPPY_SERVER_ADDR} in the OTLP
+	// endpoint (no other $ in the JSON — the DB host is a render token, not a shell var).
+	return scriptOp(strings.Join([]string{
+		"set -e",
+		fetchBinary("stroppy", ver, "stroppy_linux_amd64.tar.gz", "stroppy", "stroppy"),
+		"mkdir -p /etc/stroppy",
+		"cat > /etc/stroppy/run-config.json << STROPPYCFG",
+		cfg,
+		"STROPPYCFG",
+		"stroppy run -f /etc/stroppy/run-config.json",
+	}, "\n"))
+}
+
+// stroppyScriptPaths maps a friendly workload name + engine to stroppy's embedded
+// script (.ts) and SQL paths (relative to the embedded workloads/ dir). The bare
+// preset name (e.g. "tpcc") is a directory, not a runnable file — stroppy needs the
+// concrete .ts. Engine selects the matching .sql dialect.
+func stroppyScriptPaths(name string, _ domain.Database_Kind) (script, sql string) {
+	// Map friendly preset names to stroppy's embedded script path (old code's proven
+	// default). stroppy auto-resolves the per-driver .sql from the preset dir, so sql
+	// stays empty. An explicit path (contains "/" or ".ts") is used verbatim.
+	switch {
+	case name == "" || name == "tpcc":
+		return "tpcc/procs", ""
+	case name == "tpcb":
+		return "tpcb/procs", ""
+	case name == "tpch":
+		return "tpch/tx.ts", "" // tpch is analytical — tx variant only (no procs)
+	default:
+		return name, "" // explicit path (e.g. "tpcc/tx.ts") used verbatim
+	}
+}
+
+// stroppyDriverType maps a database engine to stroppy's driver selector (-d).
+func stroppyDriverType(kind domain.Database_Kind) string {
+	// stroppy driverType allowlist: csv, mysql, noop, picodata, postgres, ydb.
+	switch kind {
+	case domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
+		return "mysql"
+	case domain.Database_KIND_PICODATA:
+		return "picodata"
+	case domain.Database_KIND_YDB:
+		return "ydb"
+	default: // postgres, cockroach (pg-wire)
+		return "postgres"
+	}
+}
+
+// ── per-machine monitoring chain ───────────────────────────────────────────────
+
+// machineHostsDatabase reports whether any component on the machine is a DATABASE,
+// so its monitor chain installs/scrapes the engine exporter.
+func machineHostsDatabase(m *domain.Topology_Machine) bool {
+	for _, c := range m.GetComponents() {
+		if c.GetKind() == domain.Topology_Component_KIND_DATABASE {
+			return true
+		}
+	}
+	return false
+}
+
+// monitorChain builds one machine's monitoring node-chain (all agent.command,
+// sequential within the machine): node_exporter → [DB exporter] → vmagent. It is
+// the new-dag port of the old executor's installMonitor/configMonitor pipeline.
+//
+// Everything ships metrics to VictoriaMetrics via vmagent's -remoteWrite.url. The
+// server reverse-proxies /vm/* to VM, so the remote_write URL is
+// ${STROPPY_SERVER_ADDR}/vm/api/v1/write. ${STROPPY_SERVER_ADDR} is expanded by the
+// agent's shell when the heredoc writes the unit/config — NOT resolved at plan time.
+// An external label run_id is added so dashboards filter per run.
+//
+// System-log shipping: command output is already streamed to the server via the
+// agent's SendLogs; vmagent additionally remote_writes node/DB metrics. Journald →
+// VictoriaLogs (/vl) scraping is a deliberate follow-up (the old vector-based
+// shipper, executor.go startVector) — not ported here to keep the chain to the
+// must-have metrics path; see internal/old/domain/agent/executor.go for the recipe.
+func monitorChain(m *domain.Topology_Machine, db *domain.Database, runID string) ([]*primitive.Dag_Node, error) {
+	prefix := m.GetId() + ".monitor"
+	var nodes []*primitive.Dag_Node
+	add := func(suffix string, op *ops.Operation) error {
+		n, err := agentCommand(prefix+"_"+suffix, op)
+		if err != nil {
+			return err
+		}
+		nodes = append(nodes, n)
+		return nil
+	}
+
+	// 1. node_exporter (host metrics) on every machine — binary from the server
+	//    cache (not apt), so it installs identically on a fresh YC VM. Port 9100.
+	if err := add("node_exporter", scriptOp(nodeExporterInstallScript())); err != nil {
+		return nil, err
+	}
+
+	// 2. DB-kind exporter ONLY on machines hosting a DATABASE component.
+	//    - postgres/mysql: install a separate exporter + systemd unit at the LOCAL db.
+	//    - cockroach/ydb/picodata: native Prometheus endpoint, no exporter (scraped directly).
+	var exp dbExporter
+	var hasExp bool
+	if machineHostsDatabase(m) {
+		if e, ok := dbExporterFor(db.GetKind()); ok {
+			exp, hasExp = e, true
+			if !e.native {
+				if err := add("db_exporter", scriptOp(dbExporterInstallScript(e))); err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
+	// 3. vmagent: install (download vmutils, extract vmagent-prod), write scrape
+	//    config + systemd unit, start. Last in the chain so its scrape targets
+	//    (node_exporter / DB exporter) are already started.
+	if err := add("vmagent_install", scriptOp(vmagentInstallScript())); err != nil {
+		return nil, err
+	}
+	if err := add("vmagent_config", scriptOp(vmagentConfigScript(runID, hasExp, exp))); err != nil {
+		return nil, err
+	}
+	if err := add("vmagent_start", scriptOp(vmagentStartScript())); err != nil {
+		return nil, err
+	}
+
+	// 4. vector: collects ALL logs on the host — journald (every systemd service:
+	//    db, patroni, haproxy, vmagent, …) + DB log files — and ships them to the
+	//    server's VictoriaLogs ingest, tagged with run/machine/unit for filtering.
+	if err := add("vector_install", scriptOp(vectorInstallScript())); err != nil {
+		return nil, err
+	}
+	if err := add("vector_config", scriptOp(vectorConfigScript(runID, m.GetId(), db.GetKind()))); err != nil {
+		return nil, err
+	}
+	if err := add("vector_start", scriptOp(vectorStartScript())); err != nil {
+		return nil, err
+	}
+
+	return nodes, nil
+}
+
+// vectorInstallScript installs vector from the server cache.
+func vectorInstallScript() string {
+	file := "vector-" + vectorVersion + "-x86_64-unknown-linux-musl.tar.gz"
+	archive := "vector-x86_64-unknown-linux-musl/bin/vector"
+	return "set -e\n" + fetchBinary("vector", vectorVersion, file, archive, "vector")
+}
+
+// vectorConfigScript writes /etc/stroppy/vector.yaml: tail journald + DB log files,
+// tag each event with run_id/machine_id/unit, and POST to the server's VictoriaLogs
+// ingest. The heredoc is UNQUOTED so the agent shell expands ${STROPPY_SERVER_ADDR}
+// into the sink URI at write time.
+func vectorConfigScript(runID, machineID string, kind domain.Database_Kind) string {
+	var b strings.Builder
+	b.WriteString("data_dir: /var/lib/vector\n\nsources:\n")
+	b.WriteString("  journald:\n    type: journald\n    current_boot_only: true\n")
+	dbInputs := ""
+	switch kind {
+	case domain.Database_KIND_POSTGRES, domain.Database_KIND_COCKROACH:
+		b.WriteString("  db_files:\n    type: file\n    include: ['/var/log/postgresql/*.log']\n    read_from: end\n")
+		dbInputs = ", 'db_files'"
+	case domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
+		b.WriteString("  db_files:\n    type: file\n    include: ['/var/log/mysql/*.log']\n    read_from: end\n")
+		dbInputs = ", 'db_files'"
+	}
+	b.WriteString("\ntransforms:\n  enrich:\n    inputs: ['journald'" + dbInputs + "]\n    type: remap\n    source: |\n")
+	// Tag with the SAME labels as agent command logs (logs.SendLogs) so logs filter
+	// uniformly: dag_id (the run, queried by QueryRunLogs), tenant_id, machine_id, unit.
+	// ${STROPPY_AGENT_TENANT} is expanded by the agent shell when the config is written.
+	fmt.Fprintf(&b, "      .dag_id = %q\n", runID)
+	b.WriteString("      .tenant_id = \"${STROPPY_AGENT_TENANT}\"\n")
+	fmt.Fprintf(&b, "      .machine_id = %q\n", machineID)
+	b.WriteString("      .unit = \"\"\n")
+	b.WriteString("      if is_string(.SYSTEMD_UNIT) { .unit = .SYSTEMD_UNIT } else if is_string(.source_type) { .unit = .source_type }\n")
+	b.WriteString("      if !exists(.timestamp) { .timestamp = now() }\n")
+	b.WriteString("      if is_string(.message) { .message = .message } else if is_string(.MESSAGE) { .message = .MESSAGE } else { .message = encode_json(.) }\n")
+	b.WriteString("\nsinks:\n  victorialogs:\n    type: http\n    inputs: ['enrich']\n")
+	b.WriteString("    uri: ${STROPPY_SERVER_ADDR}" + vlInsertPath + "\n")
+	b.WriteString("    method: post\n    encoding:\n      codec: json\n    framing:\n      method: newline_delimited\n")
+	b.WriteString("    batch:\n      max_events: 1000\n      timeout_secs: 5\n")
+	return "mkdir -p /etc/stroppy /var/lib/vector\ncat > /etc/stroppy/vector.yaml << VECTORCFG\n" + b.String() + "VECTORCFG"
+}
+
+// vectorStartScript writes the vector systemd unit and starts it.
+func vectorStartScript() string {
+	unit := strings.Join([]string{
+		"[Unit]", "Description=stroppy vector log shipper", "After=network.target",
+		"[Service]",
+		"EnvironmentFile=-/etc/stroppy-agent.env",
+		"ExecStart=/usr/local/bin/vector --config /etc/stroppy/vector.yaml",
+		"Restart=always",
+		"[Install]", "WantedBy=multi-user.target",
+	}, "\n")
+	return systemdUnitScript("stroppy-vector", unit)
+}
+
+// dbExporterInstallScript installs a separate DB exporter (postgres/mysql) and runs
+// it as a systemd unit pointed at the LOCAL database.
+func dbExporterInstallScript(e dbExporter) string {
+	// mysql/mariadb need a least-privilege exporter user before the exporter starts.
+	pre := ""
+	if e.job == "mysql" {
+		pre = `mysql -h 127.0.0.1 -u root -e "CREATE USER IF NOT EXISTS 'exporter'@'localhost' IDENTIFIED BY 'exporter' WITH MAX_USER_CONNECTIONS 3; GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'localhost'; FLUSH PRIVILEGES;" 2>/dev/null || true
+`
+	}
+	unit := strings.Join([]string{
+		"[Unit]",
+		"Description=stroppy " + e.job + " exporter",
+		"After=network.target",
+		"[Service]",
+		e.dataSourceEnv,
+		"ExecStart=" + e.execStart,
+		"Restart=always",
+		"[Install]",
+		"WantedBy=multi-user.target",
+	}, "\n")
+	return "set -e\n" + pre +
+		fetchBinary(e.binName, e.binVersion, e.binFile, e.binArchive, e.binName) + "\n" +
+		systemdUnitScript(e.serviceName, unit)
+}
+
+// fetchBinary builds a shell snippet that downloads a binary archive from the SERVER
+// cache (${STROPPY_SERVER_ADDR}/binary/<name>/<ver>/<file>, expanded by the agent
+// shell at exec time), extracts it, and installs <archivePath> to /usr/local/bin/<dest>.
+// Routing through the server (bincache) means the recipe is identical for local Docker
+// and Yandex Cloud, and upstream is fetched + cached exactly once.
+func fetchBinary(name, ver, file, archivePath, dest string) string {
+	url := "${STROPPY_SERVER_ADDR}/binary/" + name + "/" + ver + "/" + file
+	// Install via a temp file + atomic mv: rename() over a running ("Text file busy")
+	// binary succeeds on Linux, so a retried command never fails on the busy dest.
+	return strings.Join([]string{
+		`curl -fsSL --retry 5 --retry-delay 3 "` + url + `" -o /tmp/` + name + `.tar.gz`,
+		"tar xzf /tmp/" + name + ".tar.gz -C /tmp",
+		"chmod +x /tmp/" + archivePath,
+		"mv -f /tmp/" + archivePath + " /usr/local/bin/" + dest,
+	}, "\n")
+}
+
+// systemdUnitScript writes a systemd unit file and enables+starts it.
+func systemdUnitScript(serviceName, unit string) string {
+	return "cat > /etc/systemd/system/" + serviceName + ".service << 'UNIT'\n" + unit + "\nUNIT\n" +
+		"systemctl daemon-reload\nsystemctl enable --now " + serviceName
+}
+
+// nodeExporterInstallScript installs node_exporter from the server cache + a unit.
+func nodeExporterInstallScript() string {
+	file := "node_exporter-" + nodeExporterVersion + ".linux-amd64.tar.gz"
+	archive := "node_exporter-" + nodeExporterVersion + ".linux-amd64/node_exporter"
+	unit := strings.Join([]string{
+		"[Unit]", "Description=node_exporter", "After=network.target",
+		"[Service]", "ExecStart=/usr/local/bin/node_exporter", "Restart=always",
+		"[Install]", "WantedBy=multi-user.target",
+	}, "\n")
+	return "set -e\n" +
+		fetchBinary("node_exporter", nodeExporterVersion, file, archive, "node_exporter") + "\n" +
+		systemdUnitScript("node_exporter", unit)
+}
+
+// vmagentInstallScript installs vmagent from the server cache (vmutils tarball →
+// vmagent-prod → /usr/local/bin/vmagent).
+func vmagentInstallScript() string {
+	file := "vmutils-linux-amd64-v" + vmagentVersion + ".tar.gz"
+	return "set -e\n" + fetchBinary("vmagent", vmagentVersion, file, "vmagent-prod", "vmagent")
+}
+
+// vmagentConfigScript writes /etc/stroppy/vmagent.yml: scrape node_exporter on
+// localhost:9100 and, on DB machines, the DB exporter / native metrics port. An
+// external label run_id tags every series. The heredoc is single-quoted so the
+// scrape config is written verbatim (no shell expansion needed — the remote_write
+// URL is a vmagent FLAG, set in the systemd unit where ${STROPPY_SERVER_ADDR} is
+// expanded at write time).
+func vmagentConfigScript(runID string, hasExp bool, exp dbExporter) string {
+	var cfg strings.Builder
+	cfg.WriteString("# Generated by stroppy-cloud install dag\n")
+	cfg.WriteString("global:\n  scrape_interval: 5s\n")
+	cfg.WriteString("  external_labels:\n    run_id: '" + runID + "'\n")
+	cfg.WriteString("\nscrape_configs:\n")
+	cfg.WriteString("  - job_name: node\n    static_configs:\n      - targets: ['localhost:" + nodeExporterPort + "']\n")
+	if hasExp {
+		cfg.WriteString("  - job_name: " + exp.job + "\n")
+		if exp.metricPath != "" {
+			cfg.WriteString("    metrics_path: " + exp.metricPath + "\n")
+		}
+		cfg.WriteString("    static_configs:\n      - targets: ['localhost:" + exp.scrapePort + "']\n")
+	}
+	return "mkdir -p /etc/stroppy && cat > /etc/stroppy/vmagent.yml << 'VMSCRAPE'\n" + cfg.String() + "VMSCRAPE"
+}
+
+// vmagentStartScript writes the vmagent systemd unit and starts it. The
+// -remoteWrite.url points at the server's VM ingest (${STROPPY_SERVER_ADDR}/vm/...).
+// The heredoc is UNquoted so the agent's shell expands ${STROPPY_SERVER_ADDR} into
+// the unit at write time (systemd would not expand a process-env var on its own).
+func vmagentStartScript() string {
+	unit := strings.Join([]string{
+		"[Unit]",
+		"Description=stroppy vmagent (remote_write to VictoriaMetrics)",
+		"After=network.target",
+		"[Service]",
+		"ExecStart=/usr/local/bin/vmagent " +
+			"-promscrape.config=/etc/stroppy/vmagent.yml " +
+			"-remoteWrite.url=${STROPPY_SERVER_ADDR}" + remoteWritePath + " " +
+			"-remoteWrite.tmpDataPath=/var/lib/vmagent",
+		"Restart=always",
+		"[Install]",
+		"WantedBy=multi-user.target",
+	}, "\n")
+	return "mkdir -p /var/lib/vmagent && cat > /etc/systemd/system/stroppy-vmagent.service << UNIT\n" + unit + "\nUNIT\n" +
+		"systemctl daemon-reload && systemctl enable --now stroppy-vmagent"
 }
 
 // stroppyURL is the engine-specific connection URL with the late-binding host token.
@@ -316,8 +669,8 @@ func stroppyURL(db *domain.Database) string {
 	case domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
 		return "mysql://stroppy@" + stroppyDBHostToken + ":3306/stroppy"
 	case domain.Database_KIND_COCKROACH:
-		return "postgres://stroppy@" + stroppyDBHostToken + ":26257/stroppy"
-	default:
-		return "postgres://stroppy@" + stroppyDBHostToken + ":5432/stroppy"
+		return "postgresql://root@" + stroppyDBHostToken + ":26257/defaultdb?sslmode=disable"
+	default: // postgres pg-wire (old code's proven URL)
+		return "postgresql://postgres@" + stroppyDBHostToken + ":5432/postgres?sslmode=disable"
 	}
 }

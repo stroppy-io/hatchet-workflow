@@ -19,6 +19,8 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+
+	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 )
 
 // ensure the imports are used
@@ -37,6 +39,8 @@ var (
 	_ = sort.Sort
 
 	_ = deployment.Provider(0)
+
+	_ = models.SortOrder(0)
 )
 
 // Validate checks the field values on FetchQuotasRequest with the rules
@@ -282,10 +286,10 @@ func (m *ListNetworkAllocationsRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if m.GetPageSize() > 1000 {
+	if _, ok := ListNetworkAllocationsRequest_SortField_name[int32(m.GetSortField())]; !ok {
 		err := ListNetworkAllocationsRequestValidationError{
-			field:  "PageSize",
-			reason: "value must be less than or equal to 1000",
+			field:  "SortField",
+			reason: "value must be one of the defined enum values",
 		}
 		if !all {
 			return err
@@ -293,15 +297,107 @@ func (m *ListNetworkAllocationsRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetPageToken()) > 256 {
+	if _, ok := models.SortOrder_name[int32(m.GetOrder())]; !ok {
 		err := ListNetworkAllocationsRequestValidationError{
-			field:  "PageToken",
-			reason: "value length must be at most 256 runes",
+			field:  "Order",
+			reason: "value must be one of the defined enum values",
 		}
 		if !all {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPage()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListNetworkAllocationsRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListNetworkAllocationsRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPage()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListNetworkAllocationsRequestValidationError{
+				field:  "Page",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListNetworkAllocationsRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListNetworkAllocationsRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListNetworkAllocationsRequestValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.Search != nil {
+
+		if utf8.RuneCountInString(m.GetSearch()) > 64 {
+			err := ListNetworkAllocationsRequestValidationError{
+				field:  "Search",
+				reason: "value length must be at most 64 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.Zone != nil {
+
+		if utf8.RuneCountInString(m.GetZone()) > 64 {
+			err := ListNetworkAllocationsRequestValidationError{
+				field:  "Zone",
+				reason: "value length must be at most 64 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.Leased != nil {
+		// no validation rules for Leased
 	}
 
 	if len(errors) > 0 {
@@ -384,6 +480,172 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListNetworkAllocationsRequestValidationError{}
+
+// Validate checks the field values on ListNetworkAllocationsResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListNetworkAllocationsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListNetworkAllocationsResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// ListNetworkAllocationsResponseMultiError, or nil if none found.
+func (m *ListNetworkAllocationsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListNetworkAllocationsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetNetworkAllocations() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListNetworkAllocationsResponseValidationError{
+						field:  fmt.Sprintf("NetworkAllocations[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListNetworkAllocationsResponseValidationError{
+						field:  fmt.Sprintf("NetworkAllocations[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListNetworkAllocationsResponseValidationError{
+					field:  fmt.Sprintf("NetworkAllocations[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetPageInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListNetworkAllocationsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListNetworkAllocationsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPageInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListNetworkAllocationsResponseValidationError{
+				field:  "PageInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ListNetworkAllocationsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListNetworkAllocationsResponseMultiError is an error wrapping multiple
+// validation errors returned by ListNetworkAllocationsResponse.ValidateAll()
+// if the designated constraints aren't met.
+type ListNetworkAllocationsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListNetworkAllocationsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListNetworkAllocationsResponseMultiError) AllErrors() []error { return m }
+
+// ListNetworkAllocationsResponseValidationError is the validation error
+// returned by ListNetworkAllocationsResponse.Validate if the designated
+// constraints aren't met.
+type ListNetworkAllocationsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListNetworkAllocationsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListNetworkAllocationsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListNetworkAllocationsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListNetworkAllocationsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListNetworkAllocationsResponseValidationError) ErrorName() string {
+	return "ListNetworkAllocationsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListNetworkAllocationsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListNetworkAllocationsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListNetworkAllocationsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListNetworkAllocationsResponseValidationError{}
 
 // Validate checks the field values on ReconcileRequest with the rules defined
 // in the proto definition for this message. If any rules are violated, the

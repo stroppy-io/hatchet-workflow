@@ -8,6 +8,7 @@ package ui
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -24,14 +25,80 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// SortField — typed sortable columns (no arbitrary strings).
+type ListPackagesRequest_SortField int32
+
+const (
+	ListPackagesRequest_SORT_FIELD_UNSPECIFIED ListPackagesRequest_SortField = 0
+	ListPackagesRequest_SORT_FIELD_CREATED_AT  ListPackagesRequest_SortField = 1
+	ListPackagesRequest_SORT_FIELD_NAME        ListPackagesRequest_SortField = 2
+	ListPackagesRequest_SORT_FIELD_DB_KIND     ListPackagesRequest_SortField = 3
+)
+
+// Enum value maps for ListPackagesRequest_SortField.
+var (
+	ListPackagesRequest_SortField_name = map[int32]string{
+		0: "SORT_FIELD_UNSPECIFIED",
+		1: "SORT_FIELD_CREATED_AT",
+		2: "SORT_FIELD_NAME",
+		3: "SORT_FIELD_DB_KIND",
+	}
+	ListPackagesRequest_SortField_value = map[string]int32{
+		"SORT_FIELD_UNSPECIFIED": 0,
+		"SORT_FIELD_CREATED_AT":  1,
+		"SORT_FIELD_NAME":        2,
+		"SORT_FIELD_DB_KIND":     3,
+	}
+)
+
+func (x ListPackagesRequest_SortField) Enum() *ListPackagesRequest_SortField {
+	p := new(ListPackagesRequest_SortField)
+	*p = x
+	return p
+}
+
+func (x ListPackagesRequest_SortField) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ListPackagesRequest_SortField) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_api_ui_package_proto_enumTypes[0].Descriptor()
+}
+
+func (ListPackagesRequest_SortField) Type() protoreflect.EnumType {
+	return &file_cloud_v1_api_ui_package_proto_enumTypes[0]
+}
+
+func (x ListPackagesRequest_SortField) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ListPackagesRequest_SortField.Descriptor instead.
+func (ListPackagesRequest_SortField) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_package_proto_rawDescGZIP(), []int{0, 0}
+}
+
 // PackageService manages the package catalog (H51). Every request carries
 // tenant_id (membership + role validated; scoped by it, A). ListPackages merges
 // backend builtin recipes with the tenant's custom uploads. Uploading a .deb does
 // NOT stream bytes through the API: RequestPackageUpload creates the record and
 // returns a presigned PUT URL; the client uploads to S3 directly (G2).
 type ListPackagesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	TenantId *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// search filters by package name (free text).
+	Search *string `protobuf:"bytes,2,opt,name=search,proto3,oneof" json:"search,omitempty"`
+	// db_kind filters by database kind (e.g. "postgresql").
+	DbKind *string `protobuf:"bytes,3,opt,name=db_kind,json=dbKind,proto3,oneof" json:"db_kind,omitempty"`
+	// db_version filters by database version string.
+	DbVersion *string `protobuf:"bytes,4,opt,name=db_version,json=dbVersion,proto3,oneof" json:"db_version,omitempty"`
+	// is_builtin tri-state: unset = all, true = builtin recipes, false = custom uploads.
+	IsBuiltin *bool                         `protobuf:"varint,5,opt,name=is_builtin,json=isBuiltin,proto3,oneof" json:"is_builtin,omitempty"`
+	SortField ListPackagesRequest_SortField `protobuf:"varint,6,opt,name=sort_field,json=sortField,proto3,enum=cloud.v1.api.ui.ListPackagesRequest_SortField" json:"sort_field,omitempty"`
+	Order     models.SortOrder              `protobuf:"varint,7,opt,name=order,proto3,enum=cloud.v1.models.SortOrder" json:"order,omitempty"`
+	Page      *models.Page                  `protobuf:"bytes,8,opt,name=page,proto3" json:"page,omitempty"`
+	// tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter.
+	Tags          *common.Tags `protobuf:"bytes,9,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -73,6 +140,115 @@ func (x *ListPackagesRequest) GetTenantId() *models.TenantId {
 	return nil
 }
 
+func (x *ListPackagesRequest) GetSearch() string {
+	if x != nil && x.Search != nil {
+		return *x.Search
+	}
+	return ""
+}
+
+func (x *ListPackagesRequest) GetDbKind() string {
+	if x != nil && x.DbKind != nil {
+		return *x.DbKind
+	}
+	return ""
+}
+
+func (x *ListPackagesRequest) GetDbVersion() string {
+	if x != nil && x.DbVersion != nil {
+		return *x.DbVersion
+	}
+	return ""
+}
+
+func (x *ListPackagesRequest) GetIsBuiltin() bool {
+	if x != nil && x.IsBuiltin != nil {
+		return *x.IsBuiltin
+	}
+	return false
+}
+
+func (x *ListPackagesRequest) GetSortField() ListPackagesRequest_SortField {
+	if x != nil {
+		return x.SortField
+	}
+	return ListPackagesRequest_SORT_FIELD_UNSPECIFIED
+}
+
+func (x *ListPackagesRequest) GetOrder() models.SortOrder {
+	if x != nil {
+		return x.Order
+	}
+	return models.SortOrder(0)
+}
+
+func (x *ListPackagesRequest) GetPage() *models.Page {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+func (x *ListPackagesRequest) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// ListPackagesResponse — rows plus pagination metadata (H42).
+type ListPackagesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Packages      []*models.Package      `protobuf:"bytes,1,rep,name=packages,proto3" json:"packages,omitempty"`
+	PageInfo      *models.PageInfo       `protobuf:"bytes,2,opt,name=page_info,json=pageInfo,proto3" json:"page_info,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPackagesResponse) Reset() {
+	*x = ListPackagesResponse{}
+	mi := &file_cloud_v1_api_ui_package_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPackagesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPackagesResponse) ProtoMessage() {}
+
+func (x *ListPackagesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_ui_package_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPackagesResponse.ProtoReflect.Descriptor instead.
+func (*ListPackagesResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_package_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ListPackagesResponse) GetPackages() []*models.Package {
+	if x != nil {
+		return x.Packages
+	}
+	return nil
+}
+
+func (x *ListPackagesResponse) GetPageInfo() *models.PageInfo {
+	if x != nil {
+		return x.PageInfo
+	}
+	return nil
+}
+
 type RequestPackageUploadRequest struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	TenantId  *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
@@ -87,7 +263,7 @@ type RequestPackageUploadRequest struct {
 
 func (x *RequestPackageUploadRequest) Reset() {
 	*x = RequestPackageUploadRequest{}
-	mi := &file_cloud_v1_api_ui_package_proto_msgTypes[1]
+	mi := &file_cloud_v1_api_ui_package_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -99,7 +275,7 @@ func (x *RequestPackageUploadRequest) String() string {
 func (*RequestPackageUploadRequest) ProtoMessage() {}
 
 func (x *RequestPackageUploadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_package_proto_msgTypes[1]
+	mi := &file_cloud_v1_api_ui_package_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -112,7 +288,7 @@ func (x *RequestPackageUploadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestPackageUploadRequest.ProtoReflect.Descriptor instead.
 func (*RequestPackageUploadRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_package_proto_rawDescGZIP(), []int{1}
+	return file_cloud_v1_api_ui_package_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *RequestPackageUploadRequest) GetTenantId() *models.TenantId {
@@ -162,7 +338,7 @@ type RequestPackageUploadResponse struct {
 
 func (x *RequestPackageUploadResponse) Reset() {
 	*x = RequestPackageUploadResponse{}
-	mi := &file_cloud_v1_api_ui_package_proto_msgTypes[2]
+	mi := &file_cloud_v1_api_ui_package_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -174,7 +350,7 @@ func (x *RequestPackageUploadResponse) String() string {
 func (*RequestPackageUploadResponse) ProtoMessage() {}
 
 func (x *RequestPackageUploadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_package_proto_msgTypes[2]
+	mi := &file_cloud_v1_api_ui_package_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -187,7 +363,7 @@ func (x *RequestPackageUploadResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestPackageUploadResponse.ProtoReflect.Descriptor instead.
 func (*RequestPackageUploadResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_package_proto_rawDescGZIP(), []int{2}
+	return file_cloud_v1_api_ui_package_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *RequestPackageUploadResponse) GetPackage() *models.Package {
@@ -214,7 +390,7 @@ type DeletePackageRequest struct {
 
 func (x *DeletePackageRequest) Reset() {
 	*x = DeletePackageRequest{}
-	mi := &file_cloud_v1_api_ui_package_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_ui_package_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -226,7 +402,7 @@ func (x *DeletePackageRequest) String() string {
 func (*DeletePackageRequest) ProtoMessage() {}
 
 func (x *DeletePackageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_package_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_ui_package_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -239,7 +415,7 @@ func (x *DeletePackageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeletePackageRequest.ProtoReflect.Descriptor instead.
 func (*DeletePackageRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_package_proto_rawDescGZIP(), []int{3}
+	return file_cloud_v1_api_ui_package_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *DeletePackageRequest) GetTenantId() *models.TenantId {
@@ -260,9 +436,33 @@ var File_cloud_v1_api_ui_package_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_ui_package_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcloud/v1/api/ui/package.proto\x12\x0fcloud.v1.api.ui\x1a\x1ccloud/v1/models/common.proto\x1a\x1dcloud/v1/models/package.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x17validate/validate.proto\"W\n" +
+	"\x1dcloud/v1/api/ui/package.proto\x12\x0fcloud.v1.api.ui\x1a\x1acloud/v1/common/tags.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1dcloud/v1/models/package.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x17validate/validate.proto\"\x87\x05\n" +
 	"\x13ListPackagesRequest\x12@\n" +
-	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\"\xfa\x01\n" +
+	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12%\n" +
+	"\x06search\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02H\x00R\x06search\x88\x01\x01\x12%\n" +
+	"\adb_kind\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@H\x01R\x06dbKind\x88\x01\x01\x12+\n" +
+	"\n" +
+	"db_version\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x18@H\x02R\tdbVersion\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"is_builtin\x18\x05 \x01(\bH\x03R\tisBuiltin\x88\x01\x01\x12W\n" +
+	"\n" +
+	"sort_field\x18\x06 \x01(\x0e2..cloud.v1.api.ui.ListPackagesRequest.SortFieldB\b\xfaB\x05\x82\x01\x02\x10\x01R\tsortField\x12:\n" +
+	"\x05order\x18\a \x01(\x0e2\x1a.cloud.v1.models.SortOrderB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05order\x12)\n" +
+	"\x04page\x18\b \x01(\v2\x15.cloud.v1.models.PageR\x04page\x12)\n" +
+	"\x04tags\x18\t \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"o\n" +
+	"\tSortField\x12\x1a\n" +
+	"\x16SORT_FIELD_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15SORT_FIELD_CREATED_AT\x10\x01\x12\x13\n" +
+	"\x0fSORT_FIELD_NAME\x10\x02\x12\x16\n" +
+	"\x12SORT_FIELD_DB_KIND\x10\x03B\t\n" +
+	"\a_searchB\n" +
+	"\n" +
+	"\b_db_kindB\r\n" +
+	"\v_db_versionB\r\n" +
+	"\v_is_builtin\"\x84\x01\n" +
+	"\x14ListPackagesResponse\x124\n" +
+	"\bpackages\x18\x01 \x03(\v2\x18.cloud.v1.models.PackageR\bpackages\x126\n" +
+	"\tpage_info\x18\x02 \x01(\v2\x19.cloud.v1.models.PageInfoR\bpageInfo\"\xfa\x01\n" +
 	"\x1bRequestPackageUploadRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12\x1e\n" +
 	"\x04name\x18\x02 \x01(\tB\n" +
@@ -279,9 +479,9 @@ const file_cloud_v1_api_ui_package_proto_rawDesc = "" +
 	"\xfaB\ar\x05\x10\x01\x18\x80 R\tuploadUrl\"\x89\x01\n" +
 	"\x14DeletePackageRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12/\n" +
-	"\x02id\x18\x02 \x01(\v2\x15.cloud.v1.models.UlidB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02id2\xb9\x02\n" +
-	"\x0ePackageService\x12X\n" +
-	"\fListPackages\x12$.cloud.v1.api.ui.ListPackagesRequest\x1a\x1d.cloud.v1.models.Package.List\"\x03\x90\x02\x01\x12x\n" +
+	"\x02id\x18\x02 \x01(\v2\x15.cloud.v1.models.UlidB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02id2\xc1\x02\n" +
+	"\x0ePackageService\x12`\n" +
+	"\fListPackages\x12$.cloud.v1.api.ui.ListPackagesRequest\x1a%.cloud.v1.api.ui.ListPackagesResponse\"\x03\x90\x02\x01\x12x\n" +
 	"\x14RequestPackageUpload\x12,.cloud.v1.api.ui.RequestPackageUploadRequest\x1a-.cloud.v1.api.ui.RequestPackageUploadResponse\"\x03\x90\x02\x02\x12S\n" +
 	"\rDeletePackage\x12%.cloud.v1.api.ui.DeletePackageRequest\x1a\x16.google.protobuf.Empty\"\x03\x90\x02\x02BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/uib\x06proto3"
 
@@ -297,35 +497,47 @@ func file_cloud_v1_api_ui_package_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_ui_package_proto_rawDescData
 }
 
-var file_cloud_v1_api_ui_package_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_cloud_v1_api_ui_package_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cloud_v1_api_ui_package_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_cloud_v1_api_ui_package_proto_goTypes = []any{
-	(*ListPackagesRequest)(nil),          // 0: cloud.v1.api.ui.ListPackagesRequest
-	(*RequestPackageUploadRequest)(nil),  // 1: cloud.v1.api.ui.RequestPackageUploadRequest
-	(*RequestPackageUploadResponse)(nil), // 2: cloud.v1.api.ui.RequestPackageUploadResponse
-	(*DeletePackageRequest)(nil),         // 3: cloud.v1.api.ui.DeletePackageRequest
-	(*models.TenantId)(nil),              // 4: cloud.v1.models.TenantId
-	(*models.Package)(nil),               // 5: cloud.v1.models.Package
-	(*models.Ulid)(nil),                  // 6: cloud.v1.models.Ulid
-	(*models.Package_List)(nil),          // 7: cloud.v1.models.Package.List
-	(*emptypb.Empty)(nil),                // 8: google.protobuf.Empty
+	(ListPackagesRequest_SortField)(0),   // 0: cloud.v1.api.ui.ListPackagesRequest.SortField
+	(*ListPackagesRequest)(nil),          // 1: cloud.v1.api.ui.ListPackagesRequest
+	(*ListPackagesResponse)(nil),         // 2: cloud.v1.api.ui.ListPackagesResponse
+	(*RequestPackageUploadRequest)(nil),  // 3: cloud.v1.api.ui.RequestPackageUploadRequest
+	(*RequestPackageUploadResponse)(nil), // 4: cloud.v1.api.ui.RequestPackageUploadResponse
+	(*DeletePackageRequest)(nil),         // 5: cloud.v1.api.ui.DeletePackageRequest
+	(*models.TenantId)(nil),              // 6: cloud.v1.models.TenantId
+	(models.SortOrder)(0),                // 7: cloud.v1.models.SortOrder
+	(*models.Page)(nil),                  // 8: cloud.v1.models.Page
+	(*common.Tags)(nil),                  // 9: cloud.v1.common.Tags
+	(*models.Package)(nil),               // 10: cloud.v1.models.Package
+	(*models.PageInfo)(nil),              // 11: cloud.v1.models.PageInfo
+	(*models.Ulid)(nil),                  // 12: cloud.v1.models.Ulid
+	(*emptypb.Empty)(nil),                // 13: google.protobuf.Empty
 }
 var file_cloud_v1_api_ui_package_proto_depIdxs = []int32{
-	4, // 0: cloud.v1.api.ui.ListPackagesRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	4, // 1: cloud.v1.api.ui.RequestPackageUploadRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	5, // 2: cloud.v1.api.ui.RequestPackageUploadResponse.package:type_name -> cloud.v1.models.Package
-	4, // 3: cloud.v1.api.ui.DeletePackageRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	6, // 4: cloud.v1.api.ui.DeletePackageRequest.id:type_name -> cloud.v1.models.Ulid
-	0, // 5: cloud.v1.api.ui.PackageService.ListPackages:input_type -> cloud.v1.api.ui.ListPackagesRequest
-	1, // 6: cloud.v1.api.ui.PackageService.RequestPackageUpload:input_type -> cloud.v1.api.ui.RequestPackageUploadRequest
-	3, // 7: cloud.v1.api.ui.PackageService.DeletePackage:input_type -> cloud.v1.api.ui.DeletePackageRequest
-	7, // 8: cloud.v1.api.ui.PackageService.ListPackages:output_type -> cloud.v1.models.Package.List
-	2, // 9: cloud.v1.api.ui.PackageService.RequestPackageUpload:output_type -> cloud.v1.api.ui.RequestPackageUploadResponse
-	8, // 10: cloud.v1.api.ui.PackageService.DeletePackage:output_type -> google.protobuf.Empty
-	8, // [8:11] is the sub-list for method output_type
-	5, // [5:8] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	6,  // 0: cloud.v1.api.ui.ListPackagesRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	0,  // 1: cloud.v1.api.ui.ListPackagesRequest.sort_field:type_name -> cloud.v1.api.ui.ListPackagesRequest.SortField
+	7,  // 2: cloud.v1.api.ui.ListPackagesRequest.order:type_name -> cloud.v1.models.SortOrder
+	8,  // 3: cloud.v1.api.ui.ListPackagesRequest.page:type_name -> cloud.v1.models.Page
+	9,  // 4: cloud.v1.api.ui.ListPackagesRequest.tags:type_name -> cloud.v1.common.Tags
+	10, // 5: cloud.v1.api.ui.ListPackagesResponse.packages:type_name -> cloud.v1.models.Package
+	11, // 6: cloud.v1.api.ui.ListPackagesResponse.page_info:type_name -> cloud.v1.models.PageInfo
+	6,  // 7: cloud.v1.api.ui.RequestPackageUploadRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	10, // 8: cloud.v1.api.ui.RequestPackageUploadResponse.package:type_name -> cloud.v1.models.Package
+	6,  // 9: cloud.v1.api.ui.DeletePackageRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	12, // 10: cloud.v1.api.ui.DeletePackageRequest.id:type_name -> cloud.v1.models.Ulid
+	1,  // 11: cloud.v1.api.ui.PackageService.ListPackages:input_type -> cloud.v1.api.ui.ListPackagesRequest
+	3,  // 12: cloud.v1.api.ui.PackageService.RequestPackageUpload:input_type -> cloud.v1.api.ui.RequestPackageUploadRequest
+	5,  // 13: cloud.v1.api.ui.PackageService.DeletePackage:input_type -> cloud.v1.api.ui.DeletePackageRequest
+	2,  // 14: cloud.v1.api.ui.PackageService.ListPackages:output_type -> cloud.v1.api.ui.ListPackagesResponse
+	4,  // 15: cloud.v1.api.ui.PackageService.RequestPackageUpload:output_type -> cloud.v1.api.ui.RequestPackageUploadResponse
+	13, // 16: cloud.v1.api.ui.PackageService.DeletePackage:output_type -> google.protobuf.Empty
+	14, // [14:17] is the sub-list for method output_type
+	11, // [11:14] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_ui_package_proto_init() }
@@ -333,18 +545,20 @@ func file_cloud_v1_api_ui_package_proto_init() {
 	if File_cloud_v1_api_ui_package_proto != nil {
 		return
 	}
+	file_cloud_v1_api_ui_package_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_ui_package_proto_rawDesc), len(file_cloud_v1_api_ui_package_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   4,
+			NumEnums:      1,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_cloud_v1_api_ui_package_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_api_ui_package_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_api_ui_package_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_api_ui_package_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_api_ui_package_proto = out.File

@@ -70,7 +70,7 @@ type RunServiceClient interface {
 	// --- run lifecycle (tenant-scoped) ---
 	SubmitTestRun(context.Context, *ui.SubmitTestRunRequest) (*models.TestRun, error)
 	GetTestRun(context.Context, *ui.GetTestRunRequest) (*models.TestRun, error)
-	ListTestRuns(context.Context, *ui.ListTestRunsRequest) (*models.TestRun_List, error)
+	ListTestRuns(context.Context, *ui.ListTestRunsRequest) (*ui.ListTestRunsResponse, error)
 	CancelTestRun(context.Context, *ui.CancelTestRunRequest) (*models.TestRun, error)
 	// StreamTestRunLogs is a connect-go server-stream of unified log lines (F2).
 	StreamTestRunLogs(context.Context, *ui.StreamTestRunLogsRequest) (*connect.ServerStreamForClient[logs.LogLine], error)
@@ -110,7 +110,7 @@ func NewRunServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
-		listTestRuns: connect.NewClient[ui.ListTestRunsRequest, models.TestRun_List](
+		listTestRuns: connect.NewClient[ui.ListTestRunsRequest, ui.ListTestRunsResponse](
 			httpClient,
 			baseURL+RunServiceListTestRunsProcedure,
 			connect.WithSchema(runServiceMethods.ByName("ListTestRuns")),
@@ -180,7 +180,7 @@ func NewRunServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 type runServiceClient struct {
 	submitTestRun     *connect.Client[ui.SubmitTestRunRequest, models.TestRun]
 	getTestRun        *connect.Client[ui.GetTestRunRequest, models.TestRun]
-	listTestRuns      *connect.Client[ui.ListTestRunsRequest, models.TestRun_List]
+	listTestRuns      *connect.Client[ui.ListTestRunsRequest, ui.ListTestRunsResponse]
 	cancelTestRun     *connect.Client[ui.CancelTestRunRequest, models.TestRun]
 	streamTestRunLogs *connect.Client[ui.StreamTestRunLogsRequest, logs.LogLine]
 	queryRunLogs      *connect.Client[ui.QueryRunLogsRequest, logs.LogPage]
@@ -210,7 +210,7 @@ func (c *runServiceClient) GetTestRun(ctx context.Context, req *ui.GetTestRunReq
 }
 
 // ListTestRuns calls cloud.v1.api.ui.RunService.ListTestRuns.
-func (c *runServiceClient) ListTestRuns(ctx context.Context, req *ui.ListTestRunsRequest) (*models.TestRun_List, error) {
+func (c *runServiceClient) ListTestRuns(ctx context.Context, req *ui.ListTestRunsRequest) (*ui.ListTestRunsResponse, error) {
 	response, err := c.listTestRuns.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -291,7 +291,7 @@ type RunServiceHandler interface {
 	// --- run lifecycle (tenant-scoped) ---
 	SubmitTestRun(context.Context, *ui.SubmitTestRunRequest) (*models.TestRun, error)
 	GetTestRun(context.Context, *ui.GetTestRunRequest) (*models.TestRun, error)
-	ListTestRuns(context.Context, *ui.ListTestRunsRequest) (*models.TestRun_List, error)
+	ListTestRuns(context.Context, *ui.ListTestRunsRequest) (*ui.ListTestRunsResponse, error)
 	CancelTestRun(context.Context, *ui.CancelTestRunRequest) (*models.TestRun, error)
 	// StreamTestRunLogs is a connect-go server-stream of unified log lines (F2).
 	StreamTestRunLogs(context.Context, *ui.StreamTestRunLogsRequest, *connect.ServerStream[logs.LogLine]) error
@@ -431,7 +431,7 @@ func (UnimplementedRunServiceHandler) GetTestRun(context.Context, *ui.GetTestRun
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.GetTestRun is not implemented"))
 }
 
-func (UnimplementedRunServiceHandler) ListTestRuns(context.Context, *ui.ListTestRunsRequest) (*models.TestRun_List, error) {
+func (UnimplementedRunServiceHandler) ListTestRuns(context.Context, *ui.ListTestRunsRequest) (*ui.ListTestRunsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.ListTestRuns is not implemented"))
 }
 

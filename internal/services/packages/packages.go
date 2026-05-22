@@ -26,11 +26,8 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/utils/tracing"
 )
 
-// Uploader issues a presigned PUT URL for an object key (S3, G2).
-//
-// TODO(packages): no implementation exists yet — internal/infrastructure/s3 has
-// no presign helper. Needs an aws-sdk PresignClient.PresignPutObject wrapper.
-// Reported.
+// Uploader issues a presigned PUT URL for an object key (S3, G2). Implemented by
+// internal/infrastructure/s3 over the aws-sdk PresignClient.PresignPutObject.
 type Uploader interface {
 	PresignPut(ctx context.Context, objectKey string, ttl time.Duration) (uploadURL string, err error)
 }
@@ -68,22 +65,61 @@ func NewPackageService(logger *xlog.Logger, executor exec.DB, txm tx.Trm, az *au
 	}
 }
 
-// ListPackages returns the tenant's packages.
-func (s *PackageService) ListPackages(ctx context.Context, req *uipb.ListPackagesRequest) (*models.Package_List, error) {
+// ListPackages returns the tenant's packages with cursor pagination
+// (newest-first by default), optionally filtered by db kind/version/builtin.
+func (s *PackageService) ListPackages(ctx context.Context, req *uipb.ListPackagesRequest) (*uipb.ListPackagesResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListPackages",
-		func(ctx context.Context, _ trace.Span) (*models.Package_List, error) {
+		func(ctx context.Context, _ trace.Span) (*uipb.ListPackagesResponse, error) {
 			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
 				return nil, err
 			}
-			pkgs, err := s.packages.Query(ctx,
-				models.Packages.SelectAll().Where(
-					models.Packages.TenantId.Eq(req.GetTenantId().GetValue()),
-					models.Packages.DeletedAt.IsNull(),
-				))
+			size := svcutil.PageSize(req.GetPage())
+			desc := svcutil.CursorDesc(req.GetOrder())
+			q := models.Packages.SelectAll().Where(
+				models.Packages.TenantId.Eq(req.GetTenantId().GetValue()),
+				models.Packages.DeletedAt.IsNull(),
+			)
+			if req.DbKind != nil {
+				q = q.Where(models.Packages.DbKind.Eq(req.GetDbKind()))
+			}
+			if req.DbVersion != nil {
+				q = q.Where(models.Packages.DbVersion.Eq(req.GetDbVersion()))
+			}
+			if req.IsBuiltin != nil {
+				q = q.Where(models.Packages.IsBuiltin.Eq(req.GetIsBuiltin()))
+			}
+			// search: match the package name (free text).
+			if req.GetSearch() != "" {
+				q = q.Where(models.Packages.Name.ILike("%" + req.GetSearch() + "%"))
+			}
+			// tags: Tags is serialized JSON of common.Tags (a TEXT column) — match
+			// each requested free tag and key=value label as a substring.
+			for _, tag := range req.GetTags().GetTags() {
+				q = q.Where(models.Packages.Tags.ILike("%" + tag + "%"))
+			}
+			for k, v := range req.GetTags().GetLabels() {
+				q = q.Where(models.Packages.Tags.ILike("%" + k + "%" + v + "%"))
+			}
+			if tok := req.GetPage().GetToken(); tok != "" {
+				if desc {
+					q = q.Where(models.Packages.Id.Lt(tok))
+				} else {
+					q = q.Where(models.Packages.Id.Gt(tok))
+				}
+			}
+			if desc {
+				q = q.OrderByDESC(models.PackageColumnId)
+			} else {
+				q = q.OrderByASC(models.PackageColumnId)
+			}
+			rows, err := s.packages.Query(ctx, q.Limit(size+1))
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "list packages: %v", err)
 			}
-			return &models.Package_List{Packages: pkgs}, nil
+			items, pageInfo := svcutil.Paginate(rows, size, func(p *models.Package) string {
+				return p.GetEntity().GetId().GetValue()
+			})
+			return &uipb.ListPackagesResponse{Packages: items, PageInfo: pageInfo}, nil
 		})
 }
 

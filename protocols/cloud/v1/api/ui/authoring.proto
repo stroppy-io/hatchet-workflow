@@ -1,0 +1,155 @@
+syntax = "proto3";
+
+package cloud.v1.api.ui;
+
+import "cloud/v1/deployment/deployment.proto";
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/domain/test.proto";
+import "cloud/v1/domain/topology.proto";
+import "cloud/v1/domain/workload.proto";
+import "cloud/v1/models/common.proto";
+import "cloud/v1/runtime/primitive/dag.proto";
+import "cloud/v1/runtime/render/config.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui";
+
+/*
+    AuthoringService is the Wizard's stateless assembly surface. It NEVER persists:
+    it takes presets/drafts by VALUE, runs the pure domain transforms (assemble,
+    merge topology, materialize deployment, render/probe previews, compile the DAG
+    blueprint) and returns the immutable TestPreset plus diagnostics/provenance.
+    Persistence is PresetService (catalog); execution is RunService (SubmitTestRun).
+*/
+
+// TestPresetRef carries a by-value draft (selected presets are copied into the draft,
+// never executed by reference — editing the catalog later does not change the draft).
+message TestPresetRef {
+    models.TenantId tenant_id = 1 [(validate.rules).message = {required: true}];
+    domain.TestPreset test_preset = 2 [(validate.rules).message = {required: true}];
+}
+
+// Severity grades a diagnostic; ERROR blocks submit, WARNING is fixable, INFO is hint.
+enum Severity {
+    SEVERITY_UNSPECIFIED = 0;
+    SEVERITY_INFO = 1;
+    SEVERITY_WARNING = 2;
+    SEVERITY_ERROR = 3;
+}
+
+// DiagnosticCode classifies a compatibility/feasibility problem (Wizard step 1+).
+enum DiagnosticCode {
+    DIAGNOSTIC_CODE_UNSPECIFIED = 0;
+    DIAGNOSTIC_CODE_PROTOCOL_UNSUPPORTED = 1;          // workload protocol not supported by db kind
+    DIAGNOSTIC_CODE_SCRIPT_UNSUPPORTED = 2;            // script not supported for kind/protocol
+    DIAGNOSTIC_CODE_STROPPY_VERSION_BELOW_MIN = 3;     // stroppy version below required minimum
+    DIAGNOSTIC_CODE_TOPOLOGY_CONFLICT = 4;             // db/workload topology cannot be merged
+    DIAGNOSTIC_CODE_DEPLOYMENT_NOT_MATERIALIZABLE = 5; // deployment cannot be derived from topology
+    DIAGNOSTIC_CODE_QUOTA_EXCEEDED = 6;                // provider quota insufficient
+}
+
+message Diagnostic {
+    Severity severity = 1;
+    DiagnosticCode code = 2;
+    string message = 3;
+    /* field_path is the proto path of the offending element (UI highlight). */
+    string field_path = 4;
+}
+
+message DiagnosticsReport {
+    repeated Diagnostic diagnostics = 1;
+}
+
+// ProvenanceSource marks where an assembled element came from (UI badges).
+enum ProvenanceSource {
+    PROVENANCE_SOURCE_UNSPECIFIED = 0;
+    PROVENANCE_SOURCE_DATABASE_PRESET = 1;
+    PROVENANCE_SOURCE_WORKLOAD_PRESET = 2;
+    PROVENANCE_SOURCE_GENERATED = 3; // synthesized by the backend
+    PROVENANCE_SOURCE_USER = 4;      // edited by the user
+}
+
+// Provenance maps a field path to its source.
+message Provenance {
+    map<string, ProvenanceSource> fields = 1;
+}
+
+// TestPresetAssembly is the assemble/merge result: the immutable TestPreset plus the
+// diagnostics and provenance the Wizard renders.
+message TestPresetAssembly {
+    domain.TestPreset test_preset = 1;
+    repeated Diagnostic diagnostics = 2;
+    Provenance provenance = 3;
+}
+
+// ── step 1: choose presets ──────────────────────────────────────────────────
+message AssembleFromPresetsRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message = {required: true}];
+    domain.DatabasePreset database_preset = 2 [(validate.rules).message = {required: true}];
+    domain.WorkloadPreset workload_preset = 3 [(validate.rules).message = {required: true}];
+    deployment.Provider provider = 4 [(validate.rules).enum = {defined_only: true}];
+}
+
+// ── steps 2-3: edit database / workload (re-assemble after edits) ────────────
+message AssembleTestPresetRequest {
+    TestPresetRef draft = 1 [(validate.rules).message = {required: true}];
+}
+
+message RenderPreview {
+    repeated runtime.render.Config configs = 1; // per-component rendered config files
+}
+
+message WorkloadConfigPreview {
+    string stroppy_config = 1; // generated stroppy run config (JSON)
+}
+
+message WorkloadProbe {
+    repeated Diagnostic diagnostics = 1;
+    string stroppy_version = 2;
+    bool ok = 3;
+}
+
+// ── step 4: topology merge ──────────────────────────────────────────────────
+message MergeTopologyRequest {
+    domain.Topology database_topology = 1;
+    domain.Topology workload_topology = 2;
+    domain.Topology user_patch = 3; // user edits applied on top of the merge
+}
+
+message TopologyMerge {
+    domain.Topology topology = 1;
+    Provenance provenance = 2;
+    repeated Diagnostic diagnostics = 3;
+}
+
+// ── step 5: deployment ──────────────────────────────────────────────────────
+message MaterializeDeploymentIntentRequest {
+    domain.TestPreset test_preset = 1 [(validate.rules).message = {required: true}];
+    deployment.Provider provider = 2 [(validate.rules).enum = {defined_only: true}];
+}
+
+message DeploymentCheck {
+    repeated Diagnostic diagnostics = 1;
+    repeated deployment.QuotaRequest quota_requests = 2; // quota impact
+    bool feasible = 3;
+}
+
+service AuthoringService {
+    // step 1
+    rpc AssembleFromPresets (AssembleFromPresetsRequest) returns (TestPresetAssembly) {option idempotency_level = NO_SIDE_EFFECTS;}
+    // steps 2-3 (re-assemble after edits) + previews/probe
+    rpc AssembleTestPreset (AssembleTestPresetRequest) returns (TestPresetAssembly) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc ValidateTestPreset (TestPresetRef) returns (DiagnosticsReport) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc PreviewDatabaseRender (TestPresetRef) returns (RenderPreview) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc ProbeWorkload (TestPresetRef) returns (WorkloadProbe) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc PreviewWorkloadConfig (TestPresetRef) returns (WorkloadConfigPreview) {option idempotency_level = NO_SIDE_EFFECTS;}
+    // step 4
+    rpc MergeTopology (MergeTopologyRequest) returns (TopologyMerge) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc ValidateTopology (domain.Topology) returns (DiagnosticsReport) {option idempotency_level = NO_SIDE_EFFECTS;}
+    // step 5
+    rpc MaterializeDeploymentIntent (MaterializeDeploymentIntentRequest) returns (deployment.DeploymentIntent) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc ValidateDeploymentIntent (deployment.DeploymentIntent) returns (DiagnosticsReport) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc CheckDeployment (TestPresetRef) returns (DeploymentCheck) {option idempotency_level = NO_SIDE_EFFECTS;}
+    // step 6 — the BLUEPRINT (no run, no state, no tasks)
+    rpc CompileTestPresetPreview (TestPresetRef) returns (runtime.primitive.Dag) {option idempotency_level = NO_SIDE_EFFECTS;}
+}

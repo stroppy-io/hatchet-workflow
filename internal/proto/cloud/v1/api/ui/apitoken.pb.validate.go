@@ -456,6 +456,120 @@ func (m *ListApiTokensRequest) validate(all bool) error {
 		}
 	}
 
+	if _, ok := ListApiTokensRequest_SortField_name[int32(m.GetSortField())]; !ok {
+		err := ListApiTokensRequestValidationError{
+			field:  "SortField",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := models.SortOrder_name[int32(m.GetOrder())]; !ok {
+		err := ListApiTokensRequestValidationError{
+			field:  "Order",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPage()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListApiTokensRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListApiTokensRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPage()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListApiTokensRequestValidationError{
+				field:  "Page",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListApiTokensRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListApiTokensRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListApiTokensRequestValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.Search != nil {
+
+		if utf8.RuneCountInString(m.GetSearch()) > 256 {
+			err := ListApiTokensRequestValidationError{
+				field:  "Search",
+				reason: "value length must be at most 256 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.Role != nil {
+
+		if _, ok := models.TenantMember_Role_name[int32(m.GetRole())]; !ok {
+			err := ListApiTokensRequestValidationError{
+				field:  "Role",
+				reason: "value must be one of the defined enum values",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.Expired != nil {
+		// no validation rules for Expired
+	}
+
 	if len(errors) > 0 {
 		return ListApiTokensRequestMultiError(errors)
 	}
@@ -535,6 +649,171 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListApiTokensRequestValidationError{}
+
+// Validate checks the field values on ListApiTokensResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListApiTokensResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListApiTokensResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListApiTokensResponseMultiError, or nil if none found.
+func (m *ListApiTokensResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListApiTokensResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetApiTokens() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListApiTokensResponseValidationError{
+						field:  fmt.Sprintf("ApiTokens[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListApiTokensResponseValidationError{
+						field:  fmt.Sprintf("ApiTokens[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListApiTokensResponseValidationError{
+					field:  fmt.Sprintf("ApiTokens[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetPageInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListApiTokensResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListApiTokensResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPageInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListApiTokensResponseValidationError{
+				field:  "PageInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ListApiTokensResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListApiTokensResponseMultiError is an error wrapping multiple validation
+// errors returned by ListApiTokensResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ListApiTokensResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListApiTokensResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListApiTokensResponseMultiError) AllErrors() []error { return m }
+
+// ListApiTokensResponseValidationError is the validation error returned by
+// ListApiTokensResponse.Validate if the designated constraints aren't met.
+type ListApiTokensResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListApiTokensResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListApiTokensResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListApiTokensResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListApiTokensResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListApiTokensResponseValidationError) ErrorName() string {
+	return "ListApiTokensResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListApiTokensResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListApiTokensResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListApiTokensResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListApiTokensResponseValidationError{}
 
 // Validate checks the field values on RevokeApiTokenRequest with the rules
 // defined in the proto definition for this message. If any rules are

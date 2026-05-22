@@ -4,26 +4,24 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/gopherex/xlog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/agent/opexec"
+	agentpkg "github.com/stroppy-io/stroppy-cloud/internal/agent"
+	"github.com/stroppy-io/stroppy-cloud/internal/build"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/ids"
 	agentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
-	rtagent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent"
 )
 
-// RunAgent runs the agent poll loop against the control plane: register, then
-// Poll → execute the leased command's op locally via opexec → Report, forever.
-// This is the production agent (one per machine/VM); the server never executes
-// agent-locus nodes itself.
+// RunAgent dials the control plane and runs the per-machine agent loop
+// (internal/agent): register → heartbeat → poll → execute on-host → report, shipping
+// command logs back through the server's SendLogs RPC. The server never pushes (D16).
 func RunAgent(ctx context.Context, cfg *Config, logger *xlog.Logger) error {
-	log := logger.AppendName("agent")
 	conn, err := grpc.NewClient(cfg.Agent.ServerAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(bearerUnaryInterceptor(cfg.Agent.Token)),
@@ -31,89 +29,48 @@ func RunAgent(ctx context.Context, cfg *Config, logger *xlog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("dial %s: %w", cfg.Agent.ServerAddr, err)
 	}
-	defer conn.Close()
+	defer conn.Close() //nolint:errcheck
 
-	client := agentpb.NewAgentServiceClient(conn)
-	tenantID := &models.TenantId{Value: cfg.Agent.TenantID}
-	target := &rtagent.Target{MachineId: cfg.Agent.MachineID}
 	host, _ := os.Hostname()
-	opx := opexec.New()
-
-	if _, err := client.Register(ctx, &agentpb.RegisterRequest{
-		TenantId: tenantID,
-		Target:   target,
-		Host:     host,
-		Version:  "stroppy-cloud",
-		BootId:   ids.New(),
-	}); err != nil {
-		return fmt.Errorf("register: %w", err)
-	}
-	log.Info("agent registered", xlog.String("machine", cfg.Agent.MachineID))
-
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
-		resp, perr := client.Poll(ctx, &agentpb.PollRequest{TenantId: tenantID, Target: target, Host: host})
-		if perr != nil {
-			log.Warn("poll failed", xlog.String("error", perr.Error()))
-			sleep(ctx, cfg.Agent.PollEvery)
-			continue
-		}
-		lease := resp.GetLease()
-		if lease == nil {
-			sleep(ctx, cfg.Agent.PollEvery)
-			continue
-		}
-
-		cmd := lease.GetCommand()
-		log.Info("executing command", xlog.String("command", cmd.GetId()))
-		report := executeCommand(ctx, opx, cmd, target)
-		if _, rerr := client.Report(ctx, &agentpb.ReportRequest{
-			TenantId: tenantID,
-			Address:  lease.GetAddress(),
-			Report:   report,
-		}); rerr != nil {
-			log.Warn("report failed", xlog.String("error", rerr.Error()))
-		}
-	}
+	ag := agentpkg.New(logger, grpcAgentClient{c: agentpb.NewAgentServiceClient(conn)}, agentpkg.Config{
+		TenantID:     cfg.Agent.TenantID,
+		MachineID:    cfg.Agent.MachineID,
+		Host:         host,
+		Version:      build.Version,
+		BootID:       ids.New(),
+		PollInterval: cfg.Agent.PollEvery,
+	})
+	return ag.Run(ctx)
 }
 
-// executeCommand runs the command's op and maps the outcome to a Report.
-func executeCommand(ctx context.Context, opx *opexec.Executor, cmd *rtagent.Command, target *rtagent.Target) *rtagent.Report {
-	res, err := opx.Execute(ctx, cmd.GetOperation())
-	report := &rtagent.Report{CommandId: cmd.GetId(), Target: target, Result: res}
-	switch {
-	case err != nil:
-		report.Status = rtagent.CommandStatus_COMMAND_STATUS_FAILED
-		report.Error = err.Error()
-	case res.GetRunCmd() != nil && res.GetRunCmd().GetExitCode() != 0:
-		report.Status = rtagent.CommandStatus_COMMAND_STATUS_FAILED
-		report.Error = fmt.Sprintf("exit code %d: %s", res.GetRunCmd().GetExitCode(), string(res.GetRunCmd().GetStderr()))
-	default:
-		report.Status = rtagent.CommandStatus_COMMAND_STATUS_COMPLETED
-	}
-	return report
+// grpcAgentClient adapts the generated AgentServiceClient (variadic grpc.CallOption)
+// to the agent.Client interface.
+type grpcAgentClient struct{ c agentpb.AgentServiceClient }
+
+func (g grpcAgentClient) Register(ctx context.Context, req *agentpb.RegisterRequest) (*models.Agent, error) {
+	return g.c.Register(ctx, req)
 }
 
-func sleep(ctx context.Context, d time.Duration) {
-	t := time.NewTimer(d)
-	defer t.Stop()
-	select {
-	case <-ctx.Done():
-	case <-t.C:
-	}
+func (g grpcAgentClient) Heartbeat(ctx context.Context, req *agentpb.HeartbeatRequest) (*models.Agent, error) {
+	return g.c.Heartbeat(ctx, req)
+}
+
+func (g grpcAgentClient) Poll(ctx context.Context, req *agentpb.PollRequest) (*agentpb.PollResponse, error) {
+	return g.c.Poll(ctx, req)
+}
+
+func (g grpcAgentClient) Report(ctx context.Context, req *agentpb.ReportRequest) (*emptypb.Empty, error) {
+	return g.c.Report(ctx, req)
+}
+
+func (g grpcAgentClient) SendLogs(ctx context.Context, req *agentpb.SendLogsRequest) (*emptypb.Empty, error) {
+	return g.c.SendLogs(ctx, req)
 }
 
 // bearerUnaryInterceptor attaches the agent JWT as Authorization metadata.
 func bearerUnaryInterceptor(token string) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		if token != "" {
-			ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
-		}
+		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
 		return invoker(ctx, method, req, reply, cc, opts...)
 	}
 }

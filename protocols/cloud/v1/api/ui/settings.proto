@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.api.ui;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/models/common.proto";
 import "cloud/v1/models/settings.proto";
 import "google/protobuf/empty.proto";
@@ -18,7 +19,35 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     provider settings.
  */
 message ListSettingsItemsRequest {
+    /* SortField — typed sortable columns (no arbitrary strings). */
+    enum SortField {
+        SORT_FIELD_UNSPECIFIED = 0;
+        SORT_FIELD_PART = 1;
+        SORT_FIELD_KEY = 2;
+        SORT_FIELD_UPDATED_AT = 3;
+    }
     models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    /* part filters by settings partition. */
+    optional models.SettingsItem.Part part = 2 [(validate.rules).enum.defined_only = true];
+    /* key filters by settings key. */
+    optional models.SettingsItem.Key key = 3 [(validate.rules).enum.defined_only = true];
+    SortField sort_field = 4 [(validate.rules).enum.defined_only = true];
+    models.SortOrder order = 5 [(validate.rules).enum.defined_only = true];
+    models.Page page = 6;
+    /* tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter. */
+    common.Tags tags = 7;
+}
+
+/*
+    ListSettingsItemsResponse — rows plus pagination metadata (H42). SECRET
+    semantics: for secret-bearing keys (e.g. KEY_YANDEX_CLOUD_TOKEN,
+    KEY_YANDEX_CLOUD_SSH_PUBLIC_KEY) the server BLANKS SettingsItem.value in list
+    rows (redacted); GetSettingsItem reveals a single item. Convention only — no
+    masked flag on the row.
+ */
+message ListSettingsItemsResponse {
+    repeated models.SettingsItem settings_items = 1;
+    models.PageInfo page_info = 2;
 }
 message GetSettingsItemRequest {
     models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
@@ -37,7 +66,7 @@ message DeleteSettingsItemRequest {
 }
 
 service SettingsService {
-    rpc ListSettingsItems (ListSettingsItemsRequest) returns (models.SettingsItem.List) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc ListSettingsItems (ListSettingsItemsRequest) returns (ListSettingsItemsResponse) {option idempotency_level = NO_SIDE_EFFECTS;}
     rpc GetSettingsItem (GetSettingsItemRequest) returns (models.SettingsItem) {option idempotency_level = NO_SIDE_EFFECTS;}
     rpc SetSettingsItem (SetSettingsItemRequest) returns (models.SettingsItem) {option idempotency_level = IDEMPOTENT;}
     rpc DeleteSettingsItem (DeleteSettingsItemRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;}

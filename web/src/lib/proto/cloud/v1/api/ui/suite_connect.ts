@@ -3,8 +3,8 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CancelSuiteRunRequest, CreateSuiteRequest, GetSuiteRequest, GetSuiteRunRequest, LaunchSuiteRunRequest, ListSuiteRunsRequest } from "./suite_pbts";
-import { Suite, SuiteRun, SuiteRun_List } from "../../models/testing_pbts";
+import { CancelSuiteRunRequest, CreateSuiteRequest, GetSuiteRequest, GetSuiteRunRequest, LaunchSuiteRunRequest, ListSuiteRunsRequest, ListSuiteRunsResponse, ListSuitesRequest, ListSuitesResponse } from "./suite_pbts";
+import { Suite, SuiteRun } from "../../models/testing_pbts";
 import { MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -34,6 +34,16 @@ export const SuiteService = {
       idempotency: MethodIdempotency.NoSideEffects,
     },
     /**
+     * @generated from rpc cloud.v1.api.ui.SuiteService.ListSuites
+     */
+    listSuites: {
+      name: "ListSuites",
+      I: ListSuitesRequest,
+      O: ListSuitesResponse,
+      kind: MethodKind.Unary,
+      idempotency: MethodIdempotency.NoSideEffects,
+    },
+    /**
      * @generated from rpc cloud.v1.api.ui.SuiteService.LaunchSuiteRun
      */
     launchSuiteRun: {
@@ -59,7 +69,7 @@ export const SuiteService = {
     listSuiteRuns: {
       name: "ListSuiteRuns",
       I: ListSuiteRunsRequest,
-      O: SuiteRun_List,
+      O: ListSuiteRunsResponse,
       kind: MethodKind.Unary,
       idempotency: MethodIdempotency.NoSideEffects,
     },

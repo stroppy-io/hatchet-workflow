@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.models;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/models/common.proto";
 import "goplain/goplain.proto";
 import "ratelproto/ratelproto.proto";
@@ -29,4 +30,6 @@ message Account {
         BDD decision (A, features/tenancy/auth.feature).
      */
     bool is_admin = 6;
+    /* tags is a free label set for filtering/grouping. */
+    common.Tags tags = 7 [(goplain.field).serialize = true];
 }

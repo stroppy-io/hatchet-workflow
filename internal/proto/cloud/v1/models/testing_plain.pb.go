@@ -4,7 +4,9 @@
 package models
 
 import (
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	primitive "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
 	ratelcast "github.com/yaroher/ratel/pkg/ratelcast"
 	protojson "google.golang.org/protobuf/encoding/protojson"
 	time "time"
@@ -27,6 +29,8 @@ type TestRunScanner struct {
 	TestPreset     []byte     `json:"testPreset"`           // origin: serialized, empath: test_preset
 	Dag            string     `json:"dag"`                  // origin: type_alias, empath: dag
 	SuiteRunId     *string    `json:"suiteRunId,omitempty"` // origin: type_alias, empath: suite_run_id
+	Tags           []byte     `json:"tags"`                 // origin: serialized, empath: tags
+	Status         string     `json:"status"`
 }
 
 // IntoPlain converts protobuf message to plain struct
@@ -80,6 +84,15 @@ func (pb *TestRun) IntoPlain() *TestRunScanner {
 		_tmp := pb.GetSuiteRunId().GetValue()
 		p.SuiteRunId = &_tmp
 	}
+	// Tags serialized from tags
+	if pb.Tags != nil {
+		if data, err := protojson.Marshal(pb.Tags); err == nil {
+			p.Tags = data
+		}
+	} else {
+		p.Tags = []byte{}
+	}
+	p.Status = pb.Status.String()
 	return p
 }
 
@@ -163,6 +176,14 @@ func (p *TestRunScanner) IntoPb() *TestRun {
 	if p.SuiteRunId != nil {
 		pb.SuiteRunId = &SuiteRunId{Value: *p.SuiteRunId}
 	}
+	// Tags deserialize -> tags
+	if len(p.Tags) > 0 {
+		var msg common.Tags
+		if err := protojson.Unmarshal(p.Tags, &msg); err == nil {
+			pb.Tags = &msg
+		}
+	}
+	pb.Status = primitive.Status(primitive.Status_value[p.Status])
 	return pb
 }
 
@@ -178,6 +199,7 @@ type SuiteScanner struct {
 	Preset         []byte     `json:"preset"` // origin: serialized, empath: preset
 	Cron           []byte     `json:"cron"`   // origin: serialized, empath: cron
 	NextFireAt     *time.Time `json:"nextFireAt,omitempty"`
+	Tags           []byte     `json:"tags"` // origin: serialized, empath: tags
 }
 
 // IntoPlain converts protobuf message to plain struct
@@ -233,6 +255,14 @@ func (pb *Suite) IntoPlain() *SuiteScanner {
 	if pb.NextFireAt != nil {
 		_tmp := ratelcast.TimestampToTime(pb.NextFireAt)
 		p.NextFireAt = &_tmp
+	}
+	// Tags serialized from tags
+	if pb.Tags != nil {
+		if data, err := protojson.Marshal(pb.Tags); err == nil {
+			p.Tags = data
+		}
+	} else {
+		p.Tags = []byte{}
 	}
 	return p
 }
@@ -319,6 +349,13 @@ func (p *SuiteScanner) IntoPb() *Suite {
 	if p.NextFireAt != nil {
 		pb.NextFireAt = ratelcast.TimeToTimestamp(*p.NextFireAt)
 	}
+	// Tags deserialize -> tags
+	if len(p.Tags) > 0 {
+		var msg common.Tags
+		if err := protojson.Unmarshal(p.Tags, &msg); err == nil {
+			pb.Tags = &msg
+		}
+	}
 	return pb
 }
 
@@ -332,6 +369,7 @@ type SuiteRunScanner struct {
 	SuiteId        string           `json:"suiteId"`        // origin: type_alias, empath: suite_id
 	Dag            string           `json:"dag"`            // origin: type_alias, empath: dag
 	TestRuns       []TestRunScanner `json:"testRuns"`
+	Tags           []byte           `json:"tags"` // origin: serialized, empath: tags
 }
 
 // IntoPlain converts protobuf message to plain struct
@@ -383,6 +421,14 @@ func (pb *SuiteRun) IntoPlain() *SuiteRunScanner {
 		}
 	} else {
 		p.TestRuns = []TestRunScanner{}
+	}
+	// Tags serialized from tags
+	if pb.Tags != nil {
+		if data, err := protojson.Marshal(pb.Tags); err == nil {
+			p.Tags = data
+		}
+	} else {
+		p.Tags = []byte{}
 	}
 	return p
 }
@@ -462,6 +508,13 @@ func (p *SuiteRunScanner) IntoPb() *SuiteRun {
 		pb.TestRuns = make([]*TestRun, len(p.TestRuns))
 		for i := range p.TestRuns {
 			pb.TestRuns[i] = (&p.TestRuns[i]).IntoPb()
+		}
+	}
+	// Tags deserialize -> tags
+	if len(p.Tags) > 0 {
+		var msg common.Tags
+		if err := protojson.Unmarshal(p.Tags, &msg); err == nil {
+			pb.Tags = &msg
 		}
 	}
 	return pb

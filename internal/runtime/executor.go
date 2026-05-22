@@ -412,7 +412,19 @@ func (e *Executor) executeNode(ctx context.Context, dag *primitive.Dag, node *pr
 		return nodeResult{nodeID: node.GetId(), taskState: state, err: err}
 	case *primitive.Dag_Node_SubDag:
 		sub := proto.Clone(v.SubDag).(*primitive.Dag)
-		runErr := e.Run(ctx, sub)
+		// Run the embedded sub-dag with a NON-persisting child executor: its snapshot
+		// is mirrored back into the owning node and saved with the parent dag. The
+		// global save hook (dagstore.SaveDag) rejects a sub-dag (no tenant metadata),
+		// which would otherwise abort the sub-run before parking its agent nodes.
+		subExec := &Executor{
+			tasks:      e.tasks,
+			predicates: e.predicates,
+			dagRefs:    e.dagRefs,
+			save:       func(context.Context, *primitive.Dag) error { return nil },
+			now:        e.now,
+			sleep:      e.sleep,
+		}
+		runErr := subExec.Run(ctx, sub)
 		res := nodeResult{nodeID: node.GetId(), subDag: sub}
 		switch sub.GetStatus() {
 		case primitive.Status_STATUS_COMPLETED:

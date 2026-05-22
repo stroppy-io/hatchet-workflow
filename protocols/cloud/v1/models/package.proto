@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.models;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/models/common.proto";
 import "goplain/goplain.proto";
 import "ratelproto/ratelproto.proto";
@@ -35,4 +36,6 @@ message Package {
     string checksum = 7 [(validate.rules).string.max_len = 256];
     /* is_builtin is true only for backend-provided recipes surfaced in listings. */
     bool is_builtin = 8;
+    /* tags is a free label set for filtering/grouping. */
+    common.Tags tags = 9 [(goplain.field).serialize = true];
 }

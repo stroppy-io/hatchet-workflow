@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.api.ui;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/domain/suite.proto";
 import "cloud/v1/models/common.proto";
 import "cloud/v1/models/testing.proto";
@@ -39,11 +40,55 @@ message GetSuiteRunRequest {
     models.SuiteRunId suite_run_id = 2 [(validate.rules).message.required = true];
 }
 
+/* ListSuitesRequest lists suite DEFINITIONS (the /suites catalog), not runs. */
+message ListSuitesRequest {
+    /* SortField — typed sortable columns (no arbitrary strings). */
+    enum SortField {
+        SORT_FIELD_UNSPECIFIED = 0;
+        SORT_FIELD_CREATED_AT = 1;
+        SORT_FIELD_NAME = 2;
+        SORT_FIELD_NEXT_FIRE_AT = 3;
+    }
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    /* search filters by suite name/description (free text). */
+    optional string search = 2 [(validate.rules).string.max_len = 256];
+    /* has_cron filters to suites with (true) / without (false) a cron schedule. */
+    optional bool has_cron = 3;
+    SortField sort_field = 4 [(validate.rules).enum.defined_only = true];
+    models.SortOrder order = 5 [(validate.rules).enum.defined_only = true];
+    models.Page page = 6;
+    /* tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter. */
+    common.Tags tags = 7;
+}
+
+/* ListSuitesResponse — rows plus pagination metadata (H42). */
+message ListSuitesResponse {
+    repeated models.Suite suites = 1;
+    models.PageInfo page_info = 2;
+}
+
 message ListSuiteRunsRequest {
+    /* SortField — typed sortable columns (no arbitrary strings). */
+    enum SortField {
+        SORT_FIELD_UNSPECIFIED = 0;
+        SORT_FIELD_CREATED_AT = 1;
+        SORT_FIELD_STATUS = 2;
+    }
     models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
     optional runtime.primitive.Status status = 2 [(validate.rules).enum.defined_only = true];
-    uint32 page_size = 3 [(validate.rules).uint32.lte = 1000];
-    string page_token = 4 [(validate.rules).string.max_len = 256];
+    /* suite_id filters runs to a single suite. */
+    optional models.SuiteId suite_id = 3;
+    SortField sort_field = 4 [(validate.rules).enum.defined_only = true];
+    models.SortOrder order = 5 [(validate.rules).enum.defined_only = true];
+    models.Page page = 6;
+    /* tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter. */
+    common.Tags tags = 7;
+}
+
+/* ListSuiteRunsResponse — rows plus pagination metadata (H42). */
+message ListSuiteRunsResponse {
+    repeated models.SuiteRun suite_runs = 1;
+    models.PageInfo page_info = 2;
 }
 
 message CancelSuiteRunRequest {
@@ -54,8 +99,9 @@ message CancelSuiteRunRequest {
 service SuiteService {
     rpc CreateSuite (CreateSuiteRequest) returns (models.Suite) {option idempotency_level = IDEMPOTENT;}
     rpc GetSuite (GetSuiteRequest) returns (models.Suite) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc ListSuites (ListSuitesRequest) returns (ListSuitesResponse) {option idempotency_level = NO_SIDE_EFFECTS;}
     rpc LaunchSuiteRun (LaunchSuiteRunRequest) returns (models.SuiteRun) {option idempotency_level = IDEMPOTENT;}
     rpc GetSuiteRun (GetSuiteRunRequest) returns (models.SuiteRun) {option idempotency_level = NO_SIDE_EFFECTS;}
-    rpc ListSuiteRuns (ListSuiteRunsRequest) returns (models.SuiteRun.List) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc ListSuiteRuns (ListSuiteRunsRequest) returns (ListSuiteRunsResponse) {option idempotency_level = NO_SIDE_EFFECTS;}
     rpc CancelSuiteRun (CancelSuiteRunRequest) returns (models.SuiteRun) {option idempotency_level = IDEMPOTENT;}
 }

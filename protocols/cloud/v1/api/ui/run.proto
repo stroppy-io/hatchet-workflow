@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.api.ui;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/domain/test.proto";
 import "cloud/v1/models/common.proto";
 import "cloud/v1/models/testing.proto";
@@ -41,10 +42,28 @@ message GetTestRunRequest {
 
 /* ListTestRunsRequest is a typed per-model query (no generic CommonQuery). */
 message ListTestRunsRequest {
+    /* SortField — typed sortable columns (no arbitrary strings). */
+    enum SortField {
+        SORT_FIELD_UNSPECIFIED = 0;
+        SORT_FIELD_CREATED_AT = 1;
+        SORT_FIELD_NAME = 2;
+        SORT_FIELD_STATUS = 3;
+    }
     models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
     optional runtime.primitive.Status status = 2 [(validate.rules).enum.defined_only = true];
-    uint32 page_size = 3 [(validate.rules).uint32.lte = 1000];
-    string page_token = 4 [(validate.rules).string.max_len = 256];
+    /* search filters by run name/description (free text). */
+    optional string search = 3 [(validate.rules).string.max_len = 256];
+    SortField sort_field = 4 [(validate.rules).enum.defined_only = true];
+    models.SortOrder order = 5 [(validate.rules).enum.defined_only = true];
+    models.Page page = 6;
+    /* tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter. */
+    common.Tags tags = 7;
+}
+
+/* ListTestRunsResponse — rows plus pagination metadata (H42). */
+message ListTestRunsResponse {
+    repeated models.TestRun test_runs = 1;
+    models.PageInfo page_info = 2;
 }
 
 message CancelTestRunRequest {
@@ -132,7 +151,7 @@ service RunService {
     /* --- run lifecycle (tenant-scoped) --- */
     rpc SubmitTestRun (SubmitTestRunRequest) returns (models.TestRun) {option idempotency_level = IDEMPOTENT;}
     rpc GetTestRun (GetTestRunRequest) returns (models.TestRun) {option idempotency_level = NO_SIDE_EFFECTS;}
-    rpc ListTestRuns (ListTestRunsRequest) returns (models.TestRun.List) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc ListTestRuns (ListTestRunsRequest) returns (ListTestRunsResponse) {option idempotency_level = NO_SIDE_EFFECTS;}
     rpc CancelTestRun (CancelTestRunRequest) returns (models.TestRun) {option idempotency_level = IDEMPOTENT;}
     /* --- logs (both axes: stage + component; unified runtime.logs.LogLine) --- */
     /* StreamTestRunLogs is a connect-go server-stream of unified log lines (F2). */

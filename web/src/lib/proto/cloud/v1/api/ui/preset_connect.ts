@@ -3,9 +3,9 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { ClonePresetRequest, DeletePresetRequest, ListPresetRequest } from "./preset_pbts";
-import { Preset, Preset_List } from "../../models/preset_pbts";
+import { ClonePresetRequest, DeletePresetRequest, ListPresetRequest, ListPresetsResponse } from "./preset_pbts";
 import { Empty, MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
+import { Preset } from "../../models/preset_pbts";
 
 /**
  * @generated from service cloud.v1.api.ui.PresetService
@@ -19,7 +19,7 @@ export const PresetService = {
     listPresets: {
       name: "ListPresets",
       I: ListPresetRequest,
-      O: Preset_List,
+      O: ListPresetsResponse,
       kind: MethodKind.Unary,
       idempotency: MethodIdempotency.NoSideEffects,
     },

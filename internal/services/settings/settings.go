@@ -53,21 +53,81 @@ func NewSettingsService(logger *xlog.Logger, executor exec.DB, txm tx.Trm, az *a
 	}
 }
 
-// ListSettingsItems returns the tenant's settings.
-//
-// TODO(settings): secret values are NOT masked yet — read is ADMIN and creds
-// should be redacted (which keys are secret = backend rule). Reported.
-func (s *SettingsService) ListSettingsItems(ctx context.Context, req *uipb.ListSettingsItemsRequest) (*models.SettingsItem_List, error) {
+// secretKeys are settings keys whose value is a credential and must be redacted
+// on read (read is ADMIN; the value is never returned in clear). Writes are
+// unaffected.
+var secretKeys = map[models.SettingsItem_Key]struct{}{
+	models.SettingsItem_KEY_YANDEX_CLOUD_TOKEN:          {},
+	models.SettingsItem_KEY_YANDEX_CLOUD_SSH_PUBLIC_KEY: {},
+}
+
+// maskSecret blanks the string value of a secret settings item (in place),
+// replacing it with "***". Non-secret keys and non-string values are untouched.
+func maskSecret(item *models.SettingsItem) {
+	if item == nil {
+		return
+	}
+	if _, ok := secretKeys[item.GetKey()]; !ok {
+		return
+	}
+	if v := item.GetValue(); v != nil {
+		v.Value = &models.SettingsItem_Value_StringValue{StringValue: "***"}
+	}
+}
+
+// ListSettingsItems returns the tenant's settings with cursor pagination
+// (newest-first by default), optionally filtered by part/key. Secret values
+// are redacted before returning (read is ADMIN, creds are never returned clear).
+func (s *SettingsService) ListSettingsItems(ctx context.Context, req *uipb.ListSettingsItemsRequest) (*uipb.ListSettingsItemsResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListSettingsItems",
-		func(ctx context.Context, _ trace.Span) (*models.SettingsItem_List, error) {
+		func(ctx context.Context, _ trace.Span) (*uipb.ListSettingsItemsResponse, error) {
 			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_ADMIN); err != nil {
 				return nil, err
 			}
-			items, err := s.tenantItems(ctx, req.GetTenantId().GetValue())
+			size := svcutil.PageSize(req.GetPage())
+			desc := svcutil.CursorDesc(req.GetOrder())
+			q := models.SettingsItems.SelectAll().Where(
+				models.SettingsItems.TenantId.Eq(req.GetTenantId().GetValue()),
+				models.SettingsItems.DeletedAt.IsNull(),
+			)
+			// Part/Key are stored as the enum String() value (settings_plain converter).
+			if req.Part != nil {
+				q = q.Where(models.SettingsItems.Part.Eq(req.GetPart().String()))
+			}
+			if req.Key != nil {
+				q = q.Where(models.SettingsItems.Key.Eq(req.GetKey().String()))
+			}
+			// tags: Tags is serialized JSON of common.Tags (a TEXT column) — match
+			// each requested free tag and key=value label as a substring.
+			for _, tag := range req.GetTags().GetTags() {
+				q = q.Where(models.SettingsItems.Tags.ILike("%" + tag + "%"))
+			}
+			for k, v := range req.GetTags().GetLabels() {
+				q = q.Where(models.SettingsItems.Tags.ILike("%" + k + "%" + v + "%"))
+			}
+			if tok := req.GetPage().GetToken(); tok != "" {
+				if desc {
+					q = q.Where(models.SettingsItems.Id.Lt(tok))
+				} else {
+					q = q.Where(models.SettingsItems.Id.Gt(tok))
+				}
+			}
+			if desc {
+				q = q.OrderByDESC(models.SettingsItemColumnId)
+			} else {
+				q = q.OrderByASC(models.SettingsItemColumnId)
+			}
+			rows, err := s.items.Query(ctx, q.Limit(size+1))
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "list settings: %v", err)
 			}
-			return &models.SettingsItem_List{SettingsItems: items}, nil
+			items, pageInfo := svcutil.Paginate(rows, size, func(it *models.SettingsItem) string {
+				return it.GetId().GetValue()
+			})
+			for _, it := range items {
+				maskSecret(it)
+			}
+			return &uipb.ListSettingsItemsResponse{SettingsItems: items, PageInfo: pageInfo}, nil
 		})
 }
 
@@ -87,6 +147,7 @@ func (s *SettingsService) GetSettingsItem(ctx context.Context, req *uipb.GetSett
 			if err != nil {
 				return nil, svcutil.NotFound(err, "settings item")
 			}
+			maskSecret(item)
 			return item, nil
 		})
 }

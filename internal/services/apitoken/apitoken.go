@@ -86,22 +86,69 @@ func (s *ApiTokenService) CreateApiToken(ctx context.Context, req *uipb.CreateAp
 		})
 }
 
-// ListApiTokens returns the tenant's tokens (hash never exposed).
-func (s *ApiTokenService) ListApiTokens(ctx context.Context, req *uipb.ListApiTokensRequest) (*models.ApiToken_List, error) {
+// ListApiTokens returns the tenant's tokens (hash never exposed) with cursor
+// pagination (newest-first by default).
+func (s *ApiTokenService) ListApiTokens(ctx context.Context, req *uipb.ListApiTokensRequest) (*uipb.ListApiTokensResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListApiTokens",
-		func(ctx context.Context, _ trace.Span) (*models.ApiToken_List, error) {
+		func(ctx context.Context, _ trace.Span) (*uipb.ListApiTokensResponse, error) {
 			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_OWNER); err != nil {
 				return nil, err
 			}
-			tokens, err := s.tokens.Query(ctx,
-				models.ApiTokens.SelectAll().Where(
-					models.ApiTokens.TenantId.Eq(req.GetTenantId().GetValue()),
-					models.ApiTokens.DeletedAt.IsNull(),
-				))
+			size := svcutil.PageSize(req.GetPage())
+			desc := svcutil.CursorDesc(req.GetOrder())
+			q := models.ApiTokens.SelectAll().Where(
+				models.ApiTokens.TenantId.Eq(req.GetTenantId().GetValue()),
+				models.ApiTokens.DeletedAt.IsNull(),
+			)
+			// search: match the token name (free text).
+			if req.Search != nil && req.GetSearch() != "" {
+				q = q.Where(models.ApiTokens.Name.ILike("%" + req.GetSearch() + "%"))
+			}
+			// role: Role is stored as the enum String() value (apitoken_plain converter).
+			if req.Role != nil {
+				q = q.Where(models.ApiTokens.Role.Eq(req.GetRole().String()))
+			}
+			// expired: tri-state (*bool) — true = past expiry (expires_at < now);
+			// false = active or never-expires (expires_at is null OR >= now).
+			if req.Expired != nil {
+				now := time.Now()
+				if req.GetExpired() {
+					q = q.Where(models.ApiTokens.ExpiresAt.Lt(&now))
+				} else {
+					q = q.Where(models.ApiTokens.Or(
+						models.ApiTokens.ExpiresAt.IsNull(),
+						models.ApiTokens.ExpiresAt.Gte(&now),
+					))
+				}
+			}
+			// tags: Tags is serialized JSON of common.Tags (a TEXT column) — match
+			// each requested free tag and key=value label as a substring.
+			for _, tag := range req.GetTags().GetTags() {
+				q = q.Where(models.ApiTokens.Tags.ILike("%" + tag + "%"))
+			}
+			for k, v := range req.GetTags().GetLabels() {
+				q = q.Where(models.ApiTokens.Tags.ILike("%" + k + "%" + v + "%"))
+			}
+			if tok := req.GetPage().GetToken(); tok != "" {
+				if desc {
+					q = q.Where(models.ApiTokens.Id.Lt(tok))
+				} else {
+					q = q.Where(models.ApiTokens.Id.Gt(tok))
+				}
+			}
+			if desc {
+				q = q.OrderByDESC(models.ApiTokenColumnId)
+			} else {
+				q = q.OrderByASC(models.ApiTokenColumnId)
+			}
+			rows, err := s.tokens.Query(ctx, q.Limit(size+1))
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "list api tokens: %v", err)
 			}
-			return &models.ApiToken_List{ApiTokens: tokens}, nil
+			items, pageInfo := svcutil.Paginate(rows, size, func(t *models.ApiToken) string {
+				return t.GetEntity().GetId().GetValue()
+			})
+			return &uipb.ListApiTokensResponse{ApiTokens: items, PageInfo: pageInfo}, nil
 		})
 }
 

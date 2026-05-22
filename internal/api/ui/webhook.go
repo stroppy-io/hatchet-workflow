@@ -16,7 +16,7 @@ import (
 // webhook subscriptions (ADMIN). internal/services implements it.
 type WebhookActions interface {
 	CreateWebhook(ctx context.Context, req *uipb.CreateWebhookRequest) (*models.Webhook, error)
-	ListWebhooks(ctx context.Context, req *uipb.ListWebhooksRequest) (*models.Webhook_List, error)
+	ListWebhooks(ctx context.Context, req *uipb.ListWebhooksRequest) (*uipb.ListWebhooksResponse, error)
 	UpdateWebhook(ctx context.Context, req *uipb.UpdateWebhookRequest) (*models.Webhook, error)
 	DeleteWebhook(ctx context.Context, req *uipb.DeleteWebhookRequest) (*emptypb.Empty, error)
 	TestWebhook(ctx context.Context, req *uipb.TestWebhookRequest) (*emptypb.Empty, error)
@@ -46,9 +46,9 @@ func (s *WebhookService) CreateWebhook(ctx context.Context, req *uipb.CreateWebh
 		})
 }
 
-func (s *WebhookService) ListWebhooks(ctx context.Context, req *uipb.ListWebhooksRequest) (*models.Webhook_List, error) {
+func (s *WebhookService) ListWebhooks(ctx context.Context, req *uipb.ListWebhooksRequest) (*uipb.ListWebhooksResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListWebhooks",
-		func(ctx context.Context, _ trace.Span) (*models.Webhook_List, error) {
+		func(ctx context.Context, _ trace.Span) (*uipb.ListWebhooksResponse, error) {
 			return s.svc.ListWebhooks(ctx, req)
 		})
 }

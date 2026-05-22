@@ -8,6 +8,7 @@ package ui
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	logs "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/logs"
@@ -27,6 +28,59 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// SortField — typed sortable columns (no arbitrary strings).
+type ListTestRunsRequest_SortField int32
+
+const (
+	ListTestRunsRequest_SORT_FIELD_UNSPECIFIED ListTestRunsRequest_SortField = 0
+	ListTestRunsRequest_SORT_FIELD_CREATED_AT  ListTestRunsRequest_SortField = 1
+	ListTestRunsRequest_SORT_FIELD_NAME        ListTestRunsRequest_SortField = 2
+	ListTestRunsRequest_SORT_FIELD_STATUS      ListTestRunsRequest_SortField = 3
+)
+
+// Enum value maps for ListTestRunsRequest_SortField.
+var (
+	ListTestRunsRequest_SortField_name = map[int32]string{
+		0: "SORT_FIELD_UNSPECIFIED",
+		1: "SORT_FIELD_CREATED_AT",
+		2: "SORT_FIELD_NAME",
+		3: "SORT_FIELD_STATUS",
+	}
+	ListTestRunsRequest_SortField_value = map[string]int32{
+		"SORT_FIELD_UNSPECIFIED": 0,
+		"SORT_FIELD_CREATED_AT":  1,
+		"SORT_FIELD_NAME":        2,
+		"SORT_FIELD_STATUS":      3,
+	}
+)
+
+func (x ListTestRunsRequest_SortField) Enum() *ListTestRunsRequest_SortField {
+	p := new(ListTestRunsRequest_SortField)
+	*p = x
+	return p
+}
+
+func (x ListTestRunsRequest_SortField) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ListTestRunsRequest_SortField) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_api_ui_run_proto_enumTypes[0].Descriptor()
+}
+
+func (ListTestRunsRequest_SortField) Type() protoreflect.EnumType {
+	return &file_cloud_v1_api_ui_run_proto_enumTypes[0]
+}
+
+func (x ListTestRunsRequest_SortField) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ListTestRunsRequest_SortField.Descriptor instead.
+func (ListTestRunsRequest_SortField) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{2, 0}
+}
 
 // RunService launches and observes test runs, and serves their metrics, run
 // comparison, and share links (F). Metrics and Share are folded in here.
@@ -162,11 +216,16 @@ func (x *GetTestRunRequest) GetId() *models.TestRunId {
 
 // ListTestRunsRequest is a typed per-model query (no generic CommonQuery).
 type ListTestRunsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Status        *primitive.Status      `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.runtime.primitive.Status,oneof" json:"status,omitempty"`
-	PageSize      uint32                 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken     string                 `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	TenantId *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Status   *primitive.Status      `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.runtime.primitive.Status,oneof" json:"status,omitempty"`
+	// search filters by run name/description (free text).
+	Search    *string                       `protobuf:"bytes,3,opt,name=search,proto3,oneof" json:"search,omitempty"`
+	SortField ListTestRunsRequest_SortField `protobuf:"varint,4,opt,name=sort_field,json=sortField,proto3,enum=cloud.v1.api.ui.ListTestRunsRequest_SortField" json:"sort_field,omitempty"`
+	Order     models.SortOrder              `protobuf:"varint,5,opt,name=order,proto3,enum=cloud.v1.models.SortOrder" json:"order,omitempty"`
+	Page      *models.Page                  `protobuf:"bytes,6,opt,name=page,proto3" json:"page,omitempty"`
+	// tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter.
+	Tags          *common.Tags `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -215,18 +274,92 @@ func (x *ListTestRunsRequest) GetStatus() primitive.Status {
 	return primitive.Status(0)
 }
 
-func (x *ListTestRunsRequest) GetPageSize() uint32 {
-	if x != nil {
-		return x.PageSize
-	}
-	return 0
-}
-
-func (x *ListTestRunsRequest) GetPageToken() string {
-	if x != nil {
-		return x.PageToken
+func (x *ListTestRunsRequest) GetSearch() string {
+	if x != nil && x.Search != nil {
+		return *x.Search
 	}
 	return ""
+}
+
+func (x *ListTestRunsRequest) GetSortField() ListTestRunsRequest_SortField {
+	if x != nil {
+		return x.SortField
+	}
+	return ListTestRunsRequest_SORT_FIELD_UNSPECIFIED
+}
+
+func (x *ListTestRunsRequest) GetOrder() models.SortOrder {
+	if x != nil {
+		return x.Order
+	}
+	return models.SortOrder(0)
+}
+
+func (x *ListTestRunsRequest) GetPage() *models.Page {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+func (x *ListTestRunsRequest) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// ListTestRunsResponse — rows plus pagination metadata (H42).
+type ListTestRunsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TestRuns      []*models.TestRun      `protobuf:"bytes,1,rep,name=test_runs,json=testRuns,proto3" json:"test_runs,omitempty"`
+	PageInfo      *models.PageInfo       `protobuf:"bytes,2,opt,name=page_info,json=pageInfo,proto3" json:"page_info,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTestRunsResponse) Reset() {
+	*x = ListTestRunsResponse{}
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTestRunsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTestRunsResponse) ProtoMessage() {}
+
+func (x *ListTestRunsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTestRunsResponse.ProtoReflect.Descriptor instead.
+func (*ListTestRunsResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ListTestRunsResponse) GetTestRuns() []*models.TestRun {
+	if x != nil {
+		return x.TestRuns
+	}
+	return nil
+}
+
+func (x *ListTestRunsResponse) GetPageInfo() *models.PageInfo {
+	if x != nil {
+		return x.PageInfo
+	}
+	return nil
 }
 
 type CancelTestRunRequest struct {
@@ -239,7 +372,7 @@ type CancelTestRunRequest struct {
 
 func (x *CancelTestRunRequest) Reset() {
 	*x = CancelTestRunRequest{}
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -251,7 +384,7 @@ func (x *CancelTestRunRequest) String() string {
 func (*CancelTestRunRequest) ProtoMessage() {}
 
 func (x *CancelTestRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -264,7 +397,7 @@ func (x *CancelTestRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelTestRunRequest.ProtoReflect.Descriptor instead.
 func (*CancelTestRunRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{3}
+	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CancelTestRunRequest) GetTenantId() *models.TenantId {
@@ -294,7 +427,7 @@ type StreamTestRunLogsRequest struct {
 
 func (x *StreamTestRunLogsRequest) Reset() {
 	*x = StreamTestRunLogsRequest{}
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[4]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -306,7 +439,7 @@ func (x *StreamTestRunLogsRequest) String() string {
 func (*StreamTestRunLogsRequest) ProtoMessage() {}
 
 func (x *StreamTestRunLogsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[4]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -319,7 +452,7 @@ func (x *StreamTestRunLogsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamTestRunLogsRequest.ProtoReflect.Descriptor instead.
 func (*StreamTestRunLogsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{4}
+	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *StreamTestRunLogsRequest) GetTenantId() *models.TenantId {
@@ -370,7 +503,7 @@ type QueryRunLogsRequest struct {
 
 func (x *QueryRunLogsRequest) Reset() {
 	*x = QueryRunLogsRequest{}
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[5]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -382,7 +515,7 @@ func (x *QueryRunLogsRequest) String() string {
 func (*QueryRunLogsRequest) ProtoMessage() {}
 
 func (x *QueryRunLogsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[5]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -395,7 +528,7 @@ func (x *QueryRunLogsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryRunLogsRequest.ProtoReflect.Descriptor instead.
 func (*QueryRunLogsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{5}
+	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *QueryRunLogsRequest) GetTenantId() *models.TenantId {
@@ -476,7 +609,7 @@ type BuildLogLinkRequest struct {
 
 func (x *BuildLogLinkRequest) Reset() {
 	*x = BuildLogLinkRequest{}
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[6]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -488,7 +621,7 @@ func (x *BuildLogLinkRequest) String() string {
 func (*BuildLogLinkRequest) ProtoMessage() {}
 
 func (x *BuildLogLinkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[6]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -501,7 +634,7 @@ func (x *BuildLogLinkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BuildLogLinkRequest.ProtoReflect.Descriptor instead.
 func (*BuildLogLinkRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{6}
+	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *BuildLogLinkRequest) GetTenantId() *models.TenantId {
@@ -551,7 +684,7 @@ type BuildLogLinkResponse struct {
 
 func (x *BuildLogLinkResponse) Reset() {
 	*x = BuildLogLinkResponse{}
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[7]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -563,7 +696,7 @@ func (x *BuildLogLinkResponse) String() string {
 func (*BuildLogLinkResponse) ProtoMessage() {}
 
 func (x *BuildLogLinkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[7]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -576,7 +709,7 @@ func (x *BuildLogLinkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BuildLogLinkResponse.ProtoReflect.Descriptor instead.
 func (*BuildLogLinkResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{7}
+	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *BuildLogLinkResponse) GetUrl() string {
@@ -603,7 +736,7 @@ type GetRunMetricsRequest struct {
 
 func (x *GetRunMetricsRequest) Reset() {
 	*x = GetRunMetricsRequest{}
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[8]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -615,7 +748,7 @@ func (x *GetRunMetricsRequest) String() string {
 func (*GetRunMetricsRequest) ProtoMessage() {}
 
 func (x *GetRunMetricsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[8]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -628,7 +761,7 @@ func (x *GetRunMetricsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRunMetricsRequest.ProtoReflect.Descriptor instead.
 func (*GetRunMetricsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{8}
+	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetRunMetricsRequest) GetTenantId() *models.TenantId {
@@ -659,7 +792,7 @@ type CompareRunsRequest struct {
 
 func (x *CompareRunsRequest) Reset() {
 	*x = CompareRunsRequest{}
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[9]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -671,7 +804,7 @@ func (x *CompareRunsRequest) String() string {
 func (*CompareRunsRequest) ProtoMessage() {}
 
 func (x *CompareRunsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[9]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -684,7 +817,7 @@ func (x *CompareRunsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompareRunsRequest.ProtoReflect.Descriptor instead.
 func (*CompareRunsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{9}
+	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *CompareRunsRequest) GetTenantId() *models.TenantId {
@@ -726,7 +859,7 @@ type CreateShareLinkRequest struct {
 
 func (x *CreateShareLinkRequest) Reset() {
 	*x = CreateShareLinkRequest{}
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[10]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -738,7 +871,7 @@ func (x *CreateShareLinkRequest) String() string {
 func (*CreateShareLinkRequest) ProtoMessage() {}
 
 func (x *CreateShareLinkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[10]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -751,7 +884,7 @@ func (x *CreateShareLinkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateShareLinkRequest.ProtoReflect.Descriptor instead.
 func (*CreateShareLinkRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{10}
+	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CreateShareLinkRequest) GetTenantId() *models.TenantId {
@@ -778,7 +911,7 @@ type CreateShareLinkResponse struct {
 
 func (x *CreateShareLinkResponse) Reset() {
 	*x = CreateShareLinkResponse{}
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[11]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -790,7 +923,7 @@ func (x *CreateShareLinkResponse) String() string {
 func (*CreateShareLinkResponse) ProtoMessage() {}
 
 func (x *CreateShareLinkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[11]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -803,7 +936,7 @@ func (x *CreateShareLinkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateShareLinkResponse.ProtoReflect.Descriptor instead.
 func (*CreateShareLinkResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{11}
+	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *CreateShareLinkResponse) GetToken() string {
@@ -830,7 +963,7 @@ type GetSharedRunRequest struct {
 
 func (x *GetSharedRunRequest) Reset() {
 	*x = GetSharedRunRequest{}
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[12]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -842,7 +975,7 @@ func (x *GetSharedRunRequest) String() string {
 func (*GetSharedRunRequest) ProtoMessage() {}
 
 func (x *GetSharedRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[12]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -855,7 +988,7 @@ func (x *GetSharedRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSharedRunRequest.ProtoReflect.Descriptor instead.
 func (*GetSharedRunRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{12}
+	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetSharedRunRequest) GetToken() string {
@@ -877,7 +1010,7 @@ type GetSharedRunResponse struct {
 
 func (x *GetSharedRunResponse) Reset() {
 	*x = GetSharedRunResponse{}
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[13]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -889,7 +1022,7 @@ func (x *GetSharedRunResponse) String() string {
 func (*GetSharedRunResponse) ProtoMessage() {}
 
 func (x *GetSharedRunResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[13]
+	mi := &file_cloud_v1_api_ui_run_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -902,7 +1035,7 @@ func (x *GetSharedRunResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSharedRunResponse.ProtoReflect.Descriptor instead.
 func (*GetSharedRunResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{13}
+	return file_cloud_v1_api_ui_run_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetSharedRunResponse) GetRun() *models.TestRun {
@@ -923,7 +1056,7 @@ var File_cloud_v1_api_ui_run_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_ui_run_proto_rawDesc = "" +
 	"\n" +
-	"\x19cloud/v1/api/ui/run.proto\x12\x0fcloud.v1.api.ui\x1a\x1acloud/v1/domain/test.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1dcloud/v1/models/testing.proto\x1a cloud/v1/runtime/logs/logs.proto\x1a&cloud/v1/runtime/metrics/metrics.proto\x1a'cloud/v1/runtime/primitive/status.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\x8d\x02\n" +
+	"\x19cloud/v1/api/ui/run.proto\x12\x0fcloud.v1.api.ui\x1a\x1acloud/v1/common/tags.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1dcloud/v1/models/testing.proto\x1a cloud/v1/runtime/logs/logs.proto\x1a&cloud/v1/runtime/metrics/metrics.proto\x1a'cloud/v1/runtime/primitive/status.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\x8d\x02\n" +
 	"\x14SubmitTestRunRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12F\n" +
 	"\vtest_preset\x18\x02 \x01(\v2\x1b.cloud.v1.domain.TestPresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
@@ -934,14 +1067,26 @@ const file_cloud_v1_api_ui_run_proto_rawDesc = "" +
 	"\f_description\"\x8b\x01\n" +
 	"\x11GetTestRunRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x124\n" +
-	"\x02id\x18\x02 \x01(\v2\x1a.cloud.v1.models.TestRunIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02id\"\xfd\x01\n" +
+	"\x02id\x18\x02 \x01(\v2\x1a.cloud.v1.models.TestRunIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02id\"\xba\x04\n" +
 	"\x13ListTestRunsRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12I\n" +
 	"\x06status\x18\x02 \x01(\x0e2\".cloud.v1.runtime.primitive.StatusB\b\xfaB\x05\x82\x01\x02\x10\x01H\x00R\x06status\x88\x01\x01\x12%\n" +
-	"\tpage_size\x18\x03 \x01(\rB\b\xfaB\x05*\x03\x18\xe8\aR\bpageSize\x12'\n" +
+	"\x06search\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02H\x01R\x06search\x88\x01\x01\x12W\n" +
 	"\n" +
-	"page_token\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\tpageTokenB\t\n" +
-	"\a_status\"\x8e\x01\n" +
+	"sort_field\x18\x04 \x01(\x0e2..cloud.v1.api.ui.ListTestRunsRequest.SortFieldB\b\xfaB\x05\x82\x01\x02\x10\x01R\tsortField\x12:\n" +
+	"\x05order\x18\x05 \x01(\x0e2\x1a.cloud.v1.models.SortOrderB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05order\x12)\n" +
+	"\x04page\x18\x06 \x01(\v2\x15.cloud.v1.models.PageR\x04page\x12)\n" +
+	"\x04tags\x18\a \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"n\n" +
+	"\tSortField\x12\x1a\n" +
+	"\x16SORT_FIELD_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15SORT_FIELD_CREATED_AT\x10\x01\x12\x13\n" +
+	"\x0fSORT_FIELD_NAME\x10\x02\x12\x15\n" +
+	"\x11SORT_FIELD_STATUS\x10\x03B\t\n" +
+	"\a_statusB\t\n" +
+	"\a_search\"\x85\x01\n" +
+	"\x14ListTestRunsResponse\x125\n" +
+	"\ttest_runs\x18\x01 \x03(\v2\x18.cloud.v1.models.TestRunR\btestRuns\x126\n" +
+	"\tpage_info\x18\x02 \x01(\v2\x19.cloud.v1.models.PageInfoR\bpageInfo\"\x8e\x01\n" +
 	"\x14CancelTestRunRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x124\n" +
 	"\x02id\x18\x02 \x01(\v2\x1a.cloud.v1.models.TestRunIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02id\"\xa6\x02\n" +
@@ -1002,13 +1147,13 @@ const file_cloud_v1_api_ui_run_proto_rawDesc = "" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05token\"\x82\x01\n" +
 	"\x14GetSharedRunResponse\x12*\n" +
 	"\x03run\x18\x01 \x01(\v2\x18.cloud.v1.models.TestRunR\x03run\x12>\n" +
-	"\ametrics\x18\x02 \x01(\v2$.cloud.v1.runtime.metrics.RunMetricsR\ametrics2\x98\b\n" +
+	"\ametrics\x18\x02 \x01(\v2$.cloud.v1.runtime.metrics.RunMetricsR\ametrics2\xa0\b\n" +
 	"\n" +
 	"RunService\x12U\n" +
 	"\rSubmitTestRun\x12%.cloud.v1.api.ui.SubmitTestRunRequest\x1a\x18.cloud.v1.models.TestRun\"\x03\x90\x02\x02\x12O\n" +
 	"\n" +
-	"GetTestRun\x12\".cloud.v1.api.ui.GetTestRunRequest\x1a\x18.cloud.v1.models.TestRun\"\x03\x90\x02\x01\x12X\n" +
-	"\fListTestRuns\x12$.cloud.v1.api.ui.ListTestRunsRequest\x1a\x1d.cloud.v1.models.TestRun.List\"\x03\x90\x02\x01\x12U\n" +
+	"GetTestRun\x12\".cloud.v1.api.ui.GetTestRunRequest\x1a\x18.cloud.v1.models.TestRun\"\x03\x90\x02\x01\x12`\n" +
+	"\fListTestRuns\x12$.cloud.v1.api.ui.ListTestRunsRequest\x1a%.cloud.v1.api.ui.ListTestRunsResponse\"\x03\x90\x02\x01\x12U\n" +
 	"\rCancelTestRun\x12%.cloud.v1.api.ui.CancelTestRunRequest\x1a\x18.cloud.v1.models.TestRun\"\x03\x90\x02\x02\x12e\n" +
 	"\x11StreamTestRunLogs\x12).cloud.v1.api.ui.StreamTestRunLogsRequest\x1a\x1e.cloud.v1.runtime.logs.LogLine\"\x03\x90\x02\x010\x01\x12Y\n" +
 	"\fQueryRunLogs\x12$.cloud.v1.api.ui.QueryRunLogsRequest\x1a\x1e.cloud.v1.runtime.logs.LogPage\"\x03\x90\x02\x01\x12`\n" +
@@ -1030,93 +1175,105 @@ func file_cloud_v1_api_ui_run_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_ui_run_proto_rawDescData
 }
 
-var file_cloud_v1_api_ui_run_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_cloud_v1_api_ui_run_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cloud_v1_api_ui_run_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_cloud_v1_api_ui_run_proto_goTypes = []any{
-	(*SubmitTestRunRequest)(nil),     // 0: cloud.v1.api.ui.SubmitTestRunRequest
-	(*GetTestRunRequest)(nil),        // 1: cloud.v1.api.ui.GetTestRunRequest
-	(*ListTestRunsRequest)(nil),      // 2: cloud.v1.api.ui.ListTestRunsRequest
-	(*CancelTestRunRequest)(nil),     // 3: cloud.v1.api.ui.CancelTestRunRequest
-	(*StreamTestRunLogsRequest)(nil), // 4: cloud.v1.api.ui.StreamTestRunLogsRequest
-	(*QueryRunLogsRequest)(nil),      // 5: cloud.v1.api.ui.QueryRunLogsRequest
-	(*BuildLogLinkRequest)(nil),      // 6: cloud.v1.api.ui.BuildLogLinkRequest
-	(*BuildLogLinkResponse)(nil),     // 7: cloud.v1.api.ui.BuildLogLinkResponse
-	(*GetRunMetricsRequest)(nil),     // 8: cloud.v1.api.ui.GetRunMetricsRequest
-	(*CompareRunsRequest)(nil),       // 9: cloud.v1.api.ui.CompareRunsRequest
-	(*CreateShareLinkRequest)(nil),   // 10: cloud.v1.api.ui.CreateShareLinkRequest
-	(*CreateShareLinkResponse)(nil),  // 11: cloud.v1.api.ui.CreateShareLinkResponse
-	(*GetSharedRunRequest)(nil),      // 12: cloud.v1.api.ui.GetSharedRunRequest
-	(*GetSharedRunResponse)(nil),     // 13: cloud.v1.api.ui.GetSharedRunResponse
-	(*models.TenantId)(nil),          // 14: cloud.v1.models.TenantId
-	(*domain.TestPreset)(nil),        // 15: cloud.v1.domain.TestPreset
-	(*models.TestRunId)(nil),         // 16: cloud.v1.models.TestRunId
-	(primitive.Status)(0),            // 17: cloud.v1.runtime.primitive.Status
-	(logs.Source)(0),                 // 18: cloud.v1.runtime.logs.Source
-	(*timestamppb.Timestamp)(nil),    // 19: google.protobuf.Timestamp
-	(*logs.LogCursor)(nil),           // 20: cloud.v1.runtime.logs.LogCursor
-	(*logs.LogRef)(nil),              // 21: cloud.v1.runtime.logs.LogRef
-	(*models.TestRun)(nil),           // 22: cloud.v1.models.TestRun
-	(*metrics.RunMetrics)(nil),       // 23: cloud.v1.runtime.metrics.RunMetrics
-	(*models.TestRun_List)(nil),      // 24: cloud.v1.models.TestRun.List
-	(*logs.LogLine)(nil),             // 25: cloud.v1.runtime.logs.LogLine
-	(*logs.LogPage)(nil),             // 26: cloud.v1.runtime.logs.LogPage
-	(*metrics.Comparison)(nil),       // 27: cloud.v1.runtime.metrics.Comparison
+	(ListTestRunsRequest_SortField)(0), // 0: cloud.v1.api.ui.ListTestRunsRequest.SortField
+	(*SubmitTestRunRequest)(nil),       // 1: cloud.v1.api.ui.SubmitTestRunRequest
+	(*GetTestRunRequest)(nil),          // 2: cloud.v1.api.ui.GetTestRunRequest
+	(*ListTestRunsRequest)(nil),        // 3: cloud.v1.api.ui.ListTestRunsRequest
+	(*ListTestRunsResponse)(nil),       // 4: cloud.v1.api.ui.ListTestRunsResponse
+	(*CancelTestRunRequest)(nil),       // 5: cloud.v1.api.ui.CancelTestRunRequest
+	(*StreamTestRunLogsRequest)(nil),   // 6: cloud.v1.api.ui.StreamTestRunLogsRequest
+	(*QueryRunLogsRequest)(nil),        // 7: cloud.v1.api.ui.QueryRunLogsRequest
+	(*BuildLogLinkRequest)(nil),        // 8: cloud.v1.api.ui.BuildLogLinkRequest
+	(*BuildLogLinkResponse)(nil),       // 9: cloud.v1.api.ui.BuildLogLinkResponse
+	(*GetRunMetricsRequest)(nil),       // 10: cloud.v1.api.ui.GetRunMetricsRequest
+	(*CompareRunsRequest)(nil),         // 11: cloud.v1.api.ui.CompareRunsRequest
+	(*CreateShareLinkRequest)(nil),     // 12: cloud.v1.api.ui.CreateShareLinkRequest
+	(*CreateShareLinkResponse)(nil),    // 13: cloud.v1.api.ui.CreateShareLinkResponse
+	(*GetSharedRunRequest)(nil),        // 14: cloud.v1.api.ui.GetSharedRunRequest
+	(*GetSharedRunResponse)(nil),       // 15: cloud.v1.api.ui.GetSharedRunResponse
+	(*models.TenantId)(nil),            // 16: cloud.v1.models.TenantId
+	(*domain.TestPreset)(nil),          // 17: cloud.v1.domain.TestPreset
+	(*models.TestRunId)(nil),           // 18: cloud.v1.models.TestRunId
+	(primitive.Status)(0),              // 19: cloud.v1.runtime.primitive.Status
+	(models.SortOrder)(0),              // 20: cloud.v1.models.SortOrder
+	(*models.Page)(nil),                // 21: cloud.v1.models.Page
+	(*common.Tags)(nil),                // 22: cloud.v1.common.Tags
+	(*models.TestRun)(nil),             // 23: cloud.v1.models.TestRun
+	(*models.PageInfo)(nil),            // 24: cloud.v1.models.PageInfo
+	(logs.Source)(0),                   // 25: cloud.v1.runtime.logs.Source
+	(*timestamppb.Timestamp)(nil),      // 26: google.protobuf.Timestamp
+	(*logs.LogCursor)(nil),             // 27: cloud.v1.runtime.logs.LogCursor
+	(*logs.LogRef)(nil),                // 28: cloud.v1.runtime.logs.LogRef
+	(*metrics.RunMetrics)(nil),         // 29: cloud.v1.runtime.metrics.RunMetrics
+	(*logs.LogLine)(nil),               // 30: cloud.v1.runtime.logs.LogLine
+	(*logs.LogPage)(nil),               // 31: cloud.v1.runtime.logs.LogPage
+	(*metrics.Comparison)(nil),         // 32: cloud.v1.runtime.metrics.Comparison
 }
 var file_cloud_v1_api_ui_run_proto_depIdxs = []int32{
-	14, // 0: cloud.v1.api.ui.SubmitTestRunRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	15, // 1: cloud.v1.api.ui.SubmitTestRunRequest.test_preset:type_name -> cloud.v1.domain.TestPreset
-	14, // 2: cloud.v1.api.ui.GetTestRunRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	16, // 3: cloud.v1.api.ui.GetTestRunRequest.id:type_name -> cloud.v1.models.TestRunId
-	14, // 4: cloud.v1.api.ui.ListTestRunsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	17, // 5: cloud.v1.api.ui.ListTestRunsRequest.status:type_name -> cloud.v1.runtime.primitive.Status
-	14, // 6: cloud.v1.api.ui.CancelTestRunRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	16, // 7: cloud.v1.api.ui.CancelTestRunRequest.id:type_name -> cloud.v1.models.TestRunId
-	14, // 8: cloud.v1.api.ui.StreamTestRunLogsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	16, // 9: cloud.v1.api.ui.StreamTestRunLogsRequest.id:type_name -> cloud.v1.models.TestRunId
-	14, // 10: cloud.v1.api.ui.QueryRunLogsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	16, // 11: cloud.v1.api.ui.QueryRunLogsRequest.run_id:type_name -> cloud.v1.models.TestRunId
-	18, // 12: cloud.v1.api.ui.QueryRunLogsRequest.source:type_name -> cloud.v1.runtime.logs.Source
-	19, // 13: cloud.v1.api.ui.QueryRunLogsRequest.start:type_name -> google.protobuf.Timestamp
-	19, // 14: cloud.v1.api.ui.QueryRunLogsRequest.end:type_name -> google.protobuf.Timestamp
-	14, // 15: cloud.v1.api.ui.BuildLogLinkRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	16, // 16: cloud.v1.api.ui.BuildLogLinkRequest.run_id:type_name -> cloud.v1.models.TestRunId
-	20, // 17: cloud.v1.api.ui.BuildLogLinkRequest.cursor:type_name -> cloud.v1.runtime.logs.LogCursor
-	21, // 18: cloud.v1.api.ui.BuildLogLinkResponse.ref:type_name -> cloud.v1.runtime.logs.LogRef
-	14, // 19: cloud.v1.api.ui.GetRunMetricsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	16, // 20: cloud.v1.api.ui.GetRunMetricsRequest.run_id:type_name -> cloud.v1.models.TestRunId
-	14, // 21: cloud.v1.api.ui.CompareRunsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	16, // 22: cloud.v1.api.ui.CompareRunsRequest.run_a:type_name -> cloud.v1.models.TestRunId
-	16, // 23: cloud.v1.api.ui.CompareRunsRequest.run_b:type_name -> cloud.v1.models.TestRunId
-	14, // 24: cloud.v1.api.ui.CreateShareLinkRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	16, // 25: cloud.v1.api.ui.CreateShareLinkRequest.run_id:type_name -> cloud.v1.models.TestRunId
-	22, // 26: cloud.v1.api.ui.GetSharedRunResponse.run:type_name -> cloud.v1.models.TestRun
-	23, // 27: cloud.v1.api.ui.GetSharedRunResponse.metrics:type_name -> cloud.v1.runtime.metrics.RunMetrics
-	0,  // 28: cloud.v1.api.ui.RunService.SubmitTestRun:input_type -> cloud.v1.api.ui.SubmitTestRunRequest
-	1,  // 29: cloud.v1.api.ui.RunService.GetTestRun:input_type -> cloud.v1.api.ui.GetTestRunRequest
-	2,  // 30: cloud.v1.api.ui.RunService.ListTestRuns:input_type -> cloud.v1.api.ui.ListTestRunsRequest
-	3,  // 31: cloud.v1.api.ui.RunService.CancelTestRun:input_type -> cloud.v1.api.ui.CancelTestRunRequest
-	4,  // 32: cloud.v1.api.ui.RunService.StreamTestRunLogs:input_type -> cloud.v1.api.ui.StreamTestRunLogsRequest
-	5,  // 33: cloud.v1.api.ui.RunService.QueryRunLogs:input_type -> cloud.v1.api.ui.QueryRunLogsRequest
-	6,  // 34: cloud.v1.api.ui.RunService.BuildLogLink:input_type -> cloud.v1.api.ui.BuildLogLinkRequest
-	8,  // 35: cloud.v1.api.ui.RunService.GetRunMetrics:input_type -> cloud.v1.api.ui.GetRunMetricsRequest
-	9,  // 36: cloud.v1.api.ui.RunService.CompareRuns:input_type -> cloud.v1.api.ui.CompareRunsRequest
-	10, // 37: cloud.v1.api.ui.RunService.CreateShareLink:input_type -> cloud.v1.api.ui.CreateShareLinkRequest
-	12, // 38: cloud.v1.api.ui.RunService.GetSharedRun:input_type -> cloud.v1.api.ui.GetSharedRunRequest
-	22, // 39: cloud.v1.api.ui.RunService.SubmitTestRun:output_type -> cloud.v1.models.TestRun
-	22, // 40: cloud.v1.api.ui.RunService.GetTestRun:output_type -> cloud.v1.models.TestRun
-	24, // 41: cloud.v1.api.ui.RunService.ListTestRuns:output_type -> cloud.v1.models.TestRun.List
-	22, // 42: cloud.v1.api.ui.RunService.CancelTestRun:output_type -> cloud.v1.models.TestRun
-	25, // 43: cloud.v1.api.ui.RunService.StreamTestRunLogs:output_type -> cloud.v1.runtime.logs.LogLine
-	26, // 44: cloud.v1.api.ui.RunService.QueryRunLogs:output_type -> cloud.v1.runtime.logs.LogPage
-	7,  // 45: cloud.v1.api.ui.RunService.BuildLogLink:output_type -> cloud.v1.api.ui.BuildLogLinkResponse
-	23, // 46: cloud.v1.api.ui.RunService.GetRunMetrics:output_type -> cloud.v1.runtime.metrics.RunMetrics
-	27, // 47: cloud.v1.api.ui.RunService.CompareRuns:output_type -> cloud.v1.runtime.metrics.Comparison
-	11, // 48: cloud.v1.api.ui.RunService.CreateShareLink:output_type -> cloud.v1.api.ui.CreateShareLinkResponse
-	13, // 49: cloud.v1.api.ui.RunService.GetSharedRun:output_type -> cloud.v1.api.ui.GetSharedRunResponse
-	39, // [39:50] is the sub-list for method output_type
-	28, // [28:39] is the sub-list for method input_type
-	28, // [28:28] is the sub-list for extension type_name
-	28, // [28:28] is the sub-list for extension extendee
-	0,  // [0:28] is the sub-list for field type_name
+	16, // 0: cloud.v1.api.ui.SubmitTestRunRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	17, // 1: cloud.v1.api.ui.SubmitTestRunRequest.test_preset:type_name -> cloud.v1.domain.TestPreset
+	16, // 2: cloud.v1.api.ui.GetTestRunRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	18, // 3: cloud.v1.api.ui.GetTestRunRequest.id:type_name -> cloud.v1.models.TestRunId
+	16, // 4: cloud.v1.api.ui.ListTestRunsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	19, // 5: cloud.v1.api.ui.ListTestRunsRequest.status:type_name -> cloud.v1.runtime.primitive.Status
+	0,  // 6: cloud.v1.api.ui.ListTestRunsRequest.sort_field:type_name -> cloud.v1.api.ui.ListTestRunsRequest.SortField
+	20, // 7: cloud.v1.api.ui.ListTestRunsRequest.order:type_name -> cloud.v1.models.SortOrder
+	21, // 8: cloud.v1.api.ui.ListTestRunsRequest.page:type_name -> cloud.v1.models.Page
+	22, // 9: cloud.v1.api.ui.ListTestRunsRequest.tags:type_name -> cloud.v1.common.Tags
+	23, // 10: cloud.v1.api.ui.ListTestRunsResponse.test_runs:type_name -> cloud.v1.models.TestRun
+	24, // 11: cloud.v1.api.ui.ListTestRunsResponse.page_info:type_name -> cloud.v1.models.PageInfo
+	16, // 12: cloud.v1.api.ui.CancelTestRunRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	18, // 13: cloud.v1.api.ui.CancelTestRunRequest.id:type_name -> cloud.v1.models.TestRunId
+	16, // 14: cloud.v1.api.ui.StreamTestRunLogsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	18, // 15: cloud.v1.api.ui.StreamTestRunLogsRequest.id:type_name -> cloud.v1.models.TestRunId
+	16, // 16: cloud.v1.api.ui.QueryRunLogsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	18, // 17: cloud.v1.api.ui.QueryRunLogsRequest.run_id:type_name -> cloud.v1.models.TestRunId
+	25, // 18: cloud.v1.api.ui.QueryRunLogsRequest.source:type_name -> cloud.v1.runtime.logs.Source
+	26, // 19: cloud.v1.api.ui.QueryRunLogsRequest.start:type_name -> google.protobuf.Timestamp
+	26, // 20: cloud.v1.api.ui.QueryRunLogsRequest.end:type_name -> google.protobuf.Timestamp
+	16, // 21: cloud.v1.api.ui.BuildLogLinkRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	18, // 22: cloud.v1.api.ui.BuildLogLinkRequest.run_id:type_name -> cloud.v1.models.TestRunId
+	27, // 23: cloud.v1.api.ui.BuildLogLinkRequest.cursor:type_name -> cloud.v1.runtime.logs.LogCursor
+	28, // 24: cloud.v1.api.ui.BuildLogLinkResponse.ref:type_name -> cloud.v1.runtime.logs.LogRef
+	16, // 25: cloud.v1.api.ui.GetRunMetricsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	18, // 26: cloud.v1.api.ui.GetRunMetricsRequest.run_id:type_name -> cloud.v1.models.TestRunId
+	16, // 27: cloud.v1.api.ui.CompareRunsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	18, // 28: cloud.v1.api.ui.CompareRunsRequest.run_a:type_name -> cloud.v1.models.TestRunId
+	18, // 29: cloud.v1.api.ui.CompareRunsRequest.run_b:type_name -> cloud.v1.models.TestRunId
+	16, // 30: cloud.v1.api.ui.CreateShareLinkRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	18, // 31: cloud.v1.api.ui.CreateShareLinkRequest.run_id:type_name -> cloud.v1.models.TestRunId
+	23, // 32: cloud.v1.api.ui.GetSharedRunResponse.run:type_name -> cloud.v1.models.TestRun
+	29, // 33: cloud.v1.api.ui.GetSharedRunResponse.metrics:type_name -> cloud.v1.runtime.metrics.RunMetrics
+	1,  // 34: cloud.v1.api.ui.RunService.SubmitTestRun:input_type -> cloud.v1.api.ui.SubmitTestRunRequest
+	2,  // 35: cloud.v1.api.ui.RunService.GetTestRun:input_type -> cloud.v1.api.ui.GetTestRunRequest
+	3,  // 36: cloud.v1.api.ui.RunService.ListTestRuns:input_type -> cloud.v1.api.ui.ListTestRunsRequest
+	5,  // 37: cloud.v1.api.ui.RunService.CancelTestRun:input_type -> cloud.v1.api.ui.CancelTestRunRequest
+	6,  // 38: cloud.v1.api.ui.RunService.StreamTestRunLogs:input_type -> cloud.v1.api.ui.StreamTestRunLogsRequest
+	7,  // 39: cloud.v1.api.ui.RunService.QueryRunLogs:input_type -> cloud.v1.api.ui.QueryRunLogsRequest
+	8,  // 40: cloud.v1.api.ui.RunService.BuildLogLink:input_type -> cloud.v1.api.ui.BuildLogLinkRequest
+	10, // 41: cloud.v1.api.ui.RunService.GetRunMetrics:input_type -> cloud.v1.api.ui.GetRunMetricsRequest
+	11, // 42: cloud.v1.api.ui.RunService.CompareRuns:input_type -> cloud.v1.api.ui.CompareRunsRequest
+	12, // 43: cloud.v1.api.ui.RunService.CreateShareLink:input_type -> cloud.v1.api.ui.CreateShareLinkRequest
+	14, // 44: cloud.v1.api.ui.RunService.GetSharedRun:input_type -> cloud.v1.api.ui.GetSharedRunRequest
+	23, // 45: cloud.v1.api.ui.RunService.SubmitTestRun:output_type -> cloud.v1.models.TestRun
+	23, // 46: cloud.v1.api.ui.RunService.GetTestRun:output_type -> cloud.v1.models.TestRun
+	4,  // 47: cloud.v1.api.ui.RunService.ListTestRuns:output_type -> cloud.v1.api.ui.ListTestRunsResponse
+	23, // 48: cloud.v1.api.ui.RunService.CancelTestRun:output_type -> cloud.v1.models.TestRun
+	30, // 49: cloud.v1.api.ui.RunService.StreamTestRunLogs:output_type -> cloud.v1.runtime.logs.LogLine
+	31, // 50: cloud.v1.api.ui.RunService.QueryRunLogs:output_type -> cloud.v1.runtime.logs.LogPage
+	9,  // 51: cloud.v1.api.ui.RunService.BuildLogLink:output_type -> cloud.v1.api.ui.BuildLogLinkResponse
+	29, // 52: cloud.v1.api.ui.RunService.GetRunMetrics:output_type -> cloud.v1.runtime.metrics.RunMetrics
+	32, // 53: cloud.v1.api.ui.RunService.CompareRuns:output_type -> cloud.v1.runtime.metrics.Comparison
+	13, // 54: cloud.v1.api.ui.RunService.CreateShareLink:output_type -> cloud.v1.api.ui.CreateShareLinkResponse
+	15, // 55: cloud.v1.api.ui.RunService.GetSharedRun:output_type -> cloud.v1.api.ui.GetSharedRunResponse
+	45, // [45:56] is the sub-list for method output_type
+	34, // [34:45] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_ui_run_proto_init() }
@@ -1126,21 +1283,22 @@ func file_cloud_v1_api_ui_run_proto_init() {
 	}
 	file_cloud_v1_api_ui_run_proto_msgTypes[0].OneofWrappers = []any{}
 	file_cloud_v1_api_ui_run_proto_msgTypes[2].OneofWrappers = []any{}
-	file_cloud_v1_api_ui_run_proto_msgTypes[4].OneofWrappers = []any{}
 	file_cloud_v1_api_ui_run_proto_msgTypes[5].OneofWrappers = []any{}
 	file_cloud_v1_api_ui_run_proto_msgTypes[6].OneofWrappers = []any{}
+	file_cloud_v1_api_ui_run_proto_msgTypes[7].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_ui_run_proto_rawDesc), len(file_cloud_v1_api_ui_run_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   14,
+			NumEnums:      1,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_cloud_v1_api_ui_run_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_api_ui_run_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_api_ui_run_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_api_ui_run_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_api_ui_run_proto = out.File

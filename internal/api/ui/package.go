@@ -8,7 +8,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	uipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
-	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/utils/tracing"
 )
 
@@ -16,7 +15,7 @@ import (
 // custom package catalog. Upload is via presigned PUT (RequestPackageUpload
 // returns the URL; bytes go over HTTP, not RPC). internal/services implements it.
 type PackageActions interface {
-	ListPackages(ctx context.Context, req *uipb.ListPackagesRequest) (*models.Package_List, error)
+	ListPackages(ctx context.Context, req *uipb.ListPackagesRequest) (*uipb.ListPackagesResponse, error)
 	RequestPackageUpload(ctx context.Context, req *uipb.RequestPackageUploadRequest) (*uipb.RequestPackageUploadResponse, error)
 	DeletePackage(ctx context.Context, req *uipb.DeletePackageRequest) (*emptypb.Empty, error)
 }
@@ -38,9 +37,9 @@ func NewPackageService(logger *xlog.Logger, svc PackageActions) *PackageService 
 	}
 }
 
-func (s *PackageService) ListPackages(ctx context.Context, req *uipb.ListPackagesRequest) (*models.Package_List, error) {
+func (s *PackageService) ListPackages(ctx context.Context, req *uipb.ListPackagesRequest) (*uipb.ListPackagesResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListPackages",
-		func(ctx context.Context, _ trace.Span) (*models.Package_List, error) {
+		func(ctx context.Context, _ trace.Span) (*uipb.ListPackagesResponse, error) {
 			return s.svc.ListPackages(ctx, req)
 		})
 }

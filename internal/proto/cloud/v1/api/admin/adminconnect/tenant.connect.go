@@ -34,6 +34,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// TenantAdminServiceListTenantsProcedure is the fully-qualified name of the TenantAdminService's
+	// ListTenants RPC.
+	TenantAdminServiceListTenantsProcedure = "/cloud.v1.api.admin.TenantAdminService/ListTenants"
 	// TenantAdminServiceCreateTenantProcedure is the fully-qualified name of the TenantAdminService's
 	// CreateTenant RPC.
 	TenantAdminServiceCreateTenantProcedure = "/cloud.v1.api.admin.TenantAdminService/CreateTenant"
@@ -47,6 +50,7 @@ const (
 
 // TenantAdminServiceClient is a client for the cloud.v1.api.admin.TenantAdminService service.
 type TenantAdminServiceClient interface {
+	ListTenants(context.Context, *admin.ListTenantsRequest) (*admin.ListTenantsResponse, error)
 	CreateTenant(context.Context, *admin.CreateTenantRequest) (*models.Tenant, error)
 	UpdateTenant(context.Context, *admin.UpdateTenantRequest) (*models.Tenant, error)
 	DeleteTenant(context.Context, *models.TenantId) (*models.Tenant, error)
@@ -63,6 +67,13 @@ func NewTenantAdminServiceClient(httpClient connect.HTTPClient, baseURL string, 
 	baseURL = strings.TrimRight(baseURL, "/")
 	tenantAdminServiceMethods := admin.File_cloud_v1_api_admin_tenant_proto.Services().ByName("TenantAdminService").Methods()
 	return &tenantAdminServiceClient{
+		listTenants: connect.NewClient[admin.ListTenantsRequest, admin.ListTenantsResponse](
+			httpClient,
+			baseURL+TenantAdminServiceListTenantsProcedure,
+			connect.WithSchema(tenantAdminServiceMethods.ByName("ListTenants")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
 		createTenant: connect.NewClient[admin.CreateTenantRequest, models.Tenant](
 			httpClient,
 			baseURL+TenantAdminServiceCreateTenantProcedure,
@@ -89,9 +100,19 @@ func NewTenantAdminServiceClient(httpClient connect.HTTPClient, baseURL string, 
 
 // tenantAdminServiceClient implements TenantAdminServiceClient.
 type tenantAdminServiceClient struct {
+	listTenants  *connect.Client[admin.ListTenantsRequest, admin.ListTenantsResponse]
 	createTenant *connect.Client[admin.CreateTenantRequest, models.Tenant]
 	updateTenant *connect.Client[admin.UpdateTenantRequest, models.Tenant]
 	deleteTenant *connect.Client[models.TenantId, models.Tenant]
+}
+
+// ListTenants calls cloud.v1.api.admin.TenantAdminService.ListTenants.
+func (c *tenantAdminServiceClient) ListTenants(ctx context.Context, req *admin.ListTenantsRequest) (*admin.ListTenantsResponse, error) {
+	response, err := c.listTenants.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // CreateTenant calls cloud.v1.api.admin.TenantAdminService.CreateTenant.
@@ -124,6 +145,7 @@ func (c *tenantAdminServiceClient) DeleteTenant(ctx context.Context, req *models
 // TenantAdminServiceHandler is an implementation of the cloud.v1.api.admin.TenantAdminService
 // service.
 type TenantAdminServiceHandler interface {
+	ListTenants(context.Context, *admin.ListTenantsRequest) (*admin.ListTenantsResponse, error)
 	CreateTenant(context.Context, *admin.CreateTenantRequest) (*models.Tenant, error)
 	UpdateTenant(context.Context, *admin.UpdateTenantRequest) (*models.Tenant, error)
 	DeleteTenant(context.Context, *models.TenantId) (*models.Tenant, error)
@@ -136,6 +158,13 @@ type TenantAdminServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewTenantAdminServiceHandler(svc TenantAdminServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	tenantAdminServiceMethods := admin.File_cloud_v1_api_admin_tenant_proto.Services().ByName("TenantAdminService").Methods()
+	tenantAdminServiceListTenantsHandler := connect.NewUnaryHandlerSimple(
+		TenantAdminServiceListTenantsProcedure,
+		svc.ListTenants,
+		connect.WithSchema(tenantAdminServiceMethods.ByName("ListTenants")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
 	tenantAdminServiceCreateTenantHandler := connect.NewUnaryHandlerSimple(
 		TenantAdminServiceCreateTenantProcedure,
 		svc.CreateTenant,
@@ -159,6 +188,8 @@ func NewTenantAdminServiceHandler(svc TenantAdminServiceHandler, opts ...connect
 	)
 	return "/cloud.v1.api.admin.TenantAdminService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case TenantAdminServiceListTenantsProcedure:
+			tenantAdminServiceListTenantsHandler.ServeHTTP(w, r)
 		case TenantAdminServiceCreateTenantProcedure:
 			tenantAdminServiceCreateTenantHandler.ServeHTTP(w, r)
 		case TenantAdminServiceUpdateTenantProcedure:
@@ -173,6 +204,10 @@ func NewTenantAdminServiceHandler(svc TenantAdminServiceHandler, opts ...connect
 
 // UnimplementedTenantAdminServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedTenantAdminServiceHandler struct{}
+
+func (UnimplementedTenantAdminServiceHandler) ListTenants(context.Context, *admin.ListTenantsRequest) (*admin.ListTenantsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.admin.TenantAdminService.ListTenants is not implemented"))
+}
 
 func (UnimplementedTenantAdminServiceHandler) CreateTenant(context.Context, *admin.CreateTenantRequest) (*models.Tenant, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.admin.TenantAdminService.CreateTenant is not implemented"))

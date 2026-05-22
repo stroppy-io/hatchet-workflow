@@ -55,7 +55,7 @@ const (
 // WebhookServiceClient is a client for the cloud.v1.api.ui.WebhookService service.
 type WebhookServiceClient interface {
 	CreateWebhook(context.Context, *ui.CreateWebhookRequest) (*models.Webhook, error)
-	ListWebhooks(context.Context, *ui.ListWebhooksRequest) (*models.Webhook_List, error)
+	ListWebhooks(context.Context, *ui.ListWebhooksRequest) (*ui.ListWebhooksResponse, error)
 	UpdateWebhook(context.Context, *ui.UpdateWebhookRequest) (*models.Webhook, error)
 	DeleteWebhook(context.Context, *ui.DeleteWebhookRequest) (*emptypb.Empty, error)
 	TestWebhook(context.Context, *ui.TestWebhookRequest) (*emptypb.Empty, error)
@@ -79,7 +79,7 @@ func NewWebhookServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithIdempotency(connect.IdempotencyIdempotent),
 			connect.WithClientOptions(opts...),
 		),
-		listWebhooks: connect.NewClient[ui.ListWebhooksRequest, models.Webhook_List](
+		listWebhooks: connect.NewClient[ui.ListWebhooksRequest, ui.ListWebhooksResponse](
 			httpClient,
 			baseURL+WebhookServiceListWebhooksProcedure,
 			connect.WithSchema(webhookServiceMethods.ByName("ListWebhooks")),
@@ -113,7 +113,7 @@ func NewWebhookServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 // webhookServiceClient implements WebhookServiceClient.
 type webhookServiceClient struct {
 	createWebhook *connect.Client[ui.CreateWebhookRequest, models.Webhook]
-	listWebhooks  *connect.Client[ui.ListWebhooksRequest, models.Webhook_List]
+	listWebhooks  *connect.Client[ui.ListWebhooksRequest, ui.ListWebhooksResponse]
 	updateWebhook *connect.Client[ui.UpdateWebhookRequest, models.Webhook]
 	deleteWebhook *connect.Client[ui.DeleteWebhookRequest, emptypb.Empty]
 	testWebhook   *connect.Client[ui.TestWebhookRequest, emptypb.Empty]
@@ -129,7 +129,7 @@ func (c *webhookServiceClient) CreateWebhook(ctx context.Context, req *ui.Create
 }
 
 // ListWebhooks calls cloud.v1.api.ui.WebhookService.ListWebhooks.
-func (c *webhookServiceClient) ListWebhooks(ctx context.Context, req *ui.ListWebhooksRequest) (*models.Webhook_List, error) {
+func (c *webhookServiceClient) ListWebhooks(ctx context.Context, req *ui.ListWebhooksRequest) (*ui.ListWebhooksResponse, error) {
 	response, err := c.listWebhooks.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -167,7 +167,7 @@ func (c *webhookServiceClient) TestWebhook(ctx context.Context, req *ui.TestWebh
 // WebhookServiceHandler is an implementation of the cloud.v1.api.ui.WebhookService service.
 type WebhookServiceHandler interface {
 	CreateWebhook(context.Context, *ui.CreateWebhookRequest) (*models.Webhook, error)
-	ListWebhooks(context.Context, *ui.ListWebhooksRequest) (*models.Webhook_List, error)
+	ListWebhooks(context.Context, *ui.ListWebhooksRequest) (*ui.ListWebhooksResponse, error)
 	UpdateWebhook(context.Context, *ui.UpdateWebhookRequest) (*models.Webhook, error)
 	DeleteWebhook(context.Context, *ui.DeleteWebhookRequest) (*emptypb.Empty, error)
 	TestWebhook(context.Context, *ui.TestWebhookRequest) (*emptypb.Empty, error)
@@ -240,7 +240,7 @@ func (UnimplementedWebhookServiceHandler) CreateWebhook(context.Context, *ui.Cre
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.WebhookService.CreateWebhook is not implemented"))
 }
 
-func (UnimplementedWebhookServiceHandler) ListWebhooks(context.Context, *ui.ListWebhooksRequest) (*models.Webhook_List, error) {
+func (UnimplementedWebhookServiceHandler) ListWebhooks(context.Context, *ui.ListWebhooksRequest) (*ui.ListWebhooksResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.WebhookService.ListWebhooks is not implemented"))
 }
 

@@ -6,8 +6,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
-	dagdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/dag"
 	uipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/logs"
@@ -17,17 +17,12 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/utils/tracing"
 )
 
-// Planner compiles a TestPreset (+ resolved deployment params) into an executable
-// Dag (C12). Implemented by internal/domain/dag.
-type Planner interface {
-	Compile(preset *domain.TestPreset, params *dagdomain.DeploymentParams) (*primitive.Dag, error)
-}
-
-// ProviderResolver resolves a tenant's deployment params (provider settings +
-// per-machine network allocation + cloud-init) for a topology. Implemented by
-// internal/services/deploy.
+// ProviderResolver resolves a tenant's run-scoped deployment.Deployment (provider
+// settings + per-machine network allocation + agent bootstrap) for a TestPreset.
+// Implemented by internal/services/deploy. The resolved deployment is baked into the
+// dag (dag.BuildTestDag) at submit time.
 type ProviderResolver interface {
-	Resolve(ctx context.Context, tenantID string, topo *domain.Topology) (*dagdomain.DeploymentParams, error)
+	Resolve(ctx context.Context, tenantID string, preset *domain.TestPreset) (*deployment.Deployment, error)
 }
 
 // DagStore persists and loads Dag aggregates. Implemented by
@@ -45,19 +40,15 @@ type LogsClient interface {
 	BuildLogLink(ctx context.Context, dagID string, req *uipb.BuildLogLinkRequest) (string, error)
 }
 
-// MetricsClient serves run metric summaries (VictoriaMetrics, E19).
-//
-// TODO(run): no implementation yet — needs a VictoriaMetrics summary client.
-// Reported.
+// MetricsClient serves run metric summaries (VictoriaMetrics, E19). Implemented by
+// services/metrics over the VictoriaMetrics instant-query client.
 type MetricsClient interface {
 	GetRunMetrics(ctx context.Context, runID string) (*metrics.RunMetrics, error)
 	CompareRuns(ctx context.Context, runA, runB string) (*metrics.Comparison, error)
 }
 
 // ShareStore mints and resolves immutable public run-share snapshots (G5).
-//
-// TODO(run): no implementation yet — needs a snapshot store + opaque token.
-// Reported.
+// Implemented by services/share (opaque token + metric snapshot stored in Valkey).
 type ShareStore interface {
 	CreateShareLink(ctx context.Context, run *models.TestRun) (token, url string, err error)
 	GetSharedRun(ctx context.Context, token string) (*uipb.GetSharedRunResponse, error)
@@ -119,7 +110,13 @@ func (s *RunService) GetRunMetrics(ctx context.Context, req *uipb.GetRunMetricsR
 			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
 				return nil, err
 			}
-			return s.metrics.GetRunMetrics(ctx, req.GetRunId().GetValue())
+			// Metrics are tagged run_id=<dag id> (stroppy OTLP resource attr / vmagent
+			// label), so resolve run -> dag and query by the dag id (mirrors logs).
+			run, err := s.loadRun(ctx, req.GetTenantId().GetValue(), req.GetRunId().GetValue())
+			if err != nil {
+				return nil, err
+			}
+			return s.metrics.GetRunMetrics(ctx, run.GetDag().GetValue())
 		})
 }
 

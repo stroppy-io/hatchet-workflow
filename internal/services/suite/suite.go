@@ -19,6 +19,7 @@ import (
 	dagdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/ids"
 	uipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
@@ -30,14 +31,10 @@ import (
 
 const metadataTenantID = "tenant_id"
 
-// Planner compiles a TestPreset (+ deployment params) into a Dag (C12).
-type Planner interface {
-	Compile(preset *domain.TestPreset, params *dagdomain.DeploymentParams) (*primitive.Dag, error)
-}
-
-// ProviderResolver resolves a tenant's deployment params for a topology.
+// ProviderResolver resolves a tenant's run-scoped deployment.Deployment for a
+// TestPreset (baked into each per-test dag via dag.BuildTestDag).
 type ProviderResolver interface {
-	Resolve(ctx context.Context, tenantID string, topo *domain.Topology) (*dagdomain.DeploymentParams, error)
+	Resolve(ctx context.Context, tenantID string, preset *domain.TestPreset) (*deployment.Deployment, error)
 }
 
 // DagStore persists Dag aggregates.
@@ -58,7 +55,6 @@ type SuiteService struct {
 	testRuns *repository.ProtoRepository[
 		models.TestRunAlias, models.TestRunColumnAlias, *models.TestRunScanner, *models.TestRun,
 	]
-	planner  Planner
 	provider ProviderResolver
 	store    DagStore
 	authz    *authz.Authz
@@ -68,13 +64,12 @@ type SuiteService struct {
 var _ uiapi.SuiteActions = (*SuiteService)(nil)
 
 // New builds a SuiteService.
-func New(logger *xlog.Logger, executor exec.DB, txm tx.Trm, az *authz.Authz, planner Planner, provider ProviderResolver, store DagStore) *SuiteService {
+func New(logger *xlog.Logger, executor exec.DB, txm tx.Trm, az *authz.Authz, provider ProviderResolver, store DagStore) *SuiteService {
 	return &SuiteService{
 		Entity:    tracing.NewEntity(logger.AppendName("SuiteService")),
 		suites:    repository.NewProtoRepository(repository.NewScannerRepository(models.Suites.Table, executor), models.SuiteConverter),
 		suiteRuns: repository.NewProtoRepository(repository.NewScannerRepository(models.SuiteRuns.Table, executor), models.SuiteRunConverter),
 		testRuns:  repository.NewProtoRepository(repository.NewScannerRepository(models.TestRuns.Table, executor), models.TestRunConverter),
-		planner:   planner,
 		provider:  provider,
 		store:     store,
 		authz:     az,
@@ -126,11 +121,9 @@ func (s *SuiteService) GetSuite(ctx context.Context, req *uipb.GetSuiteRequest) 
 }
 
 // LaunchSuiteRun compiles every test in the suite into its own Dag and builds an
-// orchestration Dag of dag_ref nodes; persists the lot and returns the SuiteRun.
-//
-// TODO(suite): scheduling is coarse — all dag_refs are ready with MaxParallelism=1
-// (effectively sequential); explicit seq/parallel ordering + on_node_failure
-// mapping from SuitePreset.Scheduling is not fully translated. Reported.
+// orchestration Dag of dag_ref nodes (dag.BuildSuiteDag maps SuitePreset.Scheduling:
+// sequential -> chained edges, parallel -> MaxParallelism, + on_node_failure);
+// persists the lot and returns the SuiteRun.
 func (s *SuiteService) LaunchSuiteRun(ctx context.Context, req *uipb.LaunchSuiteRunRequest) (*models.SuiteRun, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "LaunchSuiteRun",
 		func(ctx context.Context, _ trace.Span) (*models.SuiteRun, error) {
@@ -156,14 +149,11 @@ func (s *SuiteService) LaunchSuiteRun(ctx context.Context, req *uipb.LaunchSuite
 			var testDagIDs []string
 
 			for i, tp := range suite.GetPreset().GetTests() {
-				params, err := s.provider.Resolve(ctx, tenant.GetValue(), tp.GetTopology())
+				dep, err := s.provider.Resolve(ctx, tenant.GetValue(), tp)
 				if err != nil {
 					return nil, status.Errorf(codes.Internal, "resolve deployment %d: %v", i, err)
 				}
-				dag, err := s.planner.Compile(tp, params)
-				if err != nil {
-					return nil, status.Errorf(codes.InvalidArgument, "compile test %d: %v", i, err)
-				}
+				dag := dagdomain.BuildTestDag(tp, dep, dagdomain.Deps{Install: dagdomain.RecipeInstallBuilder{}})
 				if dag.Metadata == nil {
 					dag.Metadata = map[string]string{}
 				}
@@ -231,23 +221,109 @@ func (s *SuiteService) GetSuiteRun(ctx context.Context, req *uipb.GetSuiteRunReq
 		})
 }
 
-// ListSuiteRuns returns the tenant's suite runs.
-//
-// TODO(suite): page_token pagination ignored. Reported.
-func (s *SuiteService) ListSuiteRuns(ctx context.Context, req *uipb.ListSuiteRunsRequest) (*models.SuiteRun_List, error) {
+// ListSuiteRuns returns the tenant's suite runs with cursor pagination
+// (newest-first by default), optionally scoped to a single suite.
+func (s *SuiteService) ListSuiteRuns(ctx context.Context, req *uipb.ListSuiteRunsRequest) (*uipb.ListSuiteRunsResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListSuiteRuns",
-		func(ctx context.Context, _ trace.Span) (*models.SuiteRun_List, error) {
+		func(ctx context.Context, _ trace.Span) (*uipb.ListSuiteRunsResponse, error) {
 			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
 				return nil, err
 			}
-			runs, err := s.suiteRuns.Query(ctx, models.SuiteRuns.SelectAll().Where(
+			size := svcutil.PageSize(req.GetPage())
+			desc := svcutil.CursorDesc(req.GetOrder())
+			q := models.SuiteRuns.SelectAll().Where(
 				models.SuiteRuns.TenantId.Eq(req.GetTenantId().GetValue()),
 				models.SuiteRuns.DeletedAt.IsNull(),
-			))
+			)
+			if req.GetSuiteId() != nil {
+				q = q.Where(models.SuiteRuns.SuiteId.Eq(req.GetSuiteId().GetValue()))
+			}
+			// status filtering needs the Dag status (not a run column); use the Dag list or denormalize status — tracked as a schema follow-up.
+			// tags: Tags is serialized JSON of common.Tags (a TEXT column) — match
+			// each requested free tag and key=value label as a substring.
+			for _, tag := range req.GetTags().GetTags() {
+				q = q.Where(models.SuiteRuns.Tags.ILike("%" + tag + "%"))
+			}
+			for k, v := range req.GetTags().GetLabels() {
+				q = q.Where(models.SuiteRuns.Tags.ILike("%" + k + "%" + v + "%"))
+			}
+			if tok := req.GetPage().GetToken(); tok != "" {
+				if desc {
+					q = q.Where(models.SuiteRuns.Id.Lt(tok))
+				} else {
+					q = q.Where(models.SuiteRuns.Id.Gt(tok))
+				}
+			}
+			if desc {
+				q = q.OrderByDESC(models.SuiteRunColumnId)
+			} else {
+				q = q.OrderByASC(models.SuiteRunColumnId)
+			}
+			rows, err := s.suiteRuns.Query(ctx, q.Limit(size+1))
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "list suite runs: %v", err)
 			}
-			return &models.SuiteRun_List{SuiteRuns: runs}, nil
+			items, pageInfo := svcutil.Paginate(rows, size, func(r *models.SuiteRun) string {
+				return r.GetEntity().GetId().GetValue()
+			})
+			return &uipb.ListSuiteRunsResponse{SuiteRuns: items, PageInfo: pageInfo}, nil
+		})
+}
+
+// ListSuites returns the tenant's suite definitions with cursor pagination
+// (newest-first by default), optionally filtered by cron presence.
+func (s *SuiteService) ListSuites(ctx context.Context, req *uipb.ListSuitesRequest) (*uipb.ListSuitesResponse, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListSuites",
+		func(ctx context.Context, _ trace.Span) (*uipb.ListSuitesResponse, error) {
+			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
+				return nil, err
+			}
+			size := svcutil.PageSize(req.GetPage())
+			desc := svcutil.CursorDesc(req.GetOrder())
+			q := models.Suites.SelectAll().Where(
+				models.Suites.TenantId.Eq(req.GetTenantId().GetValue()),
+				models.Suites.DeletedAt.IsNull(),
+			)
+			if req.HasCron != nil {
+				// Cron is a NOT NULL text column: empty string == no schedule.
+				if req.GetHasCron() {
+					q = q.Where(models.Suites.Cron.Neq(""))
+				} else {
+					q = q.Where(models.Suites.Cron.Eq(""))
+				}
+			}
+			// search: match the suite name (NullText column → raw ILIKE).
+			if req.GetSearch() != "" {
+				q = q.Where(models.Suites.Name.Raw("ILIKE", "?", "%"+req.GetSearch()+"%"))
+			}
+			// tags: Tags is serialized JSON of common.Tags (a TEXT column) — match
+			// each requested free tag and key=value label as a substring.
+			for _, tag := range req.GetTags().GetTags() {
+				q = q.Where(models.Suites.Tags.ILike("%" + tag + "%"))
+			}
+			for k, v := range req.GetTags().GetLabels() {
+				q = q.Where(models.Suites.Tags.ILike("%" + k + "%" + v + "%"))
+			}
+			if tok := req.GetPage().GetToken(); tok != "" {
+				if desc {
+					q = q.Where(models.Suites.Id.Lt(tok))
+				} else {
+					q = q.Where(models.Suites.Id.Gt(tok))
+				}
+			}
+			if desc {
+				q = q.OrderByDESC(models.SuiteColumnId)
+			} else {
+				q = q.OrderByASC(models.SuiteColumnId)
+			}
+			rows, err := s.suites.Query(ctx, q.Limit(size+1))
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "list suites: %v", err)
+			}
+			items, pageInfo := svcutil.Paginate(rows, size, func(su *models.Suite) string {
+				return su.GetEntity().GetId().GetValue()
+			})
+			return &uipb.ListSuitesResponse{Suites: items, PageInfo: pageInfo}, nil
 		})
 }
 

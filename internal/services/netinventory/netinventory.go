@@ -3,8 +3,10 @@
 // currently in use so the allocator never collides across runs. Leases are
 // TTL-bounded (no explicit free — expired leases are ignored), which bounds leak.
 //
-// This is the persisted mirror; the live-VPC reconcile (the cloud as source of
-// truth, H33) is a separate layer that needs the Yandex Cloud SDK.
+// This is the persisted (in-flight reservation) mirror; the live VPC view (the cloud
+// as source of truth, H33) is services/yandexcloud, whose UsedIPs returns live
+// instances ∪ this mirror. services/deploy reads used IPs through that union, so the
+// subnet is never assumed empty.
 package netinventory
 
 import (

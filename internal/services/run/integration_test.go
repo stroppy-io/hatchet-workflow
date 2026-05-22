@@ -19,11 +19,11 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/api/caller"
-	dagdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/ids"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/dagstore"
 	adminpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/admin"
 	uipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	rtlogs "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/logs"
@@ -53,15 +53,18 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// --- Fakes for the cheap-to-stub injected deps. ProviderResolver returns minimal
-// (empty) DeploymentParams; the real planner compiles a valid Dag from them. Logs/
-// Metrics return empty data; ShareStore mints a canned token. No real cloud/
-// VictoriaLogs/VictoriaMetrics/S3 is touched. The Planner and DagStore are REAL.
+// --- Fakes for the cheap-to-stub injected deps. ProviderResolver returns a minimal
+// docker deployment; run.SubmitTestRun builds a valid Dag from it via BuildTestDag.
+// Logs/Metrics return empty data; ShareStore mints a canned token. No real cloud/
+// VictoriaLogs/VictoriaMetrics/S3 is touched. The DagStore is REAL.
 
 type fakeProvider struct{}
 
-func (fakeProvider) Resolve(_ context.Context, _ string, _ *domain.Topology) (*dagdomain.DeploymentParams, error) {
-	return &dagdomain.DeploymentParams{}, nil
+func (fakeProvider) Resolve(_ context.Context, _ string, _ *domain.TestPreset) (*deployment.Deployment, error) {
+	return &deployment.Deployment{
+		Provider:   deployment.Provider_PROVIDER_DOCKER,
+		Deployment: &deployment.Deployment_Docker{Docker: &deployment.Docker{Input: &deployment.Docker_Input{}}},
+	}, nil
 }
 
 type fakeLogs struct{}
@@ -121,7 +124,6 @@ func newFixture(t *testing.T, role models.TenantMember_Role) *fixture {
 	az := authz.New(log, executor)
 	store := dagstore.New(log, executor)
 	svc := run.New(log, executor, trm, az,
-		dagdomain.New(), // real dag compiler
 		fakeProvider{},
 		store, // real dagstore
 		fakeLogs{}, fakeMetrics{}, fakeShare{})

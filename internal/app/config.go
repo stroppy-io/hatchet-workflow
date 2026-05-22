@@ -41,6 +41,13 @@ type Config struct {
 	AgentBinaryURL_ string
 	AgentJWTTTL_    time.Duration
 
+	// Bootstrap: the root admin + its tenant are seeded at server start if no
+	// admin account exists yet (idempotent). Settings scaffold + system database
+	// presets are seeded under that root tenant.
+	RootAdminEmail    string
+	RootAdminPassword string
+	RootTenantName    string
+
 	// Agent client mode (the `agent` subcommand).
 	Agent AgentConfig
 }
@@ -112,6 +119,10 @@ func LoadConfig() *Config {
 		ServerAddr_:     os.Getenv("STROPPY_SERVER_ADDR"),
 		AgentBinaryURL_: os.Getenv("STROPPY_AGENT_BINARY_URL"),
 		AgentJWTTTL_:    envDuration("STROPPY_AGENT_JWT_TTL", 24*time.Hour),
+
+		RootAdminEmail:    env("STROPPY_ROOT_ADMIN_EMAIL", "admin@stroppy.local"),
+		RootAdminPassword: env("STROPPY_ROOT_ADMIN_PASSWORD", "stroppy-admin-change-me"),
+		RootTenantName:    env("STROPPY_ROOT_TENANT_NAME", "root"),
 		Agent: AgentConfig{
 			ServerAddr: env("STROPPY_AGENT_SERVER", "localhost:8080"),
 			TenantID:   os.Getenv("STROPPY_AGENT_TENANT"),

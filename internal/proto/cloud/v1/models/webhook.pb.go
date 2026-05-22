@@ -8,6 +8,7 @@ package models
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	_ "github.com/yaroher/protoc-gen-go-plain/goplain"
 	_ "github.com/yaroher/ratel/ratelproto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -92,7 +93,9 @@ type Webhook struct {
 	// events the webhook subscribes to.
 	Events []Webhook_Event `protobuf:"varint,4,rep,packed,name=events,proto3,enum=cloud.v1.models.Webhook_Event" json:"events,omitempty"`
 	// enabled toggles delivery without deleting the config.
-	Enabled       bool `protobuf:"varint,5,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Enabled bool `protobuf:"varint,5,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	// tags is a free label set for filtering/grouping.
+	Tags          *common.Tags `protobuf:"bytes,6,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -162,6 +165,13 @@ func (x *Webhook) GetEnabled() bool {
 	return false
 }
 
+func (x *Webhook) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
 type Webhook_List struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Webhooks      []*Webhook             `protobuf:"bytes,1,rep,name=webhooks,proto3" json:"webhooks,omitempty"`
@@ -210,14 +220,15 @@ var File_cloud_v1_models_webhook_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_webhook_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcloud/v1/models/webhook.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/models/common.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xe9\x03\n" +
+	"\x1dcloud/v1/models/webhook.proto\x12\x0fcloud.v1.models\x1a\x1acloud/v1/common/tags.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\x9c\x04\n" +
 	"\aWebhook\x127\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x122\n" +
 	"\x05owned\x18\x02 \x01(\v2\x14.cloud.v1.models.OwnB\x06\x82\xa6\x1d\x02 \x01R\x05owned\x12\x1f\n" +
 	"\x03url\x18\x03 \x01(\tB\r\xfaB\n" +
 	"r\b\x10\b\x18\x80\x10\x88\x01\x01R\x03url\x12K\n" +
 	"\x06events\x18\x04 \x03(\x0e2\x1e.cloud.v1.models.Webhook.EventB\x13\xfaB\x10\x92\x01\r\b\x01\x10\x10\"\a\x82\x01\x04\x10\x01 \x00R\x06events\x12\x18\n" +
-	"\aenabled\x18\x05 \x01(\bR\aenabled\x1a<\n" +
+	"\aenabled\x18\x05 \x01(\bR\aenabled\x121\n" +
+	"\x04tags\x18\x06 \x01(\v2\x15.cloud.v1.common.TagsB\x06\x82\xa6\x1d\x02\x10\x01R\x04tags\x1a<\n" +
 	"\x04List\x124\n" +
 	"\bwebhooks\x18\x01 \x03(\v2\x18.cloud.v1.models.WebhookR\bwebhooks\"\x80\x01\n" +
 	"\x05Event\x12\x15\n" +
@@ -248,17 +259,19 @@ var file_cloud_v1_models_webhook_proto_goTypes = []any{
 	(*Webhook_List)(nil), // 2: cloud.v1.models.Webhook.List
 	(*Entity)(nil),       // 3: cloud.v1.models.Entity
 	(*Own)(nil),          // 4: cloud.v1.models.Own
+	(*common.Tags)(nil),  // 5: cloud.v1.common.Tags
 }
 var file_cloud_v1_models_webhook_proto_depIdxs = []int32{
 	3, // 0: cloud.v1.models.Webhook.entity:type_name -> cloud.v1.models.Entity
 	4, // 1: cloud.v1.models.Webhook.owned:type_name -> cloud.v1.models.Own
 	0, // 2: cloud.v1.models.Webhook.events:type_name -> cloud.v1.models.Webhook.Event
-	1, // 3: cloud.v1.models.Webhook.List.webhooks:type_name -> cloud.v1.models.Webhook
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	5, // 3: cloud.v1.models.Webhook.tags:type_name -> cloud.v1.common.Tags
+	1, // 4: cloud.v1.models.Webhook.List.webhooks:type_name -> cloud.v1.models.Webhook
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_webhook_proto_init() }

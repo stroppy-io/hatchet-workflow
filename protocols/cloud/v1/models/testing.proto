@@ -2,9 +2,11 @@ syntax = "proto3";
 
 package cloud.v1.models;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/domain/suite.proto";
 import "cloud/v1/domain/test.proto";
 import "cloud/v1/models/common.proto";
+import "cloud/v1/runtime/primitive/status.proto";
 import "google/protobuf/timestamp.proto";
 import "goplain/goplain.proto";
 import "ratelproto/ratelproto.proto";
@@ -50,6 +52,12 @@ message TestRun {
         references_column: "id"
         on_delete: CASCADE
     }];
+    /* tags is a free label set for filtering/grouping. */
+    common.Tags tags = 8 [(goplain.field).serialize = true];
+
+    /* status mirrors the run's Dag.status (H22). Hydrated on read from the Dag
+       (authoritative); the persisted column is a best-effort denormalization. */
+    runtime.primitive.Status status = 9 [(validate.rules).enum.defined_only = true];
 }
 
 message Suite {
@@ -102,6 +110,8 @@ message Suite {
         loop. The per-fire lease lives in Valkey (G3), not here.
      */
     optional google.protobuf.Timestamp next_fire_at = 7;
+    /* tags is a free label set for filtering/grouping. */
+    common.Tags tags = 8 [(goplain.field).serialize = true];
 }
 
 message SuiteRun {
@@ -132,4 +142,6 @@ message SuiteRun {
             on_delete_cascade: true
         }
     }];
+    /* tags is a free label set for filtering/grouping. */
+    common.Tags tags = 9 [(goplain.field).serialize = true];
 }

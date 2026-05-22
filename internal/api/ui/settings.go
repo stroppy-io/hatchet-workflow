@@ -16,7 +16,7 @@ import (
 // settings items (provider creds etc; read=ADMIN masked, write=OWNER).
 // internal/services implements it.
 type SettingsActions interface {
-	ListSettingsItems(ctx context.Context, req *uipb.ListSettingsItemsRequest) (*models.SettingsItem_List, error)
+	ListSettingsItems(ctx context.Context, req *uipb.ListSettingsItemsRequest) (*uipb.ListSettingsItemsResponse, error)
 	GetSettingsItem(ctx context.Context, req *uipb.GetSettingsItemRequest) (*models.SettingsItem, error)
 	SetSettingsItem(ctx context.Context, req *uipb.SetSettingsItemRequest) (*models.SettingsItem, error)
 	DeleteSettingsItem(ctx context.Context, req *uipb.DeleteSettingsItemRequest) (*emptypb.Empty, error)
@@ -39,9 +39,9 @@ func NewSettingsService(logger *xlog.Logger, svc SettingsActions) *SettingsServi
 	}
 }
 
-func (s *SettingsService) ListSettingsItems(ctx context.Context, req *uipb.ListSettingsItemsRequest) (*models.SettingsItem_List, error) {
+func (s *SettingsService) ListSettingsItems(ctx context.Context, req *uipb.ListSettingsItemsRequest) (*uipb.ListSettingsItemsResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListSettingsItems",
-		func(ctx context.Context, _ trace.Span) (*models.SettingsItem_List, error) {
+		func(ctx context.Context, _ trace.Span) (*uipb.ListSettingsItemsResponse, error) {
 			return s.svc.ListSettingsItems(ctx, req)
 		})
 }

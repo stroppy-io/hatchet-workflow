@@ -8,7 +8,6 @@ package ui
 
 import (
 	context "context"
-	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -30,7 +29,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PackageServiceClient interface {
-	ListPackages(ctx context.Context, in *ListPackagesRequest, opts ...grpc.CallOption) (*models.Package_List, error)
+	ListPackages(ctx context.Context, in *ListPackagesRequest, opts ...grpc.CallOption) (*ListPackagesResponse, error)
 	RequestPackageUpload(ctx context.Context, in *RequestPackageUploadRequest, opts ...grpc.CallOption) (*RequestPackageUploadResponse, error)
 	DeletePackage(ctx context.Context, in *DeletePackageRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
@@ -43,9 +42,9 @@ func NewPackageServiceClient(cc grpc.ClientConnInterface) PackageServiceClient {
 	return &packageServiceClient{cc}
 }
 
-func (c *packageServiceClient) ListPackages(ctx context.Context, in *ListPackagesRequest, opts ...grpc.CallOption) (*models.Package_List, error) {
+func (c *packageServiceClient) ListPackages(ctx context.Context, in *ListPackagesRequest, opts ...grpc.CallOption) (*ListPackagesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(models.Package_List)
+	out := new(ListPackagesResponse)
 	err := c.cc.Invoke(ctx, PackageService_ListPackages_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -77,7 +76,7 @@ func (c *packageServiceClient) DeletePackage(ctx context.Context, in *DeletePack
 // All implementations must embed UnimplementedPackageServiceServer
 // for forward compatibility.
 type PackageServiceServer interface {
-	ListPackages(context.Context, *ListPackagesRequest) (*models.Package_List, error)
+	ListPackages(context.Context, *ListPackagesRequest) (*ListPackagesResponse, error)
 	RequestPackageUpload(context.Context, *RequestPackageUploadRequest) (*RequestPackageUploadResponse, error)
 	DeletePackage(context.Context, *DeletePackageRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedPackageServiceServer()
@@ -90,7 +89,7 @@ type PackageServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedPackageServiceServer struct{}
 
-func (UnimplementedPackageServiceServer) ListPackages(context.Context, *ListPackagesRequest) (*models.Package_List, error) {
+func (UnimplementedPackageServiceServer) ListPackages(context.Context, *ListPackagesRequest) (*ListPackagesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListPackages not implemented")
 }
 func (UnimplementedPackageServiceServer) RequestPackageUpload(context.Context, *RequestPackageUploadRequest) (*RequestPackageUploadResponse, error) {

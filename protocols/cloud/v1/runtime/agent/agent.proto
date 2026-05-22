@@ -97,4 +97,8 @@ message LogLine {
     Stream stream = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
     string line = 4 [(validate.rules).string.max_len = 65536];
     google.protobuf.Timestamp observed_at = 5;
+    /* dag_id + node_execution_id correlate the line to its run + node so logs are
+       filterable by run/node (alongside machine_id/component from target). */
+    string dag_id = 6 [(validate.rules).string.max_len = 128];
+    string node_execution_id = 7 [(validate.rules).string.max_len = 256];
 }

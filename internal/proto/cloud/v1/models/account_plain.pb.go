@@ -4,7 +4,9 @@
 package models
 
 import (
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	ratelcast "github.com/yaroher/ratel/pkg/ratelcast"
+	protojson "google.golang.org/protobuf/encoding/protojson"
 	time "time"
 )
 
@@ -16,6 +18,7 @@ type AccountScanner struct {
 	Email        string     `json:"email"`
 	Nickname     string     `json:"nickname"`
 	IsAdmin      bool       `json:"isAdmin"`
+	Tags         []byte     `json:"tags"`         // origin: serialized, empath: tags
 	PasswordHash string     `json:"passwordHash"` // origin: virtual, empath: virtual
 }
 
@@ -46,6 +49,14 @@ func (pb *Account) IntoPlain() *AccountScanner {
 	p.Email = pb.Email
 	p.Nickname = pb.Nickname
 	p.IsAdmin = pb.IsAdmin
+	// Tags serialized from tags
+	if pb.Tags != nil {
+		if data, err := protojson.Marshal(pb.Tags); err == nil {
+			p.Tags = data
+		}
+	} else {
+		p.Tags = []byte{}
+	}
 	// PasswordHash is virtual, no source in protobuf
 	return p
 }
@@ -96,6 +107,13 @@ func (p *AccountScanner) IntoPb() *Account {
 	pb.Email = p.Email
 	pb.Nickname = p.Nickname
 	pb.IsAdmin = p.IsAdmin
+	// Tags deserialize -> tags
+	if len(p.Tags) > 0 {
+		var msg common.Tags
+		if err := protojson.Unmarshal(p.Tags, &msg); err == nil {
+			pb.Tags = &msg
+		}
+	}
 	// PasswordHash is virtual, skipping
 	return pb
 }

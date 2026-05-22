@@ -19,6 +19,8 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	agent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent"
+
+	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 )
 
 // ensure the imports are used
@@ -37,6 +39,8 @@ var (
 	_ = sort.Sort
 
 	_ = agent.AgentStatus(0)
+
+	_ = models.SortOrder(0)
 )
 
 // Validate checks the field values on RegisterRequest with the rules defined
@@ -1627,12 +1631,34 @@ func (m *ListAgentsRequest) validate(all bool) error {
 		}
 	}
 
+	if _, ok := ListAgentsRequest_SortField_name[int32(m.GetSortField())]; !ok {
+		err := ListAgentsRequestValidationError{
+			field:  "SortField",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := models.SortOrder_name[int32(m.GetOrder())]; !ok {
+		err := ListAgentsRequestValidationError{
+			field:  "Order",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if all {
-		switch v := interface{}(m.GetQuery()).(type) {
+		switch v := interface{}(m.GetPage()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, ListAgentsRequestValidationError{
-					field:  "Query",
+					field:  "Page",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -1640,20 +1666,79 @@ func (m *ListAgentsRequest) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, ListAgentsRequestValidationError{
-					field:  "Query",
+					field:  "Page",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetQuery()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetPage()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ListAgentsRequestValidationError{
-				field:  "Query",
+				field:  "Page",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
 		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListAgentsRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListAgentsRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListAgentsRequestValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.Status != nil {
+
+		if _, ok := agent.AgentStatus_name[int32(m.GetStatus())]; !ok {
+			err := ListAgentsRequestValidationError{
+				field:  "Status",
+				reason: "value must be one of the defined enum values",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.Search != nil {
+
+		if utf8.RuneCountInString(m.GetSearch()) > 256 {
+			err := ListAgentsRequestValidationError{
+				field:  "Search",
+				reason: "value length must be at most 256 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
 	}
 
 	if len(errors) > 0 {
@@ -1735,3 +1820,168 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListAgentsRequestValidationError{}
+
+// Validate checks the field values on ListAgentsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListAgentsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListAgentsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListAgentsResponseMultiError, or nil if none found.
+func (m *ListAgentsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListAgentsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetAgents() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListAgentsResponseValidationError{
+						field:  fmt.Sprintf("Agents[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListAgentsResponseValidationError{
+						field:  fmt.Sprintf("Agents[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListAgentsResponseValidationError{
+					field:  fmt.Sprintf("Agents[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetPageInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListAgentsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListAgentsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPageInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListAgentsResponseValidationError{
+				field:  "PageInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ListAgentsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListAgentsResponseMultiError is an error wrapping multiple validation errors
+// returned by ListAgentsResponse.ValidateAll() if the designated constraints
+// aren't met.
+type ListAgentsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListAgentsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListAgentsResponseMultiError) AllErrors() []error { return m }
+
+// ListAgentsResponseValidationError is the validation error returned by
+// ListAgentsResponse.Validate if the designated constraints aren't met.
+type ListAgentsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListAgentsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListAgentsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListAgentsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListAgentsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListAgentsResponseValidationError) ErrorName() string {
+	return "ListAgentsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListAgentsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListAgentsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListAgentsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListAgentsResponseValidationError{}

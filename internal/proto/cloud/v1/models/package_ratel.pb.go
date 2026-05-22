@@ -10,9 +10,9 @@ import (
 	"github.com/yaroher/ratel/pkg/ddl"
 	"github.com/yaroher/ratel/pkg/dml/set"
 	"github.com/yaroher/ratel/pkg/exec"
-	"github.com/yaroher/ratel/pkg/sqlerr"
 	"github.com/yaroher/ratel/pkg/repository"
 	"github.com/yaroher/ratel/pkg/schema"
+	"github.com/yaroher/ratel/pkg/sqlerr"
 )
 
 var (
@@ -46,6 +46,7 @@ const (
 	PackageColumnDebObjectUri   PackageColumnAlias = "deb_object_uri"
 	PackageColumnChecksum       PackageColumnAlias = "checksum"
 	PackageColumnIsBuiltin      PackageColumnAlias = "is_builtin"
+	PackageColumnTags           PackageColumnAlias = "tags"
 )
 
 func (s *PackageScanner) GetTarget(col string) func() any {
@@ -74,6 +75,8 @@ func (s *PackageScanner) GetTarget(col string) func() any {
 		return func() any { return &s.Checksum }
 	case PackageColumnIsBuiltin:
 		return func() any { return &s.IsBuiltin }
+	case PackageColumnTags:
+		return func() any { return &s.Tags }
 	default:
 		panic("unknown field: " + col)
 	}
@@ -105,6 +108,8 @@ func (s *PackageScanner) GetSetter(f PackageColumnAlias) func() set.ValueSetter[
 		return func() set.ValueSetter[PackageColumnAlias] { return set.NewSetter(f, &s.Checksum) }
 	case PackageColumnIsBuiltin:
 		return func() set.ValueSetter[PackageColumnAlias] { return set.NewSetter(f, &s.IsBuiltin) }
+	case PackageColumnTags:
+		return func() set.ValueSetter[PackageColumnAlias] { return set.NewSetter(f, &s.Tags) }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -136,6 +141,8 @@ func (s *PackageScanner) GetValue(f PackageColumnAlias) func() any {
 		return func() any { return s.Checksum }
 	case PackageColumnIsBuiltin:
 		return func() any { return s.IsBuiltin }
+	case PackageColumnTags:
+		return func() any { return s.Tags }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -155,6 +162,7 @@ func (s *PackageScanner) AllSetters() []set.ValueSetter[PackageColumnAlias] {
 		set.NewSetter[PackageColumnAlias](PackageColumnDebObjectUri, s.DebObjectUri),
 		set.NewSetter[PackageColumnAlias](PackageColumnChecksum, s.Checksum),
 		set.NewSetter[PackageColumnAlias](PackageColumnIsBuiltin, s.IsBuiltin),
+		set.NewSetter[PackageColumnAlias](PackageColumnTags, s.Tags),
 	}
 }
 
@@ -178,6 +186,7 @@ type PackagesTable struct {
 	DebObjectUri   schema.TextColumnI[PackageColumnAlias]
 	Checksum       schema.TextColumnI[PackageColumnAlias]
 	IsBuiltin      schema.BooleanColumnI[PackageColumnAlias]
+	Tags           schema.TextColumnI[PackageColumnAlias]
 }
 
 // Packages is the global packages table instance
@@ -194,6 +203,7 @@ var Packages = func() PackagesTable {
 	debObjectUriCol := schema.TextColumn(PackageColumnDebObjectUri, ddl.WithNotNull[PackageColumnAlias]())
 	checksumCol := schema.TextColumn(PackageColumnChecksum, ddl.WithNotNull[PackageColumnAlias]())
 	isBuiltinCol := schema.BooleanColumn(PackageColumnIsBuiltin, ddl.WithNotNull[PackageColumnAlias]())
+	tagsCol := schema.TextColumn(PackageColumnTags, ddl.WithNotNull[PackageColumnAlias]())
 
 	return PackagesTable{
 		Table: schema.NewTable[PackageAlias, PackageColumnAlias, *PackageScanner](
@@ -212,6 +222,7 @@ var Packages = func() PackagesTable {
 				debObjectUriCol.DDL(),
 				checksumCol.DDL(),
 				isBuiltinCol.DDL(),
+				tagsCol.DDL(),
 			},
 		),
 		Id:             idCol,
@@ -226,6 +237,7 @@ var Packages = func() PackagesTable {
 		DebObjectUri:   debObjectUriCol,
 		Checksum:       checksumCol,
 		IsBuiltin:      isBuiltinCol,
+		Tags:           tagsCol,
 	}
 }()
 

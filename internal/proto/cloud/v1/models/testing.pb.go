@@ -8,7 +8,9 @@ package models
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	primitive "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
 	_ "github.com/yaroher/protoc-gen-go-plain/goplain"
 	_ "github.com/yaroher/ratel/ratelproto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -134,14 +136,19 @@ func (Suite_Cron_Concurrent) EnumDescriptor() ([]byte, []int) {
 // - naming holes RESOLVED (H10): SuiteRuns -> SuiteRun (singular instance);
 // Suite.List now holds Suite under `suites`; SuiteRun.List uses `suite_runs`.
 type TestRun struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entity        *Entity                `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	Owned         *Own                   `protobuf:"bytes,2,opt,name=owned,proto3" json:"owned,omitempty"`
-	Name          *string                `protobuf:"bytes,3,opt,name=name,proto3,oneof" json:"name,omitempty"`
-	Description   *string                `protobuf:"bytes,4,opt,name=description,proto3,oneof" json:"description,omitempty"`
-	TestPreset    *domain.TestPreset     `protobuf:"bytes,5,opt,name=test_preset,json=testPreset,proto3" json:"test_preset,omitempty"`
-	Dag           *DagId                 `protobuf:"bytes,6,opt,name=dag,proto3" json:"dag,omitempty"`
-	SuiteRunId    *SuiteRunId            `protobuf:"bytes,7,opt,name=suite_run_id,json=suiteRunId,proto3,oneof" json:"suite_run_id,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Entity      *Entity                `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	Owned       *Own                   `protobuf:"bytes,2,opt,name=owned,proto3" json:"owned,omitempty"`
+	Name        *string                `protobuf:"bytes,3,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	Description *string                `protobuf:"bytes,4,opt,name=description,proto3,oneof" json:"description,omitempty"`
+	TestPreset  *domain.TestPreset     `protobuf:"bytes,5,opt,name=test_preset,json=testPreset,proto3" json:"test_preset,omitempty"`
+	Dag         *DagId                 `protobuf:"bytes,6,opt,name=dag,proto3" json:"dag,omitempty"`
+	SuiteRunId  *SuiteRunId            `protobuf:"bytes,7,opt,name=suite_run_id,json=suiteRunId,proto3,oneof" json:"suite_run_id,omitempty"`
+	// tags is a free label set for filtering/grouping.
+	Tags *common.Tags `protobuf:"bytes,8,opt,name=tags,proto3" json:"tags,omitempty"`
+	// status mirrors the run's Dag.status (H22). Hydrated on read from the Dag
+	// (authoritative); the persisted column is a best-effort denormalization.
+	Status        primitive.Status `protobuf:"varint,9,opt,name=status,proto3,enum=cloud.v1.runtime.primitive.Status" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -225,6 +232,20 @@ func (x *TestRun) GetSuiteRunId() *SuiteRunId {
 	return nil
 }
 
+func (x *TestRun) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+func (x *TestRun) GetStatus() primitive.Status {
+	if x != nil {
+		return x.Status
+	}
+	return primitive.Status(0)
+}
+
 type Suite struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	Entity      *Entity                `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
@@ -236,7 +257,9 @@ type Suite struct {
 	Cron *Suite_Cron `protobuf:"bytes,6,opt,name=cron,proto3" json:"cron,omitempty"`
 	// next_fire_at is the next scheduled firing instant, indexed for the cron
 	// loop. The per-fire lease lives in Valkey (G3), not here.
-	NextFireAt    *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=next_fire_at,json=nextFireAt,proto3,oneof" json:"next_fire_at,omitempty"`
+	NextFireAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=next_fire_at,json=nextFireAt,proto3,oneof" json:"next_fire_at,omitempty"`
+	// tags is a free label set for filtering/grouping.
+	Tags          *common.Tags `protobuf:"bytes,8,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -320,13 +343,22 @@ func (x *Suite) GetNextFireAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Suite) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
 type SuiteRun struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entity        *Entity                `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	Owned         *Own                   `protobuf:"bytes,2,opt,name=owned,proto3" json:"owned,omitempty"`
-	SuiteId       *SuiteId               `protobuf:"bytes,3,opt,name=suite_id,json=suiteId,proto3" json:"suite_id,omitempty"`
-	Dag           *DagId                 `protobuf:"bytes,6,opt,name=dag,proto3" json:"dag,omitempty"`
-	TestRuns      []*TestRun             `protobuf:"bytes,8,rep,name=test_runs,json=testRuns,proto3" json:"test_runs,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Entity   *Entity                `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	Owned    *Own                   `protobuf:"bytes,2,opt,name=owned,proto3" json:"owned,omitempty"`
+	SuiteId  *SuiteId               `protobuf:"bytes,3,opt,name=suite_id,json=suiteId,proto3" json:"suite_id,omitempty"`
+	Dag      *DagId                 `protobuf:"bytes,6,opt,name=dag,proto3" json:"dag,omitempty"`
+	TestRuns []*TestRun             `protobuf:"bytes,8,rep,name=test_runs,json=testRuns,proto3" json:"test_runs,omitempty"`
+	// tags is a free label set for filtering/grouping.
+	Tags          *common.Tags `protobuf:"bytes,9,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -392,6 +424,13 @@ func (x *SuiteRun) GetDag() *DagId {
 func (x *SuiteRun) GetTestRuns() []*TestRun {
 	if x != nil {
 		return x.TestRuns
+	}
+	return nil
+}
+
+func (x *SuiteRun) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
 	}
 	return nil
 }
@@ -603,7 +642,7 @@ var File_cloud_v1_models_testing_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_testing_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcloud/v1/models/testing.proto\x12\x0fcloud.v1.models\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xc0\x04\n" +
+	"\x1dcloud/v1/models/testing.proto\x12\x0fcloud.v1.models\x1a\x1acloud/v1/common/tags.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ccloud/v1/models/common.proto\x1a'cloud/v1/runtime/primitive/status.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xb9\x05\n" +
 	"\aTestRun\x127\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x122\n" +
 	"\x05owned\x18\x02 \x01(\v2\x14.cloud.v1.models.OwnB\x06\x82\xa6\x1d\x02 \x01R\x05owned\x12#\n" +
@@ -615,12 +654,14 @@ const file_cloud_v1_models_testing_proto_rawDesc = "" +
 	"\x03dag\x18\x06 \x01(\v2\x16.cloud.v1.models.DagIdB\x1a\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x0e\x12\f2\x04dags:\x02id@\x01R\x03dag\x12\\\n" +
 	"\fsuite_run_id\x18\a \x01(\v2\x1b.cloud.v1.models.SuiteRunIdB\x18\x9a\xb5\x18\x14\x12\x122\n" +
 	"suite_runs:\x02id@\x01H\x02R\n" +
-	"suiteRunId\x88\x01\x01\x1a=\n" +
+	"suiteRunId\x88\x01\x01\x121\n" +
+	"\x04tags\x18\b \x01(\v2\x15.cloud.v1.common.TagsB\x06\x82\xa6\x1d\x02\x10\x01R\x04tags\x12D\n" +
+	"\x06status\x18\t \x01(\x0e2\".cloud.v1.runtime.primitive.StatusB\b\xfaB\x05\x82\x01\x02\x10\x01R\x06status\x1a=\n" +
 	"\x04List\x125\n" +
 	"\ttest_runs\x18\x01 \x03(\v2\x18.cloud.v1.models.TestRunR\btestRuns:\x17\x92\xb5\x18\r\b\x01\x12\ttest_runs\x82\xa6\x1d\x02\b\x01B\a\n" +
 	"\x05_nameB\x0e\n" +
 	"\f_descriptionB\x0f\n" +
-	"\r_suite_run_id\"\xad\a\n" +
+	"\r_suite_run_id\"\xe0\a\n" +
 	"\x05Suite\x127\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x122\n" +
 	"\x05owned\x18\x02 \x01(\v2\x14.cloud.v1.models.OwnB\x06\x82\xa6\x1d\x02 \x01R\x05owned\x12#\n" +
@@ -630,7 +671,8 @@ const file_cloud_v1_models_testing_proto_rawDesc = "" +
 	"\x06preset\x18\x05 \x01(\v2\x1c.cloud.v1.domain.SuitePresetB\x0e\xfaB\x05\x8a\x01\x02\x10\x01\x82\xa6\x1d\x02\x10\x01R\x06preset\x127\n" +
 	"\x04cron\x18\x06 \x01(\v2\x1b.cloud.v1.models.Suite.CronB\x06\x82\xa6\x1d\x02\x10\x01R\x04cron\x12A\n" +
 	"\fnext_fire_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampH\x02R\n" +
-	"nextFireAt\x88\x01\x01\x1a6\n" +
+	"nextFireAt\x88\x01\x01\x121\n" +
+	"\x04tags\x18\b \x01(\v2\x15.cloud.v1.common.TagsB\x06\x82\xa6\x1d\x02\x10\x01R\x04tags\x1a6\n" +
 	"\x04List\x12.\n" +
 	"\x06suites\x18\x01 \x03(\v2\x16.cloud.v1.models.SuiteR\x06suites\x1a\x85\x03\n" +
 	"\x04Cron\x12\x1e\n" +
@@ -653,7 +695,7 @@ const file_cloud_v1_models_testing_proto_rawDesc = "" +
 	"\x0fsuites_cron_idx\x12\fnext_fire_at\x82\xa6\x1d\x02\b\x01B\a\n" +
 	"\x05_nameB\x0e\n" +
 	"\f_descriptionB\x0f\n" +
-	"\r_next_fire_at\"\xb3\x03\n" +
+	"\r_next_fire_at\"\xe6\x03\n" +
 	"\bSuiteRun\x127\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x122\n" +
 	"\x05owned\x18\x02 \x01(\v2\x14.cloud.v1.models.OwnB\x06\x82\xa6\x1d\x02 \x01R\x05owned\x12I\n" +
@@ -661,7 +703,8 @@ const file_cloud_v1_models_testing_proto_rawDesc = "" +
 	"\x03dag\x18\x06 \x01(\v2\x16.cloud.v1.models.DagIdB\x1a\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x0e\x12\f2\x04dags:\x02id@\x01R\x03dag\x12M\n" +
 	"\ttest_runs\x18\b \x03(\v2\x18.cloud.v1.models.TestRunB\x16\xa2\xb5\x18\x12\n" +
 	"\x10\n" +
-	"\fsuite_run_id\x18\x01R\btestRuns\x1a@\n" +
+	"\fsuite_run_id\x18\x01R\btestRuns\x121\n" +
+	"\x04tags\x18\t \x01(\v2\x15.cloud.v1.common.TagsB\x06\x82\xa6\x1d\x02\x10\x01R\x04tags\x1a@\n" +
 	"\x04List\x128\n" +
 	"\n" +
 	"suite_runs\x18\x01 \x03(\v2\x19.cloud.v1.models.SuiteRunR\tsuiteRuns:\x18\x92\xb5\x18\x0e\b\x01\x12\n" +
@@ -696,9 +739,11 @@ var file_cloud_v1_models_testing_proto_goTypes = []any{
 	(*domain.TestPreset)(nil),     // 11: cloud.v1.domain.TestPreset
 	(*DagId)(nil),                 // 12: cloud.v1.models.DagId
 	(*SuiteRunId)(nil),            // 13: cloud.v1.models.SuiteRunId
-	(*domain.SuitePreset)(nil),    // 14: cloud.v1.domain.SuitePreset
-	(*timestamppb.Timestamp)(nil), // 15: google.protobuf.Timestamp
-	(*SuiteId)(nil),               // 16: cloud.v1.models.SuiteId
+	(*common.Tags)(nil),           // 14: cloud.v1.common.Tags
+	(primitive.Status)(0),         // 15: cloud.v1.runtime.primitive.Status
+	(*domain.SuitePreset)(nil),    // 16: cloud.v1.domain.SuitePreset
+	(*timestamppb.Timestamp)(nil), // 17: google.protobuf.Timestamp
+	(*SuiteId)(nil),               // 18: cloud.v1.models.SuiteId
 }
 var file_cloud_v1_models_testing_proto_depIdxs = []int32{
 	9,  // 0: cloud.v1.models.TestRun.entity:type_name -> cloud.v1.models.Entity
@@ -706,26 +751,30 @@ var file_cloud_v1_models_testing_proto_depIdxs = []int32{
 	11, // 2: cloud.v1.models.TestRun.test_preset:type_name -> cloud.v1.domain.TestPreset
 	12, // 3: cloud.v1.models.TestRun.dag:type_name -> cloud.v1.models.DagId
 	13, // 4: cloud.v1.models.TestRun.suite_run_id:type_name -> cloud.v1.models.SuiteRunId
-	9,  // 5: cloud.v1.models.Suite.entity:type_name -> cloud.v1.models.Entity
-	10, // 6: cloud.v1.models.Suite.owned:type_name -> cloud.v1.models.Own
-	14, // 7: cloud.v1.models.Suite.preset:type_name -> cloud.v1.domain.SuitePreset
-	7,  // 8: cloud.v1.models.Suite.cron:type_name -> cloud.v1.models.Suite.Cron
-	15, // 9: cloud.v1.models.Suite.next_fire_at:type_name -> google.protobuf.Timestamp
-	9,  // 10: cloud.v1.models.SuiteRun.entity:type_name -> cloud.v1.models.Entity
-	10, // 11: cloud.v1.models.SuiteRun.owned:type_name -> cloud.v1.models.Own
-	16, // 12: cloud.v1.models.SuiteRun.suite_id:type_name -> cloud.v1.models.SuiteId
-	12, // 13: cloud.v1.models.SuiteRun.dag:type_name -> cloud.v1.models.DagId
-	2,  // 14: cloud.v1.models.SuiteRun.test_runs:type_name -> cloud.v1.models.TestRun
-	2,  // 15: cloud.v1.models.TestRun.List.test_runs:type_name -> cloud.v1.models.TestRun
-	3,  // 16: cloud.v1.models.Suite.List.suites:type_name -> cloud.v1.models.Suite
-	0,  // 17: cloud.v1.models.Suite.Cron.catchup:type_name -> cloud.v1.models.Suite.Cron.Catchup
-	1,  // 18: cloud.v1.models.Suite.Cron.concurrent:type_name -> cloud.v1.models.Suite.Cron.Concurrent
-	4,  // 19: cloud.v1.models.SuiteRun.List.suite_runs:type_name -> cloud.v1.models.SuiteRun
-	20, // [20:20] is the sub-list for method output_type
-	20, // [20:20] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	14, // 5: cloud.v1.models.TestRun.tags:type_name -> cloud.v1.common.Tags
+	15, // 6: cloud.v1.models.TestRun.status:type_name -> cloud.v1.runtime.primitive.Status
+	9,  // 7: cloud.v1.models.Suite.entity:type_name -> cloud.v1.models.Entity
+	10, // 8: cloud.v1.models.Suite.owned:type_name -> cloud.v1.models.Own
+	16, // 9: cloud.v1.models.Suite.preset:type_name -> cloud.v1.domain.SuitePreset
+	7,  // 10: cloud.v1.models.Suite.cron:type_name -> cloud.v1.models.Suite.Cron
+	17, // 11: cloud.v1.models.Suite.next_fire_at:type_name -> google.protobuf.Timestamp
+	14, // 12: cloud.v1.models.Suite.tags:type_name -> cloud.v1.common.Tags
+	9,  // 13: cloud.v1.models.SuiteRun.entity:type_name -> cloud.v1.models.Entity
+	10, // 14: cloud.v1.models.SuiteRun.owned:type_name -> cloud.v1.models.Own
+	18, // 15: cloud.v1.models.SuiteRun.suite_id:type_name -> cloud.v1.models.SuiteId
+	12, // 16: cloud.v1.models.SuiteRun.dag:type_name -> cloud.v1.models.DagId
+	2,  // 17: cloud.v1.models.SuiteRun.test_runs:type_name -> cloud.v1.models.TestRun
+	14, // 18: cloud.v1.models.SuiteRun.tags:type_name -> cloud.v1.common.Tags
+	2,  // 19: cloud.v1.models.TestRun.List.test_runs:type_name -> cloud.v1.models.TestRun
+	3,  // 20: cloud.v1.models.Suite.List.suites:type_name -> cloud.v1.models.Suite
+	0,  // 21: cloud.v1.models.Suite.Cron.catchup:type_name -> cloud.v1.models.Suite.Cron.Catchup
+	1,  // 22: cloud.v1.models.Suite.Cron.concurrent:type_name -> cloud.v1.models.Suite.Cron.Concurrent
+	4,  // 23: cloud.v1.models.SuiteRun.List.suite_runs:type_name -> cloud.v1.models.SuiteRun
+	24, // [24:24] is the sub-list for method output_type
+	24, // [24:24] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_testing_proto_init() }

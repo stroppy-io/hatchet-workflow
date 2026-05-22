@@ -68,10 +68,11 @@ Examples:
 			}
 			ctx, cancel := callCtx()
 			defer cancel()
-			list, err := uipb.NewPresetServiceClient(c.conn).ListPresets(ctx, &uipb.ListPresetRequest{
-				TenantId: tenantID,
-				Kind:     kindEnum,
-			})
+			req := &uipb.ListPresetRequest{TenantId: tenantID}
+			if kindEnum != models.Preset_KIND_UNSPECIFIED {
+				req.Kinds = []models.Preset_Kind{kindEnum}
+			}
+			list, err := uipb.NewPresetServiceClient(c.conn).ListPresets(ctx, req)
 			if err != nil {
 				return fmt.Errorf("list presets: %w", err)
 			}

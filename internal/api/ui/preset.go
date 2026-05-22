@@ -15,7 +15,7 @@ import (
 // PresetActions is the dependency the PresetService is built on: tenant-scoped
 // reusable Preset{DATABASE|WORKLOAD|TEST} catalog. internal/services implements it.
 type PresetActions interface {
-	ListPresets(ctx context.Context, req *uipb.ListPresetRequest) (*models.Preset_List, error)
+	ListPresets(ctx context.Context, req *uipb.ListPresetRequest) (*uipb.ListPresetsResponse, error)
 	CreatePreset(ctx context.Context, req *models.Preset) (*models.Preset, error)
 	UpdatePreset(ctx context.Context, req *models.Preset) (*models.Preset, error)
 	DeletePreset(ctx context.Context, req *uipb.DeletePresetRequest) (*emptypb.Empty, error)
@@ -39,9 +39,9 @@ func NewPresetService(logger *xlog.Logger, svc PresetActions) *PresetService {
 	}
 }
 
-func (s *PresetService) ListPresets(ctx context.Context, req *uipb.ListPresetRequest) (*models.Preset_List, error) {
+func (s *PresetService) ListPresets(ctx context.Context, req *uipb.ListPresetRequest) (*uipb.ListPresetsResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListPresets",
-		func(ctx context.Context, _ trace.Span) (*models.Preset_List, error) {
+		func(ctx context.Context, _ trace.Span) (*uipb.ListPresetsResponse, error) {
 			return s.svc.ListPresets(ctx, req)
 		})
 }

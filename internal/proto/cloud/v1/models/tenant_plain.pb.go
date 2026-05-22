@@ -4,7 +4,9 @@
 package models
 
 import (
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	ratelcast "github.com/yaroher/ratel/pkg/ratelcast"
+	protojson "google.golang.org/protobuf/encoding/protojson"
 	time "time"
 )
 
@@ -15,7 +17,9 @@ type TenantScanner struct {
 	UpdatedAt      time.Time             `json:"updatedAt"`
 	DeletedAt      *time.Time            `json:"deletedAt,omitempty"`
 	OwnerAccountId string                `json:"ownerAccountId"` // origin: type_alias, empath: owner_account_id
+	Name           *string               `json:"name,omitempty"`
 	Members        []TenantMemberScanner `json:"members"`
+	Tags           []byte                `json:"tags"` // origin: serialized, empath: tags
 }
 
 // IntoPlain converts protobuf message to plain struct
@@ -46,6 +50,7 @@ func (pb *Tenant) IntoPlain() *TenantScanner {
 	if pb.GetOwnerAccountId() != nil {
 		p.OwnerAccountId = pb.GetOwnerAccountId().GetValue()
 	}
+	p.Name = pb.Name
 	if len(pb.Members) > 0 {
 		p.Members = make([]TenantMemberScanner, len(pb.Members))
 		for i, v := range pb.Members {
@@ -55,6 +60,14 @@ func (pb *Tenant) IntoPlain() *TenantScanner {
 		}
 	} else {
 		p.Members = []TenantMemberScanner{}
+	}
+	// Tags serialized from tags
+	if pb.Tags != nil {
+		if data, err := protojson.Marshal(pb.Tags); err == nil {
+			p.Tags = data
+		}
+	} else {
+		p.Tags = []byte{}
 	}
 	return p
 }
@@ -106,10 +119,18 @@ func (p *TenantScanner) IntoPb() *Tenant {
 	if p.OwnerAccountId != "" {
 		pb.OwnerAccountId = &AccountId{Value: p.OwnerAccountId}
 	}
+	pb.Name = p.Name
 	if len(p.Members) > 0 {
 		pb.Members = make([]*TenantMember, len(p.Members))
 		for i := range p.Members {
 			pb.Members[i] = (&p.Members[i]).IntoPb()
+		}
+	}
+	// Tags deserialize -> tags
+	if len(p.Tags) > 0 {
+		var msg common.Tags
+		if err := protojson.Unmarshal(p.Tags, &msg); err == nil {
+			pb.Tags = &msg
 		}
 	}
 	return pb
@@ -124,6 +145,7 @@ type TenantMemberScanner struct {
 	TenantId  string     `json:"tenantId"`  // origin: type_alias, empath: tenant_id
 	AccountId string     `json:"accountId"` // origin: type_alias, empath: account_id
 	Role      string     `json:"role"`
+	Tags      []byte     `json:"tags"` // origin: serialized, empath: tags
 }
 
 // IntoPlain converts protobuf message to plain struct
@@ -159,6 +181,14 @@ func (pb *TenantMember) IntoPlain() *TenantMemberScanner {
 		p.AccountId = pb.GetAccountId().GetValue()
 	}
 	p.Role = pb.Role.String()
+	// Tags serialized from tags
+	if pb.Tags != nil {
+		if data, err := protojson.Marshal(pb.Tags); err == nil {
+			p.Tags = data
+		}
+	} else {
+		p.Tags = []byte{}
+	}
 	return p
 }
 
@@ -214,5 +244,12 @@ func (p *TenantMemberScanner) IntoPb() *TenantMember {
 		pb.AccountId = &AccountId{Value: p.AccountId}
 	}
 	pb.Role = TenantMember_Role(TenantMember_Role_value[p.Role])
+	// Tags deserialize -> tags
+	if len(p.Tags) > 0 {
+		var msg common.Tags
+		if err := protojson.Unmarshal(p.Tags, &msg); err == nil {
+			pb.Tags = &msg
+		}
+	}
 	return pb
 }

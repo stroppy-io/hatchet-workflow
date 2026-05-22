@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 )
 
 // ensure the imports are used
@@ -33,6 +35,8 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = models.SortOrder(0)
 )
 
 // Validate checks the field values on ListPackagesRequest with the rules
@@ -95,6 +99,135 @@ func (m *ListPackagesRequest) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	if _, ok := ListPackagesRequest_SortField_name[int32(m.GetSortField())]; !ok {
+		err := ListPackagesRequestValidationError{
+			field:  "SortField",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := models.SortOrder_name[int32(m.GetOrder())]; !ok {
+		err := ListPackagesRequestValidationError{
+			field:  "Order",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPage()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListPackagesRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListPackagesRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPage()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListPackagesRequestValidationError{
+				field:  "Page",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListPackagesRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListPackagesRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListPackagesRequestValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.Search != nil {
+
+		if utf8.RuneCountInString(m.GetSearch()) > 256 {
+			err := ListPackagesRequestValidationError{
+				field:  "Search",
+				reason: "value length must be at most 256 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.DbKind != nil {
+
+		if utf8.RuneCountInString(m.GetDbKind()) > 64 {
+			err := ListPackagesRequestValidationError{
+				field:  "DbKind",
+				reason: "value length must be at most 64 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.DbVersion != nil {
+
+		if utf8.RuneCountInString(m.GetDbVersion()) > 64 {
+			err := ListPackagesRequestValidationError{
+				field:  "DbVersion",
+				reason: "value length must be at most 64 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.IsBuiltin != nil {
+		// no validation rules for IsBuiltin
 	}
 
 	if len(errors) > 0 {
@@ -176,6 +309,171 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListPackagesRequestValidationError{}
+
+// Validate checks the field values on ListPackagesResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListPackagesResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListPackagesResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListPackagesResponseMultiError, or nil if none found.
+func (m *ListPackagesResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListPackagesResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetPackages() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListPackagesResponseValidationError{
+						field:  fmt.Sprintf("Packages[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListPackagesResponseValidationError{
+						field:  fmt.Sprintf("Packages[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListPackagesResponseValidationError{
+					field:  fmt.Sprintf("Packages[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetPageInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListPackagesResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListPackagesResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPageInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListPackagesResponseValidationError{
+				field:  "PageInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ListPackagesResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListPackagesResponseMultiError is an error wrapping multiple validation
+// errors returned by ListPackagesResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ListPackagesResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListPackagesResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListPackagesResponseMultiError) AllErrors() []error { return m }
+
+// ListPackagesResponseValidationError is the validation error returned by
+// ListPackagesResponse.Validate if the designated constraints aren't met.
+type ListPackagesResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListPackagesResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListPackagesResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListPackagesResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListPackagesResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListPackagesResponseValidationError) ErrorName() string {
+	return "ListPackagesResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListPackagesResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListPackagesResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListPackagesResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListPackagesResponseValidationError{}
 
 // Validate checks the field values on RequestPackageUploadRequest with the
 // rules defined in the proto definition for this message. If any rules are

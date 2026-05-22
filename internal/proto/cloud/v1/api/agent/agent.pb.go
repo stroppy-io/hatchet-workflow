@@ -8,6 +8,7 @@ package agent
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	agent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -25,6 +26,59 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// SortField — typed sortable columns (no arbitrary strings).
+type ListAgentsRequest_SortField int32
+
+const (
+	ListAgentsRequest_SORT_FIELD_UNSPECIFIED  ListAgentsRequest_SortField = 0
+	ListAgentsRequest_SORT_FIELD_CREATED_AT   ListAgentsRequest_SortField = 1
+	ListAgentsRequest_SORT_FIELD_LAST_SEEN_AT ListAgentsRequest_SortField = 2
+	ListAgentsRequest_SORT_FIELD_STATUS       ListAgentsRequest_SortField = 3
+)
+
+// Enum value maps for ListAgentsRequest_SortField.
+var (
+	ListAgentsRequest_SortField_name = map[int32]string{
+		0: "SORT_FIELD_UNSPECIFIED",
+		1: "SORT_FIELD_CREATED_AT",
+		2: "SORT_FIELD_LAST_SEEN_AT",
+		3: "SORT_FIELD_STATUS",
+	}
+	ListAgentsRequest_SortField_value = map[string]int32{
+		"SORT_FIELD_UNSPECIFIED":  0,
+		"SORT_FIELD_CREATED_AT":   1,
+		"SORT_FIELD_LAST_SEEN_AT": 2,
+		"SORT_FIELD_STATUS":       3,
+	}
+)
+
+func (x ListAgentsRequest_SortField) Enum() *ListAgentsRequest_SortField {
+	p := new(ListAgentsRequest_SortField)
+	*p = x
+	return p
+}
+
+func (x ListAgentsRequest_SortField) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ListAgentsRequest_SortField) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_api_agent_agent_proto_enumTypes[0].Descriptor()
+}
+
+func (ListAgentsRequest_SortField) Type() protoreflect.EnumType {
+	return &file_cloud_v1_api_agent_agent_proto_enumTypes[0]
+}
+
+func (x ListAgentsRequest_SortField) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ListAgentsRequest_SortField.Descriptor instead.
+func (ListAgentsRequest_SortField) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_api_agent_agent_proto_rawDescGZIP(), []int{8, 0}
+}
 
 type RegisterRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -507,9 +561,17 @@ func (x *SendLogsRequest) GetLines() []*agent.LogLine {
 }
 
 type ListAgentsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Query         *models.CommonQuery    `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	TenantId *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// status filters by agent runtime status.
+	Status *agent.AgentStatus `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.runtime.agent.AgentStatus,oneof" json:"status,omitempty"`
+	// search filters by host / machine_id (free text).
+	Search    *string                     `protobuf:"bytes,3,opt,name=search,proto3,oneof" json:"search,omitempty"`
+	SortField ListAgentsRequest_SortField `protobuf:"varint,4,opt,name=sort_field,json=sortField,proto3,enum=cloud.v1.api.agent.ListAgentsRequest_SortField" json:"sort_field,omitempty"`
+	Order     models.SortOrder            `protobuf:"varint,5,opt,name=order,proto3,enum=cloud.v1.models.SortOrder" json:"order,omitempty"`
+	Page      *models.Page                `protobuf:"bytes,6,opt,name=page,proto3" json:"page,omitempty"`
+	// tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter.
+	Tags          *common.Tags `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -551,9 +613,97 @@ func (x *ListAgentsRequest) GetTenantId() *models.TenantId {
 	return nil
 }
 
-func (x *ListAgentsRequest) GetQuery() *models.CommonQuery {
+func (x *ListAgentsRequest) GetStatus() agent.AgentStatus {
+	if x != nil && x.Status != nil {
+		return *x.Status
+	}
+	return agent.AgentStatus(0)
+}
+
+func (x *ListAgentsRequest) GetSearch() string {
+	if x != nil && x.Search != nil {
+		return *x.Search
+	}
+	return ""
+}
+
+func (x *ListAgentsRequest) GetSortField() ListAgentsRequest_SortField {
 	if x != nil {
-		return x.Query
+		return x.SortField
+	}
+	return ListAgentsRequest_SORT_FIELD_UNSPECIFIED
+}
+
+func (x *ListAgentsRequest) GetOrder() models.SortOrder {
+	if x != nil {
+		return x.Order
+	}
+	return models.SortOrder(0)
+}
+
+func (x *ListAgentsRequest) GetPage() *models.Page {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+func (x *ListAgentsRequest) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// ListAgentsResponse — rows plus pagination metadata (H42).
+type ListAgentsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Agents        []*models.Agent        `protobuf:"bytes,1,rep,name=agents,proto3" json:"agents,omitempty"`
+	PageInfo      *models.PageInfo       `protobuf:"bytes,2,opt,name=page_info,json=pageInfo,proto3" json:"page_info,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAgentsResponse) Reset() {
+	*x = ListAgentsResponse{}
+	mi := &file_cloud_v1_api_agent_agent_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAgentsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAgentsResponse) ProtoMessage() {}
+
+func (x *ListAgentsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_agent_agent_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAgentsResponse.ProtoReflect.Descriptor instead.
+func (*ListAgentsResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_agent_agent_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ListAgentsResponse) GetAgents() []*models.Agent {
+	if x != nil {
+		return x.Agents
+	}
+	return nil
+}
+
+func (x *ListAgentsResponse) GetPageInfo() *models.PageInfo {
+	if x != nil {
+		return x.PageInfo
 	}
 	return nil
 }
@@ -562,7 +712,7 @@ var File_cloud_v1_api_agent_agent_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_agent_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/api/agent/agent.proto\x12\x12cloud.v1.api.agent\x1a\x1bcloud/v1/models/agent.proto\x1a\x1ccloud/v1/models/common.proto\x1a\"cloud/v1/runtime/agent/agent.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\x99\x02\n" +
+	"\x1ecloud/v1/api/agent/agent.proto\x12\x12cloud.v1.api.agent\x1a\x1acloud/v1/common/tags.proto\x1a\x1bcloud/v1/models/agent.proto\x1a\x1ccloud/v1/models/common.proto\x1a\"cloud/v1/runtime/agent/agent.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\x99\x02\n" +
 	"\x0fRegisterRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12@\n" +
 	"\x06target\x18\x02 \x01(\v2\x1e.cloud.v1.runtime.agent.TargetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06target\x12\x1c\n" +
@@ -597,18 +747,34 @@ const file_cloud_v1_api_agent_agent_proto_rawDesc = "" +
 	"\x06report\x18\x03 \x01(\v2\x1e.cloud.v1.runtime.agent.ReportB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06report\"\x95\x01\n" +
 	"\x0fSendLogsRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12@\n" +
-	"\x05lines\x18\x02 \x03(\v2\x1f.cloud.v1.runtime.agent.LogLineB\t\xfaB\x06\x92\x01\x03\x10\x80\bR\x05lines\"\x89\x01\n" +
+	"\x05lines\x18\x02 \x03(\v2\x1f.cloud.v1.runtime.agent.LogLineB\t\xfaB\x06\x92\x01\x03\x10\x80\bR\x05lines\"\xc2\x04\n" +
 	"\x11ListAgentsRequest\x12@\n" +
-	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x122\n" +
-	"\x05query\x18\x02 \x01(\v2\x1c.cloud.v1.models.CommonQueryR\x05query2\xae\x04\n" +
+	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12J\n" +
+	"\x06status\x18\x02 \x01(\x0e2#.cloud.v1.runtime.agent.AgentStatusB\b\xfaB\x05\x82\x01\x02\x10\x01H\x00R\x06status\x88\x01\x01\x12%\n" +
+	"\x06search\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02H\x01R\x06search\x88\x01\x01\x12X\n" +
+	"\n" +
+	"sort_field\x18\x04 \x01(\x0e2/.cloud.v1.api.agent.ListAgentsRequest.SortFieldB\b\xfaB\x05\x82\x01\x02\x10\x01R\tsortField\x12:\n" +
+	"\x05order\x18\x05 \x01(\x0e2\x1a.cloud.v1.models.SortOrderB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05order\x12)\n" +
+	"\x04page\x18\x06 \x01(\v2\x15.cloud.v1.models.PageR\x04page\x12)\n" +
+	"\x04tags\x18\a \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"v\n" +
+	"\tSortField\x12\x1a\n" +
+	"\x16SORT_FIELD_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15SORT_FIELD_CREATED_AT\x10\x01\x12\x1b\n" +
+	"\x17SORT_FIELD_LAST_SEEN_AT\x10\x02\x12\x15\n" +
+	"\x11SORT_FIELD_STATUS\x10\x03B\t\n" +
+	"\a_statusB\t\n" +
+	"\a_search\"|\n" +
+	"\x12ListAgentsResponse\x12.\n" +
+	"\x06agents\x18\x01 \x03(\v2\x16.cloud.v1.models.AgentR\x06agents\x126\n" +
+	"\tpage_info\x18\x02 \x01(\v2\x19.cloud.v1.models.PageInfoR\bpageInfo2\xb9\x04\n" +
 	"\fAgentService\x12L\n" +
 	"\bRegister\x12#.cloud.v1.api.agent.RegisterRequest\x1a\x16.cloud.v1.models.Agent\"\x03\x90\x02\x02\x12N\n" +
 	"\tHeartbeat\x12$.cloud.v1.api.agent.HeartbeatRequest\x1a\x16.cloud.v1.models.Agent\"\x03\x90\x02\x02\x12N\n" +
 	"\x04Poll\x12\x1f.cloud.v1.api.agent.PollRequest\x1a .cloud.v1.api.agent.PollResponse\"\x03\x90\x02\x01\x12H\n" +
 	"\x06Report\x12!.cloud.v1.api.agent.ReportRequest\x1a\x16.google.protobuf.Empty\"\x03\x90\x02\x02\x12L\n" +
-	"\bSendLogs\x12#.cloud.v1.api.agent.SendLogsRequest\x1a\x16.google.protobuf.Empty\"\x03\x90\x02\x02\x12U\n" +
+	"\bSendLogs\x12#.cloud.v1.api.agent.SendLogsRequest\x1a\x16.google.protobuf.Empty\"\x03\x90\x02\x02\x12`\n" +
 	"\n" +
-	"ListAgents\x12%.cloud.v1.api.agent.ListAgentsRequest\x1a\x1b.cloud.v1.models.Agent.List\"\x03\x90\x02\x01\x12A\n" +
+	"ListAgents\x12%.cloud.v1.api.agent.ListAgentsRequest\x1a&.cloud.v1.api.agent.ListAgentsResponse\"\x03\x90\x02\x01\x12A\n" +
 	"\bGetAgent\x12\x18.cloud.v1.models.AgentId\x1a\x16.cloud.v1.models.Agent\"\x03\x90\x02\x01BGZEgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/agentb\x06proto3"
 
 var (
@@ -623,70 +789,81 @@ func file_cloud_v1_api_agent_agent_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_agent_agent_proto_rawDescData
 }
 
-var file_cloud_v1_api_agent_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_cloud_v1_api_agent_agent_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cloud_v1_api_agent_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_cloud_v1_api_agent_agent_proto_goTypes = []any{
-	(*RegisterRequest)(nil),       // 0: cloud.v1.api.agent.RegisterRequest
-	(*HeartbeatRequest)(nil),      // 1: cloud.v1.api.agent.HeartbeatRequest
-	(*PollRequest)(nil),           // 2: cloud.v1.api.agent.PollRequest
-	(*PollResponse)(nil),          // 3: cloud.v1.api.agent.PollResponse
-	(*NodeAddress)(nil),           // 4: cloud.v1.api.agent.NodeAddress
-	(*CommandLease)(nil),          // 5: cloud.v1.api.agent.CommandLease
-	(*ReportRequest)(nil),         // 6: cloud.v1.api.agent.ReportRequest
-	(*SendLogsRequest)(nil),       // 7: cloud.v1.api.agent.SendLogsRequest
-	(*ListAgentsRequest)(nil),     // 8: cloud.v1.api.agent.ListAgentsRequest
-	(*models.TenantId)(nil),       // 9: cloud.v1.models.TenantId
-	(*agent.Target)(nil),          // 10: cloud.v1.runtime.agent.Target
-	(agent.AgentStatus)(0),        // 11: cloud.v1.runtime.agent.AgentStatus
-	(*models.DagId)(nil),          // 12: cloud.v1.models.DagId
-	(*agent.Command)(nil),         // 13: cloud.v1.runtime.agent.Command
-	(*timestamppb.Timestamp)(nil), // 14: google.protobuf.Timestamp
-	(*agent.Report)(nil),          // 15: cloud.v1.runtime.agent.Report
-	(*agent.LogLine)(nil),         // 16: cloud.v1.runtime.agent.LogLine
-	(*models.CommonQuery)(nil),    // 17: cloud.v1.models.CommonQuery
-	(*models.AgentId)(nil),        // 18: cloud.v1.models.AgentId
-	(*models.Agent)(nil),          // 19: cloud.v1.models.Agent
-	(*emptypb.Empty)(nil),         // 20: google.protobuf.Empty
-	(*models.Agent_List)(nil),     // 21: cloud.v1.models.Agent.List
+	(ListAgentsRequest_SortField)(0), // 0: cloud.v1.api.agent.ListAgentsRequest.SortField
+	(*RegisterRequest)(nil),          // 1: cloud.v1.api.agent.RegisterRequest
+	(*HeartbeatRequest)(nil),         // 2: cloud.v1.api.agent.HeartbeatRequest
+	(*PollRequest)(nil),              // 3: cloud.v1.api.agent.PollRequest
+	(*PollResponse)(nil),             // 4: cloud.v1.api.agent.PollResponse
+	(*NodeAddress)(nil),              // 5: cloud.v1.api.agent.NodeAddress
+	(*CommandLease)(nil),             // 6: cloud.v1.api.agent.CommandLease
+	(*ReportRequest)(nil),            // 7: cloud.v1.api.agent.ReportRequest
+	(*SendLogsRequest)(nil),          // 8: cloud.v1.api.agent.SendLogsRequest
+	(*ListAgentsRequest)(nil),        // 9: cloud.v1.api.agent.ListAgentsRequest
+	(*ListAgentsResponse)(nil),       // 10: cloud.v1.api.agent.ListAgentsResponse
+	(*models.TenantId)(nil),          // 11: cloud.v1.models.TenantId
+	(*agent.Target)(nil),             // 12: cloud.v1.runtime.agent.Target
+	(agent.AgentStatus)(0),           // 13: cloud.v1.runtime.agent.AgentStatus
+	(*models.DagId)(nil),             // 14: cloud.v1.models.DagId
+	(*agent.Command)(nil),            // 15: cloud.v1.runtime.agent.Command
+	(*timestamppb.Timestamp)(nil),    // 16: google.protobuf.Timestamp
+	(*agent.Report)(nil),             // 17: cloud.v1.runtime.agent.Report
+	(*agent.LogLine)(nil),            // 18: cloud.v1.runtime.agent.LogLine
+	(models.SortOrder)(0),            // 19: cloud.v1.models.SortOrder
+	(*models.Page)(nil),              // 20: cloud.v1.models.Page
+	(*common.Tags)(nil),              // 21: cloud.v1.common.Tags
+	(*models.Agent)(nil),             // 22: cloud.v1.models.Agent
+	(*models.PageInfo)(nil),          // 23: cloud.v1.models.PageInfo
+	(*models.AgentId)(nil),           // 24: cloud.v1.models.AgentId
+	(*emptypb.Empty)(nil),            // 25: google.protobuf.Empty
 }
 var file_cloud_v1_api_agent_agent_proto_depIdxs = []int32{
-	9,  // 0: cloud.v1.api.agent.RegisterRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	10, // 1: cloud.v1.api.agent.RegisterRequest.target:type_name -> cloud.v1.runtime.agent.Target
-	9,  // 2: cloud.v1.api.agent.HeartbeatRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	10, // 3: cloud.v1.api.agent.HeartbeatRequest.target:type_name -> cloud.v1.runtime.agent.Target
-	11, // 4: cloud.v1.api.agent.HeartbeatRequest.status:type_name -> cloud.v1.runtime.agent.AgentStatus
-	9,  // 5: cloud.v1.api.agent.PollRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	10, // 6: cloud.v1.api.agent.PollRequest.target:type_name -> cloud.v1.runtime.agent.Target
-	5,  // 7: cloud.v1.api.agent.PollResponse.lease:type_name -> cloud.v1.api.agent.CommandLease
-	12, // 8: cloud.v1.api.agent.NodeAddress.dag_id:type_name -> cloud.v1.models.DagId
-	4,  // 9: cloud.v1.api.agent.CommandLease.address:type_name -> cloud.v1.api.agent.NodeAddress
-	13, // 10: cloud.v1.api.agent.CommandLease.command:type_name -> cloud.v1.runtime.agent.Command
-	14, // 11: cloud.v1.api.agent.CommandLease.lease_expires_at:type_name -> google.protobuf.Timestamp
-	9,  // 12: cloud.v1.api.agent.ReportRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	4,  // 13: cloud.v1.api.agent.ReportRequest.address:type_name -> cloud.v1.api.agent.NodeAddress
-	15, // 14: cloud.v1.api.agent.ReportRequest.report:type_name -> cloud.v1.runtime.agent.Report
-	9,  // 15: cloud.v1.api.agent.SendLogsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	16, // 16: cloud.v1.api.agent.SendLogsRequest.lines:type_name -> cloud.v1.runtime.agent.LogLine
-	9,  // 17: cloud.v1.api.agent.ListAgentsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	17, // 18: cloud.v1.api.agent.ListAgentsRequest.query:type_name -> cloud.v1.models.CommonQuery
-	0,  // 19: cloud.v1.api.agent.AgentService.Register:input_type -> cloud.v1.api.agent.RegisterRequest
-	1,  // 20: cloud.v1.api.agent.AgentService.Heartbeat:input_type -> cloud.v1.api.agent.HeartbeatRequest
-	2,  // 21: cloud.v1.api.agent.AgentService.Poll:input_type -> cloud.v1.api.agent.PollRequest
-	6,  // 22: cloud.v1.api.agent.AgentService.Report:input_type -> cloud.v1.api.agent.ReportRequest
-	7,  // 23: cloud.v1.api.agent.AgentService.SendLogs:input_type -> cloud.v1.api.agent.SendLogsRequest
-	8,  // 24: cloud.v1.api.agent.AgentService.ListAgents:input_type -> cloud.v1.api.agent.ListAgentsRequest
-	18, // 25: cloud.v1.api.agent.AgentService.GetAgent:input_type -> cloud.v1.models.AgentId
-	19, // 26: cloud.v1.api.agent.AgentService.Register:output_type -> cloud.v1.models.Agent
-	19, // 27: cloud.v1.api.agent.AgentService.Heartbeat:output_type -> cloud.v1.models.Agent
-	3,  // 28: cloud.v1.api.agent.AgentService.Poll:output_type -> cloud.v1.api.agent.PollResponse
-	20, // 29: cloud.v1.api.agent.AgentService.Report:output_type -> google.protobuf.Empty
-	20, // 30: cloud.v1.api.agent.AgentService.SendLogs:output_type -> google.protobuf.Empty
-	21, // 31: cloud.v1.api.agent.AgentService.ListAgents:output_type -> cloud.v1.models.Agent.List
-	19, // 32: cloud.v1.api.agent.AgentService.GetAgent:output_type -> cloud.v1.models.Agent
-	26, // [26:33] is the sub-list for method output_type
-	19, // [19:26] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	11, // 0: cloud.v1.api.agent.RegisterRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	12, // 1: cloud.v1.api.agent.RegisterRequest.target:type_name -> cloud.v1.runtime.agent.Target
+	11, // 2: cloud.v1.api.agent.HeartbeatRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	12, // 3: cloud.v1.api.agent.HeartbeatRequest.target:type_name -> cloud.v1.runtime.agent.Target
+	13, // 4: cloud.v1.api.agent.HeartbeatRequest.status:type_name -> cloud.v1.runtime.agent.AgentStatus
+	11, // 5: cloud.v1.api.agent.PollRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	12, // 6: cloud.v1.api.agent.PollRequest.target:type_name -> cloud.v1.runtime.agent.Target
+	6,  // 7: cloud.v1.api.agent.PollResponse.lease:type_name -> cloud.v1.api.agent.CommandLease
+	14, // 8: cloud.v1.api.agent.NodeAddress.dag_id:type_name -> cloud.v1.models.DagId
+	5,  // 9: cloud.v1.api.agent.CommandLease.address:type_name -> cloud.v1.api.agent.NodeAddress
+	15, // 10: cloud.v1.api.agent.CommandLease.command:type_name -> cloud.v1.runtime.agent.Command
+	16, // 11: cloud.v1.api.agent.CommandLease.lease_expires_at:type_name -> google.protobuf.Timestamp
+	11, // 12: cloud.v1.api.agent.ReportRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	5,  // 13: cloud.v1.api.agent.ReportRequest.address:type_name -> cloud.v1.api.agent.NodeAddress
+	17, // 14: cloud.v1.api.agent.ReportRequest.report:type_name -> cloud.v1.runtime.agent.Report
+	11, // 15: cloud.v1.api.agent.SendLogsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	18, // 16: cloud.v1.api.agent.SendLogsRequest.lines:type_name -> cloud.v1.runtime.agent.LogLine
+	11, // 17: cloud.v1.api.agent.ListAgentsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	13, // 18: cloud.v1.api.agent.ListAgentsRequest.status:type_name -> cloud.v1.runtime.agent.AgentStatus
+	0,  // 19: cloud.v1.api.agent.ListAgentsRequest.sort_field:type_name -> cloud.v1.api.agent.ListAgentsRequest.SortField
+	19, // 20: cloud.v1.api.agent.ListAgentsRequest.order:type_name -> cloud.v1.models.SortOrder
+	20, // 21: cloud.v1.api.agent.ListAgentsRequest.page:type_name -> cloud.v1.models.Page
+	21, // 22: cloud.v1.api.agent.ListAgentsRequest.tags:type_name -> cloud.v1.common.Tags
+	22, // 23: cloud.v1.api.agent.ListAgentsResponse.agents:type_name -> cloud.v1.models.Agent
+	23, // 24: cloud.v1.api.agent.ListAgentsResponse.page_info:type_name -> cloud.v1.models.PageInfo
+	1,  // 25: cloud.v1.api.agent.AgentService.Register:input_type -> cloud.v1.api.agent.RegisterRequest
+	2,  // 26: cloud.v1.api.agent.AgentService.Heartbeat:input_type -> cloud.v1.api.agent.HeartbeatRequest
+	3,  // 27: cloud.v1.api.agent.AgentService.Poll:input_type -> cloud.v1.api.agent.PollRequest
+	7,  // 28: cloud.v1.api.agent.AgentService.Report:input_type -> cloud.v1.api.agent.ReportRequest
+	8,  // 29: cloud.v1.api.agent.AgentService.SendLogs:input_type -> cloud.v1.api.agent.SendLogsRequest
+	9,  // 30: cloud.v1.api.agent.AgentService.ListAgents:input_type -> cloud.v1.api.agent.ListAgentsRequest
+	24, // 31: cloud.v1.api.agent.AgentService.GetAgent:input_type -> cloud.v1.models.AgentId
+	22, // 32: cloud.v1.api.agent.AgentService.Register:output_type -> cloud.v1.models.Agent
+	22, // 33: cloud.v1.api.agent.AgentService.Heartbeat:output_type -> cloud.v1.models.Agent
+	4,  // 34: cloud.v1.api.agent.AgentService.Poll:output_type -> cloud.v1.api.agent.PollResponse
+	25, // 35: cloud.v1.api.agent.AgentService.Report:output_type -> google.protobuf.Empty
+	25, // 36: cloud.v1.api.agent.AgentService.SendLogs:output_type -> google.protobuf.Empty
+	10, // 37: cloud.v1.api.agent.AgentService.ListAgents:output_type -> cloud.v1.api.agent.ListAgentsResponse
+	22, // 38: cloud.v1.api.agent.AgentService.GetAgent:output_type -> cloud.v1.models.Agent
+	32, // [32:39] is the sub-list for method output_type
+	25, // [25:32] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_agent_agent_proto_init() }
@@ -695,18 +872,20 @@ func file_cloud_v1_api_agent_agent_proto_init() {
 		return
 	}
 	file_cloud_v1_api_agent_agent_proto_msgTypes[3].OneofWrappers = []any{}
+	file_cloud_v1_api_agent_agent_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_agent_agent_proto_rawDesc), len(file_cloud_v1_api_agent_agent_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   9,
+			NumEnums:      1,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_cloud_v1_api_agent_agent_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_api_agent_agent_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_api_agent_agent_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_api_agent_agent_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_api_agent_agent_proto = out.File

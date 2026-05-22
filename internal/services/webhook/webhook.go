@@ -9,6 +9,7 @@ import (
 
 	"github.com/gopherex/pgtx/pkg/tx"
 	"github.com/gopherex/xlog"
+	"github.com/yaroher/ratel/pkg/dml/set"
 	"github.com/yaroher/ratel/pkg/exec"
 	"github.com/yaroher/ratel/pkg/repository"
 	"go.opentelemetry.io/otel/trace"
@@ -87,28 +88,95 @@ func (s *WebhookService) CreateWebhook(ctx context.Context, req *uipb.CreateWebh
 		})
 }
 
-// ListWebhooks returns the tenant's webhooks.
-func (s *WebhookService) ListWebhooks(ctx context.Context, req *uipb.ListWebhooksRequest) (*models.Webhook_List, error) {
+// ListWebhooks returns the tenant's webhooks with cursor pagination
+// (newest-first by default).
+func (s *WebhookService) ListWebhooks(ctx context.Context, req *uipb.ListWebhooksRequest) (*uipb.ListWebhooksResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListWebhooks",
-		func(ctx context.Context, _ trace.Span) (*models.Webhook_List, error) {
+		func(ctx context.Context, _ trace.Span) (*uipb.ListWebhooksResponse, error) {
 			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_ADMIN); err != nil {
 				return nil, err
 			}
-			hooks, err := s.hooks.Query(ctx,
-				models.Webhooks.SelectAll().Where(
-					models.Webhooks.TenantId.Eq(req.GetTenantId().GetValue()),
-					models.Webhooks.DeletedAt.IsNull(),
-				))
+			size := svcutil.PageSize(req.GetPage())
+			desc := svcutil.CursorDesc(req.GetOrder())
+			q := models.Webhooks.SelectAll().Where(
+				models.Webhooks.TenantId.Eq(req.GetTenantId().GetValue()),
+				models.Webhooks.DeletedAt.IsNull(),
+			)
+			// search: no Name column on webhooks — match the endpoint URL.
+			if req.Search != nil && req.GetSearch() != "" {
+				q = q.Where(models.Webhooks.Url.ILike("%" + req.GetSearch() + "%"))
+			}
+			// enabled: tri-state (*bool) — filter only when set.
+			if req.Enabled != nil {
+				q = q.Where(models.Webhooks.Enabled.Eq(req.GetEnabled()))
+			}
+			// events: Events is a TEXT[] of enum String() values — match webhooks
+			// subscribed to any of the requested events (array overlap, &&).
+			if evs := req.GetEvents(); len(evs) > 0 {
+				vals := make([]string, len(evs))
+				for i, e := range evs {
+					vals[i] = e.String()
+				}
+				q = q.Where(models.Webhooks.Events.ARRAYOverlapRaw("?", vals))
+			}
+			// tags: Tags is serialized JSON of common.Tags (a TEXT column) — match
+			// each requested free tag and key=value label as a substring.
+			for _, tag := range req.GetTags().GetTags() {
+				q = q.Where(models.Webhooks.Tags.ILike("%" + tag + "%"))
+			}
+			for k, v := range req.GetTags().GetLabels() {
+				q = q.Where(models.Webhooks.Tags.ILike("%" + k + "%" + v + "%"))
+			}
+			if tok := req.GetPage().GetToken(); tok != "" {
+				if desc {
+					q = q.Where(models.Webhooks.Id.Lt(tok))
+				} else {
+					q = q.Where(models.Webhooks.Id.Gt(tok))
+				}
+			}
+			if desc {
+				q = q.OrderByDESC(models.WebhookColumnId)
+			} else {
+				q = q.OrderByASC(models.WebhookColumnId)
+			}
+			rows, err := s.hooks.Query(ctx, q.Limit(size+1))
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "list webhooks: %v", err)
 			}
-			return &models.Webhook_List{Webhooks: hooks}, nil
+			items, pageInfo := svcutil.Paginate(rows, size, func(w *models.Webhook) string {
+				return w.GetEntity().GetId().GetValue()
+			})
+			return &uipb.ListWebhooksResponse{Webhooks: items, PageInfo: pageInfo}, nil
 		})
 }
 
-// UpdateWebhook replaces a webhook's mutable fields (id + created_at preserved).
-//
-// TODO(webhook): update_mask not honored — full replace. Reported.
+// webhookUpdatableColumns maps proto field paths (UpdateWebhookRequest.webhook)
+// to the mutable webhook columns a mask may select. id/created_at and the
+// tenancy/owner invariants are never writable here; secret is rotated only via
+// the request's dedicated secret field (write-only, never on the proto).
+var webhookUpdatableColumns = map[string]models.WebhookColumnAlias{
+	"url":     models.WebhookColumnUrl,
+	"events":  models.WebhookColumnEvents,
+	"enabled": models.WebhookColumnEnabled,
+	"tags":    models.WebhookColumnTags,
+}
+
+// webhookMutableColumns is the back-compat full-replace set written when the
+// update_mask is empty/nil.
+var webhookMutableColumns = []models.WebhookColumnAlias{
+	models.WebhookColumnUrl,
+	models.WebhookColumnEvents,
+	models.WebhookColumnEnabled,
+	models.WebhookColumnTags,
+}
+
+// UpdateWebhook updates a webhook's mutable fields (id + created_at preserved).
+// When the request's update_mask names paths, only those columns are written;
+// an empty/nil mask is full-replace of the mutable fields (back-compat). The
+// optional secret rotates the signing secret regardless of the mask (empty
+// leaves it unchanged). UpdateWebhookRequest has no update_mask field on the
+// wire today, so the mask is always empty and this is full-replace; the mask
+// plumbing is in place for when the request gains one. updated_at is always bumped.
 func (s *WebhookService) UpdateWebhook(ctx context.Context, req *uipb.UpdateWebhookRequest) (*models.Webhook, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "UpdateWebhook",
 		func(ctx context.Context, _ trace.Span) (*models.Webhook, error) {
@@ -131,17 +199,48 @@ func (s *WebhookService) UpdateWebhook(ctx context.Context, req *uipb.UpdateWebh
 			hook.Owned = existing.GetOwned()
 			scanner := hook.IntoPlain()
 			scanner.UpdatedAt = time.Now()
+			setters := maskedWebhookSetters(scanner, nil)
+			setters = append(setters, models.Webhooks.UpdatedAt.Set(scanner.UpdatedAt))
 			if sec := req.GetSecret(); sec != "" {
 				scanner.Secret = sec
+				setters = append(setters, scanner.GetSetter(models.WebhookColumnSecret)())
 			}
 			updated, err := s.hooks.QueryRow(ctx,
-				models.Webhooks.Update().Set(scanner.AllSetters()...).
+				models.Webhooks.Update().Set(setters...).
 					Where(models.Webhooks.Id.Eq(id)).ReturningAll())
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "update webhook: %v", err)
 			}
 			return updated, nil
 		})
+}
+
+// maskedWebhookSetters builds the column setters for a partial webhook UPDATE
+// honoring a proto FieldMask path list. paths from the mask select the columns;
+// an empty/nil mask falls back to the full mutable set (back-compat). Unknown
+// paths are ignored; updated_at and secret are handled by the caller.
+func maskedWebhookSetters(scanner *models.WebhookScanner, paths []string) []set.ValueSetter[models.WebhookColumnAlias] {
+	cols := webhookMutableColumns
+	if len(paths) > 0 {
+		cols = nil
+		seen := make(map[models.WebhookColumnAlias]struct{}, len(paths))
+		for _, p := range paths {
+			col, ok := webhookUpdatableColumns[p]
+			if !ok {
+				continue
+			}
+			if _, dup := seen[col]; dup {
+				continue
+			}
+			seen[col] = struct{}{}
+			cols = append(cols, col)
+		}
+	}
+	setters := make([]set.ValueSetter[models.WebhookColumnAlias], 0, len(cols))
+	for _, col := range cols {
+		setters = append(setters, scanner.GetSetter(col)())
+	}
+	return setters
 }
 
 // DeleteWebhook soft-deletes a webhook.

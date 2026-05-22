@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 )
 
 // ensure the imports are used
@@ -33,6 +35,8 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = models.SortOrder(0)
 )
 
 // Validate checks the field values on CreateTenantRequest with the rules
@@ -358,3 +362,438 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = UpdateTenantRequestValidationError{}
+
+// Validate checks the field values on ListTenantsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListTenantsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListTenantsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListTenantsRequestMultiError, or nil if none found.
+func (m *ListTenantsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListTenantsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetTenantId() == nil {
+		err := ListTenantsRequestValidationError{
+			field:  "TenantId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTenantId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListTenantsRequestValidationError{
+					field:  "TenantId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListTenantsRequestValidationError{
+					field:  "TenantId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTenantId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListTenantsRequestValidationError{
+				field:  "TenantId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if _, ok := ListTenantsRequest_SortField_name[int32(m.GetSortField())]; !ok {
+		err := ListTenantsRequestValidationError{
+			field:  "SortField",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := models.SortOrder_name[int32(m.GetOrder())]; !ok {
+		err := ListTenantsRequestValidationError{
+			field:  "Order",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPage()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListTenantsRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListTenantsRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPage()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListTenantsRequestValidationError{
+				field:  "Page",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListTenantsRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListTenantsRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListTenantsRequestValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.Search != nil {
+
+		if utf8.RuneCountInString(m.GetSearch()) > 256 {
+			err := ListTenantsRequestValidationError{
+				field:  "Search",
+				reason: "value length must be at most 256 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.OwnerAccountId != nil {
+
+		if all {
+			switch v := interface{}(m.GetOwnerAccountId()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListTenantsRequestValidationError{
+						field:  "OwnerAccountId",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListTenantsRequestValidationError{
+						field:  "OwnerAccountId",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetOwnerAccountId()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListTenantsRequestValidationError{
+					field:  "OwnerAccountId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListTenantsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListTenantsRequestMultiError is an error wrapping multiple validation errors
+// returned by ListTenantsRequest.ValidateAll() if the designated constraints
+// aren't met.
+type ListTenantsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListTenantsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListTenantsRequestMultiError) AllErrors() []error { return m }
+
+// ListTenantsRequestValidationError is the validation error returned by
+// ListTenantsRequest.Validate if the designated constraints aren't met.
+type ListTenantsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListTenantsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListTenantsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListTenantsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListTenantsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListTenantsRequestValidationError) ErrorName() string {
+	return "ListTenantsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListTenantsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListTenantsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListTenantsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListTenantsRequestValidationError{}
+
+// Validate checks the field values on ListTenantsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListTenantsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListTenantsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListTenantsResponseMultiError, or nil if none found.
+func (m *ListTenantsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListTenantsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetTenants() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListTenantsResponseValidationError{
+						field:  fmt.Sprintf("Tenants[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListTenantsResponseValidationError{
+						field:  fmt.Sprintf("Tenants[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListTenantsResponseValidationError{
+					field:  fmt.Sprintf("Tenants[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetPageInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListTenantsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListTenantsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPageInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListTenantsResponseValidationError{
+				field:  "PageInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ListTenantsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListTenantsResponseMultiError is an error wrapping multiple validation
+// errors returned by ListTenantsResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ListTenantsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListTenantsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListTenantsResponseMultiError) AllErrors() []error { return m }
+
+// ListTenantsResponseValidationError is the validation error returned by
+// ListTenantsResponse.Validate if the designated constraints aren't met.
+type ListTenantsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListTenantsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListTenantsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListTenantsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListTenantsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListTenantsResponseValidationError) ErrorName() string {
+	return "ListTenantsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListTenantsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListTenantsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListTenantsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListTenantsResponseValidationError{}

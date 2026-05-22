@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.api.admin;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/models/common.proto";
 import "cloud/v1/models/tenant.proto";
 import "google/protobuf/field_mask.proto";
@@ -23,7 +24,38 @@ message UpdateTenantRequest {
     google.protobuf.FieldMask update_mask = 2 [(validate.rules).message = {required: true}];
 }
 
+/* ListTenantsRequest is the platform-admin tenants table contract (is_admin). */
+message ListTenantsRequest {
+    /* SortField — typed sortable columns (no arbitrary strings). */
+    enum SortField {
+        SORT_FIELD_UNSPECIFIED = 0;
+        SORT_FIELD_CREATED_AT = 1;
+        SORT_FIELD_NAME = 2;
+    }
+    /* tenant_id is the acting tenant context (every request carries it); the
+       platform-admin (is_admin) tenants listing itself is cross-tenant. */
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    /* search filters by tenant name (free text). */
+    optional string search = 2 [(validate.rules).string.max_len = 256];
+    /* owner_account_id filters tenants by their owner account. */
+    optional models.AccountId owner_account_id = 3;
+    SortField sort_field = 4 [(validate.rules).enum.defined_only = true];
+    models.SortOrder order = 5 [(validate.rules).enum.defined_only = true];
+    models.Page page = 6;
+    /* tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter. */
+    common.Tags tags = 7;
+}
+
+/* ListTenantsResponse — rows plus pagination metadata (H42). */
+message ListTenantsResponse {
+    repeated models.Tenant tenants = 1;
+    models.PageInfo page_info = 2;
+}
+
 service TenantAdminService {
+    rpc ListTenants (ListTenantsRequest) returns (ListTenantsResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+    }
     rpc CreateTenant (CreateTenantRequest) returns (models.Tenant) {
         option idempotency_level = IDEMPOTENT;
     }

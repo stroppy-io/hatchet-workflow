@@ -9,7 +9,6 @@ package ui
 import (
 	context "context"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
-	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -31,7 +30,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CloudInventoryServiceClient interface {
 	FetchQuotas(ctx context.Context, in *FetchQuotasRequest, opts ...grpc.CallOption) (*deployment.QuotaInventory, error)
-	ListNetworkAllocations(ctx context.Context, in *ListNetworkAllocationsRequest, opts ...grpc.CallOption) (*models.NetworkAllocation_List, error)
+	ListNetworkAllocations(ctx context.Context, in *ListNetworkAllocationsRequest, opts ...grpc.CallOption) (*ListNetworkAllocationsResponse, error)
 	Reconcile(ctx context.Context, in *ReconcileRequest, opts ...grpc.CallOption) (*ReconcileResponse, error)
 }
 
@@ -53,9 +52,9 @@ func (c *cloudInventoryServiceClient) FetchQuotas(ctx context.Context, in *Fetch
 	return out, nil
 }
 
-func (c *cloudInventoryServiceClient) ListNetworkAllocations(ctx context.Context, in *ListNetworkAllocationsRequest, opts ...grpc.CallOption) (*models.NetworkAllocation_List, error) {
+func (c *cloudInventoryServiceClient) ListNetworkAllocations(ctx context.Context, in *ListNetworkAllocationsRequest, opts ...grpc.CallOption) (*ListNetworkAllocationsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(models.NetworkAllocation_List)
+	out := new(ListNetworkAllocationsResponse)
 	err := c.cc.Invoke(ctx, CloudInventoryService_ListNetworkAllocations_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -78,7 +77,7 @@ func (c *cloudInventoryServiceClient) Reconcile(ctx context.Context, in *Reconci
 // for forward compatibility.
 type CloudInventoryServiceServer interface {
 	FetchQuotas(context.Context, *FetchQuotasRequest) (*deployment.QuotaInventory, error)
-	ListNetworkAllocations(context.Context, *ListNetworkAllocationsRequest) (*models.NetworkAllocation_List, error)
+	ListNetworkAllocations(context.Context, *ListNetworkAllocationsRequest) (*ListNetworkAllocationsResponse, error)
 	Reconcile(context.Context, *ReconcileRequest) (*ReconcileResponse, error)
 	mustEmbedUnimplementedCloudInventoryServiceServer()
 }
@@ -93,7 +92,7 @@ type UnimplementedCloudInventoryServiceServer struct{}
 func (UnimplementedCloudInventoryServiceServer) FetchQuotas(context.Context, *FetchQuotasRequest) (*deployment.QuotaInventory, error) {
 	return nil, status.Error(codes.Unimplemented, "method FetchQuotas not implemented")
 }
-func (UnimplementedCloudInventoryServiceServer) ListNetworkAllocations(context.Context, *ListNetworkAllocationsRequest) (*models.NetworkAllocation_List, error) {
+func (UnimplementedCloudInventoryServiceServer) ListNetworkAllocations(context.Context, *ListNetworkAllocationsRequest) (*ListNetworkAllocationsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListNetworkAllocations not implemented")
 }
 func (UnimplementedCloudInventoryServiceServer) Reconcile(context.Context, *ReconcileRequest) (*ReconcileResponse, error) {

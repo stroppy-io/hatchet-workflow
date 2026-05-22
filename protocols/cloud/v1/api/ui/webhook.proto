@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.api.ui;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/models/common.proto";
 import "cloud/v1/models/webhook.proto";
 import "google/protobuf/empty.proto";
@@ -27,7 +28,30 @@ message UpdateWebhookRequest {
     string secret = 3 [(validate.rules).string.max_len = 512];
 }
 message ListWebhooksRequest {
+    /* SortField — typed sortable columns (no arbitrary strings). */
+    enum SortField {
+        SORT_FIELD_UNSPECIFIED = 0;
+        SORT_FIELD_CREATED_AT = 1;
+        SORT_FIELD_URL = 2;
+    }
     models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    /* search filters by webhook URL (free text). */
+    optional string search = 2 [(validate.rules).string.max_len = 256];
+    /* enabled tri-state: unset = all, true/false matches the enabled flag. */
+    optional bool enabled = 3;
+    /* events filters to webhooks subscribed to any of the given events. */
+    repeated models.Webhook.Event events = 4 [(validate.rules).repeated.items.enum = {defined_only: true, not_in: [0]}];
+    SortField sort_field = 5 [(validate.rules).enum.defined_only = true];
+    models.SortOrder order = 6 [(validate.rules).enum.defined_only = true];
+    models.Page page = 7;
+    /* tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter. */
+    common.Tags tags = 8;
+}
+
+/* ListWebhooksResponse — rows plus pagination metadata (H42). */
+message ListWebhooksResponse {
+    repeated models.Webhook webhooks = 1;
+    models.PageInfo page_info = 2;
 }
 message DeleteWebhookRequest {
     models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
@@ -40,7 +64,7 @@ message TestWebhookRequest {
 
 service WebhookService {
     rpc CreateWebhook (CreateWebhookRequest) returns (models.Webhook) {option idempotency_level = IDEMPOTENT;}
-    rpc ListWebhooks (ListWebhooksRequest) returns (models.Webhook.List) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc ListWebhooks (ListWebhooksRequest) returns (ListWebhooksResponse) {option idempotency_level = NO_SIDE_EFFECTS;}
     rpc UpdateWebhook (UpdateWebhookRequest) returns (models.Webhook) {option idempotency_level = IDEMPOTENT;}
     rpc DeleteWebhook (DeleteWebhookRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;}
     rpc TestWebhook (TestWebhookRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;}

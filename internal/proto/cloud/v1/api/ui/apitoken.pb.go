@@ -8,6 +8,7 @@ package ui
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -24,6 +25,59 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// SortField — typed sortable columns (no arbitrary strings).
+type ListApiTokensRequest_SortField int32
+
+const (
+	ListApiTokensRequest_SORT_FIELD_UNSPECIFIED ListApiTokensRequest_SortField = 0
+	ListApiTokensRequest_SORT_FIELD_CREATED_AT  ListApiTokensRequest_SortField = 1
+	ListApiTokensRequest_SORT_FIELD_NAME        ListApiTokensRequest_SortField = 2
+	ListApiTokensRequest_SORT_FIELD_EXPIRES_AT  ListApiTokensRequest_SortField = 3
+)
+
+// Enum value maps for ListApiTokensRequest_SortField.
+var (
+	ListApiTokensRequest_SortField_name = map[int32]string{
+		0: "SORT_FIELD_UNSPECIFIED",
+		1: "SORT_FIELD_CREATED_AT",
+		2: "SORT_FIELD_NAME",
+		3: "SORT_FIELD_EXPIRES_AT",
+	}
+	ListApiTokensRequest_SortField_value = map[string]int32{
+		"SORT_FIELD_UNSPECIFIED": 0,
+		"SORT_FIELD_CREATED_AT":  1,
+		"SORT_FIELD_NAME":        2,
+		"SORT_FIELD_EXPIRES_AT":  3,
+	}
+)
+
+func (x ListApiTokensRequest_SortField) Enum() *ListApiTokensRequest_SortField {
+	p := new(ListApiTokensRequest_SortField)
+	*p = x
+	return p
+}
+
+func (x ListApiTokensRequest_SortField) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ListApiTokensRequest_SortField) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_api_ui_apitoken_proto_enumTypes[0].Descriptor()
+}
+
+func (ListApiTokensRequest_SortField) Type() protoreflect.EnumType {
+	return &file_cloud_v1_api_ui_apitoken_proto_enumTypes[0]
+}
+
+func (x ListApiTokensRequest_SortField) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ListApiTokensRequest_SortField.Descriptor instead.
+func (ListApiTokensRequest_SortField) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_apitoken_proto_rawDescGZIP(), []int{2, 0}
+}
 
 // ApiTokenService manages tenant API tokens (CI/SDK creds). Minted/revoked by the
 // tenant OWNER only (centralized, like SettingsService); every request carries
@@ -154,8 +208,19 @@ func (x *CreateApiTokenResponse) GetSecret() string {
 }
 
 type ListApiTokensRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	TenantId *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// search filters by token name (free text).
+	Search *string `protobuf:"bytes,2,opt,name=search,proto3,oneof" json:"search,omitempty"`
+	// role filters by the role the token authenticates as.
+	Role *models.TenantMember_Role `protobuf:"varint,3,opt,name=role,proto3,enum=cloud.v1.models.TenantMember_Role,oneof" json:"role,omitempty"`
+	// expired tri-state: unset = all, true = past expiry, false = active / no expiry.
+	Expired   *bool                          `protobuf:"varint,4,opt,name=expired,proto3,oneof" json:"expired,omitempty"`
+	SortField ListApiTokensRequest_SortField `protobuf:"varint,5,opt,name=sort_field,json=sortField,proto3,enum=cloud.v1.api.ui.ListApiTokensRequest_SortField" json:"sort_field,omitempty"`
+	Order     models.SortOrder               `protobuf:"varint,6,opt,name=order,proto3,enum=cloud.v1.models.SortOrder" json:"order,omitempty"`
+	Page      *models.Page                   `protobuf:"bytes,7,opt,name=page,proto3" json:"page,omitempty"`
+	// tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter.
+	Tags          *common.Tags `protobuf:"bytes,8,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -197,6 +262,108 @@ func (x *ListApiTokensRequest) GetTenantId() *models.TenantId {
 	return nil
 }
 
+func (x *ListApiTokensRequest) GetSearch() string {
+	if x != nil && x.Search != nil {
+		return *x.Search
+	}
+	return ""
+}
+
+func (x *ListApiTokensRequest) GetRole() models.TenantMember_Role {
+	if x != nil && x.Role != nil {
+		return *x.Role
+	}
+	return models.TenantMember_Role(0)
+}
+
+func (x *ListApiTokensRequest) GetExpired() bool {
+	if x != nil && x.Expired != nil {
+		return *x.Expired
+	}
+	return false
+}
+
+func (x *ListApiTokensRequest) GetSortField() ListApiTokensRequest_SortField {
+	if x != nil {
+		return x.SortField
+	}
+	return ListApiTokensRequest_SORT_FIELD_UNSPECIFIED
+}
+
+func (x *ListApiTokensRequest) GetOrder() models.SortOrder {
+	if x != nil {
+		return x.Order
+	}
+	return models.SortOrder(0)
+}
+
+func (x *ListApiTokensRequest) GetPage() *models.Page {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+func (x *ListApiTokensRequest) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// ListApiTokensResponse — rows plus pagination metadata (H42).
+type ListApiTokensResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ApiTokens     []*models.ApiToken     `protobuf:"bytes,1,rep,name=api_tokens,json=apiTokens,proto3" json:"api_tokens,omitempty"`
+	PageInfo      *models.PageInfo       `protobuf:"bytes,2,opt,name=page_info,json=pageInfo,proto3" json:"page_info,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListApiTokensResponse) Reset() {
+	*x = ListApiTokensResponse{}
+	mi := &file_cloud_v1_api_ui_apitoken_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListApiTokensResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListApiTokensResponse) ProtoMessage() {}
+
+func (x *ListApiTokensResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_ui_apitoken_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListApiTokensResponse.ProtoReflect.Descriptor instead.
+func (*ListApiTokensResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_apitoken_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ListApiTokensResponse) GetApiTokens() []*models.ApiToken {
+	if x != nil {
+		return x.ApiTokens
+	}
+	return nil
+}
+
+func (x *ListApiTokensResponse) GetPageInfo() *models.PageInfo {
+	if x != nil {
+		return x.PageInfo
+	}
+	return nil
+}
+
 type RevokeApiTokenRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TenantId      *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
@@ -207,7 +374,7 @@ type RevokeApiTokenRequest struct {
 
 func (x *RevokeApiTokenRequest) Reset() {
 	*x = RevokeApiTokenRequest{}
-	mi := &file_cloud_v1_api_ui_apitoken_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_ui_apitoken_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -219,7 +386,7 @@ func (x *RevokeApiTokenRequest) String() string {
 func (*RevokeApiTokenRequest) ProtoMessage() {}
 
 func (x *RevokeApiTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_apitoken_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_ui_apitoken_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -232,7 +399,7 @@ func (x *RevokeApiTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeApiTokenRequest.ProtoReflect.Descriptor instead.
 func (*RevokeApiTokenRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_apitoken_proto_rawDescGZIP(), []int{3}
+	return file_cloud_v1_api_ui_apitoken_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *RevokeApiTokenRequest) GetTenantId() *models.TenantId {
@@ -253,7 +420,7 @@ var File_cloud_v1_api_ui_apitoken_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_ui_apitoken_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/api/ui/apitoken.proto\x12\x0fcloud.v1.api.ui\x1a\x1ecloud/v1/models/apitoken.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1ccloud/v1/models/tenant.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\x8e\x02\n" +
+	"\x1ecloud/v1/api/ui/apitoken.proto\x12\x0fcloud.v1.api.ui\x1a\x1acloud/v1/common/tags.proto\x1a\x1ecloud/v1/models/apitoken.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1ccloud/v1/models/tenant.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\x8e\x02\n" +
 	"\x15CreateApiTokenRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12\x1e\n" +
 	"\x04name\x18\x02 \x01(\tB\n" +
@@ -265,15 +432,36 @@ const file_cloud_v1_api_ui_apitoken_proto_rawDesc = "" +
 	"\x16CreateApiTokenResponse\x12/\n" +
 	"\x05token\x18\x01 \x01(\v2\x19.cloud.v1.models.ApiTokenR\x05token\x12\"\n" +
 	"\x06secret\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x06secret\"X\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x06secret\"\xe5\x04\n" +
 	"\x14ListApiTokensRequest\x12@\n" +
-	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\"\x8a\x01\n" +
+	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12%\n" +
+	"\x06search\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02H\x00R\x06search\x88\x01\x01\x12E\n" +
+	"\x04role\x18\x03 \x01(\x0e2\".cloud.v1.models.TenantMember.RoleB\b\xfaB\x05\x82\x01\x02\x10\x01H\x01R\x04role\x88\x01\x01\x12\x1d\n" +
+	"\aexpired\x18\x04 \x01(\bH\x02R\aexpired\x88\x01\x01\x12X\n" +
+	"\n" +
+	"sort_field\x18\x05 \x01(\x0e2/.cloud.v1.api.ui.ListApiTokensRequest.SortFieldB\b\xfaB\x05\x82\x01\x02\x10\x01R\tsortField\x12:\n" +
+	"\x05order\x18\x06 \x01(\x0e2\x1a.cloud.v1.models.SortOrderB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05order\x12)\n" +
+	"\x04page\x18\a \x01(\v2\x15.cloud.v1.models.PageR\x04page\x12)\n" +
+	"\x04tags\x18\b \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"r\n" +
+	"\tSortField\x12\x1a\n" +
+	"\x16SORT_FIELD_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15SORT_FIELD_CREATED_AT\x10\x01\x12\x13\n" +
+	"\x0fSORT_FIELD_NAME\x10\x02\x12\x19\n" +
+	"\x15SORT_FIELD_EXPIRES_AT\x10\x03B\t\n" +
+	"\a_searchB\a\n" +
+	"\x05_roleB\n" +
+	"\n" +
+	"\b_expired\"\x89\x01\n" +
+	"\x15ListApiTokensResponse\x128\n" +
+	"\n" +
+	"api_tokens\x18\x01 \x03(\v2\x19.cloud.v1.models.ApiTokenR\tapiTokens\x126\n" +
+	"\tpage_info\x18\x02 \x01(\v2\x19.cloud.v1.models.PageInfoR\bpageInfo\"\x8a\x01\n" +
 	"\x15RevokeApiTokenRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12/\n" +
-	"\x02id\x18\x02 \x01(\v2\x15.cloud.v1.models.UlidB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02id2\xad\x02\n" +
+	"\x02id\x18\x02 \x01(\v2\x15.cloud.v1.models.UlidB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02id2\xb5\x02\n" +
 	"\x0fApiTokenService\x12f\n" +
-	"\x0eCreateApiToken\x12&.cloud.v1.api.ui.CreateApiTokenRequest\x1a'.cloud.v1.api.ui.CreateApiTokenResponse\"\x03\x90\x02\x02\x12[\n" +
-	"\rListApiTokens\x12%.cloud.v1.api.ui.ListApiTokensRequest\x1a\x1e.cloud.v1.models.ApiToken.List\"\x03\x90\x02\x01\x12U\n" +
+	"\x0eCreateApiToken\x12&.cloud.v1.api.ui.CreateApiTokenRequest\x1a'.cloud.v1.api.ui.CreateApiTokenResponse\"\x03\x90\x02\x02\x12c\n" +
+	"\rListApiTokens\x12%.cloud.v1.api.ui.ListApiTokensRequest\x1a&.cloud.v1.api.ui.ListApiTokensResponse\"\x03\x90\x02\x01\x12U\n" +
 	"\x0eRevokeApiToken\x12&.cloud.v1.api.ui.RevokeApiTokenRequest\x1a\x16.google.protobuf.Empty\"\x03\x90\x02\x02BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/uib\x06proto3"
 
 var (
@@ -288,39 +476,52 @@ func file_cloud_v1_api_ui_apitoken_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_ui_apitoken_proto_rawDescData
 }
 
-var file_cloud_v1_api_ui_apitoken_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_cloud_v1_api_ui_apitoken_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cloud_v1_api_ui_apitoken_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_cloud_v1_api_ui_apitoken_proto_goTypes = []any{
-	(*CreateApiTokenRequest)(nil),  // 0: cloud.v1.api.ui.CreateApiTokenRequest
-	(*CreateApiTokenResponse)(nil), // 1: cloud.v1.api.ui.CreateApiTokenResponse
-	(*ListApiTokensRequest)(nil),   // 2: cloud.v1.api.ui.ListApiTokensRequest
-	(*RevokeApiTokenRequest)(nil),  // 3: cloud.v1.api.ui.RevokeApiTokenRequest
-	(*models.TenantId)(nil),        // 4: cloud.v1.models.TenantId
-	(models.TenantMember_Role)(0),  // 5: cloud.v1.models.TenantMember.Role
-	(*timestamppb.Timestamp)(nil),  // 6: google.protobuf.Timestamp
-	(*models.ApiToken)(nil),        // 7: cloud.v1.models.ApiToken
-	(*models.Ulid)(nil),            // 8: cloud.v1.models.Ulid
-	(*models.ApiToken_List)(nil),   // 9: cloud.v1.models.ApiToken.List
-	(*emptypb.Empty)(nil),          // 10: google.protobuf.Empty
+	(ListApiTokensRequest_SortField)(0), // 0: cloud.v1.api.ui.ListApiTokensRequest.SortField
+	(*CreateApiTokenRequest)(nil),       // 1: cloud.v1.api.ui.CreateApiTokenRequest
+	(*CreateApiTokenResponse)(nil),      // 2: cloud.v1.api.ui.CreateApiTokenResponse
+	(*ListApiTokensRequest)(nil),        // 3: cloud.v1.api.ui.ListApiTokensRequest
+	(*ListApiTokensResponse)(nil),       // 4: cloud.v1.api.ui.ListApiTokensResponse
+	(*RevokeApiTokenRequest)(nil),       // 5: cloud.v1.api.ui.RevokeApiTokenRequest
+	(*models.TenantId)(nil),             // 6: cloud.v1.models.TenantId
+	(models.TenantMember_Role)(0),       // 7: cloud.v1.models.TenantMember.Role
+	(*timestamppb.Timestamp)(nil),       // 8: google.protobuf.Timestamp
+	(*models.ApiToken)(nil),             // 9: cloud.v1.models.ApiToken
+	(models.SortOrder)(0),               // 10: cloud.v1.models.SortOrder
+	(*models.Page)(nil),                 // 11: cloud.v1.models.Page
+	(*common.Tags)(nil),                 // 12: cloud.v1.common.Tags
+	(*models.PageInfo)(nil),             // 13: cloud.v1.models.PageInfo
+	(*models.Ulid)(nil),                 // 14: cloud.v1.models.Ulid
+	(*emptypb.Empty)(nil),               // 15: google.protobuf.Empty
 }
 var file_cloud_v1_api_ui_apitoken_proto_depIdxs = []int32{
-	4,  // 0: cloud.v1.api.ui.CreateApiTokenRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	5,  // 1: cloud.v1.api.ui.CreateApiTokenRequest.role:type_name -> cloud.v1.models.TenantMember.Role
-	6,  // 2: cloud.v1.api.ui.CreateApiTokenRequest.expires_at:type_name -> google.protobuf.Timestamp
-	7,  // 3: cloud.v1.api.ui.CreateApiTokenResponse.token:type_name -> cloud.v1.models.ApiToken
-	4,  // 4: cloud.v1.api.ui.ListApiTokensRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	4,  // 5: cloud.v1.api.ui.RevokeApiTokenRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	8,  // 6: cloud.v1.api.ui.RevokeApiTokenRequest.id:type_name -> cloud.v1.models.Ulid
-	0,  // 7: cloud.v1.api.ui.ApiTokenService.CreateApiToken:input_type -> cloud.v1.api.ui.CreateApiTokenRequest
-	2,  // 8: cloud.v1.api.ui.ApiTokenService.ListApiTokens:input_type -> cloud.v1.api.ui.ListApiTokensRequest
-	3,  // 9: cloud.v1.api.ui.ApiTokenService.RevokeApiToken:input_type -> cloud.v1.api.ui.RevokeApiTokenRequest
-	1,  // 10: cloud.v1.api.ui.ApiTokenService.CreateApiToken:output_type -> cloud.v1.api.ui.CreateApiTokenResponse
-	9,  // 11: cloud.v1.api.ui.ApiTokenService.ListApiTokens:output_type -> cloud.v1.models.ApiToken.List
-	10, // 12: cloud.v1.api.ui.ApiTokenService.RevokeApiToken:output_type -> google.protobuf.Empty
-	10, // [10:13] is the sub-list for method output_type
-	7,  // [7:10] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	6,  // 0: cloud.v1.api.ui.CreateApiTokenRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	7,  // 1: cloud.v1.api.ui.CreateApiTokenRequest.role:type_name -> cloud.v1.models.TenantMember.Role
+	8,  // 2: cloud.v1.api.ui.CreateApiTokenRequest.expires_at:type_name -> google.protobuf.Timestamp
+	9,  // 3: cloud.v1.api.ui.CreateApiTokenResponse.token:type_name -> cloud.v1.models.ApiToken
+	6,  // 4: cloud.v1.api.ui.ListApiTokensRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	7,  // 5: cloud.v1.api.ui.ListApiTokensRequest.role:type_name -> cloud.v1.models.TenantMember.Role
+	0,  // 6: cloud.v1.api.ui.ListApiTokensRequest.sort_field:type_name -> cloud.v1.api.ui.ListApiTokensRequest.SortField
+	10, // 7: cloud.v1.api.ui.ListApiTokensRequest.order:type_name -> cloud.v1.models.SortOrder
+	11, // 8: cloud.v1.api.ui.ListApiTokensRequest.page:type_name -> cloud.v1.models.Page
+	12, // 9: cloud.v1.api.ui.ListApiTokensRequest.tags:type_name -> cloud.v1.common.Tags
+	9,  // 10: cloud.v1.api.ui.ListApiTokensResponse.api_tokens:type_name -> cloud.v1.models.ApiToken
+	13, // 11: cloud.v1.api.ui.ListApiTokensResponse.page_info:type_name -> cloud.v1.models.PageInfo
+	6,  // 12: cloud.v1.api.ui.RevokeApiTokenRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	14, // 13: cloud.v1.api.ui.RevokeApiTokenRequest.id:type_name -> cloud.v1.models.Ulid
+	1,  // 14: cloud.v1.api.ui.ApiTokenService.CreateApiToken:input_type -> cloud.v1.api.ui.CreateApiTokenRequest
+	3,  // 15: cloud.v1.api.ui.ApiTokenService.ListApiTokens:input_type -> cloud.v1.api.ui.ListApiTokensRequest
+	5,  // 16: cloud.v1.api.ui.ApiTokenService.RevokeApiToken:input_type -> cloud.v1.api.ui.RevokeApiTokenRequest
+	2,  // 17: cloud.v1.api.ui.ApiTokenService.CreateApiToken:output_type -> cloud.v1.api.ui.CreateApiTokenResponse
+	4,  // 18: cloud.v1.api.ui.ApiTokenService.ListApiTokens:output_type -> cloud.v1.api.ui.ListApiTokensResponse
+	15, // 19: cloud.v1.api.ui.ApiTokenService.RevokeApiToken:output_type -> google.protobuf.Empty
+	17, // [17:20] is the sub-list for method output_type
+	14, // [14:17] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_ui_apitoken_proto_init() }
@@ -329,18 +530,20 @@ func file_cloud_v1_api_ui_apitoken_proto_init() {
 		return
 	}
 	file_cloud_v1_api_ui_apitoken_proto_msgTypes[0].OneofWrappers = []any{}
+	file_cloud_v1_api_ui_apitoken_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_ui_apitoken_proto_rawDesc), len(file_cloud_v1_api_ui_apitoken_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   4,
+			NumEnums:      1,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_cloud_v1_api_ui_apitoken_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_api_ui_apitoken_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_api_ui_apitoken_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_api_ui_apitoken_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_api_ui_apitoken_proto = out.File

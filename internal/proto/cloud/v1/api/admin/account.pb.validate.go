@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 )
 
 // ensure the imports are used
@@ -33,6 +35,8 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = models.SortOrder(0)
 )
 
 // Validate checks the field values on CreateAccountRequest with the rules
@@ -392,6 +396,46 @@ func (m *UpdatePasswordRequest) validate(all bool) error {
 
 	var errors []error
 
+	if m.GetAccountId() == nil {
+		err := UpdatePasswordRequestValidationError{
+			field:  "AccountId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetAccountId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, UpdatePasswordRequestValidationError{
+					field:  "AccountId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, UpdatePasswordRequestValidationError{
+					field:  "AccountId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAccountId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return UpdatePasswordRequestValidationError{
+				field:  "AccountId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if l := utf8.RuneCountInString(m.GetNewPassword()); l < 1 || l > 128 {
 		err := UpdatePasswordRequestValidationError{
 			field:  "NewPassword",
@@ -482,3 +526,409 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = UpdatePasswordRequestValidationError{}
+
+// Validate checks the field values on ListAccountsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListAccountsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListAccountsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListAccountsRequestMultiError, or nil if none found.
+func (m *ListAccountsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListAccountsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetTenantId() == nil {
+		err := ListAccountsRequestValidationError{
+			field:  "TenantId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTenantId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListAccountsRequestValidationError{
+					field:  "TenantId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListAccountsRequestValidationError{
+					field:  "TenantId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTenantId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListAccountsRequestValidationError{
+				field:  "TenantId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if _, ok := ListAccountsRequest_SortField_name[int32(m.GetSortField())]; !ok {
+		err := ListAccountsRequestValidationError{
+			field:  "SortField",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := models.SortOrder_name[int32(m.GetOrder())]; !ok {
+		err := ListAccountsRequestValidationError{
+			field:  "Order",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPage()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListAccountsRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListAccountsRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPage()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListAccountsRequestValidationError{
+				field:  "Page",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListAccountsRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListAccountsRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListAccountsRequestValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.Search != nil {
+
+		if utf8.RuneCountInString(m.GetSearch()) > 256 {
+			err := ListAccountsRequestValidationError{
+				field:  "Search",
+				reason: "value length must be at most 256 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.IsAdmin != nil {
+		// no validation rules for IsAdmin
+	}
+
+	if len(errors) > 0 {
+		return ListAccountsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListAccountsRequestMultiError is an error wrapping multiple validation
+// errors returned by ListAccountsRequest.ValidateAll() if the designated
+// constraints aren't met.
+type ListAccountsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListAccountsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListAccountsRequestMultiError) AllErrors() []error { return m }
+
+// ListAccountsRequestValidationError is the validation error returned by
+// ListAccountsRequest.Validate if the designated constraints aren't met.
+type ListAccountsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListAccountsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListAccountsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListAccountsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListAccountsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListAccountsRequestValidationError) ErrorName() string {
+	return "ListAccountsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListAccountsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListAccountsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListAccountsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListAccountsRequestValidationError{}
+
+// Validate checks the field values on ListAccountsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListAccountsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListAccountsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListAccountsResponseMultiError, or nil if none found.
+func (m *ListAccountsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListAccountsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetAccounts() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListAccountsResponseValidationError{
+						field:  fmt.Sprintf("Accounts[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListAccountsResponseValidationError{
+						field:  fmt.Sprintf("Accounts[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListAccountsResponseValidationError{
+					field:  fmt.Sprintf("Accounts[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetPageInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListAccountsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListAccountsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPageInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListAccountsResponseValidationError{
+				field:  "PageInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ListAccountsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListAccountsResponseMultiError is an error wrapping multiple validation
+// errors returned by ListAccountsResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ListAccountsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListAccountsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListAccountsResponseMultiError) AllErrors() []error { return m }
+
+// ListAccountsResponseValidationError is the validation error returned by
+// ListAccountsResponse.Validate if the designated constraints aren't met.
+type ListAccountsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListAccountsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListAccountsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListAccountsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListAccountsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListAccountsResponseValidationError) ErrorName() string {
+	return "ListAccountsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListAccountsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListAccountsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListAccountsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListAccountsResponseValidationError{}

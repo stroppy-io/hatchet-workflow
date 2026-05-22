@@ -4,13 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	rtagent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent"
-	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/ops"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
 	renderpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/render"
-	"github.com/stroppy-io/stroppy-cloud/internal/runtime"
 )
 
 func singlePreset() *domain.TestPreset {
@@ -27,102 +24,20 @@ func singlePreset() *domain.TestPreset {
 	}
 }
 
-func findNode(dag *primitive.Dag, id string) *primitive.Dag_Node {
-	for _, n := range dag.GetNodes() {
-		if n.GetId() == id {
-			return n
+func hasEdge(d *primitive.Dag, from, to string) bool {
+	for _, e := range d.GetEdges() {
+		if e.GetSource() == from && e.GetTarget() == to {
+			return true
 		}
 	}
-	return nil
-}
-
-func TestCompileSingleProducesValidDag(t *testing.T) {
-	dag, err := New().Compile(singlePreset(), nil)
-	if err != nil {
-		t.Fatalf("compile: %v", err)
-	}
-	if err := runtime.ValidateDag(dag); err != nil {
-		t.Fatalf("validate dag: %v", err)
-	}
-	wantNodes := []string{"render_config", "terraform_apply", "install_and_run", "collect_results", "terraform_destroy"}
-	for _, id := range wantNodes {
-		if findNode(dag, id) == nil {
-			t.Errorf("missing node %q", id)
-		}
-	}
-	if !findNode(dag, "terraform_destroy").GetScheduling().GetAlwaysRun() {
-		t.Error("terraform_destroy must be always_run")
-	}
-}
-
-func TestTerraformApplyCarriesModuleAndVars(t *testing.T) {
-	dag, err := New().Compile(singlePreset(), nil)
-	if err != nil {
-		t.Fatalf("compile: %v", err)
-	}
-	apply := findNode(dag, "terraform_apply")
-	input := apply.GetTaskState().GetInput()
-	if input == nil {
-		t.Fatal("terraform_apply has no input")
-	}
-	var op ops.TfOperation
-	if err := input.UnmarshalTo(&op); err != nil {
-		t.Fatalf("unmarshal TfOperation: %v", err)
-	}
-	if op.GetInput().GetAction() != ops.TfOperation_ACTION_APPLY {
-		t.Errorf("action = %s, want APPLY", op.GetInput().GetAction())
-	}
-	if len(op.GetInput().GetFiles()) == 0 {
-		t.Error("expected embedded .tf module files")
-	}
-	if op.GetInput().GetVarFile() == nil {
-		t.Error("expected terraform.tfvars.json var_file")
-	}
-
-	// apply + destroy must share the workdir for crash-safe teardown.
-	var destroyOp ops.TfOperation
-	if err := findNode(dag, "terraform_destroy").GetTaskState().GetInput().UnmarshalTo(&destroyOp); err != nil {
-		t.Fatalf("unmarshal destroy: %v", err)
-	}
-	if op.GetInput().GetWorkdirId() != destroyOp.GetInput().GetWorkdirId() {
-		t.Error("apply and destroy must share workdir_id")
-	}
-}
-
-func TestTfvarsFromParamsUseProtoNames(t *testing.T) {
-	params := &DeploymentParams{
-		Platform:    deployment.Yandex_PLATFORM_ID_STANDARD_V3,
-		Zone:        deployment.Yandex_ZONE_RU_CENTRAL1_A,
-		ImageID:     "img-1",
-		NetworkID:   "net-1",
-		NetworkName: "n",
-		NetworkCIDR: "10.0.0.0/16",
-	}
-	dag, err := New().Compile(singlePreset(), params)
-	if err != nil {
-		t.Fatalf("compile: %v", err)
-	}
-	var op ops.TfOperation
-	if err := findNode(dag, "terraform_apply").GetTaskState().GetInput().UnmarshalTo(&op); err != nil {
-		t.Fatalf("unmarshal: %v", err)
-	}
-	vars := op.GetInput().GetVarFile().GetContent().GetText()
-	for _, want := range []string{"network_id", "net-1", "platform_id", "standard-v3", "boot_disk_gb"} {
-		if !strings.Contains(vars, want) {
-			t.Errorf("tfvars missing %q:\n%s", want, vars)
-		}
-	}
-	if strings.Contains(vars, "networkId") {
-		t.Errorf("tfvars used lowerCamel (want proto snake_case):\n%s", vars)
-	}
+	return false
 }
 
 func TestRecipeProducesRealCommands(t *testing.T) {
-	dag, err := New().Compile(singlePreset(), nil)
+	sub, err := BuildInstallDag(singlePreset(), "test-dag")
 	if err != nil {
-		t.Fatalf("compile: %v", err)
+		t.Fatalf("build install: %v", err)
 	}
-	sub := findNode(dag, "install_and_run").GetSubDag()
 	var scripts []string
 	for _, n := range sub.GetNodes() {
 		var cmd rtagent.Command
@@ -167,11 +82,10 @@ func TestGraphCompilesHATopology(t *testing.T) {
 			},
 		},
 	}
-	dag, err := New().Compile(preset, nil)
+	sub, err := BuildInstallDag(preset, "test-dag")
 	if err != nil {
-		t.Fatalf("compile: %v", err)
+		t.Fatalf("build install: %v", err)
 	}
-	sub := findNode(dag, "install_and_run").GetSubDag()
 	have := map[string]bool{}
 	for _, n := range sub.GetNodes() {
 		have[n.GetId()] = true
@@ -201,25 +115,122 @@ func TestGraphCompilesHATopology(t *testing.T) {
 	}
 }
 
-func hasEdge(d *primitive.Dag, from, to string) bool {
-	for _, e := range d.GetEdges() {
-		if e.GetSource() == from && e.GetTarget() == to {
-			return true
+// scriptTexts returns every RUN_CMD script body emitted by the install dag.
+func scriptTexts(t *testing.T, sub *primitive.Dag) []string {
+	t.Helper()
+	var out []string
+	for _, n := range sub.GetNodes() {
+		var cmd rtagent.Command
+		if err := n.GetTaskState().GetInput().UnmarshalTo(&cmd); err != nil {
+			continue
+		}
+		if s := cmd.GetOperation().GetRunCmd().GetScript(); s != nil {
+			out = append(out, s.GetText())
 		}
 	}
-	return false
+	return out
+}
+
+func TestMonitorChainPerMachine(t *testing.T) {
+	sub, err := BuildInstallDag(singlePreset(), "test-dag")
+	if err != nil {
+		t.Fatalf("build install: %v", err)
+	}
+	have := map[string]bool{}
+	for _, n := range sub.GetNodes() {
+		have[n.GetId()] = true
+	}
+	// Every machine gets a node_exporter + vmagent monitor chain (machine id "db-1").
+	for _, want := range []string{
+		"db-1.monitor_node_exporter",
+		"db-1.monitor_db_exporter", // pg machine → postgres_exporter
+		"db-1.monitor_vmagent_install",
+		"db-1.monitor_vmagent_config",
+		"db-1.monitor_vmagent_start",
+	} {
+		if !have[want] {
+			t.Errorf("missing monitor node %q", want)
+		}
+	}
+	// Monitor chain is sequential within the machine.
+	if !hasEdge(sub, "db-1.monitor_node_exporter", "db-1.monitor_db_exporter") {
+		t.Error("monitor chain not ordered node_exporter -> db_exporter")
+	}
+
+	all := strings.Join(scriptTexts(t, sub), "\n")
+	// node_exporter fetched from the SERVER cache (not apt), installed to /usr/local/bin.
+	if !strings.Contains(all, "/binary/node_exporter/") || !strings.Contains(all, "/usr/local/bin/node_exporter") {
+		t.Error("monitor chain missing node_exporter install from server cache")
+	}
+	// vmagent fetched from the server cache (vmutils tarball -> /usr/local/bin/vmagent).
+	if !strings.Contains(all, "/binary/vmagent/") || !strings.Contains(all, "/usr/local/bin/vmagent") {
+		t.Error("monitor chain missing vmagent install from server cache")
+	}
+	// remote_write points at the server's VM ingest via ${STROPPY_SERVER_ADDR}/vm.
+	if !strings.Contains(all, "-remoteWrite.url=${STROPPY_SERVER_ADDR}/vm/insert/0/prometheus/api/v1/write") {
+		t.Error("vmagent remote_write URL not wired to ${STROPPY_SERVER_ADDR}/vm")
+	}
+	// run_id external label is present and scrape config targets node_exporter + postgres_exporter.
+	if !strings.Contains(all, "run_id:") {
+		t.Error("vmagent scrape config missing run_id external label")
+	}
+	if !strings.Contains(all, "localhost:9100") || !strings.Contains(all, "localhost:9187") {
+		t.Error("vmagent scrape config missing node_exporter / postgres_exporter targets")
+	}
+	// postgres_exporter fetched from the server cache, pointed at the LOCAL db.
+	if !strings.Contains(all, "/binary/postgres_exporter/") || !strings.Contains(all, "DATA_SOURCE_NAME=postgresql://postgres@localhost:5432") {
+		t.Error("postgres_exporter not installed from server cache / pointed at local db")
+	}
+}
+
+func TestStroppyRunHasOTLPEndpoint(t *testing.T) {
+	preset := singlePreset()
+	preset.Topology.Machines = append(preset.Topology.Machines, &domain.Topology_Machine{
+		Id: "load-1", Cores: 2, MemoryGb: 4,
+		Components: []*domain.Topology_Component{{Id: "load", Kind: domain.Topology_Component_KIND_STROPPY}},
+	})
+	sub, err := BuildInstallDag(preset, "test-dag")
+	if err != nil {
+		t.Fatalf("build install: %v", err)
+	}
+	var found bool
+	for _, n := range sub.GetNodes() {
+		if n.GetId() != "load.run_stroppy" {
+			continue
+		}
+		var cmd rtagent.Command
+		if err := n.GetTaskState().GetInput().UnmarshalTo(&cmd); err != nil {
+			t.Fatalf("unmarshal run_stroppy: %v", err)
+		}
+		script := cmd.GetOperation().GetRunCmd().GetScript().GetText()
+		// stroppy v5 takes a run config file (not --url) with an OTLP exporter to the
+		// server's VM ingest + a run_id resource attribute for metric correlation.
+		if !strings.Contains(script, `"otlp_http_endpoint":"${STROPPY_AGENT_SERVER}"`) ||
+			!strings.Contains(script, `/vm/insert/0/opentelemetry/api/v1/push`) {
+			t.Errorf("run_stroppy missing OTLP exporter endpoint/path:\n%s", script)
+		}
+		if !strings.Contains(script, "OTEL_RESOURCE_ATTRIBUTES") || !strings.Contains(script, "run_id=") {
+			t.Errorf("run_stroppy missing run_id resource attribute:\n%s", script)
+		}
+		if !strings.Contains(script, "stroppy run -f /etc/stroppy/run-config.json") {
+			t.Errorf("run_stroppy not invoking stroppy with a config file:\n%s", script)
+		}
+		if !strings.Contains(script, `"driver_type":"postgres"`) {
+			t.Errorf("run_stroppy config missing pg driver:\n%s", script)
+		}
+		found = true
+	}
+	if !found {
+		t.Fatal("no load.run_stroppy node found")
+	}
 }
 
 func TestInstallSubDagUsesAgentCommands(t *testing.T) {
-	dag, err := New().Compile(singlePreset(), nil)
+	sub, err := BuildInstallDag(singlePreset(), "test-dag")
 	if err != nil {
-		t.Fatalf("compile: %v", err)
+		t.Fatalf("build install: %v", err)
 	}
-	sub := findNode(dag, "install_and_run").GetSubDag()
-	if sub == nil {
-		t.Fatal("install_and_run is not a sub_dag")
-	}
-	if len(sub.GetNodes()) == 0 {
+	if sub == nil || len(sub.GetNodes()) == 0 {
 		t.Fatal("install sub_dag has no nodes")
 	}
 	for _, n := range sub.GetNodes() {

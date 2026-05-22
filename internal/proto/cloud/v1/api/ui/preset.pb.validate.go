@@ -101,10 +101,66 @@ func (m *ListPresetRequest) validate(all bool) error {
 		}
 	}
 
-	if _, ok := _ListPresetRequest_Kind_NotInLookup[m.GetKind()]; ok {
+	for idx, item := range m.GetKinds() {
+		_, _ = idx, item
+
+		if _, ok := _ListPresetRequest_Kinds_NotInLookup[item]; ok {
+			err := ListPresetRequestValidationError{
+				field:  fmt.Sprintf("Kinds[%v]", idx),
+				reason: "value must not be in list [0]",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if _, ok := models.Preset_Kind_name[int32(item)]; !ok {
+			err := ListPresetRequestValidationError{
+				field:  fmt.Sprintf("Kinds[%v]", idx),
+				reason: "value must be one of the defined enum values",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListPresetRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListPresetRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListPresetRequestValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if _, ok := ListPresetRequest_SortField_name[int32(m.GetSortField())]; !ok {
 		err := ListPresetRequestValidationError{
-			field:  "Kind",
-			reason: "value must not be in list [KIND_UNSPECIFIED]",
+			field:  "SortField",
+			reason: "value must be one of the defined enum values",
 		}
 		if !all {
 			return err
@@ -112,15 +168,59 @@ func (m *ListPresetRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if _, ok := models.Preset_Kind_name[int32(m.GetKind())]; !ok {
+	if _, ok := models.SortOrder_name[int32(m.GetOrder())]; !ok {
 		err := ListPresetRequestValidationError{
-			field:  "Kind",
+			field:  "Order",
 			reason: "value must be one of the defined enum values",
 		}
 		if !all {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPage()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListPresetRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListPresetRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPage()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListPresetRequestValidationError{
+				field:  "Page",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.Search != nil {
+
+		if utf8.RuneCountInString(m.GetSearch()) > 256 {
+			err := ListPresetRequestValidationError{
+				field:  "Search",
+				reason: "value length must be at most 256 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
 	}
 
 	if len(errors) > 0 {
@@ -203,9 +303,174 @@ var _ interface {
 	ErrorName() string
 } = ListPresetRequestValidationError{}
 
-var _ListPresetRequest_Kind_NotInLookup = map[models.Preset_Kind]struct{}{
+var _ListPresetRequest_Kinds_NotInLookup = map[models.Preset_Kind]struct{}{
 	0: {},
 }
+
+// Validate checks the field values on ListPresetsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListPresetsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListPresetsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListPresetsResponseMultiError, or nil if none found.
+func (m *ListPresetsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListPresetsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetPresets() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListPresetsResponseValidationError{
+						field:  fmt.Sprintf("Presets[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListPresetsResponseValidationError{
+						field:  fmt.Sprintf("Presets[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListPresetsResponseValidationError{
+					field:  fmt.Sprintf("Presets[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetPageInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListPresetsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListPresetsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPageInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListPresetsResponseValidationError{
+				field:  "PageInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ListPresetsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListPresetsResponseMultiError is an error wrapping multiple validation
+// errors returned by ListPresetsResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ListPresetsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListPresetsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListPresetsResponseMultiError) AllErrors() []error { return m }
+
+// ListPresetsResponseValidationError is the validation error returned by
+// ListPresetsResponse.Validate if the designated constraints aren't met.
+type ListPresetsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListPresetsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListPresetsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListPresetsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListPresetsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListPresetsResponseValidationError) ErrorName() string {
+	return "ListPresetsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListPresetsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListPresetsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListPresetsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListPresetsResponseValidationError{}
 
 // Validate checks the field values on DeletePresetRequest with the rules
 // defined in the proto definition for this message. If any rules are

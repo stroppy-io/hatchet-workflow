@@ -88,6 +88,14 @@ type Preset struct {
 	Owned  *Own                   `protobuf:"bytes,2,opt,name=owned,proto3" json:"owned,omitempty"`
 	Tags   *common.Tags           `protobuf:"bytes,3,opt,name=tags,proto3" json:"tags,omitempty"`
 	Kind   Preset_Kind            `protobuf:"varint,4,opt,name=kind,proto3,enum=cloud.v1.models.Preset_Kind" json:"kind,omitempty"`
+	// is_system marks a platform-seeded preset (bootstrapped at server start, not
+	// owned by a tenant user). System presets are read-only catalog entries:
+	// visible to every tenant, not user-editable/deletable.
+	IsSystem bool `protobuf:"varint,5,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
+	// name + description are the catalog display fields (a preset is a named,
+	// reusable template).
+	Name        *string `protobuf:"bytes,6,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	Description *string `protobuf:"bytes,7,opt,name=description,proto3,oneof" json:"description,omitempty"`
 	// Types that are valid to be assigned to Preset:
 	//
 	//	*Preset_WorkloadPreset
@@ -154,6 +162,27 @@ func (x *Preset) GetKind() Preset_Kind {
 		return x.Kind
 	}
 	return Preset_KIND_UNSPECIFIED
+}
+
+func (x *Preset) GetIsSystem() bool {
+	if x != nil {
+		return x.IsSystem
+	}
+	return false
+}
+
+func (x *Preset) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
+func (x *Preset) GetDescription() string {
+	if x != nil && x.Description != nil {
+		return *x.Description
+	}
+	return ""
 }
 
 func (x *Preset) GetPreset() isPreset_Preset {
@@ -260,13 +289,17 @@ var File_cloud_v1_models_preset_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_preset_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccloud/v1/models/preset.proto\x12\x0fcloud.v1.models\x1a\x1acloud/v1/common/tags.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xa8\x05\n" +
+	"\x1ccloud/v1/models/preset.proto\x12\x0fcloud.v1.models\x1a\x1acloud/v1/common/tags.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xb4\x06\n" +
 	"\x06Preset\x127\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x122\n" +
 	"\x05owned\x18\x02 \x01(\v2\x14.cloud.v1.models.OwnB\x06\x82\xa6\x1d\x02 \x01R\x05owned\x121\n" +
 	"\x04tags\x18\x03 \x01(\v2\x15.cloud.v1.common.TagsB\x06\x82\xa6\x1d\x02\x10\x01R\x04tags\x12<\n" +
 	"\x04kind\x18\x04 \x01(\x0e2\x1c.cloud.v1.models.Preset.KindB\n" +
-	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04kind\x12Z\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04kind\x12\x1b\n" +
+	"\tis_system\x18\x05 \x01(\bR\bisSystem\x12#\n" +
+	"\x04name\x18\x06 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\xff\x01H\x01R\x04name\x88\x01\x01\x12/\n" +
+	"\vdescription\x18\a \x01(\tB\b\xfaB\x05r\x03\x18\x80\bH\x02R\vdescription\x88\x01\x01\x12Z\n" +
 	"\x0fworkload_preset\x18\n" +
 	" \x01(\v2\x1f.cloud.v1.domain.WorkloadPresetB\x0e\xfaB\x05\x8a\x01\x02\x10\x01\x82\xa6\x1d\x02\x10\x01H\x00R\x0eworkloadPreset\x12Z\n" +
 	"\x0fdatabase_preset\x18\v \x01(\v2\x1f.cloud.v1.domain.DatabasePresetB\x0e\xfaB\x05\x8a\x01\x02\x10\x01\x82\xa6\x1d\x02\x10\x01H\x00R\x0edatabasePreset\x12N\n" +
@@ -279,7 +312,9 @@ const file_cloud_v1_models_preset_proto_rawDesc = "" +
 	"\rKIND_WORKLOAD\x10\x01\x12\x11\n" +
 	"\rKIND_DATABASE\x10\x02\x12\r\n" +
 	"\tKIND_TEST\x10\x03:\x15\x92\xb5\x18\v\b\x01\x12\apresets\x82\xa6\x1d\x02\b\x01B\x13\n" +
-	"\x06preset\x12\t\xf8B\x01\x82\xb5\x18\x02\b\x01BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
+	"\x06preset\x12\t\xf8B\x01\x82\xb5\x18\x02\b\x01B\a\n" +
+	"\x05_nameB\x0e\n" +
+	"\f_descriptionBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
 
 var (
 	file_cloud_v1_models_preset_proto_rawDescOnce sync.Once

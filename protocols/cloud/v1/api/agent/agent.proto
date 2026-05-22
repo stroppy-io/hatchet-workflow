@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.api.agent;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/models/agent.proto";
 import "cloud/v1/models/common.proto";
 import "cloud/v1/runtime/agent/agent.proto";
@@ -60,8 +61,29 @@ message SendLogsRequest {
 }
 
 message ListAgentsRequest {
+    /* SortField — typed sortable columns (no arbitrary strings). */
+    enum SortField {
+        SORT_FIELD_UNSPECIFIED = 0;
+        SORT_FIELD_CREATED_AT = 1;
+        SORT_FIELD_LAST_SEEN_AT = 2;
+        SORT_FIELD_STATUS = 3;
+    }
     models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
-    models.CommonQuery query = 2;
+    /* status filters by agent runtime status. */
+    optional runtime.agent.AgentStatus status = 2 [(validate.rules).enum.defined_only = true];
+    /* search filters by host / machine_id (free text). */
+    optional string search = 3 [(validate.rules).string.max_len = 256];
+    SortField sort_field = 4 [(validate.rules).enum.defined_only = true];
+    models.SortOrder order = 5 [(validate.rules).enum.defined_only = true];
+    models.Page page = 6;
+    /* tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter. */
+    common.Tags tags = 7;
+}
+
+/* ListAgentsResponse — rows plus pagination metadata (H42). */
+message ListAgentsResponse {
+    repeated models.Agent agents = 1;
+    models.PageInfo page_info = 2;
 }
 
 /*
@@ -99,6 +121,6 @@ service AgentService {
     rpc SendLogs (SendLogsRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;};
 
     /* Control-plane agent observability API. Commands are persisted as DAG nodes. */
-    rpc ListAgents (ListAgentsRequest) returns (models.Agent.List) {option idempotency_level = NO_SIDE_EFFECTS;};
+    rpc ListAgents (ListAgentsRequest) returns (ListAgentsResponse) {option idempotency_level = NO_SIDE_EFFECTS;};
     rpc GetAgent (models.AgentId) returns (models.Agent) {option idempotency_level = NO_SIDE_EFFECTS;};
 }

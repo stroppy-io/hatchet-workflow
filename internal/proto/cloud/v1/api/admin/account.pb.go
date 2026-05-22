@@ -8,6 +8,7 @@ package admin
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -24,6 +25,59 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// SortField — typed sortable columns (no arbitrary strings).
+type ListAccountsRequest_SortField int32
+
+const (
+	ListAccountsRequest_SORT_FIELD_UNSPECIFIED ListAccountsRequest_SortField = 0
+	ListAccountsRequest_SORT_FIELD_CREATED_AT  ListAccountsRequest_SortField = 1
+	ListAccountsRequest_SORT_FIELD_EMAIL       ListAccountsRequest_SortField = 2
+	ListAccountsRequest_SORT_FIELD_NICKNAME    ListAccountsRequest_SortField = 3
+)
+
+// Enum value maps for ListAccountsRequest_SortField.
+var (
+	ListAccountsRequest_SortField_name = map[int32]string{
+		0: "SORT_FIELD_UNSPECIFIED",
+		1: "SORT_FIELD_CREATED_AT",
+		2: "SORT_FIELD_EMAIL",
+		3: "SORT_FIELD_NICKNAME",
+	}
+	ListAccountsRequest_SortField_value = map[string]int32{
+		"SORT_FIELD_UNSPECIFIED": 0,
+		"SORT_FIELD_CREATED_AT":  1,
+		"SORT_FIELD_EMAIL":       2,
+		"SORT_FIELD_NICKNAME":    3,
+	}
+)
+
+func (x ListAccountsRequest_SortField) Enum() *ListAccountsRequest_SortField {
+	p := new(ListAccountsRequest_SortField)
+	*p = x
+	return p
+}
+
+func (x ListAccountsRequest_SortField) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ListAccountsRequest_SortField) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_api_admin_account_proto_enumTypes[0].Descriptor()
+}
+
+func (ListAccountsRequest_SortField) Type() protoreflect.EnumType {
+	return &file_cloud_v1_api_admin_account_proto_enumTypes[0]
+}
+
+func (x ListAccountsRequest_SortField) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ListAccountsRequest_SortField.Descriptor instead.
+func (ListAccountsRequest_SortField) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_api_admin_account_proto_rawDescGZIP(), []int{3, 0}
+}
 
 type CreateAccountRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -130,8 +184,10 @@ func (x *UpdateAccountRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
 }
 
 type UpdatePasswordRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NewPassword   string                 `protobuf:"bytes,2,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// account_id is the target account whose password is reset (platform-admin).
+	AccountId     *models.AccountId `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	NewPassword   string            `protobuf:"bytes,2,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -166,6 +222,13 @@ func (*UpdatePasswordRequest) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_admin_account_proto_rawDescGZIP(), []int{2}
 }
 
+func (x *UpdatePasswordRequest) GetAccountId() *models.AccountId {
+	if x != nil {
+		return x.AccountId
+	}
+	return nil
+}
+
 func (x *UpdatePasswordRequest) GetNewPassword() string {
 	if x != nil {
 		return x.NewPassword
@@ -173,11 +236,162 @@ func (x *UpdatePasswordRequest) GetNewPassword() string {
 	return ""
 }
 
+// ListAccountsRequest is the platform-admin accounts table contract (is_admin).
+type ListAccountsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id is the acting tenant context (every request carries it); the
+	// platform-admin (is_admin) accounts listing itself is cross-tenant.
+	TenantId *models.TenantId `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// search filters by account email/nickname (free text).
+	Search *string `protobuf:"bytes,2,opt,name=search,proto3,oneof" json:"search,omitempty"`
+	// is_admin tri-state: unset = all, true/false matches the platform-admin flag.
+	IsAdmin   *bool                         `protobuf:"varint,3,opt,name=is_admin,json=isAdmin,proto3,oneof" json:"is_admin,omitempty"`
+	SortField ListAccountsRequest_SortField `protobuf:"varint,4,opt,name=sort_field,json=sortField,proto3,enum=cloud.v1.api.admin.ListAccountsRequest_SortField" json:"sort_field,omitempty"`
+	Order     models.SortOrder              `protobuf:"varint,5,opt,name=order,proto3,enum=cloud.v1.models.SortOrder" json:"order,omitempty"`
+	Page      *models.Page                  `protobuf:"bytes,6,opt,name=page,proto3" json:"page,omitempty"`
+	// tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter.
+	Tags          *common.Tags `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAccountsRequest) Reset() {
+	*x = ListAccountsRequest{}
+	mi := &file_cloud_v1_api_admin_account_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAccountsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAccountsRequest) ProtoMessage() {}
+
+func (x *ListAccountsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_admin_account_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAccountsRequest.ProtoReflect.Descriptor instead.
+func (*ListAccountsRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_admin_account_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ListAccountsRequest) GetTenantId() *models.TenantId {
+	if x != nil {
+		return x.TenantId
+	}
+	return nil
+}
+
+func (x *ListAccountsRequest) GetSearch() string {
+	if x != nil && x.Search != nil {
+		return *x.Search
+	}
+	return ""
+}
+
+func (x *ListAccountsRequest) GetIsAdmin() bool {
+	if x != nil && x.IsAdmin != nil {
+		return *x.IsAdmin
+	}
+	return false
+}
+
+func (x *ListAccountsRequest) GetSortField() ListAccountsRequest_SortField {
+	if x != nil {
+		return x.SortField
+	}
+	return ListAccountsRequest_SORT_FIELD_UNSPECIFIED
+}
+
+func (x *ListAccountsRequest) GetOrder() models.SortOrder {
+	if x != nil {
+		return x.Order
+	}
+	return models.SortOrder(0)
+}
+
+func (x *ListAccountsRequest) GetPage() *models.Page {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+func (x *ListAccountsRequest) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// ListAccountsResponse — rows plus pagination metadata (H42).
+type ListAccountsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Accounts      []*models.Account      `protobuf:"bytes,1,rep,name=accounts,proto3" json:"accounts,omitempty"`
+	PageInfo      *models.PageInfo       `protobuf:"bytes,2,opt,name=page_info,json=pageInfo,proto3" json:"page_info,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAccountsResponse) Reset() {
+	*x = ListAccountsResponse{}
+	mi := &file_cloud_v1_api_admin_account_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAccountsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAccountsResponse) ProtoMessage() {}
+
+func (x *ListAccountsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_admin_account_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAccountsResponse.ProtoReflect.Descriptor instead.
+func (*ListAccountsResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_admin_account_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ListAccountsResponse) GetAccounts() []*models.Account {
+	if x != nil {
+		return x.Accounts
+	}
+	return nil
+}
+
+func (x *ListAccountsResponse) GetPageInfo() *models.PageInfo {
+	if x != nil {
+		return x.PageInfo
+	}
+	return nil
+}
+
 var File_cloud_v1_api_admin_account_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_admin_account_proto_rawDesc = "" +
 	"\n" +
-	" cloud/v1/api/admin/account.proto\x12\x12cloud.v1.api.admin\x1a\x1dcloud/v1/models/account.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x17validate/validate.proto\"|\n" +
+	" cloud/v1/api/admin/account.proto\x12\x12cloud.v1.api.admin\x1a\x1acloud/v1/common/tags.proto\x1a\x1dcloud/v1/models/account.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x17validate/validate.proto\"|\n" +
 	"\x14CreateAccountRequest\x12<\n" +
 	"\aaccount\x18\x01 \x01(\v2\x18.cloud.v1.models.AccountB\b\xfaB\x05\x8a\x01\x02\x10\x01R\aaccount\x12&\n" +
 	"\bpassword\x18\x02 \x01(\tB\n" +
@@ -185,11 +399,33 @@ const file_cloud_v1_api_admin_account_proto_rawDesc = "" +
 	"\x14UpdateAccountRequest\x12<\n" +
 	"\aaccount\x18\x01 \x01(\v2\x18.cloud.v1.models.AccountB\b\xfaB\x05\x8a\x01\x02\x10\x01R\aaccount\x12E\n" +
 	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
-	"updateMask\"F\n" +
-	"\x15UpdatePasswordRequest\x12-\n" +
+	"updateMask\"\x8b\x01\n" +
+	"\x15UpdatePasswordRequest\x12C\n" +
+	"\n" +
+	"account_id\x18\x01 \x01(\v2\x1a.cloud.v1.models.AccountIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\taccountId\x12-\n" +
 	"\fnew_password\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\vnewPassword2\xeb\x02\n" +
-	"\x13AccountAdminService\x12X\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\vnewPassword\"\x97\x04\n" +
+	"\x13ListAccountsRequest\x12@\n" +
+	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12%\n" +
+	"\x06search\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02H\x00R\x06search\x88\x01\x01\x12\x1e\n" +
+	"\bis_admin\x18\x03 \x01(\bH\x01R\aisAdmin\x88\x01\x01\x12Z\n" +
+	"\n" +
+	"sort_field\x18\x04 \x01(\x0e21.cloud.v1.api.admin.ListAccountsRequest.SortFieldB\b\xfaB\x05\x82\x01\x02\x10\x01R\tsortField\x12:\n" +
+	"\x05order\x18\x05 \x01(\x0e2\x1a.cloud.v1.models.SortOrderB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05order\x12)\n" +
+	"\x04page\x18\x06 \x01(\v2\x15.cloud.v1.models.PageR\x04page\x12)\n" +
+	"\x04tags\x18\a \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"q\n" +
+	"\tSortField\x12\x1a\n" +
+	"\x16SORT_FIELD_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15SORT_FIELD_CREATED_AT\x10\x01\x12\x14\n" +
+	"\x10SORT_FIELD_EMAIL\x10\x02\x12\x17\n" +
+	"\x13SORT_FIELD_NICKNAME\x10\x03B\t\n" +
+	"\a_searchB\v\n" +
+	"\t_is_admin\"\x84\x01\n" +
+	"\x14ListAccountsResponse\x124\n" +
+	"\baccounts\x18\x01 \x03(\v2\x18.cloud.v1.models.AccountR\baccounts\x126\n" +
+	"\tpage_info\x18\x02 \x01(\v2\x19.cloud.v1.models.PageInfoR\bpageInfo2\xd3\x03\n" +
+	"\x13AccountAdminService\x12f\n" +
+	"\fListAccounts\x12'.cloud.v1.api.admin.ListAccountsRequest\x1a(.cloud.v1.api.admin.ListAccountsResponse\"\x03\x90\x02\x01\x12X\n" +
 	"\rCreateAccount\x12(.cloud.v1.api.admin.CreateAccountRequest\x1a\x18.cloud.v1.models.Account\"\x03\x90\x02\x02\x12V\n" +
 	"\rUpdateAccount\x12(.cloud.v1.api.admin.UpdateAccountRequest\x1a\x16.google.protobuf.Empty\"\x03\x90\x02\x02\x12H\n" +
 	"\rDeleteAccount\x12\x1a.cloud.v1.models.AccountId\x1a\x16.google.protobuf.Empty\"\x03\x90\x02\x02\x12X\n" +
@@ -207,33 +443,52 @@ func file_cloud_v1_api_admin_account_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_admin_account_proto_rawDescData
 }
 
-var file_cloud_v1_api_admin_account_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_cloud_v1_api_admin_account_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cloud_v1_api_admin_account_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_cloud_v1_api_admin_account_proto_goTypes = []any{
-	(*CreateAccountRequest)(nil),  // 0: cloud.v1.api.admin.CreateAccountRequest
-	(*UpdateAccountRequest)(nil),  // 1: cloud.v1.api.admin.UpdateAccountRequest
-	(*UpdatePasswordRequest)(nil), // 2: cloud.v1.api.admin.UpdatePasswordRequest
-	(*models.Account)(nil),        // 3: cloud.v1.models.Account
-	(*fieldmaskpb.FieldMask)(nil), // 4: google.protobuf.FieldMask
-	(*models.AccountId)(nil),      // 5: cloud.v1.models.AccountId
-	(*emptypb.Empty)(nil),         // 6: google.protobuf.Empty
+	(ListAccountsRequest_SortField)(0), // 0: cloud.v1.api.admin.ListAccountsRequest.SortField
+	(*CreateAccountRequest)(nil),       // 1: cloud.v1.api.admin.CreateAccountRequest
+	(*UpdateAccountRequest)(nil),       // 2: cloud.v1.api.admin.UpdateAccountRequest
+	(*UpdatePasswordRequest)(nil),      // 3: cloud.v1.api.admin.UpdatePasswordRequest
+	(*ListAccountsRequest)(nil),        // 4: cloud.v1.api.admin.ListAccountsRequest
+	(*ListAccountsResponse)(nil),       // 5: cloud.v1.api.admin.ListAccountsResponse
+	(*models.Account)(nil),             // 6: cloud.v1.models.Account
+	(*fieldmaskpb.FieldMask)(nil),      // 7: google.protobuf.FieldMask
+	(*models.AccountId)(nil),           // 8: cloud.v1.models.AccountId
+	(*models.TenantId)(nil),            // 9: cloud.v1.models.TenantId
+	(models.SortOrder)(0),              // 10: cloud.v1.models.SortOrder
+	(*models.Page)(nil),                // 11: cloud.v1.models.Page
+	(*common.Tags)(nil),                // 12: cloud.v1.common.Tags
+	(*models.PageInfo)(nil),            // 13: cloud.v1.models.PageInfo
+	(*emptypb.Empty)(nil),              // 14: google.protobuf.Empty
 }
 var file_cloud_v1_api_admin_account_proto_depIdxs = []int32{
-	3, // 0: cloud.v1.api.admin.CreateAccountRequest.account:type_name -> cloud.v1.models.Account
-	3, // 1: cloud.v1.api.admin.UpdateAccountRequest.account:type_name -> cloud.v1.models.Account
-	4, // 2: cloud.v1.api.admin.UpdateAccountRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0, // 3: cloud.v1.api.admin.AccountAdminService.CreateAccount:input_type -> cloud.v1.api.admin.CreateAccountRequest
-	1, // 4: cloud.v1.api.admin.AccountAdminService.UpdateAccount:input_type -> cloud.v1.api.admin.UpdateAccountRequest
-	5, // 5: cloud.v1.api.admin.AccountAdminService.DeleteAccount:input_type -> cloud.v1.models.AccountId
-	2, // 6: cloud.v1.api.admin.AccountAdminService.UpdatePassword:input_type -> cloud.v1.api.admin.UpdatePasswordRequest
-	3, // 7: cloud.v1.api.admin.AccountAdminService.CreateAccount:output_type -> cloud.v1.models.Account
-	6, // 8: cloud.v1.api.admin.AccountAdminService.UpdateAccount:output_type -> google.protobuf.Empty
-	6, // 9: cloud.v1.api.admin.AccountAdminService.DeleteAccount:output_type -> google.protobuf.Empty
-	6, // 10: cloud.v1.api.admin.AccountAdminService.UpdatePassword:output_type -> google.protobuf.Empty
-	7, // [7:11] is the sub-list for method output_type
-	3, // [3:7] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	6,  // 0: cloud.v1.api.admin.CreateAccountRequest.account:type_name -> cloud.v1.models.Account
+	6,  // 1: cloud.v1.api.admin.UpdateAccountRequest.account:type_name -> cloud.v1.models.Account
+	7,  // 2: cloud.v1.api.admin.UpdateAccountRequest.update_mask:type_name -> google.protobuf.FieldMask
+	8,  // 3: cloud.v1.api.admin.UpdatePasswordRequest.account_id:type_name -> cloud.v1.models.AccountId
+	9,  // 4: cloud.v1.api.admin.ListAccountsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	0,  // 5: cloud.v1.api.admin.ListAccountsRequest.sort_field:type_name -> cloud.v1.api.admin.ListAccountsRequest.SortField
+	10, // 6: cloud.v1.api.admin.ListAccountsRequest.order:type_name -> cloud.v1.models.SortOrder
+	11, // 7: cloud.v1.api.admin.ListAccountsRequest.page:type_name -> cloud.v1.models.Page
+	12, // 8: cloud.v1.api.admin.ListAccountsRequest.tags:type_name -> cloud.v1.common.Tags
+	6,  // 9: cloud.v1.api.admin.ListAccountsResponse.accounts:type_name -> cloud.v1.models.Account
+	13, // 10: cloud.v1.api.admin.ListAccountsResponse.page_info:type_name -> cloud.v1.models.PageInfo
+	4,  // 11: cloud.v1.api.admin.AccountAdminService.ListAccounts:input_type -> cloud.v1.api.admin.ListAccountsRequest
+	1,  // 12: cloud.v1.api.admin.AccountAdminService.CreateAccount:input_type -> cloud.v1.api.admin.CreateAccountRequest
+	2,  // 13: cloud.v1.api.admin.AccountAdminService.UpdateAccount:input_type -> cloud.v1.api.admin.UpdateAccountRequest
+	8,  // 14: cloud.v1.api.admin.AccountAdminService.DeleteAccount:input_type -> cloud.v1.models.AccountId
+	3,  // 15: cloud.v1.api.admin.AccountAdminService.UpdatePassword:input_type -> cloud.v1.api.admin.UpdatePasswordRequest
+	5,  // 16: cloud.v1.api.admin.AccountAdminService.ListAccounts:output_type -> cloud.v1.api.admin.ListAccountsResponse
+	6,  // 17: cloud.v1.api.admin.AccountAdminService.CreateAccount:output_type -> cloud.v1.models.Account
+	14, // 18: cloud.v1.api.admin.AccountAdminService.UpdateAccount:output_type -> google.protobuf.Empty
+	14, // 19: cloud.v1.api.admin.AccountAdminService.DeleteAccount:output_type -> google.protobuf.Empty
+	14, // 20: cloud.v1.api.admin.AccountAdminService.UpdatePassword:output_type -> google.protobuf.Empty
+	16, // [16:21] is the sub-list for method output_type
+	11, // [11:16] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_admin_account_proto_init() }
@@ -241,18 +496,20 @@ func file_cloud_v1_api_admin_account_proto_init() {
 	if File_cloud_v1_api_admin_account_proto != nil {
 		return
 	}
+	file_cloud_v1_api_admin_account_proto_msgTypes[3].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_admin_account_proto_rawDesc), len(file_cloud_v1_api_admin_account_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   3,
+			NumEnums:      1,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_cloud_v1_api_admin_account_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_api_admin_account_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_api_admin_account_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_api_admin_account_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_api_admin_account_proto = out.File

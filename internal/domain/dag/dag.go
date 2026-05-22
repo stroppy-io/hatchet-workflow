@@ -31,6 +31,7 @@ import (
 	"context"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/ids"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/render"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
@@ -43,16 +44,6 @@ import (
 )
 
 // ── seams (every external effect is an interface -> testable with fakes) ─────────
-
-// NetworkAllocator reserves the run's network (subnet/CIDR/DNS).
-type NetworkAllocator interface {
-	AllocNetwork(topo *domain.Topology) *system.Network
-}
-
-// QuotaRequester computes the provider quota the topology needs.
-type QuotaRequester interface {
-	Request(topo *domain.Topology, intent *deployment.DeploymentIntent) ([]*deployment.QuotaRequest, error)
-}
 
 // DockerProvisioner materializes (and tears down) a local Docker deployment:
 // Apply turns Docker.Input into Docker.Output (created container endpoints).
@@ -70,15 +61,13 @@ type TerraformProvisioner interface {
 // InstallBuilder builds the install_and_run sub-dag (per-component agent recipe
 // chains, emergent from the topology graph). Pure: plan-time from the preset.
 type InstallBuilder interface {
-	Build(preset *domain.TestPreset) *primitive.Dag
+	Build(preset *domain.TestPreset, runID string) *primitive.Dag
 }
 
 // Deps bundles the seams. Swap the impls for real ones and the dag is the product.
 // (There is no metrics seam: stroppy + node-exporter push metrics to the server ->
 // VictoriaMetrics during the run; the metrics service queries VM by run_id later.)
 type Deps struct {
-	Net     NetworkAllocator
-	Quota   QuotaRequester
 	Docker  DockerProvisioner
 	TF      TerraformProvisioner
 	Install InstallBuilder
@@ -114,10 +103,11 @@ func BuildDeployment(preset *domain.TestPreset, net *system.Network, quota []*de
 		containers := make(map[string]*deployment.Docker_Container, len(preset.GetTopology().GetMachines()))
 		for _, m := range preset.GetTopology().GetMachines() {
 			containers[m.GetId()] = &deployment.Docker_Container{
-				Image:        "jrei/systemd-ubuntu:22.04",
-				Privileged:   true,   // systemd-in-docker
-				CgroupnsMode: "host", // systemd-in-docker
-				// Env STROPPY_SERVER_ADDR/STROPPY_MACHINE_ID/STROPPY_AGENT_TOKEN (cloud-init baked at plan time)
+				Image:         dockerAgentImage,
+				FallbackImage: systemdImage,
+				Privileged:    true,   // systemd-in-docker
+				CgroupnsMode:  "host", // systemd-in-docker
+				// Env + /etc/stroppy-agent.env (SERVER_ADDR/MACHINE_ID/AGENT_TOKEN) injected by deploy.Resolve
 			}
 		}
 		d.Deployment = &deployment.Deployment_Docker{Docker: &deployment.Docker{
@@ -129,87 +119,39 @@ func BuildDeployment(preset *domain.TestPreset, net *system.Network, quota []*de
 	return d
 }
 
-// BuildTestDag composes the whole test as one static dag, wiring task bodies to the
-// Deps seams. Replace the Deps impls with real ones and this is the product.
-func BuildTestDag(preset *domain.TestPreset, reg runtime.TasksRegistry, deps Deps) *primitive.Dag {
-	// prepareDeployment: preset -> deployment.Deployment (the fan-out point).
-	prepare := newNode[*emptypb.Empty, *deployment.Deployment](
-		reg, prepareDeployment,
-		func(ctx runtime.DagContext, _ *emptypb.Empty) (*deployment.Deployment, error) {
-			p := _fromAny[*domain.TestPreset](ctx.Dag().GetInput())
-			quota, err := deps.Quota.Request(p.GetTopology(), p.GetDeployment())
-			if err != nil {
-				return nil, err
-			}
-			return BuildDeployment(p, deps.Net.AllocNetwork(p.GetTopology()), quota), nil
-		},
-		&emptypb.Empty{},
-	)
-
-	// deploy branches read prepareDeployment's output and APPLY the active oneof.
-	dockerApply := newNode[*emptypb.Empty, *deployment.Deployment](
-		reg, deployDocker,
-		func(ctx runtime.DagContext, _ *emptypb.Empty) (*deployment.Deployment, error) {
-			dep := mustDeployment(ctx)
-			docker, err := deps.Docker.Apply(ctx, dep.GetDocker())
-			if err != nil {
-				return nil, err
-			}
-			dep.Deployment = &deployment.Deployment_Docker{Docker: docker}
-			dep.Deployed = true
-			return dep, nil
-		},
-		&emptypb.Empty{},
-	)
-	ycApply := newNode[*emptypb.Empty, *deployment.Deployment](
-		reg, deployYc,
-		func(ctx runtime.DagContext, _ *emptypb.Empty) (*deployment.Deployment, error) {
-			dep := mustDeployment(ctx)
-			yandex, err := deps.TF.Apply(ctx, dep.GetYandex())
-			if err != nil {
-				return nil, err
-			}
-			dep.Deployment = &deployment.Deployment_Yandex{Yandex: yandex}
-			dep.Deployed = true
-			return dep, nil
-		},
-		&emptypb.Empty{},
-	)
-
-	// install_and_run: the agent recipe sub-dag (built plan-time from the topology);
-	// joins whichever deploy branch ran. Agent commands' binding holes are resolved
-	// at lease time from that branch's deployment Output.
-	install := subDagNode(installAndRun, deps.Install.Build(preset), joinAny())
-	// (no collect node: stroppy + node-exporter PUSH metrics to the server -> VM
-	// during the run; the metrics service queries VM by run_id on demand.)
-
-	// teardown: always-run cleanup; each branch no-ops unless it owns the provider
-	// (always-run nodes fire even on failure, so the provider guard lives in-task).
-	dockerDestroy := newNode[*emptypb.Empty, *emptypb.Empty](
-		reg, destroyDocker,
-		func(ctx runtime.DagContext, _ *emptypb.Empty) (*emptypb.Empty, error) {
-			if dep := mustDeployment(ctx); dep.GetProvider() == deployment.Provider_PROVIDER_DOCKER {
-				return &emptypb.Empty{}, deps.Docker.Destroy(ctx, dep.GetDocker())
-			}
-			return &emptypb.Empty{}, nil
-		},
-		&emptypb.Empty{}, alwaysRun(),
-	)
-	ycDestroy := newNode[*emptypb.Empty, *emptypb.Empty](
-		reg, destroyYc,
-		func(ctx runtime.DagContext, _ *emptypb.Empty) (*emptypb.Empty, error) {
-			if dep := mustDeployment(ctx); dep.GetProvider() == deployment.Provider_PROVIDER_YANDEX {
-				return &emptypb.Empty{}, deps.TF.Destroy(ctx, dep.GetYandex())
-			}
-			return &emptypb.Empty{}, nil
-		},
-		&emptypb.Empty{}, alwaysRun(),
-	)
-
+// BuildTestDag builds the static execution DAG STRUCTURE (named provision nodes +
+// the install sub-dag + always-run teardown). It does NOT register handlers: the
+// nodes reference handlers by name, registered once at startup via
+// RegisterProvisionHandlers (so the shared DagProcessor registry holds them with the
+// real Deps injected). deps is used only for deps.Install.Build (a pure plan-time
+// step that embeds the per-component agent recipe sub-dag).
+//
+// dep is the run-scoped deployment.Deployment, resolved at submit time (provider
+// settings + per-machine IPs + agent token/cloud-init) and baked into the
+// prepareDeployment node — which the runtime just passes through, so the provider
+// branches and the deploy/teardown handlers see the fully-resolved deployment.
+func BuildTestDag(preset *domain.TestPreset, dep *deployment.Deployment, deps Deps) *primitive.Dag {
+	id := ids.New()
 	return &primitive.Dag{
-		Id:    ids.New(),
-		Input: _toAny(preset),
-		Nodes: []*primitive.Dag_Node{prepare, dockerApply, ycApply, install, dockerDestroy, ycDestroy},
+		Id:     id,
+		Status: primitive.Status_STATUS_PENDING, // so the DagProcessor picks it up
+		Input:  _toAny(preset),
+		// component->machine map: agentqueue resolves agent-command binding holes
+		// (e.g. run_stroppy's DB host) against the deploy node's deployment Output.
+		Metadata: map[string]string{
+			render.ComponentMachineMetaKey: render.EncodeComponentMachine(componentMachine(preset.GetTopology())),
+		},
+		// install_and_run joins whichever deploy branch ran (JOIN ANY); the unselected
+		// provider branch is SKIPPED by the executor. No collect node — stroppy +
+		// node-exporter PUSH metrics to the server -> VM during the run.
+		Nodes: []*primitive.Dag_Node{
+			taskNode(prepareDeployment, dep),
+			taskNode(deployDocker, &emptypb.Empty{}),
+			taskNode(deployYc, &emptypb.Empty{}),
+			subDagNode(installAndRun, deps.Install.Build(preset, id), joinAny()),
+			taskNode(destroyDocker, &emptypb.Empty{}, alwaysRun()),
+			taskNode(destroyYc, &emptypb.Empty{}, alwaysRun()),
+		},
 		Edges: []*primitive.Dag_Edge{
 			condEdge(prepareDeployment, deployDocker, predProviderDocker),
 			condEdge(prepareDeployment, deployYc, predProviderYandex),
@@ -221,13 +163,86 @@ func BuildTestDag(preset *domain.TestPreset, reg runtime.TasksRegistry, deps Dep
 	}
 }
 
+// RegisterProvisionHandlers registers the SERVER-locus provision/teardown task
+// handlers (the named nodes BuildTestDag emits) into reg, with the real Deps
+// injected. Call once at startup (services/tasks) with production Deps, or in a test
+// with fakes. The deploy branches read prepareDeployment's output and apply the
+// active provider oneof; teardown is always-run and provider-guarded in-task.
+func RegisterProvisionHandlers(reg runtime.TasksRegistry, deps Deps) {
+	// prepareDeployment: the fan-out point. The deployment is resolved at submit time
+	// and baked into this node's input; the handler passes it through so the provider
+	// branches (and deploy/teardown) read the fully-resolved deployment.
+	registerTask(reg, prepareDeployment, func(_ runtime.DagContext, dep *deployment.Deployment) (*deployment.Deployment, error) {
+		return dep, nil
+	})
+	registerTask(reg, deployDocker, func(ctx runtime.DagContext, _ *emptypb.Empty) (*deployment.Deployment, error) {
+		dep := mustDeployment(ctx)
+		docker, err := deps.Docker.Apply(ctx, dep.GetDocker())
+		if err != nil {
+			return nil, err
+		}
+		dep.Deployment = &deployment.Deployment_Docker{Docker: docker}
+		dep.Deployed = true
+		return dep, nil
+	})
+	registerTask(reg, deployYc, func(ctx runtime.DagContext, _ *emptypb.Empty) (*deployment.Deployment, error) {
+		dep := mustDeployment(ctx)
+		yandex, err := deps.TF.Apply(ctx, dep.GetYandex())
+		if err != nil {
+			return nil, err
+		}
+		dep.Deployment = &deployment.Deployment_Yandex{Yandex: yandex}
+		dep.Deployed = true
+		return dep, nil
+	})
+	registerTask(reg, destroyDocker, func(ctx runtime.DagContext, _ *emptypb.Empty) (*emptypb.Empty, error) {
+		if dep := provisionedDeployment(ctx, deployDocker); dep.GetProvider() == deployment.Provider_PROVIDER_DOCKER {
+			return &emptypb.Empty{}, deps.Docker.Destroy(ctx, dep.GetDocker())
+		}
+		return &emptypb.Empty{}, nil
+	})
+	registerTask(reg, destroyYc, func(ctx runtime.DagContext, _ *emptypb.Empty) (*emptypb.Empty, error) {
+		if dep := provisionedDeployment(ctx, deployYc); dep.GetProvider() == deployment.Provider_PROVIDER_YANDEX {
+			return &emptypb.Empty{}, deps.TF.Destroy(ctx, dep.GetYandex())
+		}
+		return &emptypb.Empty{}, nil
+	})
+}
+
+// componentMachine maps each component id to the machine hosting it (for binding
+// resolution against the deployment Output).
+func componentMachine(topo *domain.Topology) map[string]string {
+	m := map[string]string{}
+	for _, machine := range topo.GetMachines() {
+		for _, c := range machine.GetComponents() {
+			m[c.GetId()] = machine.GetId()
+		}
+	}
+	return m
+}
+
 // mustDeployment reads the prepareDeployment node output (the run's deployment).
+// mustDeployment returns the PLAN-TIME deployment (input spec) baked into the
+// prepareDeployment node. Used by the deploy handlers, which Apply this spec.
 func mustDeployment(ctx runtime.DagContext) *deployment.Deployment {
 	out, err := ctx.GetOutput(prepareDeployment)
 	if err != nil {
 		return &deployment.Deployment{}
 	}
 	return _fromAny[*deployment.Deployment](out)
+}
+
+// provisionedDeployment returns the LIVE deployment produced by deployNode — the
+// deploy handler records the provisioner Output (container ids, IPs, network) and
+// sets Deployed=true. A teardown handler reads its paired deploy node's output so it
+// has the ids to actually destroy; if the deploy never ran it falls back to the spec.
+func provisionedDeployment(ctx runtime.DagContext, deployNode string) *deployment.Deployment {
+	if out, err := ctx.GetOutput(deployNode); err == nil {
+		if dep := _fromAny[*deployment.Deployment](out); dep.GetDeployed() {
+			return dep
+		}
+	}
+	return mustDeployment(ctx)
 }
 
 // ProviderPredicates gate the provider branches by reading prepareDeployment output.
@@ -251,19 +266,15 @@ func ProviderPredicates() runtime.PredicateRegistryMap {
 
 // ── node/edge builders (blueprint) ─────────────────────────────────────────────
 
-func newNode[I, O proto.Message](
-	reg runtime.TasksRegistry,
-	name string,
-	task runtime.TaskFn[I, O],
-	input I,
-	opts ...nodeOption,
-) *primitive.Dag_Node {
-	reg.Register(runtime.NewTask[I, O](name, task))
+// taskNode builds a SERVER-locus task node referencing handler `name` (registered
+// separately via RegisterProvisionHandlers). It does not register anything.
+func taskNode(name string, input proto.Message, opts ...nodeOption) *primitive.Dag_Node {
 	node := &primitive.Dag_Node{
-		Id: name,
+		Id:          name,
+		ExecutionId: name, // node ids are unique within the dag
 		Variant: &primitive.Dag_Node_TaskState_{
 			TaskState: &primitive.Dag_Node_TaskState{
-				Input:       _toAny[I](input),
+				Input:       _toAny(input),
 				HandlerName: name,
 				Locus:       primitive.Dag_Node_TaskState_EXECUTION_LOCUS_SERVER,
 			},
@@ -276,11 +287,17 @@ func newNode[I, O proto.Message](
 	return node
 }
 
+// registerTask registers a typed proto->proto handler under name.
+func registerTask[I, O proto.Message](reg runtime.TasksRegistry, name string, task runtime.TaskFn[I, O]) {
+	reg.Register(runtime.NewTask[I, O](name, task))
+}
+
 func subDagNode(name string, sub *primitive.Dag, opts ...nodeOption) *primitive.Dag_Node {
 	node := &primitive.Dag_Node{
-		Id:         name,
-		Variant:    &primitive.Dag_Node_SubDag{SubDag: sub},
-		Scheduling: &primitive.Dag_Node_Scheduling{},
+		Id:          name,
+		ExecutionId: name,
+		Variant:     &primitive.Dag_Node_SubDag{SubDag: sub},
+		Scheduling:  &primitive.Dag_Node_Scheduling{},
 	}
 	for _, o := range opts {
 		o(node)

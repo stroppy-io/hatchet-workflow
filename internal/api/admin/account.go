@@ -15,6 +15,7 @@ import (
 // AccountAdminActions is the dependency the AccountAdminService is built on:
 // platform-level (is_admin) account management. internal/services implements it.
 type AccountAdminActions interface {
+	ListAccounts(ctx context.Context, req *adminpb.ListAccountsRequest) (*adminpb.ListAccountsResponse, error)
 	CreateAccount(ctx context.Context, req *adminpb.CreateAccountRequest) (*models.Account, error)
 	UpdateAccount(ctx context.Context, req *adminpb.UpdateAccountRequest) (*emptypb.Empty, error)
 	DeleteAccount(ctx context.Context, id *models.AccountId) (*emptypb.Empty, error)
@@ -37,6 +38,13 @@ func NewAccountAdminService(logger *xlog.Logger, svc AccountAdminActions) *Accou
 		Entity: tracing.NewEntity(logger.AppendName("AccountAdminService")),
 		svc:    svc,
 	}
+}
+
+func (s *AccountAdminService) ListAccounts(ctx context.Context, req *adminpb.ListAccountsRequest) (*adminpb.ListAccountsResponse, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListAccounts",
+		func(ctx context.Context, _ trace.Span) (*adminpb.ListAccountsResponse, error) {
+			return s.svc.ListAccounts(ctx, req)
+		})
 }
 
 func (s *AccountAdminService) CreateAccount(ctx context.Context, req *adminpb.CreateAccountRequest) (*models.Account, error) {

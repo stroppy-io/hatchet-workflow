@@ -41,6 +41,16 @@ message Preset {
     }
     Kind kind = 4 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
 
+    /* is_system marks a platform-seeded preset (bootstrapped at server start, not
+       owned by a tenant user). System presets are read-only catalog entries:
+       visible to every tenant, not user-editable/deletable. */
+    bool is_system = 5;
+
+    /* name + description are the catalog display fields (a preset is a named,
+       reusable template). */
+    optional string name = 6 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    optional string description = 7 [(validate.rules).string.max_len = 1024];
+
     oneof preset {
         option (goplain.oneof).embed = true;
         option (validate.required) = true;

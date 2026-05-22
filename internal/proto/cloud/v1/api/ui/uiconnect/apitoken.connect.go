@@ -9,7 +9,6 @@ import (
 	context "context"
 	errors "errors"
 	ui "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
-	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	http "net/http"
 	strings "strings"
@@ -49,7 +48,7 @@ const (
 // ApiTokenServiceClient is a client for the cloud.v1.api.ui.ApiTokenService service.
 type ApiTokenServiceClient interface {
 	CreateApiToken(context.Context, *ui.CreateApiTokenRequest) (*ui.CreateApiTokenResponse, error)
-	ListApiTokens(context.Context, *ui.ListApiTokensRequest) (*models.ApiToken_List, error)
+	ListApiTokens(context.Context, *ui.ListApiTokensRequest) (*ui.ListApiTokensResponse, error)
 	RevokeApiToken(context.Context, *ui.RevokeApiTokenRequest) (*emptypb.Empty, error)
 }
 
@@ -71,7 +70,7 @@ func NewApiTokenServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithIdempotency(connect.IdempotencyIdempotent),
 			connect.WithClientOptions(opts...),
 		),
-		listApiTokens: connect.NewClient[ui.ListApiTokensRequest, models.ApiToken_List](
+		listApiTokens: connect.NewClient[ui.ListApiTokensRequest, ui.ListApiTokensResponse](
 			httpClient,
 			baseURL+ApiTokenServiceListApiTokensProcedure,
 			connect.WithSchema(apiTokenServiceMethods.ByName("ListApiTokens")),
@@ -91,7 +90,7 @@ func NewApiTokenServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 // apiTokenServiceClient implements ApiTokenServiceClient.
 type apiTokenServiceClient struct {
 	createApiToken *connect.Client[ui.CreateApiTokenRequest, ui.CreateApiTokenResponse]
-	listApiTokens  *connect.Client[ui.ListApiTokensRequest, models.ApiToken_List]
+	listApiTokens  *connect.Client[ui.ListApiTokensRequest, ui.ListApiTokensResponse]
 	revokeApiToken *connect.Client[ui.RevokeApiTokenRequest, emptypb.Empty]
 }
 
@@ -105,7 +104,7 @@ func (c *apiTokenServiceClient) CreateApiToken(ctx context.Context, req *ui.Crea
 }
 
 // ListApiTokens calls cloud.v1.api.ui.ApiTokenService.ListApiTokens.
-func (c *apiTokenServiceClient) ListApiTokens(ctx context.Context, req *ui.ListApiTokensRequest) (*models.ApiToken_List, error) {
+func (c *apiTokenServiceClient) ListApiTokens(ctx context.Context, req *ui.ListApiTokensRequest) (*ui.ListApiTokensResponse, error) {
 	response, err := c.listApiTokens.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -125,7 +124,7 @@ func (c *apiTokenServiceClient) RevokeApiToken(ctx context.Context, req *ui.Revo
 // ApiTokenServiceHandler is an implementation of the cloud.v1.api.ui.ApiTokenService service.
 type ApiTokenServiceHandler interface {
 	CreateApiToken(context.Context, *ui.CreateApiTokenRequest) (*ui.CreateApiTokenResponse, error)
-	ListApiTokens(context.Context, *ui.ListApiTokensRequest) (*models.ApiToken_List, error)
+	ListApiTokens(context.Context, *ui.ListApiTokensRequest) (*ui.ListApiTokensResponse, error)
 	RevokeApiToken(context.Context, *ui.RevokeApiTokenRequest) (*emptypb.Empty, error)
 }
 
@@ -178,7 +177,7 @@ func (UnimplementedApiTokenServiceHandler) CreateApiToken(context.Context, *ui.C
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.ApiTokenService.CreateApiToken is not implemented"))
 }
 
-func (UnimplementedApiTokenServiceHandler) ListApiTokens(context.Context, *ui.ListApiTokensRequest) (*models.ApiToken_List, error) {
+func (UnimplementedApiTokenServiceHandler) ListApiTokens(context.Context, *ui.ListApiTokensRequest) (*ui.ListApiTokensResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.ApiTokenService.ListApiTokens is not implemented"))
 }
 

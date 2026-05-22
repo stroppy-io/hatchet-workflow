@@ -1793,138 +1793,53 @@ var _ interface {
 	ErrorName() string
 } = OwnValidationError{}
 
-// Validate checks the field values on CommonQuery with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *CommonQuery) Validate() error {
+// Validate checks the field values on Page with the rules defined in the proto
+// definition for this message. If any rules are violated, the first error
+// encountered is returned, or nil if there are no violations.
+func (m *Page) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on CommonQuery with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in CommonQueryMultiError, or
-// nil if none found.
-func (m *CommonQuery) ValidateAll() error {
+// ValidateAll checks the field values on Page with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in PageMultiError, or nil if none found.
+func (m *Page) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *CommonQuery) validate(all bool) error {
+func (m *Page) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	for idx, item := range m.GetFilter() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, CommonQueryValidationError{
-						field:  fmt.Sprintf("Filter[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, CommonQueryValidationError{
-						field:  fmt.Sprintf("Filter[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return CommonQueryValidationError{
-					field:  fmt.Sprintf("Filter[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
+	if m.GetSize() > 1000 {
+		err := PageValidationError{
+			field:  "Size",
+			reason: "value must be less than or equal to 1000",
 		}
-
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
-	for idx, item := range m.GetSort() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, CommonQueryValidationError{
-						field:  fmt.Sprintf("Sort[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, CommonQueryValidationError{
-						field:  fmt.Sprintf("Sort[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return CommonQueryValidationError{
-					field:  fmt.Sprintf("Sort[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if all {
-		switch v := interface{}(m.GetPage()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, CommonQueryValidationError{
-					field:  "Page",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, CommonQueryValidationError{
-					field:  "Page",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetPage()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return CommonQueryValidationError{
-				field:  "Page",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
+	// no validation rules for Token
 
 	if len(errors) > 0 {
-		return CommonQueryMultiError(errors)
+		return PageMultiError(errors)
 	}
 
 	return nil
 }
 
-// CommonQueryMultiError is an error wrapping multiple validation errors
-// returned by CommonQuery.ValidateAll() if the designated constraints aren't met.
-type CommonQueryMultiError []error
+// PageMultiError is an error wrapping multiple validation errors returned by
+// Page.ValidateAll() if the designated constraints aren't met.
+type PageMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m CommonQueryMultiError) Error() string {
+func (m PageMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1933,11 +1848,11 @@ func (m CommonQueryMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m CommonQueryMultiError) AllErrors() []error { return m }
+func (m PageMultiError) AllErrors() []error { return m }
 
-// CommonQueryValidationError is the validation error returned by
-// CommonQuery.Validate if the designated constraints aren't met.
-type CommonQueryValidationError struct {
+// PageValidationError is the validation error returned by Page.Validate if the
+// designated constraints aren't met.
+type PageValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1945,22 +1860,22 @@ type CommonQueryValidationError struct {
 }
 
 // Field function returns field value.
-func (e CommonQueryValidationError) Field() string { return e.field }
+func (e PageValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e CommonQueryValidationError) Reason() string { return e.reason }
+func (e PageValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e CommonQueryValidationError) Cause() error { return e.cause }
+func (e PageValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e CommonQueryValidationError) Key() bool { return e.key }
+func (e PageValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e CommonQueryValidationError) ErrorName() string { return "CommonQueryValidationError" }
+func (e PageValidationError) ErrorName() string { return "PageValidationError" }
 
 // Error satisfies the builtin error interface
-func (e CommonQueryValidationError) Error() string {
+func (e PageValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1972,14 +1887,14 @@ func (e CommonQueryValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sCommonQuery.%s: %s%s",
+		"invalid %sPage.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = CommonQueryValidationError{}
+var _ error = PageValidationError{}
 
 var _ interface {
 	Field() string
@@ -1987,7 +1902,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = CommonQueryValidationError{}
+} = PageValidationError{}
 
 // Validate checks the field values on PageInfo with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -2095,377 +2010,3 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PageInfoValidationError{}
-
-// Validate checks the field values on CommonQuery_Sort with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *CommonQuery_Sort) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on CommonQuery_Sort with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// CommonQuery_SortMultiError, or nil if none found.
-func (m *CommonQuery_Sort) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *CommonQuery_Sort) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if utf8.RuneCountInString(m.GetField()) < 1 {
-		err := CommonQuery_SortValidationError{
-			field:  "Field",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if _, ok := CommonQuery_Sort_Direction_name[int32(m.GetDirection())]; !ok {
-		err := CommonQuery_SortValidationError{
-			field:  "Direction",
-			reason: "value must be one of the defined enum values",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return CommonQuery_SortMultiError(errors)
-	}
-
-	return nil
-}
-
-// CommonQuery_SortMultiError is an error wrapping multiple validation errors
-// returned by CommonQuery_Sort.ValidateAll() if the designated constraints
-// aren't met.
-type CommonQuery_SortMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m CommonQuery_SortMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m CommonQuery_SortMultiError) AllErrors() []error { return m }
-
-// CommonQuery_SortValidationError is the validation error returned by
-// CommonQuery_Sort.Validate if the designated constraints aren't met.
-type CommonQuery_SortValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e CommonQuery_SortValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e CommonQuery_SortValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e CommonQuery_SortValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e CommonQuery_SortValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e CommonQuery_SortValidationError) ErrorName() string { return "CommonQuery_SortValidationError" }
-
-// Error satisfies the builtin error interface
-func (e CommonQuery_SortValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sCommonQuery_Sort.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = CommonQuery_SortValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = CommonQuery_SortValidationError{}
-
-// Validate checks the field values on CommonQuery_Filter with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *CommonQuery_Filter) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on CommonQuery_Filter with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// CommonQuery_FilterMultiError, or nil if none found.
-func (m *CommonQuery_Filter) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *CommonQuery_Filter) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if utf8.RuneCountInString(m.GetField()) < 1 {
-		err := CommonQuery_FilterValidationError{
-			field:  "Field",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if _, ok := _CommonQuery_Filter_Operator_NotInLookup[m.GetOperator()]; ok {
-		err := CommonQuery_FilterValidationError{
-			field:  "Operator",
-			reason: "value must not be in list [OPERATOR_UNSPECIFIED]",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if _, ok := CommonQuery_Filter_Operator_name[int32(m.GetOperator())]; !ok {
-		err := CommonQuery_FilterValidationError{
-			field:  "Operator",
-			reason: "value must be one of the defined enum values",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return CommonQuery_FilterMultiError(errors)
-	}
-
-	return nil
-}
-
-// CommonQuery_FilterMultiError is an error wrapping multiple validation errors
-// returned by CommonQuery_Filter.ValidateAll() if the designated constraints
-// aren't met.
-type CommonQuery_FilterMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m CommonQuery_FilterMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m CommonQuery_FilterMultiError) AllErrors() []error { return m }
-
-// CommonQuery_FilterValidationError is the validation error returned by
-// CommonQuery_Filter.Validate if the designated constraints aren't met.
-type CommonQuery_FilterValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e CommonQuery_FilterValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e CommonQuery_FilterValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e CommonQuery_FilterValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e CommonQuery_FilterValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e CommonQuery_FilterValidationError) ErrorName() string {
-	return "CommonQuery_FilterValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e CommonQuery_FilterValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sCommonQuery_Filter.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = CommonQuery_FilterValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = CommonQuery_FilterValidationError{}
-
-var _CommonQuery_Filter_Operator_NotInLookup = map[CommonQuery_Filter_Operator]struct{}{
-	0: {},
-}
-
-// Validate checks the field values on CommonQuery_Page with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *CommonQuery_Page) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on CommonQuery_Page with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// CommonQuery_PageMultiError, or nil if none found.
-func (m *CommonQuery_Page) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *CommonQuery_Page) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if m.GetSize() > 1000 {
-		err := CommonQuery_PageValidationError{
-			field:  "Size",
-			reason: "value must be less than or equal to 1000",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	// no validation rules for Token
-
-	if len(errors) > 0 {
-		return CommonQuery_PageMultiError(errors)
-	}
-
-	return nil
-}
-
-// CommonQuery_PageMultiError is an error wrapping multiple validation errors
-// returned by CommonQuery_Page.ValidateAll() if the designated constraints
-// aren't met.
-type CommonQuery_PageMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m CommonQuery_PageMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m CommonQuery_PageMultiError) AllErrors() []error { return m }
-
-// CommonQuery_PageValidationError is the validation error returned by
-// CommonQuery_Page.Validate if the designated constraints aren't met.
-type CommonQuery_PageValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e CommonQuery_PageValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e CommonQuery_PageValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e CommonQuery_PageValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e CommonQuery_PageValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e CommonQuery_PageValidationError) ErrorName() string { return "CommonQuery_PageValidationError" }
-
-// Error satisfies the builtin error interface
-func (e CommonQuery_PageValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sCommonQuery_Page.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = CommonQuery_PageValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = CommonQuery_PageValidationError{}

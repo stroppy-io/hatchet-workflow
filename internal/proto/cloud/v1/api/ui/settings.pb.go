@@ -8,6 +8,7 @@ package ui
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -24,6 +25,59 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// SortField — typed sortable columns (no arbitrary strings).
+type ListSettingsItemsRequest_SortField int32
+
+const (
+	ListSettingsItemsRequest_SORT_FIELD_UNSPECIFIED ListSettingsItemsRequest_SortField = 0
+	ListSettingsItemsRequest_SORT_FIELD_PART        ListSettingsItemsRequest_SortField = 1
+	ListSettingsItemsRequest_SORT_FIELD_KEY         ListSettingsItemsRequest_SortField = 2
+	ListSettingsItemsRequest_SORT_FIELD_UPDATED_AT  ListSettingsItemsRequest_SortField = 3
+)
+
+// Enum value maps for ListSettingsItemsRequest_SortField.
+var (
+	ListSettingsItemsRequest_SortField_name = map[int32]string{
+		0: "SORT_FIELD_UNSPECIFIED",
+		1: "SORT_FIELD_PART",
+		2: "SORT_FIELD_KEY",
+		3: "SORT_FIELD_UPDATED_AT",
+	}
+	ListSettingsItemsRequest_SortField_value = map[string]int32{
+		"SORT_FIELD_UNSPECIFIED": 0,
+		"SORT_FIELD_PART":        1,
+		"SORT_FIELD_KEY":         2,
+		"SORT_FIELD_UPDATED_AT":  3,
+	}
+)
+
+func (x ListSettingsItemsRequest_SortField) Enum() *ListSettingsItemsRequest_SortField {
+	p := new(ListSettingsItemsRequest_SortField)
+	*p = x
+	return p
+}
+
+func (x ListSettingsItemsRequest_SortField) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ListSettingsItemsRequest_SortField) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_api_ui_settings_proto_enumTypes[0].Descriptor()
+}
+
+func (ListSettingsItemsRequest_SortField) Type() protoreflect.EnumType {
+	return &file_cloud_v1_api_ui_settings_proto_enumTypes[0]
+}
+
+func (x ListSettingsItemsRequest_SortField) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ListSettingsItemsRequest_SortField.Descriptor instead.
+func (ListSettingsItemsRequest_SortField) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_settings_proto_rawDescGZIP(), []int{0, 0}
+}
+
 // SettingsService manages PER-TENANT settings — e.g. each tenant's own Yandex
 // Cloud provider credentials (models.SettingsItem is already tenant-scoped:
 // unique (tenant_id, part, key)). Authorized by TenantMember.Role OWNER for the
@@ -31,8 +85,17 @@ const (
 // Every request carries tenant_id (A). Different tenants can hold different
 // provider settings.
 type ListSettingsItemsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	TenantId *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// part filters by settings partition.
+	Part *models.SettingsItem_Part `protobuf:"varint,2,opt,name=part,proto3,enum=cloud.v1.models.SettingsItem_Part,oneof" json:"part,omitempty"`
+	// key filters by settings key.
+	Key       *models.SettingsItem_Key           `protobuf:"varint,3,opt,name=key,proto3,enum=cloud.v1.models.SettingsItem_Key,oneof" json:"key,omitempty"`
+	SortField ListSettingsItemsRequest_SortField `protobuf:"varint,4,opt,name=sort_field,json=sortField,proto3,enum=cloud.v1.api.ui.ListSettingsItemsRequest_SortField" json:"sort_field,omitempty"`
+	Order     models.SortOrder                   `protobuf:"varint,5,opt,name=order,proto3,enum=cloud.v1.models.SortOrder" json:"order,omitempty"`
+	Page      *models.Page                       `protobuf:"bytes,6,opt,name=page,proto3" json:"page,omitempty"`
+	// tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter.
+	Tags          *common.Tags `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -74,6 +137,105 @@ func (x *ListSettingsItemsRequest) GetTenantId() *models.TenantId {
 	return nil
 }
 
+func (x *ListSettingsItemsRequest) GetPart() models.SettingsItem_Part {
+	if x != nil && x.Part != nil {
+		return *x.Part
+	}
+	return models.SettingsItem_Part(0)
+}
+
+func (x *ListSettingsItemsRequest) GetKey() models.SettingsItem_Key {
+	if x != nil && x.Key != nil {
+		return *x.Key
+	}
+	return models.SettingsItem_Key(0)
+}
+
+func (x *ListSettingsItemsRequest) GetSortField() ListSettingsItemsRequest_SortField {
+	if x != nil {
+		return x.SortField
+	}
+	return ListSettingsItemsRequest_SORT_FIELD_UNSPECIFIED
+}
+
+func (x *ListSettingsItemsRequest) GetOrder() models.SortOrder {
+	if x != nil {
+		return x.Order
+	}
+	return models.SortOrder(0)
+}
+
+func (x *ListSettingsItemsRequest) GetPage() *models.Page {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+func (x *ListSettingsItemsRequest) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// ListSettingsItemsResponse — rows plus pagination metadata (H42). SECRET
+// semantics: for secret-bearing keys (e.g. KEY_YANDEX_CLOUD_TOKEN,
+// KEY_YANDEX_CLOUD_SSH_PUBLIC_KEY) the server BLANKS SettingsItem.value in list
+// rows (redacted); GetSettingsItem reveals a single item. Convention only — no
+// masked flag on the row.
+type ListSettingsItemsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SettingsItems []*models.SettingsItem `protobuf:"bytes,1,rep,name=settings_items,json=settingsItems,proto3" json:"settings_items,omitempty"`
+	PageInfo      *models.PageInfo       `protobuf:"bytes,2,opt,name=page_info,json=pageInfo,proto3" json:"page_info,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSettingsItemsResponse) Reset() {
+	*x = ListSettingsItemsResponse{}
+	mi := &file_cloud_v1_api_ui_settings_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSettingsItemsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSettingsItemsResponse) ProtoMessage() {}
+
+func (x *ListSettingsItemsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_ui_settings_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSettingsItemsResponse.ProtoReflect.Descriptor instead.
+func (*ListSettingsItemsResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_settings_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ListSettingsItemsResponse) GetSettingsItems() []*models.SettingsItem {
+	if x != nil {
+		return x.SettingsItems
+	}
+	return nil
+}
+
+func (x *ListSettingsItemsResponse) GetPageInfo() *models.PageInfo {
+	if x != nil {
+		return x.PageInfo
+	}
+	return nil
+}
+
 type GetSettingsItemRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	TenantId       *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
@@ -84,7 +246,7 @@ type GetSettingsItemRequest struct {
 
 func (x *GetSettingsItemRequest) Reset() {
 	*x = GetSettingsItemRequest{}
-	mi := &file_cloud_v1_api_ui_settings_proto_msgTypes[1]
+	mi := &file_cloud_v1_api_ui_settings_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -96,7 +258,7 @@ func (x *GetSettingsItemRequest) String() string {
 func (*GetSettingsItemRequest) ProtoMessage() {}
 
 func (x *GetSettingsItemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_settings_proto_msgTypes[1]
+	mi := &file_cloud_v1_api_ui_settings_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -109,7 +271,7 @@ func (x *GetSettingsItemRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSettingsItemRequest.ProtoReflect.Descriptor instead.
 func (*GetSettingsItemRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_settings_proto_rawDescGZIP(), []int{1}
+	return file_cloud_v1_api_ui_settings_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetSettingsItemRequest) GetTenantId() *models.TenantId {
@@ -139,7 +301,7 @@ type SetSettingsItemRequest struct {
 
 func (x *SetSettingsItemRequest) Reset() {
 	*x = SetSettingsItemRequest{}
-	mi := &file_cloud_v1_api_ui_settings_proto_msgTypes[2]
+	mi := &file_cloud_v1_api_ui_settings_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -151,7 +313,7 @@ func (x *SetSettingsItemRequest) String() string {
 func (*SetSettingsItemRequest) ProtoMessage() {}
 
 func (x *SetSettingsItemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_settings_proto_msgTypes[2]
+	mi := &file_cloud_v1_api_ui_settings_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -164,7 +326,7 @@ func (x *SetSettingsItemRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetSettingsItemRequest.ProtoReflect.Descriptor instead.
 func (*SetSettingsItemRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_settings_proto_rawDescGZIP(), []int{2}
+	return file_cloud_v1_api_ui_settings_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SetSettingsItemRequest) GetTenantId() *models.TenantId {
@@ -205,7 +367,7 @@ type DeleteSettingsItemRequest struct {
 
 func (x *DeleteSettingsItemRequest) Reset() {
 	*x = DeleteSettingsItemRequest{}
-	mi := &file_cloud_v1_api_ui_settings_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_ui_settings_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -217,7 +379,7 @@ func (x *DeleteSettingsItemRequest) String() string {
 func (*DeleteSettingsItemRequest) ProtoMessage() {}
 
 func (x *DeleteSettingsItemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_settings_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_ui_settings_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -230,7 +392,7 @@ func (x *DeleteSettingsItemRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSettingsItemRequest.ProtoReflect.Descriptor instead.
 func (*DeleteSettingsItemRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_settings_proto_rawDescGZIP(), []int{3}
+	return file_cloud_v1_api_ui_settings_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *DeleteSettingsItemRequest) GetTenantId() *models.TenantId {
@@ -251,9 +413,26 @@ var File_cloud_v1_api_ui_settings_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_ui_settings_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/api/ui/settings.proto\x12\x0fcloud.v1.api.ui\x1a\x1ccloud/v1/models/common.proto\x1a\x1ecloud/v1/models/settings.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x17validate/validate.proto\"\\\n" +
+	"\x1ecloud/v1/api/ui/settings.proto\x12\x0fcloud.v1.api.ui\x1a\x1acloud/v1/common/tags.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1ecloud/v1/models/settings.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x17validate/validate.proto\"\xd5\x04\n" +
 	"\x18ListSettingsItemsRequest\x12@\n" +
-	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\"\xaf\x01\n" +
+	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12E\n" +
+	"\x04part\x18\x02 \x01(\x0e2\".cloud.v1.models.SettingsItem.PartB\b\xfaB\x05\x82\x01\x02\x10\x01H\x00R\x04part\x88\x01\x01\x12B\n" +
+	"\x03key\x18\x03 \x01(\x0e2!.cloud.v1.models.SettingsItem.KeyB\b\xfaB\x05\x82\x01\x02\x10\x01H\x01R\x03key\x88\x01\x01\x12\\\n" +
+	"\n" +
+	"sort_field\x18\x04 \x01(\x0e23.cloud.v1.api.ui.ListSettingsItemsRequest.SortFieldB\b\xfaB\x05\x82\x01\x02\x10\x01R\tsortField\x12:\n" +
+	"\x05order\x18\x05 \x01(\x0e2\x1a.cloud.v1.models.SortOrderB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05order\x12)\n" +
+	"\x04page\x18\x06 \x01(\v2\x15.cloud.v1.models.PageR\x04page\x12)\n" +
+	"\x04tags\x18\a \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"k\n" +
+	"\tSortField\x12\x1a\n" +
+	"\x16SORT_FIELD_UNSPECIFIED\x10\x00\x12\x13\n" +
+	"\x0fSORT_FIELD_PART\x10\x01\x12\x12\n" +
+	"\x0eSORT_FIELD_KEY\x10\x02\x12\x19\n" +
+	"\x15SORT_FIELD_UPDATED_AT\x10\x03B\a\n" +
+	"\x05_partB\x06\n" +
+	"\x04_key\"\x99\x01\n" +
+	"\x19ListSettingsItemsResponse\x12D\n" +
+	"\x0esettings_items\x18\x01 \x03(\v2\x1d.cloud.v1.models.SettingsItemR\rsettingsItems\x126\n" +
+	"\tpage_info\x18\x02 \x01(\v2\x19.cloud.v1.models.PageInfoR\bpageInfo\"\xaf\x01\n" +
 	"\x16GetSettingsItemRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12S\n" +
 	"\x10settings_item_id\x18\x02 \x01(\v2\x1f.cloud.v1.models.SettingsItemIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0esettingsItemId\"\xa4\x02\n" +
@@ -266,9 +445,9 @@ const file_cloud_v1_api_ui_settings_proto_rawDesc = "" +
 	"\x05value\x18\x04 \x01(\v2#.cloud.v1.models.SettingsItem.ValueB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05value\"\xb2\x01\n" +
 	"\x19DeleteSettingsItemRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12S\n" +
-	"\x10settings_item_id\x18\x02 \x01(\v2\x1f.cloud.v1.models.SettingsItemIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0esettingsItemId2\x99\x03\n" +
-	"\x0fSettingsService\x12g\n" +
-	"\x11ListSettingsItems\x12).cloud.v1.api.ui.ListSettingsItemsRequest\x1a\".cloud.v1.models.SettingsItem.List\"\x03\x90\x02\x01\x12^\n" +
+	"\x10settings_item_id\x18\x02 \x01(\v2\x1f.cloud.v1.models.SettingsItemIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0esettingsItemId2\xa1\x03\n" +
+	"\x0fSettingsService\x12o\n" +
+	"\x11ListSettingsItems\x12).cloud.v1.api.ui.ListSettingsItemsRequest\x1a*.cloud.v1.api.ui.ListSettingsItemsResponse\"\x03\x90\x02\x01\x12^\n" +
 	"\x0fGetSettingsItem\x12'.cloud.v1.api.ui.GetSettingsItemRequest\x1a\x1d.cloud.v1.models.SettingsItem\"\x03\x90\x02\x01\x12^\n" +
 	"\x0fSetSettingsItem\x12'.cloud.v1.api.ui.SetSettingsItemRequest\x1a\x1d.cloud.v1.models.SettingsItem\"\x03\x90\x02\x02\x12]\n" +
 	"\x12DeleteSettingsItem\x12*.cloud.v1.api.ui.DeleteSettingsItemRequest\x1a\x16.google.protobuf.Empty\"\x03\x90\x02\x02BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/uib\x06proto3"
@@ -285,44 +464,58 @@ func file_cloud_v1_api_ui_settings_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_ui_settings_proto_rawDescData
 }
 
-var file_cloud_v1_api_ui_settings_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_cloud_v1_api_ui_settings_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cloud_v1_api_ui_settings_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_cloud_v1_api_ui_settings_proto_goTypes = []any{
-	(*ListSettingsItemsRequest)(nil),  // 0: cloud.v1.api.ui.ListSettingsItemsRequest
-	(*GetSettingsItemRequest)(nil),    // 1: cloud.v1.api.ui.GetSettingsItemRequest
-	(*SetSettingsItemRequest)(nil),    // 2: cloud.v1.api.ui.SetSettingsItemRequest
-	(*DeleteSettingsItemRequest)(nil), // 3: cloud.v1.api.ui.DeleteSettingsItemRequest
-	(*models.TenantId)(nil),           // 4: cloud.v1.models.TenantId
-	(*models.SettingsItemId)(nil),     // 5: cloud.v1.models.SettingsItemId
-	(models.SettingsItem_Part)(0),     // 6: cloud.v1.models.SettingsItem.Part
-	(models.SettingsItem_Key)(0),      // 7: cloud.v1.models.SettingsItem.Key
-	(*models.SettingsItem_Value)(nil), // 8: cloud.v1.models.SettingsItem.Value
-	(*models.SettingsItem_List)(nil),  // 9: cloud.v1.models.SettingsItem.List
-	(*models.SettingsItem)(nil),       // 10: cloud.v1.models.SettingsItem
-	(*emptypb.Empty)(nil),             // 11: google.protobuf.Empty
+	(ListSettingsItemsRequest_SortField)(0), // 0: cloud.v1.api.ui.ListSettingsItemsRequest.SortField
+	(*ListSettingsItemsRequest)(nil),        // 1: cloud.v1.api.ui.ListSettingsItemsRequest
+	(*ListSettingsItemsResponse)(nil),       // 2: cloud.v1.api.ui.ListSettingsItemsResponse
+	(*GetSettingsItemRequest)(nil),          // 3: cloud.v1.api.ui.GetSettingsItemRequest
+	(*SetSettingsItemRequest)(nil),          // 4: cloud.v1.api.ui.SetSettingsItemRequest
+	(*DeleteSettingsItemRequest)(nil),       // 5: cloud.v1.api.ui.DeleteSettingsItemRequest
+	(*models.TenantId)(nil),                 // 6: cloud.v1.models.TenantId
+	(models.SettingsItem_Part)(0),           // 7: cloud.v1.models.SettingsItem.Part
+	(models.SettingsItem_Key)(0),            // 8: cloud.v1.models.SettingsItem.Key
+	(models.SortOrder)(0),                   // 9: cloud.v1.models.SortOrder
+	(*models.Page)(nil),                     // 10: cloud.v1.models.Page
+	(*common.Tags)(nil),                     // 11: cloud.v1.common.Tags
+	(*models.SettingsItem)(nil),             // 12: cloud.v1.models.SettingsItem
+	(*models.PageInfo)(nil),                 // 13: cloud.v1.models.PageInfo
+	(*models.SettingsItemId)(nil),           // 14: cloud.v1.models.SettingsItemId
+	(*models.SettingsItem_Value)(nil),       // 15: cloud.v1.models.SettingsItem.Value
+	(*emptypb.Empty)(nil),                   // 16: google.protobuf.Empty
 }
 var file_cloud_v1_api_ui_settings_proto_depIdxs = []int32{
-	4,  // 0: cloud.v1.api.ui.ListSettingsItemsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	4,  // 1: cloud.v1.api.ui.GetSettingsItemRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	5,  // 2: cloud.v1.api.ui.GetSettingsItemRequest.settings_item_id:type_name -> cloud.v1.models.SettingsItemId
-	4,  // 3: cloud.v1.api.ui.SetSettingsItemRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	6,  // 4: cloud.v1.api.ui.SetSettingsItemRequest.part:type_name -> cloud.v1.models.SettingsItem.Part
-	7,  // 5: cloud.v1.api.ui.SetSettingsItemRequest.key:type_name -> cloud.v1.models.SettingsItem.Key
-	8,  // 6: cloud.v1.api.ui.SetSettingsItemRequest.value:type_name -> cloud.v1.models.SettingsItem.Value
-	4,  // 7: cloud.v1.api.ui.DeleteSettingsItemRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	5,  // 8: cloud.v1.api.ui.DeleteSettingsItemRequest.settings_item_id:type_name -> cloud.v1.models.SettingsItemId
-	0,  // 9: cloud.v1.api.ui.SettingsService.ListSettingsItems:input_type -> cloud.v1.api.ui.ListSettingsItemsRequest
-	1,  // 10: cloud.v1.api.ui.SettingsService.GetSettingsItem:input_type -> cloud.v1.api.ui.GetSettingsItemRequest
-	2,  // 11: cloud.v1.api.ui.SettingsService.SetSettingsItem:input_type -> cloud.v1.api.ui.SetSettingsItemRequest
-	3,  // 12: cloud.v1.api.ui.SettingsService.DeleteSettingsItem:input_type -> cloud.v1.api.ui.DeleteSettingsItemRequest
-	9,  // 13: cloud.v1.api.ui.SettingsService.ListSettingsItems:output_type -> cloud.v1.models.SettingsItem.List
-	10, // 14: cloud.v1.api.ui.SettingsService.GetSettingsItem:output_type -> cloud.v1.models.SettingsItem
-	10, // 15: cloud.v1.api.ui.SettingsService.SetSettingsItem:output_type -> cloud.v1.models.SettingsItem
-	11, // 16: cloud.v1.api.ui.SettingsService.DeleteSettingsItem:output_type -> google.protobuf.Empty
-	13, // [13:17] is the sub-list for method output_type
-	9,  // [9:13] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	6,  // 0: cloud.v1.api.ui.ListSettingsItemsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	7,  // 1: cloud.v1.api.ui.ListSettingsItemsRequest.part:type_name -> cloud.v1.models.SettingsItem.Part
+	8,  // 2: cloud.v1.api.ui.ListSettingsItemsRequest.key:type_name -> cloud.v1.models.SettingsItem.Key
+	0,  // 3: cloud.v1.api.ui.ListSettingsItemsRequest.sort_field:type_name -> cloud.v1.api.ui.ListSettingsItemsRequest.SortField
+	9,  // 4: cloud.v1.api.ui.ListSettingsItemsRequest.order:type_name -> cloud.v1.models.SortOrder
+	10, // 5: cloud.v1.api.ui.ListSettingsItemsRequest.page:type_name -> cloud.v1.models.Page
+	11, // 6: cloud.v1.api.ui.ListSettingsItemsRequest.tags:type_name -> cloud.v1.common.Tags
+	12, // 7: cloud.v1.api.ui.ListSettingsItemsResponse.settings_items:type_name -> cloud.v1.models.SettingsItem
+	13, // 8: cloud.v1.api.ui.ListSettingsItemsResponse.page_info:type_name -> cloud.v1.models.PageInfo
+	6,  // 9: cloud.v1.api.ui.GetSettingsItemRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	14, // 10: cloud.v1.api.ui.GetSettingsItemRequest.settings_item_id:type_name -> cloud.v1.models.SettingsItemId
+	6,  // 11: cloud.v1.api.ui.SetSettingsItemRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	7,  // 12: cloud.v1.api.ui.SetSettingsItemRequest.part:type_name -> cloud.v1.models.SettingsItem.Part
+	8,  // 13: cloud.v1.api.ui.SetSettingsItemRequest.key:type_name -> cloud.v1.models.SettingsItem.Key
+	15, // 14: cloud.v1.api.ui.SetSettingsItemRequest.value:type_name -> cloud.v1.models.SettingsItem.Value
+	6,  // 15: cloud.v1.api.ui.DeleteSettingsItemRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	14, // 16: cloud.v1.api.ui.DeleteSettingsItemRequest.settings_item_id:type_name -> cloud.v1.models.SettingsItemId
+	1,  // 17: cloud.v1.api.ui.SettingsService.ListSettingsItems:input_type -> cloud.v1.api.ui.ListSettingsItemsRequest
+	3,  // 18: cloud.v1.api.ui.SettingsService.GetSettingsItem:input_type -> cloud.v1.api.ui.GetSettingsItemRequest
+	4,  // 19: cloud.v1.api.ui.SettingsService.SetSettingsItem:input_type -> cloud.v1.api.ui.SetSettingsItemRequest
+	5,  // 20: cloud.v1.api.ui.SettingsService.DeleteSettingsItem:input_type -> cloud.v1.api.ui.DeleteSettingsItemRequest
+	2,  // 21: cloud.v1.api.ui.SettingsService.ListSettingsItems:output_type -> cloud.v1.api.ui.ListSettingsItemsResponse
+	12, // 22: cloud.v1.api.ui.SettingsService.GetSettingsItem:output_type -> cloud.v1.models.SettingsItem
+	12, // 23: cloud.v1.api.ui.SettingsService.SetSettingsItem:output_type -> cloud.v1.models.SettingsItem
+	16, // 24: cloud.v1.api.ui.SettingsService.DeleteSettingsItem:output_type -> google.protobuf.Empty
+	21, // [21:25] is the sub-list for method output_type
+	17, // [17:21] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_ui_settings_proto_init() }
@@ -330,18 +523,20 @@ func file_cloud_v1_api_ui_settings_proto_init() {
 	if File_cloud_v1_api_ui_settings_proto != nil {
 		return
 	}
+	file_cloud_v1_api_ui_settings_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_ui_settings_proto_rawDesc), len(file_cloud_v1_api_ui_settings_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   4,
+			NumEnums:      1,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_cloud_v1_api_ui_settings_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_api_ui_settings_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_api_ui_settings_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_api_ui_settings_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_api_ui_settings_proto = out.File

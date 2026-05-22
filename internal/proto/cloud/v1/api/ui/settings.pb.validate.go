@@ -101,6 +101,116 @@ func (m *ListSettingsItemsRequest) validate(all bool) error {
 		}
 	}
 
+	if _, ok := ListSettingsItemsRequest_SortField_name[int32(m.GetSortField())]; !ok {
+		err := ListSettingsItemsRequestValidationError{
+			field:  "SortField",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := models.SortOrder_name[int32(m.GetOrder())]; !ok {
+		err := ListSettingsItemsRequestValidationError{
+			field:  "Order",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPage()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListSettingsItemsRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListSettingsItemsRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPage()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListSettingsItemsRequestValidationError{
+				field:  "Page",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListSettingsItemsRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListSettingsItemsRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListSettingsItemsRequestValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.Part != nil {
+
+		if _, ok := models.SettingsItem_Part_name[int32(m.GetPart())]; !ok {
+			err := ListSettingsItemsRequestValidationError{
+				field:  "Part",
+				reason: "value must be one of the defined enum values",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.Key != nil {
+
+		if _, ok := models.SettingsItem_Key_name[int32(m.GetKey())]; !ok {
+			err := ListSettingsItemsRequestValidationError{
+				field:  "Key",
+				reason: "value must be one of the defined enum values",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return ListSettingsItemsRequestMultiError(errors)
 	}
@@ -180,6 +290,171 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListSettingsItemsRequestValidationError{}
+
+// Validate checks the field values on ListSettingsItemsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListSettingsItemsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListSettingsItemsResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListSettingsItemsResponseMultiError, or nil if none found.
+func (m *ListSettingsItemsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListSettingsItemsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetSettingsItems() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListSettingsItemsResponseValidationError{
+						field:  fmt.Sprintf("SettingsItems[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListSettingsItemsResponseValidationError{
+						field:  fmt.Sprintf("SettingsItems[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListSettingsItemsResponseValidationError{
+					field:  fmt.Sprintf("SettingsItems[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetPageInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListSettingsItemsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListSettingsItemsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPageInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListSettingsItemsResponseValidationError{
+				field:  "PageInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ListSettingsItemsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListSettingsItemsResponseMultiError is an error wrapping multiple validation
+// errors returned by ListSettingsItemsResponse.ValidateAll() if the
+// designated constraints aren't met.
+type ListSettingsItemsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListSettingsItemsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListSettingsItemsResponseMultiError) AllErrors() []error { return m }
+
+// ListSettingsItemsResponseValidationError is the validation error returned by
+// ListSettingsItemsResponse.Validate if the designated constraints aren't met.
+type ListSettingsItemsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListSettingsItemsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListSettingsItemsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListSettingsItemsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListSettingsItemsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListSettingsItemsResponseValidationError) ErrorName() string {
+	return "ListSettingsItemsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListSettingsItemsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListSettingsItemsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListSettingsItemsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListSettingsItemsResponseValidationError{}
 
 // Validate checks the field values on GetSettingsItemRequest with the rules
 // defined in the proto definition for this message. If any rules are

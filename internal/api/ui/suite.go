@@ -16,9 +16,10 @@ import (
 type SuiteActions interface {
 	CreateSuite(ctx context.Context, req *uipb.CreateSuiteRequest) (*models.Suite, error)
 	GetSuite(ctx context.Context, req *uipb.GetSuiteRequest) (*models.Suite, error)
+	ListSuites(ctx context.Context, req *uipb.ListSuitesRequest) (*uipb.ListSuitesResponse, error)
 	LaunchSuiteRun(ctx context.Context, req *uipb.LaunchSuiteRunRequest) (*models.SuiteRun, error)
 	GetSuiteRun(ctx context.Context, req *uipb.GetSuiteRunRequest) (*models.SuiteRun, error)
-	ListSuiteRuns(ctx context.Context, req *uipb.ListSuiteRunsRequest) (*models.SuiteRun_List, error)
+	ListSuiteRuns(ctx context.Context, req *uipb.ListSuiteRunsRequest) (*uipb.ListSuiteRunsResponse, error)
 	CancelSuiteRun(ctx context.Context, req *uipb.CancelSuiteRunRequest) (*models.SuiteRun, error)
 }
 
@@ -53,6 +54,13 @@ func (s *SuiteService) GetSuite(ctx context.Context, req *uipb.GetSuiteRequest) 
 		})
 }
 
+func (s *SuiteService) ListSuites(ctx context.Context, req *uipb.ListSuitesRequest) (*uipb.ListSuitesResponse, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListSuites",
+		func(ctx context.Context, _ trace.Span) (*uipb.ListSuitesResponse, error) {
+			return s.svc.ListSuites(ctx, req)
+		})
+}
+
 func (s *SuiteService) LaunchSuiteRun(ctx context.Context, req *uipb.LaunchSuiteRunRequest) (*models.SuiteRun, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "LaunchSuiteRun",
 		func(ctx context.Context, _ trace.Span) (*models.SuiteRun, error) {
@@ -67,9 +75,9 @@ func (s *SuiteService) GetSuiteRun(ctx context.Context, req *uipb.GetSuiteRunReq
 		})
 }
 
-func (s *SuiteService) ListSuiteRuns(ctx context.Context, req *uipb.ListSuiteRunsRequest) (*models.SuiteRun_List, error) {
+func (s *SuiteService) ListSuiteRuns(ctx context.Context, req *uipb.ListSuiteRunsRequest) (*uipb.ListSuiteRunsResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListSuiteRuns",
-		func(ctx context.Context, _ trace.Span) (*models.SuiteRun_List, error) {
+		func(ctx context.Context, _ trace.Span) (*uipb.ListSuiteRunsResponse, error) {
 			return s.svc.ListSuiteRuns(ctx, req)
 		})
 }

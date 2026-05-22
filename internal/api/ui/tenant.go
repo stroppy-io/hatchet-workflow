@@ -18,6 +18,7 @@ import (
 // internal/services implements it.
 type TenantActions interface {
 	ListMyTenants(ctx context.Context, req *emptypb.Empty) (*models.Tenant_List, error)
+	ListTenantMembers(ctx context.Context, req *uipb.ListTenantMembersRequest) (*uipb.ListTenantMembersResponse, error)
 	AddMemberToTenant(ctx context.Context, req *uipb.AddMemberRequest) (*models.TenantMember, error)
 	RemoveMemberFromTenant(ctx context.Context, req *uipb.RemoveMemberRequest) (*models.TenantMember, error)
 }
@@ -43,6 +44,13 @@ func (s *TenantService) ListMyTenants(ctx context.Context, req *emptypb.Empty) (
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListMyTenants",
 		func(ctx context.Context, _ trace.Span) (*models.Tenant_List, error) {
 			return s.svc.ListMyTenants(ctx, req)
+		})
+}
+
+func (s *TenantService) ListTenantMembers(ctx context.Context, req *uipb.ListTenantMembersRequest) (*uipb.ListTenantMembersResponse, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListTenantMembers",
+		func(ctx context.Context, _ trace.Span) (*uipb.ListTenantMembersResponse, error) {
+			return s.svc.ListTenantMembers(ctx, req)
 		})
 }
 

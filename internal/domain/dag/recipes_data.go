@@ -1,5 +1,7 @@
 package dag
 
+import "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+
 // ── engine compatibility matrix + install recipes, as DATA ──────────────────────
 //
 // This file is the recipe DATA (formerly package compat, H29: recipes are backend
@@ -132,6 +134,109 @@ var (
 	}
 	recipeMonitor = Recipe{PreInstall: []string{"apt-get update"}, AptPackages: []string{"prometheus-node-exporter"}, ServiceName: "prometheus-node-exporter"}
 )
+
+// ── monitoring pipeline DATA ───────────────────────────────────────────────────
+//
+// The full metrics pipeline (ported from internal/old/domain/agent/executor.go):
+// every machine runs node_exporter (host metrics) + vmagent (scrapes local
+// exporters and remote_writes to the server's VictoriaMetrics ingest); DB
+// machines additionally run an engine-specific exporter (postgres/mysql) or, for
+// engines that expose Prometheus natively (cockroach/ydb/picodata), are scraped
+// directly on the engine's metrics port. These constants are recipe DATA so the
+// versions/ports/URLs live next to the other engine recipes, not hand-wired in
+// the builder.
+
+const (
+	// nodeExporterPort is node_exporter's default listen port (host metrics).
+	nodeExporterPort = "9100"
+	// Binary versions fetched from the SERVER cache (bincache) — never apt/github
+	// directly, so the path is identical for local Docker and Yandex Cloud VMs.
+	nodeExporterVersion     = "1.9.1"
+	postgresExporterVersion = "0.15.0"
+	mysqldExporterVersion   = "0.15.1"
+	// vmagentVersion mirrors the old executor's default vmutils release.
+	vmagentVersion = "1.139.0"
+	// vectorVersion is the log shipper (journald + DB log files → VictoriaLogs).
+	vectorVersion = "0.43.1"
+	// remoteWritePath is the server route reverse-proxied to VictoriaMetrics ingest.
+	// The cluster's vminsert is reached via vmauth's per-tenant /insert/<acct>/prometheus
+	// route (acct 0 = default). STROPPY_SERVER_ADDR is expanded by the agent at exec time.
+	remoteWritePath = "/vm/insert/0/prometheus/api/v1/write"
+	// vlInsertPath is the server route reverse-proxied to VictoriaLogs ingest.
+	vlInsertPath = "/vl/insert/jsonline?_stream_fields=dag_id,machine_id,unit&_msg_field=message&_time_field=timestamp"
+)
+
+// dbExporter describes how a DATABASE engine's metrics are collected:
+//   - aptPackage/binary != "" → a separate exporter process is installed and
+//     scraped on scrapePort;
+//   - native == true → the engine itself exposes Prometheus metrics; no exporter,
+//     vmagent just scrapes scrapePort directly.
+type dbExporter struct {
+	job        string // vmagent scrape job_name
+	scrapePort string // localhost:<port> vmagent scrapes
+	metricPath string // metrics_path (default /metrics when empty)
+	native     bool   // engine exposes Prometheus natively (no separate exporter)
+
+	// Separate-exporter install (only when native == false). The binary is fetched
+	// from the server cache (bincache name/version/archive file), extracted, and run
+	// as a systemd unit — no apt, so it works identically on a fresh YC VM.
+	binName     string // bincache binary name (e.g. "postgres_exporter")
+	binVersion  string // bincache version
+	binFile     string // release asset filename
+	binArchive  string // path of the binary inside the extracted archive
+	serviceName string // systemd unit name for the exporter
+	// dataSourceEnv is the env line baked into the exporter's systemd unit so it
+	// connects to the LOCAL database (e.g. postgres_exporter DATA_SOURCE_NAME).
+	dataSourceEnv string
+	execStart     string // ExecStart= line for the exporter systemd unit
+}
+
+// dbExporterFor maps a database engine to its metrics-collection strategy. Engines
+// not in the map (or KIND_UNSPECIFIED) yield ok=false → no DB exporter / scrape.
+func dbExporterFor(kind domain.Database_Kind) (dbExporter, bool) {
+	switch kind {
+	case domain.Database_KIND_POSTGRES:
+		// prometheus-postgres-exporter ships in the Ubuntu archive (universe);
+		// connects to the LOCAL postgres over the unix-socket-equivalent TCP loopback.
+		return dbExporter{
+			job:           "postgres",
+			scrapePort:    "9187",
+			binName:       "postgres_exporter",
+			binVersion:    postgresExporterVersion,
+			binFile:       "postgres_exporter-" + postgresExporterVersion + ".linux-amd64.tar.gz",
+			binArchive:    "postgres_exporter-" + postgresExporterVersion + ".linux-amd64/postgres_exporter",
+			serviceName:   "stroppy-postgres-exporter",
+			dataSourceEnv: `Environment=DATA_SOURCE_NAME=postgresql://postgres@localhost:5432/postgres?sslmode=disable`,
+			execStart:     "/usr/local/bin/postgres_exporter",
+		}, true
+	case domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
+		// prometheus-mysqld-exporter ships in the Ubuntu archive (universe);
+		// reads creds from DATA_SOURCE_NAME pointing at the LOCAL mysql/mariadb.
+		return dbExporter{
+			job:           "mysql",
+			scrapePort:    "9104",
+			binName:       "mysqld_exporter",
+			binVersion:    mysqldExporterVersion,
+			binFile:       "mysqld_exporter-" + mysqldExporterVersion + ".linux-amd64.tar.gz",
+			binArchive:    "mysqld_exporter-" + mysqldExporterVersion + ".linux-amd64/mysqld_exporter",
+			serviceName:   "stroppy-mysqld-exporter",
+			dataSourceEnv: `Environment=DATA_SOURCE_NAME=exporter:exporter@(localhost:3306)/`,
+			execStart:     "/usr/local/bin/mysqld_exporter",
+		}, true
+	case domain.Database_KIND_COCKROACH:
+		// CockroachDB exposes Prometheus metrics natively on its HTTP port (8080)
+		// at /_status/vars — no separate exporter.
+		return dbExporter{job: "cockroach", scrapePort: "8080", metricPath: "/_status/vars", native: true}, true
+	case domain.Database_KIND_YDB:
+		// YDB exposes counters natively on the static node's mon port (8765).
+		return dbExporter{job: "ydb", scrapePort: "8765", metricPath: "/counters/counters=ydb/prometheus", native: true}, true
+	case domain.Database_KIND_PICODATA:
+		// Picodata exposes Prometheus metrics natively on its HTTP port (8081).
+		return dbExporter{job: "picodata", scrapePort: "8081", native: true}, true
+	default:
+		return dbExporter{}, false
+	}
+}
 
 // ubuntuUniversePreInstall refreshes the package lists + enables universe (a minimal
 // base image ships neither) for archive packages like mysql-server.

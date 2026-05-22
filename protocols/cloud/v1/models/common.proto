@@ -68,72 +68,12 @@ message Own {
     ];
 }
 
-/*
-    BDD decision (G1, features/infra/persistence.feature): the generic stringly-
-    typed CommonQuery filter is NOT used. Each queryable model gets its own typed
-    query/list-request message (type-safe, allowlisted fields, injection-safe).
-    CommonQuery is kept only for Sort/Page reuse, if at all — its Filter is a
-    candidate for removal, and api requests that embed CommonQuery (e.g.
-    ListAgentsRequest) should move to per-model typed queries.
-
-    Persistence pattern (G1): aggregates are stored as JSONB payload; only
-    indexed/queried fields are promoted to scalar mirror columns (see models.Dag:
-    payload JSONB + status/lease_expires_at scalars). Schema is derived from the
-    ratel.table/ratel.column annotations; migrations are generated via ratel diff,
-    not hand-written.
- */
-/* CommonQuery — reusable list query: filter + sort + cursor pagination.
-   Filters in `filter` are combined with logical AND. Pagination is
-   cursor-based: client passes back `page.token` from the previous
-   PageInfo to fetch the next page. */
-message CommonQuery {
-    message Sort {
-        enum Direction {
-            DIRECTION_UNSPECIFIED = 0;
-            ASC = 1;
-            DESC = 2;
-        }
-        string field = 1 [(validate.rules).string.min_len = 1];
-        Direction direction = 2 [(validate.rules).enum.defined_only = true];
-    }
-
-    /* Filter — one predicate over a single field. Combined with other
-       filters via AND. For UNARY operators (IS_NULL/IS_NOT_NULL) `values`
-       must be empty; for IN/NOT_IN it may hold many; otherwise exactly one. */
-    message Filter {
-        enum Operator {
-            OPERATOR_UNSPECIFIED = 0;
-            EQ = 1;          // field = value
-            NEQ = 2;         // field != value
-            GT = 3;          // field > value
-            GTE = 4;         // field >= value
-            LT = 5;          // field < value
-            LTE = 6;         // field <= value
-            LIKE = 7;        // case-sensitive pattern match
-            ILIKE = 8;       // case-insensitive pattern match
-            IN = 9;          // field IN (values...)
-            NOT_IN = 10;     // field NOT IN (values...)
-            IS_NULL = 11;    // field IS NULL (no value)
-            IS_NOT_NULL = 12;// field IS NOT NULL (no value)
-        }
-        string field = 1 [(validate.rules).string.min_len = 1];
-        Operator operator = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
-        // String-encoded operands; the field's real type is resolved by the
-        // server. Multiple entries only make sense for IN/NOT_IN.
-        repeated string values = 3;
-    }
-
-    /* Page — cursor-based pagination request. */
-    message Page {
-        // Max items to return. 0 = server default.
-        uint32 size = 1 [(validate.rules).uint32 = {lte: 1000}];
-        // Opaque cursor from a previous PageInfo.next_token. Empty = first page.
-        string token = 2;
-    }
-
-    repeated Filter filter = 1;
-    repeated Sort sort = 2;
-    Page page = 3;
+/* Page — cursor-based pagination request. */
+message Page {
+    // Max items to return. 0 = server default.
+    uint32 size = 1 [(validate.rules).uint32 = {lte: 1000}];
+    // Opaque cursor from a previous PageInfo.next_token. Empty = first page.
+    string token = 2;
 }
 
 /* PageInfo — pagination metadata returned alongside a list result.
@@ -146,4 +86,12 @@ message PageInfo {
     bool has_more = 2;
     // Total matching rows ignoring pagination, when the server can compute it.
     optional uint64 total = 3;
+}
+
+/* SortOrder — direction for a list query's typed sort field.
+   Pair with each request's nested SortField enum. UNSPECIFIED = server default. */
+enum SortOrder {
+    SORT_ORDER_UNSPECIFIED = 0;
+    SORT_ORDER_ASC = 1;
+    SORT_ORDER_DESC = 2;
 }

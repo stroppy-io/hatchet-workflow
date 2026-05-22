@@ -8,7 +8,6 @@ package ui
 
 import (
 	context "context"
-	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -31,7 +30,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ApiTokenServiceClient interface {
 	CreateApiToken(ctx context.Context, in *CreateApiTokenRequest, opts ...grpc.CallOption) (*CreateApiTokenResponse, error)
-	ListApiTokens(ctx context.Context, in *ListApiTokensRequest, opts ...grpc.CallOption) (*models.ApiToken_List, error)
+	ListApiTokens(ctx context.Context, in *ListApiTokensRequest, opts ...grpc.CallOption) (*ListApiTokensResponse, error)
 	RevokeApiToken(ctx context.Context, in *RevokeApiTokenRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -53,9 +52,9 @@ func (c *apiTokenServiceClient) CreateApiToken(ctx context.Context, in *CreateAp
 	return out, nil
 }
 
-func (c *apiTokenServiceClient) ListApiTokens(ctx context.Context, in *ListApiTokensRequest, opts ...grpc.CallOption) (*models.ApiToken_List, error) {
+func (c *apiTokenServiceClient) ListApiTokens(ctx context.Context, in *ListApiTokensRequest, opts ...grpc.CallOption) (*ListApiTokensResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(models.ApiToken_List)
+	out := new(ListApiTokensResponse)
 	err := c.cc.Invoke(ctx, ApiTokenService_ListApiTokens_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -78,7 +77,7 @@ func (c *apiTokenServiceClient) RevokeApiToken(ctx context.Context, in *RevokeAp
 // for forward compatibility.
 type ApiTokenServiceServer interface {
 	CreateApiToken(context.Context, *CreateApiTokenRequest) (*CreateApiTokenResponse, error)
-	ListApiTokens(context.Context, *ListApiTokensRequest) (*models.ApiToken_List, error)
+	ListApiTokens(context.Context, *ListApiTokensRequest) (*ListApiTokensResponse, error)
 	RevokeApiToken(context.Context, *RevokeApiTokenRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedApiTokenServiceServer()
 }
@@ -93,7 +92,7 @@ type UnimplementedApiTokenServiceServer struct{}
 func (UnimplementedApiTokenServiceServer) CreateApiToken(context.Context, *CreateApiTokenRequest) (*CreateApiTokenResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateApiToken not implemented")
 }
-func (UnimplementedApiTokenServiceServer) ListApiTokens(context.Context, *ListApiTokensRequest) (*models.ApiToken_List, error) {
+func (UnimplementedApiTokenServiceServer) ListApiTokens(context.Context, *ListApiTokensRequest) (*ListApiTokensResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListApiTokens not implemented")
 }
 func (UnimplementedApiTokenServiceServer) RevokeApiToken(context.Context, *RevokeApiTokenRequest) (*emptypb.Empty, error) {

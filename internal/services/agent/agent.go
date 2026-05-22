@@ -105,7 +105,7 @@ func (s *AgentService) Register(ctx context.Context, req *agentpb.RegisterReques
 				}
 				ag := &models.Agent{
 					Id:               agentID,
-					Owned:            &models.Own{TenantId: req.GetTenantId()},
+					TenantId:         req.GetTenantId(),
 					Timestamps:       &models.Timestamps{CreatedAt: now, UpdatedAt: now},
 					MachineId:        machineID,
 					AgentComponentId: req.GetTarget().GetAgentComponentId(),
@@ -151,23 +151,61 @@ func (s *AgentService) Heartbeat(ctx context.Context, req *agentpb.HeartbeatRequ
 		})
 }
 
-// ListAgents returns the tenant's agents (human read).
-//
-// TODO(agent): models.CommonQuery filter/pagination ignored. Reported.
-func (s *AgentService) ListAgents(ctx context.Context, req *agentpb.ListAgentsRequest) (*models.Agent_List, error) {
+// ListAgents returns the tenant's agents (human read) with cursor pagination
+// (newest-first by default).
+func (s *AgentService) ListAgents(ctx context.Context, req *agentpb.ListAgentsRequest) (*agentpb.ListAgentsResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListAgents",
-		func(ctx context.Context, _ trace.Span) (*models.Agent_List, error) {
+		func(ctx context.Context, _ trace.Span) (*agentpb.ListAgentsResponse, error) {
 			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
 				return nil, err
 			}
-			agents, err := s.agents.Query(ctx, models.Agents.SelectAll().Where(
+			size := svcutil.PageSize(req.GetPage())
+			desc := svcutil.CursorDesc(req.GetOrder())
+			q := models.Agents.SelectAll().Where(
 				models.Agents.TenantId.Eq(req.GetTenantId().GetValue()),
 				models.Agents.DeletedAt.IsNull(),
-			))
+			)
+			// status: Status is stored as the enum String() value (agent_plain
+			// converter); filter only when set (tri-state *AgentStatus).
+			if req.Status != nil {
+				q = q.Where(models.Agents.Status.Eq(req.GetStatus().String()))
+			}
+			// search: free text over host / machine_id.
+			if req.Search != nil && req.GetSearch() != "" {
+				pat := "%" + req.GetSearch() + "%"
+				q = q.Where(models.Agents.Or(
+					models.Agents.Host.ILike(pat),
+					models.Agents.MachineId.ILike(pat),
+				))
+			}
+			// tags: Tags is serialized JSON of common.Tags (a TEXT column) — match
+			// each requested free tag and key=value label as a substring.
+			for _, tag := range req.GetTags().GetTags() {
+				q = q.Where(models.Agents.Tags.ILike("%" + tag + "%"))
+			}
+			for k, v := range req.GetTags().GetLabels() {
+				q = q.Where(models.Agents.Tags.ILike("%" + k + "%" + v + "%"))
+			}
+			if tok := req.GetPage().GetToken(); tok != "" {
+				if desc {
+					q = q.Where(models.Agents.Id.Lt(tok))
+				} else {
+					q = q.Where(models.Agents.Id.Gt(tok))
+				}
+			}
+			if desc {
+				q = q.OrderByDESC(models.AgentColumnId)
+			} else {
+				q = q.OrderByASC(models.AgentColumnId)
+			}
+			rows, err := s.agents.Query(ctx, q.Limit(size+1))
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "list agents: %v", err)
 			}
-			return &models.Agent_List{Agents: agents}, nil
+			items, pageInfo := svcutil.Paginate(rows, size, func(ag *models.Agent) string {
+				return ag.GetId().GetValue()
+			})
+			return &agentpb.ListAgentsResponse{Agents: items, PageInfo: pageInfo}, nil
 		})
 }
 
@@ -180,7 +218,7 @@ func (s *AgentService) GetAgent(ctx context.Context, id *models.AgentId) (*model
 			if err != nil {
 				return nil, err
 			}
-			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), ag.GetOwned().GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
+			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), ag.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
 				return nil, err
 			}
 			return ag, nil

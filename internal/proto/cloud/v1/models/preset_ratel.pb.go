@@ -10,9 +10,9 @@ import (
 	"github.com/yaroher/ratel/pkg/ddl"
 	"github.com/yaroher/ratel/pkg/dml/set"
 	"github.com/yaroher/ratel/pkg/exec"
-	"github.com/yaroher/ratel/pkg/sqlerr"
 	"github.com/yaroher/ratel/pkg/repository"
 	"github.com/yaroher/ratel/pkg/schema"
+	"github.com/yaroher/ratel/pkg/sqlerr"
 )
 
 var (
@@ -46,6 +46,9 @@ const (
 	PresetColumnTenantId             PresetColumnAlias = "tenant_id"
 	PresetColumnTags                 PresetColumnAlias = "tags"
 	PresetColumnKind                 PresetColumnAlias = "kind"
+	PresetColumnIsSystem             PresetColumnAlias = "is_system"
+	PresetColumnName                 PresetColumnAlias = "name"
+	PresetColumnDescription          PresetColumnAlias = "description"
 )
 
 func (s *PresetScanner) GetTarget(col string) func() any {
@@ -74,6 +77,12 @@ func (s *PresetScanner) GetTarget(col string) func() any {
 		return func() any { return &s.Tags }
 	case PresetColumnKind:
 		return func() any { return &s.Kind }
+	case PresetColumnIsSystem:
+		return func() any { return &s.IsSystem }
+	case PresetColumnName:
+		return func() any { return &s.Name }
+	case PresetColumnDescription:
+		return func() any { return &s.Description }
 	default:
 		panic("unknown field: " + col)
 	}
@@ -105,6 +114,12 @@ func (s *PresetScanner) GetSetter(f PresetColumnAlias) func() set.ValueSetter[Pr
 		return func() set.ValueSetter[PresetColumnAlias] { return set.NewSetter(f, &s.Tags) }
 	case PresetColumnKind:
 		return func() set.ValueSetter[PresetColumnAlias] { return set.NewSetter(f, &s.Kind) }
+	case PresetColumnIsSystem:
+		return func() set.ValueSetter[PresetColumnAlias] { return set.NewSetter(f, &s.IsSystem) }
+	case PresetColumnName:
+		return func() set.ValueSetter[PresetColumnAlias] { return set.NewSetter(f, &s.Name) }
+	case PresetColumnDescription:
+		return func() set.ValueSetter[PresetColumnAlias] { return set.NewSetter(f, &s.Description) }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -136,6 +151,12 @@ func (s *PresetScanner) GetValue(f PresetColumnAlias) func() any {
 		return func() any { return s.Tags }
 	case PresetColumnKind:
 		return func() any { return s.Kind }
+	case PresetColumnIsSystem:
+		return func() any { return s.IsSystem }
+	case PresetColumnName:
+		return func() any { return s.Name }
+	case PresetColumnDescription:
+		return func() any { return s.Description }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -155,6 +176,9 @@ func (s *PresetScanner) AllSetters() []set.ValueSetter[PresetColumnAlias] {
 		set.NewSetter[PresetColumnAlias](PresetColumnTenantId, s.TenantId),
 		set.NewSetter[PresetColumnAlias](PresetColumnTags, s.Tags),
 		set.NewSetter[PresetColumnAlias](PresetColumnKind, s.Kind),
+		set.NewSetter[PresetColumnAlias](PresetColumnIsSystem, s.IsSystem),
+		set.NewSetter[PresetColumnAlias](PresetColumnName, s.Name),
+		set.NewSetter[PresetColumnAlias](PresetColumnDescription, s.Description),
 	}
 }
 
@@ -178,6 +202,9 @@ type PresetsTable struct {
 	TenantId             schema.TextColumnI[PresetColumnAlias]
 	Tags                 schema.TextColumnI[PresetColumnAlias]
 	Kind                 schema.TextColumnI[PresetColumnAlias]
+	IsSystem             schema.BooleanColumnI[PresetColumnAlias]
+	Name                 schema.NullTextColumnI[PresetColumnAlias]
+	Description          schema.NullTextColumnI[PresetColumnAlias]
 }
 
 // Presets is the global presets table instance
@@ -194,6 +221,9 @@ var Presets = func() PresetsTable {
 	tenantIdCol := schema.TextColumn(PresetColumnTenantId, ddl.WithReferences[PresetColumnAlias]("tenants", "id"), ddl.WithOnDelete[PresetColumnAlias]("CASCADE"), ddl.WithNotNull[PresetColumnAlias]())
 	tagsCol := schema.TextColumn(PresetColumnTags, ddl.WithNotNull[PresetColumnAlias]())
 	kindCol := schema.TextColumn(PresetColumnKind, ddl.WithNotNull[PresetColumnAlias]())
+	isSystemCol := schema.BooleanColumn(PresetColumnIsSystem, ddl.WithNotNull[PresetColumnAlias]())
+	nameCol := schema.NullTextColumn(PresetColumnName)
+	descriptionCol := schema.NullTextColumn(PresetColumnDescription)
 
 	return PresetsTable{
 		Table: schema.NewTable[PresetAlias, PresetColumnAlias, *PresetScanner](
@@ -212,6 +242,9 @@ var Presets = func() PresetsTable {
 				tenantIdCol.DDL(),
 				tagsCol.DDL(),
 				kindCol.DDL(),
+				isSystemCol.DDL(),
+				nameCol.DDL(),
+				descriptionCol.DDL(),
 			},
 		),
 		PresetWorkloadPreset: presetWorkloadPresetCol,
@@ -226,6 +259,9 @@ var Presets = func() PresetsTable {
 		TenantId:             tenantIdCol,
 		Tags:                 tagsCol,
 		Kind:                 kindCol,
+		IsSystem:             isSystemCol,
+		Name:                 nameCol,
+		Description:          descriptionCol,
 	}
 }()
 

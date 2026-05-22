@@ -8,6 +8,7 @@ package models
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	_ "github.com/yaroher/protoc-gen-go-plain/goplain"
 	_ "github.com/yaroher/ratel/ratelproto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -45,7 +46,9 @@ type ApiToken struct {
 	// role the token authenticates as. Capped <= ADMIN (no OWNER).
 	Role TenantMember_Role `protobuf:"varint,4,opt,name=role,proto3,enum=cloud.v1.models.TenantMember_Role" json:"role,omitempty"`
 	// expires_at optionally limits the token lifetime; absent = no expiry.
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3,oneof" json:"expires_at,omitempty"`
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3,oneof" json:"expires_at,omitempty"`
+	// tags is a free label set for filtering/grouping.
+	Tags          *common.Tags `protobuf:"bytes,6,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -115,6 +118,13 @@ func (x *ApiToken) GetExpiresAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *ApiToken) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
 type ApiToken_List struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ApiTokens     []*ApiToken            `protobuf:"bytes,1,rep,name=api_tokens,json=apiTokens,proto3" json:"api_tokens,omitempty"`
@@ -163,7 +173,7 @@ var File_cloud_v1_models_apitoken_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_apitoken_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/models/apitoken.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/models/common.proto\x1a\x1ccloud/v1/models/tenant.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xc2\x03\n" +
+	"\x1ecloud/v1/models/apitoken.proto\x12\x0fcloud.v1.models\x1a\x1acloud/v1/common/tags.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1ccloud/v1/models/tenant.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xf5\x03\n" +
 	"\bApiToken\x127\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x122\n" +
 	"\x05owned\x18\x02 \x01(\v2\x14.cloud.v1.models.OwnB\x06\x82\xa6\x1d\x02 \x01R\x05owned\x12\x1e\n" +
@@ -171,7 +181,8 @@ const file_cloud_v1_models_apitoken_proto_rawDesc = "" +
 	"\xfaB\ar\x05\x10\x01\x18\xff\x01R\x04name\x12D\n" +
 	"\x04role\x18\x04 \x01(\x0e2\".cloud.v1.models.TenantMember.RoleB\f\xfaB\t\x82\x01\x06\x10\x01 \x00 \x03R\x04role\x12>\n" +
 	"\n" +
-	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\texpiresAt\x88\x01\x01\x1a@\n" +
+	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\texpiresAt\x88\x01\x01\x121\n" +
+	"\x04tags\x18\x06 \x01(\v2\x15.cloud.v1.common.TagsB\x06\x82\xa6\x1d\x02\x10\x01R\x04tags\x1a@\n" +
 	"\x04List\x128\n" +
 	"\n" +
 	"api_tokens\x18\x01 \x03(\v2\x19.cloud.v1.models.ApiTokenR\tapiTokens:R\x92\xb5\x18H\b\x01\x12\n" +
@@ -202,18 +213,20 @@ var file_cloud_v1_models_apitoken_proto_goTypes = []any{
 	(*Own)(nil),                   // 3: cloud.v1.models.Own
 	(TenantMember_Role)(0),        // 4: cloud.v1.models.TenantMember.Role
 	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
+	(*common.Tags)(nil),           // 6: cloud.v1.common.Tags
 }
 var file_cloud_v1_models_apitoken_proto_depIdxs = []int32{
 	2, // 0: cloud.v1.models.ApiToken.entity:type_name -> cloud.v1.models.Entity
 	3, // 1: cloud.v1.models.ApiToken.owned:type_name -> cloud.v1.models.Own
 	4, // 2: cloud.v1.models.ApiToken.role:type_name -> cloud.v1.models.TenantMember.Role
 	5, // 3: cloud.v1.models.ApiToken.expires_at:type_name -> google.protobuf.Timestamp
-	0, // 4: cloud.v1.models.ApiToken.List.api_tokens:type_name -> cloud.v1.models.ApiToken
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	6, // 4: cloud.v1.models.ApiToken.tags:type_name -> cloud.v1.common.Tags
+	0, // 5: cloud.v1.models.ApiToken.List.api_tokens:type_name -> cloud.v1.models.ApiToken
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_apitoken_proto_init() }

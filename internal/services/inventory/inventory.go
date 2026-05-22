@@ -23,10 +23,9 @@ import (
 )
 
 // CloudQuota talks to the cloud provider for live quota inventory and reconciles
-// our network mirror against it.
-//
-// TODO(inventory): no implementation exists — needs a Yandex Cloud client +
-// reconcile logic (D19/D20). Reported.
+// our network mirror against it. Implemented by services/yandexcloud over the real
+// Yandex Cloud SDK (quota manager + compute instance listing) — FetchQuotas and
+// Reconcile are live (D19/D20).
 type CloudQuota interface {
 	FetchQuotas(ctx context.Context, tenantID string, live bool) (*deployment.QuotaInventory, error)
 	Reconcile(ctx context.Context, tenantID string) (*uipb.ReconcileResponse, error)
@@ -71,24 +70,65 @@ func (s *CloudInventoryService) FetchQuotas(ctx context.Context, req *uipb.Fetch
 		})
 }
 
-// ListNetworkAllocations returns the tenant's subnet allocations (our mirror).
-//
-// TODO(inventory): page_token pagination is ignored — returns all rows. Reported.
-func (s *CloudInventoryService) ListNetworkAllocations(ctx context.Context, req *uipb.ListNetworkAllocationsRequest) (*models.NetworkAllocation_List, error) {
+// ListNetworkAllocations returns the tenant's subnet allocations (our mirror)
+// with cursor pagination (newest-first by default), optionally filtered by
+// provider / zone.
+func (s *CloudInventoryService) ListNetworkAllocations(ctx context.Context, req *uipb.ListNetworkAllocationsRequest) (*uipb.ListNetworkAllocationsResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListNetworkAllocations",
-		func(ctx context.Context, _ trace.Span) (*models.NetworkAllocation_List, error) {
+		func(ctx context.Context, _ trace.Span) (*uipb.ListNetworkAllocationsResponse, error) {
 			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_ADMIN); err != nil {
 				return nil, err
 			}
-			allocs, err := s.allocations.Query(ctx,
-				models.NetworkAllocations.SelectAll().Where(
-					models.NetworkAllocations.TenantId.Eq(req.GetTenantId().GetValue()),
-					models.NetworkAllocations.DeletedAt.IsNull(),
-				))
+			size := svcutil.PageSize(req.GetPage())
+			desc := svcutil.CursorDesc(req.GetOrder())
+			q := models.NetworkAllocations.SelectAll().Where(
+				models.NetworkAllocations.TenantId.Eq(req.GetTenantId().GetValue()),
+				models.NetworkAllocations.DeletedAt.IsNull(),
+			)
+			if req.GetProvider() != deployment.Provider_PROVIDER_UNSPECIFIED {
+				// Provider is stored as the enum String() value (network_plain converter).
+				q = q.Where(models.NetworkAllocations.Provider.Eq(req.GetProvider().String()))
+			}
+			if req.Zone != nil {
+				q = q.Where(models.NetworkAllocations.Zone.Eq(req.GetZone()))
+			}
+			// search: no Name column on network_allocations — match the CIDR (the
+			// human-visible identifier) case-insensitively.
+			if s := req.GetSearch(); s != "" {
+				q = q.Where(models.NetworkAllocations.Cidr.ILike("%" + s + "%"))
+			}
+			// leased: a row is leased iff it has a (future) lease expiry recorded.
+			if req.GetLeased() {
+				q = q.Where(models.NetworkAllocations.LeaseExpiresAt.IsNotNull())
+			}
+			// tags: Tags is serialized JSON of common.Tags (a TEXT column) — match
+			// each requested free tag and key=value label as a substring.
+			for _, tag := range req.GetTags().GetTags() {
+				q = q.Where(models.NetworkAllocations.Tags.ILike("%" + tag + "%"))
+			}
+			for k, v := range req.GetTags().GetLabels() {
+				q = q.Where(models.NetworkAllocations.Tags.ILike("%" + k + "%" + v + "%"))
+			}
+			if tok := req.GetPage().GetToken(); tok != "" {
+				if desc {
+					q = q.Where(models.NetworkAllocations.Id.Lt(tok))
+				} else {
+					q = q.Where(models.NetworkAllocations.Id.Gt(tok))
+				}
+			}
+			if desc {
+				q = q.OrderByDESC(models.NetworkAllocationColumnId)
+			} else {
+				q = q.OrderByASC(models.NetworkAllocationColumnId)
+			}
+			rows, err := s.allocations.Query(ctx, q.Limit(size+1))
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "list network allocations: %v", err)
 			}
-			return &models.NetworkAllocation_List{NetworkAllocations: allocs}, nil
+			items, pageInfo := svcutil.Paginate(rows, size, func(n *models.NetworkAllocation) string {
+				return n.GetId()
+			})
+			return &uipb.ListNetworkAllocationsResponse{NetworkAllocations: items, PageInfo: pageInfo}, nil
 		})
 }
 

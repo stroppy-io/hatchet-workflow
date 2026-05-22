@@ -4,7 +4,9 @@
 package models
 
 import (
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	ratelcast "github.com/yaroher/ratel/pkg/ratelcast"
+	protojson "google.golang.org/protobuf/encoding/protojson"
 	time "time"
 )
 
@@ -29,6 +31,7 @@ type ApiTokenScanner struct {
 	Name           string     `json:"name"`
 	Role           string     `json:"role"`
 	ExpiresAt      *time.Time `json:"expiresAt,omitempty"`
+	Tags           []byte     `json:"tags"`      // origin: serialized, empath: tags
 	TokenHash      string     `json:"tokenHash"` // origin: virtual, empath: virtual
 }
 
@@ -69,6 +72,14 @@ func (pb *ApiToken) IntoPlain() *ApiTokenScanner {
 	if pb.ExpiresAt != nil {
 		_tmp := ratelcast.TimestampToTime(pb.ExpiresAt)
 		p.ExpiresAt = &_tmp
+	}
+	// Tags serialized from tags
+	if pb.Tags != nil {
+		if data, err := protojson.Marshal(pb.Tags); err == nil {
+			p.Tags = data
+		}
+	} else {
+		p.Tags = []byte{}
 	}
 	// TokenHash is virtual, no source in protobuf
 	return p
@@ -141,6 +152,13 @@ func (p *ApiTokenScanner) IntoPb() *ApiToken {
 	pb.Role = TenantMember_Role(TenantMember_Role_value[p.Role])
 	if p.ExpiresAt != nil {
 		pb.ExpiresAt = ratelcast.TimeToTimestamp(*p.ExpiresAt)
+	}
+	// Tags deserialize -> tags
+	if len(p.Tags) > 0 {
+		var msg common.Tags
+		if err := protojson.Unmarshal(p.Tags, &msg); err == nil {
+			pb.Tags = &msg
+		}
 	}
 	// TokenHash is virtual, skipping
 	return pb

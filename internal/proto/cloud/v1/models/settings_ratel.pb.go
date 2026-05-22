@@ -175,6 +175,7 @@ const (
 	SettingsItemColumnPart      SettingsItemColumnAlias = "part"
 	SettingsItemColumnKey       SettingsItemColumnAlias = "key"
 	SettingsItemColumnValue     SettingsItemColumnAlias = "value"
+	SettingsItemColumnTags      SettingsItemColumnAlias = "tags"
 )
 
 func (s *SettingsItemScanner) GetTarget(col string) func() any {
@@ -195,6 +196,8 @@ func (s *SettingsItemScanner) GetTarget(col string) func() any {
 		return func() any { return &s.Key }
 	case SettingsItemColumnValue:
 		return func() any { return &s.Value }
+	case SettingsItemColumnTags:
+		return func() any { return &s.Tags }
 	default:
 		panic("unknown field: " + col)
 	}
@@ -218,6 +221,8 @@ func (s *SettingsItemScanner) GetSetter(f SettingsItemColumnAlias) func() set.Va
 		return func() set.ValueSetter[SettingsItemColumnAlias] { return set.NewSetter(f, &s.Key) }
 	case SettingsItemColumnValue:
 		return func() set.ValueSetter[SettingsItemColumnAlias] { return set.NewSetter(f, &s.Value) }
+	case SettingsItemColumnTags:
+		return func() set.ValueSetter[SettingsItemColumnAlias] { return set.NewSetter(f, &s.Tags) }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -241,6 +246,8 @@ func (s *SettingsItemScanner) GetValue(f SettingsItemColumnAlias) func() any {
 		return func() any { return s.Key }
 	case SettingsItemColumnValue:
 		return func() any { return s.Value }
+	case SettingsItemColumnTags:
+		return func() any { return s.Tags }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -256,6 +263,7 @@ func (s *SettingsItemScanner) AllSetters() []set.ValueSetter[SettingsItemColumnA
 		set.NewSetter[SettingsItemColumnAlias](SettingsItemColumnPart, s.Part),
 		set.NewSetter[SettingsItemColumnAlias](SettingsItemColumnKey, s.Key),
 		set.NewSetter[SettingsItemColumnAlias](SettingsItemColumnValue, s.Value),
+		set.NewSetter[SettingsItemColumnAlias](SettingsItemColumnTags, s.Tags),
 	}
 }
 
@@ -275,6 +283,7 @@ type SettingsItemsTable struct {
 	Part      schema.TextColumnI[SettingsItemColumnAlias]
 	Key       schema.TextColumnI[SettingsItemColumnAlias]
 	Value     schema.TextColumnI[SettingsItemColumnAlias]
+	Tags      schema.TextColumnI[SettingsItemColumnAlias]
 }
 
 // SettingsItems is the global settings_items table instance
@@ -287,6 +296,7 @@ var SettingsItems = func() SettingsItemsTable {
 	partCol := schema.TextColumn(SettingsItemColumnPart, ddl.WithNotNull[SettingsItemColumnAlias]())
 	keyCol := schema.TextColumn(SettingsItemColumnKey, ddl.WithNotNull[SettingsItemColumnAlias]())
 	valueCol := schema.TextColumn(SettingsItemColumnValue, ddl.WithDefault[SettingsItemColumnAlias]("'{}'::jsonb"), ddl.WithNotNull[SettingsItemColumnAlias]())
+	tagsCol := schema.TextColumn(SettingsItemColumnTags, ddl.WithNotNull[SettingsItemColumnAlias]())
 
 	idx0 := ddl.NewIndex[SettingsItemAlias, SettingsItemColumnAlias]("settings_items_tenant_part_key_uniq", SettingsItemAliasName).OnColumns(SettingsItemColumnTenantId, SettingsItemColumnPart, SettingsItemColumnKey)
 	idx0 = idx0.Unique()
@@ -304,6 +314,7 @@ var SettingsItems = func() SettingsItemsTable {
 				partCol.DDL(),
 				keyCol.DDL(),
 				valueCol.DDL(),
+				tagsCol.DDL(),
 			},
 			ddl.WithIndexes[SettingsItemAlias, SettingsItemColumnAlias](
 				idx0,
@@ -317,6 +328,7 @@ var SettingsItems = func() SettingsItemsTable {
 		Part:      partCol,
 		Key:       keyCol,
 		Value:     valueCol,
+		Tags:      tagsCol,
 	}
 }()
 

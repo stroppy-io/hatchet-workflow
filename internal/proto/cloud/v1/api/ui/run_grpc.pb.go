@@ -42,7 +42,7 @@ type RunServiceClient interface {
 	// --- run lifecycle (tenant-scoped) ---
 	SubmitTestRun(ctx context.Context, in *SubmitTestRunRequest, opts ...grpc.CallOption) (*models.TestRun, error)
 	GetTestRun(ctx context.Context, in *GetTestRunRequest, opts ...grpc.CallOption) (*models.TestRun, error)
-	ListTestRuns(ctx context.Context, in *ListTestRunsRequest, opts ...grpc.CallOption) (*models.TestRun_List, error)
+	ListTestRuns(ctx context.Context, in *ListTestRunsRequest, opts ...grpc.CallOption) (*ListTestRunsResponse, error)
 	CancelTestRun(ctx context.Context, in *CancelTestRunRequest, opts ...grpc.CallOption) (*models.TestRun, error)
 	// StreamTestRunLogs is a connect-go server-stream of unified log lines (F2).
 	StreamTestRunLogs(ctx context.Context, in *StreamTestRunLogsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[logs.LogLine], error)
@@ -85,9 +85,9 @@ func (c *runServiceClient) GetTestRun(ctx context.Context, in *GetTestRunRequest
 	return out, nil
 }
 
-func (c *runServiceClient) ListTestRuns(ctx context.Context, in *ListTestRunsRequest, opts ...grpc.CallOption) (*models.TestRun_List, error) {
+func (c *runServiceClient) ListTestRuns(ctx context.Context, in *ListTestRunsRequest, opts ...grpc.CallOption) (*ListTestRunsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(models.TestRun_List)
+	out := new(ListTestRunsResponse)
 	err := c.cc.Invoke(ctx, RunService_ListTestRuns_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -191,7 +191,7 @@ type RunServiceServer interface {
 	// --- run lifecycle (tenant-scoped) ---
 	SubmitTestRun(context.Context, *SubmitTestRunRequest) (*models.TestRun, error)
 	GetTestRun(context.Context, *GetTestRunRequest) (*models.TestRun, error)
-	ListTestRuns(context.Context, *ListTestRunsRequest) (*models.TestRun_List, error)
+	ListTestRuns(context.Context, *ListTestRunsRequest) (*ListTestRunsResponse, error)
 	CancelTestRun(context.Context, *CancelTestRunRequest) (*models.TestRun, error)
 	// StreamTestRunLogs is a connect-go server-stream of unified log lines (F2).
 	StreamTestRunLogs(*StreamTestRunLogsRequest, grpc.ServerStreamingServer[logs.LogLine]) error
@@ -220,7 +220,7 @@ func (UnimplementedRunServiceServer) SubmitTestRun(context.Context, *SubmitTestR
 func (UnimplementedRunServiceServer) GetTestRun(context.Context, *GetTestRunRequest) (*models.TestRun, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetTestRun not implemented")
 }
-func (UnimplementedRunServiceServer) ListTestRuns(context.Context, *ListTestRunsRequest) (*models.TestRun_List, error) {
+func (UnimplementedRunServiceServer) ListTestRuns(context.Context, *ListTestRunsRequest) (*ListTestRunsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListTestRuns not implemented")
 }
 func (UnimplementedRunServiceServer) CancelTestRun(context.Context, *CancelTestRunRequest) (*models.TestRun, error) {

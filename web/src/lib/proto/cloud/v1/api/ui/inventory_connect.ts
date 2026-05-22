@@ -3,10 +3,9 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { FetchQuotasRequest, ListNetworkAllocationsRequest, ReconcileRequest, ReconcileResponse } from "./inventory_pbts";
+import { FetchQuotasRequest, ListNetworkAllocationsRequest, ListNetworkAllocationsResponse, ReconcileRequest, ReconcileResponse } from "./inventory_pbts";
 import { QuotaInventory } from "../../deployment/deployment_pbts";
 import { MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
-import { NetworkAllocation_List } from "../../models/network_pbts";
 
 /**
  * @generated from service cloud.v1.api.ui.CloudInventoryService
@@ -30,7 +29,7 @@ export const CloudInventoryService = {
     listNetworkAllocations: {
       name: "ListNetworkAllocations",
       I: ListNetworkAllocationsRequest,
-      O: NetworkAllocation_List,
+      O: ListNetworkAllocationsResponse,
       kind: MethodKind.Unary,
       idempotency: MethodIdempotency.NoSideEffects,
     },

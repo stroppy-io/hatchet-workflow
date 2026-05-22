@@ -10,9 +10,9 @@ import (
 	"github.com/yaroher/ratel/pkg/ddl"
 	"github.com/yaroher/ratel/pkg/dml/set"
 	"github.com/yaroher/ratel/pkg/exec"
-	"github.com/yaroher/ratel/pkg/sqlerr"
 	"github.com/yaroher/ratel/pkg/repository"
 	"github.com/yaroher/ratel/pkg/schema"
+	"github.com/yaroher/ratel/pkg/sqlerr"
 )
 
 var (
@@ -41,6 +41,7 @@ const (
 	AccountColumnEmail        AccountColumnAlias = "email"
 	AccountColumnNickname     AccountColumnAlias = "nickname"
 	AccountColumnIsAdmin      AccountColumnAlias = "is_admin"
+	AccountColumnTags         AccountColumnAlias = "tags"
 	AccountColumnPasswordHash AccountColumnAlias = "password_hash"
 )
 
@@ -60,6 +61,8 @@ func (s *AccountScanner) GetTarget(col string) func() any {
 		return func() any { return &s.Nickname }
 	case AccountColumnIsAdmin:
 		return func() any { return &s.IsAdmin }
+	case AccountColumnTags:
+		return func() any { return &s.Tags }
 	case AccountColumnPasswordHash:
 		return func() any { return &s.PasswordHash }
 	default:
@@ -83,6 +86,8 @@ func (s *AccountScanner) GetSetter(f AccountColumnAlias) func() set.ValueSetter[
 		return func() set.ValueSetter[AccountColumnAlias] { return set.NewSetter(f, &s.Nickname) }
 	case AccountColumnIsAdmin:
 		return func() set.ValueSetter[AccountColumnAlias] { return set.NewSetter(f, &s.IsAdmin) }
+	case AccountColumnTags:
+		return func() set.ValueSetter[AccountColumnAlias] { return set.NewSetter(f, &s.Tags) }
 	case AccountColumnPasswordHash:
 		return func() set.ValueSetter[AccountColumnAlias] { return set.NewSetter(f, &s.PasswordHash) }
 	default:
@@ -106,6 +111,8 @@ func (s *AccountScanner) GetValue(f AccountColumnAlias) func() any {
 		return func() any { return s.Nickname }
 	case AccountColumnIsAdmin:
 		return func() any { return s.IsAdmin }
+	case AccountColumnTags:
+		return func() any { return s.Tags }
 	case AccountColumnPasswordHash:
 		return func() any { return s.PasswordHash }
 	default:
@@ -122,6 +129,7 @@ func (s *AccountScanner) AllSetters() []set.ValueSetter[AccountColumnAlias] {
 		set.NewSetter[AccountColumnAlias](AccountColumnEmail, s.Email),
 		set.NewSetter[AccountColumnAlias](AccountColumnNickname, s.Nickname),
 		set.NewSetter[AccountColumnAlias](AccountColumnIsAdmin, s.IsAdmin),
+		set.NewSetter[AccountColumnAlias](AccountColumnTags, s.Tags),
 		set.NewSetter[AccountColumnAlias](AccountColumnPasswordHash, s.PasswordHash),
 	}
 }
@@ -141,6 +149,7 @@ type AccountsTable struct {
 	Email        schema.TextColumnI[AccountColumnAlias]
 	Nickname     schema.TextColumnI[AccountColumnAlias]
 	IsAdmin      schema.BooleanColumnI[AccountColumnAlias]
+	Tags         schema.TextColumnI[AccountColumnAlias]
 	PasswordHash schema.TextColumnI[AccountColumnAlias]
 }
 
@@ -153,6 +162,7 @@ var Accounts = func() AccountsTable {
 	emailCol := schema.TextColumn(AccountColumnEmail, ddl.WithNotNull[AccountColumnAlias]())
 	nicknameCol := schema.TextColumn(AccountColumnNickname, ddl.WithNotNull[AccountColumnAlias]())
 	isAdminCol := schema.BooleanColumn(AccountColumnIsAdmin, ddl.WithNotNull[AccountColumnAlias]())
+	tagsCol := schema.TextColumn(AccountColumnTags, ddl.WithNotNull[AccountColumnAlias]())
 	passwordHashCol := schema.TextColumn(AccountColumnPasswordHash, ddl.WithNotNull[AccountColumnAlias]())
 
 	return AccountsTable{
@@ -167,6 +177,7 @@ var Accounts = func() AccountsTable {
 				emailCol.DDL(),
 				nicknameCol.DDL(),
 				isAdminCol.DDL(),
+				tagsCol.DDL(),
 				passwordHashCol.DDL(),
 			},
 		),
@@ -177,6 +188,7 @@ var Accounts = func() AccountsTable {
 		Email:        emailCol,
 		Nickname:     nicknameCol,
 		IsAdmin:      isAdminCol,
+		Tags:         tagsCol,
 		PasswordHash: passwordHashCol,
 	}
 }()

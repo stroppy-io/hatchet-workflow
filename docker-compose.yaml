@@ -100,6 +100,52 @@ services:
     depends_on:
       - vminsert
 
+  # --- Valkey (share-snapshot store + locks) ---
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: always
+    command: ["valkey-server", "--requirepass", "${VALKEY_PASSWORD:-valkey}"]
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:6379:6379"
+    volumes:
+      - valkeydata:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "-a", "${VALKEY_PASSWORD:-valkey}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # --- MinIO (S3-compatible package store) ---
+  minio:
+    image: minio/minio:latest
+    restart: always
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-stroppy}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-stroppy-minio}
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:9000:9000"
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # One-shot: create the packages bucket (reachable by service name on the compose net).
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-stroppy} ${MINIO_ROOT_PASSWORD:-stroppy-minio} &&
+      mc mb -p local/${STROPPY_S3_BUCKET:-stroppy-packages} || true
+      "
+    restart: "no"
+
   # --- Stroppy Cloud server ---
   # Runs with host networking so it can reach Docker agent containers directly.
   server:
@@ -107,15 +153,18 @@ services:
     build:
       context: .
       dockerfile: deployments/docker/stroppy-cloud.Dockerfile
+      args:
+        VERSION: ${VERSION:-dev}
     network_mode: host
     depends_on:
       postgres:
+        condition: service_healthy
+      valkey:
         condition: service_healthy
       vmauth:
         condition: service_started
     command:
       - serve
-      - --addr=:8080
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       # Terraform workdir — survives `docker compose down/up` so a server
@@ -125,14 +174,31 @@ services:
       # vector, postgres_exporter, mysqld_exporter). Survives compose
       # restarts so agents reuse local downloads instead of going to github.
       - binaries:/var/lib/stroppy-cache
+    # network_mode: host → reach every other service on 127.0.0.1:<published port>.
     environment:
-      DATABASE_URL: postgres://stroppy:${POSTGRES_PASSWORD:-stroppy}@127.0.0.1:5436/stroppy?sslmode=disable
-      JWT_SECRET: ${JWT_SECRET:-stroppy-dev-secret}
-      MONITORING_URL: http://127.0.0.1:8427
-      MONITORING_TOKEN: ${MONITORING_TOKEN:-stroppy-monitoring-secret}
-      GRAFANA_URL: ${GRAFANA_URL:-http://127.0.0.1:3001}
-      STROPPY_ADMIN_PASSWORD: ${STROPPY_ADMIN_PASSWORD:-}
-      STROPPY_MIN_VERSION: ${STROPPY_MIN_VERSION:-5.1.2}
+      STROPPY_GRPC_ADDR: ":8080"
+      STROPPY_PG_HOST: "127.0.0.1"
+      STROPPY_PG_PORT: "5436"
+      STROPPY_PG_USER: stroppy
+      STROPPY_PG_PASSWORD: ${POSTGRES_PASSWORD:-stroppy}
+      STROPPY_PG_DATABASE: stroppy
+      STROPPY_VALKEY_ADDR: "127.0.0.1:6379"
+      STROPPY_VALKEY_PASSWORD: ${VALKEY_PASSWORD:-valkey}
+      STROPPY_JWT_SECRET: ${JWT_SECRET:-stroppy-dev-secret-change-me-32-bytes-long!!}
+      STROPPY_VM_URL: ${STROPPY_VM_URL:-http://127.0.0.1:8427}
+      STROPPY_VL_URL: ${STROPPY_VL_URL:-http://127.0.0.1:8427}
+      STROPPY_VICTORIA_TOKEN: ${MONITORING_TOKEN:-stroppy-monitoring-secret}
+      STROPPY_GRAFANA_URL: ${GRAFANA_URL:-http://127.0.0.1:3001}
+      STROPPY_S3_ENDPOINT: "127.0.0.1:9000"
+      STROPPY_S3_ACCESS_KEY: ${MINIO_ROOT_USER:-stroppy}
+      STROPPY_S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-stroppy-minio}
+      STROPPY_S3_BUCKET: ${STROPPY_S3_BUCKET:-stroppy-packages}
+      STROPPY_S3_USE_SSL: "false"
+      STROPPY_SHARE_BASE_URL: ${STROPPY_SHARE_BASE_URL:-http://127.0.0.1:8080/share/}
+      STROPPY_ROOT_ADMIN_EMAIL: ${STROPPY_ROOT_ADMIN_EMAIL:-admin@stroppy.local}
+      STROPPY_ROOT_ADMIN_PASSWORD: ${STROPPY_ROOT_ADMIN_PASSWORD:-stroppy-admin-change-me}
+      STROPPY_SERVER_ADDR: ${STROPPY_SERVER_ADDR:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       YC_TOKEN: ${YC_TOKEN:-}
       YC_CLOUD_ID: ${YC_CLOUD_ID:-}
       YC_FOLDER_ID: ${YC_FOLDER_ID:-}
@@ -150,6 +216,8 @@ services:
 
 volumes:
   pgdata:
+  valkeydata:
+  miniodata:
   vmdata:
   vldata:
   tfstate:

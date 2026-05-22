@@ -3,9 +3,9 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateTenantRequest, UpdateTenantRequest } from "./tenant_pbts";
-import { Tenant } from "../../models/tenant_pbts";
+import { CreateTenantRequest, ListTenantsRequest, ListTenantsResponse, UpdateTenantRequest } from "./tenant_pbts";
 import { MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
+import { Tenant } from "../../models/tenant_pbts";
 import { TenantId } from "../../models/common_pbts";
 
 /**
@@ -14,6 +14,16 @@ import { TenantId } from "../../models/common_pbts";
 export const TenantAdminService = {
   typeName: "cloud.v1.api.admin.TenantAdminService",
   methods: {
+    /**
+     * @generated from rpc cloud.v1.api.admin.TenantAdminService.ListTenants
+     */
+    listTenants: {
+      name: "ListTenants",
+      I: ListTenantsRequest,
+      O: ListTenantsResponse,
+      kind: MethodKind.Unary,
+      idempotency: MethodIdempotency.NoSideEffects,
+    },
     /**
      * @generated from rpc cloud.v1.api.admin.TenantAdminService.CreateTenant
      */

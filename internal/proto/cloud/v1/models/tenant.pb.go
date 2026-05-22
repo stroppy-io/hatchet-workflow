@@ -8,6 +8,7 @@ package models
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	_ "github.com/yaroher/protoc-gen-go-plain/goplain"
 	_ "github.com/yaroher/ratel/ratelproto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -81,9 +82,13 @@ type Tenant struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Entity         *Entity                `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
 	OwnerAccountId *AccountId             `protobuf:"bytes,2,opt,name=owner_account_id,json=ownerAccountId,proto3" json:"owner_account_id,omitempty"`
-	Members        []*TenantMember        `protobuf:"bytes,3,rep,name=members,proto3" json:"members,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// name is the tenant display label shown in tenant tables/switchers.
+	Name    *string         `protobuf:"bytes,4,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	Members []*TenantMember `protobuf:"bytes,3,rep,name=members,proto3" json:"members,omitempty"`
+	// tags is a free label set for filtering/grouping.
+	Tags          *common.Tags `protobuf:"bytes,5,opt,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Tenant) Reset() {
@@ -130,6 +135,13 @@ func (x *Tenant) GetOwnerAccountId() *AccountId {
 	return nil
 }
 
+func (x *Tenant) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
 func (x *Tenant) GetMembers() []*TenantMember {
 	if x != nil {
 		return x.Members
@@ -137,13 +149,22 @@ func (x *Tenant) GetMembers() []*TenantMember {
 	return nil
 }
 
+func (x *Tenant) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
 // Root tenant entity representing an isolated workspace.
 type TenantMember struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entity        *Entity                `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	TenantId      *TenantId              `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	AccountId     *AccountId             `protobuf:"bytes,3,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	Role          TenantMember_Role      `protobuf:"varint,4,opt,name=role,proto3,enum=cloud.v1.models.TenantMember_Role" json:"role,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Entity    *Entity                `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	TenantId  *TenantId              `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	AccountId *AccountId             `protobuf:"bytes,3,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	Role      TenantMember_Role      `protobuf:"varint,4,opt,name=role,proto3,enum=cloud.v1.models.TenantMember_Role" json:"role,omitempty"`
+	// tags is a free label set for filtering/grouping.
+	Tags          *common.Tags `protobuf:"bytes,5,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -204,6 +225,13 @@ func (x *TenantMember) GetRole() TenantMember_Role {
 		return x.Role
 	}
 	return TenantMember_ROLE_UNSPECIFIED
+}
+
+func (x *TenantMember) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
 }
 
 // Container for paginated tenant results.
@@ -299,22 +327,26 @@ var File_cloud_v1_models_tenant_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_tenant_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccloud/v1/models/tenant.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/models/common.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xc1\x02\n" +
+	"\x1ccloud/v1/models/tenant.proto\x12\x0fcloud.v1.models\x1a\x1acloud/v1/common/tags.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xa0\x03\n" +
 	"\x06Tenant\x127\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x12\\\n" +
-	"\x10owner_account_id\x18\x02 \x01(\v2\x1a.cloud.v1.models.AccountIdB\x16\x9a\xb5\x18\x12\x12\x102\baccounts:\x02id@\x01R\x0eownerAccountId\x12N\n" +
+	"\x10owner_account_id\x18\x02 \x01(\v2\x1a.cloud.v1.models.AccountIdB\x16\x9a\xb5\x18\x12\x12\x102\baccounts:\x02id@\x01R\x0eownerAccountId\x12!\n" +
+	"\x04name\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01H\x00R\x04name\x88\x01\x01\x12N\n" +
 	"\amembers\x18\x03 \x03(\v2\x1d.cloud.v1.models.TenantMemberB\x15\xa2\xb5\x18\x11\n" +
 	"\x0f\n" +
-	"\ttenant_id\x18\x01 \x01R\amembers\x1a9\n" +
+	"\ttenant_id\x18\x01 \x01R\amembers\x121\n" +
+	"\x04tags\x18\x05 \x01(\v2\x15.cloud.v1.common.TagsB\x06\x82\xa6\x1d\x02\x10\x01R\x04tags\x1a9\n" +
 	"\x04List\x121\n" +
-	"\atenants\x18\x01 \x03(\v2\x17.cloud.v1.models.TenantR\atenants:\x15\x92\xb5\x18\v\b\x01\x12\atenants\x82\xa6\x1d\x02\b\x01\"\xe8\x03\n" +
+	"\atenants\x18\x01 \x03(\v2\x17.cloud.v1.models.TenantR\atenants:\x15\x92\xb5\x18\v\b\x01\x12\atenants\x82\xa6\x1d\x02\b\x01B\a\n" +
+	"\x05_name\"\x9b\x04\n" +
 	"\fTenantMember\x127\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x12M\n" +
 	"\ttenant_id\x18\x02 \x01(\v2\x19.cloud.v1.models.TenantIdB\x15\x9a\xb5\x18\x11\x12\x0f2\atenants:\x02id@\x01R\btenantId\x12Q\n" +
 	"\n" +
 	"account_id\x18\x03 \x01(\v2\x1a.cloud.v1.models.AccountIdB\x16\x9a\xb5\x18\x12\x12\x102\baccounts:\x02id@\x01R\taccountId\x12B\n" +
 	"\x04role\x18\x04 \x01(\x0e2\".cloud.v1.models.TenantMember.RoleB\n" +
-	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04role\x1aL\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04role\x121\n" +
+	"\x04tags\x18\x05 \x01(\v2\x15.cloud.v1.common.TagsB\x06\x82\xa6\x1d\x02\x10\x01R\x04tags\x1aL\n" +
 	"\x04List\x12D\n" +
 	"\x0etenant_members\x18\x01 \x03(\v2\x1d.cloud.v1.models.TenantMemberR\rtenantMembers\"M\n" +
 	"\x04Role\x12\x14\n" +
@@ -347,23 +379,26 @@ var file_cloud_v1_models_tenant_proto_goTypes = []any{
 	(*TenantMember_List)(nil), // 4: cloud.v1.models.TenantMember.List
 	(*Entity)(nil),            // 5: cloud.v1.models.Entity
 	(*AccountId)(nil),         // 6: cloud.v1.models.AccountId
-	(*TenantId)(nil),          // 7: cloud.v1.models.TenantId
+	(*common.Tags)(nil),       // 7: cloud.v1.common.Tags
+	(*TenantId)(nil),          // 8: cloud.v1.models.TenantId
 }
 var file_cloud_v1_models_tenant_proto_depIdxs = []int32{
-	5, // 0: cloud.v1.models.Tenant.entity:type_name -> cloud.v1.models.Entity
-	6, // 1: cloud.v1.models.Tenant.owner_account_id:type_name -> cloud.v1.models.AccountId
-	2, // 2: cloud.v1.models.Tenant.members:type_name -> cloud.v1.models.TenantMember
-	5, // 3: cloud.v1.models.TenantMember.entity:type_name -> cloud.v1.models.Entity
-	7, // 4: cloud.v1.models.TenantMember.tenant_id:type_name -> cloud.v1.models.TenantId
-	6, // 5: cloud.v1.models.TenantMember.account_id:type_name -> cloud.v1.models.AccountId
-	0, // 6: cloud.v1.models.TenantMember.role:type_name -> cloud.v1.models.TenantMember.Role
-	1, // 7: cloud.v1.models.Tenant.List.tenants:type_name -> cloud.v1.models.Tenant
-	2, // 8: cloud.v1.models.TenantMember.List.tenant_members:type_name -> cloud.v1.models.TenantMember
-	9, // [9:9] is the sub-list for method output_type
-	9, // [9:9] is the sub-list for method input_type
-	9, // [9:9] is the sub-list for extension type_name
-	9, // [9:9] is the sub-list for extension extendee
-	0, // [0:9] is the sub-list for field type_name
+	5,  // 0: cloud.v1.models.Tenant.entity:type_name -> cloud.v1.models.Entity
+	6,  // 1: cloud.v1.models.Tenant.owner_account_id:type_name -> cloud.v1.models.AccountId
+	2,  // 2: cloud.v1.models.Tenant.members:type_name -> cloud.v1.models.TenantMember
+	7,  // 3: cloud.v1.models.Tenant.tags:type_name -> cloud.v1.common.Tags
+	5,  // 4: cloud.v1.models.TenantMember.entity:type_name -> cloud.v1.models.Entity
+	8,  // 5: cloud.v1.models.TenantMember.tenant_id:type_name -> cloud.v1.models.TenantId
+	6,  // 6: cloud.v1.models.TenantMember.account_id:type_name -> cloud.v1.models.AccountId
+	0,  // 7: cloud.v1.models.TenantMember.role:type_name -> cloud.v1.models.TenantMember.Role
+	7,  // 8: cloud.v1.models.TenantMember.tags:type_name -> cloud.v1.common.Tags
+	1,  // 9: cloud.v1.models.Tenant.List.tenants:type_name -> cloud.v1.models.Tenant
+	2,  // 10: cloud.v1.models.TenantMember.List.tenant_members:type_name -> cloud.v1.models.TenantMember
+	11, // [11:11] is the sub-list for method output_type
+	11, // [11:11] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_tenant_proto_init() }
@@ -372,6 +407,7 @@ func file_cloud_v1_models_tenant_proto_init() {
 		return
 	}
 	file_cloud_v1_models_common_proto_init()
+	file_cloud_v1_models_tenant_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

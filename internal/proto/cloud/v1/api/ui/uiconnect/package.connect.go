@@ -9,7 +9,6 @@ import (
 	context "context"
 	errors "errors"
 	ui "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
-	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	http "net/http"
 	strings "strings"
@@ -48,7 +47,7 @@ const (
 
 // PackageServiceClient is a client for the cloud.v1.api.ui.PackageService service.
 type PackageServiceClient interface {
-	ListPackages(context.Context, *ui.ListPackagesRequest) (*models.Package_List, error)
+	ListPackages(context.Context, *ui.ListPackagesRequest) (*ui.ListPackagesResponse, error)
 	RequestPackageUpload(context.Context, *ui.RequestPackageUploadRequest) (*ui.RequestPackageUploadResponse, error)
 	DeletePackage(context.Context, *ui.DeletePackageRequest) (*emptypb.Empty, error)
 }
@@ -64,7 +63,7 @@ func NewPackageServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 	baseURL = strings.TrimRight(baseURL, "/")
 	packageServiceMethods := ui.File_cloud_v1_api_ui_package_proto.Services().ByName("PackageService").Methods()
 	return &packageServiceClient{
-		listPackages: connect.NewClient[ui.ListPackagesRequest, models.Package_List](
+		listPackages: connect.NewClient[ui.ListPackagesRequest, ui.ListPackagesResponse](
 			httpClient,
 			baseURL+PackageServiceListPackagesProcedure,
 			connect.WithSchema(packageServiceMethods.ByName("ListPackages")),
@@ -90,13 +89,13 @@ func NewPackageServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 
 // packageServiceClient implements PackageServiceClient.
 type packageServiceClient struct {
-	listPackages         *connect.Client[ui.ListPackagesRequest, models.Package_List]
+	listPackages         *connect.Client[ui.ListPackagesRequest, ui.ListPackagesResponse]
 	requestPackageUpload *connect.Client[ui.RequestPackageUploadRequest, ui.RequestPackageUploadResponse]
 	deletePackage        *connect.Client[ui.DeletePackageRequest, emptypb.Empty]
 }
 
 // ListPackages calls cloud.v1.api.ui.PackageService.ListPackages.
-func (c *packageServiceClient) ListPackages(ctx context.Context, req *ui.ListPackagesRequest) (*models.Package_List, error) {
+func (c *packageServiceClient) ListPackages(ctx context.Context, req *ui.ListPackagesRequest) (*ui.ListPackagesResponse, error) {
 	response, err := c.listPackages.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -124,7 +123,7 @@ func (c *packageServiceClient) DeletePackage(ctx context.Context, req *ui.Delete
 
 // PackageServiceHandler is an implementation of the cloud.v1.api.ui.PackageService service.
 type PackageServiceHandler interface {
-	ListPackages(context.Context, *ui.ListPackagesRequest) (*models.Package_List, error)
+	ListPackages(context.Context, *ui.ListPackagesRequest) (*ui.ListPackagesResponse, error)
 	RequestPackageUpload(context.Context, *ui.RequestPackageUploadRequest) (*ui.RequestPackageUploadResponse, error)
 	DeletePackage(context.Context, *ui.DeletePackageRequest) (*emptypb.Empty, error)
 }
@@ -174,7 +173,7 @@ func NewPackageServiceHandler(svc PackageServiceHandler, opts ...connect.Handler
 // UnimplementedPackageServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedPackageServiceHandler struct{}
 
-func (UnimplementedPackageServiceHandler) ListPackages(context.Context, *ui.ListPackagesRequest) (*models.Package_List, error) {
+func (UnimplementedPackageServiceHandler) ListPackages(context.Context, *ui.ListPackagesRequest) (*ui.ListPackagesResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.PackageService.ListPackages is not implemented"))
 }
 

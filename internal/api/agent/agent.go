@@ -21,7 +21,7 @@ type AgentActions interface {
 	Poll(ctx context.Context, req *agentpb.PollRequest) (*agentpb.PollResponse, error)
 	Report(ctx context.Context, req *agentpb.ReportRequest) (*emptypb.Empty, error)
 	SendLogs(ctx context.Context, req *agentpb.SendLogsRequest) (*emptypb.Empty, error)
-	ListAgents(ctx context.Context, req *agentpb.ListAgentsRequest) (*models.Agent_List, error)
+	ListAgents(ctx context.Context, req *agentpb.ListAgentsRequest) (*agentpb.ListAgentsResponse, error)
 	GetAgent(ctx context.Context, id *models.AgentId) (*models.Agent, error)
 }
 
@@ -77,9 +77,9 @@ func (s *AgentService) SendLogs(ctx context.Context, req *agentpb.SendLogsReques
 		})
 }
 
-func (s *AgentService) ListAgents(ctx context.Context, req *agentpb.ListAgentsRequest) (*models.Agent_List, error) {
+func (s *AgentService) ListAgents(ctx context.Context, req *agentpb.ListAgentsRequest) (*agentpb.ListAgentsResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListAgents",
-		func(ctx context.Context, _ trace.Span) (*models.Agent_List, error) {
+		func(ctx context.Context, _ trace.Span) (*agentpb.ListAgentsResponse, error) {
 			return s.svc.ListAgents(ctx, req)
 		})
 }

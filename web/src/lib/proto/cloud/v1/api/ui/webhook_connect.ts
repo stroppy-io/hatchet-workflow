@@ -3,8 +3,8 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateWebhookRequest, DeleteWebhookRequest, ListWebhooksRequest, TestWebhookRequest, UpdateWebhookRequest } from "./webhook_pbts";
-import { Webhook, Webhook_List } from "../../models/webhook_pbts";
+import { CreateWebhookRequest, DeleteWebhookRequest, ListWebhooksRequest, ListWebhooksResponse, TestWebhookRequest, UpdateWebhookRequest } from "./webhook_pbts";
+import { Webhook } from "../../models/webhook_pbts";
 import { Empty, MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -29,7 +29,7 @@ export const WebhookService = {
     listWebhooks: {
       name: "ListWebhooks",
       I: ListWebhooksRequest,
-      O: Webhook_List,
+      O: ListWebhooksResponse,
       kind: MethodKind.Unary,
       idempotency: MethodIdempotency.NoSideEffects,
     },

@@ -72,6 +72,7 @@ features/
   agent/          lifecycle (poll-only), command-execution
   orchestration/  suite-run, test-run, run-state-machine
   catalog/        database-preset, workload-preset, topology, render-override
+                  authoring-wizard
   provisioning/   terraform apply/destroy, cost
   tenancy/        auth, tenant-isolation
   results/        metrics-collect, compare
@@ -159,6 +160,7 @@ features/
 | H63 | future | `features/future/*` | раздел «на будущее» (`@future`, НЕ `@migration`): resilience(degrade), quotas-retention, **mcp** (AI-ассистенты через API-токен), **agentic-analysis** (AI-разбор запуска + UI) |
 | H65 | depth | `engine/*.feature` | precision-pass: пины `FailureCode` (DAG_INVALID/SUB_DAG_FAILED/DAG_REF_FAILED/DAG_REF_PENDING/DAG_REF_RUNNER_MISSING) + data-varying проза→Outline (retry attempts×fails→status, on_status). Не-движковые вердикты несут причину, кодов нет — оставлены. 16 Outline / 290 сценариев |
 | H66 | дыра(design) | API/validation | нет типизированного каталога error-кодов для API/валидации (только рантайм-движковый `FailureCode`) — рассмотреть enum ошибок API позже |
+| H67 | ✅ added | `features/catalog/authoring-wizard.feature`, `api/ui/authoring.proto`, `web/src` | Wizard = tenant-scoped authoring surface. Starts from DatabasePreset + WorkloadPreset, copies by value, reassembles via AuthoringService, preserves user-pinned edits, lets advanced users edit Topology/DeploymentIntent/raw proto, and review MUST show both TestPreset snapshot and compiled Dag blueprint before SubmitTestRun. All UI links start `/t/<tenant_id>/...` |
 | H64 | ✅ added | `features/tenancy/rbac.feature`, `api/ui/tenant.proto`, `api/admin/tenant.proto` | **полная RBAC-матрица** (concrete): min-роль на каждый RPC всех сервисов; read=VIEWER, operate=ADMIN, own-admin(settings-write/inventory-reconcile/tokens/members)=OWNER; settings/inventory read=ADMIN (creds masked); share=VIEWER, webhooks=ADMIN; is_admin кросс-тенант; api-token cap≤ADMIN; GetSharedRun public. **Member-management перенесён admin→ui TenantService (OWNER)** + role в AddMember. protoc OK |
 | H62 | depth | `cli/headless` + 4 заглушки | CLI расписан под реализацию (auth/api-token, run/wait/validate/dry-run/compare/probe/logs/upload/packages, флаги, exit-коды, JSON-out, ошибки); edge для probe/artifacts(S3)/ydb-disk/share |
 | H61 | depth | inline в 6 фич | error/edge кейсы (~22): render override/validation/unsupported; agent lease-гонка/dup-report/expired-foreign/boot_id; tf apply-fail+rollback/crash-recover; subnet-exhaustion/orphan-reconcile; token-invalid/expired/refresh-reuse/role-deny; generation-конфликт/soft-delete/FK-cascade |

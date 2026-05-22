@@ -18,6 +18,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/anypb"
 
+	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+
 	primitive "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
 )
 
@@ -35,6 +37,8 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = models.SortOrder(0)
 
 	_ = primitive.Status(0)
 )
@@ -795,6 +799,412 @@ var _ interface {
 	ErrorName() string
 } = GetSuiteRunRequestValidationError{}
 
+// Validate checks the field values on ListSuitesRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ListSuitesRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListSuitesRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListSuitesRequestMultiError, or nil if none found.
+func (m *ListSuitesRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListSuitesRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetTenantId() == nil {
+		err := ListSuitesRequestValidationError{
+			field:  "TenantId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTenantId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListSuitesRequestValidationError{
+					field:  "TenantId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListSuitesRequestValidationError{
+					field:  "TenantId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTenantId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListSuitesRequestValidationError{
+				field:  "TenantId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if _, ok := ListSuitesRequest_SortField_name[int32(m.GetSortField())]; !ok {
+		err := ListSuitesRequestValidationError{
+			field:  "SortField",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := models.SortOrder_name[int32(m.GetOrder())]; !ok {
+		err := ListSuitesRequestValidationError{
+			field:  "Order",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPage()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListSuitesRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListSuitesRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPage()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListSuitesRequestValidationError{
+				field:  "Page",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListSuitesRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListSuitesRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListSuitesRequestValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.Search != nil {
+
+		if utf8.RuneCountInString(m.GetSearch()) > 256 {
+			err := ListSuitesRequestValidationError{
+				field:  "Search",
+				reason: "value length must be at most 256 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.HasCron != nil {
+		// no validation rules for HasCron
+	}
+
+	if len(errors) > 0 {
+		return ListSuitesRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListSuitesRequestMultiError is an error wrapping multiple validation errors
+// returned by ListSuitesRequest.ValidateAll() if the designated constraints
+// aren't met.
+type ListSuitesRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListSuitesRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListSuitesRequestMultiError) AllErrors() []error { return m }
+
+// ListSuitesRequestValidationError is the validation error returned by
+// ListSuitesRequest.Validate if the designated constraints aren't met.
+type ListSuitesRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListSuitesRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListSuitesRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListSuitesRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListSuitesRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListSuitesRequestValidationError) ErrorName() string {
+	return "ListSuitesRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListSuitesRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListSuitesRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListSuitesRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListSuitesRequestValidationError{}
+
+// Validate checks the field values on ListSuitesResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListSuitesResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListSuitesResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListSuitesResponseMultiError, or nil if none found.
+func (m *ListSuitesResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListSuitesResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetSuites() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListSuitesResponseValidationError{
+						field:  fmt.Sprintf("Suites[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListSuitesResponseValidationError{
+						field:  fmt.Sprintf("Suites[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListSuitesResponseValidationError{
+					field:  fmt.Sprintf("Suites[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetPageInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListSuitesResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListSuitesResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPageInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListSuitesResponseValidationError{
+				field:  "PageInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ListSuitesResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListSuitesResponseMultiError is an error wrapping multiple validation errors
+// returned by ListSuitesResponse.ValidateAll() if the designated constraints
+// aren't met.
+type ListSuitesResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListSuitesResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListSuitesResponseMultiError) AllErrors() []error { return m }
+
+// ListSuitesResponseValidationError is the validation error returned by
+// ListSuitesResponse.Validate if the designated constraints aren't met.
+type ListSuitesResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListSuitesResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListSuitesResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListSuitesResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListSuitesResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListSuitesResponseValidationError) ErrorName() string {
+	return "ListSuitesResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListSuitesResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListSuitesResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListSuitesResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListSuitesResponseValidationError{}
+
 // Validate checks the field values on ListSuiteRunsRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -857,10 +1267,10 @@ func (m *ListSuiteRunsRequest) validate(all bool) error {
 		}
 	}
 
-	if m.GetPageSize() > 1000 {
+	if _, ok := ListSuiteRunsRequest_SortField_name[int32(m.GetSortField())]; !ok {
 		err := ListSuiteRunsRequestValidationError{
-			field:  "PageSize",
-			reason: "value must be less than or equal to 1000",
+			field:  "SortField",
+			reason: "value must be one of the defined enum values",
 		}
 		if !all {
 			return err
@@ -868,15 +1278,73 @@ func (m *ListSuiteRunsRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetPageToken()) > 256 {
+	if _, ok := models.SortOrder_name[int32(m.GetOrder())]; !ok {
 		err := ListSuiteRunsRequestValidationError{
-			field:  "PageToken",
-			reason: "value length must be at most 256 runes",
+			field:  "Order",
+			reason: "value must be one of the defined enum values",
 		}
 		if !all {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPage()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListSuiteRunsRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListSuiteRunsRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPage()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListSuiteRunsRequestValidationError{
+				field:  "Page",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListSuiteRunsRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListSuiteRunsRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListSuiteRunsRequestValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	if m.Status != nil {
@@ -890,6 +1358,39 @@ func (m *ListSuiteRunsRequest) validate(all bool) error {
 				return err
 			}
 			errors = append(errors, err)
+		}
+
+	}
+
+	if m.SuiteId != nil {
+
+		if all {
+			switch v := interface{}(m.GetSuiteId()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListSuiteRunsRequestValidationError{
+						field:  "SuiteId",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListSuiteRunsRequestValidationError{
+						field:  "SuiteId",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetSuiteId()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListSuiteRunsRequestValidationError{
+					field:  "SuiteId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
 		}
 
 	}
@@ -973,6 +1474,171 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListSuiteRunsRequestValidationError{}
+
+// Validate checks the field values on ListSuiteRunsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListSuiteRunsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListSuiteRunsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListSuiteRunsResponseMultiError, or nil if none found.
+func (m *ListSuiteRunsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListSuiteRunsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetSuiteRuns() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListSuiteRunsResponseValidationError{
+						field:  fmt.Sprintf("SuiteRuns[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListSuiteRunsResponseValidationError{
+						field:  fmt.Sprintf("SuiteRuns[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListSuiteRunsResponseValidationError{
+					field:  fmt.Sprintf("SuiteRuns[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetPageInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListSuiteRunsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListSuiteRunsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPageInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListSuiteRunsResponseValidationError{
+				field:  "PageInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ListSuiteRunsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListSuiteRunsResponseMultiError is an error wrapping multiple validation
+// errors returned by ListSuiteRunsResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ListSuiteRunsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListSuiteRunsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListSuiteRunsResponseMultiError) AllErrors() []error { return m }
+
+// ListSuiteRunsResponseValidationError is the validation error returned by
+// ListSuiteRunsResponse.Validate if the designated constraints aren't met.
+type ListSuiteRunsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListSuiteRunsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListSuiteRunsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListSuiteRunsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListSuiteRunsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListSuiteRunsResponseValidationError) ErrorName() string {
+	return "ListSuiteRunsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListSuiteRunsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListSuiteRunsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListSuiteRunsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListSuiteRunsResponseValidationError{}
 
 // Validate checks the field values on CancelSuiteRunRequest with the rules
 // defined in the proto definition for this message. If any rules are

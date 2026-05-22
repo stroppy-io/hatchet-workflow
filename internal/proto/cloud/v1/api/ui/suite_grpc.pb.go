@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	SuiteService_CreateSuite_FullMethodName    = "/cloud.v1.api.ui.SuiteService/CreateSuite"
 	SuiteService_GetSuite_FullMethodName       = "/cloud.v1.api.ui.SuiteService/GetSuite"
+	SuiteService_ListSuites_FullMethodName     = "/cloud.v1.api.ui.SuiteService/ListSuites"
 	SuiteService_LaunchSuiteRun_FullMethodName = "/cloud.v1.api.ui.SuiteService/LaunchSuiteRun"
 	SuiteService_GetSuiteRun_FullMethodName    = "/cloud.v1.api.ui.SuiteService/GetSuiteRun"
 	SuiteService_ListSuiteRuns_FullMethodName  = "/cloud.v1.api.ui.SuiteService/ListSuiteRuns"
@@ -34,9 +35,10 @@ const (
 type SuiteServiceClient interface {
 	CreateSuite(ctx context.Context, in *CreateSuiteRequest, opts ...grpc.CallOption) (*models.Suite, error)
 	GetSuite(ctx context.Context, in *GetSuiteRequest, opts ...grpc.CallOption) (*models.Suite, error)
+	ListSuites(ctx context.Context, in *ListSuitesRequest, opts ...grpc.CallOption) (*ListSuitesResponse, error)
 	LaunchSuiteRun(ctx context.Context, in *LaunchSuiteRunRequest, opts ...grpc.CallOption) (*models.SuiteRun, error)
 	GetSuiteRun(ctx context.Context, in *GetSuiteRunRequest, opts ...grpc.CallOption) (*models.SuiteRun, error)
-	ListSuiteRuns(ctx context.Context, in *ListSuiteRunsRequest, opts ...grpc.CallOption) (*models.SuiteRun_List, error)
+	ListSuiteRuns(ctx context.Context, in *ListSuiteRunsRequest, opts ...grpc.CallOption) (*ListSuiteRunsResponse, error)
 	CancelSuiteRun(ctx context.Context, in *CancelSuiteRunRequest, opts ...grpc.CallOption) (*models.SuiteRun, error)
 }
 
@@ -68,6 +70,16 @@ func (c *suiteServiceClient) GetSuite(ctx context.Context, in *GetSuiteRequest, 
 	return out, nil
 }
 
+func (c *suiteServiceClient) ListSuites(ctx context.Context, in *ListSuitesRequest, opts ...grpc.CallOption) (*ListSuitesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSuitesResponse)
+	err := c.cc.Invoke(ctx, SuiteService_ListSuites_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *suiteServiceClient) LaunchSuiteRun(ctx context.Context, in *LaunchSuiteRunRequest, opts ...grpc.CallOption) (*models.SuiteRun, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(models.SuiteRun)
@@ -88,9 +100,9 @@ func (c *suiteServiceClient) GetSuiteRun(ctx context.Context, in *GetSuiteRunReq
 	return out, nil
 }
 
-func (c *suiteServiceClient) ListSuiteRuns(ctx context.Context, in *ListSuiteRunsRequest, opts ...grpc.CallOption) (*models.SuiteRun_List, error) {
+func (c *suiteServiceClient) ListSuiteRuns(ctx context.Context, in *ListSuiteRunsRequest, opts ...grpc.CallOption) (*ListSuiteRunsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(models.SuiteRun_List)
+	out := new(ListSuiteRunsResponse)
 	err := c.cc.Invoke(ctx, SuiteService_ListSuiteRuns_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -114,9 +126,10 @@ func (c *suiteServiceClient) CancelSuiteRun(ctx context.Context, in *CancelSuite
 type SuiteServiceServer interface {
 	CreateSuite(context.Context, *CreateSuiteRequest) (*models.Suite, error)
 	GetSuite(context.Context, *GetSuiteRequest) (*models.Suite, error)
+	ListSuites(context.Context, *ListSuitesRequest) (*ListSuitesResponse, error)
 	LaunchSuiteRun(context.Context, *LaunchSuiteRunRequest) (*models.SuiteRun, error)
 	GetSuiteRun(context.Context, *GetSuiteRunRequest) (*models.SuiteRun, error)
-	ListSuiteRuns(context.Context, *ListSuiteRunsRequest) (*models.SuiteRun_List, error)
+	ListSuiteRuns(context.Context, *ListSuiteRunsRequest) (*ListSuiteRunsResponse, error)
 	CancelSuiteRun(context.Context, *CancelSuiteRunRequest) (*models.SuiteRun, error)
 	mustEmbedUnimplementedSuiteServiceServer()
 }
@@ -134,13 +147,16 @@ func (UnimplementedSuiteServiceServer) CreateSuite(context.Context, *CreateSuite
 func (UnimplementedSuiteServiceServer) GetSuite(context.Context, *GetSuiteRequest) (*models.Suite, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSuite not implemented")
 }
+func (UnimplementedSuiteServiceServer) ListSuites(context.Context, *ListSuitesRequest) (*ListSuitesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSuites not implemented")
+}
 func (UnimplementedSuiteServiceServer) LaunchSuiteRun(context.Context, *LaunchSuiteRunRequest) (*models.SuiteRun, error) {
 	return nil, status.Error(codes.Unimplemented, "method LaunchSuiteRun not implemented")
 }
 func (UnimplementedSuiteServiceServer) GetSuiteRun(context.Context, *GetSuiteRunRequest) (*models.SuiteRun, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSuiteRun not implemented")
 }
-func (UnimplementedSuiteServiceServer) ListSuiteRuns(context.Context, *ListSuiteRunsRequest) (*models.SuiteRun_List, error) {
+func (UnimplementedSuiteServiceServer) ListSuiteRuns(context.Context, *ListSuiteRunsRequest) (*ListSuiteRunsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListSuiteRuns not implemented")
 }
 func (UnimplementedSuiteServiceServer) CancelSuiteRun(context.Context, *CancelSuiteRunRequest) (*models.SuiteRun, error) {
@@ -199,6 +215,24 @@ func _SuiteService_GetSuite_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SuiteServiceServer).GetSuite(ctx, req.(*GetSuiteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SuiteService_ListSuites_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSuitesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SuiteServiceServer).ListSuites(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SuiteService_ListSuites_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SuiteServiceServer).ListSuites(ctx, req.(*ListSuitesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -289,6 +323,10 @@ var SuiteService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSuite",
 			Handler:    _SuiteService_GetSuite_Handler,
+		},
+		{
+			MethodName: "ListSuites",
+			Handler:    _SuiteService_ListSuites_Handler,
 		},
 		{
 			MethodName: "LaunchSuiteRun",

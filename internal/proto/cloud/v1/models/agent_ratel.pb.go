@@ -10,9 +10,9 @@ import (
 	"github.com/yaroher/ratel/pkg/ddl"
 	"github.com/yaroher/ratel/pkg/dml/set"
 	"github.com/yaroher/ratel/pkg/exec"
-	"github.com/yaroher/ratel/pkg/sqlerr"
 	"github.com/yaroher/ratel/pkg/repository"
 	"github.com/yaroher/ratel/pkg/schema"
+	"github.com/yaroher/ratel/pkg/sqlerr"
 )
 
 var (
@@ -35,7 +35,6 @@ func (c AgentColumnAlias) String() string { return string(c) }
 
 const (
 	AgentColumnId               AgentColumnAlias = "id"
-	AgentColumnOwnerAccountId   AgentColumnAlias = "owner_account_id"
 	AgentColumnTenantId         AgentColumnAlias = "tenant_id"
 	AgentColumnCreatedAt        AgentColumnAlias = "created_at"
 	AgentColumnUpdatedAt        AgentColumnAlias = "updated_at"
@@ -51,6 +50,7 @@ const (
 	AgentColumnLastSeenAt       AgentColumnAlias = "last_seen_at"
 	AgentColumnLeaseExpiresAt   AgentColumnAlias = "lease_expires_at"
 	AgentColumnError            AgentColumnAlias = "error"
+	AgentColumnTags             AgentColumnAlias = "tags"
 	AgentColumnRuntime          AgentColumnAlias = "runtime"
 )
 
@@ -58,8 +58,6 @@ func (s *AgentScanner) GetTarget(col string) func() any {
 	switch AgentColumnAlias(col) {
 	case AgentColumnId:
 		return func() any { return &s.Id }
-	case AgentColumnOwnerAccountId:
-		return func() any { return &s.OwnerAccountId }
 	case AgentColumnTenantId:
 		return func() any { return &s.TenantId }
 	case AgentColumnCreatedAt:
@@ -90,6 +88,8 @@ func (s *AgentScanner) GetTarget(col string) func() any {
 		return func() any { return &s.LeaseExpiresAt }
 	case AgentColumnError:
 		return func() any { return &s.Error }
+	case AgentColumnTags:
+		return func() any { return &s.Tags }
 	case AgentColumnRuntime:
 		return func() any { return &s.Runtime }
 	default:
@@ -101,8 +101,6 @@ func (s *AgentScanner) GetSetter(f AgentColumnAlias) func() set.ValueSetter[Agen
 	switch f {
 	case AgentColumnId:
 		return func() set.ValueSetter[AgentColumnAlias] { return set.NewSetter(f, &s.Id) }
-	case AgentColumnOwnerAccountId:
-		return func() set.ValueSetter[AgentColumnAlias] { return set.NewSetter(f, &s.OwnerAccountId) }
 	case AgentColumnTenantId:
 		return func() set.ValueSetter[AgentColumnAlias] { return set.NewSetter(f, &s.TenantId) }
 	case AgentColumnCreatedAt:
@@ -133,6 +131,8 @@ func (s *AgentScanner) GetSetter(f AgentColumnAlias) func() set.ValueSetter[Agen
 		return func() set.ValueSetter[AgentColumnAlias] { return set.NewSetter(f, &s.LeaseExpiresAt) }
 	case AgentColumnError:
 		return func() set.ValueSetter[AgentColumnAlias] { return set.NewSetter(f, &s.Error) }
+	case AgentColumnTags:
+		return func() set.ValueSetter[AgentColumnAlias] { return set.NewSetter(f, &s.Tags) }
 	case AgentColumnRuntime:
 		return func() set.ValueSetter[AgentColumnAlias] { return set.NewSetter(f, &s.Runtime) }
 	default:
@@ -144,8 +144,6 @@ func (s *AgentScanner) GetValue(f AgentColumnAlias) func() any {
 	switch f {
 	case AgentColumnId:
 		return func() any { return s.Id }
-	case AgentColumnOwnerAccountId:
-		return func() any { return s.OwnerAccountId }
 	case AgentColumnTenantId:
 		return func() any { return s.TenantId }
 	case AgentColumnCreatedAt:
@@ -176,6 +174,8 @@ func (s *AgentScanner) GetValue(f AgentColumnAlias) func() any {
 		return func() any { return s.LeaseExpiresAt }
 	case AgentColumnError:
 		return func() any { return s.Error }
+	case AgentColumnTags:
+		return func() any { return s.Tags }
 	case AgentColumnRuntime:
 		return func() any { return s.Runtime }
 	default:
@@ -186,7 +186,6 @@ func (s *AgentScanner) GetValue(f AgentColumnAlias) func() any {
 func (s *AgentScanner) AllSetters() []set.ValueSetter[AgentColumnAlias] {
 	return []set.ValueSetter[AgentColumnAlias]{
 		set.NewSetter[AgentColumnAlias](AgentColumnId, s.Id),
-		set.NewSetter[AgentColumnAlias](AgentColumnOwnerAccountId, s.OwnerAccountId),
 		set.NewSetter[AgentColumnAlias](AgentColumnTenantId, s.TenantId),
 		set.NewSetter[AgentColumnAlias](AgentColumnCreatedAt, s.CreatedAt),
 		set.NewSetter[AgentColumnAlias](AgentColumnUpdatedAt, s.UpdatedAt),
@@ -202,6 +201,7 @@ func (s *AgentScanner) AllSetters() []set.ValueSetter[AgentColumnAlias] {
 		set.NewSetter[AgentColumnAlias](AgentColumnLastSeenAt, s.LastSeenAt),
 		set.NewSetter[AgentColumnAlias](AgentColumnLeaseExpiresAt, s.LeaseExpiresAt),
 		set.NewSetter[AgentColumnAlias](AgentColumnError, s.Error),
+		set.NewSetter[AgentColumnAlias](AgentColumnTags, s.Tags),
 		set.NewSetter[AgentColumnAlias](AgentColumnRuntime, s.Runtime),
 	}
 }
@@ -215,7 +215,6 @@ func (s *AgentScanner) Relations() []exec.RelationLoader[*AgentScanner] {
 type AgentsTable struct {
 	*schema.Table[AgentAlias, AgentColumnAlias, *AgentScanner]
 	Id               schema.TextColumnI[AgentColumnAlias]
-	OwnerAccountId   schema.TextColumnI[AgentColumnAlias]
 	TenantId         schema.TextColumnI[AgentColumnAlias]
 	CreatedAt        schema.TimestamptzColumnI[AgentColumnAlias]
 	UpdatedAt        schema.TimestamptzColumnI[AgentColumnAlias]
@@ -231,13 +230,13 @@ type AgentsTable struct {
 	LastSeenAt       schema.TimestamptzColumnI[AgentColumnAlias]
 	LeaseExpiresAt   schema.TimestamptzColumnI[AgentColumnAlias]
 	Error            schema.TextColumnI[AgentColumnAlias]
+	Tags             schema.TextColumnI[AgentColumnAlias]
 	Runtime          schema.TextColumnI[AgentColumnAlias]
 }
 
 // Agents is the global agents table instance
 var Agents = func() AgentsTable {
 	idCol := schema.TextColumn(AgentColumnId, ddl.WithPrimaryKey[AgentColumnAlias]())
-	ownerAccountIdCol := schema.TextColumn(AgentColumnOwnerAccountId, ddl.WithReferences[AgentColumnAlias]("accounts", "id"), ddl.WithOnDelete[AgentColumnAlias]("CASCADE"), ddl.WithNotNull[AgentColumnAlias]())
 	tenantIdCol := schema.TextColumn(AgentColumnTenantId, ddl.WithReferences[AgentColumnAlias]("tenants", "id"), ddl.WithOnDelete[AgentColumnAlias]("CASCADE"), ddl.WithNotNull[AgentColumnAlias]())
 	createdAtCol := schema.TimestamptzColumn(AgentColumnCreatedAt, ddl.WithDefault[AgentColumnAlias]("now()"), ddl.WithNotNull[AgentColumnAlias]())
 	updatedAtCol := schema.TimestamptzColumn(AgentColumnUpdatedAt, ddl.WithDefault[AgentColumnAlias]("now()"), ddl.WithNotNull[AgentColumnAlias]())
@@ -253,6 +252,7 @@ var Agents = func() AgentsTable {
 	lastSeenAtCol := schema.TimestamptzColumn(AgentColumnLastSeenAt, ddl.WithNotNull[AgentColumnAlias]())
 	leaseExpiresAtCol := schema.TimestamptzColumn(AgentColumnLeaseExpiresAt, ddl.WithNotNull[AgentColumnAlias]())
 	errorCol := schema.TextColumn(AgentColumnError, ddl.WithNotNull[AgentColumnAlias]())
+	tagsCol := schema.TextColumn(AgentColumnTags, ddl.WithNotNull[AgentColumnAlias]())
 	runtimeCol := schema.TextColumn(AgentColumnRuntime, ddl.WithDefault[AgentColumnAlias]("'{}'::jsonb"), ddl.WithNotNull[AgentColumnAlias]())
 
 	idx0 := ddl.NewIndex[AgentAlias, AgentColumnAlias]("agents_tenant_machine_idx", AgentAliasName).OnColumns(AgentColumnTenantId, AgentColumnMachineId)
@@ -264,7 +264,6 @@ var Agents = func() AgentsTable {
 			func() *AgentScanner { return &AgentScanner{} },
 			[]*ddl.ColumnDDL[AgentColumnAlias]{
 				idCol.DDL(),
-				ownerAccountIdCol.DDL(),
 				tenantIdCol.DDL(),
 				createdAtCol.DDL(),
 				updatedAtCol.DDL(),
@@ -280,6 +279,7 @@ var Agents = func() AgentsTable {
 				lastSeenAtCol.DDL(),
 				leaseExpiresAtCol.DDL(),
 				errorCol.DDL(),
+				tagsCol.DDL(),
 				runtimeCol.DDL(),
 			},
 			ddl.WithIndexes[AgentAlias, AgentColumnAlias](
@@ -288,7 +288,6 @@ var Agents = func() AgentsTable {
 			),
 		),
 		Id:               idCol,
-		OwnerAccountId:   ownerAccountIdCol,
 		TenantId:         tenantIdCol,
 		CreatedAt:        createdAtCol,
 		UpdatedAt:        updatedAtCol,
@@ -304,6 +303,7 @@ var Agents = func() AgentsTable {
 		LastSeenAt:       lastSeenAtCol,
 		LeaseExpiresAt:   leaseExpiresAtCol,
 		Error:            errorCol,
+		Tags:             tagsCol,
 		Runtime:          runtimeCol,
 	}
 }()

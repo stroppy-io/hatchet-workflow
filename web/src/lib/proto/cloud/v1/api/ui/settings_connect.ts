@@ -3,9 +3,9 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { DeleteSettingsItemRequest, GetSettingsItemRequest, ListSettingsItemsRequest, SetSettingsItemRequest } from "./settings_pbts";
-import { SettingsItem, SettingsItem_List } from "../../models/settings_pbts";
+import { DeleteSettingsItemRequest, GetSettingsItemRequest, ListSettingsItemsRequest, ListSettingsItemsResponse, SetSettingsItemRequest } from "./settings_pbts";
 import { Empty, MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
+import { SettingsItem } from "../../models/settings_pbts";
 
 /**
  * @generated from service cloud.v1.api.ui.SettingsService
@@ -19,7 +19,7 @@ export const SettingsService = {
     listSettingsItems: {
       name: "ListSettingsItems",
       I: ListSettingsItemsRequest,
-      O: SettingsItem_List,
+      O: ListSettingsItemsResponse,
       kind: MethodKind.Unary,
       idempotency: MethodIdempotency.NoSideEffects,
     },

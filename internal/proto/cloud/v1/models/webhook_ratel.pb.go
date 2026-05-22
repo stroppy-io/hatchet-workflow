@@ -10,9 +10,9 @@ import (
 	"github.com/yaroher/ratel/pkg/ddl"
 	"github.com/yaroher/ratel/pkg/dml/set"
 	"github.com/yaroher/ratel/pkg/exec"
-	"github.com/yaroher/ratel/pkg/sqlerr"
 	"github.com/yaroher/ratel/pkg/repository"
 	"github.com/yaroher/ratel/pkg/schema"
+	"github.com/yaroher/ratel/pkg/sqlerr"
 )
 
 var (
@@ -43,6 +43,7 @@ const (
 	WebhookColumnUrl            WebhookColumnAlias = "url"
 	WebhookColumnEvents         WebhookColumnAlias = "events"
 	WebhookColumnEnabled        WebhookColumnAlias = "enabled"
+	WebhookColumnTags           WebhookColumnAlias = "tags"
 	WebhookColumnSecret         WebhookColumnAlias = "secret"
 )
 
@@ -66,6 +67,8 @@ func (s *WebhookScanner) GetTarget(col string) func() any {
 		return func() any { return &s.Events }
 	case WebhookColumnEnabled:
 		return func() any { return &s.Enabled }
+	case WebhookColumnTags:
+		return func() any { return &s.Tags }
 	case WebhookColumnSecret:
 		return func() any { return &s.Secret }
 	default:
@@ -93,6 +96,8 @@ func (s *WebhookScanner) GetSetter(f WebhookColumnAlias) func() set.ValueSetter[
 		return func() set.ValueSetter[WebhookColumnAlias] { return set.NewSetter(f, &s.Events) }
 	case WebhookColumnEnabled:
 		return func() set.ValueSetter[WebhookColumnAlias] { return set.NewSetter(f, &s.Enabled) }
+	case WebhookColumnTags:
+		return func() set.ValueSetter[WebhookColumnAlias] { return set.NewSetter(f, &s.Tags) }
 	case WebhookColumnSecret:
 		return func() set.ValueSetter[WebhookColumnAlias] { return set.NewSetter(f, &s.Secret) }
 	default:
@@ -120,6 +125,8 @@ func (s *WebhookScanner) GetValue(f WebhookColumnAlias) func() any {
 		return func() any { return s.Events }
 	case WebhookColumnEnabled:
 		return func() any { return s.Enabled }
+	case WebhookColumnTags:
+		return func() any { return s.Tags }
 	case WebhookColumnSecret:
 		return func() any { return s.Secret }
 	default:
@@ -138,6 +145,7 @@ func (s *WebhookScanner) AllSetters() []set.ValueSetter[WebhookColumnAlias] {
 		set.NewSetter[WebhookColumnAlias](WebhookColumnUrl, s.Url),
 		set.NewSetter[WebhookColumnAlias](WebhookColumnEvents, s.Events),
 		set.NewSetter[WebhookColumnAlias](WebhookColumnEnabled, s.Enabled),
+		set.NewSetter[WebhookColumnAlias](WebhookColumnTags, s.Tags),
 		set.NewSetter[WebhookColumnAlias](WebhookColumnSecret, s.Secret),
 	}
 }
@@ -159,6 +167,7 @@ type WebhooksTable struct {
 	Url            schema.TextColumnI[WebhookColumnAlias]
 	Events         schema.TextArrayColumnI[WebhookColumnAlias]
 	Enabled        schema.BooleanColumnI[WebhookColumnAlias]
+	Tags           schema.TextColumnI[WebhookColumnAlias]
 	Secret         schema.NullTextColumnI[WebhookColumnAlias]
 }
 
@@ -173,6 +182,7 @@ var Webhooks = func() WebhooksTable {
 	urlCol := schema.TextColumn(WebhookColumnUrl, ddl.WithNotNull[WebhookColumnAlias]())
 	eventsCol := schema.TextArrayColumn(WebhookColumnEvents, ddl.WithNotNull[WebhookColumnAlias]())
 	enabledCol := schema.BooleanColumn(WebhookColumnEnabled, ddl.WithNotNull[WebhookColumnAlias]())
+	tagsCol := schema.TextColumn(WebhookColumnTags, ddl.WithNotNull[WebhookColumnAlias]())
 	secretCol := schema.NullTextColumn(WebhookColumnSecret)
 
 	return WebhooksTable{
@@ -189,6 +199,7 @@ var Webhooks = func() WebhooksTable {
 				urlCol.DDL(),
 				eventsCol.DDL(),
 				enabledCol.DDL(),
+				tagsCol.DDL(),
 				secretCol.DDL(),
 			},
 		),
@@ -201,6 +212,7 @@ var Webhooks = func() WebhooksTable {
 		Url:            urlCol,
 		Events:         eventsCol,
 		Enabled:        enabledCol,
+		Tags:           tagsCol,
 		Secret:         secretCol,
 	}
 }()

@@ -25,132 +25,55 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type CommonQuery_Sort_Direction int32
+// SortOrder — direction for a list query's typed sort field.
+// Pair with each request's nested SortField enum. UNSPECIFIED = server default.
+type SortOrder int32
 
 const (
-	CommonQuery_Sort_DIRECTION_UNSPECIFIED CommonQuery_Sort_Direction = 0
-	CommonQuery_Sort_ASC                   CommonQuery_Sort_Direction = 1
-	CommonQuery_Sort_DESC                  CommonQuery_Sort_Direction = 2
+	SortOrder_SORT_ORDER_UNSPECIFIED SortOrder = 0
+	SortOrder_SORT_ORDER_ASC         SortOrder = 1
+	SortOrder_SORT_ORDER_DESC        SortOrder = 2
 )
 
-// Enum value maps for CommonQuery_Sort_Direction.
+// Enum value maps for SortOrder.
 var (
-	CommonQuery_Sort_Direction_name = map[int32]string{
-		0: "DIRECTION_UNSPECIFIED",
-		1: "ASC",
-		2: "DESC",
+	SortOrder_name = map[int32]string{
+		0: "SORT_ORDER_UNSPECIFIED",
+		1: "SORT_ORDER_ASC",
+		2: "SORT_ORDER_DESC",
 	}
-	CommonQuery_Sort_Direction_value = map[string]int32{
-		"DIRECTION_UNSPECIFIED": 0,
-		"ASC":                   1,
-		"DESC":                  2,
+	SortOrder_value = map[string]int32{
+		"SORT_ORDER_UNSPECIFIED": 0,
+		"SORT_ORDER_ASC":         1,
+		"SORT_ORDER_DESC":        2,
 	}
 )
 
-func (x CommonQuery_Sort_Direction) Enum() *CommonQuery_Sort_Direction {
-	p := new(CommonQuery_Sort_Direction)
+func (x SortOrder) Enum() *SortOrder {
+	p := new(SortOrder)
 	*p = x
 	return p
 }
 
-func (x CommonQuery_Sort_Direction) String() string {
+func (x SortOrder) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (CommonQuery_Sort_Direction) Descriptor() protoreflect.EnumDescriptor {
+func (SortOrder) Descriptor() protoreflect.EnumDescriptor {
 	return file_cloud_v1_models_common_proto_enumTypes[0].Descriptor()
 }
 
-func (CommonQuery_Sort_Direction) Type() protoreflect.EnumType {
+func (SortOrder) Type() protoreflect.EnumType {
 	return &file_cloud_v1_models_common_proto_enumTypes[0]
 }
 
-func (x CommonQuery_Sort_Direction) Number() protoreflect.EnumNumber {
+func (x SortOrder) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use CommonQuery_Sort_Direction.Descriptor instead.
-func (CommonQuery_Sort_Direction) EnumDescriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{14, 0, 0}
-}
-
-type CommonQuery_Filter_Operator int32
-
-const (
-	CommonQuery_Filter_OPERATOR_UNSPECIFIED CommonQuery_Filter_Operator = 0
-	CommonQuery_Filter_EQ                   CommonQuery_Filter_Operator = 1  // field = value
-	CommonQuery_Filter_NEQ                  CommonQuery_Filter_Operator = 2  // field != value
-	CommonQuery_Filter_GT                   CommonQuery_Filter_Operator = 3  // field > value
-	CommonQuery_Filter_GTE                  CommonQuery_Filter_Operator = 4  // field >= value
-	CommonQuery_Filter_LT                   CommonQuery_Filter_Operator = 5  // field < value
-	CommonQuery_Filter_LTE                  CommonQuery_Filter_Operator = 6  // field <= value
-	CommonQuery_Filter_LIKE                 CommonQuery_Filter_Operator = 7  // case-sensitive pattern match
-	CommonQuery_Filter_ILIKE                CommonQuery_Filter_Operator = 8  // case-insensitive pattern match
-	CommonQuery_Filter_IN                   CommonQuery_Filter_Operator = 9  // field IN (values...)
-	CommonQuery_Filter_NOT_IN               CommonQuery_Filter_Operator = 10 // field NOT IN (values...)
-	CommonQuery_Filter_IS_NULL              CommonQuery_Filter_Operator = 11 // field IS NULL (no value)
-	CommonQuery_Filter_IS_NOT_NULL          CommonQuery_Filter_Operator = 12 // field IS NOT NULL (no value)
-)
-
-// Enum value maps for CommonQuery_Filter_Operator.
-var (
-	CommonQuery_Filter_Operator_name = map[int32]string{
-		0:  "OPERATOR_UNSPECIFIED",
-		1:  "EQ",
-		2:  "NEQ",
-		3:  "GT",
-		4:  "GTE",
-		5:  "LT",
-		6:  "LTE",
-		7:  "LIKE",
-		8:  "ILIKE",
-		9:  "IN",
-		10: "NOT_IN",
-		11: "IS_NULL",
-		12: "IS_NOT_NULL",
-	}
-	CommonQuery_Filter_Operator_value = map[string]int32{
-		"OPERATOR_UNSPECIFIED": 0,
-		"EQ":                   1,
-		"NEQ":                  2,
-		"GT":                   3,
-		"GTE":                  4,
-		"LT":                   5,
-		"LTE":                  6,
-		"LIKE":                 7,
-		"ILIKE":                8,
-		"IN":                   9,
-		"NOT_IN":               10,
-		"IS_NULL":              11,
-		"IS_NOT_NULL":          12,
-	}
-)
-
-func (x CommonQuery_Filter_Operator) Enum() *CommonQuery_Filter_Operator {
-	p := new(CommonQuery_Filter_Operator)
-	*p = x
-	return p
-}
-
-func (x CommonQuery_Filter_Operator) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (CommonQuery_Filter_Operator) Descriptor() protoreflect.EnumDescriptor {
-	return file_cloud_v1_models_common_proto_enumTypes[1].Descriptor()
-}
-
-func (CommonQuery_Filter_Operator) Type() protoreflect.EnumType {
-	return &file_cloud_v1_models_common_proto_enumTypes[1]
-}
-
-func (x CommonQuery_Filter_Operator) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use CommonQuery_Filter_Operator.Descriptor instead.
-func (CommonQuery_Filter_Operator) EnumDescriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{14, 1, 0}
+// Deprecated: Use SortOrder.Descriptor instead.
+func (SortOrder) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{0}
 }
 
 type Ulid struct {
@@ -803,33 +726,31 @@ func (x *Own) GetTenantId() *TenantId {
 	return nil
 }
 
-// CommonQuery — reusable list query: filter + sort + cursor pagination.
-// Filters in `filter` are combined with logical AND. Pagination is
-// cursor-based: client passes back `page.token` from the previous
-// PageInfo to fetch the next page.
-type CommonQuery struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filter        []*CommonQuery_Filter  `protobuf:"bytes,1,rep,name=filter,proto3" json:"filter,omitempty"`
-	Sort          []*CommonQuery_Sort    `protobuf:"bytes,2,rep,name=sort,proto3" json:"sort,omitempty"`
-	Page          *CommonQuery_Page      `protobuf:"bytes,3,opt,name=page,proto3" json:"page,omitempty"`
+// Page — cursor-based pagination request.
+type Page struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Max items to return. 0 = server default.
+	Size uint32 `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
+	// Opaque cursor from a previous PageInfo.next_token. Empty = first page.
+	Token         string `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CommonQuery) Reset() {
-	*x = CommonQuery{}
+func (x *Page) Reset() {
+	*x = Page{}
 	mi := &file_cloud_v1_models_common_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CommonQuery) String() string {
+func (x *Page) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CommonQuery) ProtoMessage() {}
+func (*Page) ProtoMessage() {}
 
-func (x *CommonQuery) ProtoReflect() protoreflect.Message {
+func (x *Page) ProtoReflect() protoreflect.Message {
 	mi := &file_cloud_v1_models_common_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -841,30 +762,23 @@ func (x *CommonQuery) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CommonQuery.ProtoReflect.Descriptor instead.
-func (*CommonQuery) Descriptor() ([]byte, []int) {
+// Deprecated: Use Page.ProtoReflect.Descriptor instead.
+func (*Page) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *CommonQuery) GetFilter() []*CommonQuery_Filter {
+func (x *Page) GetSize() uint32 {
 	if x != nil {
-		return x.Filter
+		return x.Size
 	}
-	return nil
+	return 0
 }
 
-func (x *CommonQuery) GetSort() []*CommonQuery_Sort {
+func (x *Page) GetToken() string {
 	if x != nil {
-		return x.Sort
+		return x.Token
 	}
-	return nil
-}
-
-func (x *CommonQuery) GetPage() *CommonQuery_Page {
-	if x != nil {
-		return x.Page
-	}
-	return nil
+	return ""
 }
 
 // PageInfo — pagination metadata returned alongside a list result.
@@ -933,178 +847,6 @@ func (x *PageInfo) GetTotal() uint64 {
 	return 0
 }
 
-type CommonQuery_Sort struct {
-	state         protoimpl.MessageState     `protogen:"open.v1"`
-	Field         string                     `protobuf:"bytes,1,opt,name=field,proto3" json:"field,omitempty"`
-	Direction     CommonQuery_Sort_Direction `protobuf:"varint,2,opt,name=direction,proto3,enum=cloud.v1.models.CommonQuery_Sort_Direction" json:"direction,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CommonQuery_Sort) Reset() {
-	*x = CommonQuery_Sort{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CommonQuery_Sort) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CommonQuery_Sort) ProtoMessage() {}
-
-func (x *CommonQuery_Sort) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[16]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CommonQuery_Sort.ProtoReflect.Descriptor instead.
-func (*CommonQuery_Sort) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{14, 0}
-}
-
-func (x *CommonQuery_Sort) GetField() string {
-	if x != nil {
-		return x.Field
-	}
-	return ""
-}
-
-func (x *CommonQuery_Sort) GetDirection() CommonQuery_Sort_Direction {
-	if x != nil {
-		return x.Direction
-	}
-	return CommonQuery_Sort_DIRECTION_UNSPECIFIED
-}
-
-// Filter — one predicate over a single field. Combined with other
-// filters via AND. For UNARY operators (IS_NULL/IS_NOT_NULL) `values`
-// must be empty; for IN/NOT_IN it may hold many; otherwise exactly one.
-type CommonQuery_Filter struct {
-	state    protoimpl.MessageState      `protogen:"open.v1"`
-	Field    string                      `protobuf:"bytes,1,opt,name=field,proto3" json:"field,omitempty"`
-	Operator CommonQuery_Filter_Operator `protobuf:"varint,2,opt,name=operator,proto3,enum=cloud.v1.models.CommonQuery_Filter_Operator" json:"operator,omitempty"`
-	// String-encoded operands; the field's real type is resolved by the
-	// server. Multiple entries only make sense for IN/NOT_IN.
-	Values        []string `protobuf:"bytes,3,rep,name=values,proto3" json:"values,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CommonQuery_Filter) Reset() {
-	*x = CommonQuery_Filter{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CommonQuery_Filter) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CommonQuery_Filter) ProtoMessage() {}
-
-func (x *CommonQuery_Filter) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CommonQuery_Filter.ProtoReflect.Descriptor instead.
-func (*CommonQuery_Filter) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{14, 1}
-}
-
-func (x *CommonQuery_Filter) GetField() string {
-	if x != nil {
-		return x.Field
-	}
-	return ""
-}
-
-func (x *CommonQuery_Filter) GetOperator() CommonQuery_Filter_Operator {
-	if x != nil {
-		return x.Operator
-	}
-	return CommonQuery_Filter_OPERATOR_UNSPECIFIED
-}
-
-func (x *CommonQuery_Filter) GetValues() []string {
-	if x != nil {
-		return x.Values
-	}
-	return nil
-}
-
-// Page — cursor-based pagination request.
-type CommonQuery_Page struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Max items to return. 0 = server default.
-	Size uint32 `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
-	// Opaque cursor from a previous PageInfo.next_token. Empty = first page.
-	Token         string `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CommonQuery_Page) Reset() {
-	*x = CommonQuery_Page{}
-	mi := &file_cloud_v1_models_common_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CommonQuery_Page) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CommonQuery_Page) ProtoMessage() {}
-
-func (x *CommonQuery_Page) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_common_proto_msgTypes[18]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CommonQuery_Page.ProtoReflect.Descriptor instead.
-func (*CommonQuery_Page) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_common_proto_rawDescGZIP(), []int{14, 2}
-}
-
-func (x *CommonQuery_Page) GetSize() uint32 {
-	if x != nil {
-		return x.Size
-	}
-	return 0
-}
-
-func (x *CommonQuery_Page) GetToken() string {
-	if x != nil {
-		return x.Token
-	}
-	return ""
-}
-
 var File_cloud_v1_models_common_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_common_proto_rawDesc = "" +
@@ -1149,39 +891,7 @@ const file_cloud_v1_models_common_proto_rawDesc = "" +
 	"timestamps\"\xba\x01\n" +
 	"\x03Own\x12\\\n" +
 	"\x10owner_account_id\x18\x02 \x01(\v2\x1a.cloud.v1.models.AccountIdB\x16\x9a\xb5\x18\x12\x12\x102\baccounts:\x02id@\x01R\x0eownerAccountId\x12U\n" +
-	"\ttenant_id\x18\x03 \x01(\v2\x19.cloud.v1.models.TenantIdB\x1d\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x11\x12\x0f2\atenants:\x02id@\x01R\btenantId\"\xe5\x05\n" +
-	"\vCommonQuery\x12;\n" +
-	"\x06filter\x18\x01 \x03(\v2#.cloud.v1.models.CommonQuery.FilterR\x06filter\x125\n" +
-	"\x04sort\x18\x02 \x03(\v2!.cloud.v1.models.CommonQuery.SortR\x04sort\x125\n" +
-	"\x04page\x18\x03 \x01(\v2!.cloud.v1.models.CommonQuery.PageR\x04page\x1a\xb5\x01\n" +
-	"\x04Sort\x12\x1d\n" +
-	"\x05field\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05field\x12S\n" +
-	"\tdirection\x18\x02 \x01(\x0e2+.cloud.v1.models.CommonQuery.Sort.DirectionB\b\xfaB\x05\x82\x01\x02\x10\x01R\tdirection\"9\n" +
-	"\tDirection\x12\x19\n" +
-	"\x15DIRECTION_UNSPECIFIED\x10\x00\x12\a\n" +
-	"\x03ASC\x10\x01\x12\b\n" +
-	"\x04DESC\x10\x02\x1a\xb6\x02\n" +
-	"\x06Filter\x12\x1d\n" +
-	"\x05field\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05field\x12T\n" +
-	"\boperator\x18\x02 \x01(\x0e2,.cloud.v1.models.CommonQuery.Filter.OperatorB\n" +
-	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\boperator\x12\x16\n" +
-	"\x06values\x18\x03 \x03(\tR\x06values\"\x9e\x01\n" +
-	"\bOperator\x12\x18\n" +
-	"\x14OPERATOR_UNSPECIFIED\x10\x00\x12\x06\n" +
-	"\x02EQ\x10\x01\x12\a\n" +
-	"\x03NEQ\x10\x02\x12\x06\n" +
-	"\x02GT\x10\x03\x12\a\n" +
-	"\x03GTE\x10\x04\x12\x06\n" +
-	"\x02LT\x10\x05\x12\a\n" +
-	"\x03LTE\x10\x06\x12\b\n" +
-	"\x04LIKE\x10\a\x12\t\n" +
-	"\x05ILIKE\x10\b\x12\x06\n" +
-	"\x02IN\x10\t\x12\n" +
-	"\n" +
-	"\x06NOT_IN\x10\n" +
-	"\x12\v\n" +
-	"\aIS_NULL\x10\v\x12\x0f\n" +
-	"\vIS_NOT_NULL\x10\f\x1a:\n" +
+	"\ttenant_id\x18\x03 \x01(\v2\x19.cloud.v1.models.TenantIdB\x1d\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x11\x12\x0f2\atenants:\x02id@\x01R\btenantId\":\n" +
 	"\x04Page\x12\x1c\n" +
 	"\x04size\x18\x01 \x01(\rB\b\xfaB\x05*\x03\x18\xe8\aR\x04size\x12\x14\n" +
 	"\x05token\x18\x02 \x01(\tR\x05token\"i\n" +
@@ -1190,7 +900,11 @@ const file_cloud_v1_models_common_proto_rawDesc = "" +
 	"next_token\x18\x01 \x01(\tR\tnextToken\x12\x19\n" +
 	"\bhas_more\x18\x02 \x01(\bR\ahasMore\x12\x19\n" +
 	"\x05total\x18\x03 \x01(\x04H\x00R\x05total\x88\x01\x01B\b\n" +
-	"\x06_totalBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
+	"\x06_total*P\n" +
+	"\tSortOrder\x12\x1a\n" +
+	"\x16SORT_ORDER_UNSPECIFIED\x10\x00\x12\x12\n" +
+	"\x0eSORT_ORDER_ASC\x10\x01\x12\x13\n" +
+	"\x0fSORT_ORDER_DESC\x10\x02BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
 
 var (
 	file_cloud_v1_models_common_proto_rawDescOnce sync.Once
@@ -1204,50 +918,41 @@ func file_cloud_v1_models_common_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_models_common_proto_rawDescData
 }
 
-var file_cloud_v1_models_common_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_cloud_v1_models_common_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_cloud_v1_models_common_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cloud_v1_models_common_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_cloud_v1_models_common_proto_goTypes = []any{
-	(CommonQuery_Sort_Direction)(0),  // 0: cloud.v1.models.CommonQuery.Sort.Direction
-	(CommonQuery_Filter_Operator)(0), // 1: cloud.v1.models.CommonQuery.Filter.Operator
-	(*Ulid)(nil),                     // 2: cloud.v1.models.Ulid
-	(*AccountId)(nil),                // 3: cloud.v1.models.AccountId
-	(*TenantId)(nil),                 // 4: cloud.v1.models.TenantId
-	(*TenantMemberId)(nil),           // 5: cloud.v1.models.TenantMemberId
-	(*DatabasePresetId)(nil),         // 6: cloud.v1.models.DatabasePresetId
-	(*WorkloadPresetId)(nil),         // 7: cloud.v1.models.WorkloadPresetId
-	(*TestRunId)(nil),                // 8: cloud.v1.models.TestRunId
-	(*SuiteId)(nil),                  // 9: cloud.v1.models.SuiteId
-	(*SuiteRunId)(nil),               // 10: cloud.v1.models.SuiteRunId
-	(*DagId)(nil),                    // 11: cloud.v1.models.DagId
-	(*AgentId)(nil),                  // 12: cloud.v1.models.AgentId
-	(*Timestamps)(nil),               // 13: cloud.v1.models.Timestamps
-	(*Entity)(nil),                   // 14: cloud.v1.models.Entity
-	(*Own)(nil),                      // 15: cloud.v1.models.Own
-	(*CommonQuery)(nil),              // 16: cloud.v1.models.CommonQuery
-	(*PageInfo)(nil),                 // 17: cloud.v1.models.PageInfo
-	(*CommonQuery_Sort)(nil),         // 18: cloud.v1.models.CommonQuery.Sort
-	(*CommonQuery_Filter)(nil),       // 19: cloud.v1.models.CommonQuery.Filter
-	(*CommonQuery_Page)(nil),         // 20: cloud.v1.models.CommonQuery.Page
-	(*timestamppb.Timestamp)(nil),    // 21: google.protobuf.Timestamp
+	(SortOrder)(0),                // 0: cloud.v1.models.SortOrder
+	(*Ulid)(nil),                  // 1: cloud.v1.models.Ulid
+	(*AccountId)(nil),             // 2: cloud.v1.models.AccountId
+	(*TenantId)(nil),              // 3: cloud.v1.models.TenantId
+	(*TenantMemberId)(nil),        // 4: cloud.v1.models.TenantMemberId
+	(*DatabasePresetId)(nil),      // 5: cloud.v1.models.DatabasePresetId
+	(*WorkloadPresetId)(nil),      // 6: cloud.v1.models.WorkloadPresetId
+	(*TestRunId)(nil),             // 7: cloud.v1.models.TestRunId
+	(*SuiteId)(nil),               // 8: cloud.v1.models.SuiteId
+	(*SuiteRunId)(nil),            // 9: cloud.v1.models.SuiteRunId
+	(*DagId)(nil),                 // 10: cloud.v1.models.DagId
+	(*AgentId)(nil),               // 11: cloud.v1.models.AgentId
+	(*Timestamps)(nil),            // 12: cloud.v1.models.Timestamps
+	(*Entity)(nil),                // 13: cloud.v1.models.Entity
+	(*Own)(nil),                   // 14: cloud.v1.models.Own
+	(*Page)(nil),                  // 15: cloud.v1.models.Page
+	(*PageInfo)(nil),              // 16: cloud.v1.models.PageInfo
+	(*timestamppb.Timestamp)(nil), // 17: google.protobuf.Timestamp
 }
 var file_cloud_v1_models_common_proto_depIdxs = []int32{
-	21, // 0: cloud.v1.models.Timestamps.created_at:type_name -> google.protobuf.Timestamp
-	21, // 1: cloud.v1.models.Timestamps.updated_at:type_name -> google.protobuf.Timestamp
-	21, // 2: cloud.v1.models.Timestamps.deleted_at:type_name -> google.protobuf.Timestamp
-	2,  // 3: cloud.v1.models.Entity.id:type_name -> cloud.v1.models.Ulid
-	13, // 4: cloud.v1.models.Entity.timestamps:type_name -> cloud.v1.models.Timestamps
-	3,  // 5: cloud.v1.models.Own.owner_account_id:type_name -> cloud.v1.models.AccountId
-	4,  // 6: cloud.v1.models.Own.tenant_id:type_name -> cloud.v1.models.TenantId
-	19, // 7: cloud.v1.models.CommonQuery.filter:type_name -> cloud.v1.models.CommonQuery.Filter
-	18, // 8: cloud.v1.models.CommonQuery.sort:type_name -> cloud.v1.models.CommonQuery.Sort
-	20, // 9: cloud.v1.models.CommonQuery.page:type_name -> cloud.v1.models.CommonQuery.Page
-	0,  // 10: cloud.v1.models.CommonQuery.Sort.direction:type_name -> cloud.v1.models.CommonQuery.Sort.Direction
-	1,  // 11: cloud.v1.models.CommonQuery.Filter.operator:type_name -> cloud.v1.models.CommonQuery.Filter.Operator
-	12, // [12:12] is the sub-list for method output_type
-	12, // [12:12] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	17, // 0: cloud.v1.models.Timestamps.created_at:type_name -> google.protobuf.Timestamp
+	17, // 1: cloud.v1.models.Timestamps.updated_at:type_name -> google.protobuf.Timestamp
+	17, // 2: cloud.v1.models.Timestamps.deleted_at:type_name -> google.protobuf.Timestamp
+	1,  // 3: cloud.v1.models.Entity.id:type_name -> cloud.v1.models.Ulid
+	12, // 4: cloud.v1.models.Entity.timestamps:type_name -> cloud.v1.models.Timestamps
+	2,  // 5: cloud.v1.models.Own.owner_account_id:type_name -> cloud.v1.models.AccountId
+	3,  // 6: cloud.v1.models.Own.tenant_id:type_name -> cloud.v1.models.TenantId
+	7,  // [7:7] is the sub-list for method output_type
+	7,  // [7:7] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_common_proto_init() }
@@ -1262,8 +967,8 @@ func file_cloud_v1_models_common_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_models_common_proto_rawDesc), len(file_cloud_v1_models_common_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   19,
+			NumEnums:      1,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

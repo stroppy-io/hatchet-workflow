@@ -10,9 +10,9 @@ import (
 	"github.com/yaroher/ratel/pkg/ddl"
 	"github.com/yaroher/ratel/pkg/dml/set"
 	"github.com/yaroher/ratel/pkg/exec"
-	"github.com/yaroher/ratel/pkg/sqlerr"
 	"github.com/yaroher/ratel/pkg/repository"
 	"github.com/yaroher/ratel/pkg/schema"
+	"github.com/yaroher/ratel/pkg/sqlerr"
 )
 
 var (
@@ -43,6 +43,7 @@ const (
 	ApiTokenColumnName           ApiTokenColumnAlias = "name"
 	ApiTokenColumnRole           ApiTokenColumnAlias = "role"
 	ApiTokenColumnExpiresAt      ApiTokenColumnAlias = "expires_at"
+	ApiTokenColumnTags           ApiTokenColumnAlias = "tags"
 	ApiTokenColumnTokenHash      ApiTokenColumnAlias = "token_hash"
 )
 
@@ -66,6 +67,8 @@ func (s *ApiTokenScanner) GetTarget(col string) func() any {
 		return func() any { return &s.Role }
 	case ApiTokenColumnExpiresAt:
 		return func() any { return &s.ExpiresAt }
+	case ApiTokenColumnTags:
+		return func() any { return &s.Tags }
 	case ApiTokenColumnTokenHash:
 		return func() any { return &s.TokenHash }
 	default:
@@ -93,6 +96,8 @@ func (s *ApiTokenScanner) GetSetter(f ApiTokenColumnAlias) func() set.ValueSette
 		return func() set.ValueSetter[ApiTokenColumnAlias] { return set.NewSetter(f, &s.Role) }
 	case ApiTokenColumnExpiresAt:
 		return func() set.ValueSetter[ApiTokenColumnAlias] { return set.NewSetter(f, &s.ExpiresAt) }
+	case ApiTokenColumnTags:
+		return func() set.ValueSetter[ApiTokenColumnAlias] { return set.NewSetter(f, &s.Tags) }
 	case ApiTokenColumnTokenHash:
 		return func() set.ValueSetter[ApiTokenColumnAlias] { return set.NewSetter(f, &s.TokenHash) }
 	default:
@@ -120,6 +125,8 @@ func (s *ApiTokenScanner) GetValue(f ApiTokenColumnAlias) func() any {
 		return func() any { return s.Role }
 	case ApiTokenColumnExpiresAt:
 		return func() any { return s.ExpiresAt }
+	case ApiTokenColumnTags:
+		return func() any { return s.Tags }
 	case ApiTokenColumnTokenHash:
 		return func() any { return s.TokenHash }
 	default:
@@ -138,6 +145,7 @@ func (s *ApiTokenScanner) AllSetters() []set.ValueSetter[ApiTokenColumnAlias] {
 		set.NewSetter[ApiTokenColumnAlias](ApiTokenColumnName, s.Name),
 		set.NewSetter[ApiTokenColumnAlias](ApiTokenColumnRole, s.Role),
 		set.NewSetter[ApiTokenColumnAlias](ApiTokenColumnExpiresAt, s.ExpiresAt),
+		set.NewSetter[ApiTokenColumnAlias](ApiTokenColumnTags, s.Tags),
 		set.NewSetter[ApiTokenColumnAlias](ApiTokenColumnTokenHash, s.TokenHash),
 	}
 }
@@ -159,6 +167,7 @@ type ApiTokensTable struct {
 	Name           schema.TextColumnI[ApiTokenColumnAlias]
 	Role           schema.TextColumnI[ApiTokenColumnAlias]
 	ExpiresAt      schema.NullTimestamptzColumnI[ApiTokenColumnAlias]
+	Tags           schema.TextColumnI[ApiTokenColumnAlias]
 	TokenHash      schema.TextColumnI[ApiTokenColumnAlias]
 }
 
@@ -173,6 +182,7 @@ var ApiTokens = func() ApiTokensTable {
 	nameCol := schema.TextColumn(ApiTokenColumnName, ddl.WithNotNull[ApiTokenColumnAlias]())
 	roleCol := schema.TextColumn(ApiTokenColumnRole, ddl.WithNotNull[ApiTokenColumnAlias]())
 	expiresAtCol := schema.NullTimestamptzColumn(ApiTokenColumnExpiresAt)
+	tagsCol := schema.TextColumn(ApiTokenColumnTags, ddl.WithNotNull[ApiTokenColumnAlias]())
 	tokenHashCol := schema.TextColumn(ApiTokenColumnTokenHash, ddl.WithNotNull[ApiTokenColumnAlias]())
 
 	idx0 := ddl.NewIndex[ApiTokenAlias, ApiTokenColumnAlias]("api_tokens_hash_uniq", ApiTokenAliasName).OnColumns(ApiTokenColumnTokenHash)
@@ -192,6 +202,7 @@ var ApiTokens = func() ApiTokensTable {
 				nameCol.DDL(),
 				roleCol.DDL(),
 				expiresAtCol.DDL(),
+				tagsCol.DDL(),
 				tokenHashCol.DDL(),
 			},
 			ddl.WithIndexes[ApiTokenAlias, ApiTokenColumnAlias](
@@ -207,6 +218,7 @@ var ApiTokens = func() ApiTokensTable {
 		Name:           nameCol,
 		Role:           roleCol,
 		ExpiresAt:      expiresAtCol,
+		Tags:           tagsCol,
 		TokenHash:      tokenHashCol,
 	}
 }()

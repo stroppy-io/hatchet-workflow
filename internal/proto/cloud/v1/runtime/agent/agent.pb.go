@@ -522,14 +522,18 @@ func (x *Report) GetReportedAt() *timestamppb.Timestamp {
 
 // LogLine is one streamed or batched command log line from an agent.
 type LogLine struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CommandId     string                 `protobuf:"bytes,1,opt,name=command_id,json=commandId,proto3" json:"command_id,omitempty"`
-	Target        *Target                `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`
-	Stream        LogLine_Stream         `protobuf:"varint,3,opt,name=stream,proto3,enum=cloud.v1.runtime.agent.LogLine_Stream" json:"stream,omitempty"`
-	Line          string                 `protobuf:"bytes,4,opt,name=line,proto3" json:"line,omitempty"`
-	ObservedAt    *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=observed_at,json=observedAt,proto3" json:"observed_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	CommandId  string                 `protobuf:"bytes,1,opt,name=command_id,json=commandId,proto3" json:"command_id,omitempty"`
+	Target     *Target                `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`
+	Stream     LogLine_Stream         `protobuf:"varint,3,opt,name=stream,proto3,enum=cloud.v1.runtime.agent.LogLine_Stream" json:"stream,omitempty"`
+	Line       string                 `protobuf:"bytes,4,opt,name=line,proto3" json:"line,omitempty"`
+	ObservedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=observed_at,json=observedAt,proto3" json:"observed_at,omitempty"`
+	// dag_id + node_execution_id correlate the line to its run + node so logs are
+	// filterable by run/node (alongside machine_id/component from target).
+	DagId           string `protobuf:"bytes,6,opt,name=dag_id,json=dagId,proto3" json:"dag_id,omitempty"`
+	NodeExecutionId string `protobuf:"bytes,7,opt,name=node_execution_id,json=nodeExecutionId,proto3" json:"node_execution_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *LogLine) Reset() {
@@ -597,6 +601,20 @@ func (x *LogLine) GetObservedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *LogLine) GetDagId() string {
+	if x != nil {
+		return x.DagId
+	}
+	return ""
+}
+
+func (x *LogLine) GetNodeExecutionId() string {
+	if x != nil {
+		return x.NodeExecutionId
+	}
+	return ""
+}
+
 var File_cloud_v1_runtime_agent_agent_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_runtime_agent_agent_proto_rawDesc = "" +
@@ -638,7 +656,7 @@ const file_cloud_v1_runtime_agent_agent_proto_rawDesc = "" +
 	"\x06result\x18\x04 \x01(\v2&.cloud.v1.runtime.ops.Operation.ResultR\x06result\x12\x1e\n" +
 	"\x05error\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\x80@R\x05error\x12;\n" +
 	"\vreported_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"reportedAt\"\xe6\x02\n" +
+	"reportedAt\"\xbd\x03\n" +
 	"\aLogLine\x12)\n" +
 	"\n" +
 	"command_id\x18\x01 \x01(\tB\n" +
@@ -648,7 +666,9 @@ const file_cloud_v1_runtime_agent_agent_proto_rawDesc = "" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x06stream\x12\x1d\n" +
 	"\x04line\x18\x04 \x01(\tB\t\xfaB\x06r\x04\x18\x80\x80\x04R\x04line\x12;\n" +
 	"\vobserved_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"observedAt\"F\n" +
+	"observedAt\x12\x1f\n" +
+	"\x06dag_id\x18\x06 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x05dagId\x124\n" +
+	"\x11node_execution_id\x18\a \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\x0fnodeExecutionId\"F\n" +
 	"\x06Stream\x12\x16\n" +
 	"\x12STREAM_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rSTREAM_STDOUT\x10\x01\x12\x11\n" +

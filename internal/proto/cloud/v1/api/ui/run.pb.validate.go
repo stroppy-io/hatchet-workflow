@@ -20,6 +20,8 @@ import (
 
 	logs "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/logs"
 
+	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+
 	primitive "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
 )
 
@@ -39,6 +41,8 @@ var (
 	_ = sort.Sort
 
 	_ = logs.Source(0)
+
+	_ = models.SortOrder(0)
 
 	_ = primitive.Status(0)
 )
@@ -499,10 +503,10 @@ func (m *ListTestRunsRequest) validate(all bool) error {
 		}
 	}
 
-	if m.GetPageSize() > 1000 {
+	if _, ok := ListTestRunsRequest_SortField_name[int32(m.GetSortField())]; !ok {
 		err := ListTestRunsRequestValidationError{
-			field:  "PageSize",
-			reason: "value must be less than or equal to 1000",
+			field:  "SortField",
+			reason: "value must be one of the defined enum values",
 		}
 		if !all {
 			return err
@@ -510,15 +514,73 @@ func (m *ListTestRunsRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetPageToken()) > 256 {
+	if _, ok := models.SortOrder_name[int32(m.GetOrder())]; !ok {
 		err := ListTestRunsRequestValidationError{
-			field:  "PageToken",
-			reason: "value length must be at most 256 runes",
+			field:  "Order",
+			reason: "value must be one of the defined enum values",
 		}
 		if !all {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPage()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListTestRunsRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListTestRunsRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPage()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListTestRunsRequestValidationError{
+				field:  "Page",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListTestRunsRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListTestRunsRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListTestRunsRequestValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	if m.Status != nil {
@@ -527,6 +589,21 @@ func (m *ListTestRunsRequest) validate(all bool) error {
 			err := ListTestRunsRequestValidationError{
 				field:  "Status",
 				reason: "value must be one of the defined enum values",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.Search != nil {
+
+		if utf8.RuneCountInString(m.GetSearch()) > 256 {
+			err := ListTestRunsRequestValidationError{
+				field:  "Search",
+				reason: "value length must be at most 256 runes",
 			}
 			if !all {
 				return err
@@ -615,6 +692,171 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListTestRunsRequestValidationError{}
+
+// Validate checks the field values on ListTestRunsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListTestRunsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListTestRunsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListTestRunsResponseMultiError, or nil if none found.
+func (m *ListTestRunsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListTestRunsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetTestRuns() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListTestRunsResponseValidationError{
+						field:  fmt.Sprintf("TestRuns[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListTestRunsResponseValidationError{
+						field:  fmt.Sprintf("TestRuns[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListTestRunsResponseValidationError{
+					field:  fmt.Sprintf("TestRuns[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetPageInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListTestRunsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListTestRunsResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPageInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListTestRunsResponseValidationError{
+				field:  "PageInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ListTestRunsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListTestRunsResponseMultiError is an error wrapping multiple validation
+// errors returned by ListTestRunsResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ListTestRunsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListTestRunsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListTestRunsResponseMultiError) AllErrors() []error { return m }
+
+// ListTestRunsResponseValidationError is the validation error returned by
+// ListTestRunsResponse.Validate if the designated constraints aren't met.
+type ListTestRunsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListTestRunsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListTestRunsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListTestRunsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListTestRunsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListTestRunsResponseValidationError) ErrorName() string {
+	return "ListTestRunsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListTestRunsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListTestRunsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListTestRunsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListTestRunsResponseValidationError{}
 
 // Validate checks the field values on CancelTestRunRequest with the rules
 // defined in the proto definition for this message. If any rules are

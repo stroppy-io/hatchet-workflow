@@ -21,6 +21,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	AccountAdminService_ListAccounts_FullMethodName   = "/cloud.v1.api.admin.AccountAdminService/ListAccounts"
 	AccountAdminService_CreateAccount_FullMethodName  = "/cloud.v1.api.admin.AccountAdminService/CreateAccount"
 	AccountAdminService_UpdateAccount_FullMethodName  = "/cloud.v1.api.admin.AccountAdminService/UpdateAccount"
 	AccountAdminService_DeleteAccount_FullMethodName  = "/cloud.v1.api.admin.AccountAdminService/DeleteAccount"
@@ -31,6 +32,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AccountAdminServiceClient interface {
+	ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error)
 	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*models.Account, error)
 	UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	DeleteAccount(ctx context.Context, in *models.AccountId, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -43,6 +45,16 @@ type accountAdminServiceClient struct {
 
 func NewAccountAdminServiceClient(cc grpc.ClientConnInterface) AccountAdminServiceClient {
 	return &accountAdminServiceClient{cc}
+}
+
+func (c *accountAdminServiceClient) ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAccountsResponse)
+	err := c.cc.Invoke(ctx, AccountAdminService_ListAccounts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *accountAdminServiceClient) CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*models.Account, error) {
@@ -89,6 +101,7 @@ func (c *accountAdminServiceClient) UpdatePassword(ctx context.Context, in *Upda
 // All implementations must embed UnimplementedAccountAdminServiceServer
 // for forward compatibility.
 type AccountAdminServiceServer interface {
+	ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error)
 	CreateAccount(context.Context, *CreateAccountRequest) (*models.Account, error)
 	UpdateAccount(context.Context, *UpdateAccountRequest) (*emptypb.Empty, error)
 	DeleteAccount(context.Context, *models.AccountId) (*emptypb.Empty, error)
@@ -103,6 +116,9 @@ type AccountAdminServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAccountAdminServiceServer struct{}
 
+func (UnimplementedAccountAdminServiceServer) ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListAccounts not implemented")
+}
 func (UnimplementedAccountAdminServiceServer) CreateAccount(context.Context, *CreateAccountRequest) (*models.Account, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateAccount not implemented")
 }
@@ -134,6 +150,24 @@ func RegisterAccountAdminServiceServer(s grpc.ServiceRegistrar, srv AccountAdmin
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&AccountAdminService_ServiceDesc, srv)
+}
+
+func _AccountAdminService_ListAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAccountsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountAdminServiceServer).ListAccounts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccountAdminService_ListAccounts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountAdminServiceServer).ListAccounts(ctx, req.(*ListAccountsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _AccountAdminService_CreateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -215,6 +249,10 @@ var AccountAdminService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "cloud.v1.api.admin.AccountAdminService",
 	HandlerType: (*AccountAdminServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListAccounts",
+			Handler:    _AccountAdminService_ListAccounts_Handler,
+		},
 		{
 			MethodName: "CreateAccount",
 			Handler:    _AccountAdminService_CreateAccount_Handler,

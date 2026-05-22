@@ -8,6 +8,7 @@ package ui
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -23,6 +24,56 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// SortField — typed sortable columns (no arbitrary strings).
+type ListWebhooksRequest_SortField int32
+
+const (
+	ListWebhooksRequest_SORT_FIELD_UNSPECIFIED ListWebhooksRequest_SortField = 0
+	ListWebhooksRequest_SORT_FIELD_CREATED_AT  ListWebhooksRequest_SortField = 1
+	ListWebhooksRequest_SORT_FIELD_URL         ListWebhooksRequest_SortField = 2
+)
+
+// Enum value maps for ListWebhooksRequest_SortField.
+var (
+	ListWebhooksRequest_SortField_name = map[int32]string{
+		0: "SORT_FIELD_UNSPECIFIED",
+		1: "SORT_FIELD_CREATED_AT",
+		2: "SORT_FIELD_URL",
+	}
+	ListWebhooksRequest_SortField_value = map[string]int32{
+		"SORT_FIELD_UNSPECIFIED": 0,
+		"SORT_FIELD_CREATED_AT":  1,
+		"SORT_FIELD_URL":         2,
+	}
+)
+
+func (x ListWebhooksRequest_SortField) Enum() *ListWebhooksRequest_SortField {
+	p := new(ListWebhooksRequest_SortField)
+	*p = x
+	return p
+}
+
+func (x ListWebhooksRequest_SortField) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ListWebhooksRequest_SortField) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_api_ui_webhook_proto_enumTypes[0].Descriptor()
+}
+
+func (ListWebhooksRequest_SortField) Type() protoreflect.EnumType {
+	return &file_cloud_v1_api_ui_webhook_proto_enumTypes[0]
+}
+
+func (x ListWebhooksRequest_SortField) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ListWebhooksRequest_SortField.Descriptor instead.
+func (ListWebhooksRequest_SortField) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_webhook_proto_rawDescGZIP(), []int{2, 0}
+}
 
 // WebhookService manages tenant-scoped notification endpoints (H51). Every
 // request carries tenant_id (membership + role validated; scoped by it, A). The
@@ -150,8 +201,19 @@ func (x *UpdateWebhookRequest) GetSecret() string {
 }
 
 type ListWebhooksRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	TenantId *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// search filters by webhook URL (free text).
+	Search *string `protobuf:"bytes,2,opt,name=search,proto3,oneof" json:"search,omitempty"`
+	// enabled tri-state: unset = all, true/false matches the enabled flag.
+	Enabled *bool `protobuf:"varint,3,opt,name=enabled,proto3,oneof" json:"enabled,omitempty"`
+	// events filters to webhooks subscribed to any of the given events.
+	Events    []models.Webhook_Event        `protobuf:"varint,4,rep,packed,name=events,proto3,enum=cloud.v1.models.Webhook_Event" json:"events,omitempty"`
+	SortField ListWebhooksRequest_SortField `protobuf:"varint,5,opt,name=sort_field,json=sortField,proto3,enum=cloud.v1.api.ui.ListWebhooksRequest_SortField" json:"sort_field,omitempty"`
+	Order     models.SortOrder              `protobuf:"varint,6,opt,name=order,proto3,enum=cloud.v1.models.SortOrder" json:"order,omitempty"`
+	Page      *models.Page                  `protobuf:"bytes,7,opt,name=page,proto3" json:"page,omitempty"`
+	// tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter.
+	Tags          *common.Tags `protobuf:"bytes,8,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -193,6 +255,108 @@ func (x *ListWebhooksRequest) GetTenantId() *models.TenantId {
 	return nil
 }
 
+func (x *ListWebhooksRequest) GetSearch() string {
+	if x != nil && x.Search != nil {
+		return *x.Search
+	}
+	return ""
+}
+
+func (x *ListWebhooksRequest) GetEnabled() bool {
+	if x != nil && x.Enabled != nil {
+		return *x.Enabled
+	}
+	return false
+}
+
+func (x *ListWebhooksRequest) GetEvents() []models.Webhook_Event {
+	if x != nil {
+		return x.Events
+	}
+	return nil
+}
+
+func (x *ListWebhooksRequest) GetSortField() ListWebhooksRequest_SortField {
+	if x != nil {
+		return x.SortField
+	}
+	return ListWebhooksRequest_SORT_FIELD_UNSPECIFIED
+}
+
+func (x *ListWebhooksRequest) GetOrder() models.SortOrder {
+	if x != nil {
+		return x.Order
+	}
+	return models.SortOrder(0)
+}
+
+func (x *ListWebhooksRequest) GetPage() *models.Page {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+func (x *ListWebhooksRequest) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// ListWebhooksResponse — rows plus pagination metadata (H42).
+type ListWebhooksResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Webhooks      []*models.Webhook      `protobuf:"bytes,1,rep,name=webhooks,proto3" json:"webhooks,omitempty"`
+	PageInfo      *models.PageInfo       `protobuf:"bytes,2,opt,name=page_info,json=pageInfo,proto3" json:"page_info,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListWebhooksResponse) Reset() {
+	*x = ListWebhooksResponse{}
+	mi := &file_cloud_v1_api_ui_webhook_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListWebhooksResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListWebhooksResponse) ProtoMessage() {}
+
+func (x *ListWebhooksResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_ui_webhook_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListWebhooksResponse.ProtoReflect.Descriptor instead.
+func (*ListWebhooksResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_webhook_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ListWebhooksResponse) GetWebhooks() []*models.Webhook {
+	if x != nil {
+		return x.Webhooks
+	}
+	return nil
+}
+
+func (x *ListWebhooksResponse) GetPageInfo() *models.PageInfo {
+	if x != nil {
+		return x.PageInfo
+	}
+	return nil
+}
+
 type DeleteWebhookRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TenantId      *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
@@ -203,7 +367,7 @@ type DeleteWebhookRequest struct {
 
 func (x *DeleteWebhookRequest) Reset() {
 	*x = DeleteWebhookRequest{}
-	mi := &file_cloud_v1_api_ui_webhook_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_ui_webhook_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -215,7 +379,7 @@ func (x *DeleteWebhookRequest) String() string {
 func (*DeleteWebhookRequest) ProtoMessage() {}
 
 func (x *DeleteWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_webhook_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_ui_webhook_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -228,7 +392,7 @@ func (x *DeleteWebhookRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteWebhookRequest.ProtoReflect.Descriptor instead.
 func (*DeleteWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_webhook_proto_rawDescGZIP(), []int{3}
+	return file_cloud_v1_api_ui_webhook_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *DeleteWebhookRequest) GetTenantId() *models.TenantId {
@@ -255,7 +419,7 @@ type TestWebhookRequest struct {
 
 func (x *TestWebhookRequest) Reset() {
 	*x = TestWebhookRequest{}
-	mi := &file_cloud_v1_api_ui_webhook_proto_msgTypes[4]
+	mi := &file_cloud_v1_api_ui_webhook_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -267,7 +431,7 @@ func (x *TestWebhookRequest) String() string {
 func (*TestWebhookRequest) ProtoMessage() {}
 
 func (x *TestWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_webhook_proto_msgTypes[4]
+	mi := &file_cloud_v1_api_ui_webhook_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -280,7 +444,7 @@ func (x *TestWebhookRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestWebhookRequest.ProtoReflect.Descriptor instead.
 func (*TestWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_webhook_proto_rawDescGZIP(), []int{4}
+	return file_cloud_v1_api_ui_webhook_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *TestWebhookRequest) GetTenantId() *models.TenantId {
@@ -301,7 +465,7 @@ var File_cloud_v1_api_ui_webhook_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_ui_webhook_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcloud/v1/api/ui/webhook.proto\x12\x0fcloud.v1.api.ui\x1a\x1ccloud/v1/models/common.proto\x1a\x1dcloud/v1/models/webhook.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x17validate/validate.proto\"\xb8\x01\n" +
+	"\x1dcloud/v1/api/ui/webhook.proto\x12\x0fcloud.v1.api.ui\x1a\x1acloud/v1/common/tags.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1dcloud/v1/models/webhook.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x17validate/validate.proto\"\xb8\x01\n" +
 	"\x14CreateWebhookRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12<\n" +
 	"\awebhook\x18\x02 \x01(\v2\x18.cloud.v1.models.WebhookB\b\xfaB\x05\x8a\x01\x02\x10\x01R\awebhook\x12 \n" +
@@ -309,18 +473,36 @@ const file_cloud_v1_api_ui_webhook_proto_rawDesc = "" +
 	"\x14UpdateWebhookRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12<\n" +
 	"\awebhook\x18\x02 \x01(\v2\x18.cloud.v1.models.WebhookB\b\xfaB\x05\x8a\x01\x02\x10\x01R\awebhook\x12 \n" +
-	"\x06secret\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x04R\x06secret\"W\n" +
+	"\x06secret\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x04R\x06secret\"\xc0\x04\n" +
 	"\x13ListWebhooksRequest\x12@\n" +
-	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\"\x89\x01\n" +
+	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12%\n" +
+	"\x06search\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02H\x00R\x06search\x88\x01\x01\x12\x1d\n" +
+	"\aenabled\x18\x03 \x01(\bH\x01R\aenabled\x88\x01\x01\x12G\n" +
+	"\x06events\x18\x04 \x03(\x0e2\x1e.cloud.v1.models.Webhook.EventB\x0f\xfaB\f\x92\x01\t\"\a\x82\x01\x04\x10\x01 \x00R\x06events\x12W\n" +
+	"\n" +
+	"sort_field\x18\x05 \x01(\x0e2..cloud.v1.api.ui.ListWebhooksRequest.SortFieldB\b\xfaB\x05\x82\x01\x02\x10\x01R\tsortField\x12:\n" +
+	"\x05order\x18\x06 \x01(\x0e2\x1a.cloud.v1.models.SortOrderB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05order\x12)\n" +
+	"\x04page\x18\a \x01(\v2\x15.cloud.v1.models.PageR\x04page\x12)\n" +
+	"\x04tags\x18\b \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"V\n" +
+	"\tSortField\x12\x1a\n" +
+	"\x16SORT_FIELD_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15SORT_FIELD_CREATED_AT\x10\x01\x12\x12\n" +
+	"\x0eSORT_FIELD_URL\x10\x02B\t\n" +
+	"\a_searchB\n" +
+	"\n" +
+	"\b_enabled\"\x84\x01\n" +
+	"\x14ListWebhooksResponse\x124\n" +
+	"\bwebhooks\x18\x01 \x03(\v2\x18.cloud.v1.models.WebhookR\bwebhooks\x126\n" +
+	"\tpage_info\x18\x02 \x01(\v2\x19.cloud.v1.models.PageInfoR\bpageInfo\"\x89\x01\n" +
 	"\x14DeleteWebhookRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12/\n" +
 	"\x02id\x18\x02 \x01(\v2\x15.cloud.v1.models.UlidB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02id\"\x87\x01\n" +
 	"\x12TestWebhookRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12/\n" +
-	"\x02id\x18\x02 \x01(\v2\x15.cloud.v1.models.UlidB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02id2\xbe\x03\n" +
+	"\x02id\x18\x02 \x01(\v2\x15.cloud.v1.models.UlidB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02id2\xc6\x03\n" +
 	"\x0eWebhookService\x12U\n" +
-	"\rCreateWebhook\x12%.cloud.v1.api.ui.CreateWebhookRequest\x1a\x18.cloud.v1.models.Webhook\"\x03\x90\x02\x02\x12X\n" +
-	"\fListWebhooks\x12$.cloud.v1.api.ui.ListWebhooksRequest\x1a\x1d.cloud.v1.models.Webhook.List\"\x03\x90\x02\x01\x12U\n" +
+	"\rCreateWebhook\x12%.cloud.v1.api.ui.CreateWebhookRequest\x1a\x18.cloud.v1.models.Webhook\"\x03\x90\x02\x02\x12`\n" +
+	"\fListWebhooks\x12$.cloud.v1.api.ui.ListWebhooksRequest\x1a%.cloud.v1.api.ui.ListWebhooksResponse\"\x03\x90\x02\x01\x12U\n" +
 	"\rUpdateWebhook\x12%.cloud.v1.api.ui.UpdateWebhookRequest\x1a\x18.cloud.v1.models.Webhook\"\x03\x90\x02\x02\x12S\n" +
 	"\rDeleteWebhook\x12%.cloud.v1.api.ui.DeleteWebhookRequest\x1a\x16.google.protobuf.Empty\"\x03\x90\x02\x02\x12O\n" +
 	"\vTestWebhook\x12#.cloud.v1.api.ui.TestWebhookRequest\x1a\x16.google.protobuf.Empty\"\x03\x90\x02\x02BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/uib\x06proto3"
@@ -337,44 +519,58 @@ func file_cloud_v1_api_ui_webhook_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_ui_webhook_proto_rawDescData
 }
 
-var file_cloud_v1_api_ui_webhook_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_cloud_v1_api_ui_webhook_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cloud_v1_api_ui_webhook_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_cloud_v1_api_ui_webhook_proto_goTypes = []any{
-	(*CreateWebhookRequest)(nil), // 0: cloud.v1.api.ui.CreateWebhookRequest
-	(*UpdateWebhookRequest)(nil), // 1: cloud.v1.api.ui.UpdateWebhookRequest
-	(*ListWebhooksRequest)(nil),  // 2: cloud.v1.api.ui.ListWebhooksRequest
-	(*DeleteWebhookRequest)(nil), // 3: cloud.v1.api.ui.DeleteWebhookRequest
-	(*TestWebhookRequest)(nil),   // 4: cloud.v1.api.ui.TestWebhookRequest
-	(*models.TenantId)(nil),      // 5: cloud.v1.models.TenantId
-	(*models.Webhook)(nil),       // 6: cloud.v1.models.Webhook
-	(*models.Ulid)(nil),          // 7: cloud.v1.models.Ulid
-	(*models.Webhook_List)(nil),  // 8: cloud.v1.models.Webhook.List
-	(*emptypb.Empty)(nil),        // 9: google.protobuf.Empty
+	(ListWebhooksRequest_SortField)(0), // 0: cloud.v1.api.ui.ListWebhooksRequest.SortField
+	(*CreateWebhookRequest)(nil),       // 1: cloud.v1.api.ui.CreateWebhookRequest
+	(*UpdateWebhookRequest)(nil),       // 2: cloud.v1.api.ui.UpdateWebhookRequest
+	(*ListWebhooksRequest)(nil),        // 3: cloud.v1.api.ui.ListWebhooksRequest
+	(*ListWebhooksResponse)(nil),       // 4: cloud.v1.api.ui.ListWebhooksResponse
+	(*DeleteWebhookRequest)(nil),       // 5: cloud.v1.api.ui.DeleteWebhookRequest
+	(*TestWebhookRequest)(nil),         // 6: cloud.v1.api.ui.TestWebhookRequest
+	(*models.TenantId)(nil),            // 7: cloud.v1.models.TenantId
+	(*models.Webhook)(nil),             // 8: cloud.v1.models.Webhook
+	(models.Webhook_Event)(0),          // 9: cloud.v1.models.Webhook.Event
+	(models.SortOrder)(0),              // 10: cloud.v1.models.SortOrder
+	(*models.Page)(nil),                // 11: cloud.v1.models.Page
+	(*common.Tags)(nil),                // 12: cloud.v1.common.Tags
+	(*models.PageInfo)(nil),            // 13: cloud.v1.models.PageInfo
+	(*models.Ulid)(nil),                // 14: cloud.v1.models.Ulid
+	(*emptypb.Empty)(nil),              // 15: google.protobuf.Empty
 }
 var file_cloud_v1_api_ui_webhook_proto_depIdxs = []int32{
-	5,  // 0: cloud.v1.api.ui.CreateWebhookRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	6,  // 1: cloud.v1.api.ui.CreateWebhookRequest.webhook:type_name -> cloud.v1.models.Webhook
-	5,  // 2: cloud.v1.api.ui.UpdateWebhookRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	6,  // 3: cloud.v1.api.ui.UpdateWebhookRequest.webhook:type_name -> cloud.v1.models.Webhook
-	5,  // 4: cloud.v1.api.ui.ListWebhooksRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	5,  // 5: cloud.v1.api.ui.DeleteWebhookRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	7,  // 6: cloud.v1.api.ui.DeleteWebhookRequest.id:type_name -> cloud.v1.models.Ulid
-	5,  // 7: cloud.v1.api.ui.TestWebhookRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	7,  // 8: cloud.v1.api.ui.TestWebhookRequest.id:type_name -> cloud.v1.models.Ulid
-	0,  // 9: cloud.v1.api.ui.WebhookService.CreateWebhook:input_type -> cloud.v1.api.ui.CreateWebhookRequest
-	2,  // 10: cloud.v1.api.ui.WebhookService.ListWebhooks:input_type -> cloud.v1.api.ui.ListWebhooksRequest
-	1,  // 11: cloud.v1.api.ui.WebhookService.UpdateWebhook:input_type -> cloud.v1.api.ui.UpdateWebhookRequest
-	3,  // 12: cloud.v1.api.ui.WebhookService.DeleteWebhook:input_type -> cloud.v1.api.ui.DeleteWebhookRequest
-	4,  // 13: cloud.v1.api.ui.WebhookService.TestWebhook:input_type -> cloud.v1.api.ui.TestWebhookRequest
-	6,  // 14: cloud.v1.api.ui.WebhookService.CreateWebhook:output_type -> cloud.v1.models.Webhook
-	8,  // 15: cloud.v1.api.ui.WebhookService.ListWebhooks:output_type -> cloud.v1.models.Webhook.List
-	6,  // 16: cloud.v1.api.ui.WebhookService.UpdateWebhook:output_type -> cloud.v1.models.Webhook
-	9,  // 17: cloud.v1.api.ui.WebhookService.DeleteWebhook:output_type -> google.protobuf.Empty
-	9,  // 18: cloud.v1.api.ui.WebhookService.TestWebhook:output_type -> google.protobuf.Empty
-	14, // [14:19] is the sub-list for method output_type
-	9,  // [9:14] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	7,  // 0: cloud.v1.api.ui.CreateWebhookRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	8,  // 1: cloud.v1.api.ui.CreateWebhookRequest.webhook:type_name -> cloud.v1.models.Webhook
+	7,  // 2: cloud.v1.api.ui.UpdateWebhookRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	8,  // 3: cloud.v1.api.ui.UpdateWebhookRequest.webhook:type_name -> cloud.v1.models.Webhook
+	7,  // 4: cloud.v1.api.ui.ListWebhooksRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	9,  // 5: cloud.v1.api.ui.ListWebhooksRequest.events:type_name -> cloud.v1.models.Webhook.Event
+	0,  // 6: cloud.v1.api.ui.ListWebhooksRequest.sort_field:type_name -> cloud.v1.api.ui.ListWebhooksRequest.SortField
+	10, // 7: cloud.v1.api.ui.ListWebhooksRequest.order:type_name -> cloud.v1.models.SortOrder
+	11, // 8: cloud.v1.api.ui.ListWebhooksRequest.page:type_name -> cloud.v1.models.Page
+	12, // 9: cloud.v1.api.ui.ListWebhooksRequest.tags:type_name -> cloud.v1.common.Tags
+	8,  // 10: cloud.v1.api.ui.ListWebhooksResponse.webhooks:type_name -> cloud.v1.models.Webhook
+	13, // 11: cloud.v1.api.ui.ListWebhooksResponse.page_info:type_name -> cloud.v1.models.PageInfo
+	7,  // 12: cloud.v1.api.ui.DeleteWebhookRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	14, // 13: cloud.v1.api.ui.DeleteWebhookRequest.id:type_name -> cloud.v1.models.Ulid
+	7,  // 14: cloud.v1.api.ui.TestWebhookRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	14, // 15: cloud.v1.api.ui.TestWebhookRequest.id:type_name -> cloud.v1.models.Ulid
+	1,  // 16: cloud.v1.api.ui.WebhookService.CreateWebhook:input_type -> cloud.v1.api.ui.CreateWebhookRequest
+	3,  // 17: cloud.v1.api.ui.WebhookService.ListWebhooks:input_type -> cloud.v1.api.ui.ListWebhooksRequest
+	2,  // 18: cloud.v1.api.ui.WebhookService.UpdateWebhook:input_type -> cloud.v1.api.ui.UpdateWebhookRequest
+	5,  // 19: cloud.v1.api.ui.WebhookService.DeleteWebhook:input_type -> cloud.v1.api.ui.DeleteWebhookRequest
+	6,  // 20: cloud.v1.api.ui.WebhookService.TestWebhook:input_type -> cloud.v1.api.ui.TestWebhookRequest
+	8,  // 21: cloud.v1.api.ui.WebhookService.CreateWebhook:output_type -> cloud.v1.models.Webhook
+	4,  // 22: cloud.v1.api.ui.WebhookService.ListWebhooks:output_type -> cloud.v1.api.ui.ListWebhooksResponse
+	8,  // 23: cloud.v1.api.ui.WebhookService.UpdateWebhook:output_type -> cloud.v1.models.Webhook
+	15, // 24: cloud.v1.api.ui.WebhookService.DeleteWebhook:output_type -> google.protobuf.Empty
+	15, // 25: cloud.v1.api.ui.WebhookService.TestWebhook:output_type -> google.protobuf.Empty
+	21, // [21:26] is the sub-list for method output_type
+	16, // [16:21] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_ui_webhook_proto_init() }
@@ -382,18 +578,20 @@ func file_cloud_v1_api_ui_webhook_proto_init() {
 	if File_cloud_v1_api_ui_webhook_proto != nil {
 		return
 	}
+	file_cloud_v1_api_ui_webhook_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_ui_webhook_proto_rawDesc), len(file_cloud_v1_api_ui_webhook_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   5,
+			NumEnums:      1,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_cloud_v1_api_ui_webhook_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_api_ui_webhook_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_api_ui_webhook_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_api_ui_webhook_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_api_ui_webhook_proto = out.File

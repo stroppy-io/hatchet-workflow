@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	renderpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/render"
 )
 
@@ -80,6 +81,34 @@ type vmIP struct {
 //
 // TODO(render): only vm IPs are mapped (private/public/endpoint). Managed-service
 // endpoints (ydb_endpoint), ports, and other attrs are not wired. Reported.
+// FromDeployment resolves component runtime values from a provisioned
+// deployment.Deployment Output (Docker container IPs or Yandex VM IPs), keyed by the
+// component->machine map. This is the proto-native binding source for the blueprint
+// dag (the deploy node's output), replacing the legacy terraform-output path.
+func FromDeployment(dep *deployment.Deployment, componentToMachine map[string]string) Resolved {
+	type ip struct{ private, public string }
+	byMachine := map[string]ip{}
+	for mid, c := range dep.GetDocker().GetOutput().GetContainers() {
+		byMachine[mid] = ip{private: c.GetInternalIp()}
+	}
+	for mid, v := range dep.GetYandex().GetOutput().GetVms() {
+		byMachine[mid] = ip{private: v.GetInternalIp(), public: v.GetPublicIp()}
+	}
+	out := make(Resolved, len(componentToMachine))
+	for component, machine := range componentToMachine {
+		m, ok := byMachine[machine]
+		if !ok {
+			continue
+		}
+		out[component] = map[string]string{
+			AttrPrivateIP: m.private,
+			AttrEndpoint:  m.private,
+			AttrPublicIP:  m.public,
+		}
+	}
+	return out
+}
+
 func FromTerraform(outputsJSON map[string][]byte, componentToMachine map[string]string) (Resolved, error) {
 	raw, ok := outputsJSON["vm_ips"]
 	if !ok {

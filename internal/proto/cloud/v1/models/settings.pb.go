@@ -8,6 +8,7 @@ package models
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	_ "github.com/yaroher/protoc-gen-go-plain/goplain"
 	_ "github.com/yaroher/ratel/ratelproto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -388,13 +389,15 @@ func (x *SettingsItemId) GetValue() string {
 }
 
 type SettingsItem struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            *SettingsItemId        `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	TenantId      *TenantId              `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Timestamps    *Timestamps            `protobuf:"bytes,3,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
-	Part          SettingsItem_Part      `protobuf:"varint,10,opt,name=part,proto3,enum=cloud.v1.models.SettingsItem_Part" json:"part,omitempty"`
-	Key           SettingsItem_Key       `protobuf:"varint,11,opt,name=key,proto3,enum=cloud.v1.models.SettingsItem_Key" json:"key,omitempty"`
-	Value         *SettingsItem_Value    `protobuf:"bytes,12,opt,name=value,proto3" json:"value,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Id         *SettingsItemId        `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	TenantId   *TenantId              `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Timestamps *Timestamps            `protobuf:"bytes,3,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
+	Part       SettingsItem_Part      `protobuf:"varint,10,opt,name=part,proto3,enum=cloud.v1.models.SettingsItem_Part" json:"part,omitempty"`
+	Key        SettingsItem_Key       `protobuf:"varint,11,opt,name=key,proto3,enum=cloud.v1.models.SettingsItem_Key" json:"key,omitempty"`
+	Value      *SettingsItem_Value    `protobuf:"bytes,12,opt,name=value,proto3" json:"value,omitempty"`
+	// tags is a free label set for filtering/grouping.
+	Tags          *common.Tags `protobuf:"bytes,13,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -467,6 +470,13 @@ func (x *SettingsItem) GetKey() SettingsItem_Key {
 func (x *SettingsItem) GetValue() *SettingsItem_Value {
 	if x != nil {
 		return x.Value
+	}
+	return nil
+}
+
+func (x *SettingsItem) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
 	}
 	return nil
 }
@@ -633,7 +643,7 @@ var File_cloud_v1_models_settings_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_settings_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/models/settings.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/models/common.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xc6\x01\n" +
+	"\x1ecloud/v1/models/settings.proto\x12\x0fcloud.v1.models\x1a\x1acloud/v1/common/tags.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xc6\x01\n" +
 	"\x10PlatformSettings\x12!\n" +
 	"\x02id\x18\x01 \x01(\tB\x11\xfaB\x06r\x04\x10\x01\x18@\x9a\xb5\x18\x04\x12\x02\x10\x01R\x02id\x12C\n" +
 	"\n" +
@@ -643,7 +653,7 @@ const file_cloud_v1_models_settings_proto_rawDesc = "" +
 	" \x01(\tB\b\xfaB\x05r\x03\x18\x80\x10R\n" +
 	"serverAddr:\x1f\x92\xb5\x18\x15\b\x01\x12\x11platform_settings\x82\xa6\x1d\x02\b\x01\":\n" +
 	"\x0eSettingsItemId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"\xa5\v\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"\xd8\v\n" +
 	"\fSettingsItem\x12A\n" +
 	"\x02id\x18\x01 \x01(\v2\x1f.cloud.v1.models.SettingsItemIdB\x10\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x04\x12\x02\x10\x01R\x02id\x12U\n" +
 	"\ttenant_id\x18\x02 \x01(\v2\x19.cloud.v1.models.TenantIdB\x1d\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x11\x12\x0f2\atenants:\x02id@\x01R\btenantId\x12C\n" +
@@ -655,7 +665,8 @@ const file_cloud_v1_models_settings_proto_rawDesc = "" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04part\x12?\n" +
 	"\x03key\x18\v \x01(\x0e2!.cloud.v1.models.SettingsItem.KeyB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x03key\x12T\n" +
-	"\x05value\x18\f \x01(\v2#.cloud.v1.models.SettingsItem.ValueB\x19\x9a\xb5\x18\x0f\x12\r\x1a\v'{}'::jsonb\x82\xa6\x1d\x02\x10\x01R\x05value\x1aL\n" +
+	"\x05value\x18\f \x01(\v2#.cloud.v1.models.SettingsItem.ValueB\x19\x9a\xb5\x18\x0f\x12\r\x1a\v'{}'::jsonb\x82\xa6\x1d\x02\x10\x01R\x05value\x121\n" +
+	"\x04tags\x18\r \x01(\v2\x15.cloud.v1.common.TagsB\x06\x82\xa6\x1d\x02\x10\x01R\x04tags\x1aL\n" +
 	"\x04List\x12D\n" +
 	"\x0esettings_items\x18\x01 \x03(\v2\x1d.cloud.v1.models.SettingsItemR\rsettingsItems\x1a\xa2\x02\n" +
 	"\x05Value\x12#\n" +
@@ -726,6 +737,7 @@ var file_cloud_v1_models_settings_proto_goTypes = []any{
 	(*SettingsItem_Value)(nil), // 8: cloud.v1.models.SettingsItem.Value
 	(*Timestamps)(nil),         // 9: cloud.v1.models.Timestamps
 	(*TenantId)(nil),           // 10: cloud.v1.models.TenantId
+	(*common.Tags)(nil),        // 11: cloud.v1.common.Tags
 }
 var file_cloud_v1_models_settings_proto_depIdxs = []int32{
 	9,  // 0: cloud.v1.models.PlatformSettings.timestamps:type_name -> cloud.v1.models.Timestamps
@@ -735,14 +747,15 @@ var file_cloud_v1_models_settings_proto_depIdxs = []int32{
 	2,  // 4: cloud.v1.models.SettingsItem.part:type_name -> cloud.v1.models.SettingsItem.Part
 	3,  // 5: cloud.v1.models.SettingsItem.key:type_name -> cloud.v1.models.SettingsItem.Key
 	8,  // 6: cloud.v1.models.SettingsItem.value:type_name -> cloud.v1.models.SettingsItem.Value
-	6,  // 7: cloud.v1.models.SettingsItem.List.settings_items:type_name -> cloud.v1.models.SettingsItem
-	0,  // 8: cloud.v1.models.SettingsItem.Value.yandex_cloud_platform_id:type_name -> cloud.v1.models.YandexCloudPlatformId
-	1,  // 9: cloud.v1.models.SettingsItem.Value.yandex_cloud_zone:type_name -> cloud.v1.models.YandexCloudZone
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	11, // 7: cloud.v1.models.SettingsItem.tags:type_name -> cloud.v1.common.Tags
+	6,  // 8: cloud.v1.models.SettingsItem.List.settings_items:type_name -> cloud.v1.models.SettingsItem
+	0,  // 9: cloud.v1.models.SettingsItem.Value.yandex_cloud_platform_id:type_name -> cloud.v1.models.YandexCloudPlatformId
+	1,  // 10: cloud.v1.models.SettingsItem.Value.yandex_cloud_zone:type_name -> cloud.v1.models.YandexCloudZone
+	11, // [11:11] is the sub-list for method output_type
+	11, // [11:11] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_settings_proto_init() }

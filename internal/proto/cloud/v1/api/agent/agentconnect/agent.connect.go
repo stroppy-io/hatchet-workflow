@@ -62,7 +62,7 @@ type AgentServiceClient interface {
 	Report(context.Context, *agent.ReportRequest) (*emptypb.Empty, error)
 	SendLogs(context.Context, *agent.SendLogsRequest) (*emptypb.Empty, error)
 	// Control-plane agent observability API. Commands are persisted as DAG nodes.
-	ListAgents(context.Context, *agent.ListAgentsRequest) (*models.Agent_List, error)
+	ListAgents(context.Context, *agent.ListAgentsRequest) (*agent.ListAgentsResponse, error)
 	GetAgent(context.Context, *models.AgentId) (*models.Agent, error)
 }
 
@@ -112,7 +112,7 @@ func NewAgentServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithIdempotency(connect.IdempotencyIdempotent),
 			connect.WithClientOptions(opts...),
 		),
-		listAgents: connect.NewClient[agent.ListAgentsRequest, models.Agent_List](
+		listAgents: connect.NewClient[agent.ListAgentsRequest, agent.ListAgentsResponse](
 			httpClient,
 			baseURL+AgentServiceListAgentsProcedure,
 			connect.WithSchema(agentServiceMethods.ByName("ListAgents")),
@@ -136,7 +136,7 @@ type agentServiceClient struct {
 	poll       *connect.Client[agent.PollRequest, agent.PollResponse]
 	report     *connect.Client[agent.ReportRequest, emptypb.Empty]
 	sendLogs   *connect.Client[agent.SendLogsRequest, emptypb.Empty]
-	listAgents *connect.Client[agent.ListAgentsRequest, models.Agent_List]
+	listAgents *connect.Client[agent.ListAgentsRequest, agent.ListAgentsResponse]
 	getAgent   *connect.Client[models.AgentId, models.Agent]
 }
 
@@ -186,7 +186,7 @@ func (c *agentServiceClient) SendLogs(ctx context.Context, req *agent.SendLogsRe
 }
 
 // ListAgents calls cloud.v1.api.agent.AgentService.ListAgents.
-func (c *agentServiceClient) ListAgents(ctx context.Context, req *agent.ListAgentsRequest) (*models.Agent_List, error) {
+func (c *agentServiceClient) ListAgents(ctx context.Context, req *agent.ListAgentsRequest) (*agent.ListAgentsResponse, error) {
 	response, err := c.listAgents.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -214,7 +214,7 @@ type AgentServiceHandler interface {
 	Report(context.Context, *agent.ReportRequest) (*emptypb.Empty, error)
 	SendLogs(context.Context, *agent.SendLogsRequest) (*emptypb.Empty, error)
 	// Control-plane agent observability API. Commands are persisted as DAG nodes.
-	ListAgents(context.Context, *agent.ListAgentsRequest) (*models.Agent_List, error)
+	ListAgents(context.Context, *agent.ListAgentsRequest) (*agent.ListAgentsResponse, error)
 	GetAgent(context.Context, *models.AgentId) (*models.Agent, error)
 }
 
@@ -319,7 +319,7 @@ func (UnimplementedAgentServiceHandler) SendLogs(context.Context, *agent.SendLog
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.agent.AgentService.SendLogs is not implemented"))
 }
 
-func (UnimplementedAgentServiceHandler) ListAgents(context.Context, *agent.ListAgentsRequest) (*models.Agent_List, error) {
+func (UnimplementedAgentServiceHandler) ListAgents(context.Context, *agent.ListAgentsRequest) (*agent.ListAgentsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.agent.AgentService.ListAgents is not implemented"))
 }
 

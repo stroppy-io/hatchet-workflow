@@ -66,7 +66,7 @@ type AgentServiceClient interface {
 	Report(ctx context.Context, in *ReportRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	SendLogs(ctx context.Context, in *SendLogsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Control-plane agent observability API. Commands are persisted as DAG nodes.
-	ListAgents(ctx context.Context, in *ListAgentsRequest, opts ...grpc.CallOption) (*models.Agent_List, error)
+	ListAgents(ctx context.Context, in *ListAgentsRequest, opts ...grpc.CallOption) (*ListAgentsResponse, error)
 	GetAgent(ctx context.Context, in *models.AgentId, opts ...grpc.CallOption) (*models.Agent, error)
 }
 
@@ -128,9 +128,9 @@ func (c *agentServiceClient) SendLogs(ctx context.Context, in *SendLogsRequest, 
 	return out, nil
 }
 
-func (c *agentServiceClient) ListAgents(ctx context.Context, in *ListAgentsRequest, opts ...grpc.CallOption) (*models.Agent_List, error) {
+func (c *agentServiceClient) ListAgents(ctx context.Context, in *ListAgentsRequest, opts ...grpc.CallOption) (*ListAgentsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(models.Agent_List)
+	out := new(ListAgentsResponse)
 	err := c.cc.Invoke(ctx, AgentService_ListAgents_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -184,7 +184,7 @@ type AgentServiceServer interface {
 	Report(context.Context, *ReportRequest) (*emptypb.Empty, error)
 	SendLogs(context.Context, *SendLogsRequest) (*emptypb.Empty, error)
 	// Control-plane agent observability API. Commands are persisted as DAG nodes.
-	ListAgents(context.Context, *ListAgentsRequest) (*models.Agent_List, error)
+	ListAgents(context.Context, *ListAgentsRequest) (*ListAgentsResponse, error)
 	GetAgent(context.Context, *models.AgentId) (*models.Agent, error)
 	mustEmbedUnimplementedAgentServiceServer()
 }
@@ -211,7 +211,7 @@ func (UnimplementedAgentServiceServer) Report(context.Context, *ReportRequest) (
 func (UnimplementedAgentServiceServer) SendLogs(context.Context, *SendLogsRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method SendLogs not implemented")
 }
-func (UnimplementedAgentServiceServer) ListAgents(context.Context, *ListAgentsRequest) (*models.Agent_List, error) {
+func (UnimplementedAgentServiceServer) ListAgents(context.Context, *ListAgentsRequest) (*ListAgentsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListAgents not implemented")
 }
 func (UnimplementedAgentServiceServer) GetAgent(context.Context, *models.AgentId) (*models.Agent, error) {

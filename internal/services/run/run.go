@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	uiapi "github.com/stroppy-io/stroppy-cloud/internal/api/ui"
+	dagdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/ids"
 	uipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -37,7 +38,6 @@ type RunService struct {
 		*models.TestRunScanner,
 		*models.TestRun,
 	]
-	planner  Planner
 	provider ProviderResolver
 	store    DagStore
 	logs     LogsClient
@@ -56,7 +56,6 @@ func New(
 	executor exec.DB,
 	txm tx.Trm,
 	az *authz.Authz,
-	planner Planner,
 	provider ProviderResolver,
 	store DagStore,
 	logs LogsClient,
@@ -69,7 +68,6 @@ func New(
 			repository.NewScannerRepository(models.TestRuns.Table, executor),
 			models.TestRunConverter,
 		),
-		planner:  planner,
 		provider: provider,
 		store:    store,
 		logs:     logs,
@@ -89,14 +87,11 @@ func (s *RunService) SubmitTestRun(ctx context.Context, req *uipb.SubmitTestRunR
 			if err := s.authz.Require(ctx, c, req.GetTenantId(), models.TenantMember_ROLE_ADMIN); err != nil {
 				return nil, err
 			}
-			params, err := s.provider.Resolve(ctx, req.GetTenantId().GetValue(), req.GetTestPreset().GetTopology())
+			dep, err := s.provider.Resolve(ctx, req.GetTenantId().GetValue(), req.GetTestPreset())
 			if err != nil {
-				return nil, status.Errorf(codes.Internal, "resolve provider settings: %v", err)
+				return nil, status.Errorf(codes.Internal, "resolve deployment: %v", err)
 			}
-			dag, err := s.planner.Compile(req.GetTestPreset(), params)
-			if err != nil {
-				return nil, status.Errorf(codes.InvalidArgument, "compile preset: %v", err)
-			}
+			dag := dagdomain.BuildTestDag(req.GetTestPreset(), dep, dagdomain.Deps{Install: dagdomain.RecipeInstallBuilder{}})
 			if dag.Metadata == nil {
 				dag.Metadata = map[string]string{}
 			}
@@ -125,38 +120,93 @@ func (s *RunService) SubmitTestRun(ctx context.Context, req *uipb.SubmitTestRunR
 		})
 }
 
-// GetTestRun returns a run by id.
-//
-// TODO(run): the run's live status lives in the Dag (Dag.status, H22) and is not
-// hydrated onto the returned TestRun yet. Reported.
+// GetTestRun returns a run by id, hydrating the run's live status from its Dag
+// (the live status lives on Dag.status, H22 — not on the TestRun row).
 func (s *RunService) GetTestRun(ctx context.Context, req *uipb.GetTestRunRequest) (*models.TestRun, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "GetTestRun",
 		func(ctx context.Context, _ trace.Span) (*models.TestRun, error) {
 			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
 				return nil, err
 			}
-			return s.loadRun(ctx, req.GetTenantId().GetValue(), req.GetId().GetValue())
+			run, err := s.loadRun(ctx, req.GetTenantId().GetValue(), req.GetId().GetValue())
+			if err != nil {
+				return nil, err
+			}
+			s.hydrateStatus(ctx, run)
+			return run, nil
 		})
 }
 
-// ListTestRuns returns the tenant's runs.
-//
-// TODO(run): page_token pagination ignored — returns all rows. Reported.
-func (s *RunService) ListTestRuns(ctx context.Context, req *uipb.ListTestRunsRequest) (*models.TestRun_List, error) {
+// hydrateStatus loads the run's Dag and sets the run's live status from it. The
+// status is authoritative on Dag.status (H22); TestRun.status is the read-time
+// mirror (the persisted column is best-effort).
+func (s *RunService) hydrateStatus(ctx context.Context, run *models.TestRun) {
+	if run.GetDag().GetValue() == "" {
+		return
+	}
+	dag, err := s.store.GetDag(ctx, run.GetDag().GetValue())
+	if err != nil {
+		s.Logger().Warn("hydrate run status: load dag", xlog.String("dag_id", run.GetDag().GetValue()), xlog.Error("error", err))
+		return
+	}
+	if dag == nil {
+		return
+	}
+	run.Status = dag.GetStatus() // live run status mirrors the Dag (H22)
+}
+
+// ListTestRuns returns the tenant's runs with cursor pagination (newest-first
+// by default).
+func (s *RunService) ListTestRuns(ctx context.Context, req *uipb.ListTestRunsRequest) (*uipb.ListTestRunsResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListTestRuns",
-		func(ctx context.Context, _ trace.Span) (*models.TestRun_List, error) {
+		func(ctx context.Context, _ trace.Span) (*uipb.ListTestRunsResponse, error) {
 			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
 				return nil, err
 			}
-			runs, err := s.testRuns.Query(ctx,
-				models.TestRuns.SelectAll().Where(
-					models.TestRuns.TenantId.Eq(req.GetTenantId().GetValue()),
-					models.TestRuns.DeletedAt.IsNull(),
-				))
+			size := svcutil.PageSize(req.GetPage())
+			desc := svcutil.CursorDesc(req.GetOrder())
+			q := models.TestRuns.SelectAll().Where(
+				models.TestRuns.TenantId.Eq(req.GetTenantId().GetValue()),
+				models.TestRuns.DeletedAt.IsNull(),
+			)
+			// status filtering needs the Dag status (not a run column); use the Dag list or denormalize status — tracked as a schema follow-up.
+			// search: match the run name (NullText column → raw ILIKE).
+			if req.GetSearch() != "" {
+				q = q.Where(models.TestRuns.Name.Raw("ILIKE", "?", "%"+req.GetSearch()+"%"))
+			}
+			// tags: Tags is serialized JSON of common.Tags (a TEXT column) — match
+			// each requested free tag and key=value label as a substring.
+			for _, tag := range req.GetTags().GetTags() {
+				q = q.Where(models.TestRuns.Tags.ILike("%" + tag + "%"))
+			}
+			for k, v := range req.GetTags().GetLabels() {
+				q = q.Where(models.TestRuns.Tags.ILike("%" + k + "%" + v + "%"))
+			}
+			if tok := req.GetPage().GetToken(); tok != "" {
+				if desc {
+					q = q.Where(models.TestRuns.Id.Lt(tok))
+				} else {
+					q = q.Where(models.TestRuns.Id.Gt(tok))
+				}
+			}
+			if desc {
+				q = q.OrderByDESC(models.TestRunColumnId)
+			} else {
+				q = q.OrderByASC(models.TestRunColumnId)
+			}
+			rows, err := s.testRuns.Query(ctx, q.Limit(size+1))
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "list test runs: %v", err)
 			}
-			return &models.TestRun_List{TestRuns: runs}, nil
+			items, pageInfo := svcutil.Paginate(rows, size, func(r *models.TestRun) string {
+				return r.GetEntity().GetId().GetValue()
+			})
+			// Hydrate each run's live status from its Dag (Dag.status, H22). Batch
+			// is a per-run GetDag (no bulk-by-ids primitive on DagStore yet).
+			for _, run := range items {
+				s.hydrateStatus(ctx, run)
+			}
+			return &uipb.ListTestRunsResponse{TestRuns: items, PageInfo: pageInfo}, nil
 		})
 }
 

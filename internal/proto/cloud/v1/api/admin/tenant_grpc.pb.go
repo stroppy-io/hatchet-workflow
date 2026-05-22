@@ -20,6 +20,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	TenantAdminService_ListTenants_FullMethodName  = "/cloud.v1.api.admin.TenantAdminService/ListTenants"
 	TenantAdminService_CreateTenant_FullMethodName = "/cloud.v1.api.admin.TenantAdminService/CreateTenant"
 	TenantAdminService_UpdateTenant_FullMethodName = "/cloud.v1.api.admin.TenantAdminService/UpdateTenant"
 	TenantAdminService_DeleteTenant_FullMethodName = "/cloud.v1.api.admin.TenantAdminService/DeleteTenant"
@@ -29,6 +30,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TenantAdminServiceClient interface {
+	ListTenants(ctx context.Context, in *ListTenantsRequest, opts ...grpc.CallOption) (*ListTenantsResponse, error)
 	CreateTenant(ctx context.Context, in *CreateTenantRequest, opts ...grpc.CallOption) (*models.Tenant, error)
 	UpdateTenant(ctx context.Context, in *UpdateTenantRequest, opts ...grpc.CallOption) (*models.Tenant, error)
 	DeleteTenant(ctx context.Context, in *models.TenantId, opts ...grpc.CallOption) (*models.Tenant, error)
@@ -40,6 +42,16 @@ type tenantAdminServiceClient struct {
 
 func NewTenantAdminServiceClient(cc grpc.ClientConnInterface) TenantAdminServiceClient {
 	return &tenantAdminServiceClient{cc}
+}
+
+func (c *tenantAdminServiceClient) ListTenants(ctx context.Context, in *ListTenantsRequest, opts ...grpc.CallOption) (*ListTenantsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListTenantsResponse)
+	err := c.cc.Invoke(ctx, TenantAdminService_ListTenants_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *tenantAdminServiceClient) CreateTenant(ctx context.Context, in *CreateTenantRequest, opts ...grpc.CallOption) (*models.Tenant, error) {
@@ -76,6 +88,7 @@ func (c *tenantAdminServiceClient) DeleteTenant(ctx context.Context, in *models.
 // All implementations must embed UnimplementedTenantAdminServiceServer
 // for forward compatibility.
 type TenantAdminServiceServer interface {
+	ListTenants(context.Context, *ListTenantsRequest) (*ListTenantsResponse, error)
 	CreateTenant(context.Context, *CreateTenantRequest) (*models.Tenant, error)
 	UpdateTenant(context.Context, *UpdateTenantRequest) (*models.Tenant, error)
 	DeleteTenant(context.Context, *models.TenantId) (*models.Tenant, error)
@@ -89,6 +102,9 @@ type TenantAdminServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedTenantAdminServiceServer struct{}
 
+func (UnimplementedTenantAdminServiceServer) ListTenants(context.Context, *ListTenantsRequest) (*ListTenantsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListTenants not implemented")
+}
 func (UnimplementedTenantAdminServiceServer) CreateTenant(context.Context, *CreateTenantRequest) (*models.Tenant, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateTenant not implemented")
 }
@@ -117,6 +133,24 @@ func RegisterTenantAdminServiceServer(s grpc.ServiceRegistrar, srv TenantAdminSe
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&TenantAdminService_ServiceDesc, srv)
+}
+
+func _TenantAdminService_ListTenants_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTenantsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TenantAdminServiceServer).ListTenants(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TenantAdminService_ListTenants_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TenantAdminServiceServer).ListTenants(ctx, req.(*ListTenantsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _TenantAdminService_CreateTenant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -180,6 +214,10 @@ var TenantAdminService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "cloud.v1.api.admin.TenantAdminService",
 	HandlerType: (*TenantAdminServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListTenants",
+			Handler:    _TenantAdminService_ListTenants_Handler,
+		},
 		{
 			MethodName: "CreateTenant",
 			Handler:    _TenantAdminService_CreateTenant_Handler,

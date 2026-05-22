@@ -33,7 +33,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type WebhookServiceClient interface {
 	CreateWebhook(ctx context.Context, in *CreateWebhookRequest, opts ...grpc.CallOption) (*models.Webhook, error)
-	ListWebhooks(ctx context.Context, in *ListWebhooksRequest, opts ...grpc.CallOption) (*models.Webhook_List, error)
+	ListWebhooks(ctx context.Context, in *ListWebhooksRequest, opts ...grpc.CallOption) (*ListWebhooksResponse, error)
 	UpdateWebhook(ctx context.Context, in *UpdateWebhookRequest, opts ...grpc.CallOption) (*models.Webhook, error)
 	DeleteWebhook(ctx context.Context, in *DeleteWebhookRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	TestWebhook(ctx context.Context, in *TestWebhookRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -57,9 +57,9 @@ func (c *webhookServiceClient) CreateWebhook(ctx context.Context, in *CreateWebh
 	return out, nil
 }
 
-func (c *webhookServiceClient) ListWebhooks(ctx context.Context, in *ListWebhooksRequest, opts ...grpc.CallOption) (*models.Webhook_List, error) {
+func (c *webhookServiceClient) ListWebhooks(ctx context.Context, in *ListWebhooksRequest, opts ...grpc.CallOption) (*ListWebhooksResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(models.Webhook_List)
+	out := new(ListWebhooksResponse)
 	err := c.cc.Invoke(ctx, WebhookService_ListWebhooks_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func (c *webhookServiceClient) TestWebhook(ctx context.Context, in *TestWebhookR
 // for forward compatibility.
 type WebhookServiceServer interface {
 	CreateWebhook(context.Context, *CreateWebhookRequest) (*models.Webhook, error)
-	ListWebhooks(context.Context, *ListWebhooksRequest) (*models.Webhook_List, error)
+	ListWebhooks(context.Context, *ListWebhooksRequest) (*ListWebhooksResponse, error)
 	UpdateWebhook(context.Context, *UpdateWebhookRequest) (*models.Webhook, error)
 	DeleteWebhook(context.Context, *DeleteWebhookRequest) (*emptypb.Empty, error)
 	TestWebhook(context.Context, *TestWebhookRequest) (*emptypb.Empty, error)
@@ -119,7 +119,7 @@ type UnimplementedWebhookServiceServer struct{}
 func (UnimplementedWebhookServiceServer) CreateWebhook(context.Context, *CreateWebhookRequest) (*models.Webhook, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateWebhook not implemented")
 }
-func (UnimplementedWebhookServiceServer) ListWebhooks(context.Context, *ListWebhooksRequest) (*models.Webhook_List, error) {
+func (UnimplementedWebhookServiceServer) ListWebhooks(context.Context, *ListWebhooksRequest) (*ListWebhooksResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListWebhooks not implemented")
 }
 func (UnimplementedWebhookServiceServer) UpdateWebhook(context.Context, *UpdateWebhookRequest) (*models.Webhook, error) {

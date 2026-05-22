@@ -8,6 +8,7 @@ package agentqueue
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/gopherex/xlog"
@@ -19,9 +20,9 @@ import (
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/render"
 	agentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/agent"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	rtagent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent"
-	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/ops"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/utils/tracing"
@@ -32,9 +33,8 @@ const (
 	leaseMetaExpiresAt  = "agent.lease_expires_at"
 	leaseMetaMachine    = "agent.lease_machine"
 	// defaultLeaseTTL is how long a leased command is held before it returns to
-	// the pool absent a Report. Report{RUNNING} pushes it forward.
-	//
-	// TODO(agentqueue): make configurable.
+	// the pool absent a Report. Report{RUNNING} pushes it forward. Override with
+	// WithLeaseTTL.
 	defaultLeaseTTL = 60 * time.Second
 )
 
@@ -54,20 +54,38 @@ type Queue struct {
 
 var _ agent.CommandQueue = (*Queue)(nil)
 
+// Option configures a Queue at construction.
+type Option func(*Queue)
+
+// WithLeaseTTL overrides the command lease TTL (default defaultLeaseTTL). A
+// non-positive value is ignored (keeps the default).
+func WithLeaseTTL(d time.Duration) Option {
+	return func(q *Queue) {
+		if d > 0 {
+			q.ttl = d
+		}
+	}
+}
+
 // New builds a Queue.
-func New(logger *xlog.Logger, store Store) *Queue {
-	return &Queue{
+func New(logger *xlog.Logger, store Store, opts ...Option) *Queue {
+	q := &Queue{
 		Entity: tracing.NewEntity(logger.AppendName("AgentQueue")),
 		store:  store,
 		ttl:    defaultLeaseTTL,
 	}
+	for _, opt := range opts {
+		opt(q)
+	}
+	return q
 }
 
-// Lease hands out the next ready command for the machine, or (nil, nil) when none.
-//
-// TODO(agentqueue): no machine routing yet — any ready agent command in the
-// tenant is offered to the polling agent. Match Command.Target to the agent's
-// machine once topology placement wires node->machine. Reported.
+// Lease hands out the next ready command for the requesting agent's machine, or
+// (nil, nil) when none. Routing: a node id is "<component>.<action>"; the dag's
+// component->machine map (dag.Metadata[render.ComponentMachineMetaKey]) places
+// the node's component on a machine. Only nodes mapped to target.MachineId are
+// offered; nodes whose component can't be mapped are skipped (never leased to
+// the wrong host).
 func (q *Queue) Lease(ctx context.Context, tenantID string, target *rtagent.Target) (*agentpb.CommandLease, error) {
 	dags, err := q.store.ListByTenant(ctx, tenantID, []primitive.Status{primitive.Status_STATUS_RUNNING})
 	if err != nil {
@@ -75,7 +93,8 @@ func (q *Queue) Lease(ctx context.Context, tenantID string, target *rtagent.Targ
 	}
 	now := time.Now()
 	for _, dag := range dags {
-		node := findLeasableAgentNode(dag, now)
+		compMachine := render.DecodeComponentMachine(dag.GetMetadata()[render.ComponentMachineMetaKey])
+		node := findLeasableAgentNode(dag, now, target.GetMachineId(), compMachine)
 		if node == nil {
 			continue
 		}
@@ -116,10 +135,7 @@ func resolveCommand(dag *primitive.Dag, node *primitive.Dag_Node, cmd *rtagent.C
 	if len(bindings) == 0 {
 		return cmd, nil
 	}
-	resolved, err := render.FromTerraform(findTerraformOutput(dag), render.DecodeComponentMachine(dag.GetMetadata()[render.ComponentMachineMetaKey]))
-	if err != nil {
-		return nil, err
-	}
+	resolved := render.FromDeployment(findDeploymentOutput(dag), render.DecodeComponentMachine(dag.GetMetadata()[render.ComponentMachineMetaKey]))
 	data, err := protojson.Marshal(cmd)
 	if err != nil {
 		return nil, err
@@ -135,27 +151,29 @@ func resolveCommand(dag *primitive.Dag, node *primitive.Dag_Node, cmd *rtagent.C
 	return fresh, nil
 }
 
-// findTerraformOutput returns the first node output that decodes to a non-empty
-// TfOperation.Output (the terraform_apply result), recursing into sub-dags.
-func findTerraformOutput(dag *primitive.Dag) map[string][]byte {
-	var outputs map[string][]byte
+// findDeploymentOutput returns the first node output that decodes to a PROVISIONED
+// deployment.Deployment — one whose Output carries container/VM IPs (the deployDocker
+// / deployYc node result), recursing into sub-dags. The run_stroppy command's
+// binding holes resolve against it.
+func findDeploymentOutput(dag *primitive.Dag) *deployment.Deployment {
+	var found *deployment.Deployment
 	walkNodes(dag, func(n *primitive.Dag_Node) {
-		if outputs != nil {
+		if found != nil {
 			return
 		}
 		raw := n.GetTaskState().GetOutput()
 		if raw == nil {
 			return
 		}
-		var tfOut ops.TfOperation_Output
-		if err := raw.UnmarshalTo(&tfOut); err != nil {
+		var dep deployment.Deployment
+		if err := raw.UnmarshalTo(&dep); err != nil {
 			return
 		}
-		if len(tfOut.GetOutputsJson()) > 0 {
-			outputs = tfOut.GetOutputsJson()
+		if len(dep.GetDocker().GetOutput().GetContainers()) > 0 || len(dep.GetYandex().GetOutput().GetVms()) > 0 {
+			found = &dep
 		}
 	})
-	return outputs
+	return found
 }
 
 // Report applies a command report to the addressed node and persists the dag.
@@ -240,18 +258,47 @@ func walkNodes(dag *primitive.Dag, fn func(*primitive.Dag_Node)) {
 }
 
 // findLeasableAgentNode returns the first RUNNING agent command without a valid
-// lease (unleased or expired), recursing into sub-dags.
-func findLeasableAgentNode(dag *primitive.Dag, now time.Time) *primitive.Dag_Node {
+// lease (unleased or expired) that is placed on machineID, recursing into
+// sub-dags. A node whose component can't be mapped to a machine is skipped.
+func findLeasableAgentNode(dag *primitive.Dag, now time.Time, machineID string, compMachine map[string]string) *primitive.Dag_Node {
 	var found *primitive.Dag_Node
 	walkNodes(dag, func(n *primitive.Dag_Node) {
 		if found != nil {
 			return
 		}
-		if isAgentCommand(n) && n.GetStatus() == primitive.Status_STATUS_RUNNING && !leaseValid(n, now) {
-			found = n
+		if !isAgentCommand(n) || n.GetStatus() != primitive.Status_STATUS_RUNNING || leaseValid(n, now) {
+			return
 		}
+		if nodeMachine(n, compMachine) != machineID {
+			return
+		}
+		found = n
 	})
 	return found
+}
+
+// nodeMachine resolves the machine a node is placed on from its component
+// (the node-id prefix before the first '.') via the component->machine map.
+// Returns "" when the component can't be mapped (caller must not lease it).
+// nodeMachine resolves the machine a leasable node belongs to from its id prefix.
+// A node id is "<prefix>.<action>" where prefix is either a COMPONENT id (install
+// nodes — mapped to its machine) or a MACHINE id directly (per-machine nodes like
+// the monitoring chain).
+func nodeMachine(n *primitive.Dag_Node, compMachine map[string]string) string {
+	id := n.GetId()
+	prefix := id
+	if i := strings.IndexByte(id, '.'); i >= 0 {
+		prefix = id[:i]
+	}
+	if m, ok := compMachine[prefix]; ok {
+		return m // prefix is a component id
+	}
+	for _, m := range compMachine {
+		if m == prefix {
+			return prefix // prefix is a machine id (per-machine node)
+		}
+	}
+	return ""
 }
 
 func findByExecutionID(dag *primitive.Dag, execID string) *primitive.Dag_Node {

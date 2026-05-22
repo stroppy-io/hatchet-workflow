@@ -8,6 +8,7 @@ package models
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	_ "github.com/yaroher/protoc-gen-go-plain/goplain"
 	_ "github.com/yaroher/ratel/ratelproto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -42,7 +43,9 @@ type Package struct {
 	// checksum verifies the uploaded artifact.
 	Checksum string `protobuf:"bytes,7,opt,name=checksum,proto3" json:"checksum,omitempty"`
 	// is_builtin is true only for backend-provided recipes surfaced in listings.
-	IsBuiltin     bool `protobuf:"varint,8,opt,name=is_builtin,json=isBuiltin,proto3" json:"is_builtin,omitempty"`
+	IsBuiltin bool `protobuf:"varint,8,opt,name=is_builtin,json=isBuiltin,proto3" json:"is_builtin,omitempty"`
+	// tags is a free label set for filtering/grouping.
+	Tags          *common.Tags `protobuf:"bytes,9,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -133,6 +136,13 @@ func (x *Package) GetIsBuiltin() bool {
 	return false
 }
 
+func (x *Package) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
 type Package_List struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Packages      []*Package             `protobuf:"bytes,1,rep,name=packages,proto3" json:"packages,omitempty"`
@@ -181,7 +191,7 @@ var File_cloud_v1_models_package_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_package_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcloud/v1/models/package.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/models/common.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xad\x03\n" +
+	"\x1dcloud/v1/models/package.proto\x12\x0fcloud.v1.models\x1a\x1acloud/v1/common/tags.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xe0\x03\n" +
 	"\aPackage\x127\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.models.EntityB\x06\x82\xa6\x1d\x02 \x01R\x06entity\x122\n" +
 	"\x05owned\x18\x02 \x01(\v2\x14.cloud.v1.models.OwnB\x06\x82\xa6\x1d\x02 \x01R\x05owned\x12\x1e\n" +
@@ -193,7 +203,8 @@ const file_cloud_v1_models_package_proto_rawDesc = "" +
 	"\x0edeb_object_uri\x18\x06 \x01(\tB\b\xfaB\x05r\x03\x18\x80 R\fdebObjectUri\x12$\n" +
 	"\bchecksum\x18\a \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\bchecksum\x12\x1d\n" +
 	"\n" +
-	"is_builtin\x18\b \x01(\bR\tisBuiltin\x1a<\n" +
+	"is_builtin\x18\b \x01(\bR\tisBuiltin\x121\n" +
+	"\x04tags\x18\t \x01(\v2\x15.cloud.v1.common.TagsB\x06\x82\xa6\x1d\x02\x10\x01R\x04tags\x1a<\n" +
 	"\x04List\x124\n" +
 	"\bpackages\x18\x01 \x03(\v2\x18.cloud.v1.models.PackageR\bpackages:\x16\x92\xb5\x18\f\b\x01\x12\bpackages\x82\xa6\x1d\x02\b\x01BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
 
@@ -215,16 +226,18 @@ var file_cloud_v1_models_package_proto_goTypes = []any{
 	(*Package_List)(nil), // 1: cloud.v1.models.Package.List
 	(*Entity)(nil),       // 2: cloud.v1.models.Entity
 	(*Own)(nil),          // 3: cloud.v1.models.Own
+	(*common.Tags)(nil),  // 4: cloud.v1.common.Tags
 }
 var file_cloud_v1_models_package_proto_depIdxs = []int32{
 	2, // 0: cloud.v1.models.Package.entity:type_name -> cloud.v1.models.Entity
 	3, // 1: cloud.v1.models.Package.owned:type_name -> cloud.v1.models.Own
-	0, // 2: cloud.v1.models.Package.List.packages:type_name -> cloud.v1.models.Package
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	4, // 2: cloud.v1.models.Package.tags:type_name -> cloud.v1.common.Tags
+	0, // 3: cloud.v1.models.Package.List.packages:type_name -> cloud.v1.models.Package
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_package_proto_init() }

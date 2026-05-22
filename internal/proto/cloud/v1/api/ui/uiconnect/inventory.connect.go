@@ -10,7 +10,6 @@ import (
 	errors "errors"
 	ui "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
-	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	http "net/http"
 	strings "strings"
 )
@@ -49,7 +48,7 @@ const (
 // CloudInventoryServiceClient is a client for the cloud.v1.api.ui.CloudInventoryService service.
 type CloudInventoryServiceClient interface {
 	FetchQuotas(context.Context, *ui.FetchQuotasRequest) (*deployment.QuotaInventory, error)
-	ListNetworkAllocations(context.Context, *ui.ListNetworkAllocationsRequest) (*models.NetworkAllocation_List, error)
+	ListNetworkAllocations(context.Context, *ui.ListNetworkAllocationsRequest) (*ui.ListNetworkAllocationsResponse, error)
 	Reconcile(context.Context, *ui.ReconcileRequest) (*ui.ReconcileResponse, error)
 }
 
@@ -71,7 +70,7 @@ func NewCloudInventoryServiceClient(httpClient connect.HTTPClient, baseURL strin
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
-		listNetworkAllocations: connect.NewClient[ui.ListNetworkAllocationsRequest, models.NetworkAllocation_List](
+		listNetworkAllocations: connect.NewClient[ui.ListNetworkAllocationsRequest, ui.ListNetworkAllocationsResponse](
 			httpClient,
 			baseURL+CloudInventoryServiceListNetworkAllocationsProcedure,
 			connect.WithSchema(cloudInventoryServiceMethods.ByName("ListNetworkAllocations")),
@@ -91,7 +90,7 @@ func NewCloudInventoryServiceClient(httpClient connect.HTTPClient, baseURL strin
 // cloudInventoryServiceClient implements CloudInventoryServiceClient.
 type cloudInventoryServiceClient struct {
 	fetchQuotas            *connect.Client[ui.FetchQuotasRequest, deployment.QuotaInventory]
-	listNetworkAllocations *connect.Client[ui.ListNetworkAllocationsRequest, models.NetworkAllocation_List]
+	listNetworkAllocations *connect.Client[ui.ListNetworkAllocationsRequest, ui.ListNetworkAllocationsResponse]
 	reconcile              *connect.Client[ui.ReconcileRequest, ui.ReconcileResponse]
 }
 
@@ -105,7 +104,7 @@ func (c *cloudInventoryServiceClient) FetchQuotas(ctx context.Context, req *ui.F
 }
 
 // ListNetworkAllocations calls cloud.v1.api.ui.CloudInventoryService.ListNetworkAllocations.
-func (c *cloudInventoryServiceClient) ListNetworkAllocations(ctx context.Context, req *ui.ListNetworkAllocationsRequest) (*models.NetworkAllocation_List, error) {
+func (c *cloudInventoryServiceClient) ListNetworkAllocations(ctx context.Context, req *ui.ListNetworkAllocationsRequest) (*ui.ListNetworkAllocationsResponse, error) {
 	response, err := c.listNetworkAllocations.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -126,7 +125,7 @@ func (c *cloudInventoryServiceClient) Reconcile(ctx context.Context, req *ui.Rec
 // service.
 type CloudInventoryServiceHandler interface {
 	FetchQuotas(context.Context, *ui.FetchQuotasRequest) (*deployment.QuotaInventory, error)
-	ListNetworkAllocations(context.Context, *ui.ListNetworkAllocationsRequest) (*models.NetworkAllocation_List, error)
+	ListNetworkAllocations(context.Context, *ui.ListNetworkAllocationsRequest) (*ui.ListNetworkAllocationsResponse, error)
 	Reconcile(context.Context, *ui.ReconcileRequest) (*ui.ReconcileResponse, error)
 }
 
@@ -179,7 +178,7 @@ func (UnimplementedCloudInventoryServiceHandler) FetchQuotas(context.Context, *u
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.CloudInventoryService.FetchQuotas is not implemented"))
 }
 
-func (UnimplementedCloudInventoryServiceHandler) ListNetworkAllocations(context.Context, *ui.ListNetworkAllocationsRequest) (*models.NetworkAllocation_List, error) {
+func (UnimplementedCloudInventoryServiceHandler) ListNetworkAllocations(context.Context, *ui.ListNetworkAllocationsRequest) (*ui.ListNetworkAllocationsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.CloudInventoryService.ListNetworkAllocations is not implemented"))
 }
 

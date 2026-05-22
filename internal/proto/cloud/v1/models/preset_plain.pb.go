@@ -20,6 +20,9 @@ type PresetScanner struct {
 	TenantId             string     `json:"tenantId"`       // origin: embed, empath: tenant_id
 	Tags                 []byte     `json:"tags"`           // origin: serialized, empath: tags
 	Kind                 string     `json:"kind"`
+	IsSystem             bool       `json:"isSystem"`
+	Name                 *string    `json:"name,omitempty"`
+	Description          *string    `json:"description,omitempty"`
 	PresetWorkloadPreset []byte     `json:"presetWorkloadPreset"` // origin: serialized, empath: preset.workload_preset
 	PresetDatabasePreset []byte     `json:"presetDatabasePreset"` // origin: serialized, empath: preset.database_preset
 	PresetTestPreset     []byte     `json:"presetTestPreset"`     // origin: serialized, empath: preset.test_preset
@@ -78,6 +81,9 @@ func (pb *Preset) IntoPlain() *PresetScanner {
 		p.Tags = []byte{}
 	}
 	p.Kind = pb.Kind.String()
+	p.IsSystem = pb.IsSystem
+	p.Name = pb.Name
+	p.Description = pb.Description
 	// PresetWorkloadPreset serialized from preset.workload_preset
 	if pb.GetWorkloadPreset() != nil {
 		if data, err := protojson.Marshal(pb.GetWorkloadPreset()); err == nil {
@@ -176,6 +182,9 @@ func (p *PresetScanner) IntoPb() *Preset {
 		}
 	}
 	pb.Kind = Preset_Kind(Preset_Kind_value[p.Kind])
+	pb.IsSystem = p.IsSystem
+	pb.Name = p.Name
+	pb.Description = p.Description
 	// PresetWorkloadPreset deserialize -> preset.workload_preset
 	if len(p.PresetWorkloadPreset) > 0 {
 		var msg domain.WorkloadPreset

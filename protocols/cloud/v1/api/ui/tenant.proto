@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package cloud.v1.api.ui;
 
+import "cloud/v1/common/tags.proto";
+import "cloud/v1/models/account.proto";
 import "cloud/v1/models/common.proto";
 import "cloud/v1/models/tenant.proto";
 import "google/protobuf/empty.proto";
@@ -26,8 +28,48 @@ message RemoveMemberRequest {
     models.AccountId account_id = 2 [(validate.rules).message.required = true];
 }
 
+/* TenantMemberRow joins a membership with the member's account fields: a bare
+   TenantMember carries only account_id, but the members table needs the
+   account's email/nickname/is_admin. */
+message TenantMemberRow {
+    models.TenantMember member = 1;
+    /* account carries the member's email/nickname/is_admin for display. */
+    models.Account account = 2;
+}
+
+/* ListTenantMembersRequest is the members-management table contract (NOT the
+   identity-bootstrap ListMyTenants). */
+message ListTenantMembersRequest {
+    /* SortField — typed sortable columns (no arbitrary strings). */
+    enum SortField {
+        SORT_FIELD_UNSPECIFIED = 0;
+        SORT_FIELD_CREATED_AT = 1;
+        SORT_FIELD_ROLE = 2;
+    }
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    /* search filters by member email/nickname (free text). */
+    optional string search = 2 [(validate.rules).string.max_len = 256];
+    /* role filters by membership role. */
+    optional models.TenantMember.Role role = 3 [(validate.rules).enum.defined_only = true];
+    SortField sort_field = 4 [(validate.rules).enum.defined_only = true];
+    models.SortOrder order = 5 [(validate.rules).enum.defined_only = true];
+    models.Page page = 6;
+    /* tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter. */
+    common.Tags tags = 7;
+}
+
+/* ListTenantMembersResponse — joined rows plus pagination metadata (H42). */
+message ListTenantMembersResponse {
+    repeated TenantMemberRow members = 1;
+    models.PageInfo page_info = 2;
+}
+
 service TenantService {
     rpc ListMyTenants (google.protobuf.Empty) returns (models.Tenant.List) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+    }
+    /* ListTenantMembers requires OWNER of the tenant (members-management table). */
+    rpc ListTenantMembers (ListTenantMembersRequest) returns (ListTenantMembersResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
     }
     /* AddMemberToTenant / RemoveMemberFromTenant require OWNER of the tenant. */

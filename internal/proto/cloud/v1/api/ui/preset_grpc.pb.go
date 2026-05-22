@@ -32,7 +32,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PresetServiceClient interface {
-	ListPresets(ctx context.Context, in *ListPresetRequest, opts ...grpc.CallOption) (*models.Preset_List, error)
+	ListPresets(ctx context.Context, in *ListPresetRequest, opts ...grpc.CallOption) (*ListPresetsResponse, error)
 	CreatePreset(ctx context.Context, in *models.Preset, opts ...grpc.CallOption) (*models.Preset, error)
 	UpdatePreset(ctx context.Context, in *models.Preset, opts ...grpc.CallOption) (*models.Preset, error)
 	DeletePreset(ctx context.Context, in *DeletePresetRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -47,9 +47,9 @@ func NewPresetServiceClient(cc grpc.ClientConnInterface) PresetServiceClient {
 	return &presetServiceClient{cc}
 }
 
-func (c *presetServiceClient) ListPresets(ctx context.Context, in *ListPresetRequest, opts ...grpc.CallOption) (*models.Preset_List, error) {
+func (c *presetServiceClient) ListPresets(ctx context.Context, in *ListPresetRequest, opts ...grpc.CallOption) (*ListPresetsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(models.Preset_List)
+	out := new(ListPresetsResponse)
 	err := c.cc.Invoke(ctx, PresetService_ListPresets_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (c *presetServiceClient) ClonePreset(ctx context.Context, in *ClonePresetRe
 // All implementations must embed UnimplementedPresetServiceServer
 // for forward compatibility.
 type PresetServiceServer interface {
-	ListPresets(context.Context, *ListPresetRequest) (*models.Preset_List, error)
+	ListPresets(context.Context, *ListPresetRequest) (*ListPresetsResponse, error)
 	CreatePreset(context.Context, *models.Preset) (*models.Preset, error)
 	UpdatePreset(context.Context, *models.Preset) (*models.Preset, error)
 	DeletePreset(context.Context, *DeletePresetRequest) (*emptypb.Empty, error)
@@ -116,7 +116,7 @@ type PresetServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedPresetServiceServer struct{}
 
-func (UnimplementedPresetServiceServer) ListPresets(context.Context, *ListPresetRequest) (*models.Preset_List, error) {
+func (UnimplementedPresetServiceServer) ListPresets(context.Context, *ListPresetRequest) (*ListPresetsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListPresets not implemented")
 }
 func (UnimplementedPresetServiceServer) CreatePreset(context.Context, *models.Preset) (*models.Preset, error) {

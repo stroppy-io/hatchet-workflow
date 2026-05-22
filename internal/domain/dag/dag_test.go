@@ -49,7 +49,7 @@ func (f *fakeTF) Destroy(context.Context, *deployment.Yandex) error { f.destroye
 // fakeInstall returns a trivial server sub-dag (one no-op node) registered into reg.
 type fakeInstall struct{ reg runtime.TasksRegistry }
 
-func (f fakeInstall) Build(*domain.TestPreset) *primitive.Dag {
+func (f fakeInstall) Build(*domain.TestPreset, string) *primitive.Dag {
 	f.reg.Register(runtime.NewTask[*emptypb.Empty, *emptypb.Empty]("install_noop",
 		func(runtime.DagContext, *emptypb.Empty) (*emptypb.Empty, error) { return &emptypb.Empty{}, nil }))
 	return &primitive.Dag{
@@ -88,13 +88,12 @@ func TestBuildTestDagDockerBranch(t *testing.T) {
 	reg := runtime.NewTaskRegistry()
 	docker := &fakeDocker{}
 	tf := &fakeTF{}
-	deps := Deps{
-		Net: fakeNet{}, Quota: fakeQuota{}, Docker: docker, TF: tf,
-		Install: fakeInstall{reg: reg},
-	}
+	deps := Deps{Docker: docker, TF: tf, Install: fakeInstall{reg: reg}}
 
-	dag := BuildTestDag(dockerPreset(), reg, deps)
-	pprintDag(dag, false)
+	dep := BuildDeployment(dockerPreset(), &system.Network{}, nil)
+	dag := BuildTestDag(dockerPreset(), dep, deps)
+	RegisterProvisionHandlers(reg, deps)
+	PprintDag(dag, false)
 	preds := ProviderPredicates()
 	for k, v := range runtime.DefaultPredicates() {
 		preds[k] = v

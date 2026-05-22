@@ -4,7 +4,9 @@
 package models
 
 import (
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	ratelcast "github.com/yaroher/ratel/pkg/ratelcast"
+	protojson "google.golang.org/protobuf/encoding/protojson"
 	time "time"
 )
 
@@ -21,6 +23,7 @@ type WebhookScanner struct {
 	Url            string     `json:"url"`
 	Events         []string   `json:"events"`
 	Enabled        bool       `json:"enabled"`
+	Tags           []byte     `json:"tags"`   // origin: serialized, empath: tags
 	Secret         string     `json:"secret"` // origin: virtual, empath: virtual
 }
 
@@ -66,6 +69,14 @@ func (pb *Webhook) IntoPlain() *WebhookScanner {
 		p.Events = []string{}
 	}
 	p.Enabled = pb.Enabled
+	// Tags serialized from tags
+	if pb.Tags != nil {
+		if data, err := protojson.Marshal(pb.Tags); err == nil {
+			p.Tags = data
+		}
+	} else {
+		p.Tags = []byte{}
+	}
 	// Secret is virtual, no source in protobuf
 	return p
 }
@@ -141,6 +152,13 @@ func (p *WebhookScanner) IntoPb() *Webhook {
 		}
 	}
 	pb.Enabled = p.Enabled
+	// Tags deserialize -> tags
+	if len(p.Tags) > 0 {
+		var msg common.Tags
+		if err := protojson.Unmarshal(p.Tags, &msg); err == nil {
+			pb.Tags = &msg
+		}
+	}
 	// Secret is virtual, skipping
 	return pb
 }

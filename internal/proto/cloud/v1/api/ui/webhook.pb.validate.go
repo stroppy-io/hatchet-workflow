@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 )
 
 // ensure the imports are used
@@ -33,6 +35,8 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = models.Webhook_Event(0)
 )
 
 // Validate checks the field values on CreateWebhookRequest with the rules
@@ -483,6 +487,132 @@ func (m *ListWebhooksRequest) validate(all bool) error {
 		}
 	}
 
+	for idx, item := range m.GetEvents() {
+		_, _ = idx, item
+
+		if _, ok := _ListWebhooksRequest_Events_NotInLookup[item]; ok {
+			err := ListWebhooksRequestValidationError{
+				field:  fmt.Sprintf("Events[%v]", idx),
+				reason: "value must not be in list [0]",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if _, ok := models.Webhook_Event_name[int32(item)]; !ok {
+			err := ListWebhooksRequestValidationError{
+				field:  fmt.Sprintf("Events[%v]", idx),
+				reason: "value must be one of the defined enum values",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if _, ok := ListWebhooksRequest_SortField_name[int32(m.GetSortField())]; !ok {
+		err := ListWebhooksRequestValidationError{
+			field:  "SortField",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := models.SortOrder_name[int32(m.GetOrder())]; !ok {
+		err := ListWebhooksRequestValidationError{
+			field:  "Order",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPage()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListWebhooksRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListWebhooksRequestValidationError{
+					field:  "Page",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPage()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListWebhooksRequestValidationError{
+				field:  "Page",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListWebhooksRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListWebhooksRequestValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListWebhooksRequestValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.Search != nil {
+
+		if utf8.RuneCountInString(m.GetSearch()) > 256 {
+			err := ListWebhooksRequestValidationError{
+				field:  "Search",
+				reason: "value length must be at most 256 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.Enabled != nil {
+		// no validation rules for Enabled
+	}
+
 	if len(errors) > 0 {
 		return ListWebhooksRequestMultiError(errors)
 	}
@@ -562,6 +692,175 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListWebhooksRequestValidationError{}
+
+var _ListWebhooksRequest_Events_NotInLookup = map[models.Webhook_Event]struct{}{
+	0: {},
+}
+
+// Validate checks the field values on ListWebhooksResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListWebhooksResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListWebhooksResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListWebhooksResponseMultiError, or nil if none found.
+func (m *ListWebhooksResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListWebhooksResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetWebhooks() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListWebhooksResponseValidationError{
+						field:  fmt.Sprintf("Webhooks[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListWebhooksResponseValidationError{
+						field:  fmt.Sprintf("Webhooks[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListWebhooksResponseValidationError{
+					field:  fmt.Sprintf("Webhooks[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetPageInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListWebhooksResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListWebhooksResponseValidationError{
+					field:  "PageInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPageInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListWebhooksResponseValidationError{
+				field:  "PageInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ListWebhooksResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListWebhooksResponseMultiError is an error wrapping multiple validation
+// errors returned by ListWebhooksResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ListWebhooksResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListWebhooksResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListWebhooksResponseMultiError) AllErrors() []error { return m }
+
+// ListWebhooksResponseValidationError is the validation error returned by
+// ListWebhooksResponse.Validate if the designated constraints aren't met.
+type ListWebhooksResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListWebhooksResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListWebhooksResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListWebhooksResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListWebhooksResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListWebhooksResponseValidationError) ErrorName() string {
+	return "ListWebhooksResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListWebhooksResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListWebhooksResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListWebhooksResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListWebhooksResponseValidationError{}
 
 // Validate checks the field values on DeleteWebhookRequest with the rules
 // defined in the proto definition for this message. If any rules are

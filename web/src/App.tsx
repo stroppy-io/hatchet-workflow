@@ -1,172 +1,65 @@
-import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import { Layout } from "@/components/Layout";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { Runs } from "@/pages/Runs";
-import { NewRun } from "@/pages/NewRun";
-import { RunDetail } from "@/pages/RunDetail";
-import { Compare } from "@/pages/Compare";
-import { SettingsPage } from "@/pages/Settings";
-import { Presets } from "@/pages/Presets";
-import { RunPresets } from "@/pages/RunPresets";
-import { Suites } from "@/pages/Suites";
-import { SuiteDetail } from "@/pages/SuiteDetail";
-import { SuiteBuilder } from "@/pages/SuiteBuilder";
-import { WorkloadEditor } from "@/pages/WorkloadEditor";
-import { Packages } from "@/pages/Packages";
-import { PresetDesigner } from "@/pages/PresetDesigner";
-import { ServerHealth } from "@/pages/ServerHealth";
-import { SharedRun } from "@/pages/SharedRun";
+import { Navigate, Route, Routes } from "react-router-dom";
 
-import { Login } from "@/pages/Login";
-import { SelectTenant } from "@/pages/SelectTenant";
-import { AdminTenants } from "@/pages/AdminTenants";
-import { AdminUsers } from "@/pages/AdminUsers";
-import { TenantMembers } from "@/pages/TenantMembers";
-import { TenantTokens } from "@/pages/TenantTokens";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { useAuth } from "@/hooks/useAuth";
+import { AppShell } from "@/components/app-shell";
+import { ProtectedRoute } from "@/components/protected-route";
+import { InventoryPage } from "@/pages/inventory-page";
+import { LoginPage } from "@/pages/login-page";
+import { NotFoundPage } from "@/pages/not-found-page";
+import { PlatformSettingsPage } from "@/pages/platform-settings-page";
+import { DatabasePresetsPage, TestPresetsPage, WorkloadPresetsPage } from "@/pages/preset-card-pages";
+import { PlaceholderPage } from "@/pages/placeholder-page";
+import { SettingsPage } from "@/pages/settings-page";
+import { SuitesPage } from "@/pages/suite-card-page";
+import {
+  MembersPage,
+  PackagesPage,
+  PlatformAccountsPage,
+  PlatformTenantsPage,
+  RunsPage,
+  SuiteRunsPage,
+  TokensPage,
+  WebhooksPage,
+} from "@/pages/table-pages";
+import { TenantHomePage } from "@/pages/tenant-home-page";
+import { WizardPage } from "@/pages/wizard-page";
 
-function AppRoutes() {
-  const { isAuthenticated, isLoading, user } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
+const DEFAULT_TENANT_ID = "default";
 
-  const { selectTenant } = useAuth();
-
-  // After login: auto-select tenant or redirect.
-  useEffect(() => {
-    if (!user || !isAuthenticated) return;
-    // Skip if already on select-tenant or admin pages (root can access admin without tenant).
-    if (location.pathname === "/select-tenant" || location.pathname.startsWith("/admin")) return;
-
-    if (user.tenant_id) return; // tenant already selected
-
-    const tenants = user.tenants || [];
-    if (tenants.length === 1) {
-      // Auto-select the only tenant.
-      selectTenant(tenants[0].id);
-    } else if (tenants.length > 1) {
-      // Multiple tenants — show selector.
-      navigate("/select-tenant", { replace: true });
-    } else if (user.is_root) {
-      // Root with no tenants — go to admin to create one.
-      navigate("/admin/tenants", { replace: true });
-    } else {
-      // Non-root with no tenants — show selector (will display "no tenants" message).
-      navigate("/select-tenant", { replace: true });
-    }
-  }, [user, isAuthenticated, selectTenant, navigate, location.pathname]);
-
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background text-sm text-muted-foreground">
-        Loading...
-      </div>
-    );
-  }
-
-  // Share pages are always accessible, regardless of auth.
-  if (location.pathname.startsWith("/share/")) {
-    return (
-      <Routes>
-        <Route path="/share/:token" element={<SharedRun />} />
-      </Routes>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="*"
-          element={
-            <Navigate
-              to={`/login?redirect=${encodeURIComponent(location.pathname)}`}
-              replace
-            />
-          }
-        />
-      </Routes>
-    );
-  }
-
-  // No tenant selected yet — only show select-tenant and admin pages.
-  if (!user?.tenant_id) {
-    return (
-      <Routes>
-        <Route path="/select-tenant" element={<SelectTenant />} />
-        <Route element={<Layout />}>
-          <Route element={<ProtectedRoute requireRoot />}>
-            <Route path="/admin/tenants" element={<AdminTenants />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/server" element={<ServerHealth />} />
-          </Route>
-        </Route>
-        <Route path="/login" element={<Navigate to="/" replace />} />
-        <Route path="*" element={
-          user?.is_root
-            ? <Navigate to="/admin/tenants" replace />
-            : <Navigate to="/select-tenant" replace />
-        } />
-      </Routes>
-    );
-  }
-
+export function App() {
   return (
     <Routes>
-      <Route path="/select-tenant" element={<SelectTenant />} />
-
-      <Route element={<Layout key={user?.tenant_id || ""} />}>
-        {/* Everyone */}
-        <Route path="/" element={<Runs />} />
-        <Route path="/runs" element={<Runs />} />
-        <Route path="/runs/:id" element={<RunDetail />} />
-        <Route path="/compare" element={<Compare />} />
-        <Route path="/packages" element={<Packages />} />
-        <Route path="/presets" element={<Presets />} />
-        <Route path="/run-presets" element={<RunPresets />} />
-        <Route path="/suites" element={<Suites />} />
-        <Route path="/suites/new" element={<SuiteBuilder />} />
-        <Route path="/suites/:id" element={<SuiteDetail />} />
-        <Route path="/suites/:id/edit" element={<SuiteBuilder />} />
-        <Route path="/suites/:id/items/new" element={<WorkloadEditor />} />
-        <Route path="/suites/:id/items/:itemId/edit" element={<WorkloadEditor />} />
-
-        <Route path="/settings" element={<SettingsPage />} />
-
-        {/* Operator+ */}
-        <Route element={<ProtectedRoute minRole="operator" />}>
-          <Route path="/runs/new" element={<NewRun />} />
-          <Route path="/presets/new" element={<PresetDesigner />} />
-          <Route path="/presets/:id/edit" element={<PresetDesigner />} />
-        </Route>
-
-        {/* Owner+ */}
-        <Route element={<ProtectedRoute minRole="owner" />}>
-          <Route path="/members" element={<TenantMembers />} />
-          <Route path="/tokens" element={<TenantTokens />} />
-        </Route>
-
-        {/* Root only */}
-        <Route element={<ProtectedRoute requireRoot />}>
-          <Route path="/admin/tenants" element={<AdminTenants />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/server" element={<ServerHealth />} />
+      <Route path="/" element={<Navigate to={`/t/${DEFAULT_TENANT_ID}/wizard`} replace />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/t/:tenantId" element={<AppShell />}>
+          <Route index element={<TenantHomePage />} />
+          <Route path="wizard" element={<WizardPage />} />
+          <Route path="runs" element={<RunsPage />} />
+          <Route path="runs/:runId" element={<PlaceholderPage title="Run details" />} />
+          <Route path="presets" element={<Navigate to="database" replace />} />
+          <Route path="presets/database" element={<DatabasePresetsPage />} />
+          <Route path="presets/database/:presetId" element={<PlaceholderPage title="Database preset" />} />
+          <Route path="presets/workload" element={<WorkloadPresetsPage />} />
+          <Route path="presets/workload/:presetId" element={<PlaceholderPage title="Workload preset" />} />
+          <Route path="presets/test" element={<TestPresetsPage />} />
+          <Route path="presets/test/:presetId" element={<PlaceholderPage title="Test preset" />} />
+          <Route path="suites" element={<SuitesPage />} />
+          <Route path="suites/:suiteId" element={<PlaceholderPage title="Suite" />} />
+          <Route path="suite-runs" element={<SuiteRunsPage />} />
+          <Route path="suite-runs/:suiteRunId" element={<PlaceholderPage title="Suite run" />} />
+          <Route path="packages" element={<PackagesPage />} />
+          <Route path="webhooks" element={<WebhooksPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="inventory" element={<InventoryPage />} />
+          <Route path="tokens" element={<TokensPage />} />
+          <Route path="members" element={<MembersPage />} />
+          <Route path="platform" element={<PlaceholderPage title="Platform Admin" />} />
+          <Route path="platform/settings" element={<PlatformSettingsPage />} />
+          <Route path="platform/accounts" element={<PlatformAccountsPage />} />
+          <Route path="platform/tenants" element={<PlatformTenantsPage />} />
         </Route>
       </Route>
-
-      <Route path="/login" element={<Navigate to="/" replace />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
-  );
-}
-
-export default function App() {
-  return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
   );
 }

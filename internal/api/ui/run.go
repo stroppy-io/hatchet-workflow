@@ -23,7 +23,7 @@ import (
 type RunActions interface {
 	SubmitTestRun(ctx context.Context, req *uipb.SubmitTestRunRequest) (*models.TestRun, error)
 	GetTestRun(ctx context.Context, req *uipb.GetTestRunRequest) (*models.TestRun, error)
-	ListTestRuns(ctx context.Context, req *uipb.ListTestRunsRequest) (*models.TestRun_List, error)
+	ListTestRuns(ctx context.Context, req *uipb.ListTestRunsRequest) (*uipb.ListTestRunsResponse, error)
 	CancelTestRun(ctx context.Context, req *uipb.CancelTestRunRequest) (*models.TestRun, error)
 	StreamTestRunLogs(req *uipb.StreamTestRunLogsRequest, stream grpc.ServerStreamingServer[logs.LogLine]) error
 	QueryRunLogs(ctx context.Context, req *uipb.QueryRunLogsRequest) (*logs.LogPage, error)
@@ -65,9 +65,9 @@ func (s *RunService) GetTestRun(ctx context.Context, req *uipb.GetTestRunRequest
 		})
 }
 
-func (s *RunService) ListTestRuns(ctx context.Context, req *uipb.ListTestRunsRequest) (*models.TestRun_List, error) {
+func (s *RunService) ListTestRuns(ctx context.Context, req *uipb.ListTestRunsRequest) (*uipb.ListTestRunsResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListTestRuns",
-		func(ctx context.Context, _ trace.Span) (*models.TestRun_List, error) {
+		func(ctx context.Context, _ trace.Span) (*uipb.ListTestRunsResponse, error) {
 			return s.svc.ListTestRuns(ctx, req)
 		})
 }

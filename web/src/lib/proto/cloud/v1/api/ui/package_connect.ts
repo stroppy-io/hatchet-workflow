@@ -3,8 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { DeletePackageRequest, ListPackagesRequest, RequestPackageUploadRequest, RequestPackageUploadResponse } from "./package_pbts";
-import { Package_List } from "../../models/package_pbts";
+import { DeletePackageRequest, ListPackagesRequest, ListPackagesResponse, RequestPackageUploadRequest, RequestPackageUploadResponse } from "./package_pbts";
 import { Empty, MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -19,7 +18,7 @@ export const PackageService = {
     listPackages: {
       name: "ListPackages",
       I: ListPackagesRequest,
-      O: Package_List,
+      O: ListPackagesResponse,
       kind: MethodKind.Unary,
       idempotency: MethodIdempotency.NoSideEffects,
     },

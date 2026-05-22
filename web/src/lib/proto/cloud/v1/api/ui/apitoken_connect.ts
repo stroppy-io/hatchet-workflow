@@ -3,9 +3,8 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateApiTokenRequest, CreateApiTokenResponse, ListApiTokensRequest, RevokeApiTokenRequest } from "./apitoken_pbts";
+import { CreateApiTokenRequest, CreateApiTokenResponse, ListApiTokensRequest, ListApiTokensResponse, RevokeApiTokenRequest } from "./apitoken_pbts";
 import { Empty, MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
-import { ApiToken_List } from "../../models/apitoken_pbts";
 
 /**
  * @generated from service cloud.v1.api.ui.ApiTokenService
@@ -29,7 +28,7 @@ export const ApiTokenService = {
     listApiTokens: {
       name: "ListApiTokens",
       I: ListApiTokensRequest,
-      O: ApiToken_List,
+      O: ListApiTokensResponse,
       kind: MethodKind.Unary,
       idempotency: MethodIdempotency.NoSideEffects,
     },

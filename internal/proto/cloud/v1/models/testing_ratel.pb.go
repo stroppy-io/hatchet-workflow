@@ -10,9 +10,9 @@ import (
 	"github.com/yaroher/ratel/pkg/ddl"
 	"github.com/yaroher/ratel/pkg/dml/set"
 	"github.com/yaroher/ratel/pkg/exec"
-	"github.com/yaroher/ratel/pkg/sqlerr"
 	"github.com/yaroher/ratel/pkg/repository"
 	"github.com/yaroher/ratel/pkg/schema"
+	"github.com/yaroher/ratel/pkg/sqlerr"
 )
 
 var (
@@ -45,6 +45,8 @@ const (
 	TestRunColumnTestPreset     TestRunColumnAlias = "test_preset"
 	TestRunColumnDag            TestRunColumnAlias = "dag"
 	TestRunColumnSuiteRunId     TestRunColumnAlias = "suite_run_id"
+	TestRunColumnTags           TestRunColumnAlias = "tags"
+	TestRunColumnStatus         TestRunColumnAlias = "status"
 )
 
 func (s *TestRunScanner) GetTarget(col string) func() any {
@@ -71,6 +73,10 @@ func (s *TestRunScanner) GetTarget(col string) func() any {
 		return func() any { return &s.Dag }
 	case TestRunColumnSuiteRunId:
 		return func() any { return &s.SuiteRunId }
+	case TestRunColumnTags:
+		return func() any { return &s.Tags }
+	case TestRunColumnStatus:
+		return func() any { return &s.Status }
 	default:
 		panic("unknown field: " + col)
 	}
@@ -100,6 +106,10 @@ func (s *TestRunScanner) GetSetter(f TestRunColumnAlias) func() set.ValueSetter[
 		return func() set.ValueSetter[TestRunColumnAlias] { return set.NewSetter(f, &s.Dag) }
 	case TestRunColumnSuiteRunId:
 		return func() set.ValueSetter[TestRunColumnAlias] { return set.NewSetter(f, &s.SuiteRunId) }
+	case TestRunColumnTags:
+		return func() set.ValueSetter[TestRunColumnAlias] { return set.NewSetter(f, &s.Tags) }
+	case TestRunColumnStatus:
+		return func() set.ValueSetter[TestRunColumnAlias] { return set.NewSetter(f, &s.Status) }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -129,6 +139,10 @@ func (s *TestRunScanner) GetValue(f TestRunColumnAlias) func() any {
 		return func() any { return s.Dag }
 	case TestRunColumnSuiteRunId:
 		return func() any { return s.SuiteRunId }
+	case TestRunColumnTags:
+		return func() any { return s.Tags }
+	case TestRunColumnStatus:
+		return func() any { return s.Status }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -147,6 +161,8 @@ func (s *TestRunScanner) AllSetters() []set.ValueSetter[TestRunColumnAlias] {
 		set.NewSetter[TestRunColumnAlias](TestRunColumnTestPreset, s.TestPreset),
 		set.NewSetter[TestRunColumnAlias](TestRunColumnDag, s.Dag),
 		set.NewSetter[TestRunColumnAlias](TestRunColumnSuiteRunId, s.SuiteRunId),
+		set.NewSetter[TestRunColumnAlias](TestRunColumnTags, s.Tags),
+		set.NewSetter[TestRunColumnAlias](TestRunColumnStatus, s.Status),
 	}
 }
 
@@ -169,6 +185,8 @@ type TestRunsTable struct {
 	TestPreset     schema.TextColumnI[TestRunColumnAlias]
 	Dag            schema.TextColumnI[TestRunColumnAlias]
 	SuiteRunId     schema.NullTextColumnI[TestRunColumnAlias]
+	Tags           schema.TextColumnI[TestRunColumnAlias]
+	Status         schema.TextColumnI[TestRunColumnAlias]
 }
 
 // TestRuns is the global test_runs table instance
@@ -184,6 +202,8 @@ var TestRuns = func() TestRunsTable {
 	testPresetCol := schema.TextColumn(TestRunColumnTestPreset, ddl.WithNotNull[TestRunColumnAlias]())
 	dagCol := schema.TextColumn(TestRunColumnDag, ddl.WithReferences[TestRunColumnAlias]("dags", "id"), ddl.WithOnDelete[TestRunColumnAlias]("CASCADE"), ddl.WithNotNull[TestRunColumnAlias]())
 	suiteRunIdCol := schema.NullTextColumn(TestRunColumnSuiteRunId, ddl.WithReferences[TestRunColumnAlias]("suite_runs", "id"), ddl.WithOnDelete[TestRunColumnAlias]("CASCADE"))
+	tagsCol := schema.TextColumn(TestRunColumnTags, ddl.WithNotNull[TestRunColumnAlias]())
+	statusCol := schema.TextColumn(TestRunColumnStatus, ddl.WithNotNull[TestRunColumnAlias]())
 
 	return TestRunsTable{
 		Table: schema.NewTable[TestRunAlias, TestRunColumnAlias, *TestRunScanner](
@@ -201,6 +221,8 @@ var TestRuns = func() TestRunsTable {
 				testPresetCol.DDL(),
 				dagCol.DDL(),
 				suiteRunIdCol.DDL(),
+				tagsCol.DDL(),
+				statusCol.DDL(),
 			},
 		),
 		Id:             idCol,
@@ -214,6 +236,8 @@ var TestRuns = func() TestRunsTable {
 		TestPreset:     testPresetCol,
 		Dag:            dagCol,
 		SuiteRunId:     suiteRunIdCol,
+		Tags:           tagsCol,
+		Status:         statusCol,
 	}
 }()
 
@@ -250,6 +274,7 @@ const (
 	SuiteColumnPreset         SuiteColumnAlias = "preset"
 	SuiteColumnCron           SuiteColumnAlias = "cron"
 	SuiteColumnNextFireAt     SuiteColumnAlias = "next_fire_at"
+	SuiteColumnTags           SuiteColumnAlias = "tags"
 )
 
 func (s *SuiteScanner) GetTarget(col string) func() any {
@@ -276,6 +301,8 @@ func (s *SuiteScanner) GetTarget(col string) func() any {
 		return func() any { return &s.Cron }
 	case SuiteColumnNextFireAt:
 		return func() any { return &s.NextFireAt }
+	case SuiteColumnTags:
+		return func() any { return &s.Tags }
 	default:
 		panic("unknown field: " + col)
 	}
@@ -305,6 +332,8 @@ func (s *SuiteScanner) GetSetter(f SuiteColumnAlias) func() set.ValueSetter[Suit
 		return func() set.ValueSetter[SuiteColumnAlias] { return set.NewSetter(f, &s.Cron) }
 	case SuiteColumnNextFireAt:
 		return func() set.ValueSetter[SuiteColumnAlias] { return set.NewSetter(f, &s.NextFireAt) }
+	case SuiteColumnTags:
+		return func() set.ValueSetter[SuiteColumnAlias] { return set.NewSetter(f, &s.Tags) }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -334,6 +363,8 @@ func (s *SuiteScanner) GetValue(f SuiteColumnAlias) func() any {
 		return func() any { return s.Cron }
 	case SuiteColumnNextFireAt:
 		return func() any { return s.NextFireAt }
+	case SuiteColumnTags:
+		return func() any { return s.Tags }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -352,6 +383,7 @@ func (s *SuiteScanner) AllSetters() []set.ValueSetter[SuiteColumnAlias] {
 		set.NewSetter[SuiteColumnAlias](SuiteColumnPreset, s.Preset),
 		set.NewSetter[SuiteColumnAlias](SuiteColumnCron, s.Cron),
 		set.NewSetter[SuiteColumnAlias](SuiteColumnNextFireAt, s.NextFireAt),
+		set.NewSetter[SuiteColumnAlias](SuiteColumnTags, s.Tags),
 	}
 }
 
@@ -374,6 +406,7 @@ type SuitesTable struct {
 	Preset         schema.TextColumnI[SuiteColumnAlias]
 	Cron           schema.TextColumnI[SuiteColumnAlias]
 	NextFireAt     schema.NullTimestamptzColumnI[SuiteColumnAlias]
+	Tags           schema.TextColumnI[SuiteColumnAlias]
 }
 
 // Suites is the global suites table instance
@@ -389,6 +422,7 @@ var Suites = func() SuitesTable {
 	presetCol := schema.TextColumn(SuiteColumnPreset, ddl.WithNotNull[SuiteColumnAlias]())
 	cronCol := schema.TextColumn(SuiteColumnCron, ddl.WithNotNull[SuiteColumnAlias]())
 	nextFireAtCol := schema.NullTimestamptzColumn(SuiteColumnNextFireAt)
+	tagsCol := schema.TextColumn(SuiteColumnTags, ddl.WithNotNull[SuiteColumnAlias]())
 
 	idx0 := ddl.NewIndex[SuiteAlias, SuiteColumnAlias]("suites_cron_idx", SuiteAliasName).OnColumns(SuiteColumnNextFireAt)
 
@@ -408,6 +442,7 @@ var Suites = func() SuitesTable {
 				presetCol.DDL(),
 				cronCol.DDL(),
 				nextFireAtCol.DDL(),
+				tagsCol.DDL(),
 			},
 			ddl.WithIndexes[SuiteAlias, SuiteColumnAlias](
 				idx0,
@@ -424,6 +459,7 @@ var Suites = func() SuitesTable {
 		Preset:         presetCol,
 		Cron:           cronCol,
 		NextFireAt:     nextFireAtCol,
+		Tags:           tagsCol,
 	}
 }()
 
@@ -457,6 +493,7 @@ const (
 	SuiteRunColumnTenantId       SuiteRunColumnAlias = "tenant_id"
 	SuiteRunColumnSuiteId        SuiteRunColumnAlias = "suite_id"
 	SuiteRunColumnDag            SuiteRunColumnAlias = "dag"
+	SuiteRunColumnTags           SuiteRunColumnAlias = "tags"
 )
 
 func (s *SuiteRunScanner) GetTarget(col string) func() any {
@@ -477,6 +514,8 @@ func (s *SuiteRunScanner) GetTarget(col string) func() any {
 		return func() any { return &s.SuiteId }
 	case SuiteRunColumnDag:
 		return func() any { return &s.Dag }
+	case SuiteRunColumnTags:
+		return func() any { return &s.Tags }
 	default:
 		panic("unknown field: " + col)
 	}
@@ -500,6 +539,8 @@ func (s *SuiteRunScanner) GetSetter(f SuiteRunColumnAlias) func() set.ValueSette
 		return func() set.ValueSetter[SuiteRunColumnAlias] { return set.NewSetter(f, &s.SuiteId) }
 	case SuiteRunColumnDag:
 		return func() set.ValueSetter[SuiteRunColumnAlias] { return set.NewSetter(f, &s.Dag) }
+	case SuiteRunColumnTags:
+		return func() set.ValueSetter[SuiteRunColumnAlias] { return set.NewSetter(f, &s.Tags) }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -523,6 +564,8 @@ func (s *SuiteRunScanner) GetValue(f SuiteRunColumnAlias) func() any {
 		return func() any { return s.SuiteId }
 	case SuiteRunColumnDag:
 		return func() any { return s.Dag }
+	case SuiteRunColumnTags:
+		return func() any { return s.Tags }
 	default:
 		panic("unknown field: " + string(f))
 	}
@@ -538,6 +581,7 @@ func (s *SuiteRunScanner) AllSetters() []set.ValueSetter[SuiteRunColumnAlias] {
 		set.NewSetter[SuiteRunColumnAlias](SuiteRunColumnTenantId, s.TenantId),
 		set.NewSetter[SuiteRunColumnAlias](SuiteRunColumnSuiteId, s.SuiteId),
 		set.NewSetter[SuiteRunColumnAlias](SuiteRunColumnDag, s.Dag),
+		set.NewSetter[SuiteRunColumnAlias](SuiteRunColumnTags, s.Tags),
 	}
 }
 
@@ -613,6 +657,7 @@ type SuiteRunsTable struct {
 	TenantId       schema.TextColumnI[SuiteRunColumnAlias]
 	SuiteId        schema.TextColumnI[SuiteRunColumnAlias]
 	Dag            schema.TextColumnI[SuiteRunColumnAlias]
+	Tags           schema.TextColumnI[SuiteRunColumnAlias]
 }
 
 // SuiteRuns is the global suite_runs table instance
@@ -625,6 +670,7 @@ var SuiteRuns = func() SuiteRunsTable {
 	tenantIdCol := schema.TextColumn(SuiteRunColumnTenantId, ddl.WithReferences[SuiteRunColumnAlias]("tenants", "id"), ddl.WithOnDelete[SuiteRunColumnAlias]("CASCADE"), ddl.WithNotNull[SuiteRunColumnAlias]())
 	suiteIdCol := schema.TextColumn(SuiteRunColumnSuiteId, ddl.WithReferences[SuiteRunColumnAlias]("suites", "id"), ddl.WithOnDelete[SuiteRunColumnAlias]("CASCADE"), ddl.WithNotNull[SuiteRunColumnAlias]())
 	dagCol := schema.TextColumn(SuiteRunColumnDag, ddl.WithReferences[SuiteRunColumnAlias]("dags", "id"), ddl.WithOnDelete[SuiteRunColumnAlias]("CASCADE"), ddl.WithNotNull[SuiteRunColumnAlias]())
+	tagsCol := schema.TextColumn(SuiteRunColumnTags, ddl.WithNotNull[SuiteRunColumnAlias]())
 
 	return SuiteRunsTable{
 		Table: schema.NewTable[SuiteRunAlias, SuiteRunColumnAlias, *SuiteRunScanner](
@@ -639,6 +685,7 @@ var SuiteRuns = func() SuiteRunsTable {
 				tenantIdCol.DDL(),
 				suiteIdCol.DDL(),
 				dagCol.DDL(),
+				tagsCol.DDL(),
 			},
 		),
 		Id:             idCol,
@@ -649,6 +696,7 @@ var SuiteRuns = func() SuiteRunsTable {
 		TenantId:       tenantIdCol,
 		SuiteId:        suiteIdCol,
 		Dag:            dagCol,
+		Tags:           tagsCol,
 	}
 }()
 

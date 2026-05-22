@@ -165,6 +165,8 @@ func (m *Preset) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	// no validation rules for IsSystem
+
 	oneofPresetPresent := false
 	switch v := m.Preset.(type) {
 	case *Preset_WorkloadPreset:
@@ -338,6 +340,36 @@ func (m *Preset) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if m.Name != nil {
+
+		if l := utf8.RuneCountInString(m.GetName()); l < 1 || l > 255 {
+			err := PresetValidationError{
+				field:  "Name",
+				reason: "value length must be between 1 and 255 runes, inclusive",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.Description != nil {
+
+		if utf8.RuneCountInString(m.GetDescription()) > 1024 {
+			err := PresetValidationError{
+				field:  "Description",
+				reason: "value length must be at most 1024 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
 	}
 
 	if len(errors) > 0 {

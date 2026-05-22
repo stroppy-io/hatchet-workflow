@@ -8,7 +8,6 @@ import (
 
 	uipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
-	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/utils/tracing"
 )
 
@@ -17,7 +16,7 @@ import (
 // truth; Reconcile syncs allocations. internal/services implements it.
 type CloudInventoryActions interface {
 	FetchQuotas(ctx context.Context, req *uipb.FetchQuotasRequest) (*deployment.QuotaInventory, error)
-	ListNetworkAllocations(ctx context.Context, req *uipb.ListNetworkAllocationsRequest) (*models.NetworkAllocation_List, error)
+	ListNetworkAllocations(ctx context.Context, req *uipb.ListNetworkAllocationsRequest) (*uipb.ListNetworkAllocationsResponse, error)
 	Reconcile(ctx context.Context, req *uipb.ReconcileRequest) (*uipb.ReconcileResponse, error)
 }
 
@@ -45,9 +44,9 @@ func (s *CloudInventoryService) FetchQuotas(ctx context.Context, req *uipb.Fetch
 		})
 }
 
-func (s *CloudInventoryService) ListNetworkAllocations(ctx context.Context, req *uipb.ListNetworkAllocationsRequest) (*models.NetworkAllocation_List, error) {
+func (s *CloudInventoryService) ListNetworkAllocations(ctx context.Context, req *uipb.ListNetworkAllocationsRequest) (*uipb.ListNetworkAllocationsResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListNetworkAllocations",
-		func(ctx context.Context, _ trace.Span) (*models.NetworkAllocation_List, error) {
+		func(ctx context.Context, _ trace.Span) (*uipb.ListNetworkAllocationsResponse, error) {
 			return s.svc.ListNetworkAllocations(ctx, req)
 		})
 }

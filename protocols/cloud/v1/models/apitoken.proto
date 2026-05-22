@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.models;
 
+import "cloud/v1/common/tags.proto";
 import "cloud/v1/models/common.proto";
 import "cloud/v1/models/tenant.proto";
 import "google/protobuf/timestamp.proto";
@@ -46,4 +47,6 @@ message ApiToken {
     TenantMember.Role role = 4 [(validate.rules).enum = {defined_only: true, not_in: [0, 3]}];
     /* expires_at optionally limits the token lifetime; absent = no expiry. */
     optional google.protobuf.Timestamp expires_at = 5;
+    /* tags is a free label set for filtering/grouping. */
+    common.Tags tags = 6 [(goplain.field).serialize = true];
 }

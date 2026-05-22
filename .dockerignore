@@ -1,0 +1,11 @@
+.git
+web/node_modules
+web/dist
+web/old_src
+node_modules
+*.test
+bin/
+tmp/
+.env
+.env.*
+**/*_test.go

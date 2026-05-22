@@ -8,6 +8,7 @@ package ui
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	primitive "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
@@ -24,6 +25,109 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// SortField — typed sortable columns (no arbitrary strings).
+type ListSuitesRequest_SortField int32
+
+const (
+	ListSuitesRequest_SORT_FIELD_UNSPECIFIED  ListSuitesRequest_SortField = 0
+	ListSuitesRequest_SORT_FIELD_CREATED_AT   ListSuitesRequest_SortField = 1
+	ListSuitesRequest_SORT_FIELD_NAME         ListSuitesRequest_SortField = 2
+	ListSuitesRequest_SORT_FIELD_NEXT_FIRE_AT ListSuitesRequest_SortField = 3
+)
+
+// Enum value maps for ListSuitesRequest_SortField.
+var (
+	ListSuitesRequest_SortField_name = map[int32]string{
+		0: "SORT_FIELD_UNSPECIFIED",
+		1: "SORT_FIELD_CREATED_AT",
+		2: "SORT_FIELD_NAME",
+		3: "SORT_FIELD_NEXT_FIRE_AT",
+	}
+	ListSuitesRequest_SortField_value = map[string]int32{
+		"SORT_FIELD_UNSPECIFIED":  0,
+		"SORT_FIELD_CREATED_AT":   1,
+		"SORT_FIELD_NAME":         2,
+		"SORT_FIELD_NEXT_FIRE_AT": 3,
+	}
+)
+
+func (x ListSuitesRequest_SortField) Enum() *ListSuitesRequest_SortField {
+	p := new(ListSuitesRequest_SortField)
+	*p = x
+	return p
+}
+
+func (x ListSuitesRequest_SortField) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ListSuitesRequest_SortField) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_api_ui_suite_proto_enumTypes[0].Descriptor()
+}
+
+func (ListSuitesRequest_SortField) Type() protoreflect.EnumType {
+	return &file_cloud_v1_api_ui_suite_proto_enumTypes[0]
+}
+
+func (x ListSuitesRequest_SortField) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ListSuitesRequest_SortField.Descriptor instead.
+func (ListSuitesRequest_SortField) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_suite_proto_rawDescGZIP(), []int{4, 0}
+}
+
+// SortField — typed sortable columns (no arbitrary strings).
+type ListSuiteRunsRequest_SortField int32
+
+const (
+	ListSuiteRunsRequest_SORT_FIELD_UNSPECIFIED ListSuiteRunsRequest_SortField = 0
+	ListSuiteRunsRequest_SORT_FIELD_CREATED_AT  ListSuiteRunsRequest_SortField = 1
+	ListSuiteRunsRequest_SORT_FIELD_STATUS      ListSuiteRunsRequest_SortField = 2
+)
+
+// Enum value maps for ListSuiteRunsRequest_SortField.
+var (
+	ListSuiteRunsRequest_SortField_name = map[int32]string{
+		0: "SORT_FIELD_UNSPECIFIED",
+		1: "SORT_FIELD_CREATED_AT",
+		2: "SORT_FIELD_STATUS",
+	}
+	ListSuiteRunsRequest_SortField_value = map[string]int32{
+		"SORT_FIELD_UNSPECIFIED": 0,
+		"SORT_FIELD_CREATED_AT":  1,
+		"SORT_FIELD_STATUS":      2,
+	}
+)
+
+func (x ListSuiteRunsRequest_SortField) Enum() *ListSuiteRunsRequest_SortField {
+	p := new(ListSuiteRunsRequest_SortField)
+	*p = x
+	return p
+}
+
+func (x ListSuiteRunsRequest_SortField) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ListSuiteRunsRequest_SortField) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_api_ui_suite_proto_enumTypes[1].Descriptor()
+}
+
+func (ListSuiteRunsRequest_SortField) Type() protoreflect.EnumType {
+	return &file_cloud_v1_api_ui_suite_proto_enumTypes[1]
+}
+
+func (x ListSuiteRunsRequest_SortField) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ListSuiteRunsRequest_SortField.Descriptor instead.
+func (ListSuiteRunsRequest_SortField) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_suite_proto_rawDescGZIP(), []int{6, 0}
+}
 
 // SuiteService manages suites and launches suite runs (F). Every request carries
 // tenant_id; the server validates membership + TenantMember.Role and scopes by
@@ -254,19 +358,173 @@ func (x *GetSuiteRunRequest) GetSuiteRunId() *models.SuiteRunId {
 	return nil
 }
 
-type ListSuiteRunsRequest struct {
+// ListSuitesRequest lists suite DEFINITIONS (the /suites catalog), not runs.
+type ListSuitesRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	TenantId *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// search filters by suite name/description (free text).
+	Search *string `protobuf:"bytes,2,opt,name=search,proto3,oneof" json:"search,omitempty"`
+	// has_cron filters to suites with (true) / without (false) a cron schedule.
+	HasCron   *bool                       `protobuf:"varint,3,opt,name=has_cron,json=hasCron,proto3,oneof" json:"has_cron,omitempty"`
+	SortField ListSuitesRequest_SortField `protobuf:"varint,4,opt,name=sort_field,json=sortField,proto3,enum=cloud.v1.api.ui.ListSuitesRequest_SortField" json:"sort_field,omitempty"`
+	Order     models.SortOrder            `protobuf:"varint,5,opt,name=order,proto3,enum=cloud.v1.models.SortOrder" json:"order,omitempty"`
+	Page      *models.Page                `protobuf:"bytes,6,opt,name=page,proto3" json:"page,omitempty"`
+	// tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter.
+	Tags          *common.Tags `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSuitesRequest) Reset() {
+	*x = ListSuitesRequest{}
+	mi := &file_cloud_v1_api_ui_suite_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSuitesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSuitesRequest) ProtoMessage() {}
+
+func (x *ListSuitesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_ui_suite_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSuitesRequest.ProtoReflect.Descriptor instead.
+func (*ListSuitesRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_suite_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ListSuitesRequest) GetTenantId() *models.TenantId {
+	if x != nil {
+		return x.TenantId
+	}
+	return nil
+}
+
+func (x *ListSuitesRequest) GetSearch() string {
+	if x != nil && x.Search != nil {
+		return *x.Search
+	}
+	return ""
+}
+
+func (x *ListSuitesRequest) GetHasCron() bool {
+	if x != nil && x.HasCron != nil {
+		return *x.HasCron
+	}
+	return false
+}
+
+func (x *ListSuitesRequest) GetSortField() ListSuitesRequest_SortField {
+	if x != nil {
+		return x.SortField
+	}
+	return ListSuitesRequest_SORT_FIELD_UNSPECIFIED
+}
+
+func (x *ListSuitesRequest) GetOrder() models.SortOrder {
+	if x != nil {
+		return x.Order
+	}
+	return models.SortOrder(0)
+}
+
+func (x *ListSuitesRequest) GetPage() *models.Page {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+func (x *ListSuitesRequest) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// ListSuitesResponse — rows plus pagination metadata (H42).
+type ListSuitesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Status        *primitive.Status      `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.runtime.primitive.Status,oneof" json:"status,omitempty"`
-	PageSize      uint32                 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken     string                 `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	Suites        []*models.Suite        `protobuf:"bytes,1,rep,name=suites,proto3" json:"suites,omitempty"`
+	PageInfo      *models.PageInfo       `protobuf:"bytes,2,opt,name=page_info,json=pageInfo,proto3" json:"page_info,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSuitesResponse) Reset() {
+	*x = ListSuitesResponse{}
+	mi := &file_cloud_v1_api_ui_suite_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSuitesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSuitesResponse) ProtoMessage() {}
+
+func (x *ListSuitesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_ui_suite_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSuitesResponse.ProtoReflect.Descriptor instead.
+func (*ListSuitesResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_suite_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ListSuitesResponse) GetSuites() []*models.Suite {
+	if x != nil {
+		return x.Suites
+	}
+	return nil
+}
+
+func (x *ListSuitesResponse) GetPageInfo() *models.PageInfo {
+	if x != nil {
+		return x.PageInfo
+	}
+	return nil
+}
+
+type ListSuiteRunsRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	TenantId *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Status   *primitive.Status      `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.runtime.primitive.Status,oneof" json:"status,omitempty"`
+	// suite_id filters runs to a single suite.
+	SuiteId   *models.SuiteId                `protobuf:"bytes,3,opt,name=suite_id,json=suiteId,proto3,oneof" json:"suite_id,omitempty"`
+	SortField ListSuiteRunsRequest_SortField `protobuf:"varint,4,opt,name=sort_field,json=sortField,proto3,enum=cloud.v1.api.ui.ListSuiteRunsRequest_SortField" json:"sort_field,omitempty"`
+	Order     models.SortOrder               `protobuf:"varint,5,opt,name=order,proto3,enum=cloud.v1.models.SortOrder" json:"order,omitempty"`
+	Page      *models.Page                   `protobuf:"bytes,6,opt,name=page,proto3" json:"page,omitempty"`
+	// tags filters by labels and/or key=value labels (common.Tags); empty = no tag filter.
+	Tags          *common.Tags `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListSuiteRunsRequest) Reset() {
 	*x = ListSuiteRunsRequest{}
-	mi := &file_cloud_v1_api_ui_suite_proto_msgTypes[4]
+	mi := &file_cloud_v1_api_ui_suite_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -278,7 +536,7 @@ func (x *ListSuiteRunsRequest) String() string {
 func (*ListSuiteRunsRequest) ProtoMessage() {}
 
 func (x *ListSuiteRunsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_suite_proto_msgTypes[4]
+	mi := &file_cloud_v1_api_ui_suite_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -291,7 +549,7 @@ func (x *ListSuiteRunsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSuiteRunsRequest.ProtoReflect.Descriptor instead.
 func (*ListSuiteRunsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_suite_proto_rawDescGZIP(), []int{4}
+	return file_cloud_v1_api_ui_suite_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListSuiteRunsRequest) GetTenantId() *models.TenantId {
@@ -308,18 +566,92 @@ func (x *ListSuiteRunsRequest) GetStatus() primitive.Status {
 	return primitive.Status(0)
 }
 
-func (x *ListSuiteRunsRequest) GetPageSize() uint32 {
+func (x *ListSuiteRunsRequest) GetSuiteId() *models.SuiteId {
 	if x != nil {
-		return x.PageSize
+		return x.SuiteId
 	}
-	return 0
+	return nil
 }
 
-func (x *ListSuiteRunsRequest) GetPageToken() string {
+func (x *ListSuiteRunsRequest) GetSortField() ListSuiteRunsRequest_SortField {
 	if x != nil {
-		return x.PageToken
+		return x.SortField
 	}
-	return ""
+	return ListSuiteRunsRequest_SORT_FIELD_UNSPECIFIED
+}
+
+func (x *ListSuiteRunsRequest) GetOrder() models.SortOrder {
+	if x != nil {
+		return x.Order
+	}
+	return models.SortOrder(0)
+}
+
+func (x *ListSuiteRunsRequest) GetPage() *models.Page {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+func (x *ListSuiteRunsRequest) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// ListSuiteRunsResponse — rows plus pagination metadata (H42).
+type ListSuiteRunsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SuiteRuns     []*models.SuiteRun     `protobuf:"bytes,1,rep,name=suite_runs,json=suiteRuns,proto3" json:"suite_runs,omitempty"`
+	PageInfo      *models.PageInfo       `protobuf:"bytes,2,opt,name=page_info,json=pageInfo,proto3" json:"page_info,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSuiteRunsResponse) Reset() {
+	*x = ListSuiteRunsResponse{}
+	mi := &file_cloud_v1_api_ui_suite_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSuiteRunsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSuiteRunsResponse) ProtoMessage() {}
+
+func (x *ListSuiteRunsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_ui_suite_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSuiteRunsResponse.ProtoReflect.Descriptor instead.
+func (*ListSuiteRunsResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_suite_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ListSuiteRunsResponse) GetSuiteRuns() []*models.SuiteRun {
+	if x != nil {
+		return x.SuiteRuns
+	}
+	return nil
+}
+
+func (x *ListSuiteRunsResponse) GetPageInfo() *models.PageInfo {
+	if x != nil {
+		return x.PageInfo
+	}
+	return nil
 }
 
 type CancelSuiteRunRequest struct {
@@ -332,7 +664,7 @@ type CancelSuiteRunRequest struct {
 
 func (x *CancelSuiteRunRequest) Reset() {
 	*x = CancelSuiteRunRequest{}
-	mi := &file_cloud_v1_api_ui_suite_proto_msgTypes[5]
+	mi := &file_cloud_v1_api_ui_suite_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -344,7 +676,7 @@ func (x *CancelSuiteRunRequest) String() string {
 func (*CancelSuiteRunRequest) ProtoMessage() {}
 
 func (x *CancelSuiteRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_suite_proto_msgTypes[5]
+	mi := &file_cloud_v1_api_ui_suite_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -357,7 +689,7 @@ func (x *CancelSuiteRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelSuiteRunRequest.ProtoReflect.Descriptor instead.
 func (*CancelSuiteRunRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_suite_proto_rawDescGZIP(), []int{5}
+	return file_cloud_v1_api_ui_suite_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CancelSuiteRunRequest) GetTenantId() *models.TenantId {
@@ -378,7 +710,7 @@ var File_cloud_v1_api_ui_suite_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_ui_suite_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/api/ui/suite.proto\x12\x0fcloud.v1.api.ui\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1dcloud/v1/models/testing.proto\x1a'cloud/v1/runtime/primitive/status.proto\x1a\x17validate/validate.proto\"\x83\x02\n" +
+	"\x1bcloud/v1/api/ui/suite.proto\x12\x0fcloud.v1.api.ui\x1a\x1acloud/v1/common/tags.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1ccloud/v1/models/common.proto\x1a\x1dcloud/v1/models/testing.proto\x1a'cloud/v1/runtime/primitive/status.proto\x1a\x17validate/validate.proto\"\x83\x02\n" +
 	"\x12CreateSuiteRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12>\n" +
 	"\x06preset\x18\x02 \x01(\v2\x1c.cloud.v1.domain.SuitePresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\x12!\n" +
@@ -395,24 +727,57 @@ const file_cloud_v1_api_ui_suite_proto_rawDesc = "" +
 	"\x12GetSuiteRunRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12G\n" +
 	"\fsuite_run_id\x18\x02 \x01(\v2\x1b.cloud.v1.models.SuiteRunIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
-	"suiteRunId\"\xfe\x01\n" +
+	"suiteRunId\"\x93\x04\n" +
+	"\x11ListSuitesRequest\x12@\n" +
+	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12%\n" +
+	"\x06search\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02H\x00R\x06search\x88\x01\x01\x12\x1e\n" +
+	"\bhas_cron\x18\x03 \x01(\bH\x01R\ahasCron\x88\x01\x01\x12U\n" +
+	"\n" +
+	"sort_field\x18\x04 \x01(\x0e2,.cloud.v1.api.ui.ListSuitesRequest.SortFieldB\b\xfaB\x05\x82\x01\x02\x10\x01R\tsortField\x12:\n" +
+	"\x05order\x18\x05 \x01(\x0e2\x1a.cloud.v1.models.SortOrderB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05order\x12)\n" +
+	"\x04page\x18\x06 \x01(\v2\x15.cloud.v1.models.PageR\x04page\x12)\n" +
+	"\x04tags\x18\a \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"t\n" +
+	"\tSortField\x12\x1a\n" +
+	"\x16SORT_FIELD_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15SORT_FIELD_CREATED_AT\x10\x01\x12\x13\n" +
+	"\x0fSORT_FIELD_NAME\x10\x02\x12\x1b\n" +
+	"\x17SORT_FIELD_NEXT_FIRE_AT\x10\x03B\t\n" +
+	"\a_searchB\v\n" +
+	"\t_has_cron\"|\n" +
+	"\x12ListSuitesResponse\x12.\n" +
+	"\x06suites\x18\x01 \x03(\v2\x16.cloud.v1.models.SuiteR\x06suites\x126\n" +
+	"\tpage_info\x18\x02 \x01(\v2\x19.cloud.v1.models.PageInfoR\bpageInfo\"\xbc\x04\n" +
 	"\x14ListSuiteRunsRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12I\n" +
-	"\x06status\x18\x02 \x01(\x0e2\".cloud.v1.runtime.primitive.StatusB\b\xfaB\x05\x82\x01\x02\x10\x01H\x00R\x06status\x88\x01\x01\x12%\n" +
-	"\tpage_size\x18\x03 \x01(\rB\b\xfaB\x05*\x03\x18\xe8\aR\bpageSize\x12'\n" +
+	"\x06status\x18\x02 \x01(\x0e2\".cloud.v1.runtime.primitive.StatusB\b\xfaB\x05\x82\x01\x02\x10\x01H\x00R\x06status\x88\x01\x01\x128\n" +
+	"\bsuite_id\x18\x03 \x01(\v2\x18.cloud.v1.models.SuiteIdH\x01R\asuiteId\x88\x01\x01\x12X\n" +
 	"\n" +
-	"page_token\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\tpageTokenB\t\n" +
-	"\a_status\"\xa2\x01\n" +
+	"sort_field\x18\x04 \x01(\x0e2/.cloud.v1.api.ui.ListSuiteRunsRequest.SortFieldB\b\xfaB\x05\x82\x01\x02\x10\x01R\tsortField\x12:\n" +
+	"\x05order\x18\x05 \x01(\x0e2\x1a.cloud.v1.models.SortOrderB\b\xfaB\x05\x82\x01\x02\x10\x01R\x05order\x12)\n" +
+	"\x04page\x18\x06 \x01(\v2\x15.cloud.v1.models.PageR\x04page\x12)\n" +
+	"\x04tags\x18\a \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"Y\n" +
+	"\tSortField\x12\x1a\n" +
+	"\x16SORT_FIELD_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15SORT_FIELD_CREATED_AT\x10\x01\x12\x15\n" +
+	"\x11SORT_FIELD_STATUS\x10\x02B\t\n" +
+	"\a_statusB\v\n" +
+	"\t_suite_id\"\x89\x01\n" +
+	"\x15ListSuiteRunsResponse\x128\n" +
+	"\n" +
+	"suite_runs\x18\x01 \x03(\v2\x19.cloud.v1.models.SuiteRunR\tsuiteRuns\x126\n" +
+	"\tpage_info\x18\x02 \x01(\v2\x19.cloud.v1.models.PageInfoR\bpageInfo\"\xa2\x01\n" +
 	"\x15CancelSuiteRunRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12G\n" +
 	"\fsuite_run_id\x18\x02 \x01(\v2\x1b.cloud.v1.models.SuiteRunIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
-	"suiteRunId2\x8f\x04\n" +
+	"suiteRunId2\xf3\x04\n" +
 	"\fSuiteService\x12O\n" +
 	"\vCreateSuite\x12#.cloud.v1.api.ui.CreateSuiteRequest\x1a\x16.cloud.v1.models.Suite\"\x03\x90\x02\x02\x12I\n" +
-	"\bGetSuite\x12 .cloud.v1.api.ui.GetSuiteRequest\x1a\x16.cloud.v1.models.Suite\"\x03\x90\x02\x01\x12X\n" +
+	"\bGetSuite\x12 .cloud.v1.api.ui.GetSuiteRequest\x1a\x16.cloud.v1.models.Suite\"\x03\x90\x02\x01\x12Z\n" +
+	"\n" +
+	"ListSuites\x12\".cloud.v1.api.ui.ListSuitesRequest\x1a#.cloud.v1.api.ui.ListSuitesResponse\"\x03\x90\x02\x01\x12X\n" +
 	"\x0eLaunchSuiteRun\x12&.cloud.v1.api.ui.LaunchSuiteRunRequest\x1a\x19.cloud.v1.models.SuiteRun\"\x03\x90\x02\x02\x12R\n" +
-	"\vGetSuiteRun\x12#.cloud.v1.api.ui.GetSuiteRunRequest\x1a\x19.cloud.v1.models.SuiteRun\"\x03\x90\x02\x01\x12[\n" +
-	"\rListSuiteRuns\x12%.cloud.v1.api.ui.ListSuiteRunsRequest\x1a\x1e.cloud.v1.models.SuiteRun.List\"\x03\x90\x02\x01\x12X\n" +
+	"\vGetSuiteRun\x12#.cloud.v1.api.ui.GetSuiteRunRequest\x1a\x19.cloud.v1.models.SuiteRun\"\x03\x90\x02\x01\x12c\n" +
+	"\rListSuiteRuns\x12%.cloud.v1.api.ui.ListSuiteRunsRequest\x1a&.cloud.v1.api.ui.ListSuiteRunsResponse\"\x03\x90\x02\x01\x12X\n" +
 	"\x0eCancelSuiteRun\x12&.cloud.v1.api.ui.CancelSuiteRunRequest\x1a\x19.cloud.v1.models.SuiteRun\"\x03\x90\x02\x02BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/uib\x06proto3"
 
 var (
@@ -427,53 +792,78 @@ func file_cloud_v1_api_ui_suite_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_ui_suite_proto_rawDescData
 }
 
-var file_cloud_v1_api_ui_suite_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_cloud_v1_api_ui_suite_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_cloud_v1_api_ui_suite_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_cloud_v1_api_ui_suite_proto_goTypes = []any{
-	(*CreateSuiteRequest)(nil),    // 0: cloud.v1.api.ui.CreateSuiteRequest
-	(*GetSuiteRequest)(nil),       // 1: cloud.v1.api.ui.GetSuiteRequest
-	(*LaunchSuiteRunRequest)(nil), // 2: cloud.v1.api.ui.LaunchSuiteRunRequest
-	(*GetSuiteRunRequest)(nil),    // 3: cloud.v1.api.ui.GetSuiteRunRequest
-	(*ListSuiteRunsRequest)(nil),  // 4: cloud.v1.api.ui.ListSuiteRunsRequest
-	(*CancelSuiteRunRequest)(nil), // 5: cloud.v1.api.ui.CancelSuiteRunRequest
-	(*models.TenantId)(nil),       // 6: cloud.v1.models.TenantId
-	(*domain.SuitePreset)(nil),    // 7: cloud.v1.domain.SuitePreset
-	(*models.SuiteId)(nil),        // 8: cloud.v1.models.SuiteId
-	(*models.SuiteRunId)(nil),     // 9: cloud.v1.models.SuiteRunId
-	(primitive.Status)(0),         // 10: cloud.v1.runtime.primitive.Status
-	(*models.Suite)(nil),          // 11: cloud.v1.models.Suite
-	(*models.SuiteRun)(nil),       // 12: cloud.v1.models.SuiteRun
-	(*models.SuiteRun_List)(nil),  // 13: cloud.v1.models.SuiteRun.List
+	(ListSuitesRequest_SortField)(0),    // 0: cloud.v1.api.ui.ListSuitesRequest.SortField
+	(ListSuiteRunsRequest_SortField)(0), // 1: cloud.v1.api.ui.ListSuiteRunsRequest.SortField
+	(*CreateSuiteRequest)(nil),          // 2: cloud.v1.api.ui.CreateSuiteRequest
+	(*GetSuiteRequest)(nil),             // 3: cloud.v1.api.ui.GetSuiteRequest
+	(*LaunchSuiteRunRequest)(nil),       // 4: cloud.v1.api.ui.LaunchSuiteRunRequest
+	(*GetSuiteRunRequest)(nil),          // 5: cloud.v1.api.ui.GetSuiteRunRequest
+	(*ListSuitesRequest)(nil),           // 6: cloud.v1.api.ui.ListSuitesRequest
+	(*ListSuitesResponse)(nil),          // 7: cloud.v1.api.ui.ListSuitesResponse
+	(*ListSuiteRunsRequest)(nil),        // 8: cloud.v1.api.ui.ListSuiteRunsRequest
+	(*ListSuiteRunsResponse)(nil),       // 9: cloud.v1.api.ui.ListSuiteRunsResponse
+	(*CancelSuiteRunRequest)(nil),       // 10: cloud.v1.api.ui.CancelSuiteRunRequest
+	(*models.TenantId)(nil),             // 11: cloud.v1.models.TenantId
+	(*domain.SuitePreset)(nil),          // 12: cloud.v1.domain.SuitePreset
+	(*models.SuiteId)(nil),              // 13: cloud.v1.models.SuiteId
+	(*models.SuiteRunId)(nil),           // 14: cloud.v1.models.SuiteRunId
+	(models.SortOrder)(0),               // 15: cloud.v1.models.SortOrder
+	(*models.Page)(nil),                 // 16: cloud.v1.models.Page
+	(*common.Tags)(nil),                 // 17: cloud.v1.common.Tags
+	(*models.Suite)(nil),                // 18: cloud.v1.models.Suite
+	(*models.PageInfo)(nil),             // 19: cloud.v1.models.PageInfo
+	(primitive.Status)(0),               // 20: cloud.v1.runtime.primitive.Status
+	(*models.SuiteRun)(nil),             // 21: cloud.v1.models.SuiteRun
 }
 var file_cloud_v1_api_ui_suite_proto_depIdxs = []int32{
-	6,  // 0: cloud.v1.api.ui.CreateSuiteRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	7,  // 1: cloud.v1.api.ui.CreateSuiteRequest.preset:type_name -> cloud.v1.domain.SuitePreset
-	6,  // 2: cloud.v1.api.ui.GetSuiteRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	8,  // 3: cloud.v1.api.ui.GetSuiteRequest.suite_id:type_name -> cloud.v1.models.SuiteId
-	6,  // 4: cloud.v1.api.ui.LaunchSuiteRunRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	8,  // 5: cloud.v1.api.ui.LaunchSuiteRunRequest.suite_id:type_name -> cloud.v1.models.SuiteId
-	6,  // 6: cloud.v1.api.ui.GetSuiteRunRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	9,  // 7: cloud.v1.api.ui.GetSuiteRunRequest.suite_run_id:type_name -> cloud.v1.models.SuiteRunId
-	6,  // 8: cloud.v1.api.ui.ListSuiteRunsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	10, // 9: cloud.v1.api.ui.ListSuiteRunsRequest.status:type_name -> cloud.v1.runtime.primitive.Status
-	6,  // 10: cloud.v1.api.ui.CancelSuiteRunRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	9,  // 11: cloud.v1.api.ui.CancelSuiteRunRequest.suite_run_id:type_name -> cloud.v1.models.SuiteRunId
-	0,  // 12: cloud.v1.api.ui.SuiteService.CreateSuite:input_type -> cloud.v1.api.ui.CreateSuiteRequest
-	1,  // 13: cloud.v1.api.ui.SuiteService.GetSuite:input_type -> cloud.v1.api.ui.GetSuiteRequest
-	2,  // 14: cloud.v1.api.ui.SuiteService.LaunchSuiteRun:input_type -> cloud.v1.api.ui.LaunchSuiteRunRequest
-	3,  // 15: cloud.v1.api.ui.SuiteService.GetSuiteRun:input_type -> cloud.v1.api.ui.GetSuiteRunRequest
-	4,  // 16: cloud.v1.api.ui.SuiteService.ListSuiteRuns:input_type -> cloud.v1.api.ui.ListSuiteRunsRequest
-	5,  // 17: cloud.v1.api.ui.SuiteService.CancelSuiteRun:input_type -> cloud.v1.api.ui.CancelSuiteRunRequest
-	11, // 18: cloud.v1.api.ui.SuiteService.CreateSuite:output_type -> cloud.v1.models.Suite
-	11, // 19: cloud.v1.api.ui.SuiteService.GetSuite:output_type -> cloud.v1.models.Suite
-	12, // 20: cloud.v1.api.ui.SuiteService.LaunchSuiteRun:output_type -> cloud.v1.models.SuiteRun
-	12, // 21: cloud.v1.api.ui.SuiteService.GetSuiteRun:output_type -> cloud.v1.models.SuiteRun
-	13, // 22: cloud.v1.api.ui.SuiteService.ListSuiteRuns:output_type -> cloud.v1.models.SuiteRun.List
-	12, // 23: cloud.v1.api.ui.SuiteService.CancelSuiteRun:output_type -> cloud.v1.models.SuiteRun
-	18, // [18:24] is the sub-list for method output_type
-	12, // [12:18] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	11, // 0: cloud.v1.api.ui.CreateSuiteRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	12, // 1: cloud.v1.api.ui.CreateSuiteRequest.preset:type_name -> cloud.v1.domain.SuitePreset
+	11, // 2: cloud.v1.api.ui.GetSuiteRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	13, // 3: cloud.v1.api.ui.GetSuiteRequest.suite_id:type_name -> cloud.v1.models.SuiteId
+	11, // 4: cloud.v1.api.ui.LaunchSuiteRunRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	13, // 5: cloud.v1.api.ui.LaunchSuiteRunRequest.suite_id:type_name -> cloud.v1.models.SuiteId
+	11, // 6: cloud.v1.api.ui.GetSuiteRunRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	14, // 7: cloud.v1.api.ui.GetSuiteRunRequest.suite_run_id:type_name -> cloud.v1.models.SuiteRunId
+	11, // 8: cloud.v1.api.ui.ListSuitesRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	0,  // 9: cloud.v1.api.ui.ListSuitesRequest.sort_field:type_name -> cloud.v1.api.ui.ListSuitesRequest.SortField
+	15, // 10: cloud.v1.api.ui.ListSuitesRequest.order:type_name -> cloud.v1.models.SortOrder
+	16, // 11: cloud.v1.api.ui.ListSuitesRequest.page:type_name -> cloud.v1.models.Page
+	17, // 12: cloud.v1.api.ui.ListSuitesRequest.tags:type_name -> cloud.v1.common.Tags
+	18, // 13: cloud.v1.api.ui.ListSuitesResponse.suites:type_name -> cloud.v1.models.Suite
+	19, // 14: cloud.v1.api.ui.ListSuitesResponse.page_info:type_name -> cloud.v1.models.PageInfo
+	11, // 15: cloud.v1.api.ui.ListSuiteRunsRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	20, // 16: cloud.v1.api.ui.ListSuiteRunsRequest.status:type_name -> cloud.v1.runtime.primitive.Status
+	13, // 17: cloud.v1.api.ui.ListSuiteRunsRequest.suite_id:type_name -> cloud.v1.models.SuiteId
+	1,  // 18: cloud.v1.api.ui.ListSuiteRunsRequest.sort_field:type_name -> cloud.v1.api.ui.ListSuiteRunsRequest.SortField
+	15, // 19: cloud.v1.api.ui.ListSuiteRunsRequest.order:type_name -> cloud.v1.models.SortOrder
+	16, // 20: cloud.v1.api.ui.ListSuiteRunsRequest.page:type_name -> cloud.v1.models.Page
+	17, // 21: cloud.v1.api.ui.ListSuiteRunsRequest.tags:type_name -> cloud.v1.common.Tags
+	21, // 22: cloud.v1.api.ui.ListSuiteRunsResponse.suite_runs:type_name -> cloud.v1.models.SuiteRun
+	19, // 23: cloud.v1.api.ui.ListSuiteRunsResponse.page_info:type_name -> cloud.v1.models.PageInfo
+	11, // 24: cloud.v1.api.ui.CancelSuiteRunRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	14, // 25: cloud.v1.api.ui.CancelSuiteRunRequest.suite_run_id:type_name -> cloud.v1.models.SuiteRunId
+	2,  // 26: cloud.v1.api.ui.SuiteService.CreateSuite:input_type -> cloud.v1.api.ui.CreateSuiteRequest
+	3,  // 27: cloud.v1.api.ui.SuiteService.GetSuite:input_type -> cloud.v1.api.ui.GetSuiteRequest
+	6,  // 28: cloud.v1.api.ui.SuiteService.ListSuites:input_type -> cloud.v1.api.ui.ListSuitesRequest
+	4,  // 29: cloud.v1.api.ui.SuiteService.LaunchSuiteRun:input_type -> cloud.v1.api.ui.LaunchSuiteRunRequest
+	5,  // 30: cloud.v1.api.ui.SuiteService.GetSuiteRun:input_type -> cloud.v1.api.ui.GetSuiteRunRequest
+	8,  // 31: cloud.v1.api.ui.SuiteService.ListSuiteRuns:input_type -> cloud.v1.api.ui.ListSuiteRunsRequest
+	10, // 32: cloud.v1.api.ui.SuiteService.CancelSuiteRun:input_type -> cloud.v1.api.ui.CancelSuiteRunRequest
+	18, // 33: cloud.v1.api.ui.SuiteService.CreateSuite:output_type -> cloud.v1.models.Suite
+	18, // 34: cloud.v1.api.ui.SuiteService.GetSuite:output_type -> cloud.v1.models.Suite
+	7,  // 35: cloud.v1.api.ui.SuiteService.ListSuites:output_type -> cloud.v1.api.ui.ListSuitesResponse
+	21, // 36: cloud.v1.api.ui.SuiteService.LaunchSuiteRun:output_type -> cloud.v1.models.SuiteRun
+	21, // 37: cloud.v1.api.ui.SuiteService.GetSuiteRun:output_type -> cloud.v1.models.SuiteRun
+	9,  // 38: cloud.v1.api.ui.SuiteService.ListSuiteRuns:output_type -> cloud.v1.api.ui.ListSuiteRunsResponse
+	21, // 39: cloud.v1.api.ui.SuiteService.CancelSuiteRun:output_type -> cloud.v1.models.SuiteRun
+	33, // [33:40] is the sub-list for method output_type
+	26, // [26:33] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_ui_suite_proto_init() }
@@ -483,18 +873,20 @@ func file_cloud_v1_api_ui_suite_proto_init() {
 	}
 	file_cloud_v1_api_ui_suite_proto_msgTypes[0].OneofWrappers = []any{}
 	file_cloud_v1_api_ui_suite_proto_msgTypes[4].OneofWrappers = []any{}
+	file_cloud_v1_api_ui_suite_proto_msgTypes[6].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_ui_suite_proto_rawDesc), len(file_cloud_v1_api_ui_suite_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   6,
+			NumEnums:      2,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_cloud_v1_api_ui_suite_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_api_ui_suite_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_api_ui_suite_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_api_ui_suite_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_api_ui_suite_proto = out.File

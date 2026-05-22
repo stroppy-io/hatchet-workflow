@@ -16,6 +16,7 @@ import (
 // membership lives in the tenant-scoped ui TenantService (OWNER), not here.
 // internal/services implements it.
 type TenantAdminActions interface {
+	ListTenants(ctx context.Context, req *adminpb.ListTenantsRequest) (*adminpb.ListTenantsResponse, error)
 	CreateTenant(ctx context.Context, req *adminpb.CreateTenantRequest) (*models.Tenant, error)
 	UpdateTenant(ctx context.Context, req *adminpb.UpdateTenantRequest) (*models.Tenant, error)
 	DeleteTenant(ctx context.Context, id *models.TenantId) (*models.Tenant, error)
@@ -37,6 +38,13 @@ func NewTenantAdminService(logger *xlog.Logger, svc TenantAdminActions) *TenantA
 		Entity: tracing.NewEntity(logger.AppendName("TenantAdminService")),
 		svc:    svc,
 	}
+}
+
+func (s *TenantAdminService) ListTenants(ctx context.Context, req *adminpb.ListTenantsRequest) (*adminpb.ListTenantsResponse, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListTenants",
+		func(ctx context.Context, _ trace.Span) (*adminpb.ListTenantsResponse, error) {
+			return s.svc.ListTenants(ctx, req)
+		})
 }
 
 func (s *TenantAdminService) CreateTenant(ctx context.Context, req *adminpb.CreateTenantRequest) (*models.Tenant, error) {

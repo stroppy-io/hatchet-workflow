@@ -7,6 +7,7 @@ package agent
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -29,14 +30,6 @@ type Client interface {
 	Poll(ctx context.Context, req *agentpb.PollRequest) (*agentpb.PollResponse, error)
 	Report(ctx context.Context, req *agentpb.ReportRequest) (*emptypb.Empty, error)
 	SendLogs(ctx context.Context, req *agentpb.SendLogsRequest) (*emptypb.Empty, error)
-}
-
-// LogIngester ships command output to the log store with full dag labels (the
-// agent knows dag_id/node_execution_id from the lease). Optional; nil disables
-// direct ingest. Implemented by internal/infrastructure/victoria.LogsClient via
-// a thin adapter at wiring.
-type LogIngester interface {
-	Ingest(ctx context.Context, records []map[string]any) error
 }
 
 // Config identifies this agent and tunes the loop cadence.
@@ -72,17 +65,15 @@ type Agent struct {
 	*tracing.Entity
 	client Client
 	exec   *opexec.Executor
-	logs   LogIngester
 	cfg    Config
 }
 
-// New builds an Agent. logs may be nil (direct log ingest disabled).
-func New(logger *xlog.Logger, client Client, logs LogIngester, cfg Config) *Agent {
+// New builds an Agent over the control-plane client.
+func New(logger *xlog.Logger, client Client, cfg Config) *Agent {
 	return &Agent{
 		Entity: tracing.NewEntity(logger.AppendName("Agent")),
 		client: client,
 		exec:   opexec.New(),
-		logs:   logs,
 		cfg:    cfg.withDefaults(),
 	}
 }
@@ -176,10 +167,17 @@ func (a *Agent) handleLease(ctx context.Context, lease *agentpb.CommandLease) {
 		case <-ticker.C:
 			a.report(ctx, lease, agent.CommandStatus_COMMAND_STATUS_RUNNING, nil, "")
 		case o := <-done:
-			if o.err != nil {
-				a.report(ctx, lease, agent.CommandStatus_COMMAND_STATUS_FAILED, nil, o.err.Error())
-			} else {
-				a.ingestLogs(ctx, lease, o.result)
+			// Ship stdout/stderr to the control plane regardless of outcome, so a
+			// FAILED command is diagnosable from the run logs.
+			a.ingestLogs(ctx, lease, o.result)
+			switch {
+			case o.err != nil:
+				a.report(ctx, lease, agent.CommandStatus_COMMAND_STATUS_FAILED, o.result, o.err.Error())
+			case o.result.GetRunCmd().GetExitCode() != 0:
+				rc := o.result.GetRunCmd()
+				a.report(ctx, lease, agent.CommandStatus_COMMAND_STATUS_FAILED, o.result,
+					fmt.Sprintf("command exited %d: %s", rc.GetExitCode(), lastLines(rc.GetStderr(), 400)))
+			default:
 				a.report(ctx, lease, agent.CommandStatus_COMMAND_STATUS_COMPLETED, o.result, "")
 			}
 			return
@@ -207,39 +205,50 @@ func (a *Agent) report(ctx context.Context, lease *agentpb.CommandLease, st agen
 // ingestLogs ships a finished command's stdout/stderr to the log store, labeled
 // with the dag/node from the lease so the control plane can query by run.
 func (a *Agent) ingestLogs(ctx context.Context, lease *agentpb.CommandLease, result *ops.Operation_Result) {
-	if a.logs == nil {
-		return
-	}
 	cmd := result.GetRunCmd()
 	if cmd == nil {
 		return
 	}
-	now := time.Now().UTC().Format(time.RFC3339Nano)
+	// Correlate every line to its run (dag) + node + machine/component so logs are
+	// filterable along every axis. node_execution_id is the always-non-empty command id.
 	addr := lease.GetAddress()
-	var records []map[string]any
-	emit := func(data []byte, stream string) {
+	nodeExecID := addr.GetNodeExecutionId()
+	dagID := addr.GetDagId().GetValue()
+	now := timestamppb.Now()
+	var lines []*agent.LogLine
+	emit := func(data []byte, stream agent.LogLine_Stream) {
 		for _, line := range strings.Split(strings.TrimRight(string(data), "\n"), "\n") {
 			if line == "" {
 				continue
 			}
-			records = append(records, map[string]any{
-				"_msg":              line,
-				"_time":             now,
-				"dag_id":            addr.GetDagId().GetValue(),
-				"node_execution_id": addr.GetNodeExecutionId(),
-				"machine_id":        a.cfg.MachineID,
-				"stream":            stream,
+			lines = append(lines, &agent.LogLine{
+				CommandId:       nodeExecID,
+				DagId:           dagID,
+				NodeExecutionId: nodeExecID,
+				Target:          a.target(),
+				Stream:          stream,
+				Line:            line,
+				ObservedAt:      now,
 			})
 		}
 	}
-	emit(cmd.GetStdout(), "stdout")
-	emit(cmd.GetStderr(), "stderr")
-	if len(records) == 0 {
+	emit(cmd.GetStdout(), agent.LogLine_STREAM_STDOUT)
+	emit(cmd.GetStderr(), agent.LogLine_STREAM_STDERR)
+	if len(lines) == 0 {
 		return
 	}
-	if err := a.logs.Ingest(ctx, records); err != nil {
-		a.Logger().Warn("log ingest failed", xlog.Error("error", err))
+	// Ship to the control plane (server → VictoriaLogs); the agent never touches VL.
+	if _, err := a.client.SendLogs(ctx, &agentpb.SendLogsRequest{TenantId: a.tenant(), Lines: lines}); err != nil {
+		a.Logger().Warn("send logs failed", xlog.Error("error", err))
 	}
+}
+
+// lastLines returns the trailing n bytes of b (the most relevant part of stderr).
+func lastLines(b []byte, n int) string {
+	if len(b) > n {
+		b = b[len(b)-n:]
+	}
+	return strings.TrimSpace(string(b))
 }
 
 // sleep waits d or returns ctx.Err() if cancelled first.
