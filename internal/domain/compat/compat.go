@@ -26,9 +26,11 @@ var engineRecipes = map[string]Recipe{
 	"postgres/17": {PreInstall: pgPreInstall, AptPackages: []string{"postgresql-17", "postgresql-client-17"}, ServiceName: "postgresql"},
 	// 8.0 ships in the Ubuntu archive (universe) — no third-party repo/key needed.
 	"mysql/8.0": {PreInstall: ubuntuUniversePreInstall, AptPackages: []string{"mysql-server"}, ServiceName: "mysql"},
-	// 8.4 only exists in the upstream mysql.com APT repo (its GPG key has expired
-	// upstream — apt-get update can fail until mysql publishes a new key).
-	"mysql/8.4":     {PreInstall: mysqlPreInstall("mysql-8.4-lts"), AptPackages: []string{"mysql-server-8.4", "mysql-client"}, ServiceName: "mysql"},
+	// 8.4 (latest LTS) only exists in the upstream mysql.com APT repo, whose Release
+	// is still signed by an expired GPG key (B7B3B788A8D3785C, expired 2025-10) —
+	// apt rejects it. We pin the repo [trusted=yes] to install the latest LTS anyway
+	// (benchmark target, not a security boundary).
+	"mysql/8.4":     {PreInstall: mysqlTrustedPreInstall("mysql-8.4-lts"), AptPackages: []string{"mysql-server", "mysql-client"}, ServiceName: "mysql"},
 	"mariadb/10.11": {PreInstall: mariadbPreInstall("10.11"), AptPackages: []string{"mariadb-server", "mariadb-client"}, ServiceName: "mariadb"},
 	"mariadb/11.4":  {PreInstall: mariadbPreInstall("11.4"), AptPackages: []string{"mariadb-server", "mariadb-client"}, ServiceName: "mariadb"},
 	"picodata/25.3": {
@@ -152,6 +154,18 @@ func mysqlPreInstall(component string) []string {
 		`install -d /etc/apt/keyrings`,
 		`curl -fsSL https://repo.mysql.com/RPM-GPG-KEY-mysql-2023 | gpg --dearmor -o /etc/apt/keyrings/mysql.gpg`,
 		`bash -c 'echo "deb [signed-by=/etc/apt/keyrings/mysql.gpg] http://repo.mysql.com/apt/ubuntu/ $(lsb_release -cs) ` + component + `" > /etc/apt/sources.list.d/mysql.list'`,
+		`apt-get update`,
+	}
+}
+
+// mysqlTrustedPreInstall adds the mysql.com repo with [trusted=yes], bypassing the
+// expired upstream Release-signing key (no current key exists). Use only for the
+// versions absent from the Ubuntu archive (8.4 LTS).
+func mysqlTrustedPreInstall(component string) []string {
+	return []string{
+		`apt-get update`,
+		`apt-get install -y curl ca-certificates lsb-release`,
+		`bash -c 'echo "deb [trusted=yes] http://repo.mysql.com/apt/ubuntu/ $(lsb_release -cs) ` + component + `" > /etc/apt/sources.list.d/mysql.list'`,
 		`apt-get update`,
 	}
 }

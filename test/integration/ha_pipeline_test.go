@@ -4,7 +4,9 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -82,6 +84,99 @@ func (h *systemdHost) execOpResolved(t *testing.T, ctx context.Context, node *pr
 	}
 }
 
+// execRaw runs a command with no timeout (apt installs + binary downloads exceed
+// the c2 cap), returning code/output/err without failing the test — safe to call
+// from a worker goroutine (require/FailNow is not).
+func (h *systemdHost) execRaw(ctx context.Context, script string) (int, string, error) {
+	code, reader, err := h.c.Exec(ctx, []string{"bash", "-lc", script}, tcexec.Multiplexed())
+	if err != nil {
+		return -1, "", err
+	}
+	return code, readAll(reader), nil
+}
+
+// execOpResolvedErr is the goroutine-safe variant of execOpResolved: resolves the
+// op's bindings and runs it, returning an error instead of calling require.
+func (h *systemdHost) execOpResolvedErr(ctx context.Context, node *primitive.Dag_Node, op *ops.Operation, resolver *render.Resolver) error {
+	bindings, err := render.NodeBindings(node)
+	if err != nil {
+		return err
+	}
+	switch v := op.GetOperation().(type) {
+	case *ops.Operation_RunCmd:
+		spec := v.RunCmd
+		script := spec.GetScript().GetText()
+		if script == "" {
+			script = joinArgs(spec.GetArgv().GetArgs())
+		}
+		resolved, rerr := resolver.ResolveText(script, bindings)
+		if rerr != nil {
+			return rerr
+		}
+		code, out, eerr := h.execRaw(ctx, resolved)
+		if eerr != nil {
+			return eerr
+		}
+		if code != 0 {
+			return fmt.Errorf("command failed: %s\n%s", resolved, out)
+		}
+	case *ops.Operation_WriteFile:
+		f := v.WriteFile
+		resolved, rerr := resolver.ResolveText(f.GetContent().GetText(), bindings)
+		if rerr != nil {
+			return rerr
+		}
+		path := f.GetInfo().GetPath()
+		code, out, eerr := h.execRaw(ctx, "mkdir -p \"$(dirname '"+path+"')\" && cat > '"+path+"' <<'STROPPY_EOF'\n"+resolved+"\nSTROPPY_EOF")
+		if eerr != nil {
+			return eerr
+		}
+		if code != 0 {
+			return fmt.Errorf("write %s failed: %s", path, out)
+		}
+	default:
+		return fmt.Errorf("unsupported op %T", v)
+	}
+	return nil
+}
+
+// runComponentsParallel runs each rank group's components concurrently (independent
+// machines; the real runtime leases each agent's commands in parallel), groups in
+// order. Within a component the nodes stay sequential (intra-host ordering).
+func runComponentsParallel(t *testing.T, ctx context.Context, sub *primitive.Dag, hosts map[string]*systemdHost, resolver *render.Resolver, groups [][]string) {
+	t.Helper()
+	for _, group := range groups {
+		var wg sync.WaitGroup
+		errs := make([]error, len(group))
+		for i, compID := range group {
+			wg.Add(1)
+			go func(i int, compID string) {
+				defer wg.Done()
+				host := hosts[compID]
+				for _, n := range sub.GetNodes() {
+					if !hasPrefix(n.GetId(), compID+".") {
+						continue
+					}
+					var cmd rtagent.Command
+					if uerr := n.GetTaskState().GetInput().UnmarshalTo(&cmd); uerr != nil {
+						errs[i] = uerr
+						return
+					}
+					t.Logf("[%s] exec %s", compID, n.GetId())
+					if eerr := host.execOpResolvedErr(ctx, n, cmd.GetOperation(), resolver); eerr != nil {
+						errs[i] = fmt.Errorf("[%s] %w", compID, eerr)
+						return
+					}
+				}
+			}(i, compID)
+		}
+		wg.Wait()
+		for _, e := range errs {
+			require.NoError(t, e)
+		}
+	}
+}
+
 func joinArgs(args []string) string {
 	out := ""
 	for i, a := range args {
@@ -147,19 +242,9 @@ func TestPGHAFullPipeline(t *testing.T) {
 	require.NoError(t, err)
 	sub := findSubDag(t, dag, "install_and_run")
 
-	// Run in rank order: etcd first, then both database nodes.
-	for _, compID := range []string{"etcd1", "db1", "db2"} {
-		host := hosts[compID]
-		for _, n := range sub.GetNodes() {
-			if !hasPrefix(n.GetId(), compID+".") {
-				continue
-			}
-			var cmd rtagent.Command
-			require.NoError(t, n.GetTaskState().GetInput().UnmarshalTo(&cmd))
-			t.Logf("[%s] exec %s", compID, n.GetId())
-			host.execOpResolved(t, ctx, n, cmd.GetOperation(), resolver)
-		}
-	}
+	// Rank order: etcd (coordinator) first, then both patroni databases concurrently
+	// (they race for the leader lock — exactly what the real runtime does).
+	runComponentsParallel(t, ctx, sub, hosts, resolver, [][]string{{"etcd1"}, {"db1", "db2"}})
 
 	// Patroni must elect a leader. Probe the REST API via an in-container `timeout`
 	// (docker exec ignores context cancellation, so the probe itself must be bounded).
@@ -185,11 +270,21 @@ func TestPGHAFullPipeline(t *testing.T) {
 	require.True(t, leader, "patroni cluster never elected a leader")
 }
 
-// TestMySQLReplicationFullPipeline brings up a 2-node mysql 8.0 primary/replica
-// (GTID) via the recipe across systemd hosts, then asserts a row written on the
-// primary replicates to the replica.
+// TestMySQLReplicationFullPipeline (8.0, Ubuntu universe) and
+// TestMySQL84ReplicationFullPipeline (8.4 LTS, mysql.com repo) bring up a 2-node
+// primary/replica (GTID) via the recipe across systemd hosts, then assert a row
+// written on the primary replicates to the replica.
 func TestMySQLReplicationFullPipeline(t *testing.T) {
 	t.Parallel()
+	mysqlReplicationPipeline(t, "8.0")
+}
+
+func TestMySQL84ReplicationFullPipeline(t *testing.T) {
+	t.Parallel()
+	mysqlReplicationPipeline(t, "8.4")
+}
+
+func mysqlReplicationPipeline(t *testing.T, version string) {
 	ctx := context.Background()
 
 	net, err := network.New(ctx)
@@ -214,7 +309,7 @@ func TestMySQLReplicationFullPipeline(t *testing.T) {
 		return &domain.Topology_Component{Id: id, Kind: k}
 	}
 	preset := &domain.TestPreset{
-		Database: &domain.Database{Kind: domain.Database_KIND_MYSQL, Version: "8.0"},
+		Database: &domain.Database{Kind: domain.Database_KIND_MYSQL, Version: version},
 		Topology: &domain.Topology{
 			Machines: []*domain.Topology_Machine{
 				{Id: "m-db1", Cores: 2, MemoryGb: 4, Components: []*domain.Topology_Component{comp("db1", domain.Topology_Component_KIND_DATABASE)}},
@@ -227,18 +322,9 @@ func TestMySQLReplicationFullPipeline(t *testing.T) {
 	require.NoError(t, err)
 	sub := findSubDag(t, dag, "install_and_run")
 
-	for _, compID := range []string{"db1", "db2"} {
-		host := hosts[compID]
-		for _, n := range sub.GetNodes() {
-			if !hasPrefix(n.GetId(), compID+".") {
-				continue
-			}
-			var cmd rtagent.Command
-			require.NoError(t, n.GetTaskState().GetInput().UnmarshalTo(&cmd))
-			t.Logf("[%s] exec %s", compID, n.GetId())
-			host.execOpResolved(t, ctx, n, cmd.GetOperation(), resolver)
-		}
-	}
+	// Ordered: the primary (db1) must provision the repl user before the replica
+	// (db2) runs CHANGE REPLICATION SOURCE — two sequential single-component groups.
+	runComponentsParallel(t, ctx, sub, hosts, resolver, [][]string{{"db1"}, {"db2"}})
 
 	// Write on the primary, expect it on the replica.
 	code, out := hosts["db1"].sh(t, ctx, `mysql -e "CREATE DATABASE repltest; CREATE TABLE repltest.t(id INT PRIMARY KEY); INSERT INTO repltest.t VALUES (42);"`)
@@ -302,18 +388,9 @@ func TestPicodataClusterFullPipeline(t *testing.T) {
 	require.NoError(t, err)
 	sub := findSubDag(t, dag, "install_and_run")
 
-	for _, compID := range []string{"pd1", "pd2"} {
-		host := hosts[compID]
-		for _, n := range sub.GetNodes() {
-			if !hasPrefix(n.GetId(), compID+".") {
-				continue
-			}
-			var cmd rtagent.Command
-			require.NoError(t, n.GetTaskState().GetInput().UnmarshalTo(&cmd))
-			t.Logf("[%s] exec %s", compID, n.GetId())
-			host.execOpResolved(t, ctx, n, cmd.GetOperation(), resolver)
-		}
-	}
+	// Both picodata instances are independent (same kind-rank, peers in the yaml) —
+	// bring them up concurrently.
+	runComponentsParallel(t, ctx, sub, hosts, resolver, [][]string{{"pd1", "pd2"}})
 
 	// pg-wire (5432) must accept a connection on pd1 — the cluster bootstrapped.
 	up := false
@@ -330,6 +407,72 @@ func TestPicodataClusterFullPipeline(t *testing.T) {
 		t.Logf("pd1 picodata diagnostics:\n%s", st)
 	}
 	require.True(t, up, "picodata pg-wire never came up")
+}
+
+// TestYDBClusterFullPipeline brings up a 3-node ydb storage cluster (mirror-3) via
+// the recipe across systemd hosts (each node's static config lists all peers,
+// resolved to real IPs; --node selects its id), then asserts every node's storage
+// grpc endpoint serves.
+func TestYDBClusterFullPipeline(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	net, err := network.New(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = net.Remove(ctx) })
+
+	ids := []string{"ydb1", "ydb2", "ydb3"}
+	hosts := map[string]*systemdHost{}
+	machineIP := map[string]string{}
+	for _, id := range ids {
+		h, ip := startSystemdHostOnNetwork(t, ctx, net.Name)
+		hosts[id] = h
+		machineIP["m-"+id] = ip
+	}
+	resolved := render.Resolved{}
+	var machines []*domain.Topology_Machine
+	var conns []*domain.Topology_Connection
+	for i, id := range ids {
+		resolved[id] = map[string]string{render.AttrPrivateIP: machineIP["m-"+id], render.AttrEndpoint: machineIP["m-"+id]}
+		machines = append(machines, &domain.Topology_Machine{
+			Id: "m-" + id, Cores: 2, MemoryGb: 4,
+			Components: []*domain.Topology_Component{{Id: id, Kind: domain.Topology_Component_KIND_DATABASE}},
+		})
+		if i > 0 {
+			conns = append(conns, &domain.Topology_Connection{From: id, To: ids[0], Kind: domain.Topology_Connection_KIND_COORDINATION})
+		}
+	}
+	resolver := render.NewResolver(resolved)
+
+	preset := &domain.TestPreset{
+		Database: &domain.Database{Kind: domain.Database_KIND_YDB, Version: "24.2"},
+		Topology: &domain.Topology{Machines: machines, Connections: conns},
+	}
+	dag, err := planner.New().Compile(preset, nil)
+	require.NoError(t, err)
+	sub := findSubDag(t, dag, "install_and_run")
+
+	// All 3 storage nodes are independent machines (same kind-rank) — bring them up
+	// concurrently, as the real runtime leases each agent's commands in parallel.
+	runComponentsParallel(t, ctx, sub, hosts, resolver, [][]string{ids})
+
+	// Every node's storage grpc endpoint must serve.
+	for _, id := range ids {
+		up := false
+		for range 30 {
+			code, _ := hosts[id].c2(ctx, []string{"bash", "-lc", "timeout 4 bash -c '</dev/tcp/localhost/2135' 2>/dev/null && echo ok"})
+			if code == 0 {
+				up = true
+				break
+			}
+			time.Sleep(3 * time.Second)
+		}
+		if !up {
+			_, j := hosts[id].c2(ctx, []string{"bash", "-lc", "timeout 8 journalctl -u stroppy-ydb-storage --no-pager 2>&1 | grep -iE 'verify|fail|panic|error|invalid|require|expected|domain|location' | grep -viaE '0x' | tail -25"})
+			t.Logf("%s ydb diagnostics:\n%s", id, j)
+		}
+		require.Truef(t, up, "%s storage grpc (2135) never came up", id)
+	}
 }
 
 func hasPrefix(s, p string) bool { return len(s) >= len(p) && s[:len(p)] == p }
