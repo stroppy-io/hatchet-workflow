@@ -6,7 +6,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/domain/planner"
+	dagdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/dag"
 	uipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -18,16 +18,16 @@ import (
 )
 
 // Planner compiles a TestPreset (+ resolved deployment params) into an executable
-// Dag (C12). Implemented by internal/domain/planner.
+// Dag (C12). Implemented by internal/domain/dag.
 type Planner interface {
-	Compile(preset *domain.TestPreset, params *planner.DeploymentParams) (*primitive.Dag, error)
+	Compile(preset *domain.TestPreset, params *dagdomain.DeploymentParams) (*primitive.Dag, error)
 }
 
 // ProviderResolver resolves a tenant's deployment params (provider settings +
 // per-machine network allocation + cloud-init) for a topology. Implemented by
 // internal/services/deploy.
 type ProviderResolver interface {
-	Resolve(ctx context.Context, tenantID string, topo *domain.Topology) (*planner.DeploymentParams, error)
+	Resolve(ctx context.Context, tenantID string, topo *domain.Topology) (*dagdomain.DeploymentParams, error)
 }
 
 // DagStore persists and loads Dag aggregates. Implemented by

@@ -30,6 +30,33 @@ enum YandexCloudZone {
     YANDEX_CLOUD_ZONE_RU_CENTRAL1_D = 3; // Central Russia D zone.
 }
 
+/*
+    PlatformSettings is the GLOBAL (singleton) control-plane configuration, changed
+    only by the root admin. It is NOT tenant-scoped — there is one control plane and
+    one row.
+
+    server_addr is the single public control-plane base URL handed to every agent
+    (STROPPY_SERVER_ADDR) so it knows where to Poll/Report and fetch its binary (the
+    agent binary URL is DERIVED from server_addr + the server's agent-binary
+    endpoint — no separate setting). Empty -> the server derives a docker-host
+    fallback (host.docker.internal / bridge gateway) for local Docker runs.
+ */
+message PlatformSettings {
+    option (goplain.message).generate = true;
+    option (ratel.table) = {
+        generate: true
+        table_name: "platform_settings"
+    };
+    /* id is the fixed singleton key ("platform"); the table holds exactly one row. */
+    string id = 1 [
+        (ratel.column) = {constraints: {primary_key: true}},
+        (validate.rules).string = {min_len: 1, max_len: 64}
+    ];
+    models.Timestamps timestamps = 2 [(goplain.field).embed = true];
+    /* server_addr is the public control-plane base URL, e.g. http://51.250.1.2:8080. */
+    string server_addr = 10 [(validate.rules).string.max_len = 2048];
+}
+
 message SettingsItemId {option (goplain.message) = {generate: true, type_alias: true}; string value = 1 [(validate.rules).string.len = 26];}
 message SettingsItem {
     message List {repeated SettingsItem settings_items = 1;}

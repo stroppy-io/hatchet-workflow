@@ -48,9 +48,9 @@ const (
 
 // PackageServiceClient is a client for the cloud.v1.api.ui.PackageService service.
 type PackageServiceClient interface {
-	ListPackages(context.Context, *connect.Request[ui.ListPackagesRequest]) (*connect.Response[models.Package_List], error)
-	RequestPackageUpload(context.Context, *connect.Request[ui.RequestPackageUploadRequest]) (*connect.Response[ui.RequestPackageUploadResponse], error)
-	DeletePackage(context.Context, *connect.Request[ui.DeletePackageRequest]) (*connect.Response[emptypb.Empty], error)
+	ListPackages(context.Context, *ui.ListPackagesRequest) (*models.Package_List, error)
+	RequestPackageUpload(context.Context, *ui.RequestPackageUploadRequest) (*ui.RequestPackageUploadResponse, error)
+	DeletePackage(context.Context, *ui.DeletePackageRequest) (*emptypb.Empty, error)
 }
 
 // NewPackageServiceClient constructs a client for the cloud.v1.api.ui.PackageService service. By
@@ -96,25 +96,37 @@ type packageServiceClient struct {
 }
 
 // ListPackages calls cloud.v1.api.ui.PackageService.ListPackages.
-func (c *packageServiceClient) ListPackages(ctx context.Context, req *connect.Request[ui.ListPackagesRequest]) (*connect.Response[models.Package_List], error) {
-	return c.listPackages.CallUnary(ctx, req)
+func (c *packageServiceClient) ListPackages(ctx context.Context, req *ui.ListPackagesRequest) (*models.Package_List, error) {
+	response, err := c.listPackages.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // RequestPackageUpload calls cloud.v1.api.ui.PackageService.RequestPackageUpload.
-func (c *packageServiceClient) RequestPackageUpload(ctx context.Context, req *connect.Request[ui.RequestPackageUploadRequest]) (*connect.Response[ui.RequestPackageUploadResponse], error) {
-	return c.requestPackageUpload.CallUnary(ctx, req)
+func (c *packageServiceClient) RequestPackageUpload(ctx context.Context, req *ui.RequestPackageUploadRequest) (*ui.RequestPackageUploadResponse, error) {
+	response, err := c.requestPackageUpload.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // DeletePackage calls cloud.v1.api.ui.PackageService.DeletePackage.
-func (c *packageServiceClient) DeletePackage(ctx context.Context, req *connect.Request[ui.DeletePackageRequest]) (*connect.Response[emptypb.Empty], error) {
-	return c.deletePackage.CallUnary(ctx, req)
+func (c *packageServiceClient) DeletePackage(ctx context.Context, req *ui.DeletePackageRequest) (*emptypb.Empty, error) {
+	response, err := c.deletePackage.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // PackageServiceHandler is an implementation of the cloud.v1.api.ui.PackageService service.
 type PackageServiceHandler interface {
-	ListPackages(context.Context, *connect.Request[ui.ListPackagesRequest]) (*connect.Response[models.Package_List], error)
-	RequestPackageUpload(context.Context, *connect.Request[ui.RequestPackageUploadRequest]) (*connect.Response[ui.RequestPackageUploadResponse], error)
-	DeletePackage(context.Context, *connect.Request[ui.DeletePackageRequest]) (*connect.Response[emptypb.Empty], error)
+	ListPackages(context.Context, *ui.ListPackagesRequest) (*models.Package_List, error)
+	RequestPackageUpload(context.Context, *ui.RequestPackageUploadRequest) (*ui.RequestPackageUploadResponse, error)
+	DeletePackage(context.Context, *ui.DeletePackageRequest) (*emptypb.Empty, error)
 }
 
 // NewPackageServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -124,21 +136,21 @@ type PackageServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewPackageServiceHandler(svc PackageServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	packageServiceMethods := ui.File_cloud_v1_api_ui_package_proto.Services().ByName("PackageService").Methods()
-	packageServiceListPackagesHandler := connect.NewUnaryHandler(
+	packageServiceListPackagesHandler := connect.NewUnaryHandlerSimple(
 		PackageServiceListPackagesProcedure,
 		svc.ListPackages,
 		connect.WithSchema(packageServiceMethods.ByName("ListPackages")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	packageServiceRequestPackageUploadHandler := connect.NewUnaryHandler(
+	packageServiceRequestPackageUploadHandler := connect.NewUnaryHandlerSimple(
 		PackageServiceRequestPackageUploadProcedure,
 		svc.RequestPackageUpload,
 		connect.WithSchema(packageServiceMethods.ByName("RequestPackageUpload")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	packageServiceDeletePackageHandler := connect.NewUnaryHandler(
+	packageServiceDeletePackageHandler := connect.NewUnaryHandlerSimple(
 		PackageServiceDeletePackageProcedure,
 		svc.DeletePackage,
 		connect.WithSchema(packageServiceMethods.ByName("DeletePackage")),
@@ -162,14 +174,14 @@ func NewPackageServiceHandler(svc PackageServiceHandler, opts ...connect.Handler
 // UnimplementedPackageServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedPackageServiceHandler struct{}
 
-func (UnimplementedPackageServiceHandler) ListPackages(context.Context, *connect.Request[ui.ListPackagesRequest]) (*connect.Response[models.Package_List], error) {
+func (UnimplementedPackageServiceHandler) ListPackages(context.Context, *ui.ListPackagesRequest) (*models.Package_List, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.PackageService.ListPackages is not implemented"))
 }
 
-func (UnimplementedPackageServiceHandler) RequestPackageUpload(context.Context, *connect.Request[ui.RequestPackageUploadRequest]) (*connect.Response[ui.RequestPackageUploadResponse], error) {
+func (UnimplementedPackageServiceHandler) RequestPackageUpload(context.Context, *ui.RequestPackageUploadRequest) (*ui.RequestPackageUploadResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.PackageService.RequestPackageUpload is not implemented"))
 }
 
-func (UnimplementedPackageServiceHandler) DeletePackage(context.Context, *connect.Request[ui.DeletePackageRequest]) (*connect.Response[emptypb.Empty], error) {
+func (UnimplementedPackageServiceHandler) DeletePackage(context.Context, *ui.DeletePackageRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.PackageService.DeletePackage is not implemented"))
 }

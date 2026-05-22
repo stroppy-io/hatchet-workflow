@@ -17,8 +17,8 @@ const (
 // covers success/failure/always branching out of the box; domain-specific
 // predicates (e.g. metric thresholds) are added here as the planner emits them.
 func DefaultPredicates() PredicateRegistryMap {
-	srcStatus := func(dag *primitive.Dag, edge *primitive.Dag_Edge) (primitive.Status, bool) {
-		for _, n := range dag.GetNodes() {
+	srcStatus := func(ctx DagContext, edge *primitive.Dag_Edge) (primitive.Status, bool) {
+		for _, n := range ctx.Dag().GetNodes() {
 			if n.GetId() == edge.GetSource() {
 				return n.GetStatus(), true
 			}
@@ -26,14 +26,14 @@ func DefaultPredicates() PredicateRegistryMap {
 		return primitive.Status_STATUS_UNSPECIFIED, false
 	}
 	return PredicateRegistryMap{
-		PredicateOnSuccess: func(dag *primitive.Dag, edge *primitive.Dag_Edge) bool {
-			st, ok := srcStatus(dag, edge)
+		PredicateOnSuccess: func(ctx DagContext, edge *primitive.Dag_Edge) bool {
+			st, ok := srcStatus(ctx, edge)
 			return ok && st == primitive.Status_STATUS_COMPLETED
 		},
-		PredicateOnFailure: func(dag *primitive.Dag, edge *primitive.Dag_Edge) bool {
-			st, ok := srcStatus(dag, edge)
+		PredicateOnFailure: func(ctx DagContext, edge *primitive.Dag_Edge) bool {
+			st, ok := srcStatus(ctx, edge)
 			return ok && st == primitive.Status_STATUS_FAILED
 		},
-		PredicateAlways: func(_ *primitive.Dag, _ *primitive.Dag_Edge) bool { return true },
+		PredicateAlways: func(_ DagContext, _ *primitive.Dag_Edge) bool { return true },
 	}
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/gopherex/xlog"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/domain/planner"
+	dagdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	rtagent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/ops"
@@ -43,7 +43,7 @@ func TestLeaseResolvesBindings(t *testing.T) {
 			},
 		}}},
 	}
-	dag, err := planner.New().Compile(preset, nil)
+	dag, err := dagdomain.New().Compile(preset, nil)
 	if err != nil {
 		t.Fatalf("compile: %v", err)
 	}

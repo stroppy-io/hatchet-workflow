@@ -68,21 +68,21 @@ const (
 // RunServiceClient is a client for the cloud.v1.api.ui.RunService service.
 type RunServiceClient interface {
 	// --- run lifecycle (tenant-scoped) ---
-	SubmitTestRun(context.Context, *connect.Request[ui.SubmitTestRunRequest]) (*connect.Response[models.TestRun], error)
-	GetTestRun(context.Context, *connect.Request[ui.GetTestRunRequest]) (*connect.Response[models.TestRun], error)
-	ListTestRuns(context.Context, *connect.Request[ui.ListTestRunsRequest]) (*connect.Response[models.TestRun_List], error)
-	CancelTestRun(context.Context, *connect.Request[ui.CancelTestRunRequest]) (*connect.Response[models.TestRun], error)
+	SubmitTestRun(context.Context, *ui.SubmitTestRunRequest) (*models.TestRun, error)
+	GetTestRun(context.Context, *ui.GetTestRunRequest) (*models.TestRun, error)
+	ListTestRuns(context.Context, *ui.ListTestRunsRequest) (*models.TestRun_List, error)
+	CancelTestRun(context.Context, *ui.CancelTestRunRequest) (*models.TestRun, error)
 	// StreamTestRunLogs is a connect-go server-stream of unified log lines (F2).
-	StreamTestRunLogs(context.Context, *connect.Request[ui.StreamTestRunLogsRequest]) (*connect.ServerStreamForClient[logs.LogLine], error)
-	QueryRunLogs(context.Context, *connect.Request[ui.QueryRunLogsRequest]) (*connect.Response[logs.LogPage], error)
-	BuildLogLink(context.Context, *connect.Request[ui.BuildLogLinkRequest]) (*connect.Response[ui.BuildLogLinkResponse], error)
+	StreamTestRunLogs(context.Context, *ui.StreamTestRunLogsRequest) (*connect.ServerStreamForClient[logs.LogLine], error)
+	QueryRunLogs(context.Context, *ui.QueryRunLogsRequest) (*logs.LogPage, error)
+	BuildLogLink(context.Context, *ui.BuildLogLinkRequest) (*ui.BuildLogLinkResponse, error)
 	// --- metrics (folded from MetricsService) ---
-	GetRunMetrics(context.Context, *connect.Request[ui.GetRunMetricsRequest]) (*connect.Response[metrics.RunMetrics], error)
-	CompareRuns(context.Context, *connect.Request[ui.CompareRunsRequest]) (*connect.Response[metrics.Comparison], error)
+	GetRunMetrics(context.Context, *ui.GetRunMetricsRequest) (*metrics.RunMetrics, error)
+	CompareRuns(context.Context, *ui.CompareRunsRequest) (*metrics.Comparison, error)
 	// --- share (folded from ShareService) ---
-	CreateShareLink(context.Context, *connect.Request[ui.CreateShareLinkRequest]) (*connect.Response[ui.CreateShareLinkResponse], error)
+	CreateShareLink(context.Context, *ui.CreateShareLinkRequest) (*ui.CreateShareLinkResponse, error)
 	// GetSharedRun is the single PUBLIC (no-auth, no tenant_id) RPC.
-	GetSharedRun(context.Context, *connect.Request[ui.GetSharedRunRequest]) (*connect.Response[ui.GetSharedRunResponse], error)
+	GetSharedRun(context.Context, *ui.GetSharedRunRequest) (*ui.GetSharedRunResponse, error)
 }
 
 // NewRunServiceClient constructs a client for the cloud.v1.api.ui.RunService service. By default,
@@ -192,78 +192,118 @@ type runServiceClient struct {
 }
 
 // SubmitTestRun calls cloud.v1.api.ui.RunService.SubmitTestRun.
-func (c *runServiceClient) SubmitTestRun(ctx context.Context, req *connect.Request[ui.SubmitTestRunRequest]) (*connect.Response[models.TestRun], error) {
-	return c.submitTestRun.CallUnary(ctx, req)
+func (c *runServiceClient) SubmitTestRun(ctx context.Context, req *ui.SubmitTestRunRequest) (*models.TestRun, error) {
+	response, err := c.submitTestRun.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // GetTestRun calls cloud.v1.api.ui.RunService.GetTestRun.
-func (c *runServiceClient) GetTestRun(ctx context.Context, req *connect.Request[ui.GetTestRunRequest]) (*connect.Response[models.TestRun], error) {
-	return c.getTestRun.CallUnary(ctx, req)
+func (c *runServiceClient) GetTestRun(ctx context.Context, req *ui.GetTestRunRequest) (*models.TestRun, error) {
+	response, err := c.getTestRun.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // ListTestRuns calls cloud.v1.api.ui.RunService.ListTestRuns.
-func (c *runServiceClient) ListTestRuns(ctx context.Context, req *connect.Request[ui.ListTestRunsRequest]) (*connect.Response[models.TestRun_List], error) {
-	return c.listTestRuns.CallUnary(ctx, req)
+func (c *runServiceClient) ListTestRuns(ctx context.Context, req *ui.ListTestRunsRequest) (*models.TestRun_List, error) {
+	response, err := c.listTestRuns.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // CancelTestRun calls cloud.v1.api.ui.RunService.CancelTestRun.
-func (c *runServiceClient) CancelTestRun(ctx context.Context, req *connect.Request[ui.CancelTestRunRequest]) (*connect.Response[models.TestRun], error) {
-	return c.cancelTestRun.CallUnary(ctx, req)
+func (c *runServiceClient) CancelTestRun(ctx context.Context, req *ui.CancelTestRunRequest) (*models.TestRun, error) {
+	response, err := c.cancelTestRun.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // StreamTestRunLogs calls cloud.v1.api.ui.RunService.StreamTestRunLogs.
-func (c *runServiceClient) StreamTestRunLogs(ctx context.Context, req *connect.Request[ui.StreamTestRunLogsRequest]) (*connect.ServerStreamForClient[logs.LogLine], error) {
-	return c.streamTestRunLogs.CallServerStream(ctx, req)
+func (c *runServiceClient) StreamTestRunLogs(ctx context.Context, req *ui.StreamTestRunLogsRequest) (*connect.ServerStreamForClient[logs.LogLine], error) {
+	return c.streamTestRunLogs.CallServerStream(ctx, connect.NewRequest(req))
 }
 
 // QueryRunLogs calls cloud.v1.api.ui.RunService.QueryRunLogs.
-func (c *runServiceClient) QueryRunLogs(ctx context.Context, req *connect.Request[ui.QueryRunLogsRequest]) (*connect.Response[logs.LogPage], error) {
-	return c.queryRunLogs.CallUnary(ctx, req)
+func (c *runServiceClient) QueryRunLogs(ctx context.Context, req *ui.QueryRunLogsRequest) (*logs.LogPage, error) {
+	response, err := c.queryRunLogs.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // BuildLogLink calls cloud.v1.api.ui.RunService.BuildLogLink.
-func (c *runServiceClient) BuildLogLink(ctx context.Context, req *connect.Request[ui.BuildLogLinkRequest]) (*connect.Response[ui.BuildLogLinkResponse], error) {
-	return c.buildLogLink.CallUnary(ctx, req)
+func (c *runServiceClient) BuildLogLink(ctx context.Context, req *ui.BuildLogLinkRequest) (*ui.BuildLogLinkResponse, error) {
+	response, err := c.buildLogLink.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // GetRunMetrics calls cloud.v1.api.ui.RunService.GetRunMetrics.
-func (c *runServiceClient) GetRunMetrics(ctx context.Context, req *connect.Request[ui.GetRunMetricsRequest]) (*connect.Response[metrics.RunMetrics], error) {
-	return c.getRunMetrics.CallUnary(ctx, req)
+func (c *runServiceClient) GetRunMetrics(ctx context.Context, req *ui.GetRunMetricsRequest) (*metrics.RunMetrics, error) {
+	response, err := c.getRunMetrics.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // CompareRuns calls cloud.v1.api.ui.RunService.CompareRuns.
-func (c *runServiceClient) CompareRuns(ctx context.Context, req *connect.Request[ui.CompareRunsRequest]) (*connect.Response[metrics.Comparison], error) {
-	return c.compareRuns.CallUnary(ctx, req)
+func (c *runServiceClient) CompareRuns(ctx context.Context, req *ui.CompareRunsRequest) (*metrics.Comparison, error) {
+	response, err := c.compareRuns.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // CreateShareLink calls cloud.v1.api.ui.RunService.CreateShareLink.
-func (c *runServiceClient) CreateShareLink(ctx context.Context, req *connect.Request[ui.CreateShareLinkRequest]) (*connect.Response[ui.CreateShareLinkResponse], error) {
-	return c.createShareLink.CallUnary(ctx, req)
+func (c *runServiceClient) CreateShareLink(ctx context.Context, req *ui.CreateShareLinkRequest) (*ui.CreateShareLinkResponse, error) {
+	response, err := c.createShareLink.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // GetSharedRun calls cloud.v1.api.ui.RunService.GetSharedRun.
-func (c *runServiceClient) GetSharedRun(ctx context.Context, req *connect.Request[ui.GetSharedRunRequest]) (*connect.Response[ui.GetSharedRunResponse], error) {
-	return c.getSharedRun.CallUnary(ctx, req)
+func (c *runServiceClient) GetSharedRun(ctx context.Context, req *ui.GetSharedRunRequest) (*ui.GetSharedRunResponse, error) {
+	response, err := c.getSharedRun.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // RunServiceHandler is an implementation of the cloud.v1.api.ui.RunService service.
 type RunServiceHandler interface {
 	// --- run lifecycle (tenant-scoped) ---
-	SubmitTestRun(context.Context, *connect.Request[ui.SubmitTestRunRequest]) (*connect.Response[models.TestRun], error)
-	GetTestRun(context.Context, *connect.Request[ui.GetTestRunRequest]) (*connect.Response[models.TestRun], error)
-	ListTestRuns(context.Context, *connect.Request[ui.ListTestRunsRequest]) (*connect.Response[models.TestRun_List], error)
-	CancelTestRun(context.Context, *connect.Request[ui.CancelTestRunRequest]) (*connect.Response[models.TestRun], error)
+	SubmitTestRun(context.Context, *ui.SubmitTestRunRequest) (*models.TestRun, error)
+	GetTestRun(context.Context, *ui.GetTestRunRequest) (*models.TestRun, error)
+	ListTestRuns(context.Context, *ui.ListTestRunsRequest) (*models.TestRun_List, error)
+	CancelTestRun(context.Context, *ui.CancelTestRunRequest) (*models.TestRun, error)
 	// StreamTestRunLogs is a connect-go server-stream of unified log lines (F2).
-	StreamTestRunLogs(context.Context, *connect.Request[ui.StreamTestRunLogsRequest], *connect.ServerStream[logs.LogLine]) error
-	QueryRunLogs(context.Context, *connect.Request[ui.QueryRunLogsRequest]) (*connect.Response[logs.LogPage], error)
-	BuildLogLink(context.Context, *connect.Request[ui.BuildLogLinkRequest]) (*connect.Response[ui.BuildLogLinkResponse], error)
+	StreamTestRunLogs(context.Context, *ui.StreamTestRunLogsRequest, *connect.ServerStream[logs.LogLine]) error
+	QueryRunLogs(context.Context, *ui.QueryRunLogsRequest) (*logs.LogPage, error)
+	BuildLogLink(context.Context, *ui.BuildLogLinkRequest) (*ui.BuildLogLinkResponse, error)
 	// --- metrics (folded from MetricsService) ---
-	GetRunMetrics(context.Context, *connect.Request[ui.GetRunMetricsRequest]) (*connect.Response[metrics.RunMetrics], error)
-	CompareRuns(context.Context, *connect.Request[ui.CompareRunsRequest]) (*connect.Response[metrics.Comparison], error)
+	GetRunMetrics(context.Context, *ui.GetRunMetricsRequest) (*metrics.RunMetrics, error)
+	CompareRuns(context.Context, *ui.CompareRunsRequest) (*metrics.Comparison, error)
 	// --- share (folded from ShareService) ---
-	CreateShareLink(context.Context, *connect.Request[ui.CreateShareLinkRequest]) (*connect.Response[ui.CreateShareLinkResponse], error)
+	CreateShareLink(context.Context, *ui.CreateShareLinkRequest) (*ui.CreateShareLinkResponse, error)
 	// GetSharedRun is the single PUBLIC (no-auth, no tenant_id) RPC.
-	GetSharedRun(context.Context, *connect.Request[ui.GetSharedRunRequest]) (*connect.Response[ui.GetSharedRunResponse], error)
+	GetSharedRun(context.Context, *ui.GetSharedRunRequest) (*ui.GetSharedRunResponse, error)
 }
 
 // NewRunServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -273,77 +313,77 @@ type RunServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewRunServiceHandler(svc RunServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	runServiceMethods := ui.File_cloud_v1_api_ui_run_proto.Services().ByName("RunService").Methods()
-	runServiceSubmitTestRunHandler := connect.NewUnaryHandler(
+	runServiceSubmitTestRunHandler := connect.NewUnaryHandlerSimple(
 		RunServiceSubmitTestRunProcedure,
 		svc.SubmitTestRun,
 		connect.WithSchema(runServiceMethods.ByName("SubmitTestRun")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	runServiceGetTestRunHandler := connect.NewUnaryHandler(
+	runServiceGetTestRunHandler := connect.NewUnaryHandlerSimple(
 		RunServiceGetTestRunProcedure,
 		svc.GetTestRun,
 		connect.WithSchema(runServiceMethods.ByName("GetTestRun")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	runServiceListTestRunsHandler := connect.NewUnaryHandler(
+	runServiceListTestRunsHandler := connect.NewUnaryHandlerSimple(
 		RunServiceListTestRunsProcedure,
 		svc.ListTestRuns,
 		connect.WithSchema(runServiceMethods.ByName("ListTestRuns")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	runServiceCancelTestRunHandler := connect.NewUnaryHandler(
+	runServiceCancelTestRunHandler := connect.NewUnaryHandlerSimple(
 		RunServiceCancelTestRunProcedure,
 		svc.CancelTestRun,
 		connect.WithSchema(runServiceMethods.ByName("CancelTestRun")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	runServiceStreamTestRunLogsHandler := connect.NewServerStreamHandler(
+	runServiceStreamTestRunLogsHandler := connect.NewServerStreamHandlerSimple(
 		RunServiceStreamTestRunLogsProcedure,
 		svc.StreamTestRunLogs,
 		connect.WithSchema(runServiceMethods.ByName("StreamTestRunLogs")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	runServiceQueryRunLogsHandler := connect.NewUnaryHandler(
+	runServiceQueryRunLogsHandler := connect.NewUnaryHandlerSimple(
 		RunServiceQueryRunLogsProcedure,
 		svc.QueryRunLogs,
 		connect.WithSchema(runServiceMethods.ByName("QueryRunLogs")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	runServiceBuildLogLinkHandler := connect.NewUnaryHandler(
+	runServiceBuildLogLinkHandler := connect.NewUnaryHandlerSimple(
 		RunServiceBuildLogLinkProcedure,
 		svc.BuildLogLink,
 		connect.WithSchema(runServiceMethods.ByName("BuildLogLink")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	runServiceGetRunMetricsHandler := connect.NewUnaryHandler(
+	runServiceGetRunMetricsHandler := connect.NewUnaryHandlerSimple(
 		RunServiceGetRunMetricsProcedure,
 		svc.GetRunMetrics,
 		connect.WithSchema(runServiceMethods.ByName("GetRunMetrics")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	runServiceCompareRunsHandler := connect.NewUnaryHandler(
+	runServiceCompareRunsHandler := connect.NewUnaryHandlerSimple(
 		RunServiceCompareRunsProcedure,
 		svc.CompareRuns,
 		connect.WithSchema(runServiceMethods.ByName("CompareRuns")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	runServiceCreateShareLinkHandler := connect.NewUnaryHandler(
+	runServiceCreateShareLinkHandler := connect.NewUnaryHandlerSimple(
 		RunServiceCreateShareLinkProcedure,
 		svc.CreateShareLink,
 		connect.WithSchema(runServiceMethods.ByName("CreateShareLink")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	runServiceGetSharedRunHandler := connect.NewUnaryHandler(
+	runServiceGetSharedRunHandler := connect.NewUnaryHandlerSimple(
 		RunServiceGetSharedRunProcedure,
 		svc.GetSharedRun,
 		connect.WithSchema(runServiceMethods.ByName("GetSharedRun")),
@@ -383,46 +423,46 @@ func NewRunServiceHandler(svc RunServiceHandler, opts ...connect.HandlerOption) 
 // UnimplementedRunServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedRunServiceHandler struct{}
 
-func (UnimplementedRunServiceHandler) SubmitTestRun(context.Context, *connect.Request[ui.SubmitTestRunRequest]) (*connect.Response[models.TestRun], error) {
+func (UnimplementedRunServiceHandler) SubmitTestRun(context.Context, *ui.SubmitTestRunRequest) (*models.TestRun, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.SubmitTestRun is not implemented"))
 }
 
-func (UnimplementedRunServiceHandler) GetTestRun(context.Context, *connect.Request[ui.GetTestRunRequest]) (*connect.Response[models.TestRun], error) {
+func (UnimplementedRunServiceHandler) GetTestRun(context.Context, *ui.GetTestRunRequest) (*models.TestRun, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.GetTestRun is not implemented"))
 }
 
-func (UnimplementedRunServiceHandler) ListTestRuns(context.Context, *connect.Request[ui.ListTestRunsRequest]) (*connect.Response[models.TestRun_List], error) {
+func (UnimplementedRunServiceHandler) ListTestRuns(context.Context, *ui.ListTestRunsRequest) (*models.TestRun_List, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.ListTestRuns is not implemented"))
 }
 
-func (UnimplementedRunServiceHandler) CancelTestRun(context.Context, *connect.Request[ui.CancelTestRunRequest]) (*connect.Response[models.TestRun], error) {
+func (UnimplementedRunServiceHandler) CancelTestRun(context.Context, *ui.CancelTestRunRequest) (*models.TestRun, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.CancelTestRun is not implemented"))
 }
 
-func (UnimplementedRunServiceHandler) StreamTestRunLogs(context.Context, *connect.Request[ui.StreamTestRunLogsRequest], *connect.ServerStream[logs.LogLine]) error {
+func (UnimplementedRunServiceHandler) StreamTestRunLogs(context.Context, *ui.StreamTestRunLogsRequest, *connect.ServerStream[logs.LogLine]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.StreamTestRunLogs is not implemented"))
 }
 
-func (UnimplementedRunServiceHandler) QueryRunLogs(context.Context, *connect.Request[ui.QueryRunLogsRequest]) (*connect.Response[logs.LogPage], error) {
+func (UnimplementedRunServiceHandler) QueryRunLogs(context.Context, *ui.QueryRunLogsRequest) (*logs.LogPage, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.QueryRunLogs is not implemented"))
 }
 
-func (UnimplementedRunServiceHandler) BuildLogLink(context.Context, *connect.Request[ui.BuildLogLinkRequest]) (*connect.Response[ui.BuildLogLinkResponse], error) {
+func (UnimplementedRunServiceHandler) BuildLogLink(context.Context, *ui.BuildLogLinkRequest) (*ui.BuildLogLinkResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.BuildLogLink is not implemented"))
 }
 
-func (UnimplementedRunServiceHandler) GetRunMetrics(context.Context, *connect.Request[ui.GetRunMetricsRequest]) (*connect.Response[metrics.RunMetrics], error) {
+func (UnimplementedRunServiceHandler) GetRunMetrics(context.Context, *ui.GetRunMetricsRequest) (*metrics.RunMetrics, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.GetRunMetrics is not implemented"))
 }
 
-func (UnimplementedRunServiceHandler) CompareRuns(context.Context, *connect.Request[ui.CompareRunsRequest]) (*connect.Response[metrics.Comparison], error) {
+func (UnimplementedRunServiceHandler) CompareRuns(context.Context, *ui.CompareRunsRequest) (*metrics.Comparison, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.CompareRuns is not implemented"))
 }
 
-func (UnimplementedRunServiceHandler) CreateShareLink(context.Context, *connect.Request[ui.CreateShareLinkRequest]) (*connect.Response[ui.CreateShareLinkResponse], error) {
+func (UnimplementedRunServiceHandler) CreateShareLink(context.Context, *ui.CreateShareLinkRequest) (*ui.CreateShareLinkResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.CreateShareLink is not implemented"))
 }
 
-func (UnimplementedRunServiceHandler) GetSharedRun(context.Context, *connect.Request[ui.GetSharedRunRequest]) (*connect.Response[ui.GetSharedRunResponse], error) {
+func (UnimplementedRunServiceHandler) GetSharedRun(context.Context, *ui.GetSharedRunRequest) (*ui.GetSharedRunResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.GetSharedRun is not implemented"))
 }

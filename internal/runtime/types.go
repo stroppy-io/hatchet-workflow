@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -13,15 +14,21 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/utils/protohelp"
 )
 
+type DagContext interface {
+	context.Context
+	Dag() *primitive.Dag
+	GetOutput(id string) (*anypb.Any, error)
+}
+
 type Task[I, O proto.Message] interface {
-	Call(I) (O, error)
+	Call(ctx DagContext, input I) (O, error)
 	Name() string
 }
 
-type TaskFn[I, O proto.Message] func(I) (O, error)
+type TaskFn[I, O proto.Message] func(ctx DagContext, input I) (O, error)
 
-func (t TaskFn[I, O]) Call(i I) (O, error) {
-	return t(i)
+func (t TaskFn[I, O]) Call(ctx DagContext, i I) (O, error) {
+	return t(ctx, i)
 }
 
 type wrapper[I, O proto.Message] struct {
@@ -29,13 +36,13 @@ type wrapper[I, O proto.Message] struct {
 	downstreamFn TaskFn[I, O]
 }
 
-func (w wrapper[I, O]) Call(i *anypb.Any) (*anypb.Any, error) {
+func (w wrapper[I, O]) Call(ctx DagContext, i *anypb.Any) (*anypb.Any, error) {
 	input := protohelp.ProtoNew[I]()
 	err := i.UnmarshalTo(input)
 	if err != nil {
 		return nil, err
 	}
-	output, err := w.downstreamFn(input)
+	output, err := w.downstreamFn(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -55,6 +62,7 @@ func NewTask[I, O proto.Message](name string, handler TaskFn[I, O]) Task[*anypb.
 
 type TasksRegistry interface {
 	GetTaskHandler(name string) (Task[*anypb.Any, *anypb.Any], bool)
+	Register(task Task[*anypb.Any, *anypb.Any])
 }
 
 type TaskRegistry struct {
@@ -84,7 +92,7 @@ func (r *TaskRegistry) GetTaskHandler(name string) (Task[*anypb.Any, *anypb.Any]
 	return task, ok
 }
 
-func RunTask(state *primitive.Dag_Node_TaskState, tasksReg TasksRegistry) (*primitive.Dag_Node_TaskState, error) {
+func RunTask(ctx DagContext, state *primitive.Dag_Node_TaskState, tasksReg TasksRegistry) (*primitive.Dag_Node_TaskState, error) {
 	task, ok := tasksReg.GetTaskHandler(state.GetHandlerName())
 	if !ok {
 		return nil, NewFailureError(fmt.Errorf("task handler %q not found", state.GetHandlerName()), &primitive.Dag_Failure{
@@ -94,7 +102,7 @@ func RunTask(state *primitive.Dag_Node_TaskState, tasksReg TasksRegistry) (*prim
 			Phase:   FailurePhaseTaskLookup,
 		})
 	}
-	output, err := task.Call(state.GetInput())
+	output, err := task.Call(ctx, state.GetInput())
 	if err != nil {
 		return nil, err
 	}

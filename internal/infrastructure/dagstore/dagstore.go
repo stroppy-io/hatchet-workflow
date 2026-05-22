@@ -52,45 +52,58 @@ func New(logger *xlog.Logger, executor exec.DB) *Store {
 }
 
 // ListDagsByStatus returns the payloads of dags currently in any of the statuses.
-//
-// TODO(dagstore): queries per-status then merges (no IN-clause helper). Fine for
-// the processor's small status set; revisit for scale. Reported.
 func (s *Store) ListDagsByStatus(ctx context.Context, statuses []primitive.Status) ([]*primitive.Dag, error) {
+	statusNames := statusStrings(statuses)
+	if len(statusNames) == 0 {
+		return nil, nil
+	}
+
+	rows, err := s.dags.Query(ctx,
+		models.Dags.SelectAll().Where(
+			models.Dags.Status.In(statusNames...),
+			models.Dags.DeletedAt.IsNull(),
+		))
+	if err != nil {
+		return nil, err
+	}
+
 	var out []*primitive.Dag
-	for _, st := range statuses {
-		rows, err := s.dags.Query(ctx,
-			models.Dags.SelectAll().Where(
-				models.Dags.Status.Eq(st.String()),
-				models.Dags.DeletedAt.IsNull(),
-			))
-		if err != nil {
-			return nil, err
-		}
-		for _, row := range rows {
-			out = append(out, row.GetPayload())
-		}
+	for _, row := range rows {
+		out = append(out, row.GetPayload())
 	}
 	return out, nil
 }
 
 // ListByTenant returns the payloads of the tenant's dags in any of the statuses.
 func (s *Store) ListByTenant(ctx context.Context, tenantID string, statuses []primitive.Status) ([]*primitive.Dag, error) {
+	statusNames := statusStrings(statuses)
+	if len(statusNames) == 0 {
+		return nil, nil
+	}
+
+	rows, err := s.dags.Query(ctx,
+		models.Dags.SelectAll().Where(
+			models.Dags.TenantId.Eq(tenantID),
+			models.Dags.Status.In(statusNames...),
+			models.Dags.DeletedAt.IsNull(),
+		))
+	if err != nil {
+		return nil, err
+	}
+
 	var out []*primitive.Dag
-	for _, st := range statuses {
-		rows, err := s.dags.Query(ctx,
-			models.Dags.SelectAll().Where(
-				models.Dags.TenantId.Eq(tenantID),
-				models.Dags.Status.Eq(st.String()),
-				models.Dags.DeletedAt.IsNull(),
-			))
-		if err != nil {
-			return nil, err
-		}
-		for _, row := range rows {
-			out = append(out, row.GetPayload())
-		}
+	for _, row := range rows {
+		out = append(out, row.GetPayload())
 	}
 	return out, nil
+}
+
+func statusStrings(statuses []primitive.Status) []string {
+	names := make([]string, 0, len(statuses))
+	for _, st := range statuses {
+		names = append(names, st.String())
+	}
+	return names
 }
 
 // GetDag loads a single dag payload by id. Returns (nil, nil) when absent.

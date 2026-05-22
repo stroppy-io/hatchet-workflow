@@ -48,9 +48,9 @@ const (
 
 // CloudInventoryServiceClient is a client for the cloud.v1.api.ui.CloudInventoryService service.
 type CloudInventoryServiceClient interface {
-	FetchQuotas(context.Context, *connect.Request[ui.FetchQuotasRequest]) (*connect.Response[deployment.QuotaInventory], error)
-	ListNetworkAllocations(context.Context, *connect.Request[ui.ListNetworkAllocationsRequest]) (*connect.Response[models.NetworkAllocation_List], error)
-	Reconcile(context.Context, *connect.Request[ui.ReconcileRequest]) (*connect.Response[ui.ReconcileResponse], error)
+	FetchQuotas(context.Context, *ui.FetchQuotasRequest) (*deployment.QuotaInventory, error)
+	ListNetworkAllocations(context.Context, *ui.ListNetworkAllocationsRequest) (*models.NetworkAllocation_List, error)
+	Reconcile(context.Context, *ui.ReconcileRequest) (*ui.ReconcileResponse, error)
 }
 
 // NewCloudInventoryServiceClient constructs a client for the cloud.v1.api.ui.CloudInventoryService
@@ -96,26 +96,38 @@ type cloudInventoryServiceClient struct {
 }
 
 // FetchQuotas calls cloud.v1.api.ui.CloudInventoryService.FetchQuotas.
-func (c *cloudInventoryServiceClient) FetchQuotas(ctx context.Context, req *connect.Request[ui.FetchQuotasRequest]) (*connect.Response[deployment.QuotaInventory], error) {
-	return c.fetchQuotas.CallUnary(ctx, req)
+func (c *cloudInventoryServiceClient) FetchQuotas(ctx context.Context, req *ui.FetchQuotasRequest) (*deployment.QuotaInventory, error) {
+	response, err := c.fetchQuotas.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // ListNetworkAllocations calls cloud.v1.api.ui.CloudInventoryService.ListNetworkAllocations.
-func (c *cloudInventoryServiceClient) ListNetworkAllocations(ctx context.Context, req *connect.Request[ui.ListNetworkAllocationsRequest]) (*connect.Response[models.NetworkAllocation_List], error) {
-	return c.listNetworkAllocations.CallUnary(ctx, req)
+func (c *cloudInventoryServiceClient) ListNetworkAllocations(ctx context.Context, req *ui.ListNetworkAllocationsRequest) (*models.NetworkAllocation_List, error) {
+	response, err := c.listNetworkAllocations.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // Reconcile calls cloud.v1.api.ui.CloudInventoryService.Reconcile.
-func (c *cloudInventoryServiceClient) Reconcile(ctx context.Context, req *connect.Request[ui.ReconcileRequest]) (*connect.Response[ui.ReconcileResponse], error) {
-	return c.reconcile.CallUnary(ctx, req)
+func (c *cloudInventoryServiceClient) Reconcile(ctx context.Context, req *ui.ReconcileRequest) (*ui.ReconcileResponse, error) {
+	response, err := c.reconcile.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // CloudInventoryServiceHandler is an implementation of the cloud.v1.api.ui.CloudInventoryService
 // service.
 type CloudInventoryServiceHandler interface {
-	FetchQuotas(context.Context, *connect.Request[ui.FetchQuotasRequest]) (*connect.Response[deployment.QuotaInventory], error)
-	ListNetworkAllocations(context.Context, *connect.Request[ui.ListNetworkAllocationsRequest]) (*connect.Response[models.NetworkAllocation_List], error)
-	Reconcile(context.Context, *connect.Request[ui.ReconcileRequest]) (*connect.Response[ui.ReconcileResponse], error)
+	FetchQuotas(context.Context, *ui.FetchQuotasRequest) (*deployment.QuotaInventory, error)
+	ListNetworkAllocations(context.Context, *ui.ListNetworkAllocationsRequest) (*models.NetworkAllocation_List, error)
+	Reconcile(context.Context, *ui.ReconcileRequest) (*ui.ReconcileResponse, error)
 }
 
 // NewCloudInventoryServiceHandler builds an HTTP handler from the service implementation. It
@@ -125,21 +137,21 @@ type CloudInventoryServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewCloudInventoryServiceHandler(svc CloudInventoryServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	cloudInventoryServiceMethods := ui.File_cloud_v1_api_ui_inventory_proto.Services().ByName("CloudInventoryService").Methods()
-	cloudInventoryServiceFetchQuotasHandler := connect.NewUnaryHandler(
+	cloudInventoryServiceFetchQuotasHandler := connect.NewUnaryHandlerSimple(
 		CloudInventoryServiceFetchQuotasProcedure,
 		svc.FetchQuotas,
 		connect.WithSchema(cloudInventoryServiceMethods.ByName("FetchQuotas")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	cloudInventoryServiceListNetworkAllocationsHandler := connect.NewUnaryHandler(
+	cloudInventoryServiceListNetworkAllocationsHandler := connect.NewUnaryHandlerSimple(
 		CloudInventoryServiceListNetworkAllocationsProcedure,
 		svc.ListNetworkAllocations,
 		connect.WithSchema(cloudInventoryServiceMethods.ByName("ListNetworkAllocations")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	cloudInventoryServiceReconcileHandler := connect.NewUnaryHandler(
+	cloudInventoryServiceReconcileHandler := connect.NewUnaryHandlerSimple(
 		CloudInventoryServiceReconcileProcedure,
 		svc.Reconcile,
 		connect.WithSchema(cloudInventoryServiceMethods.ByName("Reconcile")),
@@ -163,14 +175,14 @@ func NewCloudInventoryServiceHandler(svc CloudInventoryServiceHandler, opts ...c
 // UnimplementedCloudInventoryServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedCloudInventoryServiceHandler struct{}
 
-func (UnimplementedCloudInventoryServiceHandler) FetchQuotas(context.Context, *connect.Request[ui.FetchQuotasRequest]) (*connect.Response[deployment.QuotaInventory], error) {
+func (UnimplementedCloudInventoryServiceHandler) FetchQuotas(context.Context, *ui.FetchQuotasRequest) (*deployment.QuotaInventory, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.CloudInventoryService.FetchQuotas is not implemented"))
 }
 
-func (UnimplementedCloudInventoryServiceHandler) ListNetworkAllocations(context.Context, *connect.Request[ui.ListNetworkAllocationsRequest]) (*connect.Response[models.NetworkAllocation_List], error) {
+func (UnimplementedCloudInventoryServiceHandler) ListNetworkAllocations(context.Context, *ui.ListNetworkAllocationsRequest) (*models.NetworkAllocation_List, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.CloudInventoryService.ListNetworkAllocations is not implemented"))
 }
 
-func (UnimplementedCloudInventoryServiceHandler) Reconcile(context.Context, *connect.Request[ui.ReconcileRequest]) (*connect.Response[ui.ReconcileResponse], error) {
+func (UnimplementedCloudInventoryServiceHandler) Reconcile(context.Context, *ui.ReconcileRequest) (*ui.ReconcileResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.CloudInventoryService.Reconcile is not implemented"))
 }

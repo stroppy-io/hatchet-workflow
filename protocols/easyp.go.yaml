@@ -27,6 +27,7 @@ generate:
       out: ../internal/proto
       opts:
         paths: source_relative
+        simple: true
     - name: validate
       out: ../internal/proto
       opts:

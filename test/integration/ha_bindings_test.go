@@ -11,7 +11,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/network"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/domain/planner"
+	planner "github.com/stroppy-io/stroppy-cloud/internal/domain/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/render"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	rtagent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent"

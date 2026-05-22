@@ -19,8 +19,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/api/caller"
+	dagdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/ids"
-	"github.com/stroppy-io/stroppy-cloud/internal/domain/planner"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/dagstore"
 	adminpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/admin"
 	uipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
@@ -60,8 +60,8 @@ func TestMain(m *testing.M) {
 
 type fakeProvider struct{}
 
-func (fakeProvider) Resolve(_ context.Context, _ string, _ *domain.Topology) (*planner.DeploymentParams, error) {
-	return &planner.DeploymentParams{}, nil
+func (fakeProvider) Resolve(_ context.Context, _ string, _ *domain.Topology) (*dagdomain.DeploymentParams, error) {
+	return &dagdomain.DeploymentParams{}, nil
 }
 
 type fakeLogs struct{}
@@ -121,7 +121,7 @@ func newFixture(t *testing.T, role models.TenantMember_Role) *fixture {
 	az := authz.New(log, executor)
 	store := dagstore.New(log, executor)
 	svc := run.New(log, executor, trm, az,
-		planner.New(), // real planner
+		dagdomain.New(), // real dag compiler
 		fakeProvider{},
 		store, // real dagstore
 		fakeLogs{}, fakeMetrics{}, fakeShare{})

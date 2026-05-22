@@ -1,4 +1,4 @@
-package compat
+package dag
 
 import (
 	"strings"
@@ -54,11 +54,11 @@ func TestPreInstallRefreshesAptLists(t *testing.T) {
 }
 
 func TestComponentRecipes(t *testing.T) {
-	require.Equal(t, "etcd", Etcd.ServiceName)
-	require.Equal(t, "haproxy", HAProxy.ServiceName)
-	require.Equal(t, "proxysql", ProxySQL.ServiceName)
-	require.Equal(t, "prometheus-node-exporter", Monitor.ServiceName)
-	for _, r := range []Recipe{Etcd, HAProxy, ProxySQL, Monitor} {
+	require.Equal(t, "etcd", recipeEtcd.ServiceName)
+	require.Equal(t, "haproxy", recipeHAProxy.ServiceName)
+	require.Equal(t, "proxysql", recipeProxySQL.ServiceName)
+	require.Equal(t, "prometheus-node-exporter", recipeMonitor.ServiceName)
+	for _, r := range []Recipe{recipeEtcd, recipeHAProxy, recipeProxySQL, recipeMonitor} {
 		require.Contains(t, strings.Join(r.PreInstall, "\n"), "apt-get update")
 	}
 }

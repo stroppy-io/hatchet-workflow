@@ -47,9 +47,9 @@ const (
 
 // TenantAdminServiceClient is a client for the cloud.v1.api.admin.TenantAdminService service.
 type TenantAdminServiceClient interface {
-	CreateTenant(context.Context, *connect.Request[admin.CreateTenantRequest]) (*connect.Response[models.Tenant], error)
-	UpdateTenant(context.Context, *connect.Request[admin.UpdateTenantRequest]) (*connect.Response[models.Tenant], error)
-	DeleteTenant(context.Context, *connect.Request[models.TenantId]) (*connect.Response[models.Tenant], error)
+	CreateTenant(context.Context, *admin.CreateTenantRequest) (*models.Tenant, error)
+	UpdateTenant(context.Context, *admin.UpdateTenantRequest) (*models.Tenant, error)
+	DeleteTenant(context.Context, *models.TenantId) (*models.Tenant, error)
 }
 
 // NewTenantAdminServiceClient constructs a client for the cloud.v1.api.admin.TenantAdminService
@@ -95,26 +95,38 @@ type tenantAdminServiceClient struct {
 }
 
 // CreateTenant calls cloud.v1.api.admin.TenantAdminService.CreateTenant.
-func (c *tenantAdminServiceClient) CreateTenant(ctx context.Context, req *connect.Request[admin.CreateTenantRequest]) (*connect.Response[models.Tenant], error) {
-	return c.createTenant.CallUnary(ctx, req)
+func (c *tenantAdminServiceClient) CreateTenant(ctx context.Context, req *admin.CreateTenantRequest) (*models.Tenant, error) {
+	response, err := c.createTenant.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // UpdateTenant calls cloud.v1.api.admin.TenantAdminService.UpdateTenant.
-func (c *tenantAdminServiceClient) UpdateTenant(ctx context.Context, req *connect.Request[admin.UpdateTenantRequest]) (*connect.Response[models.Tenant], error) {
-	return c.updateTenant.CallUnary(ctx, req)
+func (c *tenantAdminServiceClient) UpdateTenant(ctx context.Context, req *admin.UpdateTenantRequest) (*models.Tenant, error) {
+	response, err := c.updateTenant.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // DeleteTenant calls cloud.v1.api.admin.TenantAdminService.DeleteTenant.
-func (c *tenantAdminServiceClient) DeleteTenant(ctx context.Context, req *connect.Request[models.TenantId]) (*connect.Response[models.Tenant], error) {
-	return c.deleteTenant.CallUnary(ctx, req)
+func (c *tenantAdminServiceClient) DeleteTenant(ctx context.Context, req *models.TenantId) (*models.Tenant, error) {
+	response, err := c.deleteTenant.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // TenantAdminServiceHandler is an implementation of the cloud.v1.api.admin.TenantAdminService
 // service.
 type TenantAdminServiceHandler interface {
-	CreateTenant(context.Context, *connect.Request[admin.CreateTenantRequest]) (*connect.Response[models.Tenant], error)
-	UpdateTenant(context.Context, *connect.Request[admin.UpdateTenantRequest]) (*connect.Response[models.Tenant], error)
-	DeleteTenant(context.Context, *connect.Request[models.TenantId]) (*connect.Response[models.Tenant], error)
+	CreateTenant(context.Context, *admin.CreateTenantRequest) (*models.Tenant, error)
+	UpdateTenant(context.Context, *admin.UpdateTenantRequest) (*models.Tenant, error)
+	DeleteTenant(context.Context, *models.TenantId) (*models.Tenant, error)
 }
 
 // NewTenantAdminServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -124,21 +136,21 @@ type TenantAdminServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewTenantAdminServiceHandler(svc TenantAdminServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	tenantAdminServiceMethods := admin.File_cloud_v1_api_admin_tenant_proto.Services().ByName("TenantAdminService").Methods()
-	tenantAdminServiceCreateTenantHandler := connect.NewUnaryHandler(
+	tenantAdminServiceCreateTenantHandler := connect.NewUnaryHandlerSimple(
 		TenantAdminServiceCreateTenantProcedure,
 		svc.CreateTenant,
 		connect.WithSchema(tenantAdminServiceMethods.ByName("CreateTenant")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	tenantAdminServiceUpdateTenantHandler := connect.NewUnaryHandler(
+	tenantAdminServiceUpdateTenantHandler := connect.NewUnaryHandlerSimple(
 		TenantAdminServiceUpdateTenantProcedure,
 		svc.UpdateTenant,
 		connect.WithSchema(tenantAdminServiceMethods.ByName("UpdateTenant")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	tenantAdminServiceDeleteTenantHandler := connect.NewUnaryHandler(
+	tenantAdminServiceDeleteTenantHandler := connect.NewUnaryHandlerSimple(
 		TenantAdminServiceDeleteTenantProcedure,
 		svc.DeleteTenant,
 		connect.WithSchema(tenantAdminServiceMethods.ByName("DeleteTenant")),
@@ -162,14 +174,14 @@ func NewTenantAdminServiceHandler(svc TenantAdminServiceHandler, opts ...connect
 // UnimplementedTenantAdminServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedTenantAdminServiceHandler struct{}
 
-func (UnimplementedTenantAdminServiceHandler) CreateTenant(context.Context, *connect.Request[admin.CreateTenantRequest]) (*connect.Response[models.Tenant], error) {
+func (UnimplementedTenantAdminServiceHandler) CreateTenant(context.Context, *admin.CreateTenantRequest) (*models.Tenant, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.admin.TenantAdminService.CreateTenant is not implemented"))
 }
 
-func (UnimplementedTenantAdminServiceHandler) UpdateTenant(context.Context, *connect.Request[admin.UpdateTenantRequest]) (*connect.Response[models.Tenant], error) {
+func (UnimplementedTenantAdminServiceHandler) UpdateTenant(context.Context, *admin.UpdateTenantRequest) (*models.Tenant, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.admin.TenantAdminService.UpdateTenant is not implemented"))
 }
 
-func (UnimplementedTenantAdminServiceHandler) DeleteTenant(context.Context, *connect.Request[models.TenantId]) (*connect.Response[models.Tenant], error) {
+func (UnimplementedTenantAdminServiceHandler) DeleteTenant(context.Context, *models.TenantId) (*models.Tenant, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.admin.TenantAdminService.DeleteTenant is not implemented"))
 }

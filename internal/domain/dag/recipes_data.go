@@ -1,9 +1,13 @@
-// Package compat is the engine compatibility matrix + install recipes as DATA
-// (H29: recipes are backend data, not hand-wired Go logic). It is proto-agnostic
-// (string engine names) so it can later be sourced from a backend table/config; the
-// planner bridges the Database.Kind enum to these names and applies shape-specific
-// adjustments (e.g. patroni) on top of the looked-up Recipe.
-package compat
+package dag
+
+// ── engine compatibility matrix + install recipes, as DATA ──────────────────────
+//
+// This file is the recipe DATA (formerly package compat, H29: recipes are backend
+// data, not hand-wired Go logic). It is proto-agnostic (string engine names) so it
+// can later be sourced from a backend table/config; recipe.go bridges the
+// Database.Kind enum to these names and applies shape-specific adjustments (e.g.
+// patroni) on top of the looked-up Recipe. Kept as a clearly-separated recipe-data
+// file within the consolidated dag package.
 
 // Recipe is the per-engine on-host install plan: shell repo/setup steps, apt
 // packages, and either a systemd service to start or a start script.
@@ -110,12 +114,12 @@ func Supported() []EngineVersion {
 // Non-DATABASE component recipes (etcd / proxies / monitoring) of an emergent HA or
 // cluster topology. Configs are data (component.config); these carry install+service.
 var (
-	Etcd = Recipe{
+	recipeEtcd = Recipe{
 		PreInstall:  []string{"apt-get update", "apt-get install -y software-properties-common", "add-apt-repository -y universe", "apt-get update"},
 		AptPackages: []string{"etcd-server", "etcd-client"}, ServiceName: "etcd",
 	}
-	HAProxy  = Recipe{PreInstall: []string{"apt-get update"}, AptPackages: []string{"haproxy"}, ServiceName: "haproxy"}
-	ProxySQL = Recipe{
+	recipeHAProxy  = Recipe{PreInstall: []string{"apt-get update"}, AptPackages: []string{"haproxy"}, ServiceName: "haproxy"}
+	recipeProxySQL = Recipe{
 		PreInstall: []string{
 			"apt-get update",
 			`apt-get install -y curl ca-certificates gnupg lsb-release`,
@@ -126,7 +130,7 @@ var (
 		},
 		AptPackages: []string{"proxysql"}, ServiceName: "proxysql",
 	}
-	Monitor = Recipe{PreInstall: []string{"apt-get update"}, AptPackages: []string{"prometheus-node-exporter"}, ServiceName: "prometheus-node-exporter"}
+	recipeMonitor = Recipe{PreInstall: []string{"apt-get update"}, AptPackages: []string{"prometheus-node-exporter"}, ServiceName: "prometheus-node-exporter"}
 )
 
 // ubuntuUniversePreInstall refreshes the package lists + enables universe (a minimal
@@ -145,17 +149,6 @@ var pgPreInstall = []string{
 	`sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
 	"sh -c 'wget --quiet -O /etc/apt/trusted.gpg.d/pgdg.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc'",
 	"apt-get update",
-}
-
-func mysqlPreInstall(component string) []string {
-	return []string{
-		`apt-get update`,
-		`apt-get install -y curl gnupg lsb-release ca-certificates`,
-		`install -d /etc/apt/keyrings`,
-		`curl -fsSL https://repo.mysql.com/RPM-GPG-KEY-mysql-2023 | gpg --dearmor -o /etc/apt/keyrings/mysql.gpg`,
-		`bash -c 'echo "deb [signed-by=/etc/apt/keyrings/mysql.gpg] http://repo.mysql.com/apt/ubuntu/ $(lsb_release -cs) ` + component + `" > /etc/apt/sources.list.d/mysql.list'`,
-		`apt-get update`,
-	}
 }
 
 // mysqlTrustedPreInstall adds the mysql.com repo with [trusted=yes], bypassing the

@@ -11,11 +11,12 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type PredicateFunc func(dag *primitive.Dag, edge *primitive.Dag_Edge) bool
+type PredicateFunc func(ctx DagContext, edge *primitive.Dag_Edge) bool
 
 type PredicateRegistry interface {
 	GetPredicate(name string) (PredicateFunc, bool)
@@ -140,6 +141,14 @@ func (e *Executor) Run(ctx context.Context, dag *primitive.Dag) error {
 			return ctx.Err()
 		}
 
+		// A conditional branch the run did NOT take never becomes ready; skip such
+		// dead nodes (terminal source + unsatisfiable join) so the dag can finish.
+		if e.skipDeadNodes(dag, e.now()) {
+			if err := e.saveDag(ctx, dag); err != nil {
+				return err
+			}
+		}
+
 		if shouldStopOrdinary(dag) {
 			if err := e.runAlwaysRun(ctx, dag); err != nil {
 				return err
@@ -164,12 +173,11 @@ func (e *Executor) Run(ctx context.Context, dag *primitive.Dag) error {
 				return nil
 			}
 			if ordinaryNodesTerminal(dag) {
-				if hasOrdinaryTerminalFailure(dag) {
-					// always_run teardown runs after any failure/cancellation,
-					// independent of on_node_failure policy.
-					if err := e.runAlwaysRun(ctx, dag); err != nil {
-						return err
-					}
+				// always_run teardown is deferred to the end and runs REGARDLESS of
+				// success or failure/cancellation (dag.proto: "reserved for
+				// cleanup/teardown and may still run after failure or cancellation").
+				if err := e.runAlwaysRun(ctx, dag); err != nil {
+					return err
 				}
 				skipPendingAlwaysRun(dag, e.now())
 				finalizeDag(dag, e.now())
@@ -343,7 +351,7 @@ func (e *Executor) runBatch(ctx context.Context, dag *primitive.Dag, nodes []*pr
 	for _, node := range nodes {
 		n := node
 		g.Go(func() error {
-			results <- e.executeNode(runCtx, n)
+			results <- e.executeNode(runCtx, dag, n)
 			return nil
 		})
 	}
@@ -369,7 +377,30 @@ type nodeResult struct {
 	err    error
 }
 
-func (e *Executor) executeNode(ctx context.Context, node *primitive.Dag_Node) nodeResult {
+// dagContext is the DagContext passed to a server-locus task: it exposes the dag
+// (its input + every node's output) so a task is a pure proto->proto transform that
+// reads upstream outputs via GetOutput. Outputs are read off the live dag, which the
+// executor mutates as nodes complete.
+type dagContext struct {
+	context.Context
+	dag *primitive.Dag
+}
+
+func (d *dagContext) Dag() *primitive.Dag { return d.dag }
+
+func (d *dagContext) GetOutput(id string) (*anypb.Any, error) {
+	for _, n := range d.dag.GetNodes() {
+		if n.GetId() == id {
+			if out := n.GetTaskState().GetOutput(); out != nil {
+				return out, nil
+			}
+			return nil, fmt.Errorf("node %q has no output yet", id)
+		}
+	}
+	return nil, fmt.Errorf("node %q not found", id)
+}
+
+func (e *Executor) executeNode(ctx context.Context, dag *primitive.Dag, node *primitive.Dag_Node) nodeResult {
 	switch v := node.GetVariant().(type) {
 	case *primitive.Dag_Node_TaskState_:
 		if nodeIsAgentLocus(node) {
@@ -377,7 +408,7 @@ func (e *Executor) executeNode(ctx context.Context, node *primitive.Dag_Node) no
 			// Poll and Reports terminal status. Park it (stays RUNNING) and yield.
 			return nodeResult{nodeID: node.GetId(), parked: true}
 		}
-		state, err := RunTask(v.TaskState, e.tasks)
+		state, err := RunTask(&dagContext{Context: ctx, dag: dag}, v.TaskState, e.tasks)
 		return nodeResult{nodeID: node.GetId(), taskState: state, err: err}
 	case *primitive.Dag_Node_SubDag:
 		sub := proto.Clone(v.SubDag).(*primitive.Dag)
@@ -856,6 +887,44 @@ func finalizeDag(dag *primitive.Dag, now time.Time) {
 	dag.Execution.Status = primitive.Status_STATUS_COMPLETED
 }
 
+// skipDeadNodes marks PENDING ordinary nodes whose join can never be satisfied as
+// SKIPPED: an incoming edge is "dead" when its source is terminal but its condition
+// is unsatisfied. JOIN_ALL dies if any incoming edge is dead; JOIN_ANY dies only
+// when every incoming edge is dead. This is how the conditional branch the run did
+// not take (e.g. the unselected provider) terminates so the dag can complete.
+func (e *Executor) skipDeadNodes(dag *primitive.Dag, now time.Time) bool {
+	changed := false
+	for _, node := range dag.GetNodes() {
+		if node.GetScheduling().GetAlwaysRun() || node.GetStatus() != primitive.Status_STATUS_PENDING {
+			continue
+		}
+		incoming := incomingEdges(dag, node.GetId())
+		if len(incoming) == 0 {
+			continue
+		}
+		dead := 0
+		for _, edge := range incoming {
+			src := findNode(dag, edge.GetSource())
+			if src != nil && isTerminalStatus(src.GetStatus()) && !edgeSatisfied(dag, edge, e.predicates) {
+				dead++
+			}
+		}
+		policy := node.GetScheduling().GetJoinPolicy()
+		if policy == primitive.Dag_Node_Scheduling_JOIN_POLICY_UNSPECIFIED {
+			policy = primitive.Dag_Node_Scheduling_JOIN_POLICY_ALL
+		}
+		isDead := dead > 0
+		if policy == primitive.Dag_Node_Scheduling_JOIN_POLICY_ANY {
+			isDead = dead == len(incoming)
+		}
+		if isDead {
+			markNodeSkipped(node, now)
+			changed = true
+		}
+	}
+	return changed
+}
+
 func markUnreachableSkipped(dag *primitive.Dag, now time.Time) {
 	for _, node := range dag.GetNodes() {
 		if node.GetScheduling().GetAlwaysRun() {
@@ -1075,19 +1144,6 @@ func ordinaryNodesTerminal(dag *primitive.Dag) bool {
 	return true
 }
 
-func hasOrdinaryTerminalFailure(dag *primitive.Dag) bool {
-	for _, node := range dag.GetNodes() {
-		if node.GetScheduling().GetAlwaysRun() {
-			continue
-		}
-		switch node.GetStatus() {
-		case primitive.Status_STATUS_FAILED, primitive.Status_STATUS_CANCELLED:
-			return true
-		}
-	}
-	return false
-}
-
 func skipPendingAlwaysRun(dag *primitive.Dag, now time.Time) {
 	for _, node := range dag.GetNodes() {
 		if node.GetScheduling().GetAlwaysRun() && isRunnableStatus(node.GetStatus()) {
@@ -1166,7 +1222,7 @@ func edgeSatisfied(dag *primitive.Dag, edge *primitive.Dag_Edge, predicates Pred
 			return false
 		}
 		fn, ok := predicates.GetPredicate(edge.GetPredicateName())
-		return ok && fn(dag, edge)
+		return ok && fn(&dagContext{Context: context.Background(), dag: dag}, edge)
 	}
 	if status := edge.GetOnStatus(); status != primitive.Status_STATUS_UNSPECIFIED {
 		return source.GetStatus() == status

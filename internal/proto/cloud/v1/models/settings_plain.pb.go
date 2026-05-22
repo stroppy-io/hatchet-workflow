@@ -9,6 +9,77 @@ import (
 	time "time"
 )
 
+// PlatformSettings is the GLOBAL (singleton) control-plane configuration, changed
+// only by the root admin. It is NOT tenant-scoped — there is one control plane and
+// one row.
+//
+// server_addr is the single public control-plane base URL handed to every agent
+// (STROPPY_SERVER_ADDR) so it knows where to Poll/Report and fetch its binary (the
+// agent binary URL is DERIVED from server_addr + the server's agent-binary
+// endpoint — no separate setting). Empty -> the server derives a docker-host
+// fallback (host.docker.internal / bridge gateway) for local Docker runs.
+type PlatformSettingsScanner struct {
+	Id         string     `json:"id"`
+	CreatedAt  time.Time  `json:"createdAt"`
+	UpdatedAt  time.Time  `json:"updatedAt"`
+	DeletedAt  *time.Time `json:"deletedAt,omitempty"`
+	ServerAddr string     `json:"serverAddr"`
+}
+
+// IntoPlain converts protobuf message to plain struct
+func (pb *PlatformSettings) IntoPlain() *PlatformSettingsScanner {
+	if pb == nil {
+		return nil
+	}
+	p := &PlatformSettingsScanner{}
+
+	p.Id = pb.Id
+	// CreatedAt from
+	if pb.GetTimestamps() != nil && pb.GetTimestamps().GetCreatedAt() != nil {
+		p.CreatedAt = ratelcast.TimestampToTime(pb.GetTimestamps().GetCreatedAt())
+	}
+	// UpdatedAt from
+	if pb.GetTimestamps() != nil && pb.GetTimestamps().GetUpdatedAt() != nil {
+		p.UpdatedAt = ratelcast.TimestampToTime(pb.GetTimestamps().GetUpdatedAt())
+	}
+	// DeletedAt from
+	if pb.GetTimestamps() != nil && pb.GetTimestamps().GetDeletedAt() != nil {
+		_tmp := ratelcast.TimestampToTime(pb.GetTimestamps().GetDeletedAt())
+		p.DeletedAt = &_tmp
+	}
+	p.ServerAddr = pb.ServerAddr
+	return p
+}
+
+// IntoPb converts plain struct to protobuf message
+func (p *PlatformSettingsScanner) IntoPb() *PlatformSettings {
+	if p == nil {
+		return nil
+	}
+	pb := &PlatformSettings{}
+
+	pb.Id = p.Id
+	// CreatedAt ->
+	if pb.Timestamps == nil {
+		pb.Timestamps = &Timestamps{}
+	}
+	pb.Timestamps.CreatedAt = ratelcast.TimeToTimestamp(p.CreatedAt)
+	// UpdatedAt ->
+	if pb.Timestamps == nil {
+		pb.Timestamps = &Timestamps{}
+	}
+	pb.Timestamps.UpdatedAt = ratelcast.TimeToTimestamp(p.UpdatedAt)
+	// DeletedAt ->
+	if p.DeletedAt != nil {
+		if pb.Timestamps == nil {
+			pb.Timestamps = &Timestamps{}
+		}
+		pb.Timestamps.DeletedAt = ratelcast.TimeToTimestamp(*p.DeletedAt)
+	}
+	pb.ServerAddr = p.ServerAddr
+	return pb
+}
+
 type SettingsItemScanner struct {
 	Id        string     `json:"id"`       // origin: type_alias, empath: id
 	TenantId  string     `json:"tenantId"` // origin: type_alias, empath: tenant_id

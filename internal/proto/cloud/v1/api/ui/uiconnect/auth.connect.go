@@ -48,10 +48,10 @@ const (
 
 // AuthServiceClient is a client for the cloud.v1.api.ui.AuthService service.
 type AuthServiceClient interface {
-	Login(context.Context, *connect.Request[ui.LoginRequest]) (*connect.Response[ui.LoginResponse], error)
-	RefreshTokens(context.Context, *connect.Request[ui.RefreshTokenRequest]) (*connect.Response[ui.RefreshTokenResponse], error)
-	Logout(context.Context, *connect.Request[ui.LogoutRequest]) (*connect.Response[emptypb.Empty], error)
-	Me(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[models.Account], error)
+	Login(context.Context, *ui.LoginRequest) (*ui.LoginResponse, error)
+	RefreshTokens(context.Context, *ui.RefreshTokenRequest) (*ui.RefreshTokenResponse, error)
+	Logout(context.Context, *ui.LogoutRequest) (*emptypb.Empty, error)
+	Me(context.Context, *emptypb.Empty) (*models.Account, error)
 }
 
 // NewAuthServiceClient constructs a client for the cloud.v1.api.ui.AuthService service. By default,
@@ -105,31 +105,47 @@ type authServiceClient struct {
 }
 
 // Login calls cloud.v1.api.ui.AuthService.Login.
-func (c *authServiceClient) Login(ctx context.Context, req *connect.Request[ui.LoginRequest]) (*connect.Response[ui.LoginResponse], error) {
-	return c.login.CallUnary(ctx, req)
+func (c *authServiceClient) Login(ctx context.Context, req *ui.LoginRequest) (*ui.LoginResponse, error) {
+	response, err := c.login.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // RefreshTokens calls cloud.v1.api.ui.AuthService.RefreshTokens.
-func (c *authServiceClient) RefreshTokens(ctx context.Context, req *connect.Request[ui.RefreshTokenRequest]) (*connect.Response[ui.RefreshTokenResponse], error) {
-	return c.refreshTokens.CallUnary(ctx, req)
+func (c *authServiceClient) RefreshTokens(ctx context.Context, req *ui.RefreshTokenRequest) (*ui.RefreshTokenResponse, error) {
+	response, err := c.refreshTokens.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // Logout calls cloud.v1.api.ui.AuthService.Logout.
-func (c *authServiceClient) Logout(ctx context.Context, req *connect.Request[ui.LogoutRequest]) (*connect.Response[emptypb.Empty], error) {
-	return c.logout.CallUnary(ctx, req)
+func (c *authServiceClient) Logout(ctx context.Context, req *ui.LogoutRequest) (*emptypb.Empty, error) {
+	response, err := c.logout.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // Me calls cloud.v1.api.ui.AuthService.Me.
-func (c *authServiceClient) Me(ctx context.Context, req *connect.Request[emptypb.Empty]) (*connect.Response[models.Account], error) {
-	return c.me.CallUnary(ctx, req)
+func (c *authServiceClient) Me(ctx context.Context, req *emptypb.Empty) (*models.Account, error) {
+	response, err := c.me.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // AuthServiceHandler is an implementation of the cloud.v1.api.ui.AuthService service.
 type AuthServiceHandler interface {
-	Login(context.Context, *connect.Request[ui.LoginRequest]) (*connect.Response[ui.LoginResponse], error)
-	RefreshTokens(context.Context, *connect.Request[ui.RefreshTokenRequest]) (*connect.Response[ui.RefreshTokenResponse], error)
-	Logout(context.Context, *connect.Request[ui.LogoutRequest]) (*connect.Response[emptypb.Empty], error)
-	Me(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[models.Account], error)
+	Login(context.Context, *ui.LoginRequest) (*ui.LoginResponse, error)
+	RefreshTokens(context.Context, *ui.RefreshTokenRequest) (*ui.RefreshTokenResponse, error)
+	Logout(context.Context, *ui.LogoutRequest) (*emptypb.Empty, error)
+	Me(context.Context, *emptypb.Empty) (*models.Account, error)
 }
 
 // NewAuthServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -139,28 +155,28 @@ type AuthServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	authServiceMethods := ui.File_cloud_v1_api_ui_auth_proto.Services().ByName("AuthService").Methods()
-	authServiceLoginHandler := connect.NewUnaryHandler(
+	authServiceLoginHandler := connect.NewUnaryHandlerSimple(
 		AuthServiceLoginProcedure,
 		svc.Login,
 		connect.WithSchema(authServiceMethods.ByName("Login")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	authServiceRefreshTokensHandler := connect.NewUnaryHandler(
+	authServiceRefreshTokensHandler := connect.NewUnaryHandlerSimple(
 		AuthServiceRefreshTokensProcedure,
 		svc.RefreshTokens,
 		connect.WithSchema(authServiceMethods.ByName("RefreshTokens")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	authServiceLogoutHandler := connect.NewUnaryHandler(
+	authServiceLogoutHandler := connect.NewUnaryHandlerSimple(
 		AuthServiceLogoutProcedure,
 		svc.Logout,
 		connect.WithSchema(authServiceMethods.ByName("Logout")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	authServiceMeHandler := connect.NewUnaryHandler(
+	authServiceMeHandler := connect.NewUnaryHandlerSimple(
 		AuthServiceMeProcedure,
 		svc.Me,
 		connect.WithSchema(authServiceMethods.ByName("Me")),
@@ -186,18 +202,18 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 // UnimplementedAuthServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedAuthServiceHandler struct{}
 
-func (UnimplementedAuthServiceHandler) Login(context.Context, *connect.Request[ui.LoginRequest]) (*connect.Response[ui.LoginResponse], error) {
+func (UnimplementedAuthServiceHandler) Login(context.Context, *ui.LoginRequest) (*ui.LoginResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.AuthService.Login is not implemented"))
 }
 
-func (UnimplementedAuthServiceHandler) RefreshTokens(context.Context, *connect.Request[ui.RefreshTokenRequest]) (*connect.Response[ui.RefreshTokenResponse], error) {
+func (UnimplementedAuthServiceHandler) RefreshTokens(context.Context, *ui.RefreshTokenRequest) (*ui.RefreshTokenResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.AuthService.RefreshTokens is not implemented"))
 }
 
-func (UnimplementedAuthServiceHandler) Logout(context.Context, *connect.Request[ui.LogoutRequest]) (*connect.Response[emptypb.Empty], error) {
+func (UnimplementedAuthServiceHandler) Logout(context.Context, *ui.LogoutRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.AuthService.Logout is not implemented"))
 }
 
-func (UnimplementedAuthServiceHandler) Me(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[models.Account], error) {
+func (UnimplementedAuthServiceHandler) Me(context.Context, *emptypb.Empty) (*models.Account, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.AuthService.Me is not implemented"))
 }

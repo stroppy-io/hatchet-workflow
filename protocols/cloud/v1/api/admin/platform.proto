@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package cloud.v1.api.admin;
+
+import "cloud/v1/models/settings.proto";
+import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/admin";
+
+message SetPlatformSettingsRequest {
+    /* server_addr is the public control-plane base URL handed to every agent. */
+    string server_addr = 1 [(validate.rules).string.max_len = 2048];
+}
+
+/*
+    PlatformAdminService manages the GLOBAL (singleton) control-plane settings.
+    Root-admin only (guarded like the other admin services). server_addr is the
+    single address every agent is told to call back to.
+ */
+service PlatformAdminService {
+    rpc GetPlatformSettings (google.protobuf.Empty) returns (models.PlatformSettings) {option idempotency_level = NO_SIDE_EFFECTS;}
+    rpc SetPlatformSettings (SetPlatformSettingsRequest) returns (models.PlatformSettings) {option idempotency_level = IDEMPOTENT;}
+}

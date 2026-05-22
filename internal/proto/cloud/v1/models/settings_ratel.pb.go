@@ -10,9 +10,9 @@ import (
 	"github.com/yaroher/ratel/pkg/ddl"
 	"github.com/yaroher/ratel/pkg/dml/set"
 	"github.com/yaroher/ratel/pkg/exec"
-	"github.com/yaroher/ratel/pkg/sqlerr"
 	"github.com/yaroher/ratel/pkg/repository"
 	"github.com/yaroher/ratel/pkg/schema"
+	"github.com/yaroher/ratel/pkg/sqlerr"
 )
 
 var (
@@ -20,6 +20,139 @@ var (
 	_ = errors.New
 	_ = sqlerr.IsConstraintNamed
 )
+
+// PlatformSettingsAlias is the table alias type for the platform_settings table
+type PlatformSettingsAlias string
+
+func (a PlatformSettingsAlias) String() string { return string(a) }
+
+const PlatformSettingsAliasName PlatformSettingsAlias = "platform_settings"
+
+// PlatformSettingsColumnAlias represents column names for the platform_settings table
+type PlatformSettingsColumnAlias string
+
+func (c PlatformSettingsColumnAlias) String() string { return string(c) }
+
+const (
+	PlatformSettingsColumnId         PlatformSettingsColumnAlias = "id"
+	PlatformSettingsColumnCreatedAt  PlatformSettingsColumnAlias = "created_at"
+	PlatformSettingsColumnUpdatedAt  PlatformSettingsColumnAlias = "updated_at"
+	PlatformSettingsColumnDeletedAt  PlatformSettingsColumnAlias = "deleted_at"
+	PlatformSettingsColumnServerAddr PlatformSettingsColumnAlias = "server_addr"
+)
+
+func (s *PlatformSettingsScanner) GetTarget(col string) func() any {
+	switch PlatformSettingsColumnAlias(col) {
+	case PlatformSettingsColumnId:
+		return func() any { return &s.Id }
+	case PlatformSettingsColumnCreatedAt:
+		return func() any { return &s.CreatedAt }
+	case PlatformSettingsColumnUpdatedAt:
+		return func() any { return &s.UpdatedAt }
+	case PlatformSettingsColumnDeletedAt:
+		return func() any { return &s.DeletedAt }
+	case PlatformSettingsColumnServerAddr:
+		return func() any { return &s.ServerAddr }
+	default:
+		panic("unknown field: " + col)
+	}
+}
+
+func (s *PlatformSettingsScanner) GetSetter(f PlatformSettingsColumnAlias) func() set.ValueSetter[PlatformSettingsColumnAlias] {
+	switch f {
+	case PlatformSettingsColumnId:
+		return func() set.ValueSetter[PlatformSettingsColumnAlias] { return set.NewSetter(f, &s.Id) }
+	case PlatformSettingsColumnCreatedAt:
+		return func() set.ValueSetter[PlatformSettingsColumnAlias] { return set.NewSetter(f, &s.CreatedAt) }
+	case PlatformSettingsColumnUpdatedAt:
+		return func() set.ValueSetter[PlatformSettingsColumnAlias] { return set.NewSetter(f, &s.UpdatedAt) }
+	case PlatformSettingsColumnDeletedAt:
+		return func() set.ValueSetter[PlatformSettingsColumnAlias] { return set.NewSetter(f, &s.DeletedAt) }
+	case PlatformSettingsColumnServerAddr:
+		return func() set.ValueSetter[PlatformSettingsColumnAlias] { return set.NewSetter(f, &s.ServerAddr) }
+	default:
+		panic("unknown field: " + string(f))
+	}
+}
+
+func (s *PlatformSettingsScanner) GetValue(f PlatformSettingsColumnAlias) func() any {
+	switch f {
+	case PlatformSettingsColumnId:
+		return func() any { return s.Id }
+	case PlatformSettingsColumnCreatedAt:
+		return func() any { return s.CreatedAt }
+	case PlatformSettingsColumnUpdatedAt:
+		return func() any { return s.UpdatedAt }
+	case PlatformSettingsColumnDeletedAt:
+		return func() any { return s.DeletedAt }
+	case PlatformSettingsColumnServerAddr:
+		return func() any { return s.ServerAddr }
+	default:
+		panic("unknown field: " + string(f))
+	}
+}
+
+func (s *PlatformSettingsScanner) AllSetters() []set.ValueSetter[PlatformSettingsColumnAlias] {
+	return []set.ValueSetter[PlatformSettingsColumnAlias]{
+		set.NewSetter[PlatformSettingsColumnAlias](PlatformSettingsColumnId, s.Id),
+		set.NewSetter[PlatformSettingsColumnAlias](PlatformSettingsColumnCreatedAt, s.CreatedAt),
+		set.NewSetter[PlatformSettingsColumnAlias](PlatformSettingsColumnUpdatedAt, s.UpdatedAt),
+		set.NewSetter[PlatformSettingsColumnAlias](PlatformSettingsColumnDeletedAt, s.DeletedAt),
+		set.NewSetter[PlatformSettingsColumnAlias](PlatformSettingsColumnServerAddr, s.ServerAddr),
+	}
+}
+
+// Relations returns the relation loaders for the platform_settings table
+func (s *PlatformSettingsScanner) Relations() []exec.RelationLoader[*PlatformSettingsScanner] {
+	return nil
+}
+
+// PlatformSettingssTable represents the platform_settings table with its columns
+type PlatformSettingssTable struct {
+	*schema.Table[PlatformSettingsAlias, PlatformSettingsColumnAlias, *PlatformSettingsScanner]
+	Id         schema.TextColumnI[PlatformSettingsColumnAlias]
+	CreatedAt  schema.TimestamptzColumnI[PlatformSettingsColumnAlias]
+	UpdatedAt  schema.TimestamptzColumnI[PlatformSettingsColumnAlias]
+	DeletedAt  schema.NullTimestamptzColumnI[PlatformSettingsColumnAlias]
+	ServerAddr schema.TextColumnI[PlatformSettingsColumnAlias]
+}
+
+// PlatformSettingss is the global platform_settings table instance
+var PlatformSettingss = func() PlatformSettingssTable {
+	idCol := schema.TextColumn(PlatformSettingsColumnId, ddl.WithPrimaryKey[PlatformSettingsColumnAlias]())
+	createdAtCol := schema.TimestamptzColumn(PlatformSettingsColumnCreatedAt, ddl.WithDefault[PlatformSettingsColumnAlias]("now()"), ddl.WithNotNull[PlatformSettingsColumnAlias]())
+	updatedAtCol := schema.TimestamptzColumn(PlatformSettingsColumnUpdatedAt, ddl.WithDefault[PlatformSettingsColumnAlias]("now()"), ddl.WithNotNull[PlatformSettingsColumnAlias]())
+	deletedAtCol := schema.NullTimestamptzColumn(PlatformSettingsColumnDeletedAt, ddl.WithDefault[PlatformSettingsColumnAlias]("null"))
+	serverAddrCol := schema.TextColumn(PlatformSettingsColumnServerAddr, ddl.WithNotNull[PlatformSettingsColumnAlias]())
+
+	return PlatformSettingssTable{
+		Table: schema.NewTable[PlatformSettingsAlias, PlatformSettingsColumnAlias, *PlatformSettingsScanner](
+			PlatformSettingsAliasName,
+			func() *PlatformSettingsScanner { return &PlatformSettingsScanner{} },
+			[]*ddl.ColumnDDL[PlatformSettingsColumnAlias]{
+				idCol.DDL(),
+				createdAtCol.DDL(),
+				updatedAtCol.DDL(),
+				deletedAtCol.DDL(),
+				serverAddrCol.DDL(),
+			},
+		),
+		Id:         idCol,
+		CreatedAt:  createdAtCol,
+		UpdatedAt:  updatedAtCol,
+		DeletedAt:  deletedAtCol,
+		ServerAddr: serverAddrCol,
+	}
+}()
+
+// PlatformSettingssRef is a reference to the platform_settings table for relations
+var PlatformSettingssRef schema.RelationTableAlias[PlatformSettingsAlias] = PlatformSettingss.Table
+
+// PlatformSettingsConverter provides conversion between PlatformSettings and PlatformSettingsScanner
+var PlatformSettingsConverter = repository.Converter[*PlatformSettingsScanner, *PlatformSettings]{
+	ToScanner: (*PlatformSettings).IntoPlain,
+	ToProto:   (*PlatformSettingsScanner).IntoPb,
+}
 
 // SettingsItemAlias is the table alias type for the settings_items table
 type SettingsItemAlias string
@@ -201,6 +334,7 @@ var SettingsItemConverter = repository.Converter[*SettingsItemScanner, *Settings
 // ============================================================================
 
 const (
+	PlatformSettingsConstraintPkey           = "platform_settings_pkey"
 	SettingsItemConstraintPkey               = "settings_items_pkey"
 	SettingsItemConstraintTenantIdPartKeyIdx = "settings_items_tenant_part_key_uniq"
 )
@@ -210,6 +344,7 @@ const (
 // ============================================================================
 
 var (
+	ErrPlatformSettingsPrimaryKey           = errors.New("primary key constraint violated: platform_settings_pkey")
 	ErrSettingsItemPrimaryKey               = errors.New("primary key constraint violated: settings_items_pkey")
 	ErrSettingsItemTenantIdPartKeyUniqueIdx = errors.New("unique constraint violated: settings_items_tenant_part_key_uniq")
 )
@@ -217,6 +352,11 @@ var (
 // ============================================================================
 // Constraint Error Check Functions
 // ============================================================================
+
+// IsPlatformSettingsPrimaryKeyError checks if the error is a primary_key constraint violation on platform_settings
+func IsPlatformSettingsPrimaryKeyError(err error) bool {
+	return sqlerr.IsConstraintNamed(err, PlatformSettingsConstraintPkey)
+}
 
 // IsSettingsItemPrimaryKeyError checks if the error is a primary_key constraint violation on settings_items
 func IsSettingsItemPrimaryKeyError(err error) bool {

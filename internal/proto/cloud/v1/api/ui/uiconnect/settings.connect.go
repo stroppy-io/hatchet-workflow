@@ -51,10 +51,10 @@ const (
 
 // SettingsServiceClient is a client for the cloud.v1.api.ui.SettingsService service.
 type SettingsServiceClient interface {
-	ListSettingsItems(context.Context, *connect.Request[ui.ListSettingsItemsRequest]) (*connect.Response[models.SettingsItem_List], error)
-	GetSettingsItem(context.Context, *connect.Request[ui.GetSettingsItemRequest]) (*connect.Response[models.SettingsItem], error)
-	SetSettingsItem(context.Context, *connect.Request[ui.SetSettingsItemRequest]) (*connect.Response[models.SettingsItem], error)
-	DeleteSettingsItem(context.Context, *connect.Request[ui.DeleteSettingsItemRequest]) (*connect.Response[emptypb.Empty], error)
+	ListSettingsItems(context.Context, *ui.ListSettingsItemsRequest) (*models.SettingsItem_List, error)
+	GetSettingsItem(context.Context, *ui.GetSettingsItemRequest) (*models.SettingsItem, error)
+	SetSettingsItem(context.Context, *ui.SetSettingsItemRequest) (*models.SettingsItem, error)
+	DeleteSettingsItem(context.Context, *ui.DeleteSettingsItemRequest) (*emptypb.Empty, error)
 }
 
 // NewSettingsServiceClient constructs a client for the cloud.v1.api.ui.SettingsService service. By
@@ -108,31 +108,47 @@ type settingsServiceClient struct {
 }
 
 // ListSettingsItems calls cloud.v1.api.ui.SettingsService.ListSettingsItems.
-func (c *settingsServiceClient) ListSettingsItems(ctx context.Context, req *connect.Request[ui.ListSettingsItemsRequest]) (*connect.Response[models.SettingsItem_List], error) {
-	return c.listSettingsItems.CallUnary(ctx, req)
+func (c *settingsServiceClient) ListSettingsItems(ctx context.Context, req *ui.ListSettingsItemsRequest) (*models.SettingsItem_List, error) {
+	response, err := c.listSettingsItems.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // GetSettingsItem calls cloud.v1.api.ui.SettingsService.GetSettingsItem.
-func (c *settingsServiceClient) GetSettingsItem(ctx context.Context, req *connect.Request[ui.GetSettingsItemRequest]) (*connect.Response[models.SettingsItem], error) {
-	return c.getSettingsItem.CallUnary(ctx, req)
+func (c *settingsServiceClient) GetSettingsItem(ctx context.Context, req *ui.GetSettingsItemRequest) (*models.SettingsItem, error) {
+	response, err := c.getSettingsItem.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // SetSettingsItem calls cloud.v1.api.ui.SettingsService.SetSettingsItem.
-func (c *settingsServiceClient) SetSettingsItem(ctx context.Context, req *connect.Request[ui.SetSettingsItemRequest]) (*connect.Response[models.SettingsItem], error) {
-	return c.setSettingsItem.CallUnary(ctx, req)
+func (c *settingsServiceClient) SetSettingsItem(ctx context.Context, req *ui.SetSettingsItemRequest) (*models.SettingsItem, error) {
+	response, err := c.setSettingsItem.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // DeleteSettingsItem calls cloud.v1.api.ui.SettingsService.DeleteSettingsItem.
-func (c *settingsServiceClient) DeleteSettingsItem(ctx context.Context, req *connect.Request[ui.DeleteSettingsItemRequest]) (*connect.Response[emptypb.Empty], error) {
-	return c.deleteSettingsItem.CallUnary(ctx, req)
+func (c *settingsServiceClient) DeleteSettingsItem(ctx context.Context, req *ui.DeleteSettingsItemRequest) (*emptypb.Empty, error) {
+	response, err := c.deleteSettingsItem.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // SettingsServiceHandler is an implementation of the cloud.v1.api.ui.SettingsService service.
 type SettingsServiceHandler interface {
-	ListSettingsItems(context.Context, *connect.Request[ui.ListSettingsItemsRequest]) (*connect.Response[models.SettingsItem_List], error)
-	GetSettingsItem(context.Context, *connect.Request[ui.GetSettingsItemRequest]) (*connect.Response[models.SettingsItem], error)
-	SetSettingsItem(context.Context, *connect.Request[ui.SetSettingsItemRequest]) (*connect.Response[models.SettingsItem], error)
-	DeleteSettingsItem(context.Context, *connect.Request[ui.DeleteSettingsItemRequest]) (*connect.Response[emptypb.Empty], error)
+	ListSettingsItems(context.Context, *ui.ListSettingsItemsRequest) (*models.SettingsItem_List, error)
+	GetSettingsItem(context.Context, *ui.GetSettingsItemRequest) (*models.SettingsItem, error)
+	SetSettingsItem(context.Context, *ui.SetSettingsItemRequest) (*models.SettingsItem, error)
+	DeleteSettingsItem(context.Context, *ui.DeleteSettingsItemRequest) (*emptypb.Empty, error)
 }
 
 // NewSettingsServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -142,28 +158,28 @@ type SettingsServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewSettingsServiceHandler(svc SettingsServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	settingsServiceMethods := ui.File_cloud_v1_api_ui_settings_proto.Services().ByName("SettingsService").Methods()
-	settingsServiceListSettingsItemsHandler := connect.NewUnaryHandler(
+	settingsServiceListSettingsItemsHandler := connect.NewUnaryHandlerSimple(
 		SettingsServiceListSettingsItemsProcedure,
 		svc.ListSettingsItems,
 		connect.WithSchema(settingsServiceMethods.ByName("ListSettingsItems")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	settingsServiceGetSettingsItemHandler := connect.NewUnaryHandler(
+	settingsServiceGetSettingsItemHandler := connect.NewUnaryHandlerSimple(
 		SettingsServiceGetSettingsItemProcedure,
 		svc.GetSettingsItem,
 		connect.WithSchema(settingsServiceMethods.ByName("GetSettingsItem")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	settingsServiceSetSettingsItemHandler := connect.NewUnaryHandler(
+	settingsServiceSetSettingsItemHandler := connect.NewUnaryHandlerSimple(
 		SettingsServiceSetSettingsItemProcedure,
 		svc.SetSettingsItem,
 		connect.WithSchema(settingsServiceMethods.ByName("SetSettingsItem")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	settingsServiceDeleteSettingsItemHandler := connect.NewUnaryHandler(
+	settingsServiceDeleteSettingsItemHandler := connect.NewUnaryHandlerSimple(
 		SettingsServiceDeleteSettingsItemProcedure,
 		svc.DeleteSettingsItem,
 		connect.WithSchema(settingsServiceMethods.ByName("DeleteSettingsItem")),
@@ -189,18 +205,18 @@ func NewSettingsServiceHandler(svc SettingsServiceHandler, opts ...connect.Handl
 // UnimplementedSettingsServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedSettingsServiceHandler struct{}
 
-func (UnimplementedSettingsServiceHandler) ListSettingsItems(context.Context, *connect.Request[ui.ListSettingsItemsRequest]) (*connect.Response[models.SettingsItem_List], error) {
+func (UnimplementedSettingsServiceHandler) ListSettingsItems(context.Context, *ui.ListSettingsItemsRequest) (*models.SettingsItem_List, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.SettingsService.ListSettingsItems is not implemented"))
 }
 
-func (UnimplementedSettingsServiceHandler) GetSettingsItem(context.Context, *connect.Request[ui.GetSettingsItemRequest]) (*connect.Response[models.SettingsItem], error) {
+func (UnimplementedSettingsServiceHandler) GetSettingsItem(context.Context, *ui.GetSettingsItemRequest) (*models.SettingsItem, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.SettingsService.GetSettingsItem is not implemented"))
 }
 
-func (UnimplementedSettingsServiceHandler) SetSettingsItem(context.Context, *connect.Request[ui.SetSettingsItemRequest]) (*connect.Response[models.SettingsItem], error) {
+func (UnimplementedSettingsServiceHandler) SetSettingsItem(context.Context, *ui.SetSettingsItemRequest) (*models.SettingsItem, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.SettingsService.SetSettingsItem is not implemented"))
 }
 
-func (UnimplementedSettingsServiceHandler) DeleteSettingsItem(context.Context, *connect.Request[ui.DeleteSettingsItemRequest]) (*connect.Response[emptypb.Empty], error) {
+func (UnimplementedSettingsServiceHandler) DeleteSettingsItem(context.Context, *ui.DeleteSettingsItemRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.SettingsService.DeleteSettingsItem is not implemented"))
 }

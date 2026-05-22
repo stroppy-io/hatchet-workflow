@@ -2,21 +2,27 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"net"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"os"
 	"time"
 
+	"connectrpc.com/connect"
+	"github.com/go-chi/chi/v5"
 	"github.com/gopherex/pgtx"
 	"github.com/gopherex/pgtx/pkg/tx"
 	"github.com/gopherex/xlog"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"google.golang.org/grpc"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 
 	apiadmin "github.com/stroppy-io/stroppy-cloud/internal/api/admin"
 	apiagent "github.com/stroppy-io/stroppy-cloud/internal/api/agent"
-	"github.com/stroppy-io/stroppy-cloud/internal/api/middleware"
 	apiui "github.com/stroppy-io/stroppy-cloud/internal/api/ui"
-	"github.com/stroppy-io/stroppy-cloud/internal/domain/planner"
+	dagdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/dagstore"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
 	infs3 "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/s3"
@@ -24,9 +30,9 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/valkey"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/victoria"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/webhooksender"
-	adminpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/admin"
-	agentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/agent"
-	uipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
+	adminconnect "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/admin/adminconnect"
+	agentconnect "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/agent/agentconnect"
+	uiconnect "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui/uiconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/runtime"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/agentqueue"
@@ -40,6 +46,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/services/metrics"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/netinventory"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/packages"
+	"github.com/stroppy-io/stroppy-cloud/internal/services/platform"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/run"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/settings"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/share"
@@ -50,13 +57,14 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/services/yandexcloud"
 )
 
-// Server is the assembled control plane: a grpc API plus the background dag
-// processor. Run blocks serving both; Close releases resources.
+// Server is the assembled control plane: a Connect HTTP API (which also speaks gRPC
+// and gRPC-Web over h2c, so the CLI/agent gRPC clients keep working) plus the
+// background dag processor. It also serves the web SPA and reverse-proxies Grafana
+// + VictoriaMetrics + VictoriaLogs. Run blocks serving; Close releases resources.
 type Server struct {
-	grpc      *grpc.Server
+	httpSrv   *http.Server
 	processor *runtime.DagProcessor
 	pool      *pgxpool.Pool
-	addr      string
 	log       *xlog.Logger
 }
 
@@ -96,8 +104,9 @@ func BuildServer(ctx context.Context, cfg *Config, logger *xlog.Logger) (*Server
 	dagStore := dagstore.New(logger, executor)
 	netInv := netinventory.New(logger, executor, 24*time.Hour)
 	yc := yandexcloud.New(logger, executor, netInv)
-	provider := deploy.New(logger, executor, netInv, cfg)
-	plannerImpl := planner.New()
+	platformSvc := platform.New(logger, executor, txm)
+	provider := deploy.New(logger, executor, netInv, platformSvc, cfg)
+	plannerImpl := dagdomain.New()
 
 	// ── core services ───────────────────────────────────────────────────────
 	az := authz.New(logger, executor)
@@ -130,49 +139,90 @@ func BuildServer(ctx context.Context, cfg *Config, logger *xlog.Logger) (*Server
 		runtime.WithTerminalHook(run.WebhookTerminalHook(webhookSvc)),
 	)
 
-	// ── grpc server ──────────────────────────────────────────────────────────
-	srv := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(
-			middleware.NewAuthInterceptor(authSvc),
-			adminGuardInterceptor(),
-		),
-		grpc.ChainStreamInterceptor(
-			authStreamInterceptor(authSvc),
-		),
-	)
+	// ── connect API (also serves grpc + grpc-web over h2c) ────────────────────
+	opts := connect.WithInterceptors(newConnectAuthInterceptor(authSvc))
+	mux := chi.NewRouter()
+	mount := func(path string, h http.Handler) { mux.Handle(path+"*", h) }
 
-	uipb.RegisterAuthServiceServer(srv, apiui.NewAuthService(logger, authSvc))
-	uipb.RegisterRunServiceServer(srv, apiui.NewRunService(logger, runSvc))
-	uipb.RegisterSuiteServiceServer(srv, apiui.NewSuiteService(logger, suiteSvc))
-	uipb.RegisterPresetServiceServer(srv, apiui.NewPresetService(logger, presetSvc))
-	uipb.RegisterTenantServiceServer(srv, apiui.NewTenantService(logger, tenantSvc))
-	uipb.RegisterPackageServiceServer(srv, apiui.NewPackageService(logger, packageSvc))
-	uipb.RegisterSettingsServiceServer(srv, apiui.NewSettingsService(logger, settingsSvc))
-	uipb.RegisterCloudInventoryServiceServer(srv, apiui.NewCloudInventoryService(logger, inventorySvc))
-	uipb.RegisterApiTokenServiceServer(srv, apiui.NewApiTokenService(logger, apiTokenSvc))
-	uipb.RegisterWebhookServiceServer(srv, apiui.NewWebhookService(logger, webhookSvc))
-	adminpb.RegisterAccountAdminServiceServer(srv, apiadmin.NewAccountAdminService(logger, accountAdminSvc))
-	adminpb.RegisterTenantAdminServiceServer(srv, apiadmin.NewTenantAdminService(logger, tenantAdminSvc))
-	agentpb.RegisterAgentServiceServer(srv, apiagent.NewAgentService(logger, agentSvc))
+	mount(uiconnect.NewAuthServiceHandler(apiui.NewAuthService(logger, authSvc), opts))
+	mount(uiconnect.NewRunServiceHandler(apiui.NewRunService(logger, runSvc), opts))
+	mount(uiconnect.NewSuiteServiceHandler(apiui.NewSuiteService(logger, suiteSvc), opts))
+	mount(uiconnect.NewPresetServiceHandler(apiui.NewPresetService(logger, presetSvc), opts))
+	mount(uiconnect.NewTenantServiceHandler(apiui.NewTenantService(logger, tenantSvc), opts))
+	mount(uiconnect.NewPackageServiceHandler(apiui.NewPackageService(logger, packageSvc), opts))
+	mount(uiconnect.NewSettingsServiceHandler(apiui.NewSettingsService(logger, settingsSvc), opts))
+	mount(uiconnect.NewCloudInventoryServiceHandler(apiui.NewCloudInventoryService(logger, inventorySvc), opts))
+	mount(uiconnect.NewApiTokenServiceHandler(apiui.NewApiTokenService(logger, apiTokenSvc), opts))
+	mount(uiconnect.NewWebhookServiceHandler(apiui.NewWebhookService(logger, webhookSvc), opts))
+	mount(adminconnect.NewAccountAdminServiceHandler(apiadmin.NewAccountAdminService(logger, accountAdminSvc), opts))
+	mount(adminconnect.NewTenantAdminServiceHandler(apiadmin.NewTenantAdminService(logger, tenantAdminSvc), opts))
+	mount(adminconnect.NewPlatformAdminServiceHandler(apiadmin.NewPlatformAdminService(logger, platformSvc), opts))
+	mount(agentconnect.NewAgentServiceHandler(apiagent.NewAgentService(logger, agentSvc), opts))
 
-	return &Server{grpc: srv, processor: processor, pool: pool, addr: cfg.GRPCAddr, log: logger}, nil
+	// ── reverse proxies (embedded Grafana + Victoria metrics/logs queries) ────
+	if cfg.GrafanaURL != "" {
+		mux.Handle("/grafana/*", reverseProxy(cfg.GrafanaURL, "/grafana"))
+	}
+	if cfg.VictoriaMetricsURL != "" {
+		mux.Handle("/vm/*", reverseProxy(cfg.VictoriaMetricsURL, "/vm"))
+	}
+	if cfg.VictoriaLogsURL != "" {
+		mux.Handle("/vl/*", reverseProxy(cfg.VictoriaLogsURL, "/vl"))
+	}
+
+	mux.Get("/health", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
+	mux.Get("/agent/binary", agentBinaryHandler())
+	mountSPA(mux) // catch-all; no-op when the SPA is not embedded
+
+	handler := h2c.NewHandler(mux, &http2.Server{})
+	httpSrv := &http.Server{Addr: cfg.GRPCAddr, Handler: handler}
+
+	return &Server{httpSrv: httpSrv, processor: processor, pool: pool, log: logger}, nil
 }
 
-// Run starts the dag processor and serves the grpc API until ctx is cancelled.
+// reverseProxy proxies <prefix>/* to target, stripping the prefix.
+func reverseProxy(target, prefix string) http.Handler {
+	u, err := url.Parse(target)
+	if err != nil {
+		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			http.Error(w, "bad proxy target", http.StatusInternalServerError)
+		})
+	}
+	return http.StripPrefix(prefix, httputil.NewSingleHostReverseProxy(u))
+}
+
+// agentBinaryHandler serves the agent binary that cloud-init downloads from
+// <server_addr>/agent/binary. The file path is configured via STROPPY_AGENT_BINARY_PATH.
+//
+// TODO(agent-binary): building/embedding the agent binary into the server image is
+// out of scope; until a path is configured this returns 501.
+func agentBinaryHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		path := os.Getenv("STROPPY_AGENT_BINARY_PATH")
+		if path == "" {
+			http.Error(w, "agent binary not configured (set STROPPY_AGENT_BINARY_PATH)", http.StatusNotImplemented)
+			return
+		}
+		http.ServeFile(w, r, path)
+	}
+}
+
+// Run starts the dag processor and serves the API until ctx is cancelled.
 func (s *Server) Run(ctx context.Context) error {
 	if err := s.processor.Start(ctx); err != nil {
 		return fmt.Errorf("start processor: %w", err)
 	}
-	lis, err := net.Listen("tcp", s.addr)
-	if err != nil {
-		return fmt.Errorf("listen %s: %w", s.addr, err)
-	}
 	go func() {
 		<-ctx.Done()
-		s.grpc.GracefulStop()
+		shutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = s.httpSrv.Shutdown(shutCtx)
 	}()
-	s.log.Info("stroppy-cloud serving", xlog.String("addr", s.addr))
-	return s.grpc.Serve(lis)
+	s.log.Info("stroppy-cloud serving", xlog.String("addr", s.httpSrv.Addr))
+	if err := s.httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	return nil
 }
 
 // Close releases the processor + db pool.

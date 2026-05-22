@@ -1,17 +1,4 @@
-// Package planner compiles a domain TestPreset into an executable primitive.Dag
-// (the Plan phase, C12). Cluster shapes (single/ha/replica/scale) are NOT an enum:
-// they emerge structurally from the topology graph (component kinds + connections
-// + Database.Options). One graph-driven template compiles any topology — a per-
-// component install chain (recipe + rendered config writes + start), ordered by
-// kind rank + REPLICATION connections, with run_stroppy bound to its FLOW target.
-// Endpoints resolve via render.Binding at Execute. Canon: runtime/primitive/
-// dag.proto, domain/topology.proto, features/orchestration/compile-to-dag.feature.
-//
-// TODO(planner): component.config is consumed as-is — the HA config renderers
-// (patroni/haproxy/etcd/mysql-repl/picodata/ydb, in internal/domain/render) that
-// populate empty component configs + their bindings are the next piece. ydb/
-// cockroach binary recipes are minimal (single-node).
-package planner
+package dag
 
 import (
 	"fmt"
@@ -29,84 +16,28 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/system"
 )
 
-// Server-locus task handlers (run by the control-plane executor's TasksRegistry).
-const (
-	HandlerRenderConfig     = "render_config"
-	HandlerTerraformApply   = "terraform_apply"
-	HandlerTerraformDestroy = "terraform_destroy"
-	HandlerCollectResults   = "collect_results"
-	// HandlerAgentCommand marks an agent-locus node. The server never runs it; the
-	// agent leases it via Poll and executes the embedded ops.Operation.
-	HandlerAgentCommand = "agent.command"
-)
+// HandlerAgentCommand marks an agent-locus node. The server never runs it; the
+// agent leases it via Poll and executes the embedded ops.Operation.
+const HandlerAgentCommand = "agent.command"
 
-// Compiler compiles a TestPreset's topology graph into a Dag. Cluster shapes
-// (single / ha / replica / scale) are NOT enumerated — they emerge structurally
-// from the graph (component kinds + connections + Database.Options), so one
-// graph-driven template handles every shape (topology.proto C-note).
-type Compiler struct{}
+// RecipeInstallBuilder is the CONCRETE InstallBuilder: it builds the install_and_run
+// sub-dag from the engine recipes (the compat matrix) + the topology graph —
+// per-component agent install chains (kind-ranked, replication-ordered) plus the
+// run_stroppy workload node. Every node is AGENT-locus: the agent on each host
+// leases it (Poll) and runs it locally via opexec, then Reports. This is the real
+// "install the databases + run stroppy" code, reused by the dag blueprint.
+type RecipeInstallBuilder struct{}
 
-// New builds a Compiler.
-func New() *Compiler { return &Compiler{} }
+var _ InstallBuilder = RecipeInstallBuilder{}
 
-// Compile builds the Dag for a preset with resolved deployment params (nil = empty).
-func (c *Compiler) Compile(preset *domain.TestPreset, params *DeploymentParams) (*primitive.Dag, error) {
-	if params == nil {
-		params = &DeploymentParams{}
-	}
-	return graphTemplate(preset, params)
-}
-
-// graphTemplate: render_config -> terraform_apply -> install_and_run(sub_dag) ->
-// collect_results -> terraform_destroy(always_run). apply/destroy share a workdir.
-func graphTemplate(preset *domain.TestPreset, params *DeploymentParams) (*primitive.Dag, error) {
-	workdirID := ids.New()
-
-	applyOp, err := buildTfOperation(ops.TfOperation_ACTION_APPLY, workdirID, preset, params)
+func (RecipeInstallBuilder) Build(preset *domain.TestPreset) *primitive.Dag {
+	sub, err := BuildInstallDag(preset)
 	if err != nil {
-		return nil, err
+		// Real callers validate the preset at plan time; an empty sub-dag keeps the
+		// surrounding deploy/teardown dag well-formed for illustration.
+		return &primitive.Dag{Id: "install_and_run", Status: primitive.Status_STATUS_PENDING}
 	}
-	applyInput, err := anypb.New(applyOp)
-	if err != nil {
-		return nil, fmt.Errorf("planner: wrap apply op: %w", err)
-	}
-	destroyOp, err := buildTfOperation(ops.TfOperation_ACTION_DESTROY, workdirID, preset, params)
-	if err != nil {
-		return nil, err
-	}
-	destroyInput, err := anypb.New(destroyOp)
-	if err != nil {
-		return nil, fmt.Errorf("planner: wrap destroy op: %w", err)
-	}
-
-	view := viewTopology(preset.GetTopology())
-
-	renderNode := serverTask("render_config", HandlerRenderConfig)
-	apply := serverTaskInput("terraform_apply", HandlerTerraformApply, applyInput)
-	install, err := componentSubDag(preset)
-	if err != nil {
-		return nil, err
-	}
-	collect := serverTask("collect_results", HandlerCollectResults)
-	destroy := serverTaskInput("terraform_destroy", HandlerTerraformDestroy, destroyInput)
-	destroy.Scheduling.AlwaysRun = true // teardown runs on failure/cancel too (H58)
-
-	return &primitive.Dag{
-		Id:     ids.New(),
-		Status: primitive.Status_STATUS_PENDING,
-		Nodes:  []*primitive.Dag_Node{renderNode, apply, install, collect, destroy},
-		Edges: []*primitive.Dag_Edge{
-			edge(renderNode, apply),
-			edge(apply, install),
-			edge(install, collect),
-			edge(collect, destroy), // success path; always_run covers failure
-		},
-		// component->machine lets the execute-seam resolver map binding component
-		// ids to terraform vm outputs.
-		Metadata: map[string]string{
-			render.ComponentMachineMetaKey: render.EncodeComponentMachine(view.componentToMachine),
-		},
-	}, nil
+	return sub
 }
 
 // kindRank orders component install across the topology: coordinators (etcd) come
@@ -133,11 +64,11 @@ type componentGroup struct {
 	nodes []*primitive.Dag_Node
 }
 
-// componentSubDag is the agent's on-host work for the whole topology: a per-
-// component chain (install recipe + rendered config writes + start), ordered by
-// kind rank and by REPLICATION connections (primary before replica). Each node is
-// an agent.command carrying an ops.Operation (D17/H19).
-func componentSubDag(preset *domain.TestPreset) (*primitive.Dag_Node, error) {
+// BuildInstallDag builds the install_and_run sub-dag: per-component agent recipe
+// chains (kind-ranked, replication-ordered) plus the run_stroppy workload node —
+// all agent-locus nodes the agent leases and runs on its host. This is the concrete
+// "install the databases + run stroppy" code reused by the dag blueprint.
+func BuildInstallDag(preset *domain.TestPreset) (*primitive.Dag, error) {
 	topo := preset.GetTopology()
 	db := preset.GetDatabase()
 
@@ -164,7 +95,7 @@ func componentSubDag(preset *domain.TestPreset) (*primitive.Dag_Node, error) {
 		g := &groups[i]
 		allNodes = append(allNodes, g.nodes...)
 		for j := 1; j < len(g.nodes); j++ {
-			edges = append(edges, edge(g.nodes[j-1], g.nodes[j])) // intra-component chain
+			edges = append(edges, chainEdge(g.nodes[j-1], g.nodes[j])) // intra-component chain
 		}
 		byRank[g.rank] = append(byRank[g.rank], g)
 	}
@@ -175,7 +106,7 @@ func componentSubDag(preset *domain.TestPreset) (*primitive.Dag_Node, error) {
 	for i := 1; i < len(ranks); i++ {
 		for _, prev := range byRank[ranks[i-1]] {
 			for _, cur := range byRank[ranks[i]] {
-				edges = append(edges, edge(last(prev.nodes), cur.nodes[0]))
+				edges = append(edges, chainEdge(last(prev.nodes), cur.nodes[0]))
 			}
 		}
 	}
@@ -187,7 +118,7 @@ func componentSubDag(preset *domain.TestPreset) (*primitive.Dag_Node, error) {
 		src, okS := byID[conn.GetFrom()]
 		tgt, okT := byID[conn.GetTo()]
 		if okS && okT && src.rank == tgt.rank {
-			edges = append(edges, edge(last(src.nodes), tgt.nodes[0]))
+			edges = append(edges, chainEdge(last(src.nodes), tgt.nodes[0]))
 		}
 	}
 
@@ -197,7 +128,7 @@ func componentSubDag(preset *domain.TestPreset) (*primitive.Dag_Node, error) {
 		Nodes:  allNodes,
 		Edges:  edges,
 	}
-	return subDagNode("install_and_run", sub), nil
+	return sub, nil
 }
 
 // componentChain builds one component's ordered agent.command nodes. STROPPY is a
@@ -327,31 +258,11 @@ func presentRanks(byRank map[int][]*componentGroup) []int {
 
 func last(nodes []*primitive.Dag_Node) *primitive.Dag_Node { return nodes[len(nodes)-1] }
 
-// serverTaskInput is a server task node carrying a typed input payload.
-func serverTaskInput(id, handler string, input *anypb.Any) *primitive.Dag_Node {
-	node := serverTask(id, handler)
-	node.GetTaskState().Input = input
-	return node
-}
-
-func serverTask(id, handler string) *primitive.Dag_Node {
-	return &primitive.Dag_Node{
-		Id:          id,
-		ExecutionId: id,
-		Status:      primitive.Status_STATUS_PENDING,
-		Scheduling:  &primitive.Dag_Node_Scheduling{},
-		Variant: &primitive.Dag_Node_TaskState_{TaskState: &primitive.Dag_Node_TaskState{
-			HandlerName: handler,
-			Locus:       primitive.Dag_Node_TaskState_EXECUTION_LOCUS_SERVER,
-		}},
-	}
-}
-
 // agentCommand builds an agent-locus node whose input is Any(agent.Command{op}).
 func agentCommand(id string, op *ops.Operation) (*primitive.Dag_Node, error) {
 	input, err := anypb.New(&rtagent.Command{Operation: op})
 	if err != nil {
-		return nil, fmt.Errorf("planner: wrap command %q: %w", id, err)
+		return nil, fmt.Errorf("dag: wrap command %q: %w", id, err)
 	}
 	return &primitive.Dag_Node{
 		Id:          id,
@@ -366,17 +277,8 @@ func agentCommand(id string, op *ops.Operation) (*primitive.Dag_Node, error) {
 	}, nil
 }
 
-func subDagNode(id string, sub *primitive.Dag) *primitive.Dag_Node {
-	return &primitive.Dag_Node{
-		Id:          id,
-		ExecutionId: id,
-		Status:      primitive.Status_STATUS_PENDING,
-		Scheduling:  &primitive.Dag_Node_Scheduling{},
-		Variant:     &primitive.Dag_Node_SubDag{SubDag: sub},
-	}
-}
-
-func edge(source, target *primitive.Dag_Node) *primitive.Dag_Edge {
+// chainEdge connects two install nodes (node-typed, for the install sub-dag chains).
+func chainEdge(source, target *primitive.Dag_Node) *primitive.Dag_Edge {
 	return &primitive.Dag_Edge{
 		Id:     source.GetId() + "->" + target.GetId(),
 		Source: source.GetId(),

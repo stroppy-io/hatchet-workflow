@@ -186,7 +186,7 @@ func (x SettingsItem_Part) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SettingsItem_Part.Descriptor instead.
 func (SettingsItem_Part) EnumDescriptor() ([]byte, []int) {
-	return file_cloud_v1_models_settings_proto_rawDescGZIP(), []int{1, 0}
+	return file_cloud_v1_models_settings_proto_rawDescGZIP(), []int{2, 0}
 }
 
 // Key — setting identifier for Yandex Cloud configuration parameters.
@@ -269,7 +269,78 @@ func (x SettingsItem_Key) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SettingsItem_Key.Descriptor instead.
 func (SettingsItem_Key) EnumDescriptor() ([]byte, []int) {
-	return file_cloud_v1_models_settings_proto_rawDescGZIP(), []int{1, 1}
+	return file_cloud_v1_models_settings_proto_rawDescGZIP(), []int{2, 1}
+}
+
+// PlatformSettings is the GLOBAL (singleton) control-plane configuration, changed
+// only by the root admin. It is NOT tenant-scoped — there is one control plane and
+// one row.
+//
+// server_addr is the single public control-plane base URL handed to every agent
+// (STROPPY_SERVER_ADDR) so it knows where to Poll/Report and fetch its binary (the
+// agent binary URL is DERIVED from server_addr + the server's agent-binary
+// endpoint — no separate setting). Empty -> the server derives a docker-host
+// fallback (host.docker.internal / bridge gateway) for local Docker runs.
+type PlatformSettings struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the fixed singleton key ("platform"); the table holds exactly one row.
+	Id         string      `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Timestamps *Timestamps `protobuf:"bytes,2,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
+	// server_addr is the public control-plane base URL, e.g. http://51.250.1.2:8080.
+	ServerAddr    string `protobuf:"bytes,10,opt,name=server_addr,json=serverAddr,proto3" json:"server_addr,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PlatformSettings) Reset() {
+	*x = PlatformSettings{}
+	mi := &file_cloud_v1_models_settings_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PlatformSettings) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlatformSettings) ProtoMessage() {}
+
+func (x *PlatformSettings) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_settings_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PlatformSettings.ProtoReflect.Descriptor instead.
+func (*PlatformSettings) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_settings_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *PlatformSettings) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *PlatformSettings) GetTimestamps() *Timestamps {
+	if x != nil {
+		return x.Timestamps
+	}
+	return nil
+}
+
+func (x *PlatformSettings) GetServerAddr() string {
+	if x != nil {
+		return x.ServerAddr
+	}
+	return ""
 }
 
 type SettingsItemId struct {
@@ -281,7 +352,7 @@ type SettingsItemId struct {
 
 func (x *SettingsItemId) Reset() {
 	*x = SettingsItemId{}
-	mi := &file_cloud_v1_models_settings_proto_msgTypes[0]
+	mi := &file_cloud_v1_models_settings_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -293,7 +364,7 @@ func (x *SettingsItemId) String() string {
 func (*SettingsItemId) ProtoMessage() {}
 
 func (x *SettingsItemId) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_settings_proto_msgTypes[0]
+	mi := &file_cloud_v1_models_settings_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -306,7 +377,7 @@ func (x *SettingsItemId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SettingsItemId.ProtoReflect.Descriptor instead.
 func (*SettingsItemId) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_settings_proto_rawDescGZIP(), []int{0}
+	return file_cloud_v1_models_settings_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *SettingsItemId) GetValue() string {
@@ -330,7 +401,7 @@ type SettingsItem struct {
 
 func (x *SettingsItem) Reset() {
 	*x = SettingsItem{}
-	mi := &file_cloud_v1_models_settings_proto_msgTypes[1]
+	mi := &file_cloud_v1_models_settings_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -342,7 +413,7 @@ func (x *SettingsItem) String() string {
 func (*SettingsItem) ProtoMessage() {}
 
 func (x *SettingsItem) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_settings_proto_msgTypes[1]
+	mi := &file_cloud_v1_models_settings_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -355,7 +426,7 @@ func (x *SettingsItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SettingsItem.ProtoReflect.Descriptor instead.
 func (*SettingsItem) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_settings_proto_rawDescGZIP(), []int{1}
+	return file_cloud_v1_models_settings_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SettingsItem) GetId() *SettingsItemId {
@@ -409,7 +480,7 @@ type SettingsItem_List struct {
 
 func (x *SettingsItem_List) Reset() {
 	*x = SettingsItem_List{}
-	mi := &file_cloud_v1_models_settings_proto_msgTypes[2]
+	mi := &file_cloud_v1_models_settings_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -421,7 +492,7 @@ func (x *SettingsItem_List) String() string {
 func (*SettingsItem_List) ProtoMessage() {}
 
 func (x *SettingsItem_List) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_settings_proto_msgTypes[2]
+	mi := &file_cloud_v1_models_settings_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -434,7 +505,7 @@ func (x *SettingsItem_List) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SettingsItem_List.ProtoReflect.Descriptor instead.
 func (*SettingsItem_List) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_settings_proto_rawDescGZIP(), []int{1, 0}
+	return file_cloud_v1_models_settings_proto_rawDescGZIP(), []int{2, 0}
 }
 
 func (x *SettingsItem_List) GetSettingsItems() []*SettingsItem {
@@ -459,7 +530,7 @@ type SettingsItem_Value struct {
 
 func (x *SettingsItem_Value) Reset() {
 	*x = SettingsItem_Value{}
-	mi := &file_cloud_v1_models_settings_proto_msgTypes[3]
+	mi := &file_cloud_v1_models_settings_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -471,7 +542,7 @@ func (x *SettingsItem_Value) String() string {
 func (*SettingsItem_Value) ProtoMessage() {}
 
 func (x *SettingsItem_Value) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_settings_proto_msgTypes[3]
+	mi := &file_cloud_v1_models_settings_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -484,7 +555,7 @@ func (x *SettingsItem_Value) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SettingsItem_Value.ProtoReflect.Descriptor instead.
 func (*SettingsItem_Value) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_settings_proto_rawDescGZIP(), []int{1, 1}
+	return file_cloud_v1_models_settings_proto_rawDescGZIP(), []int{2, 1}
 }
 
 func (x *SettingsItem_Value) GetValue() isSettingsItem_Value_Value {
@@ -562,7 +633,15 @@ var File_cloud_v1_models_settings_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_settings_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/models/settings.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/models/common.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\":\n" +
+	"\x1ecloud/v1/models/settings.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/models/common.proto\x1a\x15goplain/goplain.proto\x1a\x1bratelproto/ratelproto.proto\x1a\x17validate/validate.proto\"\xc6\x01\n" +
+	"\x10PlatformSettings\x12!\n" +
+	"\x02id\x18\x01 \x01(\tB\x11\xfaB\x06r\x04\x10\x01\x18@\x9a\xb5\x18\x04\x12\x02\x10\x01R\x02id\x12C\n" +
+	"\n" +
+	"timestamps\x18\x02 \x01(\v2\x1b.cloud.v1.models.TimestampsB\x06\x82\xa6\x1d\x02 \x01R\n" +
+	"timestamps\x12)\n" +
+	"\vserver_addr\x18\n" +
+	" \x01(\tB\b\xfaB\x05r\x03\x18\x80\x10R\n" +
+	"serverAddr:\x1f\x92\xb5\x18\x15\b\x01\x12\x11platform_settings\x82\xa6\x1d\x02\b\x01\":\n" +
 	"\x0eSettingsItemId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\x1aR\x05value:\b\x82\xa6\x1d\x04\b\x01\x10\x01\"\xa5\v\n" +
 	"\fSettingsItem\x12A\n" +
@@ -634,34 +713,36 @@ func file_cloud_v1_models_settings_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_models_settings_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_cloud_v1_models_settings_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_cloud_v1_models_settings_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_cloud_v1_models_settings_proto_goTypes = []any{
 	(YandexCloudPlatformId)(0), // 0: cloud.v1.models.YandexCloudPlatformId
 	(YandexCloudZone)(0),       // 1: cloud.v1.models.YandexCloudZone
 	(SettingsItem_Part)(0),     // 2: cloud.v1.models.SettingsItem.Part
 	(SettingsItem_Key)(0),      // 3: cloud.v1.models.SettingsItem.Key
-	(*SettingsItemId)(nil),     // 4: cloud.v1.models.SettingsItemId
-	(*SettingsItem)(nil),       // 5: cloud.v1.models.SettingsItem
-	(*SettingsItem_List)(nil),  // 6: cloud.v1.models.SettingsItem.List
-	(*SettingsItem_Value)(nil), // 7: cloud.v1.models.SettingsItem.Value
-	(*TenantId)(nil),           // 8: cloud.v1.models.TenantId
+	(*PlatformSettings)(nil),   // 4: cloud.v1.models.PlatformSettings
+	(*SettingsItemId)(nil),     // 5: cloud.v1.models.SettingsItemId
+	(*SettingsItem)(nil),       // 6: cloud.v1.models.SettingsItem
+	(*SettingsItem_List)(nil),  // 7: cloud.v1.models.SettingsItem.List
+	(*SettingsItem_Value)(nil), // 8: cloud.v1.models.SettingsItem.Value
 	(*Timestamps)(nil),         // 9: cloud.v1.models.Timestamps
+	(*TenantId)(nil),           // 10: cloud.v1.models.TenantId
 }
 var file_cloud_v1_models_settings_proto_depIdxs = []int32{
-	4, // 0: cloud.v1.models.SettingsItem.id:type_name -> cloud.v1.models.SettingsItemId
-	8, // 1: cloud.v1.models.SettingsItem.tenant_id:type_name -> cloud.v1.models.TenantId
-	9, // 2: cloud.v1.models.SettingsItem.timestamps:type_name -> cloud.v1.models.Timestamps
-	2, // 3: cloud.v1.models.SettingsItem.part:type_name -> cloud.v1.models.SettingsItem.Part
-	3, // 4: cloud.v1.models.SettingsItem.key:type_name -> cloud.v1.models.SettingsItem.Key
-	7, // 5: cloud.v1.models.SettingsItem.value:type_name -> cloud.v1.models.SettingsItem.Value
-	5, // 6: cloud.v1.models.SettingsItem.List.settings_items:type_name -> cloud.v1.models.SettingsItem
-	0, // 7: cloud.v1.models.SettingsItem.Value.yandex_cloud_platform_id:type_name -> cloud.v1.models.YandexCloudPlatformId
-	1, // 8: cloud.v1.models.SettingsItem.Value.yandex_cloud_zone:type_name -> cloud.v1.models.YandexCloudZone
-	9, // [9:9] is the sub-list for method output_type
-	9, // [9:9] is the sub-list for method input_type
-	9, // [9:9] is the sub-list for extension type_name
-	9, // [9:9] is the sub-list for extension extendee
-	0, // [0:9] is the sub-list for field type_name
+	9,  // 0: cloud.v1.models.PlatformSettings.timestamps:type_name -> cloud.v1.models.Timestamps
+	5,  // 1: cloud.v1.models.SettingsItem.id:type_name -> cloud.v1.models.SettingsItemId
+	10, // 2: cloud.v1.models.SettingsItem.tenant_id:type_name -> cloud.v1.models.TenantId
+	9,  // 3: cloud.v1.models.SettingsItem.timestamps:type_name -> cloud.v1.models.Timestamps
+	2,  // 4: cloud.v1.models.SettingsItem.part:type_name -> cloud.v1.models.SettingsItem.Part
+	3,  // 5: cloud.v1.models.SettingsItem.key:type_name -> cloud.v1.models.SettingsItem.Key
+	8,  // 6: cloud.v1.models.SettingsItem.value:type_name -> cloud.v1.models.SettingsItem.Value
+	6,  // 7: cloud.v1.models.SettingsItem.List.settings_items:type_name -> cloud.v1.models.SettingsItem
+	0,  // 8: cloud.v1.models.SettingsItem.Value.yandex_cloud_platform_id:type_name -> cloud.v1.models.YandexCloudPlatformId
+	1,  // 9: cloud.v1.models.SettingsItem.Value.yandex_cloud_zone:type_name -> cloud.v1.models.YandexCloudZone
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_settings_proto_init() }
@@ -670,7 +751,7 @@ func file_cloud_v1_models_settings_proto_init() {
 		return
 	}
 	file_cloud_v1_models_common_proto_init()
-	file_cloud_v1_models_settings_proto_msgTypes[3].OneofWrappers = []any{
+	file_cloud_v1_models_settings_proto_msgTypes[4].OneofWrappers = []any{
 		(*SettingsItem_Value_StringValue)(nil),
 		(*SettingsItem_Value_BoolValue)(nil),
 		(*SettingsItem_Value_YandexCloudPlatformId)(nil),
@@ -682,7 +763,7 @@ func file_cloud_v1_models_settings_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_models_settings_proto_rawDesc), len(file_cloud_v1_models_settings_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

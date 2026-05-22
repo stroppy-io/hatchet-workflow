@@ -55,12 +55,12 @@ const (
 
 // SuiteServiceClient is a client for the cloud.v1.api.ui.SuiteService service.
 type SuiteServiceClient interface {
-	CreateSuite(context.Context, *connect.Request[ui.CreateSuiteRequest]) (*connect.Response[models.Suite], error)
-	GetSuite(context.Context, *connect.Request[ui.GetSuiteRequest]) (*connect.Response[models.Suite], error)
-	LaunchSuiteRun(context.Context, *connect.Request[ui.LaunchSuiteRunRequest]) (*connect.Response[models.SuiteRun], error)
-	GetSuiteRun(context.Context, *connect.Request[ui.GetSuiteRunRequest]) (*connect.Response[models.SuiteRun], error)
-	ListSuiteRuns(context.Context, *connect.Request[ui.ListSuiteRunsRequest]) (*connect.Response[models.SuiteRun_List], error)
-	CancelSuiteRun(context.Context, *connect.Request[ui.CancelSuiteRunRequest]) (*connect.Response[models.SuiteRun], error)
+	CreateSuite(context.Context, *ui.CreateSuiteRequest) (*models.Suite, error)
+	GetSuite(context.Context, *ui.GetSuiteRequest) (*models.Suite, error)
+	LaunchSuiteRun(context.Context, *ui.LaunchSuiteRunRequest) (*models.SuiteRun, error)
+	GetSuiteRun(context.Context, *ui.GetSuiteRunRequest) (*models.SuiteRun, error)
+	ListSuiteRuns(context.Context, *ui.ListSuiteRunsRequest) (*models.SuiteRun_List, error)
+	CancelSuiteRun(context.Context, *ui.CancelSuiteRunRequest) (*models.SuiteRun, error)
 }
 
 // NewSuiteServiceClient constructs a client for the cloud.v1.api.ui.SuiteService service. By
@@ -130,43 +130,67 @@ type suiteServiceClient struct {
 }
 
 // CreateSuite calls cloud.v1.api.ui.SuiteService.CreateSuite.
-func (c *suiteServiceClient) CreateSuite(ctx context.Context, req *connect.Request[ui.CreateSuiteRequest]) (*connect.Response[models.Suite], error) {
-	return c.createSuite.CallUnary(ctx, req)
+func (c *suiteServiceClient) CreateSuite(ctx context.Context, req *ui.CreateSuiteRequest) (*models.Suite, error) {
+	response, err := c.createSuite.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // GetSuite calls cloud.v1.api.ui.SuiteService.GetSuite.
-func (c *suiteServiceClient) GetSuite(ctx context.Context, req *connect.Request[ui.GetSuiteRequest]) (*connect.Response[models.Suite], error) {
-	return c.getSuite.CallUnary(ctx, req)
+func (c *suiteServiceClient) GetSuite(ctx context.Context, req *ui.GetSuiteRequest) (*models.Suite, error) {
+	response, err := c.getSuite.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // LaunchSuiteRun calls cloud.v1.api.ui.SuiteService.LaunchSuiteRun.
-func (c *suiteServiceClient) LaunchSuiteRun(ctx context.Context, req *connect.Request[ui.LaunchSuiteRunRequest]) (*connect.Response[models.SuiteRun], error) {
-	return c.launchSuiteRun.CallUnary(ctx, req)
+func (c *suiteServiceClient) LaunchSuiteRun(ctx context.Context, req *ui.LaunchSuiteRunRequest) (*models.SuiteRun, error) {
+	response, err := c.launchSuiteRun.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // GetSuiteRun calls cloud.v1.api.ui.SuiteService.GetSuiteRun.
-func (c *suiteServiceClient) GetSuiteRun(ctx context.Context, req *connect.Request[ui.GetSuiteRunRequest]) (*connect.Response[models.SuiteRun], error) {
-	return c.getSuiteRun.CallUnary(ctx, req)
+func (c *suiteServiceClient) GetSuiteRun(ctx context.Context, req *ui.GetSuiteRunRequest) (*models.SuiteRun, error) {
+	response, err := c.getSuiteRun.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // ListSuiteRuns calls cloud.v1.api.ui.SuiteService.ListSuiteRuns.
-func (c *suiteServiceClient) ListSuiteRuns(ctx context.Context, req *connect.Request[ui.ListSuiteRunsRequest]) (*connect.Response[models.SuiteRun_List], error) {
-	return c.listSuiteRuns.CallUnary(ctx, req)
+func (c *suiteServiceClient) ListSuiteRuns(ctx context.Context, req *ui.ListSuiteRunsRequest) (*models.SuiteRun_List, error) {
+	response, err := c.listSuiteRuns.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // CancelSuiteRun calls cloud.v1.api.ui.SuiteService.CancelSuiteRun.
-func (c *suiteServiceClient) CancelSuiteRun(ctx context.Context, req *connect.Request[ui.CancelSuiteRunRequest]) (*connect.Response[models.SuiteRun], error) {
-	return c.cancelSuiteRun.CallUnary(ctx, req)
+func (c *suiteServiceClient) CancelSuiteRun(ctx context.Context, req *ui.CancelSuiteRunRequest) (*models.SuiteRun, error) {
+	response, err := c.cancelSuiteRun.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // SuiteServiceHandler is an implementation of the cloud.v1.api.ui.SuiteService service.
 type SuiteServiceHandler interface {
-	CreateSuite(context.Context, *connect.Request[ui.CreateSuiteRequest]) (*connect.Response[models.Suite], error)
-	GetSuite(context.Context, *connect.Request[ui.GetSuiteRequest]) (*connect.Response[models.Suite], error)
-	LaunchSuiteRun(context.Context, *connect.Request[ui.LaunchSuiteRunRequest]) (*connect.Response[models.SuiteRun], error)
-	GetSuiteRun(context.Context, *connect.Request[ui.GetSuiteRunRequest]) (*connect.Response[models.SuiteRun], error)
-	ListSuiteRuns(context.Context, *connect.Request[ui.ListSuiteRunsRequest]) (*connect.Response[models.SuiteRun_List], error)
-	CancelSuiteRun(context.Context, *connect.Request[ui.CancelSuiteRunRequest]) (*connect.Response[models.SuiteRun], error)
+	CreateSuite(context.Context, *ui.CreateSuiteRequest) (*models.Suite, error)
+	GetSuite(context.Context, *ui.GetSuiteRequest) (*models.Suite, error)
+	LaunchSuiteRun(context.Context, *ui.LaunchSuiteRunRequest) (*models.SuiteRun, error)
+	GetSuiteRun(context.Context, *ui.GetSuiteRunRequest) (*models.SuiteRun, error)
+	ListSuiteRuns(context.Context, *ui.ListSuiteRunsRequest) (*models.SuiteRun_List, error)
+	CancelSuiteRun(context.Context, *ui.CancelSuiteRunRequest) (*models.SuiteRun, error)
 }
 
 // NewSuiteServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -176,42 +200,42 @@ type SuiteServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewSuiteServiceHandler(svc SuiteServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	suiteServiceMethods := ui.File_cloud_v1_api_ui_suite_proto.Services().ByName("SuiteService").Methods()
-	suiteServiceCreateSuiteHandler := connect.NewUnaryHandler(
+	suiteServiceCreateSuiteHandler := connect.NewUnaryHandlerSimple(
 		SuiteServiceCreateSuiteProcedure,
 		svc.CreateSuite,
 		connect.WithSchema(suiteServiceMethods.ByName("CreateSuite")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	suiteServiceGetSuiteHandler := connect.NewUnaryHandler(
+	suiteServiceGetSuiteHandler := connect.NewUnaryHandlerSimple(
 		SuiteServiceGetSuiteProcedure,
 		svc.GetSuite,
 		connect.WithSchema(suiteServiceMethods.ByName("GetSuite")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	suiteServiceLaunchSuiteRunHandler := connect.NewUnaryHandler(
+	suiteServiceLaunchSuiteRunHandler := connect.NewUnaryHandlerSimple(
 		SuiteServiceLaunchSuiteRunProcedure,
 		svc.LaunchSuiteRun,
 		connect.WithSchema(suiteServiceMethods.ByName("LaunchSuiteRun")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	suiteServiceGetSuiteRunHandler := connect.NewUnaryHandler(
+	suiteServiceGetSuiteRunHandler := connect.NewUnaryHandlerSimple(
 		SuiteServiceGetSuiteRunProcedure,
 		svc.GetSuiteRun,
 		connect.WithSchema(suiteServiceMethods.ByName("GetSuiteRun")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	suiteServiceListSuiteRunsHandler := connect.NewUnaryHandler(
+	suiteServiceListSuiteRunsHandler := connect.NewUnaryHandlerSimple(
 		SuiteServiceListSuiteRunsProcedure,
 		svc.ListSuiteRuns,
 		connect.WithSchema(suiteServiceMethods.ByName("ListSuiteRuns")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	suiteServiceCancelSuiteRunHandler := connect.NewUnaryHandler(
+	suiteServiceCancelSuiteRunHandler := connect.NewUnaryHandlerSimple(
 		SuiteServiceCancelSuiteRunProcedure,
 		svc.CancelSuiteRun,
 		connect.WithSchema(suiteServiceMethods.ByName("CancelSuiteRun")),
@@ -241,26 +265,26 @@ func NewSuiteServiceHandler(svc SuiteServiceHandler, opts ...connect.HandlerOpti
 // UnimplementedSuiteServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedSuiteServiceHandler struct{}
 
-func (UnimplementedSuiteServiceHandler) CreateSuite(context.Context, *connect.Request[ui.CreateSuiteRequest]) (*connect.Response[models.Suite], error) {
+func (UnimplementedSuiteServiceHandler) CreateSuite(context.Context, *ui.CreateSuiteRequest) (*models.Suite, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.SuiteService.CreateSuite is not implemented"))
 }
 
-func (UnimplementedSuiteServiceHandler) GetSuite(context.Context, *connect.Request[ui.GetSuiteRequest]) (*connect.Response[models.Suite], error) {
+func (UnimplementedSuiteServiceHandler) GetSuite(context.Context, *ui.GetSuiteRequest) (*models.Suite, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.SuiteService.GetSuite is not implemented"))
 }
 
-func (UnimplementedSuiteServiceHandler) LaunchSuiteRun(context.Context, *connect.Request[ui.LaunchSuiteRunRequest]) (*connect.Response[models.SuiteRun], error) {
+func (UnimplementedSuiteServiceHandler) LaunchSuiteRun(context.Context, *ui.LaunchSuiteRunRequest) (*models.SuiteRun, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.SuiteService.LaunchSuiteRun is not implemented"))
 }
 
-func (UnimplementedSuiteServiceHandler) GetSuiteRun(context.Context, *connect.Request[ui.GetSuiteRunRequest]) (*connect.Response[models.SuiteRun], error) {
+func (UnimplementedSuiteServiceHandler) GetSuiteRun(context.Context, *ui.GetSuiteRunRequest) (*models.SuiteRun, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.SuiteService.GetSuiteRun is not implemented"))
 }
 
-func (UnimplementedSuiteServiceHandler) ListSuiteRuns(context.Context, *connect.Request[ui.ListSuiteRunsRequest]) (*connect.Response[models.SuiteRun_List], error) {
+func (UnimplementedSuiteServiceHandler) ListSuiteRuns(context.Context, *ui.ListSuiteRunsRequest) (*models.SuiteRun_List, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.SuiteService.ListSuiteRuns is not implemented"))
 }
 
-func (UnimplementedSuiteServiceHandler) CancelSuiteRun(context.Context, *connect.Request[ui.CancelSuiteRunRequest]) (*connect.Response[models.SuiteRun], error) {
+func (UnimplementedSuiteServiceHandler) CancelSuiteRun(context.Context, *ui.CancelSuiteRunRequest) (*models.SuiteRun, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.SuiteService.CancelSuiteRun is not implemented"))
 }

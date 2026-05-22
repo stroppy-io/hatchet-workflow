@@ -16,7 +16,7 @@ import (
 	tcexec "github.com/testcontainers/testcontainers-go/exec"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/domain/planner"
+	planner "github.com/stroppy-io/stroppy-cloud/internal/domain/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	rtagent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/ops"

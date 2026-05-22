@@ -51,10 +51,10 @@ const (
 
 // AccountAdminServiceClient is a client for the cloud.v1.api.admin.AccountAdminService service.
 type AccountAdminServiceClient interface {
-	CreateAccount(context.Context, *connect.Request[admin.CreateAccountRequest]) (*connect.Response[models.Account], error)
-	UpdateAccount(context.Context, *connect.Request[admin.UpdateAccountRequest]) (*connect.Response[emptypb.Empty], error)
-	DeleteAccount(context.Context, *connect.Request[models.AccountId]) (*connect.Response[emptypb.Empty], error)
-	UpdatePassword(context.Context, *connect.Request[admin.UpdatePasswordRequest]) (*connect.Response[emptypb.Empty], error)
+	CreateAccount(context.Context, *admin.CreateAccountRequest) (*models.Account, error)
+	UpdateAccount(context.Context, *admin.UpdateAccountRequest) (*emptypb.Empty, error)
+	DeleteAccount(context.Context, *models.AccountId) (*emptypb.Empty, error)
+	UpdatePassword(context.Context, *admin.UpdatePasswordRequest) (*emptypb.Empty, error)
 }
 
 // NewAccountAdminServiceClient constructs a client for the cloud.v1.api.admin.AccountAdminService
@@ -108,32 +108,48 @@ type accountAdminServiceClient struct {
 }
 
 // CreateAccount calls cloud.v1.api.admin.AccountAdminService.CreateAccount.
-func (c *accountAdminServiceClient) CreateAccount(ctx context.Context, req *connect.Request[admin.CreateAccountRequest]) (*connect.Response[models.Account], error) {
-	return c.createAccount.CallUnary(ctx, req)
+func (c *accountAdminServiceClient) CreateAccount(ctx context.Context, req *admin.CreateAccountRequest) (*models.Account, error) {
+	response, err := c.createAccount.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // UpdateAccount calls cloud.v1.api.admin.AccountAdminService.UpdateAccount.
-func (c *accountAdminServiceClient) UpdateAccount(ctx context.Context, req *connect.Request[admin.UpdateAccountRequest]) (*connect.Response[emptypb.Empty], error) {
-	return c.updateAccount.CallUnary(ctx, req)
+func (c *accountAdminServiceClient) UpdateAccount(ctx context.Context, req *admin.UpdateAccountRequest) (*emptypb.Empty, error) {
+	response, err := c.updateAccount.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // DeleteAccount calls cloud.v1.api.admin.AccountAdminService.DeleteAccount.
-func (c *accountAdminServiceClient) DeleteAccount(ctx context.Context, req *connect.Request[models.AccountId]) (*connect.Response[emptypb.Empty], error) {
-	return c.deleteAccount.CallUnary(ctx, req)
+func (c *accountAdminServiceClient) DeleteAccount(ctx context.Context, req *models.AccountId) (*emptypb.Empty, error) {
+	response, err := c.deleteAccount.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // UpdatePassword calls cloud.v1.api.admin.AccountAdminService.UpdatePassword.
-func (c *accountAdminServiceClient) UpdatePassword(ctx context.Context, req *connect.Request[admin.UpdatePasswordRequest]) (*connect.Response[emptypb.Empty], error) {
-	return c.updatePassword.CallUnary(ctx, req)
+func (c *accountAdminServiceClient) UpdatePassword(ctx context.Context, req *admin.UpdatePasswordRequest) (*emptypb.Empty, error) {
+	response, err := c.updatePassword.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // AccountAdminServiceHandler is an implementation of the cloud.v1.api.admin.AccountAdminService
 // service.
 type AccountAdminServiceHandler interface {
-	CreateAccount(context.Context, *connect.Request[admin.CreateAccountRequest]) (*connect.Response[models.Account], error)
-	UpdateAccount(context.Context, *connect.Request[admin.UpdateAccountRequest]) (*connect.Response[emptypb.Empty], error)
-	DeleteAccount(context.Context, *connect.Request[models.AccountId]) (*connect.Response[emptypb.Empty], error)
-	UpdatePassword(context.Context, *connect.Request[admin.UpdatePasswordRequest]) (*connect.Response[emptypb.Empty], error)
+	CreateAccount(context.Context, *admin.CreateAccountRequest) (*models.Account, error)
+	UpdateAccount(context.Context, *admin.UpdateAccountRequest) (*emptypb.Empty, error)
+	DeleteAccount(context.Context, *models.AccountId) (*emptypb.Empty, error)
+	UpdatePassword(context.Context, *admin.UpdatePasswordRequest) (*emptypb.Empty, error)
 }
 
 // NewAccountAdminServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -143,28 +159,28 @@ type AccountAdminServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewAccountAdminServiceHandler(svc AccountAdminServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	accountAdminServiceMethods := admin.File_cloud_v1_api_admin_account_proto.Services().ByName("AccountAdminService").Methods()
-	accountAdminServiceCreateAccountHandler := connect.NewUnaryHandler(
+	accountAdminServiceCreateAccountHandler := connect.NewUnaryHandlerSimple(
 		AccountAdminServiceCreateAccountProcedure,
 		svc.CreateAccount,
 		connect.WithSchema(accountAdminServiceMethods.ByName("CreateAccount")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	accountAdminServiceUpdateAccountHandler := connect.NewUnaryHandler(
+	accountAdminServiceUpdateAccountHandler := connect.NewUnaryHandlerSimple(
 		AccountAdminServiceUpdateAccountProcedure,
 		svc.UpdateAccount,
 		connect.WithSchema(accountAdminServiceMethods.ByName("UpdateAccount")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	accountAdminServiceDeleteAccountHandler := connect.NewUnaryHandler(
+	accountAdminServiceDeleteAccountHandler := connect.NewUnaryHandlerSimple(
 		AccountAdminServiceDeleteAccountProcedure,
 		svc.DeleteAccount,
 		connect.WithSchema(accountAdminServiceMethods.ByName("DeleteAccount")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	accountAdminServiceUpdatePasswordHandler := connect.NewUnaryHandler(
+	accountAdminServiceUpdatePasswordHandler := connect.NewUnaryHandlerSimple(
 		AccountAdminServiceUpdatePasswordProcedure,
 		svc.UpdatePassword,
 		connect.WithSchema(accountAdminServiceMethods.ByName("UpdatePassword")),
@@ -190,18 +206,18 @@ func NewAccountAdminServiceHandler(svc AccountAdminServiceHandler, opts ...conne
 // UnimplementedAccountAdminServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedAccountAdminServiceHandler struct{}
 
-func (UnimplementedAccountAdminServiceHandler) CreateAccount(context.Context, *connect.Request[admin.CreateAccountRequest]) (*connect.Response[models.Account], error) {
+func (UnimplementedAccountAdminServiceHandler) CreateAccount(context.Context, *admin.CreateAccountRequest) (*models.Account, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.admin.AccountAdminService.CreateAccount is not implemented"))
 }
 
-func (UnimplementedAccountAdminServiceHandler) UpdateAccount(context.Context, *connect.Request[admin.UpdateAccountRequest]) (*connect.Response[emptypb.Empty], error) {
+func (UnimplementedAccountAdminServiceHandler) UpdateAccount(context.Context, *admin.UpdateAccountRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.admin.AccountAdminService.UpdateAccount is not implemented"))
 }
 
-func (UnimplementedAccountAdminServiceHandler) DeleteAccount(context.Context, *connect.Request[models.AccountId]) (*connect.Response[emptypb.Empty], error) {
+func (UnimplementedAccountAdminServiceHandler) DeleteAccount(context.Context, *models.AccountId) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.admin.AccountAdminService.DeleteAccount is not implemented"))
 }
 
-func (UnimplementedAccountAdminServiceHandler) UpdatePassword(context.Context, *connect.Request[admin.UpdatePasswordRequest]) (*connect.Response[emptypb.Empty], error) {
+func (UnimplementedAccountAdminServiceHandler) UpdatePassword(context.Context, *admin.UpdatePasswordRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.admin.AccountAdminService.UpdatePassword is not implemented"))
 }

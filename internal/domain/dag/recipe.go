@@ -1,9 +1,8 @@
-package planner
+package dag
 
 import (
 	"strings"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/domain/compat"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/render"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	renderpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/render"
@@ -13,34 +12,29 @@ import (
 // resolved to the database component's private ip at the plan->execute seam.
 const stroppyDBHostToken = "__STROPPY_DB_HOST__"
 
-// recipe is the per-component install plan. The DATA (the engine compat matrix +
-// install recipes) lives in package compat (H29: backend data); this package holds
-// only the SELECTION LOGIC over it (which recipe a component gets + shape-specific
-// adjustments like patroni).
-type recipe = compat.Recipe
-
 // recipeForComponent resolves the install recipe for one topology component. The
 // DATABASE recipe varies with the engine's replication mode (e.g. Patroni manages
-// postgres, so the started service is patroni, not postgresql).
-func recipeForComponent(c *domain.Topology_Component, db *domain.Database) recipe {
+// postgres, so the started service is patroni, not postgresql). The recipe DATA
+// itself lives in recipes_data.go; this is only the SELECTION LOGIC over it.
+func recipeForComponent(c *domain.Topology_Component, db *domain.Database) Recipe {
 	switch c.GetKind() {
 	case domain.Topology_Component_KIND_DATABASE:
 		return databaseRecipe(db)
 	case domain.Topology_Component_KIND_COORDINATOR:
-		return compat.Etcd
+		return recipeEtcd
 	case domain.Topology_Component_KIND_PROXY:
 		return proxyRecipe(db)
 	case domain.Topology_Component_KIND_MONITOR:
-		return compat.Monitor
+		return recipeMonitor
 	default:
 		// STROPPY (workload binary preinstalled in the agent image), AGENT, ADDON:
 		// no install steps; STROPPY contributes the run_stroppy command instead.
-		return recipe{}
+		return Recipe{}
 	}
 }
 
 // databaseRecipe is the engine recipe, adjusted for the replication mode.
-func databaseRecipe(db *domain.Database) recipe {
+func databaseRecipe(db *domain.Database) Recipe {
 	r := recipeFor(db)
 	if db.GetKind() == domain.Database_KIND_POSTGRES &&
 		db.GetOptions().GetPostgres().GetReplication().GetMode() == domain.Database_Options_Postgres_Replication_MODE_PATRONI {
@@ -74,19 +68,19 @@ func pgVersion(v string) string {
 }
 
 // proxyRecipe picks the proxy engine: haproxy for postgres, proxysql for mysql/mariadb.
-func proxyRecipe(db *domain.Database) recipe {
+func proxyRecipe(db *domain.Database) Recipe {
 	switch db.GetKind() {
 	case domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
-		return compat.ProxySQL
+		return recipeProxySQL
 	default:
-		return compat.HAProxy
+		return recipeHAProxy
 	}
 }
 
 // recipeFor resolves the install recipe for a database (by kind+version) from the
 // compat matrix. An unknown engine yields an empty recipe (no install steps).
-func recipeFor(db *domain.Database) recipe {
-	r, _ := compat.EngineRecipe(kindString(db.GetKind()), db.GetVersion())
+func recipeFor(db *domain.Database) Recipe {
+	r, _ := EngineRecipe(kindString(db.GetKind()), db.GetVersion())
 	return r
 }
 

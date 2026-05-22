@@ -1,5 +1,5 @@
 // Package provider resolves a tenant's provider settings (SettingsService) into
-// planner.DeploymentParams — the terraform variables the planner needs. Settings
+// dag.DeploymentParams — the terraform variables the dag compiler needs. Settings
 // enums (platform/zone) are translated to the terraform string forms here.
 package provider
 
@@ -11,7 +11,7 @@ import (
 	"github.com/yaroher/ratel/pkg/exec"
 	"github.com/yaroher/ratel/pkg/repository"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/domain/planner"
+	dagdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/utils/tracing"
@@ -43,7 +43,7 @@ func New(logger *xlog.Logger, executor exec.DB) *Resolver {
 //
 // TODO(provider): per-machine internal_ip (subnet network allocation, D20) and
 // user_data (agent cloud-init JWT, D18) are left empty — wire them when those land.
-func (r *Resolver) Resolve(ctx context.Context, tenantID string) (*planner.DeploymentParams, error) {
+func (r *Resolver) Resolve(ctx context.Context, tenantID string) (*dagdomain.DeploymentParams, error) {
 	items, err := r.items.Query(ctx, models.SettingsItems.SelectAll().Where(
 		models.SettingsItems.TenantId.Eq(tenantID),
 		models.SettingsItems.DeletedAt.IsNull(),
@@ -51,7 +51,7 @@ func (r *Resolver) Resolve(ctx context.Context, tenantID string) (*planner.Deplo
 	if err != nil {
 		return nil, err
 	}
-	p := &planner.DeploymentParams{
+	p := &dagdomain.DeploymentParams{
 		MachineInternalIP: map[string]string{},
 		MachineUserData:   map[string]string{},
 	}

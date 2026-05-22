@@ -54,16 +54,16 @@ const (
 // AgentServiceClient is a client for the cloud.v1.api.agent.AgentService service.
 type AgentServiceClient interface {
 	// Agent-facing registration and liveness.
-	Register(context.Context, *connect.Request[agent.RegisterRequest]) (*connect.Response[models.Agent], error)
-	Heartbeat(context.Context, *connect.Request[agent.HeartbeatRequest]) (*connect.Response[models.Agent], error)
+	Register(context.Context, *agent.RegisterRequest) (*models.Agent, error)
+	Heartbeat(context.Context, *agent.HeartbeatRequest) (*models.Agent, error)
 	// Agent-facing long poll for the next queued command.
-	Poll(context.Context, *connect.Request[agent.PollRequest]) (*connect.Response[agent.PollResponse], error)
+	Poll(context.Context, *agent.PollRequest) (*agent.PollResponse, error)
 	// Agent-facing command result and logs.
-	Report(context.Context, *connect.Request[agent.ReportRequest]) (*connect.Response[emptypb.Empty], error)
-	SendLogs(context.Context, *connect.Request[agent.SendLogsRequest]) (*connect.Response[emptypb.Empty], error)
+	Report(context.Context, *agent.ReportRequest) (*emptypb.Empty, error)
+	SendLogs(context.Context, *agent.SendLogsRequest) (*emptypb.Empty, error)
 	// Control-plane agent observability API. Commands are persisted as DAG nodes.
-	ListAgents(context.Context, *connect.Request[agent.ListAgentsRequest]) (*connect.Response[models.Agent_List], error)
-	GetAgent(context.Context, *connect.Request[models.AgentId]) (*connect.Response[models.Agent], error)
+	ListAgents(context.Context, *agent.ListAgentsRequest) (*models.Agent_List, error)
+	GetAgent(context.Context, *models.AgentId) (*models.Agent, error)
 }
 
 // NewAgentServiceClient constructs a client for the cloud.v1.api.agent.AgentService service. By
@@ -141,53 +141,81 @@ type agentServiceClient struct {
 }
 
 // Register calls cloud.v1.api.agent.AgentService.Register.
-func (c *agentServiceClient) Register(ctx context.Context, req *connect.Request[agent.RegisterRequest]) (*connect.Response[models.Agent], error) {
-	return c.register.CallUnary(ctx, req)
+func (c *agentServiceClient) Register(ctx context.Context, req *agent.RegisterRequest) (*models.Agent, error) {
+	response, err := c.register.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // Heartbeat calls cloud.v1.api.agent.AgentService.Heartbeat.
-func (c *agentServiceClient) Heartbeat(ctx context.Context, req *connect.Request[agent.HeartbeatRequest]) (*connect.Response[models.Agent], error) {
-	return c.heartbeat.CallUnary(ctx, req)
+func (c *agentServiceClient) Heartbeat(ctx context.Context, req *agent.HeartbeatRequest) (*models.Agent, error) {
+	response, err := c.heartbeat.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // Poll calls cloud.v1.api.agent.AgentService.Poll.
-func (c *agentServiceClient) Poll(ctx context.Context, req *connect.Request[agent.PollRequest]) (*connect.Response[agent.PollResponse], error) {
-	return c.poll.CallUnary(ctx, req)
+func (c *agentServiceClient) Poll(ctx context.Context, req *agent.PollRequest) (*agent.PollResponse, error) {
+	response, err := c.poll.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // Report calls cloud.v1.api.agent.AgentService.Report.
-func (c *agentServiceClient) Report(ctx context.Context, req *connect.Request[agent.ReportRequest]) (*connect.Response[emptypb.Empty], error) {
-	return c.report.CallUnary(ctx, req)
+func (c *agentServiceClient) Report(ctx context.Context, req *agent.ReportRequest) (*emptypb.Empty, error) {
+	response, err := c.report.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // SendLogs calls cloud.v1.api.agent.AgentService.SendLogs.
-func (c *agentServiceClient) SendLogs(ctx context.Context, req *connect.Request[agent.SendLogsRequest]) (*connect.Response[emptypb.Empty], error) {
-	return c.sendLogs.CallUnary(ctx, req)
+func (c *agentServiceClient) SendLogs(ctx context.Context, req *agent.SendLogsRequest) (*emptypb.Empty, error) {
+	response, err := c.sendLogs.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // ListAgents calls cloud.v1.api.agent.AgentService.ListAgents.
-func (c *agentServiceClient) ListAgents(ctx context.Context, req *connect.Request[agent.ListAgentsRequest]) (*connect.Response[models.Agent_List], error) {
-	return c.listAgents.CallUnary(ctx, req)
+func (c *agentServiceClient) ListAgents(ctx context.Context, req *agent.ListAgentsRequest) (*models.Agent_List, error) {
+	response, err := c.listAgents.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // GetAgent calls cloud.v1.api.agent.AgentService.GetAgent.
-func (c *agentServiceClient) GetAgent(ctx context.Context, req *connect.Request[models.AgentId]) (*connect.Response[models.Agent], error) {
-	return c.getAgent.CallUnary(ctx, req)
+func (c *agentServiceClient) GetAgent(ctx context.Context, req *models.AgentId) (*models.Agent, error) {
+	response, err := c.getAgent.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // AgentServiceHandler is an implementation of the cloud.v1.api.agent.AgentService service.
 type AgentServiceHandler interface {
 	// Agent-facing registration and liveness.
-	Register(context.Context, *connect.Request[agent.RegisterRequest]) (*connect.Response[models.Agent], error)
-	Heartbeat(context.Context, *connect.Request[agent.HeartbeatRequest]) (*connect.Response[models.Agent], error)
+	Register(context.Context, *agent.RegisterRequest) (*models.Agent, error)
+	Heartbeat(context.Context, *agent.HeartbeatRequest) (*models.Agent, error)
 	// Agent-facing long poll for the next queued command.
-	Poll(context.Context, *connect.Request[agent.PollRequest]) (*connect.Response[agent.PollResponse], error)
+	Poll(context.Context, *agent.PollRequest) (*agent.PollResponse, error)
 	// Agent-facing command result and logs.
-	Report(context.Context, *connect.Request[agent.ReportRequest]) (*connect.Response[emptypb.Empty], error)
-	SendLogs(context.Context, *connect.Request[agent.SendLogsRequest]) (*connect.Response[emptypb.Empty], error)
+	Report(context.Context, *agent.ReportRequest) (*emptypb.Empty, error)
+	SendLogs(context.Context, *agent.SendLogsRequest) (*emptypb.Empty, error)
 	// Control-plane agent observability API. Commands are persisted as DAG nodes.
-	ListAgents(context.Context, *connect.Request[agent.ListAgentsRequest]) (*connect.Response[models.Agent_List], error)
-	GetAgent(context.Context, *connect.Request[models.AgentId]) (*connect.Response[models.Agent], error)
+	ListAgents(context.Context, *agent.ListAgentsRequest) (*models.Agent_List, error)
+	GetAgent(context.Context, *models.AgentId) (*models.Agent, error)
 }
 
 // NewAgentServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -197,49 +225,49 @@ type AgentServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	agentServiceMethods := agent.File_cloud_v1_api_agent_agent_proto.Services().ByName("AgentService").Methods()
-	agentServiceRegisterHandler := connect.NewUnaryHandler(
+	agentServiceRegisterHandler := connect.NewUnaryHandlerSimple(
 		AgentServiceRegisterProcedure,
 		svc.Register,
 		connect.WithSchema(agentServiceMethods.ByName("Register")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	agentServiceHeartbeatHandler := connect.NewUnaryHandler(
+	agentServiceHeartbeatHandler := connect.NewUnaryHandlerSimple(
 		AgentServiceHeartbeatProcedure,
 		svc.Heartbeat,
 		connect.WithSchema(agentServiceMethods.ByName("Heartbeat")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	agentServicePollHandler := connect.NewUnaryHandler(
+	agentServicePollHandler := connect.NewUnaryHandlerSimple(
 		AgentServicePollProcedure,
 		svc.Poll,
 		connect.WithSchema(agentServiceMethods.ByName("Poll")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	agentServiceReportHandler := connect.NewUnaryHandler(
+	agentServiceReportHandler := connect.NewUnaryHandlerSimple(
 		AgentServiceReportProcedure,
 		svc.Report,
 		connect.WithSchema(agentServiceMethods.ByName("Report")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	agentServiceSendLogsHandler := connect.NewUnaryHandler(
+	agentServiceSendLogsHandler := connect.NewUnaryHandlerSimple(
 		AgentServiceSendLogsProcedure,
 		svc.SendLogs,
 		connect.WithSchema(agentServiceMethods.ByName("SendLogs")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	agentServiceListAgentsHandler := connect.NewUnaryHandler(
+	agentServiceListAgentsHandler := connect.NewUnaryHandlerSimple(
 		AgentServiceListAgentsProcedure,
 		svc.ListAgents,
 		connect.WithSchema(agentServiceMethods.ByName("ListAgents")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	agentServiceGetAgentHandler := connect.NewUnaryHandler(
+	agentServiceGetAgentHandler := connect.NewUnaryHandlerSimple(
 		AgentServiceGetAgentProcedure,
 		svc.GetAgent,
 		connect.WithSchema(agentServiceMethods.ByName("GetAgent")),
@@ -271,30 +299,30 @@ func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOpti
 // UnimplementedAgentServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedAgentServiceHandler struct{}
 
-func (UnimplementedAgentServiceHandler) Register(context.Context, *connect.Request[agent.RegisterRequest]) (*connect.Response[models.Agent], error) {
+func (UnimplementedAgentServiceHandler) Register(context.Context, *agent.RegisterRequest) (*models.Agent, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.agent.AgentService.Register is not implemented"))
 }
 
-func (UnimplementedAgentServiceHandler) Heartbeat(context.Context, *connect.Request[agent.HeartbeatRequest]) (*connect.Response[models.Agent], error) {
+func (UnimplementedAgentServiceHandler) Heartbeat(context.Context, *agent.HeartbeatRequest) (*models.Agent, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.agent.AgentService.Heartbeat is not implemented"))
 }
 
-func (UnimplementedAgentServiceHandler) Poll(context.Context, *connect.Request[agent.PollRequest]) (*connect.Response[agent.PollResponse], error) {
+func (UnimplementedAgentServiceHandler) Poll(context.Context, *agent.PollRequest) (*agent.PollResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.agent.AgentService.Poll is not implemented"))
 }
 
-func (UnimplementedAgentServiceHandler) Report(context.Context, *connect.Request[agent.ReportRequest]) (*connect.Response[emptypb.Empty], error) {
+func (UnimplementedAgentServiceHandler) Report(context.Context, *agent.ReportRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.agent.AgentService.Report is not implemented"))
 }
 
-func (UnimplementedAgentServiceHandler) SendLogs(context.Context, *connect.Request[agent.SendLogsRequest]) (*connect.Response[emptypb.Empty], error) {
+func (UnimplementedAgentServiceHandler) SendLogs(context.Context, *agent.SendLogsRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.agent.AgentService.SendLogs is not implemented"))
 }
 
-func (UnimplementedAgentServiceHandler) ListAgents(context.Context, *connect.Request[agent.ListAgentsRequest]) (*connect.Response[models.Agent_List], error) {
+func (UnimplementedAgentServiceHandler) ListAgents(context.Context, *agent.ListAgentsRequest) (*models.Agent_List, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.agent.AgentService.ListAgents is not implemented"))
 }
 
-func (UnimplementedAgentServiceHandler) GetAgent(context.Context, *connect.Request[models.AgentId]) (*connect.Response[models.Agent], error) {
+func (UnimplementedAgentServiceHandler) GetAgent(context.Context, *models.AgentId) (*models.Agent, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.agent.AgentService.GetAgent is not implemented"))
 }

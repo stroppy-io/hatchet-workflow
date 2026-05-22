@@ -6,7 +6,6 @@ package suite
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/gopherex/pgtx/pkg/tx"
 	"github.com/gopherex/xlog"
@@ -17,8 +16,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	uiapi "github.com/stroppy-io/stroppy-cloud/internal/api/ui"
+	dagdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/ids"
-	"github.com/stroppy-io/stroppy-cloud/internal/domain/planner"
 	uipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -33,12 +32,12 @@ const metadataTenantID = "tenant_id"
 
 // Planner compiles a TestPreset (+ deployment params) into a Dag (C12).
 type Planner interface {
-	Compile(preset *domain.TestPreset, params *planner.DeploymentParams) (*primitive.Dag, error)
+	Compile(preset *domain.TestPreset, params *dagdomain.DeploymentParams) (*primitive.Dag, error)
 }
 
 // ProviderResolver resolves a tenant's deployment params for a topology.
 type ProviderResolver interface {
-	Resolve(ctx context.Context, tenantID string, topo *domain.Topology) (*planner.DeploymentParams, error)
+	Resolve(ctx context.Context, tenantID string, topo *domain.Topology) (*dagdomain.DeploymentParams, error)
 }
 
 // DagStore persists Dag aggregates.
@@ -154,7 +153,7 @@ func (s *SuiteService) LaunchSuiteRun(ctx context.Context, req *uipb.LaunchSuite
 
 			var testDags []*primitive.Dag
 			var testRuns []*models.TestRun
-			var refNodes []*primitive.Dag_Node
+			var testDagIDs []string
 
 			for i, tp := range suite.GetPreset().GetTests() {
 				params, err := s.provider.Resolve(ctx, tenant.GetValue(), tp.GetTopology())
@@ -180,20 +179,14 @@ func (s *SuiteService) LaunchSuiteRun(ctx context.Context, req *uipb.LaunchSuite
 					Dag:        &models.DagId{Value: dag.GetId()},
 					SuiteRunId: suiteRunID,
 				})
-				refNodes = append(refNodes, dagRefNode(fmt.Sprintf("test_%d", i), dag.GetId()))
+				testDagIDs = append(testDagIDs, dag.GetId())
 			}
 
-			orchID := ids.New()
-			orch := &primitive.Dag{
-				Id:     orchID,
-				Status: primitive.Status_STATUS_PENDING,
-				Nodes:  refNodes,
-				Scheduling: &primitive.Dag_Scheduling{
-					MaxParallelism: 1,
-					OnNodeFailure:  suite.GetPreset().GetScheduling().GetOnNodeFailure(),
-				},
-				Metadata: map[string]string{metadataTenantID: tenant.GetValue()},
-			}
+			// SuiteRun is itself a Dag of dag_ref nodes over the per-test Dags
+			// (built in internal/domain/dag).
+			orch := dagdomain.BuildSuiteDag(testDagIDs, suite.GetPreset().GetScheduling())
+			orch.Metadata = map[string]string{metadataTenantID: tenant.GetValue()}
+			orchID := orch.GetId()
 			if err := runtime.ValidateDag(orch); err != nil {
 				return nil, status.Errorf(codes.Internal, "invalid orchestration dag: %v", err)
 			}
@@ -295,16 +288,6 @@ func (s *SuiteService) loadSuiteRun(ctx context.Context, tenantID, suiteRunID st
 		return nil, svcutil.NotFound(err, "suite run")
 	}
 	return sr, nil
-}
-
-func dagRefNode(id, dagID string) *primitive.Dag_Node {
-	return &primitive.Dag_Node{
-		Id:          id,
-		ExecutionId: id,
-		Status:      primitive.Status_STATUS_PENDING,
-		Scheduling:  &primitive.Dag_Node_Scheduling{},
-		Variant:     &primitive.Dag_Node_DagRef_{DagRef: &primitive.Dag_Node_DagRef{DagId: dagID}},
-	}
 }
 
 func isTerminal(st primitive.Status) bool {

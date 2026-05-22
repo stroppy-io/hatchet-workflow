@@ -64,7 +64,7 @@ func (s *memoryProcessorStorage) SaveDag(_ context.Context, dag *primitive.Dag) 
 }
 
 func TestDagProcessorStopReturnsWhileLifecycleIsInInitialProcessAll(t *testing.T) {
-	reg := NewTaskRegistry(NewTask("slow", func(*emptypb.Empty) (*emptypb.Empty, error) {
+	reg := NewTaskRegistry(NewTask("slow", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 		time.Sleep(25 * time.Millisecond)
 		return &emptypb.Empty{}, nil
 	}))
@@ -91,7 +91,7 @@ func TestDagProcessorStopReturnsWhileLifecycleIsInInitialProcessAll(t *testing.T
 }
 
 func TestDagProcessorRejectsAddDagForActiveID(t *testing.T) {
-	reg := NewTaskRegistry(NewTask("slow", func(*emptypb.Empty) (*emptypb.Empty, error) {
+	reg := NewTaskRegistry(NewTask("slow", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 		time.Sleep(50 * time.Millisecond)
 		return &emptypb.Empty{}, nil
 	}))
@@ -230,7 +230,7 @@ func TestProcessorAllowsReAddAfterCompletion(t *testing.T) {
 func TestProcessorUsesPredicates(t *testing.T) {
 	storage := newMemoryProcessorStorage()
 	reg := NewTaskRegistry(okTask(nil, "a"), okTask(nil, "b"))
-	preds := PredicateRegistryMap{"go": func(*primitive.Dag, *primitive.Dag_Edge) bool { return true }}
+	preds := PredicateRegistryMap{"go": func(DagContext, *primitive.Dag_Edge) bool { return true }}
 	p := NewDagProcessor(storage, reg,
 		WithProcessorInterval(5*time.Millisecond),
 		WithProcessorPredicates(preds),

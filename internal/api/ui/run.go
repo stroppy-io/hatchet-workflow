@@ -3,11 +3,14 @@ package ui
 import (
 	"context"
 
+	"connectrpc.com/connect"
 	"github.com/gopherex/xlog"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/connectext"
 	uipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui/uiconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/logs"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/metrics"
@@ -39,7 +42,7 @@ type RunService struct {
 	svc RunActions
 }
 
-var _ uipb.RunServiceServer = (*RunService)(nil)
+var _ uiconnect.RunServiceHandler = (*RunService)(nil)
 
 func NewRunService(logger *xlog.Logger, svc RunActions) *RunService {
 	return &RunService{
@@ -76,10 +79,12 @@ func (s *RunService) CancelTestRun(ctx context.Context, req *uipb.CancelTestRunR
 		})
 }
 
-func (s *RunService) StreamTestRunLogs(req *uipb.StreamTestRunLogsRequest, stream grpc.ServerStreamingServer[logs.LogLine]) error {
-	return s.Trace(stream.Context(), "StreamTestRunLogs",
-		func(_ context.Context, _ trace.Span) error {
-			return s.svc.StreamTestRunLogs(req, stream)
+// StreamTestRunLogs is connect server-streaming; it wraps the connect stream so the
+// underlying gRPC-style service (RunActions, grpc.ServerStreamingServer) is unchanged.
+func (s *RunService) StreamTestRunLogs(ctx context.Context, req *uipb.StreamTestRunLogsRequest, stream *connect.ServerStream[logs.LogLine]) error {
+	return s.Trace(ctx, "StreamTestRunLogs",
+		func(ctx context.Context, _ trace.Span) error {
+			return s.svc.StreamTestRunLogs(req, connectext.NewConnectStreamWrapper[logs.LogLine](ctx, stream))
 		})
 }
 

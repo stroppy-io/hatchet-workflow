@@ -4,7 +4,9 @@
 package app
 
 import (
+	"net"
 	"os"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -30,6 +32,9 @@ type Config struct {
 	VictoriaLogsURL    string
 	VictoriaMetricsURL string
 	VictoriaToken      string
+	// GrafanaURL is the upstream Grafana base URL the server reverse-proxies under
+	// /grafana/ for embedded dashboards (empty = the proxy route is not mounted).
+	GrafanaURL string
 
 	// Deployment seam: where provisioned agents call back + fetch their binary.
 	ServerAddr_     string
@@ -51,9 +56,18 @@ type AgentConfig struct {
 
 // ── per-service config interface satisfaction ──────────────────────────────────
 
-func (c *Config) JWTSecret() []byte              { return []byte(c.JWTSecretRaw) }
-func (c *Config) ShareBaseURL() string           { return c.ShareBaseURL_ }
-func (c *Config) ServerAddr() string             { return c.ServerAddr_ }
+func (c *Config) JWTSecret() []byte    { return []byte(c.JWTSecretRaw) }
+func (c *Config) ShareBaseURL() string { return c.ShareBaseURL_ }
+
+// ServerAddr is the FALLBACK control-plane address (the authoritative one is the
+// global PlatformSettings.server_addr). When unset it derives a docker-host address
+// so agents running in local containers can reach the server on the host.
+func (c *Config) ServerAddr() string {
+	if c.ServerAddr_ != "" {
+		return c.ServerAddr_
+	}
+	return dockerHostAddr(c.GRPCAddr)
+}
 func (c *Config) AgentBinaryURL() string         { return c.AgentBinaryURL_ }
 func (c *Config) AccessTokenTTL() time.Duration  { return 15 * time.Minute }
 func (c *Config) RefreshTokenTTL() time.Duration { return 30 * 24 * time.Hour }
@@ -93,9 +107,11 @@ func LoadConfig() *Config {
 		VictoriaLogsURL:    env("STROPPY_VL_URL", "http://localhost:9428"),
 		VictoriaMetricsURL: env("STROPPY_VM_URL", "http://localhost:8428"),
 		VictoriaToken:      os.Getenv("STROPPY_VICTORIA_TOKEN"),
-		ServerAddr_:        env("STROPPY_SERVER_ADDR", "http://localhost:8080"),
-		AgentBinaryURL_:    env("STROPPY_AGENT_BINARY_URL", "http://localhost:8080/agent/stroppy-cloud"),
-		AgentJWTTTL_:       envDuration("STROPPY_AGENT_JWT_TTL", 24*time.Hour),
+		GrafanaURL:         os.Getenv("STROPPY_GRAFANA_URL"),
+		// Empty default -> ServerAddr() derives a docker-host address for local runs.
+		ServerAddr_:     os.Getenv("STROPPY_SERVER_ADDR"),
+		AgentBinaryURL_: os.Getenv("STROPPY_AGENT_BINARY_URL"),
+		AgentJWTTTL_:    envDuration("STROPPY_AGENT_JWT_TTL", 24*time.Hour),
 		Agent: AgentConfig{
 			ServerAddr: env("STROPPY_AGENT_SERVER", "localhost:8080"),
 			TenantID:   os.Getenv("STROPPY_AGENT_TENANT"),
@@ -105,6 +121,21 @@ func LoadConfig() *Config {
 		},
 	}
 	return c
+}
+
+// dockerHostAddr derives the address agents running in local Docker containers use
+// to reach the server on the host: host.docker.internal on macOS/Windows, the
+// default bridge gateway (172.17.0.1) on Linux, with the server's listen port.
+func dockerHostAddr(listenAddr string) string {
+	_, port, _ := net.SplitHostPort(listenAddr)
+	if port == "" {
+		port = "8080"
+	}
+	host := "host.docker.internal"
+	if runtime.GOOS == "linux" {
+		host = "172.17.0.1"
+	}
+	return "http://" + net.JoinHostPort(host, port)
 }
 
 func env(key, def string) string {

@@ -17,11 +17,11 @@ import (
 func TestExecutorRunsNodesInDependencyOrder(t *testing.T) {
 	var calls []string
 	reg := NewTaskRegistry(
-		NewTask("first", func(*emptypb.Empty) (*emptypb.Empty, error) {
+		NewTask("first", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 			calls = append(calls, "first")
 			return &emptypb.Empty{}, nil
 		}),
-		NewTask("second", func(*emptypb.Empty) (*emptypb.Empty, error) {
+		NewTask("second", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 			calls = append(calls, "second")
 			return &emptypb.Empty{}, nil
 		}),
@@ -54,7 +54,7 @@ func TestExecutorRunsNodesInDependencyOrder(t *testing.T) {
 func TestExecutorRetryStateAndFailureHistory(t *testing.T) {
 	now := time.Date(2026, 5, 20, 12, 0, 0, 0, time.UTC)
 	attempts := 0
-	reg := NewTaskRegistry(NewTask("flaky", func(*emptypb.Empty) (*emptypb.Empty, error) {
+	reg := NewTaskRegistry(NewTask("flaky", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 		attempts++
 		if attempts == 1 {
 			return nil, errors.New("temporary failure")
@@ -102,14 +102,14 @@ func TestExecutorRetryStateAndFailureHistory(t *testing.T) {
 
 func TestExecutorStopPolicyMarksUnreachableNodesSkipped(t *testing.T) {
 	reg := NewTaskRegistry(
-		NewTask("fail", func(*emptypb.Empty) (*emptypb.Empty, error) {
+		NewTask("fail", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 			return nil, NewFailureError(errors.New("terraform quota exceeded"), &primitive.Dag_Failure{
 				Code:   "TERRAFORM_APPLY_FAILED",
 				Source: "terraform",
 				Phase:  "terraform_apply",
 			})
 		}),
-		NewTask("never", func(*emptypb.Empty) (*emptypb.Empty, error) {
+		NewTask("never", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 			t.Fatal("dependent node should not run")
 			return &emptypb.Empty{}, nil
 		}),
@@ -142,13 +142,17 @@ func TestExecutorStopPolicyMarksUnreachableNodesSkipped(t *testing.T) {
 	}
 }
 
-func TestExecutorSkipsAlwaysRunOnHappyPath(t *testing.T) {
+// always_run teardown runs at the end regardless of outcome — including the happy
+// path (dag.proto: a terraform_destroy node tears down what apply created on every
+// run, success or failure).
+func TestExecutorRunsAlwaysRunTeardownOnSuccess(t *testing.T) {
+	ran := false
 	reg := NewTaskRegistry(
-		NewTask("ok", func(*emptypb.Empty) (*emptypb.Empty, error) {
+		NewTask("ok", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 			return &emptypb.Empty{}, nil
 		}),
-		NewTask("cleanup", func(*emptypb.Empty) (*emptypb.Empty, error) {
-			t.Fatal("always_run cleanup should not run on happy path")
+		NewTask("cleanup", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
+			ran = true
 			return &emptypb.Empty{}, nil
 		}),
 	)
@@ -166,17 +170,17 @@ func TestExecutorSkipsAlwaysRunOnHappyPath(t *testing.T) {
 	if dag.GetStatus() != primitive.Status_STATUS_COMPLETED {
 		t.Fatalf("dag status = %s, want completed", dag.GetStatus())
 	}
-	if cleanup.GetStatus() != primitive.Status_STATUS_SKIPPED {
-		t.Fatalf("cleanup status = %s, want skipped", cleanup.GetStatus())
+	if !ran || cleanup.GetStatus() != primitive.Status_STATUS_COMPLETED {
+		t.Fatalf("cleanup ran=%v status=%s, want completed teardown on success", ran, cleanup.GetStatus())
 	}
 }
 
 func TestExecutorPersistsFailedNodeAsRunningDagUntilCleanup(t *testing.T) {
 	reg := NewTaskRegistry(
-		NewTask("fail", func(*emptypb.Empty) (*emptypb.Empty, error) {
+		NewTask("fail", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 			return nil, errors.New("boom")
 		}),
-		NewTask("cleanup", func(*emptypb.Empty) (*emptypb.Empty, error) {
+		NewTask("cleanup", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 			return &emptypb.Empty{}, nil
 		}),
 	)
@@ -233,7 +237,7 @@ func TestNextDelayBackoffGrowsWithoutMaxDelay(t *testing.T) {
 
 func TestExecutorNoReadyNonTerminalReturnsTerminalError(t *testing.T) {
 	reg := NewTaskRegistry(
-		NewTask("ok", func(*emptypb.Empty) (*emptypb.Empty, error) {
+		NewTask("ok", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 			return &emptypb.Empty{}, nil
 		}),
 	)
@@ -248,18 +252,21 @@ func TestExecutorNoReadyNonTerminalReturnsTerminalError(t *testing.T) {
 		Condition: &primitive.Dag_Edge_PredicateName{PredicateName: "missing"},
 	}}
 
-	err := NewExecutor(reg).Run(context.Background(), dag)
-	if err == nil {
-		t.Fatal("Run() expected terminal error")
+	// b's only incoming edge is permanently unsatisfiable (source terminal, predicate
+	// never true) — a conditional branch the run did not take. b is SKIPPED and the
+	// dag completes (conditional-branch semantics).
+	_ = NewExecutor(reg).Run(context.Background(), dag)
+	if got := findNode(dag, "b").GetStatus(); got != primitive.Status_STATUS_SKIPPED {
+		t.Fatalf("b status = %s, want skipped", got)
 	}
-	if dag.GetStatus() != primitive.Status_STATUS_FAILED {
-		t.Fatalf("dag status = %s, want failed", dag.GetStatus())
+	if dag.GetStatus() != primitive.Status_STATUS_COMPLETED {
+		t.Fatalf("dag status = %s, want completed", dag.GetStatus())
 	}
 }
 
 func TestExecutorRecoversInterruptedRunningNode(t *testing.T) {
 	calls := 0
-	reg := NewTaskRegistry(NewTask("recoverable", func(*emptypb.Empty) (*emptypb.Empty, error) {
+	reg := NewTaskRegistry(NewTask("recoverable", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 		calls++
 		return &emptypb.Empty{}, nil
 	}))
@@ -304,7 +311,7 @@ func TestExecutorRecoversInterruptedRunningNode(t *testing.T) {
 
 func TestRecoverCancellingDagKeepsAlwaysRunRunnable(t *testing.T) {
 	reg := NewTaskRegistry(
-		NewTask("cleanup", func(*emptypb.Empty) (*emptypb.Empty, error) {
+		NewTask("cleanup", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 			return &emptypb.Empty{}, nil
 		}),
 	)
@@ -386,7 +393,7 @@ func (r *recorder) snapshot() []string {
 }
 
 func okTask(rec *recorder, name string) Task[*anypb.Any, *anypb.Any] {
-	return NewTask(name, func(*emptypb.Empty) (*emptypb.Empty, error) {
+	return NewTask(name, func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 		if rec != nil {
 			rec.add(name)
 		}
@@ -395,7 +402,7 @@ func okTask(rec *recorder, name string) Task[*anypb.Any, *anypb.Any] {
 }
 
 func failTask(rec *recorder, name string) Task[*anypb.Any, *anypb.Any] {
-	return NewTask(name, func(*emptypb.Empty) (*emptypb.Empty, error) {
+	return NewTask(name, func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 		if rec != nil {
 			rec.add(name)
 		}
@@ -413,7 +420,7 @@ func alwaysRunNode(t *testing.T, id, handler string) *primitive.Dag_Node {
 
 // On full success, always_run cleanup nodes are reserved for teardown only and
 // must be SKIPPED, not block the dag (regression for the "no ready nodes" hang).
-func TestAlwaysRunSkippedOnSuccess(t *testing.T) {
+func TestAlwaysRunTeardownRunsOnSuccess(t *testing.T) {
 	rec := &recorder{}
 	reg := NewTaskRegistry(okTask(rec, "work"), okTask(rec, "cleanup"))
 	dag := testDag("dag-arsuccess",
@@ -427,13 +434,17 @@ func TestAlwaysRunSkippedOnSuccess(t *testing.T) {
 	if dag.GetStatus() != primitive.Status_STATUS_COMPLETED {
 		t.Fatalf("dag status = %s, want completed", dag.GetStatus())
 	}
-	if got := nodeByID(dag, "cleanup").GetStatus(); got != primitive.Status_STATUS_SKIPPED {
-		t.Fatalf("cleanup status = %s, want skipped", got)
+	if got := nodeByID(dag, "cleanup").GetStatus(); got != primitive.Status_STATUS_COMPLETED {
+		t.Fatalf("cleanup status = %s, want completed (teardown runs on success)", got)
 	}
+	ran := false
 	for _, c := range rec.snapshot() {
 		if c == "cleanup" {
-			t.Fatal("cleanup task ran on success path, want skipped")
+			ran = true
 		}
+	}
+	if !ran {
+		t.Fatal("always_run teardown did not run on the success path")
 	}
 }
 
@@ -515,7 +526,7 @@ func TestJoinPolicyAllSkipsOnFailedDependency(t *testing.T) {
 	reg := NewTaskRegistry(
 		okTask(nil, "a"),
 		failTask(nil, "b"),
-		NewTask("join", func(*emptypb.Empty) (*emptypb.Empty, error) {
+		NewTask("join", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 			t.Fatal("join must not run when an ALL dependency failed")
 			return &emptypb.Empty{}, nil
 		}),
@@ -548,7 +559,7 @@ func TestPredicateEdgeAllowsAndBlocks(t *testing.T) {
 			Target:    "b",
 			Condition: &primitive.Dag_Edge_PredicateName{PredicateName: "p"},
 		}}
-		preds := PredicateRegistryMap{"p": func(*primitive.Dag, *primitive.Dag_Edge) bool { return pred }}
+		preds := PredicateRegistryMap{"p": func(DagContext, *primitive.Dag_Edge) bool { return pred }}
 		_ = NewExecutor(reg, WithPredicates(preds)).Run(context.Background(), dag)
 		return dag
 	}
@@ -563,13 +574,15 @@ func TestPredicateEdgeAllowsAndBlocks(t *testing.T) {
 		}
 	})
 
-	// Characterizes CURRENT behavior: a target whose only edge predicate is false
-	// can never become ready; the dag fails with "no ready nodes" instead of
-	// skipping the unreachable node.
-	t.Run("false_fails_dag_current_behavior", func(t *testing.T) {
+	// A target whose only edge predicate is false can never become ready — it is the
+	// conditional branch the run did not take, so it is SKIPPED and the dag completes.
+	t.Run("false_skips_target", func(t *testing.T) {
 		dag := run(t, false)
-		if dag.GetStatus() != primitive.Status_STATUS_FAILED {
-			t.Fatalf("dag status = %s; current behavior is failed", dag.GetStatus())
+		if got := nodeByID(dag, "b").GetStatus(); got != primitive.Status_STATUS_SKIPPED {
+			t.Fatalf("b status = %s, want skipped", got)
+		}
+		if dag.GetStatus() != primitive.Status_STATUS_COMPLETED {
+			t.Fatalf("dag status = %s, want completed", dag.GetStatus())
 		}
 	})
 }
@@ -800,7 +813,7 @@ func TestDagRefRequiresRunner(t *testing.T) {
 // --- cancellation ------------------------------------------------------------
 
 func TestRunCancelsOnContextCancel(t *testing.T) {
-	reg := NewTaskRegistry(NewTask("work", func(*emptypb.Empty) (*emptypb.Empty, error) {
+	reg := NewTaskRegistry(NewTask("work", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 		t.Fatal("task must not run when context already cancelled")
 		return &emptypb.Empty{}, nil
 	}))
@@ -912,10 +925,10 @@ func TestFailureErrorWrapsAndUnwraps(t *testing.T) {
 }
 
 func TestTaskFnCallAdapter(t *testing.T) {
-	var fn TaskFn[*emptypb.Empty, *emptypb.Empty] = func(in *emptypb.Empty) (*emptypb.Empty, error) {
+	var fn TaskFn[*emptypb.Empty, *emptypb.Empty] = func(_ DagContext, in *emptypb.Empty) (*emptypb.Empty, error) {
 		return in, nil
 	}
-	if _, err := fn.Call(&emptypb.Empty{}); err != nil {
+	if _, err := fn.Call(&dagContext{Context: context.Background(), dag: &primitive.Dag{}}, &emptypb.Empty{}); err != nil {
 		t.Fatalf("TaskFn.Call() error = %v", err)
 	}
 }
@@ -964,7 +977,7 @@ func TestDagRefChildFailedFails(t *testing.T) {
 func TestRetryUntilSucceeded(t *testing.T) {
 	now := time.Date(2026, 5, 20, 12, 0, 0, 0, time.UTC)
 	attempts := 0
-	reg := NewTaskRegistry(NewTask("flaky", func(*emptypb.Empty) (*emptypb.Empty, error) {
+	reg := NewTaskRegistry(NewTask("flaky", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 		attempts++
 		if attempts < 3 {
 			return nil, errors.New("not yet")
@@ -997,7 +1010,7 @@ func TestRetryUntilSucceeded(t *testing.T) {
 
 func TestNonRetryableOpinionStopsRetries(t *testing.T) {
 	calls := 0
-	reg := NewTaskRegistry(NewTask("auth", func(*emptypb.Empty) (*emptypb.Empty, error) {
+	reg := NewTaskRegistry(NewTask("auth", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 		calls++
 		return nil, NewFailureError(errors.New("unauthorized"), &primitive.Dag_Failure{
 			Code:      "AUTH_FAILED",
@@ -1028,7 +1041,7 @@ func TestNonRetryableOpinionStopsRetries(t *testing.T) {
 func TestRetryableOpinionFailureErrorRetries(t *testing.T) {
 	now := time.Date(2026, 5, 20, 12, 0, 0, 0, time.UTC)
 	calls := 0
-	reg := NewTaskRegistry(NewTask("flaky", func(*emptypb.Empty) (*emptypb.Empty, error) {
+	reg := NewTaskRegistry(NewTask("flaky", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 		calls++
 		if calls == 1 {
 			return nil, NewFailureError(errors.New("transient"), &primitive.Dag_Failure{
@@ -1423,7 +1436,7 @@ func TestEdgeOnStatusCompletedMatches(t *testing.T) {
 func TestEdgeOnStatusUnmatchedNeverRunsTarget(t *testing.T) {
 	reg := NewTaskRegistry(
 		okTask(nil, "a"),
-		NewTask("b", func(*emptypb.Empty) (*emptypb.Empty, error) {
+		NewTask("b", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 			t.Fatal("b must not run: on_status FAILED never matches a COMPLETED source")
 			return &emptypb.Empty{}, nil
 		}),
@@ -1436,11 +1449,14 @@ func TestEdgeOnStatusUnmatchedNeverRunsTarget(t *testing.T) {
 		Condition: &primitive.Dag_Edge_OnStatus{OnStatus: primitive.Status_STATUS_FAILED},
 	}}
 
-	if err := NewExecutor(reg).Run(context.Background(), dag); err == nil {
-		t.Fatal("Run() expected failure (target unsatisfiable)")
+	// on_status FAILED never matches the COMPLETED source: b is the branch not taken,
+	// SKIPPED (its task never runs) and the dag completes.
+	_ = NewExecutor(reg).Run(context.Background(), dag)
+	if got := nodeByID(dag, "b").GetStatus(); got != primitive.Status_STATUS_SKIPPED {
+		t.Fatalf("b status = %s, want skipped", got)
 	}
-	if dag.GetStatus() != primitive.Status_STATUS_FAILED {
-		t.Fatalf("dag status = %s, want failed", dag.GetStatus())
+	if dag.GetStatus() != primitive.Status_STATUS_COMPLETED {
+		t.Fatalf("dag status = %s, want completed", dag.GetStatus())
 	}
 }
 
@@ -1557,7 +1573,7 @@ func TestRecoverCancellingKeepsRunningAlwaysRun(t *testing.T) {
 // --- run on already-terminal dag ---------------------------------------------
 
 func TestRunAlreadyCompletedIsNoop(t *testing.T) {
-	reg := NewTaskRegistry(NewTask("never", func(*emptypb.Empty) (*emptypb.Empty, error) {
+	reg := NewTaskRegistry(NewTask("never", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 		t.Fatal("task must not run on an already-completed dag")
 		return &emptypb.Empty{}, nil
 	}))
@@ -1595,7 +1611,7 @@ func TestExecuteNodeNoVariant(t *testing.T) {
 		Id:         "x",
 		Scheduling: &primitive.Dag_Node_Scheduling{RetryPolicy: &primitive.Retry_Policy{Attempts: 1}},
 	}
-	res := NewExecutor(NewTaskRegistry()).executeNode(context.Background(), node)
+	res := NewExecutor(NewTaskRegistry()).executeNode(context.Background(), &primitive.Dag{}, node)
 	if res.err == nil {
 		t.Fatal("node without variant must error")
 	}
@@ -1671,7 +1687,7 @@ func TestSubDagMultiNode(t *testing.T) {
 
 func TestExecutorRealClockRetrySleep(t *testing.T) {
 	calls := 0
-	reg := NewTaskRegistry(NewTask("flaky", func(*emptypb.Empty) (*emptypb.Empty, error) {
+	reg := NewTaskRegistry(NewTask("flaky", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 		calls++
 		if calls == 1 {
 			return nil, errors.New("transient")
@@ -1697,7 +1713,7 @@ func TestExecutorRealClockRetrySleep(t *testing.T) {
 }
 
 func TestExecutorRealClockCancelDuringSleep(t *testing.T) {
-	reg := NewTaskRegistry(NewTask("flaky", func(*emptypb.Empty) (*emptypb.Empty, error) {
+	reg := NewTaskRegistry(NewTask("flaky", func(DagContext, *emptypb.Empty) (*emptypb.Empty, error) {
 		return nil, errors.New("always fails")
 	}))
 	dag := testDag("real-cancel", testNode(t, "flaky", "flaky", &primitive.Retry_Policy{
@@ -1833,7 +1849,7 @@ func TestTaskHandlerNotFound(t *testing.T) {
 
 func TestTaskInputTypeMismatch(t *testing.T) {
 	// Handler expects *durationpb.Duration but the node input is *emptypb.Empty.
-	reg := NewTaskRegistry(NewTask("typed", func(*durationpb.Duration) (*emptypb.Empty, error) {
+	reg := NewTaskRegistry(NewTask("typed", func(_ DagContext, _ *durationpb.Duration) (*emptypb.Empty, error) {
 		return &emptypb.Empty{}, nil
 	}))
 	dag := testDag("type-mismatch", testNode(t, "a", "typed", nil))

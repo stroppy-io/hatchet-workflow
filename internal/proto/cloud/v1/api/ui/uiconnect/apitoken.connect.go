@@ -48,9 +48,9 @@ const (
 
 // ApiTokenServiceClient is a client for the cloud.v1.api.ui.ApiTokenService service.
 type ApiTokenServiceClient interface {
-	CreateApiToken(context.Context, *connect.Request[ui.CreateApiTokenRequest]) (*connect.Response[ui.CreateApiTokenResponse], error)
-	ListApiTokens(context.Context, *connect.Request[ui.ListApiTokensRequest]) (*connect.Response[models.ApiToken_List], error)
-	RevokeApiToken(context.Context, *connect.Request[ui.RevokeApiTokenRequest]) (*connect.Response[emptypb.Empty], error)
+	CreateApiToken(context.Context, *ui.CreateApiTokenRequest) (*ui.CreateApiTokenResponse, error)
+	ListApiTokens(context.Context, *ui.ListApiTokensRequest) (*models.ApiToken_List, error)
+	RevokeApiToken(context.Context, *ui.RevokeApiTokenRequest) (*emptypb.Empty, error)
 }
 
 // NewApiTokenServiceClient constructs a client for the cloud.v1.api.ui.ApiTokenService service. By
@@ -96,25 +96,37 @@ type apiTokenServiceClient struct {
 }
 
 // CreateApiToken calls cloud.v1.api.ui.ApiTokenService.CreateApiToken.
-func (c *apiTokenServiceClient) CreateApiToken(ctx context.Context, req *connect.Request[ui.CreateApiTokenRequest]) (*connect.Response[ui.CreateApiTokenResponse], error) {
-	return c.createApiToken.CallUnary(ctx, req)
+func (c *apiTokenServiceClient) CreateApiToken(ctx context.Context, req *ui.CreateApiTokenRequest) (*ui.CreateApiTokenResponse, error) {
+	response, err := c.createApiToken.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // ListApiTokens calls cloud.v1.api.ui.ApiTokenService.ListApiTokens.
-func (c *apiTokenServiceClient) ListApiTokens(ctx context.Context, req *connect.Request[ui.ListApiTokensRequest]) (*connect.Response[models.ApiToken_List], error) {
-	return c.listApiTokens.CallUnary(ctx, req)
+func (c *apiTokenServiceClient) ListApiTokens(ctx context.Context, req *ui.ListApiTokensRequest) (*models.ApiToken_List, error) {
+	response, err := c.listApiTokens.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // RevokeApiToken calls cloud.v1.api.ui.ApiTokenService.RevokeApiToken.
-func (c *apiTokenServiceClient) RevokeApiToken(ctx context.Context, req *connect.Request[ui.RevokeApiTokenRequest]) (*connect.Response[emptypb.Empty], error) {
-	return c.revokeApiToken.CallUnary(ctx, req)
+func (c *apiTokenServiceClient) RevokeApiToken(ctx context.Context, req *ui.RevokeApiTokenRequest) (*emptypb.Empty, error) {
+	response, err := c.revokeApiToken.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // ApiTokenServiceHandler is an implementation of the cloud.v1.api.ui.ApiTokenService service.
 type ApiTokenServiceHandler interface {
-	CreateApiToken(context.Context, *connect.Request[ui.CreateApiTokenRequest]) (*connect.Response[ui.CreateApiTokenResponse], error)
-	ListApiTokens(context.Context, *connect.Request[ui.ListApiTokensRequest]) (*connect.Response[models.ApiToken_List], error)
-	RevokeApiToken(context.Context, *connect.Request[ui.RevokeApiTokenRequest]) (*connect.Response[emptypb.Empty], error)
+	CreateApiToken(context.Context, *ui.CreateApiTokenRequest) (*ui.CreateApiTokenResponse, error)
+	ListApiTokens(context.Context, *ui.ListApiTokensRequest) (*models.ApiToken_List, error)
+	RevokeApiToken(context.Context, *ui.RevokeApiTokenRequest) (*emptypb.Empty, error)
 }
 
 // NewApiTokenServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -124,21 +136,21 @@ type ApiTokenServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewApiTokenServiceHandler(svc ApiTokenServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	apiTokenServiceMethods := ui.File_cloud_v1_api_ui_apitoken_proto.Services().ByName("ApiTokenService").Methods()
-	apiTokenServiceCreateApiTokenHandler := connect.NewUnaryHandler(
+	apiTokenServiceCreateApiTokenHandler := connect.NewUnaryHandlerSimple(
 		ApiTokenServiceCreateApiTokenProcedure,
 		svc.CreateApiToken,
 		connect.WithSchema(apiTokenServiceMethods.ByName("CreateApiToken")),
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
-	apiTokenServiceListApiTokensHandler := connect.NewUnaryHandler(
+	apiTokenServiceListApiTokensHandler := connect.NewUnaryHandlerSimple(
 		ApiTokenServiceListApiTokensProcedure,
 		svc.ListApiTokens,
 		connect.WithSchema(apiTokenServiceMethods.ByName("ListApiTokens")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
-	apiTokenServiceRevokeApiTokenHandler := connect.NewUnaryHandler(
+	apiTokenServiceRevokeApiTokenHandler := connect.NewUnaryHandlerSimple(
 		ApiTokenServiceRevokeApiTokenProcedure,
 		svc.RevokeApiToken,
 		connect.WithSchema(apiTokenServiceMethods.ByName("RevokeApiToken")),
@@ -162,14 +174,14 @@ func NewApiTokenServiceHandler(svc ApiTokenServiceHandler, opts ...connect.Handl
 // UnimplementedApiTokenServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedApiTokenServiceHandler struct{}
 
-func (UnimplementedApiTokenServiceHandler) CreateApiToken(context.Context, *connect.Request[ui.CreateApiTokenRequest]) (*connect.Response[ui.CreateApiTokenResponse], error) {
+func (UnimplementedApiTokenServiceHandler) CreateApiToken(context.Context, *ui.CreateApiTokenRequest) (*ui.CreateApiTokenResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.ApiTokenService.CreateApiToken is not implemented"))
 }
 
-func (UnimplementedApiTokenServiceHandler) ListApiTokens(context.Context, *connect.Request[ui.ListApiTokensRequest]) (*connect.Response[models.ApiToken_List], error) {
+func (UnimplementedApiTokenServiceHandler) ListApiTokens(context.Context, *ui.ListApiTokensRequest) (*models.ApiToken_List, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.ApiTokenService.ListApiTokens is not implemented"))
 }
 
-func (UnimplementedApiTokenServiceHandler) RevokeApiToken(context.Context, *connect.Request[ui.RevokeApiTokenRequest]) (*connect.Response[emptypb.Empty], error) {
+func (UnimplementedApiTokenServiceHandler) RevokeApiToken(context.Context, *ui.RevokeApiTokenRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.ApiTokenService.RevokeApiToken is not implemented"))
 }
