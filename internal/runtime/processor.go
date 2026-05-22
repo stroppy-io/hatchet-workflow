@@ -43,6 +43,7 @@ type DagProcessor struct {
 	cancel     context.CancelFunc
 	stopOnce   sync.Once
 	wg         sync.WaitGroup
+	onTerminal func(context.Context, *primitive.Dag)
 }
 
 func NewDagProcessor(storage Storage, tasks TasksRegistry, opts ...ProcessorOption) *DagProcessor {
@@ -74,6 +75,12 @@ func WithProcessorInterval(interval time.Duration) ProcessorOption {
 			p.interval = interval
 		}
 	}
+}
+
+// WithTerminalHook registers a callback fired once when a dag reaches a terminal
+// status (the app wires this to run/suite webhook delivery; runtime stays generic).
+func WithTerminalHook(fn func(context.Context, *primitive.Dag)) ProcessorOption {
+	return func(p *DagProcessor) { p.onTerminal = fn }
 }
 
 func (p *DagProcessor) lifecycle(ctx context.Context) {
@@ -125,6 +132,9 @@ func (p *DagProcessor) processOne(ctx context.Context, id string, generation uin
 		return
 	}
 	if isDagTerminal(runDag.GetStatus()) {
+		if p.onTerminal != nil {
+			p.onTerminal(ctx, runDag)
+		}
 		p.dags.Remove(id)
 		return
 	}

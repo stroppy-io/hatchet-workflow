@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 	"testing"
 
 	"github.com/gopherex/pgtx"
@@ -46,17 +47,41 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// noopSender is a fake Sender that never delivers — TestWebhook must not perform
-// real HTTP delivery in integration tests.
-type noopSender struct{}
+// recordSender is a fake Sender that records deliveries instead of performing real
+// HTTP in integration tests.
+type recordSender struct {
+	mu   sync.Mutex
+	sent []sentRecord
+}
 
-func (noopSender) Send(_ context.Context, _, _ string, _ []byte) error { return nil }
+type sentRecord struct {
+	url, secret string
+	payload     []byte
+}
+
+func (r *recordSender) Send(_ context.Context, url, secret string, payload []byte) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.sent = append(r.sent, sentRecord{url, secret, payload})
+	return nil
+}
+
+func (r *recordSender) urls() []string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	out := make([]string, len(r.sent))
+	for i, s := range r.sent {
+		out[i] = s.url
+	}
+	return out
+}
 
 // fixture bundles the system-under-test and the prerequisites a tenant-scoped
 // RBAC request needs: a tenant, an account, and the account's TenantMember role.
 type fixture struct {
 	svc       *webhook.WebhookService
 	executor  exec.DB
+	sender    *recordSender
 	tenantID  *models.TenantId
 	accountID *models.AccountId
 	ctx       context.Context // carries an ADMIN account caller
@@ -73,7 +98,8 @@ func newFixture(t *testing.T, role models.TenantMember_Role) *fixture {
 	log := xlog.Default()
 
 	az := authz.New(log, executor)
-	svc := webhook.NewWebhookService(log, executor, trm, az, noopSender{})
+	sender := &recordSender{}
+	svc := webhook.NewWebhookService(log, executor, trm, az, sender)
 
 	ctx := context.Background()
 	acctSvc := tenancy.NewAccountAdminService(log, executor, trm)
@@ -115,10 +141,43 @@ func newFixture(t *testing.T, role models.TenantMember_Role) *fixture {
 	return &fixture{
 		svc:       svc,
 		executor:  executor,
+		sender:    sender,
 		tenantID:  tenantID,
 		accountID: accountID,
 		ctx:       callerCtx,
 	}
+}
+
+// TestWebhookDeliverRunEvent verifies run-lifecycle delivery fires only the enabled
+// webhooks subscribed to the event.
+func TestWebhookDeliverRunEvent(t *testing.T) {
+	f := newFixture(t, models.TenantMember_ROLE_ADMIN)
+
+	mk := func(url string, enabled bool, events ...models.Webhook_Event) {
+		_, err := f.svc.CreateWebhook(f.ctx, &uipb.CreateWebhookRequest{
+			TenantId: f.tenantID,
+			Webhook:  &models.Webhook{Url: url, Events: events, Enabled: enabled},
+			Secret:   "sec-" + url,
+		})
+		require.NoError(t, err)
+	}
+	mk("https://h/completed", true, models.Webhook_EVENT_RUN_COMPLETED)                             // fires
+	mk("https://h/failed", true, models.Webhook_EVENT_RUN_FAILED)                                   // wrong event
+	mk("https://h/disabled", false, models.Webhook_EVENT_RUN_COMPLETED)                             // disabled
+	mk("https://h/both", true, models.Webhook_EVENT_RUN_COMPLETED, models.Webhook_EVENT_RUN_FAILED) // fires
+
+	err := f.svc.DeliverRunEvent(f.ctx, f.tenantID.GetValue(), models.Webhook_EVENT_RUN_COMPLETED, "run-1", "nightly")
+	require.NoError(t, err)
+
+	require.ElementsMatch(t, []string{"https://h/completed", "https://h/both"}, f.sender.urls(),
+		"only enabled webhooks subscribed to RUN_COMPLETED must fire")
+
+	// The payload carries the event + run id, signed with the webhook's secret.
+	f.sender.mu.Lock()
+	defer f.sender.mu.Unlock()
+	require.Contains(t, string(f.sender.sent[0].payload), `"event":"run.completed"`)
+	require.Contains(t, string(f.sender.sent[0].payload), `"id":"run-1"`)
+	require.NotEmpty(t, f.sender.sent[0].secret, "secret resolved for signing")
 }
 
 func TestWebhookCRUDRoundTrip(t *testing.T) {

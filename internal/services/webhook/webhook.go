@@ -166,6 +166,63 @@ func (s *WebhookService) DeleteWebhook(ctx context.Context, req *uipb.DeleteWebh
 		})
 }
 
+// DeliverRunEvent fires every enabled webhook of the tenant subscribed to event
+// with the given run/suite payload. Best-effort: a delivery failure is logged but
+// does not abort the others (this is called off the run lifecycle, not a request).
+func (s *WebhookService) DeliverRunEvent(ctx context.Context, tenantID string, event models.Webhook_Event, entityID, name string) error {
+	hooks, err := s.hooks.Query(ctx, models.Webhooks.SelectAll().Where(
+		models.Webhooks.TenantId.Eq(tenantID),
+		models.Webhooks.DeletedAt.IsNull(),
+	))
+	if err != nil {
+		return fmt.Errorf("list webhooks: %w", err)
+	}
+	payload := []byte(fmt.Sprintf(`{"event":%q,"id":%q,"name":%q}`, eventName(event), entityID, name))
+	delivered := 0
+	for _, hook := range hooks {
+		if !hook.GetEnabled() || !subscribed(hook, event) {
+			continue
+		}
+		secret, serr := s.hooks.Scanner().QueryRow(ctx,
+			models.Webhooks.Select(models.WebhookColumnSecret).Where(models.Webhooks.Id.Eq(hook.GetEntity().GetId().GetValue())))
+		sec := ""
+		if serr == nil {
+			sec = secret.Secret
+		}
+		if derr := s.sender.Send(ctx, hook.GetUrl(), sec, payload); derr != nil {
+			s.Logger().Warn("webhook delivery failed", xlog.String("url", hook.GetUrl()), xlog.Error("error", derr))
+			continue
+		}
+		delivered++
+	}
+	s.Logger().Debug("delivered run event", xlog.String("event", eventName(event)), xlog.Int("hooks", delivered))
+	return nil
+}
+
+func subscribed(hook *models.Webhook, event models.Webhook_Event) bool {
+	for _, e := range hook.GetEvents() {
+		if e == event {
+			return true
+		}
+	}
+	return false
+}
+
+func eventName(e models.Webhook_Event) string {
+	switch e {
+	case models.Webhook_EVENT_RUN_COMPLETED:
+		return "run.completed"
+	case models.Webhook_EVENT_RUN_FAILED:
+		return "run.failed"
+	case models.Webhook_EVENT_SUITE_COMPLETED:
+		return "suite.completed"
+	case models.Webhook_EVENT_SUITE_FAILED:
+		return "suite.failed"
+	default:
+		return "unspecified"
+	}
+}
+
 // TestWebhook delivers a test payload to the webhook, signed with its secret.
 func (s *WebhookService) TestWebhook(ctx context.Context, req *uipb.TestWebhookRequest) (*emptypb.Empty, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "TestWebhook",
