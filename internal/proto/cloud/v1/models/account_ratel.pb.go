@@ -10,9 +10,9 @@ import (
 	"github.com/yaroher/ratel/pkg/ddl"
 	"github.com/yaroher/ratel/pkg/dml/set"
 	"github.com/yaroher/ratel/pkg/exec"
+	"github.com/yaroher/ratel/pkg/sqlerr"
 	"github.com/yaroher/ratel/pkg/repository"
 	"github.com/yaroher/ratel/pkg/schema"
-	"github.com/yaroher/ratel/pkg/sqlerr"
 )
 
 var (

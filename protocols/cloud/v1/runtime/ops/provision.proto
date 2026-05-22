@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package cloud.v1.runtime.ops;
+
+import "cloud/v1/deployment/deployment.proto";
+import "cloud/v1/runtime/primitive/status.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/ops";
+
+/*
+    ProvisionOperation is the provider-agnostic provisioning step run as a
+    control-plane (server-locus) task node. It is the single dispatch seam: the
+    task switches on Input.deployment.provider and delegates to the matching
+    backend (Docker for local runs, Yandex/Terraform for cloud), then returns the
+    materialized deployment.
+
+    Concept (proto is the source of truth): everything is a deployment.Deployment
+    transform. Input carries the desired Deployment (provider + the populated
+    oneof Input — Docker.Input or Yandex.Input); Output carries the same
+    Deployment with the oneof Output filled (Docker.Output.containers[].internal_ip
+    or Yandex.Output). The agent command binding resolver reads component IPs
+    straight off Output.deployment (switch on provider) — no JSON side channel.
+ */
+message ProvisionOperation {
+    /* input is the desired provisioning state. */
+    Input input = 1 [(validate.rules).message.required = true];
+    /* output is filled by the dispatch task after the backend runs. */
+    optional Output output = 2;
+
+    /* Action selects the provisioning lifecycle command. */
+    enum Action {
+        /* ACTION_UNSPECIFIED is invalid. */
+        ACTION_UNSPECIFIED = 0;
+        /* ACTION_APPLY creates/ensures the deployment. */
+        ACTION_APPLY = 1;
+        /* ACTION_DESTROY tears the deployment down. */
+        ACTION_DESTROY = 2;
+    }
+
+    /* Input is the desired provisioning state. */
+    message Input {
+        /* action is the lifecycle command to execute. */
+        Action action = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        /*
+            deployment is the desired deployment: provider + the populated
+            provider oneof Input. The dispatch task switches on provider.
+         */
+        cloud.v1.deployment.Deployment deployment = 2 [(validate.rules).message.required = true];
+    }
+
+    /* Output is the materialized provisioning state. */
+    message Output {
+        /* status is the current/final lifecycle state. */
+        primitive.Status status = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        /*
+            deployment echoes the input deployment with the provider oneof
+            Output filled (created container/instance endpoints). Binding
+            resolution reads component IPs from here.
+         */
+        cloud.v1.deployment.Deployment deployment = 2;
+        /* error contains the terminal error for failed/cancelled actions. */
+        string error = 3 [(validate.rules).string.max_len = 8192];
+        /* started_at is the first observed execution timestamp. */
+        google.protobuf.Timestamp started_at = 4;
+        /* finished_at is the terminal execution timestamp. */
+        google.protobuf.Timestamp finished_at = 5;
+    }
+}
