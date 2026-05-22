@@ -88,6 +88,7 @@ func (p *DagProcessor) lifecycle(ctx context.Context) {
 	ticker := time.NewTicker(p.interval)
 	defer ticker.Stop()
 
+	p.refreshFromStorage(ctx)
 	p.processAll(ctx)
 	for {
 		select {
@@ -96,6 +97,7 @@ func (p *DagProcessor) lifecycle(ctx context.Context) {
 		case <-p.stop:
 			return
 		case <-ticker.C:
+			p.refreshFromStorage(ctx)
 			p.processAll(ctx)
 		}
 	}
@@ -155,6 +157,30 @@ func (p *DagProcessor) markInactive(id string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	delete(p.active, id)
+}
+
+func (p *DagProcessor) isActive(id string) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	_, ok := p.active[id]
+	return ok
+}
+
+// refreshFromStorage pulls newly-submitted (or recovered) processable dags into the
+// in-memory working set each tick, so runs persisted by the API after boot get
+// picked up. Already-tracked or in-flight dags are left untouched.
+func (p *DagProcessor) refreshFromStorage(ctx context.Context) {
+	dags, err := p.storage.ListDagsByStatus(ctx, StatusesToProcess)
+	if err != nil {
+		return
+	}
+	for _, dag := range dags {
+		id := dag.GetId()
+		if p.dags.Has(id) || p.isActive(id) {
+			continue
+		}
+		p.dags.Set(id, dag)
+	}
 }
 
 func (p *DagProcessor) isCurrentGeneration(id string, generation uint64) bool {
