@@ -38,9 +38,28 @@ func TestRenderDatabaseMySQL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("render: %v", err)
 	}
-	conf := cfg.GetItems()[0].GetFile().GetContent().GetText()
+	item := cfg.GetItems()[0].GetFile()
+	if got := item.GetInfo().GetPath(); got != "/etc/mysql/mysql.conf.d/zz-stroppy.cnf" {
+		t.Fatalf("unexpected mysql config path: %s", got)
+	}
+	conf := item.GetContent().GetText()
 	if !strings.Contains(conf, "[mysqld]") || !strings.Contains(conf, "innodb_buffer_pool_size = 2048M") {
 		t.Errorf("unexpected my.cnf:\n%s", conf)
+	}
+}
+
+func TestRenderDatabaseMariaDB(t *testing.T) {
+	cfg, err := RenderDatabase(&domain.Database{Kind: domain.Database_KIND_MARIADB, Version: "11.4"}, 4096)
+	if err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	item := cfg.GetItems()[0].GetFile()
+	if got := item.GetInfo().GetPath(); got != "/etc/mysql/mariadb.conf.d/zz-stroppy.cnf" {
+		t.Fatalf("unexpected mariadb config path: %s", got)
+	}
+	conf := item.GetContent().GetText()
+	if !strings.Contains(conf, "[mysqld]") || !strings.Contains(conf, "bind-address = 0.0.0.0") {
+		t.Errorf("unexpected mariadb my.cnf:\n%s", conf)
 	}
 }
 

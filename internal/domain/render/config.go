@@ -92,10 +92,26 @@ func renderPostgresConf(version string, totalMemoryMB int) string {
 
 // ─── mysql / mariadb ──────────────────────────────────────────────────────────
 
-func renderMySQL(_ *domain.Database, totalMemoryMB int) *renderpb.Config {
+func renderMySQL(db *domain.Database, totalMemoryMB int) *renderpb.Config {
+	return renderMySQLConfig(db.GetKind(), totalMemoryMB)
+}
+
+func renderMySQLConfig(kind domain.Database_Kind, totalMemoryMB int) *renderpb.Config {
 	return &renderpb.Config{
-		Id:    "mysql-config",
-		Items: []*renderpb.Config_Item{fileItem("my.cnf", "/etc/mysql/mysql.conf.d/zz-stroppy.cnf", renderMyCnf(totalMemoryMB))},
+		Id: "mysql-config",
+		Items: []*renderpb.Config_Item{
+			fileItem("my.cnf", mysqlConfigPath(kind), renderMyCnf(totalMemoryMB)),
+			mysqlWorkloadUserItem(),
+		},
+	}
+}
+
+func mysqlConfigPath(kind domain.Database_Kind) string {
+	switch kind {
+	case domain.Database_KIND_MARIADB:
+		return "/etc/mysql/mariadb.conf.d/zz-stroppy.cnf"
+	default:
+		return "/etc/mysql/mysql.conf.d/zz-stroppy.cnf"
 	}
 }
 
@@ -131,6 +147,16 @@ func formatMysqld(conf map[string]string, totalMemoryMB int) string {
 		fmt.Fprintf(&b, "%s = %s\n", k, v)
 	}
 	return b.String()
+}
+
+func mysqlWorkloadUserItem() *renderpb.Config_Item {
+	return commandItem("create_workload_user",
+		`mysql -e "CREATE DATABASE IF NOT EXISTS stroppy; `+
+			`CREATE USER IF NOT EXISTS 'stroppy'@'%' IDENTIFIED BY ''; `+
+			`ALTER USER 'stroppy'@'%' IDENTIFIED BY ''; `+
+			`GRANT ALL PRIVILEGES ON stroppy.* TO 'stroppy'@'%'; `+
+			`CREATE USER IF NOT EXISTS 'exporter'@'localhost' IDENTIFIED BY 'exporter' WITH MAX_USER_CONNECTIONS 3; `+
+			`GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'localhost'; FLUSH PRIVILEGES;"`, nil)
 }
 
 // ─── picodata ───────────────────────────────────────────────────────────────

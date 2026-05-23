@@ -14,9 +14,9 @@ func TestEngineRecipeMatrixComplete(t *testing.T) {
 		require.Truef(t, ok, "%s/%s missing", ev.Engine, ev.Version)
 		usable := len(r.PreInstall) > 0 || len(r.AptPackages) > 0 || r.StartScript != ""
 		require.Truef(t, usable, "%s/%s recipe is empty", ev.Engine, ev.Version)
-		// apt engines name a service; binary engines a start script (ydb starts via
-		// render command items, so it has neither — allow that one).
-		if ev.Engine != "ydb" {
+		// apt engines name a service; binary engines a start script. ydb/cockroach
+		// start via render command items, so they have neither.
+		if ev.Engine != "ydb" && ev.Engine != "cockroach" {
 			require.Truef(t, r.ServiceName != "" || r.StartScript != "",
 				"%s/%s has no service or start script", ev.Engine, ev.Version)
 		}
@@ -61,4 +61,12 @@ func TestComponentRecipes(t *testing.T) {
 	for _, r := range []Recipe{recipeEtcd, recipeHAProxy, recipeProxySQL, recipeMonitor} {
 		require.Contains(t, strings.Join(r.PreInstall, "\n"), "apt-get update")
 	}
+}
+
+func TestCockroachRecipeUsesServerBinaryCache(t *testing.T) {
+	r, ok := EngineRecipe("cockroach", "24.2")
+	require.True(t, ok)
+	joined := strings.Join(r.PreInstall, "\n")
+	require.Contains(t, joined, "${STROPPY_SERVER_ADDR}/binary/cockroach/24.2.10/cockroach-v24.2.10.linux-amd64.tgz")
+	require.NotContains(t, joined, "binaries.cockroachdb.com")
 }

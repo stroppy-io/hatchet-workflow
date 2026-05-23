@@ -148,6 +148,14 @@ services:
 
   # --- Stroppy Cloud server ---
   # Runs with host networking so it can reach Docker agent containers directly.
+  agent-image:
+    image: stroppy-agent:latest
+    build:
+      context: .
+      dockerfile: deployments/docker/agent.Dockerfile
+    entrypoint: ["/bin/true"]
+    restart: "no"
+
   server:
     restart: always
     build:
@@ -157,6 +165,8 @@ services:
         VERSION: ${VERSION:-dev}
     network_mode: host
     depends_on:
+      agent-image:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       valkey:
@@ -176,7 +186,7 @@ services:
       - binaries:/var/lib/stroppy-cache
     # network_mode: host → reach every other service on 127.0.0.1:<published port>.
     environment:
-      STROPPY_GRPC_ADDR: ":8080"
+      STROPPY_GRPC_ADDR: ${STROPPY_GRPC_ADDR:-:8080}
       STROPPY_PG_HOST: "127.0.0.1"
       STROPPY_PG_PORT: "5436"
       STROPPY_PG_USER: stroppy

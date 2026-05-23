@@ -1,6 +1,7 @@
 package dag
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -331,24 +332,7 @@ func writeFileOpFor(file *system.File) *ops.Operation {
 // so workload metrics land alongside the vmagent-scraped host/DB metrics.
 func runStroppyOp(db *domain.Database, wl *domain.Workload, runID string) *ops.Operation {
 	script, sql := stroppyScriptPaths(wl.GetScript(), db.GetKind())
-	sqlField := ""
-	if sql != "" {
-		sqlField = fmt.Sprintf(`"sql":%q,`, sql)
-	}
-	// stroppy RunConfig (protojson): script + driver + an OTLP exporter that pushes
-	// workload metrics to the server's VictoriaMetrics (cluster vminsert OTLP via the
-	// /vm proxy → vmauth), prefixed `stroppy_` and tagged via OTEL_RESOURCE_ATTRIBUTES
-	// run_id=<dag id> so GetRunMetrics correlates. Mirrors old injectOTLP.
-	// k6's OTLP/HTTP output wants endpoint = host:port ONLY (no scheme/path); the path
-	// is separate. STROPPY_AGENT_SERVER is the grpc/host:port the agent already knows.
-	global := `"global":{"exporter":{"otlp_export":{` +
-		`"otlp_http_endpoint":"${STROPPY_AGENT_SERVER}",` +
-		`"otlp_http_exporter_url_path":"/vm/insert/0/opentelemetry/api/v1/push",` +
-		`"otlp_endpoint_insecure":true,` +
-		`"otlp_metrics_prefix":"stroppy_"}}},`
-	env := fmt.Sprintf(`"env":{"OTEL_RESOURCE_ATTRIBUTES":"service.name=stroppy,run_id=%s"},`, runID)
-	cfg := fmt.Sprintf(`{"version":"1","script":%q,%s%s%s"drivers":{"0":{"driver_type":%q,"url":%q}}}`,
-		script, sqlField, global, env, stroppyDriverType(db.GetKind()), stroppyURL(db))
+	cfg := stroppyRunConfigJSON(db, wl, runID, script, sql)
 	// Fetch the pinned stroppy from the server cache (not the image bake), so the
 	// version (with its embedded workloads) is identical on local Docker and YC VMs.
 	ver := strings.TrimPrefix(wl.GetStroppyVersion(), "v")
@@ -366,6 +350,90 @@ func runStroppyOp(db *domain.Database, wl *domain.Workload, runID string) *ops.O
 		"STROPPYCFG",
 		"stroppy run -f /etc/stroppy/run-config.json",
 	}, "\n"))
+}
+
+func stroppyRunConfigJSON(db *domain.Database, wl *domain.Workload, runID, script, sql string) string {
+	params := wl.GetParameters()
+	poolSize := params.GetPoolSize()
+	if poolSize == 0 {
+		poolSize = 16
+	}
+	scaleFactor := params.GetScaleFactor()
+	if scaleFactor == 0 {
+		scaleFactor = 1
+	}
+	defaultInsertMethod := strings.TrimSpace(params.GetDefaultInsertMethod())
+	if defaultInsertMethod == "" {
+		defaultInsertMethod = "native"
+	}
+
+	env := map[string]string{
+		"OTEL_RESOURCE_ATTRIBUTES": "service.name=stroppy,run_id=" + runID,
+		"SCALE_FACTOR":             fmt.Sprintf("%g", scaleFactor),
+		"POOL_SIZE":                fmt.Sprintf("%d", poolSize),
+	}
+	for k, v := range params.GetEnv() {
+		key := strings.ToUpper(strings.TrimSpace(k))
+		if key != "" {
+			env[key] = v
+		}
+	}
+
+	driver := map[string]any{
+		"driver_type":           stroppyDriverType(db.GetKind()),
+		"url":                   stroppyURL(db),
+		"default_insert_method": defaultInsertMethod,
+		"pool": map[string]any{
+			"max_conns": poolSize,
+			"min_conns": poolSize,
+		},
+	}
+	cfg := map[string]any{
+		"version": "1",
+		"script":  script,
+		"global": map[string]any{"exporter": map[string]any{"otlp_export": map[string]any{
+			"otlp_http_endpoint":          "${STROPPY_AGENT_SERVER}",
+			"otlp_http_exporter_url_path": "/vm/insert/0/opentelemetry/api/v1/push",
+			"otlp_endpoint_insecure":      true,
+			"otlp_metrics_prefix":         "stroppy_",
+		}}},
+		"env":     env,
+		"drivers": map[string]any{"0": driver},
+	}
+	if sql != "" {
+		cfg["sql"] = sql
+	}
+	if exec := wl.GetExecution(); exec != nil {
+		k6Args := []string{}
+		if exec.GetQuiet() {
+			k6Args = append(k6Args, "-q")
+		}
+		if exec.GetVus() > 0 {
+			k6Args = append(k6Args, "--vus", fmt.Sprintf("%d", exec.GetVus()))
+		}
+		if iterations := exec.GetIterations(); iterations > 0 {
+			k6Args = append(k6Args, "--iterations", fmt.Sprintf("%d", iterations))
+		} else if duration := exec.GetDuration(); duration != "" {
+			k6Args = append(k6Args, "--duration", duration)
+		}
+		if exec.GetNoThresholds() {
+			k6Args = append(k6Args, "--no-thresholds")
+		}
+		if len(k6Args) > 0 {
+			cfg["k6_args"] = k6Args
+		}
+	}
+	if steps := params.GetSteps(); len(steps) > 0 {
+		cfg["steps"] = steps
+	}
+	if noSteps := params.GetNoSteps(); len(noSteps) > 0 {
+		cfg["no_steps"] = noSteps
+	}
+	b, err := json.Marshal(cfg)
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
 }
 
 // stroppyScriptPaths maps a friendly workload name + engine to stroppy's embedded
@@ -552,12 +620,6 @@ func vectorStartScript() string {
 // dbExporterInstallScript installs a separate DB exporter (postgres/mysql) and runs
 // it as a systemd unit pointed at the LOCAL database.
 func dbExporterInstallScript(e dbExporter) string {
-	// mysql/mariadb need a least-privilege exporter user before the exporter starts.
-	pre := ""
-	if e.job == "mysql" {
-		pre = `mysql -h 127.0.0.1 -u root -e "CREATE USER IF NOT EXISTS 'exporter'@'localhost' IDENTIFIED BY 'exporter' WITH MAX_USER_CONNECTIONS 3; GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'localhost'; FLUSH PRIVILEGES;" 2>/dev/null || true
-`
-	}
 	unit := strings.Join([]string{
 		"[Unit]",
 		"Description=stroppy " + e.job + " exporter",
@@ -569,7 +631,7 @@ func dbExporterInstallScript(e dbExporter) string {
 		"[Install]",
 		"WantedBy=multi-user.target",
 	}, "\n")
-	return "set -e\n" + pre +
+	return "set -e\n" +
 		fetchBinary(e.binName, e.binVersion, e.binFile, e.binArchive, e.binName) + "\n" +
 		systemdUnitScript(e.serviceName, unit)
 }
@@ -667,9 +729,11 @@ func vmagentStartScript() string {
 func stroppyURL(db *domain.Database) string {
 	switch db.GetKind() {
 	case domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
-		return "mysql://stroppy@" + stroppyDBHostToken + ":3306/stroppy"
+		return "stroppy@tcp(" + stroppyDBHostToken + ":3306)/stroppy"
 	case domain.Database_KIND_COCKROACH:
 		return "postgresql://root@" + stroppyDBHostToken + ":26257/defaultdb?sslmode=disable"
+	case domain.Database_KIND_YDB:
+		return "grpc://" + stroppyDBHostToken + ":2136/Root/testdb"
 	default: // postgres pg-wire (old code's proven URL)
 		return "postgresql://postgres@" + stroppyDBHostToken + ":5432/postgres?sslmode=disable"
 	}

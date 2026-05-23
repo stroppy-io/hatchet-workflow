@@ -30,6 +30,7 @@ var upstreams = map[string]string{
 	"vector":            "https://packages.timber.io/vector/{ver}/{file}",
 	"postgres_exporter": "https://github.com/prometheus-community/postgres_exporter/releases/download/v{ver}/{file}",
 	"mysqld_exporter":   "https://github.com/prometheus/mysqld_exporter/releases/download/v{ver}/{file}",
+	"cockroach":         "https://storage.googleapis.com/cockroach-release-artifacts-prod/{file}",
 }
 
 // RoutePattern is the chi route this handler serves.

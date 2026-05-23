@@ -1,5 +1,7 @@
 package dag
 
+import "strings"
+
 import "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 
 // ── engine compatibility matrix + install recipes, as DATA ──────────────────────
@@ -57,11 +59,8 @@ var engineRecipes = map[string]Recipe{
 		PreInstall: []string{
 			"apt-get update",
 			"apt-get install -y curl ca-certificates tar",
-			`curl -fsSL https://binaries.cockroachdb.com/cockroach-v24.2.0.linux-amd64.tgz -o /tmp/cockroach.tgz`,
-			`tar -xzf /tmp/cockroach.tgz -C /tmp`,
-			`install /tmp/cockroach-v24.2.0.linux-amd64/cockroach /usr/local/bin/cockroach`,
+			cockroachInstallScript("24.2"),
 		},
-		StartScript: `cockroach start-single-node --insecure --background --listen-addr=0.0.0.0:26257 --sql-addr=0.0.0.0:5432`,
 	},
 	"ydb/24.2": {
 		PreInstall: []string{
@@ -80,6 +79,30 @@ var engineRecipes = map[string]Recipe{
 var defaultVersions = map[string]string{
 	"postgres": "16", "mysql": "8.4", "mariadb": "11.4",
 	"picodata": "25.3", "cockroach": "24.2", "ydb": "24.2",
+}
+
+var cockroachVersionMap = map[string]string{
+	"24.2": "24.2.10",
+}
+
+func resolveCockroachVersion(v string) string {
+	if v == "" {
+		return cockroachVersionMap["24.2"]
+	}
+	if full, ok := cockroachVersionMap[v]; ok {
+		return full
+	}
+	return v
+}
+
+func cockroachInstallScript(version string) string {
+	full := resolveCockroachVersion(version)
+	file := "cockroach-v" + full + ".linux-amd64.tgz"
+	archive := "cockroach-v" + full + ".linux-amd64/cockroach"
+	return strings.Join([]string{
+		"set -e",
+		fetchBinary("cockroach", full, file, archive, "cockroach"),
+	}, "\n")
 }
 
 // EngineRecipe returns the install recipe for an (engine, version); version "" uses
@@ -220,7 +243,7 @@ func dbExporterFor(kind domain.Database_Kind) (dbExporter, bool) {
 			binFile:       "mysqld_exporter-" + mysqldExporterVersion + ".linux-amd64.tar.gz",
 			binArchive:    "mysqld_exporter-" + mysqldExporterVersion + ".linux-amd64/mysqld_exporter",
 			serviceName:   "stroppy-mysqld-exporter",
-			dataSourceEnv: `Environment=DATA_SOURCE_NAME=exporter:exporter@(localhost:3306)/`,
+			dataSourceEnv: `Environment=DATA_SOURCE_NAME=exporter:exporter@tcp(localhost:3306)/`,
 			execStart:     "/usr/local/bin/mysqld_exporter",
 		}, true
 	case domain.Database_KIND_COCKROACH:

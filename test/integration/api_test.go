@@ -10,6 +10,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -186,25 +187,13 @@ func fullPostgresPreset(t *testing.T, conn *grpc.ClientConn, tid *models.TenantI
 	}
 }
 
-// dbTestPreset builds a full TestPreset for an arbitrary engine + workload script:
-// a single-node system DatabasePreset of `kind` PLUS a stroppy load machine running
-// `script` (e.g. "tpcc/procs", "tpcc/tx.ts", "tpch/tx.ts").
-func dbTestPreset(t *testing.T, conn *grpc.ClientConn, tid *models.TenantId, kind domain.Database_Kind, script string) *domain.TestPreset {
+// dbTestPreset builds a full TestPreset from one concrete system DatabasePreset
+// PLUS a small stroppy load machine running `script`.
+func dbTestPreset(t *testing.T, dp *domain.DatabasePreset, script string) *domain.TestPreset {
 	t.Helper()
-	presets, err := uipb.NewPresetServiceClient(conn).ListPresets(context.Background(),
-		&uipb.ListPresetRequest{TenantId: tid, Kinds: []models.Preset_Kind{models.Preset_KIND_DATABASE}})
-	require.NoError(t, err)
-	var dp *domain.DatabasePreset
-	for _, p := range presets.GetPresets() {
-		d := p.GetDatabasePreset()
-		if d.GetDatabase().GetKind() == kind && len(d.GetTopology().GetMachines()) == 1 {
-			dp = d
-			break
-		}
-	}
-	require.NotNilf(t, dp, "single-node system preset for %s", kind)
+	require.NotNil(t, dp, "database preset")
 
-	dbComp := dp.GetTopology().GetMachines()[0].GetComponents()[0].GetId()
+	dbComp := firstDatabaseComponent(t, dp.GetTopology())
 	topo := proto.Clone(dp.GetTopology()).(*domain.Topology)
 	topo.Machines = append(topo.Machines, &domain.Topology_Machine{
 		Id: "load1", Cores: 2, MemoryGb: 4, DiskGb: 20,
@@ -213,19 +202,89 @@ func dbTestPreset(t *testing.T, conn *grpc.ClientConn, tid *models.TenantId, kin
 	topo.Connections = append(topo.Connections, &domain.Topology_Connection{
 		From: "stroppy", To: dbComp, Kind: domain.Topology_Connection_KIND_FLOW,
 	})
-	wlProto := domain.Workload_PROTOCOL_PG
-	if kind == domain.Database_KIND_MYSQL || kind == domain.Database_KIND_MARIADB {
-		wlProto = domain.Workload_PROTOCOL_MYSQL
-	}
 	return &domain.TestPreset{
 		Database: dp.GetDatabase(),
 		Topology: topo,
 		Workload: &domain.Workload{
-			StroppyVersion: "v5.1.3", Script: script, Protocol: wlProto,
-			Parameters: &domain.Workload_Parameters{PoolSize: 16, ScaleFactor: 1},
+			StroppyVersion: "v5.1.3",
+			Script:         script,
+			Protocol:       workloadProtocol(dp.GetDatabase().GetKind()),
+			Execution: &domain.Workload_Execution{
+				Vus:          1,
+				Limit:        &domain.Workload_Execution_Iterations{Iterations: 1},
+				Quiet:        true,
+				NoThresholds: true,
+			},
+			Parameters: &domain.Workload_Parameters{PoolSize: 4, ScaleFactor: 1},
 		},
 		Deployment: &deployment.DeploymentIntent{Provider: deployment.Provider_PROVIDER_DOCKER},
 	}
+}
+
+func firstDatabaseComponent(t *testing.T, topo *domain.Topology) string {
+	t.Helper()
+	for _, m := range topo.GetMachines() {
+		for _, c := range m.GetComponents() {
+			if c.GetKind() == domain.Topology_Component_KIND_DATABASE {
+				return c.GetId()
+			}
+		}
+	}
+	t.Fatal("database preset has no DATABASE component")
+	return ""
+}
+
+func workloadProtocol(kind domain.Database_Kind) domain.Workload_Protocol {
+	switch kind {
+	case domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
+		return domain.Workload_PROTOCOL_MYSQL
+	case domain.Database_KIND_PICODATA:
+		return domain.Workload_PROTOCOL_PICODATA
+	case domain.Database_KIND_YDB:
+		return domain.Workload_PROTOCOL_YDB_GRPC
+	case domain.Database_KIND_COCKROACH:
+		return domain.Workload_PROTOCOL_COCKROACH
+	default:
+		return domain.Workload_PROTOCOL_PG
+	}
+}
+
+type matrixWorkload struct {
+	name   string
+	script string
+}
+
+func matrixWorkloads(kind domain.Database_Kind) []matrixWorkload {
+	all := []matrixWorkload{
+		{"tpcc-procs", "tpcc/procs"},
+		{"tpcc-tx", "tpcc/tx.ts"},
+		{"tpcb-procs", "tpcb/procs"},
+		{"tpcb-tx", "tpcb/tx.ts"},
+		{"tpch-tx", "tpch/tx.ts"},
+	}
+	txOnly := []matrixWorkload{
+		{"tpcc-tx", "tpcc/tx.ts"},
+		{"tpcb-tx", "tpcb/tx.ts"},
+		{"tpch-tx", "tpch/tx.ts"},
+	}
+	switch kind {
+	case domain.Database_KIND_POSTGRES, domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
+		return all
+	case domain.Database_KIND_PICODATA, domain.Database_KIND_YDB, domain.Database_KIND_COCKROACH:
+		return txOnly
+	default:
+		return nil
+	}
+}
+
+func slug(s string) string {
+	s = strings.ToLower(s)
+	repl := strings.NewReplacer(" ", "-", "/", "-", "_", "-", ".", "-", "—", "-", "(", "", ")", "")
+	s = repl.Replace(s)
+	for strings.Contains(s, "--") {
+		s = strings.ReplaceAll(s, "--", "-")
+	}
+	return strings.Trim(s, "-")
 }
 
 // runBenchmark submits a preset, waits for the run to settle terminal, and returns
@@ -258,8 +317,10 @@ func runBenchmark(t *testing.T, conn *grpc.ClientConn, tid *models.TenantId, pre
 	return runID, last
 }
 
-// TestBenchmarkMatrix runs the database × workload × variant matrix locally in docker.
-// The matrix is intentionally partial (not every engine supports every workload).
+// TestBenchmarkMatrix runs workload × database × system-topology matrix locally in docker.
+// It enumerates the seeded DATABASE presets, then applies the scripts each engine
+// can run. Workloads are intentionally tiny (1 VU, 1 iteration) so topology coverage
+// dominates wall-clock time.
 // Gated behind STROPPY_MATRIX_E2E=1 (a long series of full runs).
 func TestBenchmarkMatrix(t *testing.T) {
 	if os.Getenv("STROPPY_MATRIX_E2E") != "1" {
@@ -268,30 +329,32 @@ func TestBenchmarkMatrix(t *testing.T) {
 	conn := login(t)
 	tid := rootTenant(t, conn)
 
-	combos := []struct {
-		name   string
-		kind   domain.Database_Kind
-		script string
-	}{
-		{"pg-tpcc-procs", domain.Database_KIND_POSTGRES, "tpcc/procs"},
-		{"pg-tpcc-tx", domain.Database_KIND_POSTGRES, "tpcc/tx.ts"},
-		{"pg-tpcb-procs", domain.Database_KIND_POSTGRES, "tpcb/procs"},
-		{"pg-tpcb-tx", domain.Database_KIND_POSTGRES, "tpcb/tx.ts"},
-		{"pg-tpch-tx", domain.Database_KIND_POSTGRES, "tpch/tx.ts"},
-		{"mysql-tpcc-procs", domain.Database_KIND_MYSQL, "tpcc/procs"},
-		{"mysql-tpcc-tx", domain.Database_KIND_MYSQL, "tpcc/tx.ts"},
-		{"mysql-tpcb-tx", domain.Database_KIND_MYSQL, "tpcb/tx.ts"},
-	}
-	for _, c := range combos {
-		t.Run(c.name, func(t *testing.T) {
-			preset := dbTestPreset(t, conn, tid, c.kind, c.script)
-			runID, status := runBenchmark(t, conn, tid, preset, c.name)
-			if status != primitive.Status_STATUS_COMPLETED {
-				dumpRunLogs(t, conn, tid, runID)
-				t.Fatalf("[%s] terminal %s (want COMPLETED)", c.name, status)
-			}
-			assertVectorLogs(t, conn, tid, runID)
-		})
+	presets, err := uipb.NewPresetServiceClient(conn).ListPresets(context.Background(),
+		&uipb.ListPresetRequest{TenantId: tid, Kinds: []models.Preset_Kind{models.Preset_KIND_DATABASE}})
+	require.NoError(t, err)
+	require.NotEmpty(t, presets.GetPresets(), "database system presets")
+
+	for _, p := range presets.GetPresets() {
+		dp := p.GetDatabasePreset()
+		if dp == nil {
+			continue
+		}
+		dpCopy := dp
+		for _, wl := range matrixWorkloads(dpCopy.GetDatabase().GetKind()) {
+			wl := wl
+			name := slug(p.GetName() + "-" + wl.name)
+			presetName := p.GetName()
+			t.Run(name, func(t *testing.T) {
+				t.Logf("preset=%q kind=%s script=%s", presetName, dpCopy.GetDatabase().GetKind(), wl.script)
+				preset := dbTestPreset(t, dpCopy, wl.script)
+				runID, status := runBenchmark(t, conn, tid, preset, name)
+				if status != primitive.Status_STATUS_COMPLETED {
+					dumpRunLogs(t, conn, tid, runID)
+					t.Fatalf("[%s] terminal %s (want COMPLETED)", name, status)
+				}
+				assertVectorLogs(t, conn, tid, runID)
+			})
+		}
 	}
 }
 

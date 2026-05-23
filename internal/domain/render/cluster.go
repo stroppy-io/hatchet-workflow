@@ -26,8 +26,10 @@ func RenderComponent(c *domain.Topology_Component, db *domain.Database, topo *do
 			}
 		case domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
 			if isMultiDB(topo) {
-				return renderMySQLComponent(c, topo, totalMemoryMB), nil
+				return renderMySQLComponent(c, db, topo, totalMemoryMB), nil
 			}
+		case domain.Database_KIND_COCKROACH:
+			return renderCockroachComponent(c, topo, totalMemoryMB), nil
 		case domain.Database_KIND_PICODATA:
 			if isMultiDB(topo) {
 				return renderPicodataComponent(c, topo, totalMemoryMB), nil
@@ -343,7 +345,7 @@ func commandItem(id, script string, bindings []*renderpb.Config_Binding) *render
 
 // ─── mysql / mariadb replication ──────────────────────────────────────────────
 
-func renderMySQLComponent(c *domain.Topology_Component, topo *domain.Topology, totalMemoryMB int) *renderpb.Config {
+func renderMySQLComponent(c *domain.Topology_Component, db *domain.Database, topo *domain.Topology, totalMemoryMB int) *renderpb.Config {
 	dbs := componentIDsByKind(topo, domain.Topology_Component_KIND_DATABASE)
 	serverID := 1
 	for i, id := range dbs {
@@ -358,7 +360,10 @@ func renderMySQLComponent(c *domain.Topology_Component, topo *domain.Topology, t
 	conf["log_bin"] = "mysql-bin"
 	conf["log_replica_updates"] = "ON"
 
-	items := []*renderpb.Config_Item{fileItem("my.cnf", "/etc/mysql/mysql.conf.d/zz-stroppy.cnf", formatMysqld(conf, totalMemoryMB))}
+	items := []*renderpb.Config_Item{
+		fileItem("my.cnf", mysqlConfigPath(db.GetKind()), formatMysqld(conf, totalMemoryMB)),
+		mysqlWorkloadUserItem(),
+	}
 
 	if primary := replicationSource(topo, c.GetId()); primary != "" {
 		// This node is a replica: point it at the primary's ip (late binding).
@@ -376,6 +381,87 @@ func renderMySQLComponent(c *domain.Topology_Component, topo *domain.Topology, t
 				`GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%'; FLUSH PRIVILEGES;"`, nil))
 	}
 	return &renderpb.Config{Id: "mysql", Items: items}
+}
+
+func renderCockroachComponent(c *domain.Topology_Component, topo *domain.Topology, totalMemoryMB int) *renderpb.Config {
+	cacheMB := totalMemoryMB / 4
+	if cacheMB <= 0 {
+		cacheMB = 256
+	}
+	sqlMB := totalMemoryMB / 4
+	if sqlMB <= 0 {
+		sqlMB = 256
+	}
+
+	bindings := []*renderpb.Config_Binding{
+		{Token: selfIPToken, ComponentIds: []string{c.GetId()}, Attr: AttrPrivateIP},
+	}
+	items := []*renderpb.Config_Item{}
+	joinHosts := cockroachJoinHosts(c.GetId(), topo, &bindings)
+
+	if isCockroachPrimary(topo, c.GetId()) {
+		items = append(items, commandItem("start_cockroach", renderCockroachStartScript(cacheMB, sqlMB, joinHosts), bindings))
+		items = append(items, commandItem("init_cockroach", renderCockroachInitScript(), nil))
+		return &renderpb.Config{Id: "cockroach", Items: items}
+	}
+
+	items = append(items, commandItem("start_cockroach", renderCockroachStartScript(cacheMB, sqlMB, joinHosts), bindings))
+	return &renderpb.Config{Id: "cockroach", Items: items}
+}
+
+func renderCockroachStartScript(cacheMB, sqlMB int, joinHosts string) string {
+	return strings.Join([]string{
+		"set -e",
+		"groupadd -f cockroach",
+		"(id -u cockroach >/dev/null 2>&1 || useradd cockroach -g cockroach -d /var/lib/cockroach -m)",
+		"mkdir -p /var/lib/cockroach",
+		"chown -R cockroach:cockroach /var/lib/cockroach",
+		"pkill -f '/usr/local/bin/cockroach start' 2>/dev/null || true",
+		fmt.Sprintf("su -s /bin/bash -c 'nohup /usr/local/bin/cockroach start --insecure --advertise-addr=%s:26257 --listen-addr=0.0.0.0:26257 --sql-addr=0.0.0.0:5432 --http-addr=0.0.0.0:8080 --store=/var/lib/cockroach --cache=%dMiB --max-sql-memory=%dMiB --join=%s > /var/lib/cockroach/cockroach.log 2>&1 < /dev/null &' cockroach", selfIPToken, cacheMB, sqlMB, joinHosts),
+		"for i in $(seq 1 120); do (echo > /dev/tcp/127.0.0.1/26257) 2>/dev/null && exit 0; sleep 1; done",
+	}, "\n")
+}
+
+func renderCockroachInitScript() string {
+	return `set -e
+/usr/local/bin/cockroach init --insecure --host=127.0.0.1:26257 2>&1 | tee /tmp/crdb-init.log
+grep -q "already been initialized" /tmp/crdb-init.log && exit 0 || exit ${PIPESTATUS[0]}`
+}
+
+func isCockroachPrimary(topo *domain.Topology, id string) bool {
+	return coordinationSource(topo, id) == ""
+}
+
+func coordinationSource(topo *domain.Topology, id string) string {
+	for _, conn := range topo.GetConnections() {
+		if conn.GetKind() == domain.Topology_Connection_KIND_COORDINATION && conn.GetFrom() == id {
+			return conn.GetTo()
+		}
+	}
+	return ""
+}
+
+func cockroachJoinHosts(id string, topo *domain.Topology, bindings *[]*renderpb.Config_Binding) string {
+	dbIDs := componentIDsByKind(topo, domain.Topology_Component_KIND_DATABASE)
+	if primary := coordinationSource(topo, id); primary != "" {
+		tok := peerToken("CRDB", primary)
+		*bindings = append(*bindings, &renderpb.Config_Binding{Token: tok, ComponentIds: []string{primary}, Attr: AttrPrivateIP})
+		return tok + ":26257"
+	}
+
+	var joins []string
+	for _, dbID := range dbIDs {
+		if dbID == id {
+			continue
+		}
+		tok := peerToken("CRDB", dbID)
+		*bindings = append(*bindings, &renderpb.Config_Binding{Token: tok, ComponentIds: []string{dbID}, Attr: AttrPrivateIP})
+		joins = append(joins, tok+":26257")
+	}
+	if len(joins) == 0 {
+		joins = append(joins, selfIPToken+":26257")
+	}
+	return strings.Join(joins, ",")
 }
 
 // isReplicationPrimary reports whether id is the source of any REPLICATION edge.
