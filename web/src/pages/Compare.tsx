@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "@/lib/router";
 import { compareRuns, getGrafanaSettings } from "@/api/client";
 import type { ComparisonResponse, GrafanaSettings } from "@/api/types";
 import { MetricsDiff } from "@/components/MetricsDiff";

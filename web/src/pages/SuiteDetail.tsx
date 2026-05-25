@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, Fragment } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "@/lib/router";
 import {
   cancelBatch,
   cloneSuite,

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "@/lib/router";
 import { getPreset, createPreset, updatePreset } from "@/api/client";
 import {
   ALL_DB_KINDS,

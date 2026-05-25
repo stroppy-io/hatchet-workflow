@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "@/lib/router";
 import { startRun, validateRun, dryRun, listPresets, listPackages, getStroppyVersions, getSettings, previewStroppyConfig, createRunPreset, createPreset } from "@/api/client";
 import { WorkloadForm, type K6Mode } from "@/components/WorkloadForm";
 import { InfrastructureForm, PROVIDER_META } from "@/components/InfrastructureForm";
@@ -1023,7 +1023,7 @@ function StepDatabase({
                 ))}
               </SelectContent>
             </Select>
-            <a href="/packages" className="text-[9px] font-mono text-zinc-500 hover:text-zinc-300">manage packages</a>
+            <Link to="/packages" className="text-[9px] font-mono text-zinc-500 hover:text-zinc-300">manage packages</Link>
           </div>
         )}
       </div>
@@ -1032,7 +1032,7 @@ function StepDatabase({
       <div>
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Topology Preset</span>
-          <a href="/presets" className="text-[9px] font-mono text-zinc-500 hover:text-zinc-300">manage presets</a>
+          <Link to="/presets" className="text-[9px] font-mono text-zinc-500 hover:text-zinc-300">manage presets</Link>
         </div>
         <div className="grid grid-cols-3 gap-3">
           {presetsForKind.map((p) => {

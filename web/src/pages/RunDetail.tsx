@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "@/lib/router";
 import { getRunStatus, getGrafanaSettings, deleteRun, cancelRun, createShareLink, getRunRenderedConfigs, createRunPreset } from "@/api/client";
 import { ALL_DB_KINDS, type Snapshot, type NodeStatus, type GrafanaSettings, type RunConfig } from "@/api/types";
 import { RunOverview } from "@/components/RunOverview";
@@ -261,12 +261,27 @@ export function RunDetail() {
   const [presetSaved, setPresetSaved] = useState(false);
   const [presetErr, setPresetErr] = useState("");
   const [logFocusPhase, setLogFocusPhase] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("tab")) return params.get("tab")!;
-    if (window.location.hash.startsWith("#L")) return "logs";
-    return "overview";
-  });
+  // Active tab lives in the URL (?tab=...) so each tab is a shareable link and
+  // the back button works. A log-anchor hash (#L.../#E=...) implies the logs tab.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab =
+    searchParams.get("tab") ||
+    (window.location.hash.startsWith("#L") || window.location.hash.startsWith("#E")
+      ? "logs"
+      : "overview");
+  const setActiveTab = useCallback(
+    (tab: string) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("tab", tab);
+          return next;
+        },
+        { replace: false }
+      );
+    },
+    [setSearchParams]
+  );
   const [, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [grafana, setGrafana] = useState<GrafanaSettings | null>(null);

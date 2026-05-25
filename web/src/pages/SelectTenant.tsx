@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router";
 import { useAuth } from "@/hooks/useAuth";
 import { Activity, Building2 } from "lucide-react";
 
@@ -10,7 +10,7 @@ export function SelectTenant() {
 
   async function handleSelect(tenantId: string) {
     await selectTenant(tenantId);
-    navigate("/", { replace: true });
+    navigate(`/t/${tenantId}`, { replace: true });
   }
 
   return (

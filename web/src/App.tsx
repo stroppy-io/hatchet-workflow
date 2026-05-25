@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-
 import { useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { TenantGate } from "@/components/TenantGate";
 import { Runs } from "@/pages/Runs";
 import { NewRun } from "@/pages/NewRun";
 import { RunDetail } from "@/pages/RunDetail";
@@ -27,44 +28,49 @@ import { TenantTokens } from "@/pages/TenantTokens";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 
+function Loading() {
+  return (
+    <div className="flex h-screen items-center justify-center bg-background text-sm text-muted-foreground">
+      Loading...
+    </div>
+  );
+}
+
+// Where "/" and unknown paths land once authenticated.
+function RootRedirect() {
+  const { user } = useAuth();
+  if (user?.tenant_id) return <Navigate to={`/t/${user.tenant_id}`} replace />;
+  if (user?.is_root) return <Navigate to="/admin/tenants" replace />;
+  return <Navigate to="/select-tenant" replace />;
+}
+
 function AppRoutes() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, selectTenant } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { selectTenant } = useAuth();
-
-  // After login: auto-select tenant or redirect.
+  // After login with no tenant in context: auto-select the only tenant, or
+  // route to the selector / admin. Tenant-scoped paths (/t/...) are handled by
+  // TenantGate, so skip them here.
   useEffect(() => {
     if (!user || !isAuthenticated) return;
-    // Skip if already on select-tenant or admin pages (root can access admin without tenant).
-    if (location.pathname === "/select-tenant" || location.pathname.startsWith("/admin")) return;
-
+    const p = location.pathname;
+    if (p === "/select-tenant" || p.startsWith("/admin") || p.startsWith("/t/")) return;
     if (user.tenant_id) return; // tenant already selected
 
     const tenants = user.tenants || [];
     if (tenants.length === 1) {
-      // Auto-select the only tenant.
       selectTenant(tenants[0].id);
     } else if (tenants.length > 1) {
-      // Multiple tenants — show selector.
       navigate("/select-tenant", { replace: true });
     } else if (user.is_root) {
-      // Root with no tenants — go to admin to create one.
       navigate("/admin/tenants", { replace: true });
     } else {
-      // Non-root with no tenants — show selector (will display "no tenants" message).
       navigate("/select-tenant", { replace: true });
     }
   }, [user, isAuthenticated, selectTenant, navigate, location.pathname]);
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background text-sm text-muted-foreground">
-        Loading...
-      </div>
-    );
-  }
+  if (isLoading) return <Loading />;
 
   // Share pages are always accessible, regardless of auth.
   if (location.pathname.startsWith("/share/")) {
@@ -92,64 +98,24 @@ function AppRoutes() {
     );
   }
 
-  // No tenant selected yet — only show select-tenant and admin pages.
-  if (!user?.tenant_id) {
-    return (
-      <Routes>
-        <Route path="/select-tenant" element={<SelectTenant />} />
-        <Route element={<Layout />}>
-          <Route element={<ProtectedRoute requireRoot />}>
-            <Route path="/admin/tenants" element={<AdminTenants />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/server" element={<ServerHealth />} />
-          </Route>
-        </Route>
-        <Route path="/login" element={<Navigate to="/" replace />} />
-        <Route path="*" element={
-          user?.is_root
-            ? <Navigate to="/admin/tenants" replace />
-            : <Navigate to="/select-tenant" replace />
-        } />
-      </Routes>
-    );
+  // Authenticated but no tenant chosen yet (and not on a route that handles
+  // that itself): let the auto-select effect above run before redirecting.
+  if (
+    !user?.tenant_id &&
+    location.pathname !== "/select-tenant" &&
+    !location.pathname.startsWith("/admin") &&
+    !location.pathname.startsWith("/t/")
+  ) {
+    return <Loading />;
   }
 
   return (
     <Routes>
+      <Route path="/login" element={<RootRedirect />} />
       <Route path="/select-tenant" element={<SelectTenant />} />
 
-      <Route element={<Layout key={user?.tenant_id || ""} />}>
-        {/* Everyone */}
-        <Route path="/" element={<Runs />} />
-        <Route path="/runs" element={<Runs />} />
-        <Route path="/runs/:id" element={<RunDetail />} />
-        <Route path="/compare" element={<Compare />} />
-        <Route path="/packages" element={<Packages />} />
-        <Route path="/presets" element={<Presets />} />
-        <Route path="/run-presets" element={<RunPresets />} />
-        <Route path="/suites" element={<Suites />} />
-        <Route path="/suites/new" element={<SuiteBuilder />} />
-        <Route path="/suites/:id" element={<SuiteDetail />} />
-        <Route path="/suites/:id/edit" element={<SuiteBuilder />} />
-        <Route path="/suites/:id/items/new" element={<WorkloadEditor />} />
-        <Route path="/suites/:id/items/:itemId/edit" element={<WorkloadEditor />} />
-
-        <Route path="/settings" element={<SettingsPage />} />
-
-        {/* Operator+ */}
-        <Route element={<ProtectedRoute minRole="operator" />}>
-          <Route path="/runs/new" element={<NewRun />} />
-          <Route path="/presets/new" element={<PresetDesigner />} />
-          <Route path="/presets/:id/edit" element={<PresetDesigner />} />
-        </Route>
-
-        {/* Owner+ */}
-        <Route element={<ProtectedRoute minRole="owner" />}>
-          <Route path="/members" element={<TenantMembers />} />
-          <Route path="/tokens" element={<TenantTokens />} />
-        </Route>
-
-        {/* Root only */}
+      {/* System scope: root only, tenant-independent. */}
+      <Route element={<Layout />}>
         <Route element={<ProtectedRoute requireRoot />}>
           <Route path="/admin/tenants" element={<AdminTenants />} />
           <Route path="/admin/users" element={<AdminUsers />} />
@@ -157,8 +123,41 @@ function AppRoutes() {
         </Route>
       </Route>
 
-      <Route path="/login" element={<Navigate to="/" replace />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Tenant scope: everything lives under /t/:tenantId. */}
+      <Route path="/t/:tenantId" element={<TenantGate />}>
+        <Route element={<Layout />}>
+          {/* Everyone */}
+          <Route index element={<Runs />} />
+          <Route path="runs" element={<Runs />} />
+          <Route path="runs/:id" element={<RunDetail />} />
+          <Route path="compare" element={<Compare />} />
+          <Route path="packages" element={<Packages />} />
+          <Route path="presets" element={<Presets />} />
+          <Route path="run-presets" element={<RunPresets />} />
+          <Route path="suites" element={<Suites />} />
+          <Route path="suites/new" element={<SuiteBuilder />} />
+          <Route path="suites/:id" element={<SuiteDetail />} />
+          <Route path="suites/:id/edit" element={<SuiteBuilder />} />
+          <Route path="suites/:id/items/new" element={<WorkloadEditor />} />
+          <Route path="suites/:id/items/:itemId/edit" element={<WorkloadEditor />} />
+          <Route path="settings" element={<SettingsPage />} />
+
+          {/* Operator+ */}
+          <Route element={<ProtectedRoute minRole="operator" />}>
+            <Route path="runs/new" element={<NewRun />} />
+            <Route path="presets/new" element={<PresetDesigner />} />
+            <Route path="presets/:id/edit" element={<PresetDesigner />} />
+          </Route>
+
+          {/* Owner+ */}
+          <Route element={<ProtectedRoute minRole="owner" />}>
+            <Route path="members" element={<TenantMembers />} />
+            <Route path="tokens" element={<TenantTokens />} />
+          </Route>
+        </Route>
+      </Route>
+
+      <Route path="*" element={<RootRedirect />} />
     </Routes>
   );
 }

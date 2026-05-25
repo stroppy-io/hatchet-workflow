@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "@/lib/router";
 import { useAuth } from "@/hooks/useAuth";
 
 const levels: Record<string, number> = { viewer: 1, operator: 2, owner: 3 };

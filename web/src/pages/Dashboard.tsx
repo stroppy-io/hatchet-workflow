@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router";
 import { getHealth } from "@/api/client";
 import { WSConnection } from "@/api/ws";
 import type { NodeStatus, WSMessage, Snapshot } from "@/api/types";

@@ -5,6 +5,7 @@ import { getRunLogs } from "@/api/client";
 import type { WSMessage, Snapshot } from "@/api/types";
 import { ArrowDown, Server, Zap, Search, X, WrapText, AlignLeft, Check } from "lucide-react";
 import { MultiFilter, type FilterOption } from "@/components/ui/multi-filter";
+import { useTenantId } from "@/lib/router";
 
 /* ---------- types ---------- */
 
@@ -168,6 +169,7 @@ function HighlightText({ text, search }: { text: string; search: string }) {
 interface LogStreamProps { runID?: string; snapshot?: Snapshot | null; focusPhase?: string | null; }
 
 export function LogStream({ runID, snapshot, focusPhase }: LogStreamProps) {
+  const tenantId = useTenantId();
   const [lines, setLines] = useState<DisplayLine[]>([]);
   const [autoScroll, setAutoScroll] = useState(true);
   const [filterMachines, setFilterMachines] = useState<Set<string>>(new Set());
@@ -447,7 +449,8 @@ export function LogStream({ runID, snapshot, focusPhase }: LogStreamProps) {
   // pagination state). Loader prefers #E when both present.
   const copyLineLink = useCallback((lineNum: number, eventID: string) => {
     const frag = `#E=${encodeURIComponent(eventID)}`;
-    const url = `${window.location.origin}/runs/${runID}?tab=logs${frag}`;
+    const prefix = tenantId ? `/t/${tenantId}` : "";
+    const url = `${window.location.origin}${prefix}/runs/${runID}?tab=logs${frag}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedLine(lineNum);
       window.history.replaceState(null, "", frag);
@@ -455,7 +458,7 @@ export function LogStream({ runID, snapshot, focusPhase }: LogStreamProps) {
       setHighlightEventID(eventID);
       setTimeout(() => setCopiedLine(null), 1500);
     });
-  }, [runID]);
+  }, [runID, tenantId]);
 
   const isSearching = searchResults !== null;
   const hasFilters = filterMachines.size > 0 || filterPhases.size > 0 || filterRoles.size > 0 || filterUnits.size > 0;

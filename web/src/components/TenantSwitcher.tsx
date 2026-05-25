@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "@/lib/router";
 import { useAuth } from "@/hooks/useAuth";
 import { listTenantsAdmin } from "@/api/client";
 import type { Tenant } from "@/api/types";
@@ -11,7 +12,8 @@ import {
 } from "@/components/ui/select";
 
 export function TenantSwitcher() {
-  const { user, selectTenant } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [tenants, setTenants] = useState<Tenant[]>([]);
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export function TenantSwitcher() {
   return (
     <Select
       value={user.tenant_id ?? undefined}
-      onValueChange={(v) => selectTenant(v)}
+      onValueChange={(v) => navigate(`/t/${v}`)}
     >
       <SelectTrigger className="h-7 text-xs border-border">
         <SelectValue placeholder="Switch tenant" />
