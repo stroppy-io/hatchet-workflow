@@ -31,6 +31,7 @@ var upstreams = map[string]string{
 	"postgres_exporter": "https://github.com/prometheus-community/postgres_exporter/releases/download/v{ver}/{file}",
 	"mysqld_exporter":   "https://github.com/prometheus/mysqld_exporter/releases/download/v{ver}/{file}",
 	"cockroach":         "https://storage.googleapis.com/cockroach-release-artifacts-prod/{file}",
+	"ydb":               "https://binaries.ydb.tech/release/{ver}/{file}",
 }
 
 // RoutePattern is the chi route this handler serves.

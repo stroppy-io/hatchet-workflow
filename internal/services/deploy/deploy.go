@@ -7,6 +7,7 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
@@ -47,6 +48,10 @@ type Config interface {
 	ServerAddr() string
 	JWTSecret() []byte
 	AgentJWTTTL() time.Duration
+	// AptCacheBackend != "" means the server fronts an apt cache; agents are handed
+	// STROPPY_APT_PROXY = http://<server-host>:<AptProxyAddr port> to route apt through it.
+	AptCacheBackend() string
+	AptProxyAddr() string
 }
 
 // PlatformReader reads the global (singleton) control-plane settings — the single
@@ -93,6 +98,21 @@ func (r *Resolver) serverAddr(ctx context.Context) string {
 	return r.cfg.ServerAddr()
 }
 
+// aptProxyURL builds the agent-facing apt proxy URL: the server's host (from
+// serverAddr) with the apt-relay port. e.g. ("http://10.0.0.1:8080", ":3142") ->
+// "http://10.0.0.1:3142". The agent thus reaches the cache through the server only.
+func aptProxyURL(serverAddr, aptAddr string) string {
+	host := strings.TrimPrefix(strings.TrimPrefix(serverAddr, "https://"), "http://")
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+	port := strings.TrimPrefix(aptAddr, ":")
+	if _, p, err := net.SplitHostPort(aptAddr); err == nil {
+		port = p
+	}
+	return "http://" + net.JoinHostPort(host, port)
+}
+
 // Resolve produces the run-scoped deployment.Deployment for a TestPreset in a tenant:
 // the provider-shaped infra (dag.BuildDeployment) enriched with per-machine network
 // allocation (D20) and the agent bootstrap (D18). For Docker the container Env carries
@@ -104,6 +124,12 @@ func (r *Resolver) Resolve(ctx context.Context, tenantID string, preset *domain.
 	prov := preset.GetDeployment().GetProvider()
 	serverAddr := r.serverAddr(ctx)
 	binaryURL := serverAddr + agentBinaryPath
+	// aptProxy (when the server fronts an apt cache) routes the agent's apt through
+	// the server's relay — agents know only the server. Empty disables it.
+	aptProxy := ""
+	if r.cfg.AptCacheBackend() != "" {
+		aptProxy = aptProxyURL(serverAddr, r.cfg.AptProxyAddr())
+	}
 
 	// signToken mints a per-machine agent JWT (the agent's machine principal, D18).
 	signToken := func(mid string) (string, error) {
@@ -138,14 +164,19 @@ func (r *Resolver) Resolve(ctx context.Context, tenantID string, preset *domain.
 				"STROPPY_MACHINE_ID":   m.GetId(),
 				"STROPPY_AGENT_TOKEN":  token,
 			}
+			envContent := fmt.Sprintf(
+				"STROPPY_SERVER_ADDR=%s\nSTROPPY_AGENT_SERVER=%s\nSTROPPY_AGENT_TENANT=%s\nSTROPPY_MACHINE_ID=%s\nSTROPPY_AGENT_TOKEN=%s\n",
+				serverAddr, agentServer, tenantID, m.GetId(), token)
+			if aptProxy != "" {
+				c.Env["STROPPY_APT_PROXY"] = aptProxy
+				envContent += "STROPPY_APT_PROXY=" + aptProxy + "\n"
+			}
 			// systemd services do NOT inherit PID-1 (container) env, so the agent unit
 			// reads /etc/stroppy-agent.env (its EnvironmentFile). Write it here.
 			c.Files = append(c.GetFiles(), &deployment.Docker_File{
-				Path: "/etc/stroppy-agent.env",
-				Content: []byte(fmt.Sprintf(
-					"STROPPY_SERVER_ADDR=%s\nSTROPPY_AGENT_SERVER=%s\nSTROPPY_AGENT_TENANT=%s\nSTROPPY_MACHINE_ID=%s\nSTROPPY_AGENT_TOKEN=%s\n",
-					serverAddr, agentServer, tenantID, m.GetId(), token)),
-				Mode: 0o644,
+				Path:    "/etc/stroppy-agent.env",
+				Content: []byte(envContent),
+				Mode:    0o644,
 			})
 			// systemd-in-docker needs a writable /run + the host cgroup mount.
 			c.Tmpfs = map[string]string{"/run": "exec,mode=755", "/run/lock": ""}
@@ -168,8 +199,13 @@ func (r *Resolver) Resolve(ctx context.Context, tenantID string, preset *domain.
 			if err != nil {
 				return nil, err
 			}
+			var extraEnv map[string]string
+			if aptProxy != "" {
+				extraEnv = map[string]string{"STROPPY_APT_PROXY": aptProxy}
+			}
 			ud, err := cloudinit.Render(cloudinit.Params{
 				BinaryURL: binaryURL, ServerAddr: serverAddr, MachineID: m.GetId(), AgentToken: token,
+				ExtraEnv: extraEnv,
 			})
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "render cloud-init: %v", err)

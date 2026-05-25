@@ -42,7 +42,12 @@ func NewSigner(secret []byte) *Signer {
 func (s *Signer) sign(c *Claims, ttl time.Duration) (string, error) {
 	now := time.Now()
 	c.IssuedAt = jwt.NewNumericDate(now)
-	c.ExpiresAt = jwt.NewNumericDate(now.Add(ttl))
+	// ttl <= 0 means a non-expiring token: omit the exp claim entirely so the
+	// validator never rejects it (jwt/v5 treats a missing exp as "no expiry").
+	// Agent machine tokens use this so a long benchmark never loses auth mid-run.
+	if ttl > 0 {
+		c.ExpiresAt = jwt.NewNumericDate(now.Add(ttl))
+	}
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, c).SignedString(s.secret)
 }
 

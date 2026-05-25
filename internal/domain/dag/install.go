@@ -731,9 +731,18 @@ func stroppyURL(db *domain.Database) string {
 	case domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
 		return "stroppy@tcp(" + stroppyDBHostToken + ":3306)/stroppy"
 	case domain.Database_KIND_COCKROACH:
-		return "postgresql://root@" + stroppyDBHostToken + ":26257/defaultdb?sslmode=disable"
+		// SQL on 5432 (the recipe's --sql-addr); 26257 is cockroach's RPC/listen port
+		// and resets pgwire SQL connections.
+		return "postgresql://root@" + stroppyDBHostToken + ":5432/defaultdb?sslmode=disable"
+	case domain.Database_KIND_PICODATA:
+		// picodata pg-wire: user `admin`, password from PICODATA_ADMIN_PASSWORD set at
+		// start (see the picodata recipe). No db in the URL (picodata default).
+		return "postgres://admin:T0psecret@" + stroppyDBHostToken + ":5432?sslmode=disable"
 	case domain.Database_KIND_YDB:
-		return "grpc://" + stroppyDBHostToken + ":2136/Root/testdb"
+		// The dynamic compute node (recipe start_database) serves the tenant on grpc 2136;
+		// /Root/db1 is the tenant created from the ssd pool (the static /Root domain rejects
+		// table DDL). The host token resolves to the FLOW target = first ydb node.
+		return "grpc://" + stroppyDBHostToken + ":2136/Root/db1"
 	default: // postgres pg-wire (old code's proven URL)
 		return "postgresql://postgres@" + stroppyDBHostToken + ":5432/postgres?sslmode=disable"
 	}

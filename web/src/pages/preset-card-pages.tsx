@@ -192,7 +192,11 @@ function PresetCard({ preset, variant }: { preset: Preset; variant: PresetCardPa
       <div className="mt-auto flex items-center justify-between pt-4">
         <span className="text-xs text-muted-foreground">{formatTimestamp(preset.entity?.timestamps?.updatedAt || preset.entity?.timestamps?.createdAt)}</span>
         <Button
-          onClick={() => navigate(tenantPath(tenantId, `/presets/${routePart(variant)}/${preset.entity?.id?.value ?? ""}`))}
+          onClick={() =>
+            navigate(tenantPath(tenantId, `/presets/${routePart(variant)}/${preset.entity?.id?.value ?? ""}`), {
+              state: { preset },
+            })
+          }
           size="sm"
           variant="ghost"
         >

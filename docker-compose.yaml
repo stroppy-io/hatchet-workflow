@@ -146,6 +146,18 @@ services:
       "
     restart: "no"
 
+  # --- apt-cacher-ng (transparent .deb cache, hidden behind the server) ---
+  # Bound to loopback only: agents cannot reach it directly — the server relays its
+  # apt port to it, so an agent's apt goes through the server's address alone (as for
+  # binaries). Caches http repos (Ubuntu base, pgdg) → identical, fast installs.
+  apt-cacher-ng:
+    image: sameersbn/apt-cacher-ng:3.7.4-20220421
+    restart: always
+    ports:
+      - "127.0.0.1:13142:3142"
+    volumes:
+      - aptcache:/var/cache/apt-cacher-ng
+
   # --- Stroppy Cloud server ---
   # Runs with host networking so it can reach Docker agent containers directly.
   agent-image:
@@ -172,6 +184,8 @@ services:
       valkey:
         condition: service_healthy
       vmauth:
+        condition: service_started
+      apt-cacher-ng:
         condition: service_started
     command:
       - serve
@@ -208,6 +222,10 @@ services:
       STROPPY_ROOT_ADMIN_EMAIL: ${STROPPY_ROOT_ADMIN_EMAIL:-admin@stroppy.local}
       STROPPY_ROOT_ADMIN_PASSWORD: ${STROPPY_ROOT_ADMIN_PASSWORD:-stroppy-admin-change-me}
       STROPPY_SERVER_ADDR: ${STROPPY_SERVER_ADDR:-}
+      # apt cache relay: the server forwards :3142 to the loopback-only apt-cacher-ng
+      # so agents reach the .deb cache through the server alone (one address, 1:1 cloud).
+      STROPPY_APT_CACHE_BACKEND: "127.0.0.1:13142"
+      STROPPY_APT_PROXY_ADDR: ":3142"
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       YC_TOKEN: ${YC_TOKEN:-}
       YC_CLOUD_ID: ${YC_CLOUD_ID:-}
@@ -226,6 +244,7 @@ services:
 
 volumes:
   pgdata:
+  aptcache:
   valkeydata:
   miniodata:
   vmdata:

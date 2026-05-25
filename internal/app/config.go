@@ -41,6 +41,13 @@ type Config struct {
 	AgentBinaryURL_ string
 	AgentJWTTTL_    time.Duration
 
+	// APT cache: the server fronts an internal apt-cacher-ng (hidden on loopback)
+	// via a TCP relay on AptProxyAddr_, so agents point apt at the server only
+	// (one address) and cached .deb downloads stay identical local↔cloud.
+	// AptCacheBackend_ empty disables the relay (agents apt straight from upstream).
+	AptCacheBackend_ string // host:port of the internal apt-cacher-ng (loopback)
+	AptProxyAddr_    string // server's apt-relay listen addr (e.g. ":3142")
+
 	// Bootstrap: the root admin + its tenant are seeded at server start if no
 	// admin account exists yet (idempotent). Settings scaffold + system database
 	// presets are seeded under that root tenant.
@@ -76,11 +83,17 @@ func (c *Config) ServerAddr() string {
 	return dockerHostAddr(c.GRPCAddr)
 }
 func (c *Config) AgentBinaryURL() string         { return c.AgentBinaryURL_ }
+func (c *Config) AptCacheBackend() string        { return c.AptCacheBackend_ }
+func (c *Config) AptProxyAddr() string           { return c.AptProxyAddr_ }
 func (c *Config) AccessTokenTTL() time.Duration  { return 15 * time.Minute }
 func (c *Config) RefreshTokenTTL() time.Duration { return 30 * 24 * time.Hour }
+
+// AgentJWTTTL is the lifetime of an agent machine token. Default 0 = never
+// expires (a benchmark agent polls the server for the whole run; a finite TTL
+// would drop its auth mid-run). Set STROPPY_AGENT_JWT_TTL to force a finite TTL.
 func (c *Config) AgentJWTTTL() time.Duration {
-	if c.AgentJWTTTL_ <= 0 {
-		return 24 * time.Hour
+	if c.AgentJWTTTL_ < 0 {
+		return 0
 	}
 	return c.AgentJWTTTL_
 }
@@ -116,9 +129,11 @@ func LoadConfig() *Config {
 		VictoriaToken:      os.Getenv("STROPPY_VICTORIA_TOKEN"),
 		GrafanaURL:         os.Getenv("STROPPY_GRAFANA_URL"),
 		// Empty default -> ServerAddr() derives a docker-host address for local runs.
-		ServerAddr_:     os.Getenv("STROPPY_SERVER_ADDR"),
-		AgentBinaryURL_: os.Getenv("STROPPY_AGENT_BINARY_URL"),
-		AgentJWTTTL_:    envDuration("STROPPY_AGENT_JWT_TTL", 24*time.Hour),
+		ServerAddr_:      os.Getenv("STROPPY_SERVER_ADDR"),
+		AgentBinaryURL_:  os.Getenv("STROPPY_AGENT_BINARY_URL"),
+		AgentJWTTTL_:     envDuration("STROPPY_AGENT_JWT_TTL", 0),
+		AptCacheBackend_: os.Getenv("STROPPY_APT_CACHE_BACKEND"),
+		AptProxyAddr_:    env("STROPPY_APT_PROXY_ADDR", ":3142"),
 
 		RootAdminEmail:    env("STROPPY_ROOT_ADMIN_EMAIL", "admin@stroppy.local"),
 		RootAdminPassword: env("STROPPY_ROOT_ADMIN_PASSWORD", "stroppy-admin-change-me"),

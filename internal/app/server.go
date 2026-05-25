@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -73,6 +75,11 @@ type Server struct {
 	processor *runtime.DagProcessor
 	pool      *pgxpool.Pool
 	log       *xlog.Logger
+
+	// apt relay: forward this listen addr to the internal apt-cacher-ng backend
+	// so agents reach the cache through the server only. Empty = disabled.
+	aptRelayAddr string
+	aptBackend   string
 }
 
 // BuildServer wires every infrastructure client, service, api handler, the dag
@@ -175,6 +182,9 @@ func BuildServer(ctx context.Context, cfg *Config, logger *xlog.Logger) (*Server
 		runtime.WithProcessorInterval(time.Second),
 		runtime.WithTerminalHook(run.WebhookTerminalHook(webhookSvc)),
 	)
+	// Cancellation is a runtime operation: CancelTestRun delegates to the processor,
+	// which drives CANCELLING→teardown→CANCELLED itself (no racing status writes).
+	runSvc.SetCanceller(processor)
 
 	// ── connect API (also serves grpc + grpc-web over h2c) ────────────────────
 	opts := connect.WithInterceptors(newConnectAuthInterceptor(authSvc))
@@ -218,7 +228,14 @@ func BuildServer(ctx context.Context, cfg *Config, logger *xlog.Logger) (*Server
 	handler := h2c.NewHandler(mux, &http2.Server{})
 	httpSrv := &http.Server{Addr: cfg.GRPCAddr, Handler: handler}
 
-	return &Server{httpSrv: httpSrv, processor: processor, pool: pool, log: logger}, nil
+	return &Server{
+		httpSrv:      httpSrv,
+		processor:    processor,
+		pool:         pool,
+		log:          logger,
+		aptRelayAddr: cfg.AptProxyAddr(),
+		aptBackend:   cfg.AptCacheBackend(),
+	}, nil
 }
 
 // reverseProxy proxies <prefix>/* to target, stripping the prefix.
@@ -271,6 +288,9 @@ func (s *Server) Run(ctx context.Context) error {
 	if err := s.processor.Start(ctx); err != nil {
 		return fmt.Errorf("start processor: %w", err)
 	}
+	if s.aptBackend != "" && s.aptRelayAddr != "" {
+		go s.serveAptRelay(ctx)
+	}
 	go func() {
 		<-ctx.Done()
 		shutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -290,6 +310,44 @@ func (s *Server) Run(ctx context.Context) error {
 func (s *Server) Close() {
 	s.processor.Stop()
 	s.pool.Close()
+}
+
+// serveAptRelay is a dumb TCP forwarder: every connection on aptRelayAddr is piped
+// to the internal apt-cacher-ng (aptBackend, bound to loopback so agents can't reach
+// it directly). apt on the agents points at the server only; the server relays its
+// HTTP-proxy traffic to the cache. Raw byte piping handles plain GET and CONNECT alike.
+func (s *Server) serveAptRelay(ctx context.Context) {
+	ln, err := net.Listen("tcp", s.aptRelayAddr)
+	if err != nil {
+		s.log.Error("apt relay listen failed", xlog.String("addr", s.aptRelayAddr), xlog.Err(err))
+		return
+	}
+	go func() { <-ctx.Done(); _ = ln.Close() }()
+	s.log.Info("apt cache relay",
+		xlog.String("listen", s.aptRelayAddr), xlog.String("backend", s.aptBackend))
+	for {
+		conn, err := ln.Accept()
+		if err != nil {
+			if ctx.Err() != nil {
+				return
+			}
+			continue
+		}
+		go s.pipeApt(conn)
+	}
+}
+
+func (s *Server) pipeApt(client net.Conn) {
+	defer client.Close() //nolint:errcheck
+	up, err := net.DialTimeout("tcp", s.aptBackend, 5*time.Second)
+	if err != nil {
+		return
+	}
+	defer up.Close() //nolint:errcheck
+	done := make(chan struct{}, 2)
+	go func() { _, _ = io.Copy(up, client); done <- struct{}{} }()
+	go func() { _, _ = io.Copy(client, up); done <- struct{}{} }()
+	<-done
 }
 
 func pgDSN(c *postgres.Config) string {

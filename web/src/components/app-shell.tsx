@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 import { useAuth } from "@/contexts/auth-context";
@@ -18,6 +20,7 @@ const navSections: { label: string; items: NavItem[] }[] = [
     items: [
       { label: "Wizard", path: "/wizard", minRole: ROLE_VIEWER },
       { label: "Runs", path: "/runs", minRole: ROLE_VIEWER },
+      { label: "Compare", path: "/compare", minRole: ROLE_VIEWER },
       { label: "Suites", path: "/suites", minRole: ROLE_VIEWER },
       { label: "Suite runs", path: "/suite-runs", minRole: ROLE_VIEWER },
     ],
@@ -127,7 +130,16 @@ export function AppShell() {
       </aside>
 
       <main className="min-w-0 flex-1">
-        <Outlet />
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center gap-2 p-12 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              Loading…
+            </div>
+          }
+        >
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

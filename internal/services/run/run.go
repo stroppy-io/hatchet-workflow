@@ -38,14 +38,26 @@ type RunService struct {
 		*models.TestRunScanner,
 		*models.TestRun,
 	]
-	provider ProviderResolver
-	store    DagStore
-	logs     LogsClient
-	metrics  MetricsClient
-	share    ShareStore
-	authz    *authz.Authz
-	txm      tx.Trm
+	provider  ProviderResolver
+	store     DagStore
+	logs      LogsClient
+	metrics   MetricsClient
+	share     ShareStore
+	authz     *authz.Authz
+	txm       tx.Trm
+	canceller Canceller
 }
+
+// Canceller is the runtime cancellation API (satisfied by runtime.DagProcessor).
+// CancelTestRun delegates to it so the runtime drives the CANCELLING→teardown→
+// CANCELLED transition itself — the service never writes the dag status directly.
+type Canceller interface {
+	Cancel(dagID string)
+}
+
+// SetCanceller wires the runtime canceller after construction (the processor is
+// built after this service).
+func (s *RunService) SetCanceller(c Canceller) { s.canceller = c }
 
 var _ uiapi.RunActions = (*RunService)(nil)
 
@@ -222,22 +234,14 @@ func (s *RunService) CancelTestRun(ctx context.Context, req *uipb.CancelTestRunR
 			if err != nil {
 				return nil, err
 			}
-			return tx.DoReadCommittedRet(ctx, s.txm, func(ctx context.Context) (*models.TestRun, error) {
-				dag, err := s.store.GetDag(ctx, run.GetDag().GetValue())
-				if err != nil {
-					return nil, status.Errorf(codes.Internal, "load dag: %v", err)
-				}
-				if dag == nil {
-					return nil, status.Error(codes.NotFound, "run dag not found")
-				}
-				if !isTerminal(dag.GetStatus()) {
-					dag.Status = primitive.Status_STATUS_CANCELLING
-					if err := s.store.SaveDag(ctx, dag); err != nil {
-						return nil, status.Errorf(codes.Internal, "cancel dag: %v", err)
-					}
-				}
-				return run, nil
-			})
+			if s.canceller == nil {
+				return nil, status.Error(codes.Unimplemented, "runtime canceller not wired")
+			}
+			// Hand the cancellation to the runtime: it forces the dag to CANCELLING and
+			// runs always_run teardown itself. We never write the dag status here — that
+			// would race the executor's snapshots and leave deployments un-torn-down.
+			s.canceller.Cancel(run.GetDag().GetValue())
+			return run, nil
 		})
 }
 

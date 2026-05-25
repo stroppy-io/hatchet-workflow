@@ -40,6 +40,11 @@ type DagProcessor struct {
 	started    bool
 	active     map[string]struct{}
 	generation map[string]uint64
+	// cancelReq holds dag ids whose cancellation was requested via Cancel (the
+	// runtime API). processOne forces a requested dag to CANCELLING before running
+	// the executor, so the executor itself drives always_run teardown + settles
+	// CANCELLED — no external status write races the executor's snapshots.
+	cancelReq  map[string]struct{}
 	cancel     context.CancelFunc
 	stopOnce   sync.Once
 	wg         sync.WaitGroup
@@ -56,6 +61,7 @@ func NewDagProcessor(storage Storage, tasks TasksRegistry, opts ...ProcessorOpti
 		dags:       cmap.New[*primitive.Dag](),
 		active:     make(map[string]struct{}),
 		generation: make(map[string]uint64),
+		cancelReq:  make(map[string]struct{}),
 	}
 	for _, opt := range opts {
 		opt(p)
@@ -128,12 +134,20 @@ func (p *DagProcessor) processOne(ctx context.Context, id string, generation uin
 		WithSaveHook(p.storage.SaveDag),
 	)
 	runDag := proto.Clone(dag).(*primitive.Dag)
+	// A cancellation was requested: drive the dag to CANCELLING so the executor's
+	// cancel path runs always_run teardown (destroyDocker) under a live ctx and
+	// settles CANCELLED. The flag (not a DB write) survives across ticks, so this
+	// is race-free even if the dag was mid-flight when Cancel was called.
+	if p.isCancelRequested(id) && !isDagTerminal(runDag.GetStatus()) {
+		runDag.Status = primitive.Status_STATUS_CANCELLING
+	}
 	_ = executor.Run(ctx, runDag)
 	_ = p.storage.SaveDag(context.Background(), runDag)
 	if !p.isCurrentGeneration(id, generation) {
 		return
 	}
 	if isDagTerminal(runDag.GetStatus()) {
+		p.clearCancel(id)
 		if p.onTerminal != nil {
 			p.onTerminal(ctx, runDag)
 		}
@@ -164,6 +178,29 @@ func (p *DagProcessor) isActive(id string) bool {
 	defer p.mu.Unlock()
 	_, ok := p.active[id]
 	return ok
+}
+
+// Cancel requests cancellation of a dag (the runtime API the run/suite services
+// call). It records intent in-process; the next process pass forces the dag to
+// CANCELLING and the executor runs always_run teardown + settles CANCELLED. The
+// runtime owns the status transition — callers never write the dag status directly.
+func (p *DagProcessor) Cancel(id string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.cancelReq[id] = struct{}{}
+}
+
+func (p *DagProcessor) isCancelRequested(id string) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	_, ok := p.cancelReq[id]
+	return ok
+}
+
+func (p *DagProcessor) clearCancel(id string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	delete(p.cancelReq, id)
 }
 
 // refreshFromStorage pulls newly-submitted (or recovered) processable dags into the

@@ -47,10 +47,22 @@ func databaseRecipe(db *domain.Database) Recipe {
 		r.AptPackages = append(append([]string{}, r.AptPackages...), "patroni", "python3-etcd")
 		r.ServiceName = ""
 		r.StartScript = strings.Join([]string{
+			// Idempotent: an agent's 60s command lease expires under cluster load
+			// (5 replicas basebackup the primary at once), so this step gets
+			// re-delivered. A second run of `systemd-run --unit=stroppy-patroni`
+			// would fail with "unit already exists" and the node would fail
+			// permanently. If patroni is already up from a prior delivery, succeed.
+			"if systemctl is-active --quiet stroppy-patroni; then exit 0; fi",
 			"pg_dropcluster --stop " + ver + " main >/dev/null 2>&1 || true",
 			"systemctl disable --now postgresql >/dev/null 2>&1 || true",
-			"install -d -o postgres -g postgres /var/lib/postgresql/" + ver + "/main",
+			// Mode 0700: postgres refuses to start on a data dir with group/other
+			// access. The primary's initdb forces 0700, but a replica's
+			// pg_basebackup writes into this pre-created dir and keeps its mode, so
+			// it must be 0700 from the start or PG aborts with "invalid permissions".
+			"install -d -m 0700 -o postgres -g postgres /var/lib/postgresql/" + ver + "/main",
 			"chown -R postgres:postgres /etc/patroni",
+			// Clear a dead/failed transient unit from a prior delivery so --unit is free.
+			"systemctl reset-failed stroppy-patroni >/dev/null 2>&1 || true",
 			"systemd-run --unit=stroppy-patroni --uid=postgres --gid=postgres " +
 				"--setenv=PATH=/usr/lib/postgresql/" + ver + "/bin:/usr/local/bin:/usr/bin:/bin " +
 				"--collect /usr/bin/patroni /etc/patroni/patroni.yml",

@@ -12,6 +12,14 @@
   --color-ring: #38bdf8;
   --color-primary: #38bdf8;
   --color-primary-foreground: #061016;
+  --color-secondary: #27272a;
+  --color-secondary-foreground: #f4f4f5;
+  --color-accent: #27272a;
+  --color-accent-foreground: #f4f4f5;
+  --color-popover: #18181b;
+  --color-popover-foreground: #f4f4f5;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #fef2f2;
   --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-danger: #ef4444;

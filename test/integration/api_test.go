@@ -193,15 +193,25 @@ func dbTestPreset(t *testing.T, dp *domain.DatabasePreset, script string) *domai
 	t.Helper()
 	require.NotNil(t, dp, "database preset")
 
-	dbComp := firstDatabaseComponent(t, dp.GetTopology())
+	// Route the workload at the PROXY for proxy-fronted engines (postgres→haproxy
+	// patroni leader-check, mysql/mariadb→proxysql), else the first DATABASE node.
+	// picodata/cockroach/ydb drivers do their OWN topology discovery + routing, and
+	// the patroni-shaped haproxy proxy doesn't apply to them — connect direct.
+	flowTo := stroppyFlowTarget(t, dp.GetTopology(), dp.GetDatabase().GetKind())
 	topo := proto.Clone(dp.GetTopology()).(*domain.Topology)
 	topo.Machines = append(topo.Machines, &domain.Topology_Machine{
 		Id: "load1", Cores: 2, MemoryGb: 4, DiskGb: 20,
 		Components: []*domain.Topology_Component{{Id: "stroppy", Kind: domain.Topology_Component_KIND_STROPPY}},
 	})
 	topo.Connections = append(topo.Connections, &domain.Topology_Connection{
-		From: "stroppy", To: dbComp, Kind: domain.Topology_Connection_KIND_FLOW,
+		From: "stroppy", To: flowTo, Kind: domain.Topology_Connection_KIND_FLOW,
 	})
+	// tpch is analytical over a generated dataset — keep it tiny (scale 0.1) so the
+	// data-load + heavy aggregations stay fast; tpcc/tpcb use the minimal scale 1.
+	scale := 1.0
+	if strings.Contains(script, "tpch") {
+		scale = 0.1
+	}
 	return &domain.TestPreset{
 		Database: dp.GetDatabase(),
 		Topology: topo,
@@ -215,10 +225,30 @@ func dbTestPreset(t *testing.T, dp *domain.DatabasePreset, script string) *domai
 				Quiet:        true,
 				NoThresholds: true,
 			},
-			Parameters: &domain.Workload_Parameters{PoolSize: 4, ScaleFactor: 1},
+			Parameters: &domain.Workload_Parameters{PoolSize: 4, ScaleFactor: scale},
 		},
 		Deployment: &deployment.DeploymentIntent{Provider: deployment.Provider_PROVIDER_DOCKER},
 	}
+}
+
+// stroppyFlowTarget picks the workload's connection target. For proxy-fronted
+// engines (postgres→haproxy patroni leader-check, mysql/mariadb→proxysql) it
+// returns the first PROXY so the load follows the primary. picodata/cockroach/ydb
+// drivers do their own topology discovery + routing and the patroni-shaped haproxy
+// does NOT apply to them, so they connect directly to the first DATABASE node.
+func stroppyFlowTarget(t *testing.T, topo *domain.Topology, kind domain.Database_Kind) string {
+	proxyFronted := kind == domain.Database_KIND_POSTGRES ||
+		kind == domain.Database_KIND_MYSQL || kind == domain.Database_KIND_MARIADB
+	if proxyFronted {
+		for _, m := range topo.GetMachines() {
+			for _, c := range m.GetComponents() {
+				if c.GetKind() == domain.Topology_Component_KIND_PROXY {
+					return c.GetId()
+				}
+			}
+		}
+	}
+	return firstDatabaseComponent(t, topo)
 }
 
 func firstDatabaseComponent(t *testing.T, topo *domain.Topology) string {
@@ -298,7 +328,11 @@ func runBenchmark(t *testing.T, conn *grpc.ClientConn, tid *models.TenantId, pre
 	require.NoError(t, err, "submit %s", name)
 	runID := &models.TestRunId{Value: run.GetEntity().GetId().GetValue()}
 	var last primitive.Status
-	deadline := time.Now().Add(15 * time.Minute)
+	// 90 min: clustered/replica topologies install slowly — every node apt-installs
+	// its engine (mariadb/picodata/proxysql repos are https, NOT served by the
+	// http-only apt cache) + sequential bring-up + replication runs before the
+	// workload. Generous so slow multi-node installs finish instead of timing out.
+	deadline := time.Now().Add(90 * time.Minute)
 	for time.Now().Before(deadline) {
 		got, gerr := runClient.GetTestRun(context.Background(), &uipb.GetTestRunRequest{TenantId: tid, Id: runID})
 		if gerr == nil {
@@ -314,6 +348,12 @@ func runBenchmark(t *testing.T, conn *grpc.ClientConn, tid *models.TenantId, pre
 		}
 		time.Sleep(5 * time.Second)
 	}
+	// Timed out with a non-terminal run: cancel it so the server runs the dag's
+	// always_run teardown (destroyDocker) and frees the deployed containers. Without
+	// this a slow/stuck run leaks its containers (they only tear down on a natural
+	// terminal state) and the leaked load competes with later combos.
+	_, _ = runClient.CancelTestRun(context.Background(), &uipb.CancelTestRunRequest{TenantId: tid, Id: runID})
+	t.Logf("[%s] deadline hit (last %s) — cancelled for teardown", name, last)
 	return runID, last
 }
 
@@ -346,16 +386,71 @@ func TestBenchmarkMatrix(t *testing.T) {
 			presetName := p.GetName()
 			t.Run(name, func(t *testing.T) {
 				t.Logf("preset=%q kind=%s script=%s", presetName, dpCopy.GetDatabase().GetKind(), wl.script)
+				// Fresh account token per combo: a run can take minutes and the matrix
+				// runs many of them, so a single shared 15-min access token would expire
+				// mid-matrix and cascade every later submit into Unauthenticated.
+				cc := login(t)
 				preset := dbTestPreset(t, dpCopy, wl.script)
-				runID, status := runBenchmark(t, conn, tid, preset, name)
+				runID, status := runBenchmark(t, cc, tid, preset, name)
 				if status != primitive.Status_STATUS_COMPLETED {
-					dumpRunLogs(t, conn, tid, runID)
+					dumpRunLogs(t, cc, tid, runID)
 					t.Fatalf("[%s] terminal %s (want COMPLETED)", name, status)
 				}
-				assertVectorLogs(t, conn, tid, runID)
+				assertVectorLogs(t, cc, tid, runID)
 			})
 		}
 	}
+}
+
+// TestCancelTearsDown verifies the runtime-driven cancel: submit a docker run, let
+// it deploy (RUNNING with containers), call CancelTestRun, and the dag must settle
+// CANCELLED — the processor forces CANCELLING and the executor runs always_run
+// teardown itself (no status written by the service). Gated behind STROPPY_CANCEL_E2E=1.
+func TestCancelTearsDown(t *testing.T) {
+	if os.Getenv("STROPPY_CANCEL_E2E") != "1" {
+		t.Skip("set STROPPY_CANCEL_E2E=1 to run the cancel→teardown e2e")
+	}
+	conn := login(t)
+	tid := rootTenant(t, conn)
+	rc := uipb.NewRunServiceClient(conn)
+	run, err := rc.SubmitTestRun(context.Background(), &uipb.SubmitTestRunRequest{
+		TenantId: tid, Name: ptr("cancel-e2e"), TestPreset: fullPostgresPreset(t, conn, tid),
+	})
+	require.NoError(t, err, "submit")
+	runID := &models.TestRunId{Value: run.GetEntity().GetId().GetValue()}
+
+	// Wait until RUNNING, then give it a bit to actually deploy the containers.
+	deadline := time.Now().Add(8 * time.Minute)
+	for time.Now().Before(deadline) {
+		got, gerr := rc.GetTestRun(context.Background(), &uipb.GetTestRunRequest{TenantId: tid, Id: runID})
+		if gerr == nil && got.GetStatus() == primitive.Status_STATUS_RUNNING {
+			break
+		}
+		time.Sleep(3 * time.Second)
+	}
+	time.Sleep(45 * time.Second) // let the deploy node create containers
+
+	_, err = rc.CancelTestRun(context.Background(), &uipb.CancelTestRunRequest{TenantId: tid, Id: runID})
+	require.NoError(t, err, "cancel")
+	t.Logf("cancel requested; waiting for runtime teardown → CANCELLED")
+
+	cancelDeadline := time.Now().Add(5 * time.Minute)
+	var last primitive.Status
+	for time.Now().Before(cancelDeadline) {
+		got, gerr := rc.GetTestRun(context.Background(), &uipb.GetTestRunRequest{TenantId: tid, Id: runID})
+		if gerr == nil {
+			if got.GetStatus() != last {
+				t.Logf("status: %s", got.GetStatus())
+				last = got.GetStatus()
+			}
+			if got.GetStatus() == primitive.Status_STATUS_CANCELLED {
+				t.Logf("CANCELLED — runtime drove teardown")
+				return
+			}
+		}
+		time.Sleep(3 * time.Second)
+	}
+	t.Fatalf("run did not reach CANCELLED after cancel (last %s)", last)
 }
 
 // assertVectorLogs checks that Vector shipped host logs (not just agent command

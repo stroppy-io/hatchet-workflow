@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { api, setAccessToken } from "@/lib/connect";
+import { api, setAccessToken, setUnauthorizedHandler } from "@/lib/connect";
 import type { Account } from "@/lib/proto/cloud/v1/models/account_pb.ts";
 import type { Tenant } from "@/lib/proto/cloud/v1/models/tenant_pb.ts";
 import { TenantMember_Role } from "@/lib/proto/cloud/v1/models/tenant_pb.ts";
@@ -46,6 +46,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .finally(() => setLoading(false));
   }, [refresh]);
+
+  // Let the connect 401 interceptor refresh the session once and retry. The
+  // refresh call carries "x-retry" so a failed refresh clears the session
+  // instead of looping; ProtectedRoute then redirects to /login.
+  useEffect(() => {
+    setUnauthorizedHandler(async () => {
+      try {
+        const response = await api.auth.refreshTokens(
+          { refreshToken: "" },
+          { headers: { "x-retry": "1" } },
+        );
+        const token = response.tokens?.accessToken ?? null;
+        setAccessToken(token);
+        return Boolean(token);
+      } catch {
+        setAccessToken(null);
+        setAccount(null);
+        setTenants([]);
+        return false;
+      }
+    });
+    return () => setUnauthorizedHandler(null);
+  }, []);
 
   const login = useCallback(
     async (email: string, password: string) => {

@@ -1,4 +1,4 @@
-import { createClient, type Interceptor } from "@connectrpc/connect";
+import { Code, ConnectError, createClient, type Interceptor } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 
 import { AccountAdminService } from "@/lib/proto/cloud/v1/api/admin/account_pb.ts";
@@ -17,9 +17,16 @@ import { TenantService } from "@/lib/proto/cloud/v1/api/ui/tenant_pb.ts";
 import { WebhookService } from "@/lib/proto/cloud/v1/api/ui/webhook_pb.ts";
 
 let accessToken: string | null = null;
+let unauthorizedHandler: (() => Promise<boolean>) | null = null;
 
 export function setAccessToken(token: string | null) {
   accessToken = token;
+}
+
+// Registered by AuthProvider. Returns true if the session was refreshed and the
+// request should be retried, false if the user must re-authenticate.
+export function setUnauthorizedHandler(handler: (() => Promise<boolean>) | null) {
+  unauthorizedHandler = handler;
 }
 
 const authInterceptor: Interceptor = (next) => async (request) => {
@@ -29,9 +36,33 @@ const authInterceptor: Interceptor = (next) => async (request) => {
   return next(request);
 };
 
+// On a 401 the session is refreshed once and the request retried. The "x-retry"
+// header guards against loops; the refresh call itself carries it so a failing
+// refresh does not recurse. Outermost interceptor so the retry re-applies the
+// freshly set Authorization header from authInterceptor.
+const refreshInterceptor: Interceptor = (next) => async (request) => {
+  try {
+    return await next(request);
+  } catch (error) {
+    if (
+      error instanceof ConnectError &&
+      error.code === Code.Unauthenticated &&
+      unauthorizedHandler &&
+      !request.header.has("x-retry")
+    ) {
+      const refreshed = await unauthorizedHandler();
+      if (refreshed) {
+        request.header.set("x-retry", "1");
+        return next(request);
+      }
+    }
+    throw error;
+  }
+};
+
 const transport = createConnectTransport({
   baseUrl: "",
-  interceptors: [authInterceptor],
+  interceptors: [refreshInterceptor, authInterceptor],
 });
 
 export const api = {

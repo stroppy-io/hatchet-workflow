@@ -41,6 +41,7 @@ type EntityDataTableProps<TData> = {
   emptyMessage?: string;
   error?: string | null;
   filters?: ReactNode;
+  headerActions?: ReactNode;
   getRowId?: (row: TData, index: number) => string;
   loading?: boolean;
   onNextPage?: () => void;
@@ -63,6 +64,7 @@ export function EntityDataTable<TData>({
   emptyMessage = "No rows",
   error,
   filters,
+  headerActions,
   getRowId,
   loading = false,
   onNextPage,
@@ -173,28 +175,31 @@ export function EntityDataTable<TData>({
             {selectedCount > 0 ? `, ${selectedCount} selected` : ""}
           </p>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm" variant="outline">
-              <Columns3 />
-              Columns
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(Boolean(value))}
-                >
-                  {column.id}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          {headerActions}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline">
+                <Columns3 />
+                Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) => column.toggleVisibility(Boolean(value))}
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

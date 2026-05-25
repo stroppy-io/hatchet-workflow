@@ -19,9 +19,31 @@ import (
 )
 
 // RunAgent dials the control plane and runs the per-machine agent loop
+// configureAptProxy points apt at the server's apt cache relay (STROPPY_APT_PROXY,
+// set by the deployer) before any package install runs. http only: cached repos
+// (Ubuntu base, pgdg=http) go through the cache; https repos resolve directly. Same
+// on docker and cloud — the agent reaches the cache through the server's address only.
+func configureAptProxy(logger *xlog.Logger) {
+	proxy := os.Getenv("STROPPY_APT_PROXY")
+	if proxy == "" {
+		return
+	}
+	// https::Proxy defaults to http::Proxy in apt, which would tunnel https repos
+	// (proxysql/mariadb/picodata) through the cache via CONNECT — acng can't cache
+	// those and large .debs time out. Force https DIRECT: only http repos (Ubuntu
+	// base, pgdg) are cached; https repos download straight from upstream.
+	conf := fmt.Sprintf("Acquire::http::Proxy %q;\nAcquire::https::Proxy \"DIRECT\";\n", proxy)
+	if err := os.WriteFile("/etc/apt/apt.conf.d/01stroppy-proxy", []byte(conf), 0o644); err != nil {
+		logger.Warn("configure apt proxy", xlog.String("proxy", proxy), xlog.Err(err))
+		return
+	}
+	logger.Info("apt proxy configured", xlog.String("proxy", proxy))
+}
+
 // (internal/agent): register → heartbeat → poll → execute on-host → report, shipping
 // command logs back through the server's SendLogs RPC. The server never pushes (D16).
 func RunAgent(ctx context.Context, cfg *Config, logger *xlog.Logger) error {
+	configureAptProxy(logger)
 	conn, err := grpc.NewClient(cfg.Agent.ServerAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(bearerUnaryInterceptor(cfg.Agent.Token)),

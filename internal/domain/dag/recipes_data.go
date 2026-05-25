@@ -51,9 +51,37 @@ var engineRecipes = map[string]Recipe{
 		},
 		AptPackages: []string{"picodata"},
 		// picodata has no package systemd unit — run it via a transient unit with our
-		// config (cluster peers come from instance.peer in the yaml).
-		StartScript: "install -d -o picodata -g picodata /var/lib/picodata 2>/dev/null || install -d /var/lib/picodata; " +
-			"systemd-run --unit=stroppy-picodata --collect picodata run --config /etc/picodata/picodata.yaml --instance-dir /var/lib/picodata",
+		// config (cluster peers come from instance.peer in the yaml). Idempotent across
+		// the 60s agent-lease re-delivery + waits for the pg listener so the workload
+		// node does not connect before 5432 is up.
+		StartScript: strings.Join([]string{
+			"install -d -o picodata -g picodata /var/lib/picodata 2>/dev/null || install -d /var/lib/picodata",
+			// Substitute the real node IP into the advertise addresses (the pg driver's
+			// discovery dials the advertised host, so it must be reachable, not 0.0.0.0).
+			`sed -i "s/__SELF_IP__/$(hostname -i | awk '{print $1}')/g" /etc/picodata/picodata.yaml`,
+			// Start only if not already up (idempotent across the 60s lease re-delivery).
+			// PICODATA_ADMIN_PASSWORD sets the `admin` pg user's password (stroppy connects
+			// as admin:T0psecret — see stroppyURL); without it pg auth fails.
+			"if ! (echo > /dev/tcp/127.0.0.1/5432) 2>/dev/null; then",
+			"  systemctl reset-failed stroppy-picodata >/dev/null 2>&1 || true",
+			"  systemctl is-active --quiet stroppy-picodata || systemd-run --unit=stroppy-picodata --setenv=PICODATA_ADMIN_PASSWORD=T0psecret --collect picodata run --config /etc/picodata/picodata.yaml --instance-dir /var/lib/picodata",
+			"  for i in $(seq 1 180); do (echo > /dev/tcp/127.0.0.1/5432) 2>/dev/null && break; sleep 1; done",
+			"fi",
+			"(echo > /dev/tcp/127.0.0.1/5432) 2>/dev/null || exit 1",
+			// Raise the SQL vdbe opcode limit (default 45000) so the tpcc consistency-check
+			// aggregations (MAX/SUM/GROUP BY over loaded data) don't hit "Reached a limit
+			// on max executed vdbe opcodes". RETRY until it actually succeeds (rc=0): on a
+			// multi-node cluster the pg listener (5432) comes up before the raft governor
+			// has settled, so an early ALTER SYSTEM errors out — the old `|| true` swallowed
+			// that and left the limit at 45000, failing the workload on the storage
+			// replicasets. The setting is cluster-wide + idempotent; the node is not
+			// COMPLETED (so the FLOW workload cannot start) until it is verifiably applied.
+			"for i in $(seq 1 90); do",
+			`  echo 'ALTER SYSTEM SET "sql_vdbe_opcode_max" TO 1073741824;' | picodata admin /var/lib/picodata/admin.sock >/dev/null 2>&1 && exit 0`,
+			"  sleep 2",
+			"done",
+			"exit 1",
+		}, "\n"),
 	},
 	"cockroach/24.2": {
 		PreInstall: []string{
@@ -66,8 +94,13 @@ var engineRecipes = map[string]Recipe{
 		PreInstall: []string{
 			"apt-get update",
 			"apt-get install -y curl ca-certificates tar",
-			`curl -fsSL https://binaries.ydb.tech/release/24.2.7/ydbd-24.2.7-linux-amd64.tar.gz -o /tmp/ydbd.tgz`,
-			`mkdir -p /opt/ydb && tar -xzf /tmp/ydbd.tgz -C /opt/ydb --strip-components=1`,
+			// ydbd is a ~176MB tarball: fetch it through the server binary cache (bincache
+			// "ydb" upstream), NOT direct — the server downloads it ONCE and streams to every
+			// agent over the LAN, so 3 cluster nodes don't each hammer binaries.ydb.tech (a
+			// dropped concurrent download previously left a node without the binary). Same
+			// path local + cloud. Idempotent: skip if already extracted.
+			`test -x /opt/ydb/bin/ydbd || curl -fsSL --retry 8 --retry-delay 3 "${STROPPY_SERVER_ADDR}/binary/ydb/24.2.7/ydbd-24.2.7-linux-amd64.tar.gz" -o /tmp/ydbd.tgz`,
+			`test -x /opt/ydb/bin/ydbd || (mkdir -p /opt/ydb && tar -xzf /tmp/ydbd.tgz -C /opt/ydb --strip-components=1)`,
 			`ln -sf /opt/ydb/bin/ydbd /usr/local/bin/ydbd`,
 		},
 		// Start + cluster bootstrap are render COMMAND items (config.yaml + ydbd
@@ -149,8 +182,12 @@ var (
 			"apt-get update",
 			`apt-get install -y curl ca-certificates gnupg lsb-release`,
 			`install -d /etc/apt/keyrings`,
-			`curl -fsSL https://repo.proxysql.com/ProxySQL/proxysql-2.x/repo_pub_key | gpg --dearmor -o /etc/apt/keyrings/proxysql.gpg`,
-			`bash -c 'echo "deb [signed-by=/etc/apt/keyrings/proxysql.gpg] https://repo.proxysql.com/ProxySQL/proxysql-2.x/$(lsb_release -cs)/ ./" > /etc/apt/sources.list.d/proxysql.list'`,
+			// proxysql-2.x is gone from the repo (404); the key is now version-agnostic
+			// and the deb path is proxysql-2.7.x. Stale URLs failed px*.pre_install.
+			// --retry: repo.proxysql.com is https-direct (uncached) and flakes — a dropped
+			// key fetch failed px*.pre_install_3 and skipped the whole group/replica run.
+			`curl -fsSL --retry 5 --retry-delay 3 https://repo.proxysql.com/ProxySQL/repo_pub_key | gpg --dearmor -o /etc/apt/keyrings/proxysql.gpg`,
+			`bash -c 'echo "deb [signed-by=/etc/apt/keyrings/proxysql.gpg] https://repo.proxysql.com/ProxySQL/proxysql-2.7.x/$(lsb_release -cs)/ ./" > /etc/apt/sources.list.d/proxysql.list'`,
 			`apt-get update`,
 		},
 		AptPackages: []string{"proxysql"}, ServiceName: "proxysql",
@@ -274,7 +311,12 @@ var pgPreInstall = []string{
 	// A minimal base image lacks wget/gnupg/lsb-release — install before pgdg.
 	"apt-get update",
 	"apt-get install -y wget gnupg lsb-release ca-certificates",
-	`sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
+	// HTTPS (direct, bypasses the server apt cache): apt.postgresql.org is a Fastly
+	// CDN redirector — apt-cacher-ng's range-resume on its volatile InRelease produces
+	// stale partials that 503 "unexpected range". Same https-direct treatment as the
+	// other 3rd-party DB repos (mariadb/proxysql/picodata); the cacheable ubuntu base
+	// archive (direct mirror) stays http-cached where caching gives the most value.
+	`sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
 	"sh -c 'wget --quiet -O /etc/apt/trusted.gpg.d/pgdg.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc'",
 	"apt-get update",
 }
@@ -286,7 +328,9 @@ func mysqlTrustedPreInstall(component string) []string {
 	return []string{
 		`apt-get update`,
 		`apt-get install -y curl ca-certificates lsb-release`,
-		`bash -c 'echo "deb [trusted=yes] http://repo.mysql.com/apt/ubuntu/ $(lsb_release -cs) ` + component + `" > /etc/apt/sources.list.d/mysql.list'`,
+		// HTTPS (direct, bypasses the apt cache): repo.mysql.com is a CDN redirector;
+		// apt-cacher-ng range-resume on its volatile index can 503 "unexpected range".
+		`bash -c 'echo "deb [trusted=yes] https://repo.mysql.com/apt/ubuntu/ $(lsb_release -cs) ` + component + `" > /etc/apt/sources.list.d/mysql.list'`,
 		`apt-get update`,
 	}
 }

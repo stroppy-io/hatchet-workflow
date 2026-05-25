@@ -1,20 +1,31 @@
-import { CalendarClock, Loader2, Play, Rows3 } from "lucide-react";
+import { CalendarClock, Loader2, Play, Plus, Rows3 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { create } from "@bufbuild/protobuf";
 
+import { FormDialog } from "@/components/form-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/auth-context";
+import { useAction } from "@/hooks/use-action";
 import { useCursorPagination } from "@/hooks/use-cursor-pagination";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useListQuery } from "@/hooks/use-list-query";
 import { useTenantId } from "@/hooks/use-tenant-id";
 import { api } from "@/lib/connect";
 import { formatId, formatTimestamp, providerLabel } from "@/lib/format";
+import { presetTitle } from "@/lib/preset-summary";
+import { notifySuccess } from "@/lib/toast";
 import { ListSuitesRequest_SortField } from "@/lib/proto/cloud/v1/api/ui/suite_pb.ts";
+import { Provider } from "@/lib/proto/cloud/v1/deployment/deployment_pb.ts";
+import { SuitePresetSchema } from "@/lib/proto/cloud/v1/domain/suite_pb.ts";
+import type { TestPreset } from "@/lib/proto/cloud/v1/domain/test_pb.ts";
 import { SortOrder } from "@/lib/proto/cloud/v1/models/common_pb.ts";
+import { Preset_Kind } from "@/lib/proto/cloud/v1/models/preset_pb.ts";
 import type { Suite } from "@/lib/proto/cloud/v1/models/testing_pb.ts";
 import { TenantMember_Role } from "@/lib/proto/cloud/v1/models/tenant_pb.ts";
 import { tenantPath } from "@/lib/routes";
@@ -38,11 +49,13 @@ function SuiteCard({
   canLaunch,
   launching,
   onLaunch,
+  onOpen,
   suite,
 }: {
   canLaunch: boolean;
   launching: boolean;
   onLaunch: () => void;
+  onOpen: () => void;
   suite: Suite;
 }) {
   const scheduled = Boolean(suite.cron?.expr);
@@ -88,11 +101,18 @@ function SuiteCard({
       ) : null}
 
       <div className="mt-5 flex items-center justify-between gap-2">
-        <span className="font-mono text-xs text-muted-foreground">{formatId(suite.entity?.id?.value)}</span>
-        <Button disabled={!canLaunch || launching} onClick={onLaunch} size="sm" type="button">
-          {launching ? <Loader2 className="animate-spin" /> : <Play />}
-          Launch
-        </Button>
+        <button type="button" onClick={onOpen} className="font-mono text-xs text-muted-foreground hover:text-foreground">
+          {formatId(suite.entity?.id?.value)}
+        </button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" type="button" onClick={onOpen}>
+            Open
+          </Button>
+          <Button disabled={!canLaunch || launching} onClick={onLaunch} size="sm" type="button">
+            {launching ? <Loader2 className="animate-spin" /> : <Play />}
+            Launch
+          </Button>
+        </div>
       </div>
     </article>
   );
@@ -105,6 +125,8 @@ export function SuitesPage() {
   const [scheduleFilter, setScheduleFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [launchingId, setLaunchingId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const debouncedSearch = useDebouncedValue(search);
   const pagination = useCursorPagination(24);
   const resetPagination = pagination.reset;
@@ -125,7 +147,7 @@ export function SuitesPage() {
         order: SortOrder.DESC,
         page: pagination.page,
       }),
-    [tenantId, debouncedSearch, hasCron, pagination.page],
+    [tenantId, debouncedSearch, hasCron, pagination.page, reloadKey],
   );
 
   const groups = useMemo(() => {
@@ -171,6 +193,12 @@ export function SuitesPage() {
               <SelectItem value="manual">Manual</SelectItem>
             </SelectContent>
           </Select>
+          {canLaunch ? (
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus />
+              New suite
+            </Button>
+          ) : null}
         </div>
       </header>
 
@@ -199,6 +227,7 @@ export function SuitesPage() {
                       key={suiteId || suite.name}
                       launching={launchingId === suiteId}
                       onLaunch={() => launch(suite)}
+                      onOpen={() => navigate(tenantPath(tenantId, `/suites/${suiteId}`))}
                       suite={suite}
                     />
                   );
@@ -220,6 +249,115 @@ export function SuitesPage() {
           </Button>
         </div>
       </div>
+
+      <CreateSuiteDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        tenantId={tenantId}
+        onCreated={() => {
+          setCreateOpen(false);
+          setReloadKey((key) => key + 1);
+        }}
+      />
     </div>
+  );
+}
+
+function CreateSuiteDialog({ open, onOpenChange, tenantId, onCreated }: { open: boolean; onOpenChange: (open: boolean) => void; tenantId: string; onCreated: () => void }) {
+  const [name, setName] = useState("");
+  const [provider, setProvider] = useState(String(Provider.DOCKER));
+  const [mode, setMode] = useState("sequential");
+  const [parallelN, setParallelN] = useState(2);
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const presetsResult = useListQuery(
+    () => api.preset.listPresets({ tenantId: tenantIdMessage(tenantId), kinds: [Preset_Kind.TEST], page: { size: 100 } }),
+    [tenantId, open],
+  );
+  const presets = useMemo(() => presetsResult.data?.presets ?? [], [presetsResult.data]);
+
+  const createSuite = useAction(() => {
+    const tests = presets
+      .filter((preset) => selected.includes(preset.entity?.id?.value ?? ""))
+      .map((preset) => (preset.preset.case === "testPreset" ? preset.preset.value : undefined))
+      .filter((test): test is TestPreset => Boolean(test));
+    const scheduling =
+      mode === "parallel"
+        ? { mode: { case: "parallel" as const, value: { maxParallel: parallelN } } }
+        : { mode: { case: "sequential" as const, value: true } };
+    const preset = create(SuitePresetSchema, { provider: Number(provider) as Provider, scheduling, tests });
+    return api.suite.createSuite({ tenantId: tenantIdMessage(tenantId), preset, name });
+  });
+
+  function toggle(id: string) {
+    setSelected((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]));
+  }
+
+  async function submit() {
+    const response = await createSuite.run();
+    if (!response) return;
+    notifySuccess("Suite created");
+    setName("");
+    setSelected([]);
+    onCreated();
+  }
+
+  return (
+    <FormDialog open={open} onOpenChange={onOpenChange} title="New suite" submitLabel="Create" onSubmit={submit} loading={createSuite.loading} error={createSuite.error} submitDisabled={!name.trim() || selected.length === 0}>
+      <div className="space-y-2">
+        <Label>Name</Label>
+        <Input value={name} onChange={(event) => setName(event.target.value)} autoFocus />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>Provider</Label>
+          <Select value={provider} onValueChange={setProvider}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={String(Provider.DOCKER)}>Docker</SelectItem>
+              <SelectItem value={String(Provider.YANDEX)}>Yandex Cloud</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Scheduling</Label>
+          <Select value={mode} onValueChange={setMode}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="sequential">Sequential</SelectItem>
+              <SelectItem value="parallel">Parallel</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      {mode === "parallel" ? (
+        <div className="space-y-2">
+          <Label>Max parallel</Label>
+          <Input type="number" min={1} value={parallelN} onChange={(event) => setParallelN(Number(event.target.value) || 1)} />
+        </div>
+      ) : null}
+      <div className="space-y-2">
+        <Label>Test presets</Label>
+        <div className="max-h-48 space-y-1 overflow-y-auto rounded-md border p-2">
+          {presets.length === 0 ? (
+            <p className="p-2 text-xs text-muted-foreground">{presetsResult.loading ? "Loading…" : "No test presets"}</p>
+          ) : (
+            presets.map((preset) => {
+              const id = preset.entity?.id?.value ?? "";
+              return (
+                <label key={id} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 text-sm hover:bg-muted/40">
+                  <Checkbox checked={selected.includes(id)} onCheckedChange={() => toggle(id)} />
+                  {presetTitle(preset)}
+                </label>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </FormDialog>
   );
 }
