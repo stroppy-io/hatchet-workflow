@@ -21,6 +21,8 @@ type TenantActions interface {
 	ListTenantMembers(ctx context.Context, req *uipb.ListTenantMembersRequest) (*uipb.ListTenantMembersResponse, error)
 	AddMemberToTenant(ctx context.Context, req *uipb.AddMemberRequest) (*models.TenantMember, error)
 	RemoveMemberFromTenant(ctx context.Context, req *uipb.RemoveMemberRequest) (*models.TenantMember, error)
+	UpdateMemberRole(ctx context.Context, req *uipb.UpdateMemberRoleRequest) (*models.TenantMember, error)
+	LookupAccountByEmail(ctx context.Context, req *uipb.LookupAccountByEmailRequest) (*models.Account, error)
 }
 
 // TenantService is the gRPC handler for cloud.v1.api.ui.TenantService. Pure
@@ -65,5 +67,19 @@ func (s *TenantService) RemoveMemberFromTenant(ctx context.Context, req *uipb.Re
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "RemoveMemberFromTenant",
 		func(ctx context.Context, _ trace.Span) (*models.TenantMember, error) {
 			return s.svc.RemoveMemberFromTenant(ctx, req)
+		})
+}
+
+func (s *TenantService) UpdateMemberRole(ctx context.Context, req *uipb.UpdateMemberRoleRequest) (*models.TenantMember, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "UpdateMemberRole",
+		func(ctx context.Context, _ trace.Span) (*models.TenantMember, error) {
+			return s.svc.UpdateMemberRole(ctx, req)
+		})
+}
+
+func (s *TenantService) LookupAccountByEmail(ctx context.Context, req *uipb.LookupAccountByEmailRequest) (*models.Account, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "LookupAccountByEmail",
+		func(ctx context.Context, _ trace.Span) (*models.Account, error) {
+			return s.svc.LookupAccountByEmail(ctx, req)
 		})
 }

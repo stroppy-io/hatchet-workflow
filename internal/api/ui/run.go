@@ -14,6 +14,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/logs"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/metrics"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
 	"github.com/stroppy-io/stroppy-cloud/internal/utils/tracing"
 )
 
@@ -23,7 +24,9 @@ import (
 type RunActions interface {
 	SubmitTestRun(ctx context.Context, req *uipb.SubmitTestRunRequest) (*models.TestRun, error)
 	GetTestRun(ctx context.Context, req *uipb.GetTestRunRequest) (*models.TestRun, error)
+	GetTestRunDag(ctx context.Context, req *uipb.GetTestRunRequest) (*primitive.Dag, error)
 	ListTestRuns(ctx context.Context, req *uipb.ListTestRunsRequest) (*uipb.ListTestRunsResponse, error)
+	ListAgents(ctx context.Context, req *uipb.ListAgentsRequest) (*uipb.ListAgentsResponse, error)
 	CancelTestRun(ctx context.Context, req *uipb.CancelTestRunRequest) (*models.TestRun, error)
 	StreamTestRunLogs(req *uipb.StreamTestRunLogsRequest, stream grpc.ServerStreamingServer[logs.LogLine]) error
 	QueryRunLogs(ctx context.Context, req *uipb.QueryRunLogsRequest) (*logs.LogPage, error)
@@ -62,6 +65,20 @@ func (s *RunService) GetTestRun(ctx context.Context, req *uipb.GetTestRunRequest
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "GetTestRun",
 		func(ctx context.Context, _ trace.Span) (*models.TestRun, error) {
 			return s.svc.GetTestRun(ctx, req)
+		})
+}
+
+func (s *RunService) GetTestRunDag(ctx context.Context, req *uipb.GetTestRunRequest) (*primitive.Dag, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "GetTestRunDag",
+		func(ctx context.Context, _ trace.Span) (*primitive.Dag, error) {
+			return s.svc.GetTestRunDag(ctx, req)
+		})
+}
+
+func (s *RunService) ListAgents(ctx context.Context, req *uipb.ListAgentsRequest) (*uipb.ListAgentsResponse, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListAgents",
+		func(ctx context.Context, _ trace.Span) (*uipb.ListAgentsResponse, error) {
+			return s.svc.ListAgents(ctx, req)
 		})
 }
 

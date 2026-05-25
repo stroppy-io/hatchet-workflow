@@ -19,7 +19,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/ui/preset.proto.
  */
 export const file_cloud_v1_api_ui_preset: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS9hcGkvdWkvcHJlc2V0LnByb3RvEg9jbG91ZC52MS5hcGkudWki7AMKEUxpc3RQcmVzZXRSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESPAoFa2luZHMYAiADKA4yHC5jbG91ZC52MS5tb2RlbHMuUHJlc2V0LktpbmRCD/pCDJIBCSIHggEEEAEgABIdCgZzZWFyY2gYAyABKAlCCPpCBXIDGIACSACIAQESIwoEdGFncxgEIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzEkoKCnNvcnRfZmllbGQYBSABKA4yLC5jbG91ZC52MS5hcGkudWkuTGlzdFByZXNldFJlcXVlc3QuU29ydEZpZWxkQgj6QgWCAQIQARIzCgVvcmRlchgGIAEoDjIaLmNsb3VkLnYxLm1vZGVscy5Tb3J0T3JkZXJCCPpCBYIBAhABEiMKBHBhZ2UYByABKAsyFS5jbG91ZC52MS5tb2RlbHMuUGFnZSJsCglTb3J0RmllbGQSGgoWU09SVF9GSUVMRF9VTlNQRUNJRklFRBAAEhkKFVNPUlRfRklFTERfQ1JFQVRFRF9BVBABEhMKD1NPUlRfRklFTERfTkFNRRACEhMKD1NPUlRfRklFTERfS0lORBADQgkKB19zZWFyY2gibQoTTGlzdFByZXNldHNSZXNwb25zZRIoCgdwcmVzZXRzGAEgAygLMhcuY2xvdWQudjEubW9kZWxzLlByZXNldBIsCglwYWdlX2luZm8YAiABKAsyGS5jbG91ZC52MS5tb2RlbHMuUGFnZUluZm8ihgEKE0RlbGV0ZVByZXNldFJlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARI3CgJpZBgCIAEoCzIhLmNsb3VkLnYxLm1vZGVscy5EYXRhYmFzZVByZXNldElkQgj6QgWKAQIQASKFAQoSQ2xvbmVQcmVzZXRSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESNwoCaWQYAiABKAsyIS5jbG91ZC52MS5tb2RlbHMuRGF0YWJhc2VQcmVzZXRJZEII+kIFigECEAEyoAMKDVByZXNldFNlcnZpY2USXAoLTGlzdFByZXNldHMSIi5jbG91ZC52MS5hcGkudWkuTGlzdFByZXNldFJlcXVlc3QaJC5jbG91ZC52MS5hcGkudWkuTGlzdFByZXNldHNSZXNwb25zZSIDkAIBEkUKDENyZWF0ZVByZXNldBIXLmNsb3VkLnYxLm1vZGVscy5QcmVzZXQaFy5jbG91ZC52MS5tb2RlbHMuUHJlc2V0IgOQAgESRQoMVXBkYXRlUHJlc2V0EhcuY2xvdWQudjEubW9kZWxzLlByZXNldBoXLmNsb3VkLnYxLm1vZGVscy5QcmVzZXQiA5ACAhJRCgxEZWxldGVQcmVzZXQSJC5jbG91ZC52MS5hcGkudWkuRGVsZXRlUHJlc2V0UmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIDkAICElAKC0Nsb25lUHJlc2V0EiMuY2xvdWQudjEuYXBpLnVpLkNsb25lUHJlc2V0UmVxdWVzdBoXLmNsb3VkLnYxLm1vZGVscy5QcmVzZXQiA5ACAUJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGkvdWliBnByb3RvMw", [file_cloud_v1_common_tags, file_cloud_v1_models_common, file_cloud_v1_models_preset, file_google_protobuf_empty, file_validate_validate]);
+  fileDesc("ChxjbG91ZC92MS9hcGkvdWkvcHJlc2V0LnByb3RvEg9jbG91ZC52MS5hcGkudWki7AMKEUxpc3RQcmVzZXRSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESPAoFa2luZHMYAiADKA4yHC5jbG91ZC52MS5tb2RlbHMuUHJlc2V0LktpbmRCD/pCDJIBCSIHggEEEAEgABIdCgZzZWFyY2gYAyABKAlCCPpCBXIDGIACSACIAQESIwoEdGFncxgEIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzEkoKCnNvcnRfZmllbGQYBSABKA4yLC5jbG91ZC52MS5hcGkudWkuTGlzdFByZXNldFJlcXVlc3QuU29ydEZpZWxkQgj6QgWCAQIQARIzCgVvcmRlchgGIAEoDjIaLmNsb3VkLnYxLm1vZGVscy5Tb3J0T3JkZXJCCPpCBYIBAhABEiMKBHBhZ2UYByABKAsyFS5jbG91ZC52MS5tb2RlbHMuUGFnZSJsCglTb3J0RmllbGQSGgoWU09SVF9GSUVMRF9VTlNQRUNJRklFRBAAEhkKFVNPUlRfRklFTERfQ1JFQVRFRF9BVBABEhMKD1NPUlRfRklFTERfTkFNRRACEhMKD1NPUlRfRklFTERfS0lORBADQgkKB19zZWFyY2gibQoTTGlzdFByZXNldHNSZXNwb25zZRIoCgdwcmVzZXRzGAEgAygLMhcuY2xvdWQudjEubW9kZWxzLlByZXNldBIsCglwYWdlX2luZm8YAiABKAsyGS5jbG91ZC52MS5tb2RlbHMuUGFnZUluZm8ihgEKE0RlbGV0ZVByZXNldFJlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARI3CgJpZBgCIAEoCzIhLmNsb3VkLnYxLm1vZGVscy5EYXRhYmFzZVByZXNldElkQgj6QgWKAQIQASKFAQoSQ2xvbmVQcmVzZXRSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESNwoCaWQYAiABKAsyIS5jbG91ZC52MS5tb2RlbHMuRGF0YWJhc2VQcmVzZXRJZEII+kIFigECEAEigwEKEEdldFByZXNldFJlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARI3CgJpZBgCIAEoCzIhLmNsb3VkLnYxLm1vZGVscy5EYXRhYmFzZVByZXNldElkQgj6QgWKAQIQATLuAwoNUHJlc2V0U2VydmljZRJcCgtMaXN0UHJlc2V0cxIiLmNsb3VkLnYxLmFwaS51aS5MaXN0UHJlc2V0UmVxdWVzdBokLmNsb3VkLnYxLmFwaS51aS5MaXN0UHJlc2V0c1Jlc3BvbnNlIgOQAgESTAoJR2V0UHJlc2V0EiEuY2xvdWQudjEuYXBpLnVpLkdldFByZXNldFJlcXVlc3QaFy5jbG91ZC52MS5tb2RlbHMuUHJlc2V0IgOQAgESRQoMQ3JlYXRlUHJlc2V0EhcuY2xvdWQudjEubW9kZWxzLlByZXNldBoXLmNsb3VkLnYxLm1vZGVscy5QcmVzZXQiA5ACARJFCgxVcGRhdGVQcmVzZXQSFy5jbG91ZC52MS5tb2RlbHMuUHJlc2V0GhcuY2xvdWQudjEubW9kZWxzLlByZXNldCIDkAICElEKDERlbGV0ZVByZXNldBIkLmNsb3VkLnYxLmFwaS51aS5EZWxldGVQcmVzZXRSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgOQAgISUAoLQ2xvbmVQcmVzZXQSIy5jbG91ZC52MS5hcGkudWkuQ2xvbmVQcmVzZXRSZXF1ZXN0GhcuY2xvdWQudjEubW9kZWxzLlByZXNldCIDkAIBQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2FwaS91aWIGcHJvdG8z", [file_cloud_v1_common_tags, file_cloud_v1_models_common, file_cloud_v1_models_preset, file_google_protobuf_empty, file_validate_validate]);
 
 /**
  *
@@ -294,6 +294,45 @@ export const ClonePresetRequestSchema: GenMessage<ClonePresetRequest, {jsonType:
   messageDesc(file_cloud_v1_api_ui_preset, 3);
 
 /**
+ * @generated from message cloud.v1.api.ui.GetPresetRequest
+ */
+export type GetPresetRequest = Message<"cloud.v1.api.ui.GetPresetRequest"> & {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantId;
+
+  /**
+   * @generated from field: cloud.v1.models.DatabasePresetId id = 2;
+   */
+  id?: DatabasePresetId;
+};
+
+/**
+ * @generated from message cloud.v1.api.ui.GetPresetRequest
+ */
+export type GetPresetRequestJson = {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantIdJson;
+
+  /**
+   * @generated from field: cloud.v1.models.DatabasePresetId id = 2;
+   */
+  id?: DatabasePresetIdJson;
+};
+
+export type GetPresetRequestValid = GetPresetRequest;
+
+/**
+ * Describes the message cloud.v1.api.ui.GetPresetRequest.
+ * Use `create(GetPresetRequestSchema)` to create a new message.
+ */
+export const GetPresetRequestSchema: GenMessage<GetPresetRequest, {jsonType: GetPresetRequestJson, validType: GetPresetRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_ui_preset, 4);
+
+/**
  * @generated from service cloud.v1.api.ui.PresetService
  */
 export const PresetService: GenService<{
@@ -304,6 +343,16 @@ export const PresetService: GenService<{
     methodKind: "unary";
     input: typeof ListPresetRequestSchema;
     output: typeof ListPresetsResponseSchema;
+  },
+  /**
+   * GetPreset fetches a single preset by id (tenant's own or a system preset). 
+   *
+   * @generated from rpc cloud.v1.api.ui.PresetService.GetPreset
+   */
+  getPreset: {
+    methodKind: "unary";
+    input: typeof GetPresetRequestSchema;
+    output: typeof PresetSchema;
   },
   /**
    * @generated from rpc cloud.v1.api.ui.PresetService.CreatePreset

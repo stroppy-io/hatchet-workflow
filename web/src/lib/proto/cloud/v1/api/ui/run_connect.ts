@@ -3,9 +3,10 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { BuildLogLinkRequest, BuildLogLinkResponse, CancelTestRunRequest, CompareRunsRequest, CreateShareLinkRequest, CreateShareLinkResponse, GetRunMetricsRequest, GetSharedRunRequest, GetSharedRunResponse, GetTestRunRequest, ListTestRunsRequest, ListTestRunsResponse, QueryRunLogsRequest, StreamTestRunLogsRequest, SubmitTestRunRequest } from "./run_pbts";
+import { BuildLogLinkRequest, BuildLogLinkResponse, CancelTestRunRequest, CompareRunsRequest, CreateShareLinkRequest, CreateShareLinkResponse, GetRunMetricsRequest, GetSharedRunRequest, GetSharedRunResponse, GetTestRunRequest, ListAgentsRequest, ListAgentsResponse, ListTestRunsRequest, ListTestRunsResponse, QueryRunLogsRequest, StreamTestRunLogsRequest, SubmitTestRunRequest } from "./run_pbts";
 import { TestRun } from "../../models/testing_pbts";
 import { MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
+import { Dag } from "../../runtime/primitive/dag_pbts";
 import { LogLine, LogPage } from "../../runtime/logs/logs_pbts";
 import { Comparison, RunMetrics } from "../../runtime/metrics/metrics_pbts";
 
@@ -38,12 +39,36 @@ export const RunService = {
       idempotency: MethodIdempotency.NoSideEffects,
     },
     /**
+     * GetTestRunDag returns the run's compiled+executing Dag (nodes/edges/status) for the graph view. 
+     *
+     * @generated from rpc cloud.v1.api.ui.RunService.GetTestRunDag
+     */
+    getTestRunDag: {
+      name: "GetTestRunDag",
+      I: GetTestRunRequest,
+      O: Dag,
+      kind: MethodKind.Unary,
+      idempotency: MethodIdempotency.NoSideEffects,
+    },
+    /**
      * @generated from rpc cloud.v1.api.ui.RunService.ListTestRuns
      */
     listTestRuns: {
       name: "ListTestRuns",
       I: ListTestRunsRequest,
       O: ListTestRunsResponse,
+      kind: MethodKind.Unary,
+      idempotency: MethodIdempotency.NoSideEffects,
+    },
+    /**
+     * ListAgents lists the tenant's agents (for run topology overlay; machine == agent). 
+     *
+     * @generated from rpc cloud.v1.api.ui.RunService.ListAgents
+     */
+    listAgents: {
+      name: "ListAgents",
+      I: ListAgentsRequest,
+      O: ListAgentsResponse,
       kind: MethodKind.Unary,
       idempotency: MethodIdempotency.NoSideEffects,
     },

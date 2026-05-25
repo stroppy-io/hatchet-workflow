@@ -17,7 +17,7 @@ export function ProtectedRoute() {
 
   if (tenantId && !tenants.some((tenant) => tenant.entity?.id?.value === tenantId)) {
     const firstTenant = tenants[0]?.entity?.id?.value;
-    return <Navigate to={firstTenant ? `/t/${firstTenant}/wizard` : "/login"} replace />;
+    return <Navigate to={firstTenant ? `/t/${firstTenant}/runs` : "/login"} replace />;
   }
 
   return <Outlet />;

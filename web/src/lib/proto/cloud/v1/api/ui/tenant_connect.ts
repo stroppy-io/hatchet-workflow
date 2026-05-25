@@ -5,7 +5,8 @@
 
 import { Empty, MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
 import { Tenant_List, TenantMember } from "../../models/tenant_pbts";
-import { AddMemberRequest, ListTenantMembersRequest, ListTenantMembersResponse, RemoveMemberRequest } from "./tenant_pbts";
+import { AddMemberRequest, ListTenantMembersRequest, ListTenantMembersResponse, LookupAccountByEmailRequest, RemoveMemberRequest, UpdateMemberRoleRequest } from "./tenant_pbts";
+import { Account } from "../../models/account_pbts";
 
 /**
  * @generated from service cloud.v1.api.ui.TenantService
@@ -56,6 +57,30 @@ export const TenantService = {
       O: TenantMember,
       kind: MethodKind.Unary,
       idempotency: MethodIdempotency.Idempotent,
+    },
+    /**
+     * UpdateMemberRole changes a member's role; requires OWNER of the tenant. 
+     *
+     * @generated from rpc cloud.v1.api.ui.TenantService.UpdateMemberRole
+     */
+    updateMemberRole: {
+      name: "UpdateMemberRole",
+      I: UpdateMemberRoleRequest,
+      O: TenantMember,
+      kind: MethodKind.Unary,
+      idempotency: MethodIdempotency.Idempotent,
+    },
+    /**
+     * LookupAccountByEmail resolves an account by exact email (OWNER, to add members). 
+     *
+     * @generated from rpc cloud.v1.api.ui.TenantService.LookupAccountByEmail
+     */
+    lookupAccountByEmail: {
+      name: "LookupAccountByEmail",
+      I: LookupAccountByEmailRequest,
+      O: Account,
+      kind: MethodKind.Unary,
+      idempotency: MethodIdempotency.NoSideEffects,
     },
   }
 } as const;

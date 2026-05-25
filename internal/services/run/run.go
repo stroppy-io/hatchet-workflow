@@ -8,6 +8,7 @@ package run
 
 import (
 	"context"
+	"strings"
 
 	"github.com/gopherex/pgtx/pkg/tx"
 	"github.com/gopherex/xlog"
@@ -38,6 +39,19 @@ type RunService struct {
 		*models.TestRunScanner,
 		*models.TestRun,
 	]
+	agents *repository.ProtoRepository[
+		models.AgentAlias,
+		models.AgentColumnAlias,
+		*models.AgentScanner,
+		*models.Agent,
+	]
+	accounts *repository.ProtoRepository[
+		models.AccountAlias,
+		models.AccountColumnAlias,
+		*models.AccountScanner,
+		*models.Account,
+	]
+	db        exec.DB
 	provider  ProviderResolver
 	store     DagStore
 	logs      LogsClient
@@ -80,6 +94,15 @@ func New(
 			repository.NewScannerRepository(models.TestRuns.Table, executor),
 			models.TestRunConverter,
 		),
+		agents: repository.NewProtoRepository(
+			repository.NewScannerRepository(models.Agents.Table, executor),
+			models.AgentConverter,
+		),
+		accounts: repository.NewProtoRepository(
+			repository.NewScannerRepository(models.Accounts.Table, executor),
+			models.AccountConverter,
+		),
+		db:       executor,
 		provider: provider,
 		store:    store,
 		logs:     logs,
@@ -149,26 +172,107 @@ func (s *RunService) GetTestRun(ctx context.Context, req *uipb.GetTestRunRequest
 		})
 }
 
+// GetTestRunDag returns the run's executing Dag (nodes/edges/status) for the graph view.
+func (s *RunService) GetTestRunDag(ctx context.Context, req *uipb.GetTestRunRequest) (*primitive.Dag, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "GetTestRunDag",
+		func(ctx context.Context, _ trace.Span) (*primitive.Dag, error) {
+			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
+				return nil, err
+			}
+			run, err := s.loadRun(ctx, req.GetTenantId().GetValue(), req.GetId().GetValue())
+			if err != nil {
+				return nil, err
+			}
+			dag, err := s.store.GetDag(ctx, run.GetDag().GetValue())
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "load dag: %v", err)
+			}
+			if dag == nil {
+				return nil, status.Error(codes.NotFound, "dag not found")
+			}
+			return dag, nil
+		})
+}
+
+// ListAgents lists the tenant's registered agents (machine == agent); the client
+// overlays them onto the run topology by machine_id.
+func (s *RunService) ListAgents(ctx context.Context, req *uipb.ListAgentsRequest) (*uipb.ListAgentsResponse, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListAgents",
+		func(ctx context.Context, _ trace.Span) (*uipb.ListAgentsResponse, error) {
+			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
+				return nil, err
+			}
+			size := svcutil.PageSize(req.GetPage())
+			q := models.Agents.SelectAll().Where(
+				models.Agents.TenantId.Eq(req.GetTenantId().GetValue()),
+				models.Agents.DeletedAt.IsNull(),
+			)
+			if tok := req.GetPage().GetToken(); tok != "" {
+				q = q.Where(models.Agents.Id.Lt(tok))
+			}
+			rows, err := s.agents.Query(ctx, q.OrderByDESC(models.AgentColumnId).Limit(size+1))
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "list agents: %v", err)
+			}
+			items, pageInfo := svcutil.Paginate(rows, size, func(a *models.Agent) string {
+				return a.GetId().GetValue()
+			})
+			return &uipb.ListAgentsResponse{Agents: items, PageInfo: pageInfo}, nil
+		})
+}
+
 // hydrateStatus loads the run's Dag and sets the run's live status from it. The
 // status is authoritative on Dag.status (H22); TestRun.status is the read-time
 // mirror (the persisted column is best-effort).
-func (s *RunService) hydrateStatus(ctx context.Context, run *models.TestRun) {
+// hydrateStatus sets the run's live status from its Dag (Dag.status, H22) and
+// returns the run's execution window (start/finish) for the list duration column,
+// or nil when the run has no Dag/timing yet.
+func (s *RunService) hydrateStatus(ctx context.Context, run *models.TestRun) *uipb.RunTiming {
 	if run.GetDag().GetValue() == "" {
-		return
+		return nil
 	}
 	dag, err := s.store.GetDag(ctx, run.GetDag().GetValue())
 	if err != nil {
 		s.Logger().Warn("hydrate run status: load dag", xlog.String("dag_id", run.GetDag().GetValue()), xlog.Error("error", err))
-		return
+		return nil
 	}
 	if dag == nil {
-		return
+		return nil
 	}
 	run.Status = dag.GetStatus() // live run status mirrors the Dag (H22)
+	ex := dag.GetExecution()
+	if ex.GetStartedAt() == nil && ex.GetFinishedAt() == nil {
+		return nil
+	}
+	return &uipb.RunTiming{
+		RunId:      &models.TestRunId{Value: run.GetEntity().GetId().GetValue()},
+		StartedAt:  ex.GetStartedAt(),
+		FinishedAt: ex.GetFinishedAt(),
+	}
 }
 
-// ListTestRuns returns the tenant's runs with cursor pagination (newest-first
-// by default).
+// countQuery returns the total row count for a filtered SELECT, ignoring its
+// order/offset/limit, by wrapping it in count(*). Pass the query BEFORE adding
+// pagination clauses.
+func (s *RunService) countQuery(ctx context.Context, q interface{ Build() (string, []any) }) (uint64, error) {
+	inner, args := q.Build()
+	// Build() terminates the statement with ";"; strip it so the query nests in a
+	// count(*) subquery without a syntax error.
+	inner = strings.TrimRight(strings.TrimSpace(inner), ";")
+	var total int64 // count(*) is bigint
+	if err := s.db.QueryRow(ctx, "SELECT count(*) FROM ("+inner+") AS sub", args...).Scan(&total); err != nil {
+		return 0, err
+	}
+	if total < 0 {
+		total = 0
+	}
+	return uint64(total), nil
+}
+
+// ListTestRuns returns the tenant's runs with OFFSET pagination (newest-first by
+// default) so the UI can render page numbers and jump to any page. Status is the
+// run's Dag.status, so the status filter is a subquery over the dags table (whose
+// status column is kept in sync); duration comes from each Dag's execution window.
 func (s *RunService) ListTestRuns(ctx context.Context, req *uipb.ListTestRunsRequest) (*uipb.ListTestRunsResponse, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListTestRuns",
 		func(ctx context.Context, _ trace.Span) (*uipb.ListTestRunsResponse, error) {
@@ -176,12 +280,21 @@ func (s *RunService) ListTestRuns(ctx context.Context, req *uipb.ListTestRunsReq
 				return nil, err
 			}
 			size := svcutil.PageSize(req.GetPage())
-			desc := svcutil.CursorDesc(req.GetOrder())
+			offset := svcutil.Offset(req.GetPage())
 			q := models.TestRuns.SelectAll().Where(
 				models.TestRuns.TenantId.Eq(req.GetTenantId().GetValue()),
 				models.TestRuns.DeletedAt.IsNull(),
 			)
-			// status filtering needs the Dag status (not a run column); use the Dag list or denormalize status — tracked as a schema follow-up.
+			// status lives on the Dag (run.status is best-effort): filter via a
+			// subquery over the dags table, whose status column is synced on save.
+			if st := req.GetStatus(); st != primitive.Status_STATUS_UNSPECIFIED {
+				dagIDs := models.Dags.Select(models.DagColumnId).Where(
+					models.Dags.TenantId.Eq(req.GetTenantId().GetValue()),
+					models.Dags.Status.In(st.String()),
+					models.Dags.DeletedAt.IsNull(),
+				)
+				q = q.Where(models.TestRuns.Dag.InOf(dagIDs))
+			}
 			// search: match the run name (NullText column → raw ILIKE).
 			if req.GetSearch() != "" {
 				q = q.Where(models.TestRuns.Name.Raw("ILIKE", "?", "%"+req.GetSearch()+"%"))
@@ -194,32 +307,73 @@ func (s *RunService) ListTestRuns(ctx context.Context, req *uipb.ListTestRunsReq
 			for k, v := range req.GetTags().GetLabels() {
 				q = q.Where(models.TestRuns.Tags.ILike("%" + k + "%" + v + "%"))
 			}
-			if tok := req.GetPage().GetToken(); tok != "" {
-				if desc {
-					q = q.Where(models.TestRuns.Id.Lt(tok))
-				} else {
-					q = q.Where(models.TestRuns.Id.Gt(tok))
-				}
+
+			// Total (ignoring pagination) for the page-number UI — wrap the filtered
+			// query in count(*) before adding order/offset/limit.
+			total, err := s.countQuery(ctx, q)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "count test runs: %v", err)
 			}
-			if desc {
-				q = q.OrderByDESC(models.TestRunColumnId)
+
+			// Sort by a native column (status isn't one — it's Dag-derived); id is the
+			// stable tiebreaker so paging is deterministic.
+			sortCol := models.TestRunColumnCreatedAt
+			if req.GetSortField() == uipb.ListTestRunsRequest_SORT_FIELD_NAME {
+				sortCol = models.TestRunColumnName
+			}
+			if req.GetOrder() == models.SortOrder_SORT_ORDER_ASC {
+				q = q.OrderByASC(sortCol, models.TestRunColumnId)
 			} else {
-				q = q.OrderByASC(models.TestRunColumnId)
+				q = q.OrderByDESC(sortCol, models.TestRunColumnId)
 			}
-			rows, err := s.testRuns.Query(ctx, q.Limit(size+1))
+
+			items, err := s.testRuns.Query(ctx, q.Offset(offset).Limit(size))
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "list test runs: %v", err)
 			}
-			items, pageInfo := svcutil.Paginate(rows, size, func(r *models.TestRun) string {
-				return r.GetEntity().GetId().GetValue()
-			})
-			// Hydrate each run's live status from its Dag (Dag.status, H22). Batch
-			// is a per-run GetDag (no bulk-by-ids primitive on DagStore yet).
-			for _, run := range items {
-				s.hydrateStatus(ctx, run)
+			pageInfo := &models.PageInfo{
+				Total:   &total,
+				HasMore: uint64(offset+len(items)) < total,
 			}
-			return &uipb.ListTestRunsResponse{TestRuns: items, PageInfo: pageInfo}, nil
+			// Hydrate each run's live status + execution timing from its Dag (H22).
+			// Per-run GetDag (no bulk-by-ids primitive on DagStore yet).
+			timings := make([]*uipb.RunTiming, 0, len(items))
+			for _, run := range items {
+				if t := s.hydrateStatus(ctx, run); t != nil {
+					timings = append(timings, t)
+				}
+			}
+			owners, err := s.loadOwners(ctx, items)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "load run owners: %v", err)
+			}
+			return &uipb.ListTestRunsResponse{TestRuns: items, PageInfo: pageInfo, Owners: owners, Timings: timings}, nil
 		})
+}
+
+// loadOwners fetches the distinct owner accounts referenced by the page in a
+// single WHERE id IN (...) query (no N+1), so the UI can show author name/email.
+func (s *RunService) loadOwners(ctx context.Context, runs []*models.TestRun) ([]*models.Account, error) {
+	ids := make([]string, 0, len(runs))
+	seen := make(map[string]struct{}, len(runs))
+	for _, run := range runs {
+		id := run.GetOwned().GetOwnerAccountId().GetValue()
+		if id == "" {
+			continue
+		}
+		if _, dup := seen[id]; dup {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	return s.accounts.Query(ctx, models.Accounts.SelectAll().Where(
+		models.Accounts.Id.In(ids...),
+		models.Accounts.DeletedAt.IsNull(),
+	))
 }
 
 // CancelTestRun moves the run's Dag to CANCELLING; the executor runs always_run

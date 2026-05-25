@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/render"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	rtagent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
@@ -60,6 +62,13 @@ func TestGraphCompilesHATopology(t *testing.T) {
 	comp := func(id string, k domain.Topology_Component_Kind) *domain.Topology_Component {
 		return &domain.Topology_Component{Id: id, Kind: k, Config: &renderpb.Config{}}
 	}
+	// Patroni is now an explicit component role (CompileTopology stamps it); the recipe
+	// reads the role, not Database.Options.
+	patroniComp := func(id string) *domain.Topology_Component {
+		c := comp(id, domain.Topology_Component_KIND_DATABASE)
+		c.Tags = &common.Tags{Labels: map[string]string{render.RoleLabelKey: render.RolePatroni}}
+		return c
+	}
 	preset := &domain.TestPreset{
 		Database: &domain.Database{
 			Kind: domain.Database_KIND_POSTGRES, Version: "16",
@@ -70,8 +79,8 @@ func TestGraphCompilesHATopology(t *testing.T) {
 		Topology: &domain.Topology{
 			Machines: []*domain.Topology_Machine{
 				{Id: "m-etcd", Cores: 2, MemoryGb: 4, Components: []*domain.Topology_Component{comp("etcd1", domain.Topology_Component_KIND_COORDINATOR)}},
-				{Id: "m-db1", Cores: 4, MemoryGb: 16, Components: []*domain.Topology_Component{comp("db1", domain.Topology_Component_KIND_DATABASE)}},
-				{Id: "m-db2", Cores: 4, MemoryGb: 16, Components: []*domain.Topology_Component{comp("db2", domain.Topology_Component_KIND_DATABASE)}},
+				{Id: "m-db1", Cores: 4, MemoryGb: 16, Components: []*domain.Topology_Component{patroniComp("db1")}},
+				{Id: "m-db2", Cores: 4, MemoryGb: 16, Components: []*domain.Topology_Component{patroniComp("db2")}},
 				{Id: "m-px", Cores: 2, MemoryGb: 4, Components: []*domain.Topology_Component{comp("px", domain.Topology_Component_KIND_PROXY)}},
 				{Id: "m-load", Cores: 2, MemoryGb: 4, Components: []*domain.Topology_Component{comp("load", domain.Topology_Component_KIND_STROPPY)}},
 			},

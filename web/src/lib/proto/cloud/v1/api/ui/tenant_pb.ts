@@ -6,7 +6,7 @@ import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobu
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Tags, TagsJson } from "../../common/tags_pb.ts";
 import { file_cloud_v1_common_tags } from "../../common/tags_pb.ts";
-import type { Account, AccountJson } from "../../models/account_pb.ts";
+import type { Account, AccountJson, AccountSchema } from "../../models/account_pb.ts";
 import { file_cloud_v1_models_account } from "../../models/account_pb.ts";
 import type { AccountId, AccountIdJson, Page, PageInfo, PageInfoJson, PageJson, SortOrder, SortOrderJson, TenantId, TenantIdJson } from "../../models/common_pb.ts";
 import { file_cloud_v1_models_common } from "../../models/common_pb.ts";
@@ -21,7 +21,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/ui/tenant.proto.
  */
 export const file_cloud_v1_api_ui_tenant: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS9hcGkvdWkvdGVuYW50LnByb3RvEg9jbG91ZC52MS5hcGkudWkiwgEKEEFkZE1lbWJlclJlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARI4CgphY2NvdW50X2lkGAIgASgLMhouY2xvdWQudjEubW9kZWxzLkFjY291bnRJZEII+kIFigECEAESPAoEcm9sZRgDIAEoDjIiLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRNZW1iZXIuUm9sZUIK+kIHggEEEAEgACKHAQoTUmVtb3ZlTWVtYmVyUmVxdWVzdBI2Cgl0ZW5hbnRfaWQYASABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCCPpCBYoBAhABEjgKCmFjY291bnRfaWQYAiABKAsyGi5jbG91ZC52MS5tb2RlbHMuQWNjb3VudElkQgj6QgWKAQIQASJrCg9UZW5hbnRNZW1iZXJSb3cSLQoGbWVtYmVyGAEgASgLMh0uY2xvdWQudjEubW9kZWxzLlRlbmFudE1lbWJlchIpCgdhY2NvdW50GAIgASgLMhguY2xvdWQudjEubW9kZWxzLkFjY291bnQi8QMKGExpc3RUZW5hbnRNZW1iZXJzUmVxdWVzdBI2Cgl0ZW5hbnRfaWQYASABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCCPpCBYoBAhABEh0KBnNlYXJjaBgCIAEoCUII+kIFcgMYgAJIAIgBARI/CgRyb2xlGAMgASgOMiIuY2xvdWQudjEubW9kZWxzLlRlbmFudE1lbWJlci5Sb2xlQgj6QgWCAQIQAUgBiAEBElEKCnNvcnRfZmllbGQYBCABKA4yMy5jbG91ZC52MS5hcGkudWkuTGlzdFRlbmFudE1lbWJlcnNSZXF1ZXN0LlNvcnRGaWVsZEII+kIFggECEAESMwoFb3JkZXIYBSABKA4yGi5jbG91ZC52MS5tb2RlbHMuU29ydE9yZGVyQgj6QgWCAQIQARIjCgRwYWdlGAYgASgLMhUuY2xvdWQudjEubW9kZWxzLlBhZ2USIwoEdGFncxgHIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzIlcKCVNvcnRGaWVsZBIaChZTT1JUX0ZJRUxEX1VOU1BFQ0lGSUVEEAASGQoVU09SVF9GSUVMRF9DUkVBVEVEX0FUEAESEwoPU09SVF9GSUVMRF9ST0xFEAJCCQoHX3NlYXJjaEIHCgVfcm9sZSJ8ChlMaXN0VGVuYW50TWVtYmVyc1Jlc3BvbnNlEjEKB21lbWJlcnMYASADKAsyIC5jbG91ZC52MS5hcGkudWkuVGVuYW50TWVtYmVyUm93EiwKCXBhZ2VfaW5mbxgCIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5QYWdlSW5mbzKMAwoNVGVuYW50U2VydmljZRJKCg1MaXN0TXlUZW5hbnRzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhwuY2xvdWQudjEubW9kZWxzLlRlbmFudC5MaXN0IgOQAgESbwoRTGlzdFRlbmFudE1lbWJlcnMSKS5jbG91ZC52MS5hcGkudWkuTGlzdFRlbmFudE1lbWJlcnNSZXF1ZXN0GiouY2xvdWQudjEuYXBpLnVpLkxpc3RUZW5hbnRNZW1iZXJzUmVzcG9uc2UiA5ACARJaChFBZGRNZW1iZXJUb1RlbmFudBIhLmNsb3VkLnYxLmFwaS51aS5BZGRNZW1iZXJSZXF1ZXN0Gh0uY2xvdWQudjEubW9kZWxzLlRlbmFudE1lbWJlciIDkAICEmIKFlJlbW92ZU1lbWJlckZyb21UZW5hbnQSJC5jbG91ZC52MS5hcGkudWkuUmVtb3ZlTWVtYmVyUmVxdWVzdBodLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRNZW1iZXIiA5ACAkJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGkvdWliBnByb3RvMw", [file_cloud_v1_common_tags, file_cloud_v1_models_account, file_cloud_v1_models_common, file_cloud_v1_models_tenant, file_google_protobuf_empty, file_validate_validate]);
+  fileDesc("ChxjbG91ZC92MS9hcGkvdWkvdGVuYW50LnByb3RvEg9jbG91ZC52MS5hcGkudWkiwgEKEEFkZE1lbWJlclJlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARI4CgphY2NvdW50X2lkGAIgASgLMhouY2xvdWQudjEubW9kZWxzLkFjY291bnRJZEII+kIFigECEAESPAoEcm9sZRgDIAEoDjIiLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRNZW1iZXIuUm9sZUIK+kIHggEEEAEgACKHAQoTUmVtb3ZlTWVtYmVyUmVxdWVzdBI2Cgl0ZW5hbnRfaWQYASABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCCPpCBYoBAhABEjgKCmFjY291bnRfaWQYAiABKAsyGi5jbG91ZC52MS5tb2RlbHMuQWNjb3VudElkQgj6QgWKAQIQASLJAQoXVXBkYXRlTWVtYmVyUm9sZVJlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARI4CgphY2NvdW50X2lkGAIgASgLMhouY2xvdWQudjEubW9kZWxzLkFjY291bnRJZEII+kIFigECEAESPAoEcm9sZRgDIAEoDjIiLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRNZW1iZXIuUm9sZUIK+kIHggEEEAEgACJyChtMb29rdXBBY2NvdW50QnlFbWFpbFJlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARIbCgVlbWFpbBgCIAEoCUIM+kIJcgcY/wFgARAFImsKD1RlbmFudE1lbWJlclJvdxItCgZtZW1iZXIYASABKAsyHS5jbG91ZC52MS5tb2RlbHMuVGVuYW50TWVtYmVyEikKB2FjY291bnQYAiABKAsyGC5jbG91ZC52MS5tb2RlbHMuQWNjb3VudCLxAwoYTGlzdFRlbmFudE1lbWJlcnNSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESHQoGc2VhcmNoGAIgASgJQgj6QgVyAxiAAkgAiAEBEj8KBHJvbGUYAyABKA4yIi5jbG91ZC52MS5tb2RlbHMuVGVuYW50TWVtYmVyLlJvbGVCCPpCBYIBAhABSAGIAQESUQoKc29ydF9maWVsZBgEIAEoDjIzLmNsb3VkLnYxLmFwaS51aS5MaXN0VGVuYW50TWVtYmVyc1JlcXVlc3QuU29ydEZpZWxkQgj6QgWCAQIQARIzCgVvcmRlchgFIAEoDjIaLmNsb3VkLnYxLm1vZGVscy5Tb3J0T3JkZXJCCPpCBYIBAhABEiMKBHBhZ2UYBiABKAsyFS5jbG91ZC52MS5tb2RlbHMuUGFnZRIjCgR0YWdzGAcgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MiVwoJU29ydEZpZWxkEhoKFlNPUlRfRklFTERfVU5TUEVDSUZJRUQQABIZChVTT1JUX0ZJRUxEX0NSRUFURURfQVQQARITCg9TT1JUX0ZJRUxEX1JPTEUQAkIJCgdfc2VhcmNoQgcKBV9yb2xlInwKGUxpc3RUZW5hbnRNZW1iZXJzUmVzcG9uc2USMQoHbWVtYmVycxgBIAMoCzIgLmNsb3VkLnYxLmFwaS51aS5UZW5hbnRNZW1iZXJSb3cSLAoJcGFnZV9pbmZvGAIgASgLMhkuY2xvdWQudjEubW9kZWxzLlBhZ2VJbmZvMtMECg1UZW5hbnRTZXJ2aWNlEkoKDUxpc3RNeVRlbmFudHMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHC5jbG91ZC52MS5tb2RlbHMuVGVuYW50Lkxpc3QiA5ACARJvChFMaXN0VGVuYW50TWVtYmVycxIpLmNsb3VkLnYxLmFwaS51aS5MaXN0VGVuYW50TWVtYmVyc1JlcXVlc3QaKi5jbG91ZC52MS5hcGkudWkuTGlzdFRlbmFudE1lbWJlcnNSZXNwb25zZSIDkAIBEloKEUFkZE1lbWJlclRvVGVuYW50EiEuY2xvdWQudjEuYXBpLnVpLkFkZE1lbWJlclJlcXVlc3QaHS5jbG91ZC52MS5tb2RlbHMuVGVuYW50TWVtYmVyIgOQAgISYgoWUmVtb3ZlTWVtYmVyRnJvbVRlbmFudBIkLmNsb3VkLnYxLmFwaS51aS5SZW1vdmVNZW1iZXJSZXF1ZXN0Gh0uY2xvdWQudjEubW9kZWxzLlRlbmFudE1lbWJlciIDkAICEmAKEFVwZGF0ZU1lbWJlclJvbGUSKC5jbG91ZC52MS5hcGkudWkuVXBkYXRlTWVtYmVyUm9sZVJlcXVlc3QaHS5jbG91ZC52MS5tb2RlbHMuVGVuYW50TWVtYmVyIgOQAgISYwoUTG9va3VwQWNjb3VudEJ5RW1haWwSLC5jbG91ZC52MS5hcGkudWkuTG9va3VwQWNjb3VudEJ5RW1haWxSZXF1ZXN0GhguY2xvdWQudjEubW9kZWxzLkFjY291bnQiA5ACAUJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGkvdWliBnByb3RvMw", [file_cloud_v1_common_tags, file_cloud_v1_models_account, file_cloud_v1_models_common, file_cloud_v1_models_tenant, file_google_protobuf_empty, file_validate_validate]);
 
 /**
  *
@@ -128,6 +128,104 @@ export const RemoveMemberRequestSchema: GenMessage<RemoveMemberRequest, {jsonTyp
   messageDesc(file_cloud_v1_api_ui_tenant, 1);
 
 /**
+ * UpdateMemberRoleRequest changes an existing member's role (OWNER only). 
+ *
+ * @generated from message cloud.v1.api.ui.UpdateMemberRoleRequest
+ */
+export type UpdateMemberRoleRequest = Message<"cloud.v1.api.ui.UpdateMemberRoleRequest"> & {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantId;
+
+  /**
+   * @generated from field: cloud.v1.models.AccountId account_id = 2;
+   */
+  accountId?: AccountId;
+
+  /**
+   * @generated from field: cloud.v1.models.TenantMember.Role role = 3;
+   */
+  role: TenantMember_Role;
+};
+
+/**
+ * UpdateMemberRoleRequest changes an existing member's role (OWNER only). 
+ *
+ * @generated from message cloud.v1.api.ui.UpdateMemberRoleRequest
+ */
+export type UpdateMemberRoleRequestJson = {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantIdJson;
+
+  /**
+   * @generated from field: cloud.v1.models.AccountId account_id = 2;
+   */
+  accountId?: AccountIdJson;
+
+  /**
+   * @generated from field: cloud.v1.models.TenantMember.Role role = 3;
+   */
+  role?: TenantMember_RoleJson;
+};
+
+export type UpdateMemberRoleRequestValid = UpdateMemberRoleRequest;
+
+/**
+ * Describes the message cloud.v1.api.ui.UpdateMemberRoleRequest.
+ * Use `create(UpdateMemberRoleRequestSchema)` to create a new message.
+ */
+export const UpdateMemberRoleRequestSchema: GenMessage<UpdateMemberRoleRequest, {jsonType: UpdateMemberRoleRequestJson, validType: UpdateMemberRoleRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_ui_tenant, 2);
+
+/**
+ * LookupAccountByEmailRequest resolves an account by EXACT email so an OWNER can
+ * add a member without knowing the ULID. No enumeration: exact match or NotFound. 
+ *
+ * @generated from message cloud.v1.api.ui.LookupAccountByEmailRequest
+ */
+export type LookupAccountByEmailRequest = Message<"cloud.v1.api.ui.LookupAccountByEmailRequest"> & {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantId;
+
+  /**
+   * @generated from field: string email = 2;
+   */
+  email: string;
+};
+
+/**
+ * LookupAccountByEmailRequest resolves an account by EXACT email so an OWNER can
+ * add a member without knowing the ULID. No enumeration: exact match or NotFound. 
+ *
+ * @generated from message cloud.v1.api.ui.LookupAccountByEmailRequest
+ */
+export type LookupAccountByEmailRequestJson = {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantIdJson;
+
+  /**
+   * @generated from field: string email = 2;
+   */
+  email?: string;
+};
+
+export type LookupAccountByEmailRequestValid = LookupAccountByEmailRequest;
+
+/**
+ * Describes the message cloud.v1.api.ui.LookupAccountByEmailRequest.
+ * Use `create(LookupAccountByEmailRequestSchema)` to create a new message.
+ */
+export const LookupAccountByEmailRequestSchema: GenMessage<LookupAccountByEmailRequest, {jsonType: LookupAccountByEmailRequestJson, validType: LookupAccountByEmailRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_ui_tenant, 3);
+
+/**
  * TenantMemberRow joins a membership with the member's account fields: a bare
  * TenantMember carries only account_id, but the members table needs the
  * account's email/nickname/is_admin. 
@@ -176,7 +274,7 @@ export type TenantMemberRowValid = TenantMemberRow;
  * Use `create(TenantMemberRowSchema)` to create a new message.
  */
 export const TenantMemberRowSchema: GenMessage<TenantMemberRow, {jsonType: TenantMemberRowJson, validType: TenantMemberRowValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_tenant, 2);
+  messageDesc(file_cloud_v1_api_ui_tenant, 4);
 
 /**
  * ListTenantMembersRequest is the members-management table contract (NOT the
@@ -283,7 +381,7 @@ export type ListTenantMembersRequestValid = ListTenantMembersRequest;
  * Use `create(ListTenantMembersRequestSchema)` to create a new message.
  */
 export const ListTenantMembersRequestSchema: GenMessage<ListTenantMembersRequest, {jsonType: ListTenantMembersRequestJson, validType: ListTenantMembersRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_tenant, 3);
+  messageDesc(file_cloud_v1_api_ui_tenant, 5);
 
 /**
  * SortField — typed sortable columns (no arbitrary strings). 
@@ -318,7 +416,7 @@ export type ListTenantMembersRequest_SortFieldJson = "SORT_FIELD_UNSPECIFIED" | 
  * Describes the enum cloud.v1.api.ui.ListTenantMembersRequest.SortField.
  */
 export const ListTenantMembersRequest_SortFieldSchema: GenEnum<ListTenantMembersRequest_SortField, ListTenantMembersRequest_SortFieldJson> = /*@__PURE__*/
-  enumDesc(file_cloud_v1_api_ui_tenant, 3, 0);
+  enumDesc(file_cloud_v1_api_ui_tenant, 5, 0);
 
 /**
  * ListTenantMembersResponse — joined rows plus pagination metadata (H42). 
@@ -361,7 +459,7 @@ export type ListTenantMembersResponseValid = ListTenantMembersResponse;
  * Use `create(ListTenantMembersResponseSchema)` to create a new message.
  */
 export const ListTenantMembersResponseSchema: GenMessage<ListTenantMembersResponse, {jsonType: ListTenantMembersResponseJson, validType: ListTenantMembersResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_tenant, 4);
+  messageDesc(file_cloud_v1_api_ui_tenant, 6);
 
 /**
  * @generated from service cloud.v1.api.ui.TenantService
@@ -402,6 +500,26 @@ export const TenantService: GenService<{
     methodKind: "unary";
     input: typeof RemoveMemberRequestSchema;
     output: typeof TenantMemberSchema;
+  },
+  /**
+   * UpdateMemberRole changes a member's role; requires OWNER of the tenant. 
+   *
+   * @generated from rpc cloud.v1.api.ui.TenantService.UpdateMemberRole
+   */
+  updateMemberRole: {
+    methodKind: "unary";
+    input: typeof UpdateMemberRoleRequestSchema;
+    output: typeof TenantMemberSchema;
+  },
+  /**
+   * LookupAccountByEmail resolves an account by exact email (OWNER, to add members). 
+   *
+   * @generated from rpc cloud.v1.api.ui.TenantService.LookupAccountByEmail
+   */
+  lookupAccountByEmail: {
+    methodKind: "unary";
+    input: typeof LookupAccountByEmailRequestSchema;
+    output: typeof AccountSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_cloud_v1_api_ui_tenant, 0);

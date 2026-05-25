@@ -49,8 +49,15 @@ message ClonePresetRequest {
     models.DatabasePresetId id = 2 [(validate.rules).message.required = true];
 }
 
+message GetPresetRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.DatabasePresetId id = 2 [(validate.rules).message.required = true];
+}
+
 service PresetService {
     rpc ListPresets (ListPresetRequest) returns (ListPresetsResponse) {option idempotency_level = NO_SIDE_EFFECTS;};
+    /* GetPreset fetches a single preset by id (tenant's own or a system preset). */
+    rpc GetPreset (GetPresetRequest) returns (models.Preset) {option idempotency_level = NO_SIDE_EFFECTS;};
     rpc CreatePreset (models.Preset) returns (models.Preset) {option idempotency_level = NO_SIDE_EFFECTS;};
     rpc UpdatePreset (models.Preset) returns (models.Preset) {option idempotency_level = IDEMPOTENT;};
     rpc DeletePreset (DeletePresetRequest) returns (google.protobuf.Empty) {option idempotency_level = IDEMPOTENT;};

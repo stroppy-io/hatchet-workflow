@@ -174,51 +174,79 @@ func (c *Client) GetRunMetrics(ctx context.Context, runID string) (*metricspb.Ru
 	return out, nil
 }
 
-// CompareRuns diffs two runs' summaries, computing per-metric percentage deltas
-// and a better/worse/same verdict from each metric's higher_is_better direction.
-func (c *Client) CompareRuns(ctx context.Context, runA, runB string) (*metricspb.Comparison, error) {
-	a, err := c.GetRunMetrics(ctx, runA)
-	if err != nil {
-		return nil, err
+// CompareRuns diffs N runs' summaries against a baseline (runIDs[0]), computing
+// per-metric percentage deltas and a better/worse/same verdict (relative to the
+// baseline, honouring each metric's higher_is_better direction and the threshold)
+// for every other run. Requires len(runIDs) >= 2 (the API validates this).
+func (c *Client) CompareRuns(ctx context.Context, runIDs []string, threshold float64) (*metricspb.Comparison, error) {
+	if len(runIDs) < 2 {
+		return nil, fmt.Errorf("compare needs at least 2 runs, got %d", len(runIDs))
 	}
-	b, err := c.GetRunMetrics(ctx, runB)
-	if err != nil {
-		return nil, err
-	}
-	bByKey := make(map[string]*metricspb.MetricSummary, len(b.GetMetrics()))
-	for _, m := range b.GetMetrics() {
-		bByKey[m.GetKey()] = m
-	}
-	cmp := &metricspb.Comparison{
-		RunA:    runA,
-		RunB:    runB,
-		Metrics: make([]*metricspb.MetricDiff, 0, len(a.GetMetrics())),
-		Summary: &metricspb.Comparison_Summary{},
-	}
-	for _, ma := range a.GetMetrics() {
-		mb := bByKey[ma.GetKey()]
-		diffAvg := pct(ma.GetAvg(), mb.GetAvg())
-		verdict := verdict(ma.GetHigherIsBetter(), diffAvg)
-		cmp.Metrics = append(cmp.Metrics, &metricspb.MetricDiff{
-			Key:        ma.GetKey(),
-			Name:       ma.GetName(),
-			Unit:       ma.GetUnit(),
-			AvgA:       ma.GetAvg(),
-			AvgB:       mb.GetAvg(),
-			MaxA:       ma.GetMax(),
-			MaxB:       mb.GetMax(),
-			DiffAvgPct: diffAvg,
-			DiffMaxPct: pct(ma.GetMax(), mb.GetMax()),
-			Verdict:    verdict,
-		})
-		switch verdict {
-		case metricspb.MetricDiff_VERDICT_BETTER:
-			cmp.Summary.Better++
-		case metricspb.MetricDiff_VERDICT_WORSE:
-			cmp.Summary.Worse++
-		default:
-			cmp.Summary.Same++
+	// Fetch each run's summaries and index them by metric key for O(1) lookup.
+	byKey := make([]map[string]*metricspb.MetricSummary, len(runIDs))
+	for i, id := range runIDs {
+		rm, err := c.GetRunMetrics(ctx, id)
+		if err != nil {
+			return nil, err
 		}
+		m := make(map[string]*metricspb.MetricSummary, len(rm.GetMetrics()))
+		for _, s := range rm.GetMetrics() {
+			m[s.GetKey()] = s
+		}
+		byKey[i] = m
+	}
+
+	// Per non-baseline run roll-up (aligned with runIDs[1:]).
+	summaries := make([]*metricspb.Comparison_RunSummary, len(runIDs)-1)
+	for i := range summaries {
+		summaries[i] = &metricspb.Comparison_RunSummary{RunId: runIDs[i+1]}
+	}
+
+	cmp := &metricspb.Comparison{
+		RunIds:    runIDs,
+		Metrics:   make([]*metricspb.MetricRow, 0, len(catalog)),
+		Summaries: summaries,
+	}
+	// Iterate the catalog so the row set is stable regardless of which runs have
+	// which series; a missing series yields a zero-valued (nil-safe) summary.
+	for _, d := range catalog {
+		base := byKey[0][d.key]
+		if base == nil {
+			continue // baseline lacks this metric; nothing to diff against.
+		}
+		row := &metricspb.MetricRow{
+			Key:            d.key,
+			Name:           d.name,
+			Unit:           d.unit,
+			HigherIsBetter: d.higherIsBetter,
+			Group:          d.group,
+			Cells:          make([]*metricspb.MetricCell, 0, len(runIDs)),
+		}
+		for i := range runIDs {
+			cur := byKey[i][d.key]
+			diffAvg := pct(base.GetAvg(), cur.GetAvg())
+			v := metricspb.Verdict_VERDICT_SAME
+			if i > 0 {
+				v = verdict(d.higherIsBetter, diffAvg, threshold)
+				switch v {
+				case metricspb.Verdict_VERDICT_BETTER:
+					summaries[i-1].Better++
+				case metricspb.Verdict_VERDICT_WORSE:
+					summaries[i-1].Worse++
+				default:
+					summaries[i-1].Same++
+				}
+			}
+			row.Cells = append(row.Cells, &metricspb.MetricCell{
+				RunId:      runIDs[i],
+				Avg:        cur.GetAvg(),
+				Max:        cur.GetMax(),
+				DiffAvgPct: diffAvg,
+				DiffMaxPct: pct(base.GetMax(), cur.GetMax()),
+				Verdict:    v,
+			})
+		}
+		cmp.Metrics = append(cmp.Metrics, row)
 	}
 	return cmp, nil
 }
@@ -232,25 +260,28 @@ func pct(a, b float64) float64 {
 	return (b - a) / a * 100
 }
 
-// verdict maps a percentage delta (run B relative to run A) to a better/worse/same
-// verdict, honouring the metric's comparison direction. For a higher-is-better
-// metric an increase is an improvement; for a lower-is-better metric a decrease is
-// an improvement. A zero delta is VERDICT_SAME.
-func verdict(higherIsBetter bool, diffPct float64) metricspb.MetricDiff_Verdict {
-	switch {
-	case diffPct == 0:
-		return metricspb.MetricDiff_VERDICT_SAME
-	case diffPct > 0:
-		// B is higher than A.
-		if higherIsBetter {
-			return metricspb.MetricDiff_VERDICT_BETTER
+// verdict maps a percentage delta (a run relative to the baseline) to a
+// better/worse/same verdict, honouring the metric's comparison direction. A delta
+// whose magnitude is within threshold percent counts as VERDICT_SAME. For a
+// higher-is-better metric an increase beyond threshold is an improvement; for a
+// lower-is-better metric a decrease beyond threshold is an improvement.
+func verdict(higherIsBetter bool, diffPct, threshold float64) metricspb.Verdict {
+	if diffPct < 0 {
+		if -diffPct <= threshold {
+			return metricspb.Verdict_VERDICT_SAME
 		}
-		return metricspb.MetricDiff_VERDICT_WORSE
-	default:
-		// B is lower than A.
+		// run is lower than the baseline.
 		if higherIsBetter {
-			return metricspb.MetricDiff_VERDICT_WORSE
+			return metricspb.Verdict_VERDICT_WORSE
 		}
-		return metricspb.MetricDiff_VERDICT_BETTER
+		return metricspb.Verdict_VERDICT_BETTER
 	}
+	if diffPct <= threshold {
+		return metricspb.Verdict_VERDICT_SAME
+	}
+	// run is higher than the baseline.
+	if higherIsBetter {
+		return metricspb.Verdict_VERDICT_BETTER
+	}
+	return metricspb.Verdict_VERDICT_WORSE
 }

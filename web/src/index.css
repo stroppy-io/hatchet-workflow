@@ -1,28 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #09090b;
-  --color-foreground: #f4f4f5;
-  --color-muted: #18181b;
-  --color-muted-foreground: #a1a1aa;
-  --color-card: #111113;
-  --color-card-foreground: #f4f4f5;
-  --color-border: #27272a;
-  --color-input: #27272a;
-  --color-ring: #38bdf8;
-  --color-primary: #38bdf8;
-  --color-primary-foreground: #061016;
-  --color-secondary: #27272a;
-  --color-secondary-foreground: #f4f4f5;
-  --color-accent: #27272a;
-  --color-accent-foreground: #f4f4f5;
-  --color-popover: #18181b;
-  --color-popover-foreground: #f4f4f5;
+  --color-background: #0a0a0a;
+  --color-foreground: #e5e5e5;
+  --color-muted: #171717;
+  --color-muted-foreground: #a3a3a3;
+  --color-card: #111111;
+  --color-card-foreground: #e5e5e5;
+  --color-popover: #111111;
+  --color-popover-foreground: #e5e5e5;
+  --color-border: #262626;
+  --color-input: #262626;
+  --color-ring: #3b82f6;
+  --color-primary: #3b82f6;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #1a1a2e;
+  --color-secondary-foreground: #e5e5e5;
+  --color-accent: #1a1a2e;
+  --color-accent-foreground: #e5e5e5;
   --color-destructive: #ef4444;
-  --color-destructive-foreground: #fef2f2;
+  --color-destructive-foreground: #ffffff;
   --color-success: #22c55e;
-  --color-warning: #f59e0b;
+  --color-warning: #eab308;
   --color-danger: #ef4444;
+  --color-pending: #6b7280;
 
   --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -49,6 +50,7 @@ body {
   color: var(--color-foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
@@ -65,10 +67,34 @@ a {
 }
 
 ::-webkit-scrollbar {
-  height: 8px;
-  width: 8px;
+  height: 6px;
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+/* Staggered reveal for list/pipeline rows on mount (run overview). One
+   orchestrated load animation; pair with inline animation-delay per index. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-rise {
+  animation: rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise {
+    animation: none;
+  }
 }

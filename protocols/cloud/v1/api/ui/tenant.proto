@@ -28,6 +28,20 @@ message RemoveMemberRequest {
     models.AccountId account_id = 2 [(validate.rules).message.required = true];
 }
 
+/* UpdateMemberRoleRequest changes an existing member's role (OWNER only). */
+message UpdateMemberRoleRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.AccountId account_id = 2 [(validate.rules).message.required = true];
+    models.TenantMember.Role role = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+}
+
+/* LookupAccountByEmailRequest resolves an account by EXACT email so an OWNER can
+   add a member without knowing the ULID. No enumeration: exact match or NotFound. */
+message LookupAccountByEmailRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    string email = 2 [(validate.rules).string = {min_len: 5, max_len: 255, email: true}];
+}
+
 /* TenantMemberRow joins a membership with the member's account fields: a bare
    TenantMember carries only account_id, but the members table needs the
    account's email/nickname/is_admin. */
@@ -78,5 +92,13 @@ service TenantService {
     }
     rpc RemoveMemberFromTenant (RemoveMemberRequest) returns (models.TenantMember) {
         option idempotency_level = IDEMPOTENT;
+    }
+    /* UpdateMemberRole changes a member's role; requires OWNER of the tenant. */
+    rpc UpdateMemberRole (UpdateMemberRoleRequest) returns (models.TenantMember) {
+        option idempotency_level = IDEMPOTENT;
+    }
+    /* LookupAccountByEmail resolves an account by exact email (OWNER, to add members). */
+    rpc LookupAccountByEmail (LookupAccountByEmailRequest) returns (models.Account) {
+        option idempotency_level = NO_SIDE_EFFECTS;
     }
 }

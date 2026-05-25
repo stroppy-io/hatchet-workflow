@@ -18,6 +18,10 @@ func (failingListStorage) ListDagsByStatus(context.Context, []primitive.Status) 
 	return nil, errors.New("list boom")
 }
 
+func (failingListStorage) GetDag(context.Context, string) (*primitive.Dag, error) {
+	return nil, errors.New("get boom")
+}
+
 func (failingListStorage) SaveDag(context.Context, *primitive.Dag) error { return nil }
 
 func TestProcessorStartReturnsStorageError(t *testing.T) {
@@ -54,6 +58,15 @@ func (s *memoryProcessorStorage) ListDagsByStatus(_ context.Context, statuses []
 		}
 	}
 	return dags, nil
+}
+
+func (s *memoryProcessorStorage) GetDag(_ context.Context, id string) (*primitive.Dag, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if dag, ok := s.dags[id]; ok {
+		return proto.Clone(dag).(*primitive.Dag), nil
+	}
+	return nil, nil
 }
 
 func (s *memoryProcessorStorage) SaveDag(_ context.Context, dag *primitive.Dag) error {

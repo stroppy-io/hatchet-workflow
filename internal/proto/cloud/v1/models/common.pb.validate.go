@@ -1827,6 +1827,8 @@ func (m *Page) validate(all bool) error {
 
 	// no validation rules for Token
 
+	// no validation rules for Offset
+
 	if len(errors) > 0 {
 		return PageMultiError(errors)
 	}

@@ -41,9 +41,20 @@ export function useCursorPagination(pageSizeDefault = 25) {
     setIndex((current) => Math.max(0, current - 1));
   }, []);
 
+  // Jump to a VISITED page (cursor pagination can't seek forward to unvisited
+  // pages — only pages already loaded have a token).
+  const goTo = useCallback(
+    (target: number) => {
+      setIndex(Math.max(0, Math.min(target, tokens.length - 1)));
+    },
+    [tokens.length],
+  );
+
   return {
     canPrevious: index > 0,
     index,
+    visitedCount: tokens.length,
+    goTo,
     next,
     page,
     pageSize,

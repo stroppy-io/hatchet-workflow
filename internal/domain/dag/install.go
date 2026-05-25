@@ -173,7 +173,7 @@ func componentChain(c *domain.Topology_Component, db *domain.Database, wl *domai
 	if err != nil {
 		return nil, err
 	}
-	rec := recipeForComponent(c, db)
+	rec := recipeForComponent(c, db, topo)
 	prefix := c.GetId()
 	var nodes []*primitive.Dag_Node
 	add := func(suffix string, op *ops.Operation, bindings []*renderpb.Config_Binding) error {

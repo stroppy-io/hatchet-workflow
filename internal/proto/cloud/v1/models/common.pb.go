@@ -726,13 +726,18 @@ func (x *Own) GetTenantId() *TenantId {
 	return nil
 }
 
-// Page — cursor-based pagination request.
+// Page — pagination request. Supports cursor (token) OR offset addressing; a
+// list endpoint documents which it honours. Offset enables random page access
+// (jump to page N) and total-count UIs; cursor is cheaper for forward scans.
 type Page struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Max items to return. 0 = server default.
 	Size uint32 `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
 	// Opaque cursor from a previous PageInfo.next_token. Empty = first page.
-	Token         string `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
+	Token string `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
+	// Zero-based row offset (offset pagination). 0 = first page. Used by endpoints
+	// that support random page access (jump to an arbitrary page).
+	Offset        uint64 `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -779,6 +784,13 @@ func (x *Page) GetToken() string {
 		return x.Token
 	}
 	return ""
+}
+
+func (x *Page) GetOffset() uint64 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
 }
 
 // PageInfo — pagination metadata returned alongside a list result.
@@ -891,10 +903,11 @@ const file_cloud_v1_models_common_proto_rawDesc = "" +
 	"timestamps\"\xba\x01\n" +
 	"\x03Own\x12\\\n" +
 	"\x10owner_account_id\x18\x02 \x01(\v2\x1a.cloud.v1.models.AccountIdB\x16\x9a\xb5\x18\x12\x12\x102\baccounts:\x02id@\x01R\x0eownerAccountId\x12U\n" +
-	"\ttenant_id\x18\x03 \x01(\v2\x19.cloud.v1.models.TenantIdB\x1d\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x11\x12\x0f2\atenants:\x02id@\x01R\btenantId\":\n" +
+	"\ttenant_id\x18\x03 \x01(\v2\x19.cloud.v1.models.TenantIdB\x1d\xfaB\x05\x8a\x01\x02\x10\x01\x9a\xb5\x18\x11\x12\x0f2\atenants:\x02id@\x01R\btenantId\"R\n" +
 	"\x04Page\x12\x1c\n" +
 	"\x04size\x18\x01 \x01(\rB\b\xfaB\x05*\x03\x18\xe8\aR\x04size\x12\x14\n" +
-	"\x05token\x18\x02 \x01(\tR\x05token\"i\n" +
+	"\x05token\x18\x02 \x01(\tR\x05token\x12\x16\n" +
+	"\x06offset\x18\x03 \x01(\x04R\x06offset\"i\n" +
 	"\bPageInfo\x12\x1d\n" +
 	"\n" +
 	"next_token\x18\x01 \x01(\tR\tnextToken\x12\x19\n" +

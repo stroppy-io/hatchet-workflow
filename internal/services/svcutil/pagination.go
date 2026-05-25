@@ -27,6 +27,15 @@ func CursorDesc(order models.SortOrder) bool {
 	return order != models.SortOrder_SORT_ORDER_ASC
 }
 
+// Offset returns the clamped zero-based row offset for offset pagination.
+func Offset(p *models.Page) int {
+	n := int(p.GetOffset())
+	if n < 0 {
+		return 0
+	}
+	return n
+}
+
 // Paginate finalizes a cursor page: given the over-fetched rows (PageSize()+1) it
 // trims them to size and builds the PageInfo whose next_token is the last row's
 // opaque id cursor (ULIDs are monotonic, so id order == creation order). When fewer

@@ -62,6 +62,11 @@ const refreshInterceptor: Interceptor = (next) => async (request) => {
 
 const transport = createConnectTransport({
   baseUrl: "",
+  // Binary, not JSON: messages embed google.protobuf.Any (e.g. Dag node handler
+  // inputs like deployment.Deployment). JSON decoding of an Any requires every
+  // possible type in a registry; binary keeps the Any as opaque {typeUrl,bytes},
+  // which the UI never unpacks. Avoids "type ... is not in the type registry".
+  useBinaryFormat: true,
   interceptors: [refreshInterceptor, authInterceptor],
 });
 

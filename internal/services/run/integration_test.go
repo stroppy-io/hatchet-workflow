@@ -87,7 +87,7 @@ func (fakeMetrics) GetRunMetrics(_ context.Context, runID string) (*rtmetrics.Ru
 	return &rtmetrics.RunMetrics{}, nil
 }
 
-func (fakeMetrics) CompareRuns(_ context.Context, _, _ string) (*rtmetrics.Comparison, error) {
+func (fakeMetrics) CompareRuns(_ context.Context, _ []string, _ float64) (*rtmetrics.Comparison, error) {
 	return &rtmetrics.Comparison{}, nil
 }
 

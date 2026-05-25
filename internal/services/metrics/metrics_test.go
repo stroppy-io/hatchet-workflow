@@ -193,43 +193,48 @@ func TestCompareRuns_VerdictsAndSummary(t *testing.T) {
 	}
 	c := newTestClient(t, values)
 
-	cmp, err := c.CompareRuns(context.Background(), runA, runB)
+	cmp, err := c.CompareRuns(context.Background(), []string{runA, runB}, 0)
 	require.NoError(t, err)
-	require.Equal(t, runA, cmp.GetRunA())
-	require.Equal(t, runB, cmp.GetRunB())
+	require.Equal(t, []string{runA, runB}, cmp.GetRunIds())
 	require.Len(t, cmp.GetMetrics(), len(catalog))
 
-	byKey := map[string]*metricspb.MetricDiff{}
-	for _, d := range cmp.GetMetrics() {
-		byKey[d.GetKey()] = d
+	// candidate cell (index 1) keyed by metric.
+	type cell = *metricspb.MetricCell
+	byKey := map[string]cell{}
+	for _, row := range cmp.GetMetrics() {
+		require.Len(t, row.GetCells(), 2)
+		byKey[row.GetKey()] = row.GetCells()[1]
 	}
 
 	// Throughput: +20%, higher is better => BETTER.
 	tp := byKey["throughput"]
 	assert.InDelta(t, 20.0, tp.GetDiffAvgPct(), 1e-9)
-	assert.Equal(t, metricspb.MetricDiff_VERDICT_BETTER, tp.GetVerdict())
+	assert.Equal(t, metricspb.Verdict_VERDICT_BETTER, tp.GetVerdict())
 
 	// Latency p99: +10%, lower is better => WORSE.
 	p99 := byKey["latency_p99"]
 	assert.InDelta(t, 10.0, p99.GetDiffAvgPct(), 1e-9)
-	assert.Equal(t, metricspb.MetricDiff_VERDICT_WORSE, p99.GetVerdict())
+	assert.Equal(t, metricspb.Verdict_VERDICT_WORSE, p99.GetVerdict())
 
 	// Errors: -50%, lower is better => BETTER.
 	errs := byKey["errors"]
 	assert.InDelta(t, -50.0, errs.GetDiffAvgPct(), 1e-9)
-	assert.Equal(t, metricspb.MetricDiff_VERDICT_BETTER, errs.GetVerdict())
+	assert.Equal(t, metricspb.Verdict_VERDICT_BETTER, errs.GetVerdict())
 
 	// Active connections: unchanged => SAME.
 	ac := byKey["active_connections"]
 	assert.InDelta(t, 0.0, ac.GetDiffAvgPct(), 1e-9)
-	assert.Equal(t, metricspb.MetricDiff_VERDICT_SAME, ac.GetVerdict())
+	assert.Equal(t, metricspb.Verdict_VERDICT_SAME, ac.GetVerdict())
 
-	// Roll-up summary: better = throughput, errors, error_rate (3);
-	// worse = p99, p95 (2); same = active_connections, p50 (2).
-	require.NotNil(t, cmp.GetSummary())
-	assert.Equal(t, uint32(3), cmp.GetSummary().GetBetter())
-	assert.Equal(t, uint32(2), cmp.GetSummary().GetWorse())
-	assert.Equal(t, uint32(2), cmp.GetSummary().GetSame())
+	// Roll-up summary for the (single) non-baseline run: better = throughput,
+	// errors, error_rate (3); worse = p99, p95 (2); same = active_connections,
+	// p50 (2).
+	require.Len(t, cmp.GetSummaries(), 1)
+	sum := cmp.GetSummaries()[0]
+	assert.Equal(t, runB, sum.GetRunId())
+	assert.Equal(t, uint32(3), sum.GetBetter())
+	assert.Equal(t, uint32(2), sum.GetWorse())
+	assert.Equal(t, uint32(2), sum.GetSame())
 }
 
 func TestVerdict(t *testing.T) {
@@ -237,18 +242,25 @@ func TestVerdict(t *testing.T) {
 		name           string
 		higherIsBetter bool
 		diffPct        float64
-		want           metricspb.MetricDiff_Verdict
+		want           metricspb.Verdict
 	}{
-		{"higher-better up is improvement", true, 15, metricspb.MetricDiff_VERDICT_BETTER},
-		{"higher-better down is regression", true, -15, metricspb.MetricDiff_VERDICT_WORSE},
-		{"lower-better up is regression", false, 15, metricspb.MetricDiff_VERDICT_WORSE},
-		{"lower-better down is improvement", false, -15, metricspb.MetricDiff_VERDICT_BETTER},
-		{"higher-better unchanged is same", true, 0, metricspb.MetricDiff_VERDICT_SAME},
-		{"lower-better unchanged is same", false, 0, metricspb.MetricDiff_VERDICT_SAME},
+		{"higher-better up is improvement", true, 15, metricspb.Verdict_VERDICT_BETTER},
+		{"higher-better down is regression", true, -15, metricspb.Verdict_VERDICT_WORSE},
+		{"lower-better up is regression", false, 15, metricspb.Verdict_VERDICT_WORSE},
+		{"lower-better down is improvement", false, -15, metricspb.Verdict_VERDICT_BETTER},
+		{"higher-better unchanged is same", true, 0, metricspb.Verdict_VERDICT_SAME},
+		{"lower-better unchanged is same", false, 0, metricspb.Verdict_VERDICT_SAME},
+		{"within threshold is same", true, 3, metricspb.Verdict_VERDICT_SAME},
+		{"beyond threshold counts", true, 8, metricspb.Verdict_VERDICT_BETTER},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.want, verdict(tc.higherIsBetter, tc.diffPct))
+			// threshold 0 for the first six rows, 5 for the last two.
+			threshold := 0.0
+			if tc.diffPct == 3 || tc.diffPct == 8 {
+				threshold = 5
+			}
+			assert.Equal(t, tc.want, verdict(tc.higherIsBetter, tc.diffPct, threshold))
 		})
 	}
 }

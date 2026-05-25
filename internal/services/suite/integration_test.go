@@ -235,7 +235,7 @@ func TestLaunchSuiteRunPersistsRunsAndDags(t *testing.T) {
 		for _, n := range dagRow.GetPayload().GetNodes() {
 			nodeIDs[n.GetId()] = true
 		}
-		require.True(t, nodeIDs["install_and_run"], "per-test dag missing install_and_run")
+		require.True(t, nodeIDs["installAndRun"], "per-test dag missing installAndRun")
 	}
 
 	// The orchestration Dag persisted and references the per-test Dags via dag_ref nodes.

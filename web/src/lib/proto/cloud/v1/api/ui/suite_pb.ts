@@ -14,6 +14,8 @@ import type { Suite, SuiteJson, SuiteRun, SuiteRunJson, SuiteRunSchema, SuiteSch
 import { file_cloud_v1_models_testing } from "../../models/testing_pb.ts";
 import type { Status, StatusJson } from "../../runtime/primitive/status_pb.ts";
 import { file_cloud_v1_runtime_primitive_status } from "../../runtime/primitive/status_pb.ts";
+import type { FieldMask, FieldMaskJson } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_field_mask } from "@bufbuild/protobuf/wkt";
 import { file_validate_validate } from "../../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -21,7 +23,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/ui/suite.proto.
  */
 export const file_cloud_v1_api_ui_suite: GenFile = /*@__PURE__*/
-  fileDesc("ChtjbG91ZC92MS9hcGkvdWkvc3VpdGUucHJvdG8SD2Nsb3VkLnYxLmFwaS51aSLeAQoSQ3JlYXRlU3VpdGVSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESNgoGcHJlc2V0GAIgASgLMhwuY2xvdWQudjEuZG9tYWluLlN1aXRlUHJlc2V0Qgj6QgWKAQIQARIbCgRuYW1lGAMgASgJQgj6QgVyAxj/AUgAiAEBEiIKC2Rlc2NyaXB0aW9uGAQgASgJQgj6QgVyAxiACEgBiAEBQgcKBV9uYW1lQg4KDF9kZXNjcmlwdGlvbiJ/Cg9HZXRTdWl0ZVJlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARI0CghzdWl0ZV9pZBgCIAEoCzIYLmNsb3VkLnYxLm1vZGVscy5TdWl0ZUlkQgj6QgWKAQIQASKFAQoVTGF1bmNoU3VpdGVSdW5SZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESNAoIc3VpdGVfaWQYAiABKAsyGC5jbG91ZC52MS5tb2RlbHMuU3VpdGVJZEII+kIFigECEAEiiQEKEkdldFN1aXRlUnVuUmVxdWVzdBI2Cgl0ZW5hbnRfaWQYASABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCCPpCBYoBAhABEjsKDHN1aXRlX3J1bl9pZBgCIAEoCzIbLmNsb3VkLnYxLm1vZGVscy5TdWl0ZVJ1bklkQgj6QgWKAQIQASLaAwoRTGlzdFN1aXRlc1JlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARIdCgZzZWFyY2gYAiABKAlCCPpCBXIDGIACSACIAQESFQoIaGFzX2Nyb24YAyABKAhIAYgBARJKCgpzb3J0X2ZpZWxkGAQgASgOMiwuY2xvdWQudjEuYXBpLnVpLkxpc3RTdWl0ZXNSZXF1ZXN0LlNvcnRGaWVsZEII+kIFggECEAESMwoFb3JkZXIYBSABKA4yGi5jbG91ZC52MS5tb2RlbHMuU29ydE9yZGVyQgj6QgWCAQIQARIjCgRwYWdlGAYgASgLMhUuY2xvdWQudjEubW9kZWxzLlBhZ2USIwoEdGFncxgHIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzInQKCVNvcnRGaWVsZBIaChZTT1JUX0ZJRUxEX1VOU1BFQ0lGSUVEEAASGQoVU09SVF9GSUVMRF9DUkVBVEVEX0FUEAESEwoPU09SVF9GSUVMRF9OQU1FEAISGwoXU09SVF9GSUVMRF9ORVhUX0ZJUkVfQVQQA0IJCgdfc2VhcmNoQgsKCV9oYXNfY3JvbiJqChJMaXN0U3VpdGVzUmVzcG9uc2USJgoGc3VpdGVzGAEgAygLMhYuY2xvdWQudjEubW9kZWxzLlN1aXRlEiwKCXBhZ2VfaW5mbxgCIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5QYWdlSW5mbyKDBAoUTGlzdFN1aXRlUnVuc1JlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARJBCgZzdGF0dXMYAiABKA4yIi5jbG91ZC52MS5ydW50aW1lLnByaW1pdGl2ZS5TdGF0dXNCCPpCBYIBAhABSACIAQESLwoIc3VpdGVfaWQYAyABKAsyGC5jbG91ZC52MS5tb2RlbHMuU3VpdGVJZEgBiAEBEk0KCnNvcnRfZmllbGQYBCABKA4yLy5jbG91ZC52MS5hcGkudWkuTGlzdFN1aXRlUnVuc1JlcXVlc3QuU29ydEZpZWxkQgj6QgWCAQIQARIzCgVvcmRlchgFIAEoDjIaLmNsb3VkLnYxLm1vZGVscy5Tb3J0T3JkZXJCCPpCBYIBAhABEiMKBHBhZ2UYBiABKAsyFS5jbG91ZC52MS5tb2RlbHMuUGFnZRIjCgR0YWdzGAcgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MiWQoJU29ydEZpZWxkEhoKFlNPUlRfRklFTERfVU5TUEVDSUZJRUQQABIZChVTT1JUX0ZJRUxEX0NSRUFURURfQVQQARIVChFTT1JUX0ZJRUxEX1NUQVRVUxACQgkKB19zdGF0dXNCCwoJX3N1aXRlX2lkInQKFUxpc3RTdWl0ZVJ1bnNSZXNwb25zZRItCgpzdWl0ZV9ydW5zGAEgAygLMhkuY2xvdWQudjEubW9kZWxzLlN1aXRlUnVuEiwKCXBhZ2VfaW5mbxgCIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5QYWdlSW5mbyKMAQoVQ2FuY2VsU3VpdGVSdW5SZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESOwoMc3VpdGVfcnVuX2lkGAIgASgLMhsuY2xvdWQudjEubW9kZWxzLlN1aXRlUnVuSWRCCPpCBYoBAhABMvMECgxTdWl0ZVNlcnZpY2USTwoLQ3JlYXRlU3VpdGUSIy5jbG91ZC52MS5hcGkudWkuQ3JlYXRlU3VpdGVSZXF1ZXN0GhYuY2xvdWQudjEubW9kZWxzLlN1aXRlIgOQAgISSQoIR2V0U3VpdGUSIC5jbG91ZC52MS5hcGkudWkuR2V0U3VpdGVSZXF1ZXN0GhYuY2xvdWQudjEubW9kZWxzLlN1aXRlIgOQAgESWgoKTGlzdFN1aXRlcxIiLmNsb3VkLnYxLmFwaS51aS5MaXN0U3VpdGVzUmVxdWVzdBojLmNsb3VkLnYxLmFwaS51aS5MaXN0U3VpdGVzUmVzcG9uc2UiA5ACARJYCg5MYXVuY2hTdWl0ZVJ1bhImLmNsb3VkLnYxLmFwaS51aS5MYXVuY2hTdWl0ZVJ1blJlcXVlc3QaGS5jbG91ZC52MS5tb2RlbHMuU3VpdGVSdW4iA5ACAhJSCgtHZXRTdWl0ZVJ1bhIjLmNsb3VkLnYxLmFwaS51aS5HZXRTdWl0ZVJ1blJlcXVlc3QaGS5jbG91ZC52MS5tb2RlbHMuU3VpdGVSdW4iA5ACARJjCg1MaXN0U3VpdGVSdW5zEiUuY2xvdWQudjEuYXBpLnVpLkxpc3RTdWl0ZVJ1bnNSZXF1ZXN0GiYuY2xvdWQudjEuYXBpLnVpLkxpc3RTdWl0ZVJ1bnNSZXNwb25zZSIDkAIBElgKDkNhbmNlbFN1aXRlUnVuEiYuY2xvdWQudjEuYXBpLnVpLkNhbmNlbFN1aXRlUnVuUmVxdWVzdBoZLmNsb3VkLnYxLm1vZGVscy5TdWl0ZVJ1biIDkAICQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2FwaS91aWIGcHJvdG8z", [file_cloud_v1_common_tags, file_cloud_v1_domain_suite, file_cloud_v1_models_common, file_cloud_v1_models_testing, file_cloud_v1_runtime_primitive_status, file_validate_validate]);
+  fileDesc("ChtjbG91ZC92MS9hcGkvdWkvc3VpdGUucHJvdG8SD2Nsb3VkLnYxLmFwaS51aSLeAQoSQ3JlYXRlU3VpdGVSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESNgoGcHJlc2V0GAIgASgLMhwuY2xvdWQudjEuZG9tYWluLlN1aXRlUHJlc2V0Qgj6QgWKAQIQARIbCgRuYW1lGAMgASgJQgj6QgVyAxj/AUgAiAEBEiIKC2Rlc2NyaXB0aW9uGAQgASgJQgj6QgVyAxiACEgBiAEBQgcKBV9uYW1lQg4KDF9kZXNjcmlwdGlvbiJ/Cg9HZXRTdWl0ZVJlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARI0CghzdWl0ZV9pZBgCIAEoCzIYLmNsb3VkLnYxLm1vZGVscy5TdWl0ZUlkQgj6QgWKAQIQASK4AQoSVXBkYXRlU3VpdGVSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESLwoFc3VpdGUYAiABKAsyFi5jbG91ZC52MS5tb2RlbHMuU3VpdGVCCPpCBYoBAhABEjkKC3VwZGF0ZV9tYXNrGAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFza0II+kIFigECEAEihQEKFUxhdW5jaFN1aXRlUnVuUmVxdWVzdBI2Cgl0ZW5hbnRfaWQYASABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCCPpCBYoBAhABEjQKCHN1aXRlX2lkGAIgASgLMhguY2xvdWQudjEubW9kZWxzLlN1aXRlSWRCCPpCBYoBAhABIokBChJHZXRTdWl0ZVJ1blJlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARI7CgxzdWl0ZV9ydW5faWQYAiABKAsyGy5jbG91ZC52MS5tb2RlbHMuU3VpdGVSdW5JZEII+kIFigECEAEi2gMKEUxpc3RTdWl0ZXNSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESHQoGc2VhcmNoGAIgASgJQgj6QgVyAxiAAkgAiAEBEhUKCGhhc19jcm9uGAMgASgISAGIAQESSgoKc29ydF9maWVsZBgEIAEoDjIsLmNsb3VkLnYxLmFwaS51aS5MaXN0U3VpdGVzUmVxdWVzdC5Tb3J0RmllbGRCCPpCBYIBAhABEjMKBW9yZGVyGAUgASgOMhouY2xvdWQudjEubW9kZWxzLlNvcnRPcmRlckII+kIFggECEAESIwoEcGFnZRgGIAEoCzIVLmNsb3VkLnYxLm1vZGVscy5QYWdlEiMKBHRhZ3MYByABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncyJ0CglTb3J0RmllbGQSGgoWU09SVF9GSUVMRF9VTlNQRUNJRklFRBAAEhkKFVNPUlRfRklFTERfQ1JFQVRFRF9BVBABEhMKD1NPUlRfRklFTERfTkFNRRACEhsKF1NPUlRfRklFTERfTkVYVF9GSVJFX0FUEANCCQoHX3NlYXJjaEILCglfaGFzX2Nyb24iagoSTGlzdFN1aXRlc1Jlc3BvbnNlEiYKBnN1aXRlcxgBIAMoCzIWLmNsb3VkLnYxLm1vZGVscy5TdWl0ZRIsCglwYWdlX2luZm8YAiABKAsyGS5jbG91ZC52MS5tb2RlbHMuUGFnZUluZm8igwQKFExpc3RTdWl0ZVJ1bnNSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESQQoGc3RhdHVzGAIgASgOMiIuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuU3RhdHVzQgj6QgWCAQIQAUgAiAEBEi8KCHN1aXRlX2lkGAMgASgLMhguY2xvdWQudjEubW9kZWxzLlN1aXRlSWRIAYgBARJNCgpzb3J0X2ZpZWxkGAQgASgOMi8uY2xvdWQudjEuYXBpLnVpLkxpc3RTdWl0ZVJ1bnNSZXF1ZXN0LlNvcnRGaWVsZEII+kIFggECEAESMwoFb3JkZXIYBSABKA4yGi5jbG91ZC52MS5tb2RlbHMuU29ydE9yZGVyQgj6QgWCAQIQARIjCgRwYWdlGAYgASgLMhUuY2xvdWQudjEubW9kZWxzLlBhZ2USIwoEdGFncxgHIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzIlkKCVNvcnRGaWVsZBIaChZTT1JUX0ZJRUxEX1VOU1BFQ0lGSUVEEAASGQoVU09SVF9GSUVMRF9DUkVBVEVEX0FUEAESFQoRU09SVF9GSUVMRF9TVEFUVVMQAkIJCgdfc3RhdHVzQgsKCV9zdWl0ZV9pZCJ0ChVMaXN0U3VpdGVSdW5zUmVzcG9uc2USLQoKc3VpdGVfcnVucxgBIAMoCzIZLmNsb3VkLnYxLm1vZGVscy5TdWl0ZVJ1bhIsCglwYWdlX2luZm8YAiABKAsyGS5jbG91ZC52MS5tb2RlbHMuUGFnZUluZm8ijAEKFUNhbmNlbFN1aXRlUnVuUmVxdWVzdBI2Cgl0ZW5hbnRfaWQYASABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCCPpCBYoBAhABEjsKDHN1aXRlX3J1bl9pZBgCIAEoCzIbLmNsb3VkLnYxLm1vZGVscy5TdWl0ZVJ1bklkQgj6QgWKAQIQATLEBQoMU3VpdGVTZXJ2aWNlEk8KC0NyZWF0ZVN1aXRlEiMuY2xvdWQudjEuYXBpLnVpLkNyZWF0ZVN1aXRlUmVxdWVzdBoWLmNsb3VkLnYxLm1vZGVscy5TdWl0ZSIDkAICEkkKCEdldFN1aXRlEiAuY2xvdWQudjEuYXBpLnVpLkdldFN1aXRlUmVxdWVzdBoWLmNsb3VkLnYxLm1vZGVscy5TdWl0ZSIDkAIBEk8KC1VwZGF0ZVN1aXRlEiMuY2xvdWQudjEuYXBpLnVpLlVwZGF0ZVN1aXRlUmVxdWVzdBoWLmNsb3VkLnYxLm1vZGVscy5TdWl0ZSIDkAICEloKCkxpc3RTdWl0ZXMSIi5jbG91ZC52MS5hcGkudWkuTGlzdFN1aXRlc1JlcXVlc3QaIy5jbG91ZC52MS5hcGkudWkuTGlzdFN1aXRlc1Jlc3BvbnNlIgOQAgESWAoOTGF1bmNoU3VpdGVSdW4SJi5jbG91ZC52MS5hcGkudWkuTGF1bmNoU3VpdGVSdW5SZXF1ZXN0GhkuY2xvdWQudjEubW9kZWxzLlN1aXRlUnVuIgOQAgISUgoLR2V0U3VpdGVSdW4SIy5jbG91ZC52MS5hcGkudWkuR2V0U3VpdGVSdW5SZXF1ZXN0GhkuY2xvdWQudjEubW9kZWxzLlN1aXRlUnVuIgOQAgESYwoNTGlzdFN1aXRlUnVucxIlLmNsb3VkLnYxLmFwaS51aS5MaXN0U3VpdGVSdW5zUmVxdWVzdBomLmNsb3VkLnYxLmFwaS51aS5MaXN0U3VpdGVSdW5zUmVzcG9uc2UiA5ACARJYCg5DYW5jZWxTdWl0ZVJ1bhImLmNsb3VkLnYxLmFwaS51aS5DYW5jZWxTdWl0ZVJ1blJlcXVlc3QaGS5jbG91ZC52MS5tb2RlbHMuU3VpdGVSdW4iA5ACAkJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGkvdWliBnByb3RvMw", [file_cloud_v1_common_tags, file_cloud_v1_domain_suite, file_cloud_v1_models_common, file_cloud_v1_models_testing, file_cloud_v1_runtime_primitive_status, file_google_protobuf_field_mask, file_validate_validate]);
 
 /**
  *
@@ -136,6 +138,61 @@ export const GetSuiteRequestSchema: GenMessage<GetSuiteRequest, {jsonType: GetSu
   messageDesc(file_cloud_v1_api_ui_suite, 1);
 
 /**
+ * UpdateSuiteRequest edits a suite's mutable fields by FieldMask (name,
+ * description, preset, cron). id/owner/timestamps preserved. 
+ *
+ * @generated from message cloud.v1.api.ui.UpdateSuiteRequest
+ */
+export type UpdateSuiteRequest = Message<"cloud.v1.api.ui.UpdateSuiteRequest"> & {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantId;
+
+  /**
+   * @generated from field: cloud.v1.models.Suite suite = 2;
+   */
+  suite?: Suite;
+
+  /**
+   * @generated from field: google.protobuf.FieldMask update_mask = 3;
+   */
+  updateMask?: FieldMask;
+};
+
+/**
+ * UpdateSuiteRequest edits a suite's mutable fields by FieldMask (name,
+ * description, preset, cron). id/owner/timestamps preserved. 
+ *
+ * @generated from message cloud.v1.api.ui.UpdateSuiteRequest
+ */
+export type UpdateSuiteRequestJson = {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantIdJson;
+
+  /**
+   * @generated from field: cloud.v1.models.Suite suite = 2;
+   */
+  suite?: SuiteJson;
+
+  /**
+   * @generated from field: google.protobuf.FieldMask update_mask = 3;
+   */
+  updateMask?: FieldMaskJson;
+};
+
+export type UpdateSuiteRequestValid = UpdateSuiteRequest;
+
+/**
+ * Describes the message cloud.v1.api.ui.UpdateSuiteRequest.
+ * Use `create(UpdateSuiteRequestSchema)` to create a new message.
+ */
+export const UpdateSuiteRequestSchema: GenMessage<UpdateSuiteRequest, {jsonType: UpdateSuiteRequestJson, validType: UpdateSuiteRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_ui_suite, 2);
+
+/**
  * @generated from message cloud.v1.api.ui.LaunchSuiteRunRequest
  */
 export type LaunchSuiteRunRequest = Message<"cloud.v1.api.ui.LaunchSuiteRunRequest"> & {
@@ -172,7 +229,7 @@ export type LaunchSuiteRunRequestValid = LaunchSuiteRunRequest;
  * Use `create(LaunchSuiteRunRequestSchema)` to create a new message.
  */
 export const LaunchSuiteRunRequestSchema: GenMessage<LaunchSuiteRunRequest, {jsonType: LaunchSuiteRunRequestJson, validType: LaunchSuiteRunRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_suite, 2);
+  messageDesc(file_cloud_v1_api_ui_suite, 3);
 
 /**
  * @generated from message cloud.v1.api.ui.GetSuiteRunRequest
@@ -211,7 +268,7 @@ export type GetSuiteRunRequestValid = GetSuiteRunRequest;
  * Use `create(GetSuiteRunRequestSchema)` to create a new message.
  */
 export const GetSuiteRunRequestSchema: GenMessage<GetSuiteRunRequest, {jsonType: GetSuiteRunRequestJson, validType: GetSuiteRunRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_suite, 3);
+  messageDesc(file_cloud_v1_api_ui_suite, 4);
 
 /**
  * ListSuitesRequest lists suite DEFINITIONS (the /suites catalog), not runs. 
@@ -316,7 +373,7 @@ export type ListSuitesRequestValid = ListSuitesRequest;
  * Use `create(ListSuitesRequestSchema)` to create a new message.
  */
 export const ListSuitesRequestSchema: GenMessage<ListSuitesRequest, {jsonType: ListSuitesRequestJson, validType: ListSuitesRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_suite, 4);
+  messageDesc(file_cloud_v1_api_ui_suite, 5);
 
 /**
  * SortField — typed sortable columns (no arbitrary strings). 
@@ -356,7 +413,7 @@ export type ListSuitesRequest_SortFieldJson = "SORT_FIELD_UNSPECIFIED" | "SORT_F
  * Describes the enum cloud.v1.api.ui.ListSuitesRequest.SortField.
  */
 export const ListSuitesRequest_SortFieldSchema: GenEnum<ListSuitesRequest_SortField, ListSuitesRequest_SortFieldJson> = /*@__PURE__*/
-  enumDesc(file_cloud_v1_api_ui_suite, 4, 0);
+  enumDesc(file_cloud_v1_api_ui_suite, 5, 0);
 
 /**
  * ListSuitesResponse — rows plus pagination metadata (H42). 
@@ -399,7 +456,7 @@ export type ListSuitesResponseValid = ListSuitesResponse;
  * Use `create(ListSuitesResponseSchema)` to create a new message.
  */
 export const ListSuitesResponseSchema: GenMessage<ListSuitesResponse, {jsonType: ListSuitesResponseJson, validType: ListSuitesResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_suite, 5);
+  messageDesc(file_cloud_v1_api_ui_suite, 6);
 
 /**
  * @generated from message cloud.v1.api.ui.ListSuiteRunsRequest
@@ -496,7 +553,7 @@ export type ListSuiteRunsRequestValid = ListSuiteRunsRequest;
  * Use `create(ListSuiteRunsRequestSchema)` to create a new message.
  */
 export const ListSuiteRunsRequestSchema: GenMessage<ListSuiteRunsRequest, {jsonType: ListSuiteRunsRequestJson, validType: ListSuiteRunsRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_suite, 6);
+  messageDesc(file_cloud_v1_api_ui_suite, 7);
 
 /**
  * SortField — typed sortable columns (no arbitrary strings). 
@@ -531,7 +588,7 @@ export type ListSuiteRunsRequest_SortFieldJson = "SORT_FIELD_UNSPECIFIED" | "SOR
  * Describes the enum cloud.v1.api.ui.ListSuiteRunsRequest.SortField.
  */
 export const ListSuiteRunsRequest_SortFieldSchema: GenEnum<ListSuiteRunsRequest_SortField, ListSuiteRunsRequest_SortFieldJson> = /*@__PURE__*/
-  enumDesc(file_cloud_v1_api_ui_suite, 6, 0);
+  enumDesc(file_cloud_v1_api_ui_suite, 7, 0);
 
 /**
  * ListSuiteRunsResponse — rows plus pagination metadata (H42). 
@@ -574,7 +631,7 @@ export type ListSuiteRunsResponseValid = ListSuiteRunsResponse;
  * Use `create(ListSuiteRunsResponseSchema)` to create a new message.
  */
 export const ListSuiteRunsResponseSchema: GenMessage<ListSuiteRunsResponse, {jsonType: ListSuiteRunsResponseJson, validType: ListSuiteRunsResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_suite, 7);
+  messageDesc(file_cloud_v1_api_ui_suite, 8);
 
 /**
  * @generated from message cloud.v1.api.ui.CancelSuiteRunRequest
@@ -613,7 +670,7 @@ export type CancelSuiteRunRequestValid = CancelSuiteRunRequest;
  * Use `create(CancelSuiteRunRequestSchema)` to create a new message.
  */
 export const CancelSuiteRunRequestSchema: GenMessage<CancelSuiteRunRequest, {jsonType: CancelSuiteRunRequestJson, validType: CancelSuiteRunRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_suite, 8);
+  messageDesc(file_cloud_v1_api_ui_suite, 9);
 
 /**
  * @generated from service cloud.v1.api.ui.SuiteService
@@ -633,6 +690,16 @@ export const SuiteService: GenService<{
   getSuite: {
     methodKind: "unary";
     input: typeof GetSuiteRequestSchema;
+    output: typeof SuiteSchema;
+  },
+  /**
+   * UpdateSuite edits suite fields named by update_mask (OWNER/ADMIN per RBAC). 
+   *
+   * @generated from rpc cloud.v1.api.ui.SuiteService.UpdateSuite
+   */
+  updateSuite: {
+    methodKind: "unary";
+    input: typeof UpdateSuiteRequestSchema;
     output: typeof SuiteSchema;
   },
   /**

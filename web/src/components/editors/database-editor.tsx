@@ -1,9 +1,11 @@
 import { create } from "@bufbuild/protobuf";
 import { Plus, X } from "lucide-react";
 
+import { ConfigOverridesEditor } from "@/components/editors/config-overrides-editor";
 import { NumberField, SelectField, Section, SwitchField, TextField, enumAuto } from "@/components/editors/fields";
 import { KeyValueEditor } from "@/components/editors/key-value-editor";
 import { StringListEditor } from "@/components/editors/string-list-editor";
+import { ConfigSchema } from "@/lib/proto/cloud/v1/runtime/render/config_pb.ts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -176,6 +178,11 @@ export function DatabaseEditor({ value, onChange }: { value: Database; onChange:
             onChange={(next) => patch({ options: create(Database_OptionsSchema, { options: { case: "picodata", value: next } }) })}
           />
         ) : null}
+      </Section>
+
+      <Section title="Config overrides">
+        <p className="text-xs text-muted-foreground">The config is rendered from the settings above; add overrides to patch specific rendered items.</p>
+        <ConfigOverridesEditor value={value.config ?? create(ConfigSchema, {})} onChange={(config) => patch({ config })} />
       </Section>
     </div>
   );

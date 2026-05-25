@@ -47,7 +47,7 @@ function PageFallback() {
 export function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={`/t/${DEFAULT_TENANT_ID}/wizard`} replace />} />
+      <Route path="/" element={<Navigate to={`/t/${DEFAULT_TENANT_ID}/runs`} replace />} />
       <Route path="/login" element={<LoginPage />} />
       <Route
         path="/share/:token"

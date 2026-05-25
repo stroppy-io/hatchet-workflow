@@ -3,7 +3,8 @@ import { create, toJsonString } from "@bufbuild/protobuf";
 import { useNavigate } from "react-router-dom";
 
 import { DatabaseEditor } from "@/components/editors/database-editor";
-import { TopologyEditor } from "@/components/editors/topology-editor";
+import { RawProtoEditor } from "@/components/editors/raw-proto-editor";
+import { TopologyView } from "@/components/editors/topology-view";
 import { WorkloadEditor } from "@/components/editors/workload-editor";
 import { DiagnosticsList } from "@/components/diagnostics-list";
 import { FormDialog } from "@/components/form-dialog";
@@ -22,7 +23,7 @@ import { presetTitle } from "@/lib/preset-summary";
 import { tenantIdMessage } from "@/lib/proto";
 import { tenantPath } from "@/lib/routes";
 import { notifySuccess } from "@/lib/toast";
-import { Severity, type Diagnostic } from "@/lib/proto/cloud/v1/api/ui/authoring_pb.ts";
+import { ProvenanceSource, Severity, type Diagnostic, type Provenance } from "@/lib/proto/cloud/v1/api/ui/authoring_pb.ts";
 import { DatabasePresetSchema, DatabaseSchema } from "@/lib/proto/cloud/v1/domain/database_pb.ts";
 import { TestPresetSchema, type TestPreset } from "@/lib/proto/cloud/v1/domain/test_pb.ts";
 import { TopologySchema } from "@/lib/proto/cloud/v1/domain/topology_pb.ts";
@@ -30,7 +31,7 @@ import { WorkloadPresetSchema, WorkloadSchema } from "@/lib/proto/cloud/v1/domai
 import { DeploymentIntentSchema } from "@/lib/proto/cloud/v1/deployment/deployment_pb.ts";
 import { Provider } from "@/lib/proto/cloud/v1/deployment/deployment_pb.ts";
 import { Preset_Kind, PresetSchema, type Preset } from "@/lib/proto/cloud/v1/models/preset_pb.ts";
-import type { Config } from "@/lib/proto/cloud/v1/runtime/render/config_pb.ts";
+import { ConfigSchema, type Config } from "@/lib/proto/cloud/v1/runtime/render/config_pb.ts";
 import type { Dag } from "@/lib/proto/cloud/v1/runtime/primitive/dag_pb.ts";
 
 const STEPS = ["Presets", "Database", "Workload", "Topology", "Deployment", "Review"] as const;
@@ -49,9 +50,12 @@ export function WizardPage() {
   const [renderConfigs, setRenderConfigs] = useState<Config[] | null>(null);
   const [stroppyConfig, setStroppyConfig] = useState<string | null>(null);
   const [dagPreview, setDagPreview] = useState<Dag | null>(null);
+  const [provenance, setProvenance] = useState<Provenance | null>(null);
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [saveKind, setSaveKind] = useState(String(Preset_Kind.TEST));
+  const [runName, setRunName] = useState("");
+  const [runDescription, setRunDescription] = useState("");
 
   const hasErrors = diagnostics.some((d) => d.severity === Severity.ERROR);
   const ref = () => ({ tenantId: tenantIdMessage(tenantId), testPreset: draft ?? create(TestPresetSchema, {}) });
@@ -71,8 +75,21 @@ export function WizardPage() {
   const previewWorkload = useAction(() => api.authoring.previewWorkloadConfig(ref()));
   const materialize = useAction(() => api.authoring.materializeDeploymentIntent({ testPreset: draft ?? create(TestPresetSchema, {}), provider }));
   const checkDeployment = useAction(() => api.authoring.checkDeployment(ref()));
+  const merge = useAction(() =>
+    api.authoring.mergeTopology({
+      databaseTopology: dbPreset?.preset.case === "databasePreset" ? dbPreset.preset.value.topology : undefined,
+      workloadTopology: wlPreset?.preset.case === "workloadPreset" ? wlPreset.preset.value.topology : undefined,
+    }),
+  );
   const compile = useAction(() => api.authoring.compileTestPresetPreview(ref()));
-  const submit = useAction(() => api.run.submitTestRun({ tenantId: tenantIdMessage(tenantId), testPreset: draft ?? create(TestPresetSchema, {}) }));
+  const submit = useAction(() =>
+    api.run.submitTestRun({
+      tenantId: tenantIdMessage(tenantId),
+      testPreset: draft ?? create(TestPresetSchema, {}),
+      name: runName.trim() || undefined,
+      description: runDescription.trim() || undefined,
+    }),
+  );
   const savePreset = useAction(() => api.preset.createPreset(buildSavePreset()));
 
   function buildSavePreset(): Preset {
@@ -88,11 +105,29 @@ export function WizardPage() {
     return create(PresetSchema, { kind: Preset_Kind.TEST, name: saveName, owned, preset: { case: "testPreset", value: current } });
   }
 
-  async function runAssemble() {
-    const response = await assembleFrom.run();
-    if (!response) return;
-    setDraft(response.testPreset ?? null);
-    setDiagnostics(response.diagnostics);
+  async function runContinue() {
+    if (dbPreset && wlPreset) {
+      // Both presets chosen → let the backend assemble + merge + diagnose.
+      const response = await assembleFrom.run();
+      if (!response) return;
+      setDraft(response.testPreset ?? null);
+      setDiagnostics(response.diagnostics);
+      setProvenance(response.provenance ?? null);
+    } else {
+      // Inline path: presets are optional. Seed the draft from whatever is
+      // chosen (or leave blank) and configure Database/Workload inline next.
+      const dbValue = dbPreset?.preset.case === "databasePreset" ? dbPreset.preset.value : undefined;
+      const wlValue = wlPreset?.preset.case === "workloadPreset" ? wlPreset.preset.value : undefined;
+      setDraft(
+        create(TestPresetSchema, {
+          database: dbValue?.database ?? create(DatabaseSchema, {}),
+          workload: wlValue?.workload ?? create(WorkloadSchema, {}),
+          topology: dbValue?.topology ?? wlValue?.topology ?? create(TopologySchema, {}),
+        }),
+      );
+      setDiagnostics([]);
+      setProvenance(null);
+    }
     setStep(1);
   }
 
@@ -172,20 +207,20 @@ export function WizardPage() {
 
         <section className="min-w-0 flex-1 overflow-auto p-5">
           {step === 0 ? (
-            <Panel title="Choose building blocks" description="Pick a DatabasePreset and a WorkloadPreset; the backend copies them by value into a TestPreset draft.">
+            <Panel title="Choose building blocks" description="Optional — seed the draft from presets, or leave empty and configure Database / Workload inline on the next steps.">
               <div className="grid gap-4 xl:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label>Database preset</Label>
-                  <PresetSelect tenantId={tenantId} kind={Preset_Kind.DATABASE} value={dbPreset?.entity?.id?.value ?? ""} onSelect={setDbPreset} placeholder="Select database preset" />
+                  <Label>Database preset (optional)</Label>
+                  <PresetSelect tenantId={tenantId} kind={Preset_Kind.DATABASE} value={dbPreset?.entity?.id?.value ?? ""} onSelect={setDbPreset} placeholder="Start blank or pick a preset" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Workload preset</Label>
-                  <PresetSelect tenantId={tenantId} kind={Preset_Kind.WORKLOAD} value={wlPreset?.entity?.id?.value ?? ""} onSelect={setWlPreset} placeholder="Select workload preset" />
+                  <Label>Workload preset (optional)</Label>
+                  <PresetSelect tenantId={tenantId} kind={Preset_Kind.WORKLOAD} value={wlPreset?.entity?.id?.value ?? ""} onSelect={setWlPreset} placeholder="Start blank or pick a preset" />
                 </div>
               </div>
               <div className="mt-4 flex items-center gap-3">
-                <Button onClick={runAssemble} disabled={!dbPreset || !wlPreset || assembleFrom.loading}>
-                  {assembleFrom.loading ? "Assembling…" : "Assemble draft"}
+                <Button onClick={runContinue} disabled={assembleFrom.loading}>
+                  {assembleFrom.loading ? "Assembling…" : dbPreset && wlPreset ? "Assemble from presets" : "Continue — configure inline"}
                 </Button>
                 {assembleFrom.error ? <span className="text-sm text-destructive">{assembleFrom.error}</span> : null}
               </div>
@@ -195,7 +230,7 @@ export function WizardPage() {
           {step === 1 && draft ? (
             <StepShell title="Database" actions={[{ label: validate.loading ? "Validating…" : "Validate", onClick: runValidate }, { label: previewRender.loading ? "Rendering…" : "Preview render", onClick: async () => { const r = await previewRender.run(); if (r) setRenderConfigs(r.configs); } }]}>
               <DatabaseEditor value={draft.database ?? create(DatabaseSchema, {})} onChange={(database) => patchDraft({ database })} />
-              {renderConfigs ? <Panel title="Rendered config preview"><JsonEditor readOnly minHeight="200px" value={renderConfigs.map((c) => c.id).join("\n") || "no configs"} /></Panel> : null}
+              {renderConfigs ? <Panel title="Rendered config preview"><JsonEditor readOnly minHeight="240px" value={renderConfigs.map((c) => toJsonString(ConfigSchema, c, { prettySpaces: 2 })).join("\n\n") || "no configs"} /></Panel> : null}
             </StepShell>
           ) : null}
 
@@ -207,16 +242,40 @@ export function WizardPage() {
           ) : null}
 
           {step === 3 && draft ? (
-            <StepShell title="Topology" actions={[{ label: "Validate topology", onClick: async () => { const r = await api.authoring.validateTopology(draft.topology ?? create(TopologySchema, {})); setDiagnostics(r.diagnostics); } }]}>
-              <TopologyEditor value={draft.topology ?? create(TopologySchema, {})} onChange={(topology) => patchDraft({ topology })} />
+            <StepShell
+              title="Topology"
+              actions={[
+                {
+                  label: merge.loading ? "Merging…" : "Re-merge from presets",
+                  onClick: async () => {
+                    const r = await merge.run();
+                    if (r) {
+                      patchDraft({ topology: r.topology });
+                      setProvenance(r.provenance ?? null);
+                      setDiagnostics(r.diagnostics);
+                    }
+                  },
+                },
+                {
+                  label: "Validate",
+                  onClick: async () => {
+                    const r = await api.authoring.validateTopology(draft.topology ?? create(TopologySchema, {}));
+                    setDiagnostics(r.diagnostics);
+                  },
+                },
+              ]}
+            >
+              <p className="text-sm text-muted-foreground">Topology is rendered from the Database + Workload settings (read-only). Re-merge to recompute it from the source presets.</p>
+              <TopologyView value={draft.topology ?? create(TopologySchema, {})} />
+              <ProvenancePanel provenance={provenance} />
             </StepShell>
           ) : null}
 
           {step === 4 && draft ? (
             <StepShell title="Deployment" actions={[{ label: materialize.loading ? "Materializing…" : "Materialize", onClick: async () => { const r = await materialize.run(); if (r) patchDraft({ deployment: r }); } }, { label: checkDeployment.loading ? "Checking…" : "Check feasibility", onClick: runCheck }]}>
-              <p className="text-sm text-muted-foreground">Materialize the provider-specific DeploymentIntent from the topology, then check quota feasibility.</p>
+              <p className="text-sm text-muted-foreground">Materialize the provider-specific DeploymentIntent from the topology, edit if needed, then check quota feasibility.</p>
               <Panel title="DeploymentIntent">
-                <JsonEditor readOnly minHeight="240px" value={toJsonString(DeploymentIntentSchema, draft.deployment ?? create(DeploymentIntentSchema, {}), { prettySpaces: 2 })} />
+                <RawProtoEditor schema={DeploymentIntentSchema} value={draft.deployment ?? create(DeploymentIntentSchema, {})} onChange={(deployment) => patchDraft({ deployment })} />
               </Panel>
             </StepShell>
           ) : null}
@@ -230,15 +289,30 @@ export function WizardPage() {
                 <Panel title="DAG blueprint" description="Compiled execution graph. No run, no state.">
                   <JsonPanel value={dagPreview} emptyLabel="Compile to preview the blueprint." />
                 </Panel>
+                <Panel title="Run details">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="run-name">Name</Label>
+                      <Input id="run-name" value={runName} onChange={(event) => setRunName(event.target.value)} placeholder="pg-tpcc-run" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="run-desc">Description</Label>
+                      <Input id="run-desc" value={runDescription} onChange={(event) => setRunDescription(event.target.value)} />
+                    </div>
+                  </div>
+                </Panel>
                 <div className="flex items-center gap-3">
                   <Button onClick={runSubmit} disabled={hasErrors || submit.loading}>{submit.loading ? "Submitting…" : "Submit run"}</Button>
                   <Button variant="outline" onClick={() => setSaveOpen(true)}>Save as preset</Button>
                   {hasErrors ? <span className="text-sm text-destructive">Resolve ERROR diagnostics before submitting.</span> : null}
                 </div>
               </div>
-              <Panel title="Diagnostics">
-                <DiagnosticsList diagnostics={diagnostics} />
-              </Panel>
+              <div className="space-y-4">
+                <Panel title="Diagnostics">
+                  <DiagnosticsList diagnostics={diagnostics} />
+                </Panel>
+                <ProvenancePanel provenance={provenance} />
+              </div>
             </div>
           ) : null}
 
@@ -281,6 +355,30 @@ export function WizardPage() {
         </div>
       </FormDialog>
     </div>
+  );
+}
+
+const PROVENANCE_LABEL: Record<number, string> = {
+  [ProvenanceSource.DATABASE_PRESET]: "DB preset",
+  [ProvenanceSource.WORKLOAD_PRESET]: "Workload preset",
+  [ProvenanceSource.GENERATED]: "Generated",
+  [ProvenanceSource.USER]: "User",
+};
+
+function ProvenancePanel({ provenance }: { provenance: Provenance | null }) {
+  const entries = Object.entries(provenance?.fields ?? {});
+  if (entries.length === 0) return null;
+  return (
+    <Panel title="Provenance" description="Where each assembled field came from.">
+      <div className="space-y-1 text-xs">
+        {entries.map(([path, source]) => (
+          <div key={path} className="flex items-center justify-between gap-2">
+            <span className="min-w-0 truncate font-mono text-muted-foreground">{path}</span>
+            <span className="shrink-0 rounded-full border px-2 py-0.5">{PROVENANCE_LABEL[source] ?? "—"}</span>
+          </div>
+        ))}
+      </div>
+    </Panel>
   );
 }
 

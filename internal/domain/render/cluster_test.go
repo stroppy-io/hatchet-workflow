@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	renderpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/render"
 )
@@ -12,12 +13,22 @@ func comp(id string, k domain.Topology_Component_Kind) *domain.Topology_Componen
 	return &domain.Topology_Component{Id: id, Kind: k}
 }
 
+// compR builds a component with an explicit cluster-role label — render reads the role
+// off the component, never from connections.
+func compR(id string, k domain.Topology_Component_Kind, role string) *domain.Topology_Component {
+	c := comp(id, k)
+	c.Tags = &common.Tags{Labels: map[string]string{RoleLabelKey: role}}
+	return c
+}
+
+// haTopo is a Patroni HA topology: 2 etcd coordinators + 2 patroni DB nodes (db1 is
+// the role-primary). No connections — render derives everything from component roles.
 func haTopo() *domain.Topology {
 	return &domain.Topology{Machines: []*domain.Topology_Machine{
 		{Id: "m1", Components: []*domain.Topology_Component{comp("etcd1", domain.Topology_Component_KIND_COORDINATOR)}},
 		{Id: "m2", Components: []*domain.Topology_Component{comp("etcd2", domain.Topology_Component_KIND_COORDINATOR)}},
-		{Id: "m3", Components: []*domain.Topology_Component{comp("db1", domain.Topology_Component_KIND_DATABASE)}},
-		{Id: "m4", Components: []*domain.Topology_Component{comp("db2", domain.Topology_Component_KIND_DATABASE)}},
+		{Id: "m3", Components: []*domain.Topology_Component{compR("db1", domain.Topology_Component_KIND_DATABASE, RolePatroni)}},
+		{Id: "m4", Components: []*domain.Topology_Component{compR("db2", domain.Topology_Component_KIND_DATABASE, RolePatroni)}},
 	}}
 }
 
@@ -31,7 +42,7 @@ func patroniDB() *domain.Database {
 }
 
 func TestRenderPatroniBindsEtcdHosts(t *testing.T) {
-	cfg, err := RenderComponent(comp("db1", domain.Topology_Component_KIND_DATABASE), patroniDB(), haTopo(), 4096)
+	cfg, err := RenderComponent(compR("db1", domain.Topology_Component_KIND_DATABASE, RolePatroni), patroniDB(), haTopo(), 4096)
 	if err != nil {
 		t.Fatalf("render: %v", err)
 	}
@@ -69,11 +80,8 @@ func TestRenderHAProxyBindsDatabases(t *testing.T) {
 func mysqlReplTopo() *domain.Topology {
 	return &domain.Topology{
 		Machines: []*domain.Topology_Machine{
-			{Id: "m1", Components: []*domain.Topology_Component{comp("db1", domain.Topology_Component_KIND_DATABASE)}},
-			{Id: "m2", Components: []*domain.Topology_Component{comp("db2", domain.Topology_Component_KIND_DATABASE)}},
-		},
-		Connections: []*domain.Topology_Connection{
-			{From: "db1", To: "db2", Kind: domain.Topology_Connection_KIND_REPLICATION},
+			{Id: "m1", Components: []*domain.Topology_Component{compR("db1", domain.Topology_Component_KIND_DATABASE, RolePrimary)}},
+			{Id: "m2", Components: []*domain.Topology_Component{compR("db2", domain.Topology_Component_KIND_DATABASE, RoleReplica)}},
 		},
 	}
 }
@@ -82,7 +90,7 @@ func TestRenderMySQLReplicaGetsChangeMaster(t *testing.T) {
 	db := &domain.Database{Kind: domain.Database_KIND_MYSQL}
 	topo := mysqlReplTopo()
 
-	replica, err := RenderComponent(comp("db2", domain.Topology_Component_KIND_DATABASE), db, topo, 4096)
+	replica, err := RenderComponent(compR("db2", domain.Topology_Component_KIND_DATABASE, RoleReplica), db, topo, 4096)
 	if err != nil {
 		t.Fatalf("render: %v", err)
 	}
@@ -99,7 +107,7 @@ func TestRenderMySQLReplicaGetsChangeMaster(t *testing.T) {
 		t.Errorf("replica command not bound to primary db1: %v", cmd.GetBindings())
 	}
 
-	primary, _ := RenderComponent(comp("db1", domain.Topology_Component_KIND_DATABASE), db, topo, 4096)
+	primary, _ := RenderComponent(compR("db1", domain.Topology_Component_KIND_DATABASE, RolePrimary), db, topo, 4096)
 	var primaryCmd *renderpb.Config_Item
 	for _, it := range primary.GetItems() {
 		if it.GetCommand() != nil {

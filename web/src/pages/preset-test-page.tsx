@@ -1,14 +1,14 @@
-import { create, toJsonString } from "@bufbuild/protobuf";
+import { create } from "@bufbuild/protobuf";
 import { Play } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { DatabaseEditor } from "@/components/editors/database-editor";
 import { Section } from "@/components/editors/fields";
-import { TopologyEditor } from "@/components/editors/topology-editor";
+import { RawProtoEditor } from "@/components/editors/raw-proto-editor";
+import { TopologyView } from "@/components/editors/topology-view";
 import { WorkloadEditor } from "@/components/editors/workload-editor";
 import { PresetEditorShell } from "@/components/preset-editor-shell";
 import { Button } from "@/components/ui/button";
-import { JsonEditor } from "@/components/ui/json-editor";
 import { useAction } from "@/hooks/use-action";
 import { useTenantId } from "@/hooks/use-tenant-id";
 import { api } from "@/lib/connect";
@@ -50,15 +50,16 @@ export function PresetTestPage() {
                 onChange={(workload) => setTestPreset(create(TestPresetSchema, { ...testPreset, workload }))}
               />
             </Section>
-            <Section title="Topology">
-              <TopologyEditor
-                value={testPreset.topology ?? create(TopologySchema, {})}
-                onChange={(topology) => setTestPreset(create(TestPresetSchema, { ...testPreset, topology }))}
-              />
+            <Section title="Topology (rendered)">
+              <TopologyView value={testPreset.topology ?? create(TopologySchema, {})} />
             </Section>
-            <Section title="Deployment (raw)">
-              <p className="text-xs text-muted-foreground">Materialized by the wizard from the topology + provider; read-only here.</p>
-              <JsonEditor readOnly value={toJsonString(DeploymentIntentSchema, testPreset.deployment ?? create(DeploymentIntentSchema, {}), { prettySpaces: 2 })} />
+            <Section title="Deployment">
+              <p className="text-xs text-muted-foreground">Materialized from the topology + provider; edit the raw intent and Apply.</p>
+              <RawProtoEditor
+                schema={DeploymentIntentSchema}
+                value={testPreset.deployment ?? create(DeploymentIntentSchema, {})}
+                onChange={(deployment) => setTestPreset(create(TestPresetSchema, { ...testPreset, deployment }))}
+              />
             </Section>
             <LaunchRun tenantId={tenantId} testPreset={testPreset} />
           </div>

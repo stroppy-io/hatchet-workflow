@@ -184,6 +184,33 @@ func ensureSystemPresets(ctx context.Context, presets presetRepo, accountID *mod
 	if seeded > 0 {
 		log.Info("seeded system database presets", xlog.Int("count", seeded))
 	}
+
+	seededWL := 0
+	for _, wp := range catalog.SystemWorkloadPresets() {
+		if have[wp.Name] {
+			continue
+		}
+		preset := &models.Preset{
+			Entity:   ids.NewEntity(),
+			Owned:    &models.Own{OwnerAccountId: accountID, TenantId: tenantID},
+			Name:     ptr(wp.Name),
+			Kind:     models.Preset_KIND_WORKLOAD,
+			IsSystem: true,
+			Preset:   &models.Preset_WorkloadPreset{WorkloadPreset: wp.WL},
+		}
+		if wp.Description != "" {
+			preset.Description = ptr(wp.Description)
+		}
+		scanner := preset.IntoPlain()
+		nilEmptyPresetJSONB(scanner)
+		if _, err := presets.Execute(ctx, models.Presets.Insert().From(scanner.AllSetters()...)); err != nil {
+			return err
+		}
+		seededWL++
+	}
+	if seededWL > 0 {
+		log.Info("seeded system workload presets", xlog.Int("count", seededWL))
+	}
 	return nil
 }
 

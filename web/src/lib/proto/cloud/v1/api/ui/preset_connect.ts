@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { ClonePresetRequest, DeletePresetRequest, ListPresetRequest, ListPresetsResponse } from "./preset_pbts";
+import { ClonePresetRequest, DeletePresetRequest, GetPresetRequest, ListPresetRequest, ListPresetsResponse } from "./preset_pbts";
 import { Empty, MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
 import { Preset } from "../../models/preset_pbts";
 
@@ -20,6 +20,18 @@ export const PresetService = {
       name: "ListPresets",
       I: ListPresetRequest,
       O: ListPresetsResponse,
+      kind: MethodKind.Unary,
+      idempotency: MethodIdempotency.NoSideEffects,
+    },
+    /**
+     * GetPreset fetches a single preset by id (tenant's own or a system preset). 
+     *
+     * @generated from rpc cloud.v1.api.ui.PresetService.GetPreset
+     */
+    getPreset: {
+      name: "GetPreset",
+      I: GetPresetRequest,
+      O: Preset,
       kind: MethodKind.Unary,
       idempotency: MethodIdempotency.NoSideEffects,
     },

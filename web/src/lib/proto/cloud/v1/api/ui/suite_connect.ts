@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CancelSuiteRunRequest, CreateSuiteRequest, GetSuiteRequest, GetSuiteRunRequest, LaunchSuiteRunRequest, ListSuiteRunsRequest, ListSuiteRunsResponse, ListSuitesRequest, ListSuitesResponse } from "./suite_pbts";
+import { CancelSuiteRunRequest, CreateSuiteRequest, GetSuiteRequest, GetSuiteRunRequest, LaunchSuiteRunRequest, ListSuiteRunsRequest, ListSuiteRunsResponse, ListSuitesRequest, ListSuitesResponse, UpdateSuiteRequest } from "./suite_pbts";
 import { Suite, SuiteRun } from "../../models/testing_pbts";
 import { MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
 
@@ -32,6 +32,18 @@ export const SuiteService = {
       O: Suite,
       kind: MethodKind.Unary,
       idempotency: MethodIdempotency.NoSideEffects,
+    },
+    /**
+     * UpdateSuite edits suite fields named by update_mask (OWNER/ADMIN per RBAC). 
+     *
+     * @generated from rpc cloud.v1.api.ui.SuiteService.UpdateSuite
+     */
+    updateSuite: {
+      name: "UpdateSuite",
+      I: UpdateSuiteRequest,
+      O: Suite,
+      kind: MethodKind.Unary,
+      idempotency: MethodIdempotency.Idempotent,
     },
     /**
      * @generated from rpc cloud.v1.api.ui.SuiteService.ListSuites

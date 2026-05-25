@@ -16,6 +16,36 @@ func TestSystemDatabasePresets_NonEmpty(t *testing.T) {
 	}
 }
 
+// TestSystemWorkloadPresets_Valid asserts every seeded workload preset is non-empty
+// and passes proto validation wrapped as a models.Preset KIND_WORKLOAD (the same way
+// a tenant-stored row validates). Unique names guard the seed's idempotency key.
+func TestSystemWorkloadPresets_Valid(t *testing.T) {
+	wps := SystemWorkloadPresets()
+	if len(wps) == 0 {
+		t.Fatal("SystemWorkloadPresets() returned no presets")
+	}
+	seen := map[string]bool{}
+	for _, wp := range wps {
+		wp := wp
+		t.Run(wp.Name, func(t *testing.T) {
+			if seen[wp.Name] {
+				t.Fatalf("duplicate workload preset name %q", wp.Name)
+			}
+			seen[wp.Name] = true
+			if wp.WL == nil {
+				t.Fatalf("preset %q has nil WL", wp.Name)
+			}
+			p := &models.Preset{
+				Kind:   models.Preset_KIND_WORKLOAD,
+				Preset: &models.Preset_WorkloadPreset{WorkloadPreset: wp.WL},
+			}
+			if err := p.ValidateAll(); err != nil {
+				t.Fatalf("preset %q failed validation: %v", wp.Name, err)
+			}
+		})
+	}
+}
+
 // TestSystemDatabasePresets_Valid asserts every seeded preset passes proto
 // validation (wrapped as a models.Preset KIND_DATABASE) and that the dag layer
 // can compile a preview for it without panicking — i.e. these are real,

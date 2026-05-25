@@ -19,7 +19,7 @@ export function LoginPage() {
   if (account) {
     const next = (location.state as LocationState | null)?.next;
     const fallbackTenant = tenants[0]?.entity?.id?.value ?? "default";
-    return <Navigate to={next || `/t/${fallbackTenant}/wizard`} replace />;
+    return <Navigate to={next || `/t/${fallbackTenant}/runs`} replace />;
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -29,7 +29,7 @@ export function LoginPage() {
     try {
       await login(email, password);
       const next = (location.state as LocationState | null)?.next;
-      navigate(next || "/t/default/wizard", { replace: true });
+      navigate(next || "/t/default/runs", { replace: true });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Login failed");
     } finally {

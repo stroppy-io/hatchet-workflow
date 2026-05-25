@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { useCursorPagination } from "@/hooks/use-cursor-pagination";
+import { useOffsetPagination } from "@/hooks/use-offset-pagination";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { SortOrder } from "@/lib/proto/cloud/v1/models/common_pb.ts";
 
@@ -10,10 +11,15 @@ type ListState = {
   sortField: number;
 };
 
-// Shared list-table state: search (debounced) + typed sort + cursor pagination,
-// plus `reload`/`reloadKey` so mutating pages can force a refetch (append
-// reloadKey to the useListQuery deps). Reused by every table page.
-export function useTableState(defaultSortField: number, extraResetDeps: unknown[] = []) {
+// Shared list-table state: search (debounced) + typed sort + pagination, plus
+// `reload`/`reloadKey` so mutating pages can force a refetch (append reloadKey to
+// the useListQuery deps). Reused by every table page. `mode` selects cursor
+// (default, cheap forward scan) or offset (random page access + total count).
+export function useTableState(
+  defaultSortField: number,
+  extraResetDeps: unknown[] = [],
+  mode: "cursor" | "offset" = "cursor",
+) {
   const [state, setState] = useState<ListState>({
     order: SortOrder.DESC,
     search: "",
@@ -21,7 +27,9 @@ export function useTableState(defaultSortField: number, extraResetDeps: unknown[
   });
   const [reloadKey, setReloadKey] = useState(0);
   const debouncedSearch = useDebouncedValue(state.search);
-  const pagination = useCursorPagination();
+  const cursor = useCursorPagination();
+  const offset = useOffsetPagination();
+  const pagination = mode === "offset" ? offset : cursor;
 
   const setSearch = useCallback(
     (search: string) => {

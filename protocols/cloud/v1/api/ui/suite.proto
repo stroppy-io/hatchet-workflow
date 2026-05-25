@@ -7,6 +7,7 @@ import "cloud/v1/domain/suite.proto";
 import "cloud/v1/models/common.proto";
 import "cloud/v1/models/testing.proto";
 import "cloud/v1/runtime/primitive/status.proto";
+import "google/protobuf/field_mask.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/ui";
@@ -28,6 +29,14 @@ message CreateSuiteRequest {
 message GetSuiteRequest {
     models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
     models.SuiteId suite_id = 2 [(validate.rules).message.required = true];
+}
+
+/* UpdateSuiteRequest edits a suite's mutable fields by FieldMask (name,
+   description, preset, cron). id/owner/timestamps preserved. */
+message UpdateSuiteRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.Suite suite = 2 [(validate.rules).message.required = true];
+    google.protobuf.FieldMask update_mask = 3 [(validate.rules).message.required = true];
 }
 
 message LaunchSuiteRunRequest {
@@ -99,6 +108,8 @@ message CancelSuiteRunRequest {
 service SuiteService {
     rpc CreateSuite (CreateSuiteRequest) returns (models.Suite) {option idempotency_level = IDEMPOTENT;}
     rpc GetSuite (GetSuiteRequest) returns (models.Suite) {option idempotency_level = NO_SIDE_EFFECTS;}
+    /* UpdateSuite edits suite fields named by update_mask (OWNER/ADMIN per RBAC). */
+    rpc UpdateSuite (UpdateSuiteRequest) returns (models.Suite) {option idempotency_level = IDEMPOTENT;}
     rpc ListSuites (ListSuitesRequest) returns (ListSuitesResponse) {option idempotency_level = NO_SIDE_EFFECTS;}
     rpc LaunchSuiteRun (LaunchSuiteRunRequest) returns (models.SuiteRun) {option idempotency_level = IDEMPOTENT;}
     rpc GetSuiteRun (GetSuiteRunRequest) returns (models.SuiteRun) {option idempotency_level = NO_SIDE_EFFECTS;}

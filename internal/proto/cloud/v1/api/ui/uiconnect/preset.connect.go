@@ -38,6 +38,8 @@ const (
 	// PresetServiceListPresetsProcedure is the fully-qualified name of the PresetService's ListPresets
 	// RPC.
 	PresetServiceListPresetsProcedure = "/cloud.v1.api.ui.PresetService/ListPresets"
+	// PresetServiceGetPresetProcedure is the fully-qualified name of the PresetService's GetPreset RPC.
+	PresetServiceGetPresetProcedure = "/cloud.v1.api.ui.PresetService/GetPreset"
 	// PresetServiceCreatePresetProcedure is the fully-qualified name of the PresetService's
 	// CreatePreset RPC.
 	PresetServiceCreatePresetProcedure = "/cloud.v1.api.ui.PresetService/CreatePreset"
@@ -55,6 +57,8 @@ const (
 // PresetServiceClient is a client for the cloud.v1.api.ui.PresetService service.
 type PresetServiceClient interface {
 	ListPresets(context.Context, *ui.ListPresetRequest) (*ui.ListPresetsResponse, error)
+	// GetPreset fetches a single preset by id (tenant's own or a system preset).
+	GetPreset(context.Context, *ui.GetPresetRequest) (*models.Preset, error)
 	CreatePreset(context.Context, *models.Preset) (*models.Preset, error)
 	UpdatePreset(context.Context, *models.Preset) (*models.Preset, error)
 	DeletePreset(context.Context, *ui.DeletePresetRequest) (*emptypb.Empty, error)
@@ -76,6 +80,13 @@ func NewPresetServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			httpClient,
 			baseURL+PresetServiceListPresetsProcedure,
 			connect.WithSchema(presetServiceMethods.ByName("ListPresets")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
+		getPreset: connect.NewClient[ui.GetPresetRequest, models.Preset](
+			httpClient,
+			baseURL+PresetServiceGetPresetProcedure,
+			connect.WithSchema(presetServiceMethods.ByName("GetPreset")),
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
@@ -113,6 +124,7 @@ func NewPresetServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 // presetServiceClient implements PresetServiceClient.
 type presetServiceClient struct {
 	listPresets  *connect.Client[ui.ListPresetRequest, ui.ListPresetsResponse]
+	getPreset    *connect.Client[ui.GetPresetRequest, models.Preset]
 	createPreset *connect.Client[models.Preset, models.Preset]
 	updatePreset *connect.Client[models.Preset, models.Preset]
 	deletePreset *connect.Client[ui.DeletePresetRequest, emptypb.Empty]
@@ -122,6 +134,15 @@ type presetServiceClient struct {
 // ListPresets calls cloud.v1.api.ui.PresetService.ListPresets.
 func (c *presetServiceClient) ListPresets(ctx context.Context, req *ui.ListPresetRequest) (*ui.ListPresetsResponse, error) {
 	response, err := c.listPresets.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// GetPreset calls cloud.v1.api.ui.PresetService.GetPreset.
+func (c *presetServiceClient) GetPreset(ctx context.Context, req *ui.GetPresetRequest) (*models.Preset, error) {
+	response, err := c.getPreset.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -167,6 +188,8 @@ func (c *presetServiceClient) ClonePreset(ctx context.Context, req *ui.ClonePres
 // PresetServiceHandler is an implementation of the cloud.v1.api.ui.PresetService service.
 type PresetServiceHandler interface {
 	ListPresets(context.Context, *ui.ListPresetRequest) (*ui.ListPresetsResponse, error)
+	// GetPreset fetches a single preset by id (tenant's own or a system preset).
+	GetPreset(context.Context, *ui.GetPresetRequest) (*models.Preset, error)
 	CreatePreset(context.Context, *models.Preset) (*models.Preset, error)
 	UpdatePreset(context.Context, *models.Preset) (*models.Preset, error)
 	DeletePreset(context.Context, *ui.DeletePresetRequest) (*emptypb.Empty, error)
@@ -184,6 +207,13 @@ func NewPresetServiceHandler(svc PresetServiceHandler, opts ...connect.HandlerOp
 		PresetServiceListPresetsProcedure,
 		svc.ListPresets,
 		connect.WithSchema(presetServiceMethods.ByName("ListPresets")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
+	presetServiceGetPresetHandler := connect.NewUnaryHandlerSimple(
+		PresetServiceGetPresetProcedure,
+		svc.GetPreset,
+		connect.WithSchema(presetServiceMethods.ByName("GetPreset")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
@@ -219,6 +249,8 @@ func NewPresetServiceHandler(svc PresetServiceHandler, opts ...connect.HandlerOp
 		switch r.URL.Path {
 		case PresetServiceListPresetsProcedure:
 			presetServiceListPresetsHandler.ServeHTTP(w, r)
+		case PresetServiceGetPresetProcedure:
+			presetServiceGetPresetHandler.ServeHTTP(w, r)
 		case PresetServiceCreatePresetProcedure:
 			presetServiceCreatePresetHandler.ServeHTTP(w, r)
 		case PresetServiceUpdatePresetProcedure:
@@ -238,6 +270,10 @@ type UnimplementedPresetServiceHandler struct{}
 
 func (UnimplementedPresetServiceHandler) ListPresets(context.Context, *ui.ListPresetRequest) (*ui.ListPresetsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.PresetService.ListPresets is not implemented"))
+}
+
+func (UnimplementedPresetServiceHandler) GetPreset(context.Context, *ui.GetPresetRequest) (*models.Preset, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.PresetService.GetPreset is not implemented"))
 }
 
 func (UnimplementedPresetServiceHandler) CreatePreset(context.Context, *models.Preset) (*models.Preset, error) {

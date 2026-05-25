@@ -8,8 +8,10 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -545,4 +547,167 @@ func dumpRunLogs(t *testing.T, conn *grpc.ClientConn, tid *models.TenantId, runI
 	for _, l := range logs.GetLines() {
 		t.Logf("LOG %s", l.GetLine())
 	}
+}
+
+// TestCreateAndCancelFakeRuns submits N runs and cancels each immediately (before the
+// processor deploys it), leaving N CANCELLED runs for the frontend to display. Gated
+// behind STROPPY_FAKE_RUNS (the count, e.g. 20).
+func TestCreateAndCancelFakeRuns(t *testing.T) {
+	nStr := os.Getenv("STROPPY_FAKE_RUNS")
+	if nStr == "" {
+		t.Skip("set STROPPY_FAKE_RUNS=<count> to create + cancel that many fake runs")
+	}
+	n, err := strconv.Atoi(nStr)
+	require.NoError(t, err, "STROPPY_FAKE_RUNS must be an int")
+
+	conn := login(t)
+	tid := rootTenant(t, conn)
+	preset := fullPostgresPreset(t, conn, tid)
+	runCli := uipb.NewRunServiceClient(conn)
+
+	var ids []*models.TestRunId
+	for i := 0; i < n; i++ {
+		run, serr := runCli.SubmitTestRun(context.Background(), &uipb.SubmitTestRunRequest{
+			TenantId: tid, Name: ptr(fmt.Sprintf("fake-run-%02d", i+1)), TestPreset: preset,
+		})
+		require.NoError(t, serr, "submit fake run %d", i+1)
+		id := &models.TestRunId{Value: run.GetEntity().GetId().GetValue()}
+		// Cancel right away — the cancel flag is set before the processor's deploy tick,
+		// so the run settles CANCELLED without provisioning containers.
+		_, cerr := runCli.CancelTestRun(context.Background(), &uipb.CancelTestRunRequest{TenantId: tid, Id: id})
+		require.NoError(t, cerr, "cancel fake run %d", i+1)
+		ids = append(ids, id)
+		t.Logf("submitted+cancelled fake-run-%02d (%s)", i+1, id.GetValue())
+	}
+
+	// Wait for them to settle terminal (CANCELLED), so the frontend sees a stable list.
+	deadline := time.Now().Add(5 * time.Minute)
+	for time.Now().Before(deadline) {
+		cancelled := 0
+		for _, id := range ids {
+			got, gerr := runCli.GetTestRun(context.Background(), &uipb.GetTestRunRequest{TenantId: tid, Id: id})
+			if gerr == nil && (got.GetStatus() == primitive.Status_STATUS_CANCELLED ||
+				got.GetStatus() == primitive.Status_STATUS_COMPLETED ||
+				got.GetStatus() == primitive.Status_STATUS_FAILED) {
+				cancelled++
+			}
+		}
+		t.Logf("settled %d/%d", cancelled, n)
+		if cancelled == n {
+			break
+		}
+		time.Sleep(3 * time.Second)
+	}
+	t.Logf("created + cancelled %d fake runs", n)
+}
+
+// TestSuiteParallelism: a suite of one single-node setup PER database engine, launched
+// with scheduling=parallel max_parallel=2, must (a) finish with every test COMPLETED and
+// (b) never run more than 2 of its tests at once. The orchestration dag's MaxParallelism
+// gates the per-test (gated) child dags through the runtime's dag_ref runner.
+// Gated behind STROPPY_SUITE_E2E=1.
+func TestSuiteParallelism(t *testing.T) {
+	if os.Getenv("STROPPY_SUITE_E2E") != "1" {
+		t.Skip("set STROPPY_SUITE_E2E=1 to run the suite parallelism e2e")
+	}
+	const maxParallel = 2
+	conn := login(t)
+	tid := rootTenant(t, conn)
+
+	// One single-node DATABASE preset per engine (name contains "Single").
+	presets, err := uipb.NewPresetServiceClient(conn).ListPresets(context.Background(),
+		&uipb.ListPresetRequest{TenantId: tid, Kinds: []models.Preset_Kind{models.Preset_KIND_DATABASE}})
+	require.NoError(t, err)
+	var tests []*domain.TestPreset
+	seen := map[domain.Database_Kind]bool{}
+	for _, p := range presets.GetPresets() {
+		dp := p.GetDatabasePreset()
+		if dp == nil || !strings.Contains(strings.ToLower(p.GetName()), "single") {
+			continue
+		}
+		if seen[dp.GetDatabase().GetKind()] {
+			continue
+		}
+		seen[dp.GetDatabase().GetKind()] = true
+		tests = append(tests, dbTestPreset(t, dp, "tpcc/tx.ts"))
+		t.Logf("suite test %d: %s", len(tests), p.GetName())
+	}
+	require.GreaterOrEqual(t, len(tests), 2, "need >= 2 single presets to exercise parallelism")
+
+	suiteCli := uipb.NewSuiteServiceClient(conn)
+	created, err := suiteCli.CreateSuite(context.Background(), &uipb.CreateSuiteRequest{
+		TenantId: tid,
+		Name:     ptr("parallel-singles"),
+		Preset: &domain.SuitePreset{
+			Provider: deployment.Provider_PROVIDER_DOCKER,
+			Tests:    tests,
+			Scheduling: &domain.SuitePreset_Scheduling{
+				OnNodeFailure: primitive.Dag_Scheduling_ON_NODE_FAILURE_CONTINUE,
+				Mode: &domain.SuitePreset_Scheduling_Parallel_{
+					Parallel: &domain.SuitePreset_Scheduling_Parallel{MaxParallel: maxParallel},
+				},
+			},
+		},
+	})
+	require.NoError(t, err, "create suite")
+	suiteID := &models.SuiteId{Value: created.GetEntity().GetId().GetValue()}
+
+	suiteRun, err := suiteCli.LaunchSuiteRun(context.Background(),
+		&uipb.LaunchSuiteRunRequest{TenantId: tid, SuiteId: suiteID})
+	require.NoError(t, err, "launch suite run")
+	suiteRunID := suiteRun.GetEntity().GetId().GetValue()
+	t.Logf("suite run %s launched (%d tests, max_parallel=%d)", suiteRunID, len(tests), maxParallel)
+
+	runCli := uipb.NewRunServiceClient(conn)
+	maxConcurrent := 0
+	deadline := time.Now().Add(60 * time.Minute)
+	for time.Now().Before(deadline) {
+		list, lerr := runCli.ListTestRuns(context.Background(),
+			&uipb.ListTestRunsRequest{TenantId: tid, Page: &models.Page{Size: 200}})
+		if lerr != nil {
+			time.Sleep(3 * time.Second)
+			continue
+		}
+		running, terminal, byStatus := 0, 0, map[string]int{}
+		mine := 0
+		for _, r := range list.GetTestRuns() {
+			if r.GetSuiteRunId().GetValue() != suiteRunID {
+				continue
+			}
+			mine++
+			byStatus[r.GetStatus().String()]++
+			switch r.GetStatus() {
+			case primitive.Status_STATUS_RUNNING:
+				running++
+			case primitive.Status_STATUS_COMPLETED, primitive.Status_STATUS_FAILED, primitive.Status_STATUS_CANCELLED:
+				terminal++
+			}
+		}
+		if running > maxConcurrent {
+			maxConcurrent = running
+		}
+		if mine > 0 && terminal == mine {
+			t.Logf("suite done: %v (peak concurrent=%d)", byStatus, maxConcurrent)
+			// PARALLELISM CONTRACT: never exceeded the cap, and actually overlapped.
+			require.LessOrEqualf(t, maxConcurrent, maxParallel,
+				"max_parallel=%d violated: observed %d concurrent", maxParallel, maxConcurrent)
+			require.GreaterOrEqual(t, maxConcurrent, 2, "expected the suite to run tests in parallel (peak < 2)")
+			require.Equalf(t, mine, byStatus[primitive.Status_STATUS_COMPLETED.String()],
+				"every suite test must COMPLETE: %v", byStatus)
+			return
+		}
+		t.Logf("suite progress: %v concurrent=%d peak=%d", byStatus, running, maxConcurrent)
+		time.Sleep(5 * time.Second)
+	}
+	// Deadline: tear down each per-test run so containers don't leak.
+	list, _ := runCli.ListTestRuns(context.Background(), &uipb.ListTestRunsRequest{TenantId: tid, Page: &models.Page{Size: 200}})
+	for _, r := range list.GetTestRuns() {
+		if r.GetSuiteRunId().GetValue() == suiteRunID {
+			_, _ = runCli.CancelTestRun(context.Background(), &uipb.CancelTestRunRequest{
+				TenantId: tid, Id: &models.TestRunId{Value: r.GetEntity().GetId().GetValue()}})
+		}
+	}
+	_, _ = suiteCli.CancelSuiteRun(context.Background(), &uipb.CancelSuiteRunRequest{
+		TenantId: tid, SuiteRunId: &models.SuiteRunId{Value: suiteRunID}})
+	t.Fatalf("suite did not finish within deadline (peak concurrent=%d)", maxConcurrent)
 }

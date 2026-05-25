@@ -333,6 +333,58 @@ func (x *ClonePresetRequest) GetId() *models.DatabasePresetId {
 	return nil
 }
 
+type GetPresetRequest struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	TenantId      *models.TenantId         `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Id            *models.DatabasePresetId `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPresetRequest) Reset() {
+	*x = GetPresetRequest{}
+	mi := &file_cloud_v1_api_ui_preset_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPresetRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPresetRequest) ProtoMessage() {}
+
+func (x *GetPresetRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_ui_preset_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPresetRequest.ProtoReflect.Descriptor instead.
+func (*GetPresetRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_preset_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetPresetRequest) GetTenantId() *models.TenantId {
+	if x != nil {
+		return x.TenantId
+	}
+	return nil
+}
+
+func (x *GetPresetRequest) GetId() *models.DatabasePresetId {
+	if x != nil {
+		return x.Id
+	}
+	return nil
+}
+
 var File_cloud_v1_api_ui_preset_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_ui_preset_proto_rawDesc = "" +
@@ -361,9 +413,13 @@ const file_cloud_v1_api_ui_preset_proto_rawDesc = "" +
 	"\x02id\x18\x02 \x01(\v2!.cloud.v1.models.DatabasePresetIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02id\"\x93\x01\n" +
 	"\x12ClonePresetRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12;\n" +
-	"\x02id\x18\x02 \x01(\v2!.cloud.v1.models.DatabasePresetIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02id2\xa0\x03\n" +
+	"\x02id\x18\x02 \x01(\v2!.cloud.v1.models.DatabasePresetIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02id\"\x91\x01\n" +
+	"\x10GetPresetRequest\x12@\n" +
+	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12;\n" +
+	"\x02id\x18\x02 \x01(\v2!.cloud.v1.models.DatabasePresetIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x02id2\xee\x03\n" +
 	"\rPresetService\x12\\\n" +
-	"\vListPresets\x12\".cloud.v1.api.ui.ListPresetRequest\x1a$.cloud.v1.api.ui.ListPresetsResponse\"\x03\x90\x02\x01\x12E\n" +
+	"\vListPresets\x12\".cloud.v1.api.ui.ListPresetRequest\x1a$.cloud.v1.api.ui.ListPresetsResponse\"\x03\x90\x02\x01\x12L\n" +
+	"\tGetPreset\x12!.cloud.v1.api.ui.GetPresetRequest\x1a\x17.cloud.v1.models.Preset\"\x03\x90\x02\x01\x12E\n" +
 	"\fCreatePreset\x12\x17.cloud.v1.models.Preset\x1a\x17.cloud.v1.models.Preset\"\x03\x90\x02\x01\x12E\n" +
 	"\fUpdatePreset\x12\x17.cloud.v1.models.Preset\x1a\x17.cloud.v1.models.Preset\"\x03\x90\x02\x02\x12Q\n" +
 	"\fDeletePreset\x12$.cloud.v1.api.ui.DeletePresetRequest\x1a\x16.google.protobuf.Empty\"\x03\x90\x02\x02\x12P\n" +
@@ -382,51 +438,56 @@ func file_cloud_v1_api_ui_preset_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_api_ui_preset_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_api_ui_preset_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_cloud_v1_api_ui_preset_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_cloud_v1_api_ui_preset_proto_goTypes = []any{
 	(ListPresetRequest_SortField)(0), // 0: cloud.v1.api.ui.ListPresetRequest.SortField
 	(*ListPresetRequest)(nil),        // 1: cloud.v1.api.ui.ListPresetRequest
 	(*ListPresetsResponse)(nil),      // 2: cloud.v1.api.ui.ListPresetsResponse
 	(*DeletePresetRequest)(nil),      // 3: cloud.v1.api.ui.DeletePresetRequest
 	(*ClonePresetRequest)(nil),       // 4: cloud.v1.api.ui.ClonePresetRequest
-	(*models.TenantId)(nil),          // 5: cloud.v1.models.TenantId
-	(models.Preset_Kind)(0),          // 6: cloud.v1.models.Preset.Kind
-	(*common.Tags)(nil),              // 7: cloud.v1.common.Tags
-	(models.SortOrder)(0),            // 8: cloud.v1.models.SortOrder
-	(*models.Page)(nil),              // 9: cloud.v1.models.Page
-	(*models.Preset)(nil),            // 10: cloud.v1.models.Preset
-	(*models.PageInfo)(nil),          // 11: cloud.v1.models.PageInfo
-	(*models.DatabasePresetId)(nil),  // 12: cloud.v1.models.DatabasePresetId
-	(*emptypb.Empty)(nil),            // 13: google.protobuf.Empty
+	(*GetPresetRequest)(nil),         // 5: cloud.v1.api.ui.GetPresetRequest
+	(*models.TenantId)(nil),          // 6: cloud.v1.models.TenantId
+	(models.Preset_Kind)(0),          // 7: cloud.v1.models.Preset.Kind
+	(*common.Tags)(nil),              // 8: cloud.v1.common.Tags
+	(models.SortOrder)(0),            // 9: cloud.v1.models.SortOrder
+	(*models.Page)(nil),              // 10: cloud.v1.models.Page
+	(*models.Preset)(nil),            // 11: cloud.v1.models.Preset
+	(*models.PageInfo)(nil),          // 12: cloud.v1.models.PageInfo
+	(*models.DatabasePresetId)(nil),  // 13: cloud.v1.models.DatabasePresetId
+	(*emptypb.Empty)(nil),            // 14: google.protobuf.Empty
 }
 var file_cloud_v1_api_ui_preset_proto_depIdxs = []int32{
-	5,  // 0: cloud.v1.api.ui.ListPresetRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	6,  // 1: cloud.v1.api.ui.ListPresetRequest.kinds:type_name -> cloud.v1.models.Preset.Kind
-	7,  // 2: cloud.v1.api.ui.ListPresetRequest.tags:type_name -> cloud.v1.common.Tags
+	6,  // 0: cloud.v1.api.ui.ListPresetRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	7,  // 1: cloud.v1.api.ui.ListPresetRequest.kinds:type_name -> cloud.v1.models.Preset.Kind
+	8,  // 2: cloud.v1.api.ui.ListPresetRequest.tags:type_name -> cloud.v1.common.Tags
 	0,  // 3: cloud.v1.api.ui.ListPresetRequest.sort_field:type_name -> cloud.v1.api.ui.ListPresetRequest.SortField
-	8,  // 4: cloud.v1.api.ui.ListPresetRequest.order:type_name -> cloud.v1.models.SortOrder
-	9,  // 5: cloud.v1.api.ui.ListPresetRequest.page:type_name -> cloud.v1.models.Page
-	10, // 6: cloud.v1.api.ui.ListPresetsResponse.presets:type_name -> cloud.v1.models.Preset
-	11, // 7: cloud.v1.api.ui.ListPresetsResponse.page_info:type_name -> cloud.v1.models.PageInfo
-	5,  // 8: cloud.v1.api.ui.DeletePresetRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	12, // 9: cloud.v1.api.ui.DeletePresetRequest.id:type_name -> cloud.v1.models.DatabasePresetId
-	5,  // 10: cloud.v1.api.ui.ClonePresetRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	12, // 11: cloud.v1.api.ui.ClonePresetRequest.id:type_name -> cloud.v1.models.DatabasePresetId
-	1,  // 12: cloud.v1.api.ui.PresetService.ListPresets:input_type -> cloud.v1.api.ui.ListPresetRequest
-	10, // 13: cloud.v1.api.ui.PresetService.CreatePreset:input_type -> cloud.v1.models.Preset
-	10, // 14: cloud.v1.api.ui.PresetService.UpdatePreset:input_type -> cloud.v1.models.Preset
-	3,  // 15: cloud.v1.api.ui.PresetService.DeletePreset:input_type -> cloud.v1.api.ui.DeletePresetRequest
-	4,  // 16: cloud.v1.api.ui.PresetService.ClonePreset:input_type -> cloud.v1.api.ui.ClonePresetRequest
-	2,  // 17: cloud.v1.api.ui.PresetService.ListPresets:output_type -> cloud.v1.api.ui.ListPresetsResponse
-	10, // 18: cloud.v1.api.ui.PresetService.CreatePreset:output_type -> cloud.v1.models.Preset
-	10, // 19: cloud.v1.api.ui.PresetService.UpdatePreset:output_type -> cloud.v1.models.Preset
-	13, // 20: cloud.v1.api.ui.PresetService.DeletePreset:output_type -> google.protobuf.Empty
-	10, // 21: cloud.v1.api.ui.PresetService.ClonePreset:output_type -> cloud.v1.models.Preset
-	17, // [17:22] is the sub-list for method output_type
-	12, // [12:17] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	9,  // 4: cloud.v1.api.ui.ListPresetRequest.order:type_name -> cloud.v1.models.SortOrder
+	10, // 5: cloud.v1.api.ui.ListPresetRequest.page:type_name -> cloud.v1.models.Page
+	11, // 6: cloud.v1.api.ui.ListPresetsResponse.presets:type_name -> cloud.v1.models.Preset
+	12, // 7: cloud.v1.api.ui.ListPresetsResponse.page_info:type_name -> cloud.v1.models.PageInfo
+	6,  // 8: cloud.v1.api.ui.DeletePresetRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	13, // 9: cloud.v1.api.ui.DeletePresetRequest.id:type_name -> cloud.v1.models.DatabasePresetId
+	6,  // 10: cloud.v1.api.ui.ClonePresetRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	13, // 11: cloud.v1.api.ui.ClonePresetRequest.id:type_name -> cloud.v1.models.DatabasePresetId
+	6,  // 12: cloud.v1.api.ui.GetPresetRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	13, // 13: cloud.v1.api.ui.GetPresetRequest.id:type_name -> cloud.v1.models.DatabasePresetId
+	1,  // 14: cloud.v1.api.ui.PresetService.ListPresets:input_type -> cloud.v1.api.ui.ListPresetRequest
+	5,  // 15: cloud.v1.api.ui.PresetService.GetPreset:input_type -> cloud.v1.api.ui.GetPresetRequest
+	11, // 16: cloud.v1.api.ui.PresetService.CreatePreset:input_type -> cloud.v1.models.Preset
+	11, // 17: cloud.v1.api.ui.PresetService.UpdatePreset:input_type -> cloud.v1.models.Preset
+	3,  // 18: cloud.v1.api.ui.PresetService.DeletePreset:input_type -> cloud.v1.api.ui.DeletePresetRequest
+	4,  // 19: cloud.v1.api.ui.PresetService.ClonePreset:input_type -> cloud.v1.api.ui.ClonePresetRequest
+	2,  // 20: cloud.v1.api.ui.PresetService.ListPresets:output_type -> cloud.v1.api.ui.ListPresetsResponse
+	11, // 21: cloud.v1.api.ui.PresetService.GetPreset:output_type -> cloud.v1.models.Preset
+	11, // 22: cloud.v1.api.ui.PresetService.CreatePreset:output_type -> cloud.v1.models.Preset
+	11, // 23: cloud.v1.api.ui.PresetService.UpdatePreset:output_type -> cloud.v1.models.Preset
+	14, // 24: cloud.v1.api.ui.PresetService.DeletePreset:output_type -> google.protobuf.Empty
+	11, // 25: cloud.v1.api.ui.PresetService.ClonePreset:output_type -> cloud.v1.models.Preset
+	20, // [20:26] is the sub-list for method output_type
+	14, // [14:20] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_ui_preset_proto_init() }
@@ -441,7 +502,7 @@ func file_cloud_v1_api_ui_preset_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_ui_preset_proto_rawDesc), len(file_cloud_v1_api_ui_preset_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

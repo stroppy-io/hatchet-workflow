@@ -16,10 +16,10 @@ const stroppyDBHostToken = "__STROPPY_DB_HOST__"
 // DATABASE recipe varies with the engine's replication mode (e.g. Patroni manages
 // postgres, so the started service is patroni, not postgresql). The recipe DATA
 // itself lives in recipes_data.go; this is only the SELECTION LOGIC over it.
-func recipeForComponent(c *domain.Topology_Component, db *domain.Database) Recipe {
+func recipeForComponent(c *domain.Topology_Component, db *domain.Database, topo *domain.Topology) Recipe {
 	switch c.GetKind() {
 	case domain.Topology_Component_KIND_DATABASE:
-		return databaseRecipe(db)
+		return databaseRecipe(c, db, topo)
 	case domain.Topology_Component_KIND_COORDINATOR:
 		return recipeEtcd
 	case domain.Topology_Component_KIND_PROXY:
@@ -33,11 +33,11 @@ func recipeForComponent(c *domain.Topology_Component, db *domain.Database) Recip
 	}
 }
 
-// databaseRecipe is the engine recipe, adjusted for the replication mode.
-func databaseRecipe(db *domain.Database) Recipe {
+// databaseRecipe is the engine recipe, adjusted for the cluster role of the component
+// as read from the topology IR (never from Database.Options).
+func databaseRecipe(c *domain.Topology_Component, db *domain.Database, topo *domain.Topology) Recipe {
 	r := recipeFor(db)
-	if db.GetKind() == domain.Database_KIND_POSTGRES &&
-		db.GetOptions().GetPostgres().GetReplication().GetMode() == domain.Database_Options_Postgres_Replication_MODE_PATRONI {
+	if render.IsPatroniManaged(c) {
 		// Patroni supervises postgres + talks to etcd. Install patroni + the etcd
 		// client; the start script drops the auto-created default cluster (patroni
 		// initdb's its own), stops the package's postgresql service, and runs patroni

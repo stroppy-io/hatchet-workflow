@@ -68,11 +68,49 @@ export function MembersPage() {
     }),
   );
 
+  // Email lookup (non-admin owners resolve an account id by exact email).
+  const [email, setEmail] = useState("");
+  const lookup = useAction(() => api.tenant.lookupAccountByEmail({ tenantId: tenantIdMessage(tenantId), email: email.trim() }));
+
+  async function doLookup() {
+    const account = await lookup.run();
+    if (!account) return;
+    setAccountId(account.entity?.id?.value ?? "");
+    setAccountLabel(account.email);
+  }
+
+  // Change-role dialog.
+  const [roleTarget, setRoleTarget] = useState<TenantMemberRow | null>(null);
+  const [editRole, setEditRole] = useState(String(TenantMember_Role.VIEWER));
+  const updateRole = useAction(() =>
+    api.tenant.updateMemberRole({
+      tenantId: tenantIdMessage(tenantId),
+      accountId: idMessage(roleTarget?.member?.accountId?.value ?? roleTarget?.account?.entity?.id?.value ?? ""),
+      role: Number(editRole) as TenantMember_Role,
+    }),
+  );
+
+  function openRole(row: TenantMemberRow) {
+    setRoleTarget(row);
+    setEditRole(String(row.member?.role ?? TenantMember_Role.VIEWER));
+    updateRole.reset();
+  }
+
+  async function submitRole() {
+    const response = await updateRole.run();
+    if (!response) return;
+    setRoleTarget(null);
+    notifySuccess("Role updated");
+    table.reload();
+  }
+
   function openAdd() {
     setAccountId("");
     setAccountLabel("");
+    setEmail("");
     setNewRole(String(TenantMember_Role.VIEWER));
     add.reset();
+    lookup.reset();
     setAddOpen(true);
   }
 
@@ -115,7 +153,10 @@ export function MembersPage() {
   return (
     <>
       <EntityDataTable
-        actions={[{ label: "Remove", onSelect: remove }]}
+        actions={[
+          { label: "Change role", onSelect: openRole },
+          { label: "Remove", onSelect: remove },
+        ]}
         columns={columns}
         data={result.data?.members ?? []}
         error={result.error}
@@ -164,12 +205,48 @@ export function MembersPage() {
               }}
             />
           ) : (
-            <Input value={accountId} onChange={(event) => setAccountId(event.target.value)} placeholder="Account ID (ULID)" autoFocus />
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="member@email" autoFocus />
+                <Button type="button" variant="outline" onClick={doLookup} disabled={!email.trim() || lookup.loading}>
+                  Find
+                </Button>
+              </div>
+              {accountLabel ? <p className="text-xs text-muted-foreground">Found: {accountLabel}</p> : null}
+              {lookup.error ? <p className="text-xs text-destructive">{lookup.error}</p> : null}
+            </div>
           )}
         </div>
         <div className="space-y-2">
           <Label>Role</Label>
           <Select value={newRole} onValueChange={setNewRole}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLE_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </FormDialog>
+
+      <FormDialog
+        open={roleTarget !== null}
+        onOpenChange={(open) => !open && setRoleTarget(null)}
+        title="Change role"
+        description={roleTarget?.account?.email}
+        submitLabel="Save"
+        onSubmit={submitRole}
+        loading={updateRole.loading}
+        error={updateRole.error}
+      >
+        <div className="space-y-2">
+          <Label>Role</Label>
+          <Select value={editRole} onValueChange={setEditRole}>
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>

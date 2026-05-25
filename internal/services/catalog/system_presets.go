@@ -1,6 +1,10 @@
 package catalog
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	renderpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/render"
 )
@@ -12,16 +16,104 @@ type SystemPreset struct {
 	DB          *domain.DatabasePreset
 }
 
-// SystemDatabasePresets returns the built-in DATABASE presets seeded at server
-// start. They are read-only catalog entries visible to every tenant.
+// SystemWorkloadPreset is a named platform-seeded workload preset (KIND_WORKLOAD,
+// is_system) — the workload-side analogue of SystemPreset.
+type SystemWorkloadPreset struct {
+	Name        string
+	Description string
+	WL          *domain.WorkloadPreset
+}
+
+// SystemWorkloadPresets returns the built-in WORKLOAD presets seeded at server
+// start: every stroppy benchmark script (tpcc / tpcb / tpch, in both the stored-proc
+// and the typescript-transaction flavor where the script has both) at four sizing
+// tiers (smoke → small → medium → large). Read-only catalog entries visible to every
+// tenant, mirroring SystemDatabasePresets.
 //
-// The structures here mirror the new-structure topologies already proven by the
-// integration + dag tests (test/integration/*_pipeline_test.go,
-// internal/domain/dag/compile_test.go, authoring_test.go): one Topology_Machine
-// per host, each carrying typed Topology_Components (DATABASE / COORDINATOR /
-// PROXY / STROPPY) wired by Topology_Connections whose From/To reference those
-// component ids. Every Database carries the Config/Target/Options trio the proto
-// validator requires; HA postgres sets Replication.Mode = MODE_PATRONI.
+// Each preset carries the Workload (script + sizing) + a stroppy load machine. The
+// protocol is left UNSPECIFIED on purpose — it is DB-specific and gets set when the
+// wizard assembles the workload against a chosen DatabasePreset (AssembleFromPresets),
+// the same point the stroppy→database FLOW edge is wired. Pure data: no DB, no I/O.
+func SystemWorkloadPresets() []SystemWorkloadPreset {
+	type scriptDef struct{ key, script, label string }
+	scripts := []scriptDef{
+		{"tpcc-procs", "tpcc/procs", "TPC-C procs"},
+		{"tpcc-tx", "tpcc/tx.ts", "TPC-C tx"},
+		{"tpcb-procs", "tpcb/procs", "TPC-B procs"},
+		{"tpcb-tx", "tpcb/tx.ts", "TPC-B tx"},
+		{"tpch-tx", "tpch/tx.ts", "TPC-H"},
+	}
+	type sizeDef struct {
+		name             string
+		scale, tpchScale float64
+		vus, pool        uint32
+		iterations       uint32 // when duration == ""
+		duration         string
+	}
+	sizes := []sizeDef{
+		{"smoke", 1, 0.1, 1, 4, 1, ""},
+		{"small", 1, 1, 4, 8, 0, "1m"},
+		{"medium", 10, 3, 16, 32, 0, "5m"},
+		{"large", 50, 10, 64, 128, 0, "15m"},
+	}
+	var out []SystemWorkloadPreset
+	for _, s := range scripts {
+		for _, z := range sizes {
+			scale := z.scale
+			if strings.HasPrefix(s.key, "tpch") {
+				scale = z.tpchScale
+			}
+			exec := &domain.Workload_Execution{Vus: z.vus, Quiet: true, NoThresholds: true}
+			if z.duration != "" {
+				exec.Limit = &domain.Workload_Execution_Duration{Duration: z.duration}
+			} else {
+				exec.Limit = &domain.Workload_Execution_Iterations{Iterations: z.iterations}
+			}
+			limit := z.duration
+			if limit == "" {
+				limit = fmt.Sprintf("%d iters", z.iterations)
+			}
+			out = append(out, SystemWorkloadPreset{
+				Name:        fmt.Sprintf("%s — %s", s.label, z.name),
+				Description: fmt.Sprintf("%s, %s sizing (scale %g, %d VUs, %s)", s.label, z.name, scale, z.vus, limit),
+				WL:          workloadPreset(s.script, scale, z.pool, exec),
+			})
+		}
+	}
+	return out
+}
+
+// workloadPreset builds a WorkloadPreset: the Workload (script + sizing) plus a single
+// stroppy load machine. No stroppy→database FLOW connection (the target component is
+// DB-specific — added on assembly); a SUPPORT self-edge satisfies the topology's
+// min-one-connection rule and is inert to the dag builder.
+func workloadPreset(script string, scale float64, pool uint32, exec *domain.Workload_Execution) *domain.WorkloadPreset {
+	return &domain.WorkloadPreset{
+		Workload: &domain.Workload{
+			StroppyVersion: "v5.1.3",
+			Script:         script,
+			Protocol:       domain.Workload_PROTOCOL_UNSPECIFIED,
+			Parameters:     &domain.Workload_Parameters{PoolSize: pool, ScaleFactor: scale},
+			Execution:      exec,
+		},
+		Topology: &domain.Topology{
+			Machines: []*domain.Topology_Machine{
+				machine("load1", 2, 4, 20, &domain.Topology_Component{Id: "stroppy", Kind: domain.Topology_Component_KIND_STROPPY, Config: cfg("stroppy")}),
+			},
+			Connections: []*domain.Topology_Connection{selfConn("stroppy")},
+		},
+	}
+}
+
+// SystemDatabasePresets returns the built-in DATABASE presets seeded at server start.
+// They are read-only catalog entries visible to every tenant.
+//
+// Each preset is INTENT + HARDWARE, lowered to a Topology by dag.CompileTopology:
+// the Database carries the structural intent (engine, replication / coordination
+// variant, node counts, fault-tolerance) and the dag.Sizing carries the per-role
+// machine specs (the Database deliberately holds no sizing). The compiler is the only
+// place that reads Database.Options to derive structure; the resulting Topology is the
+// IR every downstream layer (render / recipe / deployment) consumes.
 //
 // Pure data: no DB, no I/O.
 func SystemDatabasePresets() []SystemPreset {
@@ -30,97 +122,123 @@ func SystemDatabasePresets() []SystemPreset {
 		{
 			Name:        "PostgreSQL Single",
 			Description: "Single PostgreSQL instance",
-			DB:          pgSingle(),
+			DB:          compiled(pgSingle()),
 		},
 		{
 			Name:        "PostgreSQL HA",
 			Description: "PostgreSQL with Patroni, etcd coordinator and a proxy (synchronous replication)",
-			DB:          pgHA(),
+			DB:          compiled(pgHA()),
 		},
 		{
 			Name:        "PostgreSQL Scale",
 			Description: "PostgreSQL with 4 replicas, 2 proxies, Patroni and etcd",
-			DB:          pgScale(),
+			DB:          compiled(pgScale()),
 		},
 		// ── MySQL ────────────────────────────────────────────────────────────
 		{
 			Name:        "MySQL Single",
 			Description: "Single MySQL instance",
-			DB:          mysqlSingle(),
+			DB:          compiled(mysqlSingle()),
 		},
 		{
 			Name:        "MySQL Replica",
 			Description: "MySQL primary/replica with GTID-based asynchronous replication",
-			DB:          mysqlReplica(),
+			DB:          compiled(mysqlReplica()),
 		},
 		{
 			Name:        "MySQL Group",
 			Description: "MySQL Group Replication topology with ProxySQL",
-			DB:          mysqlGroup(),
+			DB:          compiled(mysqlGroup()),
 		},
 		// ── MariaDB (mysql-shaped, KIND_MARIADB) ─────────────────────────────
 		{
 			Name:        "MariaDB Single",
 			Description: "Single MariaDB instance",
-			DB:          mariadbSingle(),
+			DB:          compiled(mariadbSingle()),
 		},
 		{
 			Name:        "MariaDB Replica",
 			Description: "MariaDB primary/replica with GTID-based asynchronous replication",
-			DB:          mariadbReplica(),
+			DB:          compiled(mariadbReplica()),
 		},
 		{
 			Name:        "MariaDB Group",
 			Description: "MariaDB Group Replication-shaped topology with ProxySQL",
-			DB:          mariadbGroup(),
+			DB:          compiled(mariadbGroup()),
 		},
 		// ── Picodata ─────────────────────────────────────────────────────────
 		{
 			Name:        "Picodata Single",
 			Description: "Single Picodata instance",
-			DB:          picodataSingle(),
+			DB:          compiled(picodataSingle()),
 		},
 		{
 			Name:        "Picodata Cluster",
 			Description: "Picodata 3-instance cluster (Raft coordination)",
-			DB:          picodataCluster(),
+			DB:          compiled(picodataCluster()),
 		},
 		{
 			Name:        "Picodata Scale",
 			Description: "Picodata 6-instance multi-tier deployment",
-			DB:          picodataScale(),
+			DB:          compiled(picodataScale()),
 		},
 		// ── YDB ──────────────────────────────────────────────────────────────
 		{
 			Name:        "YDB Single",
 			Description: "YDB single universal node",
-			DB:          ydbSingle(),
+			DB:          compiled(ydbSingle()),
 		},
 		{
-			Name:        "YDB Cluster",
-			Description: "YDB 3-node storage cluster (mirror-3-dc fault tolerance)",
-			DB:          ydbCluster(),
+			Name:        "YDB mirror3dc-3x32",
+			Description: "Target perf topology: mirror-3-dc, 3×32 vCPU compute, 3×16 vCPU storage, 9 io-m3 pdisks",
+			DB:          compiled(ydbMirror3DC("ydb-mirror3dc-3x32", 3, flavor(32, 64, 50))),
+		},
+		{
+			Name:        "YDB mirror3dc-3x64",
+			Description: "Target perf topology: mirror-3-dc, 3×64 vCPU compute, 3×16 vCPU storage, 9 io-m3 pdisks",
+			DB:          compiled(ydbMirror3DC("ydb-mirror3dc-3x64", 3, flavor(64, 128, 50))),
+		},
+		{
+			Name:        "YDB mirror3dc-9x32",
+			Description: "Target perf topology: mirror-3-dc, 9×32 vCPU compute, 3×16 vCPU storage, 9 io-m3 pdisks",
+			DB:          compiled(ydbMirror3DC("ydb-mirror3dc-9x32", 9, flavor(32, 64, 50))),
 		},
 		// ── CockroachDB ──────────────────────────────────────────────────────
 		{
 			Name:        "CockroachDB Single",
 			Description: "Single CockroachDB node — dev / smoke runs",
-			DB:          cockroachSingle(),
+			DB:          compiled(cockroachSingle()),
 		},
 		{
 			Name:        "CockroachDB Cluster",
 			Description: "3-node CockroachDB cluster",
-			DB:          cockroachCluster(),
+			DB:          compiled(cockroachCluster()),
 		},
 		{
 			Name:        "CockroachDB Scale",
 			Description: "6-node CockroachDB cluster",
-			DB:          cockroachScale(),
+			DB:          compiled(cockroachScale()),
 		},
 	}
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
+
+// compiled lowers a (Database intent, Sizing) pair into a DatabasePreset via
+// dag.CompileTopology. A compile error here is a programmer bug (static, known-good
+// presets), caught by TestCompileTopology_MatchesHandAuthored — so it panics.
+func compiled(db *domain.Database, size *dag.Sizing) *domain.DatabasePreset {
+	topo, err := dag.CompileTopology(db, size)
+	if err != nil {
+		panic(fmt.Sprintf("catalog: compile system preset topology (%s): %v", db.GetConfig().GetId(), err))
+	}
+	return &domain.DatabasePreset{Database: db, Topology: topo}
+}
+
+// flavor is shorthand for a boot-disk-only machine spec (no secondary data disks).
+func flavor(cores uint32, memGb, diskGb uint64) dag.Flavor {
+	return dag.Flavor{Cores: cores, MemGb: memGb, DiskGb: diskGb}
+}
 
 // cfg builds a non-empty render.Config with the given id. The proto validator
 // requires render.Config.Id to be 1..128 runes, so every Database and Component
@@ -134,21 +252,8 @@ func selfHostedTarget() *domain.Database_Target {
 	}
 }
 
-// dbComponent / coordinatorComponent / proxyComponent build a typed topology
-// component with its required render config.
-func dbComponent(id string) *domain.Topology_Component {
-	return &domain.Topology_Component{Id: id, Kind: domain.Topology_Component_KIND_DATABASE, Config: cfg(id)}
-}
-
-func coordinatorComponent(id string) *domain.Topology_Component {
-	return &domain.Topology_Component{Id: id, Kind: domain.Topology_Component_KIND_COORDINATOR, Config: cfg(id)}
-}
-
-func proxyComponent(id string) *domain.Topology_Component {
-	return &domain.Topology_Component{Id: id, Kind: domain.Topology_Component_KIND_PROXY, Config: cfg(id)}
-}
-
-// machine builds a sized host carrying the given components.
+// machine builds a sized host carrying the given components (workload topology only;
+// database topologies are produced by dag.CompileTopology).
 func machine(id string, cores uint32, memGb, diskGb uint64, comps ...*domain.Topology_Component) *domain.Topology_Machine {
 	return &domain.Topology_Machine{
 		Id: id, Cores: cores, MemoryGb: memGb, DiskGb: diskGb,
@@ -156,358 +261,176 @@ func machine(id string, cores uint32, memGb, diskGb uint64, comps ...*domain.Top
 	}
 }
 
-// selfConn satisfies the topology min-1-connection rule for single-node presets
-// without affecting dag compilation: the dag builder only reads REPLICATION /
-// COORDINATION connections, so a SUPPORT self-edge is inert.
+// selfConn satisfies the topology min-1-connection rule for single-component
+// topologies without affecting dag compilation (a SUPPORT self-edge is inert).
 func selfConn(id string) *domain.Topology_Connection {
 	return &domain.Topology_Connection{From: id, To: id, Kind: domain.Topology_Connection_KIND_SUPPORT}
 }
 
 // ── PostgreSQL ─────────────────────────────────────────────────────────────
 
-func pgSingle() *domain.DatabasePreset {
-	return &domain.DatabasePreset{
-		Database: &domain.Database{
-			Kind:    domain.Database_KIND_POSTGRES,
-			Version: "16",
-			Config:  cfg("postgres-single"),
-			Target:  selfHostedTarget(),
-			Options: &domain.Database_Options{Options: &domain.Database_Options_Postgres_{Postgres: &domain.Database_Options_Postgres{
-				Replication: &domain.Database_Options_Postgres_Replication{
-					Mode: domain.Database_Options_Postgres_Replication_MODE_SINGLE,
-				},
-			}}},
-		},
-		Topology: &domain.Topology{
-			Machines: []*domain.Topology_Machine{
-				machine("m-db1", 4, 16, 100, dbComponent("pg")),
-			},
-			Connections: []*domain.Topology_Connection{selfConn("pg")},
-		},
-	}
+func pgSingle() (*domain.Database, *dag.Sizing) {
+	return pgDatabase("postgres-single", domain.Database_Options_Postgres_Replication_MODE_SINGLE, 0, 0),
+		&dag.Sizing{Database: flavor(4, 16, 100)}
 }
 
-// pgHA mirrors compile_test.go TestGraphCompilesHATopology / ha_pipeline_test.go:
-// etcd COORDINATOR + 2 patroni DATABASE nodes + a PROXY, wired by
-// COORDINATION / REPLICATION / PROXY connections.
-func pgHA() *domain.DatabasePreset {
-	return pgPatroni("postgres-ha", 2, 1, 4, 16, 200, 1)
+func pgHA() (*domain.Database, *dag.Sizing) {
+	return pgDatabase("postgres-ha", domain.Database_Options_Postgres_Replication_MODE_PATRONI, 2, 1),
+		&dag.Sizing{Database: flavor(4, 16, 200), Coordinator: flavor(2, 4, 50), Proxy: flavor(2, 4, 50), Proxies: 1}
 }
 
-func pgScale() *domain.DatabasePreset {
-	return pgPatroni("postgres-scale", 4, 2, 8, 16, 200, 2)
+func pgScale() (*domain.Database, *dag.Sizing) {
+	return pgDatabase("postgres-scale", domain.Database_Options_Postgres_Replication_MODE_PATRONI, 4, 2),
+		&dag.Sizing{Database: flavor(8, 16, 200), Coordinator: flavor(2, 4, 50), Proxy: flavor(2, 4, 50), Proxies: 2}
 }
 
-func pgPatroni(configID string, replicas, proxies int, dbCores uint32, dbMemGb, dbDiskGb uint64, syncReplicas uint32) *domain.DatabasePreset {
-	machines := []*domain.Topology_Machine{machine("m-etcd", 2, 4, 50, coordinatorComponent("etcd1"))}
-	conns := []*domain.Topology_Connection{}
-	dbIDs := make([]string, 0, replicas+1)
-	for i := 0; i <= replicas; i++ {
-		id := "db" + string(rune('1'+i))
-		dbIDs = append(dbIDs, id)
-		machines = append(machines, machine("m-"+id, dbCores, dbMemGb, dbDiskGb, dbComponent(id)))
-		conns = append(conns, &domain.Topology_Connection{From: id, To: "etcd1", Kind: domain.Topology_Connection_KIND_COORDINATION})
-		if i > 0 {
-			conns = append(conns, &domain.Topology_Connection{From: dbIDs[0], To: id, Kind: domain.Topology_Connection_KIND_REPLICATION})
-		}
-	}
-	for i := 0; i < proxies; i++ {
-		id := "px" + string(rune('1'+i))
-		machines = append(machines, machine("m-"+id, 2, 4, 50, proxyComponent(id)))
-		conns = append(conns, &domain.Topology_Connection{From: id, To: dbIDs[0], Kind: domain.Topology_Connection_KIND_PROXY})
-	}
-	return &domain.DatabasePreset{
-		Database: &domain.Database{
-			Kind:    domain.Database_KIND_POSTGRES,
-			Version: "16",
-			Config:  cfg(configID),
-			Target:  selfHostedTarget(),
-			Options: &domain.Database_Options{Options: &domain.Database_Options_Postgres_{Postgres: &domain.Database_Options_Postgres{
-				Replication: &domain.Database_Options_Postgres_Replication{
-					Mode:         domain.Database_Options_Postgres_Replication_MODE_PATRONI,
-					Replicas:     uint32(replicas),
-					SyncReplicas: syncReplicas,
-				},
-			}}},
-		},
-		Topology: &domain.Topology{Machines: machines, Connections: conns},
+func pgDatabase(configID string, mode domain.Database_Options_Postgres_Replication_Mode, replicas, syncReplicas uint32) *domain.Database {
+	return &domain.Database{
+		Kind:    domain.Database_KIND_POSTGRES,
+		Version: "16",
+		Config:  cfg(configID),
+		Target:  selfHostedTarget(),
+		Options: &domain.Database_Options{Options: &domain.Database_Options_Postgres_{Postgres: &domain.Database_Options_Postgres{
+			Replication: &domain.Database_Options_Postgres_Replication{Mode: mode, Replicas: replicas, SyncReplicas: syncReplicas},
+		}}},
 	}
 }
 
 // ── MySQL / MariaDB ─────────────────────────────────────────────────────────
 
-func mysqlSingle() *domain.DatabasePreset {
-	return &domain.DatabasePreset{
-		Database: &domain.Database{
-			Kind:    domain.Database_KIND_MYSQL,
-			Version: "8.4",
-			Config:  cfg("mysql-single"),
-			Target:  selfHostedTarget(),
-			Options: &domain.Database_Options{Options: &domain.Database_Options_Mysql_{Mysql: &domain.Database_Options_Mysql{
-				Replication: &domain.Database_Options_Mysql_Replication{
-					Mode: domain.Database_Options_Mysql_Replication_MODE_SINGLE,
-				},
-			}}},
-		},
-		Topology: &domain.Topology{
-			Machines: []*domain.Topology_Machine{
-				machine("m-db1", 4, 16, 100, dbComponent("db1")),
-			},
-			Connections: []*domain.Topology_Connection{selfConn("db1")},
-		},
+func mysqlSingle() (*domain.Database, *dag.Sizing) {
+	return mysqlDatabase(domain.Database_KIND_MYSQL, "mysql-single", "8.4", domain.Database_Options_Mysql_Replication_MODE_SINGLE, 0, false),
+		&dag.Sizing{Database: flavor(4, 16, 100)}
+}
+
+func mysqlReplica() (*domain.Database, *dag.Sizing) {
+	return mysqlDatabase(domain.Database_KIND_MYSQL, "mysql-replica", "8.4", domain.Database_Options_Mysql_Replication_MODE_ASYNC, 2, true),
+		&dag.Sizing{Database: flavor(4, 8, 100), Proxy: flavor(2, 4, 50), Proxies: 1}
+}
+
+func mysqlGroup() (*domain.Database, *dag.Sizing) {
+	return mysqlDatabase(domain.Database_KIND_MYSQL, "mysql-group", "8.4", domain.Database_Options_Mysql_Replication_MODE_GROUP_REPLICATION, 2, true),
+		&dag.Sizing{Database: flavor(8, 16, 200), Proxy: flavor(2, 4, 50), Proxies: 2}
+}
+
+func mariadbSingle() (*domain.Database, *dag.Sizing) {
+	return mysqlDatabase(domain.Database_KIND_MARIADB, "mariadb-single", "11.4", domain.Database_Options_Mysql_Replication_MODE_SINGLE, 0, false),
+		&dag.Sizing{Database: flavor(4, 16, 100)}
+}
+
+func mariadbReplica() (*domain.Database, *dag.Sizing) {
+	return mysqlDatabase(domain.Database_KIND_MARIADB, "mariadb-replica", "11.4", domain.Database_Options_Mysql_Replication_MODE_ASYNC, 2, true),
+		&dag.Sizing{Database: flavor(4, 8, 100), Proxy: flavor(2, 4, 50), Proxies: 1}
+}
+
+func mariadbGroup() (*domain.Database, *dag.Sizing) {
+	return mysqlDatabase(domain.Database_KIND_MARIADB, "mariadb-group", "11.4", domain.Database_Options_Mysql_Replication_MODE_GROUP_REPLICATION, 2, true),
+		&dag.Sizing{Database: flavor(8, 16, 200), Proxy: flavor(2, 4, 50), Proxies: 2}
+}
+
+func mysqlDatabase(kind domain.Database_Kind, configID, version string, mode domain.Database_Options_Mysql_Replication_Mode, replicas uint32, proxysql bool) *domain.Database {
+	mysql := &domain.Database_Options_Mysql{
+		Replication: &domain.Database_Options_Mysql_Replication{Mode: mode, Replicas: replicas},
 	}
-}
-
-// mysqlReplica mirrors systemd_pipeline_test.go mysqlReplicationPipeline:
-// 2 DATABASE nodes wired by a REPLICATION connection (primary -> replica).
-func mysqlReplica() *domain.DatabasePreset {
-	return mysqlMulti(domain.Database_KIND_MYSQL, "mysql-replica", "8.4", domain.Database_Options_Mysql_Replication_MODE_ASYNC, 2, 1, 4, 8, 100)
-}
-
-func mysqlGroup() *domain.DatabasePreset {
-	return mysqlMulti(domain.Database_KIND_MYSQL, "mysql-group", "8.4", domain.Database_Options_Mysql_Replication_MODE_GROUP_REPLICATION, 2, 2, 8, 16, 200)
-}
-
-func mariadbReplica() *domain.DatabasePreset {
-	return mysqlMulti(domain.Database_KIND_MARIADB, "mariadb-replica", "11.4", domain.Database_Options_Mysql_Replication_MODE_ASYNC, 2, 1, 4, 8, 100)
-}
-
-func mariadbGroup() *domain.DatabasePreset {
-	return mysqlMulti(domain.Database_KIND_MARIADB, "mariadb-group", "11.4", domain.Database_Options_Mysql_Replication_MODE_GROUP_REPLICATION, 2, 2, 8, 16, 200)
-}
-
-func mysqlMulti(kind domain.Database_Kind, configID, version string, mode domain.Database_Options_Mysql_Replication_Mode, replicas, proxies int, dbCores uint32, dbMemGb, dbDiskGb uint64) *domain.DatabasePreset {
-	machines := []*domain.Topology_Machine{machine("m-db1", dbCores, dbMemGb, dbDiskGb, dbComponent("db1"))}
-	conns := []*domain.Topology_Connection{}
-	for i := 0; i < replicas; i++ {
-		id := "db" + string(rune('2'+i))
-		machines = append(machines, machine("m-"+id, dbCores, dbMemGb, dbDiskGb, dbComponent(id)))
-		conns = append(conns, &domain.Topology_Connection{From: "db1", To: id, Kind: domain.Topology_Connection_KIND_REPLICATION})
+	if proxysql {
+		mysql.Access = &domain.Database_Options_Mysql_Access{Proxysql: true}
 	}
-	for i := 0; i < proxies; i++ {
-		id := "px" + string(rune('1'+i))
-		machines = append(machines, machine("m-"+id, 2, 4, 50, proxyComponent(id)))
-		conns = append(conns, &domain.Topology_Connection{From: id, To: "db1", Kind: domain.Topology_Connection_KIND_PROXY})
-	}
-	return &domain.DatabasePreset{
-		Database: &domain.Database{
-			Kind:    kind,
-			Version: version,
-			Config:  cfg(configID),
-			Target:  selfHostedTarget(),
-			Options: &domain.Database_Options{Options: &domain.Database_Options_Mysql_{Mysql: &domain.Database_Options_Mysql{
-				Replication: &domain.Database_Options_Mysql_Replication{
-					Mode:     mode,
-					Replicas: uint32(replicas),
-				},
-				Access: &domain.Database_Options_Mysql_Access{Proxysql: proxies > 0},
-			}}},
-		},
-		Topology: &domain.Topology{Machines: machines, Connections: conns},
-	}
-}
-
-// mariadbSingle reuses the MySQL-shaped options under KIND_MARIADB — the agent's
-// my.cnf writer produces a config mariadb-server reads unmodified.
-func mariadbSingle() *domain.DatabasePreset {
-	return &domain.DatabasePreset{
-		Database: &domain.Database{
-			Kind:    domain.Database_KIND_MARIADB,
-			Version: "11.4",
-			Config:  cfg("mariadb-single"),
-			Target:  selfHostedTarget(),
-			Options: &domain.Database_Options{Options: &domain.Database_Options_Mysql_{Mysql: &domain.Database_Options_Mysql{
-				Replication: &domain.Database_Options_Mysql_Replication{
-					Mode: domain.Database_Options_Mysql_Replication_MODE_SINGLE,
-				},
-			}}},
-		},
-		Topology: &domain.Topology{
-			Machines: []*domain.Topology_Machine{
-				machine("m-db1", 4, 16, 100, dbComponent("db1")),
-			},
-			Connections: []*domain.Topology_Connection{selfConn("db1")},
-		},
+	return &domain.Database{
+		Kind:    kind,
+		Version: version,
+		Config:  cfg(configID),
+		Target:  selfHostedTarget(),
+		Options: &domain.Database_Options{Options: &domain.Database_Options_Mysql_{Mysql: mysql}},
 	}
 }
 
 // ── Picodata ─────────────────────────────────────────────────────────────────
 
-func picodataSingle() *domain.DatabasePreset {
-	return &domain.DatabasePreset{
-		Database: &domain.Database{
-			Kind:    domain.Database_KIND_PICODATA,
-			Version: "25.3",
-			Config:  cfg("picodata-single"),
-			Target:  selfHostedTarget(),
-			Options: &domain.Database_Options{Options: &domain.Database_Options_Picodata_{Picodata: &domain.Database_Options_Picodata{
-				Shards: 1,
-			}}},
-		},
-		Topology: &domain.Topology{
-			Machines: []*domain.Topology_Machine{
-				machine("m-pd1", 4, 8, 100, dbComponent("pd1")),
-			},
-			Connections: []*domain.Topology_Connection{selfConn("pd1")},
-		},
-	}
+func picodataSingle() (*domain.Database, *dag.Sizing) {
+	return picodataDatabase("picodata-single", 1), &dag.Sizing{Database: flavor(4, 8, 100), Instances: 1}
 }
 
-// picodataCluster mirrors ha_pipeline_test.go TestPicodataClusterFullPipeline:
-// 2 DATABASE instances wired by a COORDINATION connection (Raft peers).
-func picodataCluster() *domain.DatabasePreset {
-	return picodataMulti("picodata-cluster", 3, 1, 4, 8, 100, 3)
+func picodataCluster() (*domain.Database, *dag.Sizing) {
+	return picodataDatabase("picodata-cluster", 3),
+		&dag.Sizing{Database: flavor(4, 8, 100), Proxy: flavor(2, 4, 50), Proxies: 1, Instances: 3}
 }
 
-func picodataScale() *domain.DatabasePreset {
-	return picodataMulti("picodata-scale", 6, 2, 8, 16, 200, 6)
+func picodataScale() (*domain.Database, *dag.Sizing) {
+	return picodataDatabase("picodata-scale", 6),
+		&dag.Sizing{Database: flavor(8, 16, 200), Proxy: flavor(2, 4, 50), Proxies: 2, Instances: 6}
 }
 
-func picodataMulti(configID string, instances, proxies int, dbCores uint32, dbMemGb, dbDiskGb uint64, shards uint32) *domain.DatabasePreset {
-	machines := make([]*domain.Topology_Machine, 0, instances+proxies)
-	conns := make([]*domain.Topology_Connection, 0, instances+proxies)
-	for i := 0; i < instances; i++ {
-		id := "pd" + string(rune('1'+i))
-		machines = append(machines, machine("m-"+id, dbCores, dbMemGb, dbDiskGb, dbComponent(id)))
-		if i > 0 {
-			conns = append(conns, &domain.Topology_Connection{From: id, To: "pd1", Kind: domain.Topology_Connection_KIND_COORDINATION})
-		}
-	}
-	for i := 0; i < proxies; i++ {
-		id := "px" + string(rune('1'+i))
-		machines = append(machines, machine("m-"+id, 2, 4, 50, proxyComponent(id)))
-		conns = append(conns, &domain.Topology_Connection{From: id, To: "pd1", Kind: domain.Topology_Connection_KIND_PROXY})
-	}
-	return &domain.DatabasePreset{
-		Database: &domain.Database{
-			Kind:    domain.Database_KIND_PICODATA,
-			Version: "25.3",
-			Config:  cfg(configID),
-			Target:  selfHostedTarget(),
-			Options: &domain.Database_Options{Options: &domain.Database_Options_Picodata_{Picodata: &domain.Database_Options_Picodata{
-				Shards: shards,
-			}}},
-		},
-		Topology: &domain.Topology{Machines: machines, Connections: conns},
+func picodataDatabase(configID string, shards uint32) *domain.Database {
+	return &domain.Database{
+		Kind:    domain.Database_KIND_PICODATA,
+		Version: "25.3",
+		Config:  cfg(configID),
+		Target:  selfHostedTarget(),
+		Options: &domain.Database_Options{Options: &domain.Database_Options_Picodata_{Picodata: &domain.Database_Options_Picodata{Shards: shards}}},
 	}
 }
 
 // ── YDB ────────────────────────────────────────────────────────────────────
 
-// ydbCluster mirrors ha_pipeline_test.go TestYDBClusterFullPipeline: 3 storage
-// DATABASE nodes, peers wired by COORDINATION connections to the first node.
-func ydbSingle() *domain.DatabasePreset {
-	return &domain.DatabasePreset{
-		Database: &domain.Database{
-			Kind:    domain.Database_KIND_YDB,
-			Version: "24.2",
-			Config:  cfg("ydb-single"),
-			Target:  selfHostedTarget(),
-			Options: &domain.Database_Options{Options: &domain.Database_Options_Ydb_{Ydb: &domain.Database_Options_Ydb{
-				Rollout: &domain.Database_Options_Ydb_SelfHosted_{SelfHosted: &domain.Database_Options_Ydb_SelfHosted{
-					StorageNodes:   1,
-					StorageGroups:  1,
-					FaultTolerance: domain.Database_Options_Ydb_SelfHosted_FAULT_TOLERANCE_NONE,
-					FailureDomain:  domain.Database_Options_Ydb_SelfHosted_FAILURE_DOMAIN_DISK,
-				}},
-				DatabasePath: "/Root/testdb",
-			}}},
-		},
-		Topology: &domain.Topology{
-			Machines:    []*domain.Topology_Machine{machine("m-ydb1", 8, 32, 200, dbComponent("ydb1"))},
-			Connections: []*domain.Topology_Connection{selfConn("ydb1")},
-		},
-	}
+func ydbSingle() (*domain.Database, *dag.Sizing) {
+	return ydbDatabase("ydb-single", 1, 0, 1, domain.Database_Options_Ydb_SelfHosted_FAULT_TOLERANCE_NONE),
+		&dag.Sizing{Database: flavor(8, 32, 200)}
 }
 
-func ydbCluster() *domain.DatabasePreset {
-	machines := make([]*domain.Topology_Machine, 0, 3)
-	conns := make([]*domain.Topology_Connection, 0, 2)
-	ids := []string{"ydb1", "ydb2", "ydb3"}
-	for i, id := range ids {
-		machines = append(machines, machine("m-"+id, 8, 32, 200, dbComponent(id)))
-		if i > 0 {
-			conns = append(conns, &domain.Topology_Connection{
-				From: id, To: ids[0], Kind: domain.Topology_Connection_KIND_COORDINATION,
-			})
+// ydbMirror3DC is the canonical YDB mirror-3-dc deployment: a dedicated STORAGE tier
+// of 3 nodes, each with 3 × 930 GB io-m3 pdisks (= 9 fail domains across 3 realms, what
+// mirror-3-dc needs), plus a COMPUTE tier of computeNodes dynamic database nodes. The
+// "<N>x<C>" suffix in the preset name is computeNodes × compute vCPU.
+func ydbMirror3DC(configID string, computeNodes uint32, compute dag.Flavor) (*domain.Database, *dag.Sizing) {
+	return ydbDatabase(configID, 3, computeNodes, 8, domain.Database_Options_Ydb_SelfHosted_FAULT_TOLERANCE_MIRROR_3_DC),
+		&dag.Sizing{
+			Storage: dag.Flavor{Cores: 16, MemGb: 32, DiskGb: 50, DataDisksGb: []uint64{930, 930, 930}},
+			Compute: compute,
 		}
-	}
-	return &domain.DatabasePreset{
-		Database: &domain.Database{
-			Kind:    domain.Database_KIND_YDB,
-			Version: "24.2",
-			Config:  cfg("ydb-cluster"),
-			Target:  selfHostedTarget(),
-			Options: &domain.Database_Options{Options: &domain.Database_Options_Ydb_{Ydb: &domain.Database_Options_Ydb{
-				Rollout: &domain.Database_Options_Ydb_SelfHosted_{SelfHosted: &domain.Database_Options_Ydb_SelfHosted{
-					StorageNodes:   3,
-					StorageGroups:  8,
-					FaultTolerance: domain.Database_Options_Ydb_SelfHosted_FAULT_TOLERANCE_MIRROR_3_DC,
-					FailureDomain:  domain.Database_Options_Ydb_SelfHosted_FAILURE_DOMAIN_DISK,
-				}},
-				DatabasePath: "/Root/testdb",
-			}}},
-		},
-		Topology: &domain.Topology{Machines: machines, Connections: conns},
+}
+
+func ydbDatabase(configID string, storageNodes, databaseNodes, storageGroups uint32, ft domain.Database_Options_Ydb_SelfHosted_FaultTolerance) *domain.Database {
+	return &domain.Database{
+		Kind:    domain.Database_KIND_YDB,
+		Version: "24.2",
+		Config:  cfg(configID),
+		Target:  selfHostedTarget(),
+		Options: &domain.Database_Options{Options: &domain.Database_Options_Ydb_{Ydb: &domain.Database_Options_Ydb{
+			Rollout: &domain.Database_Options_Ydb_SelfHosted_{SelfHosted: &domain.Database_Options_Ydb_SelfHosted{
+				StorageNodes:   storageNodes,
+				DatabaseNodes:  databaseNodes,
+				StorageGroups:  storageGroups,
+				FaultTolerance: ft,
+				FailureDomain:  domain.Database_Options_Ydb_SelfHosted_FAILURE_DOMAIN_DISK,
+			}},
+			DatabasePath: "/Root/testdb",
+		}}},
 	}
 }
 
 // ── CockroachDB ──────────────────────────────────────────────────────────────
 
-func cockroachSingle() *domain.DatabasePreset {
-	return &domain.DatabasePreset{
-		Database: &domain.Database{
-			Kind:    domain.Database_KIND_COCKROACH,
-			Version: "24.2",
-			Config:  cfg("cockroach-single"),
-			Target:  selfHostedTarget(),
-			Options: &domain.Database_Options{Options: &domain.Database_Options_Cockroach_{Cockroach: &domain.Database_Options_Cockroach{
-				Nodes:        1,
-				ZoneReplicas: 1,
-			}}},
-		},
-		Topology: &domain.Topology{
-			Machines: []*domain.Topology_Machine{
-				machine("m-crdb1", 4, 16, 100, dbComponent("crdb1")),
-			},
-			Connections: []*domain.Topology_Connection{selfConn("crdb1")},
-		},
-	}
+func cockroachSingle() (*domain.Database, *dag.Sizing) {
+	return cockroachDatabase("cockroach-single", 1), &dag.Sizing{Database: flavor(4, 16, 100)}
 }
 
-// cockroachCluster is a 3-node cockroach cluster; the gossip mesh is modelled as
-// COORDINATION connections from each follower to the first node.
-func cockroachCluster() *domain.DatabasePreset {
-	return cockroachMulti("cockroach-cluster", 3, 4, 16, 100)
+func cockroachCluster() (*domain.Database, *dag.Sizing) {
+	return cockroachDatabase("cockroach-cluster", 3), &dag.Sizing{Database: flavor(4, 16, 100)}
 }
 
-func cockroachScale() *domain.DatabasePreset {
-	return cockroachMulti("cockroach-scale", 6, 8, 16, 200)
+func cockroachScale() (*domain.Database, *dag.Sizing) {
+	return cockroachDatabase("cockroach-scale", 6), &dag.Sizing{Database: flavor(8, 16, 200)}
 }
 
-func cockroachMulti(configID string, nodes int, cores uint32, memGb, diskGb uint64) *domain.DatabasePreset {
-	machines := make([]*domain.Topology_Machine, 0, nodes)
-	conns := make([]*domain.Topology_Connection, 0, nodes-1)
-	for i := 0; i < nodes; i++ {
-		id := "crdb" + string(rune('1'+i))
-		machines = append(machines, machine("m-"+id, cores, memGb, diskGb, dbComponent(id)))
-		if i > 0 {
-			conns = append(conns, &domain.Topology_Connection{
-				From: id, To: "crdb1", Kind: domain.Topology_Connection_KIND_COORDINATION,
-			})
-		}
-	}
-	return &domain.DatabasePreset{
-		Database: &domain.Database{
-			Kind:    domain.Database_KIND_COCKROACH,
-			Version: "24.2",
-			Config:  cfg(configID),
-			Target:  selfHostedTarget(),
-			Options: &domain.Database_Options{Options: &domain.Database_Options_Cockroach_{Cockroach: &domain.Database_Options_Cockroach{
-				Nodes:        uint32(nodes),
-				ZoneReplicas: uint32(nodes),
-			}}},
-		},
-		Topology: &domain.Topology{Machines: machines, Connections: conns},
+func cockroachDatabase(configID string, nodes uint32) *domain.Database {
+	return &domain.Database{
+		Kind:    domain.Database_KIND_COCKROACH,
+		Version: "24.2",
+		Config:  cfg(configID),
+		Target:  selfHostedTarget(),
+		Options: &domain.Database_Options{Options: &domain.Database_Options_Cockroach_{Cockroach: &domain.Database_Options_Cockroach{
+			Nodes:        nodes,
+			ZoneReplicas: nodes,
+		}}},
 	}
 }

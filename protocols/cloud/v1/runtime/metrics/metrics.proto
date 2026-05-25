@@ -67,41 +67,56 @@ message RunMetrics {
     repeated MetricSummary metrics = 3 [(validate.rules).repeated.max_items = 512];
 }
 
-/* MetricDiff compares one metric across two runs. */
-message MetricDiff {
+/* Verdict classifies a per-metric change of one run against the baseline,
+   honouring the metric's higher_is_better direction and the request threshold. */
+enum Verdict {
+    VERDICT_UNSPECIFIED = 0;
+    VERDICT_BETTER = 1;
+    VERDICT_WORSE = 2;
+    VERDICT_SAME = 3;
+}
+
+/* MetricCell is one run's value for a metric within an N-way Comparison row.
+   diff_*_pct are relative to the baseline run (Comparison.run_ids[0]); for the
+   baseline cell itself they are 0 and verdict is VERDICT_SAME. */
+message MetricCell {
+    /* run_id is the run this cell belongs to (= Comparison.run_ids[index]). */
+    string run_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    double avg = 2;
+    double max = 3;
+    /* diff_avg_pct is (cell - baseline) / baseline * 100; positive means higher. */
+    double diff_avg_pct = 4;
+    double diff_max_pct = 5;
+    Verdict verdict = 6 [(validate.rules).enum.defined_only = true];
+}
+
+/* MetricRow compares one metric across all compared runs; cells are aligned
+   1:1 with Comparison.run_ids. */
+message MetricRow {
     string key = 1 [(validate.rules).string = {min_len: 1, max_len: 256}];
     string name = 2 [(validate.rules).string.max_len = 256];
     string unit = 3 [(validate.rules).string.max_len = 32];
-    double avg_a = 4;
-    double avg_b = 5;
-    double max_a = 6;
-    double max_b = 7;
-    /* diff_avg_pct is (B - A) / A * 100; positive means B is higher. */
-    double diff_avg_pct = 8;
-    double diff_max_pct = 9;
-
-    /* Verdict classifies the per-metric change against the threshold. */
-    enum Verdict {
-        VERDICT_UNSPECIFIED = 0;
-        VERDICT_BETTER = 1;
-        VERDICT_WORSE = 2;
-        VERDICT_SAME = 3;
-    }
-    Verdict verdict = 10 [(validate.rules).enum.defined_only = true];
+    /* higher_is_better is the comparison direction as DATA (mirrors MetricSummary). */
+    bool higher_is_better = 4;
+    string group = 5 [(validate.rules).string.max_len = 64];
+    repeated MetricCell cells = 6 [(validate.rules).repeated.max_items = 16];
 }
 
-/* Comparison is the metric-by-metric diff of two runs with a roll-up verdict. */
+/* Comparison is the metric-by-metric diff of N runs (>= 2) against a baseline
+   (run_ids[0]) with a per-run roll-up verdict. */
 message Comparison {
-    string run_a = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
-    string run_b = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
-    TimeRange range = 3;
-    repeated MetricDiff metrics = 4 [(validate.rules).repeated.max_items = 512];
+    /* run_ids are the compared runs in display order; run_ids[0] is the baseline. */
+    repeated string run_ids = 1 [(validate.rules).repeated = {min_items: 2, max_items: 16}];
+    TimeRange range = 2;
+    repeated MetricRow metrics = 3 [(validate.rules).repeated.max_items = 512];
+    /* summaries roll up per non-baseline run (aligned with run_ids[1:]). */
+    repeated RunSummary summaries = 4 [(validate.rules).repeated.max_items = 16];
 
-    /* Summary rolls up per-metric verdicts. */
-    message Summary {
-        uint32 better = 1;
-        uint32 worse = 2;
-        uint32 same = 3;
+    /* RunSummary rolls up one run's per-metric verdicts against the baseline. */
+    message RunSummary {
+        string run_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+        uint32 better = 2;
+        uint32 worse = 3;
+        uint32 same = 4;
     }
-    Summary summary = 5;
 }

@@ -9,6 +9,7 @@ import type { Preset } from "@/lib/proto/cloud/v1/models/preset_pb.ts";
 
 export function presetTitle(preset: Preset) {
   return (
+    preset.name ||
     preset.tags?.labels?.title ||
     preset.tags?.labels?.name ||
     preset.tags?.labels?.display_name ||
@@ -121,7 +122,7 @@ export function testPresetSummary(preset?: TestPreset) {
   };
 }
 
-function componentKindLabel(kind: Topology_Component_Kind) {
+export function componentKindLabel(kind: Topology_Component_Kind) {
   switch (kind) {
     case Topology_Component_Kind.AGENT:
       return "agent";

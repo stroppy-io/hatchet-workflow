@@ -21,8 +21,16 @@ var StatusesToProcess = []primitive.Status{
 
 type Storage interface {
 	ListDagsByStatus(ctx context.Context, status []primitive.Status) ([]*primitive.Dag, error)
+	GetDag(ctx context.Context, id string) (*primitive.Dag, error)
 	SaveDag(ctx context.Context, dag *primitive.Dag) error
 }
+
+// MetaSuiteGated marks a per-test child dag that a suite's orchestration dag owns:
+// the processor's main loop SKIPS gated dags (so they don't all run at once), and the
+// orchestration's dag_ref node releases the gate (clears the key) when it schedules
+// the child — which is how MaxParallelism is enforced (only as many children are
+// released as the orchestration runs dag_ref nodes concurrently). suite.go sets it.
+const MetaSuiteGated = "suite_gated"
 
 type ProcessorOption func(*DagProcessor)
 
@@ -132,6 +140,9 @@ func (p *DagProcessor) processOne(ctx context.Context, id string, generation uin
 		p.tasks,
 		WithPredicates(p.predicates),
 		WithSaveHook(p.storage.SaveDag),
+		// dag_ref nodes (suite orchestration dags) drive their referenced per-test
+		// dags through the processor; the runner releases the gate + waits for terminal.
+		WithDagRefRunner(p),
 	)
 	runDag := proto.Clone(dag).(*primitive.Dag)
 	// A cancellation was requested: drive the dag to CANCELLING so the executor's
@@ -203,6 +214,48 @@ func (p *DagProcessor) clearCancel(id string) {
 	delete(p.cancelReq, id)
 }
 
+// RunDagRef drives a suite orchestration dag's dag_ref node: it releases the
+// referenced per-test child dag's gate (so the processor's main loop starts running
+// it — agent polling and all) and then blocks until that child reaches a terminal
+// status, returning it. Because the orchestration executor only runs MaxParallelism
+// dag_ref nodes concurrently (runBatch + the batch-at-a-time loop), only that many
+// children are ever released + running at once — that is how suite parallelism is
+// bounded. A cancelled context (processor stop / suite cancel) unblocks the poll.
+func (p *DagProcessor) RunDagRef(ctx context.Context, ref *primitive.Dag_Node_DagRef) (*primitive.Dag, error) {
+	id := ref.GetDagId()
+	child, err := p.storage.GetDag(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("load dag ref %q: %w", id, err)
+	}
+	if child == nil {
+		return nil, fmt.Errorf("dag ref %q not found", id)
+	}
+	// Release the gate once so the main loop picks the child up.
+	if child.GetMetadata()[MetaSuiteGated] != "" {
+		delete(child.Metadata, MetaSuiteGated)
+		if err := p.storage.SaveDag(ctx, child); err != nil {
+			return nil, fmt.Errorf("release dag ref %q: %w", id, err)
+		}
+	}
+	for {
+		if isDagTerminal(child.GetStatus()) {
+			return child, nil
+		}
+		select {
+		case <-ctx.Done():
+			return child, ctx.Err()
+		case <-time.After(p.interval):
+		}
+		child, err = p.storage.GetDag(ctx, id)
+		if err != nil {
+			return nil, fmt.Errorf("poll dag ref %q: %w", id, err)
+		}
+		if child == nil {
+			return nil, fmt.Errorf("dag ref %q vanished", id)
+		}
+	}
+}
+
 // refreshFromStorage pulls newly-submitted (or recovered) processable dags into the
 // in-memory working set each tick, so runs persisted by the API after boot get
 // picked up. Already-tracked or in-flight dags are left untouched.
@@ -213,6 +266,12 @@ func (p *DagProcessor) refreshFromStorage(ctx context.Context) {
 	}
 	for _, dag := range dags {
 		id := dag.GetId()
+		// A suite-gated per-test dag is owned by its orchestration dag's dag_ref node —
+		// the main loop must NOT run it until that node releases the gate (RunDagRef),
+		// otherwise every test would start at once and MaxParallelism would be ignored.
+		if dag.GetMetadata()[MetaSuiteGated] != "" {
+			continue
+		}
 		// Skip a dag that is mid-flight (a processOne goroutine owns it) to avoid
 		// clobbering its in-progress snapshot. Otherwise (re)load the storage copy
 		// every tick: it is the source of truth and carries agent Reports applied

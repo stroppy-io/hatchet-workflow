@@ -25,6 +25,8 @@ const (
 	TenantService_ListTenantMembers_FullMethodName      = "/cloud.v1.api.ui.TenantService/ListTenantMembers"
 	TenantService_AddMemberToTenant_FullMethodName      = "/cloud.v1.api.ui.TenantService/AddMemberToTenant"
 	TenantService_RemoveMemberFromTenant_FullMethodName = "/cloud.v1.api.ui.TenantService/RemoveMemberFromTenant"
+	TenantService_UpdateMemberRole_FullMethodName       = "/cloud.v1.api.ui.TenantService/UpdateMemberRole"
+	TenantService_LookupAccountByEmail_FullMethodName   = "/cloud.v1.api.ui.TenantService/LookupAccountByEmail"
 )
 
 // TenantServiceClient is the client API for TenantService service.
@@ -37,6 +39,10 @@ type TenantServiceClient interface {
 	// AddMemberToTenant / RemoveMemberFromTenant require OWNER of the tenant.
 	AddMemberToTenant(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*models.TenantMember, error)
 	RemoveMemberFromTenant(ctx context.Context, in *RemoveMemberRequest, opts ...grpc.CallOption) (*models.TenantMember, error)
+	// UpdateMemberRole changes a member's role; requires OWNER of the tenant.
+	UpdateMemberRole(ctx context.Context, in *UpdateMemberRoleRequest, opts ...grpc.CallOption) (*models.TenantMember, error)
+	// LookupAccountByEmail resolves an account by exact email (OWNER, to add members).
+	LookupAccountByEmail(ctx context.Context, in *LookupAccountByEmailRequest, opts ...grpc.CallOption) (*models.Account, error)
 }
 
 type tenantServiceClient struct {
@@ -87,6 +93,26 @@ func (c *tenantServiceClient) RemoveMemberFromTenant(ctx context.Context, in *Re
 	return out, nil
 }
 
+func (c *tenantServiceClient) UpdateMemberRole(ctx context.Context, in *UpdateMemberRoleRequest, opts ...grpc.CallOption) (*models.TenantMember, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(models.TenantMember)
+	err := c.cc.Invoke(ctx, TenantService_UpdateMemberRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tenantServiceClient) LookupAccountByEmail(ctx context.Context, in *LookupAccountByEmailRequest, opts ...grpc.CallOption) (*models.Account, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(models.Account)
+	err := c.cc.Invoke(ctx, TenantService_LookupAccountByEmail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TenantServiceServer is the server API for TenantService service.
 // All implementations must embed UnimplementedTenantServiceServer
 // for forward compatibility.
@@ -97,6 +123,10 @@ type TenantServiceServer interface {
 	// AddMemberToTenant / RemoveMemberFromTenant require OWNER of the tenant.
 	AddMemberToTenant(context.Context, *AddMemberRequest) (*models.TenantMember, error)
 	RemoveMemberFromTenant(context.Context, *RemoveMemberRequest) (*models.TenantMember, error)
+	// UpdateMemberRole changes a member's role; requires OWNER of the tenant.
+	UpdateMemberRole(context.Context, *UpdateMemberRoleRequest) (*models.TenantMember, error)
+	// LookupAccountByEmail resolves an account by exact email (OWNER, to add members).
+	LookupAccountByEmail(context.Context, *LookupAccountByEmailRequest) (*models.Account, error)
 	mustEmbedUnimplementedTenantServiceServer()
 }
 
@@ -118,6 +148,12 @@ func (UnimplementedTenantServiceServer) AddMemberToTenant(context.Context, *AddM
 }
 func (UnimplementedTenantServiceServer) RemoveMemberFromTenant(context.Context, *RemoveMemberRequest) (*models.TenantMember, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveMemberFromTenant not implemented")
+}
+func (UnimplementedTenantServiceServer) UpdateMemberRole(context.Context, *UpdateMemberRoleRequest) (*models.TenantMember, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateMemberRole not implemented")
+}
+func (UnimplementedTenantServiceServer) LookupAccountByEmail(context.Context, *LookupAccountByEmailRequest) (*models.Account, error) {
+	return nil, status.Error(codes.Unimplemented, "method LookupAccountByEmail not implemented")
 }
 func (UnimplementedTenantServiceServer) mustEmbedUnimplementedTenantServiceServer() {}
 func (UnimplementedTenantServiceServer) testEmbeddedByValue()                       {}
@@ -212,6 +248,42 @@ func _TenantService_RemoveMemberFromTenant_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TenantService_UpdateMemberRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMemberRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TenantServiceServer).UpdateMemberRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TenantService_UpdateMemberRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TenantServiceServer).UpdateMemberRole(ctx, req.(*UpdateMemberRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TenantService_LookupAccountByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LookupAccountByEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TenantServiceServer).LookupAccountByEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TenantService_LookupAccountByEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TenantServiceServer).LookupAccountByEmail(ctx, req.(*LookupAccountByEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TenantService_ServiceDesc is the grpc.ServiceDesc for TenantService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -234,6 +306,14 @@ var TenantService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveMemberFromTenant",
 			Handler:    _TenantService_RemoveMemberFromTenant_Handler,
+		},
+		{
+			MethodName: "UpdateMemberRole",
+			Handler:    _TenantService_UpdateMemberRole_Handler,
+		},
+		{
+			MethodName: "LookupAccountByEmail",
+			Handler:    _TenantService_LookupAccountByEmail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

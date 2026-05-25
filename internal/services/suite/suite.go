@@ -6,14 +6,18 @@ package suite
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/gopherex/pgtx/pkg/tx"
 	"github.com/gopherex/xlog"
+	"github.com/yaroher/ratel/pkg/dml/set"
 	"github.com/yaroher/ratel/pkg/exec"
 	"github.com/yaroher/ratel/pkg/repository"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	uiapi "github.com/stroppy-io/stroppy-cloud/internal/api/ui"
 	dagdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/dag"
@@ -120,6 +124,97 @@ func (s *SuiteService) GetSuite(ctx context.Context, req *uipb.GetSuiteRequest) 
 		})
 }
 
+// suiteUpdatableColumns maps proto field paths (models.Suite) to the mutable
+// suite columns a FieldMask may select. id/owner/timestamps are never writable.
+var suiteUpdatableColumns = map[string]models.SuiteColumnAlias{
+	"name":        models.SuiteColumnName,
+	"description": models.SuiteColumnDescription,
+	"preset":      models.SuiteColumnPreset,
+	"cron":        models.SuiteColumnCron,
+	"tags":        models.SuiteColumnTags,
+}
+
+// suiteMutableColumns is the full-replace set written when update_mask is empty.
+var suiteMutableColumns = []models.SuiteColumnAlias{
+	models.SuiteColumnName,
+	models.SuiteColumnDescription,
+	models.SuiteColumnPreset,
+	models.SuiteColumnCron,
+	models.SuiteColumnTags,
+}
+
+// UpdateSuite edits a suite's mutable fields named by update_mask (id/owner/
+// created_at preserved, updated_at bumped). Empty mask = full replace.
+func (s *SuiteService) UpdateSuite(ctx context.Context, req *uipb.UpdateSuiteRequest) (*models.Suite, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "UpdateSuite",
+		func(ctx context.Context, _ trace.Span) (*models.Suite, error) {
+			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_ADMIN); err != nil {
+				return nil, err
+			}
+			suite := req.GetSuite()
+			id := suite.GetEntity().GetId().GetValue()
+			existing, err := s.suites.QueryRow(ctx, models.Suites.SelectAll().Where(
+				models.Suites.Id.Eq(id),
+				models.Suites.TenantId.Eq(req.GetTenantId().GetValue()),
+				models.Suites.DeletedAt.IsNull(),
+			))
+			if err != nil {
+				return nil, svcutil.NotFound(err, "suite")
+			}
+			// Preserve identity + ownership; bump updated_at.
+			suite.Entity = existing.GetEntity()
+			suite.Owned = existing.GetOwned()
+			scanner := suite.IntoPlain()
+			nilEmptySuiteJSONB(scanner)
+			scanner.UpdatedAt = time.Now()
+			setters := maskedSuiteSetters(scanner, req.GetUpdateMask().GetPaths())
+			setters = append(setters, models.Suites.UpdatedAt.Set(scanner.UpdatedAt))
+			updated, err := s.suites.QueryRow(ctx,
+				models.Suites.Update().Set(setters...).Where(models.Suites.Id.Eq(id)).ReturningAll())
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "update suite: %v", err)
+			}
+			return updated, nil
+		})
+}
+
+// maskedSuiteSetters builds column setters for a partial suite UPDATE honoring a
+// FieldMask path list; empty/nil mask falls back to the full mutable set.
+func maskedSuiteSetters(scanner *models.SuiteScanner, paths []string) []set.ValueSetter[models.SuiteColumnAlias] {
+	cols := suiteMutableColumns
+	if len(paths) > 0 {
+		cols = nil
+		seen := make(map[models.SuiteColumnAlias]struct{}, len(paths))
+		for _, p := range paths {
+			col, ok := suiteUpdatableColumns[p]
+			if !ok {
+				continue
+			}
+			if _, dup := seen[col]; dup {
+				continue
+			}
+			seen[col] = struct{}{}
+			cols = append(cols, col)
+		}
+	}
+	setters := make([]set.ValueSetter[models.SuiteColumnAlias], 0, len(cols))
+	for _, col := range cols {
+		setters = append(setters, scanner.GetSetter(col)())
+	}
+	return setters
+}
+
+// nilEmptySuiteJSONB binds absent JSONB bodies to nil (IntoPlain writes []byte{}
+// which Postgres rejects as invalid jsonb).
+func nilEmptySuiteJSONB(s *models.SuiteScanner) {
+	if len(s.Preset) == 0 {
+		s.Preset = nil
+	}
+	if len(s.Cron) == 0 {
+		s.Cron = nil
+	}
+}
+
 // LaunchSuiteRun compiles every test in the suite into its own Dag and builds an
 // orchestration Dag of dag_ref nodes (dag.BuildSuiteDag maps SuitePreset.Scheduling:
 // sequential -> chained edges, parallel -> MaxParallelism, + on_node_failure);
@@ -149,15 +244,28 @@ func (s *SuiteService) LaunchSuiteRun(ctx context.Context, req *uipb.LaunchSuite
 			var testDagIDs []string
 
 			for i, tp := range suite.GetPreset().GetTests() {
-				dep, err := s.provider.Resolve(ctx, tenant.GetValue(), tp)
+				// Suite tests can run concurrently (parallel scheduling), but a preset's
+				// topology machine ids ("load1", "m-db1", ...) are reused across tests —
+				// and the docker container name + the agent's identity (and thus the
+				// command-queue lease routing) are keyed by machine id. Two concurrent
+				// tests sharing a machine id would create the same container ("stroppy-load1")
+				// — the second deploy force-removes the first's — and an agent polling that
+				// id could be leased a node from the wrong dag. Give every test a per-run
+				// unique machine-id namespace so each test's infra is fully isolated.
+				scoped := scopeMachineIDs(tp, fmt.Sprintf("%s-%d", suiteRunEntity.GetId().GetValue(), i))
+				dep, err := s.provider.Resolve(ctx, tenant.GetValue(), scoped)
 				if err != nil {
 					return nil, status.Errorf(codes.Internal, "resolve deployment %d: %v", i, err)
 				}
-				dag := dagdomain.BuildTestDag(tp, dep, dagdomain.Deps{Install: dagdomain.RecipeInstallBuilder{}})
+				dag := dagdomain.BuildTestDag(scoped, dep, dagdomain.Deps{Install: dagdomain.RecipeInstallBuilder{}})
 				if dag.Metadata == nil {
 					dag.Metadata = map[string]string{}
 				}
 				dag.Metadata[metadataTenantID] = tenant.GetValue()
+				// Gate each per-test dag: the processor's main loop skips gated dags, so
+				// they don't all start at once — the orchestration dag's dag_ref node
+				// releases the gate when it schedules the test (bounded by MaxParallelism).
+				dag.Metadata[runtime.MetaSuiteGated] = "1"
 				if err := runtime.ValidateDag(dag); err != nil {
 					return nil, status.Errorf(codes.Internal, "invalid dag for test %d: %v", i, err)
 				}
@@ -165,7 +273,7 @@ func (s *SuiteService) LaunchSuiteRun(ctx context.Context, req *uipb.LaunchSuite
 				testRuns = append(testRuns, &models.TestRun{
 					Entity:     ids.NewEntity(),
 					Owned:      &models.Own{OwnerAccountId: c.AccountID, TenantId: tenant},
-					TestPreset: tp,
+					TestPreset: tp, // store the original (un-scoped) preset for display
 					Dag:        &models.DagId{Value: dag.GetId()},
 					SuiteRunId: suiteRunID,
 				})
@@ -364,6 +472,19 @@ func (s *SuiteService) loadSuiteRun(ctx context.Context, tenantID, suiteRunID st
 		return nil, svcutil.NotFound(err, "suite run")
 	}
 	return sr, nil
+}
+
+// scopeMachineIDs returns a deep copy of the preset whose topology machine ids are all
+// prefixed with a per-run-unique token, so concurrently-running suite tests never share
+// a machine id (and therefore never collide on container names or command-queue lease
+// routing). Only Machine.Id changes; component ids — which the workload FLOW connections
+// and the renderers reference — are untouched, so the deployment + dag stay consistent.
+func scopeMachineIDs(tp *domain.TestPreset, prefix string) *domain.TestPreset {
+	out := proto.Clone(tp).(*domain.TestPreset)
+	for _, m := range out.GetTopology().GetMachines() {
+		m.Id = prefix + "-" + m.GetId()
+	}
+	return out
 }
 
 func isTerminal(st primitive.Status) bool {

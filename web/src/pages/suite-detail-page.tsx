@@ -1,9 +1,14 @@
-import { ArrowLeft, Play } from "lucide-react";
+import { useState } from "react";
+import { create } from "@bufbuild/protobuf";
+import { ArrowLeft, Pencil, Play } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import { FormDialog } from "@/components/form-dialog";
 import { Panel } from "@/components/panel";
 import { StateBlock } from "@/components/state-block";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAction } from "@/hooks/use-action";
 import { useListQuery } from "@/hooks/use-list-query";
 import { useTenantId } from "@/hooks/use-tenant-id";
@@ -13,23 +18,52 @@ import { testPresetSummary } from "@/lib/preset-summary";
 import { idMessage, tenantIdMessage } from "@/lib/proto";
 import { tenantPath } from "@/lib/routes";
 import { notifySuccess } from "@/lib/toast";
+import { SuiteSchema } from "@/lib/proto/cloud/v1/models/testing_pb.ts";
 
 export function SuiteDetailPage() {
   const tenantId = useTenantId();
   const { suiteId = "" } = useParams();
   const navigate = useNavigate();
 
-  const result = useListQuery(() => api.suite.getSuite({ tenantId: tenantIdMessage(tenantId), suiteId: idMessage(suiteId) }), [tenantId, suiteId]);
+  const [reloadKey, setReloadKey] = useState(0);
+  const result = useListQuery(() => api.suite.getSuite({ tenantId: tenantIdMessage(tenantId), suiteId: idMessage(suiteId) }), [tenantId, suiteId, reloadKey]);
   const suite = result.data;
   const preset = suite?.preset;
 
   const launch = useAction(() => api.suite.launchSuiteRun({ tenantId: tenantIdMessage(tenantId), suiteId: idMessage(suiteId) }));
+
+  // Edit (name + description) via UpdateSuite + FieldMask.
+  const [editOpen, setEditOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const save = useAction(() =>
+    api.suite.updateSuite({
+      tenantId: tenantIdMessage(tenantId),
+      suite: create(SuiteSchema, { ...suite, name, description }),
+      updateMask: { paths: ["name", "description"] },
+    }),
+  );
 
   async function doLaunch() {
     const response = await launch.run();
     if (!response) return;
     notifySuccess("Suite run launched");
     navigate(tenantPath(tenantId, `/suite-runs/${response.entity?.id?.value ?? ""}`));
+  }
+
+  function openEdit() {
+    setName(suite?.name ?? "");
+    setDescription(suite?.description ?? "");
+    save.reset();
+    setEditOpen(true);
+  }
+
+  async function submitEdit() {
+    const response = await save.run();
+    if (!response) return;
+    setEditOpen(false);
+    notifySuccess("Suite updated");
+    setReloadKey((key) => key + 1);
   }
 
   const scheduling = preset?.scheduling?.mode.case === "parallel" ? `Parallel ×${preset.scheduling.mode.value.maxParallel}` : preset?.scheduling?.mode.case === "sequential" ? "Sequential" : "—";
@@ -46,10 +80,16 @@ export function SuiteDetailPage() {
             <p className="mt-1 font-mono text-xs text-muted-foreground">{suiteId}</p>
           </div>
         </div>
-        <Button size="sm" onClick={doLaunch} disabled={launch.loading}>
-          <Play />
-          {launch.loading ? "Launching…" : "Launch"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={openEdit} disabled={!suite}>
+            <Pencil />
+            Edit
+          </Button>
+          <Button size="sm" onClick={doLaunch} disabled={launch.loading}>
+            <Play />
+            {launch.loading ? "Launching…" : "Launch"}
+          </Button>
+        </div>
       </div>
 
       <StateBlock loading={result.loading && !suite} error={result.error} empty={!result.loading && !suite} emptyMessage="Suite not found.">
@@ -86,6 +126,26 @@ export function SuiteDetailPage() {
           </div>
         ) : null}
       </StateBlock>
+
+      <FormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        title="Edit suite"
+        submitLabel="Save"
+        onSubmit={submitEdit}
+        loading={save.loading}
+        error={save.error}
+        submitDisabled={!name.trim()}
+      >
+        <div className="space-y-2">
+          <Label>Name</Label>
+          <Input value={name} onChange={(event) => setName(event.target.value)} autoFocus />
+        </div>
+        <div className="space-y-2">
+          <Label>Description</Label>
+          <Input value={description} onChange={(event) => setDescription(event.target.value)} />
+        </div>
+      </FormDialog>
     </section>
   );
 }

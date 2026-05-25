@@ -16,6 +16,7 @@ import (
 type SuiteActions interface {
 	CreateSuite(ctx context.Context, req *uipb.CreateSuiteRequest) (*models.Suite, error)
 	GetSuite(ctx context.Context, req *uipb.GetSuiteRequest) (*models.Suite, error)
+	UpdateSuite(ctx context.Context, req *uipb.UpdateSuiteRequest) (*models.Suite, error)
 	ListSuites(ctx context.Context, req *uipb.ListSuitesRequest) (*uipb.ListSuitesResponse, error)
 	LaunchSuiteRun(ctx context.Context, req *uipb.LaunchSuiteRunRequest) (*models.SuiteRun, error)
 	GetSuiteRun(ctx context.Context, req *uipb.GetSuiteRunRequest) (*models.SuiteRun, error)
@@ -51,6 +52,13 @@ func (s *SuiteService) GetSuite(ctx context.Context, req *uipb.GetSuiteRequest) 
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "GetSuite",
 		func(ctx context.Context, _ trace.Span) (*models.Suite, error) {
 			return s.svc.GetSuite(ctx, req)
+		})
+}
+
+func (s *SuiteService) UpdateSuite(ctx context.Context, req *uipb.UpdateSuiteRequest) (*models.Suite, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "UpdateSuite",
+		func(ctx context.Context, _ trace.Span) (*models.Suite, error) {
+			return s.svc.UpdateSuite(ctx, req)
 		})
 }
 

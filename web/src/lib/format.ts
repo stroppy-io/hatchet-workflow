@@ -22,6 +22,18 @@ export function formatTimestamp(timestamp?: Timestamp) {
   }).format(new Date(millis));
 }
 
+// Compact timestamp for dense table cells (relative for recent, short date else).
+export function formatTimestampShort(timestamp?: Timestamp) {
+  if (!timestamp) return "—";
+  const millis = Number(timestamp.seconds) * 1000 + Math.floor(timestamp.nanos / 1_000_000);
+  if (!Number.isFinite(millis) || millis <= 0) return "—";
+  const diffSec = (Date.now() - millis) / 1000;
+  if (diffSec >= 0 && diffSec < 60) return "just now";
+  if (diffSec >= 0 && diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+  if (diffSec >= 0 && diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(new Date(millis));
+}
+
 export function formatBool(value: boolean | undefined, trueLabel = "Yes", falseLabel = "No") {
   if (value === undefined) return "Any";
   return value ? trueLabel : falseLabel;
@@ -67,9 +79,34 @@ export function statusLabel(status?: Status) {
       return "Failed";
     case Status.SKIPPED:
       return "Skipped";
+    case Status.CANCELLING:
+      return "Cancelling";
+    case Status.CANCELLED:
+      return "Cancelled";
     default:
-      return "Any";
+      return "Unknown";
   }
+}
+
+function timestampMs(ts?: Timestamp) {
+  if (!ts) return 0;
+  const ms = Number(ts.seconds) * 1000 + Math.floor(ts.nanos / 1_000_000);
+  return Number.isFinite(ms) && ms > 0 ? ms : 0;
+}
+
+// Human duration between two timestamps; if end is absent, measures up to now.
+export function formatDuration(start?: Timestamp, end?: Timestamp) {
+  const startMs = timestampMs(start);
+  if (!startMs) return "—";
+  const endMs = end ? timestampMs(end) : Date.now();
+  let sec = Math.max(0, Math.floor((endMs - startMs) / 1000));
+  const hours = Math.floor(sec / 3600);
+  sec %= 3600;
+  const minutes = Math.floor(sec / 60);
+  const seconds = sec % 60;
+  if (hours) return `${hours}h ${minutes}m`;
+  if (minutes) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
 }
 
 export function providerLabel(provider?: Provider) {

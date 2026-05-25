@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	SuiteService_CreateSuite_FullMethodName    = "/cloud.v1.api.ui.SuiteService/CreateSuite"
 	SuiteService_GetSuite_FullMethodName       = "/cloud.v1.api.ui.SuiteService/GetSuite"
+	SuiteService_UpdateSuite_FullMethodName    = "/cloud.v1.api.ui.SuiteService/UpdateSuite"
 	SuiteService_ListSuites_FullMethodName     = "/cloud.v1.api.ui.SuiteService/ListSuites"
 	SuiteService_LaunchSuiteRun_FullMethodName = "/cloud.v1.api.ui.SuiteService/LaunchSuiteRun"
 	SuiteService_GetSuiteRun_FullMethodName    = "/cloud.v1.api.ui.SuiteService/GetSuiteRun"
@@ -35,6 +36,8 @@ const (
 type SuiteServiceClient interface {
 	CreateSuite(ctx context.Context, in *CreateSuiteRequest, opts ...grpc.CallOption) (*models.Suite, error)
 	GetSuite(ctx context.Context, in *GetSuiteRequest, opts ...grpc.CallOption) (*models.Suite, error)
+	// UpdateSuite edits suite fields named by update_mask (OWNER/ADMIN per RBAC).
+	UpdateSuite(ctx context.Context, in *UpdateSuiteRequest, opts ...grpc.CallOption) (*models.Suite, error)
 	ListSuites(ctx context.Context, in *ListSuitesRequest, opts ...grpc.CallOption) (*ListSuitesResponse, error)
 	LaunchSuiteRun(ctx context.Context, in *LaunchSuiteRunRequest, opts ...grpc.CallOption) (*models.SuiteRun, error)
 	GetSuiteRun(ctx context.Context, in *GetSuiteRunRequest, opts ...grpc.CallOption) (*models.SuiteRun, error)
@@ -64,6 +67,16 @@ func (c *suiteServiceClient) GetSuite(ctx context.Context, in *GetSuiteRequest, 
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(models.Suite)
 	err := c.cc.Invoke(ctx, SuiteService_GetSuite_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *suiteServiceClient) UpdateSuite(ctx context.Context, in *UpdateSuiteRequest, opts ...grpc.CallOption) (*models.Suite, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(models.Suite)
+	err := c.cc.Invoke(ctx, SuiteService_UpdateSuite_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -126,6 +139,8 @@ func (c *suiteServiceClient) CancelSuiteRun(ctx context.Context, in *CancelSuite
 type SuiteServiceServer interface {
 	CreateSuite(context.Context, *CreateSuiteRequest) (*models.Suite, error)
 	GetSuite(context.Context, *GetSuiteRequest) (*models.Suite, error)
+	// UpdateSuite edits suite fields named by update_mask (OWNER/ADMIN per RBAC).
+	UpdateSuite(context.Context, *UpdateSuiteRequest) (*models.Suite, error)
 	ListSuites(context.Context, *ListSuitesRequest) (*ListSuitesResponse, error)
 	LaunchSuiteRun(context.Context, *LaunchSuiteRunRequest) (*models.SuiteRun, error)
 	GetSuiteRun(context.Context, *GetSuiteRunRequest) (*models.SuiteRun, error)
@@ -146,6 +161,9 @@ func (UnimplementedSuiteServiceServer) CreateSuite(context.Context, *CreateSuite
 }
 func (UnimplementedSuiteServiceServer) GetSuite(context.Context, *GetSuiteRequest) (*models.Suite, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSuite not implemented")
+}
+func (UnimplementedSuiteServiceServer) UpdateSuite(context.Context, *UpdateSuiteRequest) (*models.Suite, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateSuite not implemented")
 }
 func (UnimplementedSuiteServiceServer) ListSuites(context.Context, *ListSuitesRequest) (*ListSuitesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListSuites not implemented")
@@ -215,6 +233,24 @@ func _SuiteService_GetSuite_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SuiteServiceServer).GetSuite(ctx, req.(*GetSuiteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SuiteService_UpdateSuite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateSuiteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SuiteServiceServer).UpdateSuite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SuiteService_UpdateSuite_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SuiteServiceServer).UpdateSuite(ctx, req.(*UpdateSuiteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -323,6 +359,10 @@ var SuiteService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSuite",
 			Handler:    _SuiteService_GetSuite_Handler,
+		},
+		{
+			MethodName: "UpdateSuite",
+			Handler:    _SuiteService_UpdateSuite_Handler,
 		},
 		{
 			MethodName: "ListSuites",

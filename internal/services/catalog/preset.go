@@ -116,6 +116,28 @@ func (s *PresetService) ListPresets(ctx context.Context, req *uipb.ListPresetReq
 		})
 }
 
+// GetPreset fetches one preset by id — the tenant's own or a shared system preset.
+func (s *PresetService) GetPreset(ctx context.Context, req *uipb.GetPresetRequest) (*models.Preset, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "GetPreset",
+		func(ctx context.Context, _ trace.Span) (*models.Preset, error) {
+			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
+				return nil, err
+			}
+			preset, err := s.presets.QueryRow(ctx, models.Presets.SelectAll().Where(
+				models.Presets.Id.Eq(req.GetId().GetValue()),
+				models.Presets.Or(
+					models.Presets.TenantId.Eq(req.GetTenantId().GetValue()),
+					models.Presets.IsSystem.Eq(true),
+				),
+				models.Presets.DeletedAt.IsNull(),
+			))
+			if err != nil {
+				return nil, svcutil.NotFound(err, "preset")
+			}
+			return preset, nil
+		})
+}
+
 // CreatePreset stores a new preset owned by the caller in the preset's tenant.
 func (s *PresetService) CreatePreset(ctx context.Context, preset *models.Preset) (*models.Preset, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "CreatePreset",

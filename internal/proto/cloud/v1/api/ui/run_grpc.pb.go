@@ -11,6 +11,7 @@ import (
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	logs "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/logs"
 	metrics "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/metrics"
+	primitive "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -24,7 +25,9 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	RunService_SubmitTestRun_FullMethodName     = "/cloud.v1.api.ui.RunService/SubmitTestRun"
 	RunService_GetTestRun_FullMethodName        = "/cloud.v1.api.ui.RunService/GetTestRun"
+	RunService_GetTestRunDag_FullMethodName     = "/cloud.v1.api.ui.RunService/GetTestRunDag"
 	RunService_ListTestRuns_FullMethodName      = "/cloud.v1.api.ui.RunService/ListTestRuns"
+	RunService_ListAgents_FullMethodName        = "/cloud.v1.api.ui.RunService/ListAgents"
 	RunService_CancelTestRun_FullMethodName     = "/cloud.v1.api.ui.RunService/CancelTestRun"
 	RunService_StreamTestRunLogs_FullMethodName = "/cloud.v1.api.ui.RunService/StreamTestRunLogs"
 	RunService_QueryRunLogs_FullMethodName      = "/cloud.v1.api.ui.RunService/QueryRunLogs"
@@ -42,7 +45,11 @@ type RunServiceClient interface {
 	// --- run lifecycle (tenant-scoped) ---
 	SubmitTestRun(ctx context.Context, in *SubmitTestRunRequest, opts ...grpc.CallOption) (*models.TestRun, error)
 	GetTestRun(ctx context.Context, in *GetTestRunRequest, opts ...grpc.CallOption) (*models.TestRun, error)
+	// GetTestRunDag returns the run's compiled+executing Dag (nodes/edges/status) for the graph view.
+	GetTestRunDag(ctx context.Context, in *GetTestRunRequest, opts ...grpc.CallOption) (*primitive.Dag, error)
 	ListTestRuns(ctx context.Context, in *ListTestRunsRequest, opts ...grpc.CallOption) (*ListTestRunsResponse, error)
+	// ListAgents lists the tenant's agents (for run topology overlay; machine == agent).
+	ListAgents(ctx context.Context, in *ListAgentsRequest, opts ...grpc.CallOption) (*ListAgentsResponse, error)
 	CancelTestRun(ctx context.Context, in *CancelTestRunRequest, opts ...grpc.CallOption) (*models.TestRun, error)
 	// StreamTestRunLogs is a connect-go server-stream of unified log lines (F2).
 	StreamTestRunLogs(ctx context.Context, in *StreamTestRunLogsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[logs.LogLine], error)
@@ -85,10 +92,30 @@ func (c *runServiceClient) GetTestRun(ctx context.Context, in *GetTestRunRequest
 	return out, nil
 }
 
+func (c *runServiceClient) GetTestRunDag(ctx context.Context, in *GetTestRunRequest, opts ...grpc.CallOption) (*primitive.Dag, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(primitive.Dag)
+	err := c.cc.Invoke(ctx, RunService_GetTestRunDag_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *runServiceClient) ListTestRuns(ctx context.Context, in *ListTestRunsRequest, opts ...grpc.CallOption) (*ListTestRunsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListTestRunsResponse)
 	err := c.cc.Invoke(ctx, RunService_ListTestRuns_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *runServiceClient) ListAgents(ctx context.Context, in *ListAgentsRequest, opts ...grpc.CallOption) (*ListAgentsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAgentsResponse)
+	err := c.cc.Invoke(ctx, RunService_ListAgents_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +218,11 @@ type RunServiceServer interface {
 	// --- run lifecycle (tenant-scoped) ---
 	SubmitTestRun(context.Context, *SubmitTestRunRequest) (*models.TestRun, error)
 	GetTestRun(context.Context, *GetTestRunRequest) (*models.TestRun, error)
+	// GetTestRunDag returns the run's compiled+executing Dag (nodes/edges/status) for the graph view.
+	GetTestRunDag(context.Context, *GetTestRunRequest) (*primitive.Dag, error)
 	ListTestRuns(context.Context, *ListTestRunsRequest) (*ListTestRunsResponse, error)
+	// ListAgents lists the tenant's agents (for run topology overlay; machine == agent).
+	ListAgents(context.Context, *ListAgentsRequest) (*ListAgentsResponse, error)
 	CancelTestRun(context.Context, *CancelTestRunRequest) (*models.TestRun, error)
 	// StreamTestRunLogs is a connect-go server-stream of unified log lines (F2).
 	StreamTestRunLogs(*StreamTestRunLogsRequest, grpc.ServerStreamingServer[logs.LogLine]) error
@@ -220,8 +251,14 @@ func (UnimplementedRunServiceServer) SubmitTestRun(context.Context, *SubmitTestR
 func (UnimplementedRunServiceServer) GetTestRun(context.Context, *GetTestRunRequest) (*models.TestRun, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetTestRun not implemented")
 }
+func (UnimplementedRunServiceServer) GetTestRunDag(context.Context, *GetTestRunRequest) (*primitive.Dag, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetTestRunDag not implemented")
+}
 func (UnimplementedRunServiceServer) ListTestRuns(context.Context, *ListTestRunsRequest) (*ListTestRunsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListTestRuns not implemented")
+}
+func (UnimplementedRunServiceServer) ListAgents(context.Context, *ListAgentsRequest) (*ListAgentsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListAgents not implemented")
 }
 func (UnimplementedRunServiceServer) CancelTestRun(context.Context, *CancelTestRunRequest) (*models.TestRun, error) {
 	return nil, status.Error(codes.Unimplemented, "method CancelTestRun not implemented")
@@ -304,6 +341,24 @@ func _RunService_GetTestRun_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RunService_GetTestRunDag_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTestRunRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RunServiceServer).GetTestRunDag(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RunService_GetTestRunDag_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RunServiceServer).GetTestRunDag(ctx, req.(*GetTestRunRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _RunService_ListTestRuns_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListTestRunsRequest)
 	if err := dec(in); err != nil {
@@ -318,6 +373,24 @@ func _RunService_ListTestRuns_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RunServiceServer).ListTestRuns(ctx, req.(*ListTestRunsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RunService_ListAgents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAgentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RunServiceServer).ListAgents(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RunService_ListAgents_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RunServiceServer).ListAgents(ctx, req.(*ListAgentsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -475,8 +548,16 @@ var RunService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _RunService_GetTestRun_Handler,
 		},
 		{
+			MethodName: "GetTestRunDag",
+			Handler:    _RunService_GetTestRunDag_Handler,
+		},
+		{
 			MethodName: "ListTestRuns",
 			Handler:    _RunService_ListTestRuns_Handler,
+		},
+		{
+			MethodName: "ListAgents",
+			Handler:    _RunService_ListAgents_Handler,
 		},
 		{
 			MethodName: "CancelTestRun",

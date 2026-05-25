@@ -16,6 +16,7 @@ import (
 // reusable Preset{DATABASE|WORKLOAD|TEST} catalog. internal/services implements it.
 type PresetActions interface {
 	ListPresets(ctx context.Context, req *uipb.ListPresetRequest) (*uipb.ListPresetsResponse, error)
+	GetPreset(ctx context.Context, req *uipb.GetPresetRequest) (*models.Preset, error)
 	CreatePreset(ctx context.Context, req *models.Preset) (*models.Preset, error)
 	UpdatePreset(ctx context.Context, req *models.Preset) (*models.Preset, error)
 	DeletePreset(ctx context.Context, req *uipb.DeletePresetRequest) (*emptypb.Empty, error)
@@ -43,6 +44,13 @@ func (s *PresetService) ListPresets(ctx context.Context, req *uipb.ListPresetReq
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "ListPresets",
 		func(ctx context.Context, _ trace.Span) (*uipb.ListPresetsResponse, error) {
 			return s.svc.ListPresets(ctx, req)
+		})
+}
+
+func (s *PresetService) GetPreset(ctx context.Context, req *uipb.GetPresetRequest) (*models.Preset, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "GetPreset",
+		func(ctx context.Context, _ trace.Span) (*models.Preset, error) {
+			return s.svc.GetPreset(ctx, req)
 		})
 }
 

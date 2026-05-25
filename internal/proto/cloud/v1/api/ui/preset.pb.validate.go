@@ -835,3 +835,183 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ClonePresetRequestValidationError{}
+
+// Validate checks the field values on GetPresetRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *GetPresetRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetPresetRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetPresetRequestMultiError, or nil if none found.
+func (m *GetPresetRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetPresetRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetTenantId() == nil {
+		err := GetPresetRequestValidationError{
+			field:  "TenantId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTenantId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetPresetRequestValidationError{
+					field:  "TenantId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetPresetRequestValidationError{
+					field:  "TenantId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTenantId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetPresetRequestValidationError{
+				field:  "TenantId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetId() == nil {
+		err := GetPresetRequestValidationError{
+			field:  "Id",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetPresetRequestValidationError{
+					field:  "Id",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetPresetRequestValidationError{
+					field:  "Id",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetPresetRequestValidationError{
+				field:  "Id",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return GetPresetRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetPresetRequestMultiError is an error wrapping multiple validation errors
+// returned by GetPresetRequest.ValidateAll() if the designated constraints
+// aren't met.
+type GetPresetRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetPresetRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetPresetRequestMultiError) AllErrors() []error { return m }
+
+// GetPresetRequestValidationError is the validation error returned by
+// GetPresetRequest.Validate if the designated constraints aren't met.
+type GetPresetRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetPresetRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetPresetRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetPresetRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetPresetRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetPresetRequestValidationError) ErrorName() string { return "GetPresetRequestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e GetPresetRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetPresetRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetPresetRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetPresetRequestValidationError{}

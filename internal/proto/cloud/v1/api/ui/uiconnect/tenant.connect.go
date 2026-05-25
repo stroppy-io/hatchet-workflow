@@ -47,6 +47,12 @@ const (
 	// TenantServiceRemoveMemberFromTenantProcedure is the fully-qualified name of the TenantService's
 	// RemoveMemberFromTenant RPC.
 	TenantServiceRemoveMemberFromTenantProcedure = "/cloud.v1.api.ui.TenantService/RemoveMemberFromTenant"
+	// TenantServiceUpdateMemberRoleProcedure is the fully-qualified name of the TenantService's
+	// UpdateMemberRole RPC.
+	TenantServiceUpdateMemberRoleProcedure = "/cloud.v1.api.ui.TenantService/UpdateMemberRole"
+	// TenantServiceLookupAccountByEmailProcedure is the fully-qualified name of the TenantService's
+	// LookupAccountByEmail RPC.
+	TenantServiceLookupAccountByEmailProcedure = "/cloud.v1.api.ui.TenantService/LookupAccountByEmail"
 )
 
 // TenantServiceClient is a client for the cloud.v1.api.ui.TenantService service.
@@ -57,6 +63,10 @@ type TenantServiceClient interface {
 	// AddMemberToTenant / RemoveMemberFromTenant require OWNER of the tenant.
 	AddMemberToTenant(context.Context, *ui.AddMemberRequest) (*models.TenantMember, error)
 	RemoveMemberFromTenant(context.Context, *ui.RemoveMemberRequest) (*models.TenantMember, error)
+	// UpdateMemberRole changes a member's role; requires OWNER of the tenant.
+	UpdateMemberRole(context.Context, *ui.UpdateMemberRoleRequest) (*models.TenantMember, error)
+	// LookupAccountByEmail resolves an account by exact email (OWNER, to add members).
+	LookupAccountByEmail(context.Context, *ui.LookupAccountByEmailRequest) (*models.Account, error)
 }
 
 // NewTenantServiceClient constructs a client for the cloud.v1.api.ui.TenantService service. By
@@ -98,6 +108,20 @@ func NewTenantServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithIdempotency(connect.IdempotencyIdempotent),
 			connect.WithClientOptions(opts...),
 		),
+		updateMemberRole: connect.NewClient[ui.UpdateMemberRoleRequest, models.TenantMember](
+			httpClient,
+			baseURL+TenantServiceUpdateMemberRoleProcedure,
+			connect.WithSchema(tenantServiceMethods.ByName("UpdateMemberRole")),
+			connect.WithIdempotency(connect.IdempotencyIdempotent),
+			connect.WithClientOptions(opts...),
+		),
+		lookupAccountByEmail: connect.NewClient[ui.LookupAccountByEmailRequest, models.Account](
+			httpClient,
+			baseURL+TenantServiceLookupAccountByEmailProcedure,
+			connect.WithSchema(tenantServiceMethods.ByName("LookupAccountByEmail")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -107,6 +131,8 @@ type tenantServiceClient struct {
 	listTenantMembers      *connect.Client[ui.ListTenantMembersRequest, ui.ListTenantMembersResponse]
 	addMemberToTenant      *connect.Client[ui.AddMemberRequest, models.TenantMember]
 	removeMemberFromTenant *connect.Client[ui.RemoveMemberRequest, models.TenantMember]
+	updateMemberRole       *connect.Client[ui.UpdateMemberRoleRequest, models.TenantMember]
+	lookupAccountByEmail   *connect.Client[ui.LookupAccountByEmailRequest, models.Account]
 }
 
 // ListMyTenants calls cloud.v1.api.ui.TenantService.ListMyTenants.
@@ -145,6 +171,24 @@ func (c *tenantServiceClient) RemoveMemberFromTenant(ctx context.Context, req *u
 	return nil, err
 }
 
+// UpdateMemberRole calls cloud.v1.api.ui.TenantService.UpdateMemberRole.
+func (c *tenantServiceClient) UpdateMemberRole(ctx context.Context, req *ui.UpdateMemberRoleRequest) (*models.TenantMember, error) {
+	response, err := c.updateMemberRole.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// LookupAccountByEmail calls cloud.v1.api.ui.TenantService.LookupAccountByEmail.
+func (c *tenantServiceClient) LookupAccountByEmail(ctx context.Context, req *ui.LookupAccountByEmailRequest) (*models.Account, error) {
+	response, err := c.lookupAccountByEmail.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // TenantServiceHandler is an implementation of the cloud.v1.api.ui.TenantService service.
 type TenantServiceHandler interface {
 	ListMyTenants(context.Context, *emptypb.Empty) (*models.Tenant_List, error)
@@ -153,6 +197,10 @@ type TenantServiceHandler interface {
 	// AddMemberToTenant / RemoveMemberFromTenant require OWNER of the tenant.
 	AddMemberToTenant(context.Context, *ui.AddMemberRequest) (*models.TenantMember, error)
 	RemoveMemberFromTenant(context.Context, *ui.RemoveMemberRequest) (*models.TenantMember, error)
+	// UpdateMemberRole changes a member's role; requires OWNER of the tenant.
+	UpdateMemberRole(context.Context, *ui.UpdateMemberRoleRequest) (*models.TenantMember, error)
+	// LookupAccountByEmail resolves an account by exact email (OWNER, to add members).
+	LookupAccountByEmail(context.Context, *ui.LookupAccountByEmailRequest) (*models.Account, error)
 }
 
 // NewTenantServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -190,6 +238,20 @@ func NewTenantServiceHandler(svc TenantServiceHandler, opts ...connect.HandlerOp
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
+	tenantServiceUpdateMemberRoleHandler := connect.NewUnaryHandlerSimple(
+		TenantServiceUpdateMemberRoleProcedure,
+		svc.UpdateMemberRole,
+		connect.WithSchema(tenantServiceMethods.ByName("UpdateMemberRole")),
+		connect.WithIdempotency(connect.IdempotencyIdempotent),
+		connect.WithHandlerOptions(opts...),
+	)
+	tenantServiceLookupAccountByEmailHandler := connect.NewUnaryHandlerSimple(
+		TenantServiceLookupAccountByEmailProcedure,
+		svc.LookupAccountByEmail,
+		connect.WithSchema(tenantServiceMethods.ByName("LookupAccountByEmail")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cloud.v1.api.ui.TenantService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case TenantServiceListMyTenantsProcedure:
@@ -200,6 +262,10 @@ func NewTenantServiceHandler(svc TenantServiceHandler, opts ...connect.HandlerOp
 			tenantServiceAddMemberToTenantHandler.ServeHTTP(w, r)
 		case TenantServiceRemoveMemberFromTenantProcedure:
 			tenantServiceRemoveMemberFromTenantHandler.ServeHTTP(w, r)
+		case TenantServiceUpdateMemberRoleProcedure:
+			tenantServiceUpdateMemberRoleHandler.ServeHTTP(w, r)
+		case TenantServiceLookupAccountByEmailProcedure:
+			tenantServiceLookupAccountByEmailHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -223,4 +289,12 @@ func (UnimplementedTenantServiceHandler) AddMemberToTenant(context.Context, *ui.
 
 func (UnimplementedTenantServiceHandler) RemoveMemberFromTenant(context.Context, *ui.RemoveMemberRequest) (*models.TenantMember, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.TenantService.RemoveMemberFromTenant is not implemented"))
+}
+
+func (UnimplementedTenantServiceHandler) UpdateMemberRole(context.Context, *ui.UpdateMemberRoleRequest) (*models.TenantMember, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.TenantService.UpdateMemberRole is not implemented"))
+}
+
+func (UnimplementedTenantServiceHandler) LookupAccountByEmail(context.Context, *ui.LookupAccountByEmailRequest) (*models.Account, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.TenantService.LookupAccountByEmail is not implemented"))
 }

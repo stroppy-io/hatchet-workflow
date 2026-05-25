@@ -44,7 +44,7 @@ type LogsClient interface {
 // services/metrics over the VictoriaMetrics instant-query client.
 type MetricsClient interface {
 	GetRunMetrics(ctx context.Context, runID string) (*metrics.RunMetrics, error)
-	CompareRuns(ctx context.Context, runA, runB string) (*metrics.Comparison, error)
+	CompareRuns(ctx context.Context, runIDs []string, threshold float64) (*metrics.Comparison, error)
 }
 
 // ShareStore mints and resolves immutable public run-share snapshots (G5).
@@ -120,14 +120,18 @@ func (s *RunService) GetRunMetrics(ctx context.Context, req *uipb.GetRunMetricsR
 		})
 }
 
-// CompareRuns compares two runs in the same tenant (VIEWER).
+// CompareRuns compares N runs (baseline = run_ids[0]) in the same tenant (VIEWER).
 func (s *RunService) CompareRuns(ctx context.Context, req *uipb.CompareRunsRequest) (*metrics.Comparison, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "CompareRuns",
 		func(ctx context.Context, _ trace.Span) (*metrics.Comparison, error) {
 			if err := s.authz.Require(ctx, svcutil.CallerOf(ctx), req.GetTenantId(), models.TenantMember_ROLE_VIEWER); err != nil {
 				return nil, err
 			}
-			return s.metrics.CompareRuns(ctx, req.GetRunA().GetValue(), req.GetRunB().GetValue())
+			runIDs := make([]string, 0, len(req.GetRunIds()))
+			for _, id := range req.GetRunIds() {
+				runIDs = append(runIDs, id.GetValue())
+			}
+			return s.metrics.CompareRuns(ctx, runIDs, req.GetThreshold())
 		})
 }
 

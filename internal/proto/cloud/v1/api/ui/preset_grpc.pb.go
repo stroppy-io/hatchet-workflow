@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	PresetService_ListPresets_FullMethodName  = "/cloud.v1.api.ui.PresetService/ListPresets"
+	PresetService_GetPreset_FullMethodName    = "/cloud.v1.api.ui.PresetService/GetPreset"
 	PresetService_CreatePreset_FullMethodName = "/cloud.v1.api.ui.PresetService/CreatePreset"
 	PresetService_UpdatePreset_FullMethodName = "/cloud.v1.api.ui.PresetService/UpdatePreset"
 	PresetService_DeletePreset_FullMethodName = "/cloud.v1.api.ui.PresetService/DeletePreset"
@@ -33,6 +34,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PresetServiceClient interface {
 	ListPresets(ctx context.Context, in *ListPresetRequest, opts ...grpc.CallOption) (*ListPresetsResponse, error)
+	// GetPreset fetches a single preset by id (tenant's own or a system preset).
+	GetPreset(ctx context.Context, in *GetPresetRequest, opts ...grpc.CallOption) (*models.Preset, error)
 	CreatePreset(ctx context.Context, in *models.Preset, opts ...grpc.CallOption) (*models.Preset, error)
 	UpdatePreset(ctx context.Context, in *models.Preset, opts ...grpc.CallOption) (*models.Preset, error)
 	DeletePreset(ctx context.Context, in *DeletePresetRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -51,6 +54,16 @@ func (c *presetServiceClient) ListPresets(ctx context.Context, in *ListPresetReq
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListPresetsResponse)
 	err := c.cc.Invoke(ctx, PresetService_ListPresets_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *presetServiceClient) GetPreset(ctx context.Context, in *GetPresetRequest, opts ...grpc.CallOption) (*models.Preset, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(models.Preset)
+	err := c.cc.Invoke(ctx, PresetService_GetPreset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -102,6 +115,8 @@ func (c *presetServiceClient) ClonePreset(ctx context.Context, in *ClonePresetRe
 // for forward compatibility.
 type PresetServiceServer interface {
 	ListPresets(context.Context, *ListPresetRequest) (*ListPresetsResponse, error)
+	// GetPreset fetches a single preset by id (tenant's own or a system preset).
+	GetPreset(context.Context, *GetPresetRequest) (*models.Preset, error)
 	CreatePreset(context.Context, *models.Preset) (*models.Preset, error)
 	UpdatePreset(context.Context, *models.Preset) (*models.Preset, error)
 	DeletePreset(context.Context, *DeletePresetRequest) (*emptypb.Empty, error)
@@ -118,6 +133,9 @@ type UnimplementedPresetServiceServer struct{}
 
 func (UnimplementedPresetServiceServer) ListPresets(context.Context, *ListPresetRequest) (*ListPresetsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListPresets not implemented")
+}
+func (UnimplementedPresetServiceServer) GetPreset(context.Context, *GetPresetRequest) (*models.Preset, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPreset not implemented")
 }
 func (UnimplementedPresetServiceServer) CreatePreset(context.Context, *models.Preset) (*models.Preset, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreatePreset not implemented")
@@ -166,6 +184,24 @@ func _PresetService_ListPresets_Handler(srv interface{}, ctx context.Context, de
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PresetServiceServer).ListPresets(ctx, req.(*ListPresetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PresetService_GetPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPresetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PresetServiceServer).GetPreset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PresetService_GetPreset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PresetServiceServer).GetPreset(ctx, req.(*GetPresetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -252,6 +288,10 @@ var PresetService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPresets",
 			Handler:    _PresetService_ListPresets_Handler,
+		},
+		{
+			MethodName: "GetPreset",
+			Handler:    _PresetService_GetPreset_Handler,
 		},
 		{
 			MethodName: "CreatePreset",

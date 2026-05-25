@@ -10,7 +10,7 @@ export function JsonPanel({ value, emptyLabel = "No data yet" }: JsonPanelProps)
 
   return (
     <pre className="max-h-[28rem] overflow-auto bg-[#050506] p-3 font-mono text-xs leading-5 text-zinc-200">
-      {JSON.stringify(value, null, 2)}
+      {JSON.stringify(value, (_key, v) => (typeof v === "bigint" ? v.toString() : v), 2)}
     </pre>
   );
 }

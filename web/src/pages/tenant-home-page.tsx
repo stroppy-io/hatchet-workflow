@@ -5,5 +5,5 @@ import { tenantPath } from "@/lib/routes";
 
 export function TenantHomePage() {
   const tenantId = useTenantId();
-  return <Navigate to={tenantPath(tenantId, "/wizard")} replace />;
+  return <Navigate to={tenantPath(tenantId, "/runs")} replace />;
 }

@@ -12,6 +12,7 @@ import (
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	logs "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/logs"
 	metrics "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/metrics"
+	primitive "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/primitive"
 	http "net/http"
 	strings "strings"
 )
@@ -41,8 +42,13 @@ const (
 	RunServiceSubmitTestRunProcedure = "/cloud.v1.api.ui.RunService/SubmitTestRun"
 	// RunServiceGetTestRunProcedure is the fully-qualified name of the RunService's GetTestRun RPC.
 	RunServiceGetTestRunProcedure = "/cloud.v1.api.ui.RunService/GetTestRun"
+	// RunServiceGetTestRunDagProcedure is the fully-qualified name of the RunService's GetTestRunDag
+	// RPC.
+	RunServiceGetTestRunDagProcedure = "/cloud.v1.api.ui.RunService/GetTestRunDag"
 	// RunServiceListTestRunsProcedure is the fully-qualified name of the RunService's ListTestRuns RPC.
 	RunServiceListTestRunsProcedure = "/cloud.v1.api.ui.RunService/ListTestRuns"
+	// RunServiceListAgentsProcedure is the fully-qualified name of the RunService's ListAgents RPC.
+	RunServiceListAgentsProcedure = "/cloud.v1.api.ui.RunService/ListAgents"
 	// RunServiceCancelTestRunProcedure is the fully-qualified name of the RunService's CancelTestRun
 	// RPC.
 	RunServiceCancelTestRunProcedure = "/cloud.v1.api.ui.RunService/CancelTestRun"
@@ -70,7 +76,11 @@ type RunServiceClient interface {
 	// --- run lifecycle (tenant-scoped) ---
 	SubmitTestRun(context.Context, *ui.SubmitTestRunRequest) (*models.TestRun, error)
 	GetTestRun(context.Context, *ui.GetTestRunRequest) (*models.TestRun, error)
+	// GetTestRunDag returns the run's compiled+executing Dag (nodes/edges/status) for the graph view.
+	GetTestRunDag(context.Context, *ui.GetTestRunRequest) (*primitive.Dag, error)
 	ListTestRuns(context.Context, *ui.ListTestRunsRequest) (*ui.ListTestRunsResponse, error)
+	// ListAgents lists the tenant's agents (for run topology overlay; machine == agent).
+	ListAgents(context.Context, *ui.ListAgentsRequest) (*ui.ListAgentsResponse, error)
 	CancelTestRun(context.Context, *ui.CancelTestRunRequest) (*models.TestRun, error)
 	// StreamTestRunLogs is a connect-go server-stream of unified log lines (F2).
 	StreamTestRunLogs(context.Context, *ui.StreamTestRunLogsRequest) (*connect.ServerStreamForClient[logs.LogLine], error)
@@ -110,10 +120,24 @@ func NewRunServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
+		getTestRunDag: connect.NewClient[ui.GetTestRunRequest, primitive.Dag](
+			httpClient,
+			baseURL+RunServiceGetTestRunDagProcedure,
+			connect.WithSchema(runServiceMethods.ByName("GetTestRunDag")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
 		listTestRuns: connect.NewClient[ui.ListTestRunsRequest, ui.ListTestRunsResponse](
 			httpClient,
 			baseURL+RunServiceListTestRunsProcedure,
 			connect.WithSchema(runServiceMethods.ByName("ListTestRuns")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
+		listAgents: connect.NewClient[ui.ListAgentsRequest, ui.ListAgentsResponse](
+			httpClient,
+			baseURL+RunServiceListAgentsProcedure,
+			connect.WithSchema(runServiceMethods.ByName("ListAgents")),
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
@@ -180,7 +204,9 @@ func NewRunServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 type runServiceClient struct {
 	submitTestRun     *connect.Client[ui.SubmitTestRunRequest, models.TestRun]
 	getTestRun        *connect.Client[ui.GetTestRunRequest, models.TestRun]
+	getTestRunDag     *connect.Client[ui.GetTestRunRequest, primitive.Dag]
 	listTestRuns      *connect.Client[ui.ListTestRunsRequest, ui.ListTestRunsResponse]
+	listAgents        *connect.Client[ui.ListAgentsRequest, ui.ListAgentsResponse]
 	cancelTestRun     *connect.Client[ui.CancelTestRunRequest, models.TestRun]
 	streamTestRunLogs *connect.Client[ui.StreamTestRunLogsRequest, logs.LogLine]
 	queryRunLogs      *connect.Client[ui.QueryRunLogsRequest, logs.LogPage]
@@ -209,9 +235,27 @@ func (c *runServiceClient) GetTestRun(ctx context.Context, req *ui.GetTestRunReq
 	return nil, err
 }
 
+// GetTestRunDag calls cloud.v1.api.ui.RunService.GetTestRunDag.
+func (c *runServiceClient) GetTestRunDag(ctx context.Context, req *ui.GetTestRunRequest) (*primitive.Dag, error) {
+	response, err := c.getTestRunDag.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ListTestRuns calls cloud.v1.api.ui.RunService.ListTestRuns.
 func (c *runServiceClient) ListTestRuns(ctx context.Context, req *ui.ListTestRunsRequest) (*ui.ListTestRunsResponse, error) {
 	response, err := c.listTestRuns.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// ListAgents calls cloud.v1.api.ui.RunService.ListAgents.
+func (c *runServiceClient) ListAgents(ctx context.Context, req *ui.ListAgentsRequest) (*ui.ListAgentsResponse, error) {
+	response, err := c.listAgents.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -291,7 +335,11 @@ type RunServiceHandler interface {
 	// --- run lifecycle (tenant-scoped) ---
 	SubmitTestRun(context.Context, *ui.SubmitTestRunRequest) (*models.TestRun, error)
 	GetTestRun(context.Context, *ui.GetTestRunRequest) (*models.TestRun, error)
+	// GetTestRunDag returns the run's compiled+executing Dag (nodes/edges/status) for the graph view.
+	GetTestRunDag(context.Context, *ui.GetTestRunRequest) (*primitive.Dag, error)
 	ListTestRuns(context.Context, *ui.ListTestRunsRequest) (*ui.ListTestRunsResponse, error)
+	// ListAgents lists the tenant's agents (for run topology overlay; machine == agent).
+	ListAgents(context.Context, *ui.ListAgentsRequest) (*ui.ListAgentsResponse, error)
 	CancelTestRun(context.Context, *ui.CancelTestRunRequest) (*models.TestRun, error)
 	// StreamTestRunLogs is a connect-go server-stream of unified log lines (F2).
 	StreamTestRunLogs(context.Context, *ui.StreamTestRunLogsRequest, *connect.ServerStream[logs.LogLine]) error
@@ -327,10 +375,24 @@ func NewRunServiceHandler(svc RunServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
+	runServiceGetTestRunDagHandler := connect.NewUnaryHandlerSimple(
+		RunServiceGetTestRunDagProcedure,
+		svc.GetTestRunDag,
+		connect.WithSchema(runServiceMethods.ByName("GetTestRunDag")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
 	runServiceListTestRunsHandler := connect.NewUnaryHandlerSimple(
 		RunServiceListTestRunsProcedure,
 		svc.ListTestRuns,
 		connect.WithSchema(runServiceMethods.ByName("ListTestRuns")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
+	runServiceListAgentsHandler := connect.NewUnaryHandlerSimple(
+		RunServiceListAgentsProcedure,
+		svc.ListAgents,
+		connect.WithSchema(runServiceMethods.ByName("ListAgents")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
@@ -396,8 +458,12 @@ func NewRunServiceHandler(svc RunServiceHandler, opts ...connect.HandlerOption) 
 			runServiceSubmitTestRunHandler.ServeHTTP(w, r)
 		case RunServiceGetTestRunProcedure:
 			runServiceGetTestRunHandler.ServeHTTP(w, r)
+		case RunServiceGetTestRunDagProcedure:
+			runServiceGetTestRunDagHandler.ServeHTTP(w, r)
 		case RunServiceListTestRunsProcedure:
 			runServiceListTestRunsHandler.ServeHTTP(w, r)
+		case RunServiceListAgentsProcedure:
+			runServiceListAgentsHandler.ServeHTTP(w, r)
 		case RunServiceCancelTestRunProcedure:
 			runServiceCancelTestRunHandler.ServeHTTP(w, r)
 		case RunServiceStreamTestRunLogsProcedure:
@@ -431,8 +497,16 @@ func (UnimplementedRunServiceHandler) GetTestRun(context.Context, *ui.GetTestRun
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.GetTestRun is not implemented"))
 }
 
+func (UnimplementedRunServiceHandler) GetTestRunDag(context.Context, *ui.GetTestRunRequest) (*primitive.Dag, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.GetTestRunDag is not implemented"))
+}
+
 func (UnimplementedRunServiceHandler) ListTestRuns(context.Context, *ui.ListTestRunsRequest) (*ui.ListTestRunsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.ListTestRuns is not implemented"))
+}
+
+func (UnimplementedRunServiceHandler) ListAgents(context.Context, *ui.ListAgentsRequest) (*ui.ListAgentsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.ui.RunService.ListAgents is not implemented"))
 }
 
 func (UnimplementedRunServiceHandler) CancelTestRun(context.Context, *ui.CancelTestRunRequest) (*models.TestRun, error) {

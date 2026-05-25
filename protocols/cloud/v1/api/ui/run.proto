@@ -4,10 +4,13 @@ package cloud.v1.api.ui;
 
 import "cloud/v1/common/tags.proto";
 import "cloud/v1/domain/test.proto";
+import "cloud/v1/models/account.proto";
+import "cloud/v1/models/agent.proto";
 import "cloud/v1/models/common.proto";
 import "cloud/v1/models/testing.proto";
 import "cloud/v1/runtime/logs/logs.proto";
 import "cloud/v1/runtime/metrics/metrics.proto";
+import "cloud/v1/runtime/primitive/dag.proto";
 import "cloud/v1/runtime/primitive/status.proto";
 import "google/protobuf/timestamp.proto";
 import "validate/validate.proto";
@@ -60,10 +63,25 @@ message ListTestRunsRequest {
     common.Tags tags = 7;
 }
 
-/* ListTestRunsResponse — rows plus pagination metadata (H42). */
+/* RunTiming carries a run's execution window, derived from its Dag.Execution
+   (the run row has no timing columns). started_at is the run's execution start;
+   finished_at is set only for terminal runs (absent ⇒ still running). */
+message RunTiming {
+    models.TestRunId run_id = 1;
+    optional google.protobuf.Timestamp started_at = 2;
+    optional google.protobuf.Timestamp finished_at = 3;
+}
+
+/* ListTestRunsResponse — rows plus pagination metadata (H42). owners carries the
+   distinct owner Accounts referenced by the page so the UI shows author name/email
+   (run row holds only owner_account_id). timings carries each row's execution
+   window (from the Dag) so the UI shows a real run duration. page_info.total is
+   populated (offset pagination) so the UI can render page numbers / jump. */
 message ListTestRunsResponse {
     repeated models.TestRun test_runs = 1;
     models.PageInfo page_info = 2;
+    repeated models.Account owners = 3;
+    repeated RunTiming timings = 4;
 }
 
 message CancelTestRunRequest {
@@ -117,13 +135,25 @@ message GetRunMetricsRequest {
     models.TestRunId run_id = 2 [(validate.rules).message.required = true];
 }
 
-/* CompareRunsRequest compares two runs' metrics (E). */
+/* ListAgentsRequest lists the tenant's registered agents (machine == agent).
+   Used to overlay agent status onto a run's topology machines (by machine_id). */
+message ListAgentsRequest {
+    models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
+    models.Page page = 2;
+}
+message ListAgentsResponse {
+    repeated models.Agent agents = 1;
+    models.PageInfo page_info = 2;
+}
+
+/* CompareRunsRequest compares N runs' metrics against a baseline (E). run_ids[0]
+   is the baseline; every other run is diffed against it. */
 message CompareRunsRequest {
     models.TenantId tenant_id = 1 [(validate.rules).message.required = true];
-    models.TestRunId run_a = 2 [(validate.rules).message.required = true];
-    models.TestRunId run_b = 3 [(validate.rules).message.required = true];
-    /* threshold is the percent change above which a metric counts as better/worse. */
-    double threshold = 4 [(validate.rules).double = {gte: 0, lte: 100}];
+    /* run_ids are the runs to compare (>= 2); run_ids[0] is the baseline. */
+    repeated models.TestRunId run_ids = 2 [(validate.rules).repeated = {min_items: 2, max_items: 16}];
+    /* threshold is the percent change within which a metric counts as unchanged. */
+    double threshold = 3 [(validate.rules).double = {gte: 0, lte: 100}];
 }
 
 /* CreateShareLinkRequest freezes a run into a read-only share (G5). */
@@ -151,7 +181,11 @@ service RunService {
     /* --- run lifecycle (tenant-scoped) --- */
     rpc SubmitTestRun (SubmitTestRunRequest) returns (models.TestRun) {option idempotency_level = IDEMPOTENT;}
     rpc GetTestRun (GetTestRunRequest) returns (models.TestRun) {option idempotency_level = NO_SIDE_EFFECTS;}
+    /* GetTestRunDag returns the run's compiled+executing Dag (nodes/edges/status) for the graph view. */
+    rpc GetTestRunDag (GetTestRunRequest) returns (runtime.primitive.Dag) {option idempotency_level = NO_SIDE_EFFECTS;}
     rpc ListTestRuns (ListTestRunsRequest) returns (ListTestRunsResponse) {option idempotency_level = NO_SIDE_EFFECTS;}
+    /* ListAgents lists the tenant's agents (for run topology overlay; machine == agent). */
+    rpc ListAgents (ListAgentsRequest) returns (ListAgentsResponse) {option idempotency_level = NO_SIDE_EFFECTS;}
     rpc CancelTestRun (CancelTestRunRequest) returns (models.TestRun) {option idempotency_level = IDEMPOTENT;}
     /* --- logs (both axes: stage + component; unified runtime.logs.LogLine) --- */
     /* StreamTestRunLogs is a connect-go server-stream of unified log lines (F2). */

@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/common.proto.
  */
 export const file_cloud_v1_models_common: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS9tb2RlbHMvY29tbW9uLnByb3RvEg9jbG91ZC52MS5tb2RlbHMiKQoEVWxpZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIi4KCUFjY291bnRJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQQAQgBIi0KCFRlbmFudElkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBAgBEAEiMwoOVGVuYW50TWVtYmVySWQSFwoFdmFsdWUYASABKAlCCPpCBXIDmAEaOgiCph0ECAEQASI1ChBEYXRhYmFzZVByZXNldElkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBBABCAEiNQoQV29ya2xvYWRQcmVzZXRJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIi4KCVRlc3RSdW5JZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIiwKB1N1aXRlSWQSFwoFdmFsdWUYASABKAlCCPpCBXIDmAEaOgiCph0EEAEIASIvCgpTdWl0ZVJ1bklkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBAgBEAEiKgoFRGFnSWQSFwoFdmFsdWUYASABKAlCCPpCBXIDmAEaOgiCph0EEAEIASIsCgdBZ2VudElkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBBABCAEi+AEKClRpbWVzdGFtcHMSRwoKY3JlYXRlZF9hdBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCF/pCB7IBBAgBOAGatRgJEgcaBW5vdygpEkcKCnVwZGF0ZWRfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQhf6QgeyAQQ4AQgBmrUYCRIHGgVub3coKRJJCgpkZWxldGVkX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIU+kIFsgECOAGatRgIEgYaBG51bGxIAIgBAUINCgtfZGVsZXRlZF9hdCJuCgZFbnRpdHkSKwoCaWQYASABKAsyFS5jbG91ZC52MS5tb2RlbHMuVWxpZEIImrUYBBICEAESNwoKdGltZXN0YW1wcxgDIAEoCzIbLmNsb3VkLnYxLm1vZGVscy5UaW1lc3RhbXBzQgaCph0CIAEioAEKA093bhJMChBvd25lcl9hY2NvdW50X2lkGAIgASgLMhouY2xvdWQudjEubW9kZWxzLkFjY291bnRJZEIWmrUYEhIQMghhY2NvdW50czoCaWRAARJLCgl0ZW5hbnRfaWQYAyABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCHfpCBYoBAhABmrUYERIPMgd0ZW5hbnRzOgJpZEABIi0KBFBhZ2USFgoEc2l6ZRgBIAEoDUII+kIFKgMY6AcSDQoFdG9rZW4YAiABKAkiTgoIUGFnZUluZm8SEgoKbmV4dF90b2tlbhgBIAEoCRIQCghoYXNfbW9yZRgCIAEoCBISCgV0b3RhbBgDIAEoBEgAiAEBQggKBl90b3RhbCpQCglTb3J0T3JkZXISGgoWU09SVF9PUkRFUl9VTlNQRUNJRklFRBAAEhIKDlNPUlRfT1JERVJfQVNDEAESEwoPU09SVF9PUkRFUl9ERVNDEAJCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_google_protobuf_timestamp, file_goplain_goplain, file_ratelproto_ratelproto, file_validate_validate]);
+  fileDesc("ChxjbG91ZC92MS9tb2RlbHMvY29tbW9uLnByb3RvEg9jbG91ZC52MS5tb2RlbHMiKQoEVWxpZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIi4KCUFjY291bnRJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQQAQgBIi0KCFRlbmFudElkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBBABCAEiMwoOVGVuYW50TWVtYmVySWQSFwoFdmFsdWUYASABKAlCCPpCBXIDmAEaOgiCph0ECAEQASI1ChBEYXRhYmFzZVByZXNldElkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBAgBEAEiNQoQV29ya2xvYWRQcmVzZXRJZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIi4KCVRlc3RSdW5JZBIXCgV2YWx1ZRgBIAEoCUII+kIFcgOYARo6CIKmHQQIARABIiwKB1N1aXRlSWQSFwoFdmFsdWUYASABKAlCCPpCBXIDmAEaOgiCph0ECAEQASIvCgpTdWl0ZVJ1bklkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBAgBEAEiKgoFRGFnSWQSFwoFdmFsdWUYASABKAlCCPpCBXIDmAEaOgiCph0ECAEQASIsCgdBZ2VudElkEhcKBXZhbHVlGAEgASgJQgj6QgVyA5gBGjoIgqYdBAgBEAEi+AEKClRpbWVzdGFtcHMSRwoKY3JlYXRlZF9hdBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCF/pCB7IBBAgBOAGatRgJEgcaBW5vdygpEkcKCnVwZGF0ZWRfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQhf6QgeyAQQ4AQgBmrUYCRIHGgVub3coKRJJCgpkZWxldGVkX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIU+kIFsgECOAGatRgIEgYaBG51bGxIAIgBAUINCgtfZGVsZXRlZF9hdCJuCgZFbnRpdHkSKwoCaWQYASABKAsyFS5jbG91ZC52MS5tb2RlbHMuVWxpZEIImrUYBBICEAESNwoKdGltZXN0YW1wcxgDIAEoCzIbLmNsb3VkLnYxLm1vZGVscy5UaW1lc3RhbXBzQgaCph0CIAEioAEKA093bhJMChBvd25lcl9hY2NvdW50X2lkGAIgASgLMhouY2xvdWQudjEubW9kZWxzLkFjY291bnRJZEIWmrUYEhIQQAEyCGFjY291bnRzOgJpZBJLCgl0ZW5hbnRfaWQYAyABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCHfpCBYoBAhABmrUYERIPOgJpZEABMgd0ZW5hbnRzIj0KBFBhZ2USFgoEc2l6ZRgBIAEoDUII+kIFKgMY6AcSDQoFdG9rZW4YAiABKAkSDgoGb2Zmc2V0GAMgASgEIk4KCFBhZ2VJbmZvEhIKCm5leHRfdG9rZW4YASABKAkSEAoIaGFzX21vcmUYAiABKAgSEgoFdG90YWwYAyABKARIAIgBAUIICgZfdG90YWwqUAoJU29ydE9yZGVyEhoKFlNPUlRfT1JERVJfVU5TUEVDSUZJRUQQABISCg5TT1JUX09SREVSX0FTQxABEhMKD1NPUlRfT1JERVJfREVTQxACQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_google_protobuf_timestamp, file_goplain_goplain, file_ratelproto_ratelproto, file_validate_validate]);
 
 /**
  * @generated from message cloud.v1.models.Ulid
@@ -470,7 +470,9 @@ export const OwnSchema: GenMessage<Own, {jsonType: OwnJson, validType: OwnValid}
   messageDesc(file_cloud_v1_models_common, 13);
 
 /**
- * Page — cursor-based pagination request. 
+ * Page — pagination request. Supports cursor (token) OR offset addressing; a
+ * list endpoint documents which it honours. Offset enables random page access
+ * (jump to page N) and total-count UIs; cursor is cheaper for forward scans. 
  *
  * @generated from message cloud.v1.models.Page
  */
@@ -488,10 +490,20 @@ export type Page = Message<"cloud.v1.models.Page"> & {
    * @generated from field: string token = 2;
    */
   token: string;
+
+  /**
+   * Zero-based row offset (offset pagination). 0 = first page. Used by endpoints
+   * that support random page access (jump to an arbitrary page).
+   *
+   * @generated from field: uint64 offset = 3;
+   */
+  offset: bigint;
 };
 
 /**
- * Page — cursor-based pagination request. 
+ * Page — pagination request. Supports cursor (token) OR offset addressing; a
+ * list endpoint documents which it honours. Offset enables random page access
+ * (jump to page N) and total-count UIs; cursor is cheaper for forward scans. 
  *
  * @generated from message cloud.v1.models.Page
  */
@@ -509,6 +521,14 @@ export type PageJson = {
    * @generated from field: string token = 2;
    */
   token?: string;
+
+  /**
+   * Zero-based row offset (offset pagination). 0 = first page. Used by endpoints
+   * that support random page access (jump to an arbitrary page).
+   *
+   * @generated from field: uint64 offset = 3;
+   */
+  offset?: string;
 };
 
 export type PageValid = Page;

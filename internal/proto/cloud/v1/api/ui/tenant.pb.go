@@ -72,7 +72,7 @@ func (x ListTenantMembersRequest_SortField) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ListTenantMembersRequest_SortField.Descriptor instead.
 func (ListTenantMembersRequest_SortField) EnumDescriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_tenant_proto_rawDescGZIP(), []int{3, 0}
+	return file_cloud_v1_api_ui_tenant_proto_rawDescGZIP(), []int{5, 0}
 }
 
 // TenantService is the tenant-scoped membership surface. A tenant OWNER manages
@@ -192,6 +192,121 @@ func (x *RemoveMemberRequest) GetAccountId() *models.AccountId {
 	return nil
 }
 
+// UpdateMemberRoleRequest changes an existing member's role (OWNER only).
+type UpdateMemberRoleRequest struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	TenantId      *models.TenantId         `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	AccountId     *models.AccountId        `protobuf:"bytes,2,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	Role          models.TenantMember_Role `protobuf:"varint,3,opt,name=role,proto3,enum=cloud.v1.models.TenantMember_Role" json:"role,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateMemberRoleRequest) Reset() {
+	*x = UpdateMemberRoleRequest{}
+	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateMemberRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateMemberRoleRequest) ProtoMessage() {}
+
+func (x *UpdateMemberRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateMemberRoleRequest.ProtoReflect.Descriptor instead.
+func (*UpdateMemberRoleRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_tenant_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *UpdateMemberRoleRequest) GetTenantId() *models.TenantId {
+	if x != nil {
+		return x.TenantId
+	}
+	return nil
+}
+
+func (x *UpdateMemberRoleRequest) GetAccountId() *models.AccountId {
+	if x != nil {
+		return x.AccountId
+	}
+	return nil
+}
+
+func (x *UpdateMemberRoleRequest) GetRole() models.TenantMember_Role {
+	if x != nil {
+		return x.Role
+	}
+	return models.TenantMember_Role(0)
+}
+
+// LookupAccountByEmailRequest resolves an account by EXACT email so an OWNER can
+// add a member without knowing the ULID. No enumeration: exact match or NotFound.
+type LookupAccountByEmailRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      *models.TenantId       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LookupAccountByEmailRequest) Reset() {
+	*x = LookupAccountByEmailRequest{}
+	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LookupAccountByEmailRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LookupAccountByEmailRequest) ProtoMessage() {}
+
+func (x *LookupAccountByEmailRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LookupAccountByEmailRequest.ProtoReflect.Descriptor instead.
+func (*LookupAccountByEmailRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_ui_tenant_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *LookupAccountByEmailRequest) GetTenantId() *models.TenantId {
+	if x != nil {
+		return x.TenantId
+	}
+	return nil
+}
+
+func (x *LookupAccountByEmailRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
 // TenantMemberRow joins a membership with the member's account fields: a bare
 // TenantMember carries only account_id, but the members table needs the
 // account's email/nickname/is_admin.
@@ -206,7 +321,7 @@ type TenantMemberRow struct {
 
 func (x *TenantMemberRow) Reset() {
 	*x = TenantMemberRow{}
-	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[2]
+	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -218,7 +333,7 @@ func (x *TenantMemberRow) String() string {
 func (*TenantMemberRow) ProtoMessage() {}
 
 func (x *TenantMemberRow) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[2]
+	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -231,7 +346,7 @@ func (x *TenantMemberRow) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TenantMemberRow.ProtoReflect.Descriptor instead.
 func (*TenantMemberRow) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_tenant_proto_rawDescGZIP(), []int{2}
+	return file_cloud_v1_api_ui_tenant_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *TenantMemberRow) GetMember() *models.TenantMember {
@@ -268,7 +383,7 @@ type ListTenantMembersRequest struct {
 
 func (x *ListTenantMembersRequest) Reset() {
 	*x = ListTenantMembersRequest{}
-	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -280,7 +395,7 @@ func (x *ListTenantMembersRequest) String() string {
 func (*ListTenantMembersRequest) ProtoMessage() {}
 
 func (x *ListTenantMembersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -293,7 +408,7 @@ func (x *ListTenantMembersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTenantMembersRequest.ProtoReflect.Descriptor instead.
 func (*ListTenantMembersRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_tenant_proto_rawDescGZIP(), []int{3}
+	return file_cloud_v1_api_ui_tenant_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ListTenantMembersRequest) GetTenantId() *models.TenantId {
@@ -356,7 +471,7 @@ type ListTenantMembersResponse struct {
 
 func (x *ListTenantMembersResponse) Reset() {
 	*x = ListTenantMembersResponse{}
-	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[4]
+	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -368,7 +483,7 @@ func (x *ListTenantMembersResponse) String() string {
 func (*ListTenantMembersResponse) ProtoMessage() {}
 
 func (x *ListTenantMembersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[4]
+	mi := &file_cloud_v1_api_ui_tenant_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -381,7 +496,7 @@ func (x *ListTenantMembersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTenantMembersResponse.ProtoReflect.Descriptor instead.
 func (*ListTenantMembersResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_ui_tenant_proto_rawDescGZIP(), []int{4}
+	return file_cloud_v1_api_ui_tenant_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListTenantMembersResponse) GetMembers() []*TenantMemberRow {
@@ -412,7 +527,16 @@ const file_cloud_v1_api_ui_tenant_proto_rawDesc = "" +
 	"\x13RemoveMemberRequest\x12@\n" +
 	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12C\n" +
 	"\n" +
-	"account_id\x18\x02 \x01(\v2\x1a.cloud.v1.models.AccountIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\taccountId\"|\n" +
+	"account_id\x18\x02 \x01(\v2\x1a.cloud.v1.models.AccountIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\taccountId\"\xe4\x01\n" +
+	"\x17UpdateMemberRoleRequest\x12@\n" +
+	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12C\n" +
+	"\n" +
+	"account_id\x18\x02 \x01(\v2\x1a.cloud.v1.models.AccountIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\taccountId\x12B\n" +
+	"\x04role\x18\x03 \x01(\x0e2\".cloud.v1.models.TenantMember.RoleB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04role\"\x83\x01\n" +
+	"\x1bLookupAccountByEmailRequest\x12@\n" +
+	"\ttenant_id\x18\x01 \x01(\v2\x19.cloud.v1.models.TenantIdB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btenantId\x12\"\n" +
+	"\x05email\x18\x02 \x01(\tB\f\xfaB\tr\a\x10\x05\x18\xff\x01`\x01R\x05email\"|\n" +
 	"\x0fTenantMemberRow\x125\n" +
 	"\x06member\x18\x01 \x01(\v2\x1d.cloud.v1.models.TenantMemberR\x06member\x122\n" +
 	"\aaccount\x18\x02 \x01(\v2\x18.cloud.v1.models.AccountR\aaccount\"\xa7\x04\n" +
@@ -433,12 +557,14 @@ const file_cloud_v1_api_ui_tenant_proto_rawDesc = "" +
 	"\x05_role\"\x8f\x01\n" +
 	"\x19ListTenantMembersResponse\x12:\n" +
 	"\amembers\x18\x01 \x03(\v2 .cloud.v1.api.ui.TenantMemberRowR\amembers\x126\n" +
-	"\tpage_info\x18\x02 \x01(\v2\x19.cloud.v1.models.PageInfoR\bpageInfo2\x8c\x03\n" +
+	"\tpage_info\x18\x02 \x01(\v2\x19.cloud.v1.models.PageInfoR\bpageInfo2\xd3\x04\n" +
 	"\rTenantService\x12J\n" +
 	"\rListMyTenants\x12\x16.google.protobuf.Empty\x1a\x1c.cloud.v1.models.Tenant.List\"\x03\x90\x02\x01\x12o\n" +
 	"\x11ListTenantMembers\x12).cloud.v1.api.ui.ListTenantMembersRequest\x1a*.cloud.v1.api.ui.ListTenantMembersResponse\"\x03\x90\x02\x01\x12Z\n" +
 	"\x11AddMemberToTenant\x12!.cloud.v1.api.ui.AddMemberRequest\x1a\x1d.cloud.v1.models.TenantMember\"\x03\x90\x02\x02\x12b\n" +
-	"\x16RemoveMemberFromTenant\x12$.cloud.v1.api.ui.RemoveMemberRequest\x1a\x1d.cloud.v1.models.TenantMember\"\x03\x90\x02\x02BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/uib\x06proto3"
+	"\x16RemoveMemberFromTenant\x12$.cloud.v1.api.ui.RemoveMemberRequest\x1a\x1d.cloud.v1.models.TenantMember\"\x03\x90\x02\x02\x12`\n" +
+	"\x10UpdateMemberRole\x12(.cloud.v1.api.ui.UpdateMemberRoleRequest\x1a\x1d.cloud.v1.models.TenantMember\"\x03\x90\x02\x02\x12c\n" +
+	"\x14LookupAccountByEmail\x12,.cloud.v1.api.ui.LookupAccountByEmailRequest\x1a\x18.cloud.v1.models.Account\"\x03\x90\x02\x01BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/uib\x06proto3"
 
 var (
 	file_cloud_v1_api_ui_tenant_proto_rawDescOnce sync.Once
@@ -453,55 +579,65 @@ func file_cloud_v1_api_ui_tenant_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_api_ui_tenant_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_api_ui_tenant_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_cloud_v1_api_ui_tenant_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_cloud_v1_api_ui_tenant_proto_goTypes = []any{
 	(ListTenantMembersRequest_SortField)(0), // 0: cloud.v1.api.ui.ListTenantMembersRequest.SortField
 	(*AddMemberRequest)(nil),                // 1: cloud.v1.api.ui.AddMemberRequest
 	(*RemoveMemberRequest)(nil),             // 2: cloud.v1.api.ui.RemoveMemberRequest
-	(*TenantMemberRow)(nil),                 // 3: cloud.v1.api.ui.TenantMemberRow
-	(*ListTenantMembersRequest)(nil),        // 4: cloud.v1.api.ui.ListTenantMembersRequest
-	(*ListTenantMembersResponse)(nil),       // 5: cloud.v1.api.ui.ListTenantMembersResponse
-	(*models.TenantId)(nil),                 // 6: cloud.v1.models.TenantId
-	(*models.AccountId)(nil),                // 7: cloud.v1.models.AccountId
-	(models.TenantMember_Role)(0),           // 8: cloud.v1.models.TenantMember.Role
-	(*models.TenantMember)(nil),             // 9: cloud.v1.models.TenantMember
-	(*models.Account)(nil),                  // 10: cloud.v1.models.Account
-	(models.SortOrder)(0),                   // 11: cloud.v1.models.SortOrder
-	(*models.Page)(nil),                     // 12: cloud.v1.models.Page
-	(*common.Tags)(nil),                     // 13: cloud.v1.common.Tags
-	(*models.PageInfo)(nil),                 // 14: cloud.v1.models.PageInfo
-	(*emptypb.Empty)(nil),                   // 15: google.protobuf.Empty
-	(*models.Tenant_List)(nil),              // 16: cloud.v1.models.Tenant.List
+	(*UpdateMemberRoleRequest)(nil),         // 3: cloud.v1.api.ui.UpdateMemberRoleRequest
+	(*LookupAccountByEmailRequest)(nil),     // 4: cloud.v1.api.ui.LookupAccountByEmailRequest
+	(*TenantMemberRow)(nil),                 // 5: cloud.v1.api.ui.TenantMemberRow
+	(*ListTenantMembersRequest)(nil),        // 6: cloud.v1.api.ui.ListTenantMembersRequest
+	(*ListTenantMembersResponse)(nil),       // 7: cloud.v1.api.ui.ListTenantMembersResponse
+	(*models.TenantId)(nil),                 // 8: cloud.v1.models.TenantId
+	(*models.AccountId)(nil),                // 9: cloud.v1.models.AccountId
+	(models.TenantMember_Role)(0),           // 10: cloud.v1.models.TenantMember.Role
+	(*models.TenantMember)(nil),             // 11: cloud.v1.models.TenantMember
+	(*models.Account)(nil),                  // 12: cloud.v1.models.Account
+	(models.SortOrder)(0),                   // 13: cloud.v1.models.SortOrder
+	(*models.Page)(nil),                     // 14: cloud.v1.models.Page
+	(*common.Tags)(nil),                     // 15: cloud.v1.common.Tags
+	(*models.PageInfo)(nil),                 // 16: cloud.v1.models.PageInfo
+	(*emptypb.Empty)(nil),                   // 17: google.protobuf.Empty
+	(*models.Tenant_List)(nil),              // 18: cloud.v1.models.Tenant.List
 }
 var file_cloud_v1_api_ui_tenant_proto_depIdxs = []int32{
-	6,  // 0: cloud.v1.api.ui.AddMemberRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	7,  // 1: cloud.v1.api.ui.AddMemberRequest.account_id:type_name -> cloud.v1.models.AccountId
-	8,  // 2: cloud.v1.api.ui.AddMemberRequest.role:type_name -> cloud.v1.models.TenantMember.Role
-	6,  // 3: cloud.v1.api.ui.RemoveMemberRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	7,  // 4: cloud.v1.api.ui.RemoveMemberRequest.account_id:type_name -> cloud.v1.models.AccountId
-	9,  // 5: cloud.v1.api.ui.TenantMemberRow.member:type_name -> cloud.v1.models.TenantMember
-	10, // 6: cloud.v1.api.ui.TenantMemberRow.account:type_name -> cloud.v1.models.Account
-	6,  // 7: cloud.v1.api.ui.ListTenantMembersRequest.tenant_id:type_name -> cloud.v1.models.TenantId
-	8,  // 8: cloud.v1.api.ui.ListTenantMembersRequest.role:type_name -> cloud.v1.models.TenantMember.Role
-	0,  // 9: cloud.v1.api.ui.ListTenantMembersRequest.sort_field:type_name -> cloud.v1.api.ui.ListTenantMembersRequest.SortField
-	11, // 10: cloud.v1.api.ui.ListTenantMembersRequest.order:type_name -> cloud.v1.models.SortOrder
-	12, // 11: cloud.v1.api.ui.ListTenantMembersRequest.page:type_name -> cloud.v1.models.Page
-	13, // 12: cloud.v1.api.ui.ListTenantMembersRequest.tags:type_name -> cloud.v1.common.Tags
-	3,  // 13: cloud.v1.api.ui.ListTenantMembersResponse.members:type_name -> cloud.v1.api.ui.TenantMemberRow
-	14, // 14: cloud.v1.api.ui.ListTenantMembersResponse.page_info:type_name -> cloud.v1.models.PageInfo
-	15, // 15: cloud.v1.api.ui.TenantService.ListMyTenants:input_type -> google.protobuf.Empty
-	4,  // 16: cloud.v1.api.ui.TenantService.ListTenantMembers:input_type -> cloud.v1.api.ui.ListTenantMembersRequest
-	1,  // 17: cloud.v1.api.ui.TenantService.AddMemberToTenant:input_type -> cloud.v1.api.ui.AddMemberRequest
-	2,  // 18: cloud.v1.api.ui.TenantService.RemoveMemberFromTenant:input_type -> cloud.v1.api.ui.RemoveMemberRequest
-	16, // 19: cloud.v1.api.ui.TenantService.ListMyTenants:output_type -> cloud.v1.models.Tenant.List
-	5,  // 20: cloud.v1.api.ui.TenantService.ListTenantMembers:output_type -> cloud.v1.api.ui.ListTenantMembersResponse
-	9,  // 21: cloud.v1.api.ui.TenantService.AddMemberToTenant:output_type -> cloud.v1.models.TenantMember
-	9,  // 22: cloud.v1.api.ui.TenantService.RemoveMemberFromTenant:output_type -> cloud.v1.models.TenantMember
-	19, // [19:23] is the sub-list for method output_type
-	15, // [15:19] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	8,  // 0: cloud.v1.api.ui.AddMemberRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	9,  // 1: cloud.v1.api.ui.AddMemberRequest.account_id:type_name -> cloud.v1.models.AccountId
+	10, // 2: cloud.v1.api.ui.AddMemberRequest.role:type_name -> cloud.v1.models.TenantMember.Role
+	8,  // 3: cloud.v1.api.ui.RemoveMemberRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	9,  // 4: cloud.v1.api.ui.RemoveMemberRequest.account_id:type_name -> cloud.v1.models.AccountId
+	8,  // 5: cloud.v1.api.ui.UpdateMemberRoleRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	9,  // 6: cloud.v1.api.ui.UpdateMemberRoleRequest.account_id:type_name -> cloud.v1.models.AccountId
+	10, // 7: cloud.v1.api.ui.UpdateMemberRoleRequest.role:type_name -> cloud.v1.models.TenantMember.Role
+	8,  // 8: cloud.v1.api.ui.LookupAccountByEmailRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	11, // 9: cloud.v1.api.ui.TenantMemberRow.member:type_name -> cloud.v1.models.TenantMember
+	12, // 10: cloud.v1.api.ui.TenantMemberRow.account:type_name -> cloud.v1.models.Account
+	8,  // 11: cloud.v1.api.ui.ListTenantMembersRequest.tenant_id:type_name -> cloud.v1.models.TenantId
+	10, // 12: cloud.v1.api.ui.ListTenantMembersRequest.role:type_name -> cloud.v1.models.TenantMember.Role
+	0,  // 13: cloud.v1.api.ui.ListTenantMembersRequest.sort_field:type_name -> cloud.v1.api.ui.ListTenantMembersRequest.SortField
+	13, // 14: cloud.v1.api.ui.ListTenantMembersRequest.order:type_name -> cloud.v1.models.SortOrder
+	14, // 15: cloud.v1.api.ui.ListTenantMembersRequest.page:type_name -> cloud.v1.models.Page
+	15, // 16: cloud.v1.api.ui.ListTenantMembersRequest.tags:type_name -> cloud.v1.common.Tags
+	5,  // 17: cloud.v1.api.ui.ListTenantMembersResponse.members:type_name -> cloud.v1.api.ui.TenantMemberRow
+	16, // 18: cloud.v1.api.ui.ListTenantMembersResponse.page_info:type_name -> cloud.v1.models.PageInfo
+	17, // 19: cloud.v1.api.ui.TenantService.ListMyTenants:input_type -> google.protobuf.Empty
+	6,  // 20: cloud.v1.api.ui.TenantService.ListTenantMembers:input_type -> cloud.v1.api.ui.ListTenantMembersRequest
+	1,  // 21: cloud.v1.api.ui.TenantService.AddMemberToTenant:input_type -> cloud.v1.api.ui.AddMemberRequest
+	2,  // 22: cloud.v1.api.ui.TenantService.RemoveMemberFromTenant:input_type -> cloud.v1.api.ui.RemoveMemberRequest
+	3,  // 23: cloud.v1.api.ui.TenantService.UpdateMemberRole:input_type -> cloud.v1.api.ui.UpdateMemberRoleRequest
+	4,  // 24: cloud.v1.api.ui.TenantService.LookupAccountByEmail:input_type -> cloud.v1.api.ui.LookupAccountByEmailRequest
+	18, // 25: cloud.v1.api.ui.TenantService.ListMyTenants:output_type -> cloud.v1.models.Tenant.List
+	7,  // 26: cloud.v1.api.ui.TenantService.ListTenantMembers:output_type -> cloud.v1.api.ui.ListTenantMembersResponse
+	11, // 27: cloud.v1.api.ui.TenantService.AddMemberToTenant:output_type -> cloud.v1.models.TenantMember
+	11, // 28: cloud.v1.api.ui.TenantService.RemoveMemberFromTenant:output_type -> cloud.v1.models.TenantMember
+	11, // 29: cloud.v1.api.ui.TenantService.UpdateMemberRole:output_type -> cloud.v1.models.TenantMember
+	12, // 30: cloud.v1.api.ui.TenantService.LookupAccountByEmail:output_type -> cloud.v1.models.Account
+	25, // [25:31] is the sub-list for method output_type
+	19, // [19:25] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_ui_tenant_proto_init() }
@@ -509,14 +645,14 @@ func file_cloud_v1_api_ui_tenant_proto_init() {
 	if File_cloud_v1_api_ui_tenant_proto != nil {
 		return
 	}
-	file_cloud_v1_api_ui_tenant_proto_msgTypes[3].OneofWrappers = []any{}
+	file_cloud_v1_api_ui_tenant_proto_msgTypes[5].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_ui_tenant_proto_rawDesc), len(file_cloud_v1_api_ui_tenant_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

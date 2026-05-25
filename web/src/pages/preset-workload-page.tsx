@@ -1,7 +1,8 @@
 import { create } from "@bufbuild/protobuf";
 import { useParams } from "react-router-dom";
 
-import { TopologyEditor } from "@/components/editors/topology-editor";
+import { Section } from "@/components/editors/fields";
+import { TopologyView } from "@/components/editors/topology-view";
 import { WorkloadEditor } from "@/components/editors/workload-editor";
 import { PresetEditorShell } from "@/components/preset-editor-shell";
 import { useTenantId } from "@/hooks/use-tenant-id";
@@ -29,10 +30,9 @@ export function PresetWorkloadPage() {
               value={workloadPreset.workload ?? create(WorkloadSchema, {})}
               onChange={(workload) => setWorkloadPreset(create(WorkloadPresetSchema, { ...workloadPreset, workload }))}
             />
-            <TopologyEditor
-              value={workloadPreset.topology ?? create(TopologySchema, {})}
-              onChange={(topology) => setWorkloadPreset(create(WorkloadPresetSchema, { ...workloadPreset, topology }))}
-            />
+            <Section title="Topology (rendered from settings)">
+              <TopologyView value={workloadPreset.topology ?? create(TopologySchema, {})} />
+            </Section>
           </div>
         );
       }}

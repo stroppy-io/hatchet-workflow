@@ -21,7 +21,7 @@ func RenderComponent(c *domain.Topology_Component, db *domain.Database, topo *do
 	case domain.Topology_Component_KIND_DATABASE:
 		switch db.GetKind() {
 		case domain.Database_KIND_POSTGRES:
-			if db.GetOptions().GetPostgres().GetReplication().GetMode() == domain.Database_Options_Postgres_Replication_MODE_PATRONI {
+			if IsPatroniManaged(c) {
 				return renderPatroni(c, topo, totalMemoryMB, pgVersion(db.GetVersion())), nil
 			}
 		case domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
@@ -48,6 +48,41 @@ func RenderComponent(c *domain.Topology_Component, db *domain.Database, topo *do
 	default:
 		return &renderpb.Config{Id: "no-config"}, nil
 	}
+}
+
+// Component role labels. CompileTopology stamps these onto Topology_Component.Tags so
+// the cluster role is an EXPLICIT, user-visible property of the component — never
+// re-derived from Database.Options (would ignore topology edits) nor from connections
+// (a network/graph concern). Render and recipe read only the component's own role.
+const (
+	RoleLabelKey = "role"
+	RolePrimary  = "primary" // sole writable node (mysql primary, cockroach seed)
+	RoleReplica  = "replica" // follows a primary (mysql replica, cockroach joiner)
+	RolePatroni  = "patroni" // postgres node supervised by Patroni + etcd
+)
+
+// ComponentRole returns the component's cluster role label (empty when unset).
+func ComponentRole(c *domain.Topology_Component) string {
+	return c.GetTags().GetLabels()[RoleLabelKey]
+}
+
+// IsPatroniManaged reports whether a DATABASE component is Patroni-managed, read from
+// its explicit role label (set by CompileTopology), not from options or edges.
+func IsPatroniManaged(c *domain.Topology_Component) bool {
+	return ComponentRole(c) == RolePatroni
+}
+
+// primaryDatabaseID returns the id of the DATABASE component marked RolePrimary (the
+// replication source / cluster seed), or "" if none — found by role, not by edges.
+func primaryDatabaseID(topo *domain.Topology) string {
+	for _, m := range topo.GetMachines() {
+		for _, c := range m.GetComponents() {
+			if c.GetKind() == domain.Topology_Component_KIND_DATABASE && ComponentRole(c) == RolePrimary {
+				return c.GetId()
+			}
+		}
+	}
+	return ""
 }
 
 const selfIPToken = "__SELF_IP__"
@@ -373,17 +408,6 @@ func isMultiDB(topo *domain.Topology) bool {
 	return len(componentIDsByKind(topo, domain.Topology_Component_KIND_DATABASE)) > 1
 }
 
-// replicationSource returns the primary component id of a REPLICATION edge whose
-// target is id (empty when id is not a replica).
-func replicationSource(topo *domain.Topology, id string) string {
-	for _, conn := range topo.GetConnections() {
-		if conn.GetKind() == domain.Topology_Connection_KIND_REPLICATION && conn.GetTo() == id {
-			return conn.GetFrom()
-		}
-	}
-	return ""
-}
-
 func commandItem(id, script string, bindings []*renderpb.Config_Binding) *renderpb.Config_Item {
 	return &renderpb.Config_Item{
 		Id:       id,
@@ -431,8 +455,12 @@ func renderMySQLComponent(c *domain.Topology_Component, db *domain.Database, top
 		mysqlWorkloadUserItem(),
 	}
 
-	if primary := replicationSource(topo, c.GetId()); primary != "" {
-		// This node is a replica: point it at the primary's ip (late binding).
+	switch ComponentRole(c) {
+	case RoleReplica:
+		// This node is a replica: point it at the primary's ip (late binding). The
+		// primary is the RolePrimary DATABASE component — read from the topology, not
+		// from a replication edge.
+		primary := primaryDatabaseID(topo)
 		tok := "__PRIMARY_IP__"
 		// STOP first (idempotent across agent-lease re-delivery: CHANGE fails if the
 		// replica is already running), then retry the whole setup — the primary's
@@ -449,7 +477,7 @@ func renderMySQLComponent(c *domain.Topology_Component, db *domain.Database, top
 		sql := `for i in $(seq 1 40); do mysql -e "` + inner + `" && exit 0; sleep 5; done; exit 1`
 		items = append(items, commandItem("setup_replica", sql,
 			[]*renderpb.Config_Binding{{Token: tok, ComponentIds: []string{primary}, Attr: AttrPrivateIP}}))
-	} else if isReplicationPrimary(topo, c.GetId()) {
+	case RolePrimary:
 		// This node is the primary of a replica: provision the replication user. Use
 		// the server default auth plugin (caching_sha2_password) — mysql_native_password
 		// is disabled by default in 8.4; the replica pairs it with GET_SOURCE_PUBLIC_KEY.
@@ -474,9 +502,10 @@ func renderCockroachComponent(c *domain.Topology_Component, topo *domain.Topolog
 		{Token: selfIPToken, ComponentIds: []string{c.GetId()}, Attr: AttrPrivateIP},
 	}
 	items := []*renderpb.Config_Item{}
-	joinHosts := cockroachJoinHosts(c.GetId(), topo, &bindings)
+	joinHosts := cockroachJoinHosts(c, topo, &bindings)
 
-	if isCockroachPrimary(topo, c.GetId()) {
+	// The RolePrimary node is the cluster seed: it also runs the one-shot init.
+	if ComponentRole(c) == RolePrimary {
 		items = append(items, commandItem("start_cockroach", renderCockroachStartScript(cacheMB, sqlMB, joinHosts), bindings))
 		items = append(items, commandItem("init_cockroach", renderCockroachInitScript(), nil))
 		return &renderpb.Config{Id: "cockroach", Items: items}
@@ -515,30 +544,20 @@ grep -qE "successfully initialized|already been initialized" /tmp/crdb-init.log 
 exit 1`
 }
 
-func isCockroachPrimary(topo *domain.Topology, id string) bool {
-	return coordinationSource(topo, id) == ""
-}
-
-func coordinationSource(topo *domain.Topology, id string) string {
-	for _, conn := range topo.GetConnections() {
-		if conn.GetKind() == domain.Topology_Connection_KIND_COORDINATION && conn.GetFrom() == id {
-			return conn.GetTo()
-		}
-	}
-	return ""
-}
-
-func cockroachJoinHosts(id string, topo *domain.Topology, bindings *[]*renderpb.Config_Binding) string {
-	dbIDs := componentIDsByKind(topo, domain.Topology_Component_KIND_DATABASE)
-	if primary := coordinationSource(topo, id); primary != "" {
+// cockroachJoinHosts builds the --join target list for a cockroach node from component
+// ROLES (not edges): a RoleReplica (joiner) joins the RolePrimary seed; the seed joins
+// every other DATABASE node. A lone node joins itself.
+func cockroachJoinHosts(c *domain.Topology_Component, topo *domain.Topology, bindings *[]*renderpb.Config_Binding) string {
+	if ComponentRole(c) == RoleReplica {
+		primary := primaryDatabaseID(topo)
 		tok := peerToken("CRDB", primary)
 		*bindings = append(*bindings, &renderpb.Config_Binding{Token: tok, ComponentIds: []string{primary}, Attr: AttrPrivateIP})
 		return tok + ":26257"
 	}
 
 	var joins []string
-	for _, dbID := range dbIDs {
-		if dbID == id {
+	for _, dbID := range componentIDsByKind(topo, domain.Topology_Component_KIND_DATABASE) {
+		if dbID == c.GetId() {
 			continue
 		}
 		tok := peerToken("CRDB", dbID)
@@ -549,16 +568,6 @@ func cockroachJoinHosts(id string, topo *domain.Topology, bindings *[]*renderpb.
 		joins = append(joins, selfIPToken+":26257")
 	}
 	return strings.Join(joins, ",")
-}
-
-// isReplicationPrimary reports whether id is the source of any REPLICATION edge.
-func isReplicationPrimary(topo *domain.Topology, id string) bool {
-	for _, conn := range topo.GetConnections() {
-		if conn.GetKind() == domain.Topology_Connection_KIND_REPLICATION && conn.GetFrom() == id {
-			return true
-		}
-	}
-	return false
 }
 
 // ─── picodata cluster ─────────────────────────────────────────────────────────

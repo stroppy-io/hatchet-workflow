@@ -8,6 +8,10 @@ import type { Tags, TagsJson } from "../../common/tags_pb.ts";
 import { file_cloud_v1_common_tags } from "../../common/tags_pb.ts";
 import type { TestPreset, TestPresetJson } from "../../domain/test_pb.ts";
 import { file_cloud_v1_domain_test } from "../../domain/test_pb.ts";
+import type { Account, AccountJson } from "../../models/account_pb.ts";
+import { file_cloud_v1_models_account } from "../../models/account_pb.ts";
+import type { Agent, AgentJson } from "../../models/agent_pb.ts";
+import { file_cloud_v1_models_agent } from "../../models/agent_pb.ts";
 import type { Page, PageInfo, PageInfoJson, PageJson, SortOrder, SortOrderJson, TenantId, TenantIdJson, TestRunId, TestRunIdJson } from "../../models/common_pb.ts";
 import { file_cloud_v1_models_common } from "../../models/common_pb.ts";
 import type { TestRun, TestRunJson, TestRunSchema } from "../../models/testing_pb.ts";
@@ -16,6 +20,8 @@ import type { LogCursor, LogCursorJson, LogLineSchema, LogPageSchema, LogRef, Lo
 import { file_cloud_v1_runtime_logs_logs } from "../../runtime/logs/logs_pb.ts";
 import type { ComparisonSchema, RunMetrics, RunMetricsJson, RunMetricsSchema } from "../../runtime/metrics/metrics_pb.ts";
 import { file_cloud_v1_runtime_metrics_metrics } from "../../runtime/metrics/metrics_pb.ts";
+import type { DagSchema } from "../../runtime/primitive/dag_pb.ts";
+import { file_cloud_v1_runtime_primitive_dag } from "../../runtime/primitive/dag_pb.ts";
 import type { Status, StatusJson } from "../../runtime/primitive/status_pb.ts";
 import { file_cloud_v1_runtime_primitive_status } from "../../runtime/primitive/status_pb.ts";
 import type { Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
@@ -27,7 +33,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/ui/run.proto.
  */
 export const file_cloud_v1_api_ui_run: GenFile = /*@__PURE__*/
-  fileDesc("ChljbG91ZC92MS9hcGkvdWkvcnVuLnByb3RvEg9jbG91ZC52MS5hcGkudWki5AEKFFN1Ym1pdFRlc3RSdW5SZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESOgoLdGVzdF9wcmVzZXQYAiABKAsyGy5jbG91ZC52MS5kb21haW4uVGVzdFByZXNldEII+kIFigECEAESGwoEbmFtZRgDIAEoCUII+kIFcgMY/wFIAIgBARIiCgtkZXNjcmlwdGlvbhgEIAEoCUII+kIFcgMYgAhIAYgBAUIHCgVfbmFtZUIOCgxfZGVzY3JpcHRpb24ifQoRR2V0VGVzdFJ1blJlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARIwCgJpZBgCIAEoCzIaLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuSWRCCPpCBYoBAhABIoIEChNMaXN0VGVzdFJ1bnNSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESQQoGc3RhdHVzGAIgASgOMiIuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuU3RhdHVzQgj6QgWCAQIQAUgAiAEBEh0KBnNlYXJjaBgDIAEoCUII+kIFcgMYgAJIAYgBARJMCgpzb3J0X2ZpZWxkGAQgASgOMi4uY2xvdWQudjEuYXBpLnVpLkxpc3RUZXN0UnVuc1JlcXVlc3QuU29ydEZpZWxkQgj6QgWCAQIQARIzCgVvcmRlchgFIAEoDjIaLmNsb3VkLnYxLm1vZGVscy5Tb3J0T3JkZXJCCPpCBYIBAhABEiMKBHBhZ2UYBiABKAsyFS5jbG91ZC52MS5tb2RlbHMuUGFnZRIjCgR0YWdzGAcgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MibgoJU29ydEZpZWxkEhoKFlNPUlRfRklFTERfVU5TUEVDSUZJRUQQABIZChVTT1JUX0ZJRUxEX0NSRUFURURfQVQQARITCg9TT1JUX0ZJRUxEX05BTUUQAhIVChFTT1JUX0ZJRUxEX1NUQVRVUxADQgkKB19zdGF0dXNCCQoHX3NlYXJjaCJxChRMaXN0VGVzdFJ1bnNSZXNwb25zZRIrCgl0ZXN0X3J1bnMYASADKAsyGC5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1bhIsCglwYWdlX2luZm8YAiABKAsyGS5jbG91ZC52MS5tb2RlbHMuUGFnZUluZm8igAEKFENhbmNlbFRlc3RSdW5SZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESMAoCaWQYAiABKAsyGi5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1bklkQgj6QgWKAQIQASL6AQoYU3RyZWFtVGVzdFJ1bkxvZ3NSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESMAoCaWQYAiABKAsyGi5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1bklkQgj6QgWKAQIQARIoChFub2RlX2V4ZWN1dGlvbl9pZBgDIAEoCUII+kIFcgMYgAFIAIgBARIjCgxjb21wb25lbnRfaWQYBCABKAlCCPpCBXIDGIABSAGIAQFCFAoSX25vZGVfZXhlY3V0aW9uX2lkQg8KDV9jb21wb25lbnRfaWQi7QMKE1F1ZXJ5UnVuTG9nc1JlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARI0CgZydW5faWQYAiABKAsyGi5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1bklkQgj6QgWKAQIQARIoChFub2RlX2V4ZWN1dGlvbl9pZBgDIAEoCUII+kIFcgMYgAFIAIgBARIjCgxjb21wb25lbnRfaWQYBCABKAlCCPpCBXIDGIABSAGIAQESPAoGc291cmNlGAUgASgOMh0uY2xvdWQudjEucnVudGltZS5sb2dzLlNvdXJjZUII+kIFggECEAFIAogBARIuCgVzdGFydBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIA4gBARIsCgNlbmQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSASIAQESGwoJcGFnZV9zaXplGAggASgNQgj6QgUqAxiQThIcCgpwYWdlX3Rva2VuGAkgASgJQgj6QgVyAxiAAkIUChJfbm9kZV9leGVjdXRpb25faWRCDwoNX2NvbXBvbmVudF9pZEIJCgdfc291cmNlQggKBl9zdGFydEIGCgRfZW5kIrsCChNCdWlsZExvZ0xpbmtSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESNAoGcnVuX2lkGAIgASgLMhouY2xvdWQudjEubW9kZWxzLlRlc3RSdW5JZEII+kIFigECEAESKAoRbm9kZV9leGVjdXRpb25faWQYAyABKAlCCPpCBXIDGIABSACIAQESIwoMY29tcG9uZW50X2lkGAQgASgJQgj6QgVyAxiAAUgBiAEBEjUKBmN1cnNvchgFIAEoCzIgLmNsb3VkLnYxLnJ1bnRpbWUubG9ncy5Mb2dDdXJzb3JIAogBAUIUChJfbm9kZV9leGVjdXRpb25faWRCDwoNX2NvbXBvbmVudF9pZEIJCgdfY3Vyc29yIlsKFEJ1aWxkTG9nTGlua1Jlc3BvbnNlEhcKA3VybBgBIAEoCUIK+kIHcgUQARiAIBIqCgNyZWYYAiABKAsyHS5jbG91ZC52MS5ydW50aW1lLmxvZ3MuTG9nUmVmIoQBChRHZXRSdW5NZXRyaWNzUmVxdWVzdBI2Cgl0ZW5hbnRfaWQYASABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCCPpCBYoBAhABEjQKBnJ1bl9pZBgCIAEoCzIaLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuSWRCCPpCBYoBAhABIuIBChJDb21wYXJlUnVuc1JlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARIzCgVydW5fYRgCIAEoCzIaLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuSWRCCPpCBYoBAhABEjMKBXJ1bl9iGAMgASgLMhouY2xvdWQudjEubW9kZWxzLlRlc3RSdW5JZEII+kIFigECEAESKgoJdGhyZXNob2xkGAQgASgBQhf6QhQSEhkAAAAAAABZQCkAAAAAAAAAACKGAQoWQ3JlYXRlU2hhcmVMaW5rUmVxdWVzdBI2Cgl0ZW5hbnRfaWQYASABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCCPpCBYoBAhABEjQKBnJ1bl9pZBgCIAEoCzIaLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuSWRCCPpCBYoBAhABIk0KF0NyZWF0ZVNoYXJlTGlua1Jlc3BvbnNlEhkKBXRva2VuGAEgASgJQgr6QgdyBRABGIABEhcKA3VybBgCIAEoCUIK+kIHcgUQARiABCIwChNHZXRTaGFyZWRSdW5SZXF1ZXN0EhkKBXRva2VuGAEgASgJQgr6QgdyBRABGIABInQKFEdldFNoYXJlZFJ1blJlc3BvbnNlEiUKA3J1bhgBIAEoCzIYLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuEjUKB21ldHJpY3MYAiABKAsyJC5jbG91ZC52MS5ydW50aW1lLm1ldHJpY3MuUnVuTWV0cmljczKgCAoKUnVuU2VydmljZRJVCg1TdWJtaXRUZXN0UnVuEiUuY2xvdWQudjEuYXBpLnVpLlN1Ym1pdFRlc3RSdW5SZXF1ZXN0GhguY2xvdWQudjEubW9kZWxzLlRlc3RSdW4iA5ACAhJPCgpHZXRUZXN0UnVuEiIuY2xvdWQudjEuYXBpLnVpLkdldFRlc3RSdW5SZXF1ZXN0GhguY2xvdWQudjEubW9kZWxzLlRlc3RSdW4iA5ACARJgCgxMaXN0VGVzdFJ1bnMSJC5jbG91ZC52MS5hcGkudWkuTGlzdFRlc3RSdW5zUmVxdWVzdBolLmNsb3VkLnYxLmFwaS51aS5MaXN0VGVzdFJ1bnNSZXNwb25zZSIDkAIBElUKDUNhbmNlbFRlc3RSdW4SJS5jbG91ZC52MS5hcGkudWkuQ2FuY2VsVGVzdFJ1blJlcXVlc3QaGC5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1biIDkAICEmUKEVN0cmVhbVRlc3RSdW5Mb2dzEikuY2xvdWQudjEuYXBpLnVpLlN0cmVhbVRlc3RSdW5Mb2dzUmVxdWVzdBoeLmNsb3VkLnYxLnJ1bnRpbWUubG9ncy5Mb2dMaW5lIgOQAgEwARJZCgxRdWVyeVJ1bkxvZ3MSJC5jbG91ZC52MS5hcGkudWkuUXVlcnlSdW5Mb2dzUmVxdWVzdBoeLmNsb3VkLnYxLnJ1bnRpbWUubG9ncy5Mb2dQYWdlIgOQAgESYAoMQnVpbGRMb2dMaW5rEiQuY2xvdWQudjEuYXBpLnVpLkJ1aWxkTG9nTGlua1JlcXVlc3QaJS5jbG91ZC52MS5hcGkudWkuQnVpbGRMb2dMaW5rUmVzcG9uc2UiA5ACARJhCg1HZXRSdW5NZXRyaWNzEiUuY2xvdWQudjEuYXBpLnVpLkdldFJ1bk1ldHJpY3NSZXF1ZXN0GiQuY2xvdWQudjEucnVudGltZS5tZXRyaWNzLlJ1bk1ldHJpY3MiA5ACARJdCgtDb21wYXJlUnVucxIjLmNsb3VkLnYxLmFwaS51aS5Db21wYXJlUnVuc1JlcXVlc3QaJC5jbG91ZC52MS5ydW50aW1lLm1ldHJpY3MuQ29tcGFyaXNvbiIDkAIBEmkKD0NyZWF0ZVNoYXJlTGluaxInLmNsb3VkLnYxLmFwaS51aS5DcmVhdGVTaGFyZUxpbmtSZXF1ZXN0GiguY2xvdWQudjEuYXBpLnVpLkNyZWF0ZVNoYXJlTGlua1Jlc3BvbnNlIgOQAgISYAoMR2V0U2hhcmVkUnVuEiQuY2xvdWQudjEuYXBpLnVpLkdldFNoYXJlZFJ1blJlcXVlc3QaJS5jbG91ZC52MS5hcGkudWkuR2V0U2hhcmVkUnVuUmVzcG9uc2UiA5ACAUJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGkvdWliBnByb3RvMw", [file_cloud_v1_common_tags, file_cloud_v1_domain_test, file_cloud_v1_models_common, file_cloud_v1_models_testing, file_cloud_v1_runtime_logs_logs, file_cloud_v1_runtime_metrics_metrics, file_cloud_v1_runtime_primitive_status, file_google_protobuf_timestamp, file_validate_validate]);
+  fileDesc("ChljbG91ZC92MS9hcGkvdWkvcnVuLnByb3RvEg9jbG91ZC52MS5hcGkudWki5AEKFFN1Ym1pdFRlc3RSdW5SZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESOgoLdGVzdF9wcmVzZXQYAiABKAsyGy5jbG91ZC52MS5kb21haW4uVGVzdFByZXNldEII+kIFigECEAESGwoEbmFtZRgDIAEoCUII+kIFcgMY/wFIAIgBARIiCgtkZXNjcmlwdGlvbhgEIAEoCUII+kIFcgMYgAhIAYgBAUIHCgVfbmFtZUIOCgxfZGVzY3JpcHRpb24ifQoRR2V0VGVzdFJ1blJlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARIwCgJpZBgCIAEoCzIaLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuSWRCCPpCBYoBAhABIoIEChNMaXN0VGVzdFJ1bnNSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESQQoGc3RhdHVzGAIgASgOMiIuY2xvdWQudjEucnVudGltZS5wcmltaXRpdmUuU3RhdHVzQgj6QgWCAQIQAUgAiAEBEh0KBnNlYXJjaBgDIAEoCUII+kIFcgMYgAJIAYgBARJMCgpzb3J0X2ZpZWxkGAQgASgOMi4uY2xvdWQudjEuYXBpLnVpLkxpc3RUZXN0UnVuc1JlcXVlc3QuU29ydEZpZWxkQgj6QgWCAQIQARIzCgVvcmRlchgFIAEoDjIaLmNsb3VkLnYxLm1vZGVscy5Tb3J0T3JkZXJCCPpCBYIBAhABEiMKBHBhZ2UYBiABKAsyFS5jbG91ZC52MS5tb2RlbHMuUGFnZRIjCgR0YWdzGAcgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MibgoJU29ydEZpZWxkEhoKFlNPUlRfRklFTERfVU5TUEVDSUZJRUQQABIZChVTT1JUX0ZJRUxEX0NSRUFURURfQVQQARITCg9TT1JUX0ZJRUxEX05BTUUQAhIVChFTT1JUX0ZJRUxEX1NUQVRVUxADQgkKB19zdGF0dXNCCQoHX3NlYXJjaCLBAQoJUnVuVGltaW5nEioKBnJ1bl9pZBgBIAEoCzIaLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuSWQSMwoKc3RhcnRlZF9hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAIgBARI0CgtmaW5pc2hlZF9hdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAYgBAUINCgtfc3RhcnRlZF9hdEIOCgxfZmluaXNoZWRfYXQiyAEKFExpc3RUZXN0UnVuc1Jlc3BvbnNlEisKCXRlc3RfcnVucxgBIAMoCzIYLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuEiwKCXBhZ2VfaW5mbxgCIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5QYWdlSW5mbxIoCgZvd25lcnMYAyADKAsyGC5jbG91ZC52MS5tb2RlbHMuQWNjb3VudBIrCgd0aW1pbmdzGAQgAygLMhouY2xvdWQudjEuYXBpLnVpLlJ1blRpbWluZyKAAQoUQ2FuY2VsVGVzdFJ1blJlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARIwCgJpZBgCIAEoCzIaLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuSWRCCPpCBYoBAhABIvoBChhTdHJlYW1UZXN0UnVuTG9nc1JlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARIwCgJpZBgCIAEoCzIaLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuSWRCCPpCBYoBAhABEigKEW5vZGVfZXhlY3V0aW9uX2lkGAMgASgJQgj6QgVyAxiAAUgAiAEBEiMKDGNvbXBvbmVudF9pZBgEIAEoCUII+kIFcgMYgAFIAYgBAUIUChJfbm9kZV9leGVjdXRpb25faWRCDwoNX2NvbXBvbmVudF9pZCLtAwoTUXVlcnlSdW5Mb2dzUmVxdWVzdBI2Cgl0ZW5hbnRfaWQYASABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCCPpCBYoBAhABEjQKBnJ1bl9pZBgCIAEoCzIaLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuSWRCCPpCBYoBAhABEigKEW5vZGVfZXhlY3V0aW9uX2lkGAMgASgJQgj6QgVyAxiAAUgAiAEBEiMKDGNvbXBvbmVudF9pZBgEIAEoCUII+kIFcgMYgAFIAYgBARI8CgZzb3VyY2UYBSABKA4yHS5jbG91ZC52MS5ydW50aW1lLmxvZ3MuU291cmNlQgj6QgWCAQIQAUgCiAEBEi4KBXN0YXJ0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEgDiAEBEiwKA2VuZBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIBIgBARIbCglwYWdlX3NpemUYCCABKA1CCPpCBSoDGJBOEhwKCnBhZ2VfdG9rZW4YCSABKAlCCPpCBXIDGIACQhQKEl9ub2RlX2V4ZWN1dGlvbl9pZEIPCg1fY29tcG9uZW50X2lkQgkKB19zb3VyY2VCCAoGX3N0YXJ0QgYKBF9lbmQiuwIKE0J1aWxkTG9nTGlua1JlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARI0CgZydW5faWQYAiABKAsyGi5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1bklkQgj6QgWKAQIQARIoChFub2RlX2V4ZWN1dGlvbl9pZBgDIAEoCUII+kIFcgMYgAFIAIgBARIjCgxjb21wb25lbnRfaWQYBCABKAlCCPpCBXIDGIABSAGIAQESNQoGY3Vyc29yGAUgASgLMiAuY2xvdWQudjEucnVudGltZS5sb2dzLkxvZ0N1cnNvckgCiAEBQhQKEl9ub2RlX2V4ZWN1dGlvbl9pZEIPCg1fY29tcG9uZW50X2lkQgkKB19jdXJzb3IiWwoUQnVpbGRMb2dMaW5rUmVzcG9uc2USFwoDdXJsGAEgASgJQgr6QgdyBRABGIAgEioKA3JlZhgCIAEoCzIdLmNsb3VkLnYxLnJ1bnRpbWUubG9ncy5Mb2dSZWYihAEKFEdldFJ1bk1ldHJpY3NSZXF1ZXN0EjYKCXRlbmFudF9pZBgBIAEoCzIZLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRJZEII+kIFigECEAESNAoGcnVuX2lkGAIgASgLMhouY2xvdWQudjEubW9kZWxzLlRlc3RSdW5JZEII+kIFigECEAEicAoRTGlzdEFnZW50c1JlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARIjCgRwYWdlGAIgASgLMhUuY2xvdWQudjEubW9kZWxzLlBhZ2UiagoSTGlzdEFnZW50c1Jlc3BvbnNlEiYKBmFnZW50cxgBIAMoCzIWLmNsb3VkLnYxLm1vZGVscy5BZ2VudBIsCglwYWdlX2luZm8YAiABKAsyGS5jbG91ZC52MS5tb2RlbHMuUGFnZUluZm8isQEKEkNvbXBhcmVSdW5zUmVxdWVzdBI2Cgl0ZW5hbnRfaWQYASABKAsyGS5jbG91ZC52MS5tb2RlbHMuVGVuYW50SWRCCPpCBYoBAhABEjcKB3J1bl9pZHMYAiADKAsyGi5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1bklkQgr6QgeSAQQIAhAQEioKCXRocmVzaG9sZBgDIAEoAUIX+kIUEhIZAAAAAAAAWUApAAAAAAAAAAAihgEKFkNyZWF0ZVNoYXJlTGlua1JlcXVlc3QSNgoJdGVuYW50X2lkGAEgASgLMhkuY2xvdWQudjEubW9kZWxzLlRlbmFudElkQgj6QgWKAQIQARI0CgZydW5faWQYAiABKAsyGi5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1bklkQgj6QgWKAQIQASJNChdDcmVhdGVTaGFyZUxpbmtSZXNwb25zZRIZCgV0b2tlbhgBIAEoCUIK+kIHcgUQARiAARIXCgN1cmwYAiABKAlCCvpCB3IFEAEYgAQiMAoTR2V0U2hhcmVkUnVuUmVxdWVzdBIZCgV0b2tlbhgBIAEoCUIK+kIHcgUYgAEQASJ0ChRHZXRTaGFyZWRSdW5SZXNwb25zZRIlCgNydW4YASABKAsyGC5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1bhI1CgdtZXRyaWNzGAIgASgLMiQuY2xvdWQudjEucnVudGltZS5tZXRyaWNzLlJ1bk1ldHJpY3My1wkKClJ1blNlcnZpY2USVQoNU3VibWl0VGVzdFJ1bhIlLmNsb3VkLnYxLmFwaS51aS5TdWJtaXRUZXN0UnVuUmVxdWVzdBoYLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuIgOQAgISTwoKR2V0VGVzdFJ1bhIiLmNsb3VkLnYxLmFwaS51aS5HZXRUZXN0UnVuUmVxdWVzdBoYLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuIgOQAgESWQoNR2V0VGVzdFJ1bkRhZxIiLmNsb3VkLnYxLmFwaS51aS5HZXRUZXN0UnVuUmVxdWVzdBofLmNsb3VkLnYxLnJ1bnRpbWUucHJpbWl0aXZlLkRhZyIDkAIBEmAKDExpc3RUZXN0UnVucxIkLmNsb3VkLnYxLmFwaS51aS5MaXN0VGVzdFJ1bnNSZXF1ZXN0GiUuY2xvdWQudjEuYXBpLnVpLkxpc3RUZXN0UnVuc1Jlc3BvbnNlIgOQAgESWgoKTGlzdEFnZW50cxIiLmNsb3VkLnYxLmFwaS51aS5MaXN0QWdlbnRzUmVxdWVzdBojLmNsb3VkLnYxLmFwaS51aS5MaXN0QWdlbnRzUmVzcG9uc2UiA5ACARJVCg1DYW5jZWxUZXN0UnVuEiUuY2xvdWQudjEuYXBpLnVpLkNhbmNlbFRlc3RSdW5SZXF1ZXN0GhguY2xvdWQudjEubW9kZWxzLlRlc3RSdW4iA5ACAhJlChFTdHJlYW1UZXN0UnVuTG9ncxIpLmNsb3VkLnYxLmFwaS51aS5TdHJlYW1UZXN0UnVuTG9nc1JlcXVlc3QaHi5jbG91ZC52MS5ydW50aW1lLmxvZ3MuTG9nTGluZSIDkAIBMAESWQoMUXVlcnlSdW5Mb2dzEiQuY2xvdWQudjEuYXBpLnVpLlF1ZXJ5UnVuTG9nc1JlcXVlc3QaHi5jbG91ZC52MS5ydW50aW1lLmxvZ3MuTG9nUGFnZSIDkAIBEmAKDEJ1aWxkTG9nTGluaxIkLmNsb3VkLnYxLmFwaS51aS5CdWlsZExvZ0xpbmtSZXF1ZXN0GiUuY2xvdWQudjEuYXBpLnVpLkJ1aWxkTG9nTGlua1Jlc3BvbnNlIgOQAgESYQoNR2V0UnVuTWV0cmljcxIlLmNsb3VkLnYxLmFwaS51aS5HZXRSdW5NZXRyaWNzUmVxdWVzdBokLmNsb3VkLnYxLnJ1bnRpbWUubWV0cmljcy5SdW5NZXRyaWNzIgOQAgESXQoLQ29tcGFyZVJ1bnMSIy5jbG91ZC52MS5hcGkudWkuQ29tcGFyZVJ1bnNSZXF1ZXN0GiQuY2xvdWQudjEucnVudGltZS5tZXRyaWNzLkNvbXBhcmlzb24iA5ACARJpCg9DcmVhdGVTaGFyZUxpbmsSJy5jbG91ZC52MS5hcGkudWkuQ3JlYXRlU2hhcmVMaW5rUmVxdWVzdBooLmNsb3VkLnYxLmFwaS51aS5DcmVhdGVTaGFyZUxpbmtSZXNwb25zZSIDkAICEmAKDEdldFNoYXJlZFJ1bhIkLmNsb3VkLnYxLmFwaS51aS5HZXRTaGFyZWRSdW5SZXF1ZXN0GiUuY2xvdWQudjEuYXBpLnVpLkdldFNoYXJlZFJ1blJlc3BvbnNlIgOQAgFCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBpL3VpYgZwcm90bzM", [file_cloud_v1_common_tags, file_cloud_v1_domain_test, file_cloud_v1_models_account, file_cloud_v1_models_agent, file_cloud_v1_models_common, file_cloud_v1_models_testing, file_cloud_v1_runtime_logs_logs, file_cloud_v1_runtime_metrics_metrics, file_cloud_v1_runtime_primitive_dag, file_cloud_v1_runtime_primitive_status, file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  *
@@ -297,7 +303,68 @@ export const ListTestRunsRequest_SortFieldSchema: GenEnum<ListTestRunsRequest_So
   enumDesc(file_cloud_v1_api_ui_run, 2, 0);
 
 /**
- * ListTestRunsResponse — rows plus pagination metadata (H42). 
+ * RunTiming carries a run's execution window, derived from its Dag.Execution
+ * (the run row has no timing columns). started_at is the run's execution start;
+ * finished_at is set only for terminal runs (absent ⇒ still running). 
+ *
+ * @generated from message cloud.v1.api.ui.RunTiming
+ */
+export type RunTiming = Message<"cloud.v1.api.ui.RunTiming"> & {
+  /**
+   * @generated from field: cloud.v1.models.TestRunId run_id = 1;
+   */
+  runId?: TestRunId;
+
+  /**
+   * @generated from field: optional google.protobuf.Timestamp started_at = 2;
+   */
+  startedAt?: Timestamp;
+
+  /**
+   * @generated from field: optional google.protobuf.Timestamp finished_at = 3;
+   */
+  finishedAt?: Timestamp;
+};
+
+/**
+ * RunTiming carries a run's execution window, derived from its Dag.Execution
+ * (the run row has no timing columns). started_at is the run's execution start;
+ * finished_at is set only for terminal runs (absent ⇒ still running). 
+ *
+ * @generated from message cloud.v1.api.ui.RunTiming
+ */
+export type RunTimingJson = {
+  /**
+   * @generated from field: cloud.v1.models.TestRunId run_id = 1;
+   */
+  runId?: TestRunIdJson;
+
+  /**
+   * @generated from field: optional google.protobuf.Timestamp started_at = 2;
+   */
+  startedAt?: TimestampJson;
+
+  /**
+   * @generated from field: optional google.protobuf.Timestamp finished_at = 3;
+   */
+  finishedAt?: TimestampJson;
+};
+
+export type RunTimingValid = RunTiming;
+
+/**
+ * Describes the message cloud.v1.api.ui.RunTiming.
+ * Use `create(RunTimingSchema)` to create a new message.
+ */
+export const RunTimingSchema: GenMessage<RunTiming, {jsonType: RunTimingJson, validType: RunTimingValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_ui_run, 3);
+
+/**
+ * ListTestRunsResponse — rows plus pagination metadata (H42). owners carries the
+ * distinct owner Accounts referenced by the page so the UI shows author name/email
+ * (run row holds only owner_account_id). timings carries each row's execution
+ * window (from the Dag) so the UI shows a real run duration. page_info.total is
+ * populated (offset pagination) so the UI can render page numbers / jump. 
  *
  * @generated from message cloud.v1.api.ui.ListTestRunsResponse
  */
@@ -311,10 +378,24 @@ export type ListTestRunsResponse = Message<"cloud.v1.api.ui.ListTestRunsResponse
    * @generated from field: cloud.v1.models.PageInfo page_info = 2;
    */
   pageInfo?: PageInfo;
+
+  /**
+   * @generated from field: repeated cloud.v1.models.Account owners = 3;
+   */
+  owners: Account[];
+
+  /**
+   * @generated from field: repeated cloud.v1.api.ui.RunTiming timings = 4;
+   */
+  timings: RunTiming[];
 };
 
 /**
- * ListTestRunsResponse — rows plus pagination metadata (H42). 
+ * ListTestRunsResponse — rows plus pagination metadata (H42). owners carries the
+ * distinct owner Accounts referenced by the page so the UI shows author name/email
+ * (run row holds only owner_account_id). timings carries each row's execution
+ * window (from the Dag) so the UI shows a real run duration. page_info.total is
+ * populated (offset pagination) so the UI can render page numbers / jump. 
  *
  * @generated from message cloud.v1.api.ui.ListTestRunsResponse
  */
@@ -328,6 +409,16 @@ export type ListTestRunsResponseJson = {
    * @generated from field: cloud.v1.models.PageInfo page_info = 2;
    */
   pageInfo?: PageInfoJson;
+
+  /**
+   * @generated from field: repeated cloud.v1.models.Account owners = 3;
+   */
+  owners?: AccountJson[];
+
+  /**
+   * @generated from field: repeated cloud.v1.api.ui.RunTiming timings = 4;
+   */
+  timings?: RunTimingJson[];
 };
 
 export type ListTestRunsResponseValid = ListTestRunsResponse;
@@ -337,7 +428,7 @@ export type ListTestRunsResponseValid = ListTestRunsResponse;
  * Use `create(ListTestRunsResponseSchema)` to create a new message.
  */
 export const ListTestRunsResponseSchema: GenMessage<ListTestRunsResponse, {jsonType: ListTestRunsResponseJson, validType: ListTestRunsResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_run, 3);
+  messageDesc(file_cloud_v1_api_ui_run, 4);
 
 /**
  * @generated from message cloud.v1.api.ui.CancelTestRunRequest
@@ -376,7 +467,7 @@ export type CancelTestRunRequestValid = CancelTestRunRequest;
  * Use `create(CancelTestRunRequestSchema)` to create a new message.
  */
 export const CancelTestRunRequestSchema: GenMessage<CancelTestRunRequest, {jsonType: CancelTestRunRequestJson, validType: CancelTestRunRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_run, 4);
+  messageDesc(file_cloud_v1_api_ui_run, 5);
 
 /**
  * @generated from message cloud.v1.api.ui.StreamTestRunLogsRequest
@@ -439,7 +530,7 @@ export type StreamTestRunLogsRequestValid = StreamTestRunLogsRequest;
  * Use `create(StreamTestRunLogsRequestSchema)` to create a new message.
  */
 export const StreamTestRunLogsRequestSchema: GenMessage<StreamTestRunLogsRequest, {jsonType: StreamTestRunLogsRequestJson, validType: StreamTestRunLogsRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_run, 5);
+  messageDesc(file_cloud_v1_api_ui_run, 6);
 
 /**
  *
@@ -558,7 +649,7 @@ export type QueryRunLogsRequestValid = QueryRunLogsRequest;
  * Use `create(QueryRunLogsRequestSchema)` to create a new message.
  */
 export const QueryRunLogsRequestSchema: GenMessage<QueryRunLogsRequest, {jsonType: QueryRunLogsRequestJson, validType: QueryRunLogsRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_run, 6);
+  messageDesc(file_cloud_v1_api_ui_run, 7);
 
 /**
  * BuildLogLinkRequest builds a deep-link to a component slice or a specific line. 
@@ -635,7 +726,7 @@ export type BuildLogLinkRequestValid = BuildLogLinkRequest;
  * Use `create(BuildLogLinkRequestSchema)` to create a new message.
  */
 export const BuildLogLinkRequestSchema: GenMessage<BuildLogLinkRequest, {jsonType: BuildLogLinkRequestJson, validType: BuildLogLinkRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_run, 7);
+  messageDesc(file_cloud_v1_api_ui_run, 8);
 
 /**
  * @generated from message cloud.v1.api.ui.BuildLogLinkResponse
@@ -682,7 +773,7 @@ export type BuildLogLinkResponseValid = BuildLogLinkResponse;
  * Use `create(BuildLogLinkResponseSchema)` to create a new message.
  */
 export const BuildLogLinkResponseSchema: GenMessage<BuildLogLinkResponse, {jsonType: BuildLogLinkResponseJson, validType: BuildLogLinkResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_run, 8);
+  messageDesc(file_cloud_v1_api_ui_run, 9);
 
 /**
  * @generated from message cloud.v1.api.ui.GetRunMetricsRequest
@@ -721,10 +812,95 @@ export type GetRunMetricsRequestValid = GetRunMetricsRequest;
  * Use `create(GetRunMetricsRequestSchema)` to create a new message.
  */
 export const GetRunMetricsRequestSchema: GenMessage<GetRunMetricsRequest, {jsonType: GetRunMetricsRequestJson, validType: GetRunMetricsRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_run, 9);
+  messageDesc(file_cloud_v1_api_ui_run, 10);
 
 /**
- * CompareRunsRequest compares two runs' metrics (E). 
+ * ListAgentsRequest lists the tenant's registered agents (machine == agent).
+ * Used to overlay agent status onto a run's topology machines (by machine_id). 
+ *
+ * @generated from message cloud.v1.api.ui.ListAgentsRequest
+ */
+export type ListAgentsRequest = Message<"cloud.v1.api.ui.ListAgentsRequest"> & {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantId;
+
+  /**
+   * @generated from field: cloud.v1.models.Page page = 2;
+   */
+  page?: Page;
+};
+
+/**
+ * ListAgentsRequest lists the tenant's registered agents (machine == agent).
+ * Used to overlay agent status onto a run's topology machines (by machine_id). 
+ *
+ * @generated from message cloud.v1.api.ui.ListAgentsRequest
+ */
+export type ListAgentsRequestJson = {
+  /**
+   * @generated from field: cloud.v1.models.TenantId tenant_id = 1;
+   */
+  tenantId?: TenantIdJson;
+
+  /**
+   * @generated from field: cloud.v1.models.Page page = 2;
+   */
+  page?: PageJson;
+};
+
+export type ListAgentsRequestValid = ListAgentsRequest;
+
+/**
+ * Describes the message cloud.v1.api.ui.ListAgentsRequest.
+ * Use `create(ListAgentsRequestSchema)` to create a new message.
+ */
+export const ListAgentsRequestSchema: GenMessage<ListAgentsRequest, {jsonType: ListAgentsRequestJson, validType: ListAgentsRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_ui_run, 11);
+
+/**
+ * @generated from message cloud.v1.api.ui.ListAgentsResponse
+ */
+export type ListAgentsResponse = Message<"cloud.v1.api.ui.ListAgentsResponse"> & {
+  /**
+   * @generated from field: repeated cloud.v1.models.Agent agents = 1;
+   */
+  agents: Agent[];
+
+  /**
+   * @generated from field: cloud.v1.models.PageInfo page_info = 2;
+   */
+  pageInfo?: PageInfo;
+};
+
+/**
+ * @generated from message cloud.v1.api.ui.ListAgentsResponse
+ */
+export type ListAgentsResponseJson = {
+  /**
+   * @generated from field: repeated cloud.v1.models.Agent agents = 1;
+   */
+  agents?: AgentJson[];
+
+  /**
+   * @generated from field: cloud.v1.models.PageInfo page_info = 2;
+   */
+  pageInfo?: PageInfoJson;
+};
+
+export type ListAgentsResponseValid = ListAgentsResponse;
+
+/**
+ * Describes the message cloud.v1.api.ui.ListAgentsResponse.
+ * Use `create(ListAgentsResponseSchema)` to create a new message.
+ */
+export const ListAgentsResponseSchema: GenMessage<ListAgentsResponse, {jsonType: ListAgentsResponseJson, validType: ListAgentsResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_ui_run, 12);
+
+/**
+ * CompareRunsRequest compares N runs' metrics against a baseline (E). run_ids[0]
+ * is the baseline; every other run is diffed against it. 
  *
  * @generated from message cloud.v1.api.ui.CompareRunsRequest
  */
@@ -735,25 +911,23 @@ export type CompareRunsRequest = Message<"cloud.v1.api.ui.CompareRunsRequest"> &
   tenantId?: TenantId;
 
   /**
-   * @generated from field: cloud.v1.models.TestRunId run_a = 2;
-   */
-  runA?: TestRunId;
-
-  /**
-   * @generated from field: cloud.v1.models.TestRunId run_b = 3;
-   */
-  runB?: TestRunId;
-
-  /**
-   * threshold is the percent change above which a metric counts as better/worse. 
+   * run_ids are the runs to compare (>= 2); run_ids[0] is the baseline. 
    *
-   * @generated from field: double threshold = 4;
+   * @generated from field: repeated cloud.v1.models.TestRunId run_ids = 2;
+   */
+  runIds: TestRunId[];
+
+  /**
+   * threshold is the percent change within which a metric counts as unchanged. 
+   *
+   * @generated from field: double threshold = 3;
    */
   threshold: number;
 };
 
 /**
- * CompareRunsRequest compares two runs' metrics (E). 
+ * CompareRunsRequest compares N runs' metrics against a baseline (E). run_ids[0]
+ * is the baseline; every other run is diffed against it. 
  *
  * @generated from message cloud.v1.api.ui.CompareRunsRequest
  */
@@ -764,19 +938,16 @@ export type CompareRunsRequestJson = {
   tenantId?: TenantIdJson;
 
   /**
-   * @generated from field: cloud.v1.models.TestRunId run_a = 2;
-   */
-  runA?: TestRunIdJson;
-
-  /**
-   * @generated from field: cloud.v1.models.TestRunId run_b = 3;
-   */
-  runB?: TestRunIdJson;
-
-  /**
-   * threshold is the percent change above which a metric counts as better/worse. 
+   * run_ids are the runs to compare (>= 2); run_ids[0] is the baseline. 
    *
-   * @generated from field: double threshold = 4;
+   * @generated from field: repeated cloud.v1.models.TestRunId run_ids = 2;
+   */
+  runIds?: TestRunIdJson[];
+
+  /**
+   * threshold is the percent change within which a metric counts as unchanged. 
+   *
+   * @generated from field: double threshold = 3;
    */
   threshold?: number | "NaN" | "Infinity" | "-Infinity";
 };
@@ -788,7 +959,7 @@ export type CompareRunsRequestValid = CompareRunsRequest;
  * Use `create(CompareRunsRequestSchema)` to create a new message.
  */
 export const CompareRunsRequestSchema: GenMessage<CompareRunsRequest, {jsonType: CompareRunsRequestJson, validType: CompareRunsRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_run, 10);
+  messageDesc(file_cloud_v1_api_ui_run, 13);
 
 /**
  * CreateShareLinkRequest freezes a run into a read-only share (G5). 
@@ -831,7 +1002,7 @@ export type CreateShareLinkRequestValid = CreateShareLinkRequest;
  * Use `create(CreateShareLinkRequestSchema)` to create a new message.
  */
 export const CreateShareLinkRequestSchema: GenMessage<CreateShareLinkRequest, {jsonType: CreateShareLinkRequestJson, validType: CreateShareLinkRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_run, 11);
+  messageDesc(file_cloud_v1_api_ui_run, 14);
 
 /**
  * @generated from message cloud.v1.api.ui.CreateShareLinkResponse
@@ -870,7 +1041,7 @@ export type CreateShareLinkResponseValid = CreateShareLinkResponse;
  * Use `create(CreateShareLinkResponseSchema)` to create a new message.
  */
 export const CreateShareLinkResponseSchema: GenMessage<CreateShareLinkResponse, {jsonType: CreateShareLinkResponseJson, validType: CreateShareLinkResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_run, 12);
+  messageDesc(file_cloud_v1_api_ui_run, 15);
 
 /**
  * GetSharedRunRequest is PUBLIC (token only, no tenant_id, no auth). 
@@ -903,7 +1074,7 @@ export type GetSharedRunRequestValid = GetSharedRunRequest;
  * Use `create(GetSharedRunRequestSchema)` to create a new message.
  */
 export const GetSharedRunRequestSchema: GenMessage<GetSharedRunRequest, {jsonType: GetSharedRunRequestJson, validType: GetSharedRunRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_run, 13);
+  messageDesc(file_cloud_v1_api_ui_run, 16);
 
 /**
  * @generated from message cloud.v1.api.ui.GetSharedRunResponse
@@ -950,7 +1121,7 @@ export type GetSharedRunResponseValid = GetSharedRunResponse;
  * Use `create(GetSharedRunResponseSchema)` to create a new message.
  */
 export const GetSharedRunResponseSchema: GenMessage<GetSharedRunResponse, {jsonType: GetSharedRunResponseJson, validType: GetSharedRunResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_ui_run, 14);
+  messageDesc(file_cloud_v1_api_ui_run, 17);
 
 /**
  * @generated from service cloud.v1.api.ui.RunService
@@ -975,12 +1146,32 @@ export const RunService: GenService<{
     output: typeof TestRunSchema;
   },
   /**
+   * GetTestRunDag returns the run's compiled+executing Dag (nodes/edges/status) for the graph view. 
+   *
+   * @generated from rpc cloud.v1.api.ui.RunService.GetTestRunDag
+   */
+  getTestRunDag: {
+    methodKind: "unary";
+    input: typeof GetTestRunRequestSchema;
+    output: typeof DagSchema;
+  },
+  /**
    * @generated from rpc cloud.v1.api.ui.RunService.ListTestRuns
    */
   listTestRuns: {
     methodKind: "unary";
     input: typeof ListTestRunsRequestSchema;
     output: typeof ListTestRunsResponseSchema;
+  },
+  /**
+   * ListAgents lists the tenant's agents (for run topology overlay; machine == agent). 
+   *
+   * @generated from rpc cloud.v1.api.ui.RunService.ListAgents
+   */
+  listAgents: {
+    methodKind: "unary";
+    input: typeof ListAgentsRequestSchema;
+    output: typeof ListAgentsResponseSchema;
   },
   /**
    * @generated from rpc cloud.v1.api.ui.RunService.CancelTestRun

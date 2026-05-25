@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/runtime/metrics/metrics.proto.
  */
 export const file_cloud_v1_runtime_metrics_metrics: GenFile = /*@__PURE__*/
-  fileDesc("CiZjbG91ZC92MS9ydW50aW1lL21ldHJpY3MvbWV0cmljcy5wcm90bxIYY2xvdWQudjEucnVudGltZS5tZXRyaWNzInMKCVRpbWVSYW5nZRIzCgVzdGFydBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCCPpCBbIBAggBEjEKA2VuZBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCCPpCBbIBAggBIt0BCg1NZXRyaWNTdW1tYXJ5EhcKA2tleRgBIAEoCUIK+kIHcgUQARiAAhIWCgRuYW1lGAIgASgJQgj6QgVyAxiAAhIVCgR1bml0GAMgASgJQgf6QgRyAhggEgsKA2F2ZxgEIAEoARILCgNtaW4YBSABKAESCwoDbWF4GAYgASgBEgwKBGxhc3QYByABKAESGAoQaGlnaGVyX2lzX2JldHRlchgIIAEoCBIdCgtkZXNjcmlwdGlvbhgJIAEoCUII+kIFcgMYgAgSFgoFZ3JvdXAYCiABKAlCB/pCBHICGEAiqwEKClJ1bk1ldHJpY3MSGgoGcnVuX2lkGAEgASgJQgr6QgdyBRABGIABEjwKBXJhbmdlGAIgASgLMiMuY2xvdWQudjEucnVudGltZS5tZXRyaWNzLlRpbWVSYW5nZUII+kIFigECEAESQwoHbWV0cmljcxgDIAMoCzInLmNsb3VkLnYxLnJ1bnRpbWUubWV0cmljcy5NZXRyaWNTdW1tYXJ5Qgn6QgaSAQMQgAQi4gIKCk1ldHJpY0RpZmYSFwoDa2V5GAEgASgJQgr6QgdyBRABGIACEhYKBG5hbWUYAiABKAlCCPpCBXIDGIACEhUKBHVuaXQYAyABKAlCB/pCBHICGCASDQoFYXZnX2EYBCABKAESDQoFYXZnX2IYBSABKAESDQoFbWF4X2EYBiABKAESDQoFbWF4X2IYByABKAESFAoMZGlmZl9hdmdfcGN0GAggASgBEhQKDGRpZmZfbWF4X3BjdBgJIAEoARJHCgd2ZXJkaWN0GAogASgOMiwuY2xvdWQudjEucnVudGltZS5tZXRyaWNzLk1ldHJpY0RpZmYuVmVyZGljdEII+kIFggECEAEiWwoHVmVyZGljdBIXChNWRVJESUNUX1VOU1BFQ0lGSUVEEAASEgoOVkVSRElDVF9CRVRURVIQARIRCg1WRVJESUNUX1dPUlNFEAISEAoMVkVSRElDVF9TQU1FEAMirwIKCkNvbXBhcmlzb24SGQoFcnVuX2EYASABKAlCCvpCB3IFEAEYgAESGQoFcnVuX2IYAiABKAlCCvpCB3IFEAEYgAESMgoFcmFuZ2UYAyABKAsyIy5jbG91ZC52MS5ydW50aW1lLm1ldHJpY3MuVGltZVJhbmdlEkAKB21ldHJpY3MYBCADKAsyJC5jbG91ZC52MS5ydW50aW1lLm1ldHJpY3MuTWV0cmljRGlmZkIJ+kIGkgEDEIAEEj0KB3N1bW1hcnkYBSABKAsyLC5jbG91ZC52MS5ydW50aW1lLm1ldHJpY3MuQ29tcGFyaXNvbi5TdW1tYXJ5GjYKB1N1bW1hcnkSDgoGYmV0dGVyGAEgASgNEg0KBXdvcnNlGAIgASgNEgwKBHNhbWUYAyABKA1CTVpLZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvcnVudGltZS9tZXRyaWNzYgZwcm90bzM", [file_google_protobuf_timestamp, file_validate_validate]);
+  fileDesc("CiZjbG91ZC92MS9ydW50aW1lL21ldHJpY3MvbWV0cmljcy5wcm90bxIYY2xvdWQudjEucnVudGltZS5tZXRyaWNzInMKCVRpbWVSYW5nZRIzCgVzdGFydBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCCPpCBbIBAggBEjEKA2VuZBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCCPpCBbIBAggBIt0BCg1NZXRyaWNTdW1tYXJ5EhcKA2tleRgBIAEoCUIK+kIHcgUQARiAAhIWCgRuYW1lGAIgASgJQgj6QgVyAxiAAhIVCgR1bml0GAMgASgJQgf6QgRyAhggEgsKA2F2ZxgEIAEoARILCgNtaW4YBSABKAESCwoDbWF4GAYgASgBEgwKBGxhc3QYByABKAESGAoQaGlnaGVyX2lzX2JldHRlchgIIAEoCBIdCgtkZXNjcmlwdGlvbhgJIAEoCUII+kIFcgMYgAgSFgoFZ3JvdXAYCiABKAlCB/pCBHICGEAiqwEKClJ1bk1ldHJpY3MSGgoGcnVuX2lkGAEgASgJQgr6QgdyBRiAARABEjwKBXJhbmdlGAIgASgLMiMuY2xvdWQudjEucnVudGltZS5tZXRyaWNzLlRpbWVSYW5nZUII+kIFigECEAESQwoHbWV0cmljcxgDIAMoCzInLmNsb3VkLnYxLnJ1bnRpbWUubWV0cmljcy5NZXRyaWNTdW1tYXJ5Qgn6QgaSAQMQgAQirAEKCk1ldHJpY0NlbGwSGgoGcnVuX2lkGAEgASgJQgr6QgdyBRABGIABEgsKA2F2ZxgCIAEoARILCgNtYXgYAyABKAESFAoMZGlmZl9hdmdfcGN0GAQgASgBEhQKDGRpZmZfbWF4X3BjdBgFIAEoARI8Cgd2ZXJkaWN0GAYgASgOMiEuY2xvdWQudjEucnVudGltZS5tZXRyaWNzLlZlcmRpY3RCCPpCBYIBAhABIsQBCglNZXRyaWNSb3cSFwoDa2V5GAEgASgJQgr6QgdyBRiAAhABEhYKBG5hbWUYAiABKAlCCPpCBXIDGIACEhUKBHVuaXQYAyABKAlCB/pCBHICGCASGAoQaGlnaGVyX2lzX2JldHRlchgEIAEoCBIWCgVncm91cBgFIAEoCUIH+kIEcgIYQBI9CgVjZWxscxgGIAMoCzIkLmNsb3VkLnYxLnJ1bnRpbWUubWV0cmljcy5NZXRyaWNDZWxsQgj6QgWSAQIQECLDAgoKQ29tcGFyaXNvbhIbCgdydW5faWRzGAEgAygJQgr6QgeSAQQIAhAQEjIKBXJhbmdlGAIgASgLMiMuY2xvdWQudjEucnVudGltZS5tZXRyaWNzLlRpbWVSYW5nZRI/CgdtZXRyaWNzGAMgAygLMiMuY2xvdWQudjEucnVudGltZS5tZXRyaWNzLk1ldHJpY1Jvd0IJ+kIGkgEDEIAEEkwKCXN1bW1hcmllcxgEIAMoCzIvLmNsb3VkLnYxLnJ1bnRpbWUubWV0cmljcy5Db21wYXJpc29uLlJ1blN1bW1hcnlCCPpCBZIBAhAQGlUKClJ1blN1bW1hcnkSGgoGcnVuX2lkGAEgASgJQgr6QgdyBRABGIABEg4KBmJldHRlchgCIAEoDRINCgV3b3JzZRgDIAEoDRIMCgRzYW1lGAQgASgNKlsKB1ZlcmRpY3QSFwoTVkVSRElDVF9VTlNQRUNJRklFRBAAEhIKDlZFUkRJQ1RfQkVUVEVSEAESEQoNVkVSRElDVF9XT1JTRRACEhAKDFZFUkRJQ1RfU0FNRRADQk1aS2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3J1bnRpbWUvbWV0cmljc2IGcHJvdG8z", [file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  * TimeRange is the [start, end] window the metrics cover. 
@@ -267,11 +267,107 @@ export const RunMetricsSchema: GenMessage<RunMetrics, {jsonType: RunMetricsJson,
   messageDesc(file_cloud_v1_runtime_metrics_metrics, 2);
 
 /**
- * MetricDiff compares one metric across two runs. 
+ * MetricCell is one run's value for a metric within an N-way Comparison row.
+ * diff_*_pct are relative to the baseline run (Comparison.run_ids[0]); for the
+ * baseline cell itself they are 0 and verdict is VERDICT_SAME. 
  *
- * @generated from message cloud.v1.runtime.metrics.MetricDiff
+ * @generated from message cloud.v1.runtime.metrics.MetricCell
  */
-export type MetricDiff = Message<"cloud.v1.runtime.metrics.MetricDiff"> & {
+export type MetricCell = Message<"cloud.v1.runtime.metrics.MetricCell"> & {
+  /**
+   * run_id is the run this cell belongs to (= Comparison.run_ids[index]). 
+   *
+   * @generated from field: string run_id = 1;
+   */
+  runId: string;
+
+  /**
+   * @generated from field: double avg = 2;
+   */
+  avg: number;
+
+  /**
+   * @generated from field: double max = 3;
+   */
+  max: number;
+
+  /**
+   * diff_avg_pct is (cell - baseline) / baseline * 100; positive means higher. 
+   *
+   * @generated from field: double diff_avg_pct = 4;
+   */
+  diffAvgPct: number;
+
+  /**
+   * @generated from field: double diff_max_pct = 5;
+   */
+  diffMaxPct: number;
+
+  /**
+   * @generated from field: cloud.v1.runtime.metrics.Verdict verdict = 6;
+   */
+  verdict: Verdict;
+};
+
+/**
+ * MetricCell is one run's value for a metric within an N-way Comparison row.
+ * diff_*_pct are relative to the baseline run (Comparison.run_ids[0]); for the
+ * baseline cell itself they are 0 and verdict is VERDICT_SAME. 
+ *
+ * @generated from message cloud.v1.runtime.metrics.MetricCell
+ */
+export type MetricCellJson = {
+  /**
+   * run_id is the run this cell belongs to (= Comparison.run_ids[index]). 
+   *
+   * @generated from field: string run_id = 1;
+   */
+  runId?: string;
+
+  /**
+   * @generated from field: double avg = 2;
+   */
+  avg?: number | "NaN" | "Infinity" | "-Infinity";
+
+  /**
+   * @generated from field: double max = 3;
+   */
+  max?: number | "NaN" | "Infinity" | "-Infinity";
+
+  /**
+   * diff_avg_pct is (cell - baseline) / baseline * 100; positive means higher. 
+   *
+   * @generated from field: double diff_avg_pct = 4;
+   */
+  diffAvgPct?: number | "NaN" | "Infinity" | "-Infinity";
+
+  /**
+   * @generated from field: double diff_max_pct = 5;
+   */
+  diffMaxPct?: number | "NaN" | "Infinity" | "-Infinity";
+
+  /**
+   * @generated from field: cloud.v1.runtime.metrics.Verdict verdict = 6;
+   */
+  verdict?: VerdictJson;
+};
+
+export type MetricCellValid = MetricCell;
+
+/**
+ * Describes the message cloud.v1.runtime.metrics.MetricCell.
+ * Use `create(MetricCellSchema)` to create a new message.
+ */
+export const MetricCellSchema: GenMessage<MetricCell, {jsonType: MetricCellJson, validType: MetricCellValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_runtime_metrics_metrics, 3);
+
+/**
+ * MetricRow compares one metric across all compared runs; cells are aligned
+ * 1:1 with Comparison.run_ids. 
+ *
+ * @generated from message cloud.v1.runtime.metrics.MetricRow
+ */
+export type MetricRow = Message<"cloud.v1.runtime.metrics.MetricRow"> & {
   /**
    * @generated from field: string key = 1;
    */
@@ -288,49 +384,30 @@ export type MetricDiff = Message<"cloud.v1.runtime.metrics.MetricDiff"> & {
   unit: string;
 
   /**
-   * @generated from field: double avg_a = 4;
-   */
-  avgA: number;
-
-  /**
-   * @generated from field: double avg_b = 5;
-   */
-  avgB: number;
-
-  /**
-   * @generated from field: double max_a = 6;
-   */
-  maxA: number;
-
-  /**
-   * @generated from field: double max_b = 7;
-   */
-  maxB: number;
-
-  /**
-   * diff_avg_pct is (B - A) / A * 100; positive means B is higher. 
+   * higher_is_better is the comparison direction as DATA (mirrors MetricSummary). 
    *
-   * @generated from field: double diff_avg_pct = 8;
+   * @generated from field: bool higher_is_better = 4;
    */
-  diffAvgPct: number;
+  higherIsBetter: boolean;
 
   /**
-   * @generated from field: double diff_max_pct = 9;
+   * @generated from field: string group = 5;
    */
-  diffMaxPct: number;
+  group: string;
 
   /**
-   * @generated from field: cloud.v1.runtime.metrics.MetricDiff.Verdict verdict = 10;
+   * @generated from field: repeated cloud.v1.runtime.metrics.MetricCell cells = 6;
    */
-  verdict: MetricDiff_Verdict;
+  cells: MetricCell[];
 };
 
 /**
- * MetricDiff compares one metric across two runs. 
+ * MetricRow compares one metric across all compared runs; cells are aligned
+ * 1:1 with Comparison.run_ids. 
  *
- * @generated from message cloud.v1.runtime.metrics.MetricDiff
+ * @generated from message cloud.v1.runtime.metrics.MetricRow
  */
-export type MetricDiffJson = {
+export type MetricRowJson = {
   /**
    * @generated from field: string key = 1;
    */
@@ -347,58 +424,175 @@ export type MetricDiffJson = {
   unit?: string;
 
   /**
-   * @generated from field: double avg_a = 4;
-   */
-  avgA?: number | "NaN" | "Infinity" | "-Infinity";
-
-  /**
-   * @generated from field: double avg_b = 5;
-   */
-  avgB?: number | "NaN" | "Infinity" | "-Infinity";
-
-  /**
-   * @generated from field: double max_a = 6;
-   */
-  maxA?: number | "NaN" | "Infinity" | "-Infinity";
-
-  /**
-   * @generated from field: double max_b = 7;
-   */
-  maxB?: number | "NaN" | "Infinity" | "-Infinity";
-
-  /**
-   * diff_avg_pct is (B - A) / A * 100; positive means B is higher. 
+   * higher_is_better is the comparison direction as DATA (mirrors MetricSummary). 
    *
-   * @generated from field: double diff_avg_pct = 8;
+   * @generated from field: bool higher_is_better = 4;
    */
-  diffAvgPct?: number | "NaN" | "Infinity" | "-Infinity";
+  higherIsBetter?: boolean;
 
   /**
-   * @generated from field: double diff_max_pct = 9;
+   * @generated from field: string group = 5;
    */
-  diffMaxPct?: number | "NaN" | "Infinity" | "-Infinity";
+  group?: string;
 
   /**
-   * @generated from field: cloud.v1.runtime.metrics.MetricDiff.Verdict verdict = 10;
+   * @generated from field: repeated cloud.v1.runtime.metrics.MetricCell cells = 6;
    */
-  verdict?: MetricDiff_VerdictJson;
+  cells?: MetricCellJson[];
 };
 
-export type MetricDiffValid = MetricDiff;
+export type MetricRowValid = MetricRow;
 
 /**
- * Describes the message cloud.v1.runtime.metrics.MetricDiff.
- * Use `create(MetricDiffSchema)` to create a new message.
+ * Describes the message cloud.v1.runtime.metrics.MetricRow.
+ * Use `create(MetricRowSchema)` to create a new message.
  */
-export const MetricDiffSchema: GenMessage<MetricDiff, {jsonType: MetricDiffJson, validType: MetricDiffValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_runtime_metrics_metrics, 3);
+export const MetricRowSchema: GenMessage<MetricRow, {jsonType: MetricRowJson, validType: MetricRowValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_runtime_metrics_metrics, 4);
 
 /**
- * Verdict classifies the per-metric change against the threshold. 
+ * Comparison is the metric-by-metric diff of N runs (>= 2) against a baseline
+ * (run_ids[0]) with a per-run roll-up verdict. 
  *
- * @generated from enum cloud.v1.runtime.metrics.MetricDiff.Verdict
+ * @generated from message cloud.v1.runtime.metrics.Comparison
  */
-export enum MetricDiff_Verdict {
+export type Comparison = Message<"cloud.v1.runtime.metrics.Comparison"> & {
+  /**
+   * run_ids are the compared runs in display order; run_ids[0] is the baseline. 
+   *
+   * @generated from field: repeated string run_ids = 1;
+   */
+  runIds: string[];
+
+  /**
+   * @generated from field: cloud.v1.runtime.metrics.TimeRange range = 2;
+   */
+  range?: TimeRange;
+
+  /**
+   * @generated from field: repeated cloud.v1.runtime.metrics.MetricRow metrics = 3;
+   */
+  metrics: MetricRow[];
+
+  /**
+   * summaries roll up per non-baseline run (aligned with run_ids[1:]). 
+   *
+   * @generated from field: repeated cloud.v1.runtime.metrics.Comparison.RunSummary summaries = 4;
+   */
+  summaries: Comparison_RunSummary[];
+};
+
+/**
+ * Comparison is the metric-by-metric diff of N runs (>= 2) against a baseline
+ * (run_ids[0]) with a per-run roll-up verdict. 
+ *
+ * @generated from message cloud.v1.runtime.metrics.Comparison
+ */
+export type ComparisonJson = {
+  /**
+   * run_ids are the compared runs in display order; run_ids[0] is the baseline. 
+   *
+   * @generated from field: repeated string run_ids = 1;
+   */
+  runIds?: string[];
+
+  /**
+   * @generated from field: cloud.v1.runtime.metrics.TimeRange range = 2;
+   */
+  range?: TimeRangeJson;
+
+  /**
+   * @generated from field: repeated cloud.v1.runtime.metrics.MetricRow metrics = 3;
+   */
+  metrics?: MetricRowJson[];
+
+  /**
+   * summaries roll up per non-baseline run (aligned with run_ids[1:]). 
+   *
+   * @generated from field: repeated cloud.v1.runtime.metrics.Comparison.RunSummary summaries = 4;
+   */
+  summaries?: Comparison_RunSummaryJson[];
+};
+
+export type ComparisonValid = Comparison;
+
+/**
+ * Describes the message cloud.v1.runtime.metrics.Comparison.
+ * Use `create(ComparisonSchema)` to create a new message.
+ */
+export const ComparisonSchema: GenMessage<Comparison, {jsonType: ComparisonJson, validType: ComparisonValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_runtime_metrics_metrics, 5);
+
+/**
+ * RunSummary rolls up one run's per-metric verdicts against the baseline. 
+ *
+ * @generated from message cloud.v1.runtime.metrics.Comparison.RunSummary
+ */
+export type Comparison_RunSummary = Message<"cloud.v1.runtime.metrics.Comparison.RunSummary"> & {
+  /**
+   * @generated from field: string run_id = 1;
+   */
+  runId: string;
+
+  /**
+   * @generated from field: uint32 better = 2;
+   */
+  better: number;
+
+  /**
+   * @generated from field: uint32 worse = 3;
+   */
+  worse: number;
+
+  /**
+   * @generated from field: uint32 same = 4;
+   */
+  same: number;
+};
+
+/**
+ * RunSummary rolls up one run's per-metric verdicts against the baseline. 
+ *
+ * @generated from message cloud.v1.runtime.metrics.Comparison.RunSummary
+ */
+export type Comparison_RunSummaryJson = {
+  /**
+   * @generated from field: string run_id = 1;
+   */
+  runId?: string;
+
+  /**
+   * @generated from field: uint32 better = 2;
+   */
+  better?: number;
+
+  /**
+   * @generated from field: uint32 worse = 3;
+   */
+  worse?: number;
+
+  /**
+   * @generated from field: uint32 same = 4;
+   */
+  same?: number;
+};
+
+export type Comparison_RunSummaryValid = Comparison_RunSummary;
+
+/**
+ * Describes the message cloud.v1.runtime.metrics.Comparison.RunSummary.
+ * Use `create(Comparison_RunSummarySchema)` to create a new message.
+ */
+export const Comparison_RunSummarySchema: GenMessage<Comparison_RunSummary, {jsonType: Comparison_RunSummaryJson, validType: Comparison_RunSummaryValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_runtime_metrics_metrics, 5, 0);
+
+/**
+ * Verdict classifies a per-metric change of one run against the baseline,
+ * honouring the metric's higher_is_better direction and the request threshold. 
+ *
+ * @generated from enum cloud.v1.runtime.metrics.Verdict
+ */
+export enum Verdict {
   /**
    * @generated from enum value: VERDICT_UNSPECIFIED = 0;
    */
@@ -421,141 +615,16 @@ export enum MetricDiff_Verdict {
 }
 
 /**
- * Verdict classifies the per-metric change against the threshold. 
+ * Verdict classifies a per-metric change of one run against the baseline,
+ * honouring the metric's higher_is_better direction and the request threshold. 
  *
- * @generated from enum cloud.v1.runtime.metrics.MetricDiff.Verdict
+ * @generated from enum cloud.v1.runtime.metrics.Verdict
  */
-export type MetricDiff_VerdictJson = "VERDICT_UNSPECIFIED" | "VERDICT_BETTER" | "VERDICT_WORSE" | "VERDICT_SAME";
+export type VerdictJson = "VERDICT_UNSPECIFIED" | "VERDICT_BETTER" | "VERDICT_WORSE" | "VERDICT_SAME";
 
 /**
- * Describes the enum cloud.v1.runtime.metrics.MetricDiff.Verdict.
+ * Describes the enum cloud.v1.runtime.metrics.Verdict.
  */
-export const MetricDiff_VerdictSchema: GenEnum<MetricDiff_Verdict, MetricDiff_VerdictJson> = /*@__PURE__*/
-  enumDesc(file_cloud_v1_runtime_metrics_metrics, 3, 0);
-
-/**
- * Comparison is the metric-by-metric diff of two runs with a roll-up verdict. 
- *
- * @generated from message cloud.v1.runtime.metrics.Comparison
- */
-export type Comparison = Message<"cloud.v1.runtime.metrics.Comparison"> & {
-  /**
-   * @generated from field: string run_a = 1;
-   */
-  runA: string;
-
-  /**
-   * @generated from field: string run_b = 2;
-   */
-  runB: string;
-
-  /**
-   * @generated from field: cloud.v1.runtime.metrics.TimeRange range = 3;
-   */
-  range?: TimeRange;
-
-  /**
-   * @generated from field: repeated cloud.v1.runtime.metrics.MetricDiff metrics = 4;
-   */
-  metrics: MetricDiff[];
-
-  /**
-   * @generated from field: cloud.v1.runtime.metrics.Comparison.Summary summary = 5;
-   */
-  summary?: Comparison_Summary;
-};
-
-/**
- * Comparison is the metric-by-metric diff of two runs with a roll-up verdict. 
- *
- * @generated from message cloud.v1.runtime.metrics.Comparison
- */
-export type ComparisonJson = {
-  /**
-   * @generated from field: string run_a = 1;
-   */
-  runA?: string;
-
-  /**
-   * @generated from field: string run_b = 2;
-   */
-  runB?: string;
-
-  /**
-   * @generated from field: cloud.v1.runtime.metrics.TimeRange range = 3;
-   */
-  range?: TimeRangeJson;
-
-  /**
-   * @generated from field: repeated cloud.v1.runtime.metrics.MetricDiff metrics = 4;
-   */
-  metrics?: MetricDiffJson[];
-
-  /**
-   * @generated from field: cloud.v1.runtime.metrics.Comparison.Summary summary = 5;
-   */
-  summary?: Comparison_SummaryJson;
-};
-
-export type ComparisonValid = Comparison;
-
-/**
- * Describes the message cloud.v1.runtime.metrics.Comparison.
- * Use `create(ComparisonSchema)` to create a new message.
- */
-export const ComparisonSchema: GenMessage<Comparison, {jsonType: ComparisonJson, validType: ComparisonValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_runtime_metrics_metrics, 4);
-
-/**
- * Summary rolls up per-metric verdicts. 
- *
- * @generated from message cloud.v1.runtime.metrics.Comparison.Summary
- */
-export type Comparison_Summary = Message<"cloud.v1.runtime.metrics.Comparison.Summary"> & {
-  /**
-   * @generated from field: uint32 better = 1;
-   */
-  better: number;
-
-  /**
-   * @generated from field: uint32 worse = 2;
-   */
-  worse: number;
-
-  /**
-   * @generated from field: uint32 same = 3;
-   */
-  same: number;
-};
-
-/**
- * Summary rolls up per-metric verdicts. 
- *
- * @generated from message cloud.v1.runtime.metrics.Comparison.Summary
- */
-export type Comparison_SummaryJson = {
-  /**
-   * @generated from field: uint32 better = 1;
-   */
-  better?: number;
-
-  /**
-   * @generated from field: uint32 worse = 2;
-   */
-  worse?: number;
-
-  /**
-   * @generated from field: uint32 same = 3;
-   */
-  same?: number;
-};
-
-export type Comparison_SummaryValid = Comparison_Summary;
-
-/**
- * Describes the message cloud.v1.runtime.metrics.Comparison.Summary.
- * Use `create(Comparison_SummarySchema)` to create a new message.
- */
-export const Comparison_SummarySchema: GenMessage<Comparison_Summary, {jsonType: Comparison_SummaryJson, validType: Comparison_SummaryValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_runtime_metrics_metrics, 4, 0);
+export const VerdictSchema: GenEnum<Verdict, VerdictJson> = /*@__PURE__*/
+  enumDesc(file_cloud_v1_runtime_metrics_metrics, 0);
 

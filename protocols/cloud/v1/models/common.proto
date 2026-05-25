@@ -68,12 +68,17 @@ message Own {
     ];
 }
 
-/* Page — cursor-based pagination request. */
+/* Page — pagination request. Supports cursor (token) OR offset addressing; a
+   list endpoint documents which it honours. Offset enables random page access
+   (jump to page N) and total-count UIs; cursor is cheaper for forward scans. */
 message Page {
     // Max items to return. 0 = server default.
     uint32 size = 1 [(validate.rules).uint32 = {lte: 1000}];
     // Opaque cursor from a previous PageInfo.next_token. Empty = first page.
     string token = 2;
+    // Zero-based row offset (offset pagination). 0 = first page. Used by endpoints
+    // that support random page access (jump to an arbitrary page).
+    uint64 offset = 3;
 }
 
 /* PageInfo — pagination metadata returned alongside a list result.

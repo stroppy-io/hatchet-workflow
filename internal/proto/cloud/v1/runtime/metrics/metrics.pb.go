@@ -23,25 +23,26 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Verdict classifies the per-metric change against the threshold.
-type MetricDiff_Verdict int32
+// Verdict classifies a per-metric change of one run against the baseline,
+// honouring the metric's higher_is_better direction and the request threshold.
+type Verdict int32
 
 const (
-	MetricDiff_VERDICT_UNSPECIFIED MetricDiff_Verdict = 0
-	MetricDiff_VERDICT_BETTER      MetricDiff_Verdict = 1
-	MetricDiff_VERDICT_WORSE       MetricDiff_Verdict = 2
-	MetricDiff_VERDICT_SAME        MetricDiff_Verdict = 3
+	Verdict_VERDICT_UNSPECIFIED Verdict = 0
+	Verdict_VERDICT_BETTER      Verdict = 1
+	Verdict_VERDICT_WORSE       Verdict = 2
+	Verdict_VERDICT_SAME        Verdict = 3
 )
 
-// Enum value maps for MetricDiff_Verdict.
+// Enum value maps for Verdict.
 var (
-	MetricDiff_Verdict_name = map[int32]string{
+	Verdict_name = map[int32]string{
 		0: "VERDICT_UNSPECIFIED",
 		1: "VERDICT_BETTER",
 		2: "VERDICT_WORSE",
 		3: "VERDICT_SAME",
 	}
-	MetricDiff_Verdict_value = map[string]int32{
+	Verdict_value = map[string]int32{
 		"VERDICT_UNSPECIFIED": 0,
 		"VERDICT_BETTER":      1,
 		"VERDICT_WORSE":       2,
@@ -49,31 +50,31 @@ var (
 	}
 )
 
-func (x MetricDiff_Verdict) Enum() *MetricDiff_Verdict {
-	p := new(MetricDiff_Verdict)
+func (x Verdict) Enum() *Verdict {
+	p := new(Verdict)
 	*p = x
 	return p
 }
 
-func (x MetricDiff_Verdict) String() string {
+func (x Verdict) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (MetricDiff_Verdict) Descriptor() protoreflect.EnumDescriptor {
+func (Verdict) Descriptor() protoreflect.EnumDescriptor {
 	return file_cloud_v1_runtime_metrics_metrics_proto_enumTypes[0].Descriptor()
 }
 
-func (MetricDiff_Verdict) Type() protoreflect.EnumType {
+func (Verdict) Type() protoreflect.EnumType {
 	return &file_cloud_v1_runtime_metrics_metrics_proto_enumTypes[0]
 }
 
-func (x MetricDiff_Verdict) Number() protoreflect.EnumNumber {
+func (x Verdict) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use MetricDiff_Verdict.Descriptor instead.
-func (MetricDiff_Verdict) EnumDescriptor() ([]byte, []int) {
-	return file_cloud_v1_runtime_metrics_metrics_proto_rawDescGZIP(), []int{3, 0}
+// Deprecated: Use Verdict.Descriptor instead.
+func (Verdict) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_runtime_metrics_metrics_proto_rawDescGZIP(), []int{0}
 }
 
 // TimeRange is the [start, end] window the metrics cover.
@@ -315,38 +316,37 @@ func (x *RunMetrics) GetMetrics() []*MetricSummary {
 	return nil
 }
 
-// MetricDiff compares one metric across two runs.
-type MetricDiff struct {
+// MetricCell is one run's value for a metric within an N-way Comparison row.
+// diff_*_pct are relative to the baseline run (Comparison.run_ids[0]); for the
+// baseline cell itself they are 0 and verdict is VERDICT_SAME.
+type MetricCell struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Key   string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Name  string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Unit  string                 `protobuf:"bytes,3,opt,name=unit,proto3" json:"unit,omitempty"`
-	AvgA  float64                `protobuf:"fixed64,4,opt,name=avg_a,json=avgA,proto3" json:"avg_a,omitempty"`
-	AvgB  float64                `protobuf:"fixed64,5,opt,name=avg_b,json=avgB,proto3" json:"avg_b,omitempty"`
-	MaxA  float64                `protobuf:"fixed64,6,opt,name=max_a,json=maxA,proto3" json:"max_a,omitempty"`
-	MaxB  float64                `protobuf:"fixed64,7,opt,name=max_b,json=maxB,proto3" json:"max_b,omitempty"`
-	// diff_avg_pct is (B - A) / A * 100; positive means B is higher.
-	DiffAvgPct    float64            `protobuf:"fixed64,8,opt,name=diff_avg_pct,json=diffAvgPct,proto3" json:"diff_avg_pct,omitempty"`
-	DiffMaxPct    float64            `protobuf:"fixed64,9,opt,name=diff_max_pct,json=diffMaxPct,proto3" json:"diff_max_pct,omitempty"`
-	Verdict       MetricDiff_Verdict `protobuf:"varint,10,opt,name=verdict,proto3,enum=cloud.v1.runtime.metrics.MetricDiff_Verdict" json:"verdict,omitempty"`
+	// run_id is the run this cell belongs to (= Comparison.run_ids[index]).
+	RunId string  `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	Avg   float64 `protobuf:"fixed64,2,opt,name=avg,proto3" json:"avg,omitempty"`
+	Max   float64 `protobuf:"fixed64,3,opt,name=max,proto3" json:"max,omitempty"`
+	// diff_avg_pct is (cell - baseline) / baseline * 100; positive means higher.
+	DiffAvgPct    float64 `protobuf:"fixed64,4,opt,name=diff_avg_pct,json=diffAvgPct,proto3" json:"diff_avg_pct,omitempty"`
+	DiffMaxPct    float64 `protobuf:"fixed64,5,opt,name=diff_max_pct,json=diffMaxPct,proto3" json:"diff_max_pct,omitempty"`
+	Verdict       Verdict `protobuf:"varint,6,opt,name=verdict,proto3,enum=cloud.v1.runtime.metrics.Verdict" json:"verdict,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *MetricDiff) Reset() {
-	*x = MetricDiff{}
+func (x *MetricCell) Reset() {
+	*x = MetricCell{}
 	mi := &file_cloud_v1_runtime_metrics_metrics_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *MetricDiff) String() string {
+func (x *MetricCell) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MetricDiff) ProtoMessage() {}
+func (*MetricCell) ProtoMessage() {}
 
-func (x *MetricDiff) ProtoReflect() protoreflect.Message {
+func (x *MetricCell) ProtoReflect() protoreflect.Message {
 	mi := &file_cloud_v1_runtime_metrics_metrics_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -358,96 +358,158 @@ func (x *MetricDiff) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use MetricDiff.ProtoReflect.Descriptor instead.
-func (*MetricDiff) Descriptor() ([]byte, []int) {
+// Deprecated: Use MetricCell.ProtoReflect.Descriptor instead.
+func (*MetricCell) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_runtime_metrics_metrics_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *MetricDiff) GetKey() string {
+func (x *MetricCell) GetRunId() string {
 	if x != nil {
-		return x.Key
+		return x.RunId
 	}
 	return ""
 }
 
-func (x *MetricDiff) GetName() string {
+func (x *MetricCell) GetAvg() float64 {
 	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *MetricDiff) GetUnit() string {
-	if x != nil {
-		return x.Unit
-	}
-	return ""
-}
-
-func (x *MetricDiff) GetAvgA() float64 {
-	if x != nil {
-		return x.AvgA
+		return x.Avg
 	}
 	return 0
 }
 
-func (x *MetricDiff) GetAvgB() float64 {
+func (x *MetricCell) GetMax() float64 {
 	if x != nil {
-		return x.AvgB
+		return x.Max
 	}
 	return 0
 }
 
-func (x *MetricDiff) GetMaxA() float64 {
-	if x != nil {
-		return x.MaxA
-	}
-	return 0
-}
-
-func (x *MetricDiff) GetMaxB() float64 {
-	if x != nil {
-		return x.MaxB
-	}
-	return 0
-}
-
-func (x *MetricDiff) GetDiffAvgPct() float64 {
+func (x *MetricCell) GetDiffAvgPct() float64 {
 	if x != nil {
 		return x.DiffAvgPct
 	}
 	return 0
 }
 
-func (x *MetricDiff) GetDiffMaxPct() float64 {
+func (x *MetricCell) GetDiffMaxPct() float64 {
 	if x != nil {
 		return x.DiffMaxPct
 	}
 	return 0
 }
 
-func (x *MetricDiff) GetVerdict() MetricDiff_Verdict {
+func (x *MetricCell) GetVerdict() Verdict {
 	if x != nil {
 		return x.Verdict
 	}
-	return MetricDiff_VERDICT_UNSPECIFIED
+	return Verdict_VERDICT_UNSPECIFIED
 }
 
-// Comparison is the metric-by-metric diff of two runs with a roll-up verdict.
+// MetricRow compares one metric across all compared runs; cells are aligned
+//
+//1:1 with Comparison.run_ids.
+type MetricRow struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Key   string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Name  string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Unit  string                 `protobuf:"bytes,3,opt,name=unit,proto3" json:"unit,omitempty"`
+	// higher_is_better is the comparison direction as DATA (mirrors MetricSummary).
+	HigherIsBetter bool          `protobuf:"varint,4,opt,name=higher_is_better,json=higherIsBetter,proto3" json:"higher_is_better,omitempty"`
+	Group          string        `protobuf:"bytes,5,opt,name=group,proto3" json:"group,omitempty"`
+	Cells          []*MetricCell `protobuf:"bytes,6,rep,name=cells,proto3" json:"cells,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *MetricRow) Reset() {
+	*x = MetricRow{}
+	mi := &file_cloud_v1_runtime_metrics_metrics_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MetricRow) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MetricRow) ProtoMessage() {}
+
+func (x *MetricRow) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_runtime_metrics_metrics_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MetricRow.ProtoReflect.Descriptor instead.
+func (*MetricRow) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_runtime_metrics_metrics_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *MetricRow) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *MetricRow) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *MetricRow) GetUnit() string {
+	if x != nil {
+		return x.Unit
+	}
+	return ""
+}
+
+func (x *MetricRow) GetHigherIsBetter() bool {
+	if x != nil {
+		return x.HigherIsBetter
+	}
+	return false
+}
+
+func (x *MetricRow) GetGroup() string {
+	if x != nil {
+		return x.Group
+	}
+	return ""
+}
+
+func (x *MetricRow) GetCells() []*MetricCell {
+	if x != nil {
+		return x.Cells
+	}
+	return nil
+}
+
+// Comparison is the metric-by-metric diff of N runs (>= 2) against a baseline
+// (run_ids[0]) with a per-run roll-up verdict.
 type Comparison struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RunA          string                 `protobuf:"bytes,1,opt,name=run_a,json=runA,proto3" json:"run_a,omitempty"`
-	RunB          string                 `protobuf:"bytes,2,opt,name=run_b,json=runB,proto3" json:"run_b,omitempty"`
-	Range         *TimeRange             `protobuf:"bytes,3,opt,name=range,proto3" json:"range,omitempty"`
-	Metrics       []*MetricDiff          `protobuf:"bytes,4,rep,name=metrics,proto3" json:"metrics,omitempty"`
-	Summary       *Comparison_Summary    `protobuf:"bytes,5,opt,name=summary,proto3" json:"summary,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// run_ids are the compared runs in display order; run_ids[0] is the baseline.
+	RunIds  []string     `protobuf:"bytes,1,rep,name=run_ids,json=runIds,proto3" json:"run_ids,omitempty"`
+	Range   *TimeRange   `protobuf:"bytes,2,opt,name=range,proto3" json:"range,omitempty"`
+	Metrics []*MetricRow `protobuf:"bytes,3,rep,name=metrics,proto3" json:"metrics,omitempty"`
+	// summaries roll up per non-baseline run (aligned with run_ids[1:]).
+	Summaries     []*Comparison_RunSummary `protobuf:"bytes,4,rep,name=summaries,proto3" json:"summaries,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Comparison) Reset() {
 	*x = Comparison{}
-	mi := &file_cloud_v1_runtime_metrics_metrics_proto_msgTypes[4]
+	mi := &file_cloud_v1_runtime_metrics_metrics_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -459,7 +521,7 @@ func (x *Comparison) String() string {
 func (*Comparison) ProtoMessage() {}
 
 func (x *Comparison) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_runtime_metrics_metrics_proto_msgTypes[4]
+	mi := &file_cloud_v1_runtime_metrics_metrics_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -472,21 +534,14 @@ func (x *Comparison) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Comparison.ProtoReflect.Descriptor instead.
 func (*Comparison) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_runtime_metrics_metrics_proto_rawDescGZIP(), []int{4}
+	return file_cloud_v1_runtime_metrics_metrics_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *Comparison) GetRunA() string {
+func (x *Comparison) GetRunIds() []string {
 	if x != nil {
-		return x.RunA
+		return x.RunIds
 	}
-	return ""
-}
-
-func (x *Comparison) GetRunB() string {
-	if x != nil {
-		return x.RunB
-	}
-	return ""
+	return nil
 }
 
 func (x *Comparison) GetRange() *TimeRange {
@@ -496,45 +551,46 @@ func (x *Comparison) GetRange() *TimeRange {
 	return nil
 }
 
-func (x *Comparison) GetMetrics() []*MetricDiff {
+func (x *Comparison) GetMetrics() []*MetricRow {
 	if x != nil {
 		return x.Metrics
 	}
 	return nil
 }
 
-func (x *Comparison) GetSummary() *Comparison_Summary {
+func (x *Comparison) GetSummaries() []*Comparison_RunSummary {
 	if x != nil {
-		return x.Summary
+		return x.Summaries
 	}
 	return nil
 }
 
-// Summary rolls up per-metric verdicts.
-type Comparison_Summary struct {
+// RunSummary rolls up one run's per-metric verdicts against the baseline.
+type Comparison_RunSummary struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Better        uint32                 `protobuf:"varint,1,opt,name=better,proto3" json:"better,omitempty"`
-	Worse         uint32                 `protobuf:"varint,2,opt,name=worse,proto3" json:"worse,omitempty"`
-	Same          uint32                 `protobuf:"varint,3,opt,name=same,proto3" json:"same,omitempty"`
+	RunId         string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	Better        uint32                 `protobuf:"varint,2,opt,name=better,proto3" json:"better,omitempty"`
+	Worse         uint32                 `protobuf:"varint,3,opt,name=worse,proto3" json:"worse,omitempty"`
+	Same          uint32                 `protobuf:"varint,4,opt,name=same,proto3" json:"same,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Comparison_Summary) Reset() {
-	*x = Comparison_Summary{}
-	mi := &file_cloud_v1_runtime_metrics_metrics_proto_msgTypes[5]
+func (x *Comparison_RunSummary) Reset() {
+	*x = Comparison_RunSummary{}
+	mi := &file_cloud_v1_runtime_metrics_metrics_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Comparison_Summary) String() string {
+func (x *Comparison_RunSummary) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Comparison_Summary) ProtoMessage() {}
+func (*Comparison_RunSummary) ProtoMessage() {}
 
-func (x *Comparison_Summary) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_runtime_metrics_metrics_proto_msgTypes[5]
+func (x *Comparison_RunSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_runtime_metrics_metrics_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -545,26 +601,33 @@ func (x *Comparison_Summary) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Comparison_Summary.ProtoReflect.Descriptor instead.
-func (*Comparison_Summary) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_runtime_metrics_metrics_proto_rawDescGZIP(), []int{4, 0}
+// Deprecated: Use Comparison_RunSummary.ProtoReflect.Descriptor instead.
+func (*Comparison_RunSummary) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_runtime_metrics_metrics_proto_rawDescGZIP(), []int{5, 0}
 }
 
-func (x *Comparison_Summary) GetBetter() uint32 {
+func (x *Comparison_RunSummary) GetRunId() string {
+	if x != nil {
+		return x.RunId
+	}
+	return ""
+}
+
+func (x *Comparison_RunSummary) GetBetter() uint32 {
 	if x != nil {
 		return x.Better
 	}
 	return 0
 }
 
-func (x *Comparison_Summary) GetWorse() uint32 {
+func (x *Comparison_RunSummary) GetWorse() uint32 {
 	if x != nil {
 		return x.Worse
 	}
 	return 0
 }
 
-func (x *Comparison_Summary) GetSame() uint32 {
+func (x *Comparison_RunSummary) GetSame() uint32 {
 	if x != nil {
 		return x.Same
 	}
@@ -597,41 +660,45 @@ const file_cloud_v1_runtime_metrics_metrics_proto_rawDesc = "" +
 	"\x06run_id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\x12C\n" +
 	"\x05range\x18\x02 \x01(\v2#.cloud.v1.runtime.metrics.TimeRangeB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05range\x12L\n" +
-	"\ametrics\x18\x03 \x03(\v2'.cloud.v1.runtime.metrics.MetricSummaryB\t\xfaB\x06\x92\x01\x03\x10\x80\x04R\ametrics\"\xac\x03\n" +
+	"\ametrics\x18\x03 \x03(\v2'.cloud.v1.runtime.metrics.MetricSummaryB\t\xfaB\x06\x92\x01\x03\x10\x80\x04R\ametrics\"\xde\x01\n" +
 	"\n" +
-	"MetricDiff\x12\x1c\n" +
+	"MetricCell\x12!\n" +
+	"\x06run_id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\x12\x10\n" +
+	"\x03avg\x18\x02 \x01(\x01R\x03avg\x12\x10\n" +
+	"\x03max\x18\x03 \x01(\x01R\x03max\x12 \n" +
+	"\fdiff_avg_pct\x18\x04 \x01(\x01R\n" +
+	"diffAvgPct\x12 \n" +
+	"\fdiff_max_pct\x18\x05 \x01(\x01R\n" +
+	"diffMaxPct\x12E\n" +
+	"\averdict\x18\x06 \x01(\x0e2!.cloud.v1.runtime.metrics.VerdictB\b\xfaB\x05\x82\x01\x02\x10\x01R\averdict\"\xf3\x01\n" +
+	"\tMetricRow\x12\x1c\n" +
 	"\x03key\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x02R\x03key\x12\x1c\n" +
 	"\x04name\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\x04name\x12\x1b\n" +
-	"\x04unit\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18 R\x04unit\x12\x13\n" +
-	"\x05avg_a\x18\x04 \x01(\x01R\x04avgA\x12\x13\n" +
-	"\x05avg_b\x18\x05 \x01(\x01R\x04avgB\x12\x13\n" +
-	"\x05max_a\x18\x06 \x01(\x01R\x04maxA\x12\x13\n" +
-	"\x05max_b\x18\a \x01(\x01R\x04maxB\x12 \n" +
-	"\fdiff_avg_pct\x18\b \x01(\x01R\n" +
-	"diffAvgPct\x12 \n" +
-	"\fdiff_max_pct\x18\t \x01(\x01R\n" +
-	"diffMaxPct\x12P\n" +
-	"\averdict\x18\n" +
-	" \x01(\x0e2,.cloud.v1.runtime.metrics.MetricDiff.VerdictB\b\xfaB\x05\x82\x01\x02\x10\x01R\averdict\"[\n" +
+	"\x04unit\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18 R\x04unit\x12(\n" +
+	"\x10higher_is_better\x18\x04 \x01(\bR\x0ehigherIsBetter\x12\x1d\n" +
+	"\x05group\x18\x05 \x01(\tB\a\xfaB\x04r\x02\x18@R\x05group\x12D\n" +
+	"\x05cells\x18\x06 \x03(\v2$.cloud.v1.runtime.metrics.MetricCellB\b\xfaB\x05\x92\x01\x02\x10\x10R\x05cells\"\x82\x03\n" +
+	"\n" +
+	"Comparison\x12#\n" +
+	"\arun_ids\x18\x01 \x03(\tB\n" +
+	"\xfaB\a\x92\x01\x04\b\x02\x10\x10R\x06runIds\x129\n" +
+	"\x05range\x18\x02 \x01(\v2#.cloud.v1.runtime.metrics.TimeRangeR\x05range\x12H\n" +
+	"\ametrics\x18\x03 \x03(\v2#.cloud.v1.runtime.metrics.MetricRowB\t\xfaB\x06\x92\x01\x03\x10\x80\x04R\ametrics\x12W\n" +
+	"\tsummaries\x18\x04 \x03(\v2/.cloud.v1.runtime.metrics.Comparison.RunSummaryB\b\xfaB\x05\x92\x01\x02\x10\x10R\tsummaries\x1aq\n" +
+	"\n" +
+	"RunSummary\x12!\n" +
+	"\x06run_id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\x12\x16\n" +
+	"\x06better\x18\x02 \x01(\rR\x06better\x12\x14\n" +
+	"\x05worse\x18\x03 \x01(\rR\x05worse\x12\x12\n" +
+	"\x04same\x18\x04 \x01(\rR\x04same*[\n" +
 	"\aVerdict\x12\x17\n" +
 	"\x13VERDICT_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eVERDICT_BETTER\x10\x01\x12\x11\n" +
 	"\rVERDICT_WORSE\x10\x02\x12\x10\n" +
-	"\fVERDICT_SAME\x10\x03\"\xe9\x02\n" +
-	"\n" +
-	"Comparison\x12\x1f\n" +
-	"\x05run_a\x18\x01 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x04runA\x12\x1f\n" +
-	"\x05run_b\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x04runB\x129\n" +
-	"\x05range\x18\x03 \x01(\v2#.cloud.v1.runtime.metrics.TimeRangeR\x05range\x12I\n" +
-	"\ametrics\x18\x04 \x03(\v2$.cloud.v1.runtime.metrics.MetricDiffB\t\xfaB\x06\x92\x01\x03\x10\x80\x04R\ametrics\x12F\n" +
-	"\asummary\x18\x05 \x01(\v2,.cloud.v1.runtime.metrics.Comparison.SummaryR\asummary\x1aK\n" +
-	"\aSummary\x12\x16\n" +
-	"\x06better\x18\x01 \x01(\rR\x06better\x12\x14\n" +
-	"\x05worse\x18\x02 \x01(\rR\x05worse\x12\x12\n" +
-	"\x04same\x18\x03 \x01(\rR\x04sameBMZKgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/metricsb\x06proto3"
+	"\fVERDICT_SAME\x10\x03BMZKgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/runtime/metricsb\x06proto3"
 
 var (
 	file_cloud_v1_runtime_metrics_metrics_proto_rawDescOnce sync.Once
@@ -646,31 +713,33 @@ func file_cloud_v1_runtime_metrics_metrics_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_runtime_metrics_metrics_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_runtime_metrics_metrics_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_cloud_v1_runtime_metrics_metrics_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_cloud_v1_runtime_metrics_metrics_proto_goTypes = []any{
-	(MetricDiff_Verdict)(0),       // 0: cloud.v1.runtime.metrics.MetricDiff.Verdict
+	(Verdict)(0),                  // 0: cloud.v1.runtime.metrics.Verdict
 	(*TimeRange)(nil),             // 1: cloud.v1.runtime.metrics.TimeRange
 	(*MetricSummary)(nil),         // 2: cloud.v1.runtime.metrics.MetricSummary
 	(*RunMetrics)(nil),            // 3: cloud.v1.runtime.metrics.RunMetrics
-	(*MetricDiff)(nil),            // 4: cloud.v1.runtime.metrics.MetricDiff
-	(*Comparison)(nil),            // 5: cloud.v1.runtime.metrics.Comparison
-	(*Comparison_Summary)(nil),    // 6: cloud.v1.runtime.metrics.Comparison.Summary
-	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
+	(*MetricCell)(nil),            // 4: cloud.v1.runtime.metrics.MetricCell
+	(*MetricRow)(nil),             // 5: cloud.v1.runtime.metrics.MetricRow
+	(*Comparison)(nil),            // 6: cloud.v1.runtime.metrics.Comparison
+	(*Comparison_RunSummary)(nil), // 7: cloud.v1.runtime.metrics.Comparison.RunSummary
+	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
 }
 var file_cloud_v1_runtime_metrics_metrics_proto_depIdxs = []int32{
-	7, // 0: cloud.v1.runtime.metrics.TimeRange.start:type_name -> google.protobuf.Timestamp
-	7, // 1: cloud.v1.runtime.metrics.TimeRange.end:type_name -> google.protobuf.Timestamp
+	8, // 0: cloud.v1.runtime.metrics.TimeRange.start:type_name -> google.protobuf.Timestamp
+	8, // 1: cloud.v1.runtime.metrics.TimeRange.end:type_name -> google.protobuf.Timestamp
 	1, // 2: cloud.v1.runtime.metrics.RunMetrics.range:type_name -> cloud.v1.runtime.metrics.TimeRange
 	2, // 3: cloud.v1.runtime.metrics.RunMetrics.metrics:type_name -> cloud.v1.runtime.metrics.MetricSummary
-	0, // 4: cloud.v1.runtime.metrics.MetricDiff.verdict:type_name -> cloud.v1.runtime.metrics.MetricDiff.Verdict
-	1, // 5: cloud.v1.runtime.metrics.Comparison.range:type_name -> cloud.v1.runtime.metrics.TimeRange
-	4, // 6: cloud.v1.runtime.metrics.Comparison.metrics:type_name -> cloud.v1.runtime.metrics.MetricDiff
-	6, // 7: cloud.v1.runtime.metrics.Comparison.summary:type_name -> cloud.v1.runtime.metrics.Comparison.Summary
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	0, // 4: cloud.v1.runtime.metrics.MetricCell.verdict:type_name -> cloud.v1.runtime.metrics.Verdict
+	4, // 5: cloud.v1.runtime.metrics.MetricRow.cells:type_name -> cloud.v1.runtime.metrics.MetricCell
+	1, // 6: cloud.v1.runtime.metrics.Comparison.range:type_name -> cloud.v1.runtime.metrics.TimeRange
+	5, // 7: cloud.v1.runtime.metrics.Comparison.metrics:type_name -> cloud.v1.runtime.metrics.MetricRow
+	7, // 8: cloud.v1.runtime.metrics.Comparison.summaries:type_name -> cloud.v1.runtime.metrics.Comparison.RunSummary
+	9, // [9:9] is the sub-list for method output_type
+	9, // [9:9] is the sub-list for method input_type
+	9, // [9:9] is the sub-list for extension type_name
+	9, // [9:9] is the sub-list for extension extendee
+	0, // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_runtime_metrics_metrics_proto_init() }
@@ -684,7 +753,7 @@ func file_cloud_v1_runtime_metrics_metrics_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_runtime_metrics_metrics_proto_rawDesc), len(file_cloud_v1_runtime_metrics_metrics_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -245,6 +245,53 @@ func (s *TenantService) AddMemberToTenant(ctx context.Context, req *uipb.AddMemb
 		})
 }
 
+// UpdateMemberRole changes an existing membership's role (OWNER only).
+func (s *TenantService) UpdateMemberRole(ctx context.Context, req *uipb.UpdateMemberRoleRequest) (*models.TenantMember, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "UpdateMemberRole",
+		func(ctx context.Context, _ trace.Span) (*models.TenantMember, error) {
+			c, _ := caller.FromContext(ctx)
+			if err := s.authz.Require(ctx, c, req.GetTenantId(), models.TenantMember_ROLE_OWNER); err != nil {
+				return nil, err
+			}
+			now := time.Now()
+			updated, err := s.members.QueryRow(ctx,
+				models.TenantMembers.Update().Set(
+					// Role is stored as the enum String() value (tenant_plain converter).
+					models.TenantMembers.Role.Set(req.GetRole().String()),
+					models.TenantMembers.UpdatedAt.Set(now),
+				).Where(
+					models.TenantMembers.TenantId.Eq(req.GetTenantId().GetValue()),
+					models.TenantMembers.AccountId.Eq(req.GetAccountId().GetValue()),
+					models.TenantMembers.DeletedAt.IsNull(),
+				).ReturningAll(),
+			)
+			if err != nil {
+				return nil, svcutil.NotFound(err, "member")
+			}
+			return updated, nil
+		})
+}
+
+// LookupAccountByEmail resolves an account by EXACT email so an OWNER can add a
+// member without the ULID (OWNER only; exact match or NotFound — no enumeration).
+func (s *TenantService) LookupAccountByEmail(ctx context.Context, req *uipb.LookupAccountByEmailRequest) (*models.Account, error) {
+	return tracing.WithTraceRetErr(s.Tracer(), ctx, "LookupAccountByEmail",
+		func(ctx context.Context, _ trace.Span) (*models.Account, error) {
+			c, _ := caller.FromContext(ctx)
+			if err := s.authz.Require(ctx, c, req.GetTenantId(), models.TenantMember_ROLE_OWNER); err != nil {
+				return nil, err
+			}
+			account, err := s.accounts.QueryRow(ctx, models.Accounts.SelectAll().Where(
+				models.Accounts.Email.Eq(req.GetEmail()),
+				models.Accounts.DeletedAt.IsNull(),
+			))
+			if err != nil {
+				return nil, svcutil.NotFound(err, "account")
+			}
+			return account, nil
+		})
+}
+
 // RemoveMemberFromTenant soft-deletes a membership (OWNER only) and returns it.
 func (s *TenantService) RemoveMemberFromTenant(ctx context.Context, req *uipb.RemoveMemberRequest) (*models.TenantMember, error) {
 	return tracing.WithTraceRetErr(s.Tracer(), ctx, "RemoveMemberFromTenant",

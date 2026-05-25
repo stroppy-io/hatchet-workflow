@@ -142,8 +142,7 @@ func runCompare(c *cloudClient, runA, runB string, threshold float64, outputFile
 	defer cancel()
 	cmp, err := uipb.NewRunServiceClient(c.conn).CompareRuns(ctx, &uipb.CompareRunsRequest{
 		TenantId:  tenantID,
-		RunA:      &models.TestRunId{Value: runA},
-		RunB:      &models.TestRunId{Value: runB},
+		RunIds:    []*models.TestRunId{{Value: runA}, {Value: runB}},
 		Threshold: threshold,
 	})
 	if err != nil {
@@ -192,37 +191,63 @@ func formatFromExt(path string) string {
 	}
 }
 
-func verdictString(v metrics.MetricDiff_Verdict) string {
+func verdictString(v metrics.Verdict) string {
 	switch v {
-	case metrics.MetricDiff_VERDICT_BETTER:
+	case metrics.Verdict_VERDICT_BETTER:
 		return "better"
-	case metrics.MetricDiff_VERDICT_WORSE:
+	case metrics.Verdict_VERDICT_WORSE:
 		return "worse"
-	case metrics.MetricDiff_VERDICT_SAME:
+	case metrics.Verdict_VERDICT_SAME:
 		return "same"
 	default:
 		return "-"
 	}
 }
 
+// The CLI compares exactly two runs, so it reads the baseline (cells[0]) and the
+// single candidate (cells[1]) out of each N-way MetricRow.
+func runID(r *metrics.Comparison, i int) string {
+	if i < len(r.GetRunIds()) {
+		return r.GetRunIds()[i]
+	}
+	return "?"
+}
+
+func cellAt(m *metrics.MetricRow, i int) *metrics.MetricCell {
+	if i < len(m.GetCells()) {
+		return m.GetCells()[i]
+	}
+	return &metrics.MetricCell{}
+}
+
+// candidateSummary is the roll-up for the (single) non-baseline run.
+func candidateSummary(r *metrics.Comparison) *metrics.Comparison_RunSummary {
+	if len(r.GetSummaries()) > 0 {
+		return r.GetSummaries()[0]
+	}
+	return &metrics.Comparison_RunSummary{}
+}
+
 func renderTable(w *strings.Builder, r *metrics.Comparison) {
-	fmt.Fprintf(w, "\nCompare: %s vs %s\n\n", r.GetRunA(), r.GetRunB())
+	fmt.Fprintf(w, "\nCompare: %s vs %s\n\n", runID(r, 0), runID(r, 1))
 	fmt.Fprintf(w, "%-35s %12s %12s %10s %8s\n", "METRIC", "BASELINE", "CANDIDATE", "DIFF %", "VERDICT")
 	fmt.Fprintln(w, strings.Repeat("-", 82))
 	for _, m := range r.GetMetrics() {
+		cand := cellAt(m, 1)
 		fmt.Fprintf(w, "%-35s %12.2f %12.2f %+9.1f%% %8s\n",
-			m.GetName(), m.GetAvgA(), m.GetAvgB(), m.GetDiffAvgPct(), verdictString(m.GetVerdict()))
+			m.GetName(), cellAt(m, 0).GetAvg(), cand.GetAvg(), cand.GetDiffAvgPct(), verdictString(cand.GetVerdict()))
 	}
-	s := r.GetSummary()
+	s := candidateSummary(r)
 	fmt.Fprintf(w, "\nSummary: %d better, %d worse, %d same\n", s.GetBetter(), s.GetWorse(), s.GetSame())
 }
 
 func renderMarkdown(w *strings.Builder, r *metrics.Comparison) {
-	fmt.Fprintf(w, "## Benchmark: %s vs %s\n\n", r.GetRunA(), r.GetRunB())
+	fmt.Fprintf(w, "## Benchmark: %s vs %s\n\n", runID(r, 0), runID(r, 1))
 	fmt.Fprintln(w, "| Metric | Baseline | Candidate | Diff % | Verdict |")
 	fmt.Fprintln(w, "|--------|----------|-----------|--------|---------|")
 	for _, m := range r.GetMetrics() {
-		verdict := verdictString(m.GetVerdict())
+		cand := cellAt(m, 1)
+		verdict := verdictString(cand.GetVerdict())
 		switch verdict {
 		case "better":
 			verdict = ":white_check_mark: better"
@@ -232,21 +257,22 @@ func renderMarkdown(w *strings.Builder, r *metrics.Comparison) {
 			verdict = ":heavy_minus_sign: same"
 		}
 		fmt.Fprintf(w, "| %s | %.2f %s | %.2f %s | %+.1f%% | %s |\n",
-			m.GetName(), m.GetAvgA(), m.GetUnit(), m.GetAvgB(), m.GetUnit(), m.GetDiffAvgPct(), verdict)
+			m.GetName(), cellAt(m, 0).GetAvg(), m.GetUnit(), cand.GetAvg(), m.GetUnit(), cand.GetDiffAvgPct(), verdict)
 	}
-	s := r.GetSummary()
+	s := candidateSummary(r)
 	fmt.Fprintf(w, "\n**Summary:** %d better, %d worse, %d same\n", s.GetBetter(), s.GetWorse(), s.GetSame())
 }
 
 func renderJUnit(w *strings.Builder, r *metrics.Comparison) {
 	fmt.Fprintln(w, `<?xml version="1.0" encoding="UTF-8"?>`)
 	fmt.Fprintf(w, "<testsuite name=\"stroppy-compare\" tests=\"%d\" failures=\"%d\">\n",
-		len(r.GetMetrics()), r.GetSummary().GetWorse())
+		len(r.GetMetrics()), candidateSummary(r).GetWorse())
 	for _, m := range r.GetMetrics() {
+		cand := cellAt(m, 1)
 		fmt.Fprintf(w, "  <testcase name=\"%s\" classname=\"stroppy.%s\">\n", m.GetName(), m.GetKey())
-		if m.GetVerdict() == metrics.MetricDiff_VERDICT_WORSE {
+		if cand.GetVerdict() == metrics.Verdict_VERDICT_WORSE {
 			fmt.Fprintf(w, "    <failure message=\"%s regressed by %.1f%%\">avg_a=%.2f avg_b=%.2f diff=%.1f%%</failure>\n",
-				m.GetName(), m.GetDiffAvgPct(), m.GetAvgA(), m.GetAvgB(), m.GetDiffAvgPct())
+				m.GetName(), cand.GetDiffAvgPct(), cellAt(m, 0).GetAvg(), cand.GetAvg(), cand.GetDiffAvgPct())
 		}
 		fmt.Fprintln(w, "  </testcase>")
 	}

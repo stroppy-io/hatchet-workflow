@@ -2,7 +2,8 @@ import { create } from "@bufbuild/protobuf";
 import { useParams } from "react-router-dom";
 
 import { DatabaseEditor } from "@/components/editors/database-editor";
-import { TopologyEditor } from "@/components/editors/topology-editor";
+import { Section } from "@/components/editors/fields";
+import { TopologyView } from "@/components/editors/topology-view";
 import { PresetEditorShell } from "@/components/preset-editor-shell";
 import { useTenantId } from "@/hooks/use-tenant-id";
 import { DatabasePresetSchema, DatabaseSchema } from "@/lib/proto/cloud/v1/domain/database_pb.ts";
@@ -29,10 +30,9 @@ export function PresetDatabasePage() {
               value={databasePreset.database ?? create(DatabaseSchema, {})}
               onChange={(database) => setDatabasePreset(create(DatabasePresetSchema, { ...databasePreset, database }))}
             />
-            <TopologyEditor
-              value={databasePreset.topology ?? create(TopologySchema, {})}
-              onChange={(topology) => setDatabasePreset(create(DatabasePresetSchema, { ...databasePreset, topology }))}
-            />
+            <Section title="Topology (rendered from settings)">
+              <TopologyView value={databasePreset.topology ?? create(TopologySchema, {})} />
+            </Section>
           </div>
         );
       }}

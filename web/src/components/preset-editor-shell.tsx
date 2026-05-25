@@ -35,14 +35,15 @@ export function PresetEditorShell({ tenantId, kind, presetId, routePart, childre
   const confirm = useConfirm();
   const [reloadKey, setReloadKey] = useState(0);
 
-  const listResult = useListQuery(
-    () => api.preset.listPresets({ tenantId: tenantIdMessage(tenantId), kinds: [kind], page: { size: 200 } }),
-    [tenantId, kind, reloadKey],
+  const getResult = useListQuery(
+    () => api.preset.getPreset({ tenantId: tenantIdMessage(tenantId), id: idMessage(presetId) }),
+    [tenantId, presetId, reloadKey],
   );
 
+  // Prefer the freshly fetched preset; fall back to the one passed via router
+  // state from the catalog card as an instant placeholder while it loads.
   const statePreset = (location.state as { preset?: Preset } | null)?.preset;
-  const fetched = listResult.data?.presets.find((preset) => preset.entity?.id?.value === presetId);
-  const preset = fetched ?? (statePreset?.entity?.id?.value === presetId ? statePreset : undefined);
+  const preset = getResult.data ?? (statePreset?.entity?.id?.value === presetId ? statePreset : undefined);
 
   const [draft, setDraft] = useState<Preset | null>(null);
   useEffect(() => {
@@ -81,7 +82,7 @@ export function PresetEditorShell({ tenantId, kind, presetId, routePart, childre
     }
   }
 
-  const listLoading = listResult.loading && !preset;
+  const listLoading = getResult.loading && !preset;
 
   return (
     <section className="flex min-h-0 flex-col gap-5 p-6">
@@ -113,7 +114,7 @@ export function PresetEditorShell({ tenantId, kind, presetId, routePart, childre
 
       {save.error ? <div className="border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">{save.error}</div> : null}
 
-      <StateBlock loading={listLoading} error={listResult.error} empty={!listLoading && !draft} emptyMessage="Preset not found.">
+      <StateBlock loading={listLoading} error={getResult.error} empty={!listLoading && !draft} emptyMessage="Preset not found.">
         {draft ? (
           <div className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">

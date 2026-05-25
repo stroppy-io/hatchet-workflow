@@ -516,32 +516,32 @@ var _ interface {
 	ErrorName() string
 } = RunMetricsValidationError{}
 
-// Validate checks the field values on MetricDiff with the rules defined in the
+// Validate checks the field values on MetricCell with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *MetricDiff) Validate() error {
+func (m *MetricCell) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on MetricDiff with the rules defined in
+// ValidateAll checks the field values on MetricCell with the rules defined in
 // the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in MetricDiffMultiError, or
+// result is a list of violation errors wrapped in MetricCellMultiError, or
 // nil if none found.
-func (m *MetricDiff) ValidateAll() error {
+func (m *MetricCell) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *MetricDiff) validate(all bool) error {
+func (m *MetricCell) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	if l := utf8.RuneCountInString(m.GetKey()); l < 1 || l > 256 {
-		err := MetricDiffValidationError{
-			field:  "Key",
-			reason: "value length must be between 1 and 256 runes, inclusive",
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
+		err := MetricCellValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
 		}
 		if !all {
 			return err
@@ -549,42 +549,16 @@ func (m *MetricDiff) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetName()) > 256 {
-		err := MetricDiffValidationError{
-			field:  "Name",
-			reason: "value length must be at most 256 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Avg
 
-	if utf8.RuneCountInString(m.GetUnit()) > 32 {
-		err := MetricDiffValidationError{
-			field:  "Unit",
-			reason: "value length must be at most 32 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	// no validation rules for AvgA
-
-	// no validation rules for AvgB
-
-	// no validation rules for MaxA
-
-	// no validation rules for MaxB
+	// no validation rules for Max
 
 	// no validation rules for DiffAvgPct
 
 	// no validation rules for DiffMaxPct
 
-	if _, ok := MetricDiff_Verdict_name[int32(m.GetVerdict())]; !ok {
-		err := MetricDiffValidationError{
+	if _, ok := Verdict_name[int32(m.GetVerdict())]; !ok {
+		err := MetricCellValidationError{
 			field:  "Verdict",
 			reason: "value must be one of the defined enum values",
 		}
@@ -595,18 +569,18 @@ func (m *MetricDiff) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return MetricDiffMultiError(errors)
+		return MetricCellMultiError(errors)
 	}
 
 	return nil
 }
 
-// MetricDiffMultiError is an error wrapping multiple validation errors
-// returned by MetricDiff.ValidateAll() if the designated constraints aren't met.
-type MetricDiffMultiError []error
+// MetricCellMultiError is an error wrapping multiple validation errors
+// returned by MetricCell.ValidateAll() if the designated constraints aren't met.
+type MetricCellMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m MetricDiffMultiError) Error() string {
+func (m MetricCellMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -615,11 +589,11 @@ func (m MetricDiffMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m MetricDiffMultiError) AllErrors() []error { return m }
+func (m MetricCellMultiError) AllErrors() []error { return m }
 
-// MetricDiffValidationError is the validation error returned by
-// MetricDiff.Validate if the designated constraints aren't met.
-type MetricDiffValidationError struct {
+// MetricCellValidationError is the validation error returned by
+// MetricCell.Validate if the designated constraints aren't met.
+type MetricCellValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -627,22 +601,22 @@ type MetricDiffValidationError struct {
 }
 
 // Field function returns field value.
-func (e MetricDiffValidationError) Field() string { return e.field }
+func (e MetricCellValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e MetricDiffValidationError) Reason() string { return e.reason }
+func (e MetricCellValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e MetricDiffValidationError) Cause() error { return e.cause }
+func (e MetricCellValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e MetricDiffValidationError) Key() bool { return e.key }
+func (e MetricCellValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e MetricDiffValidationError) ErrorName() string { return "MetricDiffValidationError" }
+func (e MetricCellValidationError) ErrorName() string { return "MetricCellValidationError" }
 
 // Error satisfies the builtin error interface
-func (e MetricDiffValidationError) Error() string {
+func (e MetricCellValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -654,14 +628,14 @@ func (e MetricDiffValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sMetricDiff.%s: %s%s",
+		"invalid %sMetricCell.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = MetricDiffValidationError{}
+var _ error = MetricCellValidationError{}
 
 var _ interface {
 	Field() string
@@ -669,7 +643,197 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = MetricDiffValidationError{}
+} = MetricCellValidationError{}
+
+// Validate checks the field values on MetricRow with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *MetricRow) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on MetricRow with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in MetricRowMultiError, or nil
+// if none found.
+func (m *MetricRow) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *MetricRow) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetKey()); l < 1 || l > 256 {
+		err := MetricRowValidationError{
+			field:  "Key",
+			reason: "value length must be between 1 and 256 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetName()) > 256 {
+		err := MetricRowValidationError{
+			field:  "Name",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetUnit()) > 32 {
+		err := MetricRowValidationError{
+			field:  "Unit",
+			reason: "value length must be at most 32 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for HigherIsBetter
+
+	if utf8.RuneCountInString(m.GetGroup()) > 64 {
+		err := MetricRowValidationError{
+			field:  "Group",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetCells()) > 16 {
+		err := MetricRowValidationError{
+			field:  "Cells",
+			reason: "value must contain no more than 16 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetCells() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, MetricRowValidationError{
+						field:  fmt.Sprintf("Cells[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, MetricRowValidationError{
+						field:  fmt.Sprintf("Cells[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return MetricRowValidationError{
+					field:  fmt.Sprintf("Cells[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return MetricRowMultiError(errors)
+	}
+
+	return nil
+}
+
+// MetricRowMultiError is an error wrapping multiple validation errors returned
+// by MetricRow.ValidateAll() if the designated constraints aren't met.
+type MetricRowMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m MetricRowMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m MetricRowMultiError) AllErrors() []error { return m }
+
+// MetricRowValidationError is the validation error returned by
+// MetricRow.Validate if the designated constraints aren't met.
+type MetricRowValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MetricRowValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MetricRowValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MetricRowValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MetricRowValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MetricRowValidationError) ErrorName() string { return "MetricRowValidationError" }
+
+// Error satisfies the builtin error interface
+func (e MetricRowValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMetricRow.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MetricRowValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MetricRowValidationError{}
 
 // Validate checks the field values on Comparison with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -693,21 +857,10 @@ func (m *Comparison) validate(all bool) error {
 
 	var errors []error
 
-	if l := utf8.RuneCountInString(m.GetRunA()); l < 1 || l > 128 {
+	if l := len(m.GetRunIds()); l < 2 || l > 16 {
 		err := ComparisonValidationError{
-			field:  "RunA",
-			reason: "value length must be between 1 and 128 runes, inclusive",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if l := utf8.RuneCountInString(m.GetRunB()); l < 1 || l > 128 {
-		err := ComparisonValidationError{
-			field:  "RunB",
-			reason: "value length must be between 1 and 128 runes, inclusive",
+			field:  "RunIds",
+			reason: "value must contain between 2 and 16 items, inclusive",
 		}
 		if !all {
 			return err
@@ -789,33 +942,49 @@ func (m *Comparison) validate(all bool) error {
 
 	}
 
-	if all {
-		switch v := interface{}(m.GetSummary()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ComparisonValidationError{
-					field:  "Summary",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
+	if len(m.GetSummaries()) > 16 {
+		err := ComparisonValidationError{
+			field:  "Summaries",
+			reason: "value must contain no more than 16 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetSummaries() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ComparisonValidationError{
+						field:  fmt.Sprintf("Summaries[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ComparisonValidationError{
+						field:  fmt.Sprintf("Summaries[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
 			}
-		case interface{ Validate() error }:
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				errors = append(errors, ComparisonValidationError{
-					field:  "Summary",
+				return ComparisonValidationError{
+					field:  fmt.Sprintf("Summaries[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
-				})
+				}
 			}
 		}
-	} else if v, ok := interface{}(m.GetSummary()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ComparisonValidationError{
-				field:  "Summary",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
+
 	}
 
 	if len(errors) > 0 {
@@ -895,27 +1064,38 @@ var _ interface {
 	ErrorName() string
 } = ComparisonValidationError{}
 
-// Validate checks the field values on Comparison_Summary with the rules
+// Validate checks the field values on Comparison_RunSummary with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Comparison_Summary) Validate() error {
+func (m *Comparison_RunSummary) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Comparison_Summary with the rules
+// ValidateAll checks the field values on Comparison_RunSummary with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// Comparison_SummaryMultiError, or nil if none found.
-func (m *Comparison_Summary) ValidateAll() error {
+// Comparison_RunSummaryMultiError, or nil if none found.
+func (m *Comparison_RunSummary) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Comparison_Summary) validate(all bool) error {
+func (m *Comparison_RunSummary) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
+		err := Comparison_RunSummaryValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	// no validation rules for Better
 
@@ -924,19 +1104,19 @@ func (m *Comparison_Summary) validate(all bool) error {
 	// no validation rules for Same
 
 	if len(errors) > 0 {
-		return Comparison_SummaryMultiError(errors)
+		return Comparison_RunSummaryMultiError(errors)
 	}
 
 	return nil
 }
 
-// Comparison_SummaryMultiError is an error wrapping multiple validation errors
-// returned by Comparison_Summary.ValidateAll() if the designated constraints
-// aren't met.
-type Comparison_SummaryMultiError []error
+// Comparison_RunSummaryMultiError is an error wrapping multiple validation
+// errors returned by Comparison_RunSummary.ValidateAll() if the designated
+// constraints aren't met.
+type Comparison_RunSummaryMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Comparison_SummaryMultiError) Error() string {
+func (m Comparison_RunSummaryMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -945,11 +1125,11 @@ func (m Comparison_SummaryMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Comparison_SummaryMultiError) AllErrors() []error { return m }
+func (m Comparison_RunSummaryMultiError) AllErrors() []error { return m }
 
-// Comparison_SummaryValidationError is the validation error returned by
-// Comparison_Summary.Validate if the designated constraints aren't met.
-type Comparison_SummaryValidationError struct {
+// Comparison_RunSummaryValidationError is the validation error returned by
+// Comparison_RunSummary.Validate if the designated constraints aren't met.
+type Comparison_RunSummaryValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -957,24 +1137,24 @@ type Comparison_SummaryValidationError struct {
 }
 
 // Field function returns field value.
-func (e Comparison_SummaryValidationError) Field() string { return e.field }
+func (e Comparison_RunSummaryValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Comparison_SummaryValidationError) Reason() string { return e.reason }
+func (e Comparison_RunSummaryValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Comparison_SummaryValidationError) Cause() error { return e.cause }
+func (e Comparison_RunSummaryValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Comparison_SummaryValidationError) Key() bool { return e.key }
+func (e Comparison_RunSummaryValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Comparison_SummaryValidationError) ErrorName() string {
-	return "Comparison_SummaryValidationError"
+func (e Comparison_RunSummaryValidationError) ErrorName() string {
+	return "Comparison_RunSummaryValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e Comparison_SummaryValidationError) Error() string {
+func (e Comparison_RunSummaryValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -986,14 +1166,14 @@ func (e Comparison_SummaryValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sComparison_Summary.%s: %s%s",
+		"invalid %sComparison_RunSummary.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Comparison_SummaryValidationError{}
+var _ error = Comparison_RunSummaryValidationError{}
 
 var _ interface {
 	Field() string
@@ -1001,4 +1181,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Comparison_SummaryValidationError{}
+} = Comparison_RunSummaryValidationError{}

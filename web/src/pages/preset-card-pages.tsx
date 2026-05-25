@@ -18,6 +18,8 @@ import {
   testPresetSummary,
   workloadPresetSummary,
 } from "@/lib/preset-summary";
+import { databaseColor } from "@/lib/db-colors";
+import { Database_Kind } from "@/lib/proto/cloud/v1/domain/database_pb.ts";
 import { Preset_Kind, type Preset } from "@/lib/proto/cloud/v1/models/preset_pb.ts";
 import { SortOrder } from "@/lib/proto/cloud/v1/models/common_pb.ts";
 import { ListPresetRequest_SortField } from "@/lib/proto/cloud/v1/api/ui/preset_pb.ts";
@@ -159,6 +161,8 @@ function PresetCard({ preset, variant }: { preset: Preset; variant: PresetCardPa
   const navigate = useNavigate();
   const description = presetDescription(preset);
   const summary = buildSummary(preset, variant);
+  const dbKind = presetDbKind(preset, variant);
+  const dbColor = dbKind !== undefined ? databaseColor(dbKind) : undefined;
 
   return (
     <article className="flex min-h-56 flex-col rounded-md border bg-card p-4">
@@ -167,7 +171,7 @@ function PresetCard({ preset, variant }: { preset: Preset; variant: PresetCardPa
           <h3 className="truncate text-base font-semibold">{presetTitle(preset)}</h3>
           <p className="mt-1 line-clamp-2 min-h-10 text-sm text-muted-foreground">{description || summary.headline}</p>
         </div>
-        <Badge variant="outline">{summary.badge}</Badge>
+        <Badge variant="outline" style={dbColor ? { color: dbColor, borderColor: dbColor } : undefined}>{summary.badge}</Badge>
       </div>
 
       <div className="mt-4 grid gap-2 text-sm">
@@ -265,6 +269,12 @@ function buildSummary(preset: Preset, variant: PresetCardPageProps["variant"]) {
       { label: "Deploy", value: summary.deployment },
     ],
   };
+}
+
+function presetDbKind(preset: Preset, variant: PresetCardPageProps["variant"]): Database_Kind | undefined {
+  if (variant === "database" && preset.preset.case === "databasePreset") return preset.preset.value.database?.kind;
+  if (variant === "test" && preset.preset.case === "testPreset") return preset.preset.value.database?.kind;
+  return undefined;
 }
 
 function routePart(variant: PresetCardPageProps["variant"]) {
