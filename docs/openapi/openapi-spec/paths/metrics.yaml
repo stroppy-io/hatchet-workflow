@@ -1,0 +1,184 @@
+run_runID_metrics:
+  parameters:
+  - name: runID
+    in: path
+    required: true
+    schema:
+      type: string
+  - name: start
+    in: query
+    schema:
+      type: string
+      format: date-time
+    description: RFC3339; auto-derived from snapshot if omitted
+  - name: end
+    in: query
+    schema:
+      type: string
+      format: date-time
+    description: RFC3339; auto-derived from snapshot if omitted
+  get:
+    tags:
+    - Metrics & Logs
+    summary: Collected metrics for a run
+    description: Viewer+. Requires monitoring configured (else 503).
+    responses:
+      '200':
+        description: Run metrics.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/metrics.yaml#/RunMetrics
+      '400':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+      '503':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+run_runID_logs:
+  parameters:
+  - name: runID
+    in: path
+    required: true
+    schema:
+      type: string
+  - name: start
+    in: query
+    schema:
+      type: string
+      format: date-time
+  - name: end
+    in: query
+    schema:
+      type: string
+      format: date-time
+  - name: limit
+    in: query
+    schema:
+      type: integer
+      default: 500
+  - name: dir
+    in: query
+    schema:
+      type: string
+      enum:
+      - asc
+      - desc
+    description: Sort by time
+  - name: search
+    in: query
+    schema:
+      type: string
+    description: Substring match on message
+  - name: action
+    in: query
+    style: form
+    explode: true
+    schema:
+      type: array
+      items:
+        type: string
+    description: Filter by phase/action
+  - name: role
+    in: query
+    style: form
+    explode: true
+    schema:
+      type: array
+      items:
+        type: string
+  - name: unit
+    in: query
+    style: form
+    explode: true
+    schema:
+      type: array
+      items:
+        type: string
+    description: systemd unit
+  - name: machine_id
+    in: query
+    style: form
+    explode: true
+    schema:
+      type: array
+      items:
+        type: string
+  get:
+    tags:
+    - Metrics & Logs
+    summary: Query run logs (NDJSON)
+    description: 'Viewer+. Proxies VictoriaLogs. Returns newline-delimited JSON log
+
+      records. Responds 503 when monitoring is not configured.
+
+      '
+    responses:
+      '200':
+        description: NDJSON log lines.
+        content:
+          application/x-ndjson:
+            schema:
+              type: string
+      '503':
+        description: Log storage not configured.
+compare:
+  get:
+    tags:
+    - Metrics & Logs
+    summary: Compare metrics of two runs
+    description: Viewer+. Requires monitoring configured.
+    parameters:
+    - name: a
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Run A id
+    - name: b
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Run B id
+    - name: start
+      in: query
+      schema:
+        type: string
+        format: date-time
+    - name: end
+      in: query
+      schema:
+        type: string
+        format: date-time
+    - name: threshold
+      in: query
+      schema:
+        type: number
+        default: 5
+      description: Verdict threshold percent
+    responses:
+      '200':
+        description: Comparison.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/metrics.yaml#/ComparisonResponse
+      '400':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+      '503':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse

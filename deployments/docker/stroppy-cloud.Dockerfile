@@ -30,7 +30,7 @@ COPY . .
 COPY --from=spa /app/web/dist ./web/dist
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-	-ldflags="-w -s -X github.com/stroppy-io/stroppy-cloud/internal/core/build.Version=$VERSION -X github.com/stroppy-io/stroppy-cloud/internal/core/build.ServiceName=stroppy-cloud" \
+	-ldflags="-w -s -X github.com/stroppy-io/stroppy-cloud/internal/utils/build.Version=$VERSION -X github.com/stroppy-io/stroppy-cloud/internal/utils/build.ServiceName=stroppy-cloud" \
 	-trimpath \
 	-v -o /app/bin/stroppy-cloud "./cmd/cli"
 

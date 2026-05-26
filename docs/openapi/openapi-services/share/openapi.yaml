@@ -1,0 +1,197 @@
+openapi: 3.0.3
+info:
+  title: Stroppy Cloud — Share API
+  description: Self-contained Share domain slice of the Stroppy Cloud API. Independently valid; no external
+    $refs.
+  version: 1.0.0
+servers:
+- url: /
+  description: Same-origin (SPA is served by the API server)
+security:
+- bearerAuth: []
+tags:
+- name: Share
+  description: Public read-only run share links.
+paths:
+  /api/v1/run/{runID}/share:
+    parameters:
+    - name: runID
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      tags:
+      - Share
+      summary: Create a public share link for a run
+      description: Operator+. Freezes the snapshot + metrics into a read-only record.
+      responses:
+        '200':
+          description: Share token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  url:
+                    type: string
+                    example: /share/abc123
+        '404':
+          $ref: '#/components/responses/Error'
+  /api/share/{token}:
+    parameters:
+    - name: token
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      tags:
+      - Share
+      summary: Fetch a shared run (public)
+      security: []
+      responses:
+        '200':
+          description: Frozen snapshot + metrics.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  run_id:
+                    type: string
+                  snapshot:
+                    $ref: '#/components/schemas/Snapshot'
+                  metrics:
+                    $ref: '#/components/schemas/RunMetrics'
+                  created_at:
+                    type: string
+                    format: date-time
+        '404':
+          $ref: '#/components/responses/Error'
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+    MetricSummary:
+      type: object
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        unit:
+          type: string
+        avg:
+          type: number
+        min:
+          type: number
+        max:
+          type: number
+        last:
+          type: number
+    NodeStatus:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          $ref: '#/components/schemas/NodeStatusValue'
+        error:
+          type: string
+    NodeStatusValue:
+      type: string
+      enum:
+      - pending
+      - running
+      - done
+      - failed
+      - cancelled
+    RunMetrics:
+      type: object
+      properties:
+        run_id:
+          type: string
+        range:
+          $ref: '#/components/schemas/TimeRange'
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricSummary'
+    Snapshot:
+      type: object
+      properties:
+        graph:
+          type: string
+          description: JSON-encoded graph
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/NodeStatus'
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+        state:
+          type: object
+          additionalProperties: true
+          properties:
+            provider:
+              type: string
+            run_config:
+              description: object or JSON string
+            targets:
+              type: array
+              items:
+                $ref: '#/components/schemas/SnapshotTarget'
+            effective_configs:
+              type: object
+              additionalProperties:
+                $ref: '#/components/schemas/StringMap'
+    SnapshotTarget:
+      type: object
+      properties:
+        id:
+          type: string
+        host:
+          type: string
+        internal_host:
+          type: string
+        role:
+          type: string
+    StringMap:
+      type: object
+      additionalProperties:
+        type: string
+    TimeRange:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+  responses:
+    Error:
+      description: Error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token

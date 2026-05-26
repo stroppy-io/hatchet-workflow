@@ -1,0 +1,113 @@
+run_presets:
+  get:
+    tags:
+    - Run Presets
+    summary: List run presets
+    description: Viewer+.
+    parameters:
+    - name: db_kind
+      in: query
+      schema:
+        $ref: ../components/common.yaml#/DatabaseKind
+    responses:
+      '200':
+        description: Run presets.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../components/presets.yaml#/RunPreset
+  post:
+    tags:
+    - Run Presets
+    summary: Create a run preset
+    description: Operator+.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - name
+            - db_kind
+            - config
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              db_kind:
+                $ref: ../components/common.yaml#/DatabaseKind
+              config:
+                $ref: ../components/common.yaml#/RunConfig
+    responses:
+      '201':
+        description: Created.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/IdResponse
+run_presets_id:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  get:
+    tags:
+    - Run Presets
+    summary: Get a run preset
+    description: Viewer+.
+    responses:
+      '200':
+        description: Run preset.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/presets.yaml#/RunPreset
+      '404':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+  put:
+    tags:
+    - Run Presets
+    summary: Update a run preset
+    description: Operator+.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              config:
+                $ref: ../components/common.yaml#/RunConfig
+    responses:
+      '200':
+        description: Updated.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+  delete:
+    tags:
+    - Run Presets
+    summary: Delete a run preset
+    description: Operator+.
+    responses:
+      '200':
+        description: Deleted.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse

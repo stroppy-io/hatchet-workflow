@@ -1,0 +1,156 @@
+admin_tenants:
+  get:
+    tags:
+    - Admin
+    summary: List all tenants
+    description: Root only.
+    responses:
+      '200':
+        description: Tenants.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../components/auth.yaml#/Tenant
+  post:
+    tags:
+    - Admin
+    summary: Create a tenant
+    description: Root only.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - name
+            properties:
+              name:
+                type: string
+    responses:
+      '200':
+        description: Tenant created.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/auth.yaml#/Tenant
+admin_tenants_id:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  delete:
+    tags:
+    - Admin
+    summary: Delete a tenant
+    description: Root only.
+    responses:
+      '200':
+        description: Deleted.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+admin_users:
+  get:
+    tags:
+    - Admin
+    summary: List all users
+    description: Root only.
+    responses:
+      '200':
+        description: Users.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../components/auth.yaml#/AdminUser
+  post:
+    tags:
+    - Admin
+    summary: Create a user
+    description: Root only.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - username
+            - password
+            properties:
+              username:
+                type: string
+              password:
+                type: string
+                format: password
+              is_root:
+                type: boolean
+    responses:
+      '200':
+        description: User created.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                username:
+                  type: string
+admin_users_id:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  delete:
+    tags:
+    - Admin
+    summary: Delete a user
+    description: Root only.
+    responses:
+      '200':
+        description: Deleted.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+admin_users_id_password:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  put:
+    tags:
+    - Admin
+    summary: Reset a user's password
+    description: Root only.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - password
+            properties:
+              password:
+                type: string
+                format: password
+    responses:
+      '200':
+        description: Password reset.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse

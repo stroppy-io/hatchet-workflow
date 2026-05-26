@@ -1,0 +1,37 @@
+Preset:
+  type: object
+  properties:
+    id:
+      type: string
+    name:
+      type: string
+    description:
+      type: string
+    db_kind:
+      $ref: ./common.yaml#/DatabaseKind
+    is_builtin:
+      type: boolean
+    topology:
+      $ref: ./common.yaml#/Topology
+    created_at:
+      type: string
+      format: date-time
+RunPreset:
+  type: object
+  properties:
+    id:
+      type: string
+    name:
+      type: string
+    description:
+      type: string
+    db_kind:
+      type: string
+    config:
+      $ref: ./common.yaml#/RunConfig
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time

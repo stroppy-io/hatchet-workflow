@@ -1,0 +1,44 @@
+settings:
+  get:
+    tags:
+    - Settings
+    summary: Get tenant settings
+    description: Viewer+.
+    responses:
+      '200':
+        description: Settings.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/settings.yaml#/ServerSettings
+  put:
+    tags:
+    - Settings
+    summary: Update tenant settings
+    description: Owner+. `server_addr`/`binary_url` are root-only and preserved otherwise.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/settings.yaml#/ServerSettings
+    responses:
+      '200':
+        description: Saved.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+grafana:
+  get:
+    tags:
+    - Grafana
+    summary: Grafana embed configuration
+    description: Authenticated (no tenant required).
+    responses:
+      '200':
+        description: Grafana config.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/settings.yaml#/GrafanaSettings

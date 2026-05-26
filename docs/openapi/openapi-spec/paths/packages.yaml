@@ -1,0 +1,256 @@
+packages:
+  get:
+    tags:
+    - Packages
+    summary: List packages
+    description: Viewer+.
+    parameters:
+    - name: db_kind
+      in: query
+      schema:
+        type: string
+    - name: db_version
+      in: query
+      schema:
+        type: string
+    responses:
+      '200':
+        description: Packages.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../components/packages.yaml#/Package
+  post:
+    tags:
+    - Packages
+    summary: Create a package
+    description: Operator+.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/packages.yaml#/PackageWriteFields
+    responses:
+      '201':
+        description: Created.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/IdResponse
+      '409':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+packages_id:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  get:
+    tags:
+    - Packages
+    summary: Get a package
+    description: Viewer+.
+    responses:
+      '200':
+        description: Package.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/packages.yaml#/Package
+      '404':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+  put:
+    tags:
+    - Packages
+    summary: Update a package
+    description: Operator+. Built-in packages cannot be edited (clone first).
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/packages.yaml#/PackageWriteFields
+    responses:
+      '200':
+        description: Updated.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: updated
+      '403':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+  delete:
+    tags:
+    - Packages
+    summary: Delete a package
+    description: Operator+.
+    responses:
+      '200':
+        description: Deleted.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: deleted
+packages_id_clone:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  post:
+    tags:
+    - Packages
+    summary: Clone a package
+    description: Operator+.
+    responses:
+      '201':
+        description: Cloned.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/IdNameResponse
+packages_id_deb:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  get:
+    tags:
+    - Packages
+    summary: Download the package's .deb
+    description: Viewer+.
+    responses:
+      '200':
+        description: Debian package binary.
+        content:
+          application/vnd.debian.binary-package:
+            schema:
+              type: string
+              format: binary
+      '404':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+  post:
+    tags:
+    - Packages
+    summary: Upload a .deb for the package
+    description: Operator+. Multipart form with a `file` field (max 500MB).
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required:
+            - file
+            properties:
+              file:
+                type: string
+                format: binary
+    responses:
+      '200':
+        description: Uploaded.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: uploaded
+                filename:
+                  type: string
+                size:
+                  type: string
+upload_deb:
+  post:
+    tags:
+    - Uploads
+    summary: Upload a standalone .deb to the package store
+    description: Operator+. Multipart `file` field; only `.deb`/`.rpm` accepted.
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required:
+            - file
+            properties:
+              file:
+                type: string
+                format: binary
+    responses:
+      '200':
+        description: Uploaded.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/UploadResponse
+      '400':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+upload_rpm:
+  post:
+    tags:
+    - Uploads
+    summary: Upload a standalone .rpm to the package store
+    description: Operator+. Alias of /upload/deb; only `.deb`/`.rpm` accepted.
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required:
+            - file
+            properties:
+              file:
+                type: string
+                format: binary
+    responses:
+      '200':
+        description: Uploaded.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/UploadResponse
+      '400':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse

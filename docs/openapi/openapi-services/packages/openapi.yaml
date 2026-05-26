@@ -1,0 +1,356 @@
+openapi: 3.0.3
+info:
+  title: Stroppy Cloud — Packages API
+  description: Self-contained Packages domain slice of the Stroppy Cloud API. Independently valid; no
+    external $refs.
+  version: 1.0.0
+servers:
+- url: /
+  description: Same-origin (SPA is served by the API server)
+security:
+- bearerAuth: []
+tags:
+- name: Packages
+  description: DB install packages (apt/deb).
+- name: Uploads
+  description: Package binary uploads.
+paths:
+  /api/v1/packages:
+    get:
+      tags:
+      - Packages
+      summary: List packages
+      description: Viewer+.
+      parameters:
+      - name: db_kind
+        in: query
+        schema:
+          type: string
+      - name: db_version
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Packages.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Package'
+    post:
+      tags:
+      - Packages
+      summary: Create a package
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackageWriteFields'
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdResponse'
+        '409':
+          $ref: '#/components/responses/Error'
+  /api/v1/packages/{id}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      tags:
+      - Packages
+      summary: Get a package
+      description: Viewer+.
+      responses:
+        '200':
+          description: Package.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+        '404':
+          $ref: '#/components/responses/Error'
+    put:
+      tags:
+      - Packages
+      summary: Update a package
+      description: Operator+. Built-in packages cannot be edited (clone first).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackageWriteFields'
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: updated
+        '403':
+          $ref: '#/components/responses/Error'
+    delete:
+      tags:
+      - Packages
+      summary: Delete a package
+      description: Operator+.
+      responses:
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+  /api/v1/packages/{id}/clone:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      tags:
+      - Packages
+      summary: Clone a package
+      description: Operator+.
+      responses:
+        '201':
+          description: Cloned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdNameResponse'
+  /api/v1/packages/{id}/deb:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      tags:
+      - Packages
+      summary: Download the package's .deb
+      description: Viewer+.
+      responses:
+        '200':
+          description: Debian package binary.
+          content:
+            application/vnd.debian.binary-package:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/Error'
+    post:
+      tags:
+      - Packages
+      summary: Upload a .deb for the package
+      description: Operator+. Multipart form with a `file` field (max 500MB).
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Uploaded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: uploaded
+                  filename:
+                    type: string
+                  size:
+                    type: string
+  /api/v1/upload/deb:
+    post:
+      tags:
+      - Uploads
+      summary: Upload a standalone .deb to the package store
+      description: Operator+. Multipart `file` field; only `.deb`/`.rpm` accepted.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Uploaded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+        '400':
+          $ref: '#/components/responses/Error'
+  /api/v1/upload/rpm:
+    post:
+      tags:
+      - Uploads
+      summary: Upload a standalone .rpm to the package store
+      description: Operator+. Alias of /upload/deb; only `.deb`/`.rpm` accepted.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Uploaded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+        '400':
+          $ref: '#/components/responses/Error'
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+    IdNameResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    IdResponse:
+      type: object
+      properties:
+        id:
+          type: string
+    Package:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        db_kind:
+          type: string
+        db_version:
+          type: string
+        is_builtin:
+          type: boolean
+        apt_packages:
+          type: array
+          items:
+            type: string
+        pre_install:
+          type: array
+          items:
+            type: string
+        custom_repo:
+          type: string
+        custom_repo_key:
+          type: string
+        deb_filename:
+          type: string
+        has_deb:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    PackageWriteFields:
+      type: object
+      required:
+      - name
+      - db_kind
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        db_kind:
+          type: string
+        db_version:
+          type: string
+        apt_packages:
+          type: array
+          items:
+            type: string
+        pre_install:
+          type: array
+          items:
+            type: string
+        custom_repo:
+          type: string
+        custom_repo_key:
+          type: string
+    UploadResponse:
+      type: object
+      properties:
+        filename:
+          type: string
+        url:
+          type: string
+        size:
+          type: string
+  responses:
+    Error:
+      description: Error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token

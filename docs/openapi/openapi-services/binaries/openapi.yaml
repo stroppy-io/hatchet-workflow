@@ -1,0 +1,91 @@
+openapi: 3.0.3
+info:
+  title: Stroppy Cloud — Binaries API
+  description: Self-contained Binaries domain slice of the Stroppy Cloud API. Independently valid; no
+    external $refs.
+  version: 1.0.0
+servers:
+- url: /
+  description: Same-origin (SPA is served by the API server)
+security:
+- bearerAuth: []
+tags:
+- name: Binaries
+  description: Internal binary distribution (not used by the UI).
+paths:
+  /packages/{filename}:
+    parameters:
+    - name: filename
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      tags:
+      - Binaries
+      summary: Serve an uploaded package file
+      security: []
+      responses:
+        '200':
+          description: File bytes.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /agent/binary:
+    get:
+      tags:
+      - Binaries
+      summary: Download the stroppy agent binary
+      description: Public — agents have no token at download time.
+      security: []
+      responses:
+        '200':
+          description: Agent binary.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /api/binaries/{name}/{version}/{filename}:
+    parameters:
+    - name: name
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: version
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: filename
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      tags:
+      - Binaries
+      summary: Cached supporting-binary proxy
+      description: Public. Caches artifacts (node_exporter, vmagent, stroppy, …) on disk.
+      security: []
+      responses:
+        '200':
+          description: Binary bytes (streamed from cache).
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token

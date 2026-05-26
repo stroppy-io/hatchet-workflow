@@ -1,0 +1,28 @@
+queue:
+  get:
+    tags:
+    - Queue & Quotas
+    summary: List active/queued jobs
+    description: Viewer+.
+    responses:
+      '200':
+        description: Queue rows.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../components/queue.yaml#/QueueRow
+quotas:
+  get:
+    tags:
+    - Queue & Quotas
+    summary: Resource usage vs. limits
+    description: Viewer+.
+    responses:
+      '200':
+        description: Quota usage.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/queue.yaml#/QuotasResponse

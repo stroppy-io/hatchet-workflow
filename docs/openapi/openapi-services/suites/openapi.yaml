@@ -1,0 +1,788 @@
+openapi: 3.0.3
+info:
+  title: Stroppy Cloud — Suites API
+  description: Self-contained Suites domain slice of the Stroppy Cloud API. Independently valid; no external
+    $refs.
+  version: 1.0.0
+servers:
+- url: /
+  description: Same-origin (SPA is served by the API server)
+security:
+- bearerAuth: []
+tags:
+- name: Suites
+  description: Matrix suites (db presets × workloads) and batches.
+- name: Suite Items
+  description: Workload-axis items within a suite.
+paths:
+  /api/v1/suites:
+    get:
+      tags:
+      - Suites
+      summary: List suites
+      description: Viewer+.
+      responses:
+        '200':
+          description: Suites.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Suite'
+    post:
+      tags:
+      - Suites
+      summary: Create a suite
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/SuiteWriteFields'
+              - type: object
+                required:
+                - name
+                properties:
+                  name:
+                    type: string
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdResponse'
+  /api/v1/suites/{id}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      tags:
+      - Suites
+      summary: Get a suite (with items + batches)
+      description: Viewer+.
+      responses:
+        '200':
+          description: Suite.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Suite'
+        '404':
+          $ref: '#/components/responses/Error'
+    put:
+      tags:
+      - Suites
+      summary: Update a suite
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuiteWriteFields'
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+    delete:
+      tags:
+      - Suites
+      summary: Delete a suite
+      description: Operator+.
+      responses:
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+  /api/v1/suites/{id}/clone:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      tags:
+      - Suites
+      summary: Clone a suite (with items)
+      description: Operator+. Cron is disabled on the clone.
+      responses:
+        '200':
+          description: Cloned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdNameResponse'
+  /api/v1/suites/{id}/run:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      tags:
+      - Suites
+      summary: Launch a suite batch
+      description: Operator+. Produces N×M job runs (presets × workloads).
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Batch launched.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suite_id:
+                    type: string
+                  batch_id:
+                    type: string
+                  items:
+                    type: integer
+  /api/v1/suites/{id}/batches/{batchID}/cancel:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: batchID
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      tags:
+      - Suites
+      summary: Cancel all runs in a batch
+      description: Operator+.
+      responses:
+        '200':
+          description: Cancelled count.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suite_id:
+                    type: string
+                  batch_id:
+                    type: string
+                  cancelled:
+                    type: integer
+  /api/v1/suites/{id}/batches/{batchID}/cross:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: batchID
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: pivot
+      in: query
+      schema:
+        type: string
+        enum:
+        - item
+        - preset
+        default: item
+    get:
+      tags:
+      - Suites
+      summary: Cross-comparison grouping of a batch
+      description: Viewer+. Groups runs by item (cross-DB) or preset (cross-workload).
+      responses:
+        '200':
+          description: Cross response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuiteCrossResponse'
+  /api/v1/suites/{id}/items:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      tags:
+      - Suite Items
+      summary: List suite items
+      description: Viewer+.
+      responses:
+        '200':
+          description: Items.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SuiteItem'
+    post:
+      tags:
+      - Suite Items
+      summary: Create a suite item
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/SuiteItemWriteFields'
+              - type: object
+                required:
+                - workload
+                properties:
+                  workload:
+                    $ref: '#/components/schemas/StroppyConfig'
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdResponse'
+  /api/v1/suites/{id}/items/reorder:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      tags:
+      - Suite Items
+      summary: Reorder suite items
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - order
+              properties:
+                order:
+                  type: object
+                  additionalProperties:
+                    type: integer
+                  description: Map of item id → position.
+      responses:
+        '200':
+          description: Reordered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+  /api/v1/suites/{id}/items/{itemID}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: itemID
+      in: path
+      required: true
+      schema:
+        type: string
+    put:
+      tags:
+      - Suite Items
+      summary: Update a suite item
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuiteItemWriteFields'
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+    delete:
+      tags:
+      - Suite Items
+      summary: Delete a suite item
+      description: Operator+.
+      responses:
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+components:
+  schemas:
+    ComparisonConfig:
+      type: object
+      properties:
+        strategy:
+          type: string
+          enum:
+          - ''
+          - previous
+          - first
+          - fixed
+        baseline_batch_id:
+          type: string
+        threshold_pct:
+          type: number
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+    IdNameResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    IdResponse:
+      type: object
+      properties:
+        id:
+          type: string
+    MachineRole:
+      type: string
+      enum:
+      - database
+      - monitor
+      - stroppy
+      - etcd
+      - proxy
+      - pgbouncer
+      - ydb-storage
+      - ydb-database
+    MachineSpec:
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/MachineRole'
+        count:
+          type: integer
+        cpus:
+          type: integer
+        memory_mb:
+          type: integer
+        disk_gb:
+          type: integer
+        disk_type:
+          type: string
+        secondary_disks:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecondaryDisk'
+        placement:
+          $ref: '#/components/schemas/PlacementSpec'
+    NetworkConfig:
+      type: object
+      properties:
+        cidr:
+          type: string
+        zone:
+          type: string
+    PlacementSpec:
+      type: object
+      properties:
+        strategy:
+          type: string
+          enum:
+          - single
+          - round-robin
+        zones:
+          type: array
+          items:
+            type: string
+    Protocol:
+      type: string
+      enum:
+      - pg
+      - mysql
+      - picodata
+      - ydb-grpc
+      - ydb-pgwire
+      - ydb-grpcs
+      - cockroach
+    Provider:
+      type: string
+      enum:
+      - yandex
+      - docker
+    SecondaryDisk:
+      type: object
+      properties:
+        device_name:
+          type: string
+        size_gb:
+          type: integer
+        type:
+          type: string
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+    StringMap:
+      type: object
+      additionalProperties:
+        type: string
+    StroppyConfig:
+      type: object
+      properties:
+        version:
+          type: string
+        protocol:
+          $ref: '#/components/schemas/Protocol'
+        script:
+          type: string
+          description: e.g. tpcc/procs, tpcc/tx, tpcb/tx
+        sql:
+          type: string
+        duration:
+          type: string
+        k6_mode:
+          type: string
+          enum:
+          - duration
+          - iterations
+        iterations:
+          type: integer
+        quiet:
+          type: boolean
+        no_thresholds:
+          type: boolean
+        vus:
+          type: integer
+        pool_size:
+          type: integer
+        scale_factor:
+          type: number
+        default_insert_method:
+          type: string
+        env:
+          $ref: '#/components/schemas/StringMap'
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkloadFile'
+        steps:
+          type: array
+          items:
+            type: string
+        no_steps:
+          type: array
+          items:
+            type: string
+        machine:
+          $ref: '#/components/schemas/MachineSpec'
+        config_override_json:
+          type: string
+        workload:
+          type: string
+          deprecated: true
+        vus_scale:
+          type: number
+          deprecated: true
+        workers:
+          type: integer
+          deprecated: true
+    Suite:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        policy:
+          $ref: '#/components/schemas/SuitePolicy'
+        comparison:
+          $ref: '#/components/schemas/ComparisonConfig'
+        db_preset_ids:
+          type: array
+          items:
+            type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SuiteItem'
+        item_count:
+          type: integer
+        provider:
+          $ref: '#/components/schemas/Provider'
+        platform_id:
+          type: string
+        network:
+          $ref: '#/components/schemas/NetworkConfig'
+        stroppy_machine:
+          $ref: '#/components/schemas/MachineSpec'
+        cron_expr:
+          type: string
+        timezone:
+          type: string
+        enabled:
+          type: boolean
+        next_fire_at:
+          type: string
+          format: date-time
+        last_fire_at:
+          type: string
+          format: date-time
+        last_batch_id:
+          type: string
+        concurrent_policy:
+          type: string
+          enum:
+          - forbid
+          - allow
+        catchup_mode:
+          type: string
+          enum:
+          - skip
+          - once
+        retention_runs:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        batches:
+          type: array
+          items:
+            $ref: '#/components/schemas/SuiteBatchSummary'
+    SuiteBatchSummary:
+      type: object
+      properties:
+        batch_id:
+          type: string
+        trigger:
+          type: string
+        fire_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        total:
+          type: integer
+        finished:
+          type: integer
+        failed:
+          type: integer
+        cancelled:
+          type: integer
+        running:
+          type: integer
+        queued:
+          type: integer
+        runs:
+          type: array
+          items:
+            $ref: '#/components/schemas/SuiteRunBrief'
+    SuiteCrossGroup:
+      type: object
+      properties:
+        group_key:
+          type: string
+        group_label:
+          type: string
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/SuiteCrossMember'
+    SuiteCrossMember:
+      type: object
+      properties:
+        run_id:
+          type: string
+        state:
+          type: string
+        db_preset_id:
+          type: string
+        preset_name:
+          type: string
+        suite_item_id:
+          type: string
+        item_name:
+          type: string
+    SuiteCrossResponse:
+      type: object
+      properties:
+        suite_id:
+          type: string
+        batch_id:
+          type: string
+        pivot:
+          type: string
+          enum:
+          - item
+          - preset
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/SuiteCrossGroup'
+    SuiteItem:
+      type: object
+      properties:
+        id:
+          type: string
+        suite_id:
+          type: string
+        position:
+          type: integer
+        name:
+          type: string
+        workload:
+          $ref: '#/components/schemas/StroppyConfig'
+        enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    SuiteItemWriteFields:
+      type: object
+      properties:
+        name:
+          type: string
+        workload:
+          $ref: '#/components/schemas/StroppyConfig'
+        position:
+          type: integer
+        enabled:
+          type: boolean
+    SuitePolicy:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum:
+          - sequential
+          - parallel
+        max_parallel:
+          type: integer
+        on_step_fail:
+          type: string
+          enum:
+          - continue
+          - stop
+        step_timeout_min:
+          type: integer
+    SuiteRunBrief:
+      type: object
+      properties:
+        run_id:
+          type: string
+        suite_item_id:
+          type: string
+        db_preset_id:
+          type: string
+        position:
+          type: integer
+        state:
+          type: string
+    SuiteWriteFields:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        policy:
+          $ref: '#/components/schemas/SuitePolicy'
+        comparison:
+          $ref: '#/components/schemas/ComparisonConfig'
+        db_preset_ids:
+          type: array
+          items:
+            type: string
+        provider:
+          $ref: '#/components/schemas/Provider'
+        platform_id:
+          type: string
+        network:
+          $ref: '#/components/schemas/NetworkConfig'
+        stroppy_machine:
+          $ref: '#/components/schemas/MachineSpec'
+        cron_expr:
+          type: string
+        timezone:
+          type: string
+        enabled:
+          type: boolean
+        concurrent_policy:
+          type: string
+          enum:
+          - forbid
+          - allow
+        catchup_mode:
+          type: string
+          enum:
+          - skip
+          - once
+        retention_runs:
+          type: integer
+    WorkloadFile:
+      type: object
+      properties:
+        name:
+          type: string
+        kind:
+          type: string
+          description: e.g. sql
+        content:
+          type: string
+  responses:
+    Error:
+      description: Error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token

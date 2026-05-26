@@ -1,0 +1,98 @@
+LoginRequest:
+  type: object
+  required:
+  - username
+  - password
+  properties:
+    username:
+      type: string
+    password:
+      type: string
+      format: password
+AuthUser:
+  type: object
+  description: Returned by GET /api/v1/auth/me.
+  properties:
+    user_id:
+      type: string
+    username:
+      type: string
+    is_root:
+      type: boolean
+    tenant_id:
+      type: string
+      nullable: true
+    role:
+      type: string
+      nullable: true
+      enum:
+      - viewer
+      - operator
+      - owner
+    tenants:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+          tenant_name:
+            type: string
+          role:
+            type: string
+Tenant:
+  type: object
+  properties:
+    id:
+      type: string
+    name:
+      type: string
+    created_at:
+      type: string
+      format: date-time
+TenantMember:
+  type: object
+  properties:
+    tenant_id:
+      type: string
+    user_id:
+      type: string
+    username:
+      type: string
+    role:
+      type: string
+    created_at:
+      type: string
+      format: date-time
+TenantAPIToken:
+  type: object
+  properties:
+    id:
+      type: string
+    tenant_id:
+      type: string
+    name:
+      type: string
+    role:
+      type: string
+    created_by:
+      type: string
+    expires_at:
+      type: string
+      format: date-time
+      nullable: true
+    created_at:
+      type: string
+      format: date-time
+AdminUser:
+  type: object
+  properties:
+    id:
+      type: string
+    username:
+      type: string
+    is_root:
+      type: boolean
+    created_at:
+      type: string
+      format: date-time

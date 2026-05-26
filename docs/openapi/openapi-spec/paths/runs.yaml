@@ -1,0 +1,298 @@
+run:
+  post:
+    tags:
+    - Runs
+    summary: Start (enqueue) a run
+    description: 'Operator+. Resolves run preset/package, probes the workload, validates
+
+      quotas, and enqueues the run in the durable job queue.
+
+      '
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/common.yaml#/RunConfig
+    responses:
+      '202':
+        description: Run queued.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                run_id:
+                  type: string
+                status:
+                  type: string
+                  example: queued
+      '400':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+      '403':
+        description: Quota exceeded.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+      '409':
+        description: Run already exists or queued.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+      '429':
+        description: Queue depth limit reached.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+      '503':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+runs:
+  get:
+    tags:
+    - Runs
+    summary: List runs (incl. queued)
+    description: Viewer+. Includes queued jobs not yet snapshotted.
+    responses:
+      '200':
+        description: Run summaries.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../components/runs.yaml#/RunSummary
+validate:
+  post:
+    tags:
+    - Runs
+    summary: Validate a run config
+    description: Operator+. Static validation; does not enqueue.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/common.yaml#/RunConfig
+    responses:
+      '200':
+        description: Valid.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: valid
+      '422':
+        description: Invalid config.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+dry_run:
+  post:
+    tags:
+    - Runs
+    summary: Compile a run config into a DAG without executing
+    description: Operator+. Returns the planned graph, resolved config, and rendered configs.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/common.yaml#/RunConfig
+    responses:
+      '200':
+        description: Dry-run result.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/runs.yaml#/DryRunResponse
+      '400':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+      '422':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+stroppy_config_preview:
+  post:
+    tags:
+    - Runs
+    summary: Preview the rendered stroppy-config.json
+    description: Operator+.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/common.yaml#/RunConfig
+    responses:
+      '200':
+        description: Stroppy config preview.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                stroppy_config:
+                  type: string
+                  description: JSON-encoded stroppy config
+run_runID:
+  parameters:
+  - name: runID
+    in: path
+    required: true
+    schema:
+      type: string
+  delete:
+    tags:
+    - Runs
+    summary: Delete a run
+    description: Operator+. Cleans up provider resources best-effort.
+    responses:
+      '200':
+        description: Deleted.
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: ../components/common.yaml#/StatusResponse
+              - type: object
+                properties:
+                  run_id:
+                    type: string
+      '404':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+run_runID_cancel:
+  parameters:
+  - name: runID
+    in: path
+    required: true
+    schema:
+      type: string
+  post:
+    tags:
+    - Runs
+    summary: Cancel a queued or running run
+    description: Operator+.
+    responses:
+      '200':
+        description: Cancelling.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: cancelling
+                run_id:
+                  type: string
+      '404':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+run_runID_status:
+  parameters:
+  - name: runID
+    in: path
+    required: true
+    schema:
+      type: string
+  get:
+    tags:
+    - Runs
+    summary: Run status snapshot
+    description: 'Viewer+. Returns the DAG snapshot annotated with current job state.
+
+      Queued runs return a minimal shim (empty nodes, `job_state=queued`).
+
+      '
+    responses:
+      '200':
+        description: Run status.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/runs.yaml#/RunStatus
+      '404':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+run_runID_rendered_configs:
+  parameters:
+  - name: runID
+    in: path
+    required: true
+    schema:
+      type: string
+  get:
+    tags:
+    - Runs
+    summary: Per-component rendered config files
+    description: Viewer+. postgresql.conf, ydb.yaml, pgbouncer.ini, etc.
+    responses:
+      '200':
+        description: Rendered configs keyed by filename.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rendered_configs:
+                  type: object
+                  additionalProperties:
+                    type: string
+      '404':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+run_runID_agents:
+  parameters:
+  - name: runID
+    in: path
+    required: true
+    schema:
+      type: string
+  get:
+    tags:
+    - Runs
+    summary: Agents (machines) for a run with live status
+    description: Viewer+.
+    responses:
+      '200':
+        description: Agent list.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../components/runs.yaml#/AgentInfo

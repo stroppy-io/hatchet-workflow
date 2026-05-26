@@ -1,0 +1,78 @@
+health:
+  get:
+    tags:
+    - System
+    summary: Liveness probe
+    security: []
+    responses:
+      '200':
+        description: Server is up.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: ok
+metrics:
+  get:
+    tags:
+    - System
+    summary: Prometheus metrics exposition
+    description: Prometheus text-format metrics for this server process.
+    security: []
+    responses:
+      '200':
+        description: Prometheus exposition format.
+        content:
+          text/plain:
+            schema:
+              type: string
+stroppy_versions:
+  get:
+    tags:
+    - System
+    summary: List available stroppy release versions
+    description: 'Returns stroppy release tags ≥ the minimum supported version, stable
+
+      releases first then prereleases. Cached 5 minutes from GitHub. Viewer+.
+
+      '
+    responses:
+      '200':
+        description: Version strings (without the leading `v`).
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                example: 4.3.1
+      '502':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+stroppy_commits:
+  get:
+    tags:
+    - System
+    summary: List per-commit stroppy pre-releases
+    description: Per-commit nightly/pre-release builds. Cached 5 minutes. Viewer+.
+    responses:
+      '200':
+        description: Commit builds.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../components/misc.yaml#/StroppyCommit
+      '502':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse

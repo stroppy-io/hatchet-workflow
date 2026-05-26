@@ -1,0 +1,37 @@
+probe:
+  post:
+    tags:
+    - Probe
+    summary: Probe a stroppy workload
+    description: Operator+. Runs `stroppy probe` and returns env declarations, steps, sql sections, driver
+      setups.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/probe.yaml#/ProbeRequest
+    responses:
+      '200':
+        description: Probe output.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/probe.yaml#/ProbeResponse
+      '400':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+      '422':
+        description: Probe failed.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                error:
+                  type: string
+                output:
+                  type: string

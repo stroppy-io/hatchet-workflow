@@ -1,0 +1,103 @@
+YandexCloudSettings:
+  type: object
+  properties:
+    token:
+      type: string
+    cloud_id:
+      type: string
+    folder_id:
+      type: string
+    zone:
+      type: string
+    network_id:
+      type: string
+    network_name:
+      type: string
+    subnet_cidr:
+      type: string
+    platform_id:
+      type: string
+    image_id:
+      type: string
+    assign_public_ip:
+      type: boolean
+    software_accelerated_network:
+      type: boolean
+    ssh_user:
+      type: string
+    ssh_public_key:
+      type: string
+CloudSettings:
+  type: object
+  properties:
+    yandex:
+      $ref: '#/YandexCloudSettings'
+    server_addr:
+      type: string
+      description: Root-only writable.
+    binary_url:
+      type: string
+      description: Root-only writable.
+WebhookConfig:
+  type: object
+  properties:
+    urls:
+      type: array
+      items:
+        type: string
+    events:
+      type: array
+      items:
+        type: string
+    timeout:
+      type: integer
+      description: Request timeout (seconds); default 10.
+TenantQuotas:
+  type: object
+  properties:
+    allowed_db_kinds:
+      type: array
+      items:
+        type: string
+    allowed_providers:
+      type: array
+      items:
+        type: string
+    max_nodes:
+      type: integer
+    max_cpus_per_node:
+      type: integer
+    max_memory_mb_per_node:
+      type: integer
+    max_disk_gb_per_node:
+      type: integer
+    max_concurrent_runs:
+      type: integer
+    max_concurrent_cpus:
+      type: integer
+    max_concurrent_memory_mb:
+      type: integer
+    max_concurrent_disk_gb:
+      type: integer
+    max_concurrent_vms:
+      type: integer
+    max_queue_depth:
+      type: integer
+ServerSettings:
+  type: object
+  properties:
+    cloud:
+      $ref: '#/CloudSettings'
+    webhooks:
+      $ref: '#/WebhookConfig'
+    quotas:
+      $ref: '#/TenantQuotas'
+GrafanaSettings:
+  type: object
+  properties:
+    url:
+      type: string
+    embed_enabled:
+      type: boolean
+    dashboards:
+      $ref: ./common.yaml#/StringMap

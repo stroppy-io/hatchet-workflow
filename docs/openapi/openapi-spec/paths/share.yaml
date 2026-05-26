@@ -1,0 +1,66 @@
+run_runID_share:
+  parameters:
+  - name: runID
+    in: path
+    required: true
+    schema:
+      type: string
+  post:
+    tags:
+    - Share
+    summary: Create a public share link for a run
+    description: Operator+. Freezes the snapshot + metrics into a read-only record.
+    responses:
+      '200':
+        description: Share token.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                url:
+                  type: string
+                  example: /share/abc123
+      '404':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+share_token:
+  parameters:
+  - name: token
+    in: path
+    required: true
+    schema:
+      type: string
+  get:
+    tags:
+    - Share
+    summary: Fetch a shared run (public)
+    security: []
+    responses:
+      '200':
+        description: Frozen snapshot + metrics.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                run_id:
+                  type: string
+                snapshot:
+                  $ref: ../components/common.yaml#/Snapshot
+                metrics:
+                  $ref: ../components/metrics.yaml#/RunMetrics
+                created_at:
+                  type: string
+                  format: date-time
+      '404':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse

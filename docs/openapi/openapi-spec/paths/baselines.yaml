@@ -1,0 +1,82 @@
+baselines:
+  get:
+    tags:
+    - Baselines
+    summary: List named baselines
+    description: Operator+.
+    responses:
+      '200':
+        description: Map of baseline name → run id.
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+baseline_name:
+  parameters:
+  - name: name
+    in: path
+    required: true
+    schema:
+      type: string
+  get:
+    tags:
+    - Baselines
+    summary: Resolve a baseline to its run id
+    description: Operator+.
+    responses:
+      '200':
+        description: Baseline pointer.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                baseline:
+                  type: string
+                run_id:
+                  type: string
+      '404':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+  put:
+    tags:
+    - Baselines
+    summary: Set a baseline pointer
+    description: Operator+.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - run_id
+            properties:
+              run_id:
+                type: string
+    responses:
+      '200':
+        description: Baseline set.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: ok
+                baseline:
+                  type: string
+                run_id:
+                  type: string
+      '400':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse

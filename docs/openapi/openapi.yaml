@@ -1,0 +1,2684 @@
+openapi: 3.0.3
+info:
+  title: Stroppy Cloud API
+  description: |
+    Complete HTTP API for the Stroppy Cloud control plane, extracted from the
+    Go chi router in `internal/domain/api/server.go` and the TypeScript client
+    in `web/src/api/`. Covers every endpoint the web UI consumes plus the
+    public share, agent, and binary-distribution surfaces.
+
+    ## Authentication
+    Most endpoints require a JWT bearer access token (`Authorization: Bearer <token>`),
+    obtained via `POST /api/v1/auth/login`. Access tokens live 15 minutes; a
+    long-lived refresh token is set as an HttpOnly `refresh_token` cookie and
+    rotated via `POST /api/v1/auth/refresh`.
+
+    ## Tenancy & roles
+    Endpoints under `/api/v1` (except auth/grafana) require a tenant-scoped JWT
+    (select one via `POST /api/v1/auth/select-tenant` when the user belongs to
+    multiple tenants). Role gates:
+      - **viewer**: read endpoints (runs, presets, suites, settings, metrics).
+      - **operator**: run lifecycle, presets/suites/packages writes, uploads, baselines.
+      - **owner**: tenant settings, members, API tokens.
+      - **root**: `/api/v1/admin/*` (tenants and users).
+
+    The per-operation `description` notes the minimum role.
+  version: 1.0.0
+
+servers:
+  - url: /
+    description: Same-origin (SPA is served by the API server)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+    description: Login, token refresh, session, password.
+  - name: Tenant Members
+    description: Manage tenant membership (owner only).
+  - name: API Tokens
+    description: Tenant API tokens (owner only).
+  - name: Admin
+    description: Root-only tenant and user administration.
+  - name: Runs
+    description: Single benchmark run lifecycle and inspection.
+  - name: Presets
+    description: Per-tenant database topology presets.
+  - name: Run Presets
+    description: Saved full run configurations.
+  - name: Suites
+    description: Matrix suites (db presets × workloads) and batches.
+  - name: Suite Items
+    description: Workload-axis items within a suite.
+  - name: Packages
+    description: DB install packages (apt/deb).
+  - name: Metrics & Logs
+    description: Run metrics, comparison, and log streaming.
+  - name: Settings
+    description: Per-tenant cloud/monitoring/quota settings.
+  - name: Grafana
+    description: Grafana embed configuration.
+  - name: Queue & Quotas
+    description: Durable job queue and resource quota usage.
+  - name: Probe
+    description: Stroppy workload introspection.
+  - name: Baselines
+    description: Named baseline run pointers for comparison.
+  - name: Share
+    description: Public read-only run share links.
+  - name: System
+    description: Health and stroppy version discovery.
+  - name: Uploads
+    description: Package binary uploads.
+  - name: Agent
+    description: Internal agent ↔ server polling protocol (not used by the UI).
+  - name: Binaries
+    description: Internal binary distribution (not used by the UI).
+  - name: WebSocket
+    description: Live log/report stream (documented for reference).
+
+paths:
+  # ============================================================
+  # Health & system
+  # ============================================================
+  /health:
+    get:
+      tags: [System]
+      summary: Liveness probe
+      security: []
+      responses:
+        "200":
+          description: Server is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+
+  /metrics:
+    get:
+      tags: [System]
+      summary: Prometheus metrics exposition
+      description: Prometheus text-format metrics for this server process.
+      security: []
+      responses:
+        "200":
+          description: Prometheus exposition format.
+          content:
+            text/plain:
+              schema: { type: string }
+
+  /api/v1/stroppy-versions:
+    get:
+      tags: [System]
+      summary: List available stroppy release versions
+      description: |
+        Returns stroppy release tags ≥ the minimum supported version, stable
+        releases first then prereleases. Cached 5 minutes from GitHub. Viewer+.
+      responses:
+        "200":
+          description: Version strings (without the leading `v`).
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: string, example: "4.3.1" }
+        "502": { $ref: "#/components/responses/Error" }
+
+  /api/v1/stroppy-commits:
+    get:
+      tags: [System]
+      summary: List per-commit stroppy pre-releases
+      description: Per-commit nightly/pre-release builds. Cached 5 minutes. Viewer+.
+      responses:
+        "200":
+          description: Commit builds.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StroppyCommit" }
+        "502": { $ref: "#/components/responses/Error" }
+
+  # ============================================================
+  # Auth
+  # ============================================================
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in with username and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: |
+            Access token returned in the body; an HttpOnly `refresh_token`
+            cookie is set (Path=/api/v1/auth, 7d).
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+              description: "refresh_token=<hex>; HttpOnly; SameSite=Strict"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AccessTokenResponse" }
+        "400": { $ref: "#/components/responses/Error" }
+        "401": { $ref: "#/components/responses/Error" }
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Rotate refresh token, mint a new access token
+      description: Reads the `refresh_token` cookie; rotates it and returns a new access token.
+      security: []
+      responses:
+        "200":
+          description: New access token; rotated refresh cookie set.
+          headers:
+            Set-Cookie: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AccessTokenResponse" }
+        "401": { $ref: "#/components/responses/Error" }
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Log out
+      description: Deletes the refresh token server-side and clears the cookie.
+      security: []
+      responses:
+        "200":
+          description: Logged out.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Current user and tenant memberships
+      responses:
+        "200":
+          description: Authenticated principal.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthUser" }
+        "401": { $ref: "#/components/responses/Error" }
+
+  /api/v1/auth/select-tenant:
+    post:
+      tags: [Auth]
+      summary: Mint a tenant-scoped access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tenant_id]
+              properties:
+                tenant_id: { type: string }
+      responses:
+        "200":
+          description: Tenant-scoped access token.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AccessTokenResponse" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /api/v1/auth/password:
+    put:
+      tags: [Auth]
+      summary: Change own password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, new_password]
+              properties:
+                current_password: { type: string, format: password }
+                new_password: { type: string, format: password }
+      responses:
+        "200":
+          description: Password changed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+        "401": { $ref: "#/components/responses/Error" }
+
+  # ============================================================
+  # Tenant members (owner+)
+  # ============================================================
+  /api/v1/tenant/members:
+    get:
+      tags: [Tenant Members]
+      summary: List tenant members
+      description: Owner only.
+      responses:
+        "200":
+          description: Members.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TenantMember" }
+    post:
+      tags: [Tenant Members]
+      summary: Add a member to the tenant
+      description: Owner only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, role]
+              properties:
+                user_id: { type: string }
+                role: { $ref: "#/components/schemas/TenantRole" }
+      responses:
+        "200":
+          description: Member added.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantMember" }
+
+  /api/v1/tenant/members/{userID}:
+    parameters:
+      - { name: userID, in: path, required: true, schema: { type: string } }
+    put:
+      tags: [Tenant Members]
+      summary: Update a member's role
+      description: Owner only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: { $ref: "#/components/schemas/TenantRole" }
+      responses:
+        "200":
+          description: Role updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+    delete:
+      tags: [Tenant Members]
+      summary: Remove a member
+      description: Owner only.
+      responses:
+        "200":
+          description: Member removed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+
+  # ============================================================
+  # Tenant API tokens (owner+)
+  # ============================================================
+  /api/v1/tenant/tokens:
+    get:
+      tags: [API Tokens]
+      summary: List tenant API tokens
+      description: Owner only. Plaintext is never returned after creation.
+      responses:
+        "200":
+          description: Tokens.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TenantAPIToken" }
+    post:
+      tags: [API Tokens]
+      summary: Create an API token
+      description: Owner only. The `plaintext` is shown once.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, role]
+              properties:
+                name: { type: string }
+                role: { $ref: "#/components/schemas/TenantRole" }
+                expires_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+      responses:
+        "200":
+          description: Token created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { $ref: "#/components/schemas/TenantAPIToken" }
+                  plaintext: { type: string }
+  /api/v1/tenant/tokens/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    delete:
+      tags: [API Tokens]
+      summary: Revoke an API token
+      description: Owner only.
+      responses:
+        "200":
+          description: Revoked.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+
+  # ============================================================
+  # Admin (root only)
+  # ============================================================
+  /api/v1/admin/tenants:
+    get:
+      tags: [Admin]
+      summary: List all tenants
+      description: Root only.
+      responses:
+        "200":
+          description: Tenants.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Tenant" }
+    post:
+      tags: [Admin]
+      summary: Create a tenant
+      description: Root only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        "200":
+          description: Tenant created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Tenant" }
+  /api/v1/admin/tenants/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    delete:
+      tags: [Admin]
+      summary: Delete a tenant
+      description: Root only.
+      responses:
+        "200":
+          description: Deleted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+
+  /api/v1/admin/users:
+    get:
+      tags: [Admin]
+      summary: List all users
+      description: Root only.
+      responses:
+        "200":
+          description: Users.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AdminUser" }
+    post:
+      tags: [Admin]
+      summary: Create a user
+      description: Root only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string, format: password }
+                is_root: { type: boolean }
+      responses:
+        "200":
+          description: User created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string }
+                  username: { type: string }
+  /api/v1/admin/users/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    delete:
+      tags: [Admin]
+      summary: Delete a user
+      description: Root only.
+      responses:
+        "200":
+          description: Deleted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+  /api/v1/admin/users/{id}/password:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    put:
+      tags: [Admin]
+      summary: Reset a user's password
+      description: Root only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string, format: password }
+      responses:
+        "200":
+          description: Password reset.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+
+  # ============================================================
+  # Runs
+  # ============================================================
+  /api/v1/run:
+    post:
+      tags: [Runs]
+      summary: Start (enqueue) a run
+      description: |
+        Operator+. Resolves run preset/package, probes the workload, validates
+        quotas, and enqueues the run in the durable job queue.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RunConfig" }
+      responses:
+        "202":
+          description: Run queued.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  run_id: { type: string }
+                  status: { type: string, example: queued }
+        "400": { $ref: "#/components/responses/Error" }
+        "403":
+          description: Quota exceeded.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "409":
+          description: Run already exists or queued.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "429":
+          description: Queue depth limit reached.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "503": { $ref: "#/components/responses/Error" }
+
+  /api/v1/runs:
+    get:
+      tags: [Runs]
+      summary: List runs (incl. queued)
+      description: Viewer+. Includes queued jobs not yet snapshotted.
+      responses:
+        "200":
+          description: Run summaries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RunSummary" }
+
+  /api/v1/validate:
+    post:
+      tags: [Runs]
+      summary: Validate a run config
+      description: Operator+. Static validation; does not enqueue.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RunConfig" }
+      responses:
+        "200":
+          description: Valid.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: valid }
+        "422":
+          description: Invalid config.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/dry-run:
+    post:
+      tags: [Runs]
+      summary: Compile a run config into a DAG without executing
+      description: Operator+. Returns the planned graph, resolved config, and rendered configs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RunConfig" }
+      responses:
+        "200":
+          description: Dry-run result.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DryRunResponse" }
+        "400": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
+
+  /api/v1/stroppy-config-preview:
+    post:
+      tags: [Runs]
+      summary: Preview the rendered stroppy-config.json
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RunConfig" }
+      responses:
+        "200":
+          description: Stroppy config preview.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stroppy_config: { type: string, description: JSON-encoded stroppy config }
+
+  /api/v1/run/{runID}:
+    parameters:
+      - { name: runID, in: path, required: true, schema: { type: string } }
+    delete:
+      tags: [Runs]
+      summary: Delete a run
+      description: Operator+. Cleans up provider resources best-effort.
+      responses:
+        "200":
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: "#/components/schemas/StatusResponse" }
+                  - type: object
+                    properties:
+                      run_id: { type: string }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /api/v1/run/{runID}/cancel:
+    parameters:
+      - { name: runID, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Runs]
+      summary: Cancel a queued or running run
+      description: Operator+.
+      responses:
+        "200":
+          description: Cancelling.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: cancelling }
+                  run_id: { type: string }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /api/v1/run/{runID}/status:
+    parameters:
+      - { name: runID, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Runs]
+      summary: Run status snapshot
+      description: |
+        Viewer+. Returns the DAG snapshot annotated with current job state.
+        Queued runs return a minimal shim (empty nodes, `job_state=queued`).
+      responses:
+        "200":
+          description: Run status.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RunStatus" }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /api/v1/run/{runID}/rendered-configs:
+    parameters:
+      - { name: runID, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Runs]
+      summary: Per-component rendered config files
+      description: Viewer+. postgresql.conf, ydb.yaml, pgbouncer.ini, etc.
+      responses:
+        "200":
+          description: Rendered configs keyed by filename.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rendered_configs:
+                    type: object
+                    additionalProperties: { type: string }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /api/v1/run/{runID}/agents:
+    parameters:
+      - { name: runID, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Runs]
+      summary: Agents (machines) for a run with live status
+      description: Viewer+.
+      responses:
+        "200":
+          description: Agent list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AgentInfo" }
+
+  /api/v1/run/{runID}/share:
+    parameters:
+      - { name: runID, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Share]
+      summary: Create a public share link for a run
+      description: Operator+. Freezes the snapshot + metrics into a read-only record.
+      responses:
+        "200":
+          description: Share token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  url: { type: string, example: /share/abc123 }
+        "404": { $ref: "#/components/responses/Error" }
+
+  # ============================================================
+  # Metrics & logs
+  # ============================================================
+  /api/v1/run/{runID}/metrics:
+    parameters:
+      - { name: runID, in: path, required: true, schema: { type: string } }
+      - { name: start, in: query, schema: { type: string, format: date-time }, description: RFC3339; auto-derived from snapshot if omitted }
+      - { name: end, in: query, schema: { type: string, format: date-time }, description: RFC3339; auto-derived from snapshot if omitted }
+    get:
+      tags: [Metrics & Logs]
+      summary: Collected metrics for a run
+      description: Viewer+. Requires monitoring configured (else 503).
+      responses:
+        "200":
+          description: Run metrics.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RunMetrics" }
+        "400": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
+
+  /api/v1/run/{runID}/logs:
+    parameters:
+      - { name: runID, in: path, required: true, schema: { type: string } }
+      - { name: start, in: query, schema: { type: string, format: date-time } }
+      - { name: end, in: query, schema: { type: string, format: date-time } }
+      - { name: limit, in: query, schema: { type: integer, default: 500 } }
+      - { name: dir, in: query, schema: { type: string, enum: [asc, desc] }, description: Sort by time }
+      - { name: search, in: query, schema: { type: string }, description: Substring match on message }
+      - { name: action, in: query, style: form, explode: true, schema: { type: array, items: { type: string } }, description: Filter by phase/action }
+      - { name: role, in: query, style: form, explode: true, schema: { type: array, items: { type: string } } }
+      - { name: unit, in: query, style: form, explode: true, schema: { type: array, items: { type: string } }, description: systemd unit }
+      - { name: machine_id, in: query, style: form, explode: true, schema: { type: array, items: { type: string } } }
+    get:
+      tags: [Metrics & Logs]
+      summary: Query run logs (NDJSON)
+      description: |
+        Viewer+. Proxies VictoriaLogs. Returns newline-delimited JSON log
+        records. Responds 503 when monitoring is not configured.
+      responses:
+        "200":
+          description: NDJSON log lines.
+          content:
+            application/x-ndjson:
+              schema: { type: string }
+        "503":
+          description: Log storage not configured.
+
+  /api/v1/compare:
+    get:
+      tags: [Metrics & Logs]
+      summary: Compare metrics of two runs
+      description: Viewer+. Requires monitoring configured.
+      parameters:
+        - { name: a, in: query, required: true, schema: { type: string }, description: Run A id }
+        - { name: b, in: query, required: true, schema: { type: string }, description: Run B id }
+        - { name: start, in: query, schema: { type: string, format: date-time } }
+        - { name: end, in: query, schema: { type: string, format: date-time } }
+        - { name: threshold, in: query, schema: { type: number, default: 5 }, description: Verdict threshold percent }
+      responses:
+        "200":
+          description: Comparison.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ComparisonResponse" }
+        "400": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
+
+  # ============================================================
+  # Baselines (operator+)
+  # ============================================================
+  /api/v1/baselines:
+    get:
+      tags: [Baselines]
+      summary: List named baselines
+      description: Operator+.
+      responses:
+        "200":
+          description: Map of baseline name → run id.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: { type: string }
+  /api/v1/baseline/{name}:
+    parameters:
+      - { name: name, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Baselines]
+      summary: Resolve a baseline to its run id
+      description: Operator+.
+      responses:
+        "200":
+          description: Baseline pointer.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  baseline: { type: string }
+                  run_id: { type: string }
+        "404": { $ref: "#/components/responses/Error" }
+    put:
+      tags: [Baselines]
+      summary: Set a baseline pointer
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [run_id]
+              properties:
+                run_id: { type: string }
+      responses:
+        "200":
+          description: Baseline set.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  baseline: { type: string }
+                  run_id: { type: string }
+        "400": { $ref: "#/components/responses/Error" }
+
+  # ============================================================
+  # Presets
+  # ============================================================
+  /api/v1/presets:
+    get:
+      tags: [Presets]
+      summary: List database topology presets
+      description: Viewer+.
+      parameters:
+        - { name: db_kind, in: query, schema: { $ref: "#/components/schemas/DatabaseKind" } }
+      responses:
+        "200":
+          description: Presets.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Preset" }
+    post:
+      tags: [Presets]
+      summary: Create a preset
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, db_kind, topology]
+              properties:
+                name: { type: string }
+                description: { type: string }
+                db_kind: { $ref: "#/components/schemas/DatabaseKind" }
+                topology: { $ref: "#/components/schemas/Topology" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IdResponse" }
+  /api/v1/presets/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Presets]
+      summary: Get a preset
+      description: Viewer+.
+      responses:
+        "200":
+          description: Preset.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Preset" }
+        "404": { $ref: "#/components/responses/Error" }
+    put:
+      tags: [Presets]
+      summary: Update a preset
+      description: Operator+. Built-in presets cannot be edited (clone first).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                topology: { $ref: "#/components/schemas/Topology" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+        "403": { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [Presets]
+      summary: Delete a preset
+      description: Operator+.
+      responses:
+        "200":
+          description: Deleted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+  /api/v1/presets/{id}/clone:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Presets]
+      summary: Clone a preset
+      description: Operator+.
+      responses:
+        "201":
+          description: Cloned.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IdNameResponse" }
+
+  # ============================================================
+  # Run presets
+  # ============================================================
+  /api/v1/run-presets:
+    get:
+      tags: [Run Presets]
+      summary: List run presets
+      description: Viewer+.
+      parameters:
+        - { name: db_kind, in: query, schema: { $ref: "#/components/schemas/DatabaseKind" } }
+      responses:
+        "200":
+          description: Run presets.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RunPreset" }
+    post:
+      tags: [Run Presets]
+      summary: Create a run preset
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, db_kind, config]
+              properties:
+                name: { type: string }
+                description: { type: string }
+                db_kind: { $ref: "#/components/schemas/DatabaseKind" }
+                config: { $ref: "#/components/schemas/RunConfig" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IdResponse" }
+  /api/v1/run-presets/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Run Presets]
+      summary: Get a run preset
+      description: Viewer+.
+      responses:
+        "200":
+          description: Run preset.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RunPreset" }
+        "404": { $ref: "#/components/responses/Error" }
+    put:
+      tags: [Run Presets]
+      summary: Update a run preset
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                config: { $ref: "#/components/schemas/RunConfig" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+    delete:
+      tags: [Run Presets]
+      summary: Delete a run preset
+      description: Operator+.
+      responses:
+        "200":
+          description: Deleted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+
+  # ============================================================
+  # Suites
+  # ============================================================
+  /api/v1/suites:
+    get:
+      tags: [Suites]
+      summary: List suites
+      description: Viewer+.
+      responses:
+        "200":
+          description: Suites.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Suite" }
+    post:
+      tags: [Suites]
+      summary: Create a suite
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: "#/components/schemas/SuiteWriteFields" }
+                - type: object
+                  required: [name]
+                  properties:
+                    name: { type: string }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IdResponse" }
+  /api/v1/suites/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Suites]
+      summary: Get a suite (with items + batches)
+      description: Viewer+.
+      responses:
+        "200":
+          description: Suite.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Suite" }
+        "404": { $ref: "#/components/responses/Error" }
+    put:
+      tags: [Suites]
+      summary: Update a suite
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SuiteWriteFields" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+    delete:
+      tags: [Suites]
+      summary: Delete a suite
+      description: Operator+.
+      responses:
+        "200":
+          description: Deleted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+  /api/v1/suites/{id}/clone:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Suites]
+      summary: Clone a suite (with items)
+      description: Operator+. Cron is disabled on the clone.
+      responses:
+        "200":
+          description: Cloned.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IdNameResponse" }
+  /api/v1/suites/{id}/run:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Suites]
+      summary: Launch a suite batch
+      description: Operator+. Produces N×M job runs (presets × workloads).
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200":
+          description: Batch launched.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suite_id: { type: string }
+                  batch_id: { type: string }
+                  items: { type: integer }
+  /api/v1/suites/{id}/batches/{batchID}/cancel:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+      - { name: batchID, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Suites]
+      summary: Cancel all runs in a batch
+      description: Operator+.
+      responses:
+        "200":
+          description: Cancelled count.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suite_id: { type: string }
+                  batch_id: { type: string }
+                  cancelled: { type: integer }
+  /api/v1/suites/{id}/batches/{batchID}/cross:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+      - { name: batchID, in: path, required: true, schema: { type: string } }
+      - { name: pivot, in: query, schema: { type: string, enum: [item, preset], default: item } }
+    get:
+      tags: [Suites]
+      summary: Cross-comparison grouping of a batch
+      description: Viewer+. Groups runs by item (cross-DB) or preset (cross-workload).
+      responses:
+        "200":
+          description: Cross response.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuiteCrossResponse" }
+
+  # ============================================================
+  # Suite items
+  # ============================================================
+  /api/v1/suites/{id}/items:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Suite Items]
+      summary: List suite items
+      description: Viewer+.
+      responses:
+        "200":
+          description: Items.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/SuiteItem" }
+    post:
+      tags: [Suite Items]
+      summary: Create a suite item
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: "#/components/schemas/SuiteItemWriteFields" }
+                - type: object
+                  required: [workload]
+                  properties:
+                    workload: { $ref: "#/components/schemas/StroppyConfig" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IdResponse" }
+  /api/v1/suites/{id}/items/reorder:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Suite Items]
+      summary: Reorder suite items
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [order]
+              properties:
+                order:
+                  type: object
+                  additionalProperties: { type: integer }
+                  description: Map of item id → position.
+      responses:
+        "200":
+          description: Reordered.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+  /api/v1/suites/{id}/items/{itemID}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+      - { name: itemID, in: path, required: true, schema: { type: string } }
+    put:
+      tags: [Suite Items]
+      summary: Update a suite item
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SuiteItemWriteFields" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+    delete:
+      tags: [Suite Items]
+      summary: Delete a suite item
+      description: Operator+.
+      responses:
+        "200":
+          description: Deleted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+
+  # ============================================================
+  # Packages
+  # ============================================================
+  /api/v1/packages:
+    get:
+      tags: [Packages]
+      summary: List packages
+      description: Viewer+.
+      parameters:
+        - { name: db_kind, in: query, schema: { type: string } }
+        - { name: db_version, in: query, schema: { type: string } }
+      responses:
+        "200":
+          description: Packages.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Package" }
+    post:
+      tags: [Packages]
+      summary: Create a package
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PackageWriteFields" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IdResponse" }
+        "409": { $ref: "#/components/responses/Error" }
+  /api/v1/packages/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Packages]
+      summary: Get a package
+      description: Viewer+.
+      responses:
+        "200":
+          description: Package.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Package" }
+        "404": { $ref: "#/components/responses/Error" }
+    put:
+      tags: [Packages]
+      summary: Update a package
+      description: Operator+. Built-in packages cannot be edited (clone first).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PackageWriteFields" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: updated }
+        "403": { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [Packages]
+      summary: Delete a package
+      description: Operator+.
+      responses:
+        "200":
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: deleted }
+  /api/v1/packages/{id}/clone:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Packages]
+      summary: Clone a package
+      description: Operator+.
+      responses:
+        "201":
+          description: Cloned.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IdNameResponse" }
+  /api/v1/packages/{id}/deb:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Packages]
+      summary: Download the package's .deb
+      description: Viewer+.
+      responses:
+        "200":
+          description: Debian package binary.
+          content:
+            application/vnd.debian.binary-package:
+              schema: { type: string, format: binary }
+        "404": { $ref: "#/components/responses/Error" }
+    post:
+      tags: [Packages]
+      summary: Upload a .deb for the package
+      description: Operator+. Multipart form with a `file` field (max 500MB).
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "200":
+          description: Uploaded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: uploaded }
+                  filename: { type: string }
+                  size: { type: string }
+
+  # ============================================================
+  # Uploads (operator+)
+  # ============================================================
+  /api/v1/upload/deb:
+    post:
+      tags: [Uploads]
+      summary: Upload a standalone .deb to the package store
+      description: Operator+. Multipart `file` field; only `.deb`/`.rpm` accepted.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "200":
+          description: Uploaded.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UploadResponse" }
+        "400": { $ref: "#/components/responses/Error" }
+  /api/v1/upload/rpm:
+    post:
+      tags: [Uploads]
+      summary: Upload a standalone .rpm to the package store
+      description: Operator+. Alias of /upload/deb; only `.deb`/`.rpm` accepted.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "200":
+          description: Uploaded.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UploadResponse" }
+        "400": { $ref: "#/components/responses/Error" }
+
+  # ============================================================
+  # Probe
+  # ============================================================
+  /api/v1/probe:
+    post:
+      tags: [Probe]
+      summary: Probe a stroppy workload
+      description: Operator+. Runs `stroppy probe` and returns env declarations, steps, sql sections, driver setups.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProbeRequest" }
+      responses:
+        "200":
+          description: Probe output.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProbeResponse" }
+        "400": { $ref: "#/components/responses/Error" }
+        "422":
+          description: Probe failed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+                  output: { type: string }
+
+  # ============================================================
+  # Settings & grafana
+  # ============================================================
+  /api/v1/settings:
+    get:
+      tags: [Settings]
+      summary: Get tenant settings
+      description: Viewer+.
+      responses:
+        "200":
+          description: Settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerSettings" }
+    put:
+      tags: [Settings]
+      summary: Update tenant settings
+      description: Owner+. `server_addr`/`binary_url` are root-only and preserved otherwise.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerSettings" }
+      responses:
+        "200":
+          description: Saved.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+
+  /api/v1/grafana:
+    get:
+      tags: [Grafana]
+      summary: Grafana embed configuration
+      description: Authenticated (no tenant required).
+      responses:
+        "200":
+          description: Grafana config.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GrafanaSettings" }
+
+  # ============================================================
+  # Queue & quotas
+  # ============================================================
+  /api/v1/queue:
+    get:
+      tags: [Queue & Quotas]
+      summary: List active/queued jobs
+      description: Viewer+.
+      responses:
+        "200":
+          description: Queue rows.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/QueueRow" }
+  /api/v1/quotas:
+    get:
+      tags: [Queue & Quotas]
+      summary: Resource usage vs. limits
+      description: Viewer+.
+      responses:
+        "200":
+          description: Quota usage.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuotasResponse" }
+
+  # ============================================================
+  # Public share (no auth)
+  # ============================================================
+  /api/share/{token}:
+    parameters:
+      - { name: token, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Share]
+      summary: Fetch a shared run (public)
+      security: []
+      responses:
+        "200":
+          description: Frozen snapshot + metrics.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  run_id: { type: string }
+                  snapshot: { $ref: "#/components/schemas/Snapshot" }
+                  metrics: { $ref: "#/components/schemas/RunMetrics" }
+                  created_at: { type: string, format: date-time }
+        "404": { $ref: "#/components/responses/Error" }
+
+  # ============================================================
+  # Static / binaries
+  # ============================================================
+  /packages/{filename}:
+    parameters:
+      - { name: filename, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Binaries]
+      summary: Serve an uploaded package file
+      security: []
+      responses:
+        "200":
+          description: File bytes.
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+  /agent/binary:
+    get:
+      tags: [Binaries]
+      summary: Download the stroppy agent binary
+      description: Public — agents have no token at download time.
+      security: []
+      responses:
+        "200":
+          description: Agent binary.
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+  /api/binaries/{name}/{version}/{filename}:
+    parameters:
+      - { name: name, in: path, required: true, schema: { type: string } }
+      - { name: version, in: path, required: true, schema: { type: string } }
+      - { name: filename, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Binaries]
+      summary: Cached supporting-binary proxy
+      description: Public. Caches artifacts (node_exporter, vmagent, stroppy, …) on disk.
+      security: []
+      responses:
+        "200":
+          description: Binary bytes (streamed from cache).
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+
+  # ============================================================
+  # Agent protocol (internal)
+  # ============================================================
+  /api/agent/register:
+    post:
+      tags: [Agent]
+      summary: Agent registration
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                machine_id: { type: string }
+      responses:
+        "200":
+          description: Registered.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+  /api/agent/poll:
+    post:
+      tags: [Agent]
+      summary: Long-poll for a command (up to 60s)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                machine_id: { type: string }
+                host: { type: string }
+                port: { type: integer }
+      responses:
+        "200":
+          description: A command to execute.
+          content:
+            application/json:
+              schema: { type: object, additionalProperties: true }
+        "204":
+          description: No command available (poll timed out).
+  /api/agent/report:
+    post:
+      tags: [Agent]
+      summary: Report command completion
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command_id: { type: string }
+                status: { type: string, enum: [done, failed] }
+                output: { type: string }
+                error: { type: string }
+      responses:
+        "200":
+          description: Acknowledged.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusResponse" }
+  /api/agent/logs-batch:
+    post:
+      tags: [Agent]
+      summary: Ship a batch of agent log lines
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: "#/components/schemas/AgentLogLine" }
+      responses:
+        "204":
+          description: Accepted.
+
+  # ============================================================
+  # WebSocket (documented for reference; not callable via REST)
+  # ============================================================
+  /ws/logs:
+    get:
+      tags: [WebSocket]
+      summary: Live log/report stream (all runs)
+      description: |
+        WebSocket upgrade. JWT is passed via the `token` query parameter
+        (browsers can't set WS headers). Messages are `WSMessage` JSON.
+      parameters:
+        - { name: token, in: query, schema: { type: string }, description: JWT access token }
+      responses:
+        "101": { description: Switching Protocols (WebSocket). }
+  /ws/logs/{runID}:
+    parameters:
+      - { name: runID, in: path, required: true, schema: { type: string } }
+      - { name: token, in: query, schema: { type: string } }
+    get:
+      tags: [WebSocket]
+      summary: Live log/report stream (one run)
+      description: WebSocket upgrade scoped to a single run.
+      responses:
+        "101": { description: Switching Protocols (WebSocket). }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token
+
+  responses:
+    Error:
+      description: Error.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  schemas:
+    # ---------- Generic ----------
+    StatusResponse:
+      type: object
+      properties:
+        status: { type: string, example: ok }
+    ErrorResponse:
+      type: object
+      properties:
+        error: { type: string }
+    AccessTokenResponse:
+      type: object
+      properties:
+        access_token: { type: string }
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string, format: password }
+    IdResponse:
+      type: object
+      properties:
+        id: { type: string }
+    IdNameResponse:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+    UploadResponse:
+      type: object
+      properties:
+        filename: { type: string }
+        url: { type: string }
+        size: { type: string }
+
+    # ---------- Enums ----------
+    Provider:
+      type: string
+      enum: [yandex, docker]
+    DatabaseKind:
+      type: string
+      enum: [postgres, mysql, mariadb, picodata, ydb, ydb-managed, cockroach]
+    Protocol:
+      type: string
+      enum: [pg, mysql, picodata, ydb-grpc, ydb-pgwire, ydb-grpcs, cockroach]
+    MachineRole:
+      type: string
+      enum: [database, monitor, stroppy, etcd, proxy, pgbouncer, ydb-storage, ydb-database]
+    Phase:
+      type: string
+      enum:
+        - network
+        - machines
+        - install_db
+        - configure_db
+        - install_monitor
+        - configure_monitor
+        - install_stroppy
+        - run_stroppy
+        - install_etcd
+        - configure_etcd
+        - install_proxy
+        - configure_proxy
+        - install_pgbouncer
+        - configure_pgbouncer
+        - teardown
+    NodeStatusValue:
+      type: string
+      enum: [pending, running, done, failed, cancelled]
+    TenantRole:
+      type: string
+      enum: [viewer, operator, owner]
+
+    # ---------- Machines / topology ----------
+    SecondaryDisk:
+      type: object
+      properties:
+        device_name: { type: string }
+        size_gb: { type: integer }
+        type: { type: string }
+    PlacementSpec:
+      type: object
+      properties:
+        strategy: { type: string, enum: [single, round-robin] }
+        zones:
+          type: array
+          items: { type: string }
+    MachineSpec:
+      type: object
+      properties:
+        role: { $ref: "#/components/schemas/MachineRole" }
+        count: { type: integer }
+        cpus: { type: integer }
+        memory_mb: { type: integer }
+        disk_gb: { type: integer }
+        disk_type: { type: string }
+        secondary_disks:
+          type: array
+          items: { $ref: "#/components/schemas/SecondaryDisk" }
+        placement: { $ref: "#/components/schemas/PlacementSpec" }
+    StringMap:
+      type: object
+      additionalProperties: { type: string }
+    PostgresTopology:
+      type: object
+      properties:
+        master: { $ref: "#/components/schemas/MachineSpec" }
+        replicas:
+          type: array
+          items: { $ref: "#/components/schemas/MachineSpec" }
+        haproxy: { $ref: "#/components/schemas/MachineSpec" }
+        pgbouncer: { type: boolean }
+        patroni: { type: boolean }
+        etcd: { type: boolean }
+        sync_replicas: { type: integer }
+        master_options: { $ref: "#/components/schemas/StringMap" }
+        replica_options: { $ref: "#/components/schemas/StringMap" }
+        haproxy_options: { $ref: "#/components/schemas/StringMap" }
+        pgbouncer_options: { $ref: "#/components/schemas/StringMap" }
+        patroni_options: { $ref: "#/components/schemas/StringMap" }
+        etcd_options: { $ref: "#/components/schemas/StringMap" }
+    MySQLTopology:
+      type: object
+      properties:
+        primary: { $ref: "#/components/schemas/MachineSpec" }
+        replicas:
+          type: array
+          items: { $ref: "#/components/schemas/MachineSpec" }
+        proxysql: { $ref: "#/components/schemas/MachineSpec" }
+        group_replication: { type: boolean }
+        semi_sync: { type: boolean }
+        primary_options: { $ref: "#/components/schemas/StringMap" }
+        replica_options: { $ref: "#/components/schemas/StringMap" }
+        proxysql_options: { $ref: "#/components/schemas/StringMap" }
+    PicodataTier:
+      type: object
+      properties:
+        name: { type: string }
+        replication_factor: { type: integer }
+        can_vote: { type: boolean }
+        count: { type: integer }
+    PicodataTopology:
+      type: object
+      properties:
+        instances:
+          type: array
+          items: { $ref: "#/components/schemas/MachineSpec" }
+        haproxy: { $ref: "#/components/schemas/MachineSpec" }
+        replication_factor: { type: integer }
+        shards: { type: integer }
+        tiers:
+          type: array
+          items: { $ref: "#/components/schemas/PicodataTier" }
+        instance_options: { $ref: "#/components/schemas/StringMap" }
+        haproxy_options: { $ref: "#/components/schemas/StringMap" }
+    YDBTopology:
+      type: object
+      properties:
+        storage: { $ref: "#/components/schemas/MachineSpec" }
+        database: { $ref: "#/components/schemas/MachineSpec" }
+        haproxy: { $ref: "#/components/schemas/MachineSpec" }
+        fault_tolerance: { type: string }
+        failure_domain_type: { type: string }
+        default_disk_type: { type: string }
+        storage_groups: { type: integer }
+        auto_size_pdisks: { type: boolean }
+        database_path: { type: string }
+        storage_options: { $ref: "#/components/schemas/StringMap" }
+        database_options: { $ref: "#/components/schemas/StringMap" }
+        haproxy_options: { $ref: "#/components/schemas/StringMap" }
+    YDBManagedAutoScale:
+      type: object
+      properties:
+        min_size: { type: integer }
+        max_size: { type: integer }
+        cpu_utilization_percent: { type: integer, default: 70 }
+    YDBManagedTerraformOutput:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string, enum: [serverless, dedicated] }
+        folder_id: { type: string }
+        location_id: { type: string }
+        database_path: { type: string }
+        ydb_api_endpoint: { type: string }
+        ydb_full_endpoint: { type: string }
+        document_api_endpoint: { type: string }
+        tls_enabled: { type: boolean }
+        status: { type: string }
+        created_at: { type: string }
+        labels: { $ref: "#/components/schemas/StringMap" }
+        resource_preset_id: { type: string }
+        network_id: { type: string }
+        subnet_ids:
+          type: array
+          items: { type: string }
+        storage_groups: { type: integer }
+        storage_type_id: { type: string }
+        throttling_rcu_limit: { type: integer }
+    YDBManagedTopology:
+      type: object
+      properties:
+        type: { type: string, enum: [serverless, dedicated] }
+        compute_type: { type: string, enum: [oltp, olap] }
+        resource_preset_id: { type: string }
+        node_count: { type: integer }
+        auto_scale: { $ref: "#/components/schemas/YDBManagedAutoScale" }
+        storage_groups: { type: integer }
+        storage_type: { type: string }
+        throttling_rcus: { type: integer }
+        client: { $ref: "#/components/schemas/MachineSpec" }
+        database_path: { type: string }
+        endpoint: { type: string }
+        terraform_output: { $ref: "#/components/schemas/YDBManagedTerraformOutput" }
+    CockroachTopology:
+      type: object
+      properties:
+        nodes: { $ref: "#/components/schemas/MachineSpec" }
+        options: { $ref: "#/components/schemas/StringMap" }
+    Topology:
+      description: One of the per-kind topology shapes (discriminated by the owning preset/config db_kind).
+      oneOf:
+        - { $ref: "#/components/schemas/PostgresTopology" }
+        - { $ref: "#/components/schemas/MySQLTopology" }
+        - { $ref: "#/components/schemas/PicodataTopology" }
+        - { $ref: "#/components/schemas/YDBTopology" }
+        - { $ref: "#/components/schemas/YDBManagedTopology" }
+        - { $ref: "#/components/schemas/CockroachTopology" }
+
+    # ---------- Run config ----------
+    NetworkConfig:
+      type: object
+      properties:
+        cidr: { type: string }
+        zone: { type: string }
+    MonitorConfig:
+      type: object
+      properties:
+        metrics_endpoint: { type: string }
+        logs_endpoint: { type: string }
+    WorkloadFile:
+      type: object
+      properties:
+        name: { type: string }
+        kind: { type: string, description: "e.g. sql" }
+        content: { type: string }
+    ExternalDBConfig:
+      type: object
+      properties:
+        endpoint: { type: string }
+        database: { type: string }
+        username: { type: string }
+        password: { type: string }
+        ssl_mode: { type: string }
+    DatabaseConfig:
+      type: object
+      properties:
+        kind: { $ref: "#/components/schemas/DatabaseKind" }
+        version: { type: string }
+        postgres: { $ref: "#/components/schemas/PostgresTopology" }
+        mysql: { $ref: "#/components/schemas/MySQLTopology" }
+        mariadb: { $ref: "#/components/schemas/MySQLTopology" }
+        picodata: { $ref: "#/components/schemas/PicodataTopology" }
+        ydb: { $ref: "#/components/schemas/YDBTopology" }
+        ydb_managed: { $ref: "#/components/schemas/YDBManagedTopology" }
+        cockroach: { $ref: "#/components/schemas/CockroachTopology" }
+        rendered_config_overrides: { $ref: "#/components/schemas/StringMap" }
+    StroppyConfig:
+      type: object
+      properties:
+        version: { type: string }
+        protocol: { $ref: "#/components/schemas/Protocol" }
+        script: { type: string, description: "e.g. tpcc/procs, tpcc/tx, tpcb/tx" }
+        sql: { type: string }
+        duration: { type: string }
+        k6_mode: { type: string, enum: [duration, iterations] }
+        iterations: { type: integer }
+        quiet: { type: boolean }
+        no_thresholds: { type: boolean }
+        vus: { type: integer }
+        pool_size: { type: integer }
+        scale_factor: { type: number }
+        default_insert_method: { type: string }
+        env: { $ref: "#/components/schemas/StringMap" }
+        files:
+          type: array
+          items: { $ref: "#/components/schemas/WorkloadFile" }
+        steps:
+          type: array
+          items: { type: string }
+        no_steps:
+          type: array
+          items: { type: string }
+        machine: { $ref: "#/components/schemas/MachineSpec" }
+        config_override_json: { type: string }
+        workload: { type: string, deprecated: true }
+        vus_scale: { type: number, deprecated: true }
+        workers: { type: integer, deprecated: true }
+    RunConfig:
+      type: object
+      required: [id, provider, network, machines, database, monitor, stroppy]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        provider: { $ref: "#/components/schemas/Provider" }
+        network: { $ref: "#/components/schemas/NetworkConfig" }
+        machines:
+          type: array
+          items: { $ref: "#/components/schemas/MachineSpec" }
+        database: { $ref: "#/components/schemas/DatabaseConfig" }
+        monitor: { $ref: "#/components/schemas/MonitorConfig" }
+        stroppy: { $ref: "#/components/schemas/StroppyConfig" }
+        preset_id: { type: string }
+        package_id: { type: string }
+        platform_id: { type: string }
+        machine_override: { $ref: "#/components/schemas/MachineSpec" }
+        run_preset_id: { type: string }
+        suite_id: { type: string }
+        external_db: { $ref: "#/components/schemas/ExternalDBConfig" }
+
+    # ---------- DAG / snapshot ----------
+    NodeStatus:
+      type: object
+      properties:
+        id: { type: string }
+        status: { $ref: "#/components/schemas/NodeStatusValue" }
+        error: { type: string }
+    SnapshotTarget:
+      type: object
+      properties:
+        id: { type: string }
+        host: { type: string }
+        internal_host: { type: string }
+        role: { type: string }
+    Snapshot:
+      type: object
+      properties:
+        graph: { type: string, description: JSON-encoded graph }
+        nodes:
+          type: array
+          items: { $ref: "#/components/schemas/NodeStatus" }
+        started_at: { type: string, format: date-time }
+        finished_at: { type: string, format: date-time }
+        state:
+          type: object
+          additionalProperties: true
+          properties:
+            provider: { type: string }
+            run_config: { description: object or JSON string }
+            targets:
+              type: array
+              items: { $ref: "#/components/schemas/SnapshotTarget" }
+            effective_configs:
+              type: object
+              additionalProperties: { $ref: "#/components/schemas/StringMap" }
+    RunStatus:
+      description: Snapshot annotated with current job state; queued runs return a minimal shim.
+      allOf:
+        - { $ref: "#/components/schemas/Snapshot" }
+        - type: object
+          properties:
+            job_state: { type: string, enum: [queued, claimed, running, finished, failed, cancelled] }
+            queue_position: { type: integer }
+            batch_id: { type: string }
+            created_at: { type: string, format: date-time }
+    RunSummary:
+      type: object
+      properties:
+        id: { type: string }
+        nodes:
+          type: array
+          items: { $ref: "#/components/schemas/NodeStatus" }
+        total: { type: integer }
+        done: { type: integer }
+        failed: { type: integer }
+        pending: { type: integer }
+        started_at: { type: string, format: date-time }
+        finished_at: { type: string, format: date-time }
+        db_kind: { type: string }
+        provider: { type: string }
+        script: { type: string }
+        duration: { type: string }
+        vus: { type: integer }
+        db_version: { type: string }
+        node_count: { type: integer }
+        preset_id: { type: string }
+        cancelled: { type: boolean }
+        name: { type: string }
+        description: { type: string }
+        suite_id: { type: string }
+        run_preset_id: { type: string }
+    DryRunResponse:
+      type: object
+      properties:
+        graph: { description: Full graph object (JSON). }
+        nodes: { description: Node list extracted from the graph. }
+        resolved_config: { $ref: "#/components/schemas/RunConfig" }
+        effective_config:
+          type: object
+          additionalProperties: { $ref: "#/components/schemas/StringMap" }
+        stroppy_config: { type: string }
+        rendered_configs:
+          type: object
+          additionalProperties: { type: string }
+
+    # ---------- Presets ----------
+    Preset:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        db_kind: { $ref: "#/components/schemas/DatabaseKind" }
+        is_builtin: { type: boolean }
+        topology: { $ref: "#/components/schemas/Topology" }
+        created_at: { type: string, format: date-time }
+    RunPreset:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        db_kind: { type: string }
+        config: { $ref: "#/components/schemas/RunConfig" }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    # ---------- Suites ----------
+    SuitePolicy:
+      type: object
+      properties:
+        mode: { type: string, enum: [sequential, parallel] }
+        max_parallel: { type: integer }
+        on_step_fail: { type: string, enum: [continue, stop] }
+        step_timeout_min: { type: integer }
+    ComparisonConfig:
+      type: object
+      properties:
+        strategy: { type: string, enum: ["", previous, first, fixed] }
+        baseline_batch_id: { type: string }
+        threshold_pct: { type: number }
+    SuiteItem:
+      type: object
+      properties:
+        id: { type: string }
+        suite_id: { type: string }
+        position: { type: integer }
+        name: { type: string }
+        workload: { $ref: "#/components/schemas/StroppyConfig" }
+        enabled: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    SuiteItemWriteFields:
+      type: object
+      properties:
+        name: { type: string }
+        workload: { $ref: "#/components/schemas/StroppyConfig" }
+        position: { type: integer }
+        enabled: { type: boolean }
+    SuiteRunBrief:
+      type: object
+      properties:
+        run_id: { type: string }
+        suite_item_id: { type: string }
+        db_preset_id: { type: string }
+        position: { type: integer }
+        state: { type: string }
+    SuiteBatchSummary:
+      type: object
+      properties:
+        batch_id: { type: string }
+        trigger: { type: string }
+        fire_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        total: { type: integer }
+        finished: { type: integer }
+        failed: { type: integer }
+        cancelled: { type: integer }
+        running: { type: integer }
+        queued: { type: integer }
+        runs:
+          type: array
+          items: { $ref: "#/components/schemas/SuiteRunBrief" }
+    SuiteWriteFields:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        policy: { $ref: "#/components/schemas/SuitePolicy" }
+        comparison: { $ref: "#/components/schemas/ComparisonConfig" }
+        db_preset_ids:
+          type: array
+          items: { type: string }
+        provider: { $ref: "#/components/schemas/Provider" }
+        platform_id: { type: string }
+        network: { $ref: "#/components/schemas/NetworkConfig" }
+        stroppy_machine: { $ref: "#/components/schemas/MachineSpec" }
+        cron_expr: { type: string }
+        timezone: { type: string }
+        enabled: { type: boolean }
+        concurrent_policy: { type: string, enum: [forbid, allow] }
+        catchup_mode: { type: string, enum: [skip, once] }
+        retention_runs: { type: integer }
+    Suite:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        policy: { $ref: "#/components/schemas/SuitePolicy" }
+        comparison: { $ref: "#/components/schemas/ComparisonConfig" }
+        db_preset_ids:
+          type: array
+          items: { type: string }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/SuiteItem" }
+        item_count: { type: integer }
+        provider: { $ref: "#/components/schemas/Provider" }
+        platform_id: { type: string }
+        network: { $ref: "#/components/schemas/NetworkConfig" }
+        stroppy_machine: { $ref: "#/components/schemas/MachineSpec" }
+        cron_expr: { type: string }
+        timezone: { type: string }
+        enabled: { type: boolean }
+        next_fire_at: { type: string, format: date-time }
+        last_fire_at: { type: string, format: date-time }
+        last_batch_id: { type: string }
+        concurrent_policy: { type: string, enum: [forbid, allow] }
+        catchup_mode: { type: string, enum: [skip, once] }
+        retention_runs: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        batches:
+          type: array
+          items: { $ref: "#/components/schemas/SuiteBatchSummary" }
+    SuiteCrossMember:
+      type: object
+      properties:
+        run_id: { type: string }
+        state: { type: string }
+        db_preset_id: { type: string }
+        preset_name: { type: string }
+        suite_item_id: { type: string }
+        item_name: { type: string }
+    SuiteCrossGroup:
+      type: object
+      properties:
+        group_key: { type: string }
+        group_label: { type: string }
+        members:
+          type: array
+          items: { $ref: "#/components/schemas/SuiteCrossMember" }
+    SuiteCrossResponse:
+      type: object
+      properties:
+        suite_id: { type: string }
+        batch_id: { type: string }
+        pivot: { type: string, enum: [item, preset] }
+        groups:
+          type: array
+          items: { $ref: "#/components/schemas/SuiteCrossGroup" }
+
+    # ---------- Packages ----------
+    Package:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        db_kind: { type: string }
+        db_version: { type: string }
+        is_builtin: { type: boolean }
+        apt_packages:
+          type: array
+          items: { type: string }
+        pre_install:
+          type: array
+          items: { type: string }
+        custom_repo: { type: string }
+        custom_repo_key: { type: string }
+        deb_filename: { type: string }
+        has_deb: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    PackageWriteFields:
+      type: object
+      required: [name, db_kind]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        db_kind: { type: string }
+        db_version: { type: string }
+        apt_packages:
+          type: array
+          items: { type: string }
+        pre_install:
+          type: array
+          items: { type: string }
+        custom_repo: { type: string }
+        custom_repo_key: { type: string }
+
+    # ---------- Probe ----------
+    ProbeRequest:
+      type: object
+      required: [script]
+      properties:
+        script: { type: string }
+        version: { type: string }
+        sql: { type: string }
+        driver_type: { type: string }
+        pool_size: { type: integer }
+        scale_factor: { type: integer }
+        env: { $ref: "#/components/schemas/StringMap" }
+        files:
+          type: array
+          items: { $ref: "#/components/schemas/WorkloadFile" }
+        include_human: { type: boolean }
+    EnvDeclaration:
+      type: object
+      properties:
+        names:
+          type: array
+          items: { type: string }
+        default: { type: string }
+        description: { type: string }
+    ProbeResponse:
+      type: object
+      properties:
+        env_declarations:
+          type: array
+          items: { $ref: "#/components/schemas/EnvDeclaration" }
+        steps:
+          type: array
+          items: { type: string }
+        sql_sections:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              queries:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name: { type: string }
+        driver_setups:
+          type: array
+          items:
+            type: object
+            properties:
+              index: { type: integer }
+              defaults:
+                type: object
+                additionalProperties: true
+        human: { type: string }
+        human_error: { type: string }
+
+    # ---------- Settings ----------
+    YandexCloudSettings:
+      type: object
+      properties:
+        token: { type: string }
+        cloud_id: { type: string }
+        folder_id: { type: string }
+        zone: { type: string }
+        network_id: { type: string }
+        network_name: { type: string }
+        subnet_cidr: { type: string }
+        platform_id: { type: string }
+        image_id: { type: string }
+        assign_public_ip: { type: boolean }
+        software_accelerated_network: { type: boolean }
+        ssh_user: { type: string }
+        ssh_public_key: { type: string }
+    CloudSettings:
+      type: object
+      properties:
+        yandex: { $ref: "#/components/schemas/YandexCloudSettings" }
+        server_addr: { type: string, description: "Root-only writable." }
+        binary_url: { type: string, description: "Root-only writable." }
+    WebhookConfig:
+      type: object
+      properties:
+        urls:
+          type: array
+          items: { type: string }
+        events:
+          type: array
+          items: { type: string }
+        timeout: { type: integer, description: "Request timeout (seconds); default 10." }
+    TenantQuotas:
+      type: object
+      properties:
+        allowed_db_kinds:
+          type: array
+          items: { type: string }
+        allowed_providers:
+          type: array
+          items: { type: string }
+        max_nodes: { type: integer }
+        max_cpus_per_node: { type: integer }
+        max_memory_mb_per_node: { type: integer }
+        max_disk_gb_per_node: { type: integer }
+        max_concurrent_runs: { type: integer }
+        max_concurrent_cpus: { type: integer }
+        max_concurrent_memory_mb: { type: integer }
+        max_concurrent_disk_gb: { type: integer }
+        max_concurrent_vms: { type: integer }
+        max_queue_depth: { type: integer }
+    ServerSettings:
+      type: object
+      properties:
+        cloud: { $ref: "#/components/schemas/CloudSettings" }
+        webhooks: { $ref: "#/components/schemas/WebhookConfig" }
+        quotas: { $ref: "#/components/schemas/TenantQuotas" }
+    GrafanaSettings:
+      type: object
+      properties:
+        url: { type: string }
+        embed_enabled: { type: boolean }
+        dashboards: { $ref: "#/components/schemas/StringMap" }
+
+    # ---------- Metrics / compare ----------
+    TimeRange:
+      type: object
+      properties:
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+    MetricSummary:
+      type: object
+      properties:
+        key: { type: string }
+        name: { type: string }
+        unit: { type: string }
+        avg: { type: number }
+        min: { type: number }
+        max: { type: number }
+        last: { type: number }
+    RunMetrics:
+      type: object
+      properties:
+        run_id: { type: string }
+        range: { $ref: "#/components/schemas/TimeRange" }
+        metrics:
+          type: array
+          items: { $ref: "#/components/schemas/MetricSummary" }
+    ComparisonRow:
+      type: object
+      properties:
+        key: { type: string }
+        name: { type: string }
+        unit: { type: string }
+        avg_a: { type: number }
+        avg_b: { type: number }
+        max_a: { type: number }
+        max_b: { type: number }
+        diff_avg_pct: { type: number }
+        diff_max_pct: { type: number }
+        verdict: { type: string, enum: [better, worse, same] }
+    ComparisonVerdict:
+      type: object
+      properties:
+        better: { type: integer }
+        worse: { type: integer }
+        same: { type: integer }
+    ComparisonResponse:
+      type: object
+      properties:
+        run_a: { type: string }
+        run_b: { type: string }
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+        metrics:
+          type: array
+          items: { $ref: "#/components/schemas/ComparisonRow" }
+        summary: { $ref: "#/components/schemas/ComparisonVerdict" }
+        config_a: { $ref: "#/components/schemas/RunConfig" }
+        config_b: { $ref: "#/components/schemas/RunConfig" }
+
+    # ---------- Auth / tenancy ----------
+    AuthUser:
+      type: object
+      description: Returned by GET /api/v1/auth/me.
+      properties:
+        user_id: { type: string }
+        username: { type: string }
+        is_root: { type: boolean }
+        tenant_id: { type: string, nullable: true }
+        role:
+          type: string
+          nullable: true
+          enum: [viewer, operator, owner]
+        tenants:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              tenant_name: { type: string }
+              role: { type: string }
+    Tenant:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        created_at: { type: string, format: date-time }
+    TenantMember:
+      type: object
+      properties:
+        tenant_id: { type: string }
+        user_id: { type: string }
+        username: { type: string }
+        role: { type: string }
+        created_at: { type: string, format: date-time }
+    TenantAPIToken:
+      type: object
+      properties:
+        id: { type: string }
+        tenant_id: { type: string }
+        name: { type: string }
+        role: { type: string }
+        created_by: { type: string }
+        expires_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+    AdminUser:
+      type: object
+      properties:
+        id: { type: string }
+        username: { type: string }
+        is_root: { type: boolean }
+        created_at: { type: string, format: date-time }
+
+    # ---------- Queue / quotas ----------
+    JobCost:
+      type: object
+      properties:
+        cpus: { type: integer }
+        memory_mb: { type: integer }
+        disk_gb: { type: integer }
+        vm_count: { type: integer }
+        runs_running: { type: integer }
+    QueueRow:
+      type: object
+      properties:
+        run_id: { type: string }
+        batch_id: { type: string }
+        suite_id: { type: string }
+        position: { type: integer }
+        state: { type: string, enum: [queued, claimed, running, finished, failed, cancelled] }
+        cost: { $ref: "#/components/schemas/JobCost" }
+        created_at: { type: string, format: date-time }
+        started_at: { type: string, format: date-time }
+        heartbeat_at: { type: string, format: date-time }
+        error: { type: string }
+        name: { type: string }
+    QuotasResponse:
+      type: object
+      properties:
+        used: { $ref: "#/components/schemas/JobCost" }
+        limits: { $ref: "#/components/schemas/JobCost" }
+        queue_depth: { type: integer }
+        running_count: { type: integer }
+
+    # ---------- Agents ----------
+    AgentInfo:
+      type: object
+      properties:
+        machine_id: { type: string }
+        role: { type: string }
+        host: { type: string }
+        internal_host: { type: string }
+        agent_port: { type: integer }
+        registered: { type: boolean }
+        healthy: { type: boolean }
+        health_error: { type: string }
+        last_seen_at: { type: string, format: date-time }
+    AgentLogLine:
+      type: object
+      properties:
+        machine_id: { type: string }
+        command_id: { type: string }
+        action: { type: string }
+        stream: { type: string }
+        line: { type: string }
+
+    # ---------- Misc ----------
+    StroppyCommit:
+      type: object
+      properties:
+        short: { type: string }
+        tag: { type: string }
+        name: { type: string }
+        download_url: { type: string }
+        published_at: { type: string, format: date-time }
+
+    # ---------- WebSocket payloads ----------
+    WSMessage:
+      type: object
+      properties:
+        type: { type: string, enum: [log, report, agent_log] }
+        run_id: { type: string }
+        node_id: { type: string }
+        payload: { description: Arbitrary message payload. }
+    LogLine:
+      type: object
+      properties:
+        run_id: { type: string }
+        phase: { type: string }
+        machine_id: { type: string }
+        line: { type: string }
+        ts: { type: string, format: date-time }

@@ -1,0 +1,144 @@
+openapi: 3.0.3
+info:
+  title: Stroppy Cloud — Agent Protocol API
+  description: Self-contained Agent Protocol domain slice of the Stroppy Cloud API. Independently valid;
+    no external $refs.
+  version: 1.0.0
+servers:
+- url: /
+  description: Same-origin (SPA is served by the API server)
+security:
+- bearerAuth: []
+tags:
+- name: Agent
+  description: Internal agent ↔ server polling protocol (not used by the UI).
+paths:
+  /api/agent/register:
+    post:
+      tags:
+      - Agent
+      summary: Agent registration
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                machine_id:
+                  type: string
+      responses:
+        '200':
+          description: Registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+  /api/agent/poll:
+    post:
+      tags:
+      - Agent
+      summary: Long-poll for a command (up to 60s)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                machine_id:
+                  type: string
+                host:
+                  type: string
+                port:
+                  type: integer
+      responses:
+        '200':
+          description: A command to execute.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '204':
+          description: No command available (poll timed out).
+  /api/agent/report:
+    post:
+      tags:
+      - Agent
+      summary: Report command completion
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command_id:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                  - done
+                  - failed
+                output:
+                  type: string
+                error:
+                  type: string
+      responses:
+        '200':
+          description: Acknowledged.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+  /api/agent/logs-batch:
+    post:
+      tags:
+      - Agent
+      summary: Ship a batch of agent log lines
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AgentLogLine'
+      responses:
+        '204':
+          description: Accepted.
+components:
+  schemas:
+    AgentLogLine:
+      type: object
+      properties:
+        machine_id:
+          type: string
+        command_id:
+          type: string
+        action:
+          type: string
+        stream:
+          type: string
+        line:
+          type: string
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token

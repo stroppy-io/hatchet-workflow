@@ -1,0 +1,99 @@
+agent_register:
+  post:
+    tags:
+    - Agent
+    summary: Agent registration
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              machine_id:
+                type: string
+    responses:
+      '200':
+        description: Registered.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+agent_poll:
+  post:
+    tags:
+    - Agent
+    summary: Long-poll for a command (up to 60s)
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              machine_id:
+                type: string
+              host:
+                type: string
+              port:
+                type: integer
+    responses:
+      '200':
+        description: A command to execute.
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      '204':
+        description: No command available (poll timed out).
+agent_report:
+  post:
+    tags:
+    - Agent
+    summary: Report command completion
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              command_id:
+                type: string
+              status:
+                type: string
+                enum:
+                - done
+                - failed
+              output:
+                type: string
+              error:
+                type: string
+    responses:
+      '200':
+        description: Acknowledged.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+agent_logs_batch:
+  post:
+    tags:
+    - Agent
+    summary: Ship a batch of agent log lines
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/runs.yaml#/AgentLogLine
+    responses:
+      '204':
+        description: Accepted.

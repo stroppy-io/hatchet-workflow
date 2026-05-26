@@ -1,0 +1,255 @@
+SuitePolicy:
+  type: object
+  properties:
+    mode:
+      type: string
+      enum:
+      - sequential
+      - parallel
+    max_parallel:
+      type: integer
+    on_step_fail:
+      type: string
+      enum:
+      - continue
+      - stop
+    step_timeout_min:
+      type: integer
+ComparisonConfig:
+  type: object
+  properties:
+    strategy:
+      type: string
+      enum:
+      - ''
+      - previous
+      - first
+      - fixed
+    baseline_batch_id:
+      type: string
+    threshold_pct:
+      type: number
+SuiteItem:
+  type: object
+  properties:
+    id:
+      type: string
+    suite_id:
+      type: string
+    position:
+      type: integer
+    name:
+      type: string
+    workload:
+      $ref: ./common.yaml#/StroppyConfig
+    enabled:
+      type: boolean
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+SuiteItemWriteFields:
+  type: object
+  properties:
+    name:
+      type: string
+    workload:
+      $ref: ./common.yaml#/StroppyConfig
+    position:
+      type: integer
+    enabled:
+      type: boolean
+SuiteRunBrief:
+  type: object
+  properties:
+    run_id:
+      type: string
+    suite_item_id:
+      type: string
+    db_preset_id:
+      type: string
+    position:
+      type: integer
+    state:
+      type: string
+SuiteBatchSummary:
+  type: object
+  properties:
+    batch_id:
+      type: string
+    trigger:
+      type: string
+    fire_at:
+      type: string
+      format: date-time
+    created_at:
+      type: string
+      format: date-time
+    total:
+      type: integer
+    finished:
+      type: integer
+    failed:
+      type: integer
+    cancelled:
+      type: integer
+    running:
+      type: integer
+    queued:
+      type: integer
+    runs:
+      type: array
+      items:
+        $ref: '#/SuiteRunBrief'
+SuiteWriteFields:
+  type: object
+  properties:
+    name:
+      type: string
+    description:
+      type: string
+    policy:
+      $ref: '#/SuitePolicy'
+    comparison:
+      $ref: '#/ComparisonConfig'
+    db_preset_ids:
+      type: array
+      items:
+        type: string
+    provider:
+      $ref: ./common.yaml#/Provider
+    platform_id:
+      type: string
+    network:
+      $ref: ./common.yaml#/NetworkConfig
+    stroppy_machine:
+      $ref: ./common.yaml#/MachineSpec
+    cron_expr:
+      type: string
+    timezone:
+      type: string
+    enabled:
+      type: boolean
+    concurrent_policy:
+      type: string
+      enum:
+      - forbid
+      - allow
+    catchup_mode:
+      type: string
+      enum:
+      - skip
+      - once
+    retention_runs:
+      type: integer
+Suite:
+  type: object
+  properties:
+    id:
+      type: string
+    name:
+      type: string
+    description:
+      type: string
+    policy:
+      $ref: '#/SuitePolicy'
+    comparison:
+      $ref: '#/ComparisonConfig'
+    db_preset_ids:
+      type: array
+      items:
+        type: string
+    items:
+      type: array
+      items:
+        $ref: '#/SuiteItem'
+    item_count:
+      type: integer
+    provider:
+      $ref: ./common.yaml#/Provider
+    platform_id:
+      type: string
+    network:
+      $ref: ./common.yaml#/NetworkConfig
+    stroppy_machine:
+      $ref: ./common.yaml#/MachineSpec
+    cron_expr:
+      type: string
+    timezone:
+      type: string
+    enabled:
+      type: boolean
+    next_fire_at:
+      type: string
+      format: date-time
+    last_fire_at:
+      type: string
+      format: date-time
+    last_batch_id:
+      type: string
+    concurrent_policy:
+      type: string
+      enum:
+      - forbid
+      - allow
+    catchup_mode:
+      type: string
+      enum:
+      - skip
+      - once
+    retention_runs:
+      type: integer
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+    batches:
+      type: array
+      items:
+        $ref: '#/SuiteBatchSummary'
+SuiteCrossMember:
+  type: object
+  properties:
+    run_id:
+      type: string
+    state:
+      type: string
+    db_preset_id:
+      type: string
+    preset_name:
+      type: string
+    suite_item_id:
+      type: string
+    item_name:
+      type: string
+SuiteCrossGroup:
+  type: object
+  properties:
+    group_key:
+      type: string
+    group_label:
+      type: string
+    members:
+      type: array
+      items:
+        $ref: '#/SuiteCrossMember'
+SuiteCrossResponse:
+  type: object
+  properties:
+    suite_id:
+      type: string
+    batch_id:
+      type: string
+    pivot:
+      type: string
+      enum:
+      - item
+      - preset
+    groups:
+      type: array
+      items:
+        $ref: '#/SuiteCrossGroup'

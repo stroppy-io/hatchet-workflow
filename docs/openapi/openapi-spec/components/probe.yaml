@@ -1,0 +1,75 @@
+ProbeRequest:
+  type: object
+  required:
+  - script
+  properties:
+    script:
+      type: string
+    version:
+      type: string
+    sql:
+      type: string
+    driver_type:
+      type: string
+    pool_size:
+      type: integer
+    scale_factor:
+      type: integer
+    env:
+      $ref: ./common.yaml#/StringMap
+    files:
+      type: array
+      items:
+        $ref: ./common.yaml#/WorkloadFile
+    include_human:
+      type: boolean
+EnvDeclaration:
+  type: object
+  properties:
+    names:
+      type: array
+      items:
+        type: string
+    default:
+      type: string
+    description:
+      type: string
+ProbeResponse:
+  type: object
+  properties:
+    env_declarations:
+      type: array
+      items:
+        $ref: '#/EnvDeclaration'
+    steps:
+      type: array
+      items:
+        type: string
+    sql_sections:
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          queries:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+    driver_setups:
+      type: array
+      items:
+        type: object
+        properties:
+          index:
+            type: integer
+          defaults:
+            type: object
+            additionalProperties: true
+    human:
+      type: string
+    human_error:
+      type: string

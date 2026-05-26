@@ -1,0 +1,631 @@
+openapi: 3.0.3
+info:
+  title: Stroppy Cloud — Run Presets API
+  description: Self-contained Run Presets domain slice of the Stroppy Cloud API. Independently valid;
+    no external $refs.
+  version: 1.0.0
+servers:
+- url: /
+  description: Same-origin (SPA is served by the API server)
+security:
+- bearerAuth: []
+tags:
+- name: Run Presets
+  description: Saved full run configurations.
+paths:
+  /api/v1/run-presets:
+    get:
+      tags:
+      - Run Presets
+      summary: List run presets
+      description: Viewer+.
+      parameters:
+      - name: db_kind
+        in: query
+        schema:
+          $ref: '#/components/schemas/DatabaseKind'
+      responses:
+        '200':
+          description: Run presets.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RunPreset'
+    post:
+      tags:
+      - Run Presets
+      summary: Create a run preset
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              - db_kind
+              - config
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                db_kind:
+                  $ref: '#/components/schemas/DatabaseKind'
+                config:
+                  $ref: '#/components/schemas/RunConfig'
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdResponse'
+  /api/v1/run-presets/{id}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      tags:
+      - Run Presets
+      summary: Get a run preset
+      description: Viewer+.
+      responses:
+        '200':
+          description: Run preset.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunPreset'
+        '404':
+          $ref: '#/components/responses/Error'
+    put:
+      tags:
+      - Run Presets
+      summary: Update a run preset
+      description: Operator+.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                config:
+                  $ref: '#/components/schemas/RunConfig'
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+    delete:
+      tags:
+      - Run Presets
+      summary: Delete a run preset
+      description: Operator+.
+      responses:
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+components:
+  schemas:
+    CockroachTopology:
+      type: object
+      properties:
+        nodes:
+          $ref: '#/components/schemas/MachineSpec'
+        options:
+          $ref: '#/components/schemas/StringMap'
+    DatabaseConfig:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/DatabaseKind'
+        version:
+          type: string
+        postgres:
+          $ref: '#/components/schemas/PostgresTopology'
+        mysql:
+          $ref: '#/components/schemas/MySQLTopology'
+        mariadb:
+          $ref: '#/components/schemas/MySQLTopology'
+        picodata:
+          $ref: '#/components/schemas/PicodataTopology'
+        ydb:
+          $ref: '#/components/schemas/YDBTopology'
+        ydb_managed:
+          $ref: '#/components/schemas/YDBManagedTopology'
+        cockroach:
+          $ref: '#/components/schemas/CockroachTopology'
+        rendered_config_overrides:
+          $ref: '#/components/schemas/StringMap'
+    DatabaseKind:
+      type: string
+      enum:
+      - postgres
+      - mysql
+      - mariadb
+      - picodata
+      - ydb
+      - ydb-managed
+      - cockroach
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+    ExternalDBConfig:
+      type: object
+      properties:
+        endpoint:
+          type: string
+        database:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        ssl_mode:
+          type: string
+    IdResponse:
+      type: object
+      properties:
+        id:
+          type: string
+    MachineRole:
+      type: string
+      enum:
+      - database
+      - monitor
+      - stroppy
+      - etcd
+      - proxy
+      - pgbouncer
+      - ydb-storage
+      - ydb-database
+    MachineSpec:
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/MachineRole'
+        count:
+          type: integer
+        cpus:
+          type: integer
+        memory_mb:
+          type: integer
+        disk_gb:
+          type: integer
+        disk_type:
+          type: string
+        secondary_disks:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecondaryDisk'
+        placement:
+          $ref: '#/components/schemas/PlacementSpec'
+    MonitorConfig:
+      type: object
+      properties:
+        metrics_endpoint:
+          type: string
+        logs_endpoint:
+          type: string
+    MySQLTopology:
+      type: object
+      properties:
+        primary:
+          $ref: '#/components/schemas/MachineSpec'
+        replicas:
+          type: array
+          items:
+            $ref: '#/components/schemas/MachineSpec'
+        proxysql:
+          $ref: '#/components/schemas/MachineSpec'
+        group_replication:
+          type: boolean
+        semi_sync:
+          type: boolean
+        primary_options:
+          $ref: '#/components/schemas/StringMap'
+        replica_options:
+          $ref: '#/components/schemas/StringMap'
+        proxysql_options:
+          $ref: '#/components/schemas/StringMap'
+    NetworkConfig:
+      type: object
+      properties:
+        cidr:
+          type: string
+        zone:
+          type: string
+    PicodataTier:
+      type: object
+      properties:
+        name:
+          type: string
+        replication_factor:
+          type: integer
+        can_vote:
+          type: boolean
+        count:
+          type: integer
+    PicodataTopology:
+      type: object
+      properties:
+        instances:
+          type: array
+          items:
+            $ref: '#/components/schemas/MachineSpec'
+        haproxy:
+          $ref: '#/components/schemas/MachineSpec'
+        replication_factor:
+          type: integer
+        shards:
+          type: integer
+        tiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/PicodataTier'
+        instance_options:
+          $ref: '#/components/schemas/StringMap'
+        haproxy_options:
+          $ref: '#/components/schemas/StringMap'
+    PlacementSpec:
+      type: object
+      properties:
+        strategy:
+          type: string
+          enum:
+          - single
+          - round-robin
+        zones:
+          type: array
+          items:
+            type: string
+    PostgresTopology:
+      type: object
+      properties:
+        master:
+          $ref: '#/components/schemas/MachineSpec'
+        replicas:
+          type: array
+          items:
+            $ref: '#/components/schemas/MachineSpec'
+        haproxy:
+          $ref: '#/components/schemas/MachineSpec'
+        pgbouncer:
+          type: boolean
+        patroni:
+          type: boolean
+        etcd:
+          type: boolean
+        sync_replicas:
+          type: integer
+        master_options:
+          $ref: '#/components/schemas/StringMap'
+        replica_options:
+          $ref: '#/components/schemas/StringMap'
+        haproxy_options:
+          $ref: '#/components/schemas/StringMap'
+        pgbouncer_options:
+          $ref: '#/components/schemas/StringMap'
+        patroni_options:
+          $ref: '#/components/schemas/StringMap'
+        etcd_options:
+          $ref: '#/components/schemas/StringMap'
+    Protocol:
+      type: string
+      enum:
+      - pg
+      - mysql
+      - picodata
+      - ydb-grpc
+      - ydb-pgwire
+      - ydb-grpcs
+      - cockroach
+    Provider:
+      type: string
+      enum:
+      - yandex
+      - docker
+    RunConfig:
+      type: object
+      required:
+      - id
+      - provider
+      - network
+      - machines
+      - database
+      - monitor
+      - stroppy
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        provider:
+          $ref: '#/components/schemas/Provider'
+        network:
+          $ref: '#/components/schemas/NetworkConfig'
+        machines:
+          type: array
+          items:
+            $ref: '#/components/schemas/MachineSpec'
+        database:
+          $ref: '#/components/schemas/DatabaseConfig'
+        monitor:
+          $ref: '#/components/schemas/MonitorConfig'
+        stroppy:
+          $ref: '#/components/schemas/StroppyConfig'
+        preset_id:
+          type: string
+        package_id:
+          type: string
+        platform_id:
+          type: string
+        machine_override:
+          $ref: '#/components/schemas/MachineSpec'
+        run_preset_id:
+          type: string
+        suite_id:
+          type: string
+        external_db:
+          $ref: '#/components/schemas/ExternalDBConfig'
+    RunPreset:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        db_kind:
+          type: string
+        config:
+          $ref: '#/components/schemas/RunConfig'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    SecondaryDisk:
+      type: object
+      properties:
+        device_name:
+          type: string
+        size_gb:
+          type: integer
+        type:
+          type: string
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+    StringMap:
+      type: object
+      additionalProperties:
+        type: string
+    StroppyConfig:
+      type: object
+      properties:
+        version:
+          type: string
+        protocol:
+          $ref: '#/components/schemas/Protocol'
+        script:
+          type: string
+          description: e.g. tpcc/procs, tpcc/tx, tpcb/tx
+        sql:
+          type: string
+        duration:
+          type: string
+        k6_mode:
+          type: string
+          enum:
+          - duration
+          - iterations
+        iterations:
+          type: integer
+        quiet:
+          type: boolean
+        no_thresholds:
+          type: boolean
+        vus:
+          type: integer
+        pool_size:
+          type: integer
+        scale_factor:
+          type: number
+        default_insert_method:
+          type: string
+        env:
+          $ref: '#/components/schemas/StringMap'
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkloadFile'
+        steps:
+          type: array
+          items:
+            type: string
+        no_steps:
+          type: array
+          items:
+            type: string
+        machine:
+          $ref: '#/components/schemas/MachineSpec'
+        config_override_json:
+          type: string
+        workload:
+          type: string
+          deprecated: true
+        vus_scale:
+          type: number
+          deprecated: true
+        workers:
+          type: integer
+          deprecated: true
+    WorkloadFile:
+      type: object
+      properties:
+        name:
+          type: string
+        kind:
+          type: string
+          description: e.g. sql
+        content:
+          type: string
+    YDBManagedAutoScale:
+      type: object
+      properties:
+        min_size:
+          type: integer
+        max_size:
+          type: integer
+        cpu_utilization_percent:
+          type: integer
+          default: 70
+    YDBManagedTerraformOutput:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - serverless
+          - dedicated
+        folder_id:
+          type: string
+        location_id:
+          type: string
+        database_path:
+          type: string
+        ydb_api_endpoint:
+          type: string
+        ydb_full_endpoint:
+          type: string
+        document_api_endpoint:
+          type: string
+        tls_enabled:
+          type: boolean
+        status:
+          type: string
+        created_at:
+          type: string
+        labels:
+          $ref: '#/components/schemas/StringMap'
+        resource_preset_id:
+          type: string
+        network_id:
+          type: string
+        subnet_ids:
+          type: array
+          items:
+            type: string
+        storage_groups:
+          type: integer
+        storage_type_id:
+          type: string
+        throttling_rcu_limit:
+          type: integer
+    YDBManagedTopology:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - serverless
+          - dedicated
+        compute_type:
+          type: string
+          enum:
+          - oltp
+          - olap
+        resource_preset_id:
+          type: string
+        node_count:
+          type: integer
+        auto_scale:
+          $ref: '#/components/schemas/YDBManagedAutoScale'
+        storage_groups:
+          type: integer
+        storage_type:
+          type: string
+        throttling_rcus:
+          type: integer
+        client:
+          $ref: '#/components/schemas/MachineSpec'
+        database_path:
+          type: string
+        endpoint:
+          type: string
+        terraform_output:
+          $ref: '#/components/schemas/YDBManagedTerraformOutput'
+    YDBTopology:
+      type: object
+      properties:
+        storage:
+          $ref: '#/components/schemas/MachineSpec'
+        database:
+          $ref: '#/components/schemas/MachineSpec'
+        haproxy:
+          $ref: '#/components/schemas/MachineSpec'
+        fault_tolerance:
+          type: string
+        failure_domain_type:
+          type: string
+        default_disk_type:
+          type: string
+        storage_groups:
+          type: integer
+        auto_size_pdisks:
+          type: boolean
+        database_path:
+          type: string
+        storage_options:
+          $ref: '#/components/schemas/StringMap'
+        database_options:
+          $ref: '#/components/schemas/StringMap'
+        haproxy_options:
+          $ref: '#/components/schemas/StringMap'
+  responses:
+    Error:
+      description: Error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token

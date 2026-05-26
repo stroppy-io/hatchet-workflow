@@ -1,0 +1,226 @@
+openapi: 3.0.3
+info:
+  title: Stroppy Cloud — Tenant Administration API
+  description: Self-contained Tenant Administration domain slice of the Stroppy Cloud API. Independently
+    valid; no external $refs.
+  version: 1.0.0
+servers:
+- url: /
+  description: Same-origin (SPA is served by the API server)
+security:
+- bearerAuth: []
+tags:
+- name: Tenant Members
+  description: Manage tenant membership (owner only).
+- name: API Tokens
+  description: Tenant API tokens (owner only).
+paths:
+  /api/v1/tenant/members:
+    get:
+      tags:
+      - Tenant Members
+      summary: List tenant members
+      description: Owner only.
+      responses:
+        '200':
+          description: Members.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TenantMember'
+    post:
+      tags:
+      - Tenant Members
+      summary: Add a member to the tenant
+      description: Owner only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - user_id
+              - role
+              properties:
+                user_id:
+                  type: string
+                role:
+                  $ref: '#/components/schemas/TenantRole'
+      responses:
+        '200':
+          description: Member added.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantMember'
+  /api/v1/tenant/members/{userID}:
+    parameters:
+    - name: userID
+      in: path
+      required: true
+      schema:
+        type: string
+    put:
+      tags:
+      - Tenant Members
+      summary: Update a member's role
+      description: Owner only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - role
+              properties:
+                role:
+                  $ref: '#/components/schemas/TenantRole'
+      responses:
+        '200':
+          description: Role updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+    delete:
+      tags:
+      - Tenant Members
+      summary: Remove a member
+      description: Owner only.
+      responses:
+        '200':
+          description: Member removed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+  /api/v1/tenant/tokens:
+    get:
+      tags:
+      - API Tokens
+      summary: List tenant API tokens
+      description: Owner only. Plaintext is never returned after creation.
+      responses:
+        '200':
+          description: Tokens.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TenantAPIToken'
+    post:
+      tags:
+      - API Tokens
+      summary: Create an API token
+      description: Owner only. The `plaintext` is shown once.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              - role
+              properties:
+                name:
+                  type: string
+                role:
+                  $ref: '#/components/schemas/TenantRole'
+                expires_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+      responses:
+        '200':
+          description: Token created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    $ref: '#/components/schemas/TenantAPIToken'
+                  plaintext:
+                    type: string
+  /api/v1/tenant/tokens/{id}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    delete:
+      tags:
+      - API Tokens
+      summary: Revoke an API token
+      description: Owner only.
+      responses:
+        '200':
+          description: Revoked.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+components:
+  schemas:
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+    TenantAPIToken:
+      type: object
+      properties:
+        id:
+          type: string
+        tenant_id:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+        created_by:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    TenantMember:
+      type: object
+      properties:
+        tenant_id:
+          type: string
+        user_id:
+          type: string
+        username:
+          type: string
+        role:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    TenantRole:
+      type: string
+      enum:
+      - viewer
+      - operator
+      - owner
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token

@@ -1,0 +1,584 @@
+StatusResponse:
+  type: object
+  properties:
+    status:
+      type: string
+      example: ok
+ErrorResponse:
+  type: object
+  properties:
+    error:
+      type: string
+AccessTokenResponse:
+  type: object
+  properties:
+    access_token:
+      type: string
+IdResponse:
+  type: object
+  properties:
+    id:
+      type: string
+IdNameResponse:
+  type: object
+  properties:
+    id:
+      type: string
+    name:
+      type: string
+UploadResponse:
+  type: object
+  properties:
+    filename:
+      type: string
+    url:
+      type: string
+    size:
+      type: string
+Provider:
+  type: string
+  enum:
+  - yandex
+  - docker
+DatabaseKind:
+  type: string
+  enum:
+  - postgres
+  - mysql
+  - mariadb
+  - picodata
+  - ydb
+  - ydb-managed
+  - cockroach
+Protocol:
+  type: string
+  enum:
+  - pg
+  - mysql
+  - picodata
+  - ydb-grpc
+  - ydb-pgwire
+  - ydb-grpcs
+  - cockroach
+MachineRole:
+  type: string
+  enum:
+  - database
+  - monitor
+  - stroppy
+  - etcd
+  - proxy
+  - pgbouncer
+  - ydb-storage
+  - ydb-database
+Phase:
+  type: string
+  enum:
+  - network
+  - machines
+  - install_db
+  - configure_db
+  - install_monitor
+  - configure_monitor
+  - install_stroppy
+  - run_stroppy
+  - install_etcd
+  - configure_etcd
+  - install_proxy
+  - configure_proxy
+  - install_pgbouncer
+  - configure_pgbouncer
+  - teardown
+NodeStatusValue:
+  type: string
+  enum:
+  - pending
+  - running
+  - done
+  - failed
+  - cancelled
+TenantRole:
+  type: string
+  enum:
+  - viewer
+  - operator
+  - owner
+SecondaryDisk:
+  type: object
+  properties:
+    device_name:
+      type: string
+    size_gb:
+      type: integer
+    type:
+      type: string
+PlacementSpec:
+  type: object
+  properties:
+    strategy:
+      type: string
+      enum:
+      - single
+      - round-robin
+    zones:
+      type: array
+      items:
+        type: string
+MachineSpec:
+  type: object
+  properties:
+    role:
+      $ref: '#/MachineRole'
+    count:
+      type: integer
+    cpus:
+      type: integer
+    memory_mb:
+      type: integer
+    disk_gb:
+      type: integer
+    disk_type:
+      type: string
+    secondary_disks:
+      type: array
+      items:
+        $ref: '#/SecondaryDisk'
+    placement:
+      $ref: '#/PlacementSpec'
+StringMap:
+  type: object
+  additionalProperties:
+    type: string
+PostgresTopology:
+  type: object
+  properties:
+    master:
+      $ref: '#/MachineSpec'
+    replicas:
+      type: array
+      items:
+        $ref: '#/MachineSpec'
+    haproxy:
+      $ref: '#/MachineSpec'
+    pgbouncer:
+      type: boolean
+    patroni:
+      type: boolean
+    etcd:
+      type: boolean
+    sync_replicas:
+      type: integer
+    master_options:
+      $ref: '#/StringMap'
+    replica_options:
+      $ref: '#/StringMap'
+    haproxy_options:
+      $ref: '#/StringMap'
+    pgbouncer_options:
+      $ref: '#/StringMap'
+    patroni_options:
+      $ref: '#/StringMap'
+    etcd_options:
+      $ref: '#/StringMap'
+MySQLTopology:
+  type: object
+  properties:
+    primary:
+      $ref: '#/MachineSpec'
+    replicas:
+      type: array
+      items:
+        $ref: '#/MachineSpec'
+    proxysql:
+      $ref: '#/MachineSpec'
+    group_replication:
+      type: boolean
+    semi_sync:
+      type: boolean
+    primary_options:
+      $ref: '#/StringMap'
+    replica_options:
+      $ref: '#/StringMap'
+    proxysql_options:
+      $ref: '#/StringMap'
+PicodataTier:
+  type: object
+  properties:
+    name:
+      type: string
+    replication_factor:
+      type: integer
+    can_vote:
+      type: boolean
+    count:
+      type: integer
+PicodataTopology:
+  type: object
+  properties:
+    instances:
+      type: array
+      items:
+        $ref: '#/MachineSpec'
+    haproxy:
+      $ref: '#/MachineSpec'
+    replication_factor:
+      type: integer
+    shards:
+      type: integer
+    tiers:
+      type: array
+      items:
+        $ref: '#/PicodataTier'
+    instance_options:
+      $ref: '#/StringMap'
+    haproxy_options:
+      $ref: '#/StringMap'
+YDBTopology:
+  type: object
+  properties:
+    storage:
+      $ref: '#/MachineSpec'
+    database:
+      $ref: '#/MachineSpec'
+    haproxy:
+      $ref: '#/MachineSpec'
+    fault_tolerance:
+      type: string
+    failure_domain_type:
+      type: string
+    default_disk_type:
+      type: string
+    storage_groups:
+      type: integer
+    auto_size_pdisks:
+      type: boolean
+    database_path:
+      type: string
+    storage_options:
+      $ref: '#/StringMap'
+    database_options:
+      $ref: '#/StringMap'
+    haproxy_options:
+      $ref: '#/StringMap'
+YDBManagedAutoScale:
+  type: object
+  properties:
+    min_size:
+      type: integer
+    max_size:
+      type: integer
+    cpu_utilization_percent:
+      type: integer
+      default: 70
+YDBManagedTerraformOutput:
+  type: object
+  properties:
+    id:
+      type: string
+    name:
+      type: string
+    type:
+      type: string
+      enum:
+      - serverless
+      - dedicated
+    folder_id:
+      type: string
+    location_id:
+      type: string
+    database_path:
+      type: string
+    ydb_api_endpoint:
+      type: string
+    ydb_full_endpoint:
+      type: string
+    document_api_endpoint:
+      type: string
+    tls_enabled:
+      type: boolean
+    status:
+      type: string
+    created_at:
+      type: string
+    labels:
+      $ref: '#/StringMap'
+    resource_preset_id:
+      type: string
+    network_id:
+      type: string
+    subnet_ids:
+      type: array
+      items:
+        type: string
+    storage_groups:
+      type: integer
+    storage_type_id:
+      type: string
+    throttling_rcu_limit:
+      type: integer
+YDBManagedTopology:
+  type: object
+  properties:
+    type:
+      type: string
+      enum:
+      - serverless
+      - dedicated
+    compute_type:
+      type: string
+      enum:
+      - oltp
+      - olap
+    resource_preset_id:
+      type: string
+    node_count:
+      type: integer
+    auto_scale:
+      $ref: '#/YDBManagedAutoScale'
+    storage_groups:
+      type: integer
+    storage_type:
+      type: string
+    throttling_rcus:
+      type: integer
+    client:
+      $ref: '#/MachineSpec'
+    database_path:
+      type: string
+    endpoint:
+      type: string
+    terraform_output:
+      $ref: '#/YDBManagedTerraformOutput'
+CockroachTopology:
+  type: object
+  properties:
+    nodes:
+      $ref: '#/MachineSpec'
+    options:
+      $ref: '#/StringMap'
+Topology:
+  description: One of the per-kind topology shapes (discriminated by the owning preset/config db_kind).
+  oneOf:
+  - $ref: '#/PostgresTopology'
+  - $ref: '#/MySQLTopology'
+  - $ref: '#/PicodataTopology'
+  - $ref: '#/YDBTopology'
+  - $ref: '#/YDBManagedTopology'
+  - $ref: '#/CockroachTopology'
+NetworkConfig:
+  type: object
+  properties:
+    cidr:
+      type: string
+    zone:
+      type: string
+MonitorConfig:
+  type: object
+  properties:
+    metrics_endpoint:
+      type: string
+    logs_endpoint:
+      type: string
+WorkloadFile:
+  type: object
+  properties:
+    name:
+      type: string
+    kind:
+      type: string
+      description: e.g. sql
+    content:
+      type: string
+ExternalDBConfig:
+  type: object
+  properties:
+    endpoint:
+      type: string
+    database:
+      type: string
+    username:
+      type: string
+    password:
+      type: string
+    ssl_mode:
+      type: string
+DatabaseConfig:
+  type: object
+  properties:
+    kind:
+      $ref: '#/DatabaseKind'
+    version:
+      type: string
+    postgres:
+      $ref: '#/PostgresTopology'
+    mysql:
+      $ref: '#/MySQLTopology'
+    mariadb:
+      $ref: '#/MySQLTopology'
+    picodata:
+      $ref: '#/PicodataTopology'
+    ydb:
+      $ref: '#/YDBTopology'
+    ydb_managed:
+      $ref: '#/YDBManagedTopology'
+    cockroach:
+      $ref: '#/CockroachTopology'
+    rendered_config_overrides:
+      $ref: '#/StringMap'
+StroppyConfig:
+  type: object
+  properties:
+    version:
+      type: string
+    protocol:
+      $ref: '#/Protocol'
+    script:
+      type: string
+      description: e.g. tpcc/procs, tpcc/tx, tpcb/tx
+    sql:
+      type: string
+    duration:
+      type: string
+    k6_mode:
+      type: string
+      enum:
+      - duration
+      - iterations
+    iterations:
+      type: integer
+    quiet:
+      type: boolean
+    no_thresholds:
+      type: boolean
+    vus:
+      type: integer
+    pool_size:
+      type: integer
+    scale_factor:
+      type: number
+    default_insert_method:
+      type: string
+    env:
+      $ref: '#/StringMap'
+    files:
+      type: array
+      items:
+        $ref: '#/WorkloadFile'
+    steps:
+      type: array
+      items:
+        type: string
+    no_steps:
+      type: array
+      items:
+        type: string
+    machine:
+      $ref: '#/MachineSpec'
+    config_override_json:
+      type: string
+    workload:
+      type: string
+      deprecated: true
+    vus_scale:
+      type: number
+      deprecated: true
+    workers:
+      type: integer
+      deprecated: true
+RunConfig:
+  type: object
+  required:
+  - id
+  - provider
+  - network
+  - machines
+  - database
+  - monitor
+  - stroppy
+  properties:
+    id:
+      type: string
+    name:
+      type: string
+    description:
+      type: string
+    provider:
+      $ref: '#/Provider'
+    network:
+      $ref: '#/NetworkConfig'
+    machines:
+      type: array
+      items:
+        $ref: '#/MachineSpec'
+    database:
+      $ref: '#/DatabaseConfig'
+    monitor:
+      $ref: '#/MonitorConfig'
+    stroppy:
+      $ref: '#/StroppyConfig'
+    preset_id:
+      type: string
+    package_id:
+      type: string
+    platform_id:
+      type: string
+    machine_override:
+      $ref: '#/MachineSpec'
+    run_preset_id:
+      type: string
+    suite_id:
+      type: string
+    external_db:
+      $ref: '#/ExternalDBConfig'
+NodeStatus:
+  type: object
+  properties:
+    id:
+      type: string
+    status:
+      $ref: '#/NodeStatusValue'
+    error:
+      type: string
+SnapshotTarget:
+  type: object
+  properties:
+    id:
+      type: string
+    host:
+      type: string
+    internal_host:
+      type: string
+    role:
+      type: string
+Snapshot:
+  type: object
+  properties:
+    graph:
+      type: string
+      description: JSON-encoded graph
+    nodes:
+      type: array
+      items:
+        $ref: '#/NodeStatus'
+    started_at:
+      type: string
+      format: date-time
+    finished_at:
+      type: string
+      format: date-time
+    state:
+      type: object
+      additionalProperties: true
+      properties:
+        provider:
+          type: string
+        run_config:
+          description: object or JSON string
+        targets:
+          type: array
+          items:
+            $ref: '#/SnapshotTarget'
+        effective_configs:
+          type: object
+          additionalProperties:
+            $ref: '#/StringMap'

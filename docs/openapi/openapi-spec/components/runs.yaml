@@ -1,0 +1,125 @@
+RunStatus:
+  description: Snapshot annotated with current job state; queued runs return a minimal shim.
+  allOf:
+  - $ref: ./common.yaml#/Snapshot
+  - type: object
+    properties:
+      job_state:
+        type: string
+        enum:
+        - queued
+        - claimed
+        - running
+        - finished
+        - failed
+        - cancelled
+      queue_position:
+        type: integer
+      batch_id:
+        type: string
+      created_at:
+        type: string
+        format: date-time
+RunSummary:
+  type: object
+  properties:
+    id:
+      type: string
+    nodes:
+      type: array
+      items:
+        $ref: ./common.yaml#/NodeStatus
+    total:
+      type: integer
+    done:
+      type: integer
+    failed:
+      type: integer
+    pending:
+      type: integer
+    started_at:
+      type: string
+      format: date-time
+    finished_at:
+      type: string
+      format: date-time
+    db_kind:
+      type: string
+    provider:
+      type: string
+    script:
+      type: string
+    duration:
+      type: string
+    vus:
+      type: integer
+    db_version:
+      type: string
+    node_count:
+      type: integer
+    preset_id:
+      type: string
+    cancelled:
+      type: boolean
+    name:
+      type: string
+    description:
+      type: string
+    suite_id:
+      type: string
+    run_preset_id:
+      type: string
+DryRunResponse:
+  type: object
+  properties:
+    graph:
+      description: Full graph object (JSON).
+    nodes:
+      description: Node list extracted from the graph.
+    resolved_config:
+      $ref: ./common.yaml#/RunConfig
+    effective_config:
+      type: object
+      additionalProperties:
+        $ref: ./common.yaml#/StringMap
+    stroppy_config:
+      type: string
+    rendered_configs:
+      type: object
+      additionalProperties:
+        type: string
+AgentInfo:
+  type: object
+  properties:
+    machine_id:
+      type: string
+    role:
+      type: string
+    host:
+      type: string
+    internal_host:
+      type: string
+    agent_port:
+      type: integer
+    registered:
+      type: boolean
+    healthy:
+      type: boolean
+    health_error:
+      type: string
+    last_seen_at:
+      type: string
+      format: date-time
+AgentLogLine:
+  type: object
+  properties:
+    machine_id:
+      type: string
+    command_id:
+      type: string
+    action:
+      type: string
+    stream:
+      type: string
+    line:
+      type: string

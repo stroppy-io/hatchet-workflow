@@ -1,0 +1,217 @@
+openapi: 3.0.3
+info:
+  title: Stroppy Cloud API
+  description: "Complete HTTP API for the Stroppy Cloud control plane, extracted from the\nGo chi router\
+    \ in `internal/domain/api/server.go` and the TypeScript client\nin `web/src/api/`. Covers every endpoint\
+    \ the web UI consumes plus the\npublic share, agent, and binary-distribution surfaces.\n\n## Authentication\n\
+    Most endpoints require a JWT bearer access token (`Authorization: Bearer <token>`),\nobtained via\
+    \ `POST /api/v1/auth/login`. Access tokens live 15 minutes; a\nlong-lived refresh token is set as\
+    \ an HttpOnly `refresh_token` cookie and\nrotated via `POST /api/v1/auth/refresh`.\n\n## Tenancy &\
+    \ roles\nEndpoints under `/api/v1` (except auth/grafana) require a tenant-scoped JWT\n(select one\
+    \ via `POST /api/v1/auth/select-tenant` when the user belongs to\nmultiple tenants). Role gates:\n\
+    \  - **viewer**: read endpoints (runs, presets, suites, settings, metrics).\n  - **operator**: run\
+    \ lifecycle, presets/suites/packages writes, uploads, baselines.\n  - **owner**: tenant settings,\
+    \ members, API tokens.\n  - **root**: `/api/v1/admin/*` (tenants and users).\n\nThe per-operation\
+    \ `description` notes the minimum role.\n"
+  version: 1.0.0
+servers:
+- url: /
+  description: Same-origin (SPA is served by the API server)
+security:
+- bearerAuth: []
+tags:
+- name: Auth
+  description: Login, token refresh, session, password.
+- name: Tenant Members
+  description: Manage tenant membership (owner only).
+- name: API Tokens
+  description: Tenant API tokens (owner only).
+- name: Admin
+  description: Root-only tenant and user administration.
+- name: Runs
+  description: Single benchmark run lifecycle and inspection.
+- name: Presets
+  description: Per-tenant database topology presets.
+- name: Run Presets
+  description: Saved full run configurations.
+- name: Suites
+  description: Matrix suites (db presets × workloads) and batches.
+- name: Suite Items
+  description: Workload-axis items within a suite.
+- name: Packages
+  description: DB install packages (apt/deb).
+- name: Metrics & Logs
+  description: Run metrics, comparison, and log streaming.
+- name: Settings
+  description: Per-tenant cloud/monitoring/quota settings.
+- name: Grafana
+  description: Grafana embed configuration.
+- name: Queue & Quotas
+  description: Durable job queue and resource quota usage.
+- name: Probe
+  description: Stroppy workload introspection.
+- name: Baselines
+  description: Named baseline run pointers for comparison.
+- name: Share
+  description: Public read-only run share links.
+- name: System
+  description: Health and stroppy version discovery.
+- name: Uploads
+  description: Package binary uploads.
+- name: Agent
+  description: Internal agent ↔ server polling protocol (not used by the UI).
+- name: Binaries
+  description: Internal binary distribution (not used by the UI).
+- name: WebSocket
+  description: Live log/report stream (documented for reference).
+paths:
+  /health:
+    $ref: ./paths/system.yaml#/health
+  /metrics:
+    $ref: ./paths/system.yaml#/metrics
+  /api/v1/stroppy-versions:
+    $ref: ./paths/system.yaml#/stroppy_versions
+  /api/v1/stroppy-commits:
+    $ref: ./paths/system.yaml#/stroppy_commits
+  /api/v1/auth/login:
+    $ref: ./paths/auth.yaml#/auth_login
+  /api/v1/auth/refresh:
+    $ref: ./paths/auth.yaml#/auth_refresh
+  /api/v1/auth/logout:
+    $ref: ./paths/auth.yaml#/auth_logout
+  /api/v1/auth/me:
+    $ref: ./paths/auth.yaml#/auth_me
+  /api/v1/auth/select-tenant:
+    $ref: ./paths/auth.yaml#/auth_select_tenant
+  /api/v1/auth/password:
+    $ref: ./paths/auth.yaml#/auth_password
+  /api/v1/tenant/members:
+    $ref: ./paths/tenant.yaml#/tenant_members
+  /api/v1/tenant/members/{userID}:
+    $ref: ./paths/tenant.yaml#/tenant_members_userID
+  /api/v1/tenant/tokens:
+    $ref: ./paths/tenant.yaml#/tenant_tokens
+  /api/v1/tenant/tokens/{id}:
+    $ref: ./paths/tenant.yaml#/tenant_tokens_id
+  /api/v1/admin/tenants:
+    $ref: ./paths/admin.yaml#/admin_tenants
+  /api/v1/admin/tenants/{id}:
+    $ref: ./paths/admin.yaml#/admin_tenants_id
+  /api/v1/admin/users:
+    $ref: ./paths/admin.yaml#/admin_users
+  /api/v1/admin/users/{id}:
+    $ref: ./paths/admin.yaml#/admin_users_id
+  /api/v1/admin/users/{id}/password:
+    $ref: ./paths/admin.yaml#/admin_users_id_password
+  /api/v1/run:
+    $ref: ./paths/runs.yaml#/run
+  /api/v1/runs:
+    $ref: ./paths/runs.yaml#/runs
+  /api/v1/validate:
+    $ref: ./paths/runs.yaml#/validate
+  /api/v1/dry-run:
+    $ref: ./paths/runs.yaml#/dry_run
+  /api/v1/stroppy-config-preview:
+    $ref: ./paths/runs.yaml#/stroppy_config_preview
+  /api/v1/run/{runID}:
+    $ref: ./paths/runs.yaml#/run_runID
+  /api/v1/run/{runID}/cancel:
+    $ref: ./paths/runs.yaml#/run_runID_cancel
+  /api/v1/run/{runID}/status:
+    $ref: ./paths/runs.yaml#/run_runID_status
+  /api/v1/run/{runID}/rendered-configs:
+    $ref: ./paths/runs.yaml#/run_runID_rendered_configs
+  /api/v1/run/{runID}/agents:
+    $ref: ./paths/runs.yaml#/run_runID_agents
+  /api/v1/run/{runID}/share:
+    $ref: ./paths/share.yaml#/run_runID_share
+  /api/v1/run/{runID}/metrics:
+    $ref: ./paths/metrics.yaml#/run_runID_metrics
+  /api/v1/run/{runID}/logs:
+    $ref: ./paths/metrics.yaml#/run_runID_logs
+  /api/v1/compare:
+    $ref: ./paths/metrics.yaml#/compare
+  /api/v1/baselines:
+    $ref: ./paths/baselines.yaml#/baselines
+  /api/v1/baseline/{name}:
+    $ref: ./paths/baselines.yaml#/baseline_name
+  /api/v1/presets:
+    $ref: ./paths/presets.yaml#/presets
+  /api/v1/presets/{id}:
+    $ref: ./paths/presets.yaml#/presets_id
+  /api/v1/presets/{id}/clone:
+    $ref: ./paths/presets.yaml#/presets_id_clone
+  /api/v1/run-presets:
+    $ref: ./paths/run-presets.yaml#/run_presets
+  /api/v1/run-presets/{id}:
+    $ref: ./paths/run-presets.yaml#/run_presets_id
+  /api/v1/suites:
+    $ref: ./paths/suites.yaml#/suites
+  /api/v1/suites/{id}:
+    $ref: ./paths/suites.yaml#/suites_id
+  /api/v1/suites/{id}/clone:
+    $ref: ./paths/suites.yaml#/suites_id_clone
+  /api/v1/suites/{id}/run:
+    $ref: ./paths/suites.yaml#/suites_id_run
+  /api/v1/suites/{id}/batches/{batchID}/cancel:
+    $ref: ./paths/suites.yaml#/suites_id_batches_batchID_cancel
+  /api/v1/suites/{id}/batches/{batchID}/cross:
+    $ref: ./paths/suites.yaml#/suites_id_batches_batchID_cross
+  /api/v1/suites/{id}/items:
+    $ref: ./paths/suites.yaml#/suites_id_items
+  /api/v1/suites/{id}/items/reorder:
+    $ref: ./paths/suites.yaml#/suites_id_items_reorder
+  /api/v1/suites/{id}/items/{itemID}:
+    $ref: ./paths/suites.yaml#/suites_id_items_itemID
+  /api/v1/packages:
+    $ref: ./paths/packages.yaml#/packages
+  /api/v1/packages/{id}:
+    $ref: ./paths/packages.yaml#/packages_id
+  /api/v1/packages/{id}/clone:
+    $ref: ./paths/packages.yaml#/packages_id_clone
+  /api/v1/packages/{id}/deb:
+    $ref: ./paths/packages.yaml#/packages_id_deb
+  /api/v1/upload/deb:
+    $ref: ./paths/packages.yaml#/upload_deb
+  /api/v1/upload/rpm:
+    $ref: ./paths/packages.yaml#/upload_rpm
+  /api/v1/probe:
+    $ref: ./paths/probe.yaml#/probe
+  /api/v1/settings:
+    $ref: ./paths/settings.yaml#/settings
+  /api/v1/grafana:
+    $ref: ./paths/settings.yaml#/grafana
+  /api/v1/queue:
+    $ref: ./paths/queue.yaml#/queue
+  /api/v1/quotas:
+    $ref: ./paths/queue.yaml#/quotas
+  /api/share/{token}:
+    $ref: ./paths/share.yaml#/share_token
+  /packages/{filename}:
+    $ref: ./paths/binaries.yaml#/packages_filename
+  /agent/binary:
+    $ref: ./paths/binaries.yaml#/agent_binary
+  /api/binaries/{name}/{version}/{filename}:
+    $ref: ./paths/binaries.yaml#/binaries_name_version_filename
+  /api/agent/register:
+    $ref: ./paths/agent.yaml#/agent_register
+  /api/agent/poll:
+    $ref: ./paths/agent.yaml#/agent_poll
+  /api/agent/report:
+    $ref: ./paths/agent.yaml#/agent_report
+  /api/agent/logs-batch:
+    $ref: ./paths/agent.yaml#/agent_logs_batch
+  /ws/logs:
+    $ref: ./paths/websocket.yaml#/ws_logs
+  /ws/logs/{runID}:
+    $ref: ./paths/websocket.yaml#/ws_logs_runID
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token

@@ -23,7 +23,7 @@ jobs:
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           CGO_ENABLED=0 go build \
-            -ldflags="-w -s -X github.com/stroppy-io/stroppy-cloud/internal/core/build.Version=$VERSION -X github.com/stroppy-io/stroppy-cloud/internal/core/build.ServiceName=stroppy-cloud" \
+            -ldflags="-w -s -X github.com/stroppy-io/stroppy-cloud/internal/utils/build.Version=$VERSION -X github.com/stroppy-io/stroppy-cloud/internal/utils/build.ServiceName=stroppy-cloud" \
             -trimpath -o stroppy-cloud-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/cli/
       - uses: actions/upload-artifact@v4
         with:

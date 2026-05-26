@@ -1,0 +1,43 @@
+StroppyCommit:
+  type: object
+  properties:
+    short:
+      type: string
+    tag:
+      type: string
+    name:
+      type: string
+    download_url:
+      type: string
+    published_at:
+      type: string
+      format: date-time
+WSMessage:
+  type: object
+  properties:
+    type:
+      type: string
+      enum:
+      - log
+      - report
+      - agent_log
+    run_id:
+      type: string
+    node_id:
+      type: string
+    payload:
+      description: Arbitrary message payload.
+LogLine:
+  type: object
+  properties:
+    run_id:
+      type: string
+    phase:
+      type: string
+    machine_id:
+      type: string
+    line:
+      type: string
+    ts:
+      type: string
+      format: date-time

@@ -1,0 +1,63 @@
+Package:
+  type: object
+  properties:
+    id:
+      type: string
+    name:
+      type: string
+    description:
+      type: string
+    db_kind:
+      type: string
+    db_version:
+      type: string
+    is_builtin:
+      type: boolean
+    apt_packages:
+      type: array
+      items:
+        type: string
+    pre_install:
+      type: array
+      items:
+        type: string
+    custom_repo:
+      type: string
+    custom_repo_key:
+      type: string
+    deb_filename:
+      type: string
+    has_deb:
+      type: boolean
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+PackageWriteFields:
+  type: object
+  required:
+  - name
+  - db_kind
+  properties:
+    name:
+      type: string
+    description:
+      type: string
+    db_kind:
+      type: string
+    db_version:
+      type: string
+    apt_packages:
+      type: array
+      items:
+        type: string
+    pre_install:
+      type: array
+      items:
+        type: string
+    custom_repo:
+      type: string
+    custom_repo_key:
+      type: string

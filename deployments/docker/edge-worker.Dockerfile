@@ -10,7 +10,7 @@ RUN go mod download
 COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOPRIVATE="github.com/stroppy-io" go build \
-	-ldflags="-w -s -X github.com/stroppy-io/hatchet-workflow/internal/core/build.Version=$VERSION -X github.com/stroppy-io/hatchet-workflow/internal/core/build.ServiceName=edge-worker" \
+	-ldflags="-w -s -X github.com/stroppy-io/hatchet-workflow/internal/utils/build.Version=$VERSION -X github.com/stroppy-io/hatchet-workflow/internal/utils/build.ServiceName=edge-worker" \
 	-trimpath \
 	-v -o /app/bin/edge-worker "./cmd/edge-worker"
 

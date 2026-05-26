@@ -1,0 +1,96 @@
+TimeRange:
+  type: object
+  properties:
+    start:
+      type: string
+      format: date-time
+    end:
+      type: string
+      format: date-time
+MetricSummary:
+  type: object
+  properties:
+    key:
+      type: string
+    name:
+      type: string
+    unit:
+      type: string
+    avg:
+      type: number
+    min:
+      type: number
+    max:
+      type: number
+    last:
+      type: number
+RunMetrics:
+  type: object
+  properties:
+    run_id:
+      type: string
+    range:
+      $ref: '#/TimeRange'
+    metrics:
+      type: array
+      items:
+        $ref: '#/MetricSummary'
+ComparisonRow:
+  type: object
+  properties:
+    key:
+      type: string
+    name:
+      type: string
+    unit:
+      type: string
+    avg_a:
+      type: number
+    avg_b:
+      type: number
+    max_a:
+      type: number
+    max_b:
+      type: number
+    diff_avg_pct:
+      type: number
+    diff_max_pct:
+      type: number
+    verdict:
+      type: string
+      enum:
+      - better
+      - worse
+      - same
+ComparisonVerdict:
+  type: object
+  properties:
+    better:
+      type: integer
+    worse:
+      type: integer
+    same:
+      type: integer
+ComparisonResponse:
+  type: object
+  properties:
+    run_a:
+      type: string
+    run_b:
+      type: string
+    start:
+      type: string
+      format: date-time
+    end:
+      type: string
+      format: date-time
+    metrics:
+      type: array
+      items:
+        $ref: '#/ComparisonRow'
+    summary:
+      $ref: '#/ComparisonVerdict'
+    config_a:
+      $ref: ./common.yaml#/RunConfig
+    config_b:
+      $ref: ./common.yaml#/RunConfig

@@ -1,0 +1,152 @@
+tenant_members:
+  get:
+    tags:
+    - Tenant Members
+    summary: List tenant members
+    description: Owner only.
+    responses:
+      '200':
+        description: Members.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../components/auth.yaml#/TenantMember
+  post:
+    tags:
+    - Tenant Members
+    summary: Add a member to the tenant
+    description: Owner only.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - user_id
+            - role
+            properties:
+              user_id:
+                type: string
+              role:
+                $ref: ../components/common.yaml#/TenantRole
+    responses:
+      '200':
+        description: Member added.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/auth.yaml#/TenantMember
+tenant_members_userID:
+  parameters:
+  - name: userID
+    in: path
+    required: true
+    schema:
+      type: string
+  put:
+    tags:
+    - Tenant Members
+    summary: Update a member's role
+    description: Owner only.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - role
+            properties:
+              role:
+                $ref: ../components/common.yaml#/TenantRole
+    responses:
+      '200':
+        description: Role updated.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+  delete:
+    tags:
+    - Tenant Members
+    summary: Remove a member
+    description: Owner only.
+    responses:
+      '200':
+        description: Member removed.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+tenant_tokens:
+  get:
+    tags:
+    - API Tokens
+    summary: List tenant API tokens
+    description: Owner only. Plaintext is never returned after creation.
+    responses:
+      '200':
+        description: Tokens.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../components/auth.yaml#/TenantAPIToken
+  post:
+    tags:
+    - API Tokens
+    summary: Create an API token
+    description: Owner only. The `plaintext` is shown once.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - name
+            - role
+            properties:
+              name:
+                type: string
+              role:
+                $ref: ../components/common.yaml#/TenantRole
+              expires_at:
+                type: string
+                format: date-time
+                nullable: true
+    responses:
+      '200':
+        description: Token created.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  $ref: ../components/auth.yaml#/TenantAPIToken
+                plaintext:
+                  type: string
+tenant_tokens_id:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  delete:
+    tags:
+    - API Tokens
+    summary: Revoke an API token
+    description: Owner only.
+    responses:
+      '200':
+        description: Revoked.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse

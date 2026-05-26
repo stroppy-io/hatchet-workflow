@@ -1,0 +1,38 @@
+ws_logs:
+  get:
+    tags:
+    - WebSocket
+    summary: Live log/report stream (all runs)
+    description: 'WebSocket upgrade. JWT is passed via the `token` query parameter
+
+      (browsers can''t set WS headers). Messages are `WSMessage` JSON.
+
+      '
+    parameters:
+    - name: token
+      in: query
+      schema:
+        type: string
+      description: JWT access token
+    responses:
+      '101':
+        description: Switching Protocols (WebSocket).
+ws_logs_runID:
+  parameters:
+  - name: runID
+    in: path
+    required: true
+    schema:
+      type: string
+  - name: token
+    in: query
+    schema:
+      type: string
+  get:
+    tags:
+    - WebSocket
+    summary: Live log/report stream (one run)
+    description: WebSocket upgrade scoped to a single run.
+    responses:
+      '101':
+        description: Switching Protocols (WebSocket).

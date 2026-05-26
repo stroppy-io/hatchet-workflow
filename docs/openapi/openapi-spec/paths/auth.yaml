@@ -1,0 +1,171 @@
+auth_login:
+  post:
+    tags:
+    - Auth
+    summary: Log in with username and password
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/auth.yaml#/LoginRequest
+    responses:
+      '200':
+        description: 'Access token returned in the body; an HttpOnly `refresh_token`
+
+          cookie is set (Path=/api/v1/auth, 7d).
+
+          '
+        headers:
+          Set-Cookie:
+            schema:
+              type: string
+            description: refresh_token=<hex>; HttpOnly; SameSite=Strict
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/AccessTokenResponse
+      '400':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+      '401':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+auth_refresh:
+  post:
+    tags:
+    - Auth
+    summary: Rotate refresh token, mint a new access token
+    description: Reads the `refresh_token` cookie; rotates it and returns a new access token.
+    security: []
+    responses:
+      '200':
+        description: New access token; rotated refresh cookie set.
+        headers:
+          Set-Cookie:
+            schema:
+              type: string
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/AccessTokenResponse
+      '401':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+auth_logout:
+  post:
+    tags:
+    - Auth
+    summary: Log out
+    description: Deletes the refresh token server-side and clears the cookie.
+    security: []
+    responses:
+      '200':
+        description: Logged out.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+auth_me:
+  get:
+    tags:
+    - Auth
+    summary: Current user and tenant memberships
+    responses:
+      '200':
+        description: Authenticated principal.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/auth.yaml#/AuthUser
+      '401':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+auth_select_tenant:
+  post:
+    tags:
+    - Auth
+    summary: Mint a tenant-scoped access token
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - tenant_id
+            properties:
+              tenant_id:
+                type: string
+    responses:
+      '200':
+        description: Tenant-scoped access token.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/AccessTokenResponse
+      '400':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+      '403':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+      '404':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+auth_password:
+  put:
+    tags:
+    - Auth
+    summary: Change own password
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - current_password
+            - new_password
+            properties:
+              current_password:
+                type: string
+                format: password
+              new_password:
+                type: string
+                format: password
+    responses:
+      '200':
+        description: Password changed.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+      '401':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse

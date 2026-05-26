@@ -1,0 +1,138 @@
+presets:
+  get:
+    tags:
+    - Presets
+    summary: List database topology presets
+    description: Viewer+.
+    parameters:
+    - name: db_kind
+      in: query
+      schema:
+        $ref: ../components/common.yaml#/DatabaseKind
+    responses:
+      '200':
+        description: Presets.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../components/presets.yaml#/Preset
+  post:
+    tags:
+    - Presets
+    summary: Create a preset
+    description: Operator+.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - name
+            - db_kind
+            - topology
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              db_kind:
+                $ref: ../components/common.yaml#/DatabaseKind
+              topology:
+                $ref: ../components/common.yaml#/Topology
+    responses:
+      '201':
+        description: Created.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/IdResponse
+presets_id:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  get:
+    tags:
+    - Presets
+    summary: Get a preset
+    description: Viewer+.
+    responses:
+      '200':
+        description: Preset.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/presets.yaml#/Preset
+      '404':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+  put:
+    tags:
+    - Presets
+    summary: Update a preset
+    description: Operator+. Built-in presets cannot be edited (clone first).
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              topology:
+                $ref: ../components/common.yaml#/Topology
+    responses:
+      '200':
+        description: Updated.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+      '403':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+  delete:
+    tags:
+    - Presets
+    summary: Delete a preset
+    description: Operator+.
+    responses:
+      '200':
+        description: Deleted.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+presets_id_clone:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  post:
+    tags:
+    - Presets
+    summary: Clone a preset
+    description: Operator+.
+    responses:
+      '201':
+        description: Cloned.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/IdNameResponse

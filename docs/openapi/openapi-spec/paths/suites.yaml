@@ -1,0 +1,330 @@
+suites:
+  get:
+    tags:
+    - Suites
+    summary: List suites
+    description: Viewer+.
+    responses:
+      '200':
+        description: Suites.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../components/suites.yaml#/Suite
+  post:
+    tags:
+    - Suites
+    summary: Create a suite
+    description: Operator+.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            allOf:
+            - $ref: ../components/suites.yaml#/SuiteWriteFields
+            - type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+    responses:
+      '201':
+        description: Created.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/IdResponse
+suites_id:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  get:
+    tags:
+    - Suites
+    summary: Get a suite (with items + batches)
+    description: Viewer+.
+    responses:
+      '200':
+        description: Suite.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/suites.yaml#/Suite
+      '404':
+        description: Error.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/ErrorResponse
+  put:
+    tags:
+    - Suites
+    summary: Update a suite
+    description: Operator+.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/suites.yaml#/SuiteWriteFields
+    responses:
+      '200':
+        description: Updated.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+  delete:
+    tags:
+    - Suites
+    summary: Delete a suite
+    description: Operator+.
+    responses:
+      '200':
+        description: Deleted.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+suites_id_clone:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  post:
+    tags:
+    - Suites
+    summary: Clone a suite (with items)
+    description: Operator+. Cron is disabled on the clone.
+    responses:
+      '200':
+        description: Cloned.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/IdNameResponse
+suites_id_run:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  post:
+    tags:
+    - Suites
+    summary: Launch a suite batch
+    description: Operator+. Produces N×M job runs (presets × workloads).
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      '200':
+        description: Batch launched.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                suite_id:
+                  type: string
+                batch_id:
+                  type: string
+                items:
+                  type: integer
+suites_id_batches_batchID_cancel:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  - name: batchID
+    in: path
+    required: true
+    schema:
+      type: string
+  post:
+    tags:
+    - Suites
+    summary: Cancel all runs in a batch
+    description: Operator+.
+    responses:
+      '200':
+        description: Cancelled count.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                suite_id:
+                  type: string
+                batch_id:
+                  type: string
+                cancelled:
+                  type: integer
+suites_id_batches_batchID_cross:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  - name: batchID
+    in: path
+    required: true
+    schema:
+      type: string
+  - name: pivot
+    in: query
+    schema:
+      type: string
+      enum:
+      - item
+      - preset
+      default: item
+  get:
+    tags:
+    - Suites
+    summary: Cross-comparison grouping of a batch
+    description: Viewer+. Groups runs by item (cross-DB) or preset (cross-workload).
+    responses:
+      '200':
+        description: Cross response.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/suites.yaml#/SuiteCrossResponse
+suites_id_items:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  get:
+    tags:
+    - Suite Items
+    summary: List suite items
+    description: Viewer+.
+    responses:
+      '200':
+        description: Items.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../components/suites.yaml#/SuiteItem
+  post:
+    tags:
+    - Suite Items
+    summary: Create a suite item
+    description: Operator+.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            allOf:
+            - $ref: ../components/suites.yaml#/SuiteItemWriteFields
+            - type: object
+              required:
+              - workload
+              properties:
+                workload:
+                  $ref: ../components/common.yaml#/StroppyConfig
+    responses:
+      '201':
+        description: Created.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/IdResponse
+suites_id_items_reorder:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  post:
+    tags:
+    - Suite Items
+    summary: Reorder suite items
+    description: Operator+.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - order
+            properties:
+              order:
+                type: object
+                additionalProperties:
+                  type: integer
+                description: Map of item id → position.
+    responses:
+      '200':
+        description: Reordered.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+suites_id_items_itemID:
+  parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: string
+  - name: itemID
+    in: path
+    required: true
+    schema:
+      type: string
+  put:
+    tags:
+    - Suite Items
+    summary: Update a suite item
+    description: Operator+.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/suites.yaml#/SuiteItemWriteFields
+    responses:
+      '200':
+        description: Updated.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse
+  delete:
+    tags:
+    - Suite Items
+    summary: Delete a suite item
+    description: Operator+.
+    responses:
+      '200':
+        description: Deleted.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/common.yaml#/StatusResponse

@@ -1,0 +1,59 @@
+JobCost:
+  type: object
+  properties:
+    cpus:
+      type: integer
+    memory_mb:
+      type: integer
+    disk_gb:
+      type: integer
+    vm_count:
+      type: integer
+    runs_running:
+      type: integer
+QueueRow:
+  type: object
+  properties:
+    run_id:
+      type: string
+    batch_id:
+      type: string
+    suite_id:
+      type: string
+    position:
+      type: integer
+    state:
+      type: string
+      enum:
+      - queued
+      - claimed
+      - running
+      - finished
+      - failed
+      - cancelled
+    cost:
+      $ref: '#/JobCost'
+    created_at:
+      type: string
+      format: date-time
+    started_at:
+      type: string
+      format: date-time
+    heartbeat_at:
+      type: string
+      format: date-time
+    error:
+      type: string
+    name:
+      type: string
+QuotasResponse:
+  type: object
+  properties:
+    used:
+      $ref: '#/JobCost'
+    limits:
+      $ref: '#/JobCost'
+    queue_depth:
+      type: integer
+    running_count:
+      type: integer

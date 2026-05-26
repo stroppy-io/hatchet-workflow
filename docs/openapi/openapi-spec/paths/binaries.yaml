@@ -1,0 +1,66 @@
+packages_filename:
+  parameters:
+  - name: filename
+    in: path
+    required: true
+    schema:
+      type: string
+  get:
+    tags:
+    - Binaries
+    summary: Serve an uploaded package file
+    security: []
+    responses:
+      '200':
+        description: File bytes.
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+agent_binary:
+  get:
+    tags:
+    - Binaries
+    summary: Download the stroppy agent binary
+    description: Public — agents have no token at download time.
+    security: []
+    responses:
+      '200':
+        description: Agent binary.
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+binaries_name_version_filename:
+  parameters:
+  - name: name
+    in: path
+    required: true
+    schema:
+      type: string
+  - name: version
+    in: path
+    required: true
+    schema:
+      type: string
+  - name: filename
+    in: path
+    required: true
+    schema:
+      type: string
+  get:
+    tags:
+    - Binaries
+    summary: Cached supporting-binary proxy
+    description: Public. Caches artifacts (node_exporter, vmagent, stroppy, …) on disk.
+    security: []
+    responses:
+      '200':
+        description: Binary bytes (streamed from cache).
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary

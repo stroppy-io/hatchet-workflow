@@ -11,7 +11,7 @@
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 MODULE  := github.com/stroppy-io/stroppy-cloud
 BINARY  := stroppy-cloud
-LDFLAGS := -w -s -X $(MODULE)/internal/core/build.Version=$(VERSION) -X $(MODULE)/internal/core/build.ServiceName=$(BINARY)
+LDFLAGS := -w -s -X $(MODULE)/internal/utils/build.Version=$(VERSION) -X $(MODULE)/internal/utils/build.ServiceName=$(BINARY)
 GOFLAGS := -trimpath -ldflags="$(LDFLAGS)"
 
 # Docker
