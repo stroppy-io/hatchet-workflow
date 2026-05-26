@@ -1,19 +1,20 @@
 locals {
-  # Flatten (vm, secondary_disk) pairs into a map keyed by "<vm>:<device_name>"
-  # so each pair becomes its own yandex_compute_disk resource and the disk can
-  # then be attached to its parent VM.
-  secondary_disks = merge([
-    for vm_name, vm in var.compute.vms : {
-      for d in vm.secondary_disks :
-      "${vm_name}:${d.device_name}" => {
+  secondary_disk_list = flatten([
+    for vm_name, vm in var.compute.vms : [
+      for d in vm.secondary_disks : {
         vm_name     = vm_name
         device_name = d.device_name
         size        = d.size_gb
         type        = d.type
-        zone        = vm.zone != "" ? vm.zone : var.networking.zone
+        zone        = vm.zone != "" ? vm.zone : var.network.zone
       }
-    }
-  ]...)
+    ]
+  ])
+
+  secondary_disks = {
+    for d in local.secondary_disk_list :
+    "${d.vm_name}:${d.device_name}" => d
+  }
 }
 
 resource "yandex_compute_disk" "secondary" {
@@ -27,28 +28,31 @@ resource "yandex_compute_disk" "secondary" {
 resource "yandex_compute_instance" "vms" {
   for_each                  = var.compute.vms
   name                      = each.key
-  zone                      = each.value.zone != "" ? each.value.zone : var.networking.zone
+  zone                      = each.value.zone != "" ? each.value.zone : var.network.zone
   platform_id               = var.compute.platform_id
-  network_acceleration_type = each.value.network_acceleration_type
+  network_acceleration_type = each.value.network_acceleration
+  service_account_id        = try(yandex_iam_service_account.stroppy[0].id, null)
+
   network_interface {
-    subnet_id          = yandex_vpc_subnet.subnet[each.value.zone != "" ? each.value.zone : var.networking.zone].id
-    nat                = each.value.has_public_ip
+    subnet_id          = yandex_vpc_subnet.subnet[each.value.zone != "" ? each.value.zone : var.network.zone].id
+    nat                = each.value.public_ip
     ip_address         = each.value.internal_ip
     security_group_ids = [yandex_vpc_security_group.security-group.id]
   }
+
   resources {
     cores  = each.value.cores
-    memory = each.value.memory
+    memory = each.value.memory_gb
   }
+
   boot_disk {
     initialize_params {
       image_id = var.compute.image_id
-      size     = each.value.disk_size
-      type     = each.value.disk_type
+      size     = each.value.boot_disk_gb
+      type     = each.value.boot_disk_type
     }
   }
-  # Attach raw block devices. device_name becomes the virtio serial in-guest,
-  # so the agent can find them at /dev/disk/by-id/virtio-<device_name>.
+
   dynamic "secondary_disk" {
     for_each = each.value.secondary_disks
     content {
@@ -57,8 +61,13 @@ resource "yandex_compute_instance" "vms" {
       auto_delete = true
     }
   }
+
   metadata = {
     user-data          = each.value.user_data
     serial-port-enable = var.compute.serial_port_enable
   }
+
+  depends_on = [
+    yandex_resourcemanager_folder_iam_member.stroppy_ydb_editor,
+  ]
 }
