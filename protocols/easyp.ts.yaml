@@ -1,0 +1,47 @@
+lint:
+  use:
+    - DEFAULT
+  enum_zero_value_suffix: _NONE
+  service_suffix: API
+  ignore: []
+  except: []
+  allow_comment_ignores: false
+  ignore_only: {}
+deps:
+  - github.com/bufbuild/protoc-gen-validate@v1.3.3
+  - github.com/cludden/protoc-gen-go-temporal@v1.23.1
+  - github.com/temporalio/api@v1.62.12
+  - github.com/stroppy-io/schemapb@v1.3.0
+#  - github.com/yaroher/protoc-gen-go-plain@v0.7.13
+#  - github.com/yaroher/ratel@v0.4.26
+generate:
+  inputs:
+    - directory: cloud
+    - git_repo:
+        url: github.com/bufbuild/protoc-gen-validate
+        sub_directory: validate
+#    - git_repo:
+#        url: github.com/yaroher/protoc-gen-go-plain
+#        sub_directory: goplain
+#    - git_repo:
+#        url: github.com/yaroher/ratel
+#        sub_directory: ratelproto
+#    - git_repo:
+#        url: github.com/yaroher/ratel
+#        sub_directory: ratelproto
+  plugins:
+    - name: es
+      out: ../web/src/lib/proto
+      opts:
+        target: ts
+        import_extension: ts
+        json_types: true
+        valid_types: legacy_required+protovalidate_required
+#    - name: connect-es
+#      out: ../web/src/lib/proto
+#      opts:
+#        target: ts
+#        import_extension: ts
+breaking:
+  ignore: []
+  against_git_ref: master-worker
