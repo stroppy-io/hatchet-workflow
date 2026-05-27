@@ -92,7 +92,7 @@ const DB_VERSIONS: Record<DatabaseKind, string[]> = {
   mysql: ["8.4", "8.0"],
   mariadb: ["11.4", "10.11"], // both LTS releases — 11.4 is current, 10.11 supported until 2028-02
   picodata: ["25.3"],
-  ydb: ["25.2", "25.1", "24.4", "24.3"],
+  ydb: ["25.3", "25.2", "25.1", "24.4", "24.3"],
   // Managed YDB version is fixed by Yandex Cloud; surface "managed" so the
   // wizard's required version field has something coherent to render.
   "ydb-managed": ["managed"],

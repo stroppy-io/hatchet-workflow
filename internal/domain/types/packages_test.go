@@ -13,6 +13,7 @@ func TestBuiltinPackages_AllPresent(t *testing.T) {
 		"mysql-8.0":     "MySQL 8.0",
 		"mysql-8.4":     "MySQL 8.4",
 		"picodata-25.3": "Picodata 25.3",
+		"ydb-25.3":      "YDB 25.3",
 	}
 
 	found := map[string]bool{}

@@ -1756,6 +1756,7 @@ func (e *Executor) configProxySQL(ctx context.Context, cmd Command) error {
 // ydbVersionMap maps short version labels (from UI) to full patch versions
 // available at binaries.ydb.tech/release/. Update when new YDB releases ship.
 var ydbVersionMap = map[string]string{
+	"25.3": "25.3.1.25",
 	"25.2": "25.2.1.24",
 	"25.1": "25.1.4.7",
 	"24.4": "24.4.4.12",
@@ -1764,11 +1765,11 @@ var ydbVersionMap = map[string]string{
 	"24.1": "24.1.18",
 }
 
-// resolveYDBVersion maps a short version like "25.2" to the full "25.2.1.24".
-// If the input is already a full version (e.g. "25.2.1.24"), returns it as-is.
+// resolveYDBVersion maps a short version like "25.3" to the full "25.3.1.25".
+// If the input is already a full version (e.g. "25.3.1.25"), returns it as-is.
 func resolveYDBVersion(v string) string {
 	if v == "" {
-		return "25.2.1.24"
+		return "25.3.1.25"
 	}
 	if full, ok := ydbVersionMap[v]; ok {
 		return full
@@ -1787,7 +1788,7 @@ func (e *Executor) installYDB(ctx context.Context, cmd Command) error {
 		return nil
 	}
 
-	// Map short versions (e.g. "25.2") to full patch versions available at binaries.ydb.tech.
+	// Map short versions (e.g. "25.3") to full patch versions available at binaries.ydb.tech.
 	ydbVersion := resolveYDBVersion(cfg.Version)
 	downloadURL := fmt.Sprintf("https://binaries.ydb.tech/release/%s/ydbd-%s-linux-amd64.tar.gz", ydbVersion, ydbVersion)
 	e.emitLine(fmt.Sprintf("downloading ydbd %s from %s...", ydbVersion, downloadURL))

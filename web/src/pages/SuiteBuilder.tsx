@@ -1467,7 +1467,7 @@ function defaultDBVersionTS(kind: DatabaseKind): string {
     case "mysql": return "8.4";
     case "mariadb": return "11.4";
     case "picodata": return "25.3";
-    case "ydb": return "25.2";
+    case "ydb": return "25.3";
     case "ydb-managed": return "managed";
     case "cockroach": return "24.2";
     default: return "latest";

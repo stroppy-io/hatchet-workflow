@@ -796,7 +796,7 @@ func defaultDBVersion(kind types.DatabaseKind) string {
 	case types.DatabasePicodata:
 		return "25.3"
 	case types.DatabaseYDB:
-		return "25.2"
+		return "25.3"
 	case types.DatabaseYDBManaged:
 		return "managed"
 	case types.DatabaseCockroach:

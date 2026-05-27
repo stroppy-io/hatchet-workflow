@@ -40,6 +40,21 @@ func TestBuiltinPackages_ContainsPostgres16(t *testing.T) {
 	t.Error("postgres 16 not found in builtins")
 }
 
+func TestResolveYDBVersion(t *testing.T) {
+	tests := map[string]string{
+		"":          "25.3.1.25",
+		"25.3":      "25.3.1.25",
+		"25.2":      "25.2.1.24",
+		"25.3.1.25": "25.3.1.25",
+	}
+
+	for input, want := range tests {
+		if got := resolveYDBVersion(input); got != want {
+			t.Errorf("resolveYDBVersion(%q) = %q, want %q", input, got, want)
+		}
+	}
+}
+
 func TestResolveMemoryDefaults_Percentages(t *testing.T) {
 	m := map[string]string{
 		"shared_buffers":       "25%",
