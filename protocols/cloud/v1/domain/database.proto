@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package cloud.v1.domain;
+
+import "schemapb/schema.proto";
+import "cloud/v1/common/tags.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
+
+message Database {
+    enum Kind {
+        KIND_UNSPECIFIED = 0;
+        KIND_POSTGRES = 1;
+        KIND_MYSQL = 2;
+        KIND_MARIADB = 3;
+        KIND_YDB = 4;
+        KIND_YDB_MANAGED = 5;
+        KIND_COCKROACH = 6;
+        KIND_PICODATA = 7;
+    }
+    Kind kind = 1;
+    schemapb.Schema prams_schema = 2;
+    common.Tags tags = 7;
+}

@@ -38,6 +38,14 @@ configure: ## Check that all required tools are installed
 	@command -v golangci-lint >/dev/null 2>&1 && echo "  golangci-lint $$(golangci-lint --version 2>/dev/null | awk '{print $$4}')" || echo "  WARNING: golangci-lint not found (install: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest)"
 	@echo "All required dependencies OK"
 
+.PHONY: protocols
+protocols: # Generate Go + TS code from proto
+	cd protocols && easyp -cfg easyp.go.yaml mod update && easyp -cfg easyp.go.yaml mod vendor
+	rm -rf $(CURDIR)/internal/proto
+	cd protocols && easyp -cfg easyp.go.yaml generate
+	rm -rf $(CURDIR)/web/src/lib/proto
+	cd protocols && easyp -cfg easyp.ts.yaml generate
+
 # ============================================================
 # Build
 # ============================================================

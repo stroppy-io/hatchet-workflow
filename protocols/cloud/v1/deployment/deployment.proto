@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package cloud.v1.deployment;
+
+import "cloud/v1/common/ip.proto";
+import "cloud/v1/deployment/docker.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/deployment/quota.proto";
+import "cloud/v1/deployment/yandex.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment";
+
+/*
+    Deployment is the full backend bundle for one apply: the backend that ran
+    (provider), its resolved network, the quota allocations it consumed, and the
+    provider-specific input and output payloads. The input and output oneofs are
+    parallel — the arm set in each must match provider.
+ */
+message Deployment {
+    /* provider is the backend that produced this deployment; it selects which
+       arm of the input and output oneofs is set. */
+    deployment.Provider provider = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /* network is the resolved network the deployed resources attached to. */
+    common.Net network = 2;
+    /* quota_requests are the per-quota amounts this deployment consumed,
+       checked against provider Quota.State during preflight. */
+    repeated deployment.Quota.Allocation quota_requests = 4;
+
+    /* input carries the provider-specific request used for this apply. */
+    oneof input {
+        /* docker_input is the local Docker backend input. */
+        deployment.Docker.Input docker_input = 10 [(validate.rules).message.required = true];
+        /* terraform_input is the Terraform-backed input (Yandex, etc.). */
+        Terraform.Input terraform_input = 11 [(validate.rules).message.required = true];
+    }
+    /* output carries the provider-specific result; the set arm matches input. */
+    oneof output {
+        option (validate.required) = true;
+        /* docker_output is the local Docker backend output. */
+        deployment.Docker.Output docker_output = 20 [(validate.rules).message.required = true];
+        /* terraform_output is the Terraform-backed output (Yandex, etc.). */
+        Terraform.Output terraform_output = 21 [(validate.rules).message.required = true];
+    }
+}

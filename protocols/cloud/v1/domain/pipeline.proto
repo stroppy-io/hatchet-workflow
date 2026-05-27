@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package cloud.v1.domain;
+
+import "cloud/v1/common/tags.proto";
+import "schemapb/schema.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
+
+message Worker {
+    string id = 1;
+    enum Kind {
+        KIND_UNSPECIFIED = 0;
+        KIND_MASTER = 1;
+        KIND_AGENT = 2;
+    }
+    Kind kind = 2;
+    common.Tags tags = 3;
+}
+
+message Pipeline {
+    message Task {
+        string name = 1;
+        domain.Worker assigned_to = 2;
+        schemapb.Baked params = 3;
+        repeated Task children = 4;
+        common.Tags tags = 5;
+    }
+    repeated Task tasks = 1;
+    common.Tags tags = 2;
+}

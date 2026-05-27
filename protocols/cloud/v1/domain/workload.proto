@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package cloud.v1.domain;
+
+import "schemapb/schema.proto";
+import "cloud/v1/common/tags.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
+
+message Workload {
+    string stroppy_version = 1;
+    schemapb.Baked params = 2;
+    common.Tags tags = 3;
+}
+

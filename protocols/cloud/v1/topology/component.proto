@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package cloud.v1.topology;
+
+import "validate/validate.proto";
+import "cloud/v1/common/tags.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology";
+
+message Component {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    enum Kind {
+        KIND_UNSPECIFIED = 0;
+        KIND_AGENT = 1;
+        KIND_MONITOR = 2;
+        KIND_DATABASE = 3;
+        KIND_REPLICA = 4;
+        KIND_PROXY = 5;
+        KIND_WORKLOAD = 6;
+        KIND_COORDINATOR = 7;
+        KIND_ADDON = 8;
+        KIND_EXTERNAL = 9;
+    }
+    Kind kind = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    common.Tags tags = 4;
+}

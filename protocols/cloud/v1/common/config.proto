@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package cloud.v1.common;
+
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
+
+
+message Config {
+
+    message Baked {
+
+    }
+}

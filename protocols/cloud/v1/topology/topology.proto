@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package cloud.v1.topology;
+
+import "validate/validate.proto";
+import "cloud/v1/common/tags.proto";
+import "cloud/v1/topology/component.proto";
+import "cloud/v1/topology/connection.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology";
+
+
+message Topology {
+    message Instance {
+        string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+        uint32 cores = 2 [(validate.rules).uint32.gt = 0];
+        uint64 memory_gb = 3 [(validate.rules).uint64.gt = 0];
+        uint64 disk_gb = 4 [(validate.rules).uint64.gt = 0];
+        repeated uint64 data_disks_gb = 5 [(validate.rules).repeated.max_items = 64];
+        repeated topology.Component components = 6 [(validate.rules).repeated.min_items = 1];
+        common.Tags tags = 7;
+    }
+    repeated Instance instances = 1 [(validate.rules).repeated.min_items = 1];
+    repeated topology.Connection connections = 2 [(validate.rules).repeated.min_items = 1];
+    repeated Component external_components = 3 [(validate.rules).repeated.max_items = 64];
+    common.Tags tags = 4;
+}
