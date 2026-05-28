@@ -179,9 +179,9 @@ func (m *LogLine) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if l := utf8.RuneCountInString(m.GetDagId()); l < 1 || l > 128 {
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
 		err := LogLineValidationError{
-			field:  "DagId",
+			field:  "RunId",
 			reason: "value length must be between 1 and 128 runes, inclusive",
 		}
 		if !all {
@@ -189,6 +189,8 @@ func (m *LogLine) validate(all bool) error {
 		}
 		errors = append(errors, err)
 	}
+
+	// no validation rules for LineNo
 
 	if utf8.RuneCountInString(m.GetNodeExecutionId()) > 128 {
 		err := LogLineValidationError{
@@ -394,9 +396,9 @@ func (m *LogRef) validate(all bool) error {
 
 	var errors []error
 
-	if l := utf8.RuneCountInString(m.GetDagId()); l < 1 || l > 128 {
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
 		err := LogRefValidationError{
-			field:  "DagId",
+			field:  "RunId",
 			reason: "value length must be between 1 and 128 runes, inclusive",
 		}
 		if !all {

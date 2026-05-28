@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package cloud.v1.monitor;
+
+import "cloud/v1/common/status.proto";
+import "cloud/v1/domain/worker.proto";
+import "cloud/v1/monitor/logs.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "schemapb/schema.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor";
+
+/*
+    overview.proto holds the live, runtime projection of a test run for the
+    Overview tab. It is NOT a stored entity — the server derives it from the
+    Temporal workflow state (and the agent registry) and pushes it live. Keyed by
+    run id (plain string).
+
+    The key cross-cutting contract: every PipelineNode carries a LogRef so the UI
+    can jump from any point in the pipeline straight to that node's logs.
+ */
+
+/* Overview is the whole Overview-tab payload for one run (snapshot or stream tick). */
+message Overview {
+    string run_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    // Overall run status.
+    common.Status status = 2;
+    google.protobuf.Timestamp started_at = 3;
+    google.protobuf.Timestamp finished_at = 4;
+    google.protobuf.Duration duration = 5;
+    // Aggregate progress (0..100), derived from the pipeline.
+    uint32 progress_pct = 6 [(validate.rules).uint32.lte = 100];
+
+    // Live pipeline view (display tree + per-node runtime + log handles).
+    PipelineView pipeline = 7;
+    // Agents/workers participating in the run and their live state.
+    repeated WorkerInfo workers = 8;
+    // Temporal-derived activity feed (what is happening / happened).
+    repeated Event timeline = 9;
+}
+
+/*
+    PipelineView is the ONE pipeline representation: the live run pipeline derived
+    from Temporal. There is no separate static "blueprint" — for a not-yet-started
+    run the server emits the same tree with PENDING statuses.
+ */
+message PipelineView {
+    repeated PipelineNode roots = 1;
+}
+
+/* PipelineNode is one stage in the live pipeline. */
+message PipelineNode {
+    /*
+        node_execution_id is the stable id of this stage (its Temporal execution).
+        It is the node's identity AND the key the LogRef/log filter uses to slice
+        this stage's logs.
+     */
+    string node_execution_id = 10 [(validate.rules).string.max_len = 128];
+    // Human label of the stage.
+    string name = 1;
+    // Runtime status of this stage.
+    common.Status status = 2;
+    google.protobuf.Timestamp started_at = 3;
+    google.protobuf.Timestamp finished_at = 4;
+    google.protobuf.Duration duration = 5;
+    // Which worker ran this stage.
+    domain.Worker worker = 6;
+    // Baked params this stage ran with (what used to live on the static task).
+    schemapb.Baked params = 11;
+    /*
+        log_ref is the deep-link from this node to its logs. The UI builds the
+        Logs tab filter from it. Carries the run/stage/component handles needed to
+        slice the logs (node_execution_id + component_id).
+     */
+    LogRef log_ref = 7;
+    // Nested stages.
+    repeated PipelineNode children = 8;
+    // attempt counts a retried stage (>1 means it was retried).
+    uint32 attempt = 9;
+}
+
+/* WorkerInfo is a master/agent worker and its live state. */
+message WorkerInfo {
+    string id = 1 [(validate.rules).string = {max_len: 128}];
+    domain.Worker.Kind kind = 2;          // MASTER / AGENT
+    string machine_id = 3 [(validate.rules).string.max_len = 128];
+    string host = 4 [(validate.rules).string.max_len = 256];
+    // online is true if the agent is currently reachable/polling.
+    bool online = 5;
+    // Current stage the worker is executing, if any.
+    string current_node_execution_id = 6 [(validate.rules).string.max_len = 128];
+    common.Status status = 7;
+}
+
+/* Event is one item in the run's activity timeline (Temporal-derived). */
+message Event {
+    google.protobuf.Timestamp at = 1 [(validate.rules).timestamp.required = true];
+    enum Kind {
+        KIND_UNSPECIFIED = 0;
+        KIND_STAGE_STARTED = 1;
+        KIND_STAGE_COMPLETED = 2;
+        KIND_STAGE_FAILED = 3;
+        KIND_STAGE_RETRYING = 4;
+        KIND_WORKER_ONLINE = 5;
+        KIND_WORKER_OFFLINE = 6;
+        KIND_RUN_STATUS = 7;
+    }
+    Kind kind = 2;
+    string message = 3 [(validate.rules).string.max_len = 4096];
+    // Owning stage, when the event is about a stage.
+    string node_execution_id = 4 [(validate.rules).string.max_len = 128];
+    common.Status status = 5;
+}

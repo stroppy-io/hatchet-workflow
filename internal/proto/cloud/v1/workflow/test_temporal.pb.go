@@ -36,10 +36,10 @@ import (
 	"time"
 )
 
-// TestApiTaskQueue is the default task-queue for a cloud.v1.workflow.TestApi worker
-var TestApiTaskQueue = "stroppy-cloud"
+// TestServiceTaskQueue is the default task-queue for a cloud.v1.workflow.TestService worker
+var TestServiceTaskQueue = "stroppy-cloud"
 
-// cloud.v1.workflow.TestApi workflow names
+// cloud.v1.workflow.TestService workflow names
 const (
 	InstallDatabaseWorkflowWorkflowName = "InstallDatabaseWorkflow"
 	InstallStroppyWorkflowWorkflowName  = "InstallStroppyWorkflow"
@@ -47,13 +47,13 @@ const (
 	TestWorkflowWorkflowName            = "TestWorkflow"
 )
 
-// cloud.v1.workflow.TestApi workflow id expressions
+// cloud.v1.workflow.TestService workflow id expressions
 var (
 	TestWorkflowIdexpression = expression.MustParseExpression("test-run/${! test_run.id }")
 )
 
-// TestApiClient describes a client for a(n) cloud.v1.workflow.TestApi worker
-type TestApiClient interface {
+// TestServiceClient describes a client for a(n) cloud.v1.workflow.TestService worker
+type TestServiceClient interface {
 	// InstallDatabaseWorkflow executes a(n) InstallDatabaseWorkflow workflow and blocks until error or response received
 	InstallDatabaseWorkflow(ctx context.Context, req *InstallDatabaseWorkflowRequest, opts ...*InstallDatabaseWorkflowOptions) (*InstallDatabaseWorkflowResponse, error)
 
@@ -97,57 +97,57 @@ type TestApiClient interface {
 	TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error
 }
 
-// testApiClient implements a temporal client for a cloud.v1.workflow.TestApi service
-type testApiClient struct {
+// testServiceClient implements a temporal client for a cloud.v1.workflow.TestService service
+type testServiceClient struct {
 	client client.Client
 	log    *slog.Logger
 }
 
-// NewTestApiClient initializes a new cloud.v1.workflow.TestApi client
-func NewTestApiClient(c client.Client, options ...*testApiClientOptions) TestApiClient {
-	var cfg *testApiClientOptions
+// NewTestServiceClient initializes a new cloud.v1.workflow.TestService client
+func NewTestServiceClient(c client.Client, options ...*testServiceClientOptions) TestServiceClient {
+	var cfg *testServiceClientOptions
 	if len(options) > 0 {
 		cfg = options[0]
 	} else {
-		cfg = NewTestApiClientOptions()
+		cfg = NewTestServiceClientOptions()
 	}
-	return &testApiClient{
+	return &testServiceClient{
 		client: c,
 		log:    cfg.getLogger(),
 	}
 }
 
-// NewTestApiClientWithOptions initializes a new TestApi client with the given options
-func NewTestApiClientWithOptions(c client.Client, opts client.Options, options ...*testApiClientOptions) (TestApiClient, error) {
+// NewTestServiceClientWithOptions initializes a new TestService client with the given options
+func NewTestServiceClientWithOptions(c client.Client, opts client.Options, options ...*testServiceClientOptions) (TestServiceClient, error) {
 	var err error
 	c, err = client.NewClientFromExisting(c, opts)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing client with options: %w", err)
 	}
-	var cfg *testApiClientOptions
+	var cfg *testServiceClientOptions
 	if len(options) > 0 {
 		cfg = options[0]
 	} else {
-		cfg = NewTestApiClientOptions()
+		cfg = NewTestServiceClientOptions()
 	}
-	return &testApiClient{
+	return &testServiceClient{
 		client: c,
 		log:    cfg.getLogger(),
 	}, nil
 }
 
-// testApiClientOptions describes optional runtime configuration for a TestApiClient
-type testApiClientOptions struct {
+// testServiceClientOptions describes optional runtime configuration for a TestServiceClient
+type testServiceClientOptions struct {
 	log *slog.Logger
 }
 
-// NewTestApiClientOptions initializes a new testApiClientOptions value
-func NewTestApiClientOptions() *testApiClientOptions {
-	return &testApiClientOptions{}
+// NewTestServiceClientOptions initializes a new testServiceClientOptions value
+func NewTestServiceClientOptions() *testServiceClientOptions {
+	return &testServiceClientOptions{}
 }
 
 // WithLogger can be used to override the default logger
-func (opts *testApiClientOptions) WithLogger(l *slog.Logger) *testApiClientOptions {
+func (opts *testServiceClientOptions) WithLogger(l *slog.Logger) *testServiceClientOptions {
 	if l != nil {
 		opts.log = l
 	}
@@ -155,15 +155,15 @@ func (opts *testApiClientOptions) WithLogger(l *slog.Logger) *testApiClientOptio
 }
 
 // getLogger returns the configured logger, or the default logger
-func (opts *testApiClientOptions) getLogger() *slog.Logger {
+func (opts *testServiceClientOptions) getLogger() *slog.Logger {
 	if opts != nil && opts.log != nil {
 		return opts.log
 	}
 	return slog.Default()
 }
 
-// cloud.v1.workflow.TestApi.InstallDatabaseWorkflow executes a InstallDatabaseWorkflow workflow and blocks until error or response received
-func (c *testApiClient) InstallDatabaseWorkflow(ctx context.Context, req *InstallDatabaseWorkflowRequest, options ...*InstallDatabaseWorkflowOptions) (*InstallDatabaseWorkflowResponse, error) {
+// cloud.v1.workflow.TestService.InstallDatabaseWorkflow executes a InstallDatabaseWorkflow workflow and blocks until error or response received
+func (c *testServiceClient) InstallDatabaseWorkflow(ctx context.Context, req *InstallDatabaseWorkflowRequest, options ...*InstallDatabaseWorkflowOptions) (*InstallDatabaseWorkflowResponse, error) {
 	run, err := c.InstallDatabaseWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -172,7 +172,7 @@ func (c *testApiClient) InstallDatabaseWorkflow(ctx context.Context, req *Instal
 }
 
 // InstallDatabaseWorkflowAsync starts a(n) InstallDatabaseWorkflow workflow and returns a handle to the workflow run
-func (c *testApiClient) InstallDatabaseWorkflowAsync(ctx context.Context, req *InstallDatabaseWorkflowRequest, options ...*InstallDatabaseWorkflowOptions) (InstallDatabaseWorkflowRun, error) {
+func (c *testServiceClient) InstallDatabaseWorkflowAsync(ctx context.Context, req *InstallDatabaseWorkflowRequest, options ...*InstallDatabaseWorkflowOptions) (InstallDatabaseWorkflowRun, error) {
 	var o *InstallDatabaseWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -197,15 +197,15 @@ func (c *testApiClient) InstallDatabaseWorkflowAsync(ctx context.Context, req *I
 }
 
 // GetInstallDatabaseWorkflow fetches an existing InstallDatabaseWorkflow execution
-func (c *testApiClient) GetInstallDatabaseWorkflow(ctx context.Context, workflowID string, runID string) InstallDatabaseWorkflowRun {
+func (c *testServiceClient) GetInstallDatabaseWorkflow(ctx context.Context, workflowID string, runID string) InstallDatabaseWorkflowRun {
 	return &installDatabaseWorkflowRun{
 		client: c,
 		run:    c.client.GetWorkflow(ctx, workflowID, runID),
 	}
 }
 
-// cloud.v1.workflow.TestApi.InstallStroppyWorkflow executes a InstallStroppyWorkflow workflow and blocks until error or response received
-func (c *testApiClient) InstallStroppyWorkflow(ctx context.Context, req *InstallStroppyWorkflowRequest, options ...*InstallStroppyWorkflowOptions) (*InstallStroppyWorkflowResponse, error) {
+// cloud.v1.workflow.TestService.InstallStroppyWorkflow executes a InstallStroppyWorkflow workflow and blocks until error or response received
+func (c *testServiceClient) InstallStroppyWorkflow(ctx context.Context, req *InstallStroppyWorkflowRequest, options ...*InstallStroppyWorkflowOptions) (*InstallStroppyWorkflowResponse, error) {
 	run, err := c.InstallStroppyWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -214,7 +214,7 @@ func (c *testApiClient) InstallStroppyWorkflow(ctx context.Context, req *Install
 }
 
 // InstallStroppyWorkflowAsync starts a(n) InstallStroppyWorkflow workflow and returns a handle to the workflow run
-func (c *testApiClient) InstallStroppyWorkflowAsync(ctx context.Context, req *InstallStroppyWorkflowRequest, options ...*InstallStroppyWorkflowOptions) (InstallStroppyWorkflowRun, error) {
+func (c *testServiceClient) InstallStroppyWorkflowAsync(ctx context.Context, req *InstallStroppyWorkflowRequest, options ...*InstallStroppyWorkflowOptions) (InstallStroppyWorkflowRun, error) {
 	var o *InstallStroppyWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -239,15 +239,15 @@ func (c *testApiClient) InstallStroppyWorkflowAsync(ctx context.Context, req *In
 }
 
 // GetInstallStroppyWorkflow fetches an existing InstallStroppyWorkflow execution
-func (c *testApiClient) GetInstallStroppyWorkflow(ctx context.Context, workflowID string, runID string) InstallStroppyWorkflowRun {
+func (c *testServiceClient) GetInstallStroppyWorkflow(ctx context.Context, workflowID string, runID string) InstallStroppyWorkflowRun {
 	return &installStroppyWorkflowRun{
 		client: c,
 		run:    c.client.GetWorkflow(ctx, workflowID, runID),
 	}
 }
 
-// cloud.v1.workflow.TestApi.RunWorkloadWorkflow executes a RunWorkloadWorkflow workflow and blocks until error or response received
-func (c *testApiClient) RunWorkloadWorkflow(ctx context.Context, req *RunWorkloadWorkflowRequest, options ...*RunWorkloadWorkflowOptions) (*RunWorkloadWorkflowResponse, error) {
+// cloud.v1.workflow.TestService.RunWorkloadWorkflow executes a RunWorkloadWorkflow workflow and blocks until error or response received
+func (c *testServiceClient) RunWorkloadWorkflow(ctx context.Context, req *RunWorkloadWorkflowRequest, options ...*RunWorkloadWorkflowOptions) (*RunWorkloadWorkflowResponse, error) {
 	run, err := c.RunWorkloadWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -256,7 +256,7 @@ func (c *testApiClient) RunWorkloadWorkflow(ctx context.Context, req *RunWorkloa
 }
 
 // RunWorkloadWorkflowAsync starts a(n) RunWorkloadWorkflow workflow and returns a handle to the workflow run
-func (c *testApiClient) RunWorkloadWorkflowAsync(ctx context.Context, req *RunWorkloadWorkflowRequest, options ...*RunWorkloadWorkflowOptions) (RunWorkloadWorkflowRun, error) {
+func (c *testServiceClient) RunWorkloadWorkflowAsync(ctx context.Context, req *RunWorkloadWorkflowRequest, options ...*RunWorkloadWorkflowOptions) (RunWorkloadWorkflowRun, error) {
 	var o *RunWorkloadWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -281,15 +281,15 @@ func (c *testApiClient) RunWorkloadWorkflowAsync(ctx context.Context, req *RunWo
 }
 
 // GetRunWorkloadWorkflow fetches an existing RunWorkloadWorkflow execution
-func (c *testApiClient) GetRunWorkloadWorkflow(ctx context.Context, workflowID string, runID string) RunWorkloadWorkflowRun {
+func (c *testServiceClient) GetRunWorkloadWorkflow(ctx context.Context, workflowID string, runID string) RunWorkloadWorkflowRun {
 	return &runWorkloadWorkflowRun{
 		client: c,
 		run:    c.client.GetWorkflow(ctx, workflowID, runID),
 	}
 }
 
-// cloud.v1.workflow.TestApi.TestWorkflow executes a TestWorkflow workflow and blocks until error or response received
-func (c *testApiClient) TestWorkflow(ctx context.Context, req *TestWorkflowRequest, options ...*TestWorkflowOptions) (*TestWorkflowResponse, error) {
+// cloud.v1.workflow.TestService.TestWorkflow executes a TestWorkflow workflow and blocks until error or response received
+func (c *testServiceClient) TestWorkflow(ctx context.Context, req *TestWorkflowRequest, options ...*TestWorkflowOptions) (*TestWorkflowResponse, error) {
 	run, err := c.TestWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -298,7 +298,7 @@ func (c *testApiClient) TestWorkflow(ctx context.Context, req *TestWorkflowReque
 }
 
 // TestWorkflowAsync starts a(n) TestWorkflow workflow and returns a handle to the workflow run
-func (c *testApiClient) TestWorkflowAsync(ctx context.Context, req *TestWorkflowRequest, options ...*TestWorkflowOptions) (TestWorkflowRun, error) {
+func (c *testServiceClient) TestWorkflowAsync(ctx context.Context, req *TestWorkflowRequest, options ...*TestWorkflowOptions) (TestWorkflowRun, error) {
 	var o *TestWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -323,7 +323,7 @@ func (c *testApiClient) TestWorkflowAsync(ctx context.Context, req *TestWorkflow
 }
 
 // GetTestWorkflow fetches an existing TestWorkflow execution
-func (c *testApiClient) GetTestWorkflow(ctx context.Context, workflowID string, runID string) TestWorkflowRun {
+func (c *testServiceClient) GetTestWorkflow(ctx context.Context, workflowID string, runID string) TestWorkflowRun {
 	return &testWorkflowRun{
 		client: c,
 		run:    c.client.GetWorkflow(ctx, workflowID, runID),
@@ -331,12 +331,12 @@ func (c *testApiClient) GetTestWorkflow(ctx context.Context, workflowID string, 
 }
 
 // CancelWorkflow requests cancellation of an existing workflow execution
-func (c *testApiClient) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
+func (c *testServiceClient) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
 	return c.client.CancelWorkflow(ctx, workflowID, runID)
 }
 
 // TerminateWorkflow terminates an existing workflow execution
-func (c *testApiClient) TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error {
+func (c *testServiceClient) TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error {
 	return c.client.TerminateWorkflow(ctx, workflowID, runID, reason, details...)
 }
 
@@ -376,7 +376,7 @@ func (o *InstallDatabaseWorkflowOptions) Build(req protoreflect.Message) (client
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = TestApiTaskQueue
+		opts.TaskQueue = TestServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -504,7 +504,7 @@ type InstallDatabaseWorkflowRun interface {
 
 // installDatabaseWorkflowRun provides an internal implementation of a(n) InstallDatabaseWorkflowRunRun
 type installDatabaseWorkflowRun struct {
-	client *testApiClient
+	client *testServiceClient
 	run    client.WorkflowRun
 }
 
@@ -578,7 +578,7 @@ func (o *InstallStroppyWorkflowOptions) Build(req protoreflect.Message) (client.
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = TestApiTaskQueue
+		opts.TaskQueue = TestServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -706,7 +706,7 @@ type InstallStroppyWorkflowRun interface {
 
 // installStroppyWorkflowRun provides an internal implementation of a(n) InstallStroppyWorkflowRunRun
 type installStroppyWorkflowRun struct {
-	client *testApiClient
+	client *testServiceClient
 	run    client.WorkflowRun
 }
 
@@ -780,7 +780,7 @@ func (o *RunWorkloadWorkflowOptions) Build(req protoreflect.Message) (client.Sta
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = TestApiTaskQueue
+		opts.TaskQueue = TestServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -905,7 +905,7 @@ type RunWorkloadWorkflowRun interface {
 
 // runWorkloadWorkflowRun provides an internal implementation of a(n) RunWorkloadWorkflowRunRun
 type runWorkloadWorkflowRun struct {
-	client *testApiClient
+	client *testServiceClient
 	run    client.WorkflowRun
 }
 
@@ -987,7 +987,7 @@ func (o *TestWorkflowOptions) Build(req protoreflect.Message) (client.StartWorkf
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = TestApiTaskQueue
+		opts.TaskQueue = TestServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -1112,7 +1112,7 @@ type TestWorkflowRun interface {
 
 // testWorkflowRun provides an internal implementation of a(n) TestWorkflowRunRun
 type testWorkflowRun struct {
-	client *testApiClient
+	client *testServiceClient
 	run    client.WorkflowRun
 }
 
@@ -1152,8 +1152,8 @@ func (r *testWorkflowRun) Terminate(ctx context.Context, reason string, details 
 
 // Reference to generated workflow functions
 var (
-	// testApiRegistrationMutex is a mutex for registering cloud.v1.workflow.TestApi workflows
-	testApiRegistrationMutex sync.Mutex
+	// testServiceRegistrationMutex is a mutex for registering cloud.v1.workflow.TestService workflows
+	testServiceRegistrationMutex sync.Mutex
 	// InstallDatabaseWorkflowFunction implements a "InstallDatabaseWorkflow" workflow
 	InstallDatabaseWorkflowFunction func(workflow.Context, *InstallDatabaseWorkflowRequest) (*InstallDatabaseWorkflowResponse, error)
 	// InstallStroppyWorkflowFunction implements a "InstallStroppyWorkflow" workflow
@@ -1164,10 +1164,10 @@ var (
 	TestWorkflowFunction func(workflow.Context, *TestWorkflowRequest) (*TestWorkflowResponse, error)
 )
 
-// TestApiWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
+// TestServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
 type (
-	// TestApiWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
-	TestApiWorkflowFunctions interface {
+	// TestServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
+	TestServiceWorkflowFunctions interface {
 		// InstallDatabaseWorkflow executes a "InstallDatabaseWorkflow" workflow inline
 		InstallDatabaseWorkflow(workflow.Context, *InstallDatabaseWorkflowRequest) (*InstallDatabaseWorkflowResponse, error)
 		// InstallStroppyWorkflow executes a "InstallStroppyWorkflow" workflow inline
@@ -1177,48 +1177,48 @@ type (
 		// TestWorkflow executes a "TestWorkflow" workflow inline
 		TestWorkflow(workflow.Context, *TestWorkflowRequest) (*TestWorkflowResponse, error)
 	}
-	// testApiWorkflowFunctions provides an internal TestApiWorkflowFunctions implementation
-	testApiWorkflowFunctions struct{}
+	// testServiceWorkflowFunctions provides an internal TestServiceWorkflowFunctions implementation
+	testServiceWorkflowFunctions struct{}
 )
 
-func NewTestApiWorkflowFunctions() TestApiWorkflowFunctions {
-	return &testApiWorkflowFunctions{}
+func NewTestServiceWorkflowFunctions() TestServiceWorkflowFunctions {
+	return &testServiceWorkflowFunctions{}
 }
 
 // InstallDatabaseWorkflow executes a "InstallDatabaseWorkflow" workflow inline
-func (f *testApiWorkflowFunctions) InstallDatabaseWorkflow(ctx workflow.Context, req *InstallDatabaseWorkflowRequest) (*InstallDatabaseWorkflowResponse, error) {
+func (f *testServiceWorkflowFunctions) InstallDatabaseWorkflow(ctx workflow.Context, req *InstallDatabaseWorkflowRequest) (*InstallDatabaseWorkflowResponse, error) {
 	if InstallDatabaseWorkflowFunction == nil {
-		return nil, errors.New("InstallDatabaseWorkflow requires workflow registration via RegisterTestApiWorkflows or RegisterInstallDatabaseWorkflowWorkflow")
+		return nil, errors.New("InstallDatabaseWorkflow requires workflow registration via RegisterTestServiceWorkflows or RegisterInstallDatabaseWorkflowWorkflow")
 	}
 	return InstallDatabaseWorkflowFunction(ctx, req)
 }
 
 // InstallStroppyWorkflow executes a "InstallStroppyWorkflow" workflow inline
-func (f *testApiWorkflowFunctions) InstallStroppyWorkflow(ctx workflow.Context, req *InstallStroppyWorkflowRequest) (*InstallStroppyWorkflowResponse, error) {
+func (f *testServiceWorkflowFunctions) InstallStroppyWorkflow(ctx workflow.Context, req *InstallStroppyWorkflowRequest) (*InstallStroppyWorkflowResponse, error) {
 	if InstallStroppyWorkflowFunction == nil {
-		return nil, errors.New("InstallStroppyWorkflow requires workflow registration via RegisterTestApiWorkflows or RegisterInstallStroppyWorkflowWorkflow")
+		return nil, errors.New("InstallStroppyWorkflow requires workflow registration via RegisterTestServiceWorkflows or RegisterInstallStroppyWorkflowWorkflow")
 	}
 	return InstallStroppyWorkflowFunction(ctx, req)
 }
 
 // RunWorkloadWorkflow executes a "RunWorkloadWorkflow" workflow inline
-func (f *testApiWorkflowFunctions) RunWorkloadWorkflow(ctx workflow.Context, req *RunWorkloadWorkflowRequest) (*RunWorkloadWorkflowResponse, error) {
+func (f *testServiceWorkflowFunctions) RunWorkloadWorkflow(ctx workflow.Context, req *RunWorkloadWorkflowRequest) (*RunWorkloadWorkflowResponse, error) {
 	if RunWorkloadWorkflowFunction == nil {
-		return nil, errors.New("RunWorkloadWorkflow requires workflow registration via RegisterTestApiWorkflows or RegisterRunWorkloadWorkflowWorkflow")
+		return nil, errors.New("RunWorkloadWorkflow requires workflow registration via RegisterTestServiceWorkflows or RegisterRunWorkloadWorkflowWorkflow")
 	}
 	return RunWorkloadWorkflowFunction(ctx, req)
 }
 
 // TestWorkflow executes a "TestWorkflow" workflow inline
-func (f *testApiWorkflowFunctions) TestWorkflow(ctx workflow.Context, req *TestWorkflowRequest) (*TestWorkflowResponse, error) {
+func (f *testServiceWorkflowFunctions) TestWorkflow(ctx workflow.Context, req *TestWorkflowRequest) (*TestWorkflowResponse, error) {
 	if TestWorkflowFunction == nil {
-		return nil, errors.New("TestWorkflow requires workflow registration via RegisterTestApiWorkflows or RegisterTestWorkflowWorkflow")
+		return nil, errors.New("TestWorkflow requires workflow registration via RegisterTestServiceWorkflows or RegisterTestWorkflowWorkflow")
 	}
 	return TestWorkflowFunction(ctx, req)
 }
 
-// TestApiWorkflows provides methods for initializing new cloud.v1.workflow.TestApi workflow values
-type TestApiWorkflows interface {
+// TestServiceWorkflows provides methods for initializing new cloud.v1.workflow.TestService workflow values
+type TestServiceWorkflows interface {
 	// InstallDatabaseWorkflow initializes a new a(n) InstallDatabaseWorkflowWorkflow implementation
 	InstallDatabaseWorkflow(ctx workflow.Context, input *InstallDatabaseWorkflowWorkflowInput) (InstallDatabaseWorkflowWorkflow, error)
 
@@ -1232,18 +1232,18 @@ type TestApiWorkflows interface {
 	TestWorkflow(ctx workflow.Context, input *TestWorkflowWorkflowInput) (TestWorkflowWorkflow, error)
 }
 
-// RegisterTestApiWorkflows registers cloud.v1.workflow.TestApi workflows with the given worker
-func RegisterTestApiWorkflows(r worker.WorkflowRegistry, workflows TestApiWorkflows) {
+// RegisterTestServiceWorkflows registers cloud.v1.workflow.TestService workflows with the given worker
+func RegisterTestServiceWorkflows(r worker.WorkflowRegistry, workflows TestServiceWorkflows) {
 	RegisterInstallDatabaseWorkflowWorkflow(r, workflows.InstallDatabaseWorkflow)
 	RegisterInstallStroppyWorkflowWorkflow(r, workflows.InstallStroppyWorkflow)
 	RegisterRunWorkloadWorkflowWorkflow(r, workflows.RunWorkloadWorkflow)
 	RegisterTestWorkflowWorkflow(r, workflows.TestWorkflow)
 }
 
-// RegisterInstallDatabaseWorkflowWorkflow registers a cloud.v1.workflow.TestApi.InstallDatabaseWorkflow workflow with the given worker
+// RegisterInstallDatabaseWorkflowWorkflow registers a cloud.v1.workflow.TestService.InstallDatabaseWorkflow workflow with the given worker
 func RegisterInstallDatabaseWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *InstallDatabaseWorkflowWorkflowInput) (InstallDatabaseWorkflowWorkflow, error)) {
-	testApiRegistrationMutex.Lock()
-	defer testApiRegistrationMutex.Unlock()
+	testServiceRegistrationMutex.Lock()
+	defer testServiceRegistrationMutex.Unlock()
 	InstallDatabaseWorkflowFunction = buildInstallDatabaseWorkflow(wf)
 	r.RegisterWorkflowWithOptions(InstallDatabaseWorkflowFunction, workflow.RegisterOptions{Name: InstallDatabaseWorkflowWorkflowName})
 }
@@ -1352,7 +1352,7 @@ func (o *InstallDatabaseWorkflowChildOptions) Build(ctx workflow.Context, req pr
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = TestApiTaskQueue
+		opts.TaskQueue = TestServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -1507,10 +1507,10 @@ func (r *InstallDatabaseWorkflowChildRun) WaitStart(ctx workflow.Context) (*work
 	return &exec, nil
 }
 
-// RegisterInstallStroppyWorkflowWorkflow registers a cloud.v1.workflow.TestApi.InstallStroppyWorkflow workflow with the given worker
+// RegisterInstallStroppyWorkflowWorkflow registers a cloud.v1.workflow.TestService.InstallStroppyWorkflow workflow with the given worker
 func RegisterInstallStroppyWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *InstallStroppyWorkflowWorkflowInput) (InstallStroppyWorkflowWorkflow, error)) {
-	testApiRegistrationMutex.Lock()
-	defer testApiRegistrationMutex.Unlock()
+	testServiceRegistrationMutex.Lock()
+	defer testServiceRegistrationMutex.Unlock()
 	InstallStroppyWorkflowFunction = buildInstallStroppyWorkflow(wf)
 	r.RegisterWorkflowWithOptions(InstallStroppyWorkflowFunction, workflow.RegisterOptions{Name: InstallStroppyWorkflowWorkflowName})
 }
@@ -1619,7 +1619,7 @@ func (o *InstallStroppyWorkflowChildOptions) Build(ctx workflow.Context, req pro
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = TestApiTaskQueue
+		opts.TaskQueue = TestServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -1774,10 +1774,10 @@ func (r *InstallStroppyWorkflowChildRun) WaitStart(ctx workflow.Context) (*workf
 	return &exec, nil
 }
 
-// RegisterRunWorkloadWorkflowWorkflow registers a cloud.v1.workflow.TestApi.RunWorkloadWorkflow workflow with the given worker
+// RegisterRunWorkloadWorkflowWorkflow registers a cloud.v1.workflow.TestService.RunWorkloadWorkflow workflow with the given worker
 func RegisterRunWorkloadWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *RunWorkloadWorkflowWorkflowInput) (RunWorkloadWorkflowWorkflow, error)) {
-	testApiRegistrationMutex.Lock()
-	defer testApiRegistrationMutex.Unlock()
+	testServiceRegistrationMutex.Lock()
+	defer testServiceRegistrationMutex.Unlock()
 	RunWorkloadWorkflowFunction = buildRunWorkloadWorkflow(wf)
 	r.RegisterWorkflowWithOptions(RunWorkloadWorkflowFunction, workflow.RegisterOptions{Name: RunWorkloadWorkflowWorkflowName})
 }
@@ -1886,7 +1886,7 @@ func (o *RunWorkloadWorkflowChildOptions) Build(ctx workflow.Context, req protor
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = TestApiTaskQueue
+		opts.TaskQueue = TestServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -2038,10 +2038,10 @@ func (r *RunWorkloadWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow
 	return &exec, nil
 }
 
-// RegisterTestWorkflowWorkflow registers a cloud.v1.workflow.TestApi.TestWorkflow workflow with the given worker
+// RegisterTestWorkflowWorkflow registers a cloud.v1.workflow.TestService.TestWorkflow workflow with the given worker
 func RegisterTestWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *TestWorkflowWorkflowInput) (TestWorkflowWorkflow, error)) {
-	testApiRegistrationMutex.Lock()
-	defer testApiRegistrationMutex.Unlock()
+	testServiceRegistrationMutex.Lock()
+	defer testServiceRegistrationMutex.Unlock()
 	TestWorkflowFunction = buildTestWorkflow(wf)
 	r.RegisterWorkflowWithOptions(TestWorkflowFunction, workflow.RegisterOptions{Name: TestWorkflowWorkflowName})
 }
@@ -2176,7 +2176,7 @@ func (o *TestWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect.
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = TestApiTaskQueue
+		opts.TaskQueue = TestServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -2328,33 +2328,33 @@ func (r *TestWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Execut
 	return &exec, nil
 }
 
-// TestApiActivities describes available worker activities
-type TestApiActivities interface{}
+// TestServiceActivities describes available worker activities
+type TestServiceActivities interface{}
 
-// RegisterTestApiActivities registers activities with a worker
-func RegisterTestApiActivities(r worker.ActivityRegistry, activities TestApiActivities) {}
+// RegisterTestServiceActivities registers activities with a worker
+func RegisterTestServiceActivities(r worker.ActivityRegistry, activities TestServiceActivities) {}
 
 // TestClient provides a testsuite-compatible Client
-type TestTestApiClient struct {
+type TestTestServiceClient struct {
 	env       *testsuite.TestWorkflowEnvironment
-	workflows TestApiWorkflows
+	workflows TestServiceWorkflows
 }
 
-var _ TestApiClient = &TestTestApiClient{}
+var _ TestServiceClient = &TestTestServiceClient{}
 
-// NewTestTestApiClient initializes a new TestTestApiClient value
-func NewTestTestApiClient(env *testsuite.TestWorkflowEnvironment, workflows TestApiWorkflows, activities TestApiActivities) *TestTestApiClient {
+// NewTestTestServiceClient initializes a new TestTestServiceClient value
+func NewTestTestServiceClient(env *testsuite.TestWorkflowEnvironment, workflows TestServiceWorkflows, activities TestServiceActivities) *TestTestServiceClient {
 	if workflows != nil {
-		RegisterTestApiWorkflows(env, workflows)
+		RegisterTestServiceWorkflows(env, workflows)
 	}
 	if activities != nil {
-		RegisterTestApiActivities(env, activities)
+		RegisterTestServiceActivities(env, activities)
 	}
-	return &TestTestApiClient{env, workflows}
+	return &TestTestServiceClient{env, workflows}
 }
 
 // InstallDatabaseWorkflow executes a(n) InstallDatabaseWorkflow workflow in the test environment
-func (c *TestTestApiClient) InstallDatabaseWorkflow(ctx context.Context, req *InstallDatabaseWorkflowRequest, opts ...*InstallDatabaseWorkflowOptions) (*InstallDatabaseWorkflowResponse, error) {
+func (c *TestTestServiceClient) InstallDatabaseWorkflow(ctx context.Context, req *InstallDatabaseWorkflowRequest, opts ...*InstallDatabaseWorkflowOptions) (*InstallDatabaseWorkflowResponse, error) {
 	run, err := c.InstallDatabaseWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return nil, err
@@ -2363,7 +2363,7 @@ func (c *TestTestApiClient) InstallDatabaseWorkflow(ctx context.Context, req *In
 }
 
 // InstallDatabaseWorkflowAsync executes a(n) InstallDatabaseWorkflow workflow in the test environment
-func (c *TestTestApiClient) InstallDatabaseWorkflowAsync(ctx context.Context, req *InstallDatabaseWorkflowRequest, options ...*InstallDatabaseWorkflowOptions) (InstallDatabaseWorkflowRun, error) {
+func (c *TestTestServiceClient) InstallDatabaseWorkflowAsync(ctx context.Context, req *InstallDatabaseWorkflowRequest, options ...*InstallDatabaseWorkflowOptions) (InstallDatabaseWorkflowRun, error) {
 	var o *InstallDatabaseWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -2378,12 +2378,12 @@ func (c *TestTestApiClient) InstallDatabaseWorkflowAsync(ctx context.Context, re
 }
 
 // GetInstallDatabaseWorkflow is a noop
-func (c *TestTestApiClient) GetInstallDatabaseWorkflow(ctx context.Context, workflowID string, runID string) InstallDatabaseWorkflowRun {
+func (c *TestTestServiceClient) GetInstallDatabaseWorkflow(ctx context.Context, workflowID string, runID string) InstallDatabaseWorkflowRun {
 	return &testInstallDatabaseWorkflowRun{env: c.env, workflows: c.workflows}
 }
 
 // InstallStroppyWorkflow executes a(n) InstallStroppyWorkflow workflow in the test environment
-func (c *TestTestApiClient) InstallStroppyWorkflow(ctx context.Context, req *InstallStroppyWorkflowRequest, opts ...*InstallStroppyWorkflowOptions) (*InstallStroppyWorkflowResponse, error) {
+func (c *TestTestServiceClient) InstallStroppyWorkflow(ctx context.Context, req *InstallStroppyWorkflowRequest, opts ...*InstallStroppyWorkflowOptions) (*InstallStroppyWorkflowResponse, error) {
 	run, err := c.InstallStroppyWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return nil, err
@@ -2392,7 +2392,7 @@ func (c *TestTestApiClient) InstallStroppyWorkflow(ctx context.Context, req *Ins
 }
 
 // InstallStroppyWorkflowAsync executes a(n) InstallStroppyWorkflow workflow in the test environment
-func (c *TestTestApiClient) InstallStroppyWorkflowAsync(ctx context.Context, req *InstallStroppyWorkflowRequest, options ...*InstallStroppyWorkflowOptions) (InstallStroppyWorkflowRun, error) {
+func (c *TestTestServiceClient) InstallStroppyWorkflowAsync(ctx context.Context, req *InstallStroppyWorkflowRequest, options ...*InstallStroppyWorkflowOptions) (InstallStroppyWorkflowRun, error) {
 	var o *InstallStroppyWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -2407,12 +2407,12 @@ func (c *TestTestApiClient) InstallStroppyWorkflowAsync(ctx context.Context, req
 }
 
 // GetInstallStroppyWorkflow is a noop
-func (c *TestTestApiClient) GetInstallStroppyWorkflow(ctx context.Context, workflowID string, runID string) InstallStroppyWorkflowRun {
+func (c *TestTestServiceClient) GetInstallStroppyWorkflow(ctx context.Context, workflowID string, runID string) InstallStroppyWorkflowRun {
 	return &testInstallStroppyWorkflowRun{env: c.env, workflows: c.workflows}
 }
 
 // RunWorkloadWorkflow executes a(n) RunWorkloadWorkflow workflow in the test environment
-func (c *TestTestApiClient) RunWorkloadWorkflow(ctx context.Context, req *RunWorkloadWorkflowRequest, opts ...*RunWorkloadWorkflowOptions) (*RunWorkloadWorkflowResponse, error) {
+func (c *TestTestServiceClient) RunWorkloadWorkflow(ctx context.Context, req *RunWorkloadWorkflowRequest, opts ...*RunWorkloadWorkflowOptions) (*RunWorkloadWorkflowResponse, error) {
 	run, err := c.RunWorkloadWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return nil, err
@@ -2421,7 +2421,7 @@ func (c *TestTestApiClient) RunWorkloadWorkflow(ctx context.Context, req *RunWor
 }
 
 // RunWorkloadWorkflowAsync executes a(n) RunWorkloadWorkflow workflow in the test environment
-func (c *TestTestApiClient) RunWorkloadWorkflowAsync(ctx context.Context, req *RunWorkloadWorkflowRequest, options ...*RunWorkloadWorkflowOptions) (RunWorkloadWorkflowRun, error) {
+func (c *TestTestServiceClient) RunWorkloadWorkflowAsync(ctx context.Context, req *RunWorkloadWorkflowRequest, options ...*RunWorkloadWorkflowOptions) (RunWorkloadWorkflowRun, error) {
 	var o *RunWorkloadWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -2436,12 +2436,12 @@ func (c *TestTestApiClient) RunWorkloadWorkflowAsync(ctx context.Context, req *R
 }
 
 // GetRunWorkloadWorkflow is a noop
-func (c *TestTestApiClient) GetRunWorkloadWorkflow(ctx context.Context, workflowID string, runID string) RunWorkloadWorkflowRun {
+func (c *TestTestServiceClient) GetRunWorkloadWorkflow(ctx context.Context, workflowID string, runID string) RunWorkloadWorkflowRun {
 	return &testRunWorkloadWorkflowRun{env: c.env, workflows: c.workflows}
 }
 
 // TestWorkflow executes a(n) TestWorkflow workflow in the test environment
-func (c *TestTestApiClient) TestWorkflow(ctx context.Context, req *TestWorkflowRequest, opts ...*TestWorkflowOptions) (*TestWorkflowResponse, error) {
+func (c *TestTestServiceClient) TestWorkflow(ctx context.Context, req *TestWorkflowRequest, opts ...*TestWorkflowOptions) (*TestWorkflowResponse, error) {
 	run, err := c.TestWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return nil, err
@@ -2450,7 +2450,7 @@ func (c *TestTestApiClient) TestWorkflow(ctx context.Context, req *TestWorkflowR
 }
 
 // TestWorkflowAsync executes a(n) TestWorkflow workflow in the test environment
-func (c *TestTestApiClient) TestWorkflowAsync(ctx context.Context, req *TestWorkflowRequest, options ...*TestWorkflowOptions) (TestWorkflowRun, error) {
+func (c *TestTestServiceClient) TestWorkflowAsync(ctx context.Context, req *TestWorkflowRequest, options ...*TestWorkflowOptions) (TestWorkflowRun, error) {
 	var o *TestWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -2465,18 +2465,18 @@ func (c *TestTestApiClient) TestWorkflowAsync(ctx context.Context, req *TestWork
 }
 
 // GetTestWorkflow is a noop
-func (c *TestTestApiClient) GetTestWorkflow(ctx context.Context, workflowID string, runID string) TestWorkflowRun {
+func (c *TestTestServiceClient) GetTestWorkflow(ctx context.Context, workflowID string, runID string) TestWorkflowRun {
 	return &testTestWorkflowRun{env: c.env, workflows: c.workflows}
 }
 
 // CancelWorkflow requests cancellation of an existing workflow execution
-func (c *TestTestApiClient) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
+func (c *TestTestServiceClient) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
 	c.env.CancelWorkflow()
 	return nil
 }
 
 // TerminateWorkflow terminates an existing workflow execution
-func (c *TestTestApiClient) TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error {
+func (c *TestTestServiceClient) TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error {
 	return c.CancelWorkflow(ctx, workflowID, runID)
 }
 
@@ -2484,12 +2484,12 @@ var _ InstallDatabaseWorkflowRun = &testInstallDatabaseWorkflowRun{}
 
 // testInstallDatabaseWorkflowRun provides convenience methods for interacting with a(n) InstallDatabaseWorkflow workflow in the test environment
 type testInstallDatabaseWorkflowRun struct {
-	client    *TestTestApiClient
+	client    *TestTestServiceClient
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
 	opts      *client.StartWorkflowOptions
 	req       *InstallDatabaseWorkflowRequest
-	workflows TestApiWorkflows
+	workflows TestServiceWorkflows
 }
 
 // Cancel requests cancellation of a workflow in execution, returning an error if applicable
@@ -2542,12 +2542,12 @@ var _ InstallStroppyWorkflowRun = &testInstallStroppyWorkflowRun{}
 
 // testInstallStroppyWorkflowRun provides convenience methods for interacting with a(n) InstallStroppyWorkflow workflow in the test environment
 type testInstallStroppyWorkflowRun struct {
-	client    *TestTestApiClient
+	client    *TestTestServiceClient
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
 	opts      *client.StartWorkflowOptions
 	req       *InstallStroppyWorkflowRequest
-	workflows TestApiWorkflows
+	workflows TestServiceWorkflows
 }
 
 // Cancel requests cancellation of a workflow in execution, returning an error if applicable
@@ -2600,12 +2600,12 @@ var _ RunWorkloadWorkflowRun = &testRunWorkloadWorkflowRun{}
 
 // testRunWorkloadWorkflowRun provides convenience methods for interacting with a(n) RunWorkloadWorkflow workflow in the test environment
 type testRunWorkloadWorkflowRun struct {
-	client    *TestTestApiClient
+	client    *TestTestServiceClient
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
 	opts      *client.StartWorkflowOptions
 	req       *RunWorkloadWorkflowRequest
-	workflows TestApiWorkflows
+	workflows TestServiceWorkflows
 }
 
 // Cancel requests cancellation of a workflow in execution, returning an error if applicable
@@ -2658,12 +2658,12 @@ var _ TestWorkflowRun = &testTestWorkflowRun{}
 
 // testTestWorkflowRun provides convenience methods for interacting with a(n) TestWorkflow workflow in the test environment
 type testTestWorkflowRun struct {
-	client    *TestTestApiClient
+	client    *TestTestServiceClient
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
 	opts      *client.StartWorkflowOptions
 	req       *TestWorkflowRequest
-	workflows TestApiWorkflows
+	workflows TestServiceWorkflows
 }
 
 // Cancel requests cancellation of a workflow in execution, returning an error if applicable
@@ -2712,73 +2712,73 @@ func (r *testTestWorkflowRun) Terminate(ctx context.Context, reason string, deta
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
 }
 
-// TestApiCliOptions describes runtime configuration for cloud.v1.workflow.TestApi cli
-type TestApiCliOptions struct {
+// TestServiceCliOptions describes runtime configuration for cloud.v1.workflow.TestService cli
+type TestServiceCliOptions struct {
 	after            func(*v2.Context) error
 	before           func(*v2.Context) error
 	clientForCommand func(*v2.Context) (client.Client, error)
 	worker           func(*v2.Context, client.Client) (worker.Worker, error)
 }
 
-// NewTestApiCliOptions initializes a new TestApiCliOptions value
-func NewTestApiCliOptions() *TestApiCliOptions {
-	return &TestApiCliOptions{}
+// NewTestServiceCliOptions initializes a new TestServiceCliOptions value
+func NewTestServiceCliOptions() *TestServiceCliOptions {
+	return &TestServiceCliOptions{}
 }
 
 // WithAfter injects a custom After hook to be run after any command invocation
-func (opts *TestApiCliOptions) WithAfter(fn func(*v2.Context) error) *TestApiCliOptions {
+func (opts *TestServiceCliOptions) WithAfter(fn func(*v2.Context) error) *TestServiceCliOptions {
 	opts.after = fn
 	return opts
 }
 
 // WithBefore injects a custom Before hook to be run prior to any command invocation
-func (opts *TestApiCliOptions) WithBefore(fn func(*v2.Context) error) *TestApiCliOptions {
+func (opts *TestServiceCliOptions) WithBefore(fn func(*v2.Context) error) *TestServiceCliOptions {
 	opts.before = fn
 	return opts
 }
 
 // WithClient provides a Temporal client factory for use by commands
-func (opts *TestApiCliOptions) WithClient(fn func(*v2.Context) (client.Client, error)) *TestApiCliOptions {
+func (opts *TestServiceCliOptions) WithClient(fn func(*v2.Context) (client.Client, error)) *TestServiceCliOptions {
 	opts.clientForCommand = fn
 	return opts
 }
 
 // WithWorker provides an method for initializing a worker
-func (opts *TestApiCliOptions) WithWorker(fn func(*v2.Context, client.Client) (worker.Worker, error)) *TestApiCliOptions {
+func (opts *TestServiceCliOptions) WithWorker(fn func(*v2.Context, client.Client) (worker.Worker, error)) *TestServiceCliOptions {
 	opts.worker = fn
 	return opts
 }
 
-// NewTestApiCli initializes a cli for a(n) cloud.v1.workflow.TestApi service
-func NewTestApiCli(options ...*TestApiCliOptions) (*v2.App, error) {
-	commands, err := newTestApiCommands(options...)
+// NewTestServiceCli initializes a cli for a(n) cloud.v1.workflow.TestService service
+func NewTestServiceCli(options ...*TestServiceCliOptions) (*v2.App, error) {
+	commands, err := newTestServiceCommands(options...)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing subcommands: %w", err)
 	}
 	return &v2.App{
-		Name:                      "test-api",
-		Usage:                     "cloud.v1.workflow.TestApi operations",
+		Name:                      "test-service",
+		Usage:                     "cloud.v1.workflow.TestService operations",
 		Commands:                  commands,
 		DisableSliceFlagSeparator: true,
 	}, nil
 }
 
-// NewTestApiCliCommand initializes a cli command for a cloud.v1.workflow.TestApi service with subcommands for each query, signal, update, and workflow
-func NewTestApiCliCommand(options ...*TestApiCliOptions) (*v2.Command, error) {
-	subcommands, err := newTestApiCommands(options...)
+// NewTestServiceCliCommand initializes a cli command for a cloud.v1.workflow.TestService service with subcommands for each query, signal, update, and workflow
+func NewTestServiceCliCommand(options ...*TestServiceCliOptions) (*v2.Command, error) {
+	subcommands, err := newTestServiceCommands(options...)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing subcommands: %w", err)
 	}
 	return &v2.Command{
-		Name:        "test-api",
-		Usage:       "cloud.v1.workflow.TestApi operations",
+		Name:        "test-service",
+		Usage:       "cloud.v1.workflow.TestService operations",
 		Subcommands: subcommands,
 	}, nil
 }
 
-// newTestApiCommands initializes (sub)commands for a cloud.v1.workflow.TestApi cli or command
-func newTestApiCommands(options ...*TestApiCliOptions) ([]*v2.Command, error) {
-	opts := &TestApiCliOptions{}
+// newTestServiceCommands initializes (sub)commands for a cloud.v1.workflow.TestService cli or command
+func newTestServiceCommands(options ...*TestServiceCliOptions) ([]*v2.Command, error) {
+	opts := &TestServiceCliOptions{}
 	if len(options) > 0 {
 		opts = options[0]
 	}
@@ -2831,7 +2831,7 @@ func newTestApiCommands(options ...*TestApiCliOptions) ([]*v2.Command, error) {
 					return fmt.Errorf("error initializing client for command: %w", err)
 				}
 				defer tc.Close()
-				c := NewTestApiClient(tc)
+				c := NewTestServiceClient(tc)
 				req, err := UnmarshalCliFlagsToInstallDatabaseWorkflowRequest(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
 				if err != nil {
 					return fmt.Errorf("error unmarshalling request: %w", err)
@@ -2904,7 +2904,7 @@ func newTestApiCommands(options ...*TestApiCliOptions) ([]*v2.Command, error) {
 					return fmt.Errorf("error initializing client for command: %w", err)
 				}
 				defer tc.Close()
-				c := NewTestApiClient(tc)
+				c := NewTestServiceClient(tc)
 				req, err := UnmarshalCliFlagsToInstallStroppyWorkflowRequest(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
 				if err != nil {
 					return fmt.Errorf("error unmarshalling request: %w", err)
@@ -2982,7 +2982,7 @@ func newTestApiCommands(options ...*TestApiCliOptions) ([]*v2.Command, error) {
 					return fmt.Errorf("error initializing client for command: %w", err)
 				}
 				defer tc.Close()
-				c := NewTestApiClient(tc)
+				c := NewTestServiceClient(tc)
 				req, err := UnmarshalCliFlagsToRunWorkloadWorkflowRequest(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
 				if err != nil {
 					return fmt.Errorf("error unmarshalling request: %w", err)
@@ -3055,7 +3055,7 @@ func newTestApiCommands(options ...*TestApiCliOptions) ([]*v2.Command, error) {
 					return fmt.Errorf("error initializing client for command: %w", err)
 				}
 				defer tc.Close()
-				c := NewTestApiClient(tc)
+				c := NewTestServiceClient(tc)
 				req, err := UnmarshalCliFlagsToTestWorkflowRequest(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
 				if err != nil {
 					return fmt.Errorf("error unmarshalling request: %w", err)
@@ -3095,7 +3095,7 @@ func newTestApiCommands(options ...*TestApiCliOptions) ([]*v2.Command, error) {
 		commands = append(commands, []*v2.Command{
 			{
 				Name:                   "worker",
-				Usage:                  "runs a cloud.v1.workflow.TestApi worker process",
+				Usage:                  "runs a cloud.v1.workflow.TestService worker process",
 				UseShortOptionHandling: true,
 				Before:                 opts.before,
 				After:                  opts.after,
@@ -3255,21 +3255,21 @@ func UnmarshalCliFlagsToTestWorkflowRequest(cmd *v2.Context, options ...helpers.
 	return &result, nil
 }
 
-// SuiteWorkflowApiTaskQueue is the default task-queue for a cloud.v1.workflow.SuiteWorkflowApi worker
-var SuiteWorkflowApiTaskQueue = "stroppy-cloud"
+// SuiteWorkflowServiceTaskQueue is the default task-queue for a cloud.v1.workflow.SuiteWorkflowService worker
+var SuiteWorkflowServiceTaskQueue = "stroppy-cloud"
 
-// cloud.v1.workflow.SuiteWorkflowApi workflow names
+// cloud.v1.workflow.SuiteWorkflowService workflow names
 const (
 	SuiteWorkflowWorkflowName = "SuiteWorkflow"
 )
 
-// cloud.v1.workflow.SuiteWorkflowApi workflow id expressions
+// cloud.v1.workflow.SuiteWorkflowService workflow id expressions
 var (
 	SuiteWorkflowIdexpression = expression.MustParseExpression("suite-run/${! suite_run.id }")
 )
 
-// SuiteWorkflowApiClient describes a client for a(n) cloud.v1.workflow.SuiteWorkflowApi worker
-type SuiteWorkflowApiClient interface {
+// SuiteWorkflowServiceClient describes a client for a(n) cloud.v1.workflow.SuiteWorkflowService worker
+type SuiteWorkflowServiceClient interface {
 	// SuiteWorkflow executes a(n) SuiteWorkflow workflow and blocks until error or response received
 	SuiteWorkflow(ctx context.Context, req *SuiteWorkflowRequest, opts ...*SuiteWorkflowOptions) (*SuiteWorkflowResponse, error)
 
@@ -3286,57 +3286,57 @@ type SuiteWorkflowApiClient interface {
 	TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error
 }
 
-// suiteWorkflowApiClient implements a temporal client for a cloud.v1.workflow.SuiteWorkflowApi service
-type suiteWorkflowApiClient struct {
+// suiteWorkflowServiceClient implements a temporal client for a cloud.v1.workflow.SuiteWorkflowService service
+type suiteWorkflowServiceClient struct {
 	client client.Client
 	log    *slog.Logger
 }
 
-// NewSuiteWorkflowApiClient initializes a new cloud.v1.workflow.SuiteWorkflowApi client
-func NewSuiteWorkflowApiClient(c client.Client, options ...*suiteWorkflowApiClientOptions) SuiteWorkflowApiClient {
-	var cfg *suiteWorkflowApiClientOptions
+// NewSuiteWorkflowServiceClient initializes a new cloud.v1.workflow.SuiteWorkflowService client
+func NewSuiteWorkflowServiceClient(c client.Client, options ...*suiteWorkflowServiceClientOptions) SuiteWorkflowServiceClient {
+	var cfg *suiteWorkflowServiceClientOptions
 	if len(options) > 0 {
 		cfg = options[0]
 	} else {
-		cfg = NewSuiteWorkflowApiClientOptions()
+		cfg = NewSuiteWorkflowServiceClientOptions()
 	}
-	return &suiteWorkflowApiClient{
+	return &suiteWorkflowServiceClient{
 		client: c,
 		log:    cfg.getLogger(),
 	}
 }
 
-// NewSuiteWorkflowApiClientWithOptions initializes a new SuiteWorkflowApi client with the given options
-func NewSuiteWorkflowApiClientWithOptions(c client.Client, opts client.Options, options ...*suiteWorkflowApiClientOptions) (SuiteWorkflowApiClient, error) {
+// NewSuiteWorkflowServiceClientWithOptions initializes a new SuiteWorkflowService client with the given options
+func NewSuiteWorkflowServiceClientWithOptions(c client.Client, opts client.Options, options ...*suiteWorkflowServiceClientOptions) (SuiteWorkflowServiceClient, error) {
 	var err error
 	c, err = client.NewClientFromExisting(c, opts)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing client with options: %w", err)
 	}
-	var cfg *suiteWorkflowApiClientOptions
+	var cfg *suiteWorkflowServiceClientOptions
 	if len(options) > 0 {
 		cfg = options[0]
 	} else {
-		cfg = NewSuiteWorkflowApiClientOptions()
+		cfg = NewSuiteWorkflowServiceClientOptions()
 	}
-	return &suiteWorkflowApiClient{
+	return &suiteWorkflowServiceClient{
 		client: c,
 		log:    cfg.getLogger(),
 	}, nil
 }
 
-// suiteWorkflowApiClientOptions describes optional runtime configuration for a SuiteWorkflowApiClient
-type suiteWorkflowApiClientOptions struct {
+// suiteWorkflowServiceClientOptions describes optional runtime configuration for a SuiteWorkflowServiceClient
+type suiteWorkflowServiceClientOptions struct {
 	log *slog.Logger
 }
 
-// NewSuiteWorkflowApiClientOptions initializes a new suiteWorkflowApiClientOptions value
-func NewSuiteWorkflowApiClientOptions() *suiteWorkflowApiClientOptions {
-	return &suiteWorkflowApiClientOptions{}
+// NewSuiteWorkflowServiceClientOptions initializes a new suiteWorkflowServiceClientOptions value
+func NewSuiteWorkflowServiceClientOptions() *suiteWorkflowServiceClientOptions {
+	return &suiteWorkflowServiceClientOptions{}
 }
 
 // WithLogger can be used to override the default logger
-func (opts *suiteWorkflowApiClientOptions) WithLogger(l *slog.Logger) *suiteWorkflowApiClientOptions {
+func (opts *suiteWorkflowServiceClientOptions) WithLogger(l *slog.Logger) *suiteWorkflowServiceClientOptions {
 	if l != nil {
 		opts.log = l
 	}
@@ -3344,15 +3344,15 @@ func (opts *suiteWorkflowApiClientOptions) WithLogger(l *slog.Logger) *suiteWork
 }
 
 // getLogger returns the configured logger, or the default logger
-func (opts *suiteWorkflowApiClientOptions) getLogger() *slog.Logger {
+func (opts *suiteWorkflowServiceClientOptions) getLogger() *slog.Logger {
 	if opts != nil && opts.log != nil {
 		return opts.log
 	}
 	return slog.Default()
 }
 
-// cloud.v1.workflow.SuiteWorkflowApi.SuiteWorkflow executes a SuiteWorkflow workflow and blocks until error or response received
-func (c *suiteWorkflowApiClient) SuiteWorkflow(ctx context.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowOptions) (*SuiteWorkflowResponse, error) {
+// cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow executes a SuiteWorkflow workflow and blocks until error or response received
+func (c *suiteWorkflowServiceClient) SuiteWorkflow(ctx context.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowOptions) (*SuiteWorkflowResponse, error) {
 	run, err := c.SuiteWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -3361,7 +3361,7 @@ func (c *suiteWorkflowApiClient) SuiteWorkflow(ctx context.Context, req *SuiteWo
 }
 
 // SuiteWorkflowAsync starts a(n) SuiteWorkflow workflow and returns a handle to the workflow run
-func (c *suiteWorkflowApiClient) SuiteWorkflowAsync(ctx context.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowOptions) (SuiteWorkflowRun, error) {
+func (c *suiteWorkflowServiceClient) SuiteWorkflowAsync(ctx context.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowOptions) (SuiteWorkflowRun, error) {
 	var o *SuiteWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -3386,7 +3386,7 @@ func (c *suiteWorkflowApiClient) SuiteWorkflowAsync(ctx context.Context, req *Su
 }
 
 // GetSuiteWorkflow fetches an existing SuiteWorkflow execution
-func (c *suiteWorkflowApiClient) GetSuiteWorkflow(ctx context.Context, workflowID string, runID string) SuiteWorkflowRun {
+func (c *suiteWorkflowServiceClient) GetSuiteWorkflow(ctx context.Context, workflowID string, runID string) SuiteWorkflowRun {
 	return &suiteWorkflowRun{
 		client: c,
 		run:    c.client.GetWorkflow(ctx, workflowID, runID),
@@ -3394,12 +3394,12 @@ func (c *suiteWorkflowApiClient) GetSuiteWorkflow(ctx context.Context, workflowI
 }
 
 // CancelWorkflow requests cancellation of an existing workflow execution
-func (c *suiteWorkflowApiClient) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
+func (c *suiteWorkflowServiceClient) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
 	return c.client.CancelWorkflow(ctx, workflowID, runID)
 }
 
 // TerminateWorkflow terminates an existing workflow execution
-func (c *suiteWorkflowApiClient) TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error {
+func (c *suiteWorkflowServiceClient) TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error {
 	return c.client.TerminateWorkflow(ctx, workflowID, runID, reason, details...)
 }
 
@@ -3447,7 +3447,7 @@ func (o *SuiteWorkflowOptions) Build(req protoreflect.Message) (client.StartWork
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = SuiteWorkflowApiTaskQueue
+		opts.TaskQueue = SuiteWorkflowServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -3572,7 +3572,7 @@ type SuiteWorkflowRun interface {
 
 // suiteWorkflowRun provides an internal implementation of a(n) SuiteWorkflowRunRun
 type suiteWorkflowRun struct {
-	client *suiteWorkflowApiClient
+	client *suiteWorkflowServiceClient
 	run    client.WorkflowRun
 }
 
@@ -3612,50 +3612,50 @@ func (r *suiteWorkflowRun) Terminate(ctx context.Context, reason string, details
 
 // Reference to generated workflow functions
 var (
-	// suiteWorkflowApiRegistrationMutex is a mutex for registering cloud.v1.workflow.SuiteWorkflowApi workflows
-	suiteWorkflowApiRegistrationMutex sync.Mutex
+	// suiteWorkflowServiceRegistrationMutex is a mutex for registering cloud.v1.workflow.SuiteWorkflowService workflows
+	suiteWorkflowServiceRegistrationMutex sync.Mutex
 	// SuiteWorkflowFunction implements a "SuiteWorkflow" workflow
 	SuiteWorkflowFunction func(workflow.Context, *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error)
 )
 
-// SuiteWorkflowApiWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
+// SuiteWorkflowServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
 type (
-	// SuiteWorkflowApiWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
-	SuiteWorkflowApiWorkflowFunctions interface {
+	// SuiteWorkflowServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
+	SuiteWorkflowServiceWorkflowFunctions interface {
 		// SuiteWorkflow executes a "SuiteWorkflow" workflow inline
 		SuiteWorkflow(workflow.Context, *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error)
 	}
-	// suiteWorkflowApiWorkflowFunctions provides an internal SuiteWorkflowApiWorkflowFunctions implementation
-	suiteWorkflowApiWorkflowFunctions struct{}
+	// suiteWorkflowServiceWorkflowFunctions provides an internal SuiteWorkflowServiceWorkflowFunctions implementation
+	suiteWorkflowServiceWorkflowFunctions struct{}
 )
 
-func NewSuiteWorkflowApiWorkflowFunctions() SuiteWorkflowApiWorkflowFunctions {
-	return &suiteWorkflowApiWorkflowFunctions{}
+func NewSuiteWorkflowServiceWorkflowFunctions() SuiteWorkflowServiceWorkflowFunctions {
+	return &suiteWorkflowServiceWorkflowFunctions{}
 }
 
 // SuiteWorkflow executes a "SuiteWorkflow" workflow inline
-func (f *suiteWorkflowApiWorkflowFunctions) SuiteWorkflow(ctx workflow.Context, req *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error) {
+func (f *suiteWorkflowServiceWorkflowFunctions) SuiteWorkflow(ctx workflow.Context, req *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error) {
 	if SuiteWorkflowFunction == nil {
-		return nil, errors.New("SuiteWorkflow requires workflow registration via RegisterSuiteWorkflowApiWorkflows or RegisterSuiteWorkflowWorkflow")
+		return nil, errors.New("SuiteWorkflow requires workflow registration via RegisterSuiteWorkflowServiceWorkflows or RegisterSuiteWorkflowWorkflow")
 	}
 	return SuiteWorkflowFunction(ctx, req)
 }
 
-// SuiteWorkflowApiWorkflows provides methods for initializing new cloud.v1.workflow.SuiteWorkflowApi workflow values
-type SuiteWorkflowApiWorkflows interface {
+// SuiteWorkflowServiceWorkflows provides methods for initializing new cloud.v1.workflow.SuiteWorkflowService workflow values
+type SuiteWorkflowServiceWorkflows interface {
 	// SuiteWorkflow initializes a new a(n) SuiteWorkflowWorkflow implementation
 	SuiteWorkflow(ctx workflow.Context, input *SuiteWorkflowWorkflowInput) (SuiteWorkflowWorkflow, error)
 }
 
-// RegisterSuiteWorkflowApiWorkflows registers cloud.v1.workflow.SuiteWorkflowApi workflows with the given worker
-func RegisterSuiteWorkflowApiWorkflows(r worker.WorkflowRegistry, workflows SuiteWorkflowApiWorkflows) {
+// RegisterSuiteWorkflowServiceWorkflows registers cloud.v1.workflow.SuiteWorkflowService workflows with the given worker
+func RegisterSuiteWorkflowServiceWorkflows(r worker.WorkflowRegistry, workflows SuiteWorkflowServiceWorkflows) {
 	RegisterSuiteWorkflowWorkflow(r, workflows.SuiteWorkflow)
 }
 
-// RegisterSuiteWorkflowWorkflow registers a cloud.v1.workflow.SuiteWorkflowApi.SuiteWorkflow workflow with the given worker
+// RegisterSuiteWorkflowWorkflow registers a cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow workflow with the given worker
 func RegisterSuiteWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *SuiteWorkflowWorkflowInput) (SuiteWorkflowWorkflow, error)) {
-	suiteWorkflowApiRegistrationMutex.Lock()
-	defer suiteWorkflowApiRegistrationMutex.Unlock()
+	suiteWorkflowServiceRegistrationMutex.Lock()
+	defer suiteWorkflowServiceRegistrationMutex.Unlock()
 	SuiteWorkflowFunction = buildSuiteWorkflow(wf)
 	r.RegisterWorkflowWithOptions(SuiteWorkflowFunction, workflow.RegisterOptions{Name: SuiteWorkflowWorkflowName})
 }
@@ -3790,7 +3790,7 @@ func (o *SuiteWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = SuiteWorkflowApiTaskQueue
+		opts.TaskQueue = SuiteWorkflowServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -3942,34 +3942,34 @@ func (r *SuiteWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Execu
 	return &exec, nil
 }
 
-// SuiteWorkflowApiActivities describes available worker activities
-type SuiteWorkflowApiActivities interface{}
+// SuiteWorkflowServiceActivities describes available worker activities
+type SuiteWorkflowServiceActivities interface{}
 
-// RegisterSuiteWorkflowApiActivities registers activities with a worker
-func RegisterSuiteWorkflowApiActivities(r worker.ActivityRegistry, activities SuiteWorkflowApiActivities) {
+// RegisterSuiteWorkflowServiceActivities registers activities with a worker
+func RegisterSuiteWorkflowServiceActivities(r worker.ActivityRegistry, activities SuiteWorkflowServiceActivities) {
 }
 
 // TestClient provides a testsuite-compatible Client
-type TestSuiteWorkflowApiClient struct {
+type TestSuiteWorkflowServiceClient struct {
 	env       *testsuite.TestWorkflowEnvironment
-	workflows SuiteWorkflowApiWorkflows
+	workflows SuiteWorkflowServiceWorkflows
 }
 
-var _ SuiteWorkflowApiClient = &TestSuiteWorkflowApiClient{}
+var _ SuiteWorkflowServiceClient = &TestSuiteWorkflowServiceClient{}
 
-// NewTestSuiteWorkflowApiClient initializes a new TestSuiteWorkflowApiClient value
-func NewTestSuiteWorkflowApiClient(env *testsuite.TestWorkflowEnvironment, workflows SuiteWorkflowApiWorkflows, activities SuiteWorkflowApiActivities) *TestSuiteWorkflowApiClient {
+// NewTestSuiteWorkflowServiceClient initializes a new TestSuiteWorkflowServiceClient value
+func NewTestSuiteWorkflowServiceClient(env *testsuite.TestWorkflowEnvironment, workflows SuiteWorkflowServiceWorkflows, activities SuiteWorkflowServiceActivities) *TestSuiteWorkflowServiceClient {
 	if workflows != nil {
-		RegisterSuiteWorkflowApiWorkflows(env, workflows)
+		RegisterSuiteWorkflowServiceWorkflows(env, workflows)
 	}
 	if activities != nil {
-		RegisterSuiteWorkflowApiActivities(env, activities)
+		RegisterSuiteWorkflowServiceActivities(env, activities)
 	}
-	return &TestSuiteWorkflowApiClient{env, workflows}
+	return &TestSuiteWorkflowServiceClient{env, workflows}
 }
 
 // SuiteWorkflow executes a(n) SuiteWorkflow workflow in the test environment
-func (c *TestSuiteWorkflowApiClient) SuiteWorkflow(ctx context.Context, req *SuiteWorkflowRequest, opts ...*SuiteWorkflowOptions) (*SuiteWorkflowResponse, error) {
+func (c *TestSuiteWorkflowServiceClient) SuiteWorkflow(ctx context.Context, req *SuiteWorkflowRequest, opts ...*SuiteWorkflowOptions) (*SuiteWorkflowResponse, error) {
 	run, err := c.SuiteWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return nil, err
@@ -3978,7 +3978,7 @@ func (c *TestSuiteWorkflowApiClient) SuiteWorkflow(ctx context.Context, req *Sui
 }
 
 // SuiteWorkflowAsync executes a(n) SuiteWorkflow workflow in the test environment
-func (c *TestSuiteWorkflowApiClient) SuiteWorkflowAsync(ctx context.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowOptions) (SuiteWorkflowRun, error) {
+func (c *TestSuiteWorkflowServiceClient) SuiteWorkflowAsync(ctx context.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowOptions) (SuiteWorkflowRun, error) {
 	var o *SuiteWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -3993,18 +3993,18 @@ func (c *TestSuiteWorkflowApiClient) SuiteWorkflowAsync(ctx context.Context, req
 }
 
 // GetSuiteWorkflow is a noop
-func (c *TestSuiteWorkflowApiClient) GetSuiteWorkflow(ctx context.Context, workflowID string, runID string) SuiteWorkflowRun {
+func (c *TestSuiteWorkflowServiceClient) GetSuiteWorkflow(ctx context.Context, workflowID string, runID string) SuiteWorkflowRun {
 	return &testSuiteWorkflowRun{env: c.env, workflows: c.workflows}
 }
 
 // CancelWorkflow requests cancellation of an existing workflow execution
-func (c *TestSuiteWorkflowApiClient) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
+func (c *TestSuiteWorkflowServiceClient) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
 	c.env.CancelWorkflow()
 	return nil
 }
 
 // TerminateWorkflow terminates an existing workflow execution
-func (c *TestSuiteWorkflowApiClient) TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error {
+func (c *TestSuiteWorkflowServiceClient) TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error {
 	return c.CancelWorkflow(ctx, workflowID, runID)
 }
 
@@ -4012,12 +4012,12 @@ var _ SuiteWorkflowRun = &testSuiteWorkflowRun{}
 
 // testSuiteWorkflowRun provides convenience methods for interacting with a(n) SuiteWorkflow workflow in the test environment
 type testSuiteWorkflowRun struct {
-	client    *TestSuiteWorkflowApiClient
+	client    *TestSuiteWorkflowServiceClient
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
 	opts      *client.StartWorkflowOptions
 	req       *SuiteWorkflowRequest
-	workflows SuiteWorkflowApiWorkflows
+	workflows SuiteWorkflowServiceWorkflows
 }
 
 // Cancel requests cancellation of a workflow in execution, returning an error if applicable
@@ -4066,73 +4066,73 @@ func (r *testSuiteWorkflowRun) Terminate(ctx context.Context, reason string, det
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
 }
 
-// SuiteWorkflowApiCliOptions describes runtime configuration for cloud.v1.workflow.SuiteWorkflowApi cli
-type SuiteWorkflowApiCliOptions struct {
+// SuiteWorkflowServiceCliOptions describes runtime configuration for cloud.v1.workflow.SuiteWorkflowService cli
+type SuiteWorkflowServiceCliOptions struct {
 	after            func(*v2.Context) error
 	before           func(*v2.Context) error
 	clientForCommand func(*v2.Context) (client.Client, error)
 	worker           func(*v2.Context, client.Client) (worker.Worker, error)
 }
 
-// NewSuiteWorkflowApiCliOptions initializes a new SuiteWorkflowApiCliOptions value
-func NewSuiteWorkflowApiCliOptions() *SuiteWorkflowApiCliOptions {
-	return &SuiteWorkflowApiCliOptions{}
+// NewSuiteWorkflowServiceCliOptions initializes a new SuiteWorkflowServiceCliOptions value
+func NewSuiteWorkflowServiceCliOptions() *SuiteWorkflowServiceCliOptions {
+	return &SuiteWorkflowServiceCliOptions{}
 }
 
 // WithAfter injects a custom After hook to be run after any command invocation
-func (opts *SuiteWorkflowApiCliOptions) WithAfter(fn func(*v2.Context) error) *SuiteWorkflowApiCliOptions {
+func (opts *SuiteWorkflowServiceCliOptions) WithAfter(fn func(*v2.Context) error) *SuiteWorkflowServiceCliOptions {
 	opts.after = fn
 	return opts
 }
 
 // WithBefore injects a custom Before hook to be run prior to any command invocation
-func (opts *SuiteWorkflowApiCliOptions) WithBefore(fn func(*v2.Context) error) *SuiteWorkflowApiCliOptions {
+func (opts *SuiteWorkflowServiceCliOptions) WithBefore(fn func(*v2.Context) error) *SuiteWorkflowServiceCliOptions {
 	opts.before = fn
 	return opts
 }
 
 // WithClient provides a Temporal client factory for use by commands
-func (opts *SuiteWorkflowApiCliOptions) WithClient(fn func(*v2.Context) (client.Client, error)) *SuiteWorkflowApiCliOptions {
+func (opts *SuiteWorkflowServiceCliOptions) WithClient(fn func(*v2.Context) (client.Client, error)) *SuiteWorkflowServiceCliOptions {
 	opts.clientForCommand = fn
 	return opts
 }
 
 // WithWorker provides an method for initializing a worker
-func (opts *SuiteWorkflowApiCliOptions) WithWorker(fn func(*v2.Context, client.Client) (worker.Worker, error)) *SuiteWorkflowApiCliOptions {
+func (opts *SuiteWorkflowServiceCliOptions) WithWorker(fn func(*v2.Context, client.Client) (worker.Worker, error)) *SuiteWorkflowServiceCliOptions {
 	opts.worker = fn
 	return opts
 }
 
-// NewSuiteWorkflowApiCli initializes a cli for a(n) cloud.v1.workflow.SuiteWorkflowApi service
-func NewSuiteWorkflowApiCli(options ...*SuiteWorkflowApiCliOptions) (*v2.App, error) {
-	commands, err := newSuiteWorkflowApiCommands(options...)
+// NewSuiteWorkflowServiceCli initializes a cli for a(n) cloud.v1.workflow.SuiteWorkflowService service
+func NewSuiteWorkflowServiceCli(options ...*SuiteWorkflowServiceCliOptions) (*v2.App, error) {
+	commands, err := newSuiteWorkflowServiceCommands(options...)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing subcommands: %w", err)
 	}
 	return &v2.App{
-		Name:                      "suite-workflow-api",
-		Usage:                     "cloud.v1.workflow.SuiteWorkflowApi operations",
+		Name:                      "suite-workflow-service",
+		Usage:                     "cloud.v1.workflow.SuiteWorkflowService operations",
 		Commands:                  commands,
 		DisableSliceFlagSeparator: true,
 	}, nil
 }
 
-// NewSuiteWorkflowApiCliCommand initializes a cli command for a cloud.v1.workflow.SuiteWorkflowApi service with subcommands for each query, signal, update, and workflow
-func NewSuiteWorkflowApiCliCommand(options ...*SuiteWorkflowApiCliOptions) (*v2.Command, error) {
-	subcommands, err := newSuiteWorkflowApiCommands(options...)
+// NewSuiteWorkflowServiceCliCommand initializes a cli command for a cloud.v1.workflow.SuiteWorkflowService service with subcommands for each query, signal, update, and workflow
+func NewSuiteWorkflowServiceCliCommand(options ...*SuiteWorkflowServiceCliOptions) (*v2.Command, error) {
+	subcommands, err := newSuiteWorkflowServiceCommands(options...)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing subcommands: %w", err)
 	}
 	return &v2.Command{
-		Name:        "suite-workflow-api",
-		Usage:       "cloud.v1.workflow.SuiteWorkflowApi operations",
+		Name:        "suite-workflow-service",
+		Usage:       "cloud.v1.workflow.SuiteWorkflowService operations",
 		Subcommands: subcommands,
 	}, nil
 }
 
-// newSuiteWorkflowApiCommands initializes (sub)commands for a cloud.v1.workflow.SuiteWorkflowApi cli or command
-func newSuiteWorkflowApiCommands(options ...*SuiteWorkflowApiCliOptions) ([]*v2.Command, error) {
-	opts := &SuiteWorkflowApiCliOptions{}
+// newSuiteWorkflowServiceCommands initializes (sub)commands for a cloud.v1.workflow.SuiteWorkflowService cli or command
+func newSuiteWorkflowServiceCommands(options ...*SuiteWorkflowServiceCliOptions) ([]*v2.Command, error) {
+	opts := &SuiteWorkflowServiceCliOptions{}
 	if len(options) > 0 {
 		opts = options[0]
 	}
@@ -4180,7 +4180,7 @@ func newSuiteWorkflowApiCommands(options ...*SuiteWorkflowApiCliOptions) ([]*v2.
 					return fmt.Errorf("error initializing client for command: %w", err)
 				}
 				defer tc.Close()
-				c := NewSuiteWorkflowApiClient(tc)
+				c := NewSuiteWorkflowServiceClient(tc)
 				req, err := UnmarshalCliFlagsToSuiteWorkflowRequest(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
 				if err != nil {
 					return fmt.Errorf("error unmarshalling request: %w", err)
@@ -4220,7 +4220,7 @@ func newSuiteWorkflowApiCommands(options ...*SuiteWorkflowApiCliOptions) ([]*v2.
 		commands = append(commands, []*v2.Command{
 			{
 				Name:                   "worker",
-				Usage:                  "runs a cloud.v1.workflow.SuiteWorkflowApi worker process",
+				Usage:                  "runs a cloud.v1.workflow.SuiteWorkflowService worker process",
 				UseShortOptionHandling: true,
 				Before:                 opts.before,
 				After:                  opts.after,

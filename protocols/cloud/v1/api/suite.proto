@@ -1,0 +1,180 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/common/entity.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/domain/suite.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/permission.proto";
+import "cloud/v1/models/suite.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    suite.proto is the tenant-scoped API over models.SuiteRecord — the reusable
+    suite DEFINITION. CRUD + clone for definitions, plus Start which expands a
+    definition into a SuiteRunRecord and launches SuiteWorkflow. Every request is
+    tenant-scoped (tenant_id); CRUD/clone gated by RESOURCE_SUITE, Start by
+    RESOURCE_SUITE_RUN (it creates a run).
+ */
+
+message CreateSuiteRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    // Server assigns entity.id / tenant_id / timings.
+    models.SuiteRecord suite = 2 [(validate.rules).message.required = true];
+}
+message CreateSuiteResponse {
+    models.SuiteRecord suite = 1 [(validate.rules).message.required = true];
+}
+
+message GetSuiteRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message GetSuiteResponse {
+    models.SuiteRecord suite = 1 [(validate.rules).message.required = true];
+}
+
+message ListSuitesRequest {
+    message Sort {
+        enum Kind {
+            KIND_UNSPECIFIED = 0;
+            KIND_PROVIDER = 1;
+            KIND_SCHEDULE_ENABLED = 2;
+            KIND_NEXT_RUN_AT = 3;
+            KIND_LAST_RUN_AT = 4;
+            KIND_RUN_COUNT = 5;
+        }
+        oneof by {
+            common.EntitySortField entity = 1;
+            Kind kind = 2;
+        }
+        bool desc = 3;
+    }
+
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    common.EntityFilter filter = 2;
+    // Facet filters.
+    repeated deployment.Provider providers = 3;
+    // Schedule state. Unset = any; true = only scheduled+enabled; false = only paused/none.
+    optional bool schedule_enabled = 4;
+    Sort sort = 5;
+    common.Page page = 6;
+}
+message ListSuitesResponse {
+    repeated models.SuiteRecord suites = 1;
+    string next_page_token = 2;
+}
+
+message UpdateSuiteRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    // Wholesale replace; suite.entity.id selects the row.
+    models.SuiteRecord suite = 2 [(validate.rules).message.required = true];
+}
+message UpdateSuiteResponse {
+    models.SuiteRecord suite = 1 [(validate.rules).message.required = true];
+}
+
+message DeleteSuiteRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message DeleteSuiteResponse {}
+
+/*
+    CloneSuite copies a suite definition into a new editable one owned by the
+    caller (fresh id, caller as author).
+ */
+message CloneSuiteRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string name = 3 [(validate.rules).string = {max_len: 255}];
+}
+message CloneSuiteResponse {
+    models.SuiteRecord suite = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    SetSuiteSchedule sets/replaces a suite's cron schedule (and its enabled flag)
+    without sending the whole definition — handy for pausing/resuming auto-runs.
+ */
+message SetSuiteScheduleRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    domain.Schedule schedule = 3 [(validate.rules).message.required = true];
+}
+message SetSuiteScheduleResponse {
+    models.SuiteRecord suite = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    StartSuite expands a suite into a SuiteRunRecord (one TestRunRecord per
+    compatible cell) and launches SuiteWorkflow. Provide a stored `suite_id`
+    (re-run) or a fully-baked `suite` directly (CLI).
+ */
+message StartSuiteRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    oneof source {
+        option (validate.required) = true;
+        string suite_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+        domain.Suite suite = 3;
+    }
+    // Max concurrent child TestWorkflows. 0 = unlimited.
+    uint32 max_parallel = 4;
+    // Rating membership applied to all child runs; unset -> suite defaults, then
+    // platform defaults (tenant true, global false).
+    optional bool in_tenant_rating = 5;
+    optional bool in_global_rating = 6;
+}
+message StartSuiteResponse {
+    models.SuiteRunRecord suite_run = 1 [(validate.rules).message.required = true];
+}
+
+service SuiteService {
+    rpc CreateSuite (CreateSuiteRequest) returns (CreateSuiteResponse) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE, action: ACTION_CREATE}]};
+    }
+    rpc GetSuite (GetSuiteRequest) returns (GetSuiteResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE, action: ACTION_READ}]};
+    }
+    rpc ListSuites (ListSuitesRequest) returns (ListSuitesResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE, action: ACTION_LIST}]};
+    }
+    /*
+        UpdateSuite is idempotent: a wholesale field set converges on retry.
+     */
+    rpc UpdateSuite (UpdateSuiteRequest) returns (UpdateSuiteResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE, action: ACTION_UPDATE}]};
+    }
+    /*
+        DeleteSuite is idempotent: deleting an absent suite is a no-op.
+     */
+    rpc DeleteSuite (DeleteSuiteRequest) returns (DeleteSuiteResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE, action: ACTION_DELETE}]};
+    }
+    /*
+        CloneSuite mints a new definition. Not idempotent.
+     */
+    rpc CloneSuite (CloneSuiteRequest) returns (CloneSuiteResponse) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE, action: ACTION_CREATE}]};
+    }
+    /*
+        SetSuiteSchedule is idempotent: setting the same schedule converges.
+     */
+    rpc SetSuiteSchedule (SetSuiteScheduleRequest) returns (SetSuiteScheduleResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE, action: ACTION_UPDATE}]};
+    }
+    /*
+        StartSuite mints a SuiteRunRecord. Not idempotent: each call launches a run.
+     */
+    rpc StartSuite (StartSuiteRequest) returns (StartSuiteResponse) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE_RUN, action: ACTION_CREATE}]};
+    }
+}

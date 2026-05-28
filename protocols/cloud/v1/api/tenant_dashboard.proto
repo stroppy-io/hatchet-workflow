@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/api/rating.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/permission.proto";
+import "cloud/v1/models/suite.proto";
+import "cloud/v1/models/test_run.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    tenant_dashboard.proto is the tenant landing page: a single aggregated view so
+    there is something to show on entry. Tenant-scoped, gated by RESOURCE_TEST_RUN/
+    LIST (any tenant member sees it).
+
+    NOT stored: the dashboard is computed / precomputed by a background job (same
+    pattern as the share-snapshot and rating refresh) — no dashboard DB record.
+ */
+
+// StatusCounts is the run breakdown by lifecycle status.
+message StatusCounts {
+    uint32 total = 1;
+    uint32 pending = 2;
+    uint32 running = 3;
+    uint32 completed = 4;
+    uint32 failed = 5;
+    uint32 cancelled = 6;
+}
+
+// UpcomingSuite is a scheduled suite and its next planned auto-run.
+message UpcomingSuite {
+    string suite_id = 1 [(validate.rules).string = {max_len: 64}];
+    string name = 2 [(validate.rules).string.max_len = 255];
+    string cron = 3 [(validate.rules).string.max_len = 128];
+    google.protobuf.Timestamp next_run_at = 4;
+}
+
+// TenantDashboard is the whole landing payload.
+message TenantDashboard {
+    // Run counts by status (for the headline tiles).
+    StatusCounts run_counts = 1;
+    // Success rate (completed / finished) over a recent window, 0..1.
+    float success_rate = 2;
+    // Most recent runs (limited).
+    repeated models.TestRunRecord recent_runs = 3;
+    // Most recent suite runs (limited).
+    repeated models.SuiteRunRecord recent_suite_runs = 4;
+    // Scheduled suites with their next planned auto-run.
+    repeated UpcomingSuite upcoming = 5;
+    // This tenant's top benchmarks (tenant rating top-N).
+    repeated RatingEntry top_benchmarks = 6;
+}
+
+message GetTenantDashboardRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message GetTenantDashboardResponse {
+    TenantDashboard dashboard = 1 [(validate.rules).message.required = true];
+}
+
+service TenantDashboardService {
+    rpc GetTenantDashboard (GetTenantDashboardRequest) returns (GetTenantDashboardResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_LIST}]};
+    }
+}

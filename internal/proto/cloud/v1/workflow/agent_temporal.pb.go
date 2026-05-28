@@ -18,38 +18,38 @@ import (
 	"time"
 )
 
-// AgentCommandApiTaskQueue is the default task-queue for a cloud.v1.workflow.AgentCommandApi worker
-var AgentCommandApiTaskQueue = "stroppy-cloud"
+// AgentCommandServiceTaskQueue is the default task-queue for a cloud.v1.workflow.AgentCommandService worker
+var AgentCommandServiceTaskQueue = "stroppy-cloud"
 
-// cloud.v1.workflow.AgentCommandApi activity names
+// cloud.v1.workflow.AgentCommandService activity names
 const (
-	CallCmdActivityActivityName           = "cloud.v1.workflow.AgentCommandApi.CallCmdActivity"
-	CreateDirActivityActivityName         = "cloud.v1.workflow.AgentCommandApi.CreateDirActivity"
-	CreateTempDirActivityActivityName     = "cloud.v1.workflow.AgentCommandApi.CreateTempDirActivity"
-	EnsureAgentOnlineActivityActivityName = "cloud.v1.workflow.AgentCommandApi.EnsureAgentOnlineActivity"
-	WriteFileActivityActivityName         = "cloud.v1.workflow.AgentCommandApi.WriteFileActivity"
+	CallCmdActivityActivityName           = "cloud.v1.workflow.AgentCommandService.CallCmdActivity"
+	CreateDirActivityActivityName         = "cloud.v1.workflow.AgentCommandService.CreateDirActivity"
+	CreateTempDirActivityActivityName     = "cloud.v1.workflow.AgentCommandService.CreateTempDirActivity"
+	EnsureAgentOnlineActivityActivityName = "cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity"
+	WriteFileActivityActivityName         = "cloud.v1.workflow.AgentCommandService.WriteFileActivity"
 )
 
-// AgentCommandApiActivities describes available worker activities
-type AgentCommandApiActivities interface {
-	// cloud.v1.workflow.AgentCommandApi.CallCmdActivity implements a(n) cloud.v1.workflow.AgentCommandApi.CallCmdActivity activity definition
+// AgentCommandServiceActivities describes available worker activities
+type AgentCommandServiceActivities interface {
+	// cloud.v1.workflow.AgentCommandService.CallCmdActivity implements a(n) cloud.v1.workflow.AgentCommandService.CallCmdActivity activity definition
 	CallCmdActivity(ctx context.Context, req *common.Cmd) (*common.Cmd_Result, error)
 
-	// cloud.v1.workflow.AgentCommandApi.CreateDirActivity implements a(n) cloud.v1.workflow.AgentCommandApi.CreateDirActivity activity definition
+	// cloud.v1.workflow.AgentCommandService.CreateDirActivity implements a(n) cloud.v1.workflow.AgentCommandService.CreateDirActivity activity definition
 	CreateDirActivity(ctx context.Context, req *common.Dir) error
 
-	// cloud.v1.workflow.AgentCommandApi.CreateTempDirActivity implements a(n) cloud.v1.workflow.AgentCommandApi.CreateTempDirActivity activity definition
+	// cloud.v1.workflow.AgentCommandService.CreateTempDirActivity implements a(n) cloud.v1.workflow.AgentCommandService.CreateTempDirActivity activity definition
 	CreateTempDirActivity(ctx context.Context, req *common.Dir_Temp) (*common.Dir, error)
 
-	// cloud.v1.workflow.AgentCommandApi.EnsureAgentOnlineActivity implements a(n) cloud.v1.workflow.AgentCommandApi.EnsureAgentOnlineActivity activity definition
+	// cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity implements a(n) cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity activity definition
 	EnsureAgentOnlineActivity(ctx context.Context) error
 
-	// cloud.v1.workflow.AgentCommandApi.WriteFileActivity implements a(n) cloud.v1.workflow.AgentCommandApi.WriteFileActivity activity definition
+	// cloud.v1.workflow.AgentCommandService.WriteFileActivity implements a(n) cloud.v1.workflow.AgentCommandService.WriteFileActivity activity definition
 	WriteFileActivity(ctx context.Context, req *common.File) error
 }
 
-// RegisterAgentCommandApiActivities registers activities with a worker
-func RegisterAgentCommandApiActivities(r worker.ActivityRegistry, activities AgentCommandApiActivities) {
+// RegisterAgentCommandServiceActivities registers activities with a worker
+func RegisterAgentCommandServiceActivities(r worker.ActivityRegistry, activities AgentCommandServiceActivities) {
 	RegisterCallCmdActivityActivity(r, activities.CallCmdActivity)
 	RegisterCreateDirActivityActivity(r, activities.CreateDirActivity)
 	RegisterCreateTempDirActivityActivity(r, activities.CreateTempDirActivity)
@@ -57,14 +57,14 @@ func RegisterAgentCommandApiActivities(r worker.ActivityRegistry, activities Age
 	RegisterWriteFileActivityActivity(r, activities.WriteFileActivity)
 }
 
-// RegisterCallCmdActivityActivity registers a cloud.v1.workflow.AgentCommandApi.CallCmdActivity activity
+// RegisterCallCmdActivityActivity registers a cloud.v1.workflow.AgentCommandService.CallCmdActivity activity
 func RegisterCallCmdActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *common.Cmd) (*common.Cmd_Result, error)) {
 	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
 		Name: CallCmdActivityActivityName,
 	})
 }
 
-// CallCmdActivityFuture describes a(n) cloud.v1.workflow.AgentCommandApi.CallCmdActivity activity execution
+// CallCmdActivityFuture describes a(n) cloud.v1.workflow.AgentCommandService.CallCmdActivity activity execution
 type CallCmdActivityFuture struct {
 	Future workflow.Future
 }
@@ -87,12 +87,12 @@ func (f *CallCmdActivityFuture) Select(sel workflow.Selector, fn func(*CallCmdAc
 	})
 }
 
-// CallCmdActivity executes a(n) cloud.v1.workflow.AgentCommandApi.CallCmdActivity activity
+// CallCmdActivity executes a(n) cloud.v1.workflow.AgentCommandService.CallCmdActivity activity
 func CallCmdActivity(ctx workflow.Context, req *common.Cmd, options ...*CallCmdActivityActivityOptions) (*common.Cmd_Result, error) {
 	return CallCmdActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// CallCmdActivityAsync executes a(n) cloud.v1.workflow.AgentCommandApi.CallCmdActivity activity (asynchronously)
+// CallCmdActivityAsync executes a(n) cloud.v1.workflow.AgentCommandService.CallCmdActivity activity (asynchronously)
 func CallCmdActivityAsync(ctx workflow.Context, req *common.Cmd, options ...*CallCmdActivityActivityOptions) *CallCmdActivityFuture {
 	var o *CallCmdActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -114,12 +114,12 @@ func CallCmdActivityAsync(ctx workflow.Context, req *common.Cmd, options ...*Cal
 	return future
 }
 
-// CallCmdActivityLocal executes a(n) cloud.v1.workflow.AgentCommandApi.CallCmdActivity activity (locally)
+// CallCmdActivityLocal executes a(n) cloud.v1.workflow.AgentCommandService.CallCmdActivity activity (locally)
 func CallCmdActivityLocal(ctx workflow.Context, req *common.Cmd, options ...*CallCmdActivityLocalActivityOptions) (*common.Cmd_Result, error) {
 	return CallCmdActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// CallCmdActivityLocalAsync executes a(n) cloud.v1.workflow.AgentCommandApi.CallCmdActivity activity (asynchronously, locally)
+// CallCmdActivityLocalAsync executes a(n) cloud.v1.workflow.AgentCommandService.CallCmdActivity activity (asynchronously, locally)
 func CallCmdActivityLocalAsync(ctx workflow.Context, req *common.Cmd, options ...*CallCmdActivityLocalActivityOptions) *CallCmdActivityFuture {
 	var o *CallCmdActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -146,7 +146,7 @@ func CallCmdActivityLocalAsync(ctx workflow.Context, req *common.Cmd, options ..
 	return future
 }
 
-// CallCmdActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandApi.CallCmdActivity activity
+// CallCmdActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandService.CallCmdActivity activity
 type CallCmdActivityActivityOptions struct {
 	options                workflow.ActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -191,7 +191,7 @@ func (o *CallCmdActivityActivityOptions) Build(ctx workflow.Context) (workflow.C
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = AgentCommandApiTaskQueue
+		opts.TaskQueue = AgentCommandServiceTaskQueue
 	}
 	if v := o.waitForCancellation; v != nil {
 		opts.WaitForCancellation = *v
@@ -253,7 +253,7 @@ func (o *CallCmdActivityActivityOptions) WithWaitForCancellation(wait bool) *Cal
 	return o
 }
 
-// CallCmdActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandApi.CallCmdActivity activity
+// CallCmdActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandService.CallCmdActivity activity
 type CallCmdActivityLocalActivityOptions struct {
 	options                workflow.LocalActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -287,7 +287,7 @@ func (o *CallCmdActivityLocalActivityOptions) Build(ctx workflow.Context) (workf
 	return workflow.WithLocalActivityOptions(ctx, opts), nil
 }
 
-// Local specifies a custom cloud.v1.workflow.AgentCommandApi.CallCmdActivity implementation
+// Local specifies a custom cloud.v1.workflow.AgentCommandService.CallCmdActivity implementation
 func (o *CallCmdActivityLocalActivityOptions) Local(fn func(context.Context, *common.Cmd) (*common.Cmd_Result, error)) *CallCmdActivityLocalActivityOptions {
 	o.fn = fn
 	return o
@@ -323,14 +323,14 @@ func (o *CallCmdActivityLocalActivityOptions) WithStartToCloseTimeout(d time.Dur
 	return o
 }
 
-// RegisterCreateDirActivityActivity registers a cloud.v1.workflow.AgentCommandApi.CreateDirActivity activity
+// RegisterCreateDirActivityActivity registers a cloud.v1.workflow.AgentCommandService.CreateDirActivity activity
 func RegisterCreateDirActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *common.Dir) error) {
 	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
 		Name: CreateDirActivityActivityName,
 	})
 }
 
-// CreateDirActivityFuture describes a(n) cloud.v1.workflow.AgentCommandApi.CreateDirActivity activity execution
+// CreateDirActivityFuture describes a(n) cloud.v1.workflow.AgentCommandService.CreateDirActivity activity execution
 type CreateDirActivityFuture struct {
 	Future workflow.Future
 }
@@ -349,12 +349,12 @@ func (f *CreateDirActivityFuture) Select(sel workflow.Selector, fn func(*CreateD
 	})
 }
 
-// CreateDirActivity executes a(n) cloud.v1.workflow.AgentCommandApi.CreateDirActivity activity
+// CreateDirActivity executes a(n) cloud.v1.workflow.AgentCommandService.CreateDirActivity activity
 func CreateDirActivity(ctx workflow.Context, req *common.Dir, options ...*CreateDirActivityActivityOptions) error {
 	return CreateDirActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// CreateDirActivityAsync executes a(n) cloud.v1.workflow.AgentCommandApi.CreateDirActivity activity (asynchronously)
+// CreateDirActivityAsync executes a(n) cloud.v1.workflow.AgentCommandService.CreateDirActivity activity (asynchronously)
 func CreateDirActivityAsync(ctx workflow.Context, req *common.Dir, options ...*CreateDirActivityActivityOptions) *CreateDirActivityFuture {
 	var o *CreateDirActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -376,12 +376,12 @@ func CreateDirActivityAsync(ctx workflow.Context, req *common.Dir, options ...*C
 	return future
 }
 
-// CreateDirActivityLocal executes a(n) cloud.v1.workflow.AgentCommandApi.CreateDirActivity activity (locally)
+// CreateDirActivityLocal executes a(n) cloud.v1.workflow.AgentCommandService.CreateDirActivity activity (locally)
 func CreateDirActivityLocal(ctx workflow.Context, req *common.Dir, options ...*CreateDirActivityLocalActivityOptions) error {
 	return CreateDirActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// CreateDirActivityLocalAsync executes a(n) cloud.v1.workflow.AgentCommandApi.CreateDirActivity activity (asynchronously, locally)
+// CreateDirActivityLocalAsync executes a(n) cloud.v1.workflow.AgentCommandService.CreateDirActivity activity (asynchronously, locally)
 func CreateDirActivityLocalAsync(ctx workflow.Context, req *common.Dir, options ...*CreateDirActivityLocalActivityOptions) *CreateDirActivityFuture {
 	var o *CreateDirActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -408,7 +408,7 @@ func CreateDirActivityLocalAsync(ctx workflow.Context, req *common.Dir, options 
 	return future
 }
 
-// CreateDirActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandApi.CreateDirActivity activity
+// CreateDirActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandService.CreateDirActivity activity
 type CreateDirActivityActivityOptions struct {
 	options                workflow.ActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -451,7 +451,7 @@ func (o *CreateDirActivityActivityOptions) Build(ctx workflow.Context) (workflow
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = AgentCommandApiTaskQueue
+		opts.TaskQueue = AgentCommandServiceTaskQueue
 	}
 	if v := o.waitForCancellation; v != nil {
 		opts.WaitForCancellation = *v
@@ -513,7 +513,7 @@ func (o *CreateDirActivityActivityOptions) WithWaitForCancellation(wait bool) *C
 	return o
 }
 
-// CreateDirActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandApi.CreateDirActivity activity
+// CreateDirActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandService.CreateDirActivity activity
 type CreateDirActivityLocalActivityOptions struct {
 	options                workflow.LocalActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -547,7 +547,7 @@ func (o *CreateDirActivityLocalActivityOptions) Build(ctx workflow.Context) (wor
 	return workflow.WithLocalActivityOptions(ctx, opts), nil
 }
 
-// Local specifies a custom cloud.v1.workflow.AgentCommandApi.CreateDirActivity implementation
+// Local specifies a custom cloud.v1.workflow.AgentCommandService.CreateDirActivity implementation
 func (o *CreateDirActivityLocalActivityOptions) Local(fn func(context.Context, *common.Dir) error) *CreateDirActivityLocalActivityOptions {
 	o.fn = fn
 	return o
@@ -583,14 +583,14 @@ func (o *CreateDirActivityLocalActivityOptions) WithStartToCloseTimeout(d time.D
 	return o
 }
 
-// RegisterCreateTempDirActivityActivity registers a cloud.v1.workflow.AgentCommandApi.CreateTempDirActivity activity
+// RegisterCreateTempDirActivityActivity registers a cloud.v1.workflow.AgentCommandService.CreateTempDirActivity activity
 func RegisterCreateTempDirActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *common.Dir_Temp) (*common.Dir, error)) {
 	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
 		Name: CreateTempDirActivityActivityName,
 	})
 }
 
-// CreateTempDirActivityFuture describes a(n) cloud.v1.workflow.AgentCommandApi.CreateTempDirActivity activity execution
+// CreateTempDirActivityFuture describes a(n) cloud.v1.workflow.AgentCommandService.CreateTempDirActivity activity execution
 type CreateTempDirActivityFuture struct {
 	Future workflow.Future
 }
@@ -613,12 +613,12 @@ func (f *CreateTempDirActivityFuture) Select(sel workflow.Selector, fn func(*Cre
 	})
 }
 
-// CreateTempDirActivity executes a(n) cloud.v1.workflow.AgentCommandApi.CreateTempDirActivity activity
+// CreateTempDirActivity executes a(n) cloud.v1.workflow.AgentCommandService.CreateTempDirActivity activity
 func CreateTempDirActivity(ctx workflow.Context, req *common.Dir_Temp, options ...*CreateTempDirActivityActivityOptions) (*common.Dir, error) {
 	return CreateTempDirActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// CreateTempDirActivityAsync executes a(n) cloud.v1.workflow.AgentCommandApi.CreateTempDirActivity activity (asynchronously)
+// CreateTempDirActivityAsync executes a(n) cloud.v1.workflow.AgentCommandService.CreateTempDirActivity activity (asynchronously)
 func CreateTempDirActivityAsync(ctx workflow.Context, req *common.Dir_Temp, options ...*CreateTempDirActivityActivityOptions) *CreateTempDirActivityFuture {
 	var o *CreateTempDirActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -640,12 +640,12 @@ func CreateTempDirActivityAsync(ctx workflow.Context, req *common.Dir_Temp, opti
 	return future
 }
 
-// CreateTempDirActivityLocal executes a(n) cloud.v1.workflow.AgentCommandApi.CreateTempDirActivity activity (locally)
+// CreateTempDirActivityLocal executes a(n) cloud.v1.workflow.AgentCommandService.CreateTempDirActivity activity (locally)
 func CreateTempDirActivityLocal(ctx workflow.Context, req *common.Dir_Temp, options ...*CreateTempDirActivityLocalActivityOptions) (*common.Dir, error) {
 	return CreateTempDirActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// CreateTempDirActivityLocalAsync executes a(n) cloud.v1.workflow.AgentCommandApi.CreateTempDirActivity activity (asynchronously, locally)
+// CreateTempDirActivityLocalAsync executes a(n) cloud.v1.workflow.AgentCommandService.CreateTempDirActivity activity (asynchronously, locally)
 func CreateTempDirActivityLocalAsync(ctx workflow.Context, req *common.Dir_Temp, options ...*CreateTempDirActivityLocalActivityOptions) *CreateTempDirActivityFuture {
 	var o *CreateTempDirActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -672,7 +672,7 @@ func CreateTempDirActivityLocalAsync(ctx workflow.Context, req *common.Dir_Temp,
 	return future
 }
 
-// CreateTempDirActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandApi.CreateTempDirActivity activity
+// CreateTempDirActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandService.CreateTempDirActivity activity
 type CreateTempDirActivityActivityOptions struct {
 	options                workflow.ActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -715,7 +715,7 @@ func (o *CreateTempDirActivityActivityOptions) Build(ctx workflow.Context) (work
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = AgentCommandApiTaskQueue
+		opts.TaskQueue = AgentCommandServiceTaskQueue
 	}
 	if v := o.waitForCancellation; v != nil {
 		opts.WaitForCancellation = *v
@@ -777,7 +777,7 @@ func (o *CreateTempDirActivityActivityOptions) WithWaitForCancellation(wait bool
 	return o
 }
 
-// CreateTempDirActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandApi.CreateTempDirActivity activity
+// CreateTempDirActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandService.CreateTempDirActivity activity
 type CreateTempDirActivityLocalActivityOptions struct {
 	options                workflow.LocalActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -811,7 +811,7 @@ func (o *CreateTempDirActivityLocalActivityOptions) Build(ctx workflow.Context) 
 	return workflow.WithLocalActivityOptions(ctx, opts), nil
 }
 
-// Local specifies a custom cloud.v1.workflow.AgentCommandApi.CreateTempDirActivity implementation
+// Local specifies a custom cloud.v1.workflow.AgentCommandService.CreateTempDirActivity implementation
 func (o *CreateTempDirActivityLocalActivityOptions) Local(fn func(context.Context, *common.Dir_Temp) (*common.Dir, error)) *CreateTempDirActivityLocalActivityOptions {
 	o.fn = fn
 	return o
@@ -847,14 +847,14 @@ func (o *CreateTempDirActivityLocalActivityOptions) WithStartToCloseTimeout(d ti
 	return o
 }
 
-// RegisterEnsureAgentOnlineActivityActivity registers a cloud.v1.workflow.AgentCommandApi.EnsureAgentOnlineActivity activity
+// RegisterEnsureAgentOnlineActivityActivity registers a cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity activity
 func RegisterEnsureAgentOnlineActivityActivity(r worker.ActivityRegistry, fn func(context.Context) error) {
 	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
 		Name: EnsureAgentOnlineActivityActivityName,
 	})
 }
 
-// EnsureAgentOnlineActivityFuture describes a(n) cloud.v1.workflow.AgentCommandApi.EnsureAgentOnlineActivity activity execution
+// EnsureAgentOnlineActivityFuture describes a(n) cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity activity execution
 type EnsureAgentOnlineActivityFuture struct {
 	Future workflow.Future
 }
@@ -873,12 +873,12 @@ func (f *EnsureAgentOnlineActivityFuture) Select(sel workflow.Selector, fn func(
 	})
 }
 
-// EnsureAgentOnlineActivity executes a(n) cloud.v1.workflow.AgentCommandApi.EnsureAgentOnlineActivity activity
+// EnsureAgentOnlineActivity executes a(n) cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity activity
 func EnsureAgentOnlineActivity(ctx workflow.Context, options ...*EnsureAgentOnlineActivityActivityOptions) error {
 	return EnsureAgentOnlineActivityAsync(ctx, options...).Get(ctx)
 }
 
-// EnsureAgentOnlineActivityAsync executes a(n) cloud.v1.workflow.AgentCommandApi.EnsureAgentOnlineActivity activity (asynchronously)
+// EnsureAgentOnlineActivityAsync executes a(n) cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity activity (asynchronously)
 func EnsureAgentOnlineActivityAsync(ctx workflow.Context, options ...*EnsureAgentOnlineActivityActivityOptions) *EnsureAgentOnlineActivityFuture {
 	var o *EnsureAgentOnlineActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -900,12 +900,12 @@ func EnsureAgentOnlineActivityAsync(ctx workflow.Context, options ...*EnsureAgen
 	return future
 }
 
-// EnsureAgentOnlineActivityLocal executes a(n) cloud.v1.workflow.AgentCommandApi.EnsureAgentOnlineActivity activity (locally)
+// EnsureAgentOnlineActivityLocal executes a(n) cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity activity (locally)
 func EnsureAgentOnlineActivityLocal(ctx workflow.Context, options ...*EnsureAgentOnlineActivityLocalActivityOptions) error {
 	return EnsureAgentOnlineActivityLocalAsync(ctx, options...).Get(ctx)
 }
 
-// EnsureAgentOnlineActivityLocalAsync executes a(n) cloud.v1.workflow.AgentCommandApi.EnsureAgentOnlineActivity activity (asynchronously, locally)
+// EnsureAgentOnlineActivityLocalAsync executes a(n) cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity activity (asynchronously, locally)
 func EnsureAgentOnlineActivityLocalAsync(ctx workflow.Context, options ...*EnsureAgentOnlineActivityLocalActivityOptions) *EnsureAgentOnlineActivityFuture {
 	var o *EnsureAgentOnlineActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -932,7 +932,7 @@ func EnsureAgentOnlineActivityLocalAsync(ctx workflow.Context, options ...*Ensur
 	return future
 }
 
-// EnsureAgentOnlineActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandApi.EnsureAgentOnlineActivity activity
+// EnsureAgentOnlineActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity activity
 type EnsureAgentOnlineActivityActivityOptions struct {
 	options                workflow.ActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -977,7 +977,7 @@ func (o *EnsureAgentOnlineActivityActivityOptions) Build(ctx workflow.Context) (
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = AgentCommandApiTaskQueue
+		opts.TaskQueue = AgentCommandServiceTaskQueue
 	}
 	if v := o.waitForCancellation; v != nil {
 		opts.WaitForCancellation = *v
@@ -1039,7 +1039,7 @@ func (o *EnsureAgentOnlineActivityActivityOptions) WithWaitForCancellation(wait 
 	return o
 }
 
-// EnsureAgentOnlineActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandApi.EnsureAgentOnlineActivity activity
+// EnsureAgentOnlineActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity activity
 type EnsureAgentOnlineActivityLocalActivityOptions struct {
 	options                workflow.LocalActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -1073,7 +1073,7 @@ func (o *EnsureAgentOnlineActivityLocalActivityOptions) Build(ctx workflow.Conte
 	return workflow.WithLocalActivityOptions(ctx, opts), nil
 }
 
-// Local specifies a custom cloud.v1.workflow.AgentCommandApi.EnsureAgentOnlineActivity implementation
+// Local specifies a custom cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity implementation
 func (o *EnsureAgentOnlineActivityLocalActivityOptions) Local(fn func(context.Context) error) *EnsureAgentOnlineActivityLocalActivityOptions {
 	o.fn = fn
 	return o
@@ -1109,14 +1109,14 @@ func (o *EnsureAgentOnlineActivityLocalActivityOptions) WithStartToCloseTimeout(
 	return o
 }
 
-// RegisterWriteFileActivityActivity registers a cloud.v1.workflow.AgentCommandApi.WriteFileActivity activity
+// RegisterWriteFileActivityActivity registers a cloud.v1.workflow.AgentCommandService.WriteFileActivity activity
 func RegisterWriteFileActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *common.File) error) {
 	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
 		Name: WriteFileActivityActivityName,
 	})
 }
 
-// WriteFileActivityFuture describes a(n) cloud.v1.workflow.AgentCommandApi.WriteFileActivity activity execution
+// WriteFileActivityFuture describes a(n) cloud.v1.workflow.AgentCommandService.WriteFileActivity activity execution
 type WriteFileActivityFuture struct {
 	Future workflow.Future
 }
@@ -1135,12 +1135,12 @@ func (f *WriteFileActivityFuture) Select(sel workflow.Selector, fn func(*WriteFi
 	})
 }
 
-// WriteFileActivity executes a(n) cloud.v1.workflow.AgentCommandApi.WriteFileActivity activity
+// WriteFileActivity executes a(n) cloud.v1.workflow.AgentCommandService.WriteFileActivity activity
 func WriteFileActivity(ctx workflow.Context, req *common.File, options ...*WriteFileActivityActivityOptions) error {
 	return WriteFileActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// WriteFileActivityAsync executes a(n) cloud.v1.workflow.AgentCommandApi.WriteFileActivity activity (asynchronously)
+// WriteFileActivityAsync executes a(n) cloud.v1.workflow.AgentCommandService.WriteFileActivity activity (asynchronously)
 func WriteFileActivityAsync(ctx workflow.Context, req *common.File, options ...*WriteFileActivityActivityOptions) *WriteFileActivityFuture {
 	var o *WriteFileActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -1162,12 +1162,12 @@ func WriteFileActivityAsync(ctx workflow.Context, req *common.File, options ...*
 	return future
 }
 
-// WriteFileActivityLocal executes a(n) cloud.v1.workflow.AgentCommandApi.WriteFileActivity activity (locally)
+// WriteFileActivityLocal executes a(n) cloud.v1.workflow.AgentCommandService.WriteFileActivity activity (locally)
 func WriteFileActivityLocal(ctx workflow.Context, req *common.File, options ...*WriteFileActivityLocalActivityOptions) error {
 	return WriteFileActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// WriteFileActivityLocalAsync executes a(n) cloud.v1.workflow.AgentCommandApi.WriteFileActivity activity (asynchronously, locally)
+// WriteFileActivityLocalAsync executes a(n) cloud.v1.workflow.AgentCommandService.WriteFileActivity activity (asynchronously, locally)
 func WriteFileActivityLocalAsync(ctx workflow.Context, req *common.File, options ...*WriteFileActivityLocalActivityOptions) *WriteFileActivityFuture {
 	var o *WriteFileActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -1194,7 +1194,7 @@ func WriteFileActivityLocalAsync(ctx workflow.Context, req *common.File, options
 	return future
 }
 
-// WriteFileActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandApi.WriteFileActivity activity
+// WriteFileActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandService.WriteFileActivity activity
 type WriteFileActivityActivityOptions struct {
 	options                workflow.ActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -1237,7 +1237,7 @@ func (o *WriteFileActivityActivityOptions) Build(ctx workflow.Context) (workflow
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = AgentCommandApiTaskQueue
+		opts.TaskQueue = AgentCommandServiceTaskQueue
 	}
 	if v := o.waitForCancellation; v != nil {
 		opts.WaitForCancellation = *v
@@ -1299,7 +1299,7 @@ func (o *WriteFileActivityActivityOptions) WithWaitForCancellation(wait bool) *W
 	return o
 }
 
-// WriteFileActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandApi.WriteFileActivity activity
+// WriteFileActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandService.WriteFileActivity activity
 type WriteFileActivityLocalActivityOptions struct {
 	options                workflow.LocalActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -1333,7 +1333,7 @@ func (o *WriteFileActivityLocalActivityOptions) Build(ctx workflow.Context) (wor
 	return workflow.WithLocalActivityOptions(ctx, opts), nil
 }
 
-// Local specifies a custom cloud.v1.workflow.AgentCommandApi.WriteFileActivity implementation
+// Local specifies a custom cloud.v1.workflow.AgentCommandService.WriteFileActivity implementation
 func (o *WriteFileActivityLocalActivityOptions) Local(fn func(context.Context, *common.File) error) *WriteFileActivityLocalActivityOptions {
 	o.fn = fn
 	return o

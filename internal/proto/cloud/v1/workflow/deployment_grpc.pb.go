@@ -21,24 +21,24 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DeploymentApi_ProcessDeploymentWorkflow_FullMethodName        = "/cloud.v1.workflow.DeploymentApi/ProcessDeploymentWorkflow"
-	DeploymentApi_AcquireNetworkActivity_FullMethodName           = "/cloud.v1.workflow.DeploymentApi/AcquireNetworkActivity"
-	DeploymentApi_CalculateQuotasWorkflow_FullMethodName          = "/cloud.v1.workflow.DeploymentApi/CalculateQuotasWorkflow"
-	DeploymentApi_AcquireQuotasActivity_FullMethodName            = "/cloud.v1.workflow.DeploymentApi/AcquireQuotasActivity"
-	DeploymentApi_RenderDockerInputWorkflow_FullMethodName        = "/cloud.v1.workflow.DeploymentApi/RenderDockerInputWorkflow"
-	DeploymentApi_DockerPullActivity_FullMethodName               = "/cloud.v1.workflow.DeploymentApi/DockerPullActivity"
-	DeploymentApi_DockerUpActivity_FullMethodName                 = "/cloud.v1.workflow.DeploymentApi/DockerUpActivity"
-	DeploymentApi_DockerDownActivity_FullMethodName               = "/cloud.v1.workflow.DeploymentApi/DockerDownActivity"
-	DeploymentApi_RenderTerraformVariablesWorkflow_FullMethodName = "/cloud.v1.workflow.DeploymentApi/RenderTerraformVariablesWorkflow"
-	DeploymentApi_TerraformPlanActivity_FullMethodName            = "/cloud.v1.workflow.DeploymentApi/TerraformPlanActivity"
-	DeploymentApi_TerraformApplyActivity_FullMethodName           = "/cloud.v1.workflow.DeploymentApi/TerraformApplyActivity"
-	DeploymentApi_TerraformDestroyActivity_FullMethodName         = "/cloud.v1.workflow.DeploymentApi/TerraformDestroyActivity"
+	DeploymentService_ProcessDeploymentWorkflow_FullMethodName        = "/cloud.v1.workflow.DeploymentService/ProcessDeploymentWorkflow"
+	DeploymentService_AcquireNetworkActivity_FullMethodName           = "/cloud.v1.workflow.DeploymentService/AcquireNetworkActivity"
+	DeploymentService_CalculateQuotasWorkflow_FullMethodName          = "/cloud.v1.workflow.DeploymentService/CalculateQuotasWorkflow"
+	DeploymentService_AcquireQuotasActivity_FullMethodName            = "/cloud.v1.workflow.DeploymentService/AcquireQuotasActivity"
+	DeploymentService_RenderDockerInputWorkflow_FullMethodName        = "/cloud.v1.workflow.DeploymentService/RenderDockerInputWorkflow"
+	DeploymentService_DockerPullActivity_FullMethodName               = "/cloud.v1.workflow.DeploymentService/DockerPullActivity"
+	DeploymentService_DockerUpActivity_FullMethodName                 = "/cloud.v1.workflow.DeploymentService/DockerUpActivity"
+	DeploymentService_DockerDownActivity_FullMethodName               = "/cloud.v1.workflow.DeploymentService/DockerDownActivity"
+	DeploymentService_RenderTerraformVariablesWorkflow_FullMethodName = "/cloud.v1.workflow.DeploymentService/RenderTerraformVariablesWorkflow"
+	DeploymentService_TerraformPlanActivity_FullMethodName            = "/cloud.v1.workflow.DeploymentService/TerraformPlanActivity"
+	DeploymentService_TerraformApplyActivity_FullMethodName           = "/cloud.v1.workflow.DeploymentService/TerraformApplyActivity"
+	DeploymentService_TerraformDestroyActivity_FullMethodName         = "/cloud.v1.workflow.DeploymentService/TerraformDestroyActivity"
 )
 
-// DeploymentApiClient is the client API for DeploymentApi service.
+// DeploymentServiceClient is the client API for DeploymentService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type DeploymentApiClient interface {
+type DeploymentServiceClient interface {
 	ProcessDeploymentWorkflow(ctx context.Context, in *ProcessDeploymentWorkflowRequest, opts ...grpc.CallOption) (*ProcessDeploymentWorkflowResponse, error)
 	AcquireNetworkActivity(ctx context.Context, in *AcquireNetworkActivityRequest, opts ...grpc.CallOption) (*AcquireNetworkActivityResponse, error)
 	CalculateQuotasWorkflow(ctx context.Context, in *CalculateQuotasWorkflowRequest, opts ...grpc.CallOption) (*CalculateQuotasWorkflowResponse, error)
@@ -53,138 +53,138 @@ type DeploymentApiClient interface {
 	TerraformDestroyActivity(ctx context.Context, in *deployment.Terraform_Input, opts ...grpc.CallOption) (*deployment.Terraform_Output, error)
 }
 
-type deploymentApiClient struct {
+type deploymentServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewDeploymentApiClient(cc grpc.ClientConnInterface) DeploymentApiClient {
-	return &deploymentApiClient{cc}
+func NewDeploymentServiceClient(cc grpc.ClientConnInterface) DeploymentServiceClient {
+	return &deploymentServiceClient{cc}
 }
 
-func (c *deploymentApiClient) ProcessDeploymentWorkflow(ctx context.Context, in *ProcessDeploymentWorkflowRequest, opts ...grpc.CallOption) (*ProcessDeploymentWorkflowResponse, error) {
+func (c *deploymentServiceClient) ProcessDeploymentWorkflow(ctx context.Context, in *ProcessDeploymentWorkflowRequest, opts ...grpc.CallOption) (*ProcessDeploymentWorkflowResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ProcessDeploymentWorkflowResponse)
-	err := c.cc.Invoke(ctx, DeploymentApi_ProcessDeploymentWorkflow_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DeploymentService_ProcessDeploymentWorkflow_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *deploymentApiClient) AcquireNetworkActivity(ctx context.Context, in *AcquireNetworkActivityRequest, opts ...grpc.CallOption) (*AcquireNetworkActivityResponse, error) {
+func (c *deploymentServiceClient) AcquireNetworkActivity(ctx context.Context, in *AcquireNetworkActivityRequest, opts ...grpc.CallOption) (*AcquireNetworkActivityResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AcquireNetworkActivityResponse)
-	err := c.cc.Invoke(ctx, DeploymentApi_AcquireNetworkActivity_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DeploymentService_AcquireNetworkActivity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *deploymentApiClient) CalculateQuotasWorkflow(ctx context.Context, in *CalculateQuotasWorkflowRequest, opts ...grpc.CallOption) (*CalculateQuotasWorkflowResponse, error) {
+func (c *deploymentServiceClient) CalculateQuotasWorkflow(ctx context.Context, in *CalculateQuotasWorkflowRequest, opts ...grpc.CallOption) (*CalculateQuotasWorkflowResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CalculateQuotasWorkflowResponse)
-	err := c.cc.Invoke(ctx, DeploymentApi_CalculateQuotasWorkflow_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DeploymentService_CalculateQuotasWorkflow_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *deploymentApiClient) AcquireQuotasActivity(ctx context.Context, in *AcquireQuotasActivityRequest, opts ...grpc.CallOption) (*AcquireQuotasActivityResponse, error) {
+func (c *deploymentServiceClient) AcquireQuotasActivity(ctx context.Context, in *AcquireQuotasActivityRequest, opts ...grpc.CallOption) (*AcquireQuotasActivityResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AcquireQuotasActivityResponse)
-	err := c.cc.Invoke(ctx, DeploymentApi_AcquireQuotasActivity_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DeploymentService_AcquireQuotasActivity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *deploymentApiClient) RenderDockerInputWorkflow(ctx context.Context, in *topology.Topology, opts ...grpc.CallOption) (*deployment.Docker_Input, error) {
+func (c *deploymentServiceClient) RenderDockerInputWorkflow(ctx context.Context, in *topology.Topology, opts ...grpc.CallOption) (*deployment.Docker_Input, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(deployment.Docker_Input)
-	err := c.cc.Invoke(ctx, DeploymentApi_RenderDockerInputWorkflow_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DeploymentService_RenderDockerInputWorkflow_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *deploymentApiClient) DockerPullActivity(ctx context.Context, in *deployment.Docker_Input, opts ...grpc.CallOption) (*deployment.Docker_Output, error) {
+func (c *deploymentServiceClient) DockerPullActivity(ctx context.Context, in *deployment.Docker_Input, opts ...grpc.CallOption) (*deployment.Docker_Output, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(deployment.Docker_Output)
-	err := c.cc.Invoke(ctx, DeploymentApi_DockerPullActivity_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DeploymentService_DockerPullActivity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *deploymentApiClient) DockerUpActivity(ctx context.Context, in *deployment.Docker_Input, opts ...grpc.CallOption) (*deployment.Docker_Output, error) {
+func (c *deploymentServiceClient) DockerUpActivity(ctx context.Context, in *deployment.Docker_Input, opts ...grpc.CallOption) (*deployment.Docker_Output, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(deployment.Docker_Output)
-	err := c.cc.Invoke(ctx, DeploymentApi_DockerUpActivity_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DeploymentService_DockerUpActivity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *deploymentApiClient) DockerDownActivity(ctx context.Context, in *deployment.Docker_Input, opts ...grpc.CallOption) (*deployment.Docker_Output, error) {
+func (c *deploymentServiceClient) DockerDownActivity(ctx context.Context, in *deployment.Docker_Input, opts ...grpc.CallOption) (*deployment.Docker_Output, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(deployment.Docker_Output)
-	err := c.cc.Invoke(ctx, DeploymentApi_DockerDownActivity_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DeploymentService_DockerDownActivity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *deploymentApiClient) RenderTerraformVariablesWorkflow(ctx context.Context, in *topology.Topology, opts ...grpc.CallOption) (*deployment.Terraform_Input, error) {
+func (c *deploymentServiceClient) RenderTerraformVariablesWorkflow(ctx context.Context, in *topology.Topology, opts ...grpc.CallOption) (*deployment.Terraform_Input, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(deployment.Terraform_Input)
-	err := c.cc.Invoke(ctx, DeploymentApi_RenderTerraformVariablesWorkflow_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DeploymentService_RenderTerraformVariablesWorkflow_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *deploymentApiClient) TerraformPlanActivity(ctx context.Context, in *deployment.Terraform_Input, opts ...grpc.CallOption) (*deployment.Terraform_Output, error) {
+func (c *deploymentServiceClient) TerraformPlanActivity(ctx context.Context, in *deployment.Terraform_Input, opts ...grpc.CallOption) (*deployment.Terraform_Output, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(deployment.Terraform_Output)
-	err := c.cc.Invoke(ctx, DeploymentApi_TerraformPlanActivity_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DeploymentService_TerraformPlanActivity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *deploymentApiClient) TerraformApplyActivity(ctx context.Context, in *deployment.Terraform_Input, opts ...grpc.CallOption) (*deployment.Terraform_Output, error) {
+func (c *deploymentServiceClient) TerraformApplyActivity(ctx context.Context, in *deployment.Terraform_Input, opts ...grpc.CallOption) (*deployment.Terraform_Output, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(deployment.Terraform_Output)
-	err := c.cc.Invoke(ctx, DeploymentApi_TerraformApplyActivity_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DeploymentService_TerraformApplyActivity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *deploymentApiClient) TerraformDestroyActivity(ctx context.Context, in *deployment.Terraform_Input, opts ...grpc.CallOption) (*deployment.Terraform_Output, error) {
+func (c *deploymentServiceClient) TerraformDestroyActivity(ctx context.Context, in *deployment.Terraform_Input, opts ...grpc.CallOption) (*deployment.Terraform_Output, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(deployment.Terraform_Output)
-	err := c.cc.Invoke(ctx, DeploymentApi_TerraformDestroyActivity_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DeploymentService_TerraformDestroyActivity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// DeploymentApiServer is the server API for DeploymentApi service.
-// All implementations must embed UnimplementedDeploymentApiServer
+// DeploymentServiceServer is the server API for DeploymentService service.
+// All implementations must embed UnimplementedDeploymentServiceServer
 // for forward compatibility.
-type DeploymentApiServer interface {
+type DeploymentServiceServer interface {
 	ProcessDeploymentWorkflow(context.Context, *ProcessDeploymentWorkflowRequest) (*ProcessDeploymentWorkflowResponse, error)
 	AcquireNetworkActivity(context.Context, *AcquireNetworkActivityRequest) (*AcquireNetworkActivityResponse, error)
 	CalculateQuotasWorkflow(context.Context, *CalculateQuotasWorkflowRequest) (*CalculateQuotasWorkflowResponse, error)
@@ -197,343 +197,343 @@ type DeploymentApiServer interface {
 	TerraformPlanActivity(context.Context, *deployment.Terraform_Input) (*deployment.Terraform_Output, error)
 	TerraformApplyActivity(context.Context, *deployment.Terraform_Input) (*deployment.Terraform_Output, error)
 	TerraformDestroyActivity(context.Context, *deployment.Terraform_Input) (*deployment.Terraform_Output, error)
-	mustEmbedUnimplementedDeploymentApiServer()
+	mustEmbedUnimplementedDeploymentServiceServer()
 }
 
-// UnimplementedDeploymentApiServer must be embedded to have
+// UnimplementedDeploymentServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedDeploymentApiServer struct{}
+type UnimplementedDeploymentServiceServer struct{}
 
-func (UnimplementedDeploymentApiServer) ProcessDeploymentWorkflow(context.Context, *ProcessDeploymentWorkflowRequest) (*ProcessDeploymentWorkflowResponse, error) {
+func (UnimplementedDeploymentServiceServer) ProcessDeploymentWorkflow(context.Context, *ProcessDeploymentWorkflowRequest) (*ProcessDeploymentWorkflowResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ProcessDeploymentWorkflow not implemented")
 }
-func (UnimplementedDeploymentApiServer) AcquireNetworkActivity(context.Context, *AcquireNetworkActivityRequest) (*AcquireNetworkActivityResponse, error) {
+func (UnimplementedDeploymentServiceServer) AcquireNetworkActivity(context.Context, *AcquireNetworkActivityRequest) (*AcquireNetworkActivityResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AcquireNetworkActivity not implemented")
 }
-func (UnimplementedDeploymentApiServer) CalculateQuotasWorkflow(context.Context, *CalculateQuotasWorkflowRequest) (*CalculateQuotasWorkflowResponse, error) {
+func (UnimplementedDeploymentServiceServer) CalculateQuotasWorkflow(context.Context, *CalculateQuotasWorkflowRequest) (*CalculateQuotasWorkflowResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CalculateQuotasWorkflow not implemented")
 }
-func (UnimplementedDeploymentApiServer) AcquireQuotasActivity(context.Context, *AcquireQuotasActivityRequest) (*AcquireQuotasActivityResponse, error) {
+func (UnimplementedDeploymentServiceServer) AcquireQuotasActivity(context.Context, *AcquireQuotasActivityRequest) (*AcquireQuotasActivityResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AcquireQuotasActivity not implemented")
 }
-func (UnimplementedDeploymentApiServer) RenderDockerInputWorkflow(context.Context, *topology.Topology) (*deployment.Docker_Input, error) {
+func (UnimplementedDeploymentServiceServer) RenderDockerInputWorkflow(context.Context, *topology.Topology) (*deployment.Docker_Input, error) {
 	return nil, status.Error(codes.Unimplemented, "method RenderDockerInputWorkflow not implemented")
 }
-func (UnimplementedDeploymentApiServer) DockerPullActivity(context.Context, *deployment.Docker_Input) (*deployment.Docker_Output, error) {
+func (UnimplementedDeploymentServiceServer) DockerPullActivity(context.Context, *deployment.Docker_Input) (*deployment.Docker_Output, error) {
 	return nil, status.Error(codes.Unimplemented, "method DockerPullActivity not implemented")
 }
-func (UnimplementedDeploymentApiServer) DockerUpActivity(context.Context, *deployment.Docker_Input) (*deployment.Docker_Output, error) {
+func (UnimplementedDeploymentServiceServer) DockerUpActivity(context.Context, *deployment.Docker_Input) (*deployment.Docker_Output, error) {
 	return nil, status.Error(codes.Unimplemented, "method DockerUpActivity not implemented")
 }
-func (UnimplementedDeploymentApiServer) DockerDownActivity(context.Context, *deployment.Docker_Input) (*deployment.Docker_Output, error) {
+func (UnimplementedDeploymentServiceServer) DockerDownActivity(context.Context, *deployment.Docker_Input) (*deployment.Docker_Output, error) {
 	return nil, status.Error(codes.Unimplemented, "method DockerDownActivity not implemented")
 }
-func (UnimplementedDeploymentApiServer) RenderTerraformVariablesWorkflow(context.Context, *topology.Topology) (*deployment.Terraform_Input, error) {
+func (UnimplementedDeploymentServiceServer) RenderTerraformVariablesWorkflow(context.Context, *topology.Topology) (*deployment.Terraform_Input, error) {
 	return nil, status.Error(codes.Unimplemented, "method RenderTerraformVariablesWorkflow not implemented")
 }
-func (UnimplementedDeploymentApiServer) TerraformPlanActivity(context.Context, *deployment.Terraform_Input) (*deployment.Terraform_Output, error) {
+func (UnimplementedDeploymentServiceServer) TerraformPlanActivity(context.Context, *deployment.Terraform_Input) (*deployment.Terraform_Output, error) {
 	return nil, status.Error(codes.Unimplemented, "method TerraformPlanActivity not implemented")
 }
-func (UnimplementedDeploymentApiServer) TerraformApplyActivity(context.Context, *deployment.Terraform_Input) (*deployment.Terraform_Output, error) {
+func (UnimplementedDeploymentServiceServer) TerraformApplyActivity(context.Context, *deployment.Terraform_Input) (*deployment.Terraform_Output, error) {
 	return nil, status.Error(codes.Unimplemented, "method TerraformApplyActivity not implemented")
 }
-func (UnimplementedDeploymentApiServer) TerraformDestroyActivity(context.Context, *deployment.Terraform_Input) (*deployment.Terraform_Output, error) {
+func (UnimplementedDeploymentServiceServer) TerraformDestroyActivity(context.Context, *deployment.Terraform_Input) (*deployment.Terraform_Output, error) {
 	return nil, status.Error(codes.Unimplemented, "method TerraformDestroyActivity not implemented")
 }
-func (UnimplementedDeploymentApiServer) mustEmbedUnimplementedDeploymentApiServer() {}
-func (UnimplementedDeploymentApiServer) testEmbeddedByValue()                       {}
+func (UnimplementedDeploymentServiceServer) mustEmbedUnimplementedDeploymentServiceServer() {}
+func (UnimplementedDeploymentServiceServer) testEmbeddedByValue()                           {}
 
-// UnsafeDeploymentApiServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to DeploymentApiServer will
+// UnsafeDeploymentServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to DeploymentServiceServer will
 // result in compilation errors.
-type UnsafeDeploymentApiServer interface {
-	mustEmbedUnimplementedDeploymentApiServer()
+type UnsafeDeploymentServiceServer interface {
+	mustEmbedUnimplementedDeploymentServiceServer()
 }
 
-func RegisterDeploymentApiServer(s grpc.ServiceRegistrar, srv DeploymentApiServer) {
-	// If the following call panics, it indicates UnimplementedDeploymentApiServer was
+func RegisterDeploymentServiceServer(s grpc.ServiceRegistrar, srv DeploymentServiceServer) {
+	// If the following call panics, it indicates UnimplementedDeploymentServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&DeploymentApi_ServiceDesc, srv)
+	s.RegisterService(&DeploymentService_ServiceDesc, srv)
 }
 
-func _DeploymentApi_ProcessDeploymentWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DeploymentService_ProcessDeploymentWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ProcessDeploymentWorkflowRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeploymentApiServer).ProcessDeploymentWorkflow(ctx, in)
+		return srv.(DeploymentServiceServer).ProcessDeploymentWorkflow(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeploymentApi_ProcessDeploymentWorkflow_FullMethodName,
+		FullMethod: DeploymentService_ProcessDeploymentWorkflow_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeploymentApiServer).ProcessDeploymentWorkflow(ctx, req.(*ProcessDeploymentWorkflowRequest))
+		return srv.(DeploymentServiceServer).ProcessDeploymentWorkflow(ctx, req.(*ProcessDeploymentWorkflowRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeploymentApi_AcquireNetworkActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DeploymentService_AcquireNetworkActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AcquireNetworkActivityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeploymentApiServer).AcquireNetworkActivity(ctx, in)
+		return srv.(DeploymentServiceServer).AcquireNetworkActivity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeploymentApi_AcquireNetworkActivity_FullMethodName,
+		FullMethod: DeploymentService_AcquireNetworkActivity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeploymentApiServer).AcquireNetworkActivity(ctx, req.(*AcquireNetworkActivityRequest))
+		return srv.(DeploymentServiceServer).AcquireNetworkActivity(ctx, req.(*AcquireNetworkActivityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeploymentApi_CalculateQuotasWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DeploymentService_CalculateQuotasWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CalculateQuotasWorkflowRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeploymentApiServer).CalculateQuotasWorkflow(ctx, in)
+		return srv.(DeploymentServiceServer).CalculateQuotasWorkflow(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeploymentApi_CalculateQuotasWorkflow_FullMethodName,
+		FullMethod: DeploymentService_CalculateQuotasWorkflow_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeploymentApiServer).CalculateQuotasWorkflow(ctx, req.(*CalculateQuotasWorkflowRequest))
+		return srv.(DeploymentServiceServer).CalculateQuotasWorkflow(ctx, req.(*CalculateQuotasWorkflowRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeploymentApi_AcquireQuotasActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DeploymentService_AcquireQuotasActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AcquireQuotasActivityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeploymentApiServer).AcquireQuotasActivity(ctx, in)
+		return srv.(DeploymentServiceServer).AcquireQuotasActivity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeploymentApi_AcquireQuotasActivity_FullMethodName,
+		FullMethod: DeploymentService_AcquireQuotasActivity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeploymentApiServer).AcquireQuotasActivity(ctx, req.(*AcquireQuotasActivityRequest))
+		return srv.(DeploymentServiceServer).AcquireQuotasActivity(ctx, req.(*AcquireQuotasActivityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeploymentApi_RenderDockerInputWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DeploymentService_RenderDockerInputWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(topology.Topology)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeploymentApiServer).RenderDockerInputWorkflow(ctx, in)
+		return srv.(DeploymentServiceServer).RenderDockerInputWorkflow(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeploymentApi_RenderDockerInputWorkflow_FullMethodName,
+		FullMethod: DeploymentService_RenderDockerInputWorkflow_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeploymentApiServer).RenderDockerInputWorkflow(ctx, req.(*topology.Topology))
+		return srv.(DeploymentServiceServer).RenderDockerInputWorkflow(ctx, req.(*topology.Topology))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeploymentApi_DockerPullActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DeploymentService_DockerPullActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(deployment.Docker_Input)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeploymentApiServer).DockerPullActivity(ctx, in)
+		return srv.(DeploymentServiceServer).DockerPullActivity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeploymentApi_DockerPullActivity_FullMethodName,
+		FullMethod: DeploymentService_DockerPullActivity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeploymentApiServer).DockerPullActivity(ctx, req.(*deployment.Docker_Input))
+		return srv.(DeploymentServiceServer).DockerPullActivity(ctx, req.(*deployment.Docker_Input))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeploymentApi_DockerUpActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DeploymentService_DockerUpActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(deployment.Docker_Input)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeploymentApiServer).DockerUpActivity(ctx, in)
+		return srv.(DeploymentServiceServer).DockerUpActivity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeploymentApi_DockerUpActivity_FullMethodName,
+		FullMethod: DeploymentService_DockerUpActivity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeploymentApiServer).DockerUpActivity(ctx, req.(*deployment.Docker_Input))
+		return srv.(DeploymentServiceServer).DockerUpActivity(ctx, req.(*deployment.Docker_Input))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeploymentApi_DockerDownActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DeploymentService_DockerDownActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(deployment.Docker_Input)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeploymentApiServer).DockerDownActivity(ctx, in)
+		return srv.(DeploymentServiceServer).DockerDownActivity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeploymentApi_DockerDownActivity_FullMethodName,
+		FullMethod: DeploymentService_DockerDownActivity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeploymentApiServer).DockerDownActivity(ctx, req.(*deployment.Docker_Input))
+		return srv.(DeploymentServiceServer).DockerDownActivity(ctx, req.(*deployment.Docker_Input))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeploymentApi_RenderTerraformVariablesWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DeploymentService_RenderTerraformVariablesWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(topology.Topology)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeploymentApiServer).RenderTerraformVariablesWorkflow(ctx, in)
+		return srv.(DeploymentServiceServer).RenderTerraformVariablesWorkflow(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeploymentApi_RenderTerraformVariablesWorkflow_FullMethodName,
+		FullMethod: DeploymentService_RenderTerraformVariablesWorkflow_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeploymentApiServer).RenderTerraformVariablesWorkflow(ctx, req.(*topology.Topology))
+		return srv.(DeploymentServiceServer).RenderTerraformVariablesWorkflow(ctx, req.(*topology.Topology))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeploymentApi_TerraformPlanActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DeploymentService_TerraformPlanActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(deployment.Terraform_Input)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeploymentApiServer).TerraformPlanActivity(ctx, in)
+		return srv.(DeploymentServiceServer).TerraformPlanActivity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeploymentApi_TerraformPlanActivity_FullMethodName,
+		FullMethod: DeploymentService_TerraformPlanActivity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeploymentApiServer).TerraformPlanActivity(ctx, req.(*deployment.Terraform_Input))
+		return srv.(DeploymentServiceServer).TerraformPlanActivity(ctx, req.(*deployment.Terraform_Input))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeploymentApi_TerraformApplyActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DeploymentService_TerraformApplyActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(deployment.Terraform_Input)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeploymentApiServer).TerraformApplyActivity(ctx, in)
+		return srv.(DeploymentServiceServer).TerraformApplyActivity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeploymentApi_TerraformApplyActivity_FullMethodName,
+		FullMethod: DeploymentService_TerraformApplyActivity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeploymentApiServer).TerraformApplyActivity(ctx, req.(*deployment.Terraform_Input))
+		return srv.(DeploymentServiceServer).TerraformApplyActivity(ctx, req.(*deployment.Terraform_Input))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeploymentApi_TerraformDestroyActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DeploymentService_TerraformDestroyActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(deployment.Terraform_Input)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeploymentApiServer).TerraformDestroyActivity(ctx, in)
+		return srv.(DeploymentServiceServer).TerraformDestroyActivity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeploymentApi_TerraformDestroyActivity_FullMethodName,
+		FullMethod: DeploymentService_TerraformDestroyActivity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeploymentApiServer).TerraformDestroyActivity(ctx, req.(*deployment.Terraform_Input))
+		return srv.(DeploymentServiceServer).TerraformDestroyActivity(ctx, req.(*deployment.Terraform_Input))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// DeploymentApi_ServiceDesc is the grpc.ServiceDesc for DeploymentApi service.
+// DeploymentService_ServiceDesc is the grpc.ServiceDesc for DeploymentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var DeploymentApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "cloud.v1.workflow.DeploymentApi",
-	HandlerType: (*DeploymentApiServer)(nil),
+var DeploymentService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "cloud.v1.workflow.DeploymentService",
+	HandlerType: (*DeploymentServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "ProcessDeploymentWorkflow",
-			Handler:    _DeploymentApi_ProcessDeploymentWorkflow_Handler,
+			Handler:    _DeploymentService_ProcessDeploymentWorkflow_Handler,
 		},
 		{
 			MethodName: "AcquireNetworkActivity",
-			Handler:    _DeploymentApi_AcquireNetworkActivity_Handler,
+			Handler:    _DeploymentService_AcquireNetworkActivity_Handler,
 		},
 		{
 			MethodName: "CalculateQuotasWorkflow",
-			Handler:    _DeploymentApi_CalculateQuotasWorkflow_Handler,
+			Handler:    _DeploymentService_CalculateQuotasWorkflow_Handler,
 		},
 		{
 			MethodName: "AcquireQuotasActivity",
-			Handler:    _DeploymentApi_AcquireQuotasActivity_Handler,
+			Handler:    _DeploymentService_AcquireQuotasActivity_Handler,
 		},
 		{
 			MethodName: "RenderDockerInputWorkflow",
-			Handler:    _DeploymentApi_RenderDockerInputWorkflow_Handler,
+			Handler:    _DeploymentService_RenderDockerInputWorkflow_Handler,
 		},
 		{
 			MethodName: "DockerPullActivity",
-			Handler:    _DeploymentApi_DockerPullActivity_Handler,
+			Handler:    _DeploymentService_DockerPullActivity_Handler,
 		},
 		{
 			MethodName: "DockerUpActivity",
-			Handler:    _DeploymentApi_DockerUpActivity_Handler,
+			Handler:    _DeploymentService_DockerUpActivity_Handler,
 		},
 		{
 			MethodName: "DockerDownActivity",
-			Handler:    _DeploymentApi_DockerDownActivity_Handler,
+			Handler:    _DeploymentService_DockerDownActivity_Handler,
 		},
 		{
 			MethodName: "RenderTerraformVariablesWorkflow",
-			Handler:    _DeploymentApi_RenderTerraformVariablesWorkflow_Handler,
+			Handler:    _DeploymentService_RenderTerraformVariablesWorkflow_Handler,
 		},
 		{
 			MethodName: "TerraformPlanActivity",
-			Handler:    _DeploymentApi_TerraformPlanActivity_Handler,
+			Handler:    _DeploymentService_TerraformPlanActivity_Handler,
 		},
 		{
 			MethodName: "TerraformApplyActivity",
-			Handler:    _DeploymentApi_TerraformApplyActivity_Handler,
+			Handler:    _DeploymentService_TerraformApplyActivity_Handler,
 		},
 		{
 			MethodName: "TerraformDestroyActivity",
-			Handler:    _DeploymentApi_TerraformDestroyActivity_Handler,
+			Handler:    _DeploymentService_TerraformDestroyActivity_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -1,0 +1,124 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/common/entity.proto";
+import "cloud/v1/common/status.proto";
+import "cloud/v1/common/trigger.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/permission.proto";
+import "cloud/v1/models/suite.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    suite_run.proto is the tenant-scoped API over models.SuiteRunRecord — the suite
+    EXECUTION (started via SuiteAPI.StartSuite). Read/list/cancel/delete; the child
+    runs are listed via TestRunAPI.ListTestRuns(suite_run_id=...). Gated by
+    RESOURCE_SUITE_RUN.
+ */
+
+message GetSuiteRunRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message GetSuiteRunResponse {
+    models.SuiteRunRecord suite_run = 1 [(validate.rules).message.required = true];
+}
+
+message ListSuiteRunsRequest {
+    /*
+        Sort orders by a common Entity column OR a denormalized Summary column.
+     */
+    message Sort {
+        enum Kind {
+            KIND_UNSPECIFIED = 0;
+            KIND_STATUS = 1;
+            KIND_PROVIDER = 2;
+            KIND_PROGRESS = 3;
+            KIND_DURATION = 4;
+            KIND_STARTED_AT = 5;
+            KIND_FINISHED_AT = 6;
+            KIND_TOTAL = 7;        // total child runs
+        }
+        oneof by {
+            common.EntitySortField entity = 1;
+            Kind kind = 2;
+        }
+        bool desc = 3;
+    }
+
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    common.EntityFilter filter = 2;
+
+    // --- facet filters (all AND; empty / unset = not applied) ---
+    repeated common.Status statuses = 3;
+    repeated deployment.Provider providers = 4;
+    // Distinct database kinds exercised (matches Summary.db_kinds).
+    repeated domain.Database.Kind db_kinds = 5;
+    // Filter to runs of a single suite definition; empty = any.
+    string suite_id = 6 [(validate.rules).string.max_len = 64];
+    // Filter by how the run was triggered (manual / cron / api); empty = any.
+    repeated common.Trigger triggers = 17;
+    // Aggregate progress window [min,max], 0..100.
+    optional uint32 progress_min = 7 [(validate.rules).uint32.lte = 100];
+    optional uint32 progress_max = 8 [(validate.rules).uint32.lte = 100];
+    google.protobuf.Duration duration_min = 9;
+    google.protobuf.Duration duration_max = 10;
+    google.protobuf.Timestamp started_after = 11;
+    google.protobuf.Timestamp started_before = 12;
+    google.protobuf.Timestamp finished_after = 13;
+    google.protobuf.Timestamp finished_before = 14;
+
+    Sort sort = 15;
+    common.Page page = 16;
+}
+message ListSuiteRunsResponse {
+    repeated models.SuiteRunRecord suite_runs = 1;
+    string next_page_token = 2;
+}
+
+/*
+    CancelSuiteRun requests cancellation of the suite run and its children.
+    Idempotent: cancelling a finished/cancelled suite run is a no-op.
+ */
+message CancelSuiteRunRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message CancelSuiteRunResponse {
+    models.SuiteRunRecord suite_run = 1 [(validate.rules).message.required = true];
+}
+
+message DeleteSuiteRunRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message DeleteSuiteRunResponse {}
+
+service SuiteRunService {
+    rpc GetSuiteRun (GetSuiteRunRequest) returns (GetSuiteRunResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE_RUN, action: ACTION_READ}]};
+    }
+    rpc ListSuiteRuns (ListSuiteRunsRequest) returns (ListSuiteRunsResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE_RUN, action: ACTION_LIST}]};
+    }
+    rpc CancelSuiteRun (CancelSuiteRunRequest) returns (CancelSuiteRunResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE_RUN, action: ACTION_UPDATE}]};
+    }
+    /*
+        DeleteSuiteRun is idempotent: deleting an absent suite run is a no-op.
+     */
+    rpc DeleteSuiteRun (DeleteSuiteRunRequest) returns (DeleteSuiteRunResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE_RUN, action: ACTION_DELETE}]};
+    }
+}

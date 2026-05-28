@@ -38,10 +38,10 @@ import (
 	"time"
 )
 
-// DeploymentApiTaskQueue is the default task-queue for a cloud.v1.workflow.DeploymentApi worker
-var DeploymentApiTaskQueue = "stroppy-cloud"
+// DeploymentServiceTaskQueue is the default task-queue for a cloud.v1.workflow.DeploymentService worker
+var DeploymentServiceTaskQueue = "stroppy-cloud"
 
-// cloud.v1.workflow.DeploymentApi workflow names
+// cloud.v1.workflow.DeploymentService workflow names
 const (
 	CalculateQuotasWorkflowWorkflowName          = "CalculateQuotasWorkflow"
 	ProcessDeploymentWorkflowWorkflowName        = "ProcessDeploymentWorkflow"
@@ -49,20 +49,20 @@ const (
 	RenderTerraformVariablesWorkflowWorkflowName = "RenderTerraformVariablesWorkflow"
 )
 
-// cloud.v1.workflow.DeploymentApi activity names
+// cloud.v1.workflow.DeploymentService activity names
 const (
-	AcquireNetworkActivityActivityName   = "cloud.v1.workflow.DeploymentApi.AcquireNetworkActivity"
-	AcquireQuotasActivityActivityName    = "cloud.v1.workflow.DeploymentApi.AcquireQuotasActivity"
-	DockerDownActivityActivityName       = "cloud.v1.workflow.DeploymentApi.DockerDownActivity"
-	DockerPullActivityActivityName       = "cloud.v1.workflow.DeploymentApi.DockerPullActivity"
-	DockerUpActivityActivityName         = "cloud.v1.workflow.DeploymentApi.DockerUpActivity"
-	TerraformApplyActivityActivityName   = "cloud.v1.workflow.DeploymentApi.TerraformApplyActivity"
-	TerraformDestroyActivityActivityName = "cloud.v1.workflow.DeploymentApi.TerraformDestroyActivity"
-	TerraformPlanActivityActivityName    = "cloud.v1.workflow.DeploymentApi.TerraformPlanActivity"
+	AcquireNetworkActivityActivityName   = "cloud.v1.workflow.DeploymentService.AcquireNetworkActivity"
+	AcquireQuotasActivityActivityName    = "cloud.v1.workflow.DeploymentService.AcquireQuotasActivity"
+	DockerDownActivityActivityName       = "cloud.v1.workflow.DeploymentService.DockerDownActivity"
+	DockerPullActivityActivityName       = "cloud.v1.workflow.DeploymentService.DockerPullActivity"
+	DockerUpActivityActivityName         = "cloud.v1.workflow.DeploymentService.DockerUpActivity"
+	TerraformApplyActivityActivityName   = "cloud.v1.workflow.DeploymentService.TerraformApplyActivity"
+	TerraformDestroyActivityActivityName = "cloud.v1.workflow.DeploymentService.TerraformDestroyActivity"
+	TerraformPlanActivityActivityName    = "cloud.v1.workflow.DeploymentService.TerraformPlanActivity"
 )
 
-// DeploymentApiClient describes a client for a(n) cloud.v1.workflow.DeploymentApi worker
-type DeploymentApiClient interface {
+// DeploymentServiceClient describes a client for a(n) cloud.v1.workflow.DeploymentService worker
+type DeploymentServiceClient interface {
 	// CalculateQuotasWorkflow executes a(n) CalculateQuotasWorkflow workflow and blocks until error or response received
 	CalculateQuotasWorkflow(ctx context.Context, req *CalculateQuotasWorkflowRequest, opts ...*CalculateQuotasWorkflowOptions) (*CalculateQuotasWorkflowResponse, error)
 
@@ -106,57 +106,57 @@ type DeploymentApiClient interface {
 	TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error
 }
 
-// deploymentApiClient implements a temporal client for a cloud.v1.workflow.DeploymentApi service
-type deploymentApiClient struct {
+// deploymentServiceClient implements a temporal client for a cloud.v1.workflow.DeploymentService service
+type deploymentServiceClient struct {
 	client client.Client
 	log    *slog.Logger
 }
 
-// NewDeploymentApiClient initializes a new cloud.v1.workflow.DeploymentApi client
-func NewDeploymentApiClient(c client.Client, options ...*deploymentApiClientOptions) DeploymentApiClient {
-	var cfg *deploymentApiClientOptions
+// NewDeploymentServiceClient initializes a new cloud.v1.workflow.DeploymentService client
+func NewDeploymentServiceClient(c client.Client, options ...*deploymentServiceClientOptions) DeploymentServiceClient {
+	var cfg *deploymentServiceClientOptions
 	if len(options) > 0 {
 		cfg = options[0]
 	} else {
-		cfg = NewDeploymentApiClientOptions()
+		cfg = NewDeploymentServiceClientOptions()
 	}
-	return &deploymentApiClient{
+	return &deploymentServiceClient{
 		client: c,
 		log:    cfg.getLogger(),
 	}
 }
 
-// NewDeploymentApiClientWithOptions initializes a new DeploymentApi client with the given options
-func NewDeploymentApiClientWithOptions(c client.Client, opts client.Options, options ...*deploymentApiClientOptions) (DeploymentApiClient, error) {
+// NewDeploymentServiceClientWithOptions initializes a new DeploymentService client with the given options
+func NewDeploymentServiceClientWithOptions(c client.Client, opts client.Options, options ...*deploymentServiceClientOptions) (DeploymentServiceClient, error) {
 	var err error
 	c, err = client.NewClientFromExisting(c, opts)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing client with options: %w", err)
 	}
-	var cfg *deploymentApiClientOptions
+	var cfg *deploymentServiceClientOptions
 	if len(options) > 0 {
 		cfg = options[0]
 	} else {
-		cfg = NewDeploymentApiClientOptions()
+		cfg = NewDeploymentServiceClientOptions()
 	}
-	return &deploymentApiClient{
+	return &deploymentServiceClient{
 		client: c,
 		log:    cfg.getLogger(),
 	}, nil
 }
 
-// deploymentApiClientOptions describes optional runtime configuration for a DeploymentApiClient
-type deploymentApiClientOptions struct {
+// deploymentServiceClientOptions describes optional runtime configuration for a DeploymentServiceClient
+type deploymentServiceClientOptions struct {
 	log *slog.Logger
 }
 
-// NewDeploymentApiClientOptions initializes a new deploymentApiClientOptions value
-func NewDeploymentApiClientOptions() *deploymentApiClientOptions {
-	return &deploymentApiClientOptions{}
+// NewDeploymentServiceClientOptions initializes a new deploymentServiceClientOptions value
+func NewDeploymentServiceClientOptions() *deploymentServiceClientOptions {
+	return &deploymentServiceClientOptions{}
 }
 
 // WithLogger can be used to override the default logger
-func (opts *deploymentApiClientOptions) WithLogger(l *slog.Logger) *deploymentApiClientOptions {
+func (opts *deploymentServiceClientOptions) WithLogger(l *slog.Logger) *deploymentServiceClientOptions {
 	if l != nil {
 		opts.log = l
 	}
@@ -164,15 +164,15 @@ func (opts *deploymentApiClientOptions) WithLogger(l *slog.Logger) *deploymentAp
 }
 
 // getLogger returns the configured logger, or the default logger
-func (opts *deploymentApiClientOptions) getLogger() *slog.Logger {
+func (opts *deploymentServiceClientOptions) getLogger() *slog.Logger {
 	if opts != nil && opts.log != nil {
 		return opts.log
 	}
 	return slog.Default()
 }
 
-// cloud.v1.workflow.DeploymentApi.CalculateQuotasWorkflow executes a CalculateQuotasWorkflow workflow and blocks until error or response received
-func (c *deploymentApiClient) CalculateQuotasWorkflow(ctx context.Context, req *CalculateQuotasWorkflowRequest, options ...*CalculateQuotasWorkflowOptions) (*CalculateQuotasWorkflowResponse, error) {
+// cloud.v1.workflow.DeploymentService.CalculateQuotasWorkflow executes a CalculateQuotasWorkflow workflow and blocks until error or response received
+func (c *deploymentServiceClient) CalculateQuotasWorkflow(ctx context.Context, req *CalculateQuotasWorkflowRequest, options ...*CalculateQuotasWorkflowOptions) (*CalculateQuotasWorkflowResponse, error) {
 	run, err := c.CalculateQuotasWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -181,7 +181,7 @@ func (c *deploymentApiClient) CalculateQuotasWorkflow(ctx context.Context, req *
 }
 
 // CalculateQuotasWorkflowAsync starts a(n) CalculateQuotasWorkflow workflow and returns a handle to the workflow run
-func (c *deploymentApiClient) CalculateQuotasWorkflowAsync(ctx context.Context, req *CalculateQuotasWorkflowRequest, options ...*CalculateQuotasWorkflowOptions) (CalculateQuotasWorkflowRun, error) {
+func (c *deploymentServiceClient) CalculateQuotasWorkflowAsync(ctx context.Context, req *CalculateQuotasWorkflowRequest, options ...*CalculateQuotasWorkflowOptions) (CalculateQuotasWorkflowRun, error) {
 	var o *CalculateQuotasWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -206,15 +206,15 @@ func (c *deploymentApiClient) CalculateQuotasWorkflowAsync(ctx context.Context, 
 }
 
 // GetCalculateQuotasWorkflow fetches an existing CalculateQuotasWorkflow execution
-func (c *deploymentApiClient) GetCalculateQuotasWorkflow(ctx context.Context, workflowID string, runID string) CalculateQuotasWorkflowRun {
+func (c *deploymentServiceClient) GetCalculateQuotasWorkflow(ctx context.Context, workflowID string, runID string) CalculateQuotasWorkflowRun {
 	return &calculateQuotasWorkflowRun{
 		client: c,
 		run:    c.client.GetWorkflow(ctx, workflowID, runID),
 	}
 }
 
-// cloud.v1.workflow.DeploymentApi.ProcessDeploymentWorkflow executes a ProcessDeploymentWorkflow workflow and blocks until error or response received
-func (c *deploymentApiClient) ProcessDeploymentWorkflow(ctx context.Context, req *ProcessDeploymentWorkflowRequest, options ...*ProcessDeploymentWorkflowOptions) (*ProcessDeploymentWorkflowResponse, error) {
+// cloud.v1.workflow.DeploymentService.ProcessDeploymentWorkflow executes a ProcessDeploymentWorkflow workflow and blocks until error or response received
+func (c *deploymentServiceClient) ProcessDeploymentWorkflow(ctx context.Context, req *ProcessDeploymentWorkflowRequest, options ...*ProcessDeploymentWorkflowOptions) (*ProcessDeploymentWorkflowResponse, error) {
 	run, err := c.ProcessDeploymentWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -223,7 +223,7 @@ func (c *deploymentApiClient) ProcessDeploymentWorkflow(ctx context.Context, req
 }
 
 // ProcessDeploymentWorkflowAsync starts a(n) ProcessDeploymentWorkflow workflow and returns a handle to the workflow run
-func (c *deploymentApiClient) ProcessDeploymentWorkflowAsync(ctx context.Context, req *ProcessDeploymentWorkflowRequest, options ...*ProcessDeploymentWorkflowOptions) (ProcessDeploymentWorkflowRun, error) {
+func (c *deploymentServiceClient) ProcessDeploymentWorkflowAsync(ctx context.Context, req *ProcessDeploymentWorkflowRequest, options ...*ProcessDeploymentWorkflowOptions) (ProcessDeploymentWorkflowRun, error) {
 	var o *ProcessDeploymentWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -248,15 +248,15 @@ func (c *deploymentApiClient) ProcessDeploymentWorkflowAsync(ctx context.Context
 }
 
 // GetProcessDeploymentWorkflow fetches an existing ProcessDeploymentWorkflow execution
-func (c *deploymentApiClient) GetProcessDeploymentWorkflow(ctx context.Context, workflowID string, runID string) ProcessDeploymentWorkflowRun {
+func (c *deploymentServiceClient) GetProcessDeploymentWorkflow(ctx context.Context, workflowID string, runID string) ProcessDeploymentWorkflowRun {
 	return &processDeploymentWorkflowRun{
 		client: c,
 		run:    c.client.GetWorkflow(ctx, workflowID, runID),
 	}
 }
 
-// cloud.v1.workflow.DeploymentApi.RenderDockerInputWorkflow executes a RenderDockerInputWorkflow workflow and blocks until error or response received
-func (c *deploymentApiClient) RenderDockerInputWorkflow(ctx context.Context, req *topology.Topology, options ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error) {
+// cloud.v1.workflow.DeploymentService.RenderDockerInputWorkflow executes a RenderDockerInputWorkflow workflow and blocks until error or response received
+func (c *deploymentServiceClient) RenderDockerInputWorkflow(ctx context.Context, req *topology.Topology, options ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error) {
 	run, err := c.RenderDockerInputWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -265,7 +265,7 @@ func (c *deploymentApiClient) RenderDockerInputWorkflow(ctx context.Context, req
 }
 
 // RenderDockerInputWorkflowAsync starts a(n) RenderDockerInputWorkflow workflow and returns a handle to the workflow run
-func (c *deploymentApiClient) RenderDockerInputWorkflowAsync(ctx context.Context, req *topology.Topology, options ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error) {
+func (c *deploymentServiceClient) RenderDockerInputWorkflowAsync(ctx context.Context, req *topology.Topology, options ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error) {
 	var o *RenderDockerInputWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -290,15 +290,15 @@ func (c *deploymentApiClient) RenderDockerInputWorkflowAsync(ctx context.Context
 }
 
 // GetRenderDockerInputWorkflow fetches an existing RenderDockerInputWorkflow execution
-func (c *deploymentApiClient) GetRenderDockerInputWorkflow(ctx context.Context, workflowID string, runID string) RenderDockerInputWorkflowRun {
+func (c *deploymentServiceClient) GetRenderDockerInputWorkflow(ctx context.Context, workflowID string, runID string) RenderDockerInputWorkflowRun {
 	return &renderDockerInputWorkflowRun{
 		client: c,
 		run:    c.client.GetWorkflow(ctx, workflowID, runID),
 	}
 }
 
-// cloud.v1.workflow.DeploymentApi.RenderTerraformVariablesWorkflow executes a RenderTerraformVariablesWorkflow workflow and blocks until error or response received
-func (c *deploymentApiClient) RenderTerraformVariablesWorkflow(ctx context.Context, req *topology.Topology, options ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error) {
+// cloud.v1.workflow.DeploymentService.RenderTerraformVariablesWorkflow executes a RenderTerraformVariablesWorkflow workflow and blocks until error or response received
+func (c *deploymentServiceClient) RenderTerraformVariablesWorkflow(ctx context.Context, req *topology.Topology, options ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error) {
 	run, err := c.RenderTerraformVariablesWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -307,7 +307,7 @@ func (c *deploymentApiClient) RenderTerraformVariablesWorkflow(ctx context.Conte
 }
 
 // RenderTerraformVariablesWorkflowAsync starts a(n) RenderTerraformVariablesWorkflow workflow and returns a handle to the workflow run
-func (c *deploymentApiClient) RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *topology.Topology, options ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error) {
+func (c *deploymentServiceClient) RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *topology.Topology, options ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error) {
 	var o *RenderTerraformVariablesWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -332,7 +332,7 @@ func (c *deploymentApiClient) RenderTerraformVariablesWorkflowAsync(ctx context.
 }
 
 // GetRenderTerraformVariablesWorkflow fetches an existing RenderTerraformVariablesWorkflow execution
-func (c *deploymentApiClient) GetRenderTerraformVariablesWorkflow(ctx context.Context, workflowID string, runID string) RenderTerraformVariablesWorkflowRun {
+func (c *deploymentServiceClient) GetRenderTerraformVariablesWorkflow(ctx context.Context, workflowID string, runID string) RenderTerraformVariablesWorkflowRun {
 	return &renderTerraformVariablesWorkflowRun{
 		client: c,
 		run:    c.client.GetWorkflow(ctx, workflowID, runID),
@@ -340,12 +340,12 @@ func (c *deploymentApiClient) GetRenderTerraformVariablesWorkflow(ctx context.Co
 }
 
 // CancelWorkflow requests cancellation of an existing workflow execution
-func (c *deploymentApiClient) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
+func (c *deploymentServiceClient) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
 	return c.client.CancelWorkflow(ctx, workflowID, runID)
 }
 
 // TerminateWorkflow terminates an existing workflow execution
-func (c *deploymentApiClient) TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error {
+func (c *deploymentServiceClient) TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error {
 	return c.client.TerminateWorkflow(ctx, workflowID, runID, reason, details...)
 }
 
@@ -385,7 +385,7 @@ func (o *CalculateQuotasWorkflowOptions) Build(req protoreflect.Message) (client
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -512,7 +512,7 @@ type CalculateQuotasWorkflowRun interface {
 
 // calculateQuotasWorkflowRun provides an internal implementation of a(n) CalculateQuotasWorkflowRunRun
 type calculateQuotasWorkflowRun struct {
-	client *deploymentApiClient
+	client *deploymentServiceClient
 	run    client.WorkflowRun
 }
 
@@ -586,7 +586,7 @@ func (o *ProcessDeploymentWorkflowOptions) Build(req protoreflect.Message) (clie
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -711,7 +711,7 @@ type ProcessDeploymentWorkflowRun interface {
 
 // processDeploymentWorkflowRun provides an internal implementation of a(n) ProcessDeploymentWorkflowRunRun
 type processDeploymentWorkflowRun struct {
-	client *deploymentApiClient
+	client *deploymentServiceClient
 	run    client.WorkflowRun
 }
 
@@ -785,7 +785,7 @@ func (o *RenderDockerInputWorkflowOptions) Build(req protoreflect.Message) (clie
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -912,7 +912,7 @@ type RenderDockerInputWorkflowRun interface {
 
 // renderDockerInputWorkflowRun provides an internal implementation of a(n) RenderDockerInputWorkflowRunRun
 type renderDockerInputWorkflowRun struct {
-	client *deploymentApiClient
+	client *deploymentServiceClient
 	run    client.WorkflowRun
 }
 
@@ -986,7 +986,7 @@ func (o *RenderTerraformVariablesWorkflowOptions) Build(req protoreflect.Message
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -1113,7 +1113,7 @@ type RenderTerraformVariablesWorkflowRun interface {
 
 // renderTerraformVariablesWorkflowRun provides an internal implementation of a(n) RenderTerraformVariablesWorkflowRunRun
 type renderTerraformVariablesWorkflowRun struct {
-	client *deploymentApiClient
+	client *deploymentServiceClient
 	run    client.WorkflowRun
 }
 
@@ -1153,8 +1153,8 @@ func (r *renderTerraformVariablesWorkflowRun) Terminate(ctx context.Context, rea
 
 // Reference to generated workflow functions
 var (
-	// deploymentApiRegistrationMutex is a mutex for registering cloud.v1.workflow.DeploymentApi workflows
-	deploymentApiRegistrationMutex sync.Mutex
+	// deploymentServiceRegistrationMutex is a mutex for registering cloud.v1.workflow.DeploymentService workflows
+	deploymentServiceRegistrationMutex sync.Mutex
 	// CalculateQuotasWorkflowFunction implements a "CalculateQuotasWorkflow" workflow
 	CalculateQuotasWorkflowFunction func(workflow.Context, *CalculateQuotasWorkflowRequest) (*CalculateQuotasWorkflowResponse, error)
 	// ProcessDeploymentWorkflowFunction implements a "ProcessDeploymentWorkflow" workflow
@@ -1165,10 +1165,10 @@ var (
 	RenderTerraformVariablesWorkflowFunction func(workflow.Context, *topology.Topology) (*deployment.Terraform_Input, error)
 )
 
-// DeploymentApiWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
+// DeploymentServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
 type (
-	// DeploymentApiWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
-	DeploymentApiWorkflowFunctions interface {
+	// DeploymentServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
+	DeploymentServiceWorkflowFunctions interface {
 		// CalculateQuotasWorkflow executes a "CalculateQuotasWorkflow" workflow inline
 		CalculateQuotasWorkflow(workflow.Context, *CalculateQuotasWorkflowRequest) (*CalculateQuotasWorkflowResponse, error)
 		// ProcessDeploymentWorkflow executes a "ProcessDeploymentWorkflow" workflow inline
@@ -1178,48 +1178,48 @@ type (
 		// RenderTerraformVariablesWorkflow executes a "RenderTerraformVariablesWorkflow" workflow inline
 		RenderTerraformVariablesWorkflow(workflow.Context, *topology.Topology) (*deployment.Terraform_Input, error)
 	}
-	// deploymentApiWorkflowFunctions provides an internal DeploymentApiWorkflowFunctions implementation
-	deploymentApiWorkflowFunctions struct{}
+	// deploymentServiceWorkflowFunctions provides an internal DeploymentServiceWorkflowFunctions implementation
+	deploymentServiceWorkflowFunctions struct{}
 )
 
-func NewDeploymentApiWorkflowFunctions() DeploymentApiWorkflowFunctions {
-	return &deploymentApiWorkflowFunctions{}
+func NewDeploymentServiceWorkflowFunctions() DeploymentServiceWorkflowFunctions {
+	return &deploymentServiceWorkflowFunctions{}
 }
 
 // CalculateQuotasWorkflow executes a "CalculateQuotasWorkflow" workflow inline
-func (f *deploymentApiWorkflowFunctions) CalculateQuotasWorkflow(ctx workflow.Context, req *CalculateQuotasWorkflowRequest) (*CalculateQuotasWorkflowResponse, error) {
+func (f *deploymentServiceWorkflowFunctions) CalculateQuotasWorkflow(ctx workflow.Context, req *CalculateQuotasWorkflowRequest) (*CalculateQuotasWorkflowResponse, error) {
 	if CalculateQuotasWorkflowFunction == nil {
-		return nil, errors.New("CalculateQuotasWorkflow requires workflow registration via RegisterDeploymentApiWorkflows or RegisterCalculateQuotasWorkflowWorkflow")
+		return nil, errors.New("CalculateQuotasWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterCalculateQuotasWorkflowWorkflow")
 	}
 	return CalculateQuotasWorkflowFunction(ctx, req)
 }
 
 // ProcessDeploymentWorkflow executes a "ProcessDeploymentWorkflow" workflow inline
-func (f *deploymentApiWorkflowFunctions) ProcessDeploymentWorkflow(ctx workflow.Context, req *ProcessDeploymentWorkflowRequest) (*ProcessDeploymentWorkflowResponse, error) {
+func (f *deploymentServiceWorkflowFunctions) ProcessDeploymentWorkflow(ctx workflow.Context, req *ProcessDeploymentWorkflowRequest) (*ProcessDeploymentWorkflowResponse, error) {
 	if ProcessDeploymentWorkflowFunction == nil {
-		return nil, errors.New("ProcessDeploymentWorkflow requires workflow registration via RegisterDeploymentApiWorkflows or RegisterProcessDeploymentWorkflowWorkflow")
+		return nil, errors.New("ProcessDeploymentWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterProcessDeploymentWorkflowWorkflow")
 	}
 	return ProcessDeploymentWorkflowFunction(ctx, req)
 }
 
 // RenderDockerInputWorkflow executes a "RenderDockerInputWorkflow" workflow inline
-func (f *deploymentApiWorkflowFunctions) RenderDockerInputWorkflow(ctx workflow.Context, req *topology.Topology) (*deployment.Docker_Input, error) {
+func (f *deploymentServiceWorkflowFunctions) RenderDockerInputWorkflow(ctx workflow.Context, req *topology.Topology) (*deployment.Docker_Input, error) {
 	if RenderDockerInputWorkflowFunction == nil {
-		return nil, errors.New("RenderDockerInputWorkflow requires workflow registration via RegisterDeploymentApiWorkflows or RegisterRenderDockerInputWorkflowWorkflow")
+		return nil, errors.New("RenderDockerInputWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterRenderDockerInputWorkflowWorkflow")
 	}
 	return RenderDockerInputWorkflowFunction(ctx, req)
 }
 
 // RenderTerraformVariablesWorkflow executes a "RenderTerraformVariablesWorkflow" workflow inline
-func (f *deploymentApiWorkflowFunctions) RenderTerraformVariablesWorkflow(ctx workflow.Context, req *topology.Topology) (*deployment.Terraform_Input, error) {
+func (f *deploymentServiceWorkflowFunctions) RenderTerraformVariablesWorkflow(ctx workflow.Context, req *topology.Topology) (*deployment.Terraform_Input, error) {
 	if RenderTerraformVariablesWorkflowFunction == nil {
-		return nil, errors.New("RenderTerraformVariablesWorkflow requires workflow registration via RegisterDeploymentApiWorkflows or RegisterRenderTerraformVariablesWorkflowWorkflow")
+		return nil, errors.New("RenderTerraformVariablesWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterRenderTerraformVariablesWorkflowWorkflow")
 	}
 	return RenderTerraformVariablesWorkflowFunction(ctx, req)
 }
 
-// DeploymentApiWorkflows provides methods for initializing new cloud.v1.workflow.DeploymentApi workflow values
-type DeploymentApiWorkflows interface {
+// DeploymentServiceWorkflows provides methods for initializing new cloud.v1.workflow.DeploymentService workflow values
+type DeploymentServiceWorkflows interface {
 	// CalculateQuotasWorkflow initializes a new a(n) CalculateQuotasWorkflowWorkflow implementation
 	CalculateQuotasWorkflow(ctx workflow.Context, input *CalculateQuotasWorkflowWorkflowInput) (CalculateQuotasWorkflowWorkflow, error)
 
@@ -1233,18 +1233,18 @@ type DeploymentApiWorkflows interface {
 	RenderTerraformVariablesWorkflow(ctx workflow.Context, input *RenderTerraformVariablesWorkflowWorkflowInput) (RenderTerraformVariablesWorkflowWorkflow, error)
 }
 
-// RegisterDeploymentApiWorkflows registers cloud.v1.workflow.DeploymentApi workflows with the given worker
-func RegisterDeploymentApiWorkflows(r worker.WorkflowRegistry, workflows DeploymentApiWorkflows) {
+// RegisterDeploymentServiceWorkflows registers cloud.v1.workflow.DeploymentService workflows with the given worker
+func RegisterDeploymentServiceWorkflows(r worker.WorkflowRegistry, workflows DeploymentServiceWorkflows) {
 	RegisterCalculateQuotasWorkflowWorkflow(r, workflows.CalculateQuotasWorkflow)
 	RegisterProcessDeploymentWorkflowWorkflow(r, workflows.ProcessDeploymentWorkflow)
 	RegisterRenderDockerInputWorkflowWorkflow(r, workflows.RenderDockerInputWorkflow)
 	RegisterRenderTerraformVariablesWorkflowWorkflow(r, workflows.RenderTerraformVariablesWorkflow)
 }
 
-// RegisterCalculateQuotasWorkflowWorkflow registers a cloud.v1.workflow.DeploymentApi.CalculateQuotasWorkflow workflow with the given worker
+// RegisterCalculateQuotasWorkflowWorkflow registers a cloud.v1.workflow.DeploymentService.CalculateQuotasWorkflow workflow with the given worker
 func RegisterCalculateQuotasWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *CalculateQuotasWorkflowWorkflowInput) (CalculateQuotasWorkflowWorkflow, error)) {
-	deploymentApiRegistrationMutex.Lock()
-	defer deploymentApiRegistrationMutex.Unlock()
+	deploymentServiceRegistrationMutex.Lock()
+	defer deploymentServiceRegistrationMutex.Unlock()
 	CalculateQuotasWorkflowFunction = buildCalculateQuotasWorkflow(wf)
 	r.RegisterWorkflowWithOptions(CalculateQuotasWorkflowFunction, workflow.RegisterOptions{Name: CalculateQuotasWorkflowWorkflowName})
 }
@@ -1353,7 +1353,7 @@ func (o *CalculateQuotasWorkflowChildOptions) Build(ctx workflow.Context, req pr
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -1507,10 +1507,10 @@ func (r *CalculateQuotasWorkflowChildRun) WaitStart(ctx workflow.Context) (*work
 	return &exec, nil
 }
 
-// RegisterProcessDeploymentWorkflowWorkflow registers a cloud.v1.workflow.DeploymentApi.ProcessDeploymentWorkflow workflow with the given worker
+// RegisterProcessDeploymentWorkflowWorkflow registers a cloud.v1.workflow.DeploymentService.ProcessDeploymentWorkflow workflow with the given worker
 func RegisterProcessDeploymentWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *ProcessDeploymentWorkflowWorkflowInput) (ProcessDeploymentWorkflowWorkflow, error)) {
-	deploymentApiRegistrationMutex.Lock()
-	defer deploymentApiRegistrationMutex.Unlock()
+	deploymentServiceRegistrationMutex.Lock()
+	defer deploymentServiceRegistrationMutex.Unlock()
 	ProcessDeploymentWorkflowFunction = buildProcessDeploymentWorkflow(wf)
 	r.RegisterWorkflowWithOptions(ProcessDeploymentWorkflowFunction, workflow.RegisterOptions{Name: ProcessDeploymentWorkflowWorkflowName})
 }
@@ -1619,7 +1619,7 @@ func (o *ProcessDeploymentWorkflowChildOptions) Build(ctx workflow.Context, req 
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -1771,10 +1771,10 @@ func (r *ProcessDeploymentWorkflowChildRun) WaitStart(ctx workflow.Context) (*wo
 	return &exec, nil
 }
 
-// RegisterRenderDockerInputWorkflowWorkflow registers a cloud.v1.workflow.DeploymentApi.RenderDockerInputWorkflow workflow with the given worker
+// RegisterRenderDockerInputWorkflowWorkflow registers a cloud.v1.workflow.DeploymentService.RenderDockerInputWorkflow workflow with the given worker
 func RegisterRenderDockerInputWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *RenderDockerInputWorkflowWorkflowInput) (RenderDockerInputWorkflowWorkflow, error)) {
-	deploymentApiRegistrationMutex.Lock()
-	defer deploymentApiRegistrationMutex.Unlock()
+	deploymentServiceRegistrationMutex.Lock()
+	defer deploymentServiceRegistrationMutex.Unlock()
 	RenderDockerInputWorkflowFunction = buildRenderDockerInputWorkflow(wf)
 	r.RegisterWorkflowWithOptions(RenderDockerInputWorkflowFunction, workflow.RegisterOptions{Name: RenderDockerInputWorkflowWorkflowName})
 }
@@ -1883,7 +1883,7 @@ func (o *RenderDockerInputWorkflowChildOptions) Build(ctx workflow.Context, req 
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -2037,10 +2037,10 @@ func (r *RenderDockerInputWorkflowChildRun) WaitStart(ctx workflow.Context) (*wo
 	return &exec, nil
 }
 
-// RegisterRenderTerraformVariablesWorkflowWorkflow registers a cloud.v1.workflow.DeploymentApi.RenderTerraformVariablesWorkflow workflow with the given worker
+// RegisterRenderTerraformVariablesWorkflowWorkflow registers a cloud.v1.workflow.DeploymentService.RenderTerraformVariablesWorkflow workflow with the given worker
 func RegisterRenderTerraformVariablesWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *RenderTerraformVariablesWorkflowWorkflowInput) (RenderTerraformVariablesWorkflowWorkflow, error)) {
-	deploymentApiRegistrationMutex.Lock()
-	defer deploymentApiRegistrationMutex.Unlock()
+	deploymentServiceRegistrationMutex.Lock()
+	defer deploymentServiceRegistrationMutex.Unlock()
 	RenderTerraformVariablesWorkflowFunction = buildRenderTerraformVariablesWorkflow(wf)
 	r.RegisterWorkflowWithOptions(RenderTerraformVariablesWorkflowFunction, workflow.RegisterOptions{Name: RenderTerraformVariablesWorkflowWorkflowName})
 }
@@ -2149,7 +2149,7 @@ func (o *RenderTerraformVariablesWorkflowChildOptions) Build(ctx workflow.Contex
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.retryPolicy; v != nil {
 		opts.RetryPolicy = v
@@ -2303,35 +2303,35 @@ func (r *RenderTerraformVariablesWorkflowChildRun) WaitStart(ctx workflow.Contex
 	return &exec, nil
 }
 
-// DeploymentApiActivities describes available worker activities
-type DeploymentApiActivities interface {
-	// cloud.v1.workflow.DeploymentApi.AcquireNetworkActivity implements a(n) cloud.v1.workflow.DeploymentApi.AcquireNetworkActivity activity definition
+// DeploymentServiceActivities describes available worker activities
+type DeploymentServiceActivities interface {
+	// cloud.v1.workflow.DeploymentService.AcquireNetworkActivity implements a(n) cloud.v1.workflow.DeploymentService.AcquireNetworkActivity activity definition
 	AcquireNetworkActivity(ctx context.Context, req *AcquireNetworkActivityRequest) (*AcquireNetworkActivityResponse, error)
 
-	// cloud.v1.workflow.DeploymentApi.AcquireQuotasActivity implements a(n) cloud.v1.workflow.DeploymentApi.AcquireQuotasActivity activity definition
+	// cloud.v1.workflow.DeploymentService.AcquireQuotasActivity implements a(n) cloud.v1.workflow.DeploymentService.AcquireQuotasActivity activity definition
 	AcquireQuotasActivity(ctx context.Context, req *AcquireQuotasActivityRequest) (*AcquireQuotasActivityResponse, error)
 
-	// cloud.v1.workflow.DeploymentApi.DockerDownActivity implements a(n) cloud.v1.workflow.DeploymentApi.DockerDownActivity activity definition
+	// cloud.v1.workflow.DeploymentService.DockerDownActivity implements a(n) cloud.v1.workflow.DeploymentService.DockerDownActivity activity definition
 	DockerDownActivity(ctx context.Context, req *deployment.Docker_Input) (*deployment.Docker_Output, error)
 
-	// cloud.v1.workflow.DeploymentApi.DockerPullActivity implements a(n) cloud.v1.workflow.DeploymentApi.DockerPullActivity activity definition
+	// cloud.v1.workflow.DeploymentService.DockerPullActivity implements a(n) cloud.v1.workflow.DeploymentService.DockerPullActivity activity definition
 	DockerPullActivity(ctx context.Context, req *deployment.Docker_Input) (*deployment.Docker_Output, error)
 
-	// cloud.v1.workflow.DeploymentApi.DockerUpActivity implements a(n) cloud.v1.workflow.DeploymentApi.DockerUpActivity activity definition
+	// cloud.v1.workflow.DeploymentService.DockerUpActivity implements a(n) cloud.v1.workflow.DeploymentService.DockerUpActivity activity definition
 	DockerUpActivity(ctx context.Context, req *deployment.Docker_Input) (*deployment.Docker_Output, error)
 
-	// cloud.v1.workflow.DeploymentApi.TerraformApplyActivity implements a(n) cloud.v1.workflow.DeploymentApi.TerraformApplyActivity activity definition
+	// cloud.v1.workflow.DeploymentService.TerraformApplyActivity implements a(n) cloud.v1.workflow.DeploymentService.TerraformApplyActivity activity definition
 	TerraformApplyActivity(ctx context.Context, req *deployment.Terraform_Input) (*deployment.Terraform_Output, error)
 
-	// cloud.v1.workflow.DeploymentApi.TerraformDestroyActivity implements a(n) cloud.v1.workflow.DeploymentApi.TerraformDestroyActivity activity definition
+	// cloud.v1.workflow.DeploymentService.TerraformDestroyActivity implements a(n) cloud.v1.workflow.DeploymentService.TerraformDestroyActivity activity definition
 	TerraformDestroyActivity(ctx context.Context, req *deployment.Terraform_Input) (*deployment.Terraform_Output, error)
 
-	// cloud.v1.workflow.DeploymentApi.TerraformPlanActivity implements a(n) cloud.v1.workflow.DeploymentApi.TerraformPlanActivity activity definition
+	// cloud.v1.workflow.DeploymentService.TerraformPlanActivity implements a(n) cloud.v1.workflow.DeploymentService.TerraformPlanActivity activity definition
 	TerraformPlanActivity(ctx context.Context, req *deployment.Terraform_Input) (*deployment.Terraform_Output, error)
 }
 
-// RegisterDeploymentApiActivities registers activities with a worker
-func RegisterDeploymentApiActivities(r worker.ActivityRegistry, activities DeploymentApiActivities) {
+// RegisterDeploymentServiceActivities registers activities with a worker
+func RegisterDeploymentServiceActivities(r worker.ActivityRegistry, activities DeploymentServiceActivities) {
 	RegisterAcquireNetworkActivityActivity(r, activities.AcquireNetworkActivity)
 	RegisterAcquireQuotasActivityActivity(r, activities.AcquireQuotasActivity)
 	RegisterDockerDownActivityActivity(r, activities.DockerDownActivity)
@@ -2342,14 +2342,14 @@ func RegisterDeploymentApiActivities(r worker.ActivityRegistry, activities Deplo
 	RegisterTerraformPlanActivityActivity(r, activities.TerraformPlanActivity)
 }
 
-// RegisterAcquireNetworkActivityActivity registers a cloud.v1.workflow.DeploymentApi.AcquireNetworkActivity activity
+// RegisterAcquireNetworkActivityActivity registers a cloud.v1.workflow.DeploymentService.AcquireNetworkActivity activity
 func RegisterAcquireNetworkActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *AcquireNetworkActivityRequest) (*AcquireNetworkActivityResponse, error)) {
 	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
 		Name: AcquireNetworkActivityActivityName,
 	})
 }
 
-// AcquireNetworkActivityFuture describes a(n) cloud.v1.workflow.DeploymentApi.AcquireNetworkActivity activity execution
+// AcquireNetworkActivityFuture describes a(n) cloud.v1.workflow.DeploymentService.AcquireNetworkActivity activity execution
 type AcquireNetworkActivityFuture struct {
 	Future workflow.Future
 }
@@ -2372,12 +2372,12 @@ func (f *AcquireNetworkActivityFuture) Select(sel workflow.Selector, fn func(*Ac
 	})
 }
 
-// AcquireNetworkActivity executes a(n) cloud.v1.workflow.DeploymentApi.AcquireNetworkActivity activity
+// AcquireNetworkActivity executes a(n) cloud.v1.workflow.DeploymentService.AcquireNetworkActivity activity
 func AcquireNetworkActivity(ctx workflow.Context, req *AcquireNetworkActivityRequest, options ...*AcquireNetworkActivityActivityOptions) (*AcquireNetworkActivityResponse, error) {
 	return AcquireNetworkActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// AcquireNetworkActivityAsync executes a(n) cloud.v1.workflow.DeploymentApi.AcquireNetworkActivity activity (asynchronously)
+// AcquireNetworkActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.AcquireNetworkActivity activity (asynchronously)
 func AcquireNetworkActivityAsync(ctx workflow.Context, req *AcquireNetworkActivityRequest, options ...*AcquireNetworkActivityActivityOptions) *AcquireNetworkActivityFuture {
 	var o *AcquireNetworkActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2399,12 +2399,12 @@ func AcquireNetworkActivityAsync(ctx workflow.Context, req *AcquireNetworkActivi
 	return future
 }
 
-// AcquireNetworkActivityLocal executes a(n) cloud.v1.workflow.DeploymentApi.AcquireNetworkActivity activity (locally)
+// AcquireNetworkActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.AcquireNetworkActivity activity (locally)
 func AcquireNetworkActivityLocal(ctx workflow.Context, req *AcquireNetworkActivityRequest, options ...*AcquireNetworkActivityLocalActivityOptions) (*AcquireNetworkActivityResponse, error) {
 	return AcquireNetworkActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// AcquireNetworkActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentApi.AcquireNetworkActivity activity (asynchronously, locally)
+// AcquireNetworkActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.AcquireNetworkActivity activity (asynchronously, locally)
 func AcquireNetworkActivityLocalAsync(ctx workflow.Context, req *AcquireNetworkActivityRequest, options ...*AcquireNetworkActivityLocalActivityOptions) *AcquireNetworkActivityFuture {
 	var o *AcquireNetworkActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2431,7 +2431,7 @@ func AcquireNetworkActivityLocalAsync(ctx workflow.Context, req *AcquireNetworkA
 	return future
 }
 
-// AcquireNetworkActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.AcquireNetworkActivity activity
+// AcquireNetworkActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.AcquireNetworkActivity activity
 type AcquireNetworkActivityActivityOptions struct {
 	options                workflow.ActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -2474,7 +2474,7 @@ func (o *AcquireNetworkActivityActivityOptions) Build(ctx workflow.Context) (wor
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.waitForCancellation; v != nil {
 		opts.WaitForCancellation = *v
@@ -2536,7 +2536,7 @@ func (o *AcquireNetworkActivityActivityOptions) WithWaitForCancellation(wait boo
 	return o
 }
 
-// AcquireNetworkActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.AcquireNetworkActivity activity
+// AcquireNetworkActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.AcquireNetworkActivity activity
 type AcquireNetworkActivityLocalActivityOptions struct {
 	options                workflow.LocalActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -2570,7 +2570,7 @@ func (o *AcquireNetworkActivityLocalActivityOptions) Build(ctx workflow.Context)
 	return workflow.WithLocalActivityOptions(ctx, opts), nil
 }
 
-// Local specifies a custom cloud.v1.workflow.DeploymentApi.AcquireNetworkActivity implementation
+// Local specifies a custom cloud.v1.workflow.DeploymentService.AcquireNetworkActivity implementation
 func (o *AcquireNetworkActivityLocalActivityOptions) Local(fn func(context.Context, *AcquireNetworkActivityRequest) (*AcquireNetworkActivityResponse, error)) *AcquireNetworkActivityLocalActivityOptions {
 	o.fn = fn
 	return o
@@ -2606,14 +2606,14 @@ func (o *AcquireNetworkActivityLocalActivityOptions) WithStartToCloseTimeout(d t
 	return o
 }
 
-// RegisterAcquireQuotasActivityActivity registers a cloud.v1.workflow.DeploymentApi.AcquireQuotasActivity activity
+// RegisterAcquireQuotasActivityActivity registers a cloud.v1.workflow.DeploymentService.AcquireQuotasActivity activity
 func RegisterAcquireQuotasActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *AcquireQuotasActivityRequest) (*AcquireQuotasActivityResponse, error)) {
 	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
 		Name: AcquireQuotasActivityActivityName,
 	})
 }
 
-// AcquireQuotasActivityFuture describes a(n) cloud.v1.workflow.DeploymentApi.AcquireQuotasActivity activity execution
+// AcquireQuotasActivityFuture describes a(n) cloud.v1.workflow.DeploymentService.AcquireQuotasActivity activity execution
 type AcquireQuotasActivityFuture struct {
 	Future workflow.Future
 }
@@ -2636,12 +2636,12 @@ func (f *AcquireQuotasActivityFuture) Select(sel workflow.Selector, fn func(*Acq
 	})
 }
 
-// AcquireQuotasActivity executes a(n) cloud.v1.workflow.DeploymentApi.AcquireQuotasActivity activity
+// AcquireQuotasActivity executes a(n) cloud.v1.workflow.DeploymentService.AcquireQuotasActivity activity
 func AcquireQuotasActivity(ctx workflow.Context, req *AcquireQuotasActivityRequest, options ...*AcquireQuotasActivityActivityOptions) (*AcquireQuotasActivityResponse, error) {
 	return AcquireQuotasActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// AcquireQuotasActivityAsync executes a(n) cloud.v1.workflow.DeploymentApi.AcquireQuotasActivity activity (asynchronously)
+// AcquireQuotasActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.AcquireQuotasActivity activity (asynchronously)
 func AcquireQuotasActivityAsync(ctx workflow.Context, req *AcquireQuotasActivityRequest, options ...*AcquireQuotasActivityActivityOptions) *AcquireQuotasActivityFuture {
 	var o *AcquireQuotasActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2663,12 +2663,12 @@ func AcquireQuotasActivityAsync(ctx workflow.Context, req *AcquireQuotasActivity
 	return future
 }
 
-// AcquireQuotasActivityLocal executes a(n) cloud.v1.workflow.DeploymentApi.AcquireQuotasActivity activity (locally)
+// AcquireQuotasActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.AcquireQuotasActivity activity (locally)
 func AcquireQuotasActivityLocal(ctx workflow.Context, req *AcquireQuotasActivityRequest, options ...*AcquireQuotasActivityLocalActivityOptions) (*AcquireQuotasActivityResponse, error) {
 	return AcquireQuotasActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// AcquireQuotasActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentApi.AcquireQuotasActivity activity (asynchronously, locally)
+// AcquireQuotasActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.AcquireQuotasActivity activity (asynchronously, locally)
 func AcquireQuotasActivityLocalAsync(ctx workflow.Context, req *AcquireQuotasActivityRequest, options ...*AcquireQuotasActivityLocalActivityOptions) *AcquireQuotasActivityFuture {
 	var o *AcquireQuotasActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2695,7 +2695,7 @@ func AcquireQuotasActivityLocalAsync(ctx workflow.Context, req *AcquireQuotasAct
 	return future
 }
 
-// AcquireQuotasActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.AcquireQuotasActivity activity
+// AcquireQuotasActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.AcquireQuotasActivity activity
 type AcquireQuotasActivityActivityOptions struct {
 	options                workflow.ActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -2738,7 +2738,7 @@ func (o *AcquireQuotasActivityActivityOptions) Build(ctx workflow.Context) (work
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.waitForCancellation; v != nil {
 		opts.WaitForCancellation = *v
@@ -2800,7 +2800,7 @@ func (o *AcquireQuotasActivityActivityOptions) WithWaitForCancellation(wait bool
 	return o
 }
 
-// AcquireQuotasActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.AcquireQuotasActivity activity
+// AcquireQuotasActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.AcquireQuotasActivity activity
 type AcquireQuotasActivityLocalActivityOptions struct {
 	options                workflow.LocalActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -2834,7 +2834,7 @@ func (o *AcquireQuotasActivityLocalActivityOptions) Build(ctx workflow.Context) 
 	return workflow.WithLocalActivityOptions(ctx, opts), nil
 }
 
-// Local specifies a custom cloud.v1.workflow.DeploymentApi.AcquireQuotasActivity implementation
+// Local specifies a custom cloud.v1.workflow.DeploymentService.AcquireQuotasActivity implementation
 func (o *AcquireQuotasActivityLocalActivityOptions) Local(fn func(context.Context, *AcquireQuotasActivityRequest) (*AcquireQuotasActivityResponse, error)) *AcquireQuotasActivityLocalActivityOptions {
 	o.fn = fn
 	return o
@@ -2870,14 +2870,14 @@ func (o *AcquireQuotasActivityLocalActivityOptions) WithStartToCloseTimeout(d ti
 	return o
 }
 
-// RegisterDockerDownActivityActivity registers a cloud.v1.workflow.DeploymentApi.DockerDownActivity activity
+// RegisterDockerDownActivityActivity registers a cloud.v1.workflow.DeploymentService.DockerDownActivity activity
 func RegisterDockerDownActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *deployment.Docker_Input) (*deployment.Docker_Output, error)) {
 	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
 		Name: DockerDownActivityActivityName,
 	})
 }
 
-// DockerDownActivityFuture describes a(n) cloud.v1.workflow.DeploymentApi.DockerDownActivity activity execution
+// DockerDownActivityFuture describes a(n) cloud.v1.workflow.DeploymentService.DockerDownActivity activity execution
 type DockerDownActivityFuture struct {
 	Future workflow.Future
 }
@@ -2900,12 +2900,12 @@ func (f *DockerDownActivityFuture) Select(sel workflow.Selector, fn func(*Docker
 	})
 }
 
-// DockerDownActivity executes a(n) cloud.v1.workflow.DeploymentApi.DockerDownActivity activity
+// DockerDownActivity executes a(n) cloud.v1.workflow.DeploymentService.DockerDownActivity activity
 func DockerDownActivity(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerDownActivityActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerDownActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerDownActivityAsync executes a(n) cloud.v1.workflow.DeploymentApi.DockerDownActivity activity (asynchronously)
+// DockerDownActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.DockerDownActivity activity (asynchronously)
 func DockerDownActivityAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerDownActivityActivityOptions) *DockerDownActivityFuture {
 	var o *DockerDownActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2927,12 +2927,12 @@ func DockerDownActivityAsync(ctx workflow.Context, req *deployment.Docker_Input,
 	return future
 }
 
-// DockerDownActivityLocal executes a(n) cloud.v1.workflow.DeploymentApi.DockerDownActivity activity (locally)
+// DockerDownActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.DockerDownActivity activity (locally)
 func DockerDownActivityLocal(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerDownActivityLocalActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerDownActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerDownActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentApi.DockerDownActivity activity (asynchronously, locally)
+// DockerDownActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.DockerDownActivity activity (asynchronously, locally)
 func DockerDownActivityLocalAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerDownActivityLocalActivityOptions) *DockerDownActivityFuture {
 	var o *DockerDownActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2959,7 +2959,7 @@ func DockerDownActivityLocalAsync(ctx workflow.Context, req *deployment.Docker_I
 	return future
 }
 
-// DockerDownActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.DockerDownActivity activity
+// DockerDownActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.DockerDownActivity activity
 type DockerDownActivityActivityOptions struct {
 	options                workflow.ActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -3002,7 +3002,7 @@ func (o *DockerDownActivityActivityOptions) Build(ctx workflow.Context) (workflo
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.waitForCancellation; v != nil {
 		opts.WaitForCancellation = *v
@@ -3064,7 +3064,7 @@ func (o *DockerDownActivityActivityOptions) WithWaitForCancellation(wait bool) *
 	return o
 }
 
-// DockerDownActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.DockerDownActivity activity
+// DockerDownActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.DockerDownActivity activity
 type DockerDownActivityLocalActivityOptions struct {
 	options                workflow.LocalActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -3098,7 +3098,7 @@ func (o *DockerDownActivityLocalActivityOptions) Build(ctx workflow.Context) (wo
 	return workflow.WithLocalActivityOptions(ctx, opts), nil
 }
 
-// Local specifies a custom cloud.v1.workflow.DeploymentApi.DockerDownActivity implementation
+// Local specifies a custom cloud.v1.workflow.DeploymentService.DockerDownActivity implementation
 func (o *DockerDownActivityLocalActivityOptions) Local(fn func(context.Context, *deployment.Docker_Input) (*deployment.Docker_Output, error)) *DockerDownActivityLocalActivityOptions {
 	o.fn = fn
 	return o
@@ -3134,14 +3134,14 @@ func (o *DockerDownActivityLocalActivityOptions) WithStartToCloseTimeout(d time.
 	return o
 }
 
-// RegisterDockerPullActivityActivity registers a cloud.v1.workflow.DeploymentApi.DockerPullActivity activity
+// RegisterDockerPullActivityActivity registers a cloud.v1.workflow.DeploymentService.DockerPullActivity activity
 func RegisterDockerPullActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *deployment.Docker_Input) (*deployment.Docker_Output, error)) {
 	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
 		Name: DockerPullActivityActivityName,
 	})
 }
 
-// DockerPullActivityFuture describes a(n) cloud.v1.workflow.DeploymentApi.DockerPullActivity activity execution
+// DockerPullActivityFuture describes a(n) cloud.v1.workflow.DeploymentService.DockerPullActivity activity execution
 type DockerPullActivityFuture struct {
 	Future workflow.Future
 }
@@ -3164,12 +3164,12 @@ func (f *DockerPullActivityFuture) Select(sel workflow.Selector, fn func(*Docker
 	})
 }
 
-// DockerPullActivity executes a(n) cloud.v1.workflow.DeploymentApi.DockerPullActivity activity
+// DockerPullActivity executes a(n) cloud.v1.workflow.DeploymentService.DockerPullActivity activity
 func DockerPullActivity(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerPullActivityActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerPullActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerPullActivityAsync executes a(n) cloud.v1.workflow.DeploymentApi.DockerPullActivity activity (asynchronously)
+// DockerPullActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.DockerPullActivity activity (asynchronously)
 func DockerPullActivityAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerPullActivityActivityOptions) *DockerPullActivityFuture {
 	var o *DockerPullActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3191,12 +3191,12 @@ func DockerPullActivityAsync(ctx workflow.Context, req *deployment.Docker_Input,
 	return future
 }
 
-// DockerPullActivityLocal executes a(n) cloud.v1.workflow.DeploymentApi.DockerPullActivity activity (locally)
+// DockerPullActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.DockerPullActivity activity (locally)
 func DockerPullActivityLocal(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerPullActivityLocalActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerPullActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerPullActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentApi.DockerPullActivity activity (asynchronously, locally)
+// DockerPullActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.DockerPullActivity activity (asynchronously, locally)
 func DockerPullActivityLocalAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerPullActivityLocalActivityOptions) *DockerPullActivityFuture {
 	var o *DockerPullActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3223,7 +3223,7 @@ func DockerPullActivityLocalAsync(ctx workflow.Context, req *deployment.Docker_I
 	return future
 }
 
-// DockerPullActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.DockerPullActivity activity
+// DockerPullActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.DockerPullActivity activity
 type DockerPullActivityActivityOptions struct {
 	options                workflow.ActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -3266,7 +3266,7 @@ func (o *DockerPullActivityActivityOptions) Build(ctx workflow.Context) (workflo
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.waitForCancellation; v != nil {
 		opts.WaitForCancellation = *v
@@ -3328,7 +3328,7 @@ func (o *DockerPullActivityActivityOptions) WithWaitForCancellation(wait bool) *
 	return o
 }
 
-// DockerPullActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.DockerPullActivity activity
+// DockerPullActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.DockerPullActivity activity
 type DockerPullActivityLocalActivityOptions struct {
 	options                workflow.LocalActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -3362,7 +3362,7 @@ func (o *DockerPullActivityLocalActivityOptions) Build(ctx workflow.Context) (wo
 	return workflow.WithLocalActivityOptions(ctx, opts), nil
 }
 
-// Local specifies a custom cloud.v1.workflow.DeploymentApi.DockerPullActivity implementation
+// Local specifies a custom cloud.v1.workflow.DeploymentService.DockerPullActivity implementation
 func (o *DockerPullActivityLocalActivityOptions) Local(fn func(context.Context, *deployment.Docker_Input) (*deployment.Docker_Output, error)) *DockerPullActivityLocalActivityOptions {
 	o.fn = fn
 	return o
@@ -3398,14 +3398,14 @@ func (o *DockerPullActivityLocalActivityOptions) WithStartToCloseTimeout(d time.
 	return o
 }
 
-// RegisterDockerUpActivityActivity registers a cloud.v1.workflow.DeploymentApi.DockerUpActivity activity
+// RegisterDockerUpActivityActivity registers a cloud.v1.workflow.DeploymentService.DockerUpActivity activity
 func RegisterDockerUpActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *deployment.Docker_Input) (*deployment.Docker_Output, error)) {
 	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
 		Name: DockerUpActivityActivityName,
 	})
 }
 
-// DockerUpActivityFuture describes a(n) cloud.v1.workflow.DeploymentApi.DockerUpActivity activity execution
+// DockerUpActivityFuture describes a(n) cloud.v1.workflow.DeploymentService.DockerUpActivity activity execution
 type DockerUpActivityFuture struct {
 	Future workflow.Future
 }
@@ -3428,12 +3428,12 @@ func (f *DockerUpActivityFuture) Select(sel workflow.Selector, fn func(*DockerUp
 	})
 }
 
-// DockerUpActivity executes a(n) cloud.v1.workflow.DeploymentApi.DockerUpActivity activity
+// DockerUpActivity executes a(n) cloud.v1.workflow.DeploymentService.DockerUpActivity activity
 func DockerUpActivity(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerUpActivityActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerUpActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerUpActivityAsync executes a(n) cloud.v1.workflow.DeploymentApi.DockerUpActivity activity (asynchronously)
+// DockerUpActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.DockerUpActivity activity (asynchronously)
 func DockerUpActivityAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerUpActivityActivityOptions) *DockerUpActivityFuture {
 	var o *DockerUpActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3455,12 +3455,12 @@ func DockerUpActivityAsync(ctx workflow.Context, req *deployment.Docker_Input, o
 	return future
 }
 
-// DockerUpActivityLocal executes a(n) cloud.v1.workflow.DeploymentApi.DockerUpActivity activity (locally)
+// DockerUpActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.DockerUpActivity activity (locally)
 func DockerUpActivityLocal(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerUpActivityLocalActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerUpActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerUpActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentApi.DockerUpActivity activity (asynchronously, locally)
+// DockerUpActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.DockerUpActivity activity (asynchronously, locally)
 func DockerUpActivityLocalAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerUpActivityLocalActivityOptions) *DockerUpActivityFuture {
 	var o *DockerUpActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3487,7 +3487,7 @@ func DockerUpActivityLocalAsync(ctx workflow.Context, req *deployment.Docker_Inp
 	return future
 }
 
-// DockerUpActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.DockerUpActivity activity
+// DockerUpActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.DockerUpActivity activity
 type DockerUpActivityActivityOptions struct {
 	options                workflow.ActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -3532,7 +3532,7 @@ func (o *DockerUpActivityActivityOptions) Build(ctx workflow.Context) (workflow.
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.waitForCancellation; v != nil {
 		opts.WaitForCancellation = *v
@@ -3594,7 +3594,7 @@ func (o *DockerUpActivityActivityOptions) WithWaitForCancellation(wait bool) *Do
 	return o
 }
 
-// DockerUpActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.DockerUpActivity activity
+// DockerUpActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.DockerUpActivity activity
 type DockerUpActivityLocalActivityOptions struct {
 	options                workflow.LocalActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -3628,7 +3628,7 @@ func (o *DockerUpActivityLocalActivityOptions) Build(ctx workflow.Context) (work
 	return workflow.WithLocalActivityOptions(ctx, opts), nil
 }
 
-// Local specifies a custom cloud.v1.workflow.DeploymentApi.DockerUpActivity implementation
+// Local specifies a custom cloud.v1.workflow.DeploymentService.DockerUpActivity implementation
 func (o *DockerUpActivityLocalActivityOptions) Local(fn func(context.Context, *deployment.Docker_Input) (*deployment.Docker_Output, error)) *DockerUpActivityLocalActivityOptions {
 	o.fn = fn
 	return o
@@ -3664,14 +3664,14 @@ func (o *DockerUpActivityLocalActivityOptions) WithStartToCloseTimeout(d time.Du
 	return o
 }
 
-// RegisterTerraformApplyActivityActivity registers a cloud.v1.workflow.DeploymentApi.TerraformApplyActivity activity
+// RegisterTerraformApplyActivityActivity registers a cloud.v1.workflow.DeploymentService.TerraformApplyActivity activity
 func RegisterTerraformApplyActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *deployment.Terraform_Input) (*deployment.Terraform_Output, error)) {
 	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
 		Name: TerraformApplyActivityActivityName,
 	})
 }
 
-// TerraformApplyActivityFuture describes a(n) cloud.v1.workflow.DeploymentApi.TerraformApplyActivity activity execution
+// TerraformApplyActivityFuture describes a(n) cloud.v1.workflow.DeploymentService.TerraformApplyActivity activity execution
 type TerraformApplyActivityFuture struct {
 	Future workflow.Future
 }
@@ -3694,12 +3694,12 @@ func (f *TerraformApplyActivityFuture) Select(sel workflow.Selector, fn func(*Te
 	})
 }
 
-// TerraformApplyActivity executes a(n) cloud.v1.workflow.DeploymentApi.TerraformApplyActivity activity
+// TerraformApplyActivity executes a(n) cloud.v1.workflow.DeploymentService.TerraformApplyActivity activity
 func TerraformApplyActivity(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformApplyActivityActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformApplyActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformApplyActivityAsync executes a(n) cloud.v1.workflow.DeploymentApi.TerraformApplyActivity activity (asynchronously)
+// TerraformApplyActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.TerraformApplyActivity activity (asynchronously)
 func TerraformApplyActivityAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformApplyActivityActivityOptions) *TerraformApplyActivityFuture {
 	var o *TerraformApplyActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3721,12 +3721,12 @@ func TerraformApplyActivityAsync(ctx workflow.Context, req *deployment.Terraform
 	return future
 }
 
-// TerraformApplyActivityLocal executes a(n) cloud.v1.workflow.DeploymentApi.TerraformApplyActivity activity (locally)
+// TerraformApplyActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.TerraformApplyActivity activity (locally)
 func TerraformApplyActivityLocal(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformApplyActivityLocalActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformApplyActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformApplyActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentApi.TerraformApplyActivity activity (asynchronously, locally)
+// TerraformApplyActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.TerraformApplyActivity activity (asynchronously, locally)
 func TerraformApplyActivityLocalAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformApplyActivityLocalActivityOptions) *TerraformApplyActivityFuture {
 	var o *TerraformApplyActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3753,7 +3753,7 @@ func TerraformApplyActivityLocalAsync(ctx workflow.Context, req *deployment.Terr
 	return future
 }
 
-// TerraformApplyActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.TerraformApplyActivity activity
+// TerraformApplyActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.TerraformApplyActivity activity
 type TerraformApplyActivityActivityOptions struct {
 	options                workflow.ActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -3798,7 +3798,7 @@ func (o *TerraformApplyActivityActivityOptions) Build(ctx workflow.Context) (wor
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.waitForCancellation; v != nil {
 		opts.WaitForCancellation = *v
@@ -3860,7 +3860,7 @@ func (o *TerraformApplyActivityActivityOptions) WithWaitForCancellation(wait boo
 	return o
 }
 
-// TerraformApplyActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.TerraformApplyActivity activity
+// TerraformApplyActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.TerraformApplyActivity activity
 type TerraformApplyActivityLocalActivityOptions struct {
 	options                workflow.LocalActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -3894,7 +3894,7 @@ func (o *TerraformApplyActivityLocalActivityOptions) Build(ctx workflow.Context)
 	return workflow.WithLocalActivityOptions(ctx, opts), nil
 }
 
-// Local specifies a custom cloud.v1.workflow.DeploymentApi.TerraformApplyActivity implementation
+// Local specifies a custom cloud.v1.workflow.DeploymentService.TerraformApplyActivity implementation
 func (o *TerraformApplyActivityLocalActivityOptions) Local(fn func(context.Context, *deployment.Terraform_Input) (*deployment.Terraform_Output, error)) *TerraformApplyActivityLocalActivityOptions {
 	o.fn = fn
 	return o
@@ -3930,14 +3930,14 @@ func (o *TerraformApplyActivityLocalActivityOptions) WithStartToCloseTimeout(d t
 	return o
 }
 
-// RegisterTerraformDestroyActivityActivity registers a cloud.v1.workflow.DeploymentApi.TerraformDestroyActivity activity
+// RegisterTerraformDestroyActivityActivity registers a cloud.v1.workflow.DeploymentService.TerraformDestroyActivity activity
 func RegisterTerraformDestroyActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *deployment.Terraform_Input) (*deployment.Terraform_Output, error)) {
 	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
 		Name: TerraformDestroyActivityActivityName,
 	})
 }
 
-// TerraformDestroyActivityFuture describes a(n) cloud.v1.workflow.DeploymentApi.TerraformDestroyActivity activity execution
+// TerraformDestroyActivityFuture describes a(n) cloud.v1.workflow.DeploymentService.TerraformDestroyActivity activity execution
 type TerraformDestroyActivityFuture struct {
 	Future workflow.Future
 }
@@ -3960,12 +3960,12 @@ func (f *TerraformDestroyActivityFuture) Select(sel workflow.Selector, fn func(*
 	})
 }
 
-// TerraformDestroyActivity executes a(n) cloud.v1.workflow.DeploymentApi.TerraformDestroyActivity activity
+// TerraformDestroyActivity executes a(n) cloud.v1.workflow.DeploymentService.TerraformDestroyActivity activity
 func TerraformDestroyActivity(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformDestroyActivityActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformDestroyActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformDestroyActivityAsync executes a(n) cloud.v1.workflow.DeploymentApi.TerraformDestroyActivity activity (asynchronously)
+// TerraformDestroyActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.TerraformDestroyActivity activity (asynchronously)
 func TerraformDestroyActivityAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformDestroyActivityActivityOptions) *TerraformDestroyActivityFuture {
 	var o *TerraformDestroyActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3987,12 +3987,12 @@ func TerraformDestroyActivityAsync(ctx workflow.Context, req *deployment.Terrafo
 	return future
 }
 
-// TerraformDestroyActivityLocal executes a(n) cloud.v1.workflow.DeploymentApi.TerraformDestroyActivity activity (locally)
+// TerraformDestroyActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.TerraformDestroyActivity activity (locally)
 func TerraformDestroyActivityLocal(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformDestroyActivityLocalActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformDestroyActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformDestroyActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentApi.TerraformDestroyActivity activity (asynchronously, locally)
+// TerraformDestroyActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.TerraformDestroyActivity activity (asynchronously, locally)
 func TerraformDestroyActivityLocalAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformDestroyActivityLocalActivityOptions) *TerraformDestroyActivityFuture {
 	var o *TerraformDestroyActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -4019,7 +4019,7 @@ func TerraformDestroyActivityLocalAsync(ctx workflow.Context, req *deployment.Te
 	return future
 }
 
-// TerraformDestroyActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.TerraformDestroyActivity activity
+// TerraformDestroyActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.TerraformDestroyActivity activity
 type TerraformDestroyActivityActivityOptions struct {
 	options                workflow.ActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -4064,7 +4064,7 @@ func (o *TerraformDestroyActivityActivityOptions) Build(ctx workflow.Context) (w
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.waitForCancellation; v != nil {
 		opts.WaitForCancellation = *v
@@ -4126,7 +4126,7 @@ func (o *TerraformDestroyActivityActivityOptions) WithWaitForCancellation(wait b
 	return o
 }
 
-// TerraformDestroyActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.TerraformDestroyActivity activity
+// TerraformDestroyActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.TerraformDestroyActivity activity
 type TerraformDestroyActivityLocalActivityOptions struct {
 	options                workflow.LocalActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -4160,7 +4160,7 @@ func (o *TerraformDestroyActivityLocalActivityOptions) Build(ctx workflow.Contex
 	return workflow.WithLocalActivityOptions(ctx, opts), nil
 }
 
-// Local specifies a custom cloud.v1.workflow.DeploymentApi.TerraformDestroyActivity implementation
+// Local specifies a custom cloud.v1.workflow.DeploymentService.TerraformDestroyActivity implementation
 func (o *TerraformDestroyActivityLocalActivityOptions) Local(fn func(context.Context, *deployment.Terraform_Input) (*deployment.Terraform_Output, error)) *TerraformDestroyActivityLocalActivityOptions {
 	o.fn = fn
 	return o
@@ -4196,14 +4196,14 @@ func (o *TerraformDestroyActivityLocalActivityOptions) WithStartToCloseTimeout(d
 	return o
 }
 
-// RegisterTerraformPlanActivityActivity registers a cloud.v1.workflow.DeploymentApi.TerraformPlanActivity activity
+// RegisterTerraformPlanActivityActivity registers a cloud.v1.workflow.DeploymentService.TerraformPlanActivity activity
 func RegisterTerraformPlanActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *deployment.Terraform_Input) (*deployment.Terraform_Output, error)) {
 	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
 		Name: TerraformPlanActivityActivityName,
 	})
 }
 
-// TerraformPlanActivityFuture describes a(n) cloud.v1.workflow.DeploymentApi.TerraformPlanActivity activity execution
+// TerraformPlanActivityFuture describes a(n) cloud.v1.workflow.DeploymentService.TerraformPlanActivity activity execution
 type TerraformPlanActivityFuture struct {
 	Future workflow.Future
 }
@@ -4226,12 +4226,12 @@ func (f *TerraformPlanActivityFuture) Select(sel workflow.Selector, fn func(*Ter
 	})
 }
 
-// TerraformPlanActivity executes a(n) cloud.v1.workflow.DeploymentApi.TerraformPlanActivity activity
+// TerraformPlanActivity executes a(n) cloud.v1.workflow.DeploymentService.TerraformPlanActivity activity
 func TerraformPlanActivity(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformPlanActivityActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformPlanActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformPlanActivityAsync executes a(n) cloud.v1.workflow.DeploymentApi.TerraformPlanActivity activity (asynchronously)
+// TerraformPlanActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.TerraformPlanActivity activity (asynchronously)
 func TerraformPlanActivityAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformPlanActivityActivityOptions) *TerraformPlanActivityFuture {
 	var o *TerraformPlanActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -4253,12 +4253,12 @@ func TerraformPlanActivityAsync(ctx workflow.Context, req *deployment.Terraform_
 	return future
 }
 
-// TerraformPlanActivityLocal executes a(n) cloud.v1.workflow.DeploymentApi.TerraformPlanActivity activity (locally)
+// TerraformPlanActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.TerraformPlanActivity activity (locally)
 func TerraformPlanActivityLocal(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformPlanActivityLocalActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformPlanActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformPlanActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentApi.TerraformPlanActivity activity (asynchronously, locally)
+// TerraformPlanActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.TerraformPlanActivity activity (asynchronously, locally)
 func TerraformPlanActivityLocalAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformPlanActivityLocalActivityOptions) *TerraformPlanActivityFuture {
 	var o *TerraformPlanActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -4285,7 +4285,7 @@ func TerraformPlanActivityLocalAsync(ctx workflow.Context, req *deployment.Terra
 	return future
 }
 
-// TerraformPlanActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.TerraformPlanActivity activity
+// TerraformPlanActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.TerraformPlanActivity activity
 type TerraformPlanActivityActivityOptions struct {
 	options                workflow.ActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -4330,7 +4330,7 @@ func (o *TerraformPlanActivityActivityOptions) Build(ctx workflow.Context) (work
 	if v := o.taskQueue; v != nil {
 		opts.TaskQueue = *v
 	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = DeploymentApiTaskQueue
+		opts.TaskQueue = DeploymentServiceTaskQueue
 	}
 	if v := o.waitForCancellation; v != nil {
 		opts.WaitForCancellation = *v
@@ -4392,7 +4392,7 @@ func (o *TerraformPlanActivityActivityOptions) WithWaitForCancellation(wait bool
 	return o
 }
 
-// TerraformPlanActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentApi.TerraformPlanActivity activity
+// TerraformPlanActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.TerraformPlanActivity activity
 type TerraformPlanActivityLocalActivityOptions struct {
 	options                workflow.LocalActivityOptions
 	retryPolicy            *temporal.RetryPolicy
@@ -4426,7 +4426,7 @@ func (o *TerraformPlanActivityLocalActivityOptions) Build(ctx workflow.Context) 
 	return workflow.WithLocalActivityOptions(ctx, opts), nil
 }
 
-// Local specifies a custom cloud.v1.workflow.DeploymentApi.TerraformPlanActivity implementation
+// Local specifies a custom cloud.v1.workflow.DeploymentService.TerraformPlanActivity implementation
 func (o *TerraformPlanActivityLocalActivityOptions) Local(fn func(context.Context, *deployment.Terraform_Input) (*deployment.Terraform_Output, error)) *TerraformPlanActivityLocalActivityOptions {
 	o.fn = fn
 	return o
@@ -4463,26 +4463,26 @@ func (o *TerraformPlanActivityLocalActivityOptions) WithStartToCloseTimeout(d ti
 }
 
 // TestClient provides a testsuite-compatible Client
-type TestDeploymentApiClient struct {
+type TestDeploymentServiceClient struct {
 	env       *testsuite.TestWorkflowEnvironment
-	workflows DeploymentApiWorkflows
+	workflows DeploymentServiceWorkflows
 }
 
-var _ DeploymentApiClient = &TestDeploymentApiClient{}
+var _ DeploymentServiceClient = &TestDeploymentServiceClient{}
 
-// NewTestDeploymentApiClient initializes a new TestDeploymentApiClient value
-func NewTestDeploymentApiClient(env *testsuite.TestWorkflowEnvironment, workflows DeploymentApiWorkflows, activities DeploymentApiActivities) *TestDeploymentApiClient {
+// NewTestDeploymentServiceClient initializes a new TestDeploymentServiceClient value
+func NewTestDeploymentServiceClient(env *testsuite.TestWorkflowEnvironment, workflows DeploymentServiceWorkflows, activities DeploymentServiceActivities) *TestDeploymentServiceClient {
 	if workflows != nil {
-		RegisterDeploymentApiWorkflows(env, workflows)
+		RegisterDeploymentServiceWorkflows(env, workflows)
 	}
 	if activities != nil {
-		RegisterDeploymentApiActivities(env, activities)
+		RegisterDeploymentServiceActivities(env, activities)
 	}
-	return &TestDeploymentApiClient{env, workflows}
+	return &TestDeploymentServiceClient{env, workflows}
 }
 
 // CalculateQuotasWorkflow executes a(n) CalculateQuotasWorkflow workflow in the test environment
-func (c *TestDeploymentApiClient) CalculateQuotasWorkflow(ctx context.Context, req *CalculateQuotasWorkflowRequest, opts ...*CalculateQuotasWorkflowOptions) (*CalculateQuotasWorkflowResponse, error) {
+func (c *TestDeploymentServiceClient) CalculateQuotasWorkflow(ctx context.Context, req *CalculateQuotasWorkflowRequest, opts ...*CalculateQuotasWorkflowOptions) (*CalculateQuotasWorkflowResponse, error) {
 	run, err := c.CalculateQuotasWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return nil, err
@@ -4491,7 +4491,7 @@ func (c *TestDeploymentApiClient) CalculateQuotasWorkflow(ctx context.Context, r
 }
 
 // CalculateQuotasWorkflowAsync executes a(n) CalculateQuotasWorkflow workflow in the test environment
-func (c *TestDeploymentApiClient) CalculateQuotasWorkflowAsync(ctx context.Context, req *CalculateQuotasWorkflowRequest, options ...*CalculateQuotasWorkflowOptions) (CalculateQuotasWorkflowRun, error) {
+func (c *TestDeploymentServiceClient) CalculateQuotasWorkflowAsync(ctx context.Context, req *CalculateQuotasWorkflowRequest, options ...*CalculateQuotasWorkflowOptions) (CalculateQuotasWorkflowRun, error) {
 	var o *CalculateQuotasWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -4506,12 +4506,12 @@ func (c *TestDeploymentApiClient) CalculateQuotasWorkflowAsync(ctx context.Conte
 }
 
 // GetCalculateQuotasWorkflow is a noop
-func (c *TestDeploymentApiClient) GetCalculateQuotasWorkflow(ctx context.Context, workflowID string, runID string) CalculateQuotasWorkflowRun {
+func (c *TestDeploymentServiceClient) GetCalculateQuotasWorkflow(ctx context.Context, workflowID string, runID string) CalculateQuotasWorkflowRun {
 	return &testCalculateQuotasWorkflowRun{env: c.env, workflows: c.workflows}
 }
 
 // ProcessDeploymentWorkflow executes a(n) ProcessDeploymentWorkflow workflow in the test environment
-func (c *TestDeploymentApiClient) ProcessDeploymentWorkflow(ctx context.Context, req *ProcessDeploymentWorkflowRequest, opts ...*ProcessDeploymentWorkflowOptions) (*ProcessDeploymentWorkflowResponse, error) {
+func (c *TestDeploymentServiceClient) ProcessDeploymentWorkflow(ctx context.Context, req *ProcessDeploymentWorkflowRequest, opts ...*ProcessDeploymentWorkflowOptions) (*ProcessDeploymentWorkflowResponse, error) {
 	run, err := c.ProcessDeploymentWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return nil, err
@@ -4520,7 +4520,7 @@ func (c *TestDeploymentApiClient) ProcessDeploymentWorkflow(ctx context.Context,
 }
 
 // ProcessDeploymentWorkflowAsync executes a(n) ProcessDeploymentWorkflow workflow in the test environment
-func (c *TestDeploymentApiClient) ProcessDeploymentWorkflowAsync(ctx context.Context, req *ProcessDeploymentWorkflowRequest, options ...*ProcessDeploymentWorkflowOptions) (ProcessDeploymentWorkflowRun, error) {
+func (c *TestDeploymentServiceClient) ProcessDeploymentWorkflowAsync(ctx context.Context, req *ProcessDeploymentWorkflowRequest, options ...*ProcessDeploymentWorkflowOptions) (ProcessDeploymentWorkflowRun, error) {
 	var o *ProcessDeploymentWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -4535,12 +4535,12 @@ func (c *TestDeploymentApiClient) ProcessDeploymentWorkflowAsync(ctx context.Con
 }
 
 // GetProcessDeploymentWorkflow is a noop
-func (c *TestDeploymentApiClient) GetProcessDeploymentWorkflow(ctx context.Context, workflowID string, runID string) ProcessDeploymentWorkflowRun {
+func (c *TestDeploymentServiceClient) GetProcessDeploymentWorkflow(ctx context.Context, workflowID string, runID string) ProcessDeploymentWorkflowRun {
 	return &testProcessDeploymentWorkflowRun{env: c.env, workflows: c.workflows}
 }
 
 // RenderDockerInputWorkflow executes a(n) RenderDockerInputWorkflow workflow in the test environment
-func (c *TestDeploymentApiClient) RenderDockerInputWorkflow(ctx context.Context, req *topology.Topology, opts ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error) {
+func (c *TestDeploymentServiceClient) RenderDockerInputWorkflow(ctx context.Context, req *topology.Topology, opts ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error) {
 	run, err := c.RenderDockerInputWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return nil, err
@@ -4549,7 +4549,7 @@ func (c *TestDeploymentApiClient) RenderDockerInputWorkflow(ctx context.Context,
 }
 
 // RenderDockerInputWorkflowAsync executes a(n) RenderDockerInputWorkflow workflow in the test environment
-func (c *TestDeploymentApiClient) RenderDockerInputWorkflowAsync(ctx context.Context, req *topology.Topology, options ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error) {
+func (c *TestDeploymentServiceClient) RenderDockerInputWorkflowAsync(ctx context.Context, req *topology.Topology, options ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error) {
 	var o *RenderDockerInputWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -4564,12 +4564,12 @@ func (c *TestDeploymentApiClient) RenderDockerInputWorkflowAsync(ctx context.Con
 }
 
 // GetRenderDockerInputWorkflow is a noop
-func (c *TestDeploymentApiClient) GetRenderDockerInputWorkflow(ctx context.Context, workflowID string, runID string) RenderDockerInputWorkflowRun {
+func (c *TestDeploymentServiceClient) GetRenderDockerInputWorkflow(ctx context.Context, workflowID string, runID string) RenderDockerInputWorkflowRun {
 	return &testRenderDockerInputWorkflowRun{env: c.env, workflows: c.workflows}
 }
 
 // RenderTerraformVariablesWorkflow executes a(n) RenderTerraformVariablesWorkflow workflow in the test environment
-func (c *TestDeploymentApiClient) RenderTerraformVariablesWorkflow(ctx context.Context, req *topology.Topology, opts ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error) {
+func (c *TestDeploymentServiceClient) RenderTerraformVariablesWorkflow(ctx context.Context, req *topology.Topology, opts ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error) {
 	run, err := c.RenderTerraformVariablesWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return nil, err
@@ -4578,7 +4578,7 @@ func (c *TestDeploymentApiClient) RenderTerraformVariablesWorkflow(ctx context.C
 }
 
 // RenderTerraformVariablesWorkflowAsync executes a(n) RenderTerraformVariablesWorkflow workflow in the test environment
-func (c *TestDeploymentApiClient) RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *topology.Topology, options ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error) {
+func (c *TestDeploymentServiceClient) RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *topology.Topology, options ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error) {
 	var o *RenderTerraformVariablesWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -4593,18 +4593,18 @@ func (c *TestDeploymentApiClient) RenderTerraformVariablesWorkflowAsync(ctx cont
 }
 
 // GetRenderTerraformVariablesWorkflow is a noop
-func (c *TestDeploymentApiClient) GetRenderTerraformVariablesWorkflow(ctx context.Context, workflowID string, runID string) RenderTerraformVariablesWorkflowRun {
+func (c *TestDeploymentServiceClient) GetRenderTerraformVariablesWorkflow(ctx context.Context, workflowID string, runID string) RenderTerraformVariablesWorkflowRun {
 	return &testRenderTerraformVariablesWorkflowRun{env: c.env, workflows: c.workflows}
 }
 
 // CancelWorkflow requests cancellation of an existing workflow execution
-func (c *TestDeploymentApiClient) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
+func (c *TestDeploymentServiceClient) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
 	c.env.CancelWorkflow()
 	return nil
 }
 
 // TerminateWorkflow terminates an existing workflow execution
-func (c *TestDeploymentApiClient) TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error {
+func (c *TestDeploymentServiceClient) TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error {
 	return c.CancelWorkflow(ctx, workflowID, runID)
 }
 
@@ -4612,12 +4612,12 @@ var _ CalculateQuotasWorkflowRun = &testCalculateQuotasWorkflowRun{}
 
 // testCalculateQuotasWorkflowRun provides convenience methods for interacting with a(n) CalculateQuotasWorkflow workflow in the test environment
 type testCalculateQuotasWorkflowRun struct {
-	client    *TestDeploymentApiClient
+	client    *TestDeploymentServiceClient
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
 	opts      *client.StartWorkflowOptions
 	req       *CalculateQuotasWorkflowRequest
-	workflows DeploymentApiWorkflows
+	workflows DeploymentServiceWorkflows
 }
 
 // Cancel requests cancellation of a workflow in execution, returning an error if applicable
@@ -4670,12 +4670,12 @@ var _ ProcessDeploymentWorkflowRun = &testProcessDeploymentWorkflowRun{}
 
 // testProcessDeploymentWorkflowRun provides convenience methods for interacting with a(n) ProcessDeploymentWorkflow workflow in the test environment
 type testProcessDeploymentWorkflowRun struct {
-	client    *TestDeploymentApiClient
+	client    *TestDeploymentServiceClient
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
 	opts      *client.StartWorkflowOptions
 	req       *ProcessDeploymentWorkflowRequest
-	workflows DeploymentApiWorkflows
+	workflows DeploymentServiceWorkflows
 }
 
 // Cancel requests cancellation of a workflow in execution, returning an error if applicable
@@ -4728,12 +4728,12 @@ var _ RenderDockerInputWorkflowRun = &testRenderDockerInputWorkflowRun{}
 
 // testRenderDockerInputWorkflowRun provides convenience methods for interacting with a(n) RenderDockerInputWorkflow workflow in the test environment
 type testRenderDockerInputWorkflowRun struct {
-	client    *TestDeploymentApiClient
+	client    *TestDeploymentServiceClient
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
 	opts      *client.StartWorkflowOptions
 	req       *topology.Topology
-	workflows DeploymentApiWorkflows
+	workflows DeploymentServiceWorkflows
 }
 
 // Cancel requests cancellation of a workflow in execution, returning an error if applicable
@@ -4786,12 +4786,12 @@ var _ RenderTerraformVariablesWorkflowRun = &testRenderTerraformVariablesWorkflo
 
 // testRenderTerraformVariablesWorkflowRun provides convenience methods for interacting with a(n) RenderTerraformVariablesWorkflow workflow in the test environment
 type testRenderTerraformVariablesWorkflowRun struct {
-	client    *TestDeploymentApiClient
+	client    *TestDeploymentServiceClient
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
 	opts      *client.StartWorkflowOptions
 	req       *topology.Topology
-	workflows DeploymentApiWorkflows
+	workflows DeploymentServiceWorkflows
 }
 
 // Cancel requests cancellation of a workflow in execution, returning an error if applicable
@@ -4840,73 +4840,73 @@ func (r *testRenderTerraformVariablesWorkflowRun) Terminate(ctx context.Context,
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
 }
 
-// DeploymentApiCliOptions describes runtime configuration for cloud.v1.workflow.DeploymentApi cli
-type DeploymentApiCliOptions struct {
+// DeploymentServiceCliOptions describes runtime configuration for cloud.v1.workflow.DeploymentService cli
+type DeploymentServiceCliOptions struct {
 	after            func(*v2.Context) error
 	before           func(*v2.Context) error
 	clientForCommand func(*v2.Context) (client.Client, error)
 	worker           func(*v2.Context, client.Client) (worker.Worker, error)
 }
 
-// NewDeploymentApiCliOptions initializes a new DeploymentApiCliOptions value
-func NewDeploymentApiCliOptions() *DeploymentApiCliOptions {
-	return &DeploymentApiCliOptions{}
+// NewDeploymentServiceCliOptions initializes a new DeploymentServiceCliOptions value
+func NewDeploymentServiceCliOptions() *DeploymentServiceCliOptions {
+	return &DeploymentServiceCliOptions{}
 }
 
 // WithAfter injects a custom After hook to be run after any command invocation
-func (opts *DeploymentApiCliOptions) WithAfter(fn func(*v2.Context) error) *DeploymentApiCliOptions {
+func (opts *DeploymentServiceCliOptions) WithAfter(fn func(*v2.Context) error) *DeploymentServiceCliOptions {
 	opts.after = fn
 	return opts
 }
 
 // WithBefore injects a custom Before hook to be run prior to any command invocation
-func (opts *DeploymentApiCliOptions) WithBefore(fn func(*v2.Context) error) *DeploymentApiCliOptions {
+func (opts *DeploymentServiceCliOptions) WithBefore(fn func(*v2.Context) error) *DeploymentServiceCliOptions {
 	opts.before = fn
 	return opts
 }
 
 // WithClient provides a Temporal client factory for use by commands
-func (opts *DeploymentApiCliOptions) WithClient(fn func(*v2.Context) (client.Client, error)) *DeploymentApiCliOptions {
+func (opts *DeploymentServiceCliOptions) WithClient(fn func(*v2.Context) (client.Client, error)) *DeploymentServiceCliOptions {
 	opts.clientForCommand = fn
 	return opts
 }
 
 // WithWorker provides an method for initializing a worker
-func (opts *DeploymentApiCliOptions) WithWorker(fn func(*v2.Context, client.Client) (worker.Worker, error)) *DeploymentApiCliOptions {
+func (opts *DeploymentServiceCliOptions) WithWorker(fn func(*v2.Context, client.Client) (worker.Worker, error)) *DeploymentServiceCliOptions {
 	opts.worker = fn
 	return opts
 }
 
-// NewDeploymentApiCli initializes a cli for a(n) cloud.v1.workflow.DeploymentApi service
-func NewDeploymentApiCli(options ...*DeploymentApiCliOptions) (*v2.App, error) {
-	commands, err := newDeploymentApiCommands(options...)
+// NewDeploymentServiceCli initializes a cli for a(n) cloud.v1.workflow.DeploymentService service
+func NewDeploymentServiceCli(options ...*DeploymentServiceCliOptions) (*v2.App, error) {
+	commands, err := newDeploymentServiceCommands(options...)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing subcommands: %w", err)
 	}
 	return &v2.App{
-		Name:                      "deployment-api",
-		Usage:                     "cloud.v1.workflow.DeploymentApi operations",
+		Name:                      "deployment-service",
+		Usage:                     "cloud.v1.workflow.DeploymentService operations",
 		Commands:                  commands,
 		DisableSliceFlagSeparator: true,
 	}, nil
 }
 
-// NewDeploymentApiCliCommand initializes a cli command for a cloud.v1.workflow.DeploymentApi service with subcommands for each query, signal, update, and workflow
-func NewDeploymentApiCliCommand(options ...*DeploymentApiCliOptions) (*v2.Command, error) {
-	subcommands, err := newDeploymentApiCommands(options...)
+// NewDeploymentServiceCliCommand initializes a cli command for a cloud.v1.workflow.DeploymentService service with subcommands for each query, signal, update, and workflow
+func NewDeploymentServiceCliCommand(options ...*DeploymentServiceCliOptions) (*v2.Command, error) {
+	subcommands, err := newDeploymentServiceCommands(options...)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing subcommands: %w", err)
 	}
 	return &v2.Command{
-		Name:        "deployment-api",
-		Usage:       "cloud.v1.workflow.DeploymentApi operations",
+		Name:        "deployment-service",
+		Usage:       "cloud.v1.workflow.DeploymentService operations",
 		Subcommands: subcommands,
 	}, nil
 }
 
-// newDeploymentApiCommands initializes (sub)commands for a cloud.v1.workflow.DeploymentApi cli or command
-func newDeploymentApiCommands(options ...*DeploymentApiCliOptions) ([]*v2.Command, error) {
-	opts := &DeploymentApiCliOptions{}
+// newDeploymentServiceCommands initializes (sub)commands for a cloud.v1.workflow.DeploymentService cli or command
+func newDeploymentServiceCommands(options ...*DeploymentServiceCliOptions) ([]*v2.Command, error) {
+	opts := &DeploymentServiceCliOptions{}
 	if len(options) > 0 {
 		opts = options[0]
 	}
@@ -4954,7 +4954,7 @@ func newDeploymentApiCommands(options ...*DeploymentApiCliOptions) ([]*v2.Comman
 					return fmt.Errorf("error initializing client for command: %w", err)
 				}
 				defer tc.Close()
-				c := NewDeploymentApiClient(tc)
+				c := NewDeploymentServiceClient(tc)
 				req, err := UnmarshalCliFlagsToCalculateQuotasWorkflowRequest(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
 				if err != nil {
 					return fmt.Errorf("error unmarshalling request: %w", err)
@@ -5032,7 +5032,7 @@ func newDeploymentApiCommands(options ...*DeploymentApiCliOptions) ([]*v2.Comman
 					return fmt.Errorf("error initializing client for command: %w", err)
 				}
 				defer tc.Close()
-				c := NewDeploymentApiClient(tc)
+				c := NewDeploymentServiceClient(tc)
 				req, err := UnmarshalCliFlagsToProcessDeploymentWorkflowRequest(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
 				if err != nil {
 					return fmt.Errorf("error unmarshalling request: %w", err)
@@ -5120,7 +5120,7 @@ func newDeploymentApiCommands(options ...*DeploymentApiCliOptions) ([]*v2.Comman
 					return fmt.Errorf("error initializing client for command: %w", err)
 				}
 				defer tc.Close()
-				c := NewDeploymentApiClient(tc)
+				c := NewDeploymentServiceClient(tc)
 				req, err := UnmarshalCliFlagsToTopology(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
 				if err != nil {
 					return fmt.Errorf("error unmarshalling request: %w", err)
@@ -5208,7 +5208,7 @@ func newDeploymentApiCommands(options ...*DeploymentApiCliOptions) ([]*v2.Comman
 					return fmt.Errorf("error initializing client for command: %w", err)
 				}
 				defer tc.Close()
-				c := NewDeploymentApiClient(tc)
+				c := NewDeploymentServiceClient(tc)
 				req, err := UnmarshalCliFlagsToTopology(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
 				if err != nil {
 					return fmt.Errorf("error unmarshalling request: %w", err)
@@ -5248,7 +5248,7 @@ func newDeploymentApiCommands(options ...*DeploymentApiCliOptions) ([]*v2.Comman
 		commands = append(commands, []*v2.Command{
 			{
 				Name:                   "worker",
-				Usage:                  "runs a cloud.v1.workflow.DeploymentApi worker process",
+				Usage:                  "runs a cloud.v1.workflow.DeploymentService worker process",
 				UseShortOptionHandling: true,
 				Before:                 opts.before,
 				After:                  opts.after,

@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/common/entity.proto";
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/permission.proto";
+import "cloud/v1/models/package.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    package.proto is the tenant package registry (custom DB builds: .deb / binary).
+    Upload is PRESIGNED so the blob goes straight to object storage, not through our
+    backend:
+      1. CreatePackageUpload(meta) -> a PackageRecord (STATUS_UPLOADING) + a presigned
+         PUT url.
+      2. client PUTs the file to that url.
+      3. CompleteUpload(id) -> server verifies size + sha256, flips to STATUS_READY.
+    A package is referenced from a database's params schema (a package_id field), not
+    by a dedicated proto field; install resolves it (typically replacing the stock
+    install) and the agent fetches the blob via a file reference.
+
+    Tenant-scoped, gated by RESOURCE_PACKAGE. SECURITY: a package executes on the
+    host (e.g. dpkg postinst) — it only runs on the tenant's own provisioned
+    machines; verify sha256/size, enforce a size limit, keep it tenant-private.
+ */
+
+message CreatePackageUploadRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string name = 2 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    models.PackageRecord.Format format = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    string version = 4 [(validate.rules).string.max_len = 128];
+    domain.Database.Kind target_db_kind = 5;
+    string os = 6 [(validate.rules).string.max_len = 128];
+    string arch = 7 [(validate.rules).string.max_len = 32];
+    // Declared blob size + hash; verified on CompleteUpload against the uploaded object.
+    uint64 size_bytes = 8 [(validate.rules).uint64.gt = 0];
+    string sha256 = 9 [(validate.rules).string = {len: 64}];
+}
+message CreatePackageUploadResponse {
+    // The created record (STATUS_UPLOADING).
+    models.PackageRecord package = 1 [(validate.rules).message.required = true];
+    // Presigned PUT url the client uploads the blob to.
+    string upload_url = 2 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+    // When the upload url stops working.
+    google.protobuf.Timestamp upload_url_expires_at = 3;
+}
+
+/*
+    CompleteUpload finalizes after the client PUT the blob: the server verifies
+    size + sha256 and flips the record to READY (or FAILED). Idempotent.
+ */
+message CompleteUploadRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message CompleteUploadResponse {
+    models.PackageRecord package = 1 [(validate.rules).message.required = true];
+}
+
+message GetPackageRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message GetPackageResponse {
+    models.PackageRecord package = 1 [(validate.rules).message.required = true];
+}
+
+message ListPackagesRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    common.EntityFilter filter = 2;
+    // Facet filters.
+    repeated models.PackageRecord.Format formats = 3;
+    repeated domain.Database.Kind db_kinds = 4;
+    common.EntitySort sort = 5;
+    common.Page page = 6;
+}
+message ListPackagesResponse {
+    repeated models.PackageRecord packages = 1;
+    string next_page_token = 2;
+}
+
+message DeletePackageRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message DeletePackageResponse {}
+
+service PackageService {
+    /*
+        CreatePackageUpload mints a record + presigned PUT url. Not idempotent.
+     */
+    rpc CreatePackageUpload (CreatePackageUploadRequest) returns (CreatePackageUploadResponse) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PACKAGE, action: ACTION_CREATE}]};
+    }
+    rpc CompleteUpload (CompleteUploadRequest) returns (CompleteUploadResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PACKAGE, action: ACTION_UPDATE}]};
+    }
+    rpc GetPackage (GetPackageRequest) returns (GetPackageResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PACKAGE, action: ACTION_READ}]};
+    }
+    rpc ListPackages (ListPackagesRequest) returns (ListPackagesResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PACKAGE, action: ACTION_LIST}]};
+    }
+    /*
+        DeletePackage is idempotent: deleting an absent package is a no-op.
+     */
+    rpc DeletePackage (DeletePackageRequest) returns (DeletePackageResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PACKAGE, action: ACTION_DELETE}]};
+    }
+}

@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/common/entity.proto";
+import "cloud/v1/topology/topology.proto";
+import "schemapb/schema.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+/*
+    TestWizardDraft is the server-held, mutable state of a TEST wizard.
+
+    Big-schema model: the whole test form is ONE conditional schemapb schema,
+    carried in `form` (a Filled = schema + values). Database kind, database params,
+    workload, provider and provider settings all live under their paths in
+    form.values; conditional branches (e.g. provider sizing per topology) are gated
+    by schemapb `when` (validated/shown only when their CEL condition holds). The
+    server builds the schema, validates the whole form authoritatively, regenerates
+    the topology and recomputes readiness on every patch. The frontend renders the
+    form straight from `form` (schemapb ts sdk + cel-es for live UX) and sends back
+    a patched Filled.
+
+    Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
+    it bakes into a domain.TestRun.
+ */
+message TestWizardDraftRecord {
+    common.Entity entity = 1 [(validate.rules).message.required = true];
+
+    // The whole test form: one big conditional schema + its current values.
+    schemapb.Filled form = 2;
+
+    // --- server-computed (recomputed on every patch) ---
+    // Topology generated from the current form values (abstract machines;
+    // provider_parms filled once provider settings are valid).
+    topology.Topology topology = 3;
+    // Current authoritative validation errors; FieldError.field carries the path
+    // so the UI can group by section (database.*, workload.*, provider.*).
+    repeated schemapb.FieldError errors = 4;
+    // ready is true when the whole form validates and FinishTestWizard is allowed.
+    bool ready = 5;
+
+    // Seeded from this test preset, if the wizard started from one.
+    string test_preset_id = 6 [(validate.rules).string.max_len = 64];
+}

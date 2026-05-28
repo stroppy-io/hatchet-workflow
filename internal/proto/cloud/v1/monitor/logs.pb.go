@@ -28,7 +28,7 @@ type Source int32
 
 const (
 	Source_SOURCE_UNSPECIFIED Source = 0
-	// COMMAND is agent command stdout/stderr (a DAG node op).
+	// COMMAND is agent command stdout/stderr (an execution-stage op).
 	Source_SOURCE_COMMAND Source = 1
 	// JOURNALD is a systemd-managed service's stdout/stderr.
 	Source_SOURCE_JOURNALD Source = 2
@@ -187,9 +187,15 @@ func (x *LogCursor) GetSeq() uint64 {
 type LogLine struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
 	ObservedAt *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=observed_at,json=observedAt,proto3" json:"observed_at,omitempty"`
-	// dag_id is the run's Dag id (plain string, runtime-pure).
-	DagId string `protobuf:"bytes,2,opt,name=dag_id,json=dagId,proto3" json:"dag_id,omitempty"`
-	// node_execution_id is the owning DAG stage, when the line came from a node op.
+	// run_id is the owning test run id (plain string, runtime-pure).
+	RunId string `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// line_no is a stable, monotonic, GLOBAL ordinal of this line within the run
+	// (assigned server-side at ingest). Gives a continuous numbering across the
+	// whole run regardless of filter, so the UI can "go to line N", show a stable
+	// gutter, and two users opening the same LogRef land on the same line. Cursor
+	// anchors the exact position; line_no is the human/scroll index.
+	LineNo uint64 `protobuf:"varint,11,opt,name=line_no,json=lineNo,proto3" json:"line_no,omitempty"`
+	// node_execution_id is the owning execution stage, when the line came from a stage op.
 	NodeExecutionId string `protobuf:"bytes,3,opt,name=node_execution_id,json=nodeExecutionId,proto3" json:"node_execution_id,omitempty"`
 	// component_id is the topology component the line is about.
 	ComponentId string `protobuf:"bytes,4,opt,name=component_id,json=componentId,proto3" json:"component_id,omitempty"`
@@ -243,11 +249,18 @@ func (x *LogLine) GetObservedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *LogLine) GetDagId() string {
+func (x *LogLine) GetRunId() string {
 	if x != nil {
-		return x.DagId
+		return x.RunId
 	}
 	return ""
+}
+
+func (x *LogLine) GetLineNo() uint64 {
+	if x != nil {
+		return x.LineNo
+	}
+	return 0
 }
 
 func (x *LogLine) GetNodeExecutionId() string {
@@ -311,7 +324,7 @@ func (x *LogLine) GetCursor() *LogCursor {
 // node_execution_id = a stage's logs; cursor = a specific line anchor.
 type LogRef struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	DagId           string                 `protobuf:"bytes,1,opt,name=dag_id,json=dagId,proto3" json:"dag_id,omitempty"`
+	RunId           string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	NodeExecutionId *string                `protobuf:"bytes,2,opt,name=node_execution_id,json=nodeExecutionId,proto3,oneof" json:"node_execution_id,omitempty"`
 	ComponentId     *string                `protobuf:"bytes,3,opt,name=component_id,json=componentId,proto3,oneof" json:"component_id,omitempty"`
 	Start           *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=start,proto3,oneof" json:"start,omitempty"`
@@ -352,9 +365,9 @@ func (*LogRef) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_monitor_logs_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *LogRef) GetDagId() string {
+func (x *LogRef) GetRunId() string {
 	if x != nil {
-		return x.DagId
+		return x.RunId
 	}
 	return ""
 }
@@ -456,12 +469,13 @@ const file_cloud_v1_monitor_logs_proto_rawDesc = "" +
 	"\tLogCursor\x12E\n" +
 	"\vobserved_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampB\b\xfaB\x05\xb2\x01\x02\b\x01R\n" +
 	"observedAt\x12\x10\n" +
-	"\x03seq\x18\x02 \x01(\x04R\x03seq\"\xe9\x03\n" +
+	"\x03seq\x18\x02 \x01(\x04R\x03seq\"\x82\x04\n" +
 	"\aLogLine\x12E\n" +
 	"\vobserved_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampB\b\xfaB\x05\xb2\x01\x02\b\x01R\n" +
 	"observedAt\x12!\n" +
-	"\x06dag_id\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05dagId\x124\n" +
+	"\x06run_id\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\x12\x17\n" +
+	"\aline_no\x18\v \x01(\x04R\x06lineNo\x124\n" +
 	"\x11node_execution_id\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x0fnodeExecutionId\x12+\n" +
 	"\fcomponent_id\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\vcomponentId\x12'\n" +
 	"\n" +
@@ -473,8 +487,8 @@ const file_cloud_v1_monitor_logs_proto_rawDesc = "" +
 	"\x06cursor\x18\n" +
 	" \x01(\v2\x1b.cloud.v1.monitor.LogCursorR\x06cursor\"\x80\x03\n" +
 	"\x06LogRef\x12!\n" +
-	"\x06dag_id\x18\x01 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05dagId\x129\n" +
+	"\x06run_id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\x129\n" +
 	"\x11node_execution_id\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01H\x00R\x0fnodeExecutionId\x88\x01\x01\x120\n" +
 	"\fcomponent_id\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01H\x01R\vcomponentId\x88\x01\x01\x125\n" +
 	"\x05start\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampH\x02R\x05start\x88\x01\x01\x121\n" +

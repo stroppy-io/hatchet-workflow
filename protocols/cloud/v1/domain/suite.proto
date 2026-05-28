@@ -24,6 +24,30 @@ message Suite {
     deployment.Provider provider = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
 
     common.Tags tags = 4;
+
+    // Optional cron schedule that auto-starts this suite. Absent / disabled = the
+    // suite only runs when started manually.
+    Schedule schedule = 5;
+
+    // Rating defaults propagated to every child TestRun the suite spawns (incl.
+    // cron runs). Same semantics as TestRunRecord: tenant defaults true, global
+    // defaults false (opt-in). Modeled as optional so unset = the platform default.
+    optional bool default_in_tenant_rating = 6;
+    optional bool default_in_global_rating = 7;
+}
+
+/*
+    Schedule is an optional cron trigger for a suite. When enabled with a cron
+    expression, the platform auto-starts the suite on that cadence; `enabled`
+    gates it so a configured schedule can be paused without losing the cron.
+ */
+message Schedule {
+    // enabled gates the schedule: false = paused (never auto-runs).
+    bool enabled = 1;
+    // Standard cron expression (e.g. "0 2 * * *"). Validated server-side.
+    string cron = 2 [(validate.rules).string.max_len = 128];
+    // IANA timezone for the cron (e.g. "Europe/Moscow"); empty = UTC.
+    string timezone = 3 [(validate.rules).string.max_len = 64];
 }
 
 // Materialized suite execution: preset_ids expanded into concrete TestRuns.

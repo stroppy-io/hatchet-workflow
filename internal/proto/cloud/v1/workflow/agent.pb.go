@@ -27,8 +27,8 @@ var File_cloud_v1_workflow_agent_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_workflow_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcloud/v1/workflow/agent.proto\x12\x11cloud.v1.workflow\x1a\x19cloud/v1/common/cmd.proto\x1a\x19cloud/v1/common/dir.proto\x1a\x1acloud/v1/common/file.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1atemporal/v1/temporal.proto2\xf3\x03\n" +
-	"\x0fAgentCommandApi\x12m\n" +
+	"\x1dcloud/v1/workflow/agent.proto\x12\x11cloud.v1.workflow\x1a\x19cloud/v1/common/cmd.proto\x1a\x19cloud/v1/common/dir.proto\x1a\x1acloud/v1/common/file.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1atemporal/v1/temporal.proto2\xf7\x03\n" +
+	"\x13AgentCommandService\x12m\n" +
 	"\x19EnsureAgentOnlineActivity\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\" \x92\xc4\x03\x1c\"\x03\b\x84\a*\x02\b<2\x11\n" +
 	"\x02\b\x05\x11\x00\x00\x00\x00\x00\x00\x00@\x1a\x02\b<\x12S\n" +
 	"\x11CreateDirActivity\x12\x14.cloud.v1.common.Dir\x1a\x16.google.protobuf.Empty\"\x10\x92\xc4\x03\f\"\x02\b\x1e2\x06\n" +
@@ -48,16 +48,16 @@ var file_cloud_v1_workflow_agent_proto_goTypes = []any{
 	(*common.Cmd_Result)(nil), // 5: cloud.v1.common.Cmd.Result
 }
 var file_cloud_v1_workflow_agent_proto_depIdxs = []int32{
-	0, // 0: cloud.v1.workflow.AgentCommandApi.EnsureAgentOnlineActivity:input_type -> google.protobuf.Empty
-	1, // 1: cloud.v1.workflow.AgentCommandApi.CreateDirActivity:input_type -> cloud.v1.common.Dir
-	2, // 2: cloud.v1.workflow.AgentCommandApi.CreateTempDirActivity:input_type -> cloud.v1.common.Dir.Temp
-	3, // 3: cloud.v1.workflow.AgentCommandApi.WriteFileActivity:input_type -> cloud.v1.common.File
-	4, // 4: cloud.v1.workflow.AgentCommandApi.CallCmdActivity:input_type -> cloud.v1.common.Cmd
-	0, // 5: cloud.v1.workflow.AgentCommandApi.EnsureAgentOnlineActivity:output_type -> google.protobuf.Empty
-	0, // 6: cloud.v1.workflow.AgentCommandApi.CreateDirActivity:output_type -> google.protobuf.Empty
-	1, // 7: cloud.v1.workflow.AgentCommandApi.CreateTempDirActivity:output_type -> cloud.v1.common.Dir
-	0, // 8: cloud.v1.workflow.AgentCommandApi.WriteFileActivity:output_type -> google.protobuf.Empty
-	5, // 9: cloud.v1.workflow.AgentCommandApi.CallCmdActivity:output_type -> cloud.v1.common.Cmd.Result
+	0, // 0: cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity:input_type -> google.protobuf.Empty
+	1, // 1: cloud.v1.workflow.AgentCommandService.CreateDirActivity:input_type -> cloud.v1.common.Dir
+	2, // 2: cloud.v1.workflow.AgentCommandService.CreateTempDirActivity:input_type -> cloud.v1.common.Dir.Temp
+	3, // 3: cloud.v1.workflow.AgentCommandService.WriteFileActivity:input_type -> cloud.v1.common.File
+	4, // 4: cloud.v1.workflow.AgentCommandService.CallCmdActivity:input_type -> cloud.v1.common.Cmd
+	0, // 5: cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity:output_type -> google.protobuf.Empty
+	0, // 6: cloud.v1.workflow.AgentCommandService.CreateDirActivity:output_type -> google.protobuf.Empty
+	1, // 7: cloud.v1.workflow.AgentCommandService.CreateTempDirActivity:output_type -> cloud.v1.common.Dir
+	0, // 8: cloud.v1.workflow.AgentCommandService.WriteFileActivity:output_type -> google.protobuf.Empty
+	5, // 9: cloud.v1.workflow.AgentCommandService.CallCmdActivity:output_type -> cloud.v1.common.Cmd.Result
 	5, // [5:10] is the sub-list for method output_type
 	0, // [0:5] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

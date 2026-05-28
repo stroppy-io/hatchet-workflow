@@ -3,10 +3,11 @@ syntax = "proto3";
 package cloud.v1.domain;
 
 import "cloud/v1/common/tags.proto";
-import "schemapb/schema.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
+// Worker is a unit that executes pipeline stages: the master (orchestrator) or an
+// agent (on a host). The live pipeline / worker info lives in monitor/overview.proto.
 message Worker {
     string id = 1;
     enum Kind {
@@ -16,16 +17,4 @@ message Worker {
     }
     Kind kind = 2;
     common.Tags tags = 3;
-}
-
-message Pipeline {
-    message Task {
-        string name = 1;
-        domain.Worker assigned_to = 2;
-        schemapb.Baked params = 3;
-        repeated Task children = 4;
-        common.Tags tags = 5;
-    }
-    repeated Task tasks = 1;
-    common.Tags tags = 2;
 }

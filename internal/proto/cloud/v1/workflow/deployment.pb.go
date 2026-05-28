@@ -438,8 +438,8 @@ const file_cloud_v1_workflow_deployment_proto_rawDesc = "" +
 	"\x10quota_allocation\x18\x01 \x03(\v2E.cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationEntryR\x0fquotaAllocation\x1ai\n" +
 	"\x14QuotaAllocationEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12;\n" +
-	"\x05value\x18\x02 \x01(\v2%.cloud.v1.deployment.Quota.AllocationR\x05value:\x028\x012\xa7\r\n" +
-	"\rDeploymentApi\x12\xab\x01\n" +
+	"\x05value\x18\x02 \x01(\v2%.cloud.v1.deployment.Quota.AllocationR\x05value:\x028\x012\xab\r\n" +
+	"\x11DeploymentService\x12\xab\x01\n" +
 	"\x19ProcessDeploymentWorkflow\x123.cloud.v1.workflow.ProcessDeploymentWorkflowRequest\x1a4.cloud.v1.workflow.ProcessDeploymentWorkflowResponse\"#\x8a\xc4\x03\x1fJ\x02 \x01r\x19ProcessDeploymentWorkflow\x12\x99\x01\n" +
 	"\x16AcquireNetworkActivity\x120.cloud.v1.workflow.AcquireNetworkActivityRequest\x1a1.cloud.v1.workflow.AcquireNetworkActivityResponse\"\x1a\x92\xc4\x03\x16\"\x03\b\xac\x022\x0f\n" +
 	"\x02\b\x05\x11\x00\x00\x00\x00\x00\x00\x00@ \x03\x12\xa8\x01\n" +
@@ -516,30 +516,30 @@ var file_cloud_v1_workflow_deployment_proto_depIdxs = []int32{
 	15, // 11: cloud.v1.workflow.CalculateQuotasWorkflowResponse.QuotaRequestsEntry.value:type_name -> cloud.v1.deployment.Quota.Request
 	15, // 12: cloud.v1.workflow.AcquireQuotasActivityRequest.QuotaRequestsEntry.value:type_name -> cloud.v1.deployment.Quota.Request
 	16, // 13: cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationEntry.value:type_name -> cloud.v1.deployment.Quota.Allocation
-	0,  // 14: cloud.v1.workflow.DeploymentApi.ProcessDeploymentWorkflow:input_type -> cloud.v1.workflow.ProcessDeploymentWorkflowRequest
-	4,  // 15: cloud.v1.workflow.DeploymentApi.AcquireNetworkActivity:input_type -> cloud.v1.workflow.AcquireNetworkActivityRequest
-	2,  // 16: cloud.v1.workflow.DeploymentApi.CalculateQuotasWorkflow:input_type -> cloud.v1.workflow.CalculateQuotasWorkflowRequest
-	6,  // 17: cloud.v1.workflow.DeploymentApi.AcquireQuotasActivity:input_type -> cloud.v1.workflow.AcquireQuotasActivityRequest
-	12, // 18: cloud.v1.workflow.DeploymentApi.RenderDockerInputWorkflow:input_type -> cloud.v1.topology.Topology
-	17, // 19: cloud.v1.workflow.DeploymentApi.DockerPullActivity:input_type -> cloud.v1.deployment.Docker.Input
-	17, // 20: cloud.v1.workflow.DeploymentApi.DockerUpActivity:input_type -> cloud.v1.deployment.Docker.Input
-	17, // 21: cloud.v1.workflow.DeploymentApi.DockerDownActivity:input_type -> cloud.v1.deployment.Docker.Input
-	12, // 22: cloud.v1.workflow.DeploymentApi.RenderTerraformVariablesWorkflow:input_type -> cloud.v1.topology.Topology
-	18, // 23: cloud.v1.workflow.DeploymentApi.TerraformPlanActivity:input_type -> cloud.v1.deployment.Terraform.Input
-	18, // 24: cloud.v1.workflow.DeploymentApi.TerraformApplyActivity:input_type -> cloud.v1.deployment.Terraform.Input
-	18, // 25: cloud.v1.workflow.DeploymentApi.TerraformDestroyActivity:input_type -> cloud.v1.deployment.Terraform.Input
-	1,  // 26: cloud.v1.workflow.DeploymentApi.ProcessDeploymentWorkflow:output_type -> cloud.v1.workflow.ProcessDeploymentWorkflowResponse
-	5,  // 27: cloud.v1.workflow.DeploymentApi.AcquireNetworkActivity:output_type -> cloud.v1.workflow.AcquireNetworkActivityResponse
-	3,  // 28: cloud.v1.workflow.DeploymentApi.CalculateQuotasWorkflow:output_type -> cloud.v1.workflow.CalculateQuotasWorkflowResponse
-	7,  // 29: cloud.v1.workflow.DeploymentApi.AcquireQuotasActivity:output_type -> cloud.v1.workflow.AcquireQuotasActivityResponse
-	17, // 30: cloud.v1.workflow.DeploymentApi.RenderDockerInputWorkflow:output_type -> cloud.v1.deployment.Docker.Input
-	19, // 31: cloud.v1.workflow.DeploymentApi.DockerPullActivity:output_type -> cloud.v1.deployment.Docker.Output
-	19, // 32: cloud.v1.workflow.DeploymentApi.DockerUpActivity:output_type -> cloud.v1.deployment.Docker.Output
-	19, // 33: cloud.v1.workflow.DeploymentApi.DockerDownActivity:output_type -> cloud.v1.deployment.Docker.Output
-	18, // 34: cloud.v1.workflow.DeploymentApi.RenderTerraformVariablesWorkflow:output_type -> cloud.v1.deployment.Terraform.Input
-	20, // 35: cloud.v1.workflow.DeploymentApi.TerraformPlanActivity:output_type -> cloud.v1.deployment.Terraform.Output
-	20, // 36: cloud.v1.workflow.DeploymentApi.TerraformApplyActivity:output_type -> cloud.v1.deployment.Terraform.Output
-	20, // 37: cloud.v1.workflow.DeploymentApi.TerraformDestroyActivity:output_type -> cloud.v1.deployment.Terraform.Output
+	0,  // 14: cloud.v1.workflow.DeploymentService.ProcessDeploymentWorkflow:input_type -> cloud.v1.workflow.ProcessDeploymentWorkflowRequest
+	4,  // 15: cloud.v1.workflow.DeploymentService.AcquireNetworkActivity:input_type -> cloud.v1.workflow.AcquireNetworkActivityRequest
+	2,  // 16: cloud.v1.workflow.DeploymentService.CalculateQuotasWorkflow:input_type -> cloud.v1.workflow.CalculateQuotasWorkflowRequest
+	6,  // 17: cloud.v1.workflow.DeploymentService.AcquireQuotasActivity:input_type -> cloud.v1.workflow.AcquireQuotasActivityRequest
+	12, // 18: cloud.v1.workflow.DeploymentService.RenderDockerInputWorkflow:input_type -> cloud.v1.topology.Topology
+	17, // 19: cloud.v1.workflow.DeploymentService.DockerPullActivity:input_type -> cloud.v1.deployment.Docker.Input
+	17, // 20: cloud.v1.workflow.DeploymentService.DockerUpActivity:input_type -> cloud.v1.deployment.Docker.Input
+	17, // 21: cloud.v1.workflow.DeploymentService.DockerDownActivity:input_type -> cloud.v1.deployment.Docker.Input
+	12, // 22: cloud.v1.workflow.DeploymentService.RenderTerraformVariablesWorkflow:input_type -> cloud.v1.topology.Topology
+	18, // 23: cloud.v1.workflow.DeploymentService.TerraformPlanActivity:input_type -> cloud.v1.deployment.Terraform.Input
+	18, // 24: cloud.v1.workflow.DeploymentService.TerraformApplyActivity:input_type -> cloud.v1.deployment.Terraform.Input
+	18, // 25: cloud.v1.workflow.DeploymentService.TerraformDestroyActivity:input_type -> cloud.v1.deployment.Terraform.Input
+	1,  // 26: cloud.v1.workflow.DeploymentService.ProcessDeploymentWorkflow:output_type -> cloud.v1.workflow.ProcessDeploymentWorkflowResponse
+	5,  // 27: cloud.v1.workflow.DeploymentService.AcquireNetworkActivity:output_type -> cloud.v1.workflow.AcquireNetworkActivityResponse
+	3,  // 28: cloud.v1.workflow.DeploymentService.CalculateQuotasWorkflow:output_type -> cloud.v1.workflow.CalculateQuotasWorkflowResponse
+	7,  // 29: cloud.v1.workflow.DeploymentService.AcquireQuotasActivity:output_type -> cloud.v1.workflow.AcquireQuotasActivityResponse
+	17, // 30: cloud.v1.workflow.DeploymentService.RenderDockerInputWorkflow:output_type -> cloud.v1.deployment.Docker.Input
+	19, // 31: cloud.v1.workflow.DeploymentService.DockerPullActivity:output_type -> cloud.v1.deployment.Docker.Output
+	19, // 32: cloud.v1.workflow.DeploymentService.DockerUpActivity:output_type -> cloud.v1.deployment.Docker.Output
+	19, // 33: cloud.v1.workflow.DeploymentService.DockerDownActivity:output_type -> cloud.v1.deployment.Docker.Output
+	18, // 34: cloud.v1.workflow.DeploymentService.RenderTerraformVariablesWorkflow:output_type -> cloud.v1.deployment.Terraform.Input
+	20, // 35: cloud.v1.workflow.DeploymentService.TerraformPlanActivity:output_type -> cloud.v1.deployment.Terraform.Output
+	20, // 36: cloud.v1.workflow.DeploymentService.TerraformApplyActivity:output_type -> cloud.v1.deployment.Terraform.Output
+	20, // 37: cloud.v1.workflow.DeploymentService.TerraformDestroyActivity:output_type -> cloud.v1.deployment.Terraform.Output
 	26, // [26:38] is the sub-list for method output_type
 	14, // [14:26] is the sub-list for method input_type
 	14, // [14:14] is the sub-list for extension type_name

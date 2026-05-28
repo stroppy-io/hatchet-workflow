@@ -12,9 +12,9 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     into one queried shape: agent command stdout/stderr AND component/DB logs
     (Vector: journald + DB log files). Logs are runtime observations (queried from
     VictoriaLogs, not a DB entity) → runtime/, like runtime/metrics. Ids are plain
-    strings (runtime stays independent of models, like DagRef).
+    strings (runtime stays independent of models).
 
-    Two axes coexist via labels: per-DAG-stage (node_execution_id) and per-component
+    Two axes coexist via labels: per-stage (node_execution_id) and per-component
     (component_id). Command logs carry both (stage + target component); continuous
     component/DB logs carry component_id (+ machine_id) only.
  */
@@ -22,7 +22,7 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
 /* Source is where a log line came from. */
 enum Source {
     SOURCE_UNSPECIFIED = 0;
-    /* COMMAND is agent command stdout/stderr (a DAG node op). */
+    /* COMMAND is agent command stdout/stderr (an execution-stage op). */
     SOURCE_COMMAND = 1;
     /* JOURNALD is a systemd-managed service's stdout/stderr. */
     SOURCE_JOURNALD = 2;
@@ -49,9 +49,17 @@ message LogCursor {
 /* LogLine is one unified log record returned from a query or stream. */
 message LogLine {
     google.protobuf.Timestamp observed_at = 1 [(validate.rules).timestamp.required = true];
-    /* dag_id is the run's Dag id (plain string, runtime-pure). */
-    string dag_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
-    /* node_execution_id is the owning DAG stage, when the line came from a node op. */
+    /* run_id is the owning test run id (plain string, runtime-pure). */
+    string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        line_no is a stable, monotonic, GLOBAL ordinal of this line within the run
+        (assigned server-side at ingest). Gives a continuous numbering across the
+        whole run regardless of filter, so the UI can "go to line N", show a stable
+        gutter, and two users opening the same LogRef land on the same line. Cursor
+        anchors the exact position; line_no is the human/scroll index.
+     */
+    uint64 line_no = 11;
+    /* node_execution_id is the owning execution stage, when the line came from a stage op. */
     string node_execution_id = 3 [(validate.rules).string.max_len = 128];
     /* component_id is the topology component the line is about. */
     string component_id = 4 [(validate.rules).string.max_len = 128];
@@ -72,7 +80,7 @@ message LogLine {
     node_execution_id = a stage's logs; cursor = a specific line anchor.
  */
 message LogRef {
-    string dag_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    string run_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
     optional string node_execution_id = 2 [(validate.rules).string.max_len = 128];
     optional string component_id = 3 [(validate.rules).string.max_len = 128];
     optional google.protobuf.Timestamp start = 4;

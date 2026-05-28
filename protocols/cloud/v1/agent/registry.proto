@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package cloud.v1.agent;
+
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent";
+
+/*
+    registry.proto is the AGENT-FACING presence channel. The agent does its actual
+    work via Temporal (polling activities), but it also registers + heartbeats to
+    OUR server so the server knows which agents are online — this feeds
+    monitor.WorkerInfo.online on the run overview and gates the reverse shell.
+
+    Auth is the AGENT TOKEN, not the iam RBAC interceptor (no auth annotation).
+ */
+
+// AgentInfo identifies an agent host.
+message AgentInfo {
+    string machine_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    string host = 2 [(validate.rules).string.max_len = 256];
+    string agent_version = 3 [(validate.rules).string.max_len = 64];
+    // Run this agent is provisioned for (scoping/audit), if any.
+    string run_id = 4 [(validate.rules).string.max_len = 128];
+}
+
+message RegisterRequest {
+    AgentInfo info = 1 [(validate.rules).message.required = true];
+}
+message RegisterResponse {
+    // Heartbeat cadence the server expects; agent is considered offline after a
+    // missed window.
+    google.protobuf.Timestamp registered_at = 1;
+    uint32 heartbeat_interval_seconds = 2;
+}
+
+message HeartbeatRequest {
+    string machine_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+}
+message HeartbeatResponse {}
+
+service AgentRegistryService {
+    // Register announces an agent coming online.
+    rpc Register (RegisterRequest) returns (RegisterResponse);
+    // Heartbeat keeps the agent marked online.
+    rpc Heartbeat (HeartbeatRequest) returns (HeartbeatResponse);
+}

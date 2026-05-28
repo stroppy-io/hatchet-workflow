@@ -44,7 +44,7 @@ message RunWorkloadWorkflowResponse {}
 //   deploy -> install stroppy -> [install database unless external] -> run workload -> teardown.
 // It composes child workflows; topology stays baked, only runtime info from the
 // deployment is carried forward.
-service TestApi {
+service TestService {
     /*
         task_queue: shared queue for every workflow/activity of this service.
         The worker polls it. Child workflows inherit it unless overridden.
@@ -142,7 +142,7 @@ message SuiteWorkflowRequest {
 message SuiteWorkflowResponse {}
 
 // SuiteWorkflow runs a child TestWorkflow per test_run, honoring max_parallel.
-service SuiteWorkflowApi {
+service SuiteWorkflowService {
     option (temporal.v1.service) = {task_queue: "stroppy-cloud"};
 
     rpc SuiteWorkflow (SuiteWorkflowRequest) returns (SuiteWorkflowResponse) {

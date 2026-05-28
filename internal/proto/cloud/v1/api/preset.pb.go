@@ -84,6 +84,7 @@ type ListDatabasePresetsRequest_Sort_Kind int32
 const (
 	ListDatabasePresetsRequest_Sort_KIND_UNSPECIFIED ListDatabasePresetsRequest_Sort_Kind = 0
 	ListDatabasePresetsRequest_Sort_KIND_DB_KIND     ListDatabasePresetsRequest_Sort_Kind = 1 // domain.Database.Kind
+	ListDatabasePresetsRequest_Sort_KIND_IS_SYSTEM   ListDatabasePresetsRequest_Sort_Kind = 2 // system presets first/last
 )
 
 // Enum value maps for ListDatabasePresetsRequest_Sort_Kind.
@@ -91,10 +92,12 @@ var (
 	ListDatabasePresetsRequest_Sort_Kind_name = map[int32]string{
 		0: "KIND_UNSPECIFIED",
 		1: "KIND_DB_KIND",
+		2: "KIND_IS_SYSTEM",
 	}
 	ListDatabasePresetsRequest_Sort_Kind_value = map[string]int32{
 		"KIND_UNSPECIFIED": 0,
 		"KIND_DB_KIND":     1,
+		"KIND_IS_SYSTEM":   2,
 	}
 )
 
@@ -130,6 +133,7 @@ type ListWorkloadPresetsRequest_Sort_Kind int32
 const (
 	ListWorkloadPresetsRequest_Sort_KIND_UNSPECIFIED     ListWorkloadPresetsRequest_Sort_Kind = 0
 	ListWorkloadPresetsRequest_Sort_KIND_STROPPY_VERSION ListWorkloadPresetsRequest_Sort_Kind = 1
+	ListWorkloadPresetsRequest_Sort_KIND_IS_SYSTEM       ListWorkloadPresetsRequest_Sort_Kind = 2
 )
 
 // Enum value maps for ListWorkloadPresetsRequest_Sort_Kind.
@@ -137,10 +141,12 @@ var (
 	ListWorkloadPresetsRequest_Sort_Kind_name = map[int32]string{
 		0: "KIND_UNSPECIFIED",
 		1: "KIND_STROPPY_VERSION",
+		2: "KIND_IS_SYSTEM",
 	}
 	ListWorkloadPresetsRequest_Sort_Kind_value = map[string]int32{
 		"KIND_UNSPECIFIED":     0,
 		"KIND_STROPPY_VERSION": 1,
+		"KIND_IS_SYSTEM":       2,
 	}
 )
 
@@ -168,7 +174,7 @@ func (x ListWorkloadPresetsRequest_Sort_Kind) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ListWorkloadPresetsRequest_Sort_Kind.Descriptor instead.
 func (ListWorkloadPresetsRequest_Sort_Kind) EnumDescriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{14, 0, 0}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{16, 0, 0}
 }
 
 type ListTestPresetsRequest_Sort_Kind int32
@@ -177,6 +183,7 @@ const (
 	ListTestPresetsRequest_Sort_KIND_UNSPECIFIED     ListTestPresetsRequest_Sort_Kind = 0
 	ListTestPresetsRequest_Sort_KIND_DB_KIND         ListTestPresetsRequest_Sort_Kind = 1
 	ListTestPresetsRequest_Sort_KIND_STROPPY_VERSION ListTestPresetsRequest_Sort_Kind = 2
+	ListTestPresetsRequest_Sort_KIND_IS_SYSTEM       ListTestPresetsRequest_Sort_Kind = 3
 )
 
 // Enum value maps for ListTestPresetsRequest_Sort_Kind.
@@ -185,11 +192,13 @@ var (
 		0: "KIND_UNSPECIFIED",
 		1: "KIND_DB_KIND",
 		2: "KIND_STROPPY_VERSION",
+		3: "KIND_IS_SYSTEM",
 	}
 	ListTestPresetsRequest_Sort_Kind_value = map[string]int32{
 		"KIND_UNSPECIFIED":     0,
 		"KIND_DB_KIND":         1,
 		"KIND_STROPPY_VERSION": 2,
+		"KIND_IS_SYSTEM":       3,
 	}
 )
 
@@ -217,7 +226,7 @@ func (x ListTestPresetsRequest_Sort_Kind) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ListTestPresetsRequest_Sort_Kind.Descriptor instead.
 func (ListTestPresetsRequest_Sort_Kind) EnumDescriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{24, 0, 0}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{28, 0, 0}
 }
 
 // ============================ DatabasePreset ============================
@@ -226,7 +235,7 @@ type CreateDatabasePresetRequest struct {
 	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// Server assigns entity.id / tenant_id / timings; values set here are
 	// ignored.
-	Preset        *models.DatabasePreset `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
+	Preset        *models.DatabasePresetRecord `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -268,7 +277,7 @@ func (x *CreateDatabasePresetRequest) GetTenantId() string {
 	return ""
 }
 
-func (x *CreateDatabasePresetRequest) GetPreset() *models.DatabasePreset {
+func (x *CreateDatabasePresetRequest) GetPreset() *models.DatabasePresetRecord {
 	if x != nil {
 		return x.Preset
 	}
@@ -276,8 +285,8 @@ func (x *CreateDatabasePresetRequest) GetPreset() *models.DatabasePreset {
 }
 
 type CreateDatabasePresetResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Preset        *models.DatabasePreset `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	Preset        *models.DatabasePresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -312,7 +321,7 @@ func (*CreateDatabasePresetResponse) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *CreateDatabasePresetResponse) GetPreset() *models.DatabasePreset {
+func (x *CreateDatabasePresetResponse) GetPreset() *models.DatabasePresetRecord {
 	if x != nil {
 		return x.Preset
 	}
@@ -372,8 +381,8 @@ func (x *GetDatabasePresetRequest) GetId() string {
 }
 
 type GetDatabasePresetResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Preset        *models.DatabasePreset `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	Preset        *models.DatabasePresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -408,7 +417,7 @@ func (*GetDatabasePresetResponse) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetDatabasePresetResponse) GetPreset() *models.DatabasePreset {
+func (x *GetDatabasePresetResponse) GetPreset() *models.DatabasePresetRecord {
 	if x != nil {
 		return x.Preset
 	}
@@ -425,10 +434,12 @@ type ListDatabasePresetsRequest struct {
 	// Kind-specific filters.
 	DbKinds []domain.Database_Kind                  `protobuf:"varint,4,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
 	Sources []ListDatabasePresetsRequest_SourceKind `protobuf:"varint,5,rep,packed,name=sources,proto3,enum=cloud.v1.api.ListDatabasePresetsRequest_SourceKind" json:"sources,omitempty"`
+	// Filter by system flag. Unset = all; true = only system; false = only user.
+	IsSystem *bool `protobuf:"varint,6,opt,name=is_system,json=isSystem,proto3,oneof" json:"is_system,omitempty"`
 	// Ordering (common Entity column or table-specific).
-	Sort *ListDatabasePresetsRequest_Sort `protobuf:"bytes,6,opt,name=sort,proto3" json:"sort,omitempty"`
+	Sort *ListDatabasePresetsRequest_Sort `protobuf:"bytes,7,opt,name=sort,proto3" json:"sort,omitempty"`
 	// Pagination.
-	Page          *common.Page `protobuf:"bytes,7,opt,name=page,proto3" json:"page,omitempty"`
+	Page          *common.Page `protobuf:"bytes,8,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -498,6 +509,13 @@ func (x *ListDatabasePresetsRequest) GetSources() []ListDatabasePresetsRequest_S
 	return nil
 }
 
+func (x *ListDatabasePresetsRequest) GetIsSystem() bool {
+	if x != nil && x.IsSystem != nil {
+		return *x.IsSystem
+	}
+	return false
+}
+
 func (x *ListDatabasePresetsRequest) GetSort() *ListDatabasePresetsRequest_Sort {
 	if x != nil {
 		return x.Sort
@@ -513,9 +531,9 @@ func (x *ListDatabasePresetsRequest) GetPage() *common.Page {
 }
 
 type ListDatabasePresetsResponse struct {
-	state         protoimpl.MessageState   `protogen:"open.v1"`
-	Presets       []*models.DatabasePreset `protobuf:"bytes,1,rep,name=presets,proto3" json:"presets,omitempty"`
-	NextPageToken string                   `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state         protoimpl.MessageState         `protogen:"open.v1"`
+	Presets       []*models.DatabasePresetRecord `protobuf:"bytes,1,rep,name=presets,proto3" json:"presets,omitempty"`
+	NextPageToken string                         `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -550,7 +568,7 @@ func (*ListDatabasePresetsResponse) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *ListDatabasePresetsResponse) GetPresets() []*models.DatabasePreset {
+func (x *ListDatabasePresetsResponse) GetPresets() []*models.DatabasePresetRecord {
 	if x != nil {
 		return x.Presets
 	}
@@ -568,7 +586,7 @@ type UpdateDatabasePresetRequest struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// Wholesale replace; preset.entity.id selects the row.
-	Preset        *models.DatabasePreset `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
+	Preset        *models.DatabasePresetRecord `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -610,7 +628,7 @@ func (x *UpdateDatabasePresetRequest) GetTenantId() string {
 	return ""
 }
 
-func (x *UpdateDatabasePresetRequest) GetPreset() *models.DatabasePreset {
+func (x *UpdateDatabasePresetRequest) GetPreset() *models.DatabasePresetRecord {
 	if x != nil {
 		return x.Preset
 	}
@@ -618,8 +636,8 @@ func (x *UpdateDatabasePresetRequest) GetPreset() *models.DatabasePreset {
 }
 
 type UpdateDatabasePresetResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Preset        *models.DatabasePreset `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	Preset        *models.DatabasePresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -654,7 +672,7 @@ func (*UpdateDatabasePresetResponse) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *UpdateDatabasePresetResponse) GetPreset() *models.DatabasePreset {
+func (x *UpdateDatabasePresetResponse) GetPreset() *models.DatabasePresetRecord {
 	if x != nil {
 		return x.Preset
 	}
@@ -749,18 +767,126 @@ func (*DeleteDatabasePresetResponse) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{9}
 }
 
+// Clone copies a preset (typically a read-only system one) into a new editable
+// preset owned by the caller. The copy gets a fresh id, is_system = false and
+// the caller as author.
+type CloneDatabasePresetRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Id       string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	// Optional name for the copy; empty -> server derives one (e.g. "<name> (copy)").
+	Name          string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CloneDatabasePresetRequest) Reset() {
+	*x = CloneDatabasePresetRequest{}
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CloneDatabasePresetRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CloneDatabasePresetRequest) ProtoMessage() {}
+
+func (x *CloneDatabasePresetRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CloneDatabasePresetRequest.ProtoReflect.Descriptor instead.
+func (*CloneDatabasePresetRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *CloneDatabasePresetRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *CloneDatabasePresetRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *CloneDatabasePresetRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type CloneDatabasePresetResponse struct {
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	Preset        *models.DatabasePresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CloneDatabasePresetResponse) Reset() {
+	*x = CloneDatabasePresetResponse{}
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CloneDatabasePresetResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CloneDatabasePresetResponse) ProtoMessage() {}
+
+func (x *CloneDatabasePresetResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CloneDatabasePresetResponse.ProtoReflect.Descriptor instead.
+func (*CloneDatabasePresetResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *CloneDatabasePresetResponse) GetPreset() *models.DatabasePresetRecord {
+	if x != nil {
+		return x.Preset
+	}
+	return nil
+}
+
 // ============================ WorkloadPreset ============================
 type CreateWorkloadPresetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Preset        *models.WorkloadPreset `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	TenantId      string                       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Preset        *models.WorkloadPresetRecord `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateWorkloadPresetRequest) Reset() {
 	*x = CreateWorkloadPresetRequest{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[10]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -772,7 +898,7 @@ func (x *CreateWorkloadPresetRequest) String() string {
 func (*CreateWorkloadPresetRequest) ProtoMessage() {}
 
 func (x *CreateWorkloadPresetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[10]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -785,7 +911,7 @@ func (x *CreateWorkloadPresetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateWorkloadPresetRequest.ProtoReflect.Descriptor instead.
 func (*CreateWorkloadPresetRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{10}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *CreateWorkloadPresetRequest) GetTenantId() string {
@@ -795,7 +921,7 @@ func (x *CreateWorkloadPresetRequest) GetTenantId() string {
 	return ""
 }
 
-func (x *CreateWorkloadPresetRequest) GetPreset() *models.WorkloadPreset {
+func (x *CreateWorkloadPresetRequest) GetPreset() *models.WorkloadPresetRecord {
 	if x != nil {
 		return x.Preset
 	}
@@ -803,15 +929,15 @@ func (x *CreateWorkloadPresetRequest) GetPreset() *models.WorkloadPreset {
 }
 
 type CreateWorkloadPresetResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Preset        *models.WorkloadPreset `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	Preset        *models.WorkloadPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateWorkloadPresetResponse) Reset() {
 	*x = CreateWorkloadPresetResponse{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[11]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -823,7 +949,7 @@ func (x *CreateWorkloadPresetResponse) String() string {
 func (*CreateWorkloadPresetResponse) ProtoMessage() {}
 
 func (x *CreateWorkloadPresetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[11]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -836,10 +962,10 @@ func (x *CreateWorkloadPresetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateWorkloadPresetResponse.ProtoReflect.Descriptor instead.
 func (*CreateWorkloadPresetResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{11}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *CreateWorkloadPresetResponse) GetPreset() *models.WorkloadPreset {
+func (x *CreateWorkloadPresetResponse) GetPreset() *models.WorkloadPresetRecord {
 	if x != nil {
 		return x.Preset
 	}
@@ -856,7 +982,7 @@ type GetWorkloadPresetRequest struct {
 
 func (x *GetWorkloadPresetRequest) Reset() {
 	*x = GetWorkloadPresetRequest{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[12]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -868,7 +994,7 @@ func (x *GetWorkloadPresetRequest) String() string {
 func (*GetWorkloadPresetRequest) ProtoMessage() {}
 
 func (x *GetWorkloadPresetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[12]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -881,7 +1007,7 @@ func (x *GetWorkloadPresetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetWorkloadPresetRequest.ProtoReflect.Descriptor instead.
 func (*GetWorkloadPresetRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{12}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetWorkloadPresetRequest) GetTenantId() string {
@@ -899,15 +1025,15 @@ func (x *GetWorkloadPresetRequest) GetId() string {
 }
 
 type GetWorkloadPresetResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Preset        *models.WorkloadPreset `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	Preset        *models.WorkloadPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetWorkloadPresetResponse) Reset() {
 	*x = GetWorkloadPresetResponse{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[13]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -919,7 +1045,7 @@ func (x *GetWorkloadPresetResponse) String() string {
 func (*GetWorkloadPresetResponse) ProtoMessage() {}
 
 func (x *GetWorkloadPresetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[13]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -932,10 +1058,10 @@ func (x *GetWorkloadPresetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetWorkloadPresetResponse.ProtoReflect.Descriptor instead.
 func (*GetWorkloadPresetResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{13}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *GetWorkloadPresetResponse) GetPreset() *models.WorkloadPreset {
+func (x *GetWorkloadPresetResponse) GetPreset() *models.WorkloadPresetRecord {
 	if x != nil {
 		return x.Preset
 	}
@@ -950,17 +1076,19 @@ type ListWorkloadPresetsRequest struct {
 	Tags map[string]string `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Kind-specific filter.
 	StroppyVersions []string `protobuf:"bytes,4,rep,name=stroppy_versions,json=stroppyVersions,proto3" json:"stroppy_versions,omitempty"`
+	// Filter by system flag. Unset = all; true = only system; false = only user.
+	IsSystem *bool `protobuf:"varint,5,opt,name=is_system,json=isSystem,proto3,oneof" json:"is_system,omitempty"`
 	// Ordering (common Entity column or table-specific).
-	Sort *ListWorkloadPresetsRequest_Sort `protobuf:"bytes,5,opt,name=sort,proto3" json:"sort,omitempty"`
+	Sort *ListWorkloadPresetsRequest_Sort `protobuf:"bytes,6,opt,name=sort,proto3" json:"sort,omitempty"`
 	// Pagination.
-	Page          *common.Page `protobuf:"bytes,6,opt,name=page,proto3" json:"page,omitempty"`
+	Page          *common.Page `protobuf:"bytes,7,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListWorkloadPresetsRequest) Reset() {
 	*x = ListWorkloadPresetsRequest{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[14]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -972,7 +1100,7 @@ func (x *ListWorkloadPresetsRequest) String() string {
 func (*ListWorkloadPresetsRequest) ProtoMessage() {}
 
 func (x *ListWorkloadPresetsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[14]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -985,7 +1113,7 @@ func (x *ListWorkloadPresetsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListWorkloadPresetsRequest.ProtoReflect.Descriptor instead.
 func (*ListWorkloadPresetsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{14}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ListWorkloadPresetsRequest) GetTenantId() string {
@@ -1016,6 +1144,13 @@ func (x *ListWorkloadPresetsRequest) GetStroppyVersions() []string {
 	return nil
 }
 
+func (x *ListWorkloadPresetsRequest) GetIsSystem() bool {
+	if x != nil && x.IsSystem != nil {
+		return *x.IsSystem
+	}
+	return false
+}
+
 func (x *ListWorkloadPresetsRequest) GetSort() *ListWorkloadPresetsRequest_Sort {
 	if x != nil {
 		return x.Sort
@@ -1031,16 +1166,16 @@ func (x *ListWorkloadPresetsRequest) GetPage() *common.Page {
 }
 
 type ListWorkloadPresetsResponse struct {
-	state         protoimpl.MessageState   `protogen:"open.v1"`
-	Presets       []*models.WorkloadPreset `protobuf:"bytes,1,rep,name=presets,proto3" json:"presets,omitempty"`
-	NextPageToken string                   `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state         protoimpl.MessageState         `protogen:"open.v1"`
+	Presets       []*models.WorkloadPresetRecord `protobuf:"bytes,1,rep,name=presets,proto3" json:"presets,omitempty"`
+	NextPageToken string                         `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListWorkloadPresetsResponse) Reset() {
 	*x = ListWorkloadPresetsResponse{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[15]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1052,7 +1187,7 @@ func (x *ListWorkloadPresetsResponse) String() string {
 func (*ListWorkloadPresetsResponse) ProtoMessage() {}
 
 func (x *ListWorkloadPresetsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[15]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1065,10 +1200,10 @@ func (x *ListWorkloadPresetsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListWorkloadPresetsResponse.ProtoReflect.Descriptor instead.
 func (*ListWorkloadPresetsResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{15}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{17}
 }
 
-func (x *ListWorkloadPresetsResponse) GetPresets() []*models.WorkloadPreset {
+func (x *ListWorkloadPresetsResponse) GetPresets() []*models.WorkloadPresetRecord {
 	if x != nil {
 		return x.Presets
 	}
@@ -1083,16 +1218,16 @@ func (x *ListWorkloadPresetsResponse) GetNextPageToken() string {
 }
 
 type UpdateWorkloadPresetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Preset        *models.WorkloadPreset `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	TenantId      string                       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Preset        *models.WorkloadPresetRecord `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdateWorkloadPresetRequest) Reset() {
 	*x = UpdateWorkloadPresetRequest{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[16]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1104,7 +1239,7 @@ func (x *UpdateWorkloadPresetRequest) String() string {
 func (*UpdateWorkloadPresetRequest) ProtoMessage() {}
 
 func (x *UpdateWorkloadPresetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[16]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1117,7 +1252,7 @@ func (x *UpdateWorkloadPresetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateWorkloadPresetRequest.ProtoReflect.Descriptor instead.
 func (*UpdateWorkloadPresetRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{16}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *UpdateWorkloadPresetRequest) GetTenantId() string {
@@ -1127,7 +1262,7 @@ func (x *UpdateWorkloadPresetRequest) GetTenantId() string {
 	return ""
 }
 
-func (x *UpdateWorkloadPresetRequest) GetPreset() *models.WorkloadPreset {
+func (x *UpdateWorkloadPresetRequest) GetPreset() *models.WorkloadPresetRecord {
 	if x != nil {
 		return x.Preset
 	}
@@ -1135,15 +1270,15 @@ func (x *UpdateWorkloadPresetRequest) GetPreset() *models.WorkloadPreset {
 }
 
 type UpdateWorkloadPresetResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Preset        *models.WorkloadPreset `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	Preset        *models.WorkloadPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdateWorkloadPresetResponse) Reset() {
 	*x = UpdateWorkloadPresetResponse{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[17]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1155,7 +1290,7 @@ func (x *UpdateWorkloadPresetResponse) String() string {
 func (*UpdateWorkloadPresetResponse) ProtoMessage() {}
 
 func (x *UpdateWorkloadPresetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[17]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1168,10 +1303,10 @@ func (x *UpdateWorkloadPresetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateWorkloadPresetResponse.ProtoReflect.Descriptor instead.
 func (*UpdateWorkloadPresetResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{17}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{19}
 }
 
-func (x *UpdateWorkloadPresetResponse) GetPreset() *models.WorkloadPreset {
+func (x *UpdateWorkloadPresetResponse) GetPreset() *models.WorkloadPresetRecord {
 	if x != nil {
 		return x.Preset
 	}
@@ -1188,7 +1323,7 @@ type DeleteWorkloadPresetRequest struct {
 
 func (x *DeleteWorkloadPresetRequest) Reset() {
 	*x = DeleteWorkloadPresetRequest{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[18]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1200,7 +1335,7 @@ func (x *DeleteWorkloadPresetRequest) String() string {
 func (*DeleteWorkloadPresetRequest) ProtoMessage() {}
 
 func (x *DeleteWorkloadPresetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[18]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1213,7 +1348,7 @@ func (x *DeleteWorkloadPresetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteWorkloadPresetRequest.ProtoReflect.Descriptor instead.
 func (*DeleteWorkloadPresetRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{18}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *DeleteWorkloadPresetRequest) GetTenantId() string {
@@ -1238,7 +1373,7 @@ type DeleteWorkloadPresetResponse struct {
 
 func (x *DeleteWorkloadPresetResponse) Reset() {
 	*x = DeleteWorkloadPresetResponse{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[19]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1250,7 +1385,7 @@ func (x *DeleteWorkloadPresetResponse) String() string {
 func (*DeleteWorkloadPresetResponse) ProtoMessage() {}
 
 func (x *DeleteWorkloadPresetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[19]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1263,21 +1398,128 @@ func (x *DeleteWorkloadPresetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteWorkloadPresetResponse.ProtoReflect.Descriptor instead.
 func (*DeleteWorkloadPresetResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{19}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{21}
+}
+
+// Clone copies a preset (typically a read-only system one) into a new editable
+// preset owned by the caller. The copy gets a fresh id, is_system = false and
+// the caller as author.
+type CloneWorkloadPresetRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CloneWorkloadPresetRequest) Reset() {
+	*x = CloneWorkloadPresetRequest{}
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CloneWorkloadPresetRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CloneWorkloadPresetRequest) ProtoMessage() {}
+
+func (x *CloneWorkloadPresetRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CloneWorkloadPresetRequest.ProtoReflect.Descriptor instead.
+func (*CloneWorkloadPresetRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *CloneWorkloadPresetRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *CloneWorkloadPresetRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *CloneWorkloadPresetRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type CloneWorkloadPresetResponse struct {
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	Preset        *models.WorkloadPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CloneWorkloadPresetResponse) Reset() {
+	*x = CloneWorkloadPresetResponse{}
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CloneWorkloadPresetResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CloneWorkloadPresetResponse) ProtoMessage() {}
+
+func (x *CloneWorkloadPresetResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CloneWorkloadPresetResponse.ProtoReflect.Descriptor instead.
+func (*CloneWorkloadPresetResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *CloneWorkloadPresetResponse) GetPreset() *models.WorkloadPresetRecord {
+	if x != nil {
+		return x.Preset
+	}
+	return nil
 }
 
 // ============================== TestPreset ==============================
 type CreateTestPresetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Preset        *models.TestPreset     `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	TenantId      string                   `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Preset        *models.TestPresetRecord `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateTestPresetRequest) Reset() {
 	*x = CreateTestPresetRequest{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[20]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1289,7 +1531,7 @@ func (x *CreateTestPresetRequest) String() string {
 func (*CreateTestPresetRequest) ProtoMessage() {}
 
 func (x *CreateTestPresetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[20]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1302,7 +1544,7 @@ func (x *CreateTestPresetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTestPresetRequest.ProtoReflect.Descriptor instead.
 func (*CreateTestPresetRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{20}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *CreateTestPresetRequest) GetTenantId() string {
@@ -1312,7 +1554,7 @@ func (x *CreateTestPresetRequest) GetTenantId() string {
 	return ""
 }
 
-func (x *CreateTestPresetRequest) GetPreset() *models.TestPreset {
+func (x *CreateTestPresetRequest) GetPreset() *models.TestPresetRecord {
 	if x != nil {
 		return x.Preset
 	}
@@ -1320,15 +1562,15 @@ func (x *CreateTestPresetRequest) GetPreset() *models.TestPreset {
 }
 
 type CreateTestPresetResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Preset        *models.TestPreset     `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Preset        *models.TestPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateTestPresetResponse) Reset() {
 	*x = CreateTestPresetResponse{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[21]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1340,7 +1582,7 @@ func (x *CreateTestPresetResponse) String() string {
 func (*CreateTestPresetResponse) ProtoMessage() {}
 
 func (x *CreateTestPresetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[21]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1353,10 +1595,10 @@ func (x *CreateTestPresetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTestPresetResponse.ProtoReflect.Descriptor instead.
 func (*CreateTestPresetResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{21}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{25}
 }
 
-func (x *CreateTestPresetResponse) GetPreset() *models.TestPreset {
+func (x *CreateTestPresetResponse) GetPreset() *models.TestPresetRecord {
 	if x != nil {
 		return x.Preset
 	}
@@ -1373,7 +1615,7 @@ type GetTestPresetRequest struct {
 
 func (x *GetTestPresetRequest) Reset() {
 	*x = GetTestPresetRequest{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[22]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1385,7 +1627,7 @@ func (x *GetTestPresetRequest) String() string {
 func (*GetTestPresetRequest) ProtoMessage() {}
 
 func (x *GetTestPresetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[22]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1398,7 +1640,7 @@ func (x *GetTestPresetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTestPresetRequest.ProtoReflect.Descriptor instead.
 func (*GetTestPresetRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{22}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *GetTestPresetRequest) GetTenantId() string {
@@ -1416,15 +1658,15 @@ func (x *GetTestPresetRequest) GetId() string {
 }
 
 type GetTestPresetResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Preset        *models.TestPreset     `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Preset        *models.TestPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetTestPresetResponse) Reset() {
 	*x = GetTestPresetResponse{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[23]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1436,7 +1678,7 @@ func (x *GetTestPresetResponse) String() string {
 func (*GetTestPresetResponse) ProtoMessage() {}
 
 func (x *GetTestPresetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[23]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1449,10 +1691,10 @@ func (x *GetTestPresetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTestPresetResponse.ProtoReflect.Descriptor instead.
 func (*GetTestPresetResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{23}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{27}
 }
 
-func (x *GetTestPresetResponse) GetPreset() *models.TestPreset {
+func (x *GetTestPresetResponse) GetPreset() *models.TestPresetRecord {
 	if x != nil {
 		return x.Preset
 	}
@@ -1468,17 +1710,19 @@ type ListTestPresetsRequest struct {
 	// Kind-specific filters: the test's database kind and workload version.
 	DbKinds         []domain.Database_Kind `protobuf:"varint,4,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
 	StroppyVersions []string               `protobuf:"bytes,5,rep,name=stroppy_versions,json=stroppyVersions,proto3" json:"stroppy_versions,omitempty"`
+	// Filter by system flag. Unset = all; true = only system; false = only user.
+	IsSystem *bool `protobuf:"varint,6,opt,name=is_system,json=isSystem,proto3,oneof" json:"is_system,omitempty"`
 	// Ordering (common Entity column or table-specific).
-	Sort *ListTestPresetsRequest_Sort `protobuf:"bytes,6,opt,name=sort,proto3" json:"sort,omitempty"`
+	Sort *ListTestPresetsRequest_Sort `protobuf:"bytes,7,opt,name=sort,proto3" json:"sort,omitempty"`
 	// Pagination.
-	Page          *common.Page `protobuf:"bytes,7,opt,name=page,proto3" json:"page,omitempty"`
+	Page          *common.Page `protobuf:"bytes,8,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListTestPresetsRequest) Reset() {
 	*x = ListTestPresetsRequest{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[24]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1490,7 +1734,7 @@ func (x *ListTestPresetsRequest) String() string {
 func (*ListTestPresetsRequest) ProtoMessage() {}
 
 func (x *ListTestPresetsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[24]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1503,7 +1747,7 @@ func (x *ListTestPresetsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTestPresetsRequest.ProtoReflect.Descriptor instead.
 func (*ListTestPresetsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{24}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ListTestPresetsRequest) GetTenantId() string {
@@ -1541,6 +1785,13 @@ func (x *ListTestPresetsRequest) GetStroppyVersions() []string {
 	return nil
 }
 
+func (x *ListTestPresetsRequest) GetIsSystem() bool {
+	if x != nil && x.IsSystem != nil {
+		return *x.IsSystem
+	}
+	return false
+}
+
 func (x *ListTestPresetsRequest) GetSort() *ListTestPresetsRequest_Sort {
 	if x != nil {
 		return x.Sort
@@ -1556,16 +1807,16 @@ func (x *ListTestPresetsRequest) GetPage() *common.Page {
 }
 
 type ListTestPresetsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Presets       []*models.TestPreset   `protobuf:"bytes,1,rep,name=presets,proto3" json:"presets,omitempty"`
-	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state         protoimpl.MessageState     `protogen:"open.v1"`
+	Presets       []*models.TestPresetRecord `protobuf:"bytes,1,rep,name=presets,proto3" json:"presets,omitempty"`
+	NextPageToken string                     `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListTestPresetsResponse) Reset() {
 	*x = ListTestPresetsResponse{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[25]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1577,7 +1828,7 @@ func (x *ListTestPresetsResponse) String() string {
 func (*ListTestPresetsResponse) ProtoMessage() {}
 
 func (x *ListTestPresetsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[25]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1590,10 +1841,10 @@ func (x *ListTestPresetsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTestPresetsResponse.ProtoReflect.Descriptor instead.
 func (*ListTestPresetsResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{25}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{29}
 }
 
-func (x *ListTestPresetsResponse) GetPresets() []*models.TestPreset {
+func (x *ListTestPresetsResponse) GetPresets() []*models.TestPresetRecord {
 	if x != nil {
 		return x.Presets
 	}
@@ -1608,16 +1859,16 @@ func (x *ListTestPresetsResponse) GetNextPageToken() string {
 }
 
 type UpdateTestPresetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Preset        *models.TestPreset     `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	TenantId      string                   `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Preset        *models.TestPresetRecord `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdateTestPresetRequest) Reset() {
 	*x = UpdateTestPresetRequest{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[26]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1629,7 +1880,7 @@ func (x *UpdateTestPresetRequest) String() string {
 func (*UpdateTestPresetRequest) ProtoMessage() {}
 
 func (x *UpdateTestPresetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[26]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1642,7 +1893,7 @@ func (x *UpdateTestPresetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTestPresetRequest.ProtoReflect.Descriptor instead.
 func (*UpdateTestPresetRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{26}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *UpdateTestPresetRequest) GetTenantId() string {
@@ -1652,7 +1903,7 @@ func (x *UpdateTestPresetRequest) GetTenantId() string {
 	return ""
 }
 
-func (x *UpdateTestPresetRequest) GetPreset() *models.TestPreset {
+func (x *UpdateTestPresetRequest) GetPreset() *models.TestPresetRecord {
 	if x != nil {
 		return x.Preset
 	}
@@ -1660,15 +1911,15 @@ func (x *UpdateTestPresetRequest) GetPreset() *models.TestPreset {
 }
 
 type UpdateTestPresetResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Preset        *models.TestPreset     `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Preset        *models.TestPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdateTestPresetResponse) Reset() {
 	*x = UpdateTestPresetResponse{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[27]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1680,7 +1931,7 @@ func (x *UpdateTestPresetResponse) String() string {
 func (*UpdateTestPresetResponse) ProtoMessage() {}
 
 func (x *UpdateTestPresetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[27]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1693,10 +1944,10 @@ func (x *UpdateTestPresetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTestPresetResponse.ProtoReflect.Descriptor instead.
 func (*UpdateTestPresetResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{27}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{31}
 }
 
-func (x *UpdateTestPresetResponse) GetPreset() *models.TestPreset {
+func (x *UpdateTestPresetResponse) GetPreset() *models.TestPresetRecord {
 	if x != nil {
 		return x.Preset
 	}
@@ -1713,7 +1964,7 @@ type DeleteTestPresetRequest struct {
 
 func (x *DeleteTestPresetRequest) Reset() {
 	*x = DeleteTestPresetRequest{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[28]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1725,7 +1976,7 @@ func (x *DeleteTestPresetRequest) String() string {
 func (*DeleteTestPresetRequest) ProtoMessage() {}
 
 func (x *DeleteTestPresetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[28]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1738,7 +1989,7 @@ func (x *DeleteTestPresetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTestPresetRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTestPresetRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{28}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *DeleteTestPresetRequest) GetTenantId() string {
@@ -1763,7 +2014,7 @@ type DeleteTestPresetResponse struct {
 
 func (x *DeleteTestPresetResponse) Reset() {
 	*x = DeleteTestPresetResponse{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[29]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1775,7 +2026,7 @@ func (x *DeleteTestPresetResponse) String() string {
 func (*DeleteTestPresetResponse) ProtoMessage() {}
 
 func (x *DeleteTestPresetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[29]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1788,7 +2039,114 @@ func (x *DeleteTestPresetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTestPresetResponse.ProtoReflect.Descriptor instead.
 func (*DeleteTestPresetResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{29}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{33}
+}
+
+// Clone copies a preset (typically a read-only system one) into a new editable
+// preset owned by the caller. The copy gets a fresh id, is_system = false and
+// the caller as author.
+type CloneTestPresetRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CloneTestPresetRequest) Reset() {
+	*x = CloneTestPresetRequest{}
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CloneTestPresetRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CloneTestPresetRequest) ProtoMessage() {}
+
+func (x *CloneTestPresetRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CloneTestPresetRequest.ProtoReflect.Descriptor instead.
+func (*CloneTestPresetRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *CloneTestPresetRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *CloneTestPresetRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *CloneTestPresetRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type CloneTestPresetResponse struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Preset        *models.TestPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CloneTestPresetResponse) Reset() {
+	*x = CloneTestPresetResponse{}
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CloneTestPresetResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CloneTestPresetResponse) ProtoMessage() {}
+
+func (x *CloneTestPresetResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CloneTestPresetResponse.ProtoReflect.Descriptor instead.
+func (*CloneTestPresetResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *CloneTestPresetResponse) GetPreset() *models.TestPresetRecord {
+	if x != nil {
+		return x.Preset
+	}
+	return nil
 }
 
 // Sort orders by EITHER a common Entity column OR a table-specific column.
@@ -1807,7 +2165,7 @@ type ListDatabasePresetsRequest_Sort struct {
 
 func (x *ListDatabasePresetsRequest_Sort) Reset() {
 	*x = ListDatabasePresetsRequest_Sort{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[30]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1819,7 +2177,7 @@ func (x *ListDatabasePresetsRequest_Sort) String() string {
 func (*ListDatabasePresetsRequest_Sort) ProtoMessage() {}
 
 func (x *ListDatabasePresetsRequest_Sort) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[30]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1897,7 +2255,7 @@ type ListWorkloadPresetsRequest_Sort struct {
 
 func (x *ListWorkloadPresetsRequest_Sort) Reset() {
 	*x = ListWorkloadPresetsRequest_Sort{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[32]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1909,7 +2267,7 @@ func (x *ListWorkloadPresetsRequest_Sort) String() string {
 func (*ListWorkloadPresetsRequest_Sort) ProtoMessage() {}
 
 func (x *ListWorkloadPresetsRequest_Sort) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[32]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1922,7 +2280,7 @@ func (x *ListWorkloadPresetsRequest_Sort) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListWorkloadPresetsRequest_Sort.ProtoReflect.Descriptor instead.
 func (*ListWorkloadPresetsRequest_Sort) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{14, 0}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{16, 0}
 }
 
 func (x *ListWorkloadPresetsRequest_Sort) GetBy() isListWorkloadPresetsRequest_Sort_By {
@@ -1987,7 +2345,7 @@ type ListTestPresetsRequest_Sort struct {
 
 func (x *ListTestPresetsRequest_Sort) Reset() {
 	*x = ListTestPresetsRequest_Sort{}
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[34]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1999,7 +2357,7 @@ func (x *ListTestPresetsRequest_Sort) String() string {
 func (*ListTestPresetsRequest_Sort) ProtoMessage() {}
 
 func (x *ListTestPresetsRequest_Sort) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_preset_proto_msgTypes[34]
+	mi := &file_cloud_v1_api_preset_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2012,7 +2370,7 @@ func (x *ListTestPresetsRequest_Sort) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTestPresetsRequest_Sort.ProtoReflect.Descriptor instead.
 func (*ListTestPresetsRequest_Sort) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{24, 0}
+	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{28, 0}
 }
 
 func (x *ListTestPresetsRequest_Sort) GetBy() isListTestPresetsRequest_Sort_By {
@@ -2067,32 +2425,34 @@ var File_cloud_v1_api_preset_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\n" +
-	"\x19cloud/v1/api/preset.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x17validate/validate.proto\"\x88\x01\n" +
+	"\x19cloud/v1/api/preset.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x17validate/validate.proto\"\x8e\x01\n" +
 	"\x1bCreateDatabasePresetRequest\x12&\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12A\n" +
-	"\x06preset\x18\x02 \x01(\v2\x1f.cloud.v1.models.DatabasePresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"a\n" +
-	"\x1cCreateDatabasePresetResponse\x12A\n" +
-	"\x06preset\x18\x01 \x01(\v2\x1f.cloud.v1.models.DatabasePresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"]\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12G\n" +
+	"\x06preset\x18\x02 \x01(\v2%.cloud.v1.models.DatabasePresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"g\n" +
+	"\x1cCreateDatabasePresetResponse\x12G\n" +
+	"\x06preset\x18\x01 \x01(\v2%.cloud.v1.models.DatabasePresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"]\n" +
 	"\x18GetDatabasePresetRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
-	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"^\n" +
-	"\x19GetDatabasePresetResponse\x12A\n" +
-	"\x06preset\x18\x01 \x01(\v2\x1f.cloud.v1.models.DatabasePresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\xc6\x06\n" +
+	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"d\n" +
+	"\x19GetDatabasePresetResponse\x12G\n" +
+	"\x06preset\x18\x01 \x01(\v2%.cloud.v1.models.DatabasePresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\x8a\a\n" +
 	"\x1aListDatabasePresetsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
 	"\x06filter\x18\x02 \x01(\v2\x1d.cloud.v1.common.EntityFilterR\x06filter\x12F\n" +
 	"\x04tags\x18\x03 \x03(\v22.cloud.v1.api.ListDatabasePresetsRequest.TagsEntryR\x04tags\x129\n" +
 	"\bdb_kinds\x18\x04 \x03(\x0e2\x1e.cloud.v1.domain.Database.KindR\adbKinds\x12M\n" +
-	"\asources\x18\x05 \x03(\x0e23.cloud.v1.api.ListDatabasePresetsRequest.SourceKindR\asources\x12A\n" +
-	"\x04sort\x18\x06 \x01(\v2-.cloud.v1.api.ListDatabasePresetsRequest.SortR\x04sort\x12)\n" +
-	"\x04page\x18\a \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xd6\x01\n" +
+	"\asources\x18\x05 \x03(\x0e23.cloud.v1.api.ListDatabasePresetsRequest.SourceKindR\asources\x12 \n" +
+	"\tis_system\x18\x06 \x01(\bH\x00R\bisSystem\x88\x01\x01\x12A\n" +
+	"\x04sort\x18\a \x01(\v2-.cloud.v1.api.ListDatabasePresetsRequest.SortR\x04sort\x12)\n" +
+	"\x04page\x18\b \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xea\x01\n" +
 	"\x04Sort\x12:\n" +
 	"\x06entity\x18\x01 \x01(\x0e2 .cloud.v1.common.EntitySortFieldH\x00R\x06entity\x12H\n" +
 	"\x04kind\x18\x02 \x01(\x0e22.cloud.v1.api.ListDatabasePresetsRequest.Sort.KindH\x00R\x04kind\x12\x12\n" +
-	"\x04desc\x18\x03 \x01(\bR\x04desc\".\n" +
+	"\x04desc\x18\x03 \x01(\bR\x04desc\"B\n" +
 	"\x04Kind\x12\x14\n" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\x10\n" +
-	"\fKIND_DB_KIND\x10\x01B\x04\n" +
+	"\fKIND_DB_KIND\x10\x01\x12\x12\n" +
+	"\x0eKIND_IS_SYSTEM\x10\x02B\x04\n" +
 	"\x02by\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -2102,122 +2462,156 @@ const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\x17SOURCE_KIND_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12SOURCE_KIND_PARAMS\x10\x01\x12\x18\n" +
 	"\x14SOURCE_KIND_EXTERNAL\x10\x02\x12\x1a\n" +
-	"\x16SOURCE_KIND_PRESET_REF\x10\x03\"\x80\x01\n" +
-	"\x1bListDatabasePresetsResponse\x129\n" +
-	"\apresets\x18\x01 \x03(\v2\x1f.cloud.v1.models.DatabasePresetR\apresets\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x88\x01\n" +
+	"\x16SOURCE_KIND_PRESET_REF\x10\x03B\f\n" +
+	"\n" +
+	"_is_system\"\x86\x01\n" +
+	"\x1bListDatabasePresetsResponse\x12?\n" +
+	"\apresets\x18\x01 \x03(\v2%.cloud.v1.models.DatabasePresetRecordR\apresets\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x8e\x01\n" +
 	"\x1bUpdateDatabasePresetRequest\x12&\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12A\n" +
-	"\x06preset\x18\x02 \x01(\v2\x1f.cloud.v1.models.DatabasePresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"a\n" +
-	"\x1cUpdateDatabasePresetResponse\x12A\n" +
-	"\x06preset\x18\x01 \x01(\v2\x1f.cloud.v1.models.DatabasePresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"`\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12G\n" +
+	"\x06preset\x18\x02 \x01(\v2%.cloud.v1.models.DatabasePresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"g\n" +
+	"\x1cUpdateDatabasePresetResponse\x12G\n" +
+	"\x06preset\x18\x01 \x01(\v2%.cloud.v1.models.DatabasePresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"`\n" +
 	"\x1bDeleteDatabasePresetRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"\x1e\n" +
-	"\x1cDeleteDatabasePresetResponse\"\x88\x01\n" +
+	"\x1cDeleteDatabasePresetResponse\"}\n" +
+	"\x1aCloneDatabasePresetRequest\x12&\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
+	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\x12\x1c\n" +
+	"\x04name\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\"f\n" +
+	"\x1bCloneDatabasePresetResponse\x12G\n" +
+	"\x06preset\x18\x01 \x01(\v2%.cloud.v1.models.DatabasePresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\x8e\x01\n" +
 	"\x1bCreateWorkloadPresetRequest\x12&\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12A\n" +
-	"\x06preset\x18\x02 \x01(\v2\x1f.cloud.v1.models.WorkloadPresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"a\n" +
-	"\x1cCreateWorkloadPresetResponse\x12A\n" +
-	"\x06preset\x18\x01 \x01(\v2\x1f.cloud.v1.models.WorkloadPresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"]\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12G\n" +
+	"\x06preset\x18\x02 \x01(\v2%.cloud.v1.models.WorkloadPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"g\n" +
+	"\x1cCreateWorkloadPresetResponse\x12G\n" +
+	"\x06preset\x18\x01 \x01(\v2%.cloud.v1.models.WorkloadPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"]\n" +
 	"\x18GetWorkloadPresetRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
-	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"^\n" +
-	"\x19GetWorkloadPresetResponse\x12A\n" +
-	"\x06preset\x18\x01 \x01(\v2\x1f.cloud.v1.models.WorkloadPresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\x86\x05\n" +
+	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"d\n" +
+	"\x19GetWorkloadPresetResponse\x12G\n" +
+	"\x06preset\x18\x01 \x01(\v2%.cloud.v1.models.WorkloadPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\xca\x05\n" +
 	"\x1aListWorkloadPresetsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
 	"\x06filter\x18\x02 \x01(\v2\x1d.cloud.v1.common.EntityFilterR\x06filter\x12F\n" +
 	"\x04tags\x18\x03 \x03(\v22.cloud.v1.api.ListWorkloadPresetsRequest.TagsEntryR\x04tags\x129\n" +
-	"\x10stroppy_versions\x18\x04 \x03(\tB\x0e\xfaB\v\x92\x01\b\x10d\"\x04r\x02\x18@R\x0fstroppyVersions\x12A\n" +
-	"\x04sort\x18\x05 \x01(\v2-.cloud.v1.api.ListWorkloadPresetsRequest.SortR\x04sort\x12)\n" +
-	"\x04page\x18\x06 \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xde\x01\n" +
+	"\x10stroppy_versions\x18\x04 \x03(\tB\x0e\xfaB\v\x92\x01\b\x10d\"\x04r\x02\x18@R\x0fstroppyVersions\x12 \n" +
+	"\tis_system\x18\x05 \x01(\bH\x00R\bisSystem\x88\x01\x01\x12A\n" +
+	"\x04sort\x18\x06 \x01(\v2-.cloud.v1.api.ListWorkloadPresetsRequest.SortR\x04sort\x12)\n" +
+	"\x04page\x18\a \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xf2\x01\n" +
 	"\x04Sort\x12:\n" +
 	"\x06entity\x18\x01 \x01(\x0e2 .cloud.v1.common.EntitySortFieldH\x00R\x06entity\x12H\n" +
 	"\x04kind\x18\x02 \x01(\x0e22.cloud.v1.api.ListWorkloadPresetsRequest.Sort.KindH\x00R\x04kind\x12\x12\n" +
-	"\x04desc\x18\x03 \x01(\bR\x04desc\"6\n" +
+	"\x04desc\x18\x03 \x01(\bR\x04desc\"J\n" +
 	"\x04Kind\x12\x14\n" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\x18\n" +
-	"\x14KIND_STROPPY_VERSION\x10\x01B\x04\n" +
+	"\x14KIND_STROPPY_VERSION\x10\x01\x12\x12\n" +
+	"\x0eKIND_IS_SYSTEM\x10\x02B\x04\n" +
 	"\x02by\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x80\x01\n" +
-	"\x1bListWorkloadPresetsResponse\x129\n" +
-	"\apresets\x18\x01 \x03(\v2\x1f.cloud.v1.models.WorkloadPresetR\apresets\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x88\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\f\n" +
+	"\n" +
+	"_is_system\"\x86\x01\n" +
+	"\x1bListWorkloadPresetsResponse\x12?\n" +
+	"\apresets\x18\x01 \x03(\v2%.cloud.v1.models.WorkloadPresetRecordR\apresets\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x8e\x01\n" +
 	"\x1bUpdateWorkloadPresetRequest\x12&\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12A\n" +
-	"\x06preset\x18\x02 \x01(\v2\x1f.cloud.v1.models.WorkloadPresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"a\n" +
-	"\x1cUpdateWorkloadPresetResponse\x12A\n" +
-	"\x06preset\x18\x01 \x01(\v2\x1f.cloud.v1.models.WorkloadPresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"`\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12G\n" +
+	"\x06preset\x18\x02 \x01(\v2%.cloud.v1.models.WorkloadPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"g\n" +
+	"\x1cUpdateWorkloadPresetResponse\x12G\n" +
+	"\x06preset\x18\x01 \x01(\v2%.cloud.v1.models.WorkloadPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"`\n" +
 	"\x1bDeleteWorkloadPresetRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"\x1e\n" +
-	"\x1cDeleteWorkloadPresetResponse\"\x80\x01\n" +
+	"\x1cDeleteWorkloadPresetResponse\"}\n" +
+	"\x1aCloneWorkloadPresetRequest\x12&\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
+	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\x12\x1c\n" +
+	"\x04name\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\"f\n" +
+	"\x1bCloneWorkloadPresetResponse\x12G\n" +
+	"\x06preset\x18\x01 \x01(\v2%.cloud.v1.models.WorkloadPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\x86\x01\n" +
 	"\x17CreateTestPresetRequest\x12&\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12=\n" +
-	"\x06preset\x18\x02 \x01(\v2\x1b.cloud.v1.models.TestPresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"Y\n" +
-	"\x18CreateTestPresetResponse\x12=\n" +
-	"\x06preset\x18\x01 \x01(\v2\x1b.cloud.v1.models.TestPresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"Y\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12C\n" +
+	"\x06preset\x18\x02 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"_\n" +
+	"\x18CreateTestPresetResponse\x12C\n" +
+	"\x06preset\x18\x01 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"Y\n" +
 	"\x14GetTestPresetRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
-	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"V\n" +
-	"\x15GetTestPresetResponse\x12=\n" +
-	"\x06preset\x18\x01 \x01(\v2\x1b.cloud.v1.models.TestPresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\xc3\x05\n" +
+	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"\\\n" +
+	"\x15GetTestPresetResponse\x12C\n" +
+	"\x06preset\x18\x01 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\x87\x06\n" +
 	"\x16ListTestPresetsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
 	"\x06filter\x18\x02 \x01(\v2\x1d.cloud.v1.common.EntityFilterR\x06filter\x12B\n" +
 	"\x04tags\x18\x03 \x03(\v2..cloud.v1.api.ListTestPresetsRequest.TagsEntryR\x04tags\x129\n" +
 	"\bdb_kinds\x18\x04 \x03(\x0e2\x1e.cloud.v1.domain.Database.KindR\adbKinds\x129\n" +
-	"\x10stroppy_versions\x18\x05 \x03(\tB\x0e\xfaB\v\x92\x01\b\x10d\"\x04r\x02\x18@R\x0fstroppyVersions\x12=\n" +
-	"\x04sort\x18\x06 \x01(\v2).cloud.v1.api.ListTestPresetsRequest.SortR\x04sort\x12)\n" +
-	"\x04page\x18\a \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xec\x01\n" +
+	"\x10stroppy_versions\x18\x05 \x03(\tB\x0e\xfaB\v\x92\x01\b\x10d\"\x04r\x02\x18@R\x0fstroppyVersions\x12 \n" +
+	"\tis_system\x18\x06 \x01(\bH\x00R\bisSystem\x88\x01\x01\x12=\n" +
+	"\x04sort\x18\a \x01(\v2).cloud.v1.api.ListTestPresetsRequest.SortR\x04sort\x12)\n" +
+	"\x04page\x18\b \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\x80\x02\n" +
 	"\x04Sort\x12:\n" +
 	"\x06entity\x18\x01 \x01(\x0e2 .cloud.v1.common.EntitySortFieldH\x00R\x06entity\x12D\n" +
 	"\x04kind\x18\x02 \x01(\x0e2..cloud.v1.api.ListTestPresetsRequest.Sort.KindH\x00R\x04kind\x12\x12\n" +
-	"\x04desc\x18\x03 \x01(\bR\x04desc\"H\n" +
+	"\x04desc\x18\x03 \x01(\bR\x04desc\"\\\n" +
 	"\x04Kind\x12\x14\n" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fKIND_DB_KIND\x10\x01\x12\x18\n" +
-	"\x14KIND_STROPPY_VERSION\x10\x02B\x04\n" +
+	"\x14KIND_STROPPY_VERSION\x10\x02\x12\x12\n" +
+	"\x0eKIND_IS_SYSTEM\x10\x03B\x04\n" +
 	"\x02by\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"x\n" +
-	"\x17ListTestPresetsResponse\x125\n" +
-	"\apresets\x18\x01 \x03(\v2\x1b.cloud.v1.models.TestPresetR\apresets\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x80\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\f\n" +
+	"\n" +
+	"_is_system\"~\n" +
+	"\x17ListTestPresetsResponse\x12;\n" +
+	"\apresets\x18\x01 \x03(\v2!.cloud.v1.models.TestPresetRecordR\apresets\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x86\x01\n" +
 	"\x17UpdateTestPresetRequest\x12&\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12=\n" +
-	"\x06preset\x18\x02 \x01(\v2\x1b.cloud.v1.models.TestPresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"Y\n" +
-	"\x18UpdateTestPresetResponse\x12=\n" +
-	"\x06preset\x18\x01 \x01(\v2\x1b.cloud.v1.models.TestPresetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\\\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12C\n" +
+	"\x06preset\x18\x02 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"_\n" +
+	"\x18UpdateTestPresetResponse\x12C\n" +
+	"\x06preset\x18\x01 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\\\n" +
 	"\x17DeleteTestPresetRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"\x1a\n" +
-	"\x18DeleteTestPresetResponse2\xfa\x04\n" +
-	"\x11DatabasePresetAPI\x12y\n" +
+	"\x18DeleteTestPresetResponse\"y\n" +
+	"\x16CloneTestPresetRequest\x12&\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
+	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\x12\x1c\n" +
+	"\x04name\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\"^\n" +
+	"\x17CloneTestPresetResponse\x12C\n" +
+	"\x06preset\x18\x01 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset2\xf6\x05\n" +
+	"\x15DatabasePresetService\x12y\n" +
 	"\x14CreateDatabasePreset\x12).cloud.v1.api.CreateDatabasePresetRequest\x1a*.cloud.v1.api.CreateDatabasePresetResponse\"\n" +
 	"\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01\x12s\n" +
 	"\x11GetDatabasePreset\x12&.cloud.v1.api.GetDatabasePresetRequest\x1a'.cloud.v1.api.GetDatabasePresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x02\x90\x02\x01\x12y\n" +
 	"\x13ListDatabasePresets\x12(.cloud.v1.api.ListDatabasePresetsRequest\x1a).cloud.v1.api.ListDatabasePresetsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x05\x90\x02\x01\x12|\n" +
 	"\x14UpdateDatabasePreset\x12).cloud.v1.api.UpdateDatabasePresetRequest\x1a*.cloud.v1.api.UpdateDatabasePresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x03\x90\x02\x02\x12|\n" +
-	"\x14DeleteDatabasePreset\x12).cloud.v1.api.DeleteDatabasePresetRequest\x1a*.cloud.v1.api.DeleteDatabasePresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x04\x90\x02\x022\xfa\x04\n" +
-	"\x11WorkloadPresetAPI\x12y\n" +
+	"\x14DeleteDatabasePreset\x12).cloud.v1.api.DeleteDatabasePresetRequest\x1a*.cloud.v1.api.DeleteDatabasePresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x04\x90\x02\x02\x12v\n" +
+	"\x13CloneDatabasePreset\x12(.cloud.v1.api.CloneDatabasePresetRequest\x1a).cloud.v1.api.CloneDatabasePresetResponse\"\n" +
+	"\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x012\xf6\x05\n" +
+	"\x15WorkloadPresetService\x12y\n" +
 	"\x14CreateWorkloadPreset\x12).cloud.v1.api.CreateWorkloadPresetRequest\x1a*.cloud.v1.api.CreateWorkloadPresetResponse\"\n" +
 	"\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01\x12s\n" +
 	"\x11GetWorkloadPreset\x12&.cloud.v1.api.GetWorkloadPresetRequest\x1a'.cloud.v1.api.GetWorkloadPresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x02\x90\x02\x01\x12y\n" +
 	"\x13ListWorkloadPresets\x12(.cloud.v1.api.ListWorkloadPresetsRequest\x1a).cloud.v1.api.ListWorkloadPresetsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x05\x90\x02\x01\x12|\n" +
 	"\x14UpdateWorkloadPreset\x12).cloud.v1.api.UpdateWorkloadPresetRequest\x1a*.cloud.v1.api.UpdateWorkloadPresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x03\x90\x02\x02\x12|\n" +
-	"\x14DeleteWorkloadPreset\x12).cloud.v1.api.DeleteWorkloadPresetRequest\x1a*.cloud.v1.api.DeleteWorkloadPresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x04\x90\x02\x022\xba\x04\n" +
-	"\rTestPresetAPI\x12m\n" +
+	"\x14DeleteWorkloadPreset\x12).cloud.v1.api.DeleteWorkloadPresetRequest\x1a*.cloud.v1.api.DeleteWorkloadPresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x04\x90\x02\x02\x12v\n" +
+	"\x13CloneWorkloadPreset\x12(.cloud.v1.api.CloneWorkloadPresetRequest\x1a).cloud.v1.api.CloneWorkloadPresetResponse\"\n" +
+	"\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x012\xaa\x05\n" +
+	"\x11TestPresetService\x12m\n" +
 	"\x10CreateTestPreset\x12%.cloud.v1.api.CreateTestPresetRequest\x1a&.cloud.v1.api.CreateTestPresetResponse\"\n" +
 	"\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01\x12g\n" +
 	"\rGetTestPreset\x12\".cloud.v1.api.GetTestPresetRequest\x1a#.cloud.v1.api.GetTestPresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x02\x90\x02\x01\x12m\n" +
 	"\x0fListTestPresets\x12$.cloud.v1.api.ListTestPresetsRequest\x1a%.cloud.v1.api.ListTestPresetsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x05\x90\x02\x01\x12p\n" +
 	"\x10UpdateTestPreset\x12%.cloud.v1.api.UpdateTestPresetRequest\x1a&.cloud.v1.api.UpdateTestPresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x03\x90\x02\x02\x12p\n" +
-	"\x10DeleteTestPreset\x12%.cloud.v1.api.DeleteTestPresetRequest\x1a&.cloud.v1.api.DeleteTestPresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x04\x90\x02\x02BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\x10DeleteTestPreset\x12%.cloud.v1.api.DeleteTestPresetRequest\x1a&.cloud.v1.api.DeleteTestPresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x04\x90\x02\x02\x12j\n" +
+	"\x0fCloneTestPreset\x12$.cloud.v1.api.CloneTestPresetRequest\x1a%.cloud.v1.api.CloneTestPresetResponse\"\n" +
+	"\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_preset_proto_rawDescOnce sync.Once
@@ -2232,7 +2626,7 @@ func file_cloud_v1_api_preset_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_api_preset_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_cloud_v1_api_preset_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
+var file_cloud_v1_api_preset_proto_msgTypes = make([]protoimpl.MessageInfo, 42)
 var file_cloud_v1_api_preset_proto_goTypes = []any{
 	(ListDatabasePresetsRequest_SourceKind)(0), // 0: cloud.v1.api.ListDatabasePresetsRequest.SourceKind
 	(ListDatabasePresetsRequest_Sort_Kind)(0),  // 1: cloud.v1.api.ListDatabasePresetsRequest.Sort.Kind
@@ -2248,115 +2642,130 @@ var file_cloud_v1_api_preset_proto_goTypes = []any{
 	(*UpdateDatabasePresetResponse)(nil),       // 11: cloud.v1.api.UpdateDatabasePresetResponse
 	(*DeleteDatabasePresetRequest)(nil),        // 12: cloud.v1.api.DeleteDatabasePresetRequest
 	(*DeleteDatabasePresetResponse)(nil),       // 13: cloud.v1.api.DeleteDatabasePresetResponse
-	(*CreateWorkloadPresetRequest)(nil),        // 14: cloud.v1.api.CreateWorkloadPresetRequest
-	(*CreateWorkloadPresetResponse)(nil),       // 15: cloud.v1.api.CreateWorkloadPresetResponse
-	(*GetWorkloadPresetRequest)(nil),           // 16: cloud.v1.api.GetWorkloadPresetRequest
-	(*GetWorkloadPresetResponse)(nil),          // 17: cloud.v1.api.GetWorkloadPresetResponse
-	(*ListWorkloadPresetsRequest)(nil),         // 18: cloud.v1.api.ListWorkloadPresetsRequest
-	(*ListWorkloadPresetsResponse)(nil),        // 19: cloud.v1.api.ListWorkloadPresetsResponse
-	(*UpdateWorkloadPresetRequest)(nil),        // 20: cloud.v1.api.UpdateWorkloadPresetRequest
-	(*UpdateWorkloadPresetResponse)(nil),       // 21: cloud.v1.api.UpdateWorkloadPresetResponse
-	(*DeleteWorkloadPresetRequest)(nil),        // 22: cloud.v1.api.DeleteWorkloadPresetRequest
-	(*DeleteWorkloadPresetResponse)(nil),       // 23: cloud.v1.api.DeleteWorkloadPresetResponse
-	(*CreateTestPresetRequest)(nil),            // 24: cloud.v1.api.CreateTestPresetRequest
-	(*CreateTestPresetResponse)(nil),           // 25: cloud.v1.api.CreateTestPresetResponse
-	(*GetTestPresetRequest)(nil),               // 26: cloud.v1.api.GetTestPresetRequest
-	(*GetTestPresetResponse)(nil),              // 27: cloud.v1.api.GetTestPresetResponse
-	(*ListTestPresetsRequest)(nil),             // 28: cloud.v1.api.ListTestPresetsRequest
-	(*ListTestPresetsResponse)(nil),            // 29: cloud.v1.api.ListTestPresetsResponse
-	(*UpdateTestPresetRequest)(nil),            // 30: cloud.v1.api.UpdateTestPresetRequest
-	(*UpdateTestPresetResponse)(nil),           // 31: cloud.v1.api.UpdateTestPresetResponse
-	(*DeleteTestPresetRequest)(nil),            // 32: cloud.v1.api.DeleteTestPresetRequest
-	(*DeleteTestPresetResponse)(nil),           // 33: cloud.v1.api.DeleteTestPresetResponse
-	(*ListDatabasePresetsRequest_Sort)(nil),    // 34: cloud.v1.api.ListDatabasePresetsRequest.Sort
-	nil,                                        // 35: cloud.v1.api.ListDatabasePresetsRequest.TagsEntry
-	(*ListWorkloadPresetsRequest_Sort)(nil),    // 36: cloud.v1.api.ListWorkloadPresetsRequest.Sort
-	nil,                                        // 37: cloud.v1.api.ListWorkloadPresetsRequest.TagsEntry
-	(*ListTestPresetsRequest_Sort)(nil),        // 38: cloud.v1.api.ListTestPresetsRequest.Sort
-	nil,                                        // 39: cloud.v1.api.ListTestPresetsRequest.TagsEntry
-	(*models.DatabasePreset)(nil),              // 40: cloud.v1.models.DatabasePreset
-	(*common.EntityFilter)(nil),                // 41: cloud.v1.common.EntityFilter
-	(domain.Database_Kind)(0),                  // 42: cloud.v1.domain.Database.Kind
-	(*common.Page)(nil),                        // 43: cloud.v1.common.Page
-	(*models.WorkloadPreset)(nil),              // 44: cloud.v1.models.WorkloadPreset
-	(*models.TestPreset)(nil),                  // 45: cloud.v1.models.TestPreset
-	(common.EntitySortField)(0),                // 46: cloud.v1.common.EntitySortField
+	(*CloneDatabasePresetRequest)(nil),         // 14: cloud.v1.api.CloneDatabasePresetRequest
+	(*CloneDatabasePresetResponse)(nil),        // 15: cloud.v1.api.CloneDatabasePresetResponse
+	(*CreateWorkloadPresetRequest)(nil),        // 16: cloud.v1.api.CreateWorkloadPresetRequest
+	(*CreateWorkloadPresetResponse)(nil),       // 17: cloud.v1.api.CreateWorkloadPresetResponse
+	(*GetWorkloadPresetRequest)(nil),           // 18: cloud.v1.api.GetWorkloadPresetRequest
+	(*GetWorkloadPresetResponse)(nil),          // 19: cloud.v1.api.GetWorkloadPresetResponse
+	(*ListWorkloadPresetsRequest)(nil),         // 20: cloud.v1.api.ListWorkloadPresetsRequest
+	(*ListWorkloadPresetsResponse)(nil),        // 21: cloud.v1.api.ListWorkloadPresetsResponse
+	(*UpdateWorkloadPresetRequest)(nil),        // 22: cloud.v1.api.UpdateWorkloadPresetRequest
+	(*UpdateWorkloadPresetResponse)(nil),       // 23: cloud.v1.api.UpdateWorkloadPresetResponse
+	(*DeleteWorkloadPresetRequest)(nil),        // 24: cloud.v1.api.DeleteWorkloadPresetRequest
+	(*DeleteWorkloadPresetResponse)(nil),       // 25: cloud.v1.api.DeleteWorkloadPresetResponse
+	(*CloneWorkloadPresetRequest)(nil),         // 26: cloud.v1.api.CloneWorkloadPresetRequest
+	(*CloneWorkloadPresetResponse)(nil),        // 27: cloud.v1.api.CloneWorkloadPresetResponse
+	(*CreateTestPresetRequest)(nil),            // 28: cloud.v1.api.CreateTestPresetRequest
+	(*CreateTestPresetResponse)(nil),           // 29: cloud.v1.api.CreateTestPresetResponse
+	(*GetTestPresetRequest)(nil),               // 30: cloud.v1.api.GetTestPresetRequest
+	(*GetTestPresetResponse)(nil),              // 31: cloud.v1.api.GetTestPresetResponse
+	(*ListTestPresetsRequest)(nil),             // 32: cloud.v1.api.ListTestPresetsRequest
+	(*ListTestPresetsResponse)(nil),            // 33: cloud.v1.api.ListTestPresetsResponse
+	(*UpdateTestPresetRequest)(nil),            // 34: cloud.v1.api.UpdateTestPresetRequest
+	(*UpdateTestPresetResponse)(nil),           // 35: cloud.v1.api.UpdateTestPresetResponse
+	(*DeleteTestPresetRequest)(nil),            // 36: cloud.v1.api.DeleteTestPresetRequest
+	(*DeleteTestPresetResponse)(nil),           // 37: cloud.v1.api.DeleteTestPresetResponse
+	(*CloneTestPresetRequest)(nil),             // 38: cloud.v1.api.CloneTestPresetRequest
+	(*CloneTestPresetResponse)(nil),            // 39: cloud.v1.api.CloneTestPresetResponse
+	(*ListDatabasePresetsRequest_Sort)(nil),    // 40: cloud.v1.api.ListDatabasePresetsRequest.Sort
+	nil,                                        // 41: cloud.v1.api.ListDatabasePresetsRequest.TagsEntry
+	(*ListWorkloadPresetsRequest_Sort)(nil),    // 42: cloud.v1.api.ListWorkloadPresetsRequest.Sort
+	nil,                                        // 43: cloud.v1.api.ListWorkloadPresetsRequest.TagsEntry
+	(*ListTestPresetsRequest_Sort)(nil),        // 44: cloud.v1.api.ListTestPresetsRequest.Sort
+	nil,                                        // 45: cloud.v1.api.ListTestPresetsRequest.TagsEntry
+	(*models.DatabasePresetRecord)(nil),        // 46: cloud.v1.models.DatabasePresetRecord
+	(*common.EntityFilter)(nil),                // 47: cloud.v1.common.EntityFilter
+	(domain.Database_Kind)(0),                  // 48: cloud.v1.domain.Database.Kind
+	(*common.Page)(nil),                        // 49: cloud.v1.common.Page
+	(*models.WorkloadPresetRecord)(nil),        // 50: cloud.v1.models.WorkloadPresetRecord
+	(*models.TestPresetRecord)(nil),            // 51: cloud.v1.models.TestPresetRecord
+	(common.EntitySortField)(0),                // 52: cloud.v1.common.EntitySortField
 }
 var file_cloud_v1_api_preset_proto_depIdxs = []int32{
-	40, // 0: cloud.v1.api.CreateDatabasePresetRequest.preset:type_name -> cloud.v1.models.DatabasePreset
-	40, // 1: cloud.v1.api.CreateDatabasePresetResponse.preset:type_name -> cloud.v1.models.DatabasePreset
-	40, // 2: cloud.v1.api.GetDatabasePresetResponse.preset:type_name -> cloud.v1.models.DatabasePreset
-	41, // 3: cloud.v1.api.ListDatabasePresetsRequest.filter:type_name -> cloud.v1.common.EntityFilter
-	35, // 4: cloud.v1.api.ListDatabasePresetsRequest.tags:type_name -> cloud.v1.api.ListDatabasePresetsRequest.TagsEntry
-	42, // 5: cloud.v1.api.ListDatabasePresetsRequest.db_kinds:type_name -> cloud.v1.domain.Database.Kind
+	46, // 0: cloud.v1.api.CreateDatabasePresetRequest.preset:type_name -> cloud.v1.models.DatabasePresetRecord
+	46, // 1: cloud.v1.api.CreateDatabasePresetResponse.preset:type_name -> cloud.v1.models.DatabasePresetRecord
+	46, // 2: cloud.v1.api.GetDatabasePresetResponse.preset:type_name -> cloud.v1.models.DatabasePresetRecord
+	47, // 3: cloud.v1.api.ListDatabasePresetsRequest.filter:type_name -> cloud.v1.common.EntityFilter
+	41, // 4: cloud.v1.api.ListDatabasePresetsRequest.tags:type_name -> cloud.v1.api.ListDatabasePresetsRequest.TagsEntry
+	48, // 5: cloud.v1.api.ListDatabasePresetsRequest.db_kinds:type_name -> cloud.v1.domain.Database.Kind
 	0,  // 6: cloud.v1.api.ListDatabasePresetsRequest.sources:type_name -> cloud.v1.api.ListDatabasePresetsRequest.SourceKind
-	34, // 7: cloud.v1.api.ListDatabasePresetsRequest.sort:type_name -> cloud.v1.api.ListDatabasePresetsRequest.Sort
-	43, // 8: cloud.v1.api.ListDatabasePresetsRequest.page:type_name -> cloud.v1.common.Page
-	40, // 9: cloud.v1.api.ListDatabasePresetsResponse.presets:type_name -> cloud.v1.models.DatabasePreset
-	40, // 10: cloud.v1.api.UpdateDatabasePresetRequest.preset:type_name -> cloud.v1.models.DatabasePreset
-	40, // 11: cloud.v1.api.UpdateDatabasePresetResponse.preset:type_name -> cloud.v1.models.DatabasePreset
-	44, // 12: cloud.v1.api.CreateWorkloadPresetRequest.preset:type_name -> cloud.v1.models.WorkloadPreset
-	44, // 13: cloud.v1.api.CreateWorkloadPresetResponse.preset:type_name -> cloud.v1.models.WorkloadPreset
-	44, // 14: cloud.v1.api.GetWorkloadPresetResponse.preset:type_name -> cloud.v1.models.WorkloadPreset
-	41, // 15: cloud.v1.api.ListWorkloadPresetsRequest.filter:type_name -> cloud.v1.common.EntityFilter
-	37, // 16: cloud.v1.api.ListWorkloadPresetsRequest.tags:type_name -> cloud.v1.api.ListWorkloadPresetsRequest.TagsEntry
-	36, // 17: cloud.v1.api.ListWorkloadPresetsRequest.sort:type_name -> cloud.v1.api.ListWorkloadPresetsRequest.Sort
-	43, // 18: cloud.v1.api.ListWorkloadPresetsRequest.page:type_name -> cloud.v1.common.Page
-	44, // 19: cloud.v1.api.ListWorkloadPresetsResponse.presets:type_name -> cloud.v1.models.WorkloadPreset
-	44, // 20: cloud.v1.api.UpdateWorkloadPresetRequest.preset:type_name -> cloud.v1.models.WorkloadPreset
-	44, // 21: cloud.v1.api.UpdateWorkloadPresetResponse.preset:type_name -> cloud.v1.models.WorkloadPreset
-	45, // 22: cloud.v1.api.CreateTestPresetRequest.preset:type_name -> cloud.v1.models.TestPreset
-	45, // 23: cloud.v1.api.CreateTestPresetResponse.preset:type_name -> cloud.v1.models.TestPreset
-	45, // 24: cloud.v1.api.GetTestPresetResponse.preset:type_name -> cloud.v1.models.TestPreset
-	41, // 25: cloud.v1.api.ListTestPresetsRequest.filter:type_name -> cloud.v1.common.EntityFilter
-	39, // 26: cloud.v1.api.ListTestPresetsRequest.tags:type_name -> cloud.v1.api.ListTestPresetsRequest.TagsEntry
-	42, // 27: cloud.v1.api.ListTestPresetsRequest.db_kinds:type_name -> cloud.v1.domain.Database.Kind
-	38, // 28: cloud.v1.api.ListTestPresetsRequest.sort:type_name -> cloud.v1.api.ListTestPresetsRequest.Sort
-	43, // 29: cloud.v1.api.ListTestPresetsRequest.page:type_name -> cloud.v1.common.Page
-	45, // 30: cloud.v1.api.ListTestPresetsResponse.presets:type_name -> cloud.v1.models.TestPreset
-	45, // 31: cloud.v1.api.UpdateTestPresetRequest.preset:type_name -> cloud.v1.models.TestPreset
-	45, // 32: cloud.v1.api.UpdateTestPresetResponse.preset:type_name -> cloud.v1.models.TestPreset
-	46, // 33: cloud.v1.api.ListDatabasePresetsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
-	1,  // 34: cloud.v1.api.ListDatabasePresetsRequest.Sort.kind:type_name -> cloud.v1.api.ListDatabasePresetsRequest.Sort.Kind
-	46, // 35: cloud.v1.api.ListWorkloadPresetsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
-	2,  // 36: cloud.v1.api.ListWorkloadPresetsRequest.Sort.kind:type_name -> cloud.v1.api.ListWorkloadPresetsRequest.Sort.Kind
-	46, // 37: cloud.v1.api.ListTestPresetsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
-	3,  // 38: cloud.v1.api.ListTestPresetsRequest.Sort.kind:type_name -> cloud.v1.api.ListTestPresetsRequest.Sort.Kind
-	4,  // 39: cloud.v1.api.DatabasePresetAPI.CreateDatabasePreset:input_type -> cloud.v1.api.CreateDatabasePresetRequest
-	6,  // 40: cloud.v1.api.DatabasePresetAPI.GetDatabasePreset:input_type -> cloud.v1.api.GetDatabasePresetRequest
-	8,  // 41: cloud.v1.api.DatabasePresetAPI.ListDatabasePresets:input_type -> cloud.v1.api.ListDatabasePresetsRequest
-	10, // 42: cloud.v1.api.DatabasePresetAPI.UpdateDatabasePreset:input_type -> cloud.v1.api.UpdateDatabasePresetRequest
-	12, // 43: cloud.v1.api.DatabasePresetAPI.DeleteDatabasePreset:input_type -> cloud.v1.api.DeleteDatabasePresetRequest
-	14, // 44: cloud.v1.api.WorkloadPresetAPI.CreateWorkloadPreset:input_type -> cloud.v1.api.CreateWorkloadPresetRequest
-	16, // 45: cloud.v1.api.WorkloadPresetAPI.GetWorkloadPreset:input_type -> cloud.v1.api.GetWorkloadPresetRequest
-	18, // 46: cloud.v1.api.WorkloadPresetAPI.ListWorkloadPresets:input_type -> cloud.v1.api.ListWorkloadPresetsRequest
-	20, // 47: cloud.v1.api.WorkloadPresetAPI.UpdateWorkloadPreset:input_type -> cloud.v1.api.UpdateWorkloadPresetRequest
-	22, // 48: cloud.v1.api.WorkloadPresetAPI.DeleteWorkloadPreset:input_type -> cloud.v1.api.DeleteWorkloadPresetRequest
-	24, // 49: cloud.v1.api.TestPresetAPI.CreateTestPreset:input_type -> cloud.v1.api.CreateTestPresetRequest
-	26, // 50: cloud.v1.api.TestPresetAPI.GetTestPreset:input_type -> cloud.v1.api.GetTestPresetRequest
-	28, // 51: cloud.v1.api.TestPresetAPI.ListTestPresets:input_type -> cloud.v1.api.ListTestPresetsRequest
-	30, // 52: cloud.v1.api.TestPresetAPI.UpdateTestPreset:input_type -> cloud.v1.api.UpdateTestPresetRequest
-	32, // 53: cloud.v1.api.TestPresetAPI.DeleteTestPreset:input_type -> cloud.v1.api.DeleteTestPresetRequest
-	5,  // 54: cloud.v1.api.DatabasePresetAPI.CreateDatabasePreset:output_type -> cloud.v1.api.CreateDatabasePresetResponse
-	7,  // 55: cloud.v1.api.DatabasePresetAPI.GetDatabasePreset:output_type -> cloud.v1.api.GetDatabasePresetResponse
-	9,  // 56: cloud.v1.api.DatabasePresetAPI.ListDatabasePresets:output_type -> cloud.v1.api.ListDatabasePresetsResponse
-	11, // 57: cloud.v1.api.DatabasePresetAPI.UpdateDatabasePreset:output_type -> cloud.v1.api.UpdateDatabasePresetResponse
-	13, // 58: cloud.v1.api.DatabasePresetAPI.DeleteDatabasePreset:output_type -> cloud.v1.api.DeleteDatabasePresetResponse
-	15, // 59: cloud.v1.api.WorkloadPresetAPI.CreateWorkloadPreset:output_type -> cloud.v1.api.CreateWorkloadPresetResponse
-	17, // 60: cloud.v1.api.WorkloadPresetAPI.GetWorkloadPreset:output_type -> cloud.v1.api.GetWorkloadPresetResponse
-	19, // 61: cloud.v1.api.WorkloadPresetAPI.ListWorkloadPresets:output_type -> cloud.v1.api.ListWorkloadPresetsResponse
-	21, // 62: cloud.v1.api.WorkloadPresetAPI.UpdateWorkloadPreset:output_type -> cloud.v1.api.UpdateWorkloadPresetResponse
-	23, // 63: cloud.v1.api.WorkloadPresetAPI.DeleteWorkloadPreset:output_type -> cloud.v1.api.DeleteWorkloadPresetResponse
-	25, // 64: cloud.v1.api.TestPresetAPI.CreateTestPreset:output_type -> cloud.v1.api.CreateTestPresetResponse
-	27, // 65: cloud.v1.api.TestPresetAPI.GetTestPreset:output_type -> cloud.v1.api.GetTestPresetResponse
-	29, // 66: cloud.v1.api.TestPresetAPI.ListTestPresets:output_type -> cloud.v1.api.ListTestPresetsResponse
-	31, // 67: cloud.v1.api.TestPresetAPI.UpdateTestPreset:output_type -> cloud.v1.api.UpdateTestPresetResponse
-	33, // 68: cloud.v1.api.TestPresetAPI.DeleteTestPreset:output_type -> cloud.v1.api.DeleteTestPresetResponse
-	54, // [54:69] is the sub-list for method output_type
-	39, // [39:54] is the sub-list for method input_type
-	39, // [39:39] is the sub-list for extension type_name
-	39, // [39:39] is the sub-list for extension extendee
-	0,  // [0:39] is the sub-list for field type_name
+	40, // 7: cloud.v1.api.ListDatabasePresetsRequest.sort:type_name -> cloud.v1.api.ListDatabasePresetsRequest.Sort
+	49, // 8: cloud.v1.api.ListDatabasePresetsRequest.page:type_name -> cloud.v1.common.Page
+	46, // 9: cloud.v1.api.ListDatabasePresetsResponse.presets:type_name -> cloud.v1.models.DatabasePresetRecord
+	46, // 10: cloud.v1.api.UpdateDatabasePresetRequest.preset:type_name -> cloud.v1.models.DatabasePresetRecord
+	46, // 11: cloud.v1.api.UpdateDatabasePresetResponse.preset:type_name -> cloud.v1.models.DatabasePresetRecord
+	46, // 12: cloud.v1.api.CloneDatabasePresetResponse.preset:type_name -> cloud.v1.models.DatabasePresetRecord
+	50, // 13: cloud.v1.api.CreateWorkloadPresetRequest.preset:type_name -> cloud.v1.models.WorkloadPresetRecord
+	50, // 14: cloud.v1.api.CreateWorkloadPresetResponse.preset:type_name -> cloud.v1.models.WorkloadPresetRecord
+	50, // 15: cloud.v1.api.GetWorkloadPresetResponse.preset:type_name -> cloud.v1.models.WorkloadPresetRecord
+	47, // 16: cloud.v1.api.ListWorkloadPresetsRequest.filter:type_name -> cloud.v1.common.EntityFilter
+	43, // 17: cloud.v1.api.ListWorkloadPresetsRequest.tags:type_name -> cloud.v1.api.ListWorkloadPresetsRequest.TagsEntry
+	42, // 18: cloud.v1.api.ListWorkloadPresetsRequest.sort:type_name -> cloud.v1.api.ListWorkloadPresetsRequest.Sort
+	49, // 19: cloud.v1.api.ListWorkloadPresetsRequest.page:type_name -> cloud.v1.common.Page
+	50, // 20: cloud.v1.api.ListWorkloadPresetsResponse.presets:type_name -> cloud.v1.models.WorkloadPresetRecord
+	50, // 21: cloud.v1.api.UpdateWorkloadPresetRequest.preset:type_name -> cloud.v1.models.WorkloadPresetRecord
+	50, // 22: cloud.v1.api.UpdateWorkloadPresetResponse.preset:type_name -> cloud.v1.models.WorkloadPresetRecord
+	50, // 23: cloud.v1.api.CloneWorkloadPresetResponse.preset:type_name -> cloud.v1.models.WorkloadPresetRecord
+	51, // 24: cloud.v1.api.CreateTestPresetRequest.preset:type_name -> cloud.v1.models.TestPresetRecord
+	51, // 25: cloud.v1.api.CreateTestPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
+	51, // 26: cloud.v1.api.GetTestPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
+	47, // 27: cloud.v1.api.ListTestPresetsRequest.filter:type_name -> cloud.v1.common.EntityFilter
+	45, // 28: cloud.v1.api.ListTestPresetsRequest.tags:type_name -> cloud.v1.api.ListTestPresetsRequest.TagsEntry
+	48, // 29: cloud.v1.api.ListTestPresetsRequest.db_kinds:type_name -> cloud.v1.domain.Database.Kind
+	44, // 30: cloud.v1.api.ListTestPresetsRequest.sort:type_name -> cloud.v1.api.ListTestPresetsRequest.Sort
+	49, // 31: cloud.v1.api.ListTestPresetsRequest.page:type_name -> cloud.v1.common.Page
+	51, // 32: cloud.v1.api.ListTestPresetsResponse.presets:type_name -> cloud.v1.models.TestPresetRecord
+	51, // 33: cloud.v1.api.UpdateTestPresetRequest.preset:type_name -> cloud.v1.models.TestPresetRecord
+	51, // 34: cloud.v1.api.UpdateTestPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
+	51, // 35: cloud.v1.api.CloneTestPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
+	52, // 36: cloud.v1.api.ListDatabasePresetsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
+	1,  // 37: cloud.v1.api.ListDatabasePresetsRequest.Sort.kind:type_name -> cloud.v1.api.ListDatabasePresetsRequest.Sort.Kind
+	52, // 38: cloud.v1.api.ListWorkloadPresetsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
+	2,  // 39: cloud.v1.api.ListWorkloadPresetsRequest.Sort.kind:type_name -> cloud.v1.api.ListWorkloadPresetsRequest.Sort.Kind
+	52, // 40: cloud.v1.api.ListTestPresetsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
+	3,  // 41: cloud.v1.api.ListTestPresetsRequest.Sort.kind:type_name -> cloud.v1.api.ListTestPresetsRequest.Sort.Kind
+	4,  // 42: cloud.v1.api.DatabasePresetService.CreateDatabasePreset:input_type -> cloud.v1.api.CreateDatabasePresetRequest
+	6,  // 43: cloud.v1.api.DatabasePresetService.GetDatabasePreset:input_type -> cloud.v1.api.GetDatabasePresetRequest
+	8,  // 44: cloud.v1.api.DatabasePresetService.ListDatabasePresets:input_type -> cloud.v1.api.ListDatabasePresetsRequest
+	10, // 45: cloud.v1.api.DatabasePresetService.UpdateDatabasePreset:input_type -> cloud.v1.api.UpdateDatabasePresetRequest
+	12, // 46: cloud.v1.api.DatabasePresetService.DeleteDatabasePreset:input_type -> cloud.v1.api.DeleteDatabasePresetRequest
+	14, // 47: cloud.v1.api.DatabasePresetService.CloneDatabasePreset:input_type -> cloud.v1.api.CloneDatabasePresetRequest
+	16, // 48: cloud.v1.api.WorkloadPresetService.CreateWorkloadPreset:input_type -> cloud.v1.api.CreateWorkloadPresetRequest
+	18, // 49: cloud.v1.api.WorkloadPresetService.GetWorkloadPreset:input_type -> cloud.v1.api.GetWorkloadPresetRequest
+	20, // 50: cloud.v1.api.WorkloadPresetService.ListWorkloadPresets:input_type -> cloud.v1.api.ListWorkloadPresetsRequest
+	22, // 51: cloud.v1.api.WorkloadPresetService.UpdateWorkloadPreset:input_type -> cloud.v1.api.UpdateWorkloadPresetRequest
+	24, // 52: cloud.v1.api.WorkloadPresetService.DeleteWorkloadPreset:input_type -> cloud.v1.api.DeleteWorkloadPresetRequest
+	26, // 53: cloud.v1.api.WorkloadPresetService.CloneWorkloadPreset:input_type -> cloud.v1.api.CloneWorkloadPresetRequest
+	28, // 54: cloud.v1.api.TestPresetService.CreateTestPreset:input_type -> cloud.v1.api.CreateTestPresetRequest
+	30, // 55: cloud.v1.api.TestPresetService.GetTestPreset:input_type -> cloud.v1.api.GetTestPresetRequest
+	32, // 56: cloud.v1.api.TestPresetService.ListTestPresets:input_type -> cloud.v1.api.ListTestPresetsRequest
+	34, // 57: cloud.v1.api.TestPresetService.UpdateTestPreset:input_type -> cloud.v1.api.UpdateTestPresetRequest
+	36, // 58: cloud.v1.api.TestPresetService.DeleteTestPreset:input_type -> cloud.v1.api.DeleteTestPresetRequest
+	38, // 59: cloud.v1.api.TestPresetService.CloneTestPreset:input_type -> cloud.v1.api.CloneTestPresetRequest
+	5,  // 60: cloud.v1.api.DatabasePresetService.CreateDatabasePreset:output_type -> cloud.v1.api.CreateDatabasePresetResponse
+	7,  // 61: cloud.v1.api.DatabasePresetService.GetDatabasePreset:output_type -> cloud.v1.api.GetDatabasePresetResponse
+	9,  // 62: cloud.v1.api.DatabasePresetService.ListDatabasePresets:output_type -> cloud.v1.api.ListDatabasePresetsResponse
+	11, // 63: cloud.v1.api.DatabasePresetService.UpdateDatabasePreset:output_type -> cloud.v1.api.UpdateDatabasePresetResponse
+	13, // 64: cloud.v1.api.DatabasePresetService.DeleteDatabasePreset:output_type -> cloud.v1.api.DeleteDatabasePresetResponse
+	15, // 65: cloud.v1.api.DatabasePresetService.CloneDatabasePreset:output_type -> cloud.v1.api.CloneDatabasePresetResponse
+	17, // 66: cloud.v1.api.WorkloadPresetService.CreateWorkloadPreset:output_type -> cloud.v1.api.CreateWorkloadPresetResponse
+	19, // 67: cloud.v1.api.WorkloadPresetService.GetWorkloadPreset:output_type -> cloud.v1.api.GetWorkloadPresetResponse
+	21, // 68: cloud.v1.api.WorkloadPresetService.ListWorkloadPresets:output_type -> cloud.v1.api.ListWorkloadPresetsResponse
+	23, // 69: cloud.v1.api.WorkloadPresetService.UpdateWorkloadPreset:output_type -> cloud.v1.api.UpdateWorkloadPresetResponse
+	25, // 70: cloud.v1.api.WorkloadPresetService.DeleteWorkloadPreset:output_type -> cloud.v1.api.DeleteWorkloadPresetResponse
+	27, // 71: cloud.v1.api.WorkloadPresetService.CloneWorkloadPreset:output_type -> cloud.v1.api.CloneWorkloadPresetResponse
+	29, // 72: cloud.v1.api.TestPresetService.CreateTestPreset:output_type -> cloud.v1.api.CreateTestPresetResponse
+	31, // 73: cloud.v1.api.TestPresetService.GetTestPreset:output_type -> cloud.v1.api.GetTestPresetResponse
+	33, // 74: cloud.v1.api.TestPresetService.ListTestPresets:output_type -> cloud.v1.api.ListTestPresetsResponse
+	35, // 75: cloud.v1.api.TestPresetService.UpdateTestPreset:output_type -> cloud.v1.api.UpdateTestPresetResponse
+	37, // 76: cloud.v1.api.TestPresetService.DeleteTestPreset:output_type -> cloud.v1.api.DeleteTestPresetResponse
+	39, // 77: cloud.v1.api.TestPresetService.CloneTestPreset:output_type -> cloud.v1.api.CloneTestPresetResponse
+	60, // [60:78] is the sub-list for method output_type
+	42, // [42:60] is the sub-list for method input_type
+	42, // [42:42] is the sub-list for extension type_name
+	42, // [42:42] is the sub-list for extension extendee
+	0,  // [0:42] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_preset_proto_init() }
@@ -2364,15 +2773,18 @@ func file_cloud_v1_api_preset_proto_init() {
 	if File_cloud_v1_api_preset_proto != nil {
 		return
 	}
-	file_cloud_v1_api_preset_proto_msgTypes[30].OneofWrappers = []any{
+	file_cloud_v1_api_preset_proto_msgTypes[4].OneofWrappers = []any{}
+	file_cloud_v1_api_preset_proto_msgTypes[16].OneofWrappers = []any{}
+	file_cloud_v1_api_preset_proto_msgTypes[28].OneofWrappers = []any{}
+	file_cloud_v1_api_preset_proto_msgTypes[36].OneofWrappers = []any{
 		(*ListDatabasePresetsRequest_Sort_Entity)(nil),
 		(*ListDatabasePresetsRequest_Sort_Kind_)(nil),
 	}
-	file_cloud_v1_api_preset_proto_msgTypes[32].OneofWrappers = []any{
+	file_cloud_v1_api_preset_proto_msgTypes[38].OneofWrappers = []any{
 		(*ListWorkloadPresetsRequest_Sort_Entity)(nil),
 		(*ListWorkloadPresetsRequest_Sort_Kind_)(nil),
 	}
-	file_cloud_v1_api_preset_proto_msgTypes[34].OneofWrappers = []any{
+	file_cloud_v1_api_preset_proto_msgTypes[40].OneofWrappers = []any{
 		(*ListTestPresetsRequest_Sort_Entity)(nil),
 		(*ListTestPresetsRequest_Sort_Kind_)(nil),
 	}
@@ -2382,7 +2794,7 @@ func file_cloud_v1_api_preset_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_preset_proto_rawDesc), len(file_cloud_v1_api_preset_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   36,
+			NumMessages:   42,
 			NumExtensions: 0,
 			NumServices:   3,
 		},

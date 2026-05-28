@@ -35,10 +35,18 @@ type Suite struct {
 	// Single provider for now. Multi-provider (cross-product to compare clouds)
 	// is planned: this becomes `repeated Provider providers` and expansion does
 	// presets x providers. Deferred to avoid the exponential bake cost for now.
-	Provider      deployment.Provider `protobuf:"varint,3,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	Tags          *common.Tags        `protobuf:"bytes,4,opt,name=tags,proto3" json:"tags,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Provider deployment.Provider `protobuf:"varint,3,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	Tags     *common.Tags        `protobuf:"bytes,4,opt,name=tags,proto3" json:"tags,omitempty"`
+	// Optional cron schedule that auto-starts this suite. Absent / disabled = the
+	// suite only runs when started manually.
+	Schedule *Schedule `protobuf:"bytes,5,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	// Rating defaults propagated to every child TestRun the suite spawns (incl.
+	// cron runs). Same semantics as TestRunRecord: tenant defaults true, global
+	// defaults false (opt-in). Modeled as optional so unset = the platform default.
+	DefaultInTenantRating *bool `protobuf:"varint,6,opt,name=default_in_tenant_rating,json=defaultInTenantRating,proto3,oneof" json:"default_in_tenant_rating,omitempty"`
+	DefaultInGlobalRating *bool `protobuf:"varint,7,opt,name=default_in_global_rating,json=defaultInGlobalRating,proto3,oneof" json:"default_in_global_rating,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *Suite) Reset() {
@@ -99,6 +107,93 @@ func (x *Suite) GetTags() *common.Tags {
 	return nil
 }
 
+func (x *Suite) GetSchedule() *Schedule {
+	if x != nil {
+		return x.Schedule
+	}
+	return nil
+}
+
+func (x *Suite) GetDefaultInTenantRating() bool {
+	if x != nil && x.DefaultInTenantRating != nil {
+		return *x.DefaultInTenantRating
+	}
+	return false
+}
+
+func (x *Suite) GetDefaultInGlobalRating() bool {
+	if x != nil && x.DefaultInGlobalRating != nil {
+		return *x.DefaultInGlobalRating
+	}
+	return false
+}
+
+// Schedule is an optional cron trigger for a suite. When enabled with a cron
+// expression, the platform auto-starts the suite on that cadence; `enabled`
+// gates it so a configured schedule can be paused without losing the cron.
+type Schedule struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// enabled gates the schedule: false = paused (never auto-runs).
+	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	// Standard cron expression (e.g. "0 2 * * *"). Validated server-side.
+	Cron string `protobuf:"bytes,2,opt,name=cron,proto3" json:"cron,omitempty"`
+	// IANA timezone for the cron (e.g. "Europe/Moscow"); empty = UTC.
+	Timezone      string `protobuf:"bytes,3,opt,name=timezone,proto3" json:"timezone,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Schedule) Reset() {
+	*x = Schedule{}
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Schedule) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Schedule) ProtoMessage() {}
+
+func (x *Schedule) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Schedule.ProtoReflect.Descriptor instead.
+func (*Schedule) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_suite_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Schedule) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *Schedule) GetCron() string {
+	if x != nil {
+		return x.Cron
+	}
+	return ""
+}
+
+func (x *Schedule) GetTimezone() string {
+	if x != nil {
+		return x.Timezone
+	}
+	return ""
+}
+
 // Materialized suite execution: preset_ids expanded into concrete TestRuns.
 type SuiteRun struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
@@ -114,7 +209,7 @@ type SuiteRun struct {
 
 func (x *SuiteRun) Reset() {
 	*x = SuiteRun{}
-	mi := &file_cloud_v1_domain_suite_proto_msgTypes[1]
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -126,7 +221,7 @@ func (x *SuiteRun) String() string {
 func (*SuiteRun) ProtoMessage() {}
 
 func (x *SuiteRun) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_domain_suite_proto_msgTypes[1]
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -139,7 +234,7 @@ func (x *SuiteRun) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SuiteRun.ProtoReflect.Descriptor instead.
 func (*SuiteRun) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_domain_suite_proto_rawDescGZIP(), []int{1}
+	return file_cloud_v1_domain_suite_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SuiteRun) GetId() string {
@@ -174,14 +269,23 @@ var File_cloud_v1_domain_suite_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_suite_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/domain/suite.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x17validate/validate.proto\"\xc1\x01\n" +
+	"\x1bcloud/v1/domain/suite.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x17validate/validate.proto\"\xae\x03\n" +
 	"\x05Suite\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12-\n" +
 	"\n" +
 	"preset_ids\x18\x02 \x03(\tB\x0e\xfaB\v\x92\x01\b\b\x01\"\x04r\x02\x10\x01R\tpresetIds\x12E\n" +
 	"\bprovider\x18\x03 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x12)\n" +
-	"\x04tags\x18\x04 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"\xab\x01\n" +
+	"\x04tags\x18\x04 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x125\n" +
+	"\bschedule\x18\x05 \x01(\v2\x19.cloud.v1.domain.ScheduleR\bschedule\x12<\n" +
+	"\x18default_in_tenant_rating\x18\x06 \x01(\bH\x00R\x15defaultInTenantRating\x88\x01\x01\x12<\n" +
+	"\x18default_in_global_rating\x18\a \x01(\bH\x01R\x15defaultInGlobalRating\x88\x01\x01B\x1b\n" +
+	"\x19_default_in_tenant_ratingB\x1b\n" +
+	"\x19_default_in_global_rating\"g\n" +
+	"\bSchedule\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1c\n" +
+	"\x04cron\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x04cron\x12#\n" +
+	"\btimezone\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@R\btimezone\"\xab\x01\n" +
 	"\bSuiteRun\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12\"\n" +
 	"\bsuite_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\asuiteId\x12?\n" +
@@ -200,23 +304,25 @@ func file_cloud_v1_domain_suite_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_domain_suite_proto_rawDescData
 }
 
-var file_cloud_v1_domain_suite_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_cloud_v1_domain_suite_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_cloud_v1_domain_suite_proto_goTypes = []any{
 	(*Suite)(nil),            // 0: cloud.v1.domain.Suite
-	(*SuiteRun)(nil),         // 1: cloud.v1.domain.SuiteRun
-	(deployment.Provider)(0), // 2: cloud.v1.deployment.Provider
-	(*common.Tags)(nil),      // 3: cloud.v1.common.Tags
-	(*TestRun)(nil),          // 4: cloud.v1.domain.TestRun
+	(*Schedule)(nil),         // 1: cloud.v1.domain.Schedule
+	(*SuiteRun)(nil),         // 2: cloud.v1.domain.SuiteRun
+	(deployment.Provider)(0), // 3: cloud.v1.deployment.Provider
+	(*common.Tags)(nil),      // 4: cloud.v1.common.Tags
+	(*TestRun)(nil),          // 5: cloud.v1.domain.TestRun
 }
 var file_cloud_v1_domain_suite_proto_depIdxs = []int32{
-	2, // 0: cloud.v1.domain.Suite.provider:type_name -> cloud.v1.deployment.Provider
-	3, // 1: cloud.v1.domain.Suite.tags:type_name -> cloud.v1.common.Tags
-	4, // 2: cloud.v1.domain.SuiteRun.test_runs:type_name -> cloud.v1.domain.TestRun
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	3, // 0: cloud.v1.domain.Suite.provider:type_name -> cloud.v1.deployment.Provider
+	4, // 1: cloud.v1.domain.Suite.tags:type_name -> cloud.v1.common.Tags
+	1, // 2: cloud.v1.domain.Suite.schedule:type_name -> cloud.v1.domain.Schedule
+	5, // 3: cloud.v1.domain.SuiteRun.test_runs:type_name -> cloud.v1.domain.TestRun
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_domain_suite_proto_init() }
@@ -225,13 +331,14 @@ func file_cloud_v1_domain_suite_proto_init() {
 		return
 	}
 	file_cloud_v1_domain_test_proto_init()
+	file_cloud_v1_domain_suite_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_domain_suite_proto_rawDesc), len(file_cloud_v1_domain_suite_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

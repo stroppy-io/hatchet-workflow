@@ -35,22 +35,22 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on DatabasePreset with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *DatabasePreset) Validate() error {
+// Validate checks the field values on DatabasePresetRecord with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DatabasePresetRecord) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on DatabasePreset with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in DatabasePresetMultiError,
-// or nil if none found.
-func (m *DatabasePreset) ValidateAll() error {
+// ValidateAll checks the field values on DatabasePresetRecord with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DatabasePresetRecordMultiError, or nil if none found.
+func (m *DatabasePresetRecord) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *DatabasePreset) validate(all bool) error {
+func (m *DatabasePresetRecord) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -58,7 +58,7 @@ func (m *DatabasePreset) validate(all bool) error {
 	var errors []error
 
 	if m.GetEntity() == nil {
-		err := DatabasePresetValidationError{
+		err := DatabasePresetRecordValidationError{
 			field:  "Entity",
 			reason: "value is required",
 		}
@@ -72,7 +72,7 @@ func (m *DatabasePreset) validate(all bool) error {
 		switch v := interface{}(m.GetEntity()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, DatabasePresetValidationError{
+				errors = append(errors, DatabasePresetRecordValidationError{
 					field:  "Entity",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -80,7 +80,7 @@ func (m *DatabasePreset) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, DatabasePresetValidationError{
+				errors = append(errors, DatabasePresetRecordValidationError{
 					field:  "Entity",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -89,7 +89,7 @@ func (m *DatabasePreset) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetEntity()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return DatabasePresetValidationError{
+			return DatabasePresetRecordValidationError{
 				field:  "Entity",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -98,7 +98,7 @@ func (m *DatabasePreset) validate(all bool) error {
 	}
 
 	if m.GetDatabase() == nil {
-		err := DatabasePresetValidationError{
+		err := DatabasePresetRecordValidationError{
 			field:  "Database",
 			reason: "value is required",
 		}
@@ -112,7 +112,7 @@ func (m *DatabasePreset) validate(all bool) error {
 		switch v := interface{}(m.GetDatabase()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, DatabasePresetValidationError{
+				errors = append(errors, DatabasePresetRecordValidationError{
 					field:  "Database",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -120,7 +120,7 @@ func (m *DatabasePreset) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, DatabasePresetValidationError{
+				errors = append(errors, DatabasePresetRecordValidationError{
 					field:  "Database",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -129,7 +129,7 @@ func (m *DatabasePreset) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetDatabase()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return DatabasePresetValidationError{
+			return DatabasePresetRecordValidationError{
 				field:  "Database",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -137,20 +137,22 @@ func (m *DatabasePreset) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for IsSystem
+
 	if len(errors) > 0 {
-		return DatabasePresetMultiError(errors)
+		return DatabasePresetRecordMultiError(errors)
 	}
 
 	return nil
 }
 
-// DatabasePresetMultiError is an error wrapping multiple validation errors
-// returned by DatabasePreset.ValidateAll() if the designated constraints
-// aren't met.
-type DatabasePresetMultiError []error
+// DatabasePresetRecordMultiError is an error wrapping multiple validation
+// errors returned by DatabasePresetRecord.ValidateAll() if the designated
+// constraints aren't met.
+type DatabasePresetRecordMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m DatabasePresetMultiError) Error() string {
+func (m DatabasePresetRecordMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -159,11 +161,11 @@ func (m DatabasePresetMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m DatabasePresetMultiError) AllErrors() []error { return m }
+func (m DatabasePresetRecordMultiError) AllErrors() []error { return m }
 
-// DatabasePresetValidationError is the validation error returned by
-// DatabasePreset.Validate if the designated constraints aren't met.
-type DatabasePresetValidationError struct {
+// DatabasePresetRecordValidationError is the validation error returned by
+// DatabasePresetRecord.Validate if the designated constraints aren't met.
+type DatabasePresetRecordValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -171,22 +173,24 @@ type DatabasePresetValidationError struct {
 }
 
 // Field function returns field value.
-func (e DatabasePresetValidationError) Field() string { return e.field }
+func (e DatabasePresetRecordValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e DatabasePresetValidationError) Reason() string { return e.reason }
+func (e DatabasePresetRecordValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e DatabasePresetValidationError) Cause() error { return e.cause }
+func (e DatabasePresetRecordValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e DatabasePresetValidationError) Key() bool { return e.key }
+func (e DatabasePresetRecordValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e DatabasePresetValidationError) ErrorName() string { return "DatabasePresetValidationError" }
+func (e DatabasePresetRecordValidationError) ErrorName() string {
+	return "DatabasePresetRecordValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e DatabasePresetValidationError) Error() string {
+func (e DatabasePresetRecordValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -198,14 +202,14 @@ func (e DatabasePresetValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sDatabasePreset.%s: %s%s",
+		"invalid %sDatabasePresetRecord.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = DatabasePresetValidationError{}
+var _ error = DatabasePresetRecordValidationError{}
 
 var _ interface {
 	Field() string
@@ -213,24 +217,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = DatabasePresetValidationError{}
+} = DatabasePresetRecordValidationError{}
 
-// Validate checks the field values on WorkloadPreset with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *WorkloadPreset) Validate() error {
+// Validate checks the field values on WorkloadPresetRecord with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *WorkloadPresetRecord) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on WorkloadPreset with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in WorkloadPresetMultiError,
-// or nil if none found.
-func (m *WorkloadPreset) ValidateAll() error {
+// ValidateAll checks the field values on WorkloadPresetRecord with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// WorkloadPresetRecordMultiError, or nil if none found.
+func (m *WorkloadPresetRecord) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *WorkloadPreset) validate(all bool) error {
+func (m *WorkloadPresetRecord) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -238,7 +242,7 @@ func (m *WorkloadPreset) validate(all bool) error {
 	var errors []error
 
 	if m.GetEntity() == nil {
-		err := WorkloadPresetValidationError{
+		err := WorkloadPresetRecordValidationError{
 			field:  "Entity",
 			reason: "value is required",
 		}
@@ -252,7 +256,7 @@ func (m *WorkloadPreset) validate(all bool) error {
 		switch v := interface{}(m.GetEntity()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, WorkloadPresetValidationError{
+				errors = append(errors, WorkloadPresetRecordValidationError{
 					field:  "Entity",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -260,7 +264,7 @@ func (m *WorkloadPreset) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, WorkloadPresetValidationError{
+				errors = append(errors, WorkloadPresetRecordValidationError{
 					field:  "Entity",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -269,7 +273,7 @@ func (m *WorkloadPreset) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetEntity()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return WorkloadPresetValidationError{
+			return WorkloadPresetRecordValidationError{
 				field:  "Entity",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -278,7 +282,7 @@ func (m *WorkloadPreset) validate(all bool) error {
 	}
 
 	if m.GetWorkload() == nil {
-		err := WorkloadPresetValidationError{
+		err := WorkloadPresetRecordValidationError{
 			field:  "Workload",
 			reason: "value is required",
 		}
@@ -292,7 +296,7 @@ func (m *WorkloadPreset) validate(all bool) error {
 		switch v := interface{}(m.GetWorkload()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, WorkloadPresetValidationError{
+				errors = append(errors, WorkloadPresetRecordValidationError{
 					field:  "Workload",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -300,7 +304,7 @@ func (m *WorkloadPreset) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, WorkloadPresetValidationError{
+				errors = append(errors, WorkloadPresetRecordValidationError{
 					field:  "Workload",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -309,7 +313,7 @@ func (m *WorkloadPreset) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetWorkload()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return WorkloadPresetValidationError{
+			return WorkloadPresetRecordValidationError{
 				field:  "Workload",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -317,20 +321,22 @@ func (m *WorkloadPreset) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for IsSystem
+
 	if len(errors) > 0 {
-		return WorkloadPresetMultiError(errors)
+		return WorkloadPresetRecordMultiError(errors)
 	}
 
 	return nil
 }
 
-// WorkloadPresetMultiError is an error wrapping multiple validation errors
-// returned by WorkloadPreset.ValidateAll() if the designated constraints
-// aren't met.
-type WorkloadPresetMultiError []error
+// WorkloadPresetRecordMultiError is an error wrapping multiple validation
+// errors returned by WorkloadPresetRecord.ValidateAll() if the designated
+// constraints aren't met.
+type WorkloadPresetRecordMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m WorkloadPresetMultiError) Error() string {
+func (m WorkloadPresetRecordMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -339,11 +345,11 @@ func (m WorkloadPresetMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m WorkloadPresetMultiError) AllErrors() []error { return m }
+func (m WorkloadPresetRecordMultiError) AllErrors() []error { return m }
 
-// WorkloadPresetValidationError is the validation error returned by
-// WorkloadPreset.Validate if the designated constraints aren't met.
-type WorkloadPresetValidationError struct {
+// WorkloadPresetRecordValidationError is the validation error returned by
+// WorkloadPresetRecord.Validate if the designated constraints aren't met.
+type WorkloadPresetRecordValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -351,22 +357,24 @@ type WorkloadPresetValidationError struct {
 }
 
 // Field function returns field value.
-func (e WorkloadPresetValidationError) Field() string { return e.field }
+func (e WorkloadPresetRecordValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e WorkloadPresetValidationError) Reason() string { return e.reason }
+func (e WorkloadPresetRecordValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e WorkloadPresetValidationError) Cause() error { return e.cause }
+func (e WorkloadPresetRecordValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e WorkloadPresetValidationError) Key() bool { return e.key }
+func (e WorkloadPresetRecordValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e WorkloadPresetValidationError) ErrorName() string { return "WorkloadPresetValidationError" }
+func (e WorkloadPresetRecordValidationError) ErrorName() string {
+	return "WorkloadPresetRecordValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e WorkloadPresetValidationError) Error() string {
+func (e WorkloadPresetRecordValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -378,14 +386,14 @@ func (e WorkloadPresetValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sWorkloadPreset.%s: %s%s",
+		"invalid %sWorkloadPresetRecord.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = WorkloadPresetValidationError{}
+var _ error = WorkloadPresetRecordValidationError{}
 
 var _ interface {
 	Field() string
@@ -393,24 +401,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = WorkloadPresetValidationError{}
+} = WorkloadPresetRecordValidationError{}
 
-// Validate checks the field values on TestPreset with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *TestPreset) Validate() error {
+// Validate checks the field values on TestPresetRecord with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *TestPresetRecord) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on TestPreset with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in TestPresetMultiError, or
-// nil if none found.
-func (m *TestPreset) ValidateAll() error {
+// ValidateAll checks the field values on TestPresetRecord with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// TestPresetRecordMultiError, or nil if none found.
+func (m *TestPresetRecord) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *TestPreset) validate(all bool) error {
+func (m *TestPresetRecord) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -418,7 +426,7 @@ func (m *TestPreset) validate(all bool) error {
 	var errors []error
 
 	if m.GetEntity() == nil {
-		err := TestPresetValidationError{
+		err := TestPresetRecordValidationError{
 			field:  "Entity",
 			reason: "value is required",
 		}
@@ -432,7 +440,7 @@ func (m *TestPreset) validate(all bool) error {
 		switch v := interface{}(m.GetEntity()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, TestPresetValidationError{
+				errors = append(errors, TestPresetRecordValidationError{
 					field:  "Entity",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -440,7 +448,7 @@ func (m *TestPreset) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, TestPresetValidationError{
+				errors = append(errors, TestPresetRecordValidationError{
 					field:  "Entity",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -449,7 +457,7 @@ func (m *TestPreset) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetEntity()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return TestPresetValidationError{
+			return TestPresetRecordValidationError{
 				field:  "Entity",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -458,7 +466,7 @@ func (m *TestPreset) validate(all bool) error {
 	}
 
 	if m.GetTest() == nil {
-		err := TestPresetValidationError{
+		err := TestPresetRecordValidationError{
 			field:  "Test",
 			reason: "value is required",
 		}
@@ -472,7 +480,7 @@ func (m *TestPreset) validate(all bool) error {
 		switch v := interface{}(m.GetTest()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, TestPresetValidationError{
+				errors = append(errors, TestPresetRecordValidationError{
 					field:  "Test",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -480,7 +488,7 @@ func (m *TestPreset) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, TestPresetValidationError{
+				errors = append(errors, TestPresetRecordValidationError{
 					field:  "Test",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -489,7 +497,7 @@ func (m *TestPreset) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetTest()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return TestPresetValidationError{
+			return TestPresetRecordValidationError{
 				field:  "Test",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -497,19 +505,22 @@ func (m *TestPreset) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for IsSystem
+
 	if len(errors) > 0 {
-		return TestPresetMultiError(errors)
+		return TestPresetRecordMultiError(errors)
 	}
 
 	return nil
 }
 
-// TestPresetMultiError is an error wrapping multiple validation errors
-// returned by TestPreset.ValidateAll() if the designated constraints aren't met.
-type TestPresetMultiError []error
+// TestPresetRecordMultiError is an error wrapping multiple validation errors
+// returned by TestPresetRecord.ValidateAll() if the designated constraints
+// aren't met.
+type TestPresetRecordMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m TestPresetMultiError) Error() string {
+func (m TestPresetRecordMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -518,11 +529,11 @@ func (m TestPresetMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m TestPresetMultiError) AllErrors() []error { return m }
+func (m TestPresetRecordMultiError) AllErrors() []error { return m }
 
-// TestPresetValidationError is the validation error returned by
-// TestPreset.Validate if the designated constraints aren't met.
-type TestPresetValidationError struct {
+// TestPresetRecordValidationError is the validation error returned by
+// TestPresetRecord.Validate if the designated constraints aren't met.
+type TestPresetRecordValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -530,22 +541,22 @@ type TestPresetValidationError struct {
 }
 
 // Field function returns field value.
-func (e TestPresetValidationError) Field() string { return e.field }
+func (e TestPresetRecordValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e TestPresetValidationError) Reason() string { return e.reason }
+func (e TestPresetRecordValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e TestPresetValidationError) Cause() error { return e.cause }
+func (e TestPresetRecordValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e TestPresetValidationError) Key() bool { return e.key }
+func (e TestPresetRecordValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e TestPresetValidationError) ErrorName() string { return "TestPresetValidationError" }
+func (e TestPresetRecordValidationError) ErrorName() string { return "TestPresetRecordValidationError" }
 
 // Error satisfies the builtin error interface
-func (e TestPresetValidationError) Error() string {
+func (e TestPresetRecordValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -557,14 +568,14 @@ func (e TestPresetValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sTestPreset.%s: %s%s",
+		"invalid %sTestPresetRecord.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = TestPresetValidationError{}
+var _ error = TestPresetRecordValidationError{}
 
 var _ interface {
 	Field() string
@@ -572,4 +583,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = TestPresetValidationError{}
+} = TestPresetRecordValidationError{}

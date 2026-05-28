@@ -2,7 +2,7 @@ lint:
   use:
     - DEFAULT
   enum_zero_value_suffix: _NONE
-  service_suffix: API
+  service_suffix: Service
   ignore: []
   except: []
   allow_comment_ignores: false

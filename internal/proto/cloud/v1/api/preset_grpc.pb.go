@@ -19,257 +19,303 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DatabasePresetAPI_CreateDatabasePreset_FullMethodName = "/cloud.v1.api.DatabasePresetAPI/CreateDatabasePreset"
-	DatabasePresetAPI_GetDatabasePreset_FullMethodName    = "/cloud.v1.api.DatabasePresetAPI/GetDatabasePreset"
-	DatabasePresetAPI_ListDatabasePresets_FullMethodName  = "/cloud.v1.api.DatabasePresetAPI/ListDatabasePresets"
-	DatabasePresetAPI_UpdateDatabasePreset_FullMethodName = "/cloud.v1.api.DatabasePresetAPI/UpdateDatabasePreset"
-	DatabasePresetAPI_DeleteDatabasePreset_FullMethodName = "/cloud.v1.api.DatabasePresetAPI/DeleteDatabasePreset"
+	DatabasePresetService_CreateDatabasePreset_FullMethodName = "/cloud.v1.api.DatabasePresetService/CreateDatabasePreset"
+	DatabasePresetService_GetDatabasePreset_FullMethodName    = "/cloud.v1.api.DatabasePresetService/GetDatabasePreset"
+	DatabasePresetService_ListDatabasePresets_FullMethodName  = "/cloud.v1.api.DatabasePresetService/ListDatabasePresets"
+	DatabasePresetService_UpdateDatabasePreset_FullMethodName = "/cloud.v1.api.DatabasePresetService/UpdateDatabasePreset"
+	DatabasePresetService_DeleteDatabasePreset_FullMethodName = "/cloud.v1.api.DatabasePresetService/DeleteDatabasePreset"
+	DatabasePresetService_CloneDatabasePreset_FullMethodName  = "/cloud.v1.api.DatabasePresetService/CloneDatabasePreset"
 )
 
-// DatabasePresetAPIClient is the client API for DatabasePresetAPI service.
+// DatabasePresetServiceClient is the client API for DatabasePresetService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type DatabasePresetAPIClient interface {
+type DatabasePresetServiceClient interface {
 	CreateDatabasePreset(ctx context.Context, in *CreateDatabasePresetRequest, opts ...grpc.CallOption) (*CreateDatabasePresetResponse, error)
 	GetDatabasePreset(ctx context.Context, in *GetDatabasePresetRequest, opts ...grpc.CallOption) (*GetDatabasePresetResponse, error)
 	ListDatabasePresets(ctx context.Context, in *ListDatabasePresetsRequest, opts ...grpc.CallOption) (*ListDatabasePresetsResponse, error)
 	// UpdateDatabasePreset is idempotent: a wholesale field set converges on retry.
+	// System presets (is_system) are read-only and rejected — clone instead.
 	UpdateDatabasePreset(ctx context.Context, in *UpdateDatabasePresetRequest, opts ...grpc.CallOption) (*UpdateDatabasePresetResponse, error)
 	// DeleteDatabasePreset is idempotent: deleting an absent preset is a no-op.
+	// System presets (is_system) are rejected.
 	DeleteDatabasePreset(ctx context.Context, in *DeleteDatabasePresetRequest, opts ...grpc.CallOption) (*DeleteDatabasePresetResponse, error)
+	// CloneDatabasePreset creates a new editable copy. Not idempotent: each call
+	// mints a new preset.
+	CloneDatabasePreset(ctx context.Context, in *CloneDatabasePresetRequest, opts ...grpc.CallOption) (*CloneDatabasePresetResponse, error)
 }
 
-type databasePresetAPIClient struct {
+type databasePresetServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewDatabasePresetAPIClient(cc grpc.ClientConnInterface) DatabasePresetAPIClient {
-	return &databasePresetAPIClient{cc}
+func NewDatabasePresetServiceClient(cc grpc.ClientConnInterface) DatabasePresetServiceClient {
+	return &databasePresetServiceClient{cc}
 }
 
-func (c *databasePresetAPIClient) CreateDatabasePreset(ctx context.Context, in *CreateDatabasePresetRequest, opts ...grpc.CallOption) (*CreateDatabasePresetResponse, error) {
+func (c *databasePresetServiceClient) CreateDatabasePreset(ctx context.Context, in *CreateDatabasePresetRequest, opts ...grpc.CallOption) (*CreateDatabasePresetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateDatabasePresetResponse)
-	err := c.cc.Invoke(ctx, DatabasePresetAPI_CreateDatabasePreset_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DatabasePresetService_CreateDatabasePreset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *databasePresetAPIClient) GetDatabasePreset(ctx context.Context, in *GetDatabasePresetRequest, opts ...grpc.CallOption) (*GetDatabasePresetResponse, error) {
+func (c *databasePresetServiceClient) GetDatabasePreset(ctx context.Context, in *GetDatabasePresetRequest, opts ...grpc.CallOption) (*GetDatabasePresetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetDatabasePresetResponse)
-	err := c.cc.Invoke(ctx, DatabasePresetAPI_GetDatabasePreset_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DatabasePresetService_GetDatabasePreset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *databasePresetAPIClient) ListDatabasePresets(ctx context.Context, in *ListDatabasePresetsRequest, opts ...grpc.CallOption) (*ListDatabasePresetsResponse, error) {
+func (c *databasePresetServiceClient) ListDatabasePresets(ctx context.Context, in *ListDatabasePresetsRequest, opts ...grpc.CallOption) (*ListDatabasePresetsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListDatabasePresetsResponse)
-	err := c.cc.Invoke(ctx, DatabasePresetAPI_ListDatabasePresets_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DatabasePresetService_ListDatabasePresets_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *databasePresetAPIClient) UpdateDatabasePreset(ctx context.Context, in *UpdateDatabasePresetRequest, opts ...grpc.CallOption) (*UpdateDatabasePresetResponse, error) {
+func (c *databasePresetServiceClient) UpdateDatabasePreset(ctx context.Context, in *UpdateDatabasePresetRequest, opts ...grpc.CallOption) (*UpdateDatabasePresetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateDatabasePresetResponse)
-	err := c.cc.Invoke(ctx, DatabasePresetAPI_UpdateDatabasePreset_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DatabasePresetService_UpdateDatabasePreset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *databasePresetAPIClient) DeleteDatabasePreset(ctx context.Context, in *DeleteDatabasePresetRequest, opts ...grpc.CallOption) (*DeleteDatabasePresetResponse, error) {
+func (c *databasePresetServiceClient) DeleteDatabasePreset(ctx context.Context, in *DeleteDatabasePresetRequest, opts ...grpc.CallOption) (*DeleteDatabasePresetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteDatabasePresetResponse)
-	err := c.cc.Invoke(ctx, DatabasePresetAPI_DeleteDatabasePreset_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DatabasePresetService_DeleteDatabasePreset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// DatabasePresetAPIServer is the server API for DatabasePresetAPI service.
-// All implementations must embed UnimplementedDatabasePresetAPIServer
+func (c *databasePresetServiceClient) CloneDatabasePreset(ctx context.Context, in *CloneDatabasePresetRequest, opts ...grpc.CallOption) (*CloneDatabasePresetResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CloneDatabasePresetResponse)
+	err := c.cc.Invoke(ctx, DatabasePresetService_CloneDatabasePreset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// DatabasePresetServiceServer is the server API for DatabasePresetService service.
+// All implementations must embed UnimplementedDatabasePresetServiceServer
 // for forward compatibility.
-type DatabasePresetAPIServer interface {
+type DatabasePresetServiceServer interface {
 	CreateDatabasePreset(context.Context, *CreateDatabasePresetRequest) (*CreateDatabasePresetResponse, error)
 	GetDatabasePreset(context.Context, *GetDatabasePresetRequest) (*GetDatabasePresetResponse, error)
 	ListDatabasePresets(context.Context, *ListDatabasePresetsRequest) (*ListDatabasePresetsResponse, error)
 	// UpdateDatabasePreset is idempotent: a wholesale field set converges on retry.
+	// System presets (is_system) are read-only and rejected — clone instead.
 	UpdateDatabasePreset(context.Context, *UpdateDatabasePresetRequest) (*UpdateDatabasePresetResponse, error)
 	// DeleteDatabasePreset is idempotent: deleting an absent preset is a no-op.
+	// System presets (is_system) are rejected.
 	DeleteDatabasePreset(context.Context, *DeleteDatabasePresetRequest) (*DeleteDatabasePresetResponse, error)
-	mustEmbedUnimplementedDatabasePresetAPIServer()
+	// CloneDatabasePreset creates a new editable copy. Not idempotent: each call
+	// mints a new preset.
+	CloneDatabasePreset(context.Context, *CloneDatabasePresetRequest) (*CloneDatabasePresetResponse, error)
+	mustEmbedUnimplementedDatabasePresetServiceServer()
 }
 
-// UnimplementedDatabasePresetAPIServer must be embedded to have
+// UnimplementedDatabasePresetServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedDatabasePresetAPIServer struct{}
+type UnimplementedDatabasePresetServiceServer struct{}
 
-func (UnimplementedDatabasePresetAPIServer) CreateDatabasePreset(context.Context, *CreateDatabasePresetRequest) (*CreateDatabasePresetResponse, error) {
+func (UnimplementedDatabasePresetServiceServer) CreateDatabasePreset(context.Context, *CreateDatabasePresetRequest) (*CreateDatabasePresetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateDatabasePreset not implemented")
 }
-func (UnimplementedDatabasePresetAPIServer) GetDatabasePreset(context.Context, *GetDatabasePresetRequest) (*GetDatabasePresetResponse, error) {
+func (UnimplementedDatabasePresetServiceServer) GetDatabasePreset(context.Context, *GetDatabasePresetRequest) (*GetDatabasePresetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetDatabasePreset not implemented")
 }
-func (UnimplementedDatabasePresetAPIServer) ListDatabasePresets(context.Context, *ListDatabasePresetsRequest) (*ListDatabasePresetsResponse, error) {
+func (UnimplementedDatabasePresetServiceServer) ListDatabasePresets(context.Context, *ListDatabasePresetsRequest) (*ListDatabasePresetsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListDatabasePresets not implemented")
 }
-func (UnimplementedDatabasePresetAPIServer) UpdateDatabasePreset(context.Context, *UpdateDatabasePresetRequest) (*UpdateDatabasePresetResponse, error) {
+func (UnimplementedDatabasePresetServiceServer) UpdateDatabasePreset(context.Context, *UpdateDatabasePresetRequest) (*UpdateDatabasePresetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateDatabasePreset not implemented")
 }
-func (UnimplementedDatabasePresetAPIServer) DeleteDatabasePreset(context.Context, *DeleteDatabasePresetRequest) (*DeleteDatabasePresetResponse, error) {
+func (UnimplementedDatabasePresetServiceServer) DeleteDatabasePreset(context.Context, *DeleteDatabasePresetRequest) (*DeleteDatabasePresetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteDatabasePreset not implemented")
 }
-func (UnimplementedDatabasePresetAPIServer) mustEmbedUnimplementedDatabasePresetAPIServer() {}
-func (UnimplementedDatabasePresetAPIServer) testEmbeddedByValue()                           {}
+func (UnimplementedDatabasePresetServiceServer) CloneDatabasePreset(context.Context, *CloneDatabasePresetRequest) (*CloneDatabasePresetResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CloneDatabasePreset not implemented")
+}
+func (UnimplementedDatabasePresetServiceServer) mustEmbedUnimplementedDatabasePresetServiceServer() {}
+func (UnimplementedDatabasePresetServiceServer) testEmbeddedByValue()                               {}
 
-// UnsafeDatabasePresetAPIServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to DatabasePresetAPIServer will
+// UnsafeDatabasePresetServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to DatabasePresetServiceServer will
 // result in compilation errors.
-type UnsafeDatabasePresetAPIServer interface {
-	mustEmbedUnimplementedDatabasePresetAPIServer()
+type UnsafeDatabasePresetServiceServer interface {
+	mustEmbedUnimplementedDatabasePresetServiceServer()
 }
 
-func RegisterDatabasePresetAPIServer(s grpc.ServiceRegistrar, srv DatabasePresetAPIServer) {
-	// If the following call panics, it indicates UnimplementedDatabasePresetAPIServer was
+func RegisterDatabasePresetServiceServer(s grpc.ServiceRegistrar, srv DatabasePresetServiceServer) {
+	// If the following call panics, it indicates UnimplementedDatabasePresetServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&DatabasePresetAPI_ServiceDesc, srv)
+	s.RegisterService(&DatabasePresetService_ServiceDesc, srv)
 }
 
-func _DatabasePresetAPI_CreateDatabasePreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DatabasePresetService_CreateDatabasePreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateDatabasePresetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DatabasePresetAPIServer).CreateDatabasePreset(ctx, in)
+		return srv.(DatabasePresetServiceServer).CreateDatabasePreset(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DatabasePresetAPI_CreateDatabasePreset_FullMethodName,
+		FullMethod: DatabasePresetService_CreateDatabasePreset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DatabasePresetAPIServer).CreateDatabasePreset(ctx, req.(*CreateDatabasePresetRequest))
+		return srv.(DatabasePresetServiceServer).CreateDatabasePreset(ctx, req.(*CreateDatabasePresetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DatabasePresetAPI_GetDatabasePreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DatabasePresetService_GetDatabasePreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetDatabasePresetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DatabasePresetAPIServer).GetDatabasePreset(ctx, in)
+		return srv.(DatabasePresetServiceServer).GetDatabasePreset(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DatabasePresetAPI_GetDatabasePreset_FullMethodName,
+		FullMethod: DatabasePresetService_GetDatabasePreset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DatabasePresetAPIServer).GetDatabasePreset(ctx, req.(*GetDatabasePresetRequest))
+		return srv.(DatabasePresetServiceServer).GetDatabasePreset(ctx, req.(*GetDatabasePresetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DatabasePresetAPI_ListDatabasePresets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DatabasePresetService_ListDatabasePresets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListDatabasePresetsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DatabasePresetAPIServer).ListDatabasePresets(ctx, in)
+		return srv.(DatabasePresetServiceServer).ListDatabasePresets(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DatabasePresetAPI_ListDatabasePresets_FullMethodName,
+		FullMethod: DatabasePresetService_ListDatabasePresets_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DatabasePresetAPIServer).ListDatabasePresets(ctx, req.(*ListDatabasePresetsRequest))
+		return srv.(DatabasePresetServiceServer).ListDatabasePresets(ctx, req.(*ListDatabasePresetsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DatabasePresetAPI_UpdateDatabasePreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DatabasePresetService_UpdateDatabasePreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateDatabasePresetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DatabasePresetAPIServer).UpdateDatabasePreset(ctx, in)
+		return srv.(DatabasePresetServiceServer).UpdateDatabasePreset(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DatabasePresetAPI_UpdateDatabasePreset_FullMethodName,
+		FullMethod: DatabasePresetService_UpdateDatabasePreset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DatabasePresetAPIServer).UpdateDatabasePreset(ctx, req.(*UpdateDatabasePresetRequest))
+		return srv.(DatabasePresetServiceServer).UpdateDatabasePreset(ctx, req.(*UpdateDatabasePresetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DatabasePresetAPI_DeleteDatabasePreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DatabasePresetService_DeleteDatabasePreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteDatabasePresetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DatabasePresetAPIServer).DeleteDatabasePreset(ctx, in)
+		return srv.(DatabasePresetServiceServer).DeleteDatabasePreset(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DatabasePresetAPI_DeleteDatabasePreset_FullMethodName,
+		FullMethod: DatabasePresetService_DeleteDatabasePreset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DatabasePresetAPIServer).DeleteDatabasePreset(ctx, req.(*DeleteDatabasePresetRequest))
+		return srv.(DatabasePresetServiceServer).DeleteDatabasePreset(ctx, req.(*DeleteDatabasePresetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// DatabasePresetAPI_ServiceDesc is the grpc.ServiceDesc for DatabasePresetAPI service.
+func _DatabasePresetService_CloneDatabasePreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CloneDatabasePresetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DatabasePresetServiceServer).CloneDatabasePreset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DatabasePresetService_CloneDatabasePreset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DatabasePresetServiceServer).CloneDatabasePreset(ctx, req.(*CloneDatabasePresetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// DatabasePresetService_ServiceDesc is the grpc.ServiceDesc for DatabasePresetService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var DatabasePresetAPI_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "cloud.v1.api.DatabasePresetAPI",
-	HandlerType: (*DatabasePresetAPIServer)(nil),
+var DatabasePresetService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "cloud.v1.api.DatabasePresetService",
+	HandlerType: (*DatabasePresetServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "CreateDatabasePreset",
-			Handler:    _DatabasePresetAPI_CreateDatabasePreset_Handler,
+			Handler:    _DatabasePresetService_CreateDatabasePreset_Handler,
 		},
 		{
 			MethodName: "GetDatabasePreset",
-			Handler:    _DatabasePresetAPI_GetDatabasePreset_Handler,
+			Handler:    _DatabasePresetService_GetDatabasePreset_Handler,
 		},
 		{
 			MethodName: "ListDatabasePresets",
-			Handler:    _DatabasePresetAPI_ListDatabasePresets_Handler,
+			Handler:    _DatabasePresetService_ListDatabasePresets_Handler,
 		},
 		{
 			MethodName: "UpdateDatabasePreset",
-			Handler:    _DatabasePresetAPI_UpdateDatabasePreset_Handler,
+			Handler:    _DatabasePresetService_UpdateDatabasePreset_Handler,
 		},
 		{
 			MethodName: "DeleteDatabasePreset",
-			Handler:    _DatabasePresetAPI_DeleteDatabasePreset_Handler,
+			Handler:    _DatabasePresetService_DeleteDatabasePreset_Handler,
+		},
+		{
+			MethodName: "CloneDatabasePreset",
+			Handler:    _DatabasePresetService_CloneDatabasePreset_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -277,253 +323,293 @@ var DatabasePresetAPI_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	WorkloadPresetAPI_CreateWorkloadPreset_FullMethodName = "/cloud.v1.api.WorkloadPresetAPI/CreateWorkloadPreset"
-	WorkloadPresetAPI_GetWorkloadPreset_FullMethodName    = "/cloud.v1.api.WorkloadPresetAPI/GetWorkloadPreset"
-	WorkloadPresetAPI_ListWorkloadPresets_FullMethodName  = "/cloud.v1.api.WorkloadPresetAPI/ListWorkloadPresets"
-	WorkloadPresetAPI_UpdateWorkloadPreset_FullMethodName = "/cloud.v1.api.WorkloadPresetAPI/UpdateWorkloadPreset"
-	WorkloadPresetAPI_DeleteWorkloadPreset_FullMethodName = "/cloud.v1.api.WorkloadPresetAPI/DeleteWorkloadPreset"
+	WorkloadPresetService_CreateWorkloadPreset_FullMethodName = "/cloud.v1.api.WorkloadPresetService/CreateWorkloadPreset"
+	WorkloadPresetService_GetWorkloadPreset_FullMethodName    = "/cloud.v1.api.WorkloadPresetService/GetWorkloadPreset"
+	WorkloadPresetService_ListWorkloadPresets_FullMethodName  = "/cloud.v1.api.WorkloadPresetService/ListWorkloadPresets"
+	WorkloadPresetService_UpdateWorkloadPreset_FullMethodName = "/cloud.v1.api.WorkloadPresetService/UpdateWorkloadPreset"
+	WorkloadPresetService_DeleteWorkloadPreset_FullMethodName = "/cloud.v1.api.WorkloadPresetService/DeleteWorkloadPreset"
+	WorkloadPresetService_CloneWorkloadPreset_FullMethodName  = "/cloud.v1.api.WorkloadPresetService/CloneWorkloadPreset"
 )
 
-// WorkloadPresetAPIClient is the client API for WorkloadPresetAPI service.
+// WorkloadPresetServiceClient is the client API for WorkloadPresetService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type WorkloadPresetAPIClient interface {
+type WorkloadPresetServiceClient interface {
 	CreateWorkloadPreset(ctx context.Context, in *CreateWorkloadPresetRequest, opts ...grpc.CallOption) (*CreateWorkloadPresetResponse, error)
 	GetWorkloadPreset(ctx context.Context, in *GetWorkloadPresetRequest, opts ...grpc.CallOption) (*GetWorkloadPresetResponse, error)
 	ListWorkloadPresets(ctx context.Context, in *ListWorkloadPresetsRequest, opts ...grpc.CallOption) (*ListWorkloadPresetsResponse, error)
+	// System presets (is_system) are read-only and rejected — clone instead.
 	UpdateWorkloadPreset(ctx context.Context, in *UpdateWorkloadPresetRequest, opts ...grpc.CallOption) (*UpdateWorkloadPresetResponse, error)
 	DeleteWorkloadPreset(ctx context.Context, in *DeleteWorkloadPresetRequest, opts ...grpc.CallOption) (*DeleteWorkloadPresetResponse, error)
+	CloneWorkloadPreset(ctx context.Context, in *CloneWorkloadPresetRequest, opts ...grpc.CallOption) (*CloneWorkloadPresetResponse, error)
 }
 
-type workloadPresetAPIClient struct {
+type workloadPresetServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewWorkloadPresetAPIClient(cc grpc.ClientConnInterface) WorkloadPresetAPIClient {
-	return &workloadPresetAPIClient{cc}
+func NewWorkloadPresetServiceClient(cc grpc.ClientConnInterface) WorkloadPresetServiceClient {
+	return &workloadPresetServiceClient{cc}
 }
 
-func (c *workloadPresetAPIClient) CreateWorkloadPreset(ctx context.Context, in *CreateWorkloadPresetRequest, opts ...grpc.CallOption) (*CreateWorkloadPresetResponse, error) {
+func (c *workloadPresetServiceClient) CreateWorkloadPreset(ctx context.Context, in *CreateWorkloadPresetRequest, opts ...grpc.CallOption) (*CreateWorkloadPresetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateWorkloadPresetResponse)
-	err := c.cc.Invoke(ctx, WorkloadPresetAPI_CreateWorkloadPreset_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, WorkloadPresetService_CreateWorkloadPreset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *workloadPresetAPIClient) GetWorkloadPreset(ctx context.Context, in *GetWorkloadPresetRequest, opts ...grpc.CallOption) (*GetWorkloadPresetResponse, error) {
+func (c *workloadPresetServiceClient) GetWorkloadPreset(ctx context.Context, in *GetWorkloadPresetRequest, opts ...grpc.CallOption) (*GetWorkloadPresetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetWorkloadPresetResponse)
-	err := c.cc.Invoke(ctx, WorkloadPresetAPI_GetWorkloadPreset_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, WorkloadPresetService_GetWorkloadPreset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *workloadPresetAPIClient) ListWorkloadPresets(ctx context.Context, in *ListWorkloadPresetsRequest, opts ...grpc.CallOption) (*ListWorkloadPresetsResponse, error) {
+func (c *workloadPresetServiceClient) ListWorkloadPresets(ctx context.Context, in *ListWorkloadPresetsRequest, opts ...grpc.CallOption) (*ListWorkloadPresetsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListWorkloadPresetsResponse)
-	err := c.cc.Invoke(ctx, WorkloadPresetAPI_ListWorkloadPresets_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, WorkloadPresetService_ListWorkloadPresets_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *workloadPresetAPIClient) UpdateWorkloadPreset(ctx context.Context, in *UpdateWorkloadPresetRequest, opts ...grpc.CallOption) (*UpdateWorkloadPresetResponse, error) {
+func (c *workloadPresetServiceClient) UpdateWorkloadPreset(ctx context.Context, in *UpdateWorkloadPresetRequest, opts ...grpc.CallOption) (*UpdateWorkloadPresetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateWorkloadPresetResponse)
-	err := c.cc.Invoke(ctx, WorkloadPresetAPI_UpdateWorkloadPreset_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, WorkloadPresetService_UpdateWorkloadPreset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *workloadPresetAPIClient) DeleteWorkloadPreset(ctx context.Context, in *DeleteWorkloadPresetRequest, opts ...grpc.CallOption) (*DeleteWorkloadPresetResponse, error) {
+func (c *workloadPresetServiceClient) DeleteWorkloadPreset(ctx context.Context, in *DeleteWorkloadPresetRequest, opts ...grpc.CallOption) (*DeleteWorkloadPresetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteWorkloadPresetResponse)
-	err := c.cc.Invoke(ctx, WorkloadPresetAPI_DeleteWorkloadPreset_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, WorkloadPresetService_DeleteWorkloadPreset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// WorkloadPresetAPIServer is the server API for WorkloadPresetAPI service.
-// All implementations must embed UnimplementedWorkloadPresetAPIServer
+func (c *workloadPresetServiceClient) CloneWorkloadPreset(ctx context.Context, in *CloneWorkloadPresetRequest, opts ...grpc.CallOption) (*CloneWorkloadPresetResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CloneWorkloadPresetResponse)
+	err := c.cc.Invoke(ctx, WorkloadPresetService_CloneWorkloadPreset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// WorkloadPresetServiceServer is the server API for WorkloadPresetService service.
+// All implementations must embed UnimplementedWorkloadPresetServiceServer
 // for forward compatibility.
-type WorkloadPresetAPIServer interface {
+type WorkloadPresetServiceServer interface {
 	CreateWorkloadPreset(context.Context, *CreateWorkloadPresetRequest) (*CreateWorkloadPresetResponse, error)
 	GetWorkloadPreset(context.Context, *GetWorkloadPresetRequest) (*GetWorkloadPresetResponse, error)
 	ListWorkloadPresets(context.Context, *ListWorkloadPresetsRequest) (*ListWorkloadPresetsResponse, error)
+	// System presets (is_system) are read-only and rejected — clone instead.
 	UpdateWorkloadPreset(context.Context, *UpdateWorkloadPresetRequest) (*UpdateWorkloadPresetResponse, error)
 	DeleteWorkloadPreset(context.Context, *DeleteWorkloadPresetRequest) (*DeleteWorkloadPresetResponse, error)
-	mustEmbedUnimplementedWorkloadPresetAPIServer()
+	CloneWorkloadPreset(context.Context, *CloneWorkloadPresetRequest) (*CloneWorkloadPresetResponse, error)
+	mustEmbedUnimplementedWorkloadPresetServiceServer()
 }
 
-// UnimplementedWorkloadPresetAPIServer must be embedded to have
+// UnimplementedWorkloadPresetServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedWorkloadPresetAPIServer struct{}
+type UnimplementedWorkloadPresetServiceServer struct{}
 
-func (UnimplementedWorkloadPresetAPIServer) CreateWorkloadPreset(context.Context, *CreateWorkloadPresetRequest) (*CreateWorkloadPresetResponse, error) {
+func (UnimplementedWorkloadPresetServiceServer) CreateWorkloadPreset(context.Context, *CreateWorkloadPresetRequest) (*CreateWorkloadPresetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateWorkloadPreset not implemented")
 }
-func (UnimplementedWorkloadPresetAPIServer) GetWorkloadPreset(context.Context, *GetWorkloadPresetRequest) (*GetWorkloadPresetResponse, error) {
+func (UnimplementedWorkloadPresetServiceServer) GetWorkloadPreset(context.Context, *GetWorkloadPresetRequest) (*GetWorkloadPresetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetWorkloadPreset not implemented")
 }
-func (UnimplementedWorkloadPresetAPIServer) ListWorkloadPresets(context.Context, *ListWorkloadPresetsRequest) (*ListWorkloadPresetsResponse, error) {
+func (UnimplementedWorkloadPresetServiceServer) ListWorkloadPresets(context.Context, *ListWorkloadPresetsRequest) (*ListWorkloadPresetsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListWorkloadPresets not implemented")
 }
-func (UnimplementedWorkloadPresetAPIServer) UpdateWorkloadPreset(context.Context, *UpdateWorkloadPresetRequest) (*UpdateWorkloadPresetResponse, error) {
+func (UnimplementedWorkloadPresetServiceServer) UpdateWorkloadPreset(context.Context, *UpdateWorkloadPresetRequest) (*UpdateWorkloadPresetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateWorkloadPreset not implemented")
 }
-func (UnimplementedWorkloadPresetAPIServer) DeleteWorkloadPreset(context.Context, *DeleteWorkloadPresetRequest) (*DeleteWorkloadPresetResponse, error) {
+func (UnimplementedWorkloadPresetServiceServer) DeleteWorkloadPreset(context.Context, *DeleteWorkloadPresetRequest) (*DeleteWorkloadPresetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteWorkloadPreset not implemented")
 }
-func (UnimplementedWorkloadPresetAPIServer) mustEmbedUnimplementedWorkloadPresetAPIServer() {}
-func (UnimplementedWorkloadPresetAPIServer) testEmbeddedByValue()                           {}
+func (UnimplementedWorkloadPresetServiceServer) CloneWorkloadPreset(context.Context, *CloneWorkloadPresetRequest) (*CloneWorkloadPresetResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CloneWorkloadPreset not implemented")
+}
+func (UnimplementedWorkloadPresetServiceServer) mustEmbedUnimplementedWorkloadPresetServiceServer() {}
+func (UnimplementedWorkloadPresetServiceServer) testEmbeddedByValue()                               {}
 
-// UnsafeWorkloadPresetAPIServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to WorkloadPresetAPIServer will
+// UnsafeWorkloadPresetServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to WorkloadPresetServiceServer will
 // result in compilation errors.
-type UnsafeWorkloadPresetAPIServer interface {
-	mustEmbedUnimplementedWorkloadPresetAPIServer()
+type UnsafeWorkloadPresetServiceServer interface {
+	mustEmbedUnimplementedWorkloadPresetServiceServer()
 }
 
-func RegisterWorkloadPresetAPIServer(s grpc.ServiceRegistrar, srv WorkloadPresetAPIServer) {
-	// If the following call panics, it indicates UnimplementedWorkloadPresetAPIServer was
+func RegisterWorkloadPresetServiceServer(s grpc.ServiceRegistrar, srv WorkloadPresetServiceServer) {
+	// If the following call panics, it indicates UnimplementedWorkloadPresetServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&WorkloadPresetAPI_ServiceDesc, srv)
+	s.RegisterService(&WorkloadPresetService_ServiceDesc, srv)
 }
 
-func _WorkloadPresetAPI_CreateWorkloadPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _WorkloadPresetService_CreateWorkloadPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateWorkloadPresetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(WorkloadPresetAPIServer).CreateWorkloadPreset(ctx, in)
+		return srv.(WorkloadPresetServiceServer).CreateWorkloadPreset(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: WorkloadPresetAPI_CreateWorkloadPreset_FullMethodName,
+		FullMethod: WorkloadPresetService_CreateWorkloadPreset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkloadPresetAPIServer).CreateWorkloadPreset(ctx, req.(*CreateWorkloadPresetRequest))
+		return srv.(WorkloadPresetServiceServer).CreateWorkloadPreset(ctx, req.(*CreateWorkloadPresetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _WorkloadPresetAPI_GetWorkloadPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _WorkloadPresetService_GetWorkloadPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetWorkloadPresetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(WorkloadPresetAPIServer).GetWorkloadPreset(ctx, in)
+		return srv.(WorkloadPresetServiceServer).GetWorkloadPreset(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: WorkloadPresetAPI_GetWorkloadPreset_FullMethodName,
+		FullMethod: WorkloadPresetService_GetWorkloadPreset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkloadPresetAPIServer).GetWorkloadPreset(ctx, req.(*GetWorkloadPresetRequest))
+		return srv.(WorkloadPresetServiceServer).GetWorkloadPreset(ctx, req.(*GetWorkloadPresetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _WorkloadPresetAPI_ListWorkloadPresets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _WorkloadPresetService_ListWorkloadPresets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListWorkloadPresetsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(WorkloadPresetAPIServer).ListWorkloadPresets(ctx, in)
+		return srv.(WorkloadPresetServiceServer).ListWorkloadPresets(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: WorkloadPresetAPI_ListWorkloadPresets_FullMethodName,
+		FullMethod: WorkloadPresetService_ListWorkloadPresets_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkloadPresetAPIServer).ListWorkloadPresets(ctx, req.(*ListWorkloadPresetsRequest))
+		return srv.(WorkloadPresetServiceServer).ListWorkloadPresets(ctx, req.(*ListWorkloadPresetsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _WorkloadPresetAPI_UpdateWorkloadPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _WorkloadPresetService_UpdateWorkloadPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateWorkloadPresetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(WorkloadPresetAPIServer).UpdateWorkloadPreset(ctx, in)
+		return srv.(WorkloadPresetServiceServer).UpdateWorkloadPreset(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: WorkloadPresetAPI_UpdateWorkloadPreset_FullMethodName,
+		FullMethod: WorkloadPresetService_UpdateWorkloadPreset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkloadPresetAPIServer).UpdateWorkloadPreset(ctx, req.(*UpdateWorkloadPresetRequest))
+		return srv.(WorkloadPresetServiceServer).UpdateWorkloadPreset(ctx, req.(*UpdateWorkloadPresetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _WorkloadPresetAPI_DeleteWorkloadPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _WorkloadPresetService_DeleteWorkloadPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteWorkloadPresetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(WorkloadPresetAPIServer).DeleteWorkloadPreset(ctx, in)
+		return srv.(WorkloadPresetServiceServer).DeleteWorkloadPreset(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: WorkloadPresetAPI_DeleteWorkloadPreset_FullMethodName,
+		FullMethod: WorkloadPresetService_DeleteWorkloadPreset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkloadPresetAPIServer).DeleteWorkloadPreset(ctx, req.(*DeleteWorkloadPresetRequest))
+		return srv.(WorkloadPresetServiceServer).DeleteWorkloadPreset(ctx, req.(*DeleteWorkloadPresetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// WorkloadPresetAPI_ServiceDesc is the grpc.ServiceDesc for WorkloadPresetAPI service.
+func _WorkloadPresetService_CloneWorkloadPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CloneWorkloadPresetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkloadPresetServiceServer).CloneWorkloadPreset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkloadPresetService_CloneWorkloadPreset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkloadPresetServiceServer).CloneWorkloadPreset(ctx, req.(*CloneWorkloadPresetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// WorkloadPresetService_ServiceDesc is the grpc.ServiceDesc for WorkloadPresetService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var WorkloadPresetAPI_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "cloud.v1.api.WorkloadPresetAPI",
-	HandlerType: (*WorkloadPresetAPIServer)(nil),
+var WorkloadPresetService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "cloud.v1.api.WorkloadPresetService",
+	HandlerType: (*WorkloadPresetServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "CreateWorkloadPreset",
-			Handler:    _WorkloadPresetAPI_CreateWorkloadPreset_Handler,
+			Handler:    _WorkloadPresetService_CreateWorkloadPreset_Handler,
 		},
 		{
 			MethodName: "GetWorkloadPreset",
-			Handler:    _WorkloadPresetAPI_GetWorkloadPreset_Handler,
+			Handler:    _WorkloadPresetService_GetWorkloadPreset_Handler,
 		},
 		{
 			MethodName: "ListWorkloadPresets",
-			Handler:    _WorkloadPresetAPI_ListWorkloadPresets_Handler,
+			Handler:    _WorkloadPresetService_ListWorkloadPresets_Handler,
 		},
 		{
 			MethodName: "UpdateWorkloadPreset",
-			Handler:    _WorkloadPresetAPI_UpdateWorkloadPreset_Handler,
+			Handler:    _WorkloadPresetService_UpdateWorkloadPreset_Handler,
 		},
 		{
 			MethodName: "DeleteWorkloadPreset",
-			Handler:    _WorkloadPresetAPI_DeleteWorkloadPreset_Handler,
+			Handler:    _WorkloadPresetService_DeleteWorkloadPreset_Handler,
+		},
+		{
+			MethodName: "CloneWorkloadPreset",
+			Handler:    _WorkloadPresetService_CloneWorkloadPreset_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -531,253 +617,293 @@ var WorkloadPresetAPI_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	TestPresetAPI_CreateTestPreset_FullMethodName = "/cloud.v1.api.TestPresetAPI/CreateTestPreset"
-	TestPresetAPI_GetTestPreset_FullMethodName    = "/cloud.v1.api.TestPresetAPI/GetTestPreset"
-	TestPresetAPI_ListTestPresets_FullMethodName  = "/cloud.v1.api.TestPresetAPI/ListTestPresets"
-	TestPresetAPI_UpdateTestPreset_FullMethodName = "/cloud.v1.api.TestPresetAPI/UpdateTestPreset"
-	TestPresetAPI_DeleteTestPreset_FullMethodName = "/cloud.v1.api.TestPresetAPI/DeleteTestPreset"
+	TestPresetService_CreateTestPreset_FullMethodName = "/cloud.v1.api.TestPresetService/CreateTestPreset"
+	TestPresetService_GetTestPreset_FullMethodName    = "/cloud.v1.api.TestPresetService/GetTestPreset"
+	TestPresetService_ListTestPresets_FullMethodName  = "/cloud.v1.api.TestPresetService/ListTestPresets"
+	TestPresetService_UpdateTestPreset_FullMethodName = "/cloud.v1.api.TestPresetService/UpdateTestPreset"
+	TestPresetService_DeleteTestPreset_FullMethodName = "/cloud.v1.api.TestPresetService/DeleteTestPreset"
+	TestPresetService_CloneTestPreset_FullMethodName  = "/cloud.v1.api.TestPresetService/CloneTestPreset"
 )
 
-// TestPresetAPIClient is the client API for TestPresetAPI service.
+// TestPresetServiceClient is the client API for TestPresetService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type TestPresetAPIClient interface {
+type TestPresetServiceClient interface {
 	CreateTestPreset(ctx context.Context, in *CreateTestPresetRequest, opts ...grpc.CallOption) (*CreateTestPresetResponse, error)
 	GetTestPreset(ctx context.Context, in *GetTestPresetRequest, opts ...grpc.CallOption) (*GetTestPresetResponse, error)
 	ListTestPresets(ctx context.Context, in *ListTestPresetsRequest, opts ...grpc.CallOption) (*ListTestPresetsResponse, error)
+	// System presets (is_system) are read-only and rejected — clone instead.
 	UpdateTestPreset(ctx context.Context, in *UpdateTestPresetRequest, opts ...grpc.CallOption) (*UpdateTestPresetResponse, error)
 	DeleteTestPreset(ctx context.Context, in *DeleteTestPresetRequest, opts ...grpc.CallOption) (*DeleteTestPresetResponse, error)
+	CloneTestPreset(ctx context.Context, in *CloneTestPresetRequest, opts ...grpc.CallOption) (*CloneTestPresetResponse, error)
 }
 
-type testPresetAPIClient struct {
+type testPresetServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewTestPresetAPIClient(cc grpc.ClientConnInterface) TestPresetAPIClient {
-	return &testPresetAPIClient{cc}
+func NewTestPresetServiceClient(cc grpc.ClientConnInterface) TestPresetServiceClient {
+	return &testPresetServiceClient{cc}
 }
 
-func (c *testPresetAPIClient) CreateTestPreset(ctx context.Context, in *CreateTestPresetRequest, opts ...grpc.CallOption) (*CreateTestPresetResponse, error) {
+func (c *testPresetServiceClient) CreateTestPreset(ctx context.Context, in *CreateTestPresetRequest, opts ...grpc.CallOption) (*CreateTestPresetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateTestPresetResponse)
-	err := c.cc.Invoke(ctx, TestPresetAPI_CreateTestPreset_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, TestPresetService_CreateTestPreset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *testPresetAPIClient) GetTestPreset(ctx context.Context, in *GetTestPresetRequest, opts ...grpc.CallOption) (*GetTestPresetResponse, error) {
+func (c *testPresetServiceClient) GetTestPreset(ctx context.Context, in *GetTestPresetRequest, opts ...grpc.CallOption) (*GetTestPresetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetTestPresetResponse)
-	err := c.cc.Invoke(ctx, TestPresetAPI_GetTestPreset_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, TestPresetService_GetTestPreset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *testPresetAPIClient) ListTestPresets(ctx context.Context, in *ListTestPresetsRequest, opts ...grpc.CallOption) (*ListTestPresetsResponse, error) {
+func (c *testPresetServiceClient) ListTestPresets(ctx context.Context, in *ListTestPresetsRequest, opts ...grpc.CallOption) (*ListTestPresetsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListTestPresetsResponse)
-	err := c.cc.Invoke(ctx, TestPresetAPI_ListTestPresets_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, TestPresetService_ListTestPresets_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *testPresetAPIClient) UpdateTestPreset(ctx context.Context, in *UpdateTestPresetRequest, opts ...grpc.CallOption) (*UpdateTestPresetResponse, error) {
+func (c *testPresetServiceClient) UpdateTestPreset(ctx context.Context, in *UpdateTestPresetRequest, opts ...grpc.CallOption) (*UpdateTestPresetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateTestPresetResponse)
-	err := c.cc.Invoke(ctx, TestPresetAPI_UpdateTestPreset_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, TestPresetService_UpdateTestPreset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *testPresetAPIClient) DeleteTestPreset(ctx context.Context, in *DeleteTestPresetRequest, opts ...grpc.CallOption) (*DeleteTestPresetResponse, error) {
+func (c *testPresetServiceClient) DeleteTestPreset(ctx context.Context, in *DeleteTestPresetRequest, opts ...grpc.CallOption) (*DeleteTestPresetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteTestPresetResponse)
-	err := c.cc.Invoke(ctx, TestPresetAPI_DeleteTestPreset_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, TestPresetService_DeleteTestPreset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// TestPresetAPIServer is the server API for TestPresetAPI service.
-// All implementations must embed UnimplementedTestPresetAPIServer
+func (c *testPresetServiceClient) CloneTestPreset(ctx context.Context, in *CloneTestPresetRequest, opts ...grpc.CallOption) (*CloneTestPresetResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CloneTestPresetResponse)
+	err := c.cc.Invoke(ctx, TestPresetService_CloneTestPreset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// TestPresetServiceServer is the server API for TestPresetService service.
+// All implementations must embed UnimplementedTestPresetServiceServer
 // for forward compatibility.
-type TestPresetAPIServer interface {
+type TestPresetServiceServer interface {
 	CreateTestPreset(context.Context, *CreateTestPresetRequest) (*CreateTestPresetResponse, error)
 	GetTestPreset(context.Context, *GetTestPresetRequest) (*GetTestPresetResponse, error)
 	ListTestPresets(context.Context, *ListTestPresetsRequest) (*ListTestPresetsResponse, error)
+	// System presets (is_system) are read-only and rejected — clone instead.
 	UpdateTestPreset(context.Context, *UpdateTestPresetRequest) (*UpdateTestPresetResponse, error)
 	DeleteTestPreset(context.Context, *DeleteTestPresetRequest) (*DeleteTestPresetResponse, error)
-	mustEmbedUnimplementedTestPresetAPIServer()
+	CloneTestPreset(context.Context, *CloneTestPresetRequest) (*CloneTestPresetResponse, error)
+	mustEmbedUnimplementedTestPresetServiceServer()
 }
 
-// UnimplementedTestPresetAPIServer must be embedded to have
+// UnimplementedTestPresetServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedTestPresetAPIServer struct{}
+type UnimplementedTestPresetServiceServer struct{}
 
-func (UnimplementedTestPresetAPIServer) CreateTestPreset(context.Context, *CreateTestPresetRequest) (*CreateTestPresetResponse, error) {
+func (UnimplementedTestPresetServiceServer) CreateTestPreset(context.Context, *CreateTestPresetRequest) (*CreateTestPresetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateTestPreset not implemented")
 }
-func (UnimplementedTestPresetAPIServer) GetTestPreset(context.Context, *GetTestPresetRequest) (*GetTestPresetResponse, error) {
+func (UnimplementedTestPresetServiceServer) GetTestPreset(context.Context, *GetTestPresetRequest) (*GetTestPresetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetTestPreset not implemented")
 }
-func (UnimplementedTestPresetAPIServer) ListTestPresets(context.Context, *ListTestPresetsRequest) (*ListTestPresetsResponse, error) {
+func (UnimplementedTestPresetServiceServer) ListTestPresets(context.Context, *ListTestPresetsRequest) (*ListTestPresetsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListTestPresets not implemented")
 }
-func (UnimplementedTestPresetAPIServer) UpdateTestPreset(context.Context, *UpdateTestPresetRequest) (*UpdateTestPresetResponse, error) {
+func (UnimplementedTestPresetServiceServer) UpdateTestPreset(context.Context, *UpdateTestPresetRequest) (*UpdateTestPresetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateTestPreset not implemented")
 }
-func (UnimplementedTestPresetAPIServer) DeleteTestPreset(context.Context, *DeleteTestPresetRequest) (*DeleteTestPresetResponse, error) {
+func (UnimplementedTestPresetServiceServer) DeleteTestPreset(context.Context, *DeleteTestPresetRequest) (*DeleteTestPresetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteTestPreset not implemented")
 }
-func (UnimplementedTestPresetAPIServer) mustEmbedUnimplementedTestPresetAPIServer() {}
-func (UnimplementedTestPresetAPIServer) testEmbeddedByValue()                       {}
+func (UnimplementedTestPresetServiceServer) CloneTestPreset(context.Context, *CloneTestPresetRequest) (*CloneTestPresetResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CloneTestPreset not implemented")
+}
+func (UnimplementedTestPresetServiceServer) mustEmbedUnimplementedTestPresetServiceServer() {}
+func (UnimplementedTestPresetServiceServer) testEmbeddedByValue()                           {}
 
-// UnsafeTestPresetAPIServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to TestPresetAPIServer will
+// UnsafeTestPresetServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to TestPresetServiceServer will
 // result in compilation errors.
-type UnsafeTestPresetAPIServer interface {
-	mustEmbedUnimplementedTestPresetAPIServer()
+type UnsafeTestPresetServiceServer interface {
+	mustEmbedUnimplementedTestPresetServiceServer()
 }
 
-func RegisterTestPresetAPIServer(s grpc.ServiceRegistrar, srv TestPresetAPIServer) {
-	// If the following call panics, it indicates UnimplementedTestPresetAPIServer was
+func RegisterTestPresetServiceServer(s grpc.ServiceRegistrar, srv TestPresetServiceServer) {
+	// If the following call panics, it indicates UnimplementedTestPresetServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&TestPresetAPI_ServiceDesc, srv)
+	s.RegisterService(&TestPresetService_ServiceDesc, srv)
 }
 
-func _TestPresetAPI_CreateTestPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TestPresetService_CreateTestPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateTestPresetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TestPresetAPIServer).CreateTestPreset(ctx, in)
+		return srv.(TestPresetServiceServer).CreateTestPreset(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TestPresetAPI_CreateTestPreset_FullMethodName,
+		FullMethod: TestPresetService_CreateTestPreset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TestPresetAPIServer).CreateTestPreset(ctx, req.(*CreateTestPresetRequest))
+		return srv.(TestPresetServiceServer).CreateTestPreset(ctx, req.(*CreateTestPresetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TestPresetAPI_GetTestPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TestPresetService_GetTestPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetTestPresetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TestPresetAPIServer).GetTestPreset(ctx, in)
+		return srv.(TestPresetServiceServer).GetTestPreset(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TestPresetAPI_GetTestPreset_FullMethodName,
+		FullMethod: TestPresetService_GetTestPreset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TestPresetAPIServer).GetTestPreset(ctx, req.(*GetTestPresetRequest))
+		return srv.(TestPresetServiceServer).GetTestPreset(ctx, req.(*GetTestPresetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TestPresetAPI_ListTestPresets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TestPresetService_ListTestPresets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListTestPresetsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TestPresetAPIServer).ListTestPresets(ctx, in)
+		return srv.(TestPresetServiceServer).ListTestPresets(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TestPresetAPI_ListTestPresets_FullMethodName,
+		FullMethod: TestPresetService_ListTestPresets_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TestPresetAPIServer).ListTestPresets(ctx, req.(*ListTestPresetsRequest))
+		return srv.(TestPresetServiceServer).ListTestPresets(ctx, req.(*ListTestPresetsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TestPresetAPI_UpdateTestPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TestPresetService_UpdateTestPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateTestPresetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TestPresetAPIServer).UpdateTestPreset(ctx, in)
+		return srv.(TestPresetServiceServer).UpdateTestPreset(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TestPresetAPI_UpdateTestPreset_FullMethodName,
+		FullMethod: TestPresetService_UpdateTestPreset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TestPresetAPIServer).UpdateTestPreset(ctx, req.(*UpdateTestPresetRequest))
+		return srv.(TestPresetServiceServer).UpdateTestPreset(ctx, req.(*UpdateTestPresetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TestPresetAPI_DeleteTestPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TestPresetService_DeleteTestPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteTestPresetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TestPresetAPIServer).DeleteTestPreset(ctx, in)
+		return srv.(TestPresetServiceServer).DeleteTestPreset(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TestPresetAPI_DeleteTestPreset_FullMethodName,
+		FullMethod: TestPresetService_DeleteTestPreset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TestPresetAPIServer).DeleteTestPreset(ctx, req.(*DeleteTestPresetRequest))
+		return srv.(TestPresetServiceServer).DeleteTestPreset(ctx, req.(*DeleteTestPresetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// TestPresetAPI_ServiceDesc is the grpc.ServiceDesc for TestPresetAPI service.
+func _TestPresetService_CloneTestPreset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CloneTestPresetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TestPresetServiceServer).CloneTestPreset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TestPresetService_CloneTestPreset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TestPresetServiceServer).CloneTestPreset(ctx, req.(*CloneTestPresetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// TestPresetService_ServiceDesc is the grpc.ServiceDesc for TestPresetService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var TestPresetAPI_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "cloud.v1.api.TestPresetAPI",
-	HandlerType: (*TestPresetAPIServer)(nil),
+var TestPresetService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "cloud.v1.api.TestPresetService",
+	HandlerType: (*TestPresetServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "CreateTestPreset",
-			Handler:    _TestPresetAPI_CreateTestPreset_Handler,
+			Handler:    _TestPresetService_CreateTestPreset_Handler,
 		},
 		{
 			MethodName: "GetTestPreset",
-			Handler:    _TestPresetAPI_GetTestPreset_Handler,
+			Handler:    _TestPresetService_GetTestPreset_Handler,
 		},
 		{
 			MethodName: "ListTestPresets",
-			Handler:    _TestPresetAPI_ListTestPresets_Handler,
+			Handler:    _TestPresetService_ListTestPresets_Handler,
 		},
 		{
 			MethodName: "UpdateTestPreset",
-			Handler:    _TestPresetAPI_UpdateTestPreset_Handler,
+			Handler:    _TestPresetService_UpdateTestPreset_Handler,
 		},
 		{
 			MethodName: "DeleteTestPreset",
-			Handler:    _TestPresetAPI_DeleteTestPreset_Handler,
+			Handler:    _TestPresetService_DeleteTestPreset_Handler,
+		},
+		{
+			MethodName: "CloneTestPreset",
+			Handler:    _TestPresetService_CloneTestPreset_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

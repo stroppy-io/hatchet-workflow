@@ -19,13 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TestApi_TestWorkflow_FullMethodName            = "/cloud.v1.workflow.TestApi/TestWorkflow"
-	TestApi_InstallStroppyWorkflow_FullMethodName  = "/cloud.v1.workflow.TestApi/InstallStroppyWorkflow"
-	TestApi_InstallDatabaseWorkflow_FullMethodName = "/cloud.v1.workflow.TestApi/InstallDatabaseWorkflow"
-	TestApi_RunWorkloadWorkflow_FullMethodName     = "/cloud.v1.workflow.TestApi/RunWorkloadWorkflow"
+	TestService_TestWorkflow_FullMethodName            = "/cloud.v1.workflow.TestService/TestWorkflow"
+	TestService_InstallStroppyWorkflow_FullMethodName  = "/cloud.v1.workflow.TestService/InstallStroppyWorkflow"
+	TestService_InstallDatabaseWorkflow_FullMethodName = "/cloud.v1.workflow.TestService/InstallDatabaseWorkflow"
+	TestService_RunWorkloadWorkflow_FullMethodName     = "/cloud.v1.workflow.TestService/RunWorkloadWorkflow"
 )
 
-// TestApiClient is the client API for TestApi service.
+// TestServiceClient is the client API for TestService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
@@ -35,63 +35,63 @@ const (
 //
 // It composes child workflows; topology stays baked, only runtime info from the
 // deployment is carried forward.
-type TestApiClient interface {
+type TestServiceClient interface {
 	TestWorkflow(ctx context.Context, in *TestWorkflowRequest, opts ...grpc.CallOption) (*TestWorkflowResponse, error)
 	InstallStroppyWorkflow(ctx context.Context, in *InstallStroppyWorkflowRequest, opts ...grpc.CallOption) (*InstallStroppyWorkflowResponse, error)
 	InstallDatabaseWorkflow(ctx context.Context, in *InstallDatabaseWorkflowRequest, opts ...grpc.CallOption) (*InstallDatabaseWorkflowResponse, error)
 	RunWorkloadWorkflow(ctx context.Context, in *RunWorkloadWorkflowRequest, opts ...grpc.CallOption) (*RunWorkloadWorkflowResponse, error)
 }
 
-type testApiClient struct {
+type testServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewTestApiClient(cc grpc.ClientConnInterface) TestApiClient {
-	return &testApiClient{cc}
+func NewTestServiceClient(cc grpc.ClientConnInterface) TestServiceClient {
+	return &testServiceClient{cc}
 }
 
-func (c *testApiClient) TestWorkflow(ctx context.Context, in *TestWorkflowRequest, opts ...grpc.CallOption) (*TestWorkflowResponse, error) {
+func (c *testServiceClient) TestWorkflow(ctx context.Context, in *TestWorkflowRequest, opts ...grpc.CallOption) (*TestWorkflowResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TestWorkflowResponse)
-	err := c.cc.Invoke(ctx, TestApi_TestWorkflow_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, TestService_TestWorkflow_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *testApiClient) InstallStroppyWorkflow(ctx context.Context, in *InstallStroppyWorkflowRequest, opts ...grpc.CallOption) (*InstallStroppyWorkflowResponse, error) {
+func (c *testServiceClient) InstallStroppyWorkflow(ctx context.Context, in *InstallStroppyWorkflowRequest, opts ...grpc.CallOption) (*InstallStroppyWorkflowResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(InstallStroppyWorkflowResponse)
-	err := c.cc.Invoke(ctx, TestApi_InstallStroppyWorkflow_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, TestService_InstallStroppyWorkflow_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *testApiClient) InstallDatabaseWorkflow(ctx context.Context, in *InstallDatabaseWorkflowRequest, opts ...grpc.CallOption) (*InstallDatabaseWorkflowResponse, error) {
+func (c *testServiceClient) InstallDatabaseWorkflow(ctx context.Context, in *InstallDatabaseWorkflowRequest, opts ...grpc.CallOption) (*InstallDatabaseWorkflowResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(InstallDatabaseWorkflowResponse)
-	err := c.cc.Invoke(ctx, TestApi_InstallDatabaseWorkflow_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, TestService_InstallDatabaseWorkflow_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *testApiClient) RunWorkloadWorkflow(ctx context.Context, in *RunWorkloadWorkflowRequest, opts ...grpc.CallOption) (*RunWorkloadWorkflowResponse, error) {
+func (c *testServiceClient) RunWorkloadWorkflow(ctx context.Context, in *RunWorkloadWorkflowRequest, opts ...grpc.CallOption) (*RunWorkloadWorkflowResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RunWorkloadWorkflowResponse)
-	err := c.cc.Invoke(ctx, TestApi_RunWorkloadWorkflow_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, TestService_RunWorkloadWorkflow_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// TestApiServer is the server API for TestApi service.
-// All implementations must embed UnimplementedTestApiServer
+// TestServiceServer is the server API for TestService service.
+// All implementations must embed UnimplementedTestServiceServer
 // for forward compatibility.
 //
 // TestWorkflow orchestrates one full test cycle:
@@ -100,148 +100,148 @@ func (c *testApiClient) RunWorkloadWorkflow(ctx context.Context, in *RunWorkload
 //
 // It composes child workflows; topology stays baked, only runtime info from the
 // deployment is carried forward.
-type TestApiServer interface {
+type TestServiceServer interface {
 	TestWorkflow(context.Context, *TestWorkflowRequest) (*TestWorkflowResponse, error)
 	InstallStroppyWorkflow(context.Context, *InstallStroppyWorkflowRequest) (*InstallStroppyWorkflowResponse, error)
 	InstallDatabaseWorkflow(context.Context, *InstallDatabaseWorkflowRequest) (*InstallDatabaseWorkflowResponse, error)
 	RunWorkloadWorkflow(context.Context, *RunWorkloadWorkflowRequest) (*RunWorkloadWorkflowResponse, error)
-	mustEmbedUnimplementedTestApiServer()
+	mustEmbedUnimplementedTestServiceServer()
 }
 
-// UnimplementedTestApiServer must be embedded to have
+// UnimplementedTestServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedTestApiServer struct{}
+type UnimplementedTestServiceServer struct{}
 
-func (UnimplementedTestApiServer) TestWorkflow(context.Context, *TestWorkflowRequest) (*TestWorkflowResponse, error) {
+func (UnimplementedTestServiceServer) TestWorkflow(context.Context, *TestWorkflowRequest) (*TestWorkflowResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method TestWorkflow not implemented")
 }
-func (UnimplementedTestApiServer) InstallStroppyWorkflow(context.Context, *InstallStroppyWorkflowRequest) (*InstallStroppyWorkflowResponse, error) {
+func (UnimplementedTestServiceServer) InstallStroppyWorkflow(context.Context, *InstallStroppyWorkflowRequest) (*InstallStroppyWorkflowResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method InstallStroppyWorkflow not implemented")
 }
-func (UnimplementedTestApiServer) InstallDatabaseWorkflow(context.Context, *InstallDatabaseWorkflowRequest) (*InstallDatabaseWorkflowResponse, error) {
+func (UnimplementedTestServiceServer) InstallDatabaseWorkflow(context.Context, *InstallDatabaseWorkflowRequest) (*InstallDatabaseWorkflowResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method InstallDatabaseWorkflow not implemented")
 }
-func (UnimplementedTestApiServer) RunWorkloadWorkflow(context.Context, *RunWorkloadWorkflowRequest) (*RunWorkloadWorkflowResponse, error) {
+func (UnimplementedTestServiceServer) RunWorkloadWorkflow(context.Context, *RunWorkloadWorkflowRequest) (*RunWorkloadWorkflowResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RunWorkloadWorkflow not implemented")
 }
-func (UnimplementedTestApiServer) mustEmbedUnimplementedTestApiServer() {}
-func (UnimplementedTestApiServer) testEmbeddedByValue()                 {}
+func (UnimplementedTestServiceServer) mustEmbedUnimplementedTestServiceServer() {}
+func (UnimplementedTestServiceServer) testEmbeddedByValue()                     {}
 
-// UnsafeTestApiServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to TestApiServer will
+// UnsafeTestServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to TestServiceServer will
 // result in compilation errors.
-type UnsafeTestApiServer interface {
-	mustEmbedUnimplementedTestApiServer()
+type UnsafeTestServiceServer interface {
+	mustEmbedUnimplementedTestServiceServer()
 }
 
-func RegisterTestApiServer(s grpc.ServiceRegistrar, srv TestApiServer) {
-	// If the following call panics, it indicates UnimplementedTestApiServer was
+func RegisterTestServiceServer(s grpc.ServiceRegistrar, srv TestServiceServer) {
+	// If the following call panics, it indicates UnimplementedTestServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&TestApi_ServiceDesc, srv)
+	s.RegisterService(&TestService_ServiceDesc, srv)
 }
 
-func _TestApi_TestWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TestService_TestWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TestWorkflowRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TestApiServer).TestWorkflow(ctx, in)
+		return srv.(TestServiceServer).TestWorkflow(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TestApi_TestWorkflow_FullMethodName,
+		FullMethod: TestService_TestWorkflow_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TestApiServer).TestWorkflow(ctx, req.(*TestWorkflowRequest))
+		return srv.(TestServiceServer).TestWorkflow(ctx, req.(*TestWorkflowRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TestApi_InstallStroppyWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TestService_InstallStroppyWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(InstallStroppyWorkflowRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TestApiServer).InstallStroppyWorkflow(ctx, in)
+		return srv.(TestServiceServer).InstallStroppyWorkflow(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TestApi_InstallStroppyWorkflow_FullMethodName,
+		FullMethod: TestService_InstallStroppyWorkflow_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TestApiServer).InstallStroppyWorkflow(ctx, req.(*InstallStroppyWorkflowRequest))
+		return srv.(TestServiceServer).InstallStroppyWorkflow(ctx, req.(*InstallStroppyWorkflowRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TestApi_InstallDatabaseWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TestService_InstallDatabaseWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(InstallDatabaseWorkflowRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TestApiServer).InstallDatabaseWorkflow(ctx, in)
+		return srv.(TestServiceServer).InstallDatabaseWorkflow(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TestApi_InstallDatabaseWorkflow_FullMethodName,
+		FullMethod: TestService_InstallDatabaseWorkflow_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TestApiServer).InstallDatabaseWorkflow(ctx, req.(*InstallDatabaseWorkflowRequest))
+		return srv.(TestServiceServer).InstallDatabaseWorkflow(ctx, req.(*InstallDatabaseWorkflowRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TestApi_RunWorkloadWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TestService_RunWorkloadWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RunWorkloadWorkflowRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TestApiServer).RunWorkloadWorkflow(ctx, in)
+		return srv.(TestServiceServer).RunWorkloadWorkflow(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TestApi_RunWorkloadWorkflow_FullMethodName,
+		FullMethod: TestService_RunWorkloadWorkflow_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TestApiServer).RunWorkloadWorkflow(ctx, req.(*RunWorkloadWorkflowRequest))
+		return srv.(TestServiceServer).RunWorkloadWorkflow(ctx, req.(*RunWorkloadWorkflowRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// TestApi_ServiceDesc is the grpc.ServiceDesc for TestApi service.
+// TestService_ServiceDesc is the grpc.ServiceDesc for TestService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var TestApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "cloud.v1.workflow.TestApi",
-	HandlerType: (*TestApiServer)(nil),
+var TestService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "cloud.v1.workflow.TestService",
+	HandlerType: (*TestServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "TestWorkflow",
-			Handler:    _TestApi_TestWorkflow_Handler,
+			Handler:    _TestService_TestWorkflow_Handler,
 		},
 		{
 			MethodName: "InstallStroppyWorkflow",
-			Handler:    _TestApi_InstallStroppyWorkflow_Handler,
+			Handler:    _TestService_InstallStroppyWorkflow_Handler,
 		},
 		{
 			MethodName: "InstallDatabaseWorkflow",
-			Handler:    _TestApi_InstallDatabaseWorkflow_Handler,
+			Handler:    _TestService_InstallDatabaseWorkflow_Handler,
 		},
 		{
 			MethodName: "RunWorkloadWorkflow",
-			Handler:    _TestApi_RunWorkloadWorkflow_Handler,
+			Handler:    _TestService_RunWorkloadWorkflow_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -249,105 +249,105 @@ var TestApi_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	SuiteWorkflowApi_SuiteWorkflow_FullMethodName = "/cloud.v1.workflow.SuiteWorkflowApi/SuiteWorkflow"
+	SuiteWorkflowService_SuiteWorkflow_FullMethodName = "/cloud.v1.workflow.SuiteWorkflowService/SuiteWorkflow"
 )
 
-// SuiteWorkflowApiClient is the client API for SuiteWorkflowApi service.
+// SuiteWorkflowServiceClient is the client API for SuiteWorkflowService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // SuiteWorkflow runs a child TestWorkflow per test_run, honoring max_parallel.
-type SuiteWorkflowApiClient interface {
+type SuiteWorkflowServiceClient interface {
 	SuiteWorkflow(ctx context.Context, in *SuiteWorkflowRequest, opts ...grpc.CallOption) (*SuiteWorkflowResponse, error)
 }
 
-type suiteWorkflowApiClient struct {
+type suiteWorkflowServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewSuiteWorkflowApiClient(cc grpc.ClientConnInterface) SuiteWorkflowApiClient {
-	return &suiteWorkflowApiClient{cc}
+func NewSuiteWorkflowServiceClient(cc grpc.ClientConnInterface) SuiteWorkflowServiceClient {
+	return &suiteWorkflowServiceClient{cc}
 }
 
-func (c *suiteWorkflowApiClient) SuiteWorkflow(ctx context.Context, in *SuiteWorkflowRequest, opts ...grpc.CallOption) (*SuiteWorkflowResponse, error) {
+func (c *suiteWorkflowServiceClient) SuiteWorkflow(ctx context.Context, in *SuiteWorkflowRequest, opts ...grpc.CallOption) (*SuiteWorkflowResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SuiteWorkflowResponse)
-	err := c.cc.Invoke(ctx, SuiteWorkflowApi_SuiteWorkflow_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, SuiteWorkflowService_SuiteWorkflow_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// SuiteWorkflowApiServer is the server API for SuiteWorkflowApi service.
-// All implementations must embed UnimplementedSuiteWorkflowApiServer
+// SuiteWorkflowServiceServer is the server API for SuiteWorkflowService service.
+// All implementations must embed UnimplementedSuiteWorkflowServiceServer
 // for forward compatibility.
 //
 // SuiteWorkflow runs a child TestWorkflow per test_run, honoring max_parallel.
-type SuiteWorkflowApiServer interface {
+type SuiteWorkflowServiceServer interface {
 	SuiteWorkflow(context.Context, *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error)
-	mustEmbedUnimplementedSuiteWorkflowApiServer()
+	mustEmbedUnimplementedSuiteWorkflowServiceServer()
 }
 
-// UnimplementedSuiteWorkflowApiServer must be embedded to have
+// UnimplementedSuiteWorkflowServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedSuiteWorkflowApiServer struct{}
+type UnimplementedSuiteWorkflowServiceServer struct{}
 
-func (UnimplementedSuiteWorkflowApiServer) SuiteWorkflow(context.Context, *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error) {
+func (UnimplementedSuiteWorkflowServiceServer) SuiteWorkflow(context.Context, *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SuiteWorkflow not implemented")
 }
-func (UnimplementedSuiteWorkflowApiServer) mustEmbedUnimplementedSuiteWorkflowApiServer() {}
-func (UnimplementedSuiteWorkflowApiServer) testEmbeddedByValue()                          {}
+func (UnimplementedSuiteWorkflowServiceServer) mustEmbedUnimplementedSuiteWorkflowServiceServer() {}
+func (UnimplementedSuiteWorkflowServiceServer) testEmbeddedByValue()                              {}
 
-// UnsafeSuiteWorkflowApiServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to SuiteWorkflowApiServer will
+// UnsafeSuiteWorkflowServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SuiteWorkflowServiceServer will
 // result in compilation errors.
-type UnsafeSuiteWorkflowApiServer interface {
-	mustEmbedUnimplementedSuiteWorkflowApiServer()
+type UnsafeSuiteWorkflowServiceServer interface {
+	mustEmbedUnimplementedSuiteWorkflowServiceServer()
 }
 
-func RegisterSuiteWorkflowApiServer(s grpc.ServiceRegistrar, srv SuiteWorkflowApiServer) {
-	// If the following call panics, it indicates UnimplementedSuiteWorkflowApiServer was
+func RegisterSuiteWorkflowServiceServer(s grpc.ServiceRegistrar, srv SuiteWorkflowServiceServer) {
+	// If the following call panics, it indicates UnimplementedSuiteWorkflowServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&SuiteWorkflowApi_ServiceDesc, srv)
+	s.RegisterService(&SuiteWorkflowService_ServiceDesc, srv)
 }
 
-func _SuiteWorkflowApi_SuiteWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SuiteWorkflowService_SuiteWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SuiteWorkflowRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SuiteWorkflowApiServer).SuiteWorkflow(ctx, in)
+		return srv.(SuiteWorkflowServiceServer).SuiteWorkflow(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SuiteWorkflowApi_SuiteWorkflow_FullMethodName,
+		FullMethod: SuiteWorkflowService_SuiteWorkflow_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SuiteWorkflowApiServer).SuiteWorkflow(ctx, req.(*SuiteWorkflowRequest))
+		return srv.(SuiteWorkflowServiceServer).SuiteWorkflow(ctx, req.(*SuiteWorkflowRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// SuiteWorkflowApi_ServiceDesc is the grpc.ServiceDesc for SuiteWorkflowApi service.
+// SuiteWorkflowService_ServiceDesc is the grpc.ServiceDesc for SuiteWorkflowService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var SuiteWorkflowApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "cloud.v1.workflow.SuiteWorkflowApi",
-	HandlerType: (*SuiteWorkflowApiServer)(nil),
+var SuiteWorkflowService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "cloud.v1.workflow.SuiteWorkflowService",
+	HandlerType: (*SuiteWorkflowServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "SuiteWorkflow",
-			Handler:    _SuiteWorkflowApi_SuiteWorkflow_Handler,
+			Handler:    _SuiteWorkflowService_SuiteWorkflow_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -12,7 +12,7 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     persisted entities — they are queried live from VictoriaMetrics and may be
     snapshotted into a share record. So they live under runtime/, not models/.
 
-    Like runtime/primitive (DagRef), this package stays independent of database
+    This package stays independent of database
     models: run identity is a plain string, not models.TestRunId. The API layer
     maps it to/from the typed id.
 

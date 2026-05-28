@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/common/entity.proto";
+import "cloud/v1/common/status.proto";
+import "cloud/v1/common/trigger.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/domain/suite.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+/*
+    SuiteRecord is a persisted suite DEFINITION (reusable template). It is created
+    by the suite wizard's finish and is the thing SuiteAPI.Start expands into a
+    SuiteRunRecord.
+ */
+message SuiteRecord {
+    common.Entity entity = 1 [(validate.rules).message.required = true];
+    domain.Suite spec = 2 [(validate.rules).message.required = true];
+
+    // Denormalized facets for the suites table (schedule state + last-run info).
+    Summary summary = 3;
+
+    message Summary {
+        // Mirrors spec.schedule.enabled for fast filter/sort.
+        bool schedule_enabled = 1;
+        // Mirrors spec.schedule.cron.
+        string cron = 2 [(validate.rules).string.max_len = 128];
+        // Next planned auto-run (computed from the cron); unset if disabled.
+        google.protobuf.Timestamp next_run_at = 3;
+        // Last time the suite was started (manual or cron).
+        google.protobuf.Timestamp last_run_at = 4;
+        // Status of the last suite run.
+        common.Status last_run_status = 5;
+        // How many suite runs this definition has spawned.
+        uint32 run_count = 6;
+    }
+}
+
+/*
+    SuiteRunRecord is a persisted suite EXECUTION. It references its expanded child
+    runs by id (each is a first-class TestRunRecord whose suite_run_id points back
+    here), so suite children list / track / show logs+metrics like any other run.
+    SuiteWorkflow receives a domain.SuiteRun assembled from the children at start.
+ */
+message SuiteRunRecord {
+    common.Entity entity = 1 [(validate.rules).message.required = true];
+    // The definition this run came from.
+    string suite_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    // Lifecycle status of the suite run as a whole.
+    common.Status status = 3;
+    // How this run was triggered (MANUAL / CRON / API).
+    common.Trigger trigger = 7;
+    // Max concurrent child TestWorkflows. 0 = unlimited.
+    uint32 max_parallel = 4;
+    // Child runs (ids of TestRunRecord rows).
+    repeated string test_run_ids = 5 [(validate.rules).repeated = {items: {string: {max_len: 64}}}];
+
+    // Denormalized, queryable facets for the suite-runs table (fewer than a test
+    // run: mostly child-count aggregates + provider + timing).
+    Summary summary = 6;
+
+    message Summary {
+        // Name of the originating suite definition.
+        string suite_name = 1 [(validate.rules).string.max_len = 255];
+        // Single provider the whole suite ran on.
+        deployment.Provider provider = 2;
+        // Distinct database kinds exercised by the suite (for filtering).
+        repeated domain.Database.Kind db_kinds = 3;
+        // Child run counts by outcome.
+        uint32 total = 4;
+        uint32 completed = 5;
+        uint32 failed = 6;
+        uint32 running = 7;
+        uint32 pending = 8;
+        // Aggregate progress (0..100), derived on the backend from children.
+        uint32 progress_pct = 9 [(validate.rules).uint32.lte = 100];
+        google.protobuf.Timestamp started_at = 10;
+        google.protobuf.Timestamp finished_at = 11;
+        google.protobuf.Duration duration = 12;
+    }
+}

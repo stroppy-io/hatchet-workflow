@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/agent/shell.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/permission.proto";
+import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    agent_shell.proto is the ADMIN/USER-FACING side of the interactive reverse
+    shell. Transport is a websocket carrying these protobuf frames; the server
+    bridges it to the agent's grpc control stream (agent/shell.proto). One
+    OpenShell call = one terminal session.
+
+    HIGH PRIVILEGE: this runs arbitrary commands on a host. Gated by
+    RESOURCE_AGENT_SHELL; the server MUST audit every session (who, which host,
+    when) and scope to the caller's tenant. The target + tenant arrive in the
+    first frame (ShellStart); the streaming auth interceptor reads tenant from it.
+ */
+
+// ShellStart is the REQUIRED first client frame: it picks the target and opens.
+message ShellStart {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    // Run context for audit/scoping (optional but recommended).
+    string run_id = 2 [(validate.rules).string.max_len = 128];
+    // Target host. Required.
+    string machine_id = 3 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    // Optional target component on the host.
+    string component_id = 4 [(validate.rules).string.max_len = 128];
+    // Initial terminal size.
+    uint32 cols = 5;
+    uint32 rows = 6;
+    // Shell to launch; empty -> agent default.
+    string shell = 7 [(validate.rules).string.max_len = 256];
+}
+
+// ShellClientFrame is admin -> server. The first frame MUST be `start`.
+message ShellClientFrame {
+    oneof frame {
+        option (validate.required) = true;
+        ShellStart start = 1;
+        bytes stdin = 2;
+        cloud.v1.agent.ShellResize resize = 3;
+        google.protobuf.Empty close = 4;
+    }
+}
+
+// ShellServerFrame is server -> admin.
+message ShellServerFrame {
+    oneof frame {
+        bytes stdout = 1;
+        bytes stderr = 2;
+        cloud.v1.agent.ShellExit exit = 3;
+    }
+}
+
+service AgentShellService {
+    /*
+        OpenShell attaches an interactive terminal to an agent. First client frame
+        must be ShellStart. High-privilege: RESOURCE_AGENT_SHELL + audit.
+     */
+    rpc OpenShell (stream ShellClientFrame) returns (stream ShellServerFrame) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_AGENT_SHELL, action: ACTION_CREATE}]};
+    }
+}

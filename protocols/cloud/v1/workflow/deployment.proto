@@ -60,7 +60,7 @@ message AcquireQuotasActivityResponse {
     map<string, deployment.Quota.Allocation> quota_allocation = 1;
 }
 
-service DeploymentApi {
+service DeploymentService {
     /*
         task_queue: shared queue for the deployment workflows/activities.
     */

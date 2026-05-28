@@ -19,60 +19,60 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	IamAPI_Register_FullMethodName                = "/cloud.v1.api.IamAPI/Register"
-	IamAPI_Login_FullMethodName                   = "/cloud.v1.api.IamAPI/Login"
-	IamAPI_Refresh_FullMethodName                 = "/cloud.v1.api.IamAPI/Refresh"
-	IamAPI_Logout_FullMethodName                  = "/cloud.v1.api.IamAPI/Logout"
-	IamAPI_RequestPasswordReset_FullMethodName    = "/cloud.v1.api.IamAPI/RequestPasswordReset"
-	IamAPI_ConfirmPasswordReset_FullMethodName    = "/cloud.v1.api.IamAPI/ConfirmPasswordReset"
-	IamAPI_VerifyEmail_FullMethodName             = "/cloud.v1.api.IamAPI/VerifyEmail"
-	IamAPI_CreateAccount_FullMethodName           = "/cloud.v1.api.IamAPI/CreateAccount"
-	IamAPI_GetAccount_FullMethodName              = "/cloud.v1.api.IamAPI/GetAccount"
-	IamAPI_GetMyAccount_FullMethodName            = "/cloud.v1.api.IamAPI/GetMyAccount"
-	IamAPI_ListAccounts_FullMethodName            = "/cloud.v1.api.IamAPI/ListAccounts"
-	IamAPI_UpdateAccount_FullMethodName           = "/cloud.v1.api.IamAPI/UpdateAccount"
-	IamAPI_DeleteAccount_FullMethodName           = "/cloud.v1.api.IamAPI/DeleteAccount"
-	IamAPI_ChangePassword_FullMethodName          = "/cloud.v1.api.IamAPI/ChangePassword"
-	IamAPI_ResetPassword_FullMethodName           = "/cloud.v1.api.IamAPI/ResetPassword"
-	IamAPI_ResendVerification_FullMethodName      = "/cloud.v1.api.IamAPI/ResendVerification"
-	IamAPI_CreateTenant_FullMethodName            = "/cloud.v1.api.IamAPI/CreateTenant"
-	IamAPI_GetTenant_FullMethodName               = "/cloud.v1.api.IamAPI/GetTenant"
-	IamAPI_ListMyTenants_FullMethodName           = "/cloud.v1.api.IamAPI/ListMyTenants"
-	IamAPI_UpdateTenant_FullMethodName            = "/cloud.v1.api.IamAPI/UpdateTenant"
-	IamAPI_DeleteTenant_FullMethodName            = "/cloud.v1.api.IamAPI/DeleteTenant"
-	IamAPI_TransferTenantOwnership_FullMethodName = "/cloud.v1.api.IamAPI/TransferTenantOwnership"
-	IamAPI_LeaveTenant_FullMethodName             = "/cloud.v1.api.IamAPI/LeaveTenant"
-	IamAPI_CreateRole_FullMethodName              = "/cloud.v1.api.IamAPI/CreateRole"
-	IamAPI_GetRole_FullMethodName                 = "/cloud.v1.api.IamAPI/GetRole"
-	IamAPI_ListRoles_FullMethodName               = "/cloud.v1.api.IamAPI/ListRoles"
-	IamAPI_UpdateRole_FullMethodName              = "/cloud.v1.api.IamAPI/UpdateRole"
-	IamAPI_DeleteRole_FullMethodName              = "/cloud.v1.api.IamAPI/DeleteRole"
-	IamAPI_CreateMembership_FullMethodName        = "/cloud.v1.api.IamAPI/CreateMembership"
-	IamAPI_GetMembership_FullMethodName           = "/cloud.v1.api.IamAPI/GetMembership"
-	IamAPI_ListMemberships_FullMethodName         = "/cloud.v1.api.IamAPI/ListMemberships"
-	IamAPI_UpdateMembership_FullMethodName        = "/cloud.v1.api.IamAPI/UpdateMembership"
-	IamAPI_DeleteMembership_FullMethodName        = "/cloud.v1.api.IamAPI/DeleteMembership"
-	IamAPI_GetMyPermissions_FullMethodName        = "/cloud.v1.api.IamAPI/GetMyPermissions"
-	IamAPI_ListPermissions_FullMethodName         = "/cloud.v1.api.IamAPI/ListPermissions"
-	IamAPI_CreateIdentityProvider_FullMethodName  = "/cloud.v1.api.IamAPI/CreateIdentityProvider"
-	IamAPI_GetIdentityProvider_FullMethodName     = "/cloud.v1.api.IamAPI/GetIdentityProvider"
-	IamAPI_UpdateIdentityProvider_FullMethodName  = "/cloud.v1.api.IamAPI/UpdateIdentityProvider"
-	IamAPI_DeleteIdentityProvider_FullMethodName  = "/cloud.v1.api.IamAPI/DeleteIdentityProvider"
-	IamAPI_ListIdentityProviders_FullMethodName   = "/cloud.v1.api.IamAPI/ListIdentityProviders"
-	IamAPI_StartSSO_FullMethodName                = "/cloud.v1.api.IamAPI/StartSSO"
-	IamAPI_CompleteSSO_FullMethodName             = "/cloud.v1.api.IamAPI/CompleteSSO"
-	IamAPI_LinkExternalIdentity_FullMethodName    = "/cloud.v1.api.IamAPI/LinkExternalIdentity"
-	IamAPI_UnlinkExternalIdentity_FullMethodName  = "/cloud.v1.api.IamAPI/UnlinkExternalIdentity"
-	IamAPI_ListExternalIdentities_FullMethodName  = "/cloud.v1.api.IamAPI/ListExternalIdentities"
-	IamAPI_CreateApiToken_FullMethodName          = "/cloud.v1.api.IamAPI/CreateApiToken"
-	IamAPI_ListApiTokens_FullMethodName           = "/cloud.v1.api.IamAPI/ListApiTokens"
-	IamAPI_RevokeApiToken_FullMethodName          = "/cloud.v1.api.IamAPI/RevokeApiToken"
+	IamService_Register_FullMethodName                = "/cloud.v1.api.IamService/Register"
+	IamService_Login_FullMethodName                   = "/cloud.v1.api.IamService/Login"
+	IamService_Refresh_FullMethodName                 = "/cloud.v1.api.IamService/Refresh"
+	IamService_Logout_FullMethodName                  = "/cloud.v1.api.IamService/Logout"
+	IamService_RequestPasswordReset_FullMethodName    = "/cloud.v1.api.IamService/RequestPasswordReset"
+	IamService_ConfirmPasswordReset_FullMethodName    = "/cloud.v1.api.IamService/ConfirmPasswordReset"
+	IamService_VerifyEmail_FullMethodName             = "/cloud.v1.api.IamService/VerifyEmail"
+	IamService_CreateAccount_FullMethodName           = "/cloud.v1.api.IamService/CreateAccount"
+	IamService_GetAccount_FullMethodName              = "/cloud.v1.api.IamService/GetAccount"
+	IamService_GetMyAccount_FullMethodName            = "/cloud.v1.api.IamService/GetMyAccount"
+	IamService_ListAccounts_FullMethodName            = "/cloud.v1.api.IamService/ListAccounts"
+	IamService_UpdateAccount_FullMethodName           = "/cloud.v1.api.IamService/UpdateAccount"
+	IamService_DeleteAccount_FullMethodName           = "/cloud.v1.api.IamService/DeleteAccount"
+	IamService_ChangePassword_FullMethodName          = "/cloud.v1.api.IamService/ChangePassword"
+	IamService_ResetPassword_FullMethodName           = "/cloud.v1.api.IamService/ResetPassword"
+	IamService_ResendVerification_FullMethodName      = "/cloud.v1.api.IamService/ResendVerification"
+	IamService_CreateTenant_FullMethodName            = "/cloud.v1.api.IamService/CreateTenant"
+	IamService_GetTenant_FullMethodName               = "/cloud.v1.api.IamService/GetTenant"
+	IamService_ListMyTenants_FullMethodName           = "/cloud.v1.api.IamService/ListMyTenants"
+	IamService_UpdateTenant_FullMethodName            = "/cloud.v1.api.IamService/UpdateTenant"
+	IamService_DeleteTenant_FullMethodName            = "/cloud.v1.api.IamService/DeleteTenant"
+	IamService_TransferTenantOwnership_FullMethodName = "/cloud.v1.api.IamService/TransferTenantOwnership"
+	IamService_LeaveTenant_FullMethodName             = "/cloud.v1.api.IamService/LeaveTenant"
+	IamService_CreateRole_FullMethodName              = "/cloud.v1.api.IamService/CreateRole"
+	IamService_GetRole_FullMethodName                 = "/cloud.v1.api.IamService/GetRole"
+	IamService_ListRoles_FullMethodName               = "/cloud.v1.api.IamService/ListRoles"
+	IamService_UpdateRole_FullMethodName              = "/cloud.v1.api.IamService/UpdateRole"
+	IamService_DeleteRole_FullMethodName              = "/cloud.v1.api.IamService/DeleteRole"
+	IamService_CreateMembership_FullMethodName        = "/cloud.v1.api.IamService/CreateMembership"
+	IamService_GetMembership_FullMethodName           = "/cloud.v1.api.IamService/GetMembership"
+	IamService_ListMemberships_FullMethodName         = "/cloud.v1.api.IamService/ListMemberships"
+	IamService_UpdateMembership_FullMethodName        = "/cloud.v1.api.IamService/UpdateMembership"
+	IamService_DeleteMembership_FullMethodName        = "/cloud.v1.api.IamService/DeleteMembership"
+	IamService_GetMyPermissions_FullMethodName        = "/cloud.v1.api.IamService/GetMyPermissions"
+	IamService_ListPermissions_FullMethodName         = "/cloud.v1.api.IamService/ListPermissions"
+	IamService_CreateIdentityProvider_FullMethodName  = "/cloud.v1.api.IamService/CreateIdentityProvider"
+	IamService_GetIdentityProvider_FullMethodName     = "/cloud.v1.api.IamService/GetIdentityProvider"
+	IamService_UpdateIdentityProvider_FullMethodName  = "/cloud.v1.api.IamService/UpdateIdentityProvider"
+	IamService_DeleteIdentityProvider_FullMethodName  = "/cloud.v1.api.IamService/DeleteIdentityProvider"
+	IamService_ListIdentityProviders_FullMethodName   = "/cloud.v1.api.IamService/ListIdentityProviders"
+	IamService_StartSSO_FullMethodName                = "/cloud.v1.api.IamService/StartSSO"
+	IamService_CompleteSSO_FullMethodName             = "/cloud.v1.api.IamService/CompleteSSO"
+	IamService_LinkExternalIdentity_FullMethodName    = "/cloud.v1.api.IamService/LinkExternalIdentity"
+	IamService_UnlinkExternalIdentity_FullMethodName  = "/cloud.v1.api.IamService/UnlinkExternalIdentity"
+	IamService_ListExternalIdentities_FullMethodName  = "/cloud.v1.api.IamService/ListExternalIdentities"
+	IamService_CreateApiToken_FullMethodName          = "/cloud.v1.api.IamService/CreateApiToken"
+	IamService_ListApiTokens_FullMethodName           = "/cloud.v1.api.IamService/ListApiTokens"
+	IamService_RevokeApiToken_FullMethodName          = "/cloud.v1.api.IamService/RevokeApiToken"
 )
 
-// IamAPIClient is the client API for IamAPI service.
+// IamServiceClient is the client API for IamService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type IamAPIClient interface {
+type IamServiceClient interface {
 	// Register is public self-signup, gated by
 	// PlatformSettings.allow_self_registration. Not idempotent: each call
 	// creates a new account.
@@ -183,498 +183,498 @@ type IamAPIClient interface {
 	RevokeApiToken(ctx context.Context, in *RevokeApiTokenRequest, opts ...grpc.CallOption) (*RevokeApiTokenResponse, error)
 }
 
-type iamAPIClient struct {
+type iamServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewIamAPIClient(cc grpc.ClientConnInterface) IamAPIClient {
-	return &iamAPIClient{cc}
+func NewIamServiceClient(cc grpc.ClientConnInterface) IamServiceClient {
+	return &iamServiceClient{cc}
 }
 
-func (c *iamAPIClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
+func (c *iamServiceClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RegisterResponse)
-	err := c.cc.Invoke(ctx, IamAPI_Register_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_Register_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+func (c *iamServiceClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LoginResponse)
-	err := c.cc.Invoke(ctx, IamAPI_Login_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_Login_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*RefreshResponse, error) {
+func (c *iamServiceClient) Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*RefreshResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RefreshResponse)
-	err := c.cc.Invoke(ctx, IamAPI_Refresh_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_Refresh_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponse, error) {
+func (c *iamServiceClient) Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LogoutResponse)
-	err := c.cc.Invoke(ctx, IamAPI_Logout_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_Logout_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) RequestPasswordReset(ctx context.Context, in *RequestPasswordResetRequest, opts ...grpc.CallOption) (*RequestPasswordResetResponse, error) {
+func (c *iamServiceClient) RequestPasswordReset(ctx context.Context, in *RequestPasswordResetRequest, opts ...grpc.CallOption) (*RequestPasswordResetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RequestPasswordResetResponse)
-	err := c.cc.Invoke(ctx, IamAPI_RequestPasswordReset_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_RequestPasswordReset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) ConfirmPasswordReset(ctx context.Context, in *ConfirmPasswordResetRequest, opts ...grpc.CallOption) (*ConfirmPasswordResetResponse, error) {
+func (c *iamServiceClient) ConfirmPasswordReset(ctx context.Context, in *ConfirmPasswordResetRequest, opts ...grpc.CallOption) (*ConfirmPasswordResetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ConfirmPasswordResetResponse)
-	err := c.cc.Invoke(ctx, IamAPI_ConfirmPasswordReset_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_ConfirmPasswordReset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*VerifyEmailResponse, error) {
+func (c *iamServiceClient) VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*VerifyEmailResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(VerifyEmailResponse)
-	err := c.cc.Invoke(ctx, IamAPI_VerifyEmail_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_VerifyEmail_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error) {
+func (c *iamServiceClient) CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateAccountResponse)
-	err := c.cc.Invoke(ctx, IamAPI_CreateAccount_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_CreateAccount_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountResponse, error) {
+func (c *iamServiceClient) GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetAccountResponse)
-	err := c.cc.Invoke(ctx, IamAPI_GetAccount_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_GetAccount_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) GetMyAccount(ctx context.Context, in *GetMyAccountRequest, opts ...grpc.CallOption) (*GetMyAccountResponse, error) {
+func (c *iamServiceClient) GetMyAccount(ctx context.Context, in *GetMyAccountRequest, opts ...grpc.CallOption) (*GetMyAccountResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetMyAccountResponse)
-	err := c.cc.Invoke(ctx, IamAPI_GetMyAccount_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_GetMyAccount_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error) {
+func (c *iamServiceClient) ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListAccountsResponse)
-	err := c.cc.Invoke(ctx, IamAPI_ListAccounts_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_ListAccounts_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*UpdateAccountResponse, error) {
+func (c *iamServiceClient) UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*UpdateAccountResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateAccountResponse)
-	err := c.cc.Invoke(ctx, IamAPI_UpdateAccount_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_UpdateAccount_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error) {
+func (c *iamServiceClient) DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteAccountResponse)
-	err := c.cc.Invoke(ctx, IamAPI_DeleteAccount_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_DeleteAccount_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*ChangePasswordResponse, error) {
+func (c *iamServiceClient) ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*ChangePasswordResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ChangePasswordResponse)
-	err := c.cc.Invoke(ctx, IamAPI_ChangePassword_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_ChangePassword_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) ResetPassword(ctx context.Context, in *ResetPasswordRequest, opts ...grpc.CallOption) (*ResetPasswordResponse, error) {
+func (c *iamServiceClient) ResetPassword(ctx context.Context, in *ResetPasswordRequest, opts ...grpc.CallOption) (*ResetPasswordResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ResetPasswordResponse)
-	err := c.cc.Invoke(ctx, IamAPI_ResetPassword_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_ResetPassword_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) ResendVerification(ctx context.Context, in *ResendVerificationRequest, opts ...grpc.CallOption) (*ResendVerificationResponse, error) {
+func (c *iamServiceClient) ResendVerification(ctx context.Context, in *ResendVerificationRequest, opts ...grpc.CallOption) (*ResendVerificationResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ResendVerificationResponse)
-	err := c.cc.Invoke(ctx, IamAPI_ResendVerification_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_ResendVerification_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) CreateTenant(ctx context.Context, in *CreateTenantRequest, opts ...grpc.CallOption) (*CreateTenantResponse, error) {
+func (c *iamServiceClient) CreateTenant(ctx context.Context, in *CreateTenantRequest, opts ...grpc.CallOption) (*CreateTenantResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateTenantResponse)
-	err := c.cc.Invoke(ctx, IamAPI_CreateTenant_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_CreateTenant_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) GetTenant(ctx context.Context, in *GetTenantRequest, opts ...grpc.CallOption) (*GetTenantResponse, error) {
+func (c *iamServiceClient) GetTenant(ctx context.Context, in *GetTenantRequest, opts ...grpc.CallOption) (*GetTenantResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetTenantResponse)
-	err := c.cc.Invoke(ctx, IamAPI_GetTenant_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_GetTenant_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) ListMyTenants(ctx context.Context, in *ListMyTenantsRequest, opts ...grpc.CallOption) (*ListMyTenantsResponse, error) {
+func (c *iamServiceClient) ListMyTenants(ctx context.Context, in *ListMyTenantsRequest, opts ...grpc.CallOption) (*ListMyTenantsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListMyTenantsResponse)
-	err := c.cc.Invoke(ctx, IamAPI_ListMyTenants_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_ListMyTenants_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) UpdateTenant(ctx context.Context, in *UpdateTenantRequest, opts ...grpc.CallOption) (*UpdateTenantResponse, error) {
+func (c *iamServiceClient) UpdateTenant(ctx context.Context, in *UpdateTenantRequest, opts ...grpc.CallOption) (*UpdateTenantResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateTenantResponse)
-	err := c.cc.Invoke(ctx, IamAPI_UpdateTenant_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_UpdateTenant_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) DeleteTenant(ctx context.Context, in *DeleteTenantRequest, opts ...grpc.CallOption) (*DeleteTenantResponse, error) {
+func (c *iamServiceClient) DeleteTenant(ctx context.Context, in *DeleteTenantRequest, opts ...grpc.CallOption) (*DeleteTenantResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteTenantResponse)
-	err := c.cc.Invoke(ctx, IamAPI_DeleteTenant_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_DeleteTenant_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) TransferTenantOwnership(ctx context.Context, in *TransferTenantOwnershipRequest, opts ...grpc.CallOption) (*TransferTenantOwnershipResponse, error) {
+func (c *iamServiceClient) TransferTenantOwnership(ctx context.Context, in *TransferTenantOwnershipRequest, opts ...grpc.CallOption) (*TransferTenantOwnershipResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TransferTenantOwnershipResponse)
-	err := c.cc.Invoke(ctx, IamAPI_TransferTenantOwnership_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_TransferTenantOwnership_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) LeaveTenant(ctx context.Context, in *LeaveTenantRequest, opts ...grpc.CallOption) (*LeaveTenantResponse, error) {
+func (c *iamServiceClient) LeaveTenant(ctx context.Context, in *LeaveTenantRequest, opts ...grpc.CallOption) (*LeaveTenantResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LeaveTenantResponse)
-	err := c.cc.Invoke(ctx, IamAPI_LeaveTenant_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_LeaveTenant_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) CreateRole(ctx context.Context, in *CreateRoleRequest, opts ...grpc.CallOption) (*CreateRoleResponse, error) {
+func (c *iamServiceClient) CreateRole(ctx context.Context, in *CreateRoleRequest, opts ...grpc.CallOption) (*CreateRoleResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateRoleResponse)
-	err := c.cc.Invoke(ctx, IamAPI_CreateRole_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_CreateRole_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) GetRole(ctx context.Context, in *GetRoleRequest, opts ...grpc.CallOption) (*GetRoleResponse, error) {
+func (c *iamServiceClient) GetRole(ctx context.Context, in *GetRoleRequest, opts ...grpc.CallOption) (*GetRoleResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetRoleResponse)
-	err := c.cc.Invoke(ctx, IamAPI_GetRole_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_GetRole_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*ListRolesResponse, error) {
+func (c *iamServiceClient) ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*ListRolesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListRolesResponse)
-	err := c.cc.Invoke(ctx, IamAPI_ListRoles_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_ListRoles_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*UpdateRoleResponse, error) {
+func (c *iamServiceClient) UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*UpdateRoleResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateRoleResponse)
-	err := c.cc.Invoke(ctx, IamAPI_UpdateRole_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_UpdateRole_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) DeleteRole(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*DeleteRoleResponse, error) {
+func (c *iamServiceClient) DeleteRole(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*DeleteRoleResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteRoleResponse)
-	err := c.cc.Invoke(ctx, IamAPI_DeleteRole_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_DeleteRole_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) CreateMembership(ctx context.Context, in *CreateMembershipRequest, opts ...grpc.CallOption) (*CreateMembershipResponse, error) {
+func (c *iamServiceClient) CreateMembership(ctx context.Context, in *CreateMembershipRequest, opts ...grpc.CallOption) (*CreateMembershipResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateMembershipResponse)
-	err := c.cc.Invoke(ctx, IamAPI_CreateMembership_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_CreateMembership_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) GetMembership(ctx context.Context, in *GetMembershipRequest, opts ...grpc.CallOption) (*GetMembershipResponse, error) {
+func (c *iamServiceClient) GetMembership(ctx context.Context, in *GetMembershipRequest, opts ...grpc.CallOption) (*GetMembershipResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetMembershipResponse)
-	err := c.cc.Invoke(ctx, IamAPI_GetMembership_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_GetMembership_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) ListMemberships(ctx context.Context, in *ListMembershipsRequest, opts ...grpc.CallOption) (*ListMembershipsResponse, error) {
+func (c *iamServiceClient) ListMemberships(ctx context.Context, in *ListMembershipsRequest, opts ...grpc.CallOption) (*ListMembershipsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListMembershipsResponse)
-	err := c.cc.Invoke(ctx, IamAPI_ListMemberships_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_ListMemberships_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) UpdateMembership(ctx context.Context, in *UpdateMembershipRequest, opts ...grpc.CallOption) (*UpdateMembershipResponse, error) {
+func (c *iamServiceClient) UpdateMembership(ctx context.Context, in *UpdateMembershipRequest, opts ...grpc.CallOption) (*UpdateMembershipResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateMembershipResponse)
-	err := c.cc.Invoke(ctx, IamAPI_UpdateMembership_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_UpdateMembership_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) DeleteMembership(ctx context.Context, in *DeleteMembershipRequest, opts ...grpc.CallOption) (*DeleteMembershipResponse, error) {
+func (c *iamServiceClient) DeleteMembership(ctx context.Context, in *DeleteMembershipRequest, opts ...grpc.CallOption) (*DeleteMembershipResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteMembershipResponse)
-	err := c.cc.Invoke(ctx, IamAPI_DeleteMembership_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_DeleteMembership_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) GetMyPermissions(ctx context.Context, in *GetMyPermissionsRequest, opts ...grpc.CallOption) (*GetMyPermissionsResponse, error) {
+func (c *iamServiceClient) GetMyPermissions(ctx context.Context, in *GetMyPermissionsRequest, opts ...grpc.CallOption) (*GetMyPermissionsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetMyPermissionsResponse)
-	err := c.cc.Invoke(ctx, IamAPI_GetMyPermissions_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_GetMyPermissions_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) ListPermissions(ctx context.Context, in *ListPermissionsRequest, opts ...grpc.CallOption) (*ListPermissionsResponse, error) {
+func (c *iamServiceClient) ListPermissions(ctx context.Context, in *ListPermissionsRequest, opts ...grpc.CallOption) (*ListPermissionsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListPermissionsResponse)
-	err := c.cc.Invoke(ctx, IamAPI_ListPermissions_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_ListPermissions_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) CreateIdentityProvider(ctx context.Context, in *CreateIdentityProviderRequest, opts ...grpc.CallOption) (*CreateIdentityProviderResponse, error) {
+func (c *iamServiceClient) CreateIdentityProvider(ctx context.Context, in *CreateIdentityProviderRequest, opts ...grpc.CallOption) (*CreateIdentityProviderResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateIdentityProviderResponse)
-	err := c.cc.Invoke(ctx, IamAPI_CreateIdentityProvider_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_CreateIdentityProvider_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) GetIdentityProvider(ctx context.Context, in *GetIdentityProviderRequest, opts ...grpc.CallOption) (*GetIdentityProviderResponse, error) {
+func (c *iamServiceClient) GetIdentityProvider(ctx context.Context, in *GetIdentityProviderRequest, opts ...grpc.CallOption) (*GetIdentityProviderResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetIdentityProviderResponse)
-	err := c.cc.Invoke(ctx, IamAPI_GetIdentityProvider_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_GetIdentityProvider_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) UpdateIdentityProvider(ctx context.Context, in *UpdateIdentityProviderRequest, opts ...grpc.CallOption) (*UpdateIdentityProviderResponse, error) {
+func (c *iamServiceClient) UpdateIdentityProvider(ctx context.Context, in *UpdateIdentityProviderRequest, opts ...grpc.CallOption) (*UpdateIdentityProviderResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateIdentityProviderResponse)
-	err := c.cc.Invoke(ctx, IamAPI_UpdateIdentityProvider_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_UpdateIdentityProvider_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) DeleteIdentityProvider(ctx context.Context, in *DeleteIdentityProviderRequest, opts ...grpc.CallOption) (*DeleteIdentityProviderResponse, error) {
+func (c *iamServiceClient) DeleteIdentityProvider(ctx context.Context, in *DeleteIdentityProviderRequest, opts ...grpc.CallOption) (*DeleteIdentityProviderResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteIdentityProviderResponse)
-	err := c.cc.Invoke(ctx, IamAPI_DeleteIdentityProvider_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_DeleteIdentityProvider_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) ListIdentityProviders(ctx context.Context, in *ListIdentityProvidersRequest, opts ...grpc.CallOption) (*ListIdentityProvidersResponse, error) {
+func (c *iamServiceClient) ListIdentityProviders(ctx context.Context, in *ListIdentityProvidersRequest, opts ...grpc.CallOption) (*ListIdentityProvidersResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListIdentityProvidersResponse)
-	err := c.cc.Invoke(ctx, IamAPI_ListIdentityProviders_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_ListIdentityProviders_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) StartSSO(ctx context.Context, in *StartSSORequest, opts ...grpc.CallOption) (*StartSSOResponse, error) {
+func (c *iamServiceClient) StartSSO(ctx context.Context, in *StartSSORequest, opts ...grpc.CallOption) (*StartSSOResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(StartSSOResponse)
-	err := c.cc.Invoke(ctx, IamAPI_StartSSO_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_StartSSO_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) CompleteSSO(ctx context.Context, in *CompleteSSORequest, opts ...grpc.CallOption) (*CompleteSSOResponse, error) {
+func (c *iamServiceClient) CompleteSSO(ctx context.Context, in *CompleteSSORequest, opts ...grpc.CallOption) (*CompleteSSOResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CompleteSSOResponse)
-	err := c.cc.Invoke(ctx, IamAPI_CompleteSSO_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_CompleteSSO_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) LinkExternalIdentity(ctx context.Context, in *LinkExternalIdentityRequest, opts ...grpc.CallOption) (*LinkExternalIdentityResponse, error) {
+func (c *iamServiceClient) LinkExternalIdentity(ctx context.Context, in *LinkExternalIdentityRequest, opts ...grpc.CallOption) (*LinkExternalIdentityResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LinkExternalIdentityResponse)
-	err := c.cc.Invoke(ctx, IamAPI_LinkExternalIdentity_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_LinkExternalIdentity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) UnlinkExternalIdentity(ctx context.Context, in *UnlinkExternalIdentityRequest, opts ...grpc.CallOption) (*UnlinkExternalIdentityResponse, error) {
+func (c *iamServiceClient) UnlinkExternalIdentity(ctx context.Context, in *UnlinkExternalIdentityRequest, opts ...grpc.CallOption) (*UnlinkExternalIdentityResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UnlinkExternalIdentityResponse)
-	err := c.cc.Invoke(ctx, IamAPI_UnlinkExternalIdentity_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_UnlinkExternalIdentity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) ListExternalIdentities(ctx context.Context, in *ListExternalIdentitiesRequest, opts ...grpc.CallOption) (*ListExternalIdentitiesResponse, error) {
+func (c *iamServiceClient) ListExternalIdentities(ctx context.Context, in *ListExternalIdentitiesRequest, opts ...grpc.CallOption) (*ListExternalIdentitiesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListExternalIdentitiesResponse)
-	err := c.cc.Invoke(ctx, IamAPI_ListExternalIdentities_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_ListExternalIdentities_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) CreateApiToken(ctx context.Context, in *CreateApiTokenRequest, opts ...grpc.CallOption) (*CreateApiTokenResponse, error) {
+func (c *iamServiceClient) CreateApiToken(ctx context.Context, in *CreateApiTokenRequest, opts ...grpc.CallOption) (*CreateApiTokenResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateApiTokenResponse)
-	err := c.cc.Invoke(ctx, IamAPI_CreateApiToken_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_CreateApiToken_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) ListApiTokens(ctx context.Context, in *ListApiTokensRequest, opts ...grpc.CallOption) (*ListApiTokensResponse, error) {
+func (c *iamServiceClient) ListApiTokens(ctx context.Context, in *ListApiTokensRequest, opts ...grpc.CallOption) (*ListApiTokensResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListApiTokensResponse)
-	err := c.cc.Invoke(ctx, IamAPI_ListApiTokens_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_ListApiTokens_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *iamAPIClient) RevokeApiToken(ctx context.Context, in *RevokeApiTokenRequest, opts ...grpc.CallOption) (*RevokeApiTokenResponse, error) {
+func (c *iamServiceClient) RevokeApiToken(ctx context.Context, in *RevokeApiTokenRequest, opts ...grpc.CallOption) (*RevokeApiTokenResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RevokeApiTokenResponse)
-	err := c.cc.Invoke(ctx, IamAPI_RevokeApiToken_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IamService_RevokeApiToken_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// IamAPIServer is the server API for IamAPI service.
-// All implementations must embed UnimplementedIamAPIServer
+// IamServiceServer is the server API for IamService service.
+// All implementations must embed UnimplementedIamServiceServer
 // for forward compatibility.
-type IamAPIServer interface {
+type IamServiceServer interface {
 	// Register is public self-signup, gated by
 	// PlatformSettings.allow_self_registration. Not idempotent: each call
 	// creates a new account.
@@ -783,1243 +783,1243 @@ type IamAPIServer interface {
 	// account-owner-or-admin. Idempotent: revoking an absent/already-revoked
 	// token is a no-op.
 	RevokeApiToken(context.Context, *RevokeApiTokenRequest) (*RevokeApiTokenResponse, error)
-	mustEmbedUnimplementedIamAPIServer()
+	mustEmbedUnimplementedIamServiceServer()
 }
 
-// UnimplementedIamAPIServer must be embedded to have
+// UnimplementedIamServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedIamAPIServer struct{}
+type UnimplementedIamServiceServer struct{}
 
-func (UnimplementedIamAPIServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
+func (UnimplementedIamServiceServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedIamAPIServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
+func (UnimplementedIamServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedIamAPIServer) Refresh(context.Context, *RefreshRequest) (*RefreshResponse, error) {
+func (UnimplementedIamServiceServer) Refresh(context.Context, *RefreshRequest) (*RefreshResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Refresh not implemented")
 }
-func (UnimplementedIamAPIServer) Logout(context.Context, *LogoutRequest) (*LogoutResponse, error) {
+func (UnimplementedIamServiceServer) Logout(context.Context, *LogoutRequest) (*LogoutResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Logout not implemented")
 }
-func (UnimplementedIamAPIServer) RequestPasswordReset(context.Context, *RequestPasswordResetRequest) (*RequestPasswordResetResponse, error) {
+func (UnimplementedIamServiceServer) RequestPasswordReset(context.Context, *RequestPasswordResetRequest) (*RequestPasswordResetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RequestPasswordReset not implemented")
 }
-func (UnimplementedIamAPIServer) ConfirmPasswordReset(context.Context, *ConfirmPasswordResetRequest) (*ConfirmPasswordResetResponse, error) {
+func (UnimplementedIamServiceServer) ConfirmPasswordReset(context.Context, *ConfirmPasswordResetRequest) (*ConfirmPasswordResetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ConfirmPasswordReset not implemented")
 }
-func (UnimplementedIamAPIServer) VerifyEmail(context.Context, *VerifyEmailRequest) (*VerifyEmailResponse, error) {
+func (UnimplementedIamServiceServer) VerifyEmail(context.Context, *VerifyEmailRequest) (*VerifyEmailResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method VerifyEmail not implemented")
 }
-func (UnimplementedIamAPIServer) CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error) {
+func (UnimplementedIamServiceServer) CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateAccount not implemented")
 }
-func (UnimplementedIamAPIServer) GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error) {
+func (UnimplementedIamServiceServer) GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetAccount not implemented")
 }
-func (UnimplementedIamAPIServer) GetMyAccount(context.Context, *GetMyAccountRequest) (*GetMyAccountResponse, error) {
+func (UnimplementedIamServiceServer) GetMyAccount(context.Context, *GetMyAccountRequest) (*GetMyAccountResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMyAccount not implemented")
 }
-func (UnimplementedIamAPIServer) ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error) {
+func (UnimplementedIamServiceServer) ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListAccounts not implemented")
 }
-func (UnimplementedIamAPIServer) UpdateAccount(context.Context, *UpdateAccountRequest) (*UpdateAccountResponse, error) {
+func (UnimplementedIamServiceServer) UpdateAccount(context.Context, *UpdateAccountRequest) (*UpdateAccountResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateAccount not implemented")
 }
-func (UnimplementedIamAPIServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
+func (UnimplementedIamServiceServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteAccount not implemented")
 }
-func (UnimplementedIamAPIServer) ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error) {
+func (UnimplementedIamServiceServer) ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ChangePassword not implemented")
 }
-func (UnimplementedIamAPIServer) ResetPassword(context.Context, *ResetPasswordRequest) (*ResetPasswordResponse, error) {
+func (UnimplementedIamServiceServer) ResetPassword(context.Context, *ResetPasswordRequest) (*ResetPasswordResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ResetPassword not implemented")
 }
-func (UnimplementedIamAPIServer) ResendVerification(context.Context, *ResendVerificationRequest) (*ResendVerificationResponse, error) {
+func (UnimplementedIamServiceServer) ResendVerification(context.Context, *ResendVerificationRequest) (*ResendVerificationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ResendVerification not implemented")
 }
-func (UnimplementedIamAPIServer) CreateTenant(context.Context, *CreateTenantRequest) (*CreateTenantResponse, error) {
+func (UnimplementedIamServiceServer) CreateTenant(context.Context, *CreateTenantRequest) (*CreateTenantResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateTenant not implemented")
 }
-func (UnimplementedIamAPIServer) GetTenant(context.Context, *GetTenantRequest) (*GetTenantResponse, error) {
+func (UnimplementedIamServiceServer) GetTenant(context.Context, *GetTenantRequest) (*GetTenantResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetTenant not implemented")
 }
-func (UnimplementedIamAPIServer) ListMyTenants(context.Context, *ListMyTenantsRequest) (*ListMyTenantsResponse, error) {
+func (UnimplementedIamServiceServer) ListMyTenants(context.Context, *ListMyTenantsRequest) (*ListMyTenantsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListMyTenants not implemented")
 }
-func (UnimplementedIamAPIServer) UpdateTenant(context.Context, *UpdateTenantRequest) (*UpdateTenantResponse, error) {
+func (UnimplementedIamServiceServer) UpdateTenant(context.Context, *UpdateTenantRequest) (*UpdateTenantResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateTenant not implemented")
 }
-func (UnimplementedIamAPIServer) DeleteTenant(context.Context, *DeleteTenantRequest) (*DeleteTenantResponse, error) {
+func (UnimplementedIamServiceServer) DeleteTenant(context.Context, *DeleteTenantRequest) (*DeleteTenantResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteTenant not implemented")
 }
-func (UnimplementedIamAPIServer) TransferTenantOwnership(context.Context, *TransferTenantOwnershipRequest) (*TransferTenantOwnershipResponse, error) {
+func (UnimplementedIamServiceServer) TransferTenantOwnership(context.Context, *TransferTenantOwnershipRequest) (*TransferTenantOwnershipResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method TransferTenantOwnership not implemented")
 }
-func (UnimplementedIamAPIServer) LeaveTenant(context.Context, *LeaveTenantRequest) (*LeaveTenantResponse, error) {
+func (UnimplementedIamServiceServer) LeaveTenant(context.Context, *LeaveTenantRequest) (*LeaveTenantResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method LeaveTenant not implemented")
 }
-func (UnimplementedIamAPIServer) CreateRole(context.Context, *CreateRoleRequest) (*CreateRoleResponse, error) {
+func (UnimplementedIamServiceServer) CreateRole(context.Context, *CreateRoleRequest) (*CreateRoleResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateRole not implemented")
 }
-func (UnimplementedIamAPIServer) GetRole(context.Context, *GetRoleRequest) (*GetRoleResponse, error) {
+func (UnimplementedIamServiceServer) GetRole(context.Context, *GetRoleRequest) (*GetRoleResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetRole not implemented")
 }
-func (UnimplementedIamAPIServer) ListRoles(context.Context, *ListRolesRequest) (*ListRolesResponse, error) {
+func (UnimplementedIamServiceServer) ListRoles(context.Context, *ListRolesRequest) (*ListRolesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListRoles not implemented")
 }
-func (UnimplementedIamAPIServer) UpdateRole(context.Context, *UpdateRoleRequest) (*UpdateRoleResponse, error) {
+func (UnimplementedIamServiceServer) UpdateRole(context.Context, *UpdateRoleRequest) (*UpdateRoleResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateRole not implemented")
 }
-func (UnimplementedIamAPIServer) DeleteRole(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error) {
+func (UnimplementedIamServiceServer) DeleteRole(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteRole not implemented")
 }
-func (UnimplementedIamAPIServer) CreateMembership(context.Context, *CreateMembershipRequest) (*CreateMembershipResponse, error) {
+func (UnimplementedIamServiceServer) CreateMembership(context.Context, *CreateMembershipRequest) (*CreateMembershipResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateMembership not implemented")
 }
-func (UnimplementedIamAPIServer) GetMembership(context.Context, *GetMembershipRequest) (*GetMembershipResponse, error) {
+func (UnimplementedIamServiceServer) GetMembership(context.Context, *GetMembershipRequest) (*GetMembershipResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMembership not implemented")
 }
-func (UnimplementedIamAPIServer) ListMemberships(context.Context, *ListMembershipsRequest) (*ListMembershipsResponse, error) {
+func (UnimplementedIamServiceServer) ListMemberships(context.Context, *ListMembershipsRequest) (*ListMembershipsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListMemberships not implemented")
 }
-func (UnimplementedIamAPIServer) UpdateMembership(context.Context, *UpdateMembershipRequest) (*UpdateMembershipResponse, error) {
+func (UnimplementedIamServiceServer) UpdateMembership(context.Context, *UpdateMembershipRequest) (*UpdateMembershipResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateMembership not implemented")
 }
-func (UnimplementedIamAPIServer) DeleteMembership(context.Context, *DeleteMembershipRequest) (*DeleteMembershipResponse, error) {
+func (UnimplementedIamServiceServer) DeleteMembership(context.Context, *DeleteMembershipRequest) (*DeleteMembershipResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteMembership not implemented")
 }
-func (UnimplementedIamAPIServer) GetMyPermissions(context.Context, *GetMyPermissionsRequest) (*GetMyPermissionsResponse, error) {
+func (UnimplementedIamServiceServer) GetMyPermissions(context.Context, *GetMyPermissionsRequest) (*GetMyPermissionsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMyPermissions not implemented")
 }
-func (UnimplementedIamAPIServer) ListPermissions(context.Context, *ListPermissionsRequest) (*ListPermissionsResponse, error) {
+func (UnimplementedIamServiceServer) ListPermissions(context.Context, *ListPermissionsRequest) (*ListPermissionsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListPermissions not implemented")
 }
-func (UnimplementedIamAPIServer) CreateIdentityProvider(context.Context, *CreateIdentityProviderRequest) (*CreateIdentityProviderResponse, error) {
+func (UnimplementedIamServiceServer) CreateIdentityProvider(context.Context, *CreateIdentityProviderRequest) (*CreateIdentityProviderResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateIdentityProvider not implemented")
 }
-func (UnimplementedIamAPIServer) GetIdentityProvider(context.Context, *GetIdentityProviderRequest) (*GetIdentityProviderResponse, error) {
+func (UnimplementedIamServiceServer) GetIdentityProvider(context.Context, *GetIdentityProviderRequest) (*GetIdentityProviderResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetIdentityProvider not implemented")
 }
-func (UnimplementedIamAPIServer) UpdateIdentityProvider(context.Context, *UpdateIdentityProviderRequest) (*UpdateIdentityProviderResponse, error) {
+func (UnimplementedIamServiceServer) UpdateIdentityProvider(context.Context, *UpdateIdentityProviderRequest) (*UpdateIdentityProviderResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateIdentityProvider not implemented")
 }
-func (UnimplementedIamAPIServer) DeleteIdentityProvider(context.Context, *DeleteIdentityProviderRequest) (*DeleteIdentityProviderResponse, error) {
+func (UnimplementedIamServiceServer) DeleteIdentityProvider(context.Context, *DeleteIdentityProviderRequest) (*DeleteIdentityProviderResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteIdentityProvider not implemented")
 }
-func (UnimplementedIamAPIServer) ListIdentityProviders(context.Context, *ListIdentityProvidersRequest) (*ListIdentityProvidersResponse, error) {
+func (UnimplementedIamServiceServer) ListIdentityProviders(context.Context, *ListIdentityProvidersRequest) (*ListIdentityProvidersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListIdentityProviders not implemented")
 }
-func (UnimplementedIamAPIServer) StartSSO(context.Context, *StartSSORequest) (*StartSSOResponse, error) {
+func (UnimplementedIamServiceServer) StartSSO(context.Context, *StartSSORequest) (*StartSSOResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method StartSSO not implemented")
 }
-func (UnimplementedIamAPIServer) CompleteSSO(context.Context, *CompleteSSORequest) (*CompleteSSOResponse, error) {
+func (UnimplementedIamServiceServer) CompleteSSO(context.Context, *CompleteSSORequest) (*CompleteSSOResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CompleteSSO not implemented")
 }
-func (UnimplementedIamAPIServer) LinkExternalIdentity(context.Context, *LinkExternalIdentityRequest) (*LinkExternalIdentityResponse, error) {
+func (UnimplementedIamServiceServer) LinkExternalIdentity(context.Context, *LinkExternalIdentityRequest) (*LinkExternalIdentityResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method LinkExternalIdentity not implemented")
 }
-func (UnimplementedIamAPIServer) UnlinkExternalIdentity(context.Context, *UnlinkExternalIdentityRequest) (*UnlinkExternalIdentityResponse, error) {
+func (UnimplementedIamServiceServer) UnlinkExternalIdentity(context.Context, *UnlinkExternalIdentityRequest) (*UnlinkExternalIdentityResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UnlinkExternalIdentity not implemented")
 }
-func (UnimplementedIamAPIServer) ListExternalIdentities(context.Context, *ListExternalIdentitiesRequest) (*ListExternalIdentitiesResponse, error) {
+func (UnimplementedIamServiceServer) ListExternalIdentities(context.Context, *ListExternalIdentitiesRequest) (*ListExternalIdentitiesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListExternalIdentities not implemented")
 }
-func (UnimplementedIamAPIServer) CreateApiToken(context.Context, *CreateApiTokenRequest) (*CreateApiTokenResponse, error) {
+func (UnimplementedIamServiceServer) CreateApiToken(context.Context, *CreateApiTokenRequest) (*CreateApiTokenResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateApiToken not implemented")
 }
-func (UnimplementedIamAPIServer) ListApiTokens(context.Context, *ListApiTokensRequest) (*ListApiTokensResponse, error) {
+func (UnimplementedIamServiceServer) ListApiTokens(context.Context, *ListApiTokensRequest) (*ListApiTokensResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListApiTokens not implemented")
 }
-func (UnimplementedIamAPIServer) RevokeApiToken(context.Context, *RevokeApiTokenRequest) (*RevokeApiTokenResponse, error) {
+func (UnimplementedIamServiceServer) RevokeApiToken(context.Context, *RevokeApiTokenRequest) (*RevokeApiTokenResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RevokeApiToken not implemented")
 }
-func (UnimplementedIamAPIServer) mustEmbedUnimplementedIamAPIServer() {}
-func (UnimplementedIamAPIServer) testEmbeddedByValue()                {}
+func (UnimplementedIamServiceServer) mustEmbedUnimplementedIamServiceServer() {}
+func (UnimplementedIamServiceServer) testEmbeddedByValue()                    {}
 
-// UnsafeIamAPIServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to IamAPIServer will
+// UnsafeIamServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to IamServiceServer will
 // result in compilation errors.
-type UnsafeIamAPIServer interface {
-	mustEmbedUnimplementedIamAPIServer()
+type UnsafeIamServiceServer interface {
+	mustEmbedUnimplementedIamServiceServer()
 }
 
-func RegisterIamAPIServer(s grpc.ServiceRegistrar, srv IamAPIServer) {
-	// If the following call panics, it indicates UnimplementedIamAPIServer was
+func RegisterIamServiceServer(s grpc.ServiceRegistrar, srv IamServiceServer) {
+	// If the following call panics, it indicates UnimplementedIamServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&IamAPI_ServiceDesc, srv)
+	s.RegisterService(&IamService_ServiceDesc, srv)
 }
 
-func _IamAPI_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RegisterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).Register(ctx, in)
+		return srv.(IamServiceServer).Register(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_Register_FullMethodName,
+		FullMethod: IamService_Register_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).Register(ctx, req.(*RegisterRequest))
+		return srv.(IamServiceServer).Register(ctx, req.(*RegisterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LoginRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).Login(ctx, in)
+		return srv.(IamServiceServer).Login(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_Login_FullMethodName,
+		FullMethod: IamService_Login_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).Login(ctx, req.(*LoginRequest))
+		return srv.(IamServiceServer).Login(ctx, req.(*LoginRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_Refresh_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_Refresh_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RefreshRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).Refresh(ctx, in)
+		return srv.(IamServiceServer).Refresh(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_Refresh_FullMethodName,
+		FullMethod: IamService_Refresh_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).Refresh(ctx, req.(*RefreshRequest))
+		return srv.(IamServiceServer).Refresh(ctx, req.(*RefreshRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_Logout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_Logout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LogoutRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).Logout(ctx, in)
+		return srv.(IamServiceServer).Logout(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_Logout_FullMethodName,
+		FullMethod: IamService_Logout_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).Logout(ctx, req.(*LogoutRequest))
+		return srv.(IamServiceServer).Logout(ctx, req.(*LogoutRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_RequestPasswordReset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_RequestPasswordReset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RequestPasswordResetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).RequestPasswordReset(ctx, in)
+		return srv.(IamServiceServer).RequestPasswordReset(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_RequestPasswordReset_FullMethodName,
+		FullMethod: IamService_RequestPasswordReset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).RequestPasswordReset(ctx, req.(*RequestPasswordResetRequest))
+		return srv.(IamServiceServer).RequestPasswordReset(ctx, req.(*RequestPasswordResetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_ConfirmPasswordReset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_ConfirmPasswordReset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ConfirmPasswordResetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).ConfirmPasswordReset(ctx, in)
+		return srv.(IamServiceServer).ConfirmPasswordReset(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_ConfirmPasswordReset_FullMethodName,
+		FullMethod: IamService_ConfirmPasswordReset_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).ConfirmPasswordReset(ctx, req.(*ConfirmPasswordResetRequest))
+		return srv.(IamServiceServer).ConfirmPasswordReset(ctx, req.(*ConfirmPasswordResetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_VerifyEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_VerifyEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(VerifyEmailRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).VerifyEmail(ctx, in)
+		return srv.(IamServiceServer).VerifyEmail(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_VerifyEmail_FullMethodName,
+		FullMethod: IamService_VerifyEmail_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).VerifyEmail(ctx, req.(*VerifyEmailRequest))
+		return srv.(IamServiceServer).VerifyEmail(ctx, req.(*VerifyEmailRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_CreateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_CreateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).CreateAccount(ctx, in)
+		return srv.(IamServiceServer).CreateAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_CreateAccount_FullMethodName,
+		FullMethod: IamService_CreateAccount_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).CreateAccount(ctx, req.(*CreateAccountRequest))
+		return srv.(IamServiceServer).CreateAccount(ctx, req.(*CreateAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_GetAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_GetAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).GetAccount(ctx, in)
+		return srv.(IamServiceServer).GetAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_GetAccount_FullMethodName,
+		FullMethod: IamService_GetAccount_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).GetAccount(ctx, req.(*GetAccountRequest))
+		return srv.(IamServiceServer).GetAccount(ctx, req.(*GetAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_GetMyAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_GetMyAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetMyAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).GetMyAccount(ctx, in)
+		return srv.(IamServiceServer).GetMyAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_GetMyAccount_FullMethodName,
+		FullMethod: IamService_GetMyAccount_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).GetMyAccount(ctx, req.(*GetMyAccountRequest))
+		return srv.(IamServiceServer).GetMyAccount(ctx, req.(*GetMyAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_ListAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_ListAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListAccountsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).ListAccounts(ctx, in)
+		return srv.(IamServiceServer).ListAccounts(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_ListAccounts_FullMethodName,
+		FullMethod: IamService_ListAccounts_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).ListAccounts(ctx, req.(*ListAccountsRequest))
+		return srv.(IamServiceServer).ListAccounts(ctx, req.(*ListAccountsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_UpdateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_UpdateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).UpdateAccount(ctx, in)
+		return srv.(IamServiceServer).UpdateAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_UpdateAccount_FullMethodName,
+		FullMethod: IamService_UpdateAccount_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).UpdateAccount(ctx, req.(*UpdateAccountRequest))
+		return srv.(IamServiceServer).UpdateAccount(ctx, req.(*UpdateAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_DeleteAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_DeleteAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).DeleteAccount(ctx, in)
+		return srv.(IamServiceServer).DeleteAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_DeleteAccount_FullMethodName,
+		FullMethod: IamService_DeleteAccount_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).DeleteAccount(ctx, req.(*DeleteAccountRequest))
+		return srv.(IamServiceServer).DeleteAccount(ctx, req.(*DeleteAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_ChangePassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_ChangePassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ChangePasswordRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).ChangePassword(ctx, in)
+		return srv.(IamServiceServer).ChangePassword(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_ChangePassword_FullMethodName,
+		FullMethod: IamService_ChangePassword_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).ChangePassword(ctx, req.(*ChangePasswordRequest))
+		return srv.(IamServiceServer).ChangePassword(ctx, req.(*ChangePasswordRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_ResetPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_ResetPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ResetPasswordRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).ResetPassword(ctx, in)
+		return srv.(IamServiceServer).ResetPassword(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_ResetPassword_FullMethodName,
+		FullMethod: IamService_ResetPassword_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).ResetPassword(ctx, req.(*ResetPasswordRequest))
+		return srv.(IamServiceServer).ResetPassword(ctx, req.(*ResetPasswordRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_ResendVerification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_ResendVerification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ResendVerificationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).ResendVerification(ctx, in)
+		return srv.(IamServiceServer).ResendVerification(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_ResendVerification_FullMethodName,
+		FullMethod: IamService_ResendVerification_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).ResendVerification(ctx, req.(*ResendVerificationRequest))
+		return srv.(IamServiceServer).ResendVerification(ctx, req.(*ResendVerificationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_CreateTenant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_CreateTenant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateTenantRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).CreateTenant(ctx, in)
+		return srv.(IamServiceServer).CreateTenant(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_CreateTenant_FullMethodName,
+		FullMethod: IamService_CreateTenant_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).CreateTenant(ctx, req.(*CreateTenantRequest))
+		return srv.(IamServiceServer).CreateTenant(ctx, req.(*CreateTenantRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_GetTenant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_GetTenant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetTenantRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).GetTenant(ctx, in)
+		return srv.(IamServiceServer).GetTenant(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_GetTenant_FullMethodName,
+		FullMethod: IamService_GetTenant_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).GetTenant(ctx, req.(*GetTenantRequest))
+		return srv.(IamServiceServer).GetTenant(ctx, req.(*GetTenantRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_ListMyTenants_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_ListMyTenants_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListMyTenantsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).ListMyTenants(ctx, in)
+		return srv.(IamServiceServer).ListMyTenants(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_ListMyTenants_FullMethodName,
+		FullMethod: IamService_ListMyTenants_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).ListMyTenants(ctx, req.(*ListMyTenantsRequest))
+		return srv.(IamServiceServer).ListMyTenants(ctx, req.(*ListMyTenantsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_UpdateTenant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_UpdateTenant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateTenantRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).UpdateTenant(ctx, in)
+		return srv.(IamServiceServer).UpdateTenant(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_UpdateTenant_FullMethodName,
+		FullMethod: IamService_UpdateTenant_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).UpdateTenant(ctx, req.(*UpdateTenantRequest))
+		return srv.(IamServiceServer).UpdateTenant(ctx, req.(*UpdateTenantRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_DeleteTenant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_DeleteTenant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteTenantRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).DeleteTenant(ctx, in)
+		return srv.(IamServiceServer).DeleteTenant(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_DeleteTenant_FullMethodName,
+		FullMethod: IamService_DeleteTenant_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).DeleteTenant(ctx, req.(*DeleteTenantRequest))
+		return srv.(IamServiceServer).DeleteTenant(ctx, req.(*DeleteTenantRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_TransferTenantOwnership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_TransferTenantOwnership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TransferTenantOwnershipRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).TransferTenantOwnership(ctx, in)
+		return srv.(IamServiceServer).TransferTenantOwnership(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_TransferTenantOwnership_FullMethodName,
+		FullMethod: IamService_TransferTenantOwnership_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).TransferTenantOwnership(ctx, req.(*TransferTenantOwnershipRequest))
+		return srv.(IamServiceServer).TransferTenantOwnership(ctx, req.(*TransferTenantOwnershipRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_LeaveTenant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_LeaveTenant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LeaveTenantRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).LeaveTenant(ctx, in)
+		return srv.(IamServiceServer).LeaveTenant(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_LeaveTenant_FullMethodName,
+		FullMethod: IamService_LeaveTenant_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).LeaveTenant(ctx, req.(*LeaveTenantRequest))
+		return srv.(IamServiceServer).LeaveTenant(ctx, req.(*LeaveTenantRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_CreateRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_CreateRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateRoleRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).CreateRole(ctx, in)
+		return srv.(IamServiceServer).CreateRole(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_CreateRole_FullMethodName,
+		FullMethod: IamService_CreateRole_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).CreateRole(ctx, req.(*CreateRoleRequest))
+		return srv.(IamServiceServer).CreateRole(ctx, req.(*CreateRoleRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_GetRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_GetRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetRoleRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).GetRole(ctx, in)
+		return srv.(IamServiceServer).GetRole(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_GetRole_FullMethodName,
+		FullMethod: IamService_GetRole_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).GetRole(ctx, req.(*GetRoleRequest))
+		return srv.(IamServiceServer).GetRole(ctx, req.(*GetRoleRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_ListRoles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_ListRoles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListRolesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).ListRoles(ctx, in)
+		return srv.(IamServiceServer).ListRoles(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_ListRoles_FullMethodName,
+		FullMethod: IamService_ListRoles_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).ListRoles(ctx, req.(*ListRolesRequest))
+		return srv.(IamServiceServer).ListRoles(ctx, req.(*ListRolesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_UpdateRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_UpdateRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateRoleRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).UpdateRole(ctx, in)
+		return srv.(IamServiceServer).UpdateRole(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_UpdateRole_FullMethodName,
+		FullMethod: IamService_UpdateRole_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).UpdateRole(ctx, req.(*UpdateRoleRequest))
+		return srv.(IamServiceServer).UpdateRole(ctx, req.(*UpdateRoleRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_DeleteRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_DeleteRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRoleRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).DeleteRole(ctx, in)
+		return srv.(IamServiceServer).DeleteRole(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_DeleteRole_FullMethodName,
+		FullMethod: IamService_DeleteRole_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).DeleteRole(ctx, req.(*DeleteRoleRequest))
+		return srv.(IamServiceServer).DeleteRole(ctx, req.(*DeleteRoleRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_CreateMembership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_CreateMembership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateMembershipRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).CreateMembership(ctx, in)
+		return srv.(IamServiceServer).CreateMembership(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_CreateMembership_FullMethodName,
+		FullMethod: IamService_CreateMembership_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).CreateMembership(ctx, req.(*CreateMembershipRequest))
+		return srv.(IamServiceServer).CreateMembership(ctx, req.(*CreateMembershipRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_GetMembership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_GetMembership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetMembershipRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).GetMembership(ctx, in)
+		return srv.(IamServiceServer).GetMembership(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_GetMembership_FullMethodName,
+		FullMethod: IamService_GetMembership_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).GetMembership(ctx, req.(*GetMembershipRequest))
+		return srv.(IamServiceServer).GetMembership(ctx, req.(*GetMembershipRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_ListMemberships_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_ListMemberships_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListMembershipsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).ListMemberships(ctx, in)
+		return srv.(IamServiceServer).ListMemberships(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_ListMemberships_FullMethodName,
+		FullMethod: IamService_ListMemberships_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).ListMemberships(ctx, req.(*ListMembershipsRequest))
+		return srv.(IamServiceServer).ListMemberships(ctx, req.(*ListMembershipsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_UpdateMembership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_UpdateMembership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateMembershipRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).UpdateMembership(ctx, in)
+		return srv.(IamServiceServer).UpdateMembership(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_UpdateMembership_FullMethodName,
+		FullMethod: IamService_UpdateMembership_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).UpdateMembership(ctx, req.(*UpdateMembershipRequest))
+		return srv.(IamServiceServer).UpdateMembership(ctx, req.(*UpdateMembershipRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_DeleteMembership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_DeleteMembership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteMembershipRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).DeleteMembership(ctx, in)
+		return srv.(IamServiceServer).DeleteMembership(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_DeleteMembership_FullMethodName,
+		FullMethod: IamService_DeleteMembership_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).DeleteMembership(ctx, req.(*DeleteMembershipRequest))
+		return srv.(IamServiceServer).DeleteMembership(ctx, req.(*DeleteMembershipRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_GetMyPermissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_GetMyPermissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetMyPermissionsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).GetMyPermissions(ctx, in)
+		return srv.(IamServiceServer).GetMyPermissions(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_GetMyPermissions_FullMethodName,
+		FullMethod: IamService_GetMyPermissions_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).GetMyPermissions(ctx, req.(*GetMyPermissionsRequest))
+		return srv.(IamServiceServer).GetMyPermissions(ctx, req.(*GetMyPermissionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_ListPermissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_ListPermissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListPermissionsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).ListPermissions(ctx, in)
+		return srv.(IamServiceServer).ListPermissions(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_ListPermissions_FullMethodName,
+		FullMethod: IamService_ListPermissions_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).ListPermissions(ctx, req.(*ListPermissionsRequest))
+		return srv.(IamServiceServer).ListPermissions(ctx, req.(*ListPermissionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_CreateIdentityProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_CreateIdentityProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateIdentityProviderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).CreateIdentityProvider(ctx, in)
+		return srv.(IamServiceServer).CreateIdentityProvider(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_CreateIdentityProvider_FullMethodName,
+		FullMethod: IamService_CreateIdentityProvider_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).CreateIdentityProvider(ctx, req.(*CreateIdentityProviderRequest))
+		return srv.(IamServiceServer).CreateIdentityProvider(ctx, req.(*CreateIdentityProviderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_GetIdentityProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_GetIdentityProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetIdentityProviderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).GetIdentityProvider(ctx, in)
+		return srv.(IamServiceServer).GetIdentityProvider(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_GetIdentityProvider_FullMethodName,
+		FullMethod: IamService_GetIdentityProvider_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).GetIdentityProvider(ctx, req.(*GetIdentityProviderRequest))
+		return srv.(IamServiceServer).GetIdentityProvider(ctx, req.(*GetIdentityProviderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_UpdateIdentityProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_UpdateIdentityProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateIdentityProviderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).UpdateIdentityProvider(ctx, in)
+		return srv.(IamServiceServer).UpdateIdentityProvider(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_UpdateIdentityProvider_FullMethodName,
+		FullMethod: IamService_UpdateIdentityProvider_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).UpdateIdentityProvider(ctx, req.(*UpdateIdentityProviderRequest))
+		return srv.(IamServiceServer).UpdateIdentityProvider(ctx, req.(*UpdateIdentityProviderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_DeleteIdentityProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_DeleteIdentityProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteIdentityProviderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).DeleteIdentityProvider(ctx, in)
+		return srv.(IamServiceServer).DeleteIdentityProvider(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_DeleteIdentityProvider_FullMethodName,
+		FullMethod: IamService_DeleteIdentityProvider_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).DeleteIdentityProvider(ctx, req.(*DeleteIdentityProviderRequest))
+		return srv.(IamServiceServer).DeleteIdentityProvider(ctx, req.(*DeleteIdentityProviderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_ListIdentityProviders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_ListIdentityProviders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListIdentityProvidersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).ListIdentityProviders(ctx, in)
+		return srv.(IamServiceServer).ListIdentityProviders(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_ListIdentityProviders_FullMethodName,
+		FullMethod: IamService_ListIdentityProviders_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).ListIdentityProviders(ctx, req.(*ListIdentityProvidersRequest))
+		return srv.(IamServiceServer).ListIdentityProviders(ctx, req.(*ListIdentityProvidersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_StartSSO_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_StartSSO_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(StartSSORequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).StartSSO(ctx, in)
+		return srv.(IamServiceServer).StartSSO(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_StartSSO_FullMethodName,
+		FullMethod: IamService_StartSSO_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).StartSSO(ctx, req.(*StartSSORequest))
+		return srv.(IamServiceServer).StartSSO(ctx, req.(*StartSSORequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_CompleteSSO_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_CompleteSSO_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CompleteSSORequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).CompleteSSO(ctx, in)
+		return srv.(IamServiceServer).CompleteSSO(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_CompleteSSO_FullMethodName,
+		FullMethod: IamService_CompleteSSO_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).CompleteSSO(ctx, req.(*CompleteSSORequest))
+		return srv.(IamServiceServer).CompleteSSO(ctx, req.(*CompleteSSORequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_LinkExternalIdentity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_LinkExternalIdentity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LinkExternalIdentityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).LinkExternalIdentity(ctx, in)
+		return srv.(IamServiceServer).LinkExternalIdentity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_LinkExternalIdentity_FullMethodName,
+		FullMethod: IamService_LinkExternalIdentity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).LinkExternalIdentity(ctx, req.(*LinkExternalIdentityRequest))
+		return srv.(IamServiceServer).LinkExternalIdentity(ctx, req.(*LinkExternalIdentityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_UnlinkExternalIdentity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_UnlinkExternalIdentity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UnlinkExternalIdentityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).UnlinkExternalIdentity(ctx, in)
+		return srv.(IamServiceServer).UnlinkExternalIdentity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_UnlinkExternalIdentity_FullMethodName,
+		FullMethod: IamService_UnlinkExternalIdentity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).UnlinkExternalIdentity(ctx, req.(*UnlinkExternalIdentityRequest))
+		return srv.(IamServiceServer).UnlinkExternalIdentity(ctx, req.(*UnlinkExternalIdentityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_ListExternalIdentities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_ListExternalIdentities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListExternalIdentitiesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).ListExternalIdentities(ctx, in)
+		return srv.(IamServiceServer).ListExternalIdentities(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_ListExternalIdentities_FullMethodName,
+		FullMethod: IamService_ListExternalIdentities_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).ListExternalIdentities(ctx, req.(*ListExternalIdentitiesRequest))
+		return srv.(IamServiceServer).ListExternalIdentities(ctx, req.(*ListExternalIdentitiesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_CreateApiToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_CreateApiToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateApiTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).CreateApiToken(ctx, in)
+		return srv.(IamServiceServer).CreateApiToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_CreateApiToken_FullMethodName,
+		FullMethod: IamService_CreateApiToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).CreateApiToken(ctx, req.(*CreateApiTokenRequest))
+		return srv.(IamServiceServer).CreateApiToken(ctx, req.(*CreateApiTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_ListApiTokens_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_ListApiTokens_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListApiTokensRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).ListApiTokens(ctx, in)
+		return srv.(IamServiceServer).ListApiTokens(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_ListApiTokens_FullMethodName,
+		FullMethod: IamService_ListApiTokens_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).ListApiTokens(ctx, req.(*ListApiTokensRequest))
+		return srv.(IamServiceServer).ListApiTokens(ctx, req.(*ListApiTokensRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _IamAPI_RevokeApiToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IamService_RevokeApiToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RevokeApiTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IamAPIServer).RevokeApiToken(ctx, in)
+		return srv.(IamServiceServer).RevokeApiToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IamAPI_RevokeApiToken_FullMethodName,
+		FullMethod: IamService_RevokeApiToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IamAPIServer).RevokeApiToken(ctx, req.(*RevokeApiTokenRequest))
+		return srv.(IamServiceServer).RevokeApiToken(ctx, req.(*RevokeApiTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// IamAPI_ServiceDesc is the grpc.ServiceDesc for IamAPI service.
+// IamService_ServiceDesc is the grpc.ServiceDesc for IamService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var IamAPI_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "cloud.v1.api.IamAPI",
-	HandlerType: (*IamAPIServer)(nil),
+var IamService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "cloud.v1.api.IamService",
+	HandlerType: (*IamServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Register",
-			Handler:    _IamAPI_Register_Handler,
+			Handler:    _IamService_Register_Handler,
 		},
 		{
 			MethodName: "Login",
-			Handler:    _IamAPI_Login_Handler,
+			Handler:    _IamService_Login_Handler,
 		},
 		{
 			MethodName: "Refresh",
-			Handler:    _IamAPI_Refresh_Handler,
+			Handler:    _IamService_Refresh_Handler,
 		},
 		{
 			MethodName: "Logout",
-			Handler:    _IamAPI_Logout_Handler,
+			Handler:    _IamService_Logout_Handler,
 		},
 		{
 			MethodName: "RequestPasswordReset",
-			Handler:    _IamAPI_RequestPasswordReset_Handler,
+			Handler:    _IamService_RequestPasswordReset_Handler,
 		},
 		{
 			MethodName: "ConfirmPasswordReset",
-			Handler:    _IamAPI_ConfirmPasswordReset_Handler,
+			Handler:    _IamService_ConfirmPasswordReset_Handler,
 		},
 		{
 			MethodName: "VerifyEmail",
-			Handler:    _IamAPI_VerifyEmail_Handler,
+			Handler:    _IamService_VerifyEmail_Handler,
 		},
 		{
 			MethodName: "CreateAccount",
-			Handler:    _IamAPI_CreateAccount_Handler,
+			Handler:    _IamService_CreateAccount_Handler,
 		},
 		{
 			MethodName: "GetAccount",
-			Handler:    _IamAPI_GetAccount_Handler,
+			Handler:    _IamService_GetAccount_Handler,
 		},
 		{
 			MethodName: "GetMyAccount",
-			Handler:    _IamAPI_GetMyAccount_Handler,
+			Handler:    _IamService_GetMyAccount_Handler,
 		},
 		{
 			MethodName: "ListAccounts",
-			Handler:    _IamAPI_ListAccounts_Handler,
+			Handler:    _IamService_ListAccounts_Handler,
 		},
 		{
 			MethodName: "UpdateAccount",
-			Handler:    _IamAPI_UpdateAccount_Handler,
+			Handler:    _IamService_UpdateAccount_Handler,
 		},
 		{
 			MethodName: "DeleteAccount",
-			Handler:    _IamAPI_DeleteAccount_Handler,
+			Handler:    _IamService_DeleteAccount_Handler,
 		},
 		{
 			MethodName: "ChangePassword",
-			Handler:    _IamAPI_ChangePassword_Handler,
+			Handler:    _IamService_ChangePassword_Handler,
 		},
 		{
 			MethodName: "ResetPassword",
-			Handler:    _IamAPI_ResetPassword_Handler,
+			Handler:    _IamService_ResetPassword_Handler,
 		},
 		{
 			MethodName: "ResendVerification",
-			Handler:    _IamAPI_ResendVerification_Handler,
+			Handler:    _IamService_ResendVerification_Handler,
 		},
 		{
 			MethodName: "CreateTenant",
-			Handler:    _IamAPI_CreateTenant_Handler,
+			Handler:    _IamService_CreateTenant_Handler,
 		},
 		{
 			MethodName: "GetTenant",
-			Handler:    _IamAPI_GetTenant_Handler,
+			Handler:    _IamService_GetTenant_Handler,
 		},
 		{
 			MethodName: "ListMyTenants",
-			Handler:    _IamAPI_ListMyTenants_Handler,
+			Handler:    _IamService_ListMyTenants_Handler,
 		},
 		{
 			MethodName: "UpdateTenant",
-			Handler:    _IamAPI_UpdateTenant_Handler,
+			Handler:    _IamService_UpdateTenant_Handler,
 		},
 		{
 			MethodName: "DeleteTenant",
-			Handler:    _IamAPI_DeleteTenant_Handler,
+			Handler:    _IamService_DeleteTenant_Handler,
 		},
 		{
 			MethodName: "TransferTenantOwnership",
-			Handler:    _IamAPI_TransferTenantOwnership_Handler,
+			Handler:    _IamService_TransferTenantOwnership_Handler,
 		},
 		{
 			MethodName: "LeaveTenant",
-			Handler:    _IamAPI_LeaveTenant_Handler,
+			Handler:    _IamService_LeaveTenant_Handler,
 		},
 		{
 			MethodName: "CreateRole",
-			Handler:    _IamAPI_CreateRole_Handler,
+			Handler:    _IamService_CreateRole_Handler,
 		},
 		{
 			MethodName: "GetRole",
-			Handler:    _IamAPI_GetRole_Handler,
+			Handler:    _IamService_GetRole_Handler,
 		},
 		{
 			MethodName: "ListRoles",
-			Handler:    _IamAPI_ListRoles_Handler,
+			Handler:    _IamService_ListRoles_Handler,
 		},
 		{
 			MethodName: "UpdateRole",
-			Handler:    _IamAPI_UpdateRole_Handler,
+			Handler:    _IamService_UpdateRole_Handler,
 		},
 		{
 			MethodName: "DeleteRole",
-			Handler:    _IamAPI_DeleteRole_Handler,
+			Handler:    _IamService_DeleteRole_Handler,
 		},
 		{
 			MethodName: "CreateMembership",
-			Handler:    _IamAPI_CreateMembership_Handler,
+			Handler:    _IamService_CreateMembership_Handler,
 		},
 		{
 			MethodName: "GetMembership",
-			Handler:    _IamAPI_GetMembership_Handler,
+			Handler:    _IamService_GetMembership_Handler,
 		},
 		{
 			MethodName: "ListMemberships",
-			Handler:    _IamAPI_ListMemberships_Handler,
+			Handler:    _IamService_ListMemberships_Handler,
 		},
 		{
 			MethodName: "UpdateMembership",
-			Handler:    _IamAPI_UpdateMembership_Handler,
+			Handler:    _IamService_UpdateMembership_Handler,
 		},
 		{
 			MethodName: "DeleteMembership",
-			Handler:    _IamAPI_DeleteMembership_Handler,
+			Handler:    _IamService_DeleteMembership_Handler,
 		},
 		{
 			MethodName: "GetMyPermissions",
-			Handler:    _IamAPI_GetMyPermissions_Handler,
+			Handler:    _IamService_GetMyPermissions_Handler,
 		},
 		{
 			MethodName: "ListPermissions",
-			Handler:    _IamAPI_ListPermissions_Handler,
+			Handler:    _IamService_ListPermissions_Handler,
 		},
 		{
 			MethodName: "CreateIdentityProvider",
-			Handler:    _IamAPI_CreateIdentityProvider_Handler,
+			Handler:    _IamService_CreateIdentityProvider_Handler,
 		},
 		{
 			MethodName: "GetIdentityProvider",
-			Handler:    _IamAPI_GetIdentityProvider_Handler,
+			Handler:    _IamService_GetIdentityProvider_Handler,
 		},
 		{
 			MethodName: "UpdateIdentityProvider",
-			Handler:    _IamAPI_UpdateIdentityProvider_Handler,
+			Handler:    _IamService_UpdateIdentityProvider_Handler,
 		},
 		{
 			MethodName: "DeleteIdentityProvider",
-			Handler:    _IamAPI_DeleteIdentityProvider_Handler,
+			Handler:    _IamService_DeleteIdentityProvider_Handler,
 		},
 		{
 			MethodName: "ListIdentityProviders",
-			Handler:    _IamAPI_ListIdentityProviders_Handler,
+			Handler:    _IamService_ListIdentityProviders_Handler,
 		},
 		{
 			MethodName: "StartSSO",
-			Handler:    _IamAPI_StartSSO_Handler,
+			Handler:    _IamService_StartSSO_Handler,
 		},
 		{
 			MethodName: "CompleteSSO",
-			Handler:    _IamAPI_CompleteSSO_Handler,
+			Handler:    _IamService_CompleteSSO_Handler,
 		},
 		{
 			MethodName: "LinkExternalIdentity",
-			Handler:    _IamAPI_LinkExternalIdentity_Handler,
+			Handler:    _IamService_LinkExternalIdentity_Handler,
 		},
 		{
 			MethodName: "UnlinkExternalIdentity",
-			Handler:    _IamAPI_UnlinkExternalIdentity_Handler,
+			Handler:    _IamService_UnlinkExternalIdentity_Handler,
 		},
 		{
 			MethodName: "ListExternalIdentities",
-			Handler:    _IamAPI_ListExternalIdentities_Handler,
+			Handler:    _IamService_ListExternalIdentities_Handler,
 		},
 		{
 			MethodName: "CreateApiToken",
-			Handler:    _IamAPI_CreateApiToken_Handler,
+			Handler:    _IamService_CreateApiToken_Handler,
 		},
 		{
 			MethodName: "ListApiTokens",
-			Handler:    _IamAPI_ListApiTokens_Handler,
+			Handler:    _IamService_ListApiTokens_Handler,
 		},
 		{
 			MethodName: "RevokeApiToken",
-			Handler:    _IamAPI_RevokeApiToken_Handler,
+			Handler:    _IamService_RevokeApiToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

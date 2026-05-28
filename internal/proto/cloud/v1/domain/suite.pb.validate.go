@@ -149,6 +149,43 @@ func (m *Suite) validate(all bool) error {
 		}
 	}
 
+	if all {
+		switch v := interface{}(m.GetSchedule()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SuiteValidationError{
+					field:  "Schedule",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SuiteValidationError{
+					field:  "Schedule",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSchedule()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SuiteValidationError{
+				field:  "Schedule",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.DefaultInTenantRating != nil {
+		// no validation rules for DefaultInTenantRating
+	}
+
+	if m.DefaultInGlobalRating != nil {
+		// no validation rules for DefaultInGlobalRating
+	}
+
 	if len(errors) > 0 {
 		return SuiteMultiError(errors)
 	}
@@ -229,6 +266,129 @@ var _ interface {
 var _Suite_Provider_NotInLookup = map[deployment.Provider]struct{}{
 	0: {},
 }
+
+// Validate checks the field values on Schedule with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Schedule) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Schedule with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ScheduleMultiError, or nil
+// if none found.
+func (m *Schedule) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Schedule) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Enabled
+
+	if utf8.RuneCountInString(m.GetCron()) > 128 {
+		err := ScheduleValidationError{
+			field:  "Cron",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetTimezone()) > 64 {
+		err := ScheduleValidationError{
+			field:  "Timezone",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return ScheduleMultiError(errors)
+	}
+
+	return nil
+}
+
+// ScheduleMultiError is an error wrapping multiple validation errors returned
+// by Schedule.ValidateAll() if the designated constraints aren't met.
+type ScheduleMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ScheduleMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ScheduleMultiError) AllErrors() []error { return m }
+
+// ScheduleValidationError is the validation error returned by
+// Schedule.Validate if the designated constraints aren't met.
+type ScheduleValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ScheduleValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ScheduleValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ScheduleValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ScheduleValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ScheduleValidationError) ErrorName() string { return "ScheduleValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ScheduleValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSchedule.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ScheduleValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ScheduleValidationError{}
 
 // Validate checks the field values on SuiteRun with the rules defined in the
 // proto definition for this message. If any rules are violated, the first

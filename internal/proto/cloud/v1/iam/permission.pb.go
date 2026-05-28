@@ -45,18 +45,55 @@ const (
 	// RESOURCE_PRESET is a tenant-scoped, reusable test/database/workload
 	// preset (see models.DatabasePreset / WorkloadPreset / TestPreset).
 	Resource_RESOURCE_PRESET Resource = 6
+	// RESOURCE_WIZARD is a tenant-scoped wizard draft (see
+	// models.TestWizardDraftRecord / SuiteWizardDraftRecord) used to assemble a
+	// TestRun / SuiteRun step by step.
+	Resource_RESOURCE_WIZARD Resource = 7
+	// RESOURCE_TEST_RUN is a tenant-scoped test execution (models.TestRunRecord):
+	// start, read, list, cancel, delete.
+	Resource_RESOURCE_TEST_RUN Resource = 8
+	// RESOURCE_SUITE is a tenant-scoped suite definition (models.SuiteRecord):
+	// full CRUD + clone.
+	Resource_RESOURCE_SUITE Resource = 9
+	// RESOURCE_SUITE_RUN is a tenant-scoped suite execution (models.SuiteRunRecord):
+	// start, read, list, cancel, delete.
+	Resource_RESOURCE_SUITE_RUN Resource = 10
+	// RESOURCE_FAVORITE is the per-user favorite relation (models.FavoriteRecord).
+	// Tenant-scoped so favoriting requires tenant membership; favorites are
+	// personal to the caller. Reading the computed Entity.is_favorite flag needs
+	// no grant (it rides on data the caller already reads).
+	Resource_RESOURCE_FAVORITE Resource = 11
+	// RESOURCE_AGENT_SHELL is the interactive reverse-shell to an agent from the
+	// admin UI. High-privilege (arbitrary command execution on the host): grant
+	// sparingly, audit every session.
+	Resource_RESOURCE_AGENT_SHELL Resource = 12
+	// RESOURCE_SHARE manages public share links for a run (models.ShareRecord):
+	// create / list / revoke. The PUBLIC resolve endpoint is unauthenticated and
+	// needs no grant.
+	Resource_RESOURCE_SHARE Resource = 13
+	// RESOURCE_PACKAGE is a tenant-uploaded custom package (models.PackageRecord),
+	// e.g. a custom .deb / binary used to install a database build. Tenant-private.
+	Resource_RESOURCE_PACKAGE Resource = 14
 )
 
 // Enum value maps for Resource.
 var (
 	Resource_name = map[int32]string{
-		0: "RESOURCE_UNSPECIFIED",
-		1: "RESOURCE_ACCOUNT",
-		2: "RESOURCE_TENANT",
-		3: "RESOURCE_ROLE",
-		4: "RESOURCE_MEMBERSHIP",
-		5: "RESOURCE_SETTINGS",
-		6: "RESOURCE_PRESET",
+		0:  "RESOURCE_UNSPECIFIED",
+		1:  "RESOURCE_ACCOUNT",
+		2:  "RESOURCE_TENANT",
+		3:  "RESOURCE_ROLE",
+		4:  "RESOURCE_MEMBERSHIP",
+		5:  "RESOURCE_SETTINGS",
+		6:  "RESOURCE_PRESET",
+		7:  "RESOURCE_WIZARD",
+		8:  "RESOURCE_TEST_RUN",
+		9:  "RESOURCE_SUITE",
+		10: "RESOURCE_SUITE_RUN",
+		11: "RESOURCE_FAVORITE",
+		12: "RESOURCE_AGENT_SHELL",
+		13: "RESOURCE_SHARE",
+		14: "RESOURCE_PACKAGE",
 	}
 	Resource_value = map[string]int32{
 		"RESOURCE_UNSPECIFIED": 0,
@@ -66,6 +103,14 @@ var (
 		"RESOURCE_MEMBERSHIP":  4,
 		"RESOURCE_SETTINGS":    5,
 		"RESOURCE_PRESET":      6,
+		"RESOURCE_WIZARD":      7,
+		"RESOURCE_TEST_RUN":    8,
+		"RESOURCE_SUITE":       9,
+		"RESOURCE_SUITE_RUN":   10,
+		"RESOURCE_FAVORITE":    11,
+		"RESOURCE_AGENT_SHELL": 12,
+		"RESOURCE_SHARE":       13,
+		"RESOURCE_PACKAGE":     14,
 	}
 )
 
@@ -293,7 +338,7 @@ const file_cloud_v1_iam_permission_proto_rawDesc = "" +
 	"\bresource\x18\x01 \x01(\x0e2\x16.cloud.v1.iam.ResourceB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bresource\x128\n" +
 	"\x06action\x18\x02 \x01(\x0e2\x14.cloud.v1.iam.ActionB\n" +
-	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x06action*\xa7\x01\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x06action*\xda\x02\n" +
 	"\bResource\x12\x18\n" +
 	"\x14RESOURCE_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10RESOURCE_ACCOUNT\x10\x01\x12\x13\n" +
@@ -301,7 +346,16 @@ const file_cloud_v1_iam_permission_proto_rawDesc = "" +
 	"\rRESOURCE_ROLE\x10\x03\x12\x17\n" +
 	"\x13RESOURCE_MEMBERSHIP\x10\x04\x12\x15\n" +
 	"\x11RESOURCE_SETTINGS\x10\x05\x12\x13\n" +
-	"\x0fRESOURCE_PRESET\x10\x06*\x8e\x01\n" +
+	"\x0fRESOURCE_PRESET\x10\x06\x12\x13\n" +
+	"\x0fRESOURCE_WIZARD\x10\a\x12\x15\n" +
+	"\x11RESOURCE_TEST_RUN\x10\b\x12\x12\n" +
+	"\x0eRESOURCE_SUITE\x10\t\x12\x16\n" +
+	"\x12RESOURCE_SUITE_RUN\x10\n" +
+	"\x12\x15\n" +
+	"\x11RESOURCE_FAVORITE\x10\v\x12\x18\n" +
+	"\x14RESOURCE_AGENT_SHELL\x10\f\x12\x12\n" +
+	"\x0eRESOURCE_SHARE\x10\r\x12\x14\n" +
+	"\x10RESOURCE_PACKAGE\x10\x0e*\x8e\x01\n" +
 	"\x06Action\x12\x16\n" +
 	"\x12ACTION_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rACTION_CREATE\x10\x01\x12\x0f\n" +

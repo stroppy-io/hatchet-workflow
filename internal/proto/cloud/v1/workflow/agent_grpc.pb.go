@@ -21,17 +21,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AgentCommandApi_EnsureAgentOnlineActivity_FullMethodName = "/cloud.v1.workflow.AgentCommandApi/EnsureAgentOnlineActivity"
-	AgentCommandApi_CreateDirActivity_FullMethodName         = "/cloud.v1.workflow.AgentCommandApi/CreateDirActivity"
-	AgentCommandApi_CreateTempDirActivity_FullMethodName     = "/cloud.v1.workflow.AgentCommandApi/CreateTempDirActivity"
-	AgentCommandApi_WriteFileActivity_FullMethodName         = "/cloud.v1.workflow.AgentCommandApi/WriteFileActivity"
-	AgentCommandApi_CallCmdActivity_FullMethodName           = "/cloud.v1.workflow.AgentCommandApi/CallCmdActivity"
+	AgentCommandService_EnsureAgentOnlineActivity_FullMethodName = "/cloud.v1.workflow.AgentCommandService/EnsureAgentOnlineActivity"
+	AgentCommandService_CreateDirActivity_FullMethodName         = "/cloud.v1.workflow.AgentCommandService/CreateDirActivity"
+	AgentCommandService_CreateTempDirActivity_FullMethodName     = "/cloud.v1.workflow.AgentCommandService/CreateTempDirActivity"
+	AgentCommandService_WriteFileActivity_FullMethodName         = "/cloud.v1.workflow.AgentCommandService/WriteFileActivity"
+	AgentCommandService_CallCmdActivity_FullMethodName           = "/cloud.v1.workflow.AgentCommandService/CallCmdActivity"
 )
 
-// AgentCommandApiClient is the client API for AgentCommandApi service.
+// AgentCommandServiceClient is the client API for AgentCommandService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type AgentCommandApiClient interface {
+type AgentCommandServiceClient interface {
 	EnsureAgentOnlineActivity(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	CreateDirActivity(ctx context.Context, in *common.Dir, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	CreateTempDirActivity(ctx context.Context, in *common.Dir_Temp, opts ...grpc.CallOption) (*common.Dir, error)
@@ -39,235 +39,235 @@ type AgentCommandApiClient interface {
 	CallCmdActivity(ctx context.Context, in *common.Cmd, opts ...grpc.CallOption) (*common.Cmd_Result, error)
 }
 
-type agentCommandApiClient struct {
+type agentCommandServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewAgentCommandApiClient(cc grpc.ClientConnInterface) AgentCommandApiClient {
-	return &agentCommandApiClient{cc}
+func NewAgentCommandServiceClient(cc grpc.ClientConnInterface) AgentCommandServiceClient {
+	return &agentCommandServiceClient{cc}
 }
 
-func (c *agentCommandApiClient) EnsureAgentOnlineActivity(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *agentCommandServiceClient) EnsureAgentOnlineActivity(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, AgentCommandApi_EnsureAgentOnlineActivity_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AgentCommandService_EnsureAgentOnlineActivity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *agentCommandApiClient) CreateDirActivity(ctx context.Context, in *common.Dir, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *agentCommandServiceClient) CreateDirActivity(ctx context.Context, in *common.Dir, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, AgentCommandApi_CreateDirActivity_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AgentCommandService_CreateDirActivity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *agentCommandApiClient) CreateTempDirActivity(ctx context.Context, in *common.Dir_Temp, opts ...grpc.CallOption) (*common.Dir, error) {
+func (c *agentCommandServiceClient) CreateTempDirActivity(ctx context.Context, in *common.Dir_Temp, opts ...grpc.CallOption) (*common.Dir, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(common.Dir)
-	err := c.cc.Invoke(ctx, AgentCommandApi_CreateTempDirActivity_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AgentCommandService_CreateTempDirActivity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *agentCommandApiClient) WriteFileActivity(ctx context.Context, in *common.File, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *agentCommandServiceClient) WriteFileActivity(ctx context.Context, in *common.File, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, AgentCommandApi_WriteFileActivity_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AgentCommandService_WriteFileActivity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *agentCommandApiClient) CallCmdActivity(ctx context.Context, in *common.Cmd, opts ...grpc.CallOption) (*common.Cmd_Result, error) {
+func (c *agentCommandServiceClient) CallCmdActivity(ctx context.Context, in *common.Cmd, opts ...grpc.CallOption) (*common.Cmd_Result, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(common.Cmd_Result)
-	err := c.cc.Invoke(ctx, AgentCommandApi_CallCmdActivity_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AgentCommandService_CallCmdActivity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// AgentCommandApiServer is the server API for AgentCommandApi service.
-// All implementations must embed UnimplementedAgentCommandApiServer
+// AgentCommandServiceServer is the server API for AgentCommandService service.
+// All implementations must embed UnimplementedAgentCommandServiceServer
 // for forward compatibility.
-type AgentCommandApiServer interface {
+type AgentCommandServiceServer interface {
 	EnsureAgentOnlineActivity(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 	CreateDirActivity(context.Context, *common.Dir) (*emptypb.Empty, error)
 	CreateTempDirActivity(context.Context, *common.Dir_Temp) (*common.Dir, error)
 	WriteFileActivity(context.Context, *common.File) (*emptypb.Empty, error)
 	CallCmdActivity(context.Context, *common.Cmd) (*common.Cmd_Result, error)
-	mustEmbedUnimplementedAgentCommandApiServer()
+	mustEmbedUnimplementedAgentCommandServiceServer()
 }
 
-// UnimplementedAgentCommandApiServer must be embedded to have
+// UnimplementedAgentCommandServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedAgentCommandApiServer struct{}
+type UnimplementedAgentCommandServiceServer struct{}
 
-func (UnimplementedAgentCommandApiServer) EnsureAgentOnlineActivity(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
+func (UnimplementedAgentCommandServiceServer) EnsureAgentOnlineActivity(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method EnsureAgentOnlineActivity not implemented")
 }
-func (UnimplementedAgentCommandApiServer) CreateDirActivity(context.Context, *common.Dir) (*emptypb.Empty, error) {
+func (UnimplementedAgentCommandServiceServer) CreateDirActivity(context.Context, *common.Dir) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateDirActivity not implemented")
 }
-func (UnimplementedAgentCommandApiServer) CreateTempDirActivity(context.Context, *common.Dir_Temp) (*common.Dir, error) {
+func (UnimplementedAgentCommandServiceServer) CreateTempDirActivity(context.Context, *common.Dir_Temp) (*common.Dir, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateTempDirActivity not implemented")
 }
-func (UnimplementedAgentCommandApiServer) WriteFileActivity(context.Context, *common.File) (*emptypb.Empty, error) {
+func (UnimplementedAgentCommandServiceServer) WriteFileActivity(context.Context, *common.File) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method WriteFileActivity not implemented")
 }
-func (UnimplementedAgentCommandApiServer) CallCmdActivity(context.Context, *common.Cmd) (*common.Cmd_Result, error) {
+func (UnimplementedAgentCommandServiceServer) CallCmdActivity(context.Context, *common.Cmd) (*common.Cmd_Result, error) {
 	return nil, status.Error(codes.Unimplemented, "method CallCmdActivity not implemented")
 }
-func (UnimplementedAgentCommandApiServer) mustEmbedUnimplementedAgentCommandApiServer() {}
-func (UnimplementedAgentCommandApiServer) testEmbeddedByValue()                         {}
+func (UnimplementedAgentCommandServiceServer) mustEmbedUnimplementedAgentCommandServiceServer() {}
+func (UnimplementedAgentCommandServiceServer) testEmbeddedByValue()                             {}
 
-// UnsafeAgentCommandApiServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AgentCommandApiServer will
+// UnsafeAgentCommandServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AgentCommandServiceServer will
 // result in compilation errors.
-type UnsafeAgentCommandApiServer interface {
-	mustEmbedUnimplementedAgentCommandApiServer()
+type UnsafeAgentCommandServiceServer interface {
+	mustEmbedUnimplementedAgentCommandServiceServer()
 }
 
-func RegisterAgentCommandApiServer(s grpc.ServiceRegistrar, srv AgentCommandApiServer) {
-	// If the following call panics, it indicates UnimplementedAgentCommandApiServer was
+func RegisterAgentCommandServiceServer(s grpc.ServiceRegistrar, srv AgentCommandServiceServer) {
+	// If the following call panics, it indicates UnimplementedAgentCommandServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&AgentCommandApi_ServiceDesc, srv)
+	s.RegisterService(&AgentCommandService_ServiceDesc, srv)
 }
 
-func _AgentCommandApi_EnsureAgentOnlineActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AgentCommandService_EnsureAgentOnlineActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AgentCommandApiServer).EnsureAgentOnlineActivity(ctx, in)
+		return srv.(AgentCommandServiceServer).EnsureAgentOnlineActivity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AgentCommandApi_EnsureAgentOnlineActivity_FullMethodName,
+		FullMethod: AgentCommandService_EnsureAgentOnlineActivity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AgentCommandApiServer).EnsureAgentOnlineActivity(ctx, req.(*emptypb.Empty))
+		return srv.(AgentCommandServiceServer).EnsureAgentOnlineActivity(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AgentCommandApi_CreateDirActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AgentCommandService_CreateDirActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(common.Dir)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AgentCommandApiServer).CreateDirActivity(ctx, in)
+		return srv.(AgentCommandServiceServer).CreateDirActivity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AgentCommandApi_CreateDirActivity_FullMethodName,
+		FullMethod: AgentCommandService_CreateDirActivity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AgentCommandApiServer).CreateDirActivity(ctx, req.(*common.Dir))
+		return srv.(AgentCommandServiceServer).CreateDirActivity(ctx, req.(*common.Dir))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AgentCommandApi_CreateTempDirActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AgentCommandService_CreateTempDirActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(common.Dir_Temp)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AgentCommandApiServer).CreateTempDirActivity(ctx, in)
+		return srv.(AgentCommandServiceServer).CreateTempDirActivity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AgentCommandApi_CreateTempDirActivity_FullMethodName,
+		FullMethod: AgentCommandService_CreateTempDirActivity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AgentCommandApiServer).CreateTempDirActivity(ctx, req.(*common.Dir_Temp))
+		return srv.(AgentCommandServiceServer).CreateTempDirActivity(ctx, req.(*common.Dir_Temp))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AgentCommandApi_WriteFileActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AgentCommandService_WriteFileActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(common.File)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AgentCommandApiServer).WriteFileActivity(ctx, in)
+		return srv.(AgentCommandServiceServer).WriteFileActivity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AgentCommandApi_WriteFileActivity_FullMethodName,
+		FullMethod: AgentCommandService_WriteFileActivity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AgentCommandApiServer).WriteFileActivity(ctx, req.(*common.File))
+		return srv.(AgentCommandServiceServer).WriteFileActivity(ctx, req.(*common.File))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AgentCommandApi_CallCmdActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AgentCommandService_CallCmdActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(common.Cmd)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AgentCommandApiServer).CallCmdActivity(ctx, in)
+		return srv.(AgentCommandServiceServer).CallCmdActivity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AgentCommandApi_CallCmdActivity_FullMethodName,
+		FullMethod: AgentCommandService_CallCmdActivity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AgentCommandApiServer).CallCmdActivity(ctx, req.(*common.Cmd))
+		return srv.(AgentCommandServiceServer).CallCmdActivity(ctx, req.(*common.Cmd))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// AgentCommandApi_ServiceDesc is the grpc.ServiceDesc for AgentCommandApi service.
+// AgentCommandService_ServiceDesc is the grpc.ServiceDesc for AgentCommandService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var AgentCommandApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "cloud.v1.workflow.AgentCommandApi",
-	HandlerType: (*AgentCommandApiServer)(nil),
+var AgentCommandService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "cloud.v1.workflow.AgentCommandService",
+	HandlerType: (*AgentCommandServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "EnsureAgentOnlineActivity",
-			Handler:    _AgentCommandApi_EnsureAgentOnlineActivity_Handler,
+			Handler:    _AgentCommandService_EnsureAgentOnlineActivity_Handler,
 		},
 		{
 			MethodName: "CreateDirActivity",
-			Handler:    _AgentCommandApi_CreateDirActivity_Handler,
+			Handler:    _AgentCommandService_CreateDirActivity_Handler,
 		},
 		{
 			MethodName: "CreateTempDirActivity",
-			Handler:    _AgentCommandApi_CreateTempDirActivity_Handler,
+			Handler:    _AgentCommandService_CreateTempDirActivity_Handler,
 		},
 		{
 			MethodName: "WriteFileActivity",
-			Handler:    _AgentCommandApi_WriteFileActivity_Handler,
+			Handler:    _AgentCommandService_WriteFileActivity_Handler,
 		},
 		{
 			MethodName: "CallCmdActivity",
-			Handler:    _AgentCommandApi_CallCmdActivity_Handler,
+			Handler:    _AgentCommandService_CallCmdActivity_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

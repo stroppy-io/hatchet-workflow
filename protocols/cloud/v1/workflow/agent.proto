@@ -10,7 +10,7 @@ import "temporal/v1/temporal.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow";
 
-service AgentCommandApi {
+service AgentCommandService {
     /*
         task_queue: shared queue for the agent-facing activities.
     */

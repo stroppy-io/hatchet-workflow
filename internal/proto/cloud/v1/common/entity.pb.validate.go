@@ -329,6 +329,8 @@ func (m *Entity) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	// no validation rules for IsFavorite
+
 	if len(errors) > 0 {
 		return EntityMultiError(errors)
 	}
@@ -609,6 +611,10 @@ func (m *EntityFilter) validate(all bool) error {
 			errors = append(errors, err)
 		}
 
+	}
+
+	if m.FavoritesOnly != nil {
+		// no validation rules for FavoritesOnly
 	}
 
 	if len(errors) > 0 {

@@ -728,6 +728,10 @@ func (m *ListDatabasePresetsRequest) validate(all bool) error {
 		}
 	}
 
+	if m.IsSystem != nil {
+		// no validation rules for IsSystem
+	}
+
 	if len(errors) > 0 {
 		return ListDatabasePresetsRequestMultiError(errors)
 	}
@@ -1472,6 +1476,284 @@ var _ interface {
 	ErrorName() string
 } = DeleteDatabasePresetResponseValidationError{}
 
+// Validate checks the field values on CloneDatabasePresetRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CloneDatabasePresetRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CloneDatabasePresetRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CloneDatabasePresetRequestMultiError, or nil if none found.
+func (m *CloneDatabasePresetRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CloneDatabasePresetRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := CloneDatabasePresetRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 64 {
+		err := CloneDatabasePresetRequestValidationError{
+			field:  "Id",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetName()) > 255 {
+		err := CloneDatabasePresetRequestValidationError{
+			field:  "Name",
+			reason: "value length must be at most 255 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return CloneDatabasePresetRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CloneDatabasePresetRequestMultiError is an error wrapping multiple
+// validation errors returned by CloneDatabasePresetRequest.ValidateAll() if
+// the designated constraints aren't met.
+type CloneDatabasePresetRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CloneDatabasePresetRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CloneDatabasePresetRequestMultiError) AllErrors() []error { return m }
+
+// CloneDatabasePresetRequestValidationError is the validation error returned
+// by CloneDatabasePresetRequest.Validate if the designated constraints aren't met.
+type CloneDatabasePresetRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CloneDatabasePresetRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CloneDatabasePresetRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CloneDatabasePresetRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CloneDatabasePresetRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CloneDatabasePresetRequestValidationError) ErrorName() string {
+	return "CloneDatabasePresetRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CloneDatabasePresetRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCloneDatabasePresetRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CloneDatabasePresetRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CloneDatabasePresetRequestValidationError{}
+
+// Validate checks the field values on CloneDatabasePresetResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CloneDatabasePresetResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CloneDatabasePresetResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CloneDatabasePresetResponseMultiError, or nil if none found.
+func (m *CloneDatabasePresetResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CloneDatabasePresetResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetPreset() == nil {
+		err := CloneDatabasePresetResponseValidationError{
+			field:  "Preset",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPreset()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CloneDatabasePresetResponseValidationError{
+					field:  "Preset",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CloneDatabasePresetResponseValidationError{
+					field:  "Preset",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPreset()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CloneDatabasePresetResponseValidationError{
+				field:  "Preset",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return CloneDatabasePresetResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// CloneDatabasePresetResponseMultiError is an error wrapping multiple
+// validation errors returned by CloneDatabasePresetResponse.ValidateAll() if
+// the designated constraints aren't met.
+type CloneDatabasePresetResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CloneDatabasePresetResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CloneDatabasePresetResponseMultiError) AllErrors() []error { return m }
+
+// CloneDatabasePresetResponseValidationError is the validation error returned
+// by CloneDatabasePresetResponse.Validate if the designated constraints
+// aren't met.
+type CloneDatabasePresetResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CloneDatabasePresetResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CloneDatabasePresetResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CloneDatabasePresetResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CloneDatabasePresetResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CloneDatabasePresetResponseValidationError) ErrorName() string {
+	return "CloneDatabasePresetResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CloneDatabasePresetResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCloneDatabasePresetResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CloneDatabasePresetResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CloneDatabasePresetResponseValidationError{}
+
 // Validate checks the field values on CreateWorkloadPresetRequest with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -2182,6 +2464,10 @@ func (m *ListWorkloadPresetsRequest) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	if m.IsSystem != nil {
+		// no validation rules for IsSystem
 	}
 
 	if len(errors) > 0 {
@@ -2928,6 +3214,284 @@ var _ interface {
 	ErrorName() string
 } = DeleteWorkloadPresetResponseValidationError{}
 
+// Validate checks the field values on CloneWorkloadPresetRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CloneWorkloadPresetRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CloneWorkloadPresetRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CloneWorkloadPresetRequestMultiError, or nil if none found.
+func (m *CloneWorkloadPresetRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CloneWorkloadPresetRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := CloneWorkloadPresetRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 64 {
+		err := CloneWorkloadPresetRequestValidationError{
+			field:  "Id",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetName()) > 255 {
+		err := CloneWorkloadPresetRequestValidationError{
+			field:  "Name",
+			reason: "value length must be at most 255 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return CloneWorkloadPresetRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CloneWorkloadPresetRequestMultiError is an error wrapping multiple
+// validation errors returned by CloneWorkloadPresetRequest.ValidateAll() if
+// the designated constraints aren't met.
+type CloneWorkloadPresetRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CloneWorkloadPresetRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CloneWorkloadPresetRequestMultiError) AllErrors() []error { return m }
+
+// CloneWorkloadPresetRequestValidationError is the validation error returned
+// by CloneWorkloadPresetRequest.Validate if the designated constraints aren't met.
+type CloneWorkloadPresetRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CloneWorkloadPresetRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CloneWorkloadPresetRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CloneWorkloadPresetRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CloneWorkloadPresetRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CloneWorkloadPresetRequestValidationError) ErrorName() string {
+	return "CloneWorkloadPresetRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CloneWorkloadPresetRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCloneWorkloadPresetRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CloneWorkloadPresetRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CloneWorkloadPresetRequestValidationError{}
+
+// Validate checks the field values on CloneWorkloadPresetResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CloneWorkloadPresetResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CloneWorkloadPresetResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CloneWorkloadPresetResponseMultiError, or nil if none found.
+func (m *CloneWorkloadPresetResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CloneWorkloadPresetResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetPreset() == nil {
+		err := CloneWorkloadPresetResponseValidationError{
+			field:  "Preset",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPreset()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CloneWorkloadPresetResponseValidationError{
+					field:  "Preset",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CloneWorkloadPresetResponseValidationError{
+					field:  "Preset",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPreset()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CloneWorkloadPresetResponseValidationError{
+				field:  "Preset",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return CloneWorkloadPresetResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// CloneWorkloadPresetResponseMultiError is an error wrapping multiple
+// validation errors returned by CloneWorkloadPresetResponse.ValidateAll() if
+// the designated constraints aren't met.
+type CloneWorkloadPresetResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CloneWorkloadPresetResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CloneWorkloadPresetResponseMultiError) AllErrors() []error { return m }
+
+// CloneWorkloadPresetResponseValidationError is the validation error returned
+// by CloneWorkloadPresetResponse.Validate if the designated constraints
+// aren't met.
+type CloneWorkloadPresetResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CloneWorkloadPresetResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CloneWorkloadPresetResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CloneWorkloadPresetResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CloneWorkloadPresetResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CloneWorkloadPresetResponseValidationError) ErrorName() string {
+	return "CloneWorkloadPresetResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CloneWorkloadPresetResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCloneWorkloadPresetResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CloneWorkloadPresetResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CloneWorkloadPresetResponseValidationError{}
+
 // Validate checks the field values on CreateTestPresetRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -3636,6 +4200,10 @@ func (m *ListTestPresetsRequest) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	if m.IsSystem != nil {
+		// no validation rules for IsSystem
 	}
 
 	if len(errors) > 0 {
@@ -4376,6 +4944,283 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = DeleteTestPresetResponseValidationError{}
+
+// Validate checks the field values on CloneTestPresetRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CloneTestPresetRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CloneTestPresetRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CloneTestPresetRequestMultiError, or nil if none found.
+func (m *CloneTestPresetRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CloneTestPresetRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := CloneTestPresetRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 64 {
+		err := CloneTestPresetRequestValidationError{
+			field:  "Id",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetName()) > 255 {
+		err := CloneTestPresetRequestValidationError{
+			field:  "Name",
+			reason: "value length must be at most 255 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return CloneTestPresetRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CloneTestPresetRequestMultiError is an error wrapping multiple validation
+// errors returned by CloneTestPresetRequest.ValidateAll() if the designated
+// constraints aren't met.
+type CloneTestPresetRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CloneTestPresetRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CloneTestPresetRequestMultiError) AllErrors() []error { return m }
+
+// CloneTestPresetRequestValidationError is the validation error returned by
+// CloneTestPresetRequest.Validate if the designated constraints aren't met.
+type CloneTestPresetRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CloneTestPresetRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CloneTestPresetRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CloneTestPresetRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CloneTestPresetRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CloneTestPresetRequestValidationError) ErrorName() string {
+	return "CloneTestPresetRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CloneTestPresetRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCloneTestPresetRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CloneTestPresetRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CloneTestPresetRequestValidationError{}
+
+// Validate checks the field values on CloneTestPresetResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CloneTestPresetResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CloneTestPresetResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CloneTestPresetResponseMultiError, or nil if none found.
+func (m *CloneTestPresetResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CloneTestPresetResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetPreset() == nil {
+		err := CloneTestPresetResponseValidationError{
+			field:  "Preset",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPreset()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CloneTestPresetResponseValidationError{
+					field:  "Preset",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CloneTestPresetResponseValidationError{
+					field:  "Preset",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPreset()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CloneTestPresetResponseValidationError{
+				field:  "Preset",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return CloneTestPresetResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// CloneTestPresetResponseMultiError is an error wrapping multiple validation
+// errors returned by CloneTestPresetResponse.ValidateAll() if the designated
+// constraints aren't met.
+type CloneTestPresetResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CloneTestPresetResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CloneTestPresetResponseMultiError) AllErrors() []error { return m }
+
+// CloneTestPresetResponseValidationError is the validation error returned by
+// CloneTestPresetResponse.Validate if the designated constraints aren't met.
+type CloneTestPresetResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CloneTestPresetResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CloneTestPresetResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CloneTestPresetResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CloneTestPresetResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CloneTestPresetResponseValidationError) ErrorName() string {
+	return "CloneTestPresetResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CloneTestPresetResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCloneTestPresetResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CloneTestPresetResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CloneTestPresetResponseValidationError{}
 
 // Validate checks the field values on ListDatabasePresetsRequest_Sort with the
 // rules defined in the proto definition for this message. If any rules are

@@ -882,7 +882,7 @@ message RevokeApiTokenResponse {}
     ===== Service =====
  */
 
-service IamAPI {
+service IamService {
     /*
         --- Auth (public: no bearer token) ---
      */

@@ -23,6 +23,18 @@ message Entity {
     // author_id is the Account that created the row. Server-assigned from the
     // caller; immutable afterwards.
     string author_id = 6 [(validate.rules).string = {min_len: 1, max_len: 64}];
+
+    /*
+        is_favorite is a COMPUTED, PER-CALLER flag — NOT persisted on the row.
+        On every read the server fills it from the favorites of the REQUESTING
+        account (a FavoriteRecord with author = caller, kind = this entity's kind,
+        target_id = this entity's id). Different callers see different values.
+        Writers MUST ignore any client-supplied value.
+
+        Implementation note: when serving a list/get, left-join the rows against
+        the caller's FavoriteRecords and set this true where a match exists.
+     */
+    bool is_favorite = 7;
 }
 
 /*
@@ -46,6 +58,13 @@ message EntityFilter {
     bool include_deleted = 7;
     // Restrict to rows authored by these Accounts (empty = no author filter).
     repeated string author_ids = 8 [(validate.rules).repeated = {max_items: 1000, items: {string: {max_len: 64}}}];
+    /*
+        favorites_only: when true, return only rows the REQUESTING caller has
+        favorited (rows with a matching FavoriteRecord for caller+kind+id). Unset
+        = no favorite filter. Implementation: inner-join against the caller's
+        FavoriteRecords instead of left-join.
+     */
+    optional bool favorites_only = 9;
 }
 
 // EntitySortField names the common Entity columns a list can be ordered by.
@@ -55,6 +74,8 @@ enum EntitySortField {
     ENTITY_SORT_FIELD_CREATED_AT = 2;
     ENTITY_SORT_FIELD_UPDATED_AT = 3;
     ENTITY_SORT_FIELD_AUTHOR_ID = 4;
+    // Order by the caller's favorite flag (favorited rows first when desc).
+    ENTITY_SORT_FIELD_FAVORITE = 5;
 }
 
 // EntitySort is the ready-made ordering over common Entity fields.

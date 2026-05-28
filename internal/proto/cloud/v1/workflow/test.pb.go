@@ -468,16 +468,16 @@ const file_cloud_v1_workflow_test_proto_rawDesc = "" +
 	"\x1bRunWorkloadWorkflowResponse\"X\n" +
 	"\x14SuiteWorkflowRequest\x12@\n" +
 	"\tsuite_run\x18\x01 \x01(\v2\x19.cloud.v1.domain.SuiteRunB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsuiteRun\"\x17\n" +
-	"\x15SuiteWorkflowResponse2\xa6\x05\n" +
-	"\aTestApi\x12\x95\x01\n" +
+	"\x15SuiteWorkflowResponse2\xaa\x05\n" +
+	"\vTestService\x12\x95\x01\n" +
 	"\fTestWorkflow\x12&.cloud.v1.workflow.TestWorkflowRequest\x1a'.cloud.v1.workflow.TestWorkflowResponse\"4\x8a\xc4\x030*\x1atest-run/${! test_run.id }0\x02J\x02 \x01r\fTestWorkflow\x12\xa8\x01\n" +
 	"\x16InstallStroppyWorkflow\x120.cloud.v1.workflow.InstallStroppyWorkflowRequest\x1a1.cloud.v1.workflow.InstallStroppyWorkflowResponse\")\x8a\xc4\x03%J\x06\n" +
 	"\x02\b\x05 \x03R\x03\b\x88\x0er\x16InstallStroppyWorkflow\x12\xac\x01\n" +
 	"\x17InstallDatabaseWorkflow\x121.cloud.v1.workflow.InstallDatabaseWorkflowRequest\x1a2.cloud.v1.workflow.InstallDatabaseWorkflowResponse\"*\x8a\xc4\x03&J\x06\n" +
 	"\x02\b\x05 \x03R\x03\b\x88\x0er\x17InstallDatabaseWorkflow\x12\x93\x01\n" +
 	"\x13RunWorkloadWorkflow\x12-.cloud.v1.workflow.RunWorkloadWorkflowRequest\x1a..cloud.v1.workflow.RunWorkloadWorkflowResponse\"\x1d\x8a\xc4\x03\x19J\x02 \x01r\x13RunWorkloadWorkflow\x1a\x13\x8a\xc4\x03\x0f\n" +
-	"\rstroppy-cloud2\xc5\x01\n" +
-	"\x10SuiteWorkflowApi\x12\x9b\x01\n" +
+	"\rstroppy-cloud2\xc9\x01\n" +
+	"\x14SuiteWorkflowService\x12\x9b\x01\n" +
 	"\rSuiteWorkflow\x12'.cloud.v1.workflow.SuiteWorkflowRequest\x1a(.cloud.v1.workflow.SuiteWorkflowResponse\"7\x8a\xc4\x033*\x1csuite-run/${! suite_run.id }0\x02J\x02 \x01r\rSuiteWorkflow\x1a\x13\x8a\xc4\x03\x0f\n" +
 	"\rstroppy-cloudBFZDgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflowb\x06proto3"
 
@@ -519,16 +519,16 @@ var file_cloud_v1_workflow_test_proto_depIdxs = []int32{
 	11, // 4: cloud.v1.workflow.RunWorkloadWorkflowRequest.topology:type_name -> cloud.v1.topology.Topology
 	13, // 5: cloud.v1.workflow.RunWorkloadWorkflowRequest.workload:type_name -> cloud.v1.domain.Workload
 	14, // 6: cloud.v1.workflow.SuiteWorkflowRequest.suite_run:type_name -> cloud.v1.domain.SuiteRun
-	0,  // 7: cloud.v1.workflow.TestApi.TestWorkflow:input_type -> cloud.v1.workflow.TestWorkflowRequest
-	2,  // 8: cloud.v1.workflow.TestApi.InstallStroppyWorkflow:input_type -> cloud.v1.workflow.InstallStroppyWorkflowRequest
-	4,  // 9: cloud.v1.workflow.TestApi.InstallDatabaseWorkflow:input_type -> cloud.v1.workflow.InstallDatabaseWorkflowRequest
-	6,  // 10: cloud.v1.workflow.TestApi.RunWorkloadWorkflow:input_type -> cloud.v1.workflow.RunWorkloadWorkflowRequest
-	8,  // 11: cloud.v1.workflow.SuiteWorkflowApi.SuiteWorkflow:input_type -> cloud.v1.workflow.SuiteWorkflowRequest
-	1,  // 12: cloud.v1.workflow.TestApi.TestWorkflow:output_type -> cloud.v1.workflow.TestWorkflowResponse
-	3,  // 13: cloud.v1.workflow.TestApi.InstallStroppyWorkflow:output_type -> cloud.v1.workflow.InstallStroppyWorkflowResponse
-	5,  // 14: cloud.v1.workflow.TestApi.InstallDatabaseWorkflow:output_type -> cloud.v1.workflow.InstallDatabaseWorkflowResponse
-	7,  // 15: cloud.v1.workflow.TestApi.RunWorkloadWorkflow:output_type -> cloud.v1.workflow.RunWorkloadWorkflowResponse
-	9,  // 16: cloud.v1.workflow.SuiteWorkflowApi.SuiteWorkflow:output_type -> cloud.v1.workflow.SuiteWorkflowResponse
+	0,  // 7: cloud.v1.workflow.TestService.TestWorkflow:input_type -> cloud.v1.workflow.TestWorkflowRequest
+	2,  // 8: cloud.v1.workflow.TestService.InstallStroppyWorkflow:input_type -> cloud.v1.workflow.InstallStroppyWorkflowRequest
+	4,  // 9: cloud.v1.workflow.TestService.InstallDatabaseWorkflow:input_type -> cloud.v1.workflow.InstallDatabaseWorkflowRequest
+	6,  // 10: cloud.v1.workflow.TestService.RunWorkloadWorkflow:input_type -> cloud.v1.workflow.RunWorkloadWorkflowRequest
+	8,  // 11: cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow:input_type -> cloud.v1.workflow.SuiteWorkflowRequest
+	1,  // 12: cloud.v1.workflow.TestService.TestWorkflow:output_type -> cloud.v1.workflow.TestWorkflowResponse
+	3,  // 13: cloud.v1.workflow.TestService.InstallStroppyWorkflow:output_type -> cloud.v1.workflow.InstallStroppyWorkflowResponse
+	5,  // 14: cloud.v1.workflow.TestService.InstallDatabaseWorkflow:output_type -> cloud.v1.workflow.InstallDatabaseWorkflowResponse
+	7,  // 15: cloud.v1.workflow.TestService.RunWorkloadWorkflow:output_type -> cloud.v1.workflow.RunWorkloadWorkflowResponse
+	9,  // 16: cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow:output_type -> cloud.v1.workflow.SuiteWorkflowResponse
 	12, // [12:17] is the sub-list for method output_type
 	7,  // [7:12] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name

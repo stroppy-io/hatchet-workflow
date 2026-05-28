@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/permission.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    rating.proto is the benchmark leaderboard, AUTHENTICATED scopes (the public
+    scope lives in public_rating.proto). A "benchmark" is a test run; only runs
+    flagged in_global_rating (system scope) / in_tenant_rating (tenant scope) take
+    part. Two scopes here:
+      - GetSystemRating: cross-system, any authenticated account (no specific
+        permission) — the private system-wide board.
+      - GetTenantRating: this tenant only, gated by RESOURCE_TEST_RUN/LIST.
+
+    NOT stored: ratings are computed (and likely precomputed by a background job,
+    same idea as the share-snapshot refresh) — there is no rating DB record.
+ */
+
+/*
+    RatingFilter selects and ranks the benchmark runs. Ranking is by one metric
+    (metric_key); direction is the metric's own higher_is_better.
+ */
+message RatingFilter {
+    // Metric to rank by (a MetricSummary.key). Required.
+    string metric_key = 1 [(validate.rules).string = {min_len: 1, max_len: 256}];
+    // Narrowing facets (all AND; empty = not applied).
+    repeated domain.Database.Kind db_kinds = 2;
+    repeated string stroppy_versions = 3 [(validate.rules).repeated = {max_items: 100, items: {string: {max_len: 64}}}];
+    repeated deployment.Provider providers = 4;
+    google.protobuf.Timestamp started_after = 5;
+    google.protobuf.Timestamp started_before = 6;
+}
+
+/*
+    RatingEntry is one ranked benchmark for the authenticated boards. Includes
+    identifying info (run_id, author, tenant) the public board omits.
+ */
+message RatingEntry {
+    uint32 rank = 1;
+    double metric_value = 2;
+    string metric_unit = 3 [(validate.rules).string.max_len = 32];
+    // Benchmark descriptors.
+    domain.Database.Kind db_kind = 4;
+    string workload_name = 5 [(validate.rules).string.max_len = 255];
+    string stroppy_version = 6 [(validate.rules).string.max_len = 64];
+    deployment.Provider provider = 7;
+    string topology_label = 8 [(validate.rules).string.max_len = 128];
+    uint32 node_count = 9;
+    google.protobuf.Timestamp run_at = 10;
+    // Identifying (authenticated scopes only).
+    string run_id = 11 [(validate.rules).string.max_len = 64];
+    string author_name = 12 [(validate.rules).string.max_len = 255];
+    // tenant_name is set only on the system-wide board.
+    string tenant_name = 13 [(validate.rules).string.max_len = 255];
+}
+
+message GetSystemRatingRequest {
+    RatingFilter filter = 1 [(validate.rules).message.required = true];
+    uint32 limit = 2 [(validate.rules).uint32.lte = 500];
+    string page_token = 3;
+}
+message GetSystemRatingResponse {
+    repeated RatingEntry entries = 1;
+    string next_page_token = 2;
+}
+
+message GetTenantRatingRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    RatingFilter filter = 2 [(validate.rules).message.required = true];
+    uint32 limit = 3 [(validate.rules).uint32.lte = 500];
+    string page_token = 4;
+}
+message GetTenantRatingResponse {
+    repeated RatingEntry entries = 1;
+    string next_page_token = 2;
+}
+
+service RatingService {
+    /*
+        GetSystemRating: cross-system private board over in_global_rating runs. Any
+        authenticated account (no specific permission).
+     */
+    rpc GetSystemRating (GetSystemRatingRequest) returns (GetSystemRatingResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {};
+    }
+    /*
+        GetTenantRating: this tenant's board over in_tenant_rating runs.
+     */
+    rpc GetTenantRating (GetTenantRatingRequest) returns (GetTenantRatingResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_LIST}]};
+    }
+}

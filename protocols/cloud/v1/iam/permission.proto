@@ -54,6 +54,51 @@ enum Resource {
         preset (see models.DatabasePreset / WorkloadPreset / TestPreset).
      */
     RESOURCE_PRESET = 6;
+    /*
+        RESOURCE_WIZARD is a tenant-scoped wizard draft (see
+        models.TestWizardDraftRecord / SuiteWizardDraftRecord) used to assemble a
+        TestRun / SuiteRun step by step.
+     */
+    RESOURCE_WIZARD = 7;
+    /*
+        RESOURCE_TEST_RUN is a tenant-scoped test execution (models.TestRunRecord):
+        start, read, list, cancel, delete.
+     */
+    RESOURCE_TEST_RUN = 8;
+    /*
+        RESOURCE_SUITE is a tenant-scoped suite definition (models.SuiteRecord):
+        full CRUD + clone.
+     */
+    RESOURCE_SUITE = 9;
+    /*
+        RESOURCE_SUITE_RUN is a tenant-scoped suite execution (models.SuiteRunRecord):
+        start, read, list, cancel, delete.
+     */
+    RESOURCE_SUITE_RUN = 10;
+    /*
+        RESOURCE_FAVORITE is the per-user favorite relation (models.FavoriteRecord).
+        Tenant-scoped so favoriting requires tenant membership; favorites are
+        personal to the caller. Reading the computed Entity.is_favorite flag needs
+        no grant (it rides on data the caller already reads).
+     */
+    RESOURCE_FAVORITE = 11;
+    /*
+        RESOURCE_AGENT_SHELL is the interactive reverse-shell to an agent from the
+        admin UI. High-privilege (arbitrary command execution on the host): grant
+        sparingly, audit every session.
+     */
+    RESOURCE_AGENT_SHELL = 12;
+    /*
+        RESOURCE_SHARE manages public share links for a run (models.ShareRecord):
+        create / list / revoke. The PUBLIC resolve endpoint is unauthenticated and
+        needs no grant.
+     */
+    RESOURCE_SHARE = 13;
+    /*
+        RESOURCE_PACKAGE is a tenant-uploaded custom package (models.PackageRecord),
+        e.g. a custom .deb / binary used to install a database build. Tenant-private.
+     */
+    RESOURCE_PACKAGE = 14;
 }
 
 /*

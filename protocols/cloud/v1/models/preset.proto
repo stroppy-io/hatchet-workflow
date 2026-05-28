@@ -20,20 +20,30 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     timings); the kind-specific body carries the payload.
  */
 
-// DatabasePreset table: a reusable database configuration.
-message DatabasePreset {
+/*
+    is_system marks a platform-seeded preset. System presets are READ-ONLY: the
+    service rejects Update and Delete on them. To customize one, Clone it into a
+    new editable tenant preset (is_system = false). Server-managed; clients
+    cannot set it true.
+ */
+
+// DatabasePresetRecord table: a reusable database configuration.
+message DatabasePresetRecord {
     common.Entity entity = 1 [(validate.rules).message.required = true];
     domain.Database database = 2 [(validate.rules).message.required = true];
+    bool is_system = 3;
 }
 
-// WorkloadPreset table: a reusable stroppy workload configuration.
-message WorkloadPreset {
+// WorkloadPresetRecord table: a reusable stroppy workload configuration.
+message WorkloadPresetRecord {
     common.Entity entity = 1 [(validate.rules).message.required = true];
     domain.Workload workload = 2 [(validate.rules).message.required = true];
+    bool is_system = 3;
 }
 
-// TestPreset table: a reusable database + workload combo.
-message TestPreset {
+// TestPresetRecord table: a reusable database + workload combo.
+message TestPresetRecord {
     common.Entity entity = 1 [(validate.rules).message.required = true];
     domain.Test test = 2 [(validate.rules).message.required = true];
+    bool is_system = 3;
 }

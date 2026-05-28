@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package cloud.v1.common;
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
+
+// Trigger records the ROOT cause of a run (test or suite) — who/what set it off.
+// "Part of a suite" is an ORTHOGONAL axis, not a trigger value: a suite child has
+// its parent suite run's trigger propagated, and its suite membership is shown by
+// a non-empty suite_run_id. So a child of a cron suite has trigger=CRON AND
+// suite_run_id set; a manual standalone has trigger=MANUAL and no suite_run_id.
+enum Trigger {
+    TRIGGER_UNSPECIFIED = 0;
+    // Started manually by a user.
+    TRIGGER_MANUAL = 1;
+    // Auto-started by a suite's cron schedule.
+    TRIGGER_CRON = 2;
+    // Started by an api token / automation.
+    TRIGGER_API = 3;
+}

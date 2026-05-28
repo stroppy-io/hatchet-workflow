@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/common/status.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/permission.proto";
+import "cloud/v1/monitor/metrics.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    compare.proto is the side-by-side comparison of N test runs (the compare page).
+    It returns, for each run, its config/descriptor column PLUS the per-metric diff
+    across all runs (monitor.Comparison, baselined on run_ids[0]). Tenant-scoped,
+    gated by RESOURCE_TEST_RUN/READ; all runs must be visible to the caller.
+ */
+
+// RunColumn is one run's descriptor in the comparison (config, not metrics).
+message RunColumn {
+    string run_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string name = 2 [(validate.rules).string.max_len = 255];
+    common.Status status = 3;
+    domain.Database.Kind db_kind = 4;
+    string db_name = 5 [(validate.rules).string.max_len = 255];
+    string workload_name = 6 [(validate.rules).string.max_len = 255];
+    string stroppy_version = 7 [(validate.rules).string.max_len = 64];
+    deployment.Provider provider = 8;
+    string topology_label = 9 [(validate.rules).string.max_len = 128];
+    uint32 node_count = 10;
+    google.protobuf.Timestamp started_at = 11;
+    google.protobuf.Duration duration = 12;
+}
+
+message CompareView {
+    // Per-run config columns, aligned 1:1 with the request run_ids; columns[0] is
+    // the baseline.
+    repeated RunColumn columns = 1;
+    // Per-metric diff across the runs (baseline = run_ids[0]).
+    monitor.Comparison metrics = 2;
+}
+
+message CompareRunsRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    // Runs to compare in display order; run_ids[0] is the baseline.
+    repeated string run_ids = 2 [(validate.rules).repeated = {min_items: 2, max_items: 16, items: {string: {min_len: 1, max_len: 64}}}];
+}
+message CompareRunsResponse {
+    CompareView view = 1 [(validate.rules).message.required = true];
+}
+
+service CompareService {
+    rpc CompareRuns (CompareRunsRequest) returns (CompareRunsResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
+    }
+}

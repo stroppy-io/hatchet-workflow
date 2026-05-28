@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/api/rating.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/iam/options.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    public_rating.proto is the PUBLIC, UNAUTHENTICATED benchmark leaderboard (over
+    in_global_rating runs). ClickBench-style: only the benchmark shape + the metric
+    value — NO sensitive info (no run_id, no author, no tenant, no run name). The
+    front can layer extra presentation on top to keep this surface simple.
+
+    NOT stored: computed / precomputed by a background job (like the share-snapshot
+    refresh) — no rating DB record.
+ */
+
+// PublicRatingEntry is one ranked benchmark, sensitive fields stripped.
+message PublicRatingEntry {
+    uint32 rank = 1;
+    double metric_value = 2;
+    string metric_unit = 3 [(validate.rules).string.max_len = 32];
+    domain.Database.Kind db_kind = 4;
+    string workload_name = 5 [(validate.rules).string.max_len = 255];
+    string stroppy_version = 6 [(validate.rules).string.max_len = 64];
+    deployment.Provider provider = 7;
+    string topology_label = 8 [(validate.rules).string.max_len = 128];
+    uint32 node_count = 9;
+}
+
+message GetPublicRatingRequest {
+    // Reuses the authenticated filter shape (metric_key + facets).
+    RatingFilter filter = 1 [(validate.rules).message.required = true];
+    uint32 limit = 2 [(validate.rules).uint32.lte = 500];
+    string page_token = 3;
+}
+message GetPublicRatingResponse {
+    repeated PublicRatingEntry entries = 1;
+    string next_page_token = 2;
+}
+
+service PublicRatingService {
+    /*
+        GetPublicRating resolves the public leaderboard. PUBLIC: no bearer token.
+     */
+    rpc GetPublicRating (GetPublicRatingRequest) returns (GetPublicRatingResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {public: true};
+    }
+}

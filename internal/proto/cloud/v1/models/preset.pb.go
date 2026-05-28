@@ -24,29 +24,30 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// DatabasePreset table: a reusable database configuration.
-type DatabasePreset struct {
+// DatabasePresetRecord table: a reusable database configuration.
+type DatabasePresetRecord struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Entity        *common.Entity         `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
 	Database      *domain.Database       `protobuf:"bytes,2,opt,name=database,proto3" json:"database,omitempty"`
+	IsSystem      bool                   `protobuf:"varint,3,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DatabasePreset) Reset() {
-	*x = DatabasePreset{}
+func (x *DatabasePresetRecord) Reset() {
+	*x = DatabasePresetRecord{}
 	mi := &file_cloud_v1_models_preset_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DatabasePreset) String() string {
+func (x *DatabasePresetRecord) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DatabasePreset) ProtoMessage() {}
+func (*DatabasePresetRecord) ProtoMessage() {}
 
-func (x *DatabasePreset) ProtoReflect() protoreflect.Message {
+func (x *DatabasePresetRecord) ProtoReflect() protoreflect.Message {
 	mi := &file_cloud_v1_models_preset_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -58,48 +59,56 @@ func (x *DatabasePreset) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DatabasePreset.ProtoReflect.Descriptor instead.
-func (*DatabasePreset) Descriptor() ([]byte, []int) {
+// Deprecated: Use DatabasePresetRecord.ProtoReflect.Descriptor instead.
+func (*DatabasePresetRecord) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_models_preset_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *DatabasePreset) GetEntity() *common.Entity {
+func (x *DatabasePresetRecord) GetEntity() *common.Entity {
 	if x != nil {
 		return x.Entity
 	}
 	return nil
 }
 
-func (x *DatabasePreset) GetDatabase() *domain.Database {
+func (x *DatabasePresetRecord) GetDatabase() *domain.Database {
 	if x != nil {
 		return x.Database
 	}
 	return nil
 }
 
-// WorkloadPreset table: a reusable stroppy workload configuration.
-type WorkloadPreset struct {
+func (x *DatabasePresetRecord) GetIsSystem() bool {
+	if x != nil {
+		return x.IsSystem
+	}
+	return false
+}
+
+// WorkloadPresetRecord table: a reusable stroppy workload configuration.
+type WorkloadPresetRecord struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Entity        *common.Entity         `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
 	Workload      *domain.Workload       `protobuf:"bytes,2,opt,name=workload,proto3" json:"workload,omitempty"`
+	IsSystem      bool                   `protobuf:"varint,3,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *WorkloadPreset) Reset() {
-	*x = WorkloadPreset{}
+func (x *WorkloadPresetRecord) Reset() {
+	*x = WorkloadPresetRecord{}
 	mi := &file_cloud_v1_models_preset_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *WorkloadPreset) String() string {
+func (x *WorkloadPresetRecord) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*WorkloadPreset) ProtoMessage() {}
+func (*WorkloadPresetRecord) ProtoMessage() {}
 
-func (x *WorkloadPreset) ProtoReflect() protoreflect.Message {
+func (x *WorkloadPresetRecord) ProtoReflect() protoreflect.Message {
 	mi := &file_cloud_v1_models_preset_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -111,48 +120,56 @@ func (x *WorkloadPreset) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use WorkloadPreset.ProtoReflect.Descriptor instead.
-func (*WorkloadPreset) Descriptor() ([]byte, []int) {
+// Deprecated: Use WorkloadPresetRecord.ProtoReflect.Descriptor instead.
+func (*WorkloadPresetRecord) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_models_preset_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *WorkloadPreset) GetEntity() *common.Entity {
+func (x *WorkloadPresetRecord) GetEntity() *common.Entity {
 	if x != nil {
 		return x.Entity
 	}
 	return nil
 }
 
-func (x *WorkloadPreset) GetWorkload() *domain.Workload {
+func (x *WorkloadPresetRecord) GetWorkload() *domain.Workload {
 	if x != nil {
 		return x.Workload
 	}
 	return nil
 }
 
-// TestPreset table: a reusable database + workload combo.
-type TestPreset struct {
+func (x *WorkloadPresetRecord) GetIsSystem() bool {
+	if x != nil {
+		return x.IsSystem
+	}
+	return false
+}
+
+// TestPresetRecord table: a reusable database + workload combo.
+type TestPresetRecord struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Entity        *common.Entity         `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
 	Test          *domain.Test           `protobuf:"bytes,2,opt,name=test,proto3" json:"test,omitempty"`
+	IsSystem      bool                   `protobuf:"varint,3,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *TestPreset) Reset() {
-	*x = TestPreset{}
+func (x *TestPresetRecord) Reset() {
+	*x = TestPresetRecord{}
 	mi := &file_cloud_v1_models_preset_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TestPreset) String() string {
+func (x *TestPresetRecord) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TestPreset) ProtoMessage() {}
+func (*TestPresetRecord) ProtoMessage() {}
 
-func (x *TestPreset) ProtoReflect() protoreflect.Message {
+func (x *TestPresetRecord) ProtoReflect() protoreflect.Message {
 	mi := &file_cloud_v1_models_preset_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -164,40 +181,49 @@ func (x *TestPreset) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TestPreset.ProtoReflect.Descriptor instead.
-func (*TestPreset) Descriptor() ([]byte, []int) {
+// Deprecated: Use TestPresetRecord.ProtoReflect.Descriptor instead.
+func (*TestPresetRecord) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_models_preset_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *TestPreset) GetEntity() *common.Entity {
+func (x *TestPresetRecord) GetEntity() *common.Entity {
 	if x != nil {
 		return x.Entity
 	}
 	return nil
 }
 
-func (x *TestPreset) GetTest() *domain.Test {
+func (x *TestPresetRecord) GetTest() *domain.Test {
 	if x != nil {
 		return x.Test
 	}
 	return nil
 }
 
+func (x *TestPresetRecord) GetIsSystem() bool {
+	if x != nil {
+		return x.IsSystem
+	}
+	return false
+}
+
 var File_cloud_v1_models_preset_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_preset_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccloud/v1/models/preset.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x17validate/validate.proto\"\x8c\x01\n" +
-	"\x0eDatabasePreset\x129\n" +
+	"\x1ccloud/v1/models/preset.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x17validate/validate.proto\"\xaf\x01\n" +
+	"\x14DatabasePresetRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x12?\n" +
-	"\bdatabase\x18\x02 \x01(\v2\x19.cloud.v1.domain.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\"\x8c\x01\n" +
-	"\x0eWorkloadPreset\x129\n" +
+	"\bdatabase\x18\x02 \x01(\v2\x19.cloud.v1.domain.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x12\x1b\n" +
+	"\tis_system\x18\x03 \x01(\bR\bisSystem\"\xaf\x01\n" +
+	"\x14WorkloadPresetRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x12?\n" +
-	"\bworkload\x18\x02 \x01(\v2\x19.cloud.v1.domain.WorkloadB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bworkload\"|\n" +
-	"\n" +
-	"TestPreset\x129\n" +
+	"\bworkload\x18\x02 \x01(\v2\x19.cloud.v1.domain.WorkloadB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bworkload\x12\x1b\n" +
+	"\tis_system\x18\x03 \x01(\bR\bisSystem\"\x9f\x01\n" +
+	"\x10TestPresetRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x123\n" +
-	"\x04test\x18\x02 \x01(\v2\x15.cloud.v1.domain.TestB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04testBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
+	"\x04test\x18\x02 \x01(\v2\x15.cloud.v1.domain.TestB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04test\x12\x1b\n" +
+	"\tis_system\x18\x03 \x01(\bR\bisSystemBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
 
 var (
 	file_cloud_v1_models_preset_proto_rawDescOnce sync.Once
@@ -213,21 +239,21 @@ func file_cloud_v1_models_preset_proto_rawDescGZIP() []byte {
 
 var file_cloud_v1_models_preset_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_cloud_v1_models_preset_proto_goTypes = []any{
-	(*DatabasePreset)(nil),  // 0: cloud.v1.models.DatabasePreset
-	(*WorkloadPreset)(nil),  // 1: cloud.v1.models.WorkloadPreset
-	(*TestPreset)(nil),      // 2: cloud.v1.models.TestPreset
-	(*common.Entity)(nil),   // 3: cloud.v1.common.Entity
-	(*domain.Database)(nil), // 4: cloud.v1.domain.Database
-	(*domain.Workload)(nil), // 5: cloud.v1.domain.Workload
-	(*domain.Test)(nil),     // 6: cloud.v1.domain.Test
+	(*DatabasePresetRecord)(nil), // 0: cloud.v1.models.DatabasePresetRecord
+	(*WorkloadPresetRecord)(nil), // 1: cloud.v1.models.WorkloadPresetRecord
+	(*TestPresetRecord)(nil),     // 2: cloud.v1.models.TestPresetRecord
+	(*common.Entity)(nil),        // 3: cloud.v1.common.Entity
+	(*domain.Database)(nil),      // 4: cloud.v1.domain.Database
+	(*domain.Workload)(nil),      // 5: cloud.v1.domain.Workload
+	(*domain.Test)(nil),          // 6: cloud.v1.domain.Test
 }
 var file_cloud_v1_models_preset_proto_depIdxs = []int32{
-	3, // 0: cloud.v1.models.DatabasePreset.entity:type_name -> cloud.v1.common.Entity
-	4, // 1: cloud.v1.models.DatabasePreset.database:type_name -> cloud.v1.domain.Database
-	3, // 2: cloud.v1.models.WorkloadPreset.entity:type_name -> cloud.v1.common.Entity
-	5, // 3: cloud.v1.models.WorkloadPreset.workload:type_name -> cloud.v1.domain.Workload
-	3, // 4: cloud.v1.models.TestPreset.entity:type_name -> cloud.v1.common.Entity
-	6, // 5: cloud.v1.models.TestPreset.test:type_name -> cloud.v1.domain.Test
+	3, // 0: cloud.v1.models.DatabasePresetRecord.entity:type_name -> cloud.v1.common.Entity
+	4, // 1: cloud.v1.models.DatabasePresetRecord.database:type_name -> cloud.v1.domain.Database
+	3, // 2: cloud.v1.models.WorkloadPresetRecord.entity:type_name -> cloud.v1.common.Entity
+	5, // 3: cloud.v1.models.WorkloadPresetRecord.workload:type_name -> cloud.v1.domain.Workload
+	3, // 4: cloud.v1.models.TestPresetRecord.entity:type_name -> cloud.v1.common.Entity
+	6, // 5: cloud.v1.models.TestPresetRecord.test:type_name -> cloud.v1.domain.Test
 	6, // [6:6] is the sub-list for method output_type
 	6, // [6:6] is the sub-list for method input_type
 	6, // [6:6] is the sub-list for extension type_name

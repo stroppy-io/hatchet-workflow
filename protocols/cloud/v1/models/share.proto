@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/common/entity.proto";
+import "cloud/v1/common/status.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/monitor/metrics.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+/*
+    ShareRecord is a public, read-only share link for a run (test or suite). It
+    exposes a LIMITED snapshot to people OUTSIDE the system — no account, no tenant
+    membership, just an unguessable token.
+
+    Snapshot model (NOT live): the limited view is FROZEN into `snapshot` and kept
+    fresh by a BACKGROUND job that updates the row in the DB while the share is
+    alive (so an in-progress run's numbers can still move). The public endpoint
+    serves the stored snapshot only — it never reaches into the live system on
+    behalf of an anonymous caller, and the share survives the run being deleted.
+
+    Security: token is unguessable (>=128 bit). The snapshot carries ONLY basic
+    info + our metrics — never the baked spec, params, secrets, raw logs, shell, or
+    tenant data. Revocable + (by default) time-limited.
+ */
+message ShareRecord {
+    common.Entity entity = 1 [(validate.rules).message.required = true];
+
+    // What is shared.
+    Target target = 2 [(validate.rules).message.required = true];
+
+    // Public, unguessable access token (carried in the share URL).
+    string token = 3 [(validate.rules).string = {min_len: 16, max_len: 128}];
+
+    /*
+        When the share stops working. Unset = NEVER expires — insecure and it keeps
+        the background refresh running indefinitely; only allow with an explicit
+        warning. Default when creating: 1 week.
+     */
+    google.protobuf.Timestamp expires_at = 4;
+
+    // Manually revoked: the public endpoint returns gone regardless of expiry.
+    bool revoked = 5;
+
+    // The frozen, background-refreshed limited view served publicly.
+    Snapshot snapshot = 6;
+
+    // Target picks the run this share points at.
+    message Target {
+        enum Kind {
+            KIND_UNSPECIFIED = 0;
+            KIND_TEST_RUN = 1;
+            KIND_SUITE_RUN = 2;
+        }
+        Kind kind = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        // Id of the TestRunRecord / SuiteRunRecord.
+        string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    }
+
+    // Snapshot is the limited public view, refreshed in the background.
+    message Snapshot {
+        // When the background job last refreshed this snapshot.
+        google.protobuf.Timestamp captured_at = 1;
+        oneof view {
+            SharedTestRun test_run = 2;
+            SharedSuiteRun suite_run = 3;
+        }
+    }
+}
+
+/*
+    SharedTestRun is the LIMITED public projection of a test run: basic info + our
+    metrics (NOT Grafana). No spec/params/secrets/logs.
+ */
+message SharedTestRun {
+    string name = 1;
+    common.Status status = 2;
+    domain.Database.Kind db_kind = 3;
+    string db_name = 4;            // preset display label (safe)
+    string workload_name = 5;
+    string stroppy_version = 6;
+    deployment.Provider provider = 7;
+    string topology_label = 8;
+    uint32 node_count = 9;
+    google.protobuf.Timestamp started_at = 10;
+    google.protobuf.Timestamp finished_at = 11;
+    google.protobuf.Duration duration = 12;
+    uint32 progress_pct = 13 [(validate.rules).uint32.lte = 100];
+    // Our computed metrics snapshot (NOT a Grafana link).
+    monitor.RunMetrics metrics = 14;
+}
+
+/*
+    SharedSuiteRun is the LIMITED public projection of a suite run: aggregates +
+    the per-test limited views (so an interesting matrix can be shown off).
+ */
+message SharedSuiteRun {
+    string name = 1;
+    common.Status status = 2;
+    deployment.Provider provider = 3;
+    repeated domain.Database.Kind db_kinds = 4;
+    uint32 total = 5;
+    uint32 completed = 6;
+    uint32 failed = 7;
+    uint32 running = 8;
+    uint32 progress_pct = 9 [(validate.rules).uint32.lte = 100];
+    google.protobuf.Timestamp started_at = 10;
+    google.protobuf.Timestamp finished_at = 11;
+    google.protobuf.Duration duration = 12;
+    // Limited child test views.
+    repeated SharedTestRun tests = 13;
+}

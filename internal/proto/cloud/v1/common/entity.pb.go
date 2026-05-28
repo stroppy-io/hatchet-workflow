@@ -32,6 +32,8 @@ const (
 	EntitySortField_ENTITY_SORT_FIELD_CREATED_AT  EntitySortField = 2
 	EntitySortField_ENTITY_SORT_FIELD_UPDATED_AT  EntitySortField = 3
 	EntitySortField_ENTITY_SORT_FIELD_AUTHOR_ID   EntitySortField = 4
+	// Order by the caller's favorite flag (favorited rows first when desc).
+	EntitySortField_ENTITY_SORT_FIELD_FAVORITE EntitySortField = 5
 )
 
 // Enum value maps for EntitySortField.
@@ -42,6 +44,7 @@ var (
 		2: "ENTITY_SORT_FIELD_CREATED_AT",
 		3: "ENTITY_SORT_FIELD_UPDATED_AT",
 		4: "ENTITY_SORT_FIELD_AUTHOR_ID",
+		5: "ENTITY_SORT_FIELD_FAVORITE",
 	}
 	EntitySortField_value = map[string]int32{
 		"ENTITY_SORT_FIELD_UNSPECIFIED": 0,
@@ -49,6 +52,7 @@ var (
 		"ENTITY_SORT_FIELD_CREATED_AT":  2,
 		"ENTITY_SORT_FIELD_UPDATED_AT":  3,
 		"ENTITY_SORT_FIELD_AUTHOR_ID":   4,
+		"ENTITY_SORT_FIELD_FAVORITE":    5,
 	}
 )
 
@@ -149,7 +153,16 @@ type Entity struct {
 	Timings     *Timings               `protobuf:"bytes,5,opt,name=timings,proto3" json:"timings,omitempty"`
 	// author_id is the Account that created the row. Server-assigned from the
 	// caller; immutable afterwards.
-	AuthorId      string `protobuf:"bytes,6,opt,name=author_id,json=authorId,proto3" json:"author_id,omitempty"`
+	AuthorId string `protobuf:"bytes,6,opt,name=author_id,json=authorId,proto3" json:"author_id,omitempty"`
+	// is_favorite is a COMPUTED, PER-CALLER flag — NOT persisted on the row.
+	// On every read the server fills it from the favorites of the REQUESTING
+	// account (a FavoriteRecord with author = caller, kind = this entity's kind,
+	// target_id = this entity's id). Different callers see different values.
+	// Writers MUST ignore any client-supplied value.
+	//
+	// Implementation note: when serving a list/get, left-join the rows against
+	// the caller's FavoriteRecords and set this true where a match exists.
+	IsFavorite    bool `protobuf:"varint,7,opt,name=is_favorite,json=isFavorite,proto3" json:"is_favorite,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -226,6 +239,13 @@ func (x *Entity) GetAuthorId() string {
 	return ""
 }
 
+func (x *Entity) GetIsFavorite() bool {
+	if x != nil {
+		return x.IsFavorite
+	}
+	return false
+}
+
 // EntityFilter is the ready-made filter over the common Entity fields. Any
 // model list endpoint can embed it. Every field is optional — an unset field is
 // not applied. Tenant scoping is NOT here: it comes from the request tenant_id
@@ -245,7 +265,12 @@ type EntityFilter struct {
 	// When true, include soft-deleted rows (timings.deleted_at set). Default false.
 	IncludeDeleted bool `protobuf:"varint,7,opt,name=include_deleted,json=includeDeleted,proto3" json:"include_deleted,omitempty"`
 	// Restrict to rows authored by these Accounts (empty = no author filter).
-	AuthorIds     []string `protobuf:"bytes,8,rep,name=author_ids,json=authorIds,proto3" json:"author_ids,omitempty"`
+	AuthorIds []string `protobuf:"bytes,8,rep,name=author_ids,json=authorIds,proto3" json:"author_ids,omitempty"`
+	// favorites_only: when true, return only rows the REQUESTING caller has
+	// favorited (rows with a matching FavoriteRecord for caller+kind+id). Unset
+	// = no favorite filter. Implementation: inner-join against the caller's
+	// FavoriteRecords instead of left-join.
+	FavoritesOnly *bool `protobuf:"varint,9,opt,name=favorites_only,json=favoritesOnly,proto3,oneof" json:"favorites_only,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -334,6 +359,13 @@ func (x *EntityFilter) GetAuthorIds() []string {
 		return x.AuthorIds
 	}
 	return nil
+}
+
+func (x *EntityFilter) GetFavoritesOnly() bool {
+	if x != nil && x.FavoritesOnly != nil {
+		return *x.FavoritesOnly
+	}
+	return false
 }
 
 // EntitySort is the ready-made ordering over common Entity fields.
@@ -456,7 +488,7 @@ const file_cloud_v1_common_entity_proto_rawDesc = "" +
 	"updated_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12>\n" +
 	"\n" +
 	"deleted_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\tdeletedAt\x88\x01\x01B\r\n" +
-	"\v_deleted_at\"\xf3\x01\n" +
+	"\v_deleted_at\"\x94\x02\n" +
 	"\x06Entity\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\x12&\n" +
 	"\ttenant_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x1e\n" +
@@ -464,7 +496,9 @@ const file_cloud_v1_common_entity_proto_rawDesc = "" +
 	"\xfaB\ar\x05\x10\x01\x18\xff\x01R\x04name\x12*\n" +
 	"\vdescription\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80 R\vdescription\x122\n" +
 	"\atimings\x18\x05 \x01(\v2\x18.cloud.v1.common.TimingsR\atimings\x12&\n" +
-	"\tauthor_id\x18\x06 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\bauthorId\"\xb4\x03\n" +
+	"\tauthor_id\x18\x06 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\bauthorId\x12\x1f\n" +
+	"\vis_favorite\x18\a \x01(\bR\n" +
+	"isFavorite\"\xf3\x03\n" +
 	"\fEntityFilter\x12 \n" +
 	"\x06search\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\x06search\x12!\n" +
 	"\x03ids\x18\x02 \x03(\tB\x0f\xfaB\f\x92\x01\t\x10\xe8\a\"\x04r\x02\x18@R\x03ids\x12?\n" +
@@ -474,20 +508,23 @@ const file_cloud_v1_common_entity_proto_rawDesc = "" +
 	"\x0eupdated_before\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\rupdatedBefore\x12'\n" +
 	"\x0finclude_deleted\x18\a \x01(\bR\x0eincludeDeleted\x12.\n" +
 	"\n" +
-	"author_ids\x18\b \x03(\tB\x0f\xfaB\f\x92\x01\t\x10\xe8\a\"\x04r\x02\x18@R\tauthorIds\"X\n" +
+	"author_ids\x18\b \x03(\tB\x0f\xfaB\f\x92\x01\t\x10\xe8\a\"\x04r\x02\x18@R\tauthorIds\x12*\n" +
+	"\x0efavorites_only\x18\t \x01(\bH\x00R\rfavoritesOnly\x88\x01\x01B\x11\n" +
+	"\x0f_favorites_only\"X\n" +
 	"\n" +
 	"EntitySort\x126\n" +
 	"\x05field\x18\x01 \x01(\x0e2 .cloud.v1.common.EntitySortFieldR\x05field\x12\x12\n" +
 	"\x04desc\x18\x02 \x01(\bR\x04desc\":\n" +
 	"\x04Page\x12\x1c\n" +
 	"\x04size\x18\x01 \x01(\rB\b\xfaB\x05*\x03\x18\xf4\x03R\x04size\x12\x14\n" +
-	"\x05token\x18\x02 \x01(\tR\x05token*\xb5\x01\n" +
+	"\x05token\x18\x02 \x01(\tR\x05token*\xd5\x01\n" +
 	"\x0fEntitySortField\x12!\n" +
 	"\x1dENTITY_SORT_FIELD_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16ENTITY_SORT_FIELD_NAME\x10\x01\x12 \n" +
 	"\x1cENTITY_SORT_FIELD_CREATED_AT\x10\x02\x12 \n" +
 	"\x1cENTITY_SORT_FIELD_UPDATED_AT\x10\x03\x12\x1f\n" +
-	"\x1bENTITY_SORT_FIELD_AUTHOR_ID\x10\x04BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/commonb\x06proto3"
+	"\x1bENTITY_SORT_FIELD_AUTHOR_ID\x10\x04\x12\x1e\n" +
+	"\x1aENTITY_SORT_FIELD_FAVORITE\x10\x05BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/commonb\x06proto3"
 
 var (
 	file_cloud_v1_common_entity_proto_rawDescOnce sync.Once
@@ -535,6 +572,7 @@ func file_cloud_v1_common_entity_proto_init() {
 		return
 	}
 	file_cloud_v1_common_entity_proto_msgTypes[0].OneofWrappers = []any{}
+	file_cloud_v1_common_entity_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

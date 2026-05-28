@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/common/entity.proto";
+import "cloud/v1/domain/database.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+/*
+    PackageRecord is a tenant-uploaded custom package — e.g. a .deb (apt) or a raw
+    binary — used to install a custom database build instead of the stock version.
+    The blob lives in object storage (S3/MinIO); this row holds only metadata + the
+    storage key. Upload is via presigned PUT (see api/package.proto). At install
+    time the agent fetches the blob by a file reference (resolved to a presigned
+    download). Tenant-private.
+ */
+message PackageRecord {
+    enum Format {
+        FORMAT_UNSPECIFIED = 0;
+        FORMAT_DEB = 1;     // apt / dpkg package
+        FORMAT_BINARY = 2;  // a raw executable / archive run by install commands
+    }
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_UPLOADING = 1;  // record created, blob not yet uploaded/verified
+        STATUS_READY = 2;      // uploaded + checksum/size verified
+        STATUS_FAILED = 3;     // verification failed
+    }
+
+    common.Entity entity = 1 [(validate.rules).message.required = true];
+    Format format = 2 [(validate.rules).enum = {defined_only: true}];
+    string version = 3 [(validate.rules).string.max_len = 128];
+    // Which database engine this build targets.
+    domain.Database.Kind target_db_kind = 4;
+    // Target host descriptors (informational / matching).
+    string os = 5 [(validate.rules).string.max_len = 128];    // e.g. "ubuntu-22.04"
+    string arch = 6 [(validate.rules).string.max_len = 32];   // e.g. "amd64"
+    // Object-storage key (server-assigned; not client-set).
+    string storage_uri = 7 [(validate.rules).string.max_len = 1024];
+    uint64 size_bytes = 8;
+    // Expected content hash, verified on CompleteUpload.
+    string sha256 = 9 [(validate.rules).string = {len: 64}];
+    Status status = 10;
+}
