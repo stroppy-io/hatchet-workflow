@@ -23,7 +23,7 @@ message Quota {
         /* provider selects the deployment backend this reading belongs to and,
            with it, the QuotaKind enum that quota_kind_enum_value indexes. */
         deployment.Provider provider = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
-        string name = 2 [(validate.rules).int32.gte = 1];
+        string name = 2 [(validate.rules).string.min_len = 1];
         /* units is the provider-reported unit of used and limit, e.g.
            "count", "cores", "bytes", "GB". */
         string units = 6 [(validate.rules).string = {min_len: 1, max_len: 32}];
@@ -42,6 +42,13 @@ message Quota {
         uint64 available = 5;
         /* limit is the maximum allowed for this quota, in info.units. */
         uint64 limit = 4;
+    }
+
+    message Request {
+        /* info identifies the provider and quota kind being allocated. */
+        Info info = 1 [(validate.rules).message.required = true];
+        /* used is the amount this deployment requests, in info.units. */
+        uint64 request = 3;
     }
 
     /*

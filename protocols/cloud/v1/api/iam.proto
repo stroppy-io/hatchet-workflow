@@ -1,0 +1,1224 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "google/protobuf/duration.proto";
+import "validate/validate.proto";
+import "cloud/v1/iam/account.proto";
+import "cloud/v1/iam/tenant.proto";
+import "cloud/v1/iam/role.proto";
+import "cloud/v1/iam/membership.proto";
+import "cloud/v1/iam/permission.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/sso.proto";
+import "cloud/v1/iam/apitoken.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    iam.proto is the single public API surface of the IAM subsystem. One service
+    — IamAPI — owns everything identity/authz: minting tokens, and CRUD over
+    Accounts, Tenants, Roles and Memberships.
+
+    The data shapes live in the cloud.v1.iam package (account.proto,
+    tenant.proto, role.proto, membership.proto) and the token contract in
+    iam/claims.proto; this file is only the request/response envelopes and the
+    RPCs that move them, hence its place under api/.
+
+    AUTH endpoints (Register/Login/Refresh/Logout) and the SSO entry points
+    (ListIdentityProviders/StartSSO/CompleteSSO) are PUBLIC — they take no bearer
+    token; SSO just yields the same TokenPair by another route (see
+    iam/sso.proto). Every other RPC requires a valid access token (see
+    iam.AccessClaims) and is authorized per the tenant-agnostic, per-request
+    model documented in iam/claims.proto: the active tenant comes from the
+    request's tenant reference (id or slug), the caller's Membership in it is
+    resolved live, and the required Permission is checked against the union of
+    that membership's roles. is_admin short-circuits to full access.
+
+    PROCESS GATES. Two flows are additionally fenced by global flags in
+    PlatformSettings (see admin.proto), checked BEFORE any RBAC permission:
+      - Register            <- allow_self_registration
+      - CreateTenant        <- allow_member_tenant_creation
+    A closed gate denies everyone except platform admins.
+
+    Account creation has NO permission-gated member path: it is either public
+    self-signup (Register) or admin-managed (CreateAccount, admin_only).
+ */
+
+/*
+    ===== Auth (public: no bearer token) =====
+ */
+
+/*
+    TokenPair is the result of a successful Register, Login or Refresh. Both are
+    bearer credentials.
+
+    access_token is short-lived and sent on every API call (Authorization:
+    Bearer). It is TENANT-AGNOSTIC (see iam/claims.proto) — one token works
+    across every tenant the account can reach, so switching tenant never re-mints
+    it.
+
+    refresh_token is long-lived, single-use, and ROTATED on every Refresh: each
+    Refresh invalidates the presented refresh_token and returns a new one, so the
+    caller MUST persist the new refresh_token or the next Refresh fails. The
+    server keeps the refresh token server-side so Logout can revoke it.
+ */
+message TokenPair {
+    /*
+        access_token is the short-lived, tenant-agnostic bearer token.
+     */
+    string access_token = 1 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+    /*
+        refresh_token is the long-lived, single-use, rotated token.
+     */
+    string refresh_token = 2 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+    /*
+        access_expires_in is the access_token lifetime from issuance.
+     */
+    google.protobuf.Duration access_expires_in = 3;
+    /*
+        refresh_expires_in is the refresh_token lifetime from issuance.
+     */
+    google.protobuf.Duration refresh_expires_in = 4;
+}
+
+/*
+    RegisterRequest is PUBLIC self-signup. It is gated by
+    PlatformSettings.allow_self_registration: when that flag is false the server
+    rejects this call and accounts can only be created by an admin via
+    CreateAccount. There is deliberately no is_admin field — a self-registered
+    account is never a platform admin.
+ */
+message RegisterRequest {
+    string email = 1 [(validate.rules).string = {min_len: 5, max_len: 255, email: true}];
+    string nickname = 2 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-zA-Z0-9_.-]+$"}];
+    string password = 3 [(validate.rules).string = {min_len: 8, max_len: 1024}];
+}
+
+/*
+    RegisterResponse auto-logs-in the new account by returning a TokenPair, so a
+    successful signup needs no follow-up Login. The account's email starts
+    UNVERIFIED (Account.email_verified == false); the server dispatches a
+    verification token through its Notifier (see VerifyEmailRequest). Login is not
+    blocked on verification — it is surfaced for the UI to nudge the user.
+ */
+message RegisterResponse {
+    TokenPair tokens = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    LoginRequest authenticates by login + password. login accepts EITHER a
+    nickname OR an email; the server resolves which by format. No separate flag:
+    "alice" and "alice@example.com" both go in login.
+ */
+message LoginRequest {
+    /*
+        login is the account's nickname or email.
+     */
+    string login = 1 [(validate.rules).string = {min_len: 1, max_len: 320}];
+    /*
+        password is the plaintext password, verified against the stored hash.
+     */
+    string password = 2 [(validate.rules).string = {min_len: 1, max_len: 1024}];
+}
+
+message LoginResponse {
+    TokenPair tokens = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    RefreshRequest exchanges a valid refresh_token for a fresh TokenPair. The
+    presented refresh_token is consumed (single-use); the response carries a new
+    rotated refresh_token. Travels in the body, not a cookie.
+ */
+message RefreshRequest {
+    string refresh_token = 1 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+}
+
+message RefreshResponse {
+    TokenPair tokens = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    LogoutRequest revokes the server-side session for the given refresh_token.
+ */
+message LogoutRequest {
+    string refresh_token = 1 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+}
+
+message LogoutResponse {}
+
+/*
+    ===== Accounts =====
+ */
+
+/*
+    CreateAccountRequest provisions a new global identity (the admin-only path;
+    the public path is RegisterRequest). The password is the only secret accepted
+    here; it is hashed and stored by the auth subsystem and never echoed back on
+    the returned Account.
+
+    An account needs at least ONE way to authenticate: the service rejects a
+    request with neither password nor link, since that yields an account no one
+    can ever log into. Supply a password, a link, or both.
+ */
+message CreateAccountRequest {
+    string email = 1 [(validate.rules).string = {min_len: 5, max_len: 255, email: true}];
+    string nickname = 2 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-zA-Z0-9_.-]+$"}];
+    /*
+        password is optional: omit it to create an SSO-only account that signs in
+        exclusively through a linked external identity (see link).
+     */
+    optional string password = 3 [(validate.rules).string = {min_len: 8, max_len: 1024}];
+    /*
+        is_admin may only be set by an existing platform admin; ignored otherwise.
+     */
+    bool is_admin = 4;
+    /*
+        link, when set, pre-links the new account to an external identity in the
+        same call — the admin asserts the (provider, subject) binding so the user
+        can log in via SSO immediately, without JIT provisioning.
+     */
+    ExternalIdentityLink link = 5;
+}
+
+/*
+    ExternalIdentityLink is an admin-asserted binding of a local account to an
+    IdP subject, used by CreateAccount and LinkExternalIdentity. The server
+    trusts the admin for the (provider_id, subject) pair; no SSO round-trip is
+    performed to verify it.
+ */
+message ExternalIdentityLink {
+    string provider_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string subject = 2 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    /*
+        email is the address to record on the link (display / domain checks).
+     */
+    string email = 3 [(validate.rules).string = {max_len: 255}];
+}
+
+message CreateAccountResponse {
+    iam.Account account = 1 [(validate.rules).message.required = true];
+}
+
+message GetAccountRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message GetAccountResponse {
+    iam.Account account = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    GetMyAccountRequest takes no arguments: it returns the CALLER's own Account,
+    resolved from the token subject. This is the self-profile endpoint — any
+    authenticated account may read itself without holding RESOURCE_ACCOUNT/READ.
+ */
+message GetMyAccountRequest {}
+
+message GetMyAccountResponse {
+    iam.Account account = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    ListAccountsRequest is platform-scoped (admin only).
+ */
+message ListAccountsRequest {
+    /*
+        page_size caps returned rows; 0 -> server default.
+     */
+    uint32 page_size = 1 [(validate.rules).uint32.lte = 500];
+    /*
+        page_token is the opaque cursor from a previous response.
+     */
+    string page_token = 2;
+}
+
+message ListAccountsResponse {
+    repeated iam.Account accounts = 1;
+    /*
+        next_page_token is empty when there are no more rows.
+     */
+    string next_page_token = 2;
+}
+
+/*
+    UpdateAccountRequest mutates the named account. Only email/nickname are
+    editable here; password rotation and is_admin changes are separate,
+    privilege-gated operations.
+ */
+message UpdateAccountRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    optional string email = 2 [(validate.rules).string = {min_len: 5, max_len: 255, email: true}];
+    optional string nickname = 3 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-zA-Z0-9_.-]+$"}];
+}
+
+message UpdateAccountResponse {
+    iam.Account account = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    DeleteAccountRequest removes an account. The account may be referenced by
+    Memberships, ExternalIdentities, and owned Tenants (Tenant.owner_account_id);
+    the service layer decides the cascade: linked Memberships and
+    ExternalIdentities are removed with it, but a delete is REJECTED while the
+    account still owns any Tenant — transfer ownership first
+    (TransferTenantOwnership) so no tenant is orphaned.
+ */
+message DeleteAccountRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message DeleteAccountResponse {}
+
+/*
+    ===== Passwords =====
+ */
+
+/*
+    ChangePasswordRequest is the authenticated self-service rotation: the caller
+    proves knowledge of old_password and sets new_password. Always operates on
+    the caller's own account (from the token). Not idempotent — a replay fails
+    once old_password no longer matches.
+ */
+message ChangePasswordRequest {
+    string old_password = 1 [(validate.rules).string = {min_len: 1, max_len: 1024}];
+    string new_password = 2 [(validate.rules).string = {min_len: 8, max_len: 1024}];
+}
+
+message ChangePasswordResponse {}
+
+/*
+    ResetPasswordRequest is the admin override: a platform admin sets a new
+    password for any account without knowing the old one (e.g. account recovery).
+ */
+message ResetPasswordRequest {
+    string account_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string new_password = 2 [(validate.rules).string = {min_len: 8, max_len: 1024}];
+}
+
+message ResetPasswordResponse {}
+
+/*
+    RequestPasswordResetRequest starts the PUBLIC forgot-password flow: the
+    server mints a single-use, time-bounded reset token and delivers it to the
+    account's email via its Notifier. The response is ALWAYS empty/success
+    regardless of whether the email exists — never leak account existence.
+ */
+message RequestPasswordResetRequest {
+    string email = 1 [(validate.rules).string = {min_len: 5, max_len: 255, email: true}];
+}
+
+message RequestPasswordResetResponse {}
+
+/*
+    ConfirmPasswordResetRequest completes the forgot-password flow: it consumes
+    the emailed token and sets new_password. PUBLIC; the token is the credential.
+    Not idempotent — the token is single-use.
+ */
+message ConfirmPasswordResetRequest {
+    string token = 1 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+    string new_password = 2 [(validate.rules).string = {min_len: 8, max_len: 1024}];
+}
+
+message ConfirmPasswordResetResponse {}
+
+/*
+    ===== Email verification =====
+
+    Token DELIVERY (verification and password-reset alike) is the job of a
+    server-side Notifier abstraction, NOT of these RPCs: the API mints/consumes
+    tokens, the Notifier (email/SMS/...) ships them. Swapping the delivery channel
+    never touches this contract.
+ */
+
+/*
+    VerifyEmailRequest consumes an emailed verification token and flips the
+    target account's Account.email_verified to true. PUBLIC: the token is the
+    credential and the user may not be logged in when clicking the link.
+ */
+message VerifyEmailRequest {
+    string token = 1 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+}
+
+message VerifyEmailResponse {}
+
+/*
+    ResendVerificationRequest re-dispatches a fresh verification token to the
+    CALLER's own (still-unverified) email via the Notifier. Authenticated; no
+    arguments — the account comes from the token.
+ */
+message ResendVerificationRequest {}
+
+message ResendVerificationResponse {}
+
+/*
+    ===== Tenants =====
+ */
+
+/*
+    CreateTenantRequest creates a workspace. The caller becomes owner and the
+    server seeds an owner Membership so the creator can immediately enter the
+    tenant. slug must be unique and url-safe (see iam/tenant.proto).
+ */
+message CreateTenantRequest {
+    string name = 1 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    string slug = 2 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-z0-9_-]+$"}];
+}
+
+message CreateTenantResponse {
+    iam.Tenant tenant = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    GetTenantRequest fetches one tenant by EITHER id or slug (oneof). Slug lookup
+    is the routing path: the gate resolves /t/<slug> to a Tenant via this.
+ */
+message GetTenantRequest {
+    oneof ref {
+        option (validate.required) = true;
+        string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+        string slug = 2 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-z0-9_-]+$"}];
+    }
+}
+
+message GetTenantResponse {
+    iam.Tenant tenant = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    ListMyTenantsRequest returns the tenants the CALLER is a member of — the data
+    behind the org switcher. No arguments: the account comes from the token.
+ */
+message ListMyTenantsRequest {}
+
+message ListMyTenantsResponse {
+    repeated iam.Tenant tenants = 1;
+}
+
+/*
+    UpdateTenantRequest mutates name/slug. Renaming slug breaks old links.
+ */
+message UpdateTenantRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    optional string name = 2 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    optional string slug = 3 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-z0-9_-]+$"}];
+}
+
+message UpdateTenantResponse {
+    iam.Tenant tenant = 1 [(validate.rules).message.required = true];
+}
+
+message DeleteTenantRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message DeleteTenantResponse {}
+
+/*
+    TransferTenantOwnershipRequest reassigns Tenant.owner_account_id to another
+    account, which MUST already be a member of the tenant. Ownership is the only
+    way to change owner_account_id (UpdateTenant cannot), keeping the transfer an
+    explicit, auditable action.
+ */
+message TransferTenantOwnershipRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string new_owner_account_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message TransferTenantOwnershipResponse {
+    iam.Tenant tenant = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    LeaveTenantRequest is the authenticated self-service exit: the CALLER drops
+    their own Membership in the named tenant (the GitHub "leave org" action),
+    distinct from an admin removing someone else (DeleteMembership). The owner
+    MUST transfer ownership first (TransferTenantOwnership); the service rejects
+    an owner trying to leave. Idempotent — leaving a tenant you are not in is a
+    no-op.
+ */
+message LeaveTenantRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message LeaveTenantResponse {}
+
+/*
+    ===== Roles =====
+ */
+
+/*
+    CreateRoleRequest defines a custom role. tenant_id MUST be set for
+    SCOPE_TENANT and empty for SCOPE_PLATFORM (enforced server-side). System
+    roles are seeded by the server and cannot be created here.
+ */
+message CreateRoleRequest {
+    string name = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    iam.Scope scope = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    string tenant_id = 3 [(validate.rules).string.max_len = 64];
+    repeated iam.Permission permissions = 4;
+}
+
+message CreateRoleResponse {
+    iam.Role role = 1 [(validate.rules).message.required = true];
+}
+
+message GetRoleRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message GetRoleResponse {
+    iam.Role role = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    ListRolesRequest lists roles visible to the caller. tenant_id filters to one
+    tenant's roles; empty lists the platform-scoped roles. System roles are
+    included and marked via iam.Role.is_system.
+ */
+message ListRolesRequest {
+    string tenant_id = 1 [(validate.rules).string.max_len = 64];
+    /*
+        page_size caps returned rows; 0 -> server default.
+     */
+    uint32 page_size = 2 [(validate.rules).uint32.lte = 500];
+    /*
+        page_token is the opaque cursor from a previous response.
+     */
+    string page_token = 3;
+}
+
+message ListRolesResponse {
+    repeated iam.Role roles = 1;
+    /*
+        next_page_token is empty when there are no more rows.
+     */
+    string next_page_token = 2;
+}
+
+/*
+    UpdateRoleRequest edits a custom role. System roles (is_system) are rejected.
+ */
+message UpdateRoleRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    optional string name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        permissions, when present, REPLACES the role's permission set wholesale.
+     */
+    repeated iam.Permission permissions = 3;
+}
+
+message UpdateRoleResponse {
+    iam.Role role = 1 [(validate.rules).message.required = true];
+}
+
+message DeleteRoleRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message DeleteRoleResponse {}
+
+/*
+    ===== Memberships =====
+ */
+
+/*
+    CreateMembershipRequest adds an account to a tenant with a set of roles — the
+    "invite/add member" operation. Referenced roles must be SCOPE_TENANT roles of
+    the same tenant_id or SCOPE_PLATFORM roles.
+ */
+message CreateMembershipRequest {
+    string account_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string tenant_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    repeated string role_ids = 3 [(validate.rules).repeated = {min_items: 1, items: {string: {min_len: 1, max_len: 64}}}];
+}
+
+message CreateMembershipResponse {
+    iam.Membership membership = 1 [(validate.rules).message.required = true];
+}
+
+message GetMembershipRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message GetMembershipResponse {
+    iam.Membership membership = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    ListMembershipsRequest lists all members of one tenant.
+ */
+message ListMembershipsRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        page_size caps returned rows; 0 -> server default.
+     */
+    uint32 page_size = 2 [(validate.rules).uint32.lte = 500];
+    /*
+        page_token is the opaque cursor from a previous response.
+     */
+    string page_token = 3;
+}
+
+message ListMembershipsResponse {
+    repeated iam.Membership memberships = 1;
+    /*
+        next_page_token is empty when there are no more rows.
+     */
+    string next_page_token = 2;
+}
+
+/*
+    UpdateMembershipRequest changes a member's granted roles. role_ids REPLACES
+    the existing set wholesale; an empty set is rejected (remove the membership
+    instead of leaving it role-less).
+ */
+message UpdateMembershipRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    repeated string role_ids = 2 [(validate.rules).repeated = {min_items: 1, items: {string: {min_len: 1, max_len: 64}}}];
+}
+
+message UpdateMembershipResponse {
+    iam.Membership membership = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    DeleteMembershipRequest removes a member from a tenant (revokes access).
+ */
+message DeleteMembershipRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message DeleteMembershipResponse {}
+
+/*
+    GetMyPermissionsRequest resolves the CALLER's effective Permissions in one
+    tenant — the live union the gate computes per request, exposed so a UI can
+    show/hide controls. The account comes from the token; tenant from the ref.
+ */
+message GetMyPermissionsRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message GetMyPermissionsResponse {
+    repeated iam.Permission permissions = 1;
+}
+
+/*
+    ListPermissionsRequest takes no arguments. ListPermissions returns the
+    catalog of grantable Permissions, assembled by the server from the
+    (cloud.v1.iam.auth) annotations across ALL services in the build (not only
+    IamAPI), PLUS a synthesized {resource, ACTION_MANAGE} entry for every
+    Resource that appears — MANAGE is grantable on a role but never named in an
+    annotation, so it must be added explicitly. RESOURCE/ACTION pairs that no
+    annotation references (e.g. RESOURCE_ACCOUNT/ACTION_CREATE, which is
+    admin_only) are intentionally absent: you cannot grant what nothing checks.
+ */
+message ListPermissionsRequest {}
+
+/*
+    CatalogEntry is one grantable Permission plus a human label for the UI.
+ */
+message CatalogEntry {
+    iam.Permission permission = 1 [(validate.rules).message.required = true];
+    /*
+        label is a display string for the role editor, e.g. "Create role".
+     */
+    string label = 2;
+}
+
+message ListPermissionsResponse {
+    repeated CatalogEntry entries = 1;
+}
+
+/*
+    ===== SSO (OIDC) =====
+ */
+
+/*
+    CreateIdentityProviderRequest configures a new OIDC provider. client_secret
+    is write-only: accepted here, stored server-side, never returned on the
+    IdentityProvider. The provider is created ENABLED (IdentityProvider.disabled
+    defaults false); hide it later via UpdateIdentityProvider if needed.
+ */
+message CreateIdentityProviderRequest {
+    string slug = 1 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-z0-9_-]+$"}];
+    string display_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    string issuer = 3 [(validate.rules).string = {min_len: 8, max_len: 2048, uri: true, pattern: "^https://"}];
+    string client_id = 4 [(validate.rules).string = {min_len: 1, max_len: 512}];
+    string client_secret = 5 [(validate.rules).string = {min_len: 1, max_len: 1024}];
+    repeated string scopes = 6;
+    repeated string allowed_domains = 7;
+    bool auto_provision = 8;
+}
+
+message CreateIdentityProviderResponse {
+    iam.IdentityProvider provider = 1 [(validate.rules).message.required = true];
+}
+
+message GetIdentityProviderRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message GetIdentityProviderResponse {
+    iam.IdentityProvider provider = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    UpdateIdentityProviderRequest edits a provider. A present, non-empty
+    client_secret ROTATES the stored secret; an absent one leaves it unchanged.
+ */
+message UpdateIdentityProviderRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    optional string display_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    optional string issuer = 3 [(validate.rules).string = {min_len: 8, max_len: 2048, uri: true, pattern: "^https://"}];
+    optional string client_id = 4 [(validate.rules).string = {min_len: 1, max_len: 512}];
+    optional string client_secret = 5 [(validate.rules).string = {min_len: 1, max_len: 1024}];
+    repeated string scopes = 6;
+    repeated string allowed_domains = 7;
+    optional bool auto_provision = 8;
+    /*
+        disabled hides the provider (inverted polarity: false = enabled). See
+        iam/sso.proto.
+     */
+    optional bool disabled = 9;
+}
+
+message UpdateIdentityProviderResponse {
+    iam.IdentityProvider provider = 1 [(validate.rules).message.required = true];
+}
+
+message DeleteIdentityProviderRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message DeleteIdentityProviderResponse {}
+
+/*
+    ListIdentityProvidersRequest is PUBLIC (the login page needs the buttons
+    before anyone is authenticated). It returns only ENABLED providers (those
+    with IdentityProvider.disabled == false). The response is slim on purpose —
+    only what a button needs — so admin-only config (domains, secret) never leaks
+    here.
+ */
+message ListIdentityProvidersRequest {}
+
+/*
+    SsoButton is the public, login-page view of an enabled provider.
+ */
+message SsoButton {
+    string id = 1;
+    string slug = 2;
+    string display_name = 3;
+}
+
+message ListIdentityProvidersResponse {
+    repeated SsoButton buttons = 1;
+}
+
+/*
+    StartSSORequest begins the OIDC authorization-code flow for one provider. The
+    server builds the IdP authorize URL (with a freshly generated state + PKCE
+    challenge it stashes server-side) and returns it; the client redirects the
+    user there.
+ */
+message StartSSORequest {
+    string provider_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message StartSSOResponse {
+    /*
+        redirect_url is the IdP authorize endpoint the caller must send the user
+        to.
+     */
+    string redirect_url = 1 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+    /*
+        state is the opaque CSRF token echoed back to CompleteSSO; the server also
+        keeps it to validate the callback.
+     */
+    string state = 2 [(validate.rules).string = {min_len: 1, max_len: 512}];
+}
+
+/*
+    CompleteSSORequest is the OIDC callback target. The IdP redirects the user
+    back with code + state as query params; the http layer maps them here. The
+    server validates state, exchanges code for the IdP tokens, reads the subject,
+    resolves (or JIT-provisions, per the provider) the Account, and mints our own
+    TokenPair.
+
+    The OIDC nonce is NOT carried here: the server generates it alongside state +
+    PKCE in StartSSO, stashes it server-side, and validates the id_token's nonce
+    claim during the code exchange — clients never see it.
+
+    HTTP NOTE. This RPC returns the TokenPair as JSON. Since the IdP redirects a
+    BROWSER to the callback, the http layer wrapping this RPC is responsible for
+    turning that response into a browser-friendly outcome (e.g. a 302 to the SPA
+    with the tokens, or a Set-Cookie) rather than rendering raw JSON. That same
+    layer also maps the callback route's <slug> (/auth/sso/<slug>/callback) onto
+    the provider_id field below — the RPC keys on id, the URL on slug.
+ */
+message CompleteSSORequest {
+    string provider_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string code = 2 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+    string state = 3 [(validate.rules).string = {min_len: 1, max_len: 512}];
+}
+
+message CompleteSSOResponse {
+    TokenPair tokens = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    LinkExternalIdentityRequest binds an existing account to an IdP subject
+    (admin-asserted, like CreateAccount.link). Idempotent on (provider, subject).
+ */
+message LinkExternalIdentityRequest {
+    string account_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    ExternalIdentityLink link = 2 [(validate.rules).message.required = true];
+}
+
+message LinkExternalIdentityResponse {
+    iam.ExternalIdentity identity = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    UnlinkExternalIdentityRequest removes one external identity by its id,
+    revoking SSO login through it (the Account and other links remain). The
+    caller must own the identity's account or be a platform admin (enforced
+    server-side).
+ */
+message UnlinkExternalIdentityRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message UnlinkExternalIdentityResponse {}
+
+/*
+    ListExternalIdentitiesRequest lists the identities linked to one account. The
+    caller must be that account or a platform admin (enforced server-side) — this
+    is the "my linked logins" view as well as the admin one.
+ */
+message ListExternalIdentitiesRequest {
+    string account_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message ListExternalIdentitiesResponse {
+    repeated iam.ExternalIdentity identities = 1;
+}
+
+/*
+    ===== API tokens =====
+
+    Long-lived programmatic credentials that authenticate AS an account (see
+    iam/apitoken.proto). Tenant-agnostic, like the access token. The plaintext
+    secret is returned exactly once, by CreateApiToken; thereafter only the
+    metadata (ApiToken) is readable.
+ */
+
+/*
+    CreateApiTokenRequest mints a new token for account_id. The caller must be
+    that account or a platform admin (enforced server-side), so a user creates
+    their own and an admin can provision service tokens for others.
+
+    For a SERVICE token, permissions is the requested subset; the service rejects
+    any permission the owner does not currently hold (a token can never exceed its
+    owner). For a PERSONAL token, permissions MUST be empty — it inherits the
+    account's authority.
+ */
+message CreateApiTokenRequest {
+    string account_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    iam.ApiTokenType type = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /*
+        permissions is the requested grant for a SERVICE token; leave empty for a
+        PERSONAL token.
+     */
+    repeated iam.Permission permissions = 4;
+    /*
+        ttl is the optional lifetime from creation. Omit (or zero) for a token
+        that never expires.
+     */
+    google.protobuf.Duration ttl = 5;
+}
+
+/*
+    CreateApiTokenResponse carries the created token's metadata AND the plaintext
+    secret. The secret is shown only here and never again — the caller must store
+    it now.
+ */
+message CreateApiTokenResponse {
+    iam.ApiToken token = 1 [(validate.rules).message.required = true];
+    /*
+        secret is the full plaintext token (prefix + secret) to send as a bearer
+        credential. Returned once; the server keeps only its hash.
+     */
+    string secret = 2 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+}
+
+/*
+    ListApiTokensRequest lists the tokens of one account. The caller must be that
+    account or a platform admin (enforced server-side) — the "my tokens" view as
+    well as the admin one. Secrets are never included.
+ */
+message ListApiTokensRequest {
+    string account_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message ListApiTokensResponse {
+    repeated iam.ApiToken tokens = 1;
+}
+
+/*
+    RevokeApiTokenRequest permanently disables one token by id. The caller must
+    own the token's account or be a platform admin (enforced server-side).
+ */
+message RevokeApiTokenRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message RevokeApiTokenResponse {}
+
+/*
+    ===== Service =====
+ */
+
+service IamAPI {
+    /*
+        --- Auth (public: no bearer token) ---
+     */
+    /*
+        Register is public self-signup, gated by
+        PlatformSettings.allow_self_registration. Not idempotent: each call
+        creates a new account.
+     */
+    rpc Register (RegisterRequest) returns (RegisterResponse) {
+        option (cloud.v1.iam.auth) = {public: true};
+    }
+    /*
+        Login authenticates by nickname|email + password and issues a TokenPair.
+        Not idempotent: each call mints a new session/TokenPair.
+     */
+    rpc Login (LoginRequest) returns (LoginResponse) {
+        option (cloud.v1.iam.auth) = {public: true};
+    }
+    /*
+        Refresh rotates a refresh_token into a new TokenPair. Not idempotent: the
+        refresh_token is single-use; a replay fails.
+     */
+    rpc Refresh (RefreshRequest) returns (RefreshResponse) {
+        option (cloud.v1.iam.auth) = {public: true};
+    }
+    /*
+        Logout revokes the refresh_token's server-side session. Idempotent:
+        revoking an already-revoked session is a no-op.
+     */
+    rpc Logout (LogoutRequest) returns (LogoutResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {public: true};
+    }
+    /*
+        RequestPasswordReset starts the forgot-password flow (emails a token).
+        Public. Always succeeds (no account-existence leak).
+     */
+    rpc RequestPasswordReset (RequestPasswordResetRequest) returns (RequestPasswordResetResponse) {
+        option (cloud.v1.iam.auth) = {public: true};
+    }
+    /*
+        ConfirmPasswordReset consumes the emailed token and sets a new password.
+        Public. Not idempotent: the token is single-use.
+     */
+    rpc ConfirmPasswordReset (ConfirmPasswordResetRequest) returns (ConfirmPasswordResetResponse) {
+        option (cloud.v1.iam.auth) = {public: true};
+    }
+    /*
+        VerifyEmail consumes an emailed verification token. Public: the token is
+        the credential and the user may be logged out.
+     */
+    rpc VerifyEmail (VerifyEmailRequest) returns (VerifyEmailResponse) {
+        option (cloud.v1.iam.auth) = {public: true};
+    }
+
+    /*
+        --- Accounts ---
+     */
+    /*
+        CreateAccount is the admin-only account path (the public path is
+        Register). Not idempotent: each call creates a new account.
+     */
+    rpc CreateAccount (CreateAccountRequest) returns (CreateAccountResponse) {
+        option (cloud.v1.iam.auth) = {admin_only: true};
+    }
+    rpc GetAccount (GetAccountRequest) returns (GetAccountResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ACCOUNT, action: ACTION_READ}]};
+    }
+    /*
+        GetMyAccount returns the caller's own profile — authenticated, no
+        permission (self-read).
+     */
+    rpc GetMyAccount (GetMyAccountRequest) returns (GetMyAccountResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {};
+    }
+    rpc ListAccounts (ListAccountsRequest) returns (ListAccountsResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ACCOUNT, action: ACTION_LIST}]};
+    }
+    /*
+        UpdateAccount is idempotent: a wholesale field set converges on retry.
+     */
+    rpc UpdateAccount (UpdateAccountRequest) returns (UpdateAccountResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ACCOUNT, action: ACTION_UPDATE}]};
+    }
+    /*
+        DeleteAccount is idempotent: deleting an absent account is a no-op.
+     */
+    rpc DeleteAccount (DeleteAccountRequest) returns (DeleteAccountResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ACCOUNT, action: ACTION_DELETE}]};
+    }
+    /*
+        ChangePassword is authenticated self-service (old + new). Not idempotent.
+     */
+    rpc ChangePassword (ChangePasswordRequest) returns (ChangePasswordResponse) {
+        option (cloud.v1.iam.auth) = {};
+    }
+    /*
+        ResetPassword is the admin override (sets a new password for any account).
+        Idempotent: setting the same password twice converges.
+     */
+    rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {admin_only: true};
+    }
+    /*
+        ResendVerification re-sends the caller's own email verification token.
+        Authenticated.
+     */
+    rpc ResendVerification (ResendVerificationRequest) returns (ResendVerificationResponse) {
+        option (cloud.v1.iam.auth) = {};
+    }
+
+    /*
+        --- Tenants ---
+     */
+    /*
+        CreateTenant is gated by PlatformSettings.allow_member_tenant_creation.
+        Not idempotent: each call creates a new tenant.
+     */
+    rpc CreateTenant (CreateTenantRequest) returns (CreateTenantResponse) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TENANT, action: ACTION_CREATE}]};
+    }
+    /*
+        GetTenant fetches by id or slug; slug is the routing-resolve path.
+     */
+    rpc GetTenant (GetTenantRequest) returns (GetTenantResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TENANT, action: ACTION_READ}], tenant_field: "id"};
+    }
+    /*
+        ListMyTenants returns the caller's tenants — authenticated, no permission.
+     */
+    rpc ListMyTenants (ListMyTenantsRequest) returns (ListMyTenantsResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {};
+    }
+    rpc UpdateTenant (UpdateTenantRequest) returns (UpdateTenantResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TENANT, action: ACTION_UPDATE}], tenant_field: "id"};
+    }
+    rpc DeleteTenant (DeleteTenantRequest) returns (DeleteTenantResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TENANT, action: ACTION_DELETE}], tenant_field: "id"};
+    }
+    /*
+        TransferTenantOwnership reassigns the owner. Idempotent: transferring to
+        the current owner is a no-op.
+     */
+    rpc TransferTenantOwnership (TransferTenantOwnershipRequest) returns (TransferTenantOwnershipResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TENANT, action: ACTION_UPDATE}]};
+    }
+    /*
+        LeaveTenant drops the caller's own membership — authenticated, no
+        permission. Idempotent: leaving a tenant you are not in is a no-op.
+     */
+    rpc LeaveTenant (LeaveTenantRequest) returns (LeaveTenantResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {};
+    }
+
+    /*
+        --- Roles ---
+     */
+    /*
+        CreateRole is not idempotent: each call creates a new role.
+     */
+    rpc CreateRole (CreateRoleRequest) returns (CreateRoleResponse) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ROLE, action: ACTION_CREATE}]};
+    }
+    rpc GetRole (GetRoleRequest) returns (GetRoleResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ROLE, action: ACTION_READ}]};
+    }
+    rpc ListRoles (ListRolesRequest) returns (ListRolesResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ROLE, action: ACTION_LIST}]};
+    }
+    /*
+        UpdateRole is idempotent: permissions REPLACES wholesale, converging on retry.
+     */
+    rpc UpdateRole (UpdateRoleRequest) returns (UpdateRoleResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ROLE, action: ACTION_UPDATE}]};
+    }
+    rpc DeleteRole (DeleteRoleRequest) returns (DeleteRoleResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ROLE, action: ACTION_DELETE}]};
+    }
+
+    /*
+        --- Memberships ---
+     */
+    /*
+        CreateMembership is not idempotent: each call creates a new membership row.
+     */
+    rpc CreateMembership (CreateMembershipRequest) returns (CreateMembershipResponse) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_MEMBERSHIP, action: ACTION_CREATE}]};
+    }
+    rpc GetMembership (GetMembershipRequest) returns (GetMembershipResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_MEMBERSHIP, action: ACTION_READ}]};
+    }
+    rpc ListMemberships (ListMembershipsRequest) returns (ListMembershipsResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_MEMBERSHIP, action: ACTION_LIST}]};
+    }
+    /*
+        UpdateMembership is idempotent: role_ids REPLACES wholesale, converging on retry.
+     */
+    rpc UpdateMembership (UpdateMembershipRequest) returns (UpdateMembershipResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_MEMBERSHIP, action: ACTION_UPDATE}]};
+    }
+    rpc DeleteMembership (DeleteMembershipRequest) returns (DeleteMembershipResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_MEMBERSHIP, action: ACTION_DELETE}]};
+    }
+    /*
+        GetMyPermissions resolves the caller's own permissions — authenticated, no permission.
+     */
+    rpc GetMyPermissions (GetMyPermissionsRequest) returns (GetMyPermissionsResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {};
+    }
+    /*
+        ListPermissions returns the grantable-permission catalog — authenticated, no permission.
+     */
+    rpc ListPermissions (ListPermissionsRequest) returns (ListPermissionsResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {};
+    }
+
+    /*
+        --- SSO: provider config (admin-only) ---
+     */
+    rpc CreateIdentityProvider (CreateIdentityProviderRequest) returns (CreateIdentityProviderResponse) {
+        option (cloud.v1.iam.auth) = {admin_only: true};
+    }
+    rpc GetIdentityProvider (GetIdentityProviderRequest) returns (GetIdentityProviderResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {admin_only: true};
+    }
+    rpc UpdateIdentityProvider (UpdateIdentityProviderRequest) returns (UpdateIdentityProviderResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {admin_only: true};
+    }
+    rpc DeleteIdentityProvider (DeleteIdentityProviderRequest) returns (DeleteIdentityProviderResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {admin_only: true};
+    }
+
+    /*
+        --- SSO: login flow (public) ---
+     */
+    /*
+        ListIdentityProviders returns the login-page buttons. Public, read-only.
+     */
+    rpc ListIdentityProviders (ListIdentityProvidersRequest) returns (ListIdentityProvidersResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {public: true};
+    }
+    /*
+        StartSSO returns the IdP authorize URL. Public. Not idempotent: each call
+        mints fresh state + PKCE stashed server-side.
+     */
+    rpc StartSSO (StartSSORequest) returns (StartSSOResponse) {
+        option (cloud.v1.iam.auth) = {public: true};
+    }
+    /*
+        CompleteSSO is the OIDC callback. Public. Not idempotent: the code is
+        single-use and a replay fails.
+     */
+    rpc CompleteSSO (CompleteSSORequest) returns (CompleteSSOResponse) {
+        option (cloud.v1.iam.auth) = {public: true};
+    }
+
+    /*
+        --- SSO: identity links ---
+     */
+    /*
+        LinkExternalIdentity is admin-only (admin asserts the binding). Idempotent
+        on (provider, subject).
+     */
+    rpc LinkExternalIdentity (LinkExternalIdentityRequest) returns (LinkExternalIdentityResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {admin_only: true};
+    }
+    /*
+        UnlinkExternalIdentity is authenticated; the service enforces
+        account-owner-or-admin. Idempotent: unlinking an absent link is a no-op.
+     */
+    rpc UnlinkExternalIdentity (UnlinkExternalIdentityRequest) returns (UnlinkExternalIdentityResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {};
+    }
+    /*
+        ListExternalIdentities is authenticated; the service enforces
+        account-owner-or-admin (the "my linked logins" view).
+     */
+    rpc ListExternalIdentities (ListExternalIdentitiesRequest) returns (ListExternalIdentitiesResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {};
+    }
+
+    /*
+        --- API tokens ---
+     */
+    /*
+        CreateApiToken mints a programmatic credential; the service enforces
+        account-owner-or-admin and caps a SERVICE token to the owner's
+        permissions. Not idempotent: each call mints a new token + secret.
+     */
+    rpc CreateApiToken (CreateApiTokenRequest) returns (CreateApiTokenResponse) {
+        option (cloud.v1.iam.auth) = {};
+    }
+    /*
+        ListApiTokens lists an account's tokens (metadata only). Authenticated;
+        the service enforces account-owner-or-admin.
+     */
+    rpc ListApiTokens (ListApiTokensRequest) returns (ListApiTokensResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {};
+    }
+    /*
+        RevokeApiToken disables a token. Authenticated; the service enforces
+        account-owner-or-admin. Idempotent: revoking an absent/already-revoked
+        token is a no-op.
+     */
+    rpc RevokeApiToken (RevokeApiTokenRequest) returns (RevokeApiTokenResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {};
+    }
+}

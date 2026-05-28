@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package cloud.v1.iam;
+
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "cloud/v1/common/tags.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam";
+
+/*
+    tenant.proto defines the isolation boundary. Every tenant-scoped resource in
+    the platform (roles, memberships, runs, settings, ...) belongs to exactly
+    one Tenant, and access never crosses tenants except for platform-scoped
+    grants (see Scope in permission.proto).
+ */
+
+/*
+    Tenant is an isolated workspace.
+
+    It is created and owned by an Account (owner_account_id). The owner is a
+    pointer only — the actual access an owner enjoys is still expressed through
+    a Membership + Role binding, so ownership and authorization stay decoupled
+    and auditable. Deleting the owning account does not implicitly delete the
+    tenant; that lifecycle decision lives in the service layer.
+
+    IDENTITY vs ROUTING. A tenant has TWO names with different jobs:
+      - id   — the canonical, immutable, server-assigned key. This is the ONLY
+               thing authorization and storage ever key on.
+      - slug — the url-safe handle shown to users in routes: /t/<slug>/...
+               Human-typeable, mutable, unique. URLs use slug for readability;
+               the server resolves slug -> id at the tenant gate on each request.
+      - name — the free-form display label (any characters, spaces) for UIs.
+
+    The access token is TENANT-AGNOSTIC (see claims.proto): it carries no tenant
+    at all. The active tenant comes from the URL slug, is resolved to id, and the
+    account's Membership in that id decides access — per request.
+
+    NEVER authorize on slug or name: both are mutable and reassignable, so
+    trusting them would let a rename silently transfer access. Resolve to id
+    first, then check the account's Membership/permissions against the id.
+ */
+message Tenant {
+    /*
+        id is the stable, server-assigned unique identifier (e.g. UUID).
+     */
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        name is the human-readable display label shown in tenant switchers.
+     */
+    string name = 2 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    /*
+        owner_account_id references the Account that owns this tenant. It is a
+        soft pointer for attribution/UI; effective permissions still come from
+        Membership, not from this field.
+     */
+    string owner_account_id = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        slug is the url-safe, unique handle used in user-facing routes:
+        /t/<slug>/runs, /t/<slug>/settings, ... It is what end users see and
+        type, so it is restricted to lowercase letters, digits, '-' and '_'.
+
+        slug is MUTABLE: an operator may rename it, but doing so breaks every
+        existing link to the old slug (the service layer should 301-redirect old
+        -> new where it can). Because it can change and be reassigned, slug is
+        NEVER used for authorization or stored as a foreign key — id is the
+        canonical reference. The tenant gate maps the URL slug to id once per
+        request, then checks the account's Membership against that id.
+     */
+    string slug = 4 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-z0-9_-]+$"}];
+    /*
+        tags is a free label/key-value set for filtering and grouping.
+     */
+    common.Tags tags = 5;
+    /*
+        created_at is when the tenant was first created (server clock).
+     */
+    google.protobuf.Timestamp created_at = 6;
+    /*
+        updated_at is when the tenant was last mutated (server clock).
+     */
+    google.protobuf.Timestamp updated_at = 7;
+}

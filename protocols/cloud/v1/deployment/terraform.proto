@@ -2,8 +2,9 @@ syntax = "proto3";
 
 package cloud.v1.deployment;
 
-import "validate/validate.proto";
+import "cloud/v1/deployment/provider.proto";
 import "schemapb/schema.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment";
 
@@ -28,15 +29,16 @@ message Terraform {
 
     /* input contains everything needed to prepare and run one Terraform action. */
     message Input {
+        deployment.Provider provider = 1;
         /* operation contains Terraform executor parameters independent of tfvars. */
-        Operation operation = 1 [(validate.rules).message.required = true];
+        Operation operation = 2 [(validate.rules).message.required = true];
         /*
             tfvars is the sealed, schema-backed values used to produce
             terraform.tfvars.json. It is required for plan/apply and optional
             for destroy, because crash-recovery destroy may reuse an existing
             workdir that already contains terraform.tfvars.json and tfstate.
          */
-        schemapb.Baked tfvars = 2;
+        schemapb.Baked tfvars = 3;
     }
 
     /* output contains observed Terraform state and baked output values. */

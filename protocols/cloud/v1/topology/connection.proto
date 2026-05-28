@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.topology;
 
+import "cloud/v1/common/ip.proto";
 import "validate/validate.proto";
 import "cloud/v1/common/tags.proto";
 
@@ -60,6 +61,7 @@ message Connection {
     Protocol protocol = 4 [(validate.rules).enum.defined_only = true];
     Mode mode = 5 [(validate.rules).enum.defined_only = true];
     optional uint32 port = 6 [(validate.rules).uint32.lte = 65535];
+    bool inner = 8; // if connection in one physical vm
     common.Tags tags = 7;
 }
 

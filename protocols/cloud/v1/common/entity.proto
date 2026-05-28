@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package cloud.v1.common;
+
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
+
+message Timings {
+    google.protobuf.Timestamp created_at = 1;
+    google.protobuf.Timestamp updated_at = 2;
+    optional google.protobuf.Timestamp deleted_at = 3;
+}
+
+// Entity is the common storage envelope shared by every DB-persisted model.
+message Entity {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string tenant_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string name = 3 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    string description = 4 [(validate.rules).string = {max_len: 4096}];
+    Timings timings = 5;
+    // author_id is the Account that created the row. Server-assigned from the
+    // caller; immutable afterwards.
+    string author_id = 6 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+/*
+    EntityFilter is the ready-made filter over the common Entity fields. Any
+    model list endpoint can embed it. Every field is optional — an unset field is
+    not applied. Tenant scoping is NOT here: it comes from the request tenant_id
+    + the auth interceptor, never from a client-supplied filter.
+ */
+message EntityFilter {
+    // Free-text search over name + description (substring / ILIKE).
+    string search = 1 [(validate.rules).string.max_len = 256];
+    // Restrict to these exact ids (empty = no id filter).
+    repeated string ids = 2 [(validate.rules).repeated = {max_items: 1000, items: {string: {max_len: 64}}}];
+    // Created-at window (timings.created_at).
+    google.protobuf.Timestamp created_after = 3;
+    google.protobuf.Timestamp created_before = 4;
+    // Updated-at window (timings.updated_at).
+    google.protobuf.Timestamp updated_after = 5;
+    google.protobuf.Timestamp updated_before = 6;
+    // When true, include soft-deleted rows (timings.deleted_at set). Default false.
+    bool include_deleted = 7;
+    // Restrict to rows authored by these Accounts (empty = no author filter).
+    repeated string author_ids = 8 [(validate.rules).repeated = {max_items: 1000, items: {string: {max_len: 64}}}];
+}
+
+// EntitySortField names the common Entity columns a list can be ordered by.
+enum EntitySortField {
+    ENTITY_SORT_FIELD_UNSPECIFIED = 0;
+    ENTITY_SORT_FIELD_NAME = 1;
+    ENTITY_SORT_FIELD_CREATED_AT = 2;
+    ENTITY_SORT_FIELD_UPDATED_AT = 3;
+    ENTITY_SORT_FIELD_AUTHOR_ID = 4;
+}
+
+// EntitySort is the ready-made ordering over common Entity fields.
+message EntitySort {
+    EntitySortField field = 1;
+    bool desc = 2;
+}
+
+// Page is the reusable request-side pagination cursor.
+message Page {
+    // size caps returned rows; 0 -> server default.
+    uint32 size = 1 [(validate.rules).uint32.lte = 500];
+    // token is the opaque cursor from a previous response (empty = first page).
+    string token = 2;
+}

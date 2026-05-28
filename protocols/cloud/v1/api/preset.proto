@@ -1,0 +1,303 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/common/entity.proto";
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/permission.proto";
+import "cloud/v1/models/preset.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    preset.proto exposes the tenant-scoped CRUD APIs over the three preset tables
+    (models.DatabasePreset / WorkloadPreset / TestPreset). Each kind has its own
+    service because each lives in its own table with its own filters and sort
+    keys. Every request carries tenant_id (the default auth tenant_field); presets
+    never cross tenants.
+
+    Shared filtering/sorting/pagination over the common Entity fields comes from
+    common.EntityFilter / common.EntitySort / common.Page. Kind-specific filters
+    and sort keys are nested in the one request that uses them.
+ */
+
+/*
+    ============================ DatabasePreset ============================
+ */
+message CreateDatabasePresetRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        Server assigns entity.id / tenant_id / timings; values set here are
+        ignored.
+     */
+    models.DatabasePreset preset = 2 [(validate.rules).message.required = true];
+}
+message CreateDatabasePresetResponse {
+    models.DatabasePreset preset = 1 [(validate.rules).message.required = true];
+}
+
+message GetDatabasePresetRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message GetDatabasePresetResponse {
+    models.DatabasePreset preset = 1 [(validate.rules).message.required = true];
+}
+
+message ListDatabasePresetsRequest {
+    // SourceKind mirrors domain.Database.source oneof, for filtering.
+    enum SourceKind {
+        SOURCE_KIND_UNSPECIFIED = 0;
+        SOURCE_KIND_PARAMS = 1;       // self-deploy
+        SOURCE_KIND_EXTERNAL = 2;     // external dsn
+        SOURCE_KIND_PRESET_REF = 3;   // database_preset_id
+    }
+
+    /*
+        Sort orders by EITHER a common Entity column OR a table-specific column.
+        desc applies to whichever is chosen.
+     */
+    message Sort {
+        enum Kind {
+            KIND_UNSPECIFIED = 0;
+            KIND_DB_KIND = 1;   // domain.Database.Kind
+        }
+        oneof by {
+            common.EntitySortField entity = 1;
+            Kind kind = 2;
+        }
+        bool desc = 3;
+    }
+
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    // Shared Entity-level filters (search, ids, time windows, soft-delete).
+    common.EntityFilter filter = 2;
+    // Tag match: every key=value pair must be present on the database (AND).
+    map<string, string> tags = 3;
+    // Kind-specific filters.
+    repeated domain.Database.Kind db_kinds = 4;
+    repeated SourceKind sources = 5;
+    // Ordering (common Entity column or table-specific).
+    Sort sort = 6;
+    // Pagination.
+    common.Page page = 7;
+}
+message ListDatabasePresetsResponse {
+    repeated models.DatabasePreset presets = 1;
+    string next_page_token = 2;
+}
+
+message UpdateDatabasePresetRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    // Wholesale replace; preset.entity.id selects the row.
+    models.DatabasePreset preset = 2 [(validate.rules).message.required = true];
+}
+message UpdateDatabasePresetResponse {
+    models.DatabasePreset preset = 1 [(validate.rules).message.required = true];
+}
+
+message DeleteDatabasePresetRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message DeleteDatabasePresetResponse {}
+
+service DatabasePresetAPI {
+    rpc CreateDatabasePreset (CreateDatabasePresetRequest) returns (CreateDatabasePresetResponse) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_CREATE}]};
+    }
+    rpc GetDatabasePreset (GetDatabasePresetRequest) returns (GetDatabasePresetResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_READ}]};
+    }
+    rpc ListDatabasePresets (ListDatabasePresetsRequest) returns (ListDatabasePresetsResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_LIST}]};
+    }
+    /*
+        UpdateDatabasePreset is idempotent: a wholesale field set converges on retry.
+     */
+    rpc UpdateDatabasePreset (UpdateDatabasePresetRequest) returns (UpdateDatabasePresetResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_UPDATE}]};
+    }
+    /*
+        DeleteDatabasePreset is idempotent: deleting an absent preset is a no-op.
+     */
+    rpc DeleteDatabasePreset (DeleteDatabasePresetRequest) returns (DeleteDatabasePresetResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_DELETE}]};
+    }
+}
+
+/*
+    ============================ WorkloadPreset ============================
+ */
+message CreateWorkloadPresetRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    models.WorkloadPreset preset = 2 [(validate.rules).message.required = true];
+}
+message CreateWorkloadPresetResponse {
+    models.WorkloadPreset preset = 1 [(validate.rules).message.required = true];
+}
+
+message GetWorkloadPresetRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message GetWorkloadPresetResponse {
+    models.WorkloadPreset preset = 1 [(validate.rules).message.required = true];
+}
+
+message ListWorkloadPresetsRequest {
+    message Sort {
+        enum Kind {
+            KIND_UNSPECIFIED = 0;
+            KIND_STROPPY_VERSION = 1;
+        }
+        oneof by {
+            common.EntitySortField entity = 1;
+            Kind kind = 2;
+        }
+        bool desc = 3;
+    }
+
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    common.EntityFilter filter = 2;
+    // Tag match over the workload tags (AND).
+    map<string, string> tags = 3;
+    // Kind-specific filter.
+    repeated string stroppy_versions = 4 [(validate.rules).repeated = {max_items: 100, items: {string: {max_len: 64}}}];
+    // Ordering (common Entity column or table-specific).
+    Sort sort = 5;
+    // Pagination.
+    common.Page page = 6;
+}
+message ListWorkloadPresetsResponse {
+    repeated models.WorkloadPreset presets = 1;
+    string next_page_token = 2;
+}
+
+message UpdateWorkloadPresetRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    models.WorkloadPreset preset = 2 [(validate.rules).message.required = true];
+}
+message UpdateWorkloadPresetResponse {
+    models.WorkloadPreset preset = 1 [(validate.rules).message.required = true];
+}
+
+message DeleteWorkloadPresetRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message DeleteWorkloadPresetResponse {}
+
+service WorkloadPresetAPI {
+    rpc CreateWorkloadPreset (CreateWorkloadPresetRequest) returns (CreateWorkloadPresetResponse) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_CREATE}]};
+    }
+    rpc GetWorkloadPreset (GetWorkloadPresetRequest) returns (GetWorkloadPresetResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_READ}]};
+    }
+    rpc ListWorkloadPresets (ListWorkloadPresetsRequest) returns (ListWorkloadPresetsResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_LIST}]};
+    }
+    rpc UpdateWorkloadPreset (UpdateWorkloadPresetRequest) returns (UpdateWorkloadPresetResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_UPDATE}]};
+    }
+    rpc DeleteWorkloadPreset (DeleteWorkloadPresetRequest) returns (DeleteWorkloadPresetResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_DELETE}]};
+    }
+}
+
+/*
+    ============================== TestPreset ==============================
+ */
+message CreateTestPresetRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    models.TestPreset preset = 2 [(validate.rules).message.required = true];
+}
+message CreateTestPresetResponse {
+    models.TestPreset preset = 1 [(validate.rules).message.required = true];
+}
+
+message GetTestPresetRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message GetTestPresetResponse {
+    models.TestPreset preset = 1 [(validate.rules).message.required = true];
+}
+
+message ListTestPresetsRequest {
+    message Sort {
+        enum Kind {
+            KIND_UNSPECIFIED = 0;
+            KIND_DB_KIND = 1;
+            KIND_STROPPY_VERSION = 2;
+        }
+        oneof by {
+            common.EntitySortField entity = 1;
+            Kind kind = 2;
+        }
+        bool desc = 3;
+    }
+
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    common.EntityFilter filter = 2;
+    // Tag match over the test tags (AND).
+    map<string, string> tags = 3;
+    // Kind-specific filters: the test's database kind and workload version.
+    repeated domain.Database.Kind db_kinds = 4;
+    repeated string stroppy_versions = 5 [(validate.rules).repeated = {max_items: 100, items: {string: {max_len: 64}}}];
+    // Ordering (common Entity column or table-specific).
+    Sort sort = 6;
+    // Pagination.
+    common.Page page = 7;
+}
+message ListTestPresetsResponse {
+    repeated models.TestPreset presets = 1;
+    string next_page_token = 2;
+}
+
+message UpdateTestPresetRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    models.TestPreset preset = 2 [(validate.rules).message.required = true];
+}
+message UpdateTestPresetResponse {
+    models.TestPreset preset = 1 [(validate.rules).message.required = true];
+}
+
+message DeleteTestPresetRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message DeleteTestPresetResponse {}
+
+service TestPresetAPI {
+    rpc CreateTestPreset (CreateTestPresetRequest) returns (CreateTestPresetResponse) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_CREATE}]};
+    }
+    rpc GetTestPreset (GetTestPresetRequest) returns (GetTestPresetResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_READ}]};
+    }
+    rpc ListTestPresets (ListTestPresetsRequest) returns (ListTestPresetsResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_LIST}]};
+    }
+    rpc UpdateTestPreset (UpdateTestPresetRequest) returns (UpdateTestPresetResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_UPDATE}]};
+    }
+    rpc DeleteTestPreset (DeleteTestPresetRequest) returns (DeleteTestPresetResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_DELETE}]};
+    }
+}

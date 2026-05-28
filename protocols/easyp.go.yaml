@@ -26,6 +26,11 @@ generate:
       out: ../internal/proto
       opts:
         paths: source_relative
+    - name: go_temporal
+      out: ../internal/proto
+      opts:
+        paths: source_relative
+        cli-enabled: true
 #    - name: connect-go
 #      out: ../internal/proto
 #      opts:

@@ -1,0 +1,220 @@
+syntax = "proto3";
+
+package cloud.v1.workflow;
+
+import "cloud/v1/common/ip.proto";
+import "cloud/v1/deployment/docker.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/deployment/quota.proto";
+import "cloud/v1/deployment/terraform.proto";
+import "cloud/v1/topology/topology.proto";
+import "temporal/v1/temporal.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow";
+
+
+message ProcessDeploymentWorkflowRequest {
+    deployment.Provider provider = 1;
+    /*
+        MUST BE WITH INSTANCES provider_parms
+    */
+    topology.Topology topology = 2;
+}
+message ProcessDeploymentWorkflowResponse {
+    deployment.Provider provider = 1;
+    /*
+       FULL DEPLOYD TOPOLOGY WITH ALL PARAMS
+   */
+    topology.Topology deployed_topology = 2;
+}
+
+message CalculateQuotasWorkflowRequest {
+    topology.Topology topology = 1;
+}
+
+message CalculateQuotasWorkflowResponse {
+    topology.Topology topology = 1;
+    /*
+        This is requests located by component.id
+    */
+    map<string, deployment.Quota.Request> quota_requests = 5;
+}
+
+message AcquireNetworkActivityRequest {
+    deployment.ProviderSettings settings = 2;
+}
+message AcquireNetworkActivityResponse {
+    common.Net net = 1;
+}
+
+message AcquireQuotasActivityRequest {
+    /*
+        This is requests located by component.id
+    */
+    map<string, deployment.Quota.Request> quota_requests = 5;
+}
+message AcquireQuotasActivityResponse {
+    /*
+        This is allocation located by component.id
+    */
+    map<string, deployment.Quota.Allocation> quota_allocation = 1;
+}
+
+service DeploymentApi {
+    /*
+        task_queue: shared queue for the deployment workflows/activities.
+    */
+    option (temporal.v1.service) = {task_queue: "stroppy-cloud"};
+
+    rpc ProcessDeploymentWorkflow (ProcessDeploymentWorkflowRequest) returns (ProcessDeploymentWorkflowResponse) {
+        option (temporal.v1.workflow) = {
+            name: "ProcessDeploymentWorkflow"
+            /*
+                No explicit id: always a child of TestWorkflow (deployment never
+                runs without a test). Trace via the root workflow execution.
+            */
+            /*
+                No execution_timeout: provisioning a large cluster on a cold cloud
+                can take a long time. Liveness is enforced by the activity
+                timeouts/heartbeats below, not a workflow wall clock.
+            */
+            /*
+                retry_policy: do NOT auto-retry the whole deployment — it has side
+                effects (created infra). Retries live on the activities.
+            */
+            retry_policy: {max_attempts: 1}
+        };
+    }
+
+    rpc AcquireNetworkActivity (AcquireNetworkActivityRequest) returns (AcquireNetworkActivityResponse) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 300}
+            /*
+                Provider API call; transient errors are common => retry with
+                backoff. Provider must dedupe by name.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}, backoff_coefficient: 2.0}
+        };
+    }
+
+    rpc CalculateQuotasWorkflow (CalculateQuotasWorkflowRequest) returns (CalculateQuotasWorkflowResponse) {
+        option (temporal.v1.workflow) = {
+            name: "CalculateQuotasWorkflow"
+            /*
+                Pure computation over the topology. 5m run_timeout, retryable.
+            */
+            run_timeout: {seconds: 300}
+            retry_policy: {max_attempts: 3}
+        };
+    }
+    rpc AcquireQuotasActivity (AcquireQuotasActivityRequest) returns (AcquireQuotasActivityResponse) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 300}
+            /*
+                Provider API call => retry with backoff.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}, backoff_coefficient: 2.0}
+        };
+    }
+
+    rpc RenderDockerInputWorkflow (topology.Topology) returns (deployment.Docker.Input) {
+        option (temporal.v1.workflow) = {
+            name: "RenderDockerInputWorkflow"
+            /*
+                Pure render (topology -> docker input). Fast, retryable.
+            */
+            run_timeout: {seconds: 60}
+            retry_policy: {max_attempts: 3}
+        };
+    }
+    rpc DockerPullActivity (deployment.Docker.Input) returns (deployment.Docker.Output) {
+        option (temporal.v1.activity) = {
+            /*
+                start_to_close_timeout: image pulls can be slow. 10m.
+            */
+            start_to_close_timeout: {seconds: 600}
+            /*
+                Idempotent (pull) => retry with backoff.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}, backoff_coefficient: 2.0}
+        };
+    }
+    rpc DockerUpActivity (deployment.Docker.Input) returns (deployment.Docker.Output) {
+        option (temporal.v1.activity) = {
+            /*
+                start_to_close_timeout: compose up may pull + start containers. 10m.
+            */
+            start_to_close_timeout: {seconds: 600}
+            /*
+                heartbeat_timeout: long startup heartbeats so a dead worker is
+                detected within 60s.
+            */
+            heartbeat_timeout: {seconds: 60}
+            /*
+                Idempotent (compose up converges) => retry.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}}
+        };
+    }
+    rpc DockerDownActivity (deployment.Docker.Input) returns (deployment.Docker.Output) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 300}
+            /*
+                Idempotent (compose down) => retry.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}}
+        };
+    }
+
+    rpc RenderTerraformVariablesWorkflow (topology.Topology) returns (deployment.Terraform.Input) {
+        option (temporal.v1.workflow) = {
+            name: "RenderTerraformVariablesWorkflow"
+            /*
+                Pure render (topology -> terraform vars). Fast, retryable.
+            */
+            run_timeout: {seconds: 60}
+            retry_policy: {max_attempts: 3}
+        };
+    }
+    rpc TerraformPlanActivity (deployment.Terraform.Input) returns (deployment.Terraform.Output) {
+        option (temporal.v1.activity) = {
+            /*
+                start_to_close_timeout: plan refreshes state against the provider.
+                15m.
+            */
+            start_to_close_timeout: {seconds: 900}
+            heartbeat_timeout: {seconds: 60}
+            /*
+                Read-only (no apply) => retryable.
+            */
+            retry_policy: {max_attempts: 2, initial_interval: {seconds: 10}}
+        };
+    }
+    rpc TerraformApplyActivity (deployment.Terraform.Input) returns (deployment.Terraform.Output) {
+        option (temporal.v1.activity) = {
+            /*
+                start_to_close_timeout: provisioning VMs/network can be slow. 30m.
+            */
+            start_to_close_timeout: {seconds: 1800}
+            heartbeat_timeout: {seconds: 60}
+            /*
+                Idempotent via terraform state, but mutating. Retry sparingly; the
+                state lock serializes concurrent attempts.
+            */
+            retry_policy: {max_attempts: 2, initial_interval: {seconds: 10}}
+        };
+    }
+    rpc TerraformDestroyActivity (deployment.Terraform.Input) returns (deployment.Terraform.Output) {
+        option (temporal.v1.activity) = {
+            /*
+                start_to_close_timeout: teardown of all resources. 30m.
+            */
+            start_to_close_timeout: {seconds: 1800}
+            heartbeat_timeout: {seconds: 60}
+            /*
+                Idempotent (destroy converges to empty) => retry to avoid leaks.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 10}}
+        };
+    }
+}

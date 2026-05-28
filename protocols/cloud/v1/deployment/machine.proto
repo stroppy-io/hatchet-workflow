@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package cloud.v1.deployment;
+
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment";
+
+message MachineInfo {
+    uint32 cores = 1 [(validate.rules).uint32.gt = 0];
+    uint64 memory_gb = 2 [(validate.rules).uint64.gt = 0];
+    uint64 disk_gb = 3 [(validate.rules).uint64.gt = 0];
+    repeated uint64 data_disks_gb = 4 [(validate.rules).repeated.max_items = 64];
+}

@@ -1,0 +1,167 @@
+syntax = "proto3";
+
+package cloud.v1.workflow;
+
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/domain/suite.proto";
+import "cloud/v1/domain/test.proto";
+import "cloud/v1/domain/workload.proto";
+import "cloud/v1/topology/topology.proto";
+import "temporal/v1/temporal.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow";
+
+message TestWorkflowRequest {
+    domain.TestRun test_run = 1 [(validate.rules).message.required = true];
+}
+message TestWorkflowResponse {}
+
+// Install stroppy on the runner instances. Runner machines are always
+// deployed, so this always runs. Topology is read-only here (baked + runtime).
+message InstallStroppyWorkflowRequest {
+    topology.Topology topology = 1 [(validate.rules).message.required = true];
+}
+message InstallStroppyWorkflowResponse {}
+
+// Bring up / provision the database (self-deploy or managed). Our
+// responsibility for every kind except external. Skipped for external dbs.
+message InstallDatabaseWorkflowRequest {
+    topology.Topology topology = 1 [(validate.rules).message.required = true];
+    domain.Database database = 2 [(validate.rules).message.required = true];
+}
+message InstallDatabaseWorkflowResponse {}
+
+// Run the workload via the agent (write stroppy config + call stroppy).
+// Results land in metrics, not in the response.
+message RunWorkloadWorkflowRequest {
+    topology.Topology topology = 1 [(validate.rules).message.required = true];
+    domain.Workload workload = 2 [(validate.rules).message.required = true];
+}
+message RunWorkloadWorkflowResponse {}
+
+// TestWorkflow orchestrates one full test cycle:
+//   deploy -> install stroppy -> [install database unless external] -> run workload -> teardown.
+// It composes child workflows; topology stays baked, only runtime info from the
+// deployment is carried forward.
+service TestApi {
+    /*
+        task_queue: shared queue for every workflow/activity of this service.
+        The worker polls it. Child workflows inherit it unless overridden.
+    */
+    option (temporal.v1.service) = {task_queue: "stroppy-cloud"};
+
+    rpc TestWorkflow (TestWorkflowRequest) returns (TestWorkflowResponse) {
+        option (temporal.v1.workflow) = {
+            name: "TestWorkflow"
+            /*
+                id: deterministic workflow id derived from TestRun.id via bloblang
+                interpolation. Same TestRun => same id => duplicate concurrent
+                starts are deduplicated by the server.
+            */
+            id: 'test-run/${! test_run.id }'
+            /*
+                id_reuse_policy: re-running with the same id is allowed ONLY when
+                the previous run ended unsuccessfully (failed / terminated /
+                timed out / cancelled). Prevents accidental re-run of a success.
+            */
+            id_reuse_policy: WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY
+            /*
+                No execution_timeout on purpose: a workload may load terabytes and
+                run for days. A hard cap here would kill long-but-healthy runs.
+                Liveness is enforced by activity heartbeats, not by a wall clock.
+            */
+            /*
+                retry_policy: do NOT auto-retry the orchestration as a whole — it
+                has side effects (deploy/teardown). Retries live on the child
+                workflows / activities instead.
+            */
+            retry_policy: {max_attempts: 1}
+        };
+    }
+    rpc InstallStroppyWorkflow (InstallStroppyWorkflowRequest) returns (InstallStroppyWorkflowResponse) {
+        option (temporal.v1.workflow) = {
+            name: "InstallStroppyWorkflow"
+            /*
+                No explicit id: this is always a child of TestWorkflow. Trace it
+                via workflow.GetInfo(ctx).RootWorkflowExecution.ID (the TestWorkflow
+                id), so we don't thread run_id through every child.
+            */
+            /*
+                run_timeout: install stroppy onto the runner machines. 30m.
+            */
+            run_timeout: {seconds: 1800}
+            /*
+                Idempotent (drops a binary) => safe to retry.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}}
+        };
+    }
+    rpc InstallDatabaseWorkflow (InstallDatabaseWorkflowRequest) returns (InstallDatabaseWorkflowResponse) {
+        option (temporal.v1.workflow) = {
+            name: "InstallDatabaseWorkflow"
+            /*
+                No explicit id: always a child of TestWorkflow; trace via the root
+                workflow execution.
+            */
+            /*
+                run_timeout: bring up / provision the DB (self-deploy or managed).
+                30m.
+            */
+            run_timeout: {seconds: 1800}
+            /*
+                Idempotent => safe to retry.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}}
+        };
+    }
+    rpc RunWorkloadWorkflow (RunWorkloadWorkflowRequest) returns (RunWorkloadWorkflowResponse) {
+        option (temporal.v1.workflow) = {
+            name: "RunWorkloadWorkflow"
+            /*
+                No explicit id: always a child of TestWorkflow; trace via the root
+                workflow execution.
+            */
+            /*
+                No run_timeout: the load run is the unbounded part — terabytes /
+                multi-day runs are expected. Liveness is enforced by the
+                CallCmdActivity heartbeat, not by a workflow timeout.
+            */
+            /*
+                Do NOT retry: an automatic re-run means double load and corrupted
+                metrics.
+            */
+            retry_policy: {max_attempts: 1}
+        };
+    }
+}
+
+message SuiteWorkflowRequest {
+    domain.SuiteRun suite_run = 1 [(validate.rules).message.required = true];
+}
+message SuiteWorkflowResponse {}
+
+// SuiteWorkflow runs a child TestWorkflow per test_run, honoring max_parallel.
+service SuiteWorkflowApi {
+    option (temporal.v1.service) = {task_queue: "stroppy-cloud"};
+
+    rpc SuiteWorkflow (SuiteWorkflowRequest) returns (SuiteWorkflowResponse) {
+        option (temporal.v1.workflow) = {
+            name: "SuiteWorkflow"
+            /*
+                id: deterministic, derived from SuiteRun.id.
+            */
+            id: 'suite-run/${! suite_run.id }'
+            id_reuse_policy: WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY
+            /*
+                No execution_timeout: a suite runs N child TestWorkflows, each of
+                which can itself run for days. Capping here would kill a healthy
+                long suite. Liveness comes from the children's activity heartbeats.
+            */
+            /*
+                Do NOT retry the suite orchestrator as a whole.
+            */
+            retry_policy: {max_attempts: 1}
+        };
+    }
+}

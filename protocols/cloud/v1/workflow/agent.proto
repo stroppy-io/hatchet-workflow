@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package cloud.v1.workflow;
+
+import "cloud/v1/common/cmd.proto";
+import "cloud/v1/common/dir.proto";
+import "cloud/v1/common/file.proto";
+import "google/protobuf/empty.proto";
+import "temporal/v1/temporal.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow";
+
+service AgentCommandApi {
+    /*
+        task_queue: shared queue for the agent-facing activities.
+    */
+    option (temporal.v1.service) = {task_queue: "stroppy-cloud"};
+
+    rpc EnsureAgentOnlineActivity (google.protobuf.Empty) returns (google.protobuf.Empty) {
+        option (temporal.v1.activity) = {
+            /*
+                start_to_close_timeout: a single attempt waits up to 15m for the
+                agent to report online.
+            */
+            start_to_close_timeout: {seconds: 900}
+            /*
+                heartbeat_timeout: the activity must heartbeat while polling, so a
+                dead worker is detected within 60s instead of after 15m.
+            */
+            heartbeat_timeout: {seconds: 60}
+            /*
+                retry_policy: an agent may take a while to come up; keep retrying
+                with backoff. Unlimited attempts (max_attempts 0) bounded by the
+                caller's schedule/run timeout.
+            */
+            retry_policy: {initial_interval: {seconds: 5}, backoff_coefficient: 2.0, max_interval: {seconds: 60}, max_attempts: 0}
+        };
+    }
+    rpc CreateDirActivity (common.Dir) returns (google.protobuf.Empty) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 30}
+            /*
+                Idempotent (mkdir -p semantics) => safe to retry a few times.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 2}}
+        };
+    };
+    rpc CreateTempDirActivity (common.Dir.Temp) returns (common.Dir) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 30}
+            /*
+                NOT idempotent: each attempt creates a new temp dir. Retry once
+                only to avoid leaking directories on a flaky network.
+            */
+            retry_policy: {max_attempts: 1}
+        };
+    };
+    rpc WriteFileActivity (common.File) returns (google.protobuf.Empty) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 30}
+            /*
+                Idempotent (full-content write) => safe to retry.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 2}}
+        };
+    };
+    rpc CallCmdActivity (common.Cmd) returns (common.Cmd.Result) {
+        option (temporal.v1.activity) = {
+            /*
+                start_to_close_timeout: this activity runs the actual stroppy load,
+                which can stream terabytes over many days. Set a deliberately huge
+                cap (30d) so a long-but-healthy command is never killed by the wall
+                clock; real liveness comes from the heartbeat below. Short commands
+                finish well within this and the cap costs nothing. Per-call override
+                in code is still possible for cmds that should be capped tighter.
+            */
+            start_to_close_timeout: {seconds: 2592000}
+            /*
+                heartbeat_timeout: the command must heartbeat while running, so a
+                stuck/dead worker is detected within 60s instead of waiting out the
+                30d cap. This is the real liveness mechanism for long loads.
+            */
+            heartbeat_timeout: {seconds: 60}
+            /*
+                retry_policy: a command is NOT guaranteed idempotent, so do not
+                auto-retry. The caller must make commands idempotent if it wants
+                retries.
+            */
+            retry_policy: {max_attempts: 1}
+        };
+    };
+}
+

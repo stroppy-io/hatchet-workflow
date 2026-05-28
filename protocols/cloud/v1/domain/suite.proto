@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package cloud.v1.domain;
+
+import "cloud/v1/common/tags.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/domain/test.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
+
+// Suite definition. References provider-agnostic, params-only presets; the
+// provider is applied once here, and the wizard bakes provider_parms when
+// expanding presets into TestRuns.
+message Suite {
+    string id = 1 [(validate.rules).string = {min_len: 1}];
+
+    // Presets composing the suite (Database / Workload / Test presets).
+    repeated string preset_ids = 2 [(validate.rules).repeated = {min_items: 1, items: {string: {min_len: 1}}}];
+
+    // Single provider for now. Multi-provider (cross-product to compare clouds)
+    // is planned: this becomes `repeated Provider providers` and expansion does
+    // presets x providers. Deferred to avoid the exponential bake cost for now.
+    deployment.Provider provider = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+
+    common.Tags tags = 4;
+}
+
+// Materialized suite execution: preset_ids expanded into concrete TestRuns.
+message SuiteRun {
+    string id = 1 [(validate.rules).string = {min_len: 1}];
+    string suite_id = 2 [(validate.rules).string = {min_len: 1}];
+
+    // Expanded runs (one per resolved preset).
+    repeated TestRun test_runs = 3 [(validate.rules).repeated.min_items = 1];
+
+    // Max concurrent TestWorkflows. 0 = unlimited.
+    uint32 max_parallel = 4;
+}

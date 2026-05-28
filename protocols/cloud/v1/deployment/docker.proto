@@ -20,9 +20,9 @@ message Docker {
     /* Input contains runtime parameters passed to the Docker deployer. */
     message Input {
         /* network describes the Docker network and DNS settings. */
-        Network network = 1 [(validate.rules).message.required = true];
+        Network network = 2 [(validate.rules).message.required = true];
         /* containers contains runtime container specs keyed by stable name. */
-        map<string, Container> containers = 2 [(validate.rules).map.min_pairs = 1];
+        map<string, Container> containers = 3 [(validate.rules).map.min_pairs = 1];
     }
 
     /* Network describes the Docker network attached to containers. */

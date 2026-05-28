@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/common/entity.proto";
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/domain/test.proto";
+import "cloud/v1/domain/workload.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+/*
+    models package holds the messages PERSISTED in the database — roughly one
+    message per table. Presets are provider-agnostic, params-only, tenant-scoped
+    building blocks. They are split per body kind so each lives in its own table
+    with its own columns, filters and sort options.
+
+    common.Entity carries the storage envelope (id, tenant_id, name, description,
+    timings); the kind-specific body carries the payload.
+ */
+
+// DatabasePreset table: a reusable database configuration.
+message DatabasePreset {
+    common.Entity entity = 1 [(validate.rules).message.required = true];
+    domain.Database database = 2 [(validate.rules).message.required = true];
+}
+
+// WorkloadPreset table: a reusable stroppy workload configuration.
+message WorkloadPreset {
+    common.Entity entity = 1 [(validate.rules).message.required = true];
+    domain.Workload workload = 2 [(validate.rules).message.required = true];
+}
+
+// TestPreset table: a reusable database + workload combo.
+message TestPreset {
+    common.Entity entity = 1 [(validate.rules).message.required = true];
+    domain.Test test = 2 [(validate.rules).message.required = true];
+}

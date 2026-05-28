@@ -2,12 +2,26 @@ syntax = "proto3";
 
 package cloud.v1.domain;
 
-import "schemapb/schema.proto";
 import "cloud/v1/common/tags.proto";
+import "schemapb/schema.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
 message Database {
+    // Reference to a stored database preset. Resolved server-side into one of
+    // the inline `source` variants (params for self-deploy, or external).
+    message PresetId {
+        string id = 1 [(validate.rules).string = {min_len: 1}];
+    }
+
+    // Already-running database. TestWorkflow does NOT deploy or tear it down,
+    // it only connects to `dsn` and runs the workload on top.
+    message External {
+        string dsn = 1 [(validate.rules).string = {min_len: 1}];
+        common.Tags tags = 2; // extra info about the external db (version, region, owner...)
+    }
+
     enum Kind {
         KIND_UNSPECIFIED = 0;
         KIND_POSTGRES = 1;
@@ -17,8 +31,28 @@ message Database {
         KIND_YDB_MANAGED = 5;
         KIND_COCKROACH = 6;
         KIND_PICODATA = 7;
+        // External / unmanaged database addressed only by dsn. Use with source.external.
+        KIND_EXTERNAL = 8;
     }
-    Kind kind = 1;
+    Kind kind = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+
+    // Schema (the form) describing self-deploy params for this kind.
     schemapb.Schema prams_schema = 2;
+
+    // How the database is provided for a test run.
+    oneof source {
+        option (validate.required) = true;
+
+        // Self-deploy: filled values of prams_schema. TestWorkflow deploys a DB
+        // instance into the topology and tears it down at the end.
+        schemapb.Baked params = 3;
+
+        // External: connect to an existing endpoint, skip deploy/teardown.
+        External external = 4;
+
+        // Reference to a preset, resolved into params|external server-side.
+        PresetId database_preset_id = 5;
+    }
+
     common.Tags tags = 7;
 }

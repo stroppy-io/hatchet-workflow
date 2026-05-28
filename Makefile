@@ -46,6 +46,13 @@ protocols: # Generate Go + TS code from proto
 	rm -rf $(CURDIR)/web/src/lib/proto
 	cd protocols && easyp -cfg easyp.ts.yaml generate
 
+.PHONY: mocks
+mocks: # Generate gomock mocks for every interface in the iam package (auto-discovered)
+	go run go.uber.org/mock/mockgen \
+		-destination=internal/services/iam/mocks_test.go -package=iam \
+		github.com/stroppy-io/stroppy-cloud/internal/services/iam \
+		$$(grep -hE '^type [A-Za-z0-9_]+ interface' $$(ls internal/services/iam/*.go | grep -v _test) | sed -E 's/^type ([A-Za-z0-9_]+) interface.*/\1/' | paste -sd,)
+
 # ============================================================
 # Build
 # ============================================================

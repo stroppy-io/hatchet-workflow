@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package cloud.v1.deployment;
 
+import "schemapb/schema.proto";
+
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment";
 
 /*
@@ -16,4 +19,9 @@ enum Provider {
     PROVIDER_DOCKER = 1;
     /* PROVIDER_YANDEX is the Yandex Cloud Terraform backend (Yandex message). */
     PROVIDER_YANDEX = 2;
+}
+
+message ProviderSettings {
+    Provider provider = 1;
+    schemapb.Baked settings = 2;
 }

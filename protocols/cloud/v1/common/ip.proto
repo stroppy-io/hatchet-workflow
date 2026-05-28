@@ -28,8 +28,14 @@ message IpAddress {
     string scope = 4 [(validate.rules).string.max_len = 64];
 }
 
+message AddrPort {
+    IpAddress address = 1;
+    uint32 port = 2;
+}
+
 message Cidr {
     string value = 1 [(validate.rules).string = {min_len: 1}];
+    repeated IpAddress addresses = 2; // optional for denormalize
 }
 
 message Net {

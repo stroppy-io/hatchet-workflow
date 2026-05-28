@@ -23,4 +23,7 @@ enum Status {
     STATUS_CANCELLING = 7;
     /* CANCELLED means cancellation completed. */
     STATUS_CANCELLED = 8;
+    STATUS_ALLOCATED = 9;
+    STATUS_DEPLOYMENT = 10;
+    STATUS_DEPLOYED = 11;
 }

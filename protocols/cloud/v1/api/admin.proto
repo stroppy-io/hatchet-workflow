@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "google/protobuf/duration.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    PlatformSettings is the GLOBAL (singleton) control-plane configuration, changed
+    only by the root admin. It is NOT tenant-scoped — there is one control plane and
+    one row.
+
+    server_addr is the single public control-plane base URL handed to every agent
+    (STROPPY_SERVER_ADDR) so it knows where to Poll/Report and fetch its binary (the
+    agent binary URL is DERIVED from server_addr + the server's agent-binary
+    endpoint — no separate setting). Empty -> the server derives a docker-host
+    fallback (host.docker.internal / bridge gateway) for local Docker runs.
+
+    PROCESS GATES (allow_* flags). The remaining fields are coarse, global
+    kill-switches that the service layer checks BEFORE any RBAC permission, to
+    open or close whole flows platform-wide. They sit ABOVE the role model: a
+    closed gate denies everyone EXCEPT platform admins (Account.is_admin), who
+    are never blocked by these flags. RBAC still applies on top once a gate is
+    open. Every flag is polarised so its zero value (false) is the SAFE, most
+    restrictive state — a fresh/empty PlatformSettings locks the platform down.
+ */
+message PlatformSettings {
+    /*
+        Field 2 was allow_member_account_creation, removed: account creation is
+        only self-registration (Register) or admin-managed (CreateAccount, which
+        is admin_only). There is no permission-gated member path.
+     */
+    reserved 2;
+
+    /*
+        server_addr is the public control-plane base URL, e.g. http://1.1.1.1:8080.
+     */
+    string server_addr = 10 [(validate.rules).string.max_len = 2048];
+
+    /*
+        allow_self_registration toggles the PUBLIC self-signup endpoint
+        (IamAPI.Register). When false (default) there is no open registration:
+        accounts can only be created by a platform admin via CreateAccount. Flip
+        it true to let anyone sign themselves up.
+     */
+    bool allow_self_registration = 1;
+
+    /*
+        allow_member_tenant_creation governs who may create tenants. When false
+        (default) only platform admins may call CreateTenant, regardless of any
+        RESOURCE_TENANT/ACTION_CREATE grant. When true, the normal RBAC permission
+        check applies and ordinary members can spin up tenants.
+     */
+    bool allow_member_tenant_creation = 3;
+}

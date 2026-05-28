@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "google/protobuf/duration.proto";
+import "validate/validate.proto";
+import "cloud/v1/iam/account.proto";
+import "cloud/v1/iam/tenant.proto";
+import "cloud/v1/iam/role.proto";
+import "cloud/v1/iam/membership.proto";
+import "cloud/v1/iam/permission.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/sso.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";

@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.common;
 
+import "schemapb/schema.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
@@ -36,7 +37,7 @@ message File {
         /* bytes contains binary file content. */
         bytes bytes = 11 [(validate.rules).bytes.max_len = 104857600];
         /* as_ref contains referenced file content. */
-        AsRef as_ref = 12 [(validate.rules).message.required = true] ;
+        AsRef as_ref = 12 [(validate.rules).message.required = true];
     }
 
     /*
@@ -49,4 +50,11 @@ message File {
         /* checksum optionally verifies external file content. */
         string checksum = 3 [(validate.rules).string.max_len = 256];
     }
+}
+
+
+message BakedFile {
+    File file = 1;
+    string resolver_name = 2;
+    schemapb.Baked data = 3;
 }

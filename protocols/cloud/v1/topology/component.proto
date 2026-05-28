@@ -2,8 +2,13 @@ syntax = "proto3";
 
 package cloud.v1.topology;
 
-import "validate/validate.proto";
+import "cloud/v1/common/cmd.proto";
+import "cloud/v1/common/file.proto";
+import "cloud/v1/common/status.proto";
 import "cloud/v1/common/tags.proto";
+import "schemapb/schema.proto";
+
+import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology";
 
@@ -22,5 +27,14 @@ message Component {
         KIND_EXTERNAL = 9;
     }
     Kind kind = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
-    common.Tags tags = 4;
+    common.Status status = 3;
+    message Strategy {
+        repeated common.BakedFile configuration_files = 1;
+        repeated common.Cmd deployment_commands = 2;
+    }
+    Strategy deployment_strategy = 4; // calculated (build)
+    optional schemapb.Baked provider_parms = 5; // calculated (wisard actual for non-owr components)
+    optional string allocated_on_instance_id = 6; // calculated (deployment)
+    common.Tags tags = 7;
 }
+
