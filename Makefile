@@ -60,6 +60,10 @@ mocks: # Generate gomock mocks for every interface in each internal/services/* p
 		go run go.uber.org/mock/mockgen -destination=$$dir/mocks_test.go -package=$$pkg github.com/stroppy-io/stroppy-cloud/$$dir $$ifaces; \
 	done
 
+.PHONY: schemas
+schemas: # Generate typed Go structs from schema providers under internal/schemas/**
+	go run github.com/stroppy-io/schemapb/cmd/schemapbgen@v1.4.4 --from-go-code ./internal/schemas --recursive
+
 # ============================================================
 # Build
 # ============================================================

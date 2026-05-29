@@ -4,6 +4,7 @@ go 1.25.5
 
 require (
 	connectrpc.com/connect v1.20.0
+	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/avito-tech/go-transaction-manager v1.5.1
 	github.com/cludden/protoc-gen-go-temporal v1.23.1
 	github.com/envoyproxy/protoc-gen-validate v1.3.3
@@ -11,7 +12,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gopherex/pgtx v1.1.0
 	github.com/gopherex/protoc-gen-go-jx v1.0.1
-	github.com/stroppy-io/schemapb v1.3.0
+	github.com/stroppy-io/schemapb v1.4.4
 	go.temporal.io/api v1.62.12
 	go.temporal.io/sdk v1.44.1
 	go.uber.org/mock v0.6.0
