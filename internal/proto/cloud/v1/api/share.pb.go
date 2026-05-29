@@ -26,14 +26,16 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// CreateShareRequest mints a new share (token + first snapshot) for a run.
 type CreateShareRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// What to share (test run / suite run + id).
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the share; shares are tenant-scoped.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// target is what to share (test run / suite run + id).
 	Target *models.ShareRecord_Target `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`
-	// Lifetime. 0 / unset -> server default (1 week). Explicit 0 to mean "never"
-	// is allowed but the client SHOULD warn the user: it is insecure and keeps
-	// the background refresh running forever.
+	// ttl is the share lifetime. 0 / unset -> server default (1 week). Explicit 0
+	// to mean "never" is allowed but the client SHOULD warn the user: it is
+	// insecure and keeps the background refresh running forever.
 	Ttl           *durationpb.Duration `protobuf:"bytes,3,opt,name=ttl,proto3" json:"ttl,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -90,9 +92,11 @@ func (x *CreateShareRequest) GetTtl() *durationpb.Duration {
 	return nil
 }
 
+// CreateShareResponse returns the created share record (with its token).
 type CreateShareResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Share         *models.ShareRecord    `protobuf:"bytes,1,opt,name=share,proto3" json:"share,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// share is the newly created share record.
+	Share         *models.ShareRecord `protobuf:"bytes,1,opt,name=share,proto3" json:"share,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -134,10 +138,13 @@ func (x *CreateShareResponse) GetShare() *models.ShareRecord {
 	return nil
 }
 
+// GetShareRequest fetches one share by id.
 type GetShareRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the share's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the share to fetch.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -186,9 +193,11 @@ func (x *GetShareRequest) GetId() string {
 	return ""
 }
 
+// GetShareResponse returns the requested share.
 type GetShareResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Share         *models.ShareRecord    `protobuf:"bytes,1,opt,name=share,proto3" json:"share,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// share is the fetched share record.
+	Share         *models.ShareRecord `protobuf:"bytes,1,opt,name=share,proto3" json:"share,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -230,13 +239,18 @@ func (x *GetShareResponse) GetShare() *models.ShareRecord {
 	return nil
 }
 
+// ListSharesRequest lists a tenant's shares with filtering, sort and paging.
 type ListSharesRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Filter   *common.EntityFilter   `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
-	Sort     *common.EntitySort     `protobuf:"bytes,3,opt,name=sort,proto3" json:"sort,omitempty"`
-	Page     *common.Page           `protobuf:"bytes,4,opt,name=page,proto3" json:"page,omitempty"`
-	// Narrow to shares of one run; empty = any.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the listing to one tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// filter is the shared Entity-level filter (search, ids, time windows).
+	Filter *common.EntityFilter `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
+	// sort is the ordering over the common Entity columns.
+	Sort *common.EntitySort `protobuf:"bytes,3,opt,name=sort,proto3" json:"sort,omitempty"`
+	// page is the pagination cursor/size.
+	Page *common.Page `protobuf:"bytes,4,opt,name=page,proto3" json:"page,omitempty"`
+	// target_id narrows to shares of one run; empty = any.
 	TargetId      string `protobuf:"bytes,5,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -307,10 +321,13 @@ func (x *ListSharesRequest) GetTargetId() string {
 	return ""
 }
 
+// ListSharesResponse returns one page of shares.
 type ListSharesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Shares        []*models.ShareRecord  `protobuf:"bytes,1,rep,name=shares,proto3" json:"shares,omitempty"`
-	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// shares is this page of share records.
+	Shares []*models.ShareRecord `protobuf:"bytes,1,rep,name=shares,proto3" json:"shares,omitempty"`
+	// next_page_token is empty when there are no more rows.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -362,9 +379,11 @@ func (x *ListSharesResponse) GetNextPageToken() string {
 // RevokeShare disables a share (the public endpoint returns gone) without
 // deleting the record. Idempotent.
 type RevokeShareRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the share's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the share to disable.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -413,9 +432,11 @@ func (x *RevokeShareRequest) GetId() string {
 	return ""
 }
 
+// RevokeShareResponse returns the share after it was disabled.
 type RevokeShareResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Share         *models.ShareRecord    `protobuf:"bytes,1,opt,name=share,proto3" json:"share,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// share is the now-revoked share record.
+	Share         *models.ShareRecord `protobuf:"bytes,1,opt,name=share,proto3" json:"share,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -460,10 +481,14 @@ func (x *RevokeShareResponse) GetShare() *models.ShareRecord {
 // SetShareExpiry changes the lifetime (extend / shorten). Same ttl semantics as
 // create (0/unset = default, explicit 0 = never with a warning).
 type SetShareExpiryRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Ttl           *durationpb.Duration   `protobuf:"bytes,3,opt,name=ttl,proto3" json:"ttl,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the share's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the share whose lifetime to change.
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	// ttl is the new lifetime; same semantics as create (0/unset = default,
+	// explicit 0 = never with a warning).
+	Ttl           *durationpb.Duration `protobuf:"bytes,3,opt,name=ttl,proto3" json:"ttl,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -519,9 +544,11 @@ func (x *SetShareExpiryRequest) GetTtl() *durationpb.Duration {
 	return nil
 }
 
+// SetShareExpiryResponse returns the share after its lifetime was changed.
 type SetShareExpiryResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Share         *models.ShareRecord    `protobuf:"bytes,1,opt,name=share,proto3" json:"share,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// share is the share record with the updated expiry.
+	Share         *models.ShareRecord `protobuf:"bytes,1,opt,name=share,proto3" json:"share,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -563,10 +590,13 @@ func (x *SetShareExpiryResponse) GetShare() *models.ShareRecord {
 	return nil
 }
 
+// DeleteShareRequest removes one share by id.
 type DeleteShareRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the share's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the share to remove.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -615,6 +645,7 @@ func (x *DeleteShareRequest) GetId() string {
 	return ""
 }
 
+// DeleteShareResponse is empty; success is signalled by the absence of error.
 type DeleteShareResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields

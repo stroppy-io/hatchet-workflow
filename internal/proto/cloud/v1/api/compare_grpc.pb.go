@@ -25,7 +25,11 @@ const (
 // CompareServiceClient is the client API for CompareService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// CompareService serves the side-by-side comparison page over N test runs.
 type CompareServiceClient interface {
+	// CompareRuns returns each run's config column plus the per-metric diff
+	// baselined on run_ids[0]. Read-only; gated by RESOURCE_TEST_RUN/READ.
 	CompareRuns(ctx context.Context, in *CompareRunsRequest, opts ...grpc.CallOption) (*CompareRunsResponse, error)
 }
 
@@ -50,7 +54,11 @@ func (c *compareServiceClient) CompareRuns(ctx context.Context, in *CompareRunsR
 // CompareServiceServer is the server API for CompareService service.
 // All implementations must embed UnimplementedCompareServiceServer
 // for forward compatibility.
+//
+// CompareService serves the side-by-side comparison page over N test runs.
 type CompareServiceServer interface {
+	// CompareRuns returns each run's config column plus the per-metric diff
+	// baselined on run_ids[0]. Read-only; gated by RESOURCE_TEST_RUN/READ.
 	CompareRuns(context.Context, *CompareRunsRequest) (*CompareRunsResponse, error)
 	mustEmbedUnimplementedCompareServiceServer()
 }

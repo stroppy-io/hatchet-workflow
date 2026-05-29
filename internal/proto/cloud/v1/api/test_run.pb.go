@@ -29,19 +29,31 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Kind is a test-run-specific sortable column (alternative to a common
+// Entity column).
 type ListTestRunsRequest_Sort_Kind int32
 
 const (
+	// KIND_UNSPECIFIED leaves the test-run-specific ordering unset.
 	ListTestRunsRequest_Sort_KIND_UNSPECIFIED ListTestRunsRequest_Sort_Kind = 0
-	ListTestRunsRequest_Sort_KIND_STATUS      ListTestRunsRequest_Sort_Kind = 1
-	ListTestRunsRequest_Sort_KIND_DB_KIND     ListTestRunsRequest_Sort_Kind = 2
-	ListTestRunsRequest_Sort_KIND_WORKLOAD    ListTestRunsRequest_Sort_Kind = 3 // workload_name / stroppy_version
-	ListTestRunsRequest_Sort_KIND_PROVIDER    ListTestRunsRequest_Sort_Kind = 4
-	ListTestRunsRequest_Sort_KIND_PROGRESS    ListTestRunsRequest_Sort_Kind = 5
-	ListTestRunsRequest_Sort_KIND_DURATION    ListTestRunsRequest_Sort_Kind = 6
-	ListTestRunsRequest_Sort_KIND_STARTED_AT  ListTestRunsRequest_Sort_Kind = 7
+	// KIND_STATUS orders by lifecycle status.
+	ListTestRunsRequest_Sort_KIND_STATUS ListTestRunsRequest_Sort_Kind = 1
+	// KIND_DB_KIND orders by database kind.
+	ListTestRunsRequest_Sort_KIND_DB_KIND ListTestRunsRequest_Sort_Kind = 2
+	// KIND_WORKLOAD orders by workload_name / stroppy_version.
+	ListTestRunsRequest_Sort_KIND_WORKLOAD ListTestRunsRequest_Sort_Kind = 3
+	// KIND_PROVIDER orders by deployment provider.
+	ListTestRunsRequest_Sort_KIND_PROVIDER ListTestRunsRequest_Sort_Kind = 4
+	// KIND_PROGRESS orders by progress.
+	ListTestRunsRequest_Sort_KIND_PROGRESS ListTestRunsRequest_Sort_Kind = 5
+	// KIND_DURATION orders by run duration.
+	ListTestRunsRequest_Sort_KIND_DURATION ListTestRunsRequest_Sort_Kind = 6
+	// KIND_STARTED_AT orders by start time.
+	ListTestRunsRequest_Sort_KIND_STARTED_AT ListTestRunsRequest_Sort_Kind = 7
+	// KIND_FINISHED_AT orders by finish time.
 	ListTestRunsRequest_Sort_KIND_FINISHED_AT ListTestRunsRequest_Sort_Kind = 8
-	ListTestRunsRequest_Sort_KIND_NODE_COUNT  ListTestRunsRequest_Sort_Kind = 9
+	// KIND_NODE_COUNT orders by node count.
+	ListTestRunsRequest_Sort_KIND_NODE_COUNT ListTestRunsRequest_Sort_Kind = 9
 )
 
 // Enum value maps for ListTestRunsRequest_Sort_Kind.
@@ -103,15 +115,22 @@ func (ListTestRunsRequest_Sort_Kind) EnumDescriptor() ([]byte, []int) {
 // to persist a new record and start it; or `test_run_id` to re-run an existing
 // record's spec as a new run. Launches TestWorkflow.
 type StartTestRunRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// source selects what to start: a fully baked run supplied inline, or an
+	// existing record re-run by id.
+	//
 	// Types that are valid to be assigned to Source:
 	//
 	//	*StartTestRunRequest_Run
 	//	*StartTestRunRequest_TestRunId
 	Source isStartTestRunRequest_Source `protobuf_oneof:"source"`
-	// Rating membership; unset -> server defaults (tenant true, global false).
+	// in_tenant_rating sets tenant-rating membership; unset -> server defaults
+	// (tenant true).
 	InTenantRating *bool `protobuf:"varint,4,opt,name=in_tenant_rating,json=inTenantRating,proto3,oneof" json:"in_tenant_rating,omitempty"`
+	// in_global_rating sets global-rating membership; unset -> server defaults
+	// (global false).
 	InGlobalRating *bool `protobuf:"varint,5,opt,name=in_global_rating,json=inGlobalRating,proto3,oneof" json:"in_global_rating,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -198,10 +217,12 @@ type isStartTestRunRequest_Source interface {
 }
 
 type StartTestRunRequest_Run struct {
+	// run is a fully-baked TestRun to persist and start (CLI / wizard finish).
 	Run *domain.TestRun `protobuf:"bytes,2,opt,name=run,proto3,oneof"`
 }
 
 type StartTestRunRequest_TestRunId struct {
+	// test_run_id re-runs an existing record's spec as a new run.
 	TestRunId string `protobuf:"bytes,3,opt,name=test_run_id,json=testRunId,proto3,oneof"`
 }
 
@@ -209,9 +230,11 @@ func (*StartTestRunRequest_Run) isStartTestRunRequest_Source() {}
 
 func (*StartTestRunRequest_TestRunId) isStartTestRunRequest_Source() {}
 
+// StartTestRunResponse returns the persisted, launched run.
 type StartTestRunResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Run           *models.TestRunRecord  `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// run is the persisted, launched run record.
+	Run           *models.TestRunRecord `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -253,10 +276,13 @@ func (x *StartTestRunResponse) GetRun() *models.TestRunRecord {
 	return nil
 }
 
+// GetTestRunRequest fetches a single test run by id.
 type GetTestRunRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the test run identifier to fetch.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -305,9 +331,11 @@ func (x *GetTestRunRequest) GetId() string {
 	return ""
 }
 
+// GetTestRunResponse returns the requested test run.
 type GetTestRunResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Run           *models.TestRunRecord  `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// run is the requested run record.
+	Run           *models.TestRunRecord `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -349,37 +377,56 @@ func (x *GetTestRunResponse) GetRun() *models.TestRunRecord {
 	return nil
 }
 
+// ListTestRunsRequest lists test runs with filtering, faceting, sorting and
+// pagination.
 type ListTestRunsRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// Shared Entity-level filters (search, ids, author, time windows, soft-delete).
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// filter holds the shared Entity-level filters (search, ids, author, time
+	// windows, soft-delete).
 	Filter *common.EntityFilter `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
-	// --- facet filters (all AND; empty list / unset = not applied) ---
-	Statuses          []common.Status        `protobuf:"varint,3,rep,packed,name=statuses,proto3,enum=cloud.v1.common.Status" json:"statuses,omitempty"`
-	DbKinds           []domain.Database_Kind `protobuf:"varint,4,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
-	Providers         []deployment.Provider  `protobuf:"varint,5,rep,packed,name=providers,proto3,enum=cloud.v1.deployment.Provider" json:"providers,omitempty"`
-	DbPresetIds       []string               `protobuf:"bytes,6,rep,name=db_preset_ids,json=dbPresetIds,proto3" json:"db_preset_ids,omitempty"`
-	WorkloadPresetIds []string               `protobuf:"bytes,7,rep,name=workload_preset_ids,json=workloadPresetIds,proto3" json:"workload_preset_ids,omitempty"`
-	StroppyVersions   []string               `protobuf:"bytes,8,rep,name=stroppy_versions,json=stroppyVersions,proto3" json:"stroppy_versions,omitempty"`
-	// Suite scoping.
+	// statuses facets by lifecycle status (all AND; empty list / unset = not
+	// applied).
+	Statuses []common.Status `protobuf:"varint,3,rep,packed,name=statuses,proto3,enum=cloud.v1.common.Status" json:"statuses,omitempty"`
+	// db_kinds facets by database kind.
+	DbKinds []domain.Database_Kind `protobuf:"varint,4,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
+	// providers facets by deployment provider.
+	Providers []deployment.Provider `protobuf:"varint,5,rep,packed,name=providers,proto3,enum=cloud.v1.deployment.Provider" json:"providers,omitempty"`
+	// db_preset_ids facets by database preset id.
+	DbPresetIds []string `protobuf:"bytes,6,rep,name=db_preset_ids,json=dbPresetIds,proto3" json:"db_preset_ids,omitempty"`
+	// workload_preset_ids facets by workload preset id.
+	WorkloadPresetIds []string `protobuf:"bytes,7,rep,name=workload_preset_ids,json=workloadPresetIds,proto3" json:"workload_preset_ids,omitempty"`
+	// stroppy_versions facets by stroppy version.
+	StroppyVersions []string `protobuf:"bytes,8,rep,name=stroppy_versions,json=stroppyVersions,proto3" json:"stroppy_versions,omitempty"`
+	// suite_run_id scopes to a single suite run's children.
 	SuiteRunId string `protobuf:"bytes,9,opt,name=suite_run_id,json=suiteRunId,proto3" json:"suite_run_id,omitempty"`
-	// Unset = both; true = only standalone (no suite); false = only suite children.
+	// standalone facets by suite membership. Unset = both; true = only standalone
+	// (no suite); false = only suite children.
 	Standalone *bool `protobuf:"varint,10,opt,name=standalone,proto3,oneof" json:"standalone,omitempty"`
-	// progress_pct window [min,max], 0..100.
+	// progress_min is the lower bound of the progress_pct window, 0..100.
 	ProgressMin *uint32 `protobuf:"varint,11,opt,name=progress_min,json=progressMin,proto3,oneof" json:"progress_min,omitempty"`
+	// progress_max is the upper bound of the progress_pct window, 0..100.
 	ProgressMax *uint32 `protobuf:"varint,12,opt,name=progress_max,json=progressMax,proto3,oneof" json:"progress_max,omitempty"`
-	// duration window.
+	// duration_min is the lower bound of the duration window.
 	DurationMin *durationpb.Duration `protobuf:"bytes,13,opt,name=duration_min,json=durationMin,proto3" json:"duration_min,omitempty"`
+	// duration_max is the upper bound of the duration window.
 	DurationMax *durationpb.Duration `protobuf:"bytes,14,opt,name=duration_max,json=durationMax,proto3" json:"duration_max,omitempty"`
-	// started_at / finished_at windows.
-	StartedAfter   *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=started_after,json=startedAfter,proto3" json:"started_after,omitempty"`
-	StartedBefore  *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=started_before,json=startedBefore,proto3" json:"started_before,omitempty"`
-	FinishedAfter  *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=finished_after,json=finishedAfter,proto3" json:"finished_after,omitempty"`
+	// started_after keeps runs started at or after this time.
+	StartedAfter *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=started_after,json=startedAfter,proto3" json:"started_after,omitempty"`
+	// started_before keeps runs started at or before this time.
+	StartedBefore *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=started_before,json=startedBefore,proto3" json:"started_before,omitempty"`
+	// finished_after keeps runs finished at or after this time.
+	FinishedAfter *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=finished_after,json=finishedAfter,proto3" json:"finished_after,omitempty"`
+	// finished_before keeps runs finished at or before this time.
 	FinishedBefore *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=finished_before,json=finishedBefore,proto3" json:"finished_before,omitempty"`
-	// Filter by how the run was triggered (manual / api / suite child); empty = any.
-	Triggers      []common.Trigger          `protobuf:"varint,21,rep,packed,name=triggers,proto3,enum=cloud.v1.common.Trigger" json:"triggers,omitempty"`
-	Sort          *ListTestRunsRequest_Sort `protobuf:"bytes,19,opt,name=sort,proto3" json:"sort,omitempty"`
-	Page          *common.Page              `protobuf:"bytes,20,opt,name=page,proto3" json:"page,omitempty"`
+	// triggers filters by how the run was triggered (manual / api / suite child);
+	// empty = any.
+	Triggers []common.Trigger `protobuf:"varint,21,rep,packed,name=triggers,proto3,enum=cloud.v1.common.Trigger" json:"triggers,omitempty"`
+	// sort selects the result ordering.
+	Sort *ListTestRunsRequest_Sort `protobuf:"bytes,19,opt,name=sort,proto3" json:"sort,omitempty"`
+	// page carries pagination (page size + token).
+	Page          *common.Page `protobuf:"bytes,20,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -561,10 +608,13 @@ func (x *ListTestRunsRequest) GetPage() *common.Page {
 	return nil
 }
 
+// ListTestRunsResponse returns a page of test runs.
 type ListTestRunsResponse struct {
-	state         protoimpl.MessageState  `protogen:"open.v1"`
-	Runs          []*models.TestRunRecord `protobuf:"bytes,1,rep,name=runs,proto3" json:"runs,omitempty"`
-	NextPageToken string                  `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// runs is the matching page of run records.
+	Runs []*models.TestRunRecord `protobuf:"bytes,1,rep,name=runs,proto3" json:"runs,omitempty"`
+	// next_page_token fetches the following page; empty when at the end.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -616,9 +666,11 @@ func (x *ListTestRunsResponse) GetNextPageToken() string {
 // CancelTestRun requests cancellation (status -> CANCELLING, then CANCELLED when
 // the workflow stops). Idempotent: cancelling a finished/cancelled run is a no-op.
 type CancelTestRunRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the test run identifier to cancel.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -667,9 +719,11 @@ func (x *CancelTestRunRequest) GetId() string {
 	return ""
 }
 
+// CancelTestRunResponse returns the run after the cancellation request.
 type CancelTestRunResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Run           *models.TestRunRecord  `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// run is the run record reflecting the cancellation.
+	Run           *models.TestRunRecord `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -711,10 +765,13 @@ func (x *CancelTestRunResponse) GetRun() *models.TestRunRecord {
 	return nil
 }
 
+// DeleteTestRunRequest deletes a test run by id.
 type DeleteTestRunRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the test run identifier to delete.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -763,6 +820,8 @@ func (x *DeleteTestRunRequest) GetId() string {
 	return ""
 }
 
+// DeleteTestRunResponse is empty; deletion success is signalled by a non-error
+// reply.
 type DeleteTestRunResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -802,10 +861,12 @@ func (*DeleteTestRunResponse) Descriptor() ([]byte, []int) {
 // ExtractToPreset saves a run's database+workload as a reusable TestPresetRecord,
 // so a one-off run can be promoted into a named preset.
 type ExtractToPresetRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id       string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	// Optional name for the new preset; empty -> server derives one.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the source run to extract the preset from.
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	// name is the optional name for the new preset; empty -> server derives one.
 	Name          string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -862,8 +923,10 @@ func (x *ExtractToPresetRequest) GetName() string {
 	return ""
 }
 
+// ExtractToPresetResponse returns the newly created preset.
 type ExtractToPresetResponse struct {
-	state         protoimpl.MessageState   `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// preset is the saved, reusable test preset.
 	Preset        *models.TestPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -910,12 +973,15 @@ func (x *ExtractToPresetResponse) GetPreset() *models.TestPresetRecord {
 // desc applies to whichever is chosen.
 type ListTestRunsRequest_Sort struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// by selects either a common Entity sort field or a test-run-specific Kind.
+	//
 	// Types that are valid to be assigned to By:
 	//
 	//	*ListTestRunsRequest_Sort_Entity
 	//	*ListTestRunsRequest_Sort_Kind_
-	By            isListTestRunsRequest_Sort_By `protobuf_oneof:"by"`
-	Desc          bool                          `protobuf:"varint,3,opt,name=desc,proto3" json:"desc,omitempty"`
+	By isListTestRunsRequest_Sort_By `protobuf_oneof:"by"`
+	// desc reverses the order (descending) when true.
+	Desc          bool `protobuf:"varint,3,opt,name=desc,proto3" json:"desc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -987,10 +1053,12 @@ type isListTestRunsRequest_Sort_By interface {
 }
 
 type ListTestRunsRequest_Sort_Entity struct {
+	// entity orders by a shared Entity column (name, created_at, ...).
 	Entity common.EntitySortField `protobuf:"varint,1,opt,name=entity,proto3,enum=cloud.v1.common.EntitySortField,oneof"`
 }
 
 type ListTestRunsRequest_Sort_Kind_ struct {
+	// kind orders by a test-run-specific column.
 	Kind ListTestRunsRequest_Sort_Kind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.api.ListTestRunsRequest_Sort_Kind,oneof"`
 }
 

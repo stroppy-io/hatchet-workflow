@@ -39,27 +39,34 @@ const (
 // Runtime observations (logs/metrics) are keyed by the run id directly (no dag
 // id) — see monitor/logs.proto, monitor/metrics.proto.
 type TestRunRecord struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	Entity *common.Entity         `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	// Baked run spec — the TestWorkflow input (details/relaunch, not for queries).
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entity is the storage envelope (id, tenant_id, name, timings).
+	Entity *common.Entity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	// spec is the baked run spec — the TestWorkflow input (for details/relaunch,
+	// NOT for queries).
 	Spec *domain.TestRun `protobuf:"bytes,2,opt,name=spec,proto3" json:"spec,omitempty"`
-	// Lifecycle status (PENDING/RUNNING/COMPLETED/FAILED/CANCELLING/CANCELLED/...).
+	// status is the run lifecycle status
+	// (PENDING/RUNNING/COMPLETED/FAILED/CANCELLING/CANCELLED/...).
 	Status common.Status `protobuf:"varint,3,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
-	// Owning suite run, empty for a standalone run.
+	// suite_run_id is the owning suite run; empty for a standalone run.
 	SuiteRunId string `protobuf:"bytes,4,opt,name=suite_run_id,json=suiteRunId,proto3" json:"suite_run_id,omitempty"`
-	// Root cause of the run: MANUAL / CRON / API. For a suite child it carries the
-	// PARENT suite run's trigger (e.g. CRON), while suite membership is shown by
-	// suite_run_id. So "cron + from suite" = trigger=CRON && suite_run_id set.
+	// trigger is the root cause of the run: MANUAL / CRON / API. For a suite
+	// child it carries the PARENT suite run's trigger (e.g. CRON), while suite
+	// membership is shown by suite_run_id. So "cron + from suite" = trigger=CRON
+	// && suite_run_id set.
 	Trigger common.Trigger `protobuf:"varint,7,opt,name=trigger,proto3,enum=cloud.v1.common.Trigger" json:"trigger,omitempty"`
-	// Rating membership, set at creation (any path: manual/wizard/suite/cron).
-	// in_tenant_rating defaults TRUE (counts in this tenant's leaderboard);
-	// in_global_rating defaults FALSE (publishing to the cross-system / public
-	// leaderboard is explicit opt-in). Both global views (public + system-wide
-	// private) key off in_global_rating.
+	// in_tenant_rating is the tenant-leaderboard membership, set at creation
+	// (any path: manual/wizard/suite/cron). Defaults TRUE: the run counts in
+	// this tenant's leaderboard.
 	InTenantRating bool `protobuf:"varint,8,opt,name=in_tenant_rating,json=inTenantRating,proto3" json:"in_tenant_rating,omitempty"`
+	// in_global_rating is the global-leaderboard membership, set at creation.
+	// Defaults FALSE: publishing to the cross-system / public leaderboard is
+	// explicit opt-in. Both global views (public + system-wide private) key off
+	// this flag.
 	InGlobalRating bool `protobuf:"varint,9,opt,name=in_global_rating,json=inGlobalRating,proto3" json:"in_global_rating,omitempty"`
-	// Denormalized, queryable facets for the runs table (incl. progress_pct, which
-	// the backend derives from the live pipeline / Temporal).
+	// summary holds denormalized, queryable facets for the runs table (incl.
+	// progress_pct, which the backend derives from the live pipeline /
+	// Temporal).
 	Summary       *TestRunRecord_Summary `protobuf:"bytes,6,opt,name=summary,proto3" json:"summary,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -155,25 +162,35 @@ func (x *TestRunRecord) GetSummary() *TestRunRecord_Summary {
 // every field is filterable and sortable without touching the baked spec.
 type TestRunRecord_Summary struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// --- database ---
-	DbKind       domain.Database_Kind `protobuf:"varint,1,opt,name=db_kind,json=dbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kind,omitempty"`
-	DbPresetId   string               `protobuf:"bytes,2,opt,name=db_preset_id,json=dbPresetId,proto3" json:"db_preset_id,omitempty"`
-	DbPresetName string               `protobuf:"bytes,3,opt,name=db_preset_name,json=dbPresetName,proto3" json:"db_preset_name,omitempty"`
-	// --- workload ---
+	// db_kind is the database engine the run targets (database facet).
+	DbKind domain.Database_Kind `protobuf:"varint,1,opt,name=db_kind,json=dbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kind,omitempty"`
+	// db_preset_id is the id of the database preset used.
+	DbPresetId string `protobuf:"bytes,2,opt,name=db_preset_id,json=dbPresetId,proto3" json:"db_preset_id,omitempty"`
+	// db_preset_name is the display name of the database preset used.
+	DbPresetName string `protobuf:"bytes,3,opt,name=db_preset_name,json=dbPresetName,proto3" json:"db_preset_name,omitempty"`
+	// workload_preset_id is the id of the workload preset used (workload
+	// facet).
 	WorkloadPresetId string `protobuf:"bytes,4,opt,name=workload_preset_id,json=workloadPresetId,proto3" json:"workload_preset_id,omitempty"`
-	WorkloadName     string `protobuf:"bytes,5,opt,name=workload_name,json=workloadName,proto3" json:"workload_name,omitempty"`
-	StroppyVersion   string `protobuf:"bytes,6,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
-	// --- topology ---
-	TopologyLabel string `protobuf:"bytes,7,opt,name=topology_label,json=topologyLabel,proto3" json:"topology_label,omitempty"` // e.g. "PG HA x3"
-	NodeCount     uint32 `protobuf:"varint,8,opt,name=node_count,json=nodeCount,proto3" json:"node_count,omitempty"`
-	// --- provider ---
+	// workload_name is the display name of the workload.
+	WorkloadName string `protobuf:"bytes,5,opt,name=workload_name,json=workloadName,proto3" json:"workload_name,omitempty"`
+	// stroppy_version is the stroppy build that ran the workload.
+	StroppyVersion string `protobuf:"bytes,6,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
+	// topology_label is the human-readable topology summary (topology
+	// facet), e.g. "PG HA x3".
+	TopologyLabel string `protobuf:"bytes,7,opt,name=topology_label,json=topologyLabel,proto3" json:"topology_label,omitempty"`
+	// node_count is the number of nodes in the topology.
+	NodeCount uint32 `protobuf:"varint,8,opt,name=node_count,json=nodeCount,proto3" json:"node_count,omitempty"`
+	// provider is the deployment provider the run ran on (provider facet).
 	Provider deployment.Provider `protobuf:"varint,9,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	// --- runtime ---
-	// progress_pct (0..100) derived on the backend from the pipeline / Temporal.
-	ProgressPct uint32                 `protobuf:"varint,10,opt,name=progress_pct,json=progressPct,proto3" json:"progress_pct,omitempty"`
-	StartedAt   *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
-	FinishedAt  *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
-	// duration: finished_at - started_at, or live elapsed while running.
+	// progress_pct (0..100) is the run progress (runtime facet), derived on
+	// the backend from the pipeline / Temporal.
+	ProgressPct uint32 `protobuf:"varint,10,opt,name=progress_pct,json=progressPct,proto3" json:"progress_pct,omitempty"`
+	// started_at is when the run started.
+	StartedAt *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// finished_at is when the run finished (unset while running).
+	FinishedAt *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
+	// duration is finished_at - started_at, or the live elapsed time while
+	// running.
 	Duration      *durationpb.Duration `protobuf:"bytes,13,opt,name=duration,proto3" json:"duration,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

@@ -29,6 +29,7 @@ message Terraform {
 
     /* input contains everything needed to prepare and run one Terraform action. */
     message Input {
+        /* provider selects the deployment backend this Terraform action targets. */
         deployment.Provider provider = 1;
         /* operation contains Terraform executor parameters independent of tfvars. */
         Operation operation = 2 [(validate.rules).message.required = true];

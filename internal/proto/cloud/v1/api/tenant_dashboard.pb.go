@@ -27,13 +27,19 @@ const (
 
 // StatusCounts is the run breakdown by lifecycle status.
 type StatusCounts struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Total         uint32                 `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
-	Pending       uint32                 `protobuf:"varint,2,opt,name=pending,proto3" json:"pending,omitempty"`
-	Running       uint32                 `protobuf:"varint,3,opt,name=running,proto3" json:"running,omitempty"`
-	Completed     uint32                 `protobuf:"varint,4,opt,name=completed,proto3" json:"completed,omitempty"`
-	Failed        uint32                 `protobuf:"varint,5,opt,name=failed,proto3" json:"failed,omitempty"`
-	Cancelled     uint32                 `protobuf:"varint,6,opt,name=cancelled,proto3" json:"cancelled,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// total is the count of all runs in scope.
+	Total uint32 `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
+	// pending is the count of runs not yet started.
+	Pending uint32 `protobuf:"varint,2,opt,name=pending,proto3" json:"pending,omitempty"`
+	// running is the count of currently executing runs.
+	Running uint32 `protobuf:"varint,3,opt,name=running,proto3" json:"running,omitempty"`
+	// completed is the count of successfully finished runs.
+	Completed uint32 `protobuf:"varint,4,opt,name=completed,proto3" json:"completed,omitempty"`
+	// failed is the count of runs that ended in failure.
+	Failed uint32 `protobuf:"varint,5,opt,name=failed,proto3" json:"failed,omitempty"`
+	// cancelled is the count of runs that were cancelled.
+	Cancelled     uint32 `protobuf:"varint,6,opt,name=cancelled,proto3" json:"cancelled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -112,10 +118,14 @@ func (x *StatusCounts) GetCancelled() uint32 {
 
 // UpcomingSuite is a scheduled suite and its next planned auto-run.
 type UpcomingSuite struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SuiteId       string                 `protobuf:"bytes,1,opt,name=suite_id,json=suiteId,proto3" json:"suite_id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Cron          string                 `protobuf:"bytes,3,opt,name=cron,proto3" json:"cron,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// suite_id identifies the scheduled suite definition.
+	SuiteId string `protobuf:"bytes,1,opt,name=suite_id,json=suiteId,proto3" json:"suite_id,omitempty"`
+	// name is the suite's display name.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// cron is the schedule expression driving the auto-runs.
+	Cron string `protobuf:"bytes,3,opt,name=cron,proto3" json:"cron,omitempty"`
+	// next_run_at is when the next auto-run is planned.
 	NextRunAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=next_run_at,json=nextRunAt,proto3" json:"next_run_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -182,17 +192,17 @@ func (x *UpcomingSuite) GetNextRunAt() *timestamppb.Timestamp {
 // TenantDashboard is the whole landing payload.
 type TenantDashboard struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Run counts by status (for the headline tiles).
+	// run_counts is the run breakdown by status (for the headline tiles).
 	RunCounts *StatusCounts `protobuf:"bytes,1,opt,name=run_counts,json=runCounts,proto3" json:"run_counts,omitempty"`
-	// Success rate (completed / finished) over a recent window, 0..1.
+	// success_rate is completed / finished over a recent window, 0..1.
 	SuccessRate float32 `protobuf:"fixed32,2,opt,name=success_rate,json=successRate,proto3" json:"success_rate,omitempty"`
-	// Most recent runs (limited).
+	// recent_runs is the most recent test runs (limited).
 	RecentRuns []*models.TestRunRecord `protobuf:"bytes,3,rep,name=recent_runs,json=recentRuns,proto3" json:"recent_runs,omitempty"`
-	// Most recent suite runs (limited).
+	// recent_suite_runs is the most recent suite runs (limited).
 	RecentSuiteRuns []*models.SuiteRunRecord `protobuf:"bytes,4,rep,name=recent_suite_runs,json=recentSuiteRuns,proto3" json:"recent_suite_runs,omitempty"`
-	// Scheduled suites with their next planned auto-run.
+	// upcoming is the scheduled suites with their next planned auto-run.
 	Upcoming []*UpcomingSuite `protobuf:"bytes,5,rep,name=upcoming,proto3" json:"upcoming,omitempty"`
-	// This tenant's top benchmarks (tenant rating top-N).
+	// top_benchmarks is this tenant's top benchmarks (tenant rating top-N).
 	TopBenchmarks []*RatingEntry `protobuf:"bytes,6,rep,name=top_benchmarks,json=topBenchmarks,proto3" json:"top_benchmarks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -270,9 +280,11 @@ func (x *TenantDashboard) GetTopBenchmarks() []*RatingEntry {
 	return nil
 }
 
+// GetTenantDashboardRequest fetches the aggregated dashboard for a tenant.
 type GetTenantDashboardRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId      string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -314,9 +326,11 @@ func (x *GetTenantDashboardRequest) GetTenantId() string {
 	return ""
 }
 
+// GetTenantDashboardResponse returns the computed dashboard payload.
 type GetTenantDashboardResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Dashboard     *TenantDashboard       `protobuf:"bytes,1,opt,name=dashboard,proto3" json:"dashboard,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// dashboard is the aggregated landing view.
+	Dashboard     *TenantDashboard `protobuf:"bytes,1,opt,name=dashboard,proto3" json:"dashboard,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

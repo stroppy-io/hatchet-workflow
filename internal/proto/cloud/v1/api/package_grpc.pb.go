@@ -29,11 +29,17 @@ const (
 // PackageServiceClient is the client API for PackageService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// PackageService is the tenant package registry (custom DB builds).
 type PackageServiceClient interface {
 	// CreatePackageUpload mints a record + presigned PUT url. Not idempotent.
 	CreatePackageUpload(ctx context.Context, in *CreatePackageUploadRequest, opts ...grpc.CallOption) (*CreatePackageUploadResponse, error)
+	// CompleteUpload verifies size + sha256 and flips the record to READY (or
+	// FAILED). Idempotent.
 	CompleteUpload(ctx context.Context, in *CompleteUploadRequest, opts ...grpc.CallOption) (*CompleteUploadResponse, error)
+	// GetPackage fetches one package by id. Read-only.
 	GetPackage(ctx context.Context, in *GetPackageRequest, opts ...grpc.CallOption) (*GetPackageResponse, error)
+	// ListPackages lists a tenant's packages. Read-only.
 	ListPackages(ctx context.Context, in *ListPackagesRequest, opts ...grpc.CallOption) (*ListPackagesResponse, error)
 	// DeletePackage is idempotent: deleting an absent package is a no-op.
 	DeletePackage(ctx context.Context, in *DeletePackageRequest, opts ...grpc.CallOption) (*DeletePackageResponse, error)
@@ -100,11 +106,17 @@ func (c *packageServiceClient) DeletePackage(ctx context.Context, in *DeletePack
 // PackageServiceServer is the server API for PackageService service.
 // All implementations must embed UnimplementedPackageServiceServer
 // for forward compatibility.
+//
+// PackageService is the tenant package registry (custom DB builds).
 type PackageServiceServer interface {
 	// CreatePackageUpload mints a record + presigned PUT url. Not idempotent.
 	CreatePackageUpload(context.Context, *CreatePackageUploadRequest) (*CreatePackageUploadResponse, error)
+	// CompleteUpload verifies size + sha256 and flips the record to READY (or
+	// FAILED). Idempotent.
 	CompleteUpload(context.Context, *CompleteUploadRequest) (*CompleteUploadResponse, error)
+	// GetPackage fetches one package by id. Read-only.
 	GetPackage(context.Context, *GetPackageRequest) (*GetPackageResponse, error)
+	// ListPackages lists a tenant's packages. Read-only.
 	ListPackages(context.Context, *ListPackagesRequest) (*ListPackagesResponse, error)
 	// DeletePackage is idempotent: deleting an absent package is a no-op.
 	DeletePackage(context.Context, *DeletePackageRequest) (*DeletePackageResponse, error)

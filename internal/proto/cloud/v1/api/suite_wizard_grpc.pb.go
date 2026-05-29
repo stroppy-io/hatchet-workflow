@@ -30,9 +30,15 @@ const (
 // SuiteWizardServiceClient is the client API for SuiteWizardService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// SuiteWizardService drives the suite wizard: start, fetch/list, patch-loop and
+// finish into a baked SuiteRun.
 type SuiteWizardServiceClient interface {
+	// StartSuiteWizard opens a new draft. Not idempotent.
 	StartSuiteWizard(ctx context.Context, in *StartSuiteWizardRequest, opts ...grpc.CallOption) (*StartSuiteWizardResponse, error)
+	// GetSuiteWizardDraft fetches a single draft by id. Read-only.
 	GetSuiteWizardDraft(ctx context.Context, in *GetSuiteWizardDraftRequest, opts ...grpc.CallOption) (*GetSuiteWizardDraftResponse, error)
+	// ListSuiteWizardDrafts lists drafts with filtering and pagination. Read-only.
 	ListSuiteWizardDrafts(ctx context.Context, in *ListSuiteWizardDraftsRequest, opts ...grpc.CallOption) (*ListSuiteWizardDraftsResponse, error)
 	// PatchSuiteWizard is idempotent: re-submitting the same form converges.
 	PatchSuiteWizard(ctx context.Context, in *PatchSuiteWizardRequest, opts ...grpc.CallOption) (*PatchSuiteWizardResponse, error)
@@ -113,9 +119,15 @@ func (c *suiteWizardServiceClient) FinishSuiteWizard(ctx context.Context, in *Fi
 // SuiteWizardServiceServer is the server API for SuiteWizardService service.
 // All implementations must embed UnimplementedSuiteWizardServiceServer
 // for forward compatibility.
+//
+// SuiteWizardService drives the suite wizard: start, fetch/list, patch-loop and
+// finish into a baked SuiteRun.
 type SuiteWizardServiceServer interface {
+	// StartSuiteWizard opens a new draft. Not idempotent.
 	StartSuiteWizard(context.Context, *StartSuiteWizardRequest) (*StartSuiteWizardResponse, error)
+	// GetSuiteWizardDraft fetches a single draft by id. Read-only.
 	GetSuiteWizardDraft(context.Context, *GetSuiteWizardDraftRequest) (*GetSuiteWizardDraftResponse, error)
+	// ListSuiteWizardDrafts lists drafts with filtering and pagination. Read-only.
 	ListSuiteWizardDrafts(context.Context, *ListSuiteWizardDraftsRequest) (*ListSuiteWizardDraftsResponse, error)
 	// PatchSuiteWizard is idempotent: re-submitting the same form converges.
 	PatchSuiteWizard(context.Context, *PatchSuiteWizardRequest) (*PatchSuiteWizardResponse, error)

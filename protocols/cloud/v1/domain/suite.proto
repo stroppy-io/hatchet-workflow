@@ -9,30 +9,47 @@ import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
-// Suite definition. References provider-agnostic, params-only presets; the
-// provider is applied once here, and the wizard bakes provider_parms when
-// expanding presets into TestRuns.
+/*
+    suite.proto defines a Suite: a named collection of provider-agnostic,
+    params-only presets run together under a single provider, optionally on a
+    cron schedule. Expanding a Suite produces a SuiteRun whose child TestRuns
+    are baked by the wizard (it fills provider_parms per preset).
+ */
+
+/*
+    Suite is a reusable test bundle. It references provider-agnostic,
+    params-only presets; the provider is applied once here, and the wizard bakes
+    provider_parms when expanding presets into TestRuns.
+ */
 message Suite {
+    /* id is the stable suite identifier. */
     string id = 1 [(validate.rules).string = {min_len: 1}];
 
-    // Presets composing the suite (Database / Workload / Test presets).
+    /* preset_ids are the presets composing the suite (Database / Workload /
+       Test presets). */
     repeated string preset_ids = 2 [(validate.rules).repeated = {min_items: 1, items: {string: {min_len: 1}}}];
 
-    // Single provider for now. Multi-provider (cross-product to compare clouds)
-    // is planned: this becomes `repeated Provider providers` and expansion does
-    // presets x providers. Deferred to avoid the exponential bake cost for now.
+    /* provider is the single deployment provider for now. Multi-provider
+       (cross-product to compare clouds) is planned: this becomes
+       `repeated Provider providers` and expansion does presets x providers.
+       Deferred to avoid the exponential bake cost for now. */
     deployment.Provider provider = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
 
+    /* tags are free-form metadata attached to the suite. */
     common.Tags tags = 4;
 
-    // Optional cron schedule that auto-starts this suite. Absent / disabled = the
-    // suite only runs when started manually.
+    /* schedule is an optional cron schedule that auto-starts this suite.
+       Absent / disabled = the suite only runs when started manually. */
     Schedule schedule = 5;
 
-    // Rating defaults propagated to every child TestRun the suite spawns (incl.
-    // cron runs). Same semantics as TestRunRecord: tenant defaults true, global
-    // defaults false (opt-in). Modeled as optional so unset = the platform default.
+    /* default_in_tenant_rating is the tenant-rating default propagated to every
+       child TestRun the suite spawns (incl. cron runs). Same semantics as
+       TestRunRecord: tenant defaults true. Optional so unset = platform default. */
     optional bool default_in_tenant_rating = 6;
+    /* default_in_global_rating is the global-rating default propagated to every
+       child TestRun the suite spawns (incl. cron runs). Same semantics as
+       TestRunRecord: global defaults false (opt-in). Optional so unset =
+       platform default. */
     optional bool default_in_global_rating = 7;
 }
 
@@ -42,22 +59,29 @@ message Suite {
     gates it so a configured schedule can be paused without losing the cron.
  */
 message Schedule {
-    // enabled gates the schedule: false = paused (never auto-runs).
+    /* enabled gates the schedule: false = paused (never auto-runs). */
     bool enabled = 1;
-    // Standard cron expression (e.g. "0 2 * * *"). Validated server-side.
+    /* cron is a standard cron expression (e.g. "0 2 * * *"). Validated
+       server-side. */
     string cron = 2 [(validate.rules).string.max_len = 128];
-    // IANA timezone for the cron (e.g. "Europe/Moscow"); empty = UTC.
+    /* timezone is the IANA timezone for the cron (e.g. "Europe/Moscow");
+       empty = UTC. */
     string timezone = 3 [(validate.rules).string.max_len = 64];
 }
 
-// Materialized suite execution: preset_ids expanded into concrete TestRuns.
+/*
+    SuiteRun is a materialized suite execution: the Suite's preset_ids expanded
+    into concrete TestRuns, executed with a bounded degree of parallelism.
+ */
 message SuiteRun {
+    /* id is the stable suite-run identifier. */
     string id = 1 [(validate.rules).string = {min_len: 1}];
+    /* suite_id references the Suite this run was expanded from. */
     string suite_id = 2 [(validate.rules).string = {min_len: 1}];
 
-    // Expanded runs (one per resolved preset).
+    /* test_runs are the expanded runs (one per resolved preset). */
     repeated TestRun test_runs = 3 [(validate.rules).repeated.min_items = 1];
 
-    // Max concurrent TestWorkflows. 0 = unlimited.
+    /* max_parallel is the max concurrent TestWorkflows. 0 = unlimited. */
     uint32 max_parallel = 4;
 }

@@ -29,10 +29,13 @@ const (
 // favoriting an already-favorited row is a no-op (returns the existing record).
 // The server validates the target exists and is in the caller's tenant.
 type AddFavoriteRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Kind          common.FavoriteKind    `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.common.FavoriteKind" json:"kind,omitempty"`
-	TargetId      string                 `protobuf:"bytes,3,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the favorite; favorites are tenant-local and personal.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// kind is the favoritable resource type (must be a defined, non-zero kind).
+	Kind common.FavoriteKind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.common.FavoriteKind" json:"kind,omitempty"`
+	// target_id is the id of the row being favorited, within `kind`.
+	TargetId      string `protobuf:"bytes,3,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -89,7 +92,8 @@ func (x *AddFavoriteRequest) GetTargetId() string {
 }
 
 type AddFavoriteResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// favorite is the resulting (or pre-existing) favorite join record.
 	Favorite      *models.FavoriteRecord `protobuf:"bytes,1,opt,name=favorite,proto3" json:"favorite,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -135,10 +139,13 @@ func (x *AddFavoriteResponse) GetFavorite() *models.FavoriteRecord {
 // RemoveFavorite unmarks (kind, target_id). Idempotent: removing an absent
 // favorite is a no-op.
 type RemoveFavoriteRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Kind          common.FavoriteKind    `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.common.FavoriteKind" json:"kind,omitempty"`
-	TargetId      string                 `protobuf:"bytes,3,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the favorite to the caller's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// kind is the favoritable resource type (must be a defined, non-zero kind).
+	Kind common.FavoriteKind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.common.FavoriteKind" json:"kind,omitempty"`
+	// target_id is the id of the row to unfavorite, within `kind`.
+	TargetId      string `protobuf:"bytes,3,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -194,6 +201,7 @@ func (x *RemoveFavoriteRequest) GetTargetId() string {
 	return ""
 }
 
+// RemoveFavoriteResponse is empty; success is signalled by the absence of error.
 type RemoveFavoriteResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -234,11 +242,13 @@ func (*RemoveFavoriteResponse) Descriptor() ([]byte, []int) {
 // This lists the raw join rows; to list the favorited ENTITIES themselves, use
 // the target resource's List with EntityFilter.favorites_only = true instead.
 type ListFavoritesRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// Narrow to one kind; UNSPECIFIED = all kinds.
-	Kind          common.FavoriteKind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.common.FavoriteKind" json:"kind,omitempty"`
-	Page          *common.Page        `protobuf:"bytes,3,opt,name=page,proto3" json:"page,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the listing to the caller's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// kind narrows to one kind; UNSPECIFIED = all kinds.
+	Kind common.FavoriteKind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.common.FavoriteKind" json:"kind,omitempty"`
+	// page is the pagination cursor/size.
+	Page          *common.Page `protobuf:"bytes,3,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -295,9 +305,11 @@ func (x *ListFavoritesRequest) GetPage() *common.Page {
 }
 
 type ListFavoritesResponse struct {
-	state         protoimpl.MessageState   `protogen:"open.v1"`
-	Favorites     []*models.FavoriteRecord `protobuf:"bytes,1,rep,name=favorites,proto3" json:"favorites,omitempty"`
-	NextPageToken string                   `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// favorites are the caller's favorite join rows for this page.
+	Favorites []*models.FavoriteRecord `protobuf:"bytes,1,rep,name=favorites,proto3" json:"favorites,omitempty"`
+	// next_page_token is empty when there are no more rows.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

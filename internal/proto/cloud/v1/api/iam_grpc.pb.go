@@ -98,10 +98,12 @@ type IamServiceClient interface {
 	// CreateAccount is the admin-only account path (the public path is
 	// Register). Not idempotent: each call creates a new account.
 	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error)
+	// GetAccount fetches one account by id. Read-only.
 	GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountResponse, error)
 	// GetMyAccount returns the caller's own profile — authenticated, no
 	// permission (self-read).
 	GetMyAccount(ctx context.Context, in *GetMyAccountRequest, opts ...grpc.CallOption) (*GetMyAccountResponse, error)
+	// ListAccounts lists accounts platform-wide. Read-only.
 	ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error)
 	// UpdateAccount is idempotent: a wholesale field set converges on retry.
 	UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*UpdateAccountResponse, error)
@@ -122,7 +124,11 @@ type IamServiceClient interface {
 	GetTenant(ctx context.Context, in *GetTenantRequest, opts ...grpc.CallOption) (*GetTenantResponse, error)
 	// ListMyTenants returns the caller's tenants — authenticated, no permission.
 	ListMyTenants(ctx context.Context, in *ListMyTenantsRequest, opts ...grpc.CallOption) (*ListMyTenantsResponse, error)
+	// UpdateTenant edits name/slug. Idempotent: a wholesale field set converges
+	// on retry.
 	UpdateTenant(ctx context.Context, in *UpdateTenantRequest, opts ...grpc.CallOption) (*UpdateTenantResponse, error)
+	// DeleteTenant removes a tenant. Idempotent: deleting an absent tenant is a
+	// no-op.
 	DeleteTenant(ctx context.Context, in *DeleteTenantRequest, opts ...grpc.CallOption) (*DeleteTenantResponse, error)
 	// TransferTenantOwnership reassigns the owner. Idempotent: transferring to
 	// the current owner is a no-op.
@@ -132,26 +138,41 @@ type IamServiceClient interface {
 	LeaveTenant(ctx context.Context, in *LeaveTenantRequest, opts ...grpc.CallOption) (*LeaveTenantResponse, error)
 	// CreateRole is not idempotent: each call creates a new role.
 	CreateRole(ctx context.Context, in *CreateRoleRequest, opts ...grpc.CallOption) (*CreateRoleResponse, error)
+	// GetRole fetches one role by id. Read-only.
 	GetRole(ctx context.Context, in *GetRoleRequest, opts ...grpc.CallOption) (*GetRoleResponse, error)
+	// ListRoles lists roles visible to the caller (tenant or platform scope).
+	// Read-only.
 	ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*ListRolesResponse, error)
 	// UpdateRole is idempotent: permissions REPLACES wholesale, converging on retry.
 	UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*UpdateRoleResponse, error)
+	// DeleteRole removes a custom role. Idempotent: deleting an absent role is a
+	// no-op.
 	DeleteRole(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*DeleteRoleResponse, error)
 	// CreateMembership is not idempotent: each call creates a new membership row.
 	CreateMembership(ctx context.Context, in *CreateMembershipRequest, opts ...grpc.CallOption) (*CreateMembershipResponse, error)
+	// GetMembership fetches one membership by id. Read-only.
 	GetMembership(ctx context.Context, in *GetMembershipRequest, opts ...grpc.CallOption) (*GetMembershipResponse, error)
+	// ListMemberships lists one tenant's members. Read-only.
 	ListMemberships(ctx context.Context, in *ListMembershipsRequest, opts ...grpc.CallOption) (*ListMembershipsResponse, error)
 	// UpdateMembership is idempotent: role_ids REPLACES wholesale, converging on retry.
 	UpdateMembership(ctx context.Context, in *UpdateMembershipRequest, opts ...grpc.CallOption) (*UpdateMembershipResponse, error)
+	// DeleteMembership removes a member from a tenant (revokes access).
+	// Idempotent: removing an absent membership is a no-op.
 	DeleteMembership(ctx context.Context, in *DeleteMembershipRequest, opts ...grpc.CallOption) (*DeleteMembershipResponse, error)
 	// GetMyPermissions resolves the caller's own permissions — authenticated, no permission.
 	GetMyPermissions(ctx context.Context, in *GetMyPermissionsRequest, opts ...grpc.CallOption) (*GetMyPermissionsResponse, error)
 	// ListPermissions returns the grantable-permission catalog — authenticated, no permission.
 	ListPermissions(ctx context.Context, in *ListPermissionsRequest, opts ...grpc.CallOption) (*ListPermissionsResponse, error)
-	// --- SSO: provider config (admin-only) ---
+	// CreateIdentityProvider configures a new OIDC provider. Admin-only. Not
+	// idempotent: each call creates a new provider.
 	CreateIdentityProvider(ctx context.Context, in *CreateIdentityProviderRequest, opts ...grpc.CallOption) (*CreateIdentityProviderResponse, error)
+	// GetIdentityProvider fetches one provider by id. Admin-only, read-only.
 	GetIdentityProvider(ctx context.Context, in *GetIdentityProviderRequest, opts ...grpc.CallOption) (*GetIdentityProviderResponse, error)
+	// UpdateIdentityProvider edits a provider (a present secret rotates it).
+	// Admin-only. Idempotent: a wholesale field set converges on retry.
 	UpdateIdentityProvider(ctx context.Context, in *UpdateIdentityProviderRequest, opts ...grpc.CallOption) (*UpdateIdentityProviderResponse, error)
+	// DeleteIdentityProvider removes a provider. Admin-only. Idempotent: deleting
+	// an absent provider is a no-op.
 	DeleteIdentityProvider(ctx context.Context, in *DeleteIdentityProviderRequest, opts ...grpc.CallOption) (*DeleteIdentityProviderResponse, error)
 	// ListIdentityProviders returns the login-page buttons. Public, read-only.
 	ListIdentityProviders(ctx context.Context, in *ListIdentityProvidersRequest, opts ...grpc.CallOption) (*ListIdentityProvidersResponse, error)
@@ -700,10 +721,12 @@ type IamServiceServer interface {
 	// CreateAccount is the admin-only account path (the public path is
 	// Register). Not idempotent: each call creates a new account.
 	CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error)
+	// GetAccount fetches one account by id. Read-only.
 	GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error)
 	// GetMyAccount returns the caller's own profile — authenticated, no
 	// permission (self-read).
 	GetMyAccount(context.Context, *GetMyAccountRequest) (*GetMyAccountResponse, error)
+	// ListAccounts lists accounts platform-wide. Read-only.
 	ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error)
 	// UpdateAccount is idempotent: a wholesale field set converges on retry.
 	UpdateAccount(context.Context, *UpdateAccountRequest) (*UpdateAccountResponse, error)
@@ -724,7 +747,11 @@ type IamServiceServer interface {
 	GetTenant(context.Context, *GetTenantRequest) (*GetTenantResponse, error)
 	// ListMyTenants returns the caller's tenants — authenticated, no permission.
 	ListMyTenants(context.Context, *ListMyTenantsRequest) (*ListMyTenantsResponse, error)
+	// UpdateTenant edits name/slug. Idempotent: a wholesale field set converges
+	// on retry.
 	UpdateTenant(context.Context, *UpdateTenantRequest) (*UpdateTenantResponse, error)
+	// DeleteTenant removes a tenant. Idempotent: deleting an absent tenant is a
+	// no-op.
 	DeleteTenant(context.Context, *DeleteTenantRequest) (*DeleteTenantResponse, error)
 	// TransferTenantOwnership reassigns the owner. Idempotent: transferring to
 	// the current owner is a no-op.
@@ -734,26 +761,41 @@ type IamServiceServer interface {
 	LeaveTenant(context.Context, *LeaveTenantRequest) (*LeaveTenantResponse, error)
 	// CreateRole is not idempotent: each call creates a new role.
 	CreateRole(context.Context, *CreateRoleRequest) (*CreateRoleResponse, error)
+	// GetRole fetches one role by id. Read-only.
 	GetRole(context.Context, *GetRoleRequest) (*GetRoleResponse, error)
+	// ListRoles lists roles visible to the caller (tenant or platform scope).
+	// Read-only.
 	ListRoles(context.Context, *ListRolesRequest) (*ListRolesResponse, error)
 	// UpdateRole is idempotent: permissions REPLACES wholesale, converging on retry.
 	UpdateRole(context.Context, *UpdateRoleRequest) (*UpdateRoleResponse, error)
+	// DeleteRole removes a custom role. Idempotent: deleting an absent role is a
+	// no-op.
 	DeleteRole(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error)
 	// CreateMembership is not idempotent: each call creates a new membership row.
 	CreateMembership(context.Context, *CreateMembershipRequest) (*CreateMembershipResponse, error)
+	// GetMembership fetches one membership by id. Read-only.
 	GetMembership(context.Context, *GetMembershipRequest) (*GetMembershipResponse, error)
+	// ListMemberships lists one tenant's members. Read-only.
 	ListMemberships(context.Context, *ListMembershipsRequest) (*ListMembershipsResponse, error)
 	// UpdateMembership is idempotent: role_ids REPLACES wholesale, converging on retry.
 	UpdateMembership(context.Context, *UpdateMembershipRequest) (*UpdateMembershipResponse, error)
+	// DeleteMembership removes a member from a tenant (revokes access).
+	// Idempotent: removing an absent membership is a no-op.
 	DeleteMembership(context.Context, *DeleteMembershipRequest) (*DeleteMembershipResponse, error)
 	// GetMyPermissions resolves the caller's own permissions — authenticated, no permission.
 	GetMyPermissions(context.Context, *GetMyPermissionsRequest) (*GetMyPermissionsResponse, error)
 	// ListPermissions returns the grantable-permission catalog — authenticated, no permission.
 	ListPermissions(context.Context, *ListPermissionsRequest) (*ListPermissionsResponse, error)
-	// --- SSO: provider config (admin-only) ---
+	// CreateIdentityProvider configures a new OIDC provider. Admin-only. Not
+	// idempotent: each call creates a new provider.
 	CreateIdentityProvider(context.Context, *CreateIdentityProviderRequest) (*CreateIdentityProviderResponse, error)
+	// GetIdentityProvider fetches one provider by id. Admin-only, read-only.
 	GetIdentityProvider(context.Context, *GetIdentityProviderRequest) (*GetIdentityProviderResponse, error)
+	// UpdateIdentityProvider edits a provider (a present secret rotates it).
+	// Admin-only. Idempotent: a wholesale field set converges on retry.
 	UpdateIdentityProvider(context.Context, *UpdateIdentityProviderRequest) (*UpdateIdentityProviderResponse, error)
+	// DeleteIdentityProvider removes a provider. Admin-only. Idempotent: deleting
+	// an absent provider is a no-op.
 	DeleteIdentityProvider(context.Context, *DeleteIdentityProviderRequest) (*DeleteIdentityProviderResponse, error)
 	// ListIdentityProviders returns the login-page buttons. Public, read-only.
 	ListIdentityProviders(context.Context, *ListIdentityProvidersRequest) (*ListIdentityProvidersResponse, error)

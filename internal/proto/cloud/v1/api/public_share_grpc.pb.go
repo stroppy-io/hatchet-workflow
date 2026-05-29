@@ -25,6 +25,8 @@ const (
 // PublicShareServiceClient is the client API for PublicShareService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// PublicShareService is the public, unauthenticated resolve side of run shares.
 type PublicShareServiceClient interface {
 	// GetSharedRun resolves a share token to its limited snapshot. PUBLIC: no
 	// bearer token. Returns gone if revoked/expired.
@@ -52,6 +54,8 @@ func (c *publicShareServiceClient) GetSharedRun(ctx context.Context, in *GetShar
 // PublicShareServiceServer is the server API for PublicShareService service.
 // All implementations must embed UnimplementedPublicShareServiceServer
 // for forward compatibility.
+//
+// PublicShareService is the public, unauthenticated resolve side of run shares.
 type PublicShareServiceServer interface {
 	// GetSharedRun resolves a share token to its limited snapshot. PUBLIC: no
 	// bearer token. Returns gone if revoked/expired.

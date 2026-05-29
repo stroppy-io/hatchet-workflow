@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/common/file.proto.
  */
 export const file_cloud_v1_common_file: GenFile = /*@__PURE__*/
-  fileDesc("ChpjbG91ZC92MS9jb21tb24vZmlsZS5wcm90bxIPY2xvdWQudjEuY29tbW9uIvQCCgRGaWxlEjIKBGluZm8YASABKAsyGi5jbG91ZC52MS5jb21tb24uRmlsZS5JbmZvQgj6QgWKAQIQARIOCgZhcHBlbmQYAiABKAgSGgoEdGV4dBgKIAEoCUIK+kIHcgUogICAMkgAEhsKBWJ5dGVzGAsgASgMQgr6Qgd6BRiAgIAySAASNwoGYXNfcmVmGAwgASgLMhsuY2xvdWQudjEuY29tbW9uLkZpbGUuQXNSZWZCCPpCBYoBAhABSAAaaAoESW5mbxIYCgRwYXRoGAEgASgJQgr6QgdyBRABGIAgEhYKBG1vZGUYAyABKA1CCPpCBSoDGP8fEhYKBW93bmVyGAQgASgJQgf6QgRyAhhAEhYKBWdyb3VwGAUgASgJQgf6QgRyAhhAGjwKBUFzUmVmEhcKA3VyaRgCIAEoCUIK+kIHcgUYgCAQARIaCghjaGVja3N1bRgDIAEoCUII+kIFcgMYgAJCDgoHY29udGVudBID+EIBImYKCUJha2VkRmlsZRIjCgRmaWxlGAEgASgLMhUuY2xvdWQudjEuY29tbW9uLkZpbGUSFQoNcmVzb2x2ZXJfbmFtZRgCIAEoCRIdCgRkYXRhGAMgASgLMg8uc2NoZW1hcGIuQmFrZWRCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvY29tbW9uYgZwcm90bzM", [file_schemapb_schema, file_validate_validate]);
+  fileDesc("ChpjbG91ZC92MS9jb21tb24vZmlsZS5wcm90bxIPY2xvdWQudjEuY29tbW9uIvQCCgRGaWxlEjIKBGluZm8YASABKAsyGi5jbG91ZC52MS5jb21tb24uRmlsZS5JbmZvQgj6QgWKAQIQARIOCgZhcHBlbmQYAiABKAgSGgoEdGV4dBgKIAEoCUIK+kIHcgUogICAMkgAEhsKBWJ5dGVzGAsgASgMQgr6Qgd6BRiAgIAySAASNwoGYXNfcmVmGAwgASgLMhsuY2xvdWQudjEuY29tbW9uLkZpbGUuQXNSZWZCCPpCBYoBAhABSAAaaAoESW5mbxIYCgRwYXRoGAEgASgJQgr6QgdyBRABGIAgEhYKBG1vZGUYAyABKA1CCPpCBSoDGP8fEhYKBW93bmVyGAQgASgJQgf6QgRyAhhAEhYKBWdyb3VwGAUgASgJQgf6QgRyAhhAGjwKBUFzUmVmEhcKA3VyaRgCIAEoCUIK+kIHcgUQARiAIBIaCghjaGVja3N1bRgDIAEoCUII+kIFcgMYgAJCDgoHY29udGVudBID+EIBImYKCUJha2VkRmlsZRIjCgRmaWxlGAEgASgLMhUuY2xvdWQudjEuY29tbW9uLkZpbGUSFQoNcmVzb2x2ZXJfbmFtZRgCIAEoCRIdCgRkYXRhGAMgASgLMg8uc2NoZW1hcGIuQmFrZWRCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvY29tbW9uYgZwcm90bzM", [file_schemapb_schema, file_validate_validate]);
 
 /**
  *
@@ -33,12 +33,14 @@ export type File = Message<"cloud.v1.common.File"> & {
   info?: File_Info;
 
   /**
+   * append, when true, appends content to an existing file instead of overwriting it. 
+   *
    * @generated from field: bool append = 2;
    */
   append: boolean;
 
   /**
-   * Content is inline file payload. 
+   * content carries the inline file payload as exactly one of text, bytes, or a reference. 
    *
    * @generated from oneof cloud.v1.common.File.content
    */
@@ -87,6 +89,8 @@ export type FileJson = {
   info?: File_InfoJson;
 
   /**
+   * append, when true, appends content to an existing file instead of overwriting it. 
+   *
    * @generated from field: bool append = 2;
    */
   append?: boolean;
@@ -211,6 +215,8 @@ export const File_InfoSchema: GenMessage<File_Info, {jsonType: File_InfoJson, va
  */
 export type File_AsRef = Message<"cloud.v1.common.File.AsRef"> & {
   /**
+   * uri locates the external file content (e.g. object/artifact storage). 
+   *
    * @generated from field: string uri = 2;
    */
   uri: string;
@@ -233,6 +239,8 @@ export type File_AsRef = Message<"cloud.v1.common.File.AsRef"> & {
  */
 export type File_AsRefJson = {
   /**
+   * uri locates the external file content (e.g. object/artifact storage). 
+   *
    * @generated from field: string uri = 2;
    */
   uri?: string;
@@ -255,40 +263,60 @@ export const File_AsRefSchema: GenMessage<File_AsRef, {jsonType: File_AsRefJson,
   messageDesc(file_cloud_v1_common_file, 0, 1);
 
 /**
+ *
+ * BakedFile pairs a File with the resolver that produced it and the
+ * schema-validated data used to render it, capturing a fully materialized file.
+ *
  * @generated from message cloud.v1.common.BakedFile
  */
 export type BakedFile = Message<"cloud.v1.common.BakedFile"> & {
   /**
+   * file is the materialized file description. 
+   *
    * @generated from field: cloud.v1.common.File file = 1;
    */
   file?: File;
 
   /**
+   * resolver_name identifies the resolver that produced the file content. 
+   *
    * @generated from field: string resolver_name = 2;
    */
   resolverName: string;
 
   /**
+   * data is the schema-validated input baked into the file. 
+   *
    * @generated from field: schemapb.Baked data = 3;
    */
   data?: Baked;
 };
 
 /**
+ *
+ * BakedFile pairs a File with the resolver that produced it and the
+ * schema-validated data used to render it, capturing a fully materialized file.
+ *
  * @generated from message cloud.v1.common.BakedFile
  */
 export type BakedFileJson = {
   /**
+   * file is the materialized file description. 
+   *
    * @generated from field: cloud.v1.common.File file = 1;
    */
   file?: FileJson;
 
   /**
+   * resolver_name identifies the resolver that produced the file content. 
+   *
    * @generated from field: string resolver_name = 2;
    */
   resolverName?: string;
 
   /**
+   * data is the schema-validated input baked into the file. 
+   *
    * @generated from field: schemapb.Baked data = 3;
    */
   data?: BakedJson;

@@ -27,18 +27,27 @@ const (
 
 // PublicRatingEntry is one ranked benchmark, sensitive fields stripped.
 type PublicRatingEntry struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Rank           uint32                 `protobuf:"varint,1,opt,name=rank,proto3" json:"rank,omitempty"`
-	MetricValue    float64                `protobuf:"fixed64,2,opt,name=metric_value,json=metricValue,proto3" json:"metric_value,omitempty"`
-	MetricUnit     string                 `protobuf:"bytes,3,opt,name=metric_unit,json=metricUnit,proto3" json:"metric_unit,omitempty"`
-	DbKind         domain.Database_Kind   `protobuf:"varint,4,opt,name=db_kind,json=dbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kind,omitempty"`
-	WorkloadName   string                 `protobuf:"bytes,5,opt,name=workload_name,json=workloadName,proto3" json:"workload_name,omitempty"`
-	StroppyVersion string                 `protobuf:"bytes,6,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
-	Provider       deployment.Provider    `protobuf:"varint,7,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	TopologyLabel  string                 `protobuf:"bytes,8,opt,name=topology_label,json=topologyLabel,proto3" json:"topology_label,omitempty"`
-	NodeCount      uint32                 `protobuf:"varint,9,opt,name=node_count,json=nodeCount,proto3" json:"node_count,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// rank is the 1-based position on the leaderboard.
+	Rank uint32 `protobuf:"varint,1,opt,name=rank,proto3" json:"rank,omitempty"`
+	// metric_value is the ranked metric's value for this entry.
+	MetricValue float64 `protobuf:"fixed64,2,opt,name=metric_value,json=metricValue,proto3" json:"metric_value,omitempty"`
+	// metric_unit is the unit the metric_value is expressed in.
+	MetricUnit string `protobuf:"bytes,3,opt,name=metric_unit,json=metricUnit,proto3" json:"metric_unit,omitempty"`
+	// db_kind is the database engine the benchmark ran against.
+	DbKind domain.Database_Kind `protobuf:"varint,4,opt,name=db_kind,json=dbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kind,omitempty"`
+	// workload_name is the workload the benchmark executed.
+	WorkloadName string `protobuf:"bytes,5,opt,name=workload_name,json=workloadName,proto3" json:"workload_name,omitempty"`
+	// stroppy_version is the stroppy engine version used.
+	StroppyVersion string `protobuf:"bytes,6,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
+	// provider is the deployment/cloud provider the benchmark ran on.
+	Provider deployment.Provider `protobuf:"varint,7,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	// topology_label is a human-readable summary of the cluster topology.
+	TopologyLabel string `protobuf:"bytes,8,opt,name=topology_label,json=topologyLabel,proto3" json:"topology_label,omitempty"`
+	// node_count is the number of nodes in the topology.
+	NodeCount     uint32 `protobuf:"varint,9,opt,name=node_count,json=nodeCount,proto3" json:"node_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PublicRatingEntry) Reset() {
@@ -134,12 +143,15 @@ func (x *PublicRatingEntry) GetNodeCount() uint32 {
 	return 0
 }
 
+// GetPublicRatingRequest selects and pages the public leaderboard.
 type GetPublicRatingRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Reuses the authenticated filter shape (metric_key + facets).
-	Filter        *RatingFilter `protobuf:"bytes,1,opt,name=filter,proto3" json:"filter,omitempty"`
-	Limit         uint32        `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
-	PageToken     string        `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// filter reuses the authenticated filter shape (metric_key + facets).
+	Filter *RatingFilter `protobuf:"bytes,1,opt,name=filter,proto3" json:"filter,omitempty"`
+	// limit caps returned entries (<= 500); 0 -> server default.
+	Limit uint32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	// page_token is the opaque cursor from a previous response.
+	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -195,10 +207,14 @@ func (x *GetPublicRatingRequest) GetPageToken() string {
 	return ""
 }
 
+// GetPublicRatingResponse returns one page of the public leaderboard.
 type GetPublicRatingResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entries       []*PublicRatingEntry   `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
-	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entries are the ranked benchmarks for this page (sensitive fields
+	// stripped).
+	Entries []*PublicRatingEntry `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
+	// next_page_token is empty when there are no more rows.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

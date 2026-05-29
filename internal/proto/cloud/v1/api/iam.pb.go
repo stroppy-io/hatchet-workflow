@@ -114,10 +114,13 @@ func (x *TokenPair) GetRefreshExpiresIn() *durationpb.Duration {
 // CreateAccount. There is deliberately no is_admin field — a self-registered
 // account is never a platform admin.
 type RegisterRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Nickname      string                 `protobuf:"bytes,2,opt,name=nickname,proto3" json:"nickname,omitempty"`
-	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// email is the new account's contact + login address (format-validated).
+	Email string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	// nickname is the URL/handle-safe display handle (also an alternate login).
+	Nickname string `protobuf:"bytes,2,opt,name=nickname,proto3" json:"nickname,omitempty"`
+	// password is the plaintext password to set; hashed and stored server-side.
+	Password      string `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -179,8 +182,9 @@ func (x *RegisterRequest) GetPassword() string {
 // verification token through its Notifier (see VerifyEmailRequest). Login is not
 // blocked on verification — it is surfaced for the UI to nudge the user.
 type RegisterResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tokens        *TokenPair             `protobuf:"bytes,1,opt,name=tokens,proto3" json:"tokens,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tokens auto-logs-in the new account (no follow-up Login needed).
+	Tokens        *TokenPair `protobuf:"bytes,1,opt,name=tokens,proto3" json:"tokens,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -279,9 +283,11 @@ func (x *LoginRequest) GetPassword() string {
 	return ""
 }
 
+// LoginResponse returns the issued credential pair on a successful Login.
 type LoginResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tokens        *TokenPair             `protobuf:"bytes,1,opt,name=tokens,proto3" json:"tokens,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tokens is the freshly minted access + refresh credential pair.
+	Tokens        *TokenPair `protobuf:"bytes,1,opt,name=tokens,proto3" json:"tokens,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -327,8 +333,9 @@ func (x *LoginResponse) GetTokens() *TokenPair {
 // presented refresh_token is consumed (single-use); the response carries a new
 // rotated refresh_token. Travels in the body, not a cookie.
 type RefreshRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RefreshToken  string                 `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// refresh_token is the single-use token to exchange; consumed on success.
+	RefreshToken  string `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -370,9 +377,11 @@ func (x *RefreshRequest) GetRefreshToken() string {
 	return ""
 }
 
+// RefreshResponse returns the rotated credential pair (new refresh_token).
 type RefreshResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tokens        *TokenPair             `protobuf:"bytes,1,opt,name=tokens,proto3" json:"tokens,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tokens is the new pair; persist the new refresh_token for the next Refresh.
+	Tokens        *TokenPair `protobuf:"bytes,1,opt,name=tokens,proto3" json:"tokens,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -416,8 +425,9 @@ func (x *RefreshResponse) GetTokens() *TokenPair {
 
 // LogoutRequest revokes the server-side session for the given refresh_token.
 type LogoutRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RefreshToken  string                 `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// refresh_token identifies the server-side session to revoke.
+	RefreshToken  string `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -459,6 +469,7 @@ func (x *LogoutRequest) GetRefreshToken() string {
 	return ""
 }
 
+// LogoutResponse is empty; success is signalled by the absence of error.
 type LogoutResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -504,9 +515,11 @@ func (*LogoutResponse) Descriptor() ([]byte, []int) {
 // request with neither password nor link, since that yields an account no one
 // can ever log into. Supply a password, a link, or both.
 type CreateAccountRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	Email    string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Nickname string                 `protobuf:"bytes,2,opt,name=nickname,proto3" json:"nickname,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// email is the new account's contact + login address (format-validated).
+	Email string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	// nickname is the URL/handle-safe display handle (also an alternate login).
+	Nickname string `protobuf:"bytes,2,opt,name=nickname,proto3" json:"nickname,omitempty"`
 	// password is optional: omit it to create an SSO-only account that signs in
 	// exclusively through a linked external identity (see link).
 	Password *string `protobuf:"bytes,3,opt,name=password,proto3,oneof" json:"password,omitempty"`
@@ -590,9 +603,11 @@ func (x *CreateAccountRequest) GetLink() *ExternalIdentityLink {
 // trusts the admin for the (provider_id, subject) pair; no SSO round-trip is
 // performed to verify it.
 type ExternalIdentityLink struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	ProviderId string                 `protobuf:"bytes,1,opt,name=provider_id,json=providerId,proto3" json:"provider_id,omitempty"`
-	Subject    string                 `protobuf:"bytes,2,opt,name=subject,proto3" json:"subject,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// provider_id is the IdentityProvider the subject belongs to.
+	ProviderId string `protobuf:"bytes,1,opt,name=provider_id,json=providerId,proto3" json:"provider_id,omitempty"`
+	// subject is the IdP's stable subject identifier for the user.
+	Subject string `protobuf:"bytes,2,opt,name=subject,proto3" json:"subject,omitempty"`
 	// email is the address to record on the link (display / domain checks).
 	Email         string `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -650,9 +665,11 @@ func (x *ExternalIdentityLink) GetEmail() string {
 	return ""
 }
 
+// CreateAccountResponse returns the newly provisioned account (no secret).
 type CreateAccountResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Account       *iam.Account           `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// account is the created global identity (credentials never echoed).
+	Account       *iam.Account `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -694,9 +711,11 @@ func (x *CreateAccountResponse) GetAccount() *iam.Account {
 	return nil
 }
 
+// GetAccountRequest fetches one account by id (RESOURCE_ACCOUNT/READ).
 type GetAccountRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the account to fetch.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -738,9 +757,11 @@ func (x *GetAccountRequest) GetId() string {
 	return ""
 }
 
+// GetAccountResponse returns the requested account.
 type GetAccountResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Account       *iam.Account           `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// account is the fetched global identity.
+	Account       *iam.Account `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -821,9 +842,11 @@ func (*GetMyAccountRequest) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{14}
 }
 
+// GetMyAccountResponse returns the caller's own account.
 type GetMyAccountResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Account       *iam.Account           `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// account is the caller's own global identity.
+	Account       *iam.Account `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -921,8 +944,9 @@ func (x *ListAccountsRequest) GetPageToken() string {
 }
 
 type ListAccountsResponse struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	Accounts []*iam.Account         `protobuf:"bytes,1,rep,name=accounts,proto3" json:"accounts,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// accounts is this page of global identities.
+	Accounts []*iam.Account `protobuf:"bytes,1,rep,name=accounts,proto3" json:"accounts,omitempty"`
 	// next_page_token is empty when there are no more rows.
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -977,10 +1001,13 @@ func (x *ListAccountsResponse) GetNextPageToken() string {
 // editable here; password rotation and is_admin changes are separate,
 // privilege-gated operations.
 type UpdateAccountRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Email         *string                `protobuf:"bytes,2,opt,name=email,proto3,oneof" json:"email,omitempty"`
-	Nickname      *string                `protobuf:"bytes,3,opt,name=nickname,proto3,oneof" json:"nickname,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the account to mutate.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// email, when present, replaces the account's contact + login address.
+	Email *string `protobuf:"bytes,2,opt,name=email,proto3,oneof" json:"email,omitempty"`
+	// nickname, when present, replaces the account's handle.
+	Nickname      *string `protobuf:"bytes,3,opt,name=nickname,proto3,oneof" json:"nickname,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1036,9 +1063,11 @@ func (x *UpdateAccountRequest) GetNickname() string {
 	return ""
 }
 
+// UpdateAccountResponse returns the account after the edit.
 type UpdateAccountResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Account       *iam.Account           `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// account is the updated global identity.
+	Account       *iam.Account `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1087,8 +1116,9 @@ func (x *UpdateAccountResponse) GetAccount() *iam.Account {
 // account still owns any Tenant — transfer ownership first
 // (TransferTenantOwnership) so no tenant is orphaned.
 type DeleteAccountRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the account to remove.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1130,6 +1160,7 @@ func (x *DeleteAccountRequest) GetId() string {
 	return ""
 }
 
+// DeleteAccountResponse is empty; success is signalled by the absence of error.
 type DeleteAccountResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1171,9 +1202,11 @@ func (*DeleteAccountResponse) Descriptor() ([]byte, []int) {
 // the caller's own account (from the token). Not idempotent — a replay fails
 // once old_password no longer matches.
 type ChangePasswordRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	OldPassword   string                 `protobuf:"bytes,1,opt,name=old_password,json=oldPassword,proto3" json:"old_password,omitempty"`
-	NewPassword   string                 `protobuf:"bytes,2,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// old_password is the caller's current password, verified before the change.
+	OldPassword string `protobuf:"bytes,1,opt,name=old_password,json=oldPassword,proto3" json:"old_password,omitempty"`
+	// new_password is the replacement password to set.
+	NewPassword   string `protobuf:"bytes,2,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1222,6 +1255,7 @@ func (x *ChangePasswordRequest) GetNewPassword() string {
 	return ""
 }
 
+// ChangePasswordResponse is empty; success is signalled by the absence of error.
 type ChangePasswordResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1261,9 +1295,11 @@ func (*ChangePasswordResponse) Descriptor() ([]byte, []int) {
 // ResetPasswordRequest is the admin override: a platform admin sets a new
 // password for any account without knowing the old one (e.g. account recovery).
 type ResetPasswordRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	NewPassword   string                 `protobuf:"bytes,2,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// account_id is the account whose password the admin is resetting.
+	AccountId string `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	// new_password is the replacement password to set.
+	NewPassword   string `protobuf:"bytes,2,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1312,6 +1348,7 @@ func (x *ResetPasswordRequest) GetNewPassword() string {
 	return ""
 }
 
+// ResetPasswordResponse is empty; success is signalled by the absence of error.
 type ResetPasswordResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1353,8 +1390,9 @@ func (*ResetPasswordResponse) Descriptor() ([]byte, []int) {
 // account's email via its Notifier. The response is ALWAYS empty/success
 // regardless of whether the email exists — never leak account existence.
 type RequestPasswordResetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// email is the address to send the reset token to (existence never leaked).
+	Email         string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1396,6 +1434,8 @@ func (x *RequestPasswordResetRequest) GetEmail() string {
 	return ""
 }
 
+// RequestPasswordResetResponse is always empty/success (no account-existence
+// leak).
 type RequestPasswordResetResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1436,9 +1476,11 @@ func (*RequestPasswordResetResponse) Descriptor() ([]byte, []int) {
 // the emailed token and sets new_password. PUBLIC; the token is the credential.
 // Not idempotent — the token is single-use.
 type ConfirmPasswordResetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
-	NewPassword   string                 `protobuf:"bytes,2,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// token is the single-use emailed reset token (the credential).
+	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	// new_password is the replacement password to set.
+	NewPassword   string `protobuf:"bytes,2,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1487,6 +1529,8 @@ func (x *ConfirmPasswordResetRequest) GetNewPassword() string {
 	return ""
 }
 
+// ConfirmPasswordResetResponse is empty; success is signalled by the absence of
+// error.
 type ConfirmPasswordResetResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1527,8 +1571,9 @@ func (*ConfirmPasswordResetResponse) Descriptor() ([]byte, []int) {
 // target account's Account.email_verified to true. PUBLIC: the token is the
 // credential and the user may not be logged in when clicking the link.
 type VerifyEmailRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// token is the single-use emailed verification token (the credential).
+	Token         string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1570,6 +1615,7 @@ func (x *VerifyEmailRequest) GetToken() string {
 	return ""
 }
 
+// VerifyEmailResponse is empty; success is signalled by the absence of error.
 type VerifyEmailResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1645,6 +1691,8 @@ func (*ResendVerificationRequest) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{32}
 }
 
+// ResendVerificationResponse is empty; success is signalled by the absence of
+// error.
 type ResendVerificationResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1685,9 +1733,11 @@ func (*ResendVerificationResponse) Descriptor() ([]byte, []int) {
 // server seeds an owner Membership so the creator can immediately enter the
 // tenant. slug must be unique and url-safe (see iam/tenant.proto).
 type CreateTenantRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Slug          string                 `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// name is the tenant's human-readable display name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// slug is the unique, url-safe routing key (/t/<slug>).
+	Slug          string `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1736,9 +1786,11 @@ func (x *CreateTenantRequest) GetSlug() string {
 	return ""
 }
 
+// CreateTenantResponse returns the created tenant.
 type CreateTenantResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tenant        *iam.Tenant            `protobuf:"bytes,1,opt,name=tenant,proto3" json:"tenant,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant is the newly created workspace (caller seeded as owner).
+	Tenant        *iam.Tenant `protobuf:"bytes,1,opt,name=tenant,proto3" json:"tenant,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1784,6 +1836,8 @@ func (x *CreateTenantResponse) GetTenant() *iam.Tenant {
 // is the routing path: the gate resolves /t/<slug> to a Tenant via this.
 type GetTenantRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// ref selects the tenant by EITHER id or slug.
+	//
 	// Types that are valid to be assigned to Ref:
 	//
 	//	*GetTenantRequest_Id
@@ -1853,10 +1907,12 @@ type isGetTenantRequest_Ref interface {
 }
 
 type GetTenantRequest_Id struct {
+	// id is the tenant's stable identifier.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3,oneof"`
 }
 
 type GetTenantRequest_Slug struct {
+	// slug is the url-safe routing key (the /t/<slug> resolve path).
 	Slug string `protobuf:"bytes,2,opt,name=slug,proto3,oneof"`
 }
 
@@ -1864,9 +1920,11 @@ func (*GetTenantRequest_Id) isGetTenantRequest_Ref() {}
 
 func (*GetTenantRequest_Slug) isGetTenantRequest_Ref() {}
 
+// GetTenantResponse returns the requested tenant.
 type GetTenantResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tenant        *iam.Tenant            `protobuf:"bytes,1,opt,name=tenant,proto3" json:"tenant,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant is the fetched workspace.
+	Tenant        *iam.Tenant `protobuf:"bytes,1,opt,name=tenant,proto3" json:"tenant,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1946,9 +2004,11 @@ func (*ListMyTenantsRequest) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{38}
 }
 
+// ListMyTenantsResponse returns the caller's tenants (the org switcher data).
 type ListMyTenantsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tenants       []*iam.Tenant          `protobuf:"bytes,1,rep,name=tenants,proto3" json:"tenants,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenants are the workspaces the caller is a member of.
+	Tenants       []*iam.Tenant `protobuf:"bytes,1,rep,name=tenants,proto3" json:"tenants,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1992,10 +2052,13 @@ func (x *ListMyTenantsResponse) GetTenants() []*iam.Tenant {
 
 // UpdateTenantRequest mutates name/slug. Renaming slug breaks old links.
 type UpdateTenantRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          *string                `protobuf:"bytes,2,opt,name=name,proto3,oneof" json:"name,omitempty"`
-	Slug          *string                `protobuf:"bytes,3,opt,name=slug,proto3,oneof" json:"slug,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the tenant to mutate.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// name, when present, replaces the display name.
+	Name *string `protobuf:"bytes,2,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	// slug, when present, replaces the routing key (breaks old links).
+	Slug          *string `protobuf:"bytes,3,opt,name=slug,proto3,oneof" json:"slug,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2051,9 +2114,11 @@ func (x *UpdateTenantRequest) GetSlug() string {
 	return ""
 }
 
+// UpdateTenantResponse returns the tenant after the edit.
 type UpdateTenantResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tenant        *iam.Tenant            `protobuf:"bytes,1,opt,name=tenant,proto3" json:"tenant,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant is the updated workspace.
+	Tenant        *iam.Tenant `protobuf:"bytes,1,opt,name=tenant,proto3" json:"tenant,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2095,9 +2160,11 @@ func (x *UpdateTenantResponse) GetTenant() *iam.Tenant {
 	return nil
 }
 
+// DeleteTenantRequest removes a tenant by id.
 type DeleteTenantRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the tenant to remove.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2139,6 +2206,7 @@ func (x *DeleteTenantRequest) GetId() string {
 	return ""
 }
 
+// DeleteTenantResponse is empty; success is signalled by the absence of error.
 type DeleteTenantResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -2180,9 +2248,11 @@ func (*DeleteTenantResponse) Descriptor() ([]byte, []int) {
 // way to change owner_account_id (UpdateTenant cannot), keeping the transfer an
 // explicit, auditable action.
 type TransferTenantOwnershipRequest struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	TenantId          string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	NewOwnerAccountId string                 `protobuf:"bytes,2,opt,name=new_owner_account_id,json=newOwnerAccountId,proto3" json:"new_owner_account_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id is the tenant whose ownership is being reassigned.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// new_owner_account_id is the new owner; MUST already be a member.
+	NewOwnerAccountId string `protobuf:"bytes,2,opt,name=new_owner_account_id,json=newOwnerAccountId,proto3" json:"new_owner_account_id,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -2231,9 +2301,11 @@ func (x *TransferTenantOwnershipRequest) GetNewOwnerAccountId() string {
 	return ""
 }
 
+// TransferTenantOwnershipResponse returns the tenant after the transfer.
 type TransferTenantOwnershipResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tenant        *iam.Tenant            `protobuf:"bytes,1,opt,name=tenant,proto3" json:"tenant,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant is the workspace with its new owner_account_id.
+	Tenant        *iam.Tenant `protobuf:"bytes,1,opt,name=tenant,proto3" json:"tenant,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2282,8 +2354,9 @@ func (x *TransferTenantOwnershipResponse) GetTenant() *iam.Tenant {
 // an owner trying to leave. Idempotent — leaving a tenant you are not in is a
 // no-op.
 type LeaveTenantRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id is the tenant the caller is leaving.
+	TenantId      string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2325,6 +2398,7 @@ func (x *LeaveTenantRequest) GetTenantId() string {
 	return ""
 }
 
+// LeaveTenantResponse is empty; success is signalled by the absence of error.
 type LeaveTenantResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -2365,11 +2439,15 @@ func (*LeaveTenantResponse) Descriptor() ([]byte, []int) {
 // SCOPE_TENANT and empty for SCOPE_PLATFORM (enforced server-side). System
 // roles are seeded by the server and cannot be created here.
 type CreateRoleRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Scope         iam.Scope              `protobuf:"varint,2,opt,name=scope,proto3,enum=cloud.v1.iam.Scope" json:"scope,omitempty"`
-	TenantId      string                 `protobuf:"bytes,3,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Permissions   []*iam.Permission      `protobuf:"bytes,4,rep,name=permissions,proto3" json:"permissions,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// name is the role's display name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// scope is SCOPE_TENANT or SCOPE_PLATFORM (must be defined, non-zero).
+	Scope iam.Scope `protobuf:"varint,2,opt,name=scope,proto3,enum=cloud.v1.iam.Scope" json:"scope,omitempty"`
+	// tenant_id is required for SCOPE_TENANT, empty for SCOPE_PLATFORM.
+	TenantId string `protobuf:"bytes,3,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// permissions is the role's granted permission set.
+	Permissions   []*iam.Permission `protobuf:"bytes,4,rep,name=permissions,proto3" json:"permissions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2432,9 +2510,11 @@ func (x *CreateRoleRequest) GetPermissions() []*iam.Permission {
 	return nil
 }
 
+// CreateRoleResponse returns the created role.
 type CreateRoleResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Role          *iam.Role              `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// role is the newly created custom role.
+	Role          *iam.Role `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2476,9 +2556,11 @@ func (x *CreateRoleResponse) GetRole() *iam.Role {
 	return nil
 }
 
+// GetRoleRequest fetches one role by id.
 type GetRoleRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the role to fetch.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2520,9 +2602,11 @@ func (x *GetRoleRequest) GetId() string {
 	return ""
 }
 
+// GetRoleResponse returns the requested role.
 type GetRoleResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Role          *iam.Role              `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// role is the fetched role.
+	Role          *iam.Role `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2568,8 +2652,9 @@ func (x *GetRoleResponse) GetRole() *iam.Role {
 // tenant's roles; empty lists the platform-scoped roles. System roles are
 // included and marked via iam.Role.is_system.
 type ListRolesRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id filters to one tenant's roles; empty lists platform-scoped roles.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// page_size caps returned rows; 0 -> server default.
 	PageSize uint32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// page_token is the opaque cursor from a previous response.
@@ -2631,7 +2716,8 @@ func (x *ListRolesRequest) GetPageToken() string {
 
 type ListRolesResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Roles []*iam.Role            `protobuf:"bytes,1,rep,name=roles,proto3" json:"roles,omitempty"`
+	// roles is this page of roles (system roles marked via Role.is_system).
+	Roles []*iam.Role `protobuf:"bytes,1,rep,name=roles,proto3" json:"roles,omitempty"`
 	// next_page_token is empty when there are no more rows.
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -2685,8 +2771,10 @@ func (x *ListRolesResponse) GetNextPageToken() string {
 // UpdateRoleRequest edits a custom role. System roles (is_system) are rejected.
 type UpdateRoleRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name  *string                `protobuf:"bytes,2,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	// id is the custom role to edit (system roles are rejected).
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// name, when present, replaces the role's display name.
+	Name *string `protobuf:"bytes,2,opt,name=name,proto3,oneof" json:"name,omitempty"`
 	// permissions, when present, REPLACES the role's permission set wholesale.
 	Permissions   []*iam.Permission `protobuf:"bytes,3,rep,name=permissions,proto3" json:"permissions,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -2744,9 +2832,11 @@ func (x *UpdateRoleRequest) GetPermissions() []*iam.Permission {
 	return nil
 }
 
+// UpdateRoleResponse returns the role after the edit.
 type UpdateRoleResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Role          *iam.Role              `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// role is the updated role.
+	Role          *iam.Role `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2788,9 +2878,11 @@ func (x *UpdateRoleResponse) GetRole() *iam.Role {
 	return nil
 }
 
+// DeleteRoleRequest removes a role by id.
 type DeleteRoleRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the role to remove.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2832,6 +2924,7 @@ func (x *DeleteRoleRequest) GetId() string {
 	return ""
 }
 
+// DeleteRoleResponse is empty; success is signalled by the absence of error.
 type DeleteRoleResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -2872,10 +2965,14 @@ func (*DeleteRoleResponse) Descriptor() ([]byte, []int) {
 // "invite/add member" operation. Referenced roles must be SCOPE_TENANT roles of
 // the same tenant_id or SCOPE_PLATFORM roles.
 type CreateMembershipRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	TenantId      string                 `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	RoleIds       []string               `protobuf:"bytes,3,rep,name=role_ids,json=roleIds,proto3" json:"role_ids,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// account_id is the account being added to the tenant.
+	AccountId string `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	// tenant_id is the tenant the account joins.
+	TenantId string `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// role_ids are the granted roles (SCOPE_TENANT of this tenant, or
+	// SCOPE_PLATFORM); at least one is required.
+	RoleIds       []string `protobuf:"bytes,3,rep,name=role_ids,json=roleIds,proto3" json:"role_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2931,9 +3028,11 @@ func (x *CreateMembershipRequest) GetRoleIds() []string {
 	return nil
 }
 
+// CreateMembershipResponse returns the created membership.
 type CreateMembershipResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Membership    *iam.Membership        `protobuf:"bytes,1,opt,name=membership,proto3" json:"membership,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// membership is the newly created account-in-tenant grant.
+	Membership    *iam.Membership `protobuf:"bytes,1,opt,name=membership,proto3" json:"membership,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2975,9 +3074,11 @@ func (x *CreateMembershipResponse) GetMembership() *iam.Membership {
 	return nil
 }
 
+// GetMembershipRequest fetches one membership by id.
 type GetMembershipRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the membership to fetch.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3019,9 +3120,11 @@ func (x *GetMembershipRequest) GetId() string {
 	return ""
 }
 
+// GetMembershipResponse returns the requested membership.
 type GetMembershipResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Membership    *iam.Membership        `protobuf:"bytes,1,opt,name=membership,proto3" json:"membership,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// membership is the fetched account-in-tenant grant.
+	Membership    *iam.Membership `protobuf:"bytes,1,opt,name=membership,proto3" json:"membership,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3065,8 +3168,9 @@ func (x *GetMembershipResponse) GetMembership() *iam.Membership {
 
 // ListMembershipsRequest lists all members of one tenant.
 type ListMembershipsRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id is the tenant whose members to list.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// page_size caps returned rows; 0 -> server default.
 	PageSize uint32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// page_token is the opaque cursor from a previous response.
@@ -3127,8 +3231,9 @@ func (x *ListMembershipsRequest) GetPageToken() string {
 }
 
 type ListMembershipsResponse struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	Memberships []*iam.Membership      `protobuf:"bytes,1,rep,name=memberships,proto3" json:"memberships,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// memberships is this page of the tenant's members.
+	Memberships []*iam.Membership `protobuf:"bytes,1,rep,name=memberships,proto3" json:"memberships,omitempty"`
 	// next_page_token is empty when there are no more rows.
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -3183,9 +3288,11 @@ func (x *ListMembershipsResponse) GetNextPageToken() string {
 // the existing set wholesale; an empty set is rejected (remove the membership
 // instead of leaving it role-less).
 type UpdateMembershipRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RoleIds       []string               `protobuf:"bytes,2,rep,name=role_ids,json=roleIds,proto3" json:"role_ids,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the membership to edit.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// role_ids REPLACES the granted role set wholesale; an empty set is rejected.
+	RoleIds       []string `protobuf:"bytes,2,rep,name=role_ids,json=roleIds,proto3" json:"role_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3234,9 +3341,11 @@ func (x *UpdateMembershipRequest) GetRoleIds() []string {
 	return nil
 }
 
+// UpdateMembershipResponse returns the membership after the edit.
 type UpdateMembershipResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Membership    *iam.Membership        `protobuf:"bytes,1,opt,name=membership,proto3" json:"membership,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// membership is the updated grant.
+	Membership    *iam.Membership `protobuf:"bytes,1,opt,name=membership,proto3" json:"membership,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3280,8 +3389,9 @@ func (x *UpdateMembershipResponse) GetMembership() *iam.Membership {
 
 // DeleteMembershipRequest removes a member from a tenant (revokes access).
 type DeleteMembershipRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the membership to remove (revokes the account's tenant access).
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3323,6 +3433,8 @@ func (x *DeleteMembershipRequest) GetId() string {
 	return ""
 }
 
+// DeleteMembershipResponse is empty; success is signalled by the absence of
+// error.
 type DeleteMembershipResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -3363,8 +3475,9 @@ func (*DeleteMembershipResponse) Descriptor() ([]byte, []int) {
 // tenant — the live union the gate computes per request, exposed so a UI can
 // show/hide controls. The account comes from the token; tenant from the ref.
 type GetMyPermissionsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id is the tenant to resolve the caller's effective permissions in.
+	TenantId      string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3406,9 +3519,12 @@ func (x *GetMyPermissionsRequest) GetTenantId() string {
 	return ""
 }
 
+// GetMyPermissionsResponse returns the caller's effective permissions.
 type GetMyPermissionsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Permissions   []*iam.Permission      `protobuf:"bytes,1,rep,name=permissions,proto3" json:"permissions,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// permissions is the live union the gate computes for the caller in the
+	// tenant.
+	Permissions   []*iam.Permission `protobuf:"bytes,1,rep,name=permissions,proto3" json:"permissions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3496,8 +3612,9 @@ func (*ListPermissionsRequest) Descriptor() ([]byte, []int) {
 
 // CatalogEntry is one grantable Permission plus a human label for the UI.
 type CatalogEntry struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	Permission *iam.Permission        `protobuf:"bytes,1,opt,name=permission,proto3" json:"permission,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// permission is one grantable {resource, action} pair.
+	Permission *iam.Permission `protobuf:"bytes,1,opt,name=permission,proto3" json:"permission,omitempty"`
 	// label is a display string for the role editor, e.g. "Create role".
 	Label         string `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -3548,9 +3665,11 @@ func (x *CatalogEntry) GetLabel() string {
 	return ""
 }
 
+// ListPermissionsResponse returns the full grantable-permission catalog.
 type ListPermissionsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entries       []*CatalogEntry        `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entries are the grantable permissions, each with a UI label.
+	Entries       []*CatalogEntry `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3597,17 +3716,25 @@ func (x *ListPermissionsResponse) GetEntries() []*CatalogEntry {
 // IdentityProvider. The provider is created ENABLED (IdentityProvider.disabled
 // defaults false); hide it later via UpdateIdentityProvider if needed.
 type CreateIdentityProviderRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Slug           string                 `protobuf:"bytes,1,opt,name=slug,proto3" json:"slug,omitempty"`
-	DisplayName    string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	Issuer         string                 `protobuf:"bytes,3,opt,name=issuer,proto3" json:"issuer,omitempty"`
-	ClientId       string                 `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	ClientSecret   string                 `protobuf:"bytes,5,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
-	Scopes         []string               `protobuf:"bytes,6,rep,name=scopes,proto3" json:"scopes,omitempty"`
-	AllowedDomains []string               `protobuf:"bytes,7,rep,name=allowed_domains,json=allowedDomains,proto3" json:"allowed_domains,omitempty"`
-	AutoProvision  bool                   `protobuf:"varint,8,opt,name=auto_provision,json=autoProvision,proto3" json:"auto_provision,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// slug is the url-safe key used in the SSO callback route.
+	Slug string `protobuf:"bytes,1,opt,name=slug,proto3" json:"slug,omitempty"`
+	// display_name is the login-button label shown to users.
+	DisplayName string `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	// issuer is the OIDC issuer URL (https, used for discovery).
+	Issuer string `protobuf:"bytes,3,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	// client_id is the OAuth client identifier registered at the IdP.
+	ClientId string `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	// client_secret is the OAuth client secret; write-only (never returned).
+	ClientSecret string `protobuf:"bytes,5,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
+	// scopes are the OIDC scopes to request at authorize time.
+	Scopes []string `protobuf:"bytes,6,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	// allowed_domains restricts which email domains may sign in via this IdP.
+	AllowedDomains []string `protobuf:"bytes,7,rep,name=allowed_domains,json=allowedDomains,proto3" json:"allowed_domains,omitempty"`
+	// auto_provision enables JIT account creation for first-time SSO users.
+	AutoProvision bool `protobuf:"varint,8,opt,name=auto_provision,json=autoProvision,proto3" json:"auto_provision,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateIdentityProviderRequest) Reset() {
@@ -3696,9 +3823,11 @@ func (x *CreateIdentityProviderRequest) GetAutoProvision() bool {
 	return false
 }
 
+// CreateIdentityProviderResponse returns the created provider (no secret).
 type CreateIdentityProviderResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Provider      *iam.IdentityProvider  `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// provider is the newly created (enabled) OIDC provider config.
+	Provider      *iam.IdentityProvider `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3740,9 +3869,11 @@ func (x *CreateIdentityProviderResponse) GetProvider() *iam.IdentityProvider {
 	return nil
 }
 
+// GetIdentityProviderRequest fetches one provider by id.
 type GetIdentityProviderRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the provider to fetch.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3784,9 +3915,11 @@ func (x *GetIdentityProviderRequest) GetId() string {
 	return ""
 }
 
+// GetIdentityProviderResponse returns the requested provider.
 type GetIdentityProviderResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Provider      *iam.IdentityProvider  `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// provider is the fetched OIDC provider config (no secret).
+	Provider      *iam.IdentityProvider `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3831,15 +3964,24 @@ func (x *GetIdentityProviderResponse) GetProvider() *iam.IdentityProvider {
 // UpdateIdentityProviderRequest edits a provider. A present, non-empty
 // client_secret ROTATES the stored secret; an absent one leaves it unchanged.
 type UpdateIdentityProviderRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	DisplayName    *string                `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3,oneof" json:"display_name,omitempty"`
-	Issuer         *string                `protobuf:"bytes,3,opt,name=issuer,proto3,oneof" json:"issuer,omitempty"`
-	ClientId       *string                `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3,oneof" json:"client_id,omitempty"`
-	ClientSecret   *string                `protobuf:"bytes,5,opt,name=client_secret,json=clientSecret,proto3,oneof" json:"client_secret,omitempty"`
-	Scopes         []string               `protobuf:"bytes,6,rep,name=scopes,proto3" json:"scopes,omitempty"`
-	AllowedDomains []string               `protobuf:"bytes,7,rep,name=allowed_domains,json=allowedDomains,proto3" json:"allowed_domains,omitempty"`
-	AutoProvision  *bool                  `protobuf:"varint,8,opt,name=auto_provision,json=autoProvision,proto3,oneof" json:"auto_provision,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the provider to edit.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// display_name, when present, replaces the login-button label.
+	DisplayName *string `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3,oneof" json:"display_name,omitempty"`
+	// issuer, when present, replaces the OIDC issuer URL.
+	Issuer *string `protobuf:"bytes,3,opt,name=issuer,proto3,oneof" json:"issuer,omitempty"`
+	// client_id, when present, replaces the OAuth client identifier.
+	ClientId *string `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3,oneof" json:"client_id,omitempty"`
+	// client_secret, when present and non-empty, ROTATES the stored secret;
+	// absent leaves it unchanged.
+	ClientSecret *string `protobuf:"bytes,5,opt,name=client_secret,json=clientSecret,proto3,oneof" json:"client_secret,omitempty"`
+	// scopes, when present, replaces the requested OIDC scopes.
+	Scopes []string `protobuf:"bytes,6,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	// allowed_domains, when present, replaces the email-domain allowlist.
+	AllowedDomains []string `protobuf:"bytes,7,rep,name=allowed_domains,json=allowedDomains,proto3" json:"allowed_domains,omitempty"`
+	// auto_provision, when present, toggles JIT account creation.
+	AutoProvision *bool `protobuf:"varint,8,opt,name=auto_provision,json=autoProvision,proto3,oneof" json:"auto_provision,omitempty"`
 	// disabled hides the provider (inverted polarity: false = enabled). See
 	// iam/sso.proto.
 	Disabled      *bool `protobuf:"varint,9,opt,name=disabled,proto3,oneof" json:"disabled,omitempty"`
@@ -3940,9 +4082,11 @@ func (x *UpdateIdentityProviderRequest) GetDisabled() bool {
 	return false
 }
 
+// UpdateIdentityProviderResponse returns the provider after the edit.
 type UpdateIdentityProviderResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Provider      *iam.IdentityProvider  `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// provider is the updated OIDC provider config (no secret).
+	Provider      *iam.IdentityProvider `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3984,9 +4128,11 @@ func (x *UpdateIdentityProviderResponse) GetProvider() *iam.IdentityProvider {
 	return nil
 }
 
+// DeleteIdentityProviderRequest removes a provider by id.
 type DeleteIdentityProviderRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the provider to remove.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4028,6 +4174,8 @@ func (x *DeleteIdentityProviderRequest) GetId() string {
 	return ""
 }
 
+// DeleteIdentityProviderResponse is empty; success is signalled by the absence
+// of error.
 type DeleteIdentityProviderResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -4107,10 +4255,13 @@ func (*ListIdentityProvidersRequest) Descriptor() ([]byte, []int) {
 
 // SsoButton is the public, login-page view of an enabled provider.
 type SsoButton struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Slug          string                 `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty"`
-	DisplayName   string                 `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the provider id to pass to StartSSO.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// slug is the provider's url-safe key.
+	Slug string `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty"`
+	// display_name is the button label.
+	DisplayName   string `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4166,9 +4317,11 @@ func (x *SsoButton) GetDisplayName() string {
 	return ""
 }
 
+// ListIdentityProvidersResponse returns the enabled providers' login buttons.
 type ListIdentityProvidersResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Buttons       []*SsoButton           `protobuf:"bytes,1,rep,name=buttons,proto3" json:"buttons,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// buttons are the enabled providers, slimmed to what a login button needs.
+	Buttons       []*SsoButton `protobuf:"bytes,1,rep,name=buttons,proto3" json:"buttons,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4215,8 +4368,9 @@ func (x *ListIdentityProvidersResponse) GetButtons() []*SsoButton {
 // challenge it stashes server-side) and returns it; the client redirects the
 // user there.
 type StartSSORequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProviderId    string                 `protobuf:"bytes,1,opt,name=provider_id,json=providerId,proto3" json:"provider_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// provider_id is the OIDC provider to begin the authorization-code flow for.
+	ProviderId    string `protobuf:"bytes,1,opt,name=provider_id,json=providerId,proto3" json:"provider_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4331,10 +4485,14 @@ func (x *StartSSOResponse) GetState() string {
 // layer also maps the callback route's <slug> (/auth/sso/<slug>/callback) onto
 // the provider_id field below — the RPC keys on id, the URL on slug.
 type CompleteSSORequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProviderId    string                 `protobuf:"bytes,1,opt,name=provider_id,json=providerId,proto3" json:"provider_id,omitempty"`
-	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
-	State         string                 `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// provider_id is the OIDC provider this callback belongs to (URL maps slug
+	// -> id).
+	ProviderId string `protobuf:"bytes,1,opt,name=provider_id,json=providerId,proto3" json:"provider_id,omitempty"`
+	// code is the IdP authorization code to exchange for tokens.
+	Code string `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
+	// state is the CSRF token from StartSSO, validated against the stashed value.
+	State         string `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4390,9 +4548,11 @@ func (x *CompleteSSORequest) GetState() string {
 	return ""
 }
 
+// CompleteSSOResponse returns our own TokenPair for the resolved account.
 type CompleteSSOResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tokens        *TokenPair             `protobuf:"bytes,1,opt,name=tokens,proto3" json:"tokens,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tokens is the minted access + refresh credential pair.
+	Tokens        *TokenPair `protobuf:"bytes,1,opt,name=tokens,proto3" json:"tokens,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4437,9 +4597,11 @@ func (x *CompleteSSOResponse) GetTokens() *TokenPair {
 // LinkExternalIdentityRequest binds an existing account to an IdP subject
 // (admin-asserted, like CreateAccount.link). Idempotent on (provider, subject).
 type LinkExternalIdentityRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	Link          *ExternalIdentityLink  `protobuf:"bytes,2,opt,name=link,proto3" json:"link,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// account_id is the existing account to bind to the IdP subject.
+	AccountId string `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	// link is the admin-asserted (provider, subject) binding to record.
+	Link          *ExternalIdentityLink `protobuf:"bytes,2,opt,name=link,proto3" json:"link,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4488,9 +4650,11 @@ func (x *LinkExternalIdentityRequest) GetLink() *ExternalIdentityLink {
 	return nil
 }
 
+// LinkExternalIdentityResponse returns the created (or existing) link.
 type LinkExternalIdentityResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Identity      *iam.ExternalIdentity  `protobuf:"bytes,1,opt,name=identity,proto3" json:"identity,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// identity is the resulting external-identity link.
+	Identity      *iam.ExternalIdentity `protobuf:"bytes,1,opt,name=identity,proto3" json:"identity,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4537,8 +4701,9 @@ func (x *LinkExternalIdentityResponse) GetIdentity() *iam.ExternalIdentity {
 // caller must own the identity's account or be a platform admin (enforced
 // server-side).
 type UnlinkExternalIdentityRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the external-identity link to remove.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4580,6 +4745,8 @@ func (x *UnlinkExternalIdentityRequest) GetId() string {
 	return ""
 }
 
+// UnlinkExternalIdentityResponse is empty; success is signalled by the absence
+// of error.
 type UnlinkExternalIdentityResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -4620,8 +4787,9 @@ func (*UnlinkExternalIdentityResponse) Descriptor() ([]byte, []int) {
 // caller must be that account or a platform admin (enforced server-side) — this
 // is the "my linked logins" view as well as the admin one.
 type ListExternalIdentitiesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// account_id is the account whose linked identities to list.
+	AccountId     string `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4663,8 +4831,10 @@ func (x *ListExternalIdentitiesRequest) GetAccountId() string {
 	return ""
 }
 
+// ListExternalIdentitiesResponse returns the account's linked identities.
 type ListExternalIdentitiesResponse struct {
-	state         protoimpl.MessageState  `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// identities are the external-identity links bound to the account.
 	Identities    []*iam.ExternalIdentity `protobuf:"bytes,1,rep,name=identities,proto3" json:"identities,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -4716,10 +4886,14 @@ func (x *ListExternalIdentitiesResponse) GetIdentities() []*iam.ExternalIdentity
 // owner). For a PERSONAL token, permissions MUST be empty — it inherits the
 // account's authority.
 type CreateApiTokenRequest struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	AccountId string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	Name      string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Type      iam.ApiTokenType       `protobuf:"varint,3,opt,name=type,proto3,enum=cloud.v1.iam.ApiTokenType" json:"type,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// account_id is the account the token authenticates as.
+	AccountId string `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	// name is a human-readable label for the token.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// type is PERSONAL (inherits the account's authority) or SERVICE (a capped
+	// subset); must be defined, non-zero.
+	Type iam.ApiTokenType `protobuf:"varint,3,opt,name=type,proto3,enum=cloud.v1.iam.ApiTokenType" json:"type,omitempty"`
 	// permissions is the requested grant for a SERVICE token; leave empty for a
 	// PERSONAL token.
 	Permissions []*iam.Permission `protobuf:"bytes,4,rep,name=permissions,proto3" json:"permissions,omitempty"`
@@ -4800,7 +4974,8 @@ func (x *CreateApiTokenRequest) GetTtl() *durationpb.Duration {
 // it now.
 type CreateApiTokenResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Token *iam.ApiToken          `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	// token is the created token's metadata (no secret).
+	Token *iam.ApiToken `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 	// secret is the full plaintext token (prefix + secret) to send as a bearer
 	// credential. Returned once; the server keeps only its hash.
 	Secret        string `protobuf:"bytes,2,opt,name=secret,proto3" json:"secret,omitempty"`
@@ -4856,8 +5031,9 @@ func (x *CreateApiTokenResponse) GetSecret() string {
 // account or a platform admin (enforced server-side) — the "my tokens" view as
 // well as the admin one. Secrets are never included.
 type ListApiTokensRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// account_id is the account whose tokens to list.
+	AccountId     string `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4899,9 +5075,11 @@ func (x *ListApiTokensRequest) GetAccountId() string {
 	return ""
 }
 
+// ListApiTokensResponse returns the account's token metadata (no secrets).
 type ListApiTokensResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tokens        []*iam.ApiToken        `protobuf:"bytes,1,rep,name=tokens,proto3" json:"tokens,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tokens is the account's tokens (metadata only).
+	Tokens        []*iam.ApiToken `protobuf:"bytes,1,rep,name=tokens,proto3" json:"tokens,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4946,8 +5124,9 @@ func (x *ListApiTokensResponse) GetTokens() []*iam.ApiToken {
 // RevokeApiTokenRequest permanently disables one token by id. The caller must
 // own the token's account or be a platform admin (enforced server-side).
 type RevokeApiTokenRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the token to permanently disable.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4989,6 +5168,7 @@ func (x *RevokeApiTokenRequest) GetId() string {
 	return ""
 }
 
+// RevokeApiTokenResponse is empty; success is signalled by the absence of error.
 type RevokeApiTokenResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields

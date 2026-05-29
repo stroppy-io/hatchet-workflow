@@ -27,17 +27,29 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// CreatePackageUploadRequest declares the package metadata and mints a presigned
+// upload; the blob is PUT directly to object storage afterward.
 type CreatePackageUploadRequest struct {
-	state        protoimpl.MessageState      `protogen:"open.v1"`
-	TenantId     string                      `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Name         string                      `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Format       models.PackageRecord_Format `protobuf:"varint,3,opt,name=format,proto3,enum=cloud.v1.models.PackageRecord_Format" json:"format,omitempty"`
-	Version      string                      `protobuf:"bytes,4,opt,name=version,proto3" json:"version,omitempty"`
-	TargetDbKind domain.Database_Kind        `protobuf:"varint,5,opt,name=target_db_kind,json=targetDbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"target_db_kind,omitempty"`
-	Os           string                      `protobuf:"bytes,6,opt,name=os,proto3" json:"os,omitempty"`
-	Arch         string                      `protobuf:"bytes,7,opt,name=arch,proto3" json:"arch,omitempty"`
-	// Declared blob size + hash; verified on CompleteUpload against the uploaded object.
-	SizeBytes     uint64 `protobuf:"varint,8,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the package; packages are tenant-private.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// name is the package's display name.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// format is the package format (.deb / binary); must be defined, non-zero.
+	Format models.PackageRecord_Format `protobuf:"varint,3,opt,name=format,proto3,enum=cloud.v1.models.PackageRecord_Format" json:"format,omitempty"`
+	// version is the package version string.
+	Version string `protobuf:"bytes,4,opt,name=version,proto3" json:"version,omitempty"`
+	// target_db_kind is the database engine this package builds/installs.
+	TargetDbKind domain.Database_Kind `protobuf:"varint,5,opt,name=target_db_kind,json=targetDbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"target_db_kind,omitempty"`
+	// os is the target operating system the package is built for.
+	Os string `protobuf:"bytes,6,opt,name=os,proto3" json:"os,omitempty"`
+	// arch is the target CPU architecture the package is built for.
+	Arch string `protobuf:"bytes,7,opt,name=arch,proto3" json:"arch,omitempty"`
+	// size_bytes is the declared blob size; verified on CompleteUpload against
+	// the uploaded object.
+	SizeBytes uint64 `protobuf:"varint,8,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
+	// sha256 is the declared blob hash; verified on CompleteUpload against the
+	// uploaded object.
 	Sha256        string `protobuf:"bytes,9,opt,name=sha256,proto3" json:"sha256,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -136,13 +148,15 @@ func (x *CreatePackageUploadRequest) GetSha256() string {
 	return ""
 }
 
+// CreatePackageUploadResponse returns the pending record plus the presigned PUT
+// url the client uploads the blob to.
 type CreatePackageUploadResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The created record (STATUS_UPLOADING).
+	// package is the created record (STATUS_UPLOADING).
 	Package *models.PackageRecord `protobuf:"bytes,1,opt,name=package,proto3" json:"package,omitempty"`
-	// Presigned PUT url the client uploads the blob to.
+	// upload_url is the presigned PUT url the client uploads the blob to.
 	UploadUrl string `protobuf:"bytes,2,opt,name=upload_url,json=uploadUrl,proto3" json:"upload_url,omitempty"`
-	// When the upload url stops working.
+	// upload_url_expires_at is when the upload url stops working.
 	UploadUrlExpiresAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=upload_url_expires_at,json=uploadUrlExpiresAt,proto3" json:"upload_url_expires_at,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
@@ -202,9 +216,11 @@ func (x *CreatePackageUploadResponse) GetUploadUrlExpiresAt() *timestamppb.Times
 // CompleteUpload finalizes after the client PUT the blob: the server verifies
 // size + sha256 and flips the record to READY (or FAILED). Idempotent.
 type CompleteUploadRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the package's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the package record being finalized.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -253,9 +269,11 @@ func (x *CompleteUploadRequest) GetId() string {
 	return ""
 }
 
+// CompleteUploadResponse returns the record after verification (READY/FAILED).
 type CompleteUploadResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Package       *models.PackageRecord  `protobuf:"bytes,1,opt,name=package,proto3" json:"package,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// package is the finalized record (now STATUS_READY or STATUS_FAILED).
+	Package       *models.PackageRecord `protobuf:"bytes,1,opt,name=package,proto3" json:"package,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -297,10 +315,13 @@ func (x *CompleteUploadResponse) GetPackage() *models.PackageRecord {
 	return nil
 }
 
+// GetPackageRequest fetches one package by id.
 type GetPackageRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the package's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the package to fetch.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -349,9 +370,11 @@ func (x *GetPackageRequest) GetId() string {
 	return ""
 }
 
+// GetPackageResponse returns the requested package.
 type GetPackageResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Package       *models.PackageRecord  `protobuf:"bytes,1,opt,name=package,proto3" json:"package,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// package is the fetched package record.
+	Package       *models.PackageRecord `protobuf:"bytes,1,opt,name=package,proto3" json:"package,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -393,15 +416,21 @@ func (x *GetPackageResponse) GetPackage() *models.PackageRecord {
 	return nil
 }
 
+// ListPackagesRequest lists a tenant's packages with filtering, sort and paging.
 type ListPackagesRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Filter   *common.EntityFilter   `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
-	// Facet filters.
-	Formats       []models.PackageRecord_Format `protobuf:"varint,3,rep,packed,name=formats,proto3,enum=cloud.v1.models.PackageRecord_Format" json:"formats,omitempty"`
-	DbKinds       []domain.Database_Kind        `protobuf:"varint,4,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
-	Sort          *common.EntitySort            `protobuf:"bytes,5,opt,name=sort,proto3" json:"sort,omitempty"`
-	Page          *common.Page                  `protobuf:"bytes,6,opt,name=page,proto3" json:"page,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the listing to one tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// filter is the shared Entity-level filter (search, ids, time windows).
+	Filter *common.EntityFilter `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
+	// formats narrows to specific package formats (facet filter).
+	Formats []models.PackageRecord_Format `protobuf:"varint,3,rep,packed,name=formats,proto3,enum=cloud.v1.models.PackageRecord_Format" json:"formats,omitempty"`
+	// db_kinds narrows to specific target database engines (facet filter).
+	DbKinds []domain.Database_Kind `protobuf:"varint,4,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
+	// sort is the ordering over the common Entity columns.
+	Sort *common.EntitySort `protobuf:"bytes,5,opt,name=sort,proto3" json:"sort,omitempty"`
+	// page is the pagination cursor/size.
+	Page          *common.Page `protobuf:"bytes,6,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -478,10 +507,13 @@ func (x *ListPackagesRequest) GetPage() *common.Page {
 	return nil
 }
 
+// ListPackagesResponse returns one page of packages.
 type ListPackagesResponse struct {
-	state         protoimpl.MessageState  `protogen:"open.v1"`
-	Packages      []*models.PackageRecord `protobuf:"bytes,1,rep,name=packages,proto3" json:"packages,omitempty"`
-	NextPageToken string                  `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// packages is this page of package records.
+	Packages []*models.PackageRecord `protobuf:"bytes,1,rep,name=packages,proto3" json:"packages,omitempty"`
+	// next_page_token is empty when there are no more rows.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -530,10 +562,13 @@ func (x *ListPackagesResponse) GetNextPageToken() string {
 	return ""
 }
 
+// DeletePackageRequest removes one package by id.
 type DeletePackageRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the package's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the package to remove.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -582,6 +617,7 @@ func (x *DeletePackageRequest) GetId() string {
 	return ""
 }
 
+// DeletePackageResponse is empty; success is signalled by the absence of error.
 type DeletePackageResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields

@@ -77,10 +77,15 @@ func (Provider) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_deployment_provider_proto_rawDescGZIP(), []int{0}
 }
 
+// ProviderSettings binds a chosen Provider to its baked, schema-backed
+// backend configuration. provider selects the backend and, with it, the
+// schema that settings is validated against.
 type ProviderSettings struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Provider      Provider               `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	Settings      *schemapb.Baked        `protobuf:"bytes,2,opt,name=settings,proto3" json:"settings,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// provider selects the deployment backend these settings configure.
+	Provider Provider `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	// settings is the sealed, schema-backed configuration for the provider.
+	Settings      *schemapb.Baked `protobuf:"bytes,2,opt,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

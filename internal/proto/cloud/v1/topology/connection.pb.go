@@ -23,16 +23,24 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Kind is the semantic relationship an edge represents.
 type Connection_Kind int32
 
 const (
-	Connection_KIND_UNSPECIFIED  Connection_Kind = 0
-	Connection_KIND_FLOW         Connection_Kind = 1
-	Connection_KIND_PROXY        Connection_Kind = 2
-	Connection_KIND_REPLICATION  Connection_Kind = 3
+	// KIND_UNSPECIFIED is the unset zero value.
+	Connection_KIND_UNSPECIFIED Connection_Kind = 0
+	// KIND_FLOW is a normal data/application flow.
+	Connection_KIND_FLOW Connection_Kind = 1
+	// KIND_PROXY is traffic routed through a proxy/pooler.
+	Connection_KIND_PROXY Connection_Kind = 2
+	// KIND_REPLICATION is database replication traffic.
+	Connection_KIND_REPLICATION Connection_Kind = 3
+	// KIND_COORDINATION is cluster coordination/control traffic.
 	Connection_KIND_COORDINATION Connection_Kind = 4
-	Connection_KIND_OBSERVATION  Connection_Kind = 5
-	Connection_KIND_SUPPORT      Connection_Kind = 6
+	// KIND_OBSERVATION is monitoring/metrics observation traffic.
+	Connection_KIND_OBSERVATION Connection_Kind = 5
+	// KIND_SUPPORT is auxiliary/supporting traffic.
+	Connection_KIND_SUPPORT Connection_Kind = 6
 )
 
 // Enum value maps for Connection_Kind.
@@ -88,6 +96,7 @@ func (Connection_Kind) EnumDescriptor() ([]byte, []int) {
 type Connection_Protocol int32
 
 const (
+	// PROTOCOL_UNSPECIFIED is the unset zero value.
 	Connection_PROTOCOL_UNSPECIFIED Connection_Protocol = 0
 	// TCP is plain TCP/IP traffic.
 	Connection_PROTOCOL_TCP Connection_Protocol = 1
@@ -103,9 +112,9 @@ const (
 	Connection_PROTOCOL_CONTROL Connection_Protocol = 6
 	// OTLP is a metrics/logs/traces scrape.
 	Connection_PROTOCOL_OTLP Connection_Protocol = 7
-	// PROTOCOL_PROMETHEUS_REMOTE_WRITE a metrics
+	// PROTOCOL_PROMETHEUS_REMOTE_WRITE is a Prometheus remote-write metrics push.
 	Connection_PROTOCOL_PROMETHEUS_REMOTE_WRITE Connection_Protocol = 8
-	// PROTOCOL_PROMETHEUS_REMOTE_WRITE pull metric
+	// PROTOCOL_PROMETHEUS_PULL is a Prometheus pull/scrape of metrics.
 	Connection_PROTOCOL_PROMETHEUS_PULL Connection_Protocol = 9
 )
 
@@ -168,6 +177,7 @@ func (Connection_Protocol) EnumDescriptor() ([]byte, []int) {
 type Connection_Mode int32
 
 const (
+	// MODE_UNSPECIFIED is the unset zero value.
 	Connection_MODE_UNSPECIFIED Connection_Mode = 0
 	// REQUEST is request/response.
 	Connection_MODE_REQUEST Connection_Mode = 1
@@ -228,16 +238,25 @@ func (Connection_Mode) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_topology_connection_proto_rawDescGZIP(), []int{0, 2}
 }
 
+// Connection is a directed edge between two components in the topology.
 type Connection struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	From          string                 `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
-	To            string                 `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
-	Kind          Connection_Kind        `protobuf:"varint,3,opt,name=kind,proto3,enum=cloud.v1.topology.Connection_Kind" json:"kind,omitempty"`
-	Protocol      Connection_Protocol    `protobuf:"varint,4,opt,name=protocol,proto3,enum=cloud.v1.topology.Connection_Protocol" json:"protocol,omitempty"`
-	Mode          Connection_Mode        `protobuf:"varint,5,opt,name=mode,proto3,enum=cloud.v1.topology.Connection_Mode" json:"mode,omitempty"`
-	Port          *uint32                `protobuf:"varint,6,opt,name=port,proto3,oneof" json:"port,omitempty"`
-	Inner         bool                   `protobuf:"varint,8,opt,name=inner,proto3" json:"inner,omitempty"` // if connection in one physical vm
-	Tags          *common.Tags           `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// from is the source component id of the edge.
+	From string `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
+	// to is the destination component id of the edge.
+	To string `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
+	// kind is the semantic relationship of the edge.
+	Kind Connection_Kind `protobuf:"varint,3,opt,name=kind,proto3,enum=cloud.v1.topology.Connection_Kind" json:"kind,omitempty"`
+	// protocol is the wire protocol carried on the edge.
+	Protocol Connection_Protocol `protobuf:"varint,4,opt,name=protocol,proto3,enum=cloud.v1.topology.Connection_Protocol" json:"protocol,omitempty"`
+	// mode is the traffic character of the edge.
+	Mode Connection_Mode `protobuf:"varint,5,opt,name=mode,proto3,enum=cloud.v1.topology.Connection_Mode" json:"mode,omitempty"`
+	// port is the destination port, when applicable (<= 65535).
+	Port *uint32 `protobuf:"varint,6,opt,name=port,proto3,oneof" json:"port,omitempty"`
+	// inner is true when both endpoints live on one physical VM.
+	Inner bool `protobuf:"varint,8,opt,name=inner,proto3" json:"inner,omitempty"`
+	// tags are arbitrary key/value labels attached to the connection.
+	Tags          *common.Tags `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

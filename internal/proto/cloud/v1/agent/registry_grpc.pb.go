@@ -26,6 +26,9 @@ const (
 // AgentRegistryServiceClient is the client API for AgentRegistryService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// AgentRegistryService is the agent-facing presence channel: agents register
+// and heartbeat so the server knows which agents are online.
 type AgentRegistryServiceClient interface {
 	// Register announces an agent coming online.
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
@@ -64,6 +67,9 @@ func (c *agentRegistryServiceClient) Heartbeat(ctx context.Context, in *Heartbea
 // AgentRegistryServiceServer is the server API for AgentRegistryService service.
 // All implementations must embed UnimplementedAgentRegistryServiceServer
 // for forward compatibility.
+//
+// AgentRegistryService is the agent-facing presence channel: agents register
+// and heartbeat so the server knows which agents are online.
 type AgentRegistryServiceServer interface {
 	// Register announces an agent coming online.
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)

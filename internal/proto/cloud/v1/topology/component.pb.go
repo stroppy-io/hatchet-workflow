@@ -24,19 +24,30 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Kind enumerates the role a component plays in the topology.
 type Component_Kind int32
 
 const (
+	// KIND_UNSPECIFIED is the unset zero value (rejected by validation).
 	Component_KIND_UNSPECIFIED Component_Kind = 0
-	Component_KIND_AGENT       Component_Kind = 1
-	Component_KIND_MONITOR     Component_Kind = 2
-	Component_KIND_DATABASE    Component_Kind = 3
-	Component_KIND_REPLICA     Component_Kind = 4
-	Component_KIND_PROXY       Component_Kind = 5
-	Component_KIND_WORKLOAD    Component_Kind = 6
+	// KIND_AGENT is a stroppy agent host.
+	Component_KIND_AGENT Component_Kind = 1
+	// KIND_MONITOR is a monitoring/metrics component.
+	Component_KIND_MONITOR Component_Kind = 2
+	// KIND_DATABASE is a primary database node.
+	Component_KIND_DATABASE Component_Kind = 3
+	// KIND_REPLICA is a database replica node.
+	Component_KIND_REPLICA Component_Kind = 4
+	// KIND_PROXY is a connection proxy/pooler.
+	Component_KIND_PROXY Component_Kind = 5
+	// KIND_WORKLOAD is a workload/load-generator runner.
+	Component_KIND_WORKLOAD Component_Kind = 6
+	// KIND_COORDINATOR is a cluster coordinator/control node.
 	Component_KIND_COORDINATOR Component_Kind = 7
-	Component_KIND_ADDON       Component_Kind = 8
-	Component_KIND_EXTERNAL    Component_Kind = 9
+	// KIND_ADDON is a supporting add-on component.
+	Component_KIND_ADDON Component_Kind = 8
+	// KIND_EXTERNAL is a component provided externally (e.g. a managed service).
+	Component_KIND_EXTERNAL Component_Kind = 9
 )
 
 // Enum value maps for Component_Kind.
@@ -94,17 +105,27 @@ func (Component_Kind) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_topology_component_proto_rawDescGZIP(), []int{0, 0}
 }
 
+// Component is one logical node in the topology graph.
 type Component struct {
-	state                 protoimpl.MessageState `protogen:"open.v1"`
-	Id                    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Kind                  Component_Kind         `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.topology.Component_Kind" json:"kind,omitempty"`
-	Status                common.Status          `protobuf:"varint,3,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
-	DeploymentStrategy    *Component_Strategy    `protobuf:"bytes,4,opt,name=deployment_strategy,json=deploymentStrategy,proto3" json:"deployment_strategy,omitempty"`                    // calculated (build)
-	ProviderParms         *schemapb.Baked        `protobuf:"bytes,5,opt,name=provider_parms,json=providerParms,proto3,oneof" json:"provider_parms,omitempty"`                             // calculated (wisard actual for non-owr components)
-	AllocatedOnInstanceId *string                `protobuf:"bytes,6,opt,name=allocated_on_instance_id,json=allocatedOnInstanceId,proto3,oneof" json:"allocated_on_instance_id,omitempty"` // calculated (deployment)
-	Tags                  *common.Tags           `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the unique identifier of the component within the topology.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// kind is the role this component plays; must be a defined, non-zero value.
+	Kind Component_Kind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.topology.Component_Kind" json:"kind,omitempty"`
+	// status is the current runtime status of the component.
+	Status common.Status `protobuf:"varint,3,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
+	// deployment_strategy is the deploy recipe; calculated (build).
+	DeploymentStrategy *Component_Strategy `protobuf:"bytes,4,opt,name=deployment_strategy,json=deploymentStrategy,proto3" json:"deployment_strategy,omitempty"`
+	// provider_parms are the baked provider parameters; calculated (wisard
+	// actual for non-owr components).
+	ProviderParms *schemapb.Baked `protobuf:"bytes,5,opt,name=provider_parms,json=providerParms,proto3,oneof" json:"provider_parms,omitempty"`
+	// allocated_on_instance_id is the instance this component was placed on;
+	// calculated (deployment).
+	AllocatedOnInstanceId *string `protobuf:"bytes,6,opt,name=allocated_on_instance_id,json=allocatedOnInstanceId,proto3,oneof" json:"allocated_on_instance_id,omitempty"`
+	// tags are arbitrary key/value labels attached to the component.
+	Tags          *common.Tags `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Component) Reset() {
@@ -186,10 +207,14 @@ func (x *Component) GetTags() *common.Tags {
 	return nil
 }
 
+// Strategy is the recipe used to deploy a component: configuration files to
+// lay down and commands to run.
 type Component_Strategy struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	ConfigurationFiles []*common.BakedFile    `protobuf:"bytes,1,rep,name=configuration_files,json=configurationFiles,proto3" json:"configuration_files,omitempty"`
-	DeploymentCommands []*common.Cmd          `protobuf:"bytes,2,rep,name=deployment_commands,json=deploymentCommands,proto3" json:"deployment_commands,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// configuration_files are the rendered config files to place on the host.
+	ConfigurationFiles []*common.BakedFile `protobuf:"bytes,1,rep,name=configuration_files,json=configurationFiles,proto3" json:"configuration_files,omitempty"`
+	// deployment_commands are the commands to run to bring the component up.
+	DeploymentCommands []*common.Cmd `protobuf:"bytes,2,rep,name=deployment_commands,json=deploymentCommands,proto3" json:"deployment_commands,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }

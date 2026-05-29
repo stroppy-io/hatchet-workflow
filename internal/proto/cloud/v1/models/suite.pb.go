@@ -31,10 +31,15 @@ const (
 // by the suite wizard's finish and is the thing SuiteAPI.Start expands into a
 // SuiteRunRecord.
 type SuiteRecord struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	Entity *common.Entity         `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	Spec   *domain.Suite          `protobuf:"bytes,2,opt,name=spec,proto3" json:"spec,omitempty"`
-	// Denormalized facets for the suites table (schedule state + last-run info).
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entity is the storage envelope (id, tenant_id, name, description,
+	// timings).
+	Entity *common.Entity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	// spec is the suite definition payload that SuiteAPI.Start expands into a
+	// SuiteRunRecord.
+	Spec *domain.Suite `protobuf:"bytes,2,opt,name=spec,proto3" json:"spec,omitempty"`
+	// summary holds denormalized facets for the suites table (schedule state +
+	// last-run info).
 	Summary       *SuiteRecord_Summary `protobuf:"bytes,3,opt,name=summary,proto3" json:"summary,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -96,20 +101,24 @@ func (x *SuiteRecord) GetSummary() *SuiteRecord_Summary {
 // here), so suite children list / track / show logs+metrics like any other run.
 // SuiteWorkflow receives a domain.SuiteRun assembled from the children at start.
 type SuiteRunRecord struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	Entity *common.Entity         `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	// The definition this run came from.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entity is the storage envelope (id, tenant_id, name, timings).
+	Entity *common.Entity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	// suite_id references the SuiteRecord definition this run came from.
 	SuiteId string `protobuf:"bytes,2,opt,name=suite_id,json=suiteId,proto3" json:"suite_id,omitempty"`
-	// Lifecycle status of the suite run as a whole.
+	// status is the lifecycle status of the suite run as a whole.
 	Status common.Status `protobuf:"varint,3,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
-	// How this run was triggered (MANUAL / CRON / API).
+	// trigger records how this run was triggered (MANUAL / CRON / API).
 	Trigger common.Trigger `protobuf:"varint,7,opt,name=trigger,proto3,enum=cloud.v1.common.Trigger" json:"trigger,omitempty"`
-	// Max concurrent child TestWorkflows. 0 = unlimited.
+	// max_parallel is the max number of concurrent child TestWorkflows.
+	// 0 = unlimited.
 	MaxParallel uint32 `protobuf:"varint,4,opt,name=max_parallel,json=maxParallel,proto3" json:"max_parallel,omitempty"`
-	// Child runs (ids of TestRunRecord rows).
+	// test_run_ids are the ids of the child TestRunRecord rows this suite run
+	// expanded into.
 	TestRunIds []string `protobuf:"bytes,5,rep,name=test_run_ids,json=testRunIds,proto3" json:"test_run_ids,omitempty"`
-	// Denormalized, queryable facets for the suite-runs table (fewer than a test
-	// run: mostly child-count aggregates + provider + timing).
+	// summary holds denormalized, queryable facets for the suite-runs table
+	// (fewer than a test run: mostly child-count aggregates + provider +
+	// timing).
 	Summary       *SuiteRunRecord_Summary `protobuf:"bytes,6,opt,name=summary,proto3" json:"summary,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -194,19 +203,22 @@ func (x *SuiteRunRecord) GetSummary() *SuiteRunRecord_Summary {
 	return nil
 }
 
+// Summary is the flat, indexed projection of the suite definition used by
+// the suites table.
 type SuiteRecord_Summary struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Mirrors spec.schedule.enabled for fast filter/sort.
+	// schedule_enabled mirrors spec.schedule.enabled for fast filter/sort.
 	ScheduleEnabled bool `protobuf:"varint,1,opt,name=schedule_enabled,json=scheduleEnabled,proto3" json:"schedule_enabled,omitempty"`
-	// Mirrors spec.schedule.cron.
+	// cron mirrors spec.schedule.cron.
 	Cron string `protobuf:"bytes,2,opt,name=cron,proto3" json:"cron,omitempty"`
-	// Next planned auto-run (computed from the cron); unset if disabled.
+	// next_run_at is the next planned auto-run computed from the cron;
+	// unset if scheduling is disabled.
 	NextRunAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=next_run_at,json=nextRunAt,proto3" json:"next_run_at,omitempty"`
-	// Last time the suite was started (manual or cron).
+	// last_run_at is the last time the suite was started (manual or cron).
 	LastRunAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=last_run_at,json=lastRunAt,proto3" json:"last_run_at,omitempty"`
-	// Status of the last suite run.
+	// last_run_status is the status of the last suite run.
 	LastRunStatus common.Status `protobuf:"varint,5,opt,name=last_run_status,json=lastRunStatus,proto3,enum=cloud.v1.common.Status" json:"last_run_status,omitempty"`
-	// How many suite runs this definition has spawned.
+	// run_count is how many suite runs this definition has spawned.
 	RunCount      uint32 `protobuf:"varint,6,opt,name=run_count,json=runCount,proto3" json:"run_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -284,25 +296,36 @@ func (x *SuiteRecord_Summary) GetRunCount() uint32 {
 	return 0
 }
 
+// Summary is the flat, indexed projection of the suite run used by the
+// suite-runs table.
 type SuiteRunRecord_Summary struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Name of the originating suite definition.
+	// suite_name is the name of the originating suite definition.
 	SuiteName string `protobuf:"bytes,1,opt,name=suite_name,json=suiteName,proto3" json:"suite_name,omitempty"`
-	// Single provider the whole suite ran on.
+	// provider is the single provider the whole suite ran on.
 	Provider deployment.Provider `protobuf:"varint,2,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	// Distinct database kinds exercised by the suite (for filtering).
+	// db_kinds are the distinct database kinds exercised by the suite (for
+	// filtering).
 	DbKinds []domain.Database_Kind `protobuf:"varint,3,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
-	// Child run counts by outcome.
-	Total     uint32 `protobuf:"varint,4,opt,name=total,proto3" json:"total,omitempty"`
+	// total is the total number of child runs.
+	Total uint32 `protobuf:"varint,4,opt,name=total,proto3" json:"total,omitempty"`
+	// completed is the number of child runs that finished successfully.
 	Completed uint32 `protobuf:"varint,5,opt,name=completed,proto3" json:"completed,omitempty"`
-	Failed    uint32 `protobuf:"varint,6,opt,name=failed,proto3" json:"failed,omitempty"`
-	Running   uint32 `protobuf:"varint,7,opt,name=running,proto3" json:"running,omitempty"`
-	Pending   uint32 `protobuf:"varint,8,opt,name=pending,proto3" json:"pending,omitempty"`
-	// Aggregate progress (0..100), derived on the backend from children.
-	ProgressPct   uint32                 `protobuf:"varint,9,opt,name=progress_pct,json=progressPct,proto3" json:"progress_pct,omitempty"`
-	StartedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
-	FinishedAt    *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
-	Duration      *durationpb.Duration   `protobuf:"bytes,12,opt,name=duration,proto3" json:"duration,omitempty"`
+	// failed is the number of child runs that failed.
+	Failed uint32 `protobuf:"varint,6,opt,name=failed,proto3" json:"failed,omitempty"`
+	// running is the number of child runs currently in progress.
+	Running uint32 `protobuf:"varint,7,opt,name=running,proto3" json:"running,omitempty"`
+	// pending is the number of child runs not yet started.
+	Pending uint32 `protobuf:"varint,8,opt,name=pending,proto3" json:"pending,omitempty"`
+	// progress_pct is the aggregate progress (0..100), derived on the
+	// backend from the children.
+	ProgressPct uint32 `protobuf:"varint,9,opt,name=progress_pct,json=progressPct,proto3" json:"progress_pct,omitempty"`
+	// started_at is when the suite run started.
+	StartedAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// finished_at is when the suite run finished (unset while running).
+	FinishedAt *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
+	// duration is the suite run's elapsed time.
+	Duration      *durationpb.Duration `protobuf:"bytes,12,opt,name=duration,proto3" json:"duration,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

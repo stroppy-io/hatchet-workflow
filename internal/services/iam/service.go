@@ -33,12 +33,6 @@ const (
 	can translate them into status codes.
 */
 
-// Authn resolves the caller's verified access claims from the request context
-// (populated upstream by the auth middleware).
-type Authn interface {
-	Caller(ctx context.Context) (*iam.AccessClaims, error)
-}
-
 // Authz resolves a caller's effective permissions in one tenant — the live
 // union the request gate computes (is_admin short-circuits to full access).
 type Authz interface {
@@ -185,9 +179,6 @@ type SSOFlows interface {
 	Exchange(ctx context.Context, provider *iam.IdentityProvider, secret, code, state string) (subject, email string, emailVerified bool, err error)
 }
 
-// Clock isolates wall-clock reads for testability.
-type Clock interface{ Now() time.Time }
-
 // TokenTTL supplies the lifetimes for the one-time tokens, so the durations are
 // configurable rather than hard-coded.
 type TokenTTL interface {
@@ -197,7 +188,7 @@ type TokenTTL interface {
 
 // IamDeps bundles every dependency for the constructor.
 type IamDeps struct {
-	Authn              Authn
+	Authn              utils.Authn
 	Authz              Authz
 	Accounts           AccountRepo
 	Credentials        CredentialStore
@@ -214,7 +205,6 @@ type IamDeps struct {
 	ProviderSecrets    ProviderSecrets
 	ExternalIdentities ExternalIdentityRepo
 	SSO                SSOFlows
-	Clock              Clock
 	TTL                TokenTTL
 	ApiTokens          ApiTokenRepo
 	ApiTokenSecrets    ApiTokenSecrets
@@ -247,7 +237,7 @@ func (s *IamService) caller(ctx context.Context) (*iam.AccessClaims, error) {
 }
 
 func (s *IamService) now() *timestamppb.Timestamp {
-	return timestamppb.New(s.d.Clock.Now())
+	return timestamppb.New(time.Now())
 }
 
 // doTx runs fn in a top-level serializable transaction, retrying on transient

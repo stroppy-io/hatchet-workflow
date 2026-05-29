@@ -25,6 +25,9 @@ const (
 // AgentShellServiceClient is the client API for AgentShellService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// AgentShellService bridges an admin websocket to an agent's grpc control
+// stream, exposing one interactive reverse-shell session per OpenShell call.
 type AgentShellServiceClient interface {
 	// OpenShell attaches an interactive terminal to an agent. First client frame
 	// must be ShellStart. High-privilege: RESOURCE_AGENT_SHELL + audit.
@@ -55,6 +58,9 @@ type AgentShellService_OpenShellClient = grpc.BidiStreamingClient[ShellClientFra
 // AgentShellServiceServer is the server API for AgentShellService service.
 // All implementations must embed UnimplementedAgentShellServiceServer
 // for forward compatibility.
+//
+// AgentShellService bridges an admin websocket to an agent's grpc control
+// stream, exposing one interactive reverse-shell session per OpenShell call.
 type AgentShellServiceServer interface {
 	// OpenShell attaches an interactive terminal to an agent. First client frame
 	// must be ShellStart. High-privilege: RESOURCE_AGENT_SHELL + audit.

@@ -13,23 +13,75 @@ import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology";
 
+/*
+    topology.proto defines the full benchmark topology: the set of physical
+    instances (VMs), the components allocated onto them, and the connections
+    between them. Provider/deployment parameters and quota fields are filled in
+    progressively by the deployment workflows.
+ */
+
+/*
+    Topology is the complete description of a benchmark deployment: its
+    instances, the edges between components, and any external components.
+ */
 message Topology {
+    /*
+        Instance is one physical machine (VM) in the topology onto which
+        components are allocated.
+     */
     message Instance {
+        /*
+            id is the unique identifier of the instance within the topology.
+         */
         string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+        /*
+            status is the current runtime status of the instance.
+         */
         common.Status status = 2;
+        /*
+            machine_info describes the requested machine shape/specs.
+         */
         deployment.MachineInfo machine_info = 3;
-        optional schemapb.Baked provider_parms = 4; // calculated (wisard)
-        repeated deployment.Quota.Request quota_requests = 5; // calculated (deployment)
-        repeated deployment.Quota.Allocation allocated_quotas = 6; // calculated (deployment)
-        optional schemapb.Baked deployment_parms = 7; // calculated (deployment)
+        /*
+            provider_parms are the baked provider parameters; calculated (wisard).
+         */
+        optional schemapb.Baked provider_parms = 4;
+        /*
+            quota_requests are the resource quotas requested for this instance;
+            calculated (deployment).
+         */
+        repeated deployment.Quota.Request quota_requests = 5;
+        /*
+            allocated_quotas are the quotas actually granted to this instance;
+            calculated (deployment).
+         */
+        repeated deployment.Quota.Allocation allocated_quotas = 6;
+        /*
+            deployment_parms are the baked deployment parameters; calculated
+            (deployment).
+         */
+        optional schemapb.Baked deployment_parms = 7;
+        /*
+            tags are arbitrary key/value labels attached to the instance.
+         */
         common.Tags tags = 8;
     }
+    /*
+        instances are the physical machines making up the topology; at least one
+        is required.
+     */
     repeated Instance instances = 1 [(validate.rules).repeated.min_items = 1];
+    /*
+        connections are the edges between components; at least one is required.
+     */
     repeated topology.Connection connections = 2 [(validate.rules).repeated.min_items = 1];
     /*
         Here we can add something like managed database or another sevice from prvider
         Responsibility of this is RenderTerraformVariablesWorkflow|RenderDockerInputWorkflow
     */
     repeated Component external_components = 3 [(validate.rules).repeated.max_items = 64];
+    /*
+        tags are arbitrary key/value labels attached to the whole topology.
+     */
     common.Tags tags = 4;
 }

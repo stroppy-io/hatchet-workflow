@@ -30,9 +30,10 @@ const (
 type File struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// info contains path, permissions, owner, and group.
-	Info   *File_Info `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
-	Append bool       `protobuf:"varint,2,opt,name=append,proto3" json:"append,omitempty"`
-	// Content is inline file payload.
+	Info *File_Info `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	// append, when true, appends content to an existing file instead of overwriting it.
+	Append bool `protobuf:"varint,2,opt,name=append,proto3" json:"append,omitempty"`
+	// content carries the inline file payload as exactly one of text, bytes, or a reference.
 	// Types that are valid to be assigned to Content:
 	//
 	//	*File_Text
@@ -146,11 +147,16 @@ func (*File_Bytes) isFile_Content() {}
 
 func (*File_AsRef_) isFile_Content() {}
 
+// BakedFile pairs a File with the resolver that produced it and the
+// schema-validated data used to render it, capturing a fully materialized file.
 type BakedFile struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	File          *File                  `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
-	ResolverName  string                 `protobuf:"bytes,2,opt,name=resolver_name,json=resolverName,proto3" json:"resolver_name,omitempty"`
-	Data          *schemapb.Baked        `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// file is the materialized file description.
+	File *File `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
+	// resolver_name identifies the resolver that produced the file content.
+	ResolverName string `protobuf:"bytes,2,opt,name=resolver_name,json=resolverName,proto3" json:"resolver_name,omitempty"`
+	// data is the schema-validated input baked into the file.
+	Data          *schemapb.Baked `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -284,7 +290,8 @@ func (x *File_Info) GetGroup() string {
 // files, or generated outputs without changing the file metadata model.
 type File_AsRef struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Uri   string                 `protobuf:"bytes,2,opt,name=uri,proto3" json:"uri,omitempty"`
+	// uri locates the external file content (e.g. object/artifact storage).
+	Uri string `protobuf:"bytes,2,opt,name=uri,proto3" json:"uri,omitempty"`
 	// checksum optionally verifies external file content.
 	Checksum      string `protobuf:"bytes,3,opt,name=checksum,proto3" json:"checksum,omitempty"`
 	unknownFields protoimpl.UnknownFields

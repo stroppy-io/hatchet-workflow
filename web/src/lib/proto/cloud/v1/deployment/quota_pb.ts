@@ -65,6 +65,9 @@ export type Quota_Info = Message<"cloud.v1.deployment.Quota.Info"> & {
   provider: Provider;
 
   /**
+   * name is the provider-reported quota name, e.g. the metric/quota id
+   * that quota_kind_enum_value resolves to. 
+   *
    * @generated from field: string name = 2;
    */
   name: string;
@@ -95,6 +98,9 @@ export type Quota_InfoJson = {
   provider?: ProviderJson;
 
   /**
+   * name is the provider-reported quota name, e.g. the metric/quota id
+   * that quota_kind_enum_value resolves to. 
+   *
    * @generated from field: string name = 2;
    */
   name?: string;
@@ -201,18 +207,22 @@ export const Quota_StateSchema: GenMessage<Quota_State, {jsonType: Quota_StateJs
   messageDesc(file_cloud_v1_deployment_quota, 0, 1);
 
 /**
+ *
+ * Request is the amount one deployment asks to consume from a quota
+ * during a preflight check, before it is committed as an Allocation.
+ *
  * @generated from message cloud.v1.deployment.Quota.Request
  */
 export type Quota_Request = Message<"cloud.v1.deployment.Quota.Request"> & {
   /**
-   * info identifies the provider and quota kind being allocated. 
+   * info identifies the provider and quota kind being requested. 
    *
    * @generated from field: cloud.v1.deployment.Quota.Info info = 1;
    */
   info?: Quota_Info;
 
   /**
-   * used is the amount this deployment requests, in info.units. 
+   * request is the amount this deployment requests, in info.units. 
    *
    * @generated from field: uint64 request = 3;
    */
@@ -220,18 +230,22 @@ export type Quota_Request = Message<"cloud.v1.deployment.Quota.Request"> & {
 };
 
 /**
+ *
+ * Request is the amount one deployment asks to consume from a quota
+ * during a preflight check, before it is committed as an Allocation.
+ *
  * @generated from message cloud.v1.deployment.Quota.Request
  */
 export type Quota_RequestJson = {
   /**
-   * info identifies the provider and quota kind being allocated. 
+   * info identifies the provider and quota kind being requested. 
    *
    * @generated from field: cloud.v1.deployment.Quota.Info info = 1;
    */
   info?: Quota_InfoJson;
 
   /**
-   * used is the amount this deployment requests, in info.units. 
+   * request is the amount this deployment requests, in info.units. 
    *
    * @generated from field: uint64 request = 3;
    */

@@ -24,9 +24,10 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// GetSharedRunRequest resolves one share by its public token.
 type GetSharedRunRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Unguessable token from the share URL.
+	// token is the unguessable token from the share URL.
 	Token         string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -69,9 +70,11 @@ func (x *GetSharedRunRequest) GetToken() string {
 	return ""
 }
 
+// GetSharedRunResponse returns the limited public snapshot for the token.
 type GetSharedRunResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The limited public snapshot (test or suite run) + when it was captured.
+	// snapshot is the limited public snapshot (test or suite run) + when it was
+	// captured.
 	Snapshot      *models.ShareRecord_Snapshot `protobuf:"bytes,1,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

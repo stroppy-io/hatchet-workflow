@@ -36,11 +36,14 @@ const (
 // which are computed by joining the queried rows against this table for the
 // requesting caller. Nothing else stores a favorite flag.
 type FavoriteRecord struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	Entity *common.Entity         `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	// Which table the favorite points at.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entity is the storage envelope: it carries the row id, the favoriting
+	// user (entity.author_id) and the tenant (entity.tenant_id).
+	Entity *common.Entity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	// kind names which table the favorite points at. Must be a defined,
+	// non-zero FavoriteKind.
 	Kind common.FavoriteKind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.common.FavoriteKind" json:"kind,omitempty"`
-	// Id of the favorited row (in the table named by kind).
+	// target_id is the id of the favorited row, in the table named by kind.
 	TargetId      string `protobuf:"bytes,3,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

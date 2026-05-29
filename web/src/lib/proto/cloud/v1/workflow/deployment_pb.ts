@@ -23,20 +23,28 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/workflow/deployment.proto.
  */
 export const file_cloud_v1_workflow_deployment: GenFile = /*@__PURE__*/
-  fileDesc("CiJjbG91ZC92MS93b3JrZmxvdy9kZXBsb3ltZW50LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyKCAQogUHJvY2Vzc0RlcGxveW1lbnRXb3JrZmxvd1JlcXVlc3QSLwoIcHJvdmlkZXIYASABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyEi0KCHRvcG9sb2d5GAIgASgLMhsuY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3kijAEKIVByb2Nlc3NEZXBsb3ltZW50V29ya2Zsb3dSZXNwb25zZRIvCghwcm92aWRlchgBIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISNgoRZGVwbG95ZWRfdG9wb2xvZ3kYAiABKAsyGy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neSJPCh5DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1JlcXVlc3QSLQoIdG9wb2xvZ3kYASABKAsyGy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neSKJAgofQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSZXNwb25zZRItCgh0b3BvbG9neRgBIAEoCzIbLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5El0KDnF1b3RhX3JlcXVlc3RzGAUgAygLMkUuY2xvdWQudjEud29ya2Zsb3cuQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSZXNwb25zZS5RdW90YVJlcXVlc3RzRW50cnkaWAoSUXVvdGFSZXF1ZXN0c0VudHJ5EgsKA2tleRgBIAEoCRIxCgV2YWx1ZRgCIAEoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuUmVxdWVzdDoCOAEiWAodQWNxdWlyZU5ldHdvcmtBY3Rpdml0eVJlcXVlc3QSNwoIc2V0dGluZ3MYAiABKAsyJS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyU2V0dGluZ3MiQwoeQWNxdWlyZU5ldHdvcmtBY3Rpdml0eVJlc3BvbnNlEiEKA25ldBgBIAEoCzIULmNsb3VkLnYxLmNvbW1vbi5OZXQi1AEKHEFjcXVpcmVRdW90YXNBY3Rpdml0eVJlcXVlc3QSWgoOcXVvdGFfcmVxdWVzdHMYBSADKAsyQi5jbG91ZC52MS53b3JrZmxvdy5BY3F1aXJlUXVvdGFzQWN0aXZpdHlSZXF1ZXN0LlF1b3RhUmVxdWVzdHNFbnRyeRpYChJRdW90YVJlcXVlc3RzRW50cnkSCwoDa2V5GAEgASgJEjEKBXZhbHVlGAIgASgLMiIuY2xvdWQudjEuZGVwbG95bWVudC5RdW90YS5SZXF1ZXN0OgI4ASLfAQodQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVzcG9uc2USXwoQcXVvdGFfYWxsb2NhdGlvbhgBIAMoCzJFLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVRdW90YXNBY3Rpdml0eVJlc3BvbnNlLlF1b3RhQWxsb2NhdGlvbkVudHJ5Gl0KFFF1b3RhQWxsb2NhdGlvbkVudHJ5EgsKA2tleRgBIAEoCRI0CgV2YWx1ZRgCIAEoCzIlLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuQWxsb2NhdGlvbjoCOAEyiQwKDURlcGxveW1lbnRBcGkSpwEKGVByb2Nlc3NEZXBsb3ltZW50V29ya2Zsb3cSMy5jbG91ZC52MS53b3JrZmxvdy5Qcm9jZXNzRGVwbG95bWVudFdvcmtmbG93UmVxdWVzdBo0LmNsb3VkLnYxLndvcmtmbG93LlByb2Nlc3NEZXBsb3ltZW50V29ya2Zsb3dSZXNwb25zZSIfisQDG3IZUHJvY2Vzc0RlcGxveW1lbnRXb3JrZmxvdxKIAQoWQWNxdWlyZU5ldHdvcmtBY3Rpdml0eRIwLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVOZXR3b3JrQWN0aXZpdHlSZXF1ZXN0GjEuY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZU5ldHdvcmtBY3Rpdml0eVJlc3BvbnNlIgmSxAMFIgMIrAISnwEKF0NhbGN1bGF0ZVF1b3Rhc1dvcmtmbG93EjEuY2xvdWQudjEud29ya2Zsb3cuQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSZXF1ZXN0GjIuY2xvdWQudjEud29ya2Zsb3cuQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSZXNwb25zZSIdisQDGXIXQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3cShQEKFUFjcXVpcmVRdW90YXNBY3Rpdml0eRIvLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVRdW90YXNBY3Rpdml0eVJlcXVlc3QaMC5jbG91ZC52MS53b3JrZmxvdy5BY3F1aXJlUXVvdGFzQWN0aXZpdHlSZXNwb25zZSIJksQDBSIDCKwCEnwKGVJlbmRlckRvY2tlcklucHV0V29ya2Zsb3cSGy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neRohLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLklucHV0Ih+KxAMbchlSZW5kZXJEb2NrZXJJbnB1dFdvcmtmbG93EmYKEkRvY2tlclB1bGxBY3Rpdml0eRIhLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLklucHV0GiIuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuT3V0cHV0IgmSxAMFIgMIrAISZAoQRG9ja2VyVXBBY3Rpdml0eRIhLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLklucHV0GiIuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuT3V0cHV0IgmSxAMFIgMIrAISZgoSRG9ja2VyRG93bkFjdGl2aXR5EiEuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuSW5wdXQaIi5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5PdXRwdXQiCZLEAwUiAwisAhKNAQogUmVuZGVyVGVycmFmb3JtVmFyaWFibGVzV29ya2Zsb3cSGy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neRokLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLklucHV0IiaKxAMiciBSZW5kZXJUZXJyYWZvcm1WYXJpYWJsZXNXb3JrZmxvdxJvChVUZXJyYWZvcm1QbGFuQWN0aXZpdHkSJC5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5JbnB1dBolLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLk91dHB1dCIJksQDBSIDCKwCEnAKFlRlcnJhZm9ybUFwcGx5QWN0aXZpdHkSJC5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5JbnB1dBolLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLk91dHB1dCIJksQDBSIDCKwCEnIKGFRlcnJhZm9ybURlc3Ryb3lBY3Rpdml0eRIkLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLklucHV0GiUuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uT3V0cHV0IgmSxAMFIgMIrAJCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvd29ya2Zsb3diBnByb3RvMw", [file_cloud_v1_common_ip, file_cloud_v1_deployment_docker, file_cloud_v1_deployment_provider, file_cloud_v1_deployment_quota, file_cloud_v1_deployment_terraform, file_cloud_v1_topology_topology, file_temporal_v1_temporal]);
+  fileDesc("CiJjbG91ZC92MS93b3JrZmxvdy9kZXBsb3ltZW50LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyKCAQogUHJvY2Vzc0RlcGxveW1lbnRXb3JrZmxvd1JlcXVlc3QSLwoIcHJvdmlkZXIYASABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyEi0KCHRvcG9sb2d5GAIgASgLMhsuY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3kijAEKIVByb2Nlc3NEZXBsb3ltZW50V29ya2Zsb3dSZXNwb25zZRIvCghwcm92aWRlchgBIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISNgoRZGVwbG95ZWRfdG9wb2xvZ3kYAiABKAsyGy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neSJPCh5DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1JlcXVlc3QSLQoIdG9wb2xvZ3kYASABKAsyGy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neSKJAgofQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSZXNwb25zZRItCgh0b3BvbG9neRgBIAEoCzIbLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5El0KDnF1b3RhX3JlcXVlc3RzGAUgAygLMkUuY2xvdWQudjEud29ya2Zsb3cuQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSZXNwb25zZS5RdW90YVJlcXVlc3RzRW50cnkaWAoSUXVvdGFSZXF1ZXN0c0VudHJ5EgsKA2tleRgBIAEoCRIxCgV2YWx1ZRgCIAEoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuUmVxdWVzdDoCOAEiWAodQWNxdWlyZU5ldHdvcmtBY3Rpdml0eVJlcXVlc3QSNwoIc2V0dGluZ3MYAiABKAsyJS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyU2V0dGluZ3MiQwoeQWNxdWlyZU5ldHdvcmtBY3Rpdml0eVJlc3BvbnNlEiEKA25ldBgBIAEoCzIULmNsb3VkLnYxLmNvbW1vbi5OZXQi1AEKHEFjcXVpcmVRdW90YXNBY3Rpdml0eVJlcXVlc3QSWgoOcXVvdGFfcmVxdWVzdHMYBSADKAsyQi5jbG91ZC52MS53b3JrZmxvdy5BY3F1aXJlUXVvdGFzQWN0aXZpdHlSZXF1ZXN0LlF1b3RhUmVxdWVzdHNFbnRyeRpYChJRdW90YVJlcXVlc3RzRW50cnkSCwoDa2V5GAEgASgJEjEKBXZhbHVlGAIgASgLMiIuY2xvdWQudjEuZGVwbG95bWVudC5RdW90YS5SZXF1ZXN0OgI4ASLfAQodQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVzcG9uc2USXwoQcXVvdGFfYWxsb2NhdGlvbhgBIAMoCzJFLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVRdW90YXNBY3Rpdml0eVJlc3BvbnNlLlF1b3RhQWxsb2NhdGlvbkVudHJ5Gl0KFFF1b3RhQWxsb2NhdGlvbkVudHJ5EgsKA2tleRgBIAEoCRI0CgV2YWx1ZRgCIAEoCzIlLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuQWxsb2NhdGlvbjoCOAEyqw0KEURlcGxveW1lbnRTZXJ2aWNlEqsBChlQcm9jZXNzRGVwbG95bWVudFdvcmtmbG93EjMuY2xvdWQudjEud29ya2Zsb3cuUHJvY2Vzc0RlcGxveW1lbnRXb3JrZmxvd1JlcXVlc3QaNC5jbG91ZC52MS53b3JrZmxvdy5Qcm9jZXNzRGVwbG95bWVudFdvcmtmbG93UmVzcG9uc2UiI4rEAx9KAiABchlQcm9jZXNzRGVwbG95bWVudFdvcmtmbG93EpkBChZBY3F1aXJlTmV0d29ya0FjdGl2aXR5EjAuY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZU5ldHdvcmtBY3Rpdml0eVJlcXVlc3QaMS5jbG91ZC52MS53b3JrZmxvdy5BY3F1aXJlTmV0d29ya0FjdGl2aXR5UmVzcG9uc2UiGpLEAxYiAwisAjIPIAMKAggFEQAAAAAAAABAEqgBChdDYWxjdWxhdGVRdW90YXNXb3JrZmxvdxIxLmNsb3VkLnYxLndvcmtmbG93LkNhbGN1bGF0ZVF1b3Rhc1dvcmtmbG93UmVxdWVzdBoyLmNsb3VkLnYxLndvcmtmbG93LkNhbGN1bGF0ZVF1b3Rhc1dvcmtmbG93UmVzcG9uc2UiJorEAyJKAiADchdDYWxjdWxhdGVRdW90YXNXb3JrZmxvd1IDCKwCEpYBChVBY3F1aXJlUXVvdGFzQWN0aXZpdHkSLy5jbG91ZC52MS53b3JrZmxvdy5BY3F1aXJlUXVvdGFzQWN0aXZpdHlSZXF1ZXN0GjAuY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVzcG9uc2UiGpLEAxYiAwisAjIPIAMKAggFEQAAAAAAAABAEoQBChlSZW5kZXJEb2NrZXJJbnB1dFdvcmtmbG93EhsuY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3kaIS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5JbnB1dCInisQDI1ICCDxKAiADchlSZW5kZXJEb2NrZXJJbnB1dFdvcmtmbG93EncKEkRvY2tlclB1bGxBY3Rpdml0eRIhLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLklucHV0GiIuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuT3V0cHV0IhqSxAMWIgMI2AQyDxEAAAAAAAAAQCADCgIIBRJwChBEb2NrZXJVcEFjdGl2aXR5EiEuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuSW5wdXQaIi5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5PdXRwdXQiFZLEAxEqAgg8MgYgAwoCCAUiAwjYBBJuChJEb2NrZXJEb3duQWN0aXZpdHkSIS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5JbnB1dBoiLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLk91dHB1dCIRksQDDSIDCKwCMgYgAwoCCAUSlQEKIFJlbmRlclRlcnJhZm9ybVZhcmlhYmxlc1dvcmtmbG93EhsuY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3kaJC5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5JbnB1dCIuisQDKnIgUmVuZGVyVGVycmFmb3JtVmFyaWFibGVzV29ya2Zsb3dSAgg8SgIgAxJ7ChVUZXJyYWZvcm1QbGFuQWN0aXZpdHkSJC5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5JbnB1dBolLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLk91dHB1dCIVksQDESIDCIQHKgIIPDIGIAIKAggKEnwKFlRlcnJhZm9ybUFwcGx5QWN0aXZpdHkSJC5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5JbnB1dBolLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLk91dHB1dCIVksQDESoCCDwyBiACCgIICiIDCIgOEn4KGFRlcnJhZm9ybURlc3Ryb3lBY3Rpdml0eRIkLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLklucHV0GiUuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uT3V0cHV0IhWSxAMRIgMIiA4qAgg8MgYgAwoCCAoaE4rEAw8KDXN0cm9wcHktY2xvdWRCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvd29ya2Zsb3diBnByb3RvMw", [file_cloud_v1_common_ip, file_cloud_v1_deployment_docker, file_cloud_v1_deployment_provider, file_cloud_v1_deployment_quota, file_cloud_v1_deployment_terraform, file_cloud_v1_topology_topology, file_temporal_v1_temporal]);
 
 /**
+ *
+ * ProcessDeploymentWorkflowRequest is the input to the top-level deployment
+ * workflow: which provider to use and the topology to provision.
+ *
  * @generated from message cloud.v1.workflow.ProcessDeploymentWorkflowRequest
  */
 export type ProcessDeploymentWorkflowRequest = Message<"cloud.v1.workflow.ProcessDeploymentWorkflowRequest"> & {
   /**
+   *
+   * provider is the target cloud/provider to deploy onto.
+   *
    * @generated from field: cloud.v1.deployment.Provider provider = 1;
    */
   provider: Provider;
 
   /**
    *
-   * MUST BE WITH INSTANCES provider_parms
+   * topology is the topology to provision; instances MUST already carry their
+   * provider_parms.
    *
    * @generated from field: cloud.v1.topology.Topology topology = 2;
    */
@@ -44,17 +52,25 @@ export type ProcessDeploymentWorkflowRequest = Message<"cloud.v1.workflow.Proces
 };
 
 /**
+ *
+ * ProcessDeploymentWorkflowRequest is the input to the top-level deployment
+ * workflow: which provider to use and the topology to provision.
+ *
  * @generated from message cloud.v1.workflow.ProcessDeploymentWorkflowRequest
  */
 export type ProcessDeploymentWorkflowRequestJson = {
   /**
+   *
+   * provider is the target cloud/provider to deploy onto.
+   *
    * @generated from field: cloud.v1.deployment.Provider provider = 1;
    */
   provider?: ProviderJson;
 
   /**
    *
-   * MUST BE WITH INSTANCES provider_parms
+   * topology is the topology to provision; instances MUST already carry their
+   * provider_parms.
    *
    * @generated from field: cloud.v1.topology.Topology topology = 2;
    */
@@ -71,17 +87,25 @@ export const ProcessDeploymentWorkflowRequestSchema: GenMessage<ProcessDeploymen
   messageDesc(file_cloud_v1_workflow_deployment, 0);
 
 /**
+ *
+ * ProcessDeploymentWorkflowResponse is the result of the deployment workflow:
+ * the provider used and the fully deployed topology.
+ *
  * @generated from message cloud.v1.workflow.ProcessDeploymentWorkflowResponse
  */
 export type ProcessDeploymentWorkflowResponse = Message<"cloud.v1.workflow.ProcessDeploymentWorkflowResponse"> & {
   /**
+   *
+   * provider is the provider the topology was deployed onto.
+   *
    * @generated from field: cloud.v1.deployment.Provider provider = 1;
    */
   provider: Provider;
 
   /**
    *
-   * FULL DEPLOYD TOPOLOGY WITH ALL PARAMS
+   * deployed_topology is the full deployed topology with all runtime params
+   * filled in.
    *
    * @generated from field: cloud.v1.topology.Topology deployed_topology = 2;
    */
@@ -89,17 +113,25 @@ export type ProcessDeploymentWorkflowResponse = Message<"cloud.v1.workflow.Proce
 };
 
 /**
+ *
+ * ProcessDeploymentWorkflowResponse is the result of the deployment workflow:
+ * the provider used and the fully deployed topology.
+ *
  * @generated from message cloud.v1.workflow.ProcessDeploymentWorkflowResponse
  */
 export type ProcessDeploymentWorkflowResponseJson = {
   /**
+   *
+   * provider is the provider the topology was deployed onto.
+   *
    * @generated from field: cloud.v1.deployment.Provider provider = 1;
    */
   provider?: ProviderJson;
 
   /**
    *
-   * FULL DEPLOYD TOPOLOGY WITH ALL PARAMS
+   * deployed_topology is the full deployed topology with all runtime params
+   * filled in.
    *
    * @generated from field: cloud.v1.topology.Topology deployed_topology = 2;
    */
@@ -116,20 +148,34 @@ export const ProcessDeploymentWorkflowResponseSchema: GenMessage<ProcessDeployme
   messageDesc(file_cloud_v1_workflow_deployment, 1);
 
 /**
+ *
+ * CalculateQuotasWorkflowRequest asks the workflow to compute resource quotas
+ * for a topology.
+ *
  * @generated from message cloud.v1.workflow.CalculateQuotasWorkflowRequest
  */
 export type CalculateQuotasWorkflowRequest = Message<"cloud.v1.workflow.CalculateQuotasWorkflowRequest"> & {
   /**
+   *
+   * topology is the topology to compute quota requests for.
+   *
    * @generated from field: cloud.v1.topology.Topology topology = 1;
    */
   topology?: Topology;
 };
 
 /**
+ *
+ * CalculateQuotasWorkflowRequest asks the workflow to compute resource quotas
+ * for a topology.
+ *
  * @generated from message cloud.v1.workflow.CalculateQuotasWorkflowRequest
  */
 export type CalculateQuotasWorkflowRequestJson = {
   /**
+   *
+   * topology is the topology to compute quota requests for.
+   *
    * @generated from field: cloud.v1.topology.Topology topology = 1;
    */
   topology?: TopologyJson;
@@ -145,17 +191,24 @@ export const CalculateQuotasWorkflowRequestSchema: GenMessage<CalculateQuotasWor
   messageDesc(file_cloud_v1_workflow_deployment, 2);
 
 /**
+ *
+ * CalculateQuotasWorkflowResponse returns the topology along with the computed
+ * quota requests.
+ *
  * @generated from message cloud.v1.workflow.CalculateQuotasWorkflowResponse
  */
 export type CalculateQuotasWorkflowResponse = Message<"cloud.v1.workflow.CalculateQuotasWorkflowResponse"> & {
   /**
+   *
+   * topology is the (unchanged) topology the quotas were computed for.
+   *
    * @generated from field: cloud.v1.topology.Topology topology = 1;
    */
   topology?: Topology;
 
   /**
    *
-   * This is requests located by component.id
+   * quota_requests are the computed requests keyed by component.id.
    *
    * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 5;
    */
@@ -163,17 +216,24 @@ export type CalculateQuotasWorkflowResponse = Message<"cloud.v1.workflow.Calcula
 };
 
 /**
+ *
+ * CalculateQuotasWorkflowResponse returns the topology along with the computed
+ * quota requests.
+ *
  * @generated from message cloud.v1.workflow.CalculateQuotasWorkflowResponse
  */
 export type CalculateQuotasWorkflowResponseJson = {
   /**
+   *
+   * topology is the (unchanged) topology the quotas were computed for.
+   *
    * @generated from field: cloud.v1.topology.Topology topology = 1;
    */
   topology?: TopologyJson;
 
   /**
    *
-   * This is requests located by component.id
+   * quota_requests are the computed requests keyed by component.id.
    *
    * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 5;
    */
@@ -190,20 +250,32 @@ export const CalculateQuotasWorkflowResponseSchema: GenMessage<CalculateQuotasWo
   messageDesc(file_cloud_v1_workflow_deployment, 3);
 
 /**
+ *
+ * AcquireNetworkActivityRequest asks the provider to acquire a network.
+ *
  * @generated from message cloud.v1.workflow.AcquireNetworkActivityRequest
  */
 export type AcquireNetworkActivityRequest = Message<"cloud.v1.workflow.AcquireNetworkActivityRequest"> & {
   /**
+   *
+   * settings are the provider-specific settings used to acquire the network.
+   *
    * @generated from field: cloud.v1.deployment.ProviderSettings settings = 2;
    */
   settings?: ProviderSettings;
 };
 
 /**
+ *
+ * AcquireNetworkActivityRequest asks the provider to acquire a network.
+ *
  * @generated from message cloud.v1.workflow.AcquireNetworkActivityRequest
  */
 export type AcquireNetworkActivityRequestJson = {
   /**
+   *
+   * settings are the provider-specific settings used to acquire the network.
+   *
    * @generated from field: cloud.v1.deployment.ProviderSettings settings = 2;
    */
   settings?: ProviderSettingsJson;
@@ -219,20 +291,32 @@ export const AcquireNetworkActivityRequestSchema: GenMessage<AcquireNetworkActiv
   messageDesc(file_cloud_v1_workflow_deployment, 4);
 
 /**
+ *
+ * AcquireNetworkActivityResponse returns the acquired network.
+ *
  * @generated from message cloud.v1.workflow.AcquireNetworkActivityResponse
  */
 export type AcquireNetworkActivityResponse = Message<"cloud.v1.workflow.AcquireNetworkActivityResponse"> & {
   /**
+   *
+   * net is the network acquired from the provider.
+   *
    * @generated from field: cloud.v1.common.Net net = 1;
    */
   net?: Net;
 };
 
 /**
+ *
+ * AcquireNetworkActivityResponse returns the acquired network.
+ *
  * @generated from message cloud.v1.workflow.AcquireNetworkActivityResponse
  */
 export type AcquireNetworkActivityResponseJson = {
   /**
+   *
+   * net is the network acquired from the provider.
+   *
    * @generated from field: cloud.v1.common.Net net = 1;
    */
   net?: NetJson;
@@ -248,12 +332,16 @@ export const AcquireNetworkActivityResponseSchema: GenMessage<AcquireNetworkActi
   messageDesc(file_cloud_v1_workflow_deployment, 5);
 
 /**
+ *
+ * AcquireQuotasActivityRequest asks the provider to acquire the requested
+ * quotas.
+ *
  * @generated from message cloud.v1.workflow.AcquireQuotasActivityRequest
  */
 export type AcquireQuotasActivityRequest = Message<"cloud.v1.workflow.AcquireQuotasActivityRequest"> & {
   /**
    *
-   * This is requests located by component.id
+   * quota_requests are the requests to acquire, keyed by component.id.
    *
    * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 5;
    */
@@ -261,12 +349,16 @@ export type AcquireQuotasActivityRequest = Message<"cloud.v1.workflow.AcquireQuo
 };
 
 /**
+ *
+ * AcquireQuotasActivityRequest asks the provider to acquire the requested
+ * quotas.
+ *
  * @generated from message cloud.v1.workflow.AcquireQuotasActivityRequest
  */
 export type AcquireQuotasActivityRequestJson = {
   /**
    *
-   * This is requests located by component.id
+   * quota_requests are the requests to acquire, keyed by component.id.
    *
    * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 5;
    */
@@ -283,12 +375,15 @@ export const AcquireQuotasActivityRequestSchema: GenMessage<AcquireQuotasActivit
   messageDesc(file_cloud_v1_workflow_deployment, 6);
 
 /**
+ *
+ * AcquireQuotasActivityResponse returns the quotas the provider allocated.
+ *
  * @generated from message cloud.v1.workflow.AcquireQuotasActivityResponse
  */
 export type AcquireQuotasActivityResponse = Message<"cloud.v1.workflow.AcquireQuotasActivityResponse"> & {
   /**
    *
-   * This is allocation located by component.id
+   * quota_allocation is the granted allocation keyed by component.id.
    *
    * @generated from field: map<string, cloud.v1.deployment.Quota.Allocation> quota_allocation = 1;
    */
@@ -296,12 +391,15 @@ export type AcquireQuotasActivityResponse = Message<"cloud.v1.workflow.AcquireQu
 };
 
 /**
+ *
+ * AcquireQuotasActivityResponse returns the quotas the provider allocated.
+ *
  * @generated from message cloud.v1.workflow.AcquireQuotasActivityResponse
  */
 export type AcquireQuotasActivityResponseJson = {
   /**
    *
-   * This is allocation located by component.id
+   * quota_allocation is the granted allocation keyed by component.id.
    *
    * @generated from field: map<string, cloud.v1.deployment.Quota.Allocation> quota_allocation = 1;
    */
@@ -318,11 +416,19 @@ export const AcquireQuotasActivityResponseSchema: GenMessage<AcquireQuotasActivi
   messageDesc(file_cloud_v1_workflow_deployment, 7);
 
 /**
- * @generated from service cloud.v1.workflow.DeploymentApi
+ *
+ * DeploymentService groups the Temporal workflows and activities that provision
+ * and tear down a topology's infrastructure.
+ *
+ * @generated from service cloud.v1.workflow.DeploymentService
  */
-export const DeploymentApi: GenService<{
+export const DeploymentService: GenService<{
   /**
-   * @generated from rpc cloud.v1.workflow.DeploymentApi.ProcessDeploymentWorkflow
+   *
+   * ProcessDeploymentWorkflow provisions a topology end to end; always a
+   * child of TestWorkflow and never auto-retried as a whole.
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.ProcessDeploymentWorkflow
    */
   processDeploymentWorkflow: {
     methodKind: "unary";
@@ -330,7 +436,11 @@ export const DeploymentApi: GenService<{
     output: typeof ProcessDeploymentWorkflowResponseSchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.DeploymentApi.AcquireNetworkActivity
+   *
+   * AcquireNetworkActivity acquires a network from the provider (deduped by
+   * name, retried on transient errors).
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.AcquireNetworkActivity
    */
   acquireNetworkActivity: {
     methodKind: "unary";
@@ -338,7 +448,11 @@ export const DeploymentApi: GenService<{
     output: typeof AcquireNetworkActivityResponseSchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.DeploymentApi.CalculateQuotasWorkflow
+   *
+   * CalculateQuotasWorkflow computes resource quota requests from a topology
+   * (pure computation, retryable).
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.CalculateQuotasWorkflow
    */
   calculateQuotasWorkflow: {
     methodKind: "unary";
@@ -346,7 +460,11 @@ export const DeploymentApi: GenService<{
     output: typeof CalculateQuotasWorkflowResponseSchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.DeploymentApi.AcquireQuotasActivity
+   *
+   * AcquireQuotasActivity acquires the requested quotas from the provider
+   * (retried with backoff).
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.AcquireQuotasActivity
    */
   acquireQuotasActivity: {
     methodKind: "unary";
@@ -354,7 +472,11 @@ export const DeploymentApi: GenService<{
     output: typeof AcquireQuotasActivityResponseSchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.DeploymentApi.RenderDockerInputWorkflow
+   *
+   * RenderDockerInputWorkflow renders a topology into Docker compose input
+   * (pure render, retryable).
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.RenderDockerInputWorkflow
    */
   renderDockerInputWorkflow: {
     methodKind: "unary";
@@ -362,7 +484,11 @@ export const DeploymentApi: GenService<{
     output: typeof Docker_InputSchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.DeploymentApi.DockerPullActivity
+   *
+   * DockerPullActivity pulls the required container images (idempotent,
+   * retried with backoff).
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.DockerPullActivity
    */
   dockerPullActivity: {
     methodKind: "unary";
@@ -370,7 +496,11 @@ export const DeploymentApi: GenService<{
     output: typeof Docker_OutputSchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.DeploymentApi.DockerUpActivity
+   *
+   * DockerUpActivity brings the compose stack up (idempotent/converges,
+   * heartbeats while starting).
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.DockerUpActivity
    */
   dockerUpActivity: {
     methodKind: "unary";
@@ -378,7 +508,10 @@ export const DeploymentApi: GenService<{
     output: typeof Docker_OutputSchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.DeploymentApi.DockerDownActivity
+   *
+   * DockerDownActivity tears the compose stack down (idempotent, retryable).
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.DockerDownActivity
    */
   dockerDownActivity: {
     methodKind: "unary";
@@ -386,7 +519,11 @@ export const DeploymentApi: GenService<{
     output: typeof Docker_OutputSchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.DeploymentApi.RenderTerraformVariablesWorkflow
+   *
+   * RenderTerraformVariablesWorkflow renders a topology into Terraform
+   * variables input (pure render, retryable).
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.RenderTerraformVariablesWorkflow
    */
   renderTerraformVariablesWorkflow: {
     methodKind: "unary";
@@ -394,7 +531,11 @@ export const DeploymentApi: GenService<{
     output: typeof Terraform_InputSchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.DeploymentApi.TerraformPlanActivity
+   *
+   * TerraformPlanActivity runs terraform plan against the provider (read-only,
+   * retryable).
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.TerraformPlanActivity
    */
   terraformPlanActivity: {
     methodKind: "unary";
@@ -402,7 +543,11 @@ export const DeploymentApi: GenService<{
     output: typeof Terraform_OutputSchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.DeploymentApi.TerraformApplyActivity
+   *
+   * TerraformApplyActivity runs terraform apply to provision resources
+   * (mutating; retried sparingly under the state lock).
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.TerraformApplyActivity
    */
   terraformApplyActivity: {
     methodKind: "unary";
@@ -410,7 +555,11 @@ export const DeploymentApi: GenService<{
     output: typeof Terraform_OutputSchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.DeploymentApi.TerraformDestroyActivity
+   *
+   * TerraformDestroyActivity runs terraform destroy to tear down all
+   * resources (idempotent/converges, retried to avoid leaks).
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.TerraformDestroyActivity
    */
   terraformDestroyActivity: {
     methodKind: "unary";

@@ -20,30 +20,83 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     refresh) — no rating DB record.
  */
 
-// PublicRatingEntry is one ranked benchmark, sensitive fields stripped.
+/*
+    PublicRatingEntry is one ranked benchmark, sensitive fields stripped.
+ */
 message PublicRatingEntry {
+    /*
+        rank is the 1-based position on the leaderboard.
+     */
     uint32 rank = 1;
+    /*
+        metric_value is the ranked metric's value for this entry.
+     */
     double metric_value = 2;
+    /*
+        metric_unit is the unit the metric_value is expressed in.
+     */
     string metric_unit = 3 [(validate.rules).string.max_len = 32];
+    /*
+        db_kind is the database engine the benchmark ran against.
+     */
     domain.Database.Kind db_kind = 4;
+    /*
+        workload_name is the workload the benchmark executed.
+     */
     string workload_name = 5 [(validate.rules).string.max_len = 255];
+    /*
+        stroppy_version is the stroppy engine version used.
+     */
     string stroppy_version = 6 [(validate.rules).string.max_len = 64];
+    /*
+        provider is the deployment/cloud provider the benchmark ran on.
+     */
     deployment.Provider provider = 7;
+    /*
+        topology_label is a human-readable summary of the cluster topology.
+     */
     string topology_label = 8 [(validate.rules).string.max_len = 128];
+    /*
+        node_count is the number of nodes in the topology.
+     */
     uint32 node_count = 9;
 }
 
+/*
+    GetPublicRatingRequest selects and pages the public leaderboard.
+ */
 message GetPublicRatingRequest {
-    // Reuses the authenticated filter shape (metric_key + facets).
+    /*
+        filter reuses the authenticated filter shape (metric_key + facets).
+     */
     RatingFilter filter = 1 [(validate.rules).message.required = true];
+    /*
+        limit caps returned entries (<= 500); 0 -> server default.
+     */
     uint32 limit = 2 [(validate.rules).uint32.lte = 500];
+    /*
+        page_token is the opaque cursor from a previous response.
+     */
     string page_token = 3;
 }
+/*
+    GetPublicRatingResponse returns one page of the public leaderboard.
+ */
 message GetPublicRatingResponse {
+    /*
+        entries are the ranked benchmarks for this page (sensitive fields
+        stripped).
+     */
     repeated PublicRatingEntry entries = 1;
+    /*
+        next_page_token is empty when there are no more rows.
+     */
     string next_page_token = 2;
 }
 
+/*
+    PublicRatingService serves the public, unauthenticated benchmark leaderboard.
+ */
 service PublicRatingService {
     /*
         GetPublicRating resolves the public leaderboard. PUBLIC: no bearer token.

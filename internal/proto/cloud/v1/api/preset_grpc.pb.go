@@ -30,9 +30,15 @@ const (
 // DatabasePresetServiceClient is the client API for DatabasePresetService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// DatabasePresetService is the tenant-scoped CRUD over database presets.
 type DatabasePresetServiceClient interface {
+	// CreateDatabasePreset creates a database preset. Not idempotent: each call
+	// mints a new preset.
 	CreateDatabasePreset(ctx context.Context, in *CreateDatabasePresetRequest, opts ...grpc.CallOption) (*CreateDatabasePresetResponse, error)
+	// GetDatabasePreset fetches one database preset by id. Read-only.
 	GetDatabasePreset(ctx context.Context, in *GetDatabasePresetRequest, opts ...grpc.CallOption) (*GetDatabasePresetResponse, error)
+	// ListDatabasePresets lists a tenant's database presets. Read-only.
 	ListDatabasePresets(ctx context.Context, in *ListDatabasePresetsRequest, opts ...grpc.CallOption) (*ListDatabasePresetsResponse, error)
 	// UpdateDatabasePreset is idempotent: a wholesale field set converges on retry.
 	// System presets (is_system) are read-only and rejected — clone instead.
@@ -116,9 +122,15 @@ func (c *databasePresetServiceClient) CloneDatabasePreset(ctx context.Context, i
 // DatabasePresetServiceServer is the server API for DatabasePresetService service.
 // All implementations must embed UnimplementedDatabasePresetServiceServer
 // for forward compatibility.
+//
+// DatabasePresetService is the tenant-scoped CRUD over database presets.
 type DatabasePresetServiceServer interface {
+	// CreateDatabasePreset creates a database preset. Not idempotent: each call
+	// mints a new preset.
 	CreateDatabasePreset(context.Context, *CreateDatabasePresetRequest) (*CreateDatabasePresetResponse, error)
+	// GetDatabasePreset fetches one database preset by id. Read-only.
 	GetDatabasePreset(context.Context, *GetDatabasePresetRequest) (*GetDatabasePresetResponse, error)
+	// ListDatabasePresets lists a tenant's database presets. Read-only.
 	ListDatabasePresets(context.Context, *ListDatabasePresetsRequest) (*ListDatabasePresetsResponse, error)
 	// UpdateDatabasePreset is idempotent: a wholesale field set converges on retry.
 	// System presets (is_system) are read-only and rejected — clone instead.
@@ -334,13 +346,25 @@ const (
 // WorkloadPresetServiceClient is the client API for WorkloadPresetService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// WorkloadPresetService is the tenant-scoped CRUD over workload presets.
 type WorkloadPresetServiceClient interface {
+	// CreateWorkloadPreset creates a workload preset. Not idempotent: each call
+	// mints a new preset.
 	CreateWorkloadPreset(ctx context.Context, in *CreateWorkloadPresetRequest, opts ...grpc.CallOption) (*CreateWorkloadPresetResponse, error)
+	// GetWorkloadPreset fetches one workload preset by id. Read-only.
 	GetWorkloadPreset(ctx context.Context, in *GetWorkloadPresetRequest, opts ...grpc.CallOption) (*GetWorkloadPresetResponse, error)
+	// ListWorkloadPresets lists a tenant's workload presets. Read-only.
 	ListWorkloadPresets(ctx context.Context, in *ListWorkloadPresetsRequest, opts ...grpc.CallOption) (*ListWorkloadPresetsResponse, error)
-	// System presets (is_system) are read-only and rejected — clone instead.
+	// UpdateWorkloadPreset is idempotent: a wholesale field set converges on
+	// retry. System presets (is_system) are read-only and rejected — clone
+	// instead.
 	UpdateWorkloadPreset(ctx context.Context, in *UpdateWorkloadPresetRequest, opts ...grpc.CallOption) (*UpdateWorkloadPresetResponse, error)
+	// DeleteWorkloadPreset is idempotent: deleting an absent preset is a no-op.
+	// System presets (is_system) are rejected.
 	DeleteWorkloadPreset(ctx context.Context, in *DeleteWorkloadPresetRequest, opts ...grpc.CallOption) (*DeleteWorkloadPresetResponse, error)
+	// CloneWorkloadPreset creates a new editable copy. Not idempotent: each call
+	// mints a new preset.
 	CloneWorkloadPreset(ctx context.Context, in *CloneWorkloadPresetRequest, opts ...grpc.CallOption) (*CloneWorkloadPresetResponse, error)
 }
 
@@ -415,13 +439,25 @@ func (c *workloadPresetServiceClient) CloneWorkloadPreset(ctx context.Context, i
 // WorkloadPresetServiceServer is the server API for WorkloadPresetService service.
 // All implementations must embed UnimplementedWorkloadPresetServiceServer
 // for forward compatibility.
+//
+// WorkloadPresetService is the tenant-scoped CRUD over workload presets.
 type WorkloadPresetServiceServer interface {
+	// CreateWorkloadPreset creates a workload preset. Not idempotent: each call
+	// mints a new preset.
 	CreateWorkloadPreset(context.Context, *CreateWorkloadPresetRequest) (*CreateWorkloadPresetResponse, error)
+	// GetWorkloadPreset fetches one workload preset by id. Read-only.
 	GetWorkloadPreset(context.Context, *GetWorkloadPresetRequest) (*GetWorkloadPresetResponse, error)
+	// ListWorkloadPresets lists a tenant's workload presets. Read-only.
 	ListWorkloadPresets(context.Context, *ListWorkloadPresetsRequest) (*ListWorkloadPresetsResponse, error)
-	// System presets (is_system) are read-only and rejected — clone instead.
+	// UpdateWorkloadPreset is idempotent: a wholesale field set converges on
+	// retry. System presets (is_system) are read-only and rejected — clone
+	// instead.
 	UpdateWorkloadPreset(context.Context, *UpdateWorkloadPresetRequest) (*UpdateWorkloadPresetResponse, error)
+	// DeleteWorkloadPreset is idempotent: deleting an absent preset is a no-op.
+	// System presets (is_system) are rejected.
 	DeleteWorkloadPreset(context.Context, *DeleteWorkloadPresetRequest) (*DeleteWorkloadPresetResponse, error)
+	// CloneWorkloadPreset creates a new editable copy. Not idempotent: each call
+	// mints a new preset.
 	CloneWorkloadPreset(context.Context, *CloneWorkloadPresetRequest) (*CloneWorkloadPresetResponse, error)
 	mustEmbedUnimplementedWorkloadPresetServiceServer()
 }
@@ -628,13 +664,24 @@ const (
 // TestPresetServiceClient is the client API for TestPresetService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// TestPresetService is the tenant-scoped CRUD over test presets.
 type TestPresetServiceClient interface {
+	// CreateTestPreset creates a test preset. Not idempotent: each call mints a
+	// new preset.
 	CreateTestPreset(ctx context.Context, in *CreateTestPresetRequest, opts ...grpc.CallOption) (*CreateTestPresetResponse, error)
+	// GetTestPreset fetches one test preset by id. Read-only.
 	GetTestPreset(ctx context.Context, in *GetTestPresetRequest, opts ...grpc.CallOption) (*GetTestPresetResponse, error)
+	// ListTestPresets lists a tenant's test presets. Read-only.
 	ListTestPresets(ctx context.Context, in *ListTestPresetsRequest, opts ...grpc.CallOption) (*ListTestPresetsResponse, error)
+	// UpdateTestPreset is idempotent: a wholesale field set converges on retry.
 	// System presets (is_system) are read-only and rejected — clone instead.
 	UpdateTestPreset(ctx context.Context, in *UpdateTestPresetRequest, opts ...grpc.CallOption) (*UpdateTestPresetResponse, error)
+	// DeleteTestPreset is idempotent: deleting an absent preset is a no-op.
+	// System presets (is_system) are rejected.
 	DeleteTestPreset(ctx context.Context, in *DeleteTestPresetRequest, opts ...grpc.CallOption) (*DeleteTestPresetResponse, error)
+	// CloneTestPreset creates a new editable copy. Not idempotent: each call
+	// mints a new preset.
 	CloneTestPreset(ctx context.Context, in *CloneTestPresetRequest, opts ...grpc.CallOption) (*CloneTestPresetResponse, error)
 }
 
@@ -709,13 +756,24 @@ func (c *testPresetServiceClient) CloneTestPreset(ctx context.Context, in *Clone
 // TestPresetServiceServer is the server API for TestPresetService service.
 // All implementations must embed UnimplementedTestPresetServiceServer
 // for forward compatibility.
+//
+// TestPresetService is the tenant-scoped CRUD over test presets.
 type TestPresetServiceServer interface {
+	// CreateTestPreset creates a test preset. Not idempotent: each call mints a
+	// new preset.
 	CreateTestPreset(context.Context, *CreateTestPresetRequest) (*CreateTestPresetResponse, error)
+	// GetTestPreset fetches one test preset by id. Read-only.
 	GetTestPreset(context.Context, *GetTestPresetRequest) (*GetTestPresetResponse, error)
+	// ListTestPresets lists a tenant's test presets. Read-only.
 	ListTestPresets(context.Context, *ListTestPresetsRequest) (*ListTestPresetsResponse, error)
+	// UpdateTestPreset is idempotent: a wholesale field set converges on retry.
 	// System presets (is_system) are read-only and rejected — clone instead.
 	UpdateTestPreset(context.Context, *UpdateTestPresetRequest) (*UpdateTestPresetResponse, error)
+	// DeleteTestPreset is idempotent: deleting an absent preset is a no-op.
+	// System presets (is_system) are rejected.
 	DeleteTestPreset(context.Context, *DeleteTestPresetRequest) (*DeleteTestPresetResponse, error)
+	// CloneTestPreset creates a new editable copy. Not idempotent: each call
+	// mints a new preset.
 	CloneTestPreset(context.Context, *CloneTestPresetRequest) (*CloneTestPresetResponse, error)
 	mustEmbedUnimplementedTestPresetServiceServer()
 }

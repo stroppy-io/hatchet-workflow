@@ -21,7 +21,14 @@ enum Provider {
     PROVIDER_YANDEX = 2;
 }
 
+/*
+    ProviderSettings binds a chosen Provider to its baked, schema-backed
+    backend configuration. provider selects the backend and, with it, the
+    schema that settings is validated against.
+ */
 message ProviderSettings {
+    /* provider selects the deployment backend these settings configure. */
     Provider provider = 1;
+    /* settings is the sealed, schema-backed configuration for the provider. */
     schemapb.Baked settings = 2;
 }

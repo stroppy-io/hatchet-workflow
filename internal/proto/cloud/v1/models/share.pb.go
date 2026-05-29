@@ -28,12 +28,16 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Kind names which kind of run the share targets.
 type ShareRecord_Target_Kind int32
 
 const (
+	// KIND_UNSPECIFIED is the unset default (rejected).
 	ShareRecord_Target_KIND_UNSPECIFIED ShareRecord_Target_Kind = 0
-	ShareRecord_Target_KIND_TEST_RUN    ShareRecord_Target_Kind = 1
-	ShareRecord_Target_KIND_SUITE_RUN   ShareRecord_Target_Kind = 2
+	// KIND_TEST_RUN targets a single TestRunRecord.
+	ShareRecord_Target_KIND_TEST_RUN ShareRecord_Target_Kind = 1
+	// KIND_SUITE_RUN targets a SuiteRunRecord.
+	ShareRecord_Target_KIND_SUITE_RUN ShareRecord_Target_Kind = 2
 )
 
 // Enum value maps for ShareRecord_Target_Kind.
@@ -91,19 +95,23 @@ func (ShareRecord_Target_Kind) EnumDescriptor() ([]byte, []int) {
 // info + our metrics — never the baked spec, params, secrets, raw logs, shell, or
 // tenant data. Revocable + (by default) time-limited.
 type ShareRecord struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	Entity *common.Entity         `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	// What is shared.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entity is the storage envelope (id, tenant_id, name, timings).
+	Entity *common.Entity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	// target identifies what is shared (which run this link points at).
 	Target *ShareRecord_Target `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`
-	// Public, unguessable access token (carried in the share URL).
+	// token is the public, unguessable access token carried in the share URL
+	// (>=128 bit of entropy).
 	Token string `protobuf:"bytes,3,opt,name=token,proto3" json:"token,omitempty"`
-	// When the share stops working. Unset = NEVER expires — insecure and it keeps
-	// the background refresh running indefinitely; only allow with an explicit
-	// warning. Default when creating: 1 week.
+	// expires_at is when the share stops working. Unset = NEVER expires —
+	// insecure and it keeps the background refresh running indefinitely; only
+	// allow with an explicit warning. Default when creating: 1 week.
 	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	// Manually revoked: the public endpoint returns gone regardless of expiry.
+	// revoked, when true, marks the share as manually revoked: the public
+	// endpoint returns gone regardless of expiry.
 	Revoked bool `protobuf:"varint,5,opt,name=revoked,proto3" json:"revoked,omitempty"`
-	// The frozen, background-refreshed limited view served publicly.
+	// snapshot is the frozen, background-refreshed limited view served
+	// publicly.
 	Snapshot      *ShareRecord_Snapshot `protobuf:"bytes,6,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -184,21 +192,34 @@ func (x *ShareRecord) GetSnapshot() *ShareRecord_Snapshot {
 // SharedTestRun is the LIMITED public projection of a test run: basic info + our
 // metrics (NOT Grafana). No spec/params/secrets/logs.
 type SharedTestRun struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Name           string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Status         common.Status          `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
-	DbKind         domain.Database_Kind   `protobuf:"varint,3,opt,name=db_kind,json=dbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kind,omitempty"`
-	DbName         string                 `protobuf:"bytes,4,opt,name=db_name,json=dbName,proto3" json:"db_name,omitempty"` // preset display label (safe)
-	WorkloadName   string                 `protobuf:"bytes,5,opt,name=workload_name,json=workloadName,proto3" json:"workload_name,omitempty"`
-	StroppyVersion string                 `protobuf:"bytes,6,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
-	Provider       deployment.Provider    `protobuf:"varint,7,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	TopologyLabel  string                 `protobuf:"bytes,8,opt,name=topology_label,json=topologyLabel,proto3" json:"topology_label,omitempty"`
-	NodeCount      uint32                 `protobuf:"varint,9,opt,name=node_count,json=nodeCount,proto3" json:"node_count,omitempty"`
-	StartedAt      *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
-	FinishedAt     *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
-	Duration       *durationpb.Duration   `protobuf:"bytes,12,opt,name=duration,proto3" json:"duration,omitempty"`
-	ProgressPct    uint32                 `protobuf:"varint,13,opt,name=progress_pct,json=progressPct,proto3" json:"progress_pct,omitempty"`
-	// Our computed metrics snapshot (NOT a Grafana link).
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// name is the run's display name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// status is the run's lifecycle status.
+	Status common.Status `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
+	// db_kind is the database engine the run exercised.
+	DbKind domain.Database_Kind `protobuf:"varint,3,opt,name=db_kind,json=dbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kind,omitempty"`
+	// db_name is the preset display label for the database (safe to expose).
+	DbName string `protobuf:"bytes,4,opt,name=db_name,json=dbName,proto3" json:"db_name,omitempty"`
+	// workload_name is the display name of the workload.
+	WorkloadName string `protobuf:"bytes,5,opt,name=workload_name,json=workloadName,proto3" json:"workload_name,omitempty"`
+	// stroppy_version is the stroppy build that ran the workload.
+	StroppyVersion string `protobuf:"bytes,6,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
+	// provider is the deployment provider the run ran on.
+	Provider deployment.Provider `protobuf:"varint,7,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	// topology_label is the human-readable topology summary.
+	TopologyLabel string `protobuf:"bytes,8,opt,name=topology_label,json=topologyLabel,proto3" json:"topology_label,omitempty"`
+	// node_count is the number of nodes in the topology.
+	NodeCount uint32 `protobuf:"varint,9,opt,name=node_count,json=nodeCount,proto3" json:"node_count,omitempty"`
+	// started_at is when the run started.
+	StartedAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// finished_at is when the run finished (unset while running).
+	FinishedAt *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
+	// duration is the run's elapsed time.
+	Duration *durationpb.Duration `protobuf:"bytes,12,opt,name=duration,proto3" json:"duration,omitempty"`
+	// progress_pct is the run's progress as a percentage (0..100).
+	ProgressPct uint32 `protobuf:"varint,13,opt,name=progress_pct,json=progressPct,proto3" json:"progress_pct,omitempty"`
+	// metrics is our computed metrics snapshot (NOT a Grafana link).
 	Metrics       *monitor.RunMetrics `protobuf:"bytes,14,opt,name=metrics,proto3" json:"metrics,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -335,20 +356,32 @@ func (x *SharedTestRun) GetMetrics() *monitor.RunMetrics {
 // SharedSuiteRun is the LIMITED public projection of a suite run: aggregates +
 // the per-test limited views (so an interesting matrix can be shown off).
 type SharedSuiteRun struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	Name        string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Status      common.Status          `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
-	Provider    deployment.Provider    `protobuf:"varint,3,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	DbKinds     []domain.Database_Kind `protobuf:"varint,4,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
-	Total       uint32                 `protobuf:"varint,5,opt,name=total,proto3" json:"total,omitempty"`
-	Completed   uint32                 `protobuf:"varint,6,opt,name=completed,proto3" json:"completed,omitempty"`
-	Failed      uint32                 `protobuf:"varint,7,opt,name=failed,proto3" json:"failed,omitempty"`
-	Running     uint32                 `protobuf:"varint,8,opt,name=running,proto3" json:"running,omitempty"`
-	ProgressPct uint32                 `protobuf:"varint,9,opt,name=progress_pct,json=progressPct,proto3" json:"progress_pct,omitempty"`
-	StartedAt   *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
-	FinishedAt  *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
-	Duration    *durationpb.Duration   `protobuf:"bytes,12,opt,name=duration,proto3" json:"duration,omitempty"`
-	// Limited child test views.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// name is the suite run's display name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// status is the suite run's lifecycle status.
+	Status common.Status `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
+	// provider is the single deployment provider the whole suite ran on.
+	Provider deployment.Provider `protobuf:"varint,3,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	// db_kinds are the distinct database engines exercised across the suite.
+	DbKinds []domain.Database_Kind `protobuf:"varint,4,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
+	// total is the total number of child runs.
+	Total uint32 `protobuf:"varint,5,opt,name=total,proto3" json:"total,omitempty"`
+	// completed is the number of child runs that finished successfully.
+	Completed uint32 `protobuf:"varint,6,opt,name=completed,proto3" json:"completed,omitempty"`
+	// failed is the number of child runs that failed.
+	Failed uint32 `protobuf:"varint,7,opt,name=failed,proto3" json:"failed,omitempty"`
+	// running is the number of child runs currently in progress.
+	Running uint32 `protobuf:"varint,8,opt,name=running,proto3" json:"running,omitempty"`
+	// progress_pct is the aggregate suite progress as a percentage (0..100).
+	ProgressPct uint32 `protobuf:"varint,9,opt,name=progress_pct,json=progressPct,proto3" json:"progress_pct,omitempty"`
+	// started_at is when the suite run started.
+	StartedAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// finished_at is when the suite run finished (unset while running).
+	FinishedAt *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
+	// duration is the suite run's elapsed time.
+	Duration *durationpb.Duration `protobuf:"bytes,12,opt,name=duration,proto3" json:"duration,omitempty"`
+	// tests are the limited child test views.
 	Tests         []*SharedTestRun `protobuf:"bytes,13,rep,name=tests,proto3" json:"tests,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -477,9 +510,11 @@ func (x *SharedSuiteRun) GetTests() []*SharedTestRun {
 
 // Target picks the run this share points at.
 type ShareRecord_Target struct {
-	state protoimpl.MessageState  `protogen:"open.v1"`
-	Kind  ShareRecord_Target_Kind `protobuf:"varint,1,opt,name=kind,proto3,enum=cloud.v1.models.ShareRecord_Target_Kind" json:"kind,omitempty"`
-	// Id of the TestRunRecord / SuiteRunRecord.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// kind selects whether id refers to a test run or a suite run. Must be
+	// a defined, non-zero value.
+	Kind ShareRecord_Target_Kind `protobuf:"varint,1,opt,name=kind,proto3,enum=cloud.v1.models.ShareRecord_Target_Kind" json:"kind,omitempty"`
+	// id is the id of the targeted TestRunRecord / SuiteRunRecord.
 	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -532,8 +567,11 @@ func (x *ShareRecord_Target) GetId() string {
 // Snapshot is the limited public view, refreshed in the background.
 type ShareRecord_Snapshot struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// When the background job last refreshed this snapshot.
+	// captured_at is when the background job last refreshed this snapshot.
 	CapturedAt *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=captured_at,json=capturedAt,proto3" json:"captured_at,omitempty"`
+	// view holds the limited projection matching the target kind: either a
+	// test-run view or a suite-run view.
+	//
 	// Types that are valid to be assigned to View:
 	//
 	//	*ShareRecord_Snapshot_TestRun
@@ -610,10 +648,12 @@ type isShareRecord_Snapshot_View interface {
 }
 
 type ShareRecord_Snapshot_TestRun struct {
+	// test_run is the limited projection for a single test run.
 	TestRun *SharedTestRun `protobuf:"bytes,2,opt,name=test_run,json=testRun,proto3,oneof"`
 }
 
 type ShareRecord_Snapshot_SuiteRun struct {
+	// suite_run is the limited projection for a suite run.
 	SuiteRun *SharedSuiteRun `protobuf:"bytes,3,opt,name=suite_run,json=suiteRun,proto3,oneof"`
 }
 

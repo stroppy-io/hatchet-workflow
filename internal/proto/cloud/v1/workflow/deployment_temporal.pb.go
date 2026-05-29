@@ -8,18 +8,13 @@
 package workflow
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	convert "github.com/cludden/protoc-gen-go-temporal/pkg/convert"
 	helpers "github.com/cludden/protoc-gen-go-temporal/pkg/helpers"
-	gohomedir "github.com/mitchellh/go-homedir"
-	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	scheme "github.com/cludden/protoc-gen-go-temporal/pkg/scheme"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
-	v2 "github.com/urfave/cli/v2"
 	enumsv1 "go.temporal.io/api/enums/v1"
 	activity "go.temporal.io/sdk/activity"
 	client "go.temporal.io/sdk/client"
@@ -28,11 +23,8 @@ import (
 	testsuite "go.temporal.io/sdk/testsuite"
 	worker "go.temporal.io/sdk/worker"
 	workflow "go.temporal.io/sdk/workflow"
-	protojson "google.golang.org/protobuf/encoding/protojson"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	"log/slog"
-	"os"
-	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -63,7 +55,8 @@ const (
 
 // DeploymentServiceClient describes a client for a(n) cloud.v1.workflow.DeploymentService worker
 type DeploymentServiceClient interface {
-	// CalculateQuotasWorkflow executes a(n) CalculateQuotasWorkflow workflow and blocks until error or response received
+	// CalculateQuotasWorkflow computes resource quota requests from a topology
+	// (pure computation, retryable).
 	CalculateQuotasWorkflow(ctx context.Context, req *CalculateQuotasWorkflowRequest, opts ...*CalculateQuotasWorkflowOptions) (*CalculateQuotasWorkflowResponse, error)
 
 	// CalculateQuotasWorkflowAsync starts a(n) CalculateQuotasWorkflow workflow and returns a handle to the workflow run
@@ -72,7 +65,8 @@ type DeploymentServiceClient interface {
 	// GetCalculateQuotasWorkflow retrieves a handle to an existing CalculateQuotasWorkflow workflow execution
 	GetCalculateQuotasWorkflow(ctx context.Context, workflowID string, runID string) CalculateQuotasWorkflowRun
 
-	// ProcessDeploymentWorkflow executes a(n) ProcessDeploymentWorkflow workflow and blocks until error or response received
+	// ProcessDeploymentWorkflow provisions a topology end to end; always a
+	// child of TestWorkflow and never auto-retried as a whole.
 	ProcessDeploymentWorkflow(ctx context.Context, req *ProcessDeploymentWorkflowRequest, opts ...*ProcessDeploymentWorkflowOptions) (*ProcessDeploymentWorkflowResponse, error)
 
 	// ProcessDeploymentWorkflowAsync starts a(n) ProcessDeploymentWorkflow workflow and returns a handle to the workflow run
@@ -81,7 +75,8 @@ type DeploymentServiceClient interface {
 	// GetProcessDeploymentWorkflow retrieves a handle to an existing ProcessDeploymentWorkflow workflow execution
 	GetProcessDeploymentWorkflow(ctx context.Context, workflowID string, runID string) ProcessDeploymentWorkflowRun
 
-	// RenderDockerInputWorkflow executes a(n) RenderDockerInputWorkflow workflow and blocks until error or response received
+	// RenderDockerInputWorkflow renders a topology into Docker compose input
+	// (pure render, retryable).
 	RenderDockerInputWorkflow(ctx context.Context, req *topology.Topology, opts ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error)
 
 	// RenderDockerInputWorkflowAsync starts a(n) RenderDockerInputWorkflow workflow and returns a handle to the workflow run
@@ -90,7 +85,8 @@ type DeploymentServiceClient interface {
 	// GetRenderDockerInputWorkflow retrieves a handle to an existing RenderDockerInputWorkflow workflow execution
 	GetRenderDockerInputWorkflow(ctx context.Context, workflowID string, runID string) RenderDockerInputWorkflowRun
 
-	// RenderTerraformVariablesWorkflow executes a(n) RenderTerraformVariablesWorkflow workflow and blocks until error or response received
+	// RenderTerraformVariablesWorkflow renders a topology into Terraform
+	// variables input (pure render, retryable).
 	RenderTerraformVariablesWorkflow(ctx context.Context, req *topology.Topology, opts ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error)
 
 	// RenderTerraformVariablesWorkflowAsync starts a(n) RenderTerraformVariablesWorkflow workflow and returns a handle to the workflow run
@@ -171,7 +167,8 @@ func (opts *deploymentServiceClientOptions) getLogger() *slog.Logger {
 	return slog.Default()
 }
 
-// cloud.v1.workflow.DeploymentService.CalculateQuotasWorkflow executes a CalculateQuotasWorkflow workflow and blocks until error or response received
+// CalculateQuotasWorkflow computes resource quota requests from a topology
+// (pure computation, retryable).
 func (c *deploymentServiceClient) CalculateQuotasWorkflow(ctx context.Context, req *CalculateQuotasWorkflowRequest, options ...*CalculateQuotasWorkflowOptions) (*CalculateQuotasWorkflowResponse, error) {
 	run, err := c.CalculateQuotasWorkflowAsync(ctx, req, options...)
 	if err != nil {
@@ -180,7 +177,8 @@ func (c *deploymentServiceClient) CalculateQuotasWorkflow(ctx context.Context, r
 	return run.Get(ctx)
 }
 
-// CalculateQuotasWorkflowAsync starts a(n) CalculateQuotasWorkflow workflow and returns a handle to the workflow run
+// CalculateQuotasWorkflow computes resource quota requests from a topology
+// (pure computation, retryable).
 func (c *deploymentServiceClient) CalculateQuotasWorkflowAsync(ctx context.Context, req *CalculateQuotasWorkflowRequest, options ...*CalculateQuotasWorkflowOptions) (CalculateQuotasWorkflowRun, error) {
 	var o *CalculateQuotasWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
@@ -213,7 +211,8 @@ func (c *deploymentServiceClient) GetCalculateQuotasWorkflow(ctx context.Context
 	}
 }
 
-// cloud.v1.workflow.DeploymentService.ProcessDeploymentWorkflow executes a ProcessDeploymentWorkflow workflow and blocks until error or response received
+// ProcessDeploymentWorkflow provisions a topology end to end; always a
+// child of TestWorkflow and never auto-retried as a whole.
 func (c *deploymentServiceClient) ProcessDeploymentWorkflow(ctx context.Context, req *ProcessDeploymentWorkflowRequest, options ...*ProcessDeploymentWorkflowOptions) (*ProcessDeploymentWorkflowResponse, error) {
 	run, err := c.ProcessDeploymentWorkflowAsync(ctx, req, options...)
 	if err != nil {
@@ -222,7 +221,8 @@ func (c *deploymentServiceClient) ProcessDeploymentWorkflow(ctx context.Context,
 	return run.Get(ctx)
 }
 
-// ProcessDeploymentWorkflowAsync starts a(n) ProcessDeploymentWorkflow workflow and returns a handle to the workflow run
+// ProcessDeploymentWorkflow provisions a topology end to end; always a
+// child of TestWorkflow and never auto-retried as a whole.
 func (c *deploymentServiceClient) ProcessDeploymentWorkflowAsync(ctx context.Context, req *ProcessDeploymentWorkflowRequest, options ...*ProcessDeploymentWorkflowOptions) (ProcessDeploymentWorkflowRun, error) {
 	var o *ProcessDeploymentWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
@@ -255,7 +255,8 @@ func (c *deploymentServiceClient) GetProcessDeploymentWorkflow(ctx context.Conte
 	}
 }
 
-// cloud.v1.workflow.DeploymentService.RenderDockerInputWorkflow executes a RenderDockerInputWorkflow workflow and blocks until error or response received
+// RenderDockerInputWorkflow renders a topology into Docker compose input
+// (pure render, retryable).
 func (c *deploymentServiceClient) RenderDockerInputWorkflow(ctx context.Context, req *topology.Topology, options ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error) {
 	run, err := c.RenderDockerInputWorkflowAsync(ctx, req, options...)
 	if err != nil {
@@ -264,7 +265,8 @@ func (c *deploymentServiceClient) RenderDockerInputWorkflow(ctx context.Context,
 	return run.Get(ctx)
 }
 
-// RenderDockerInputWorkflowAsync starts a(n) RenderDockerInputWorkflow workflow and returns a handle to the workflow run
+// RenderDockerInputWorkflow renders a topology into Docker compose input
+// (pure render, retryable).
 func (c *deploymentServiceClient) RenderDockerInputWorkflowAsync(ctx context.Context, req *topology.Topology, options ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error) {
 	var o *RenderDockerInputWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
@@ -297,7 +299,8 @@ func (c *deploymentServiceClient) GetRenderDockerInputWorkflow(ctx context.Conte
 	}
 }
 
-// cloud.v1.workflow.DeploymentService.RenderTerraformVariablesWorkflow executes a RenderTerraformVariablesWorkflow workflow and blocks until error or response received
+// RenderTerraformVariablesWorkflow renders a topology into Terraform
+// variables input (pure render, retryable).
 func (c *deploymentServiceClient) RenderTerraformVariablesWorkflow(ctx context.Context, req *topology.Topology, options ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error) {
 	run, err := c.RenderTerraformVariablesWorkflowAsync(ctx, req, options...)
 	if err != nil {
@@ -306,7 +309,8 @@ func (c *deploymentServiceClient) RenderTerraformVariablesWorkflow(ctx context.C
 	return run.Get(ctx)
 }
 
-// RenderTerraformVariablesWorkflowAsync starts a(n) RenderTerraformVariablesWorkflow workflow and returns a handle to the workflow run
+// RenderTerraformVariablesWorkflow renders a topology into Terraform
+// variables input (pure render, retryable).
 func (c *deploymentServiceClient) RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *topology.Topology, options ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error) {
 	var o *RenderTerraformVariablesWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
@@ -1155,13 +1159,17 @@ func (r *renderTerraformVariablesWorkflowRun) Terminate(ctx context.Context, rea
 var (
 	// deploymentServiceRegistrationMutex is a mutex for registering cloud.v1.workflow.DeploymentService workflows
 	deploymentServiceRegistrationMutex sync.Mutex
-	// CalculateQuotasWorkflowFunction implements a "CalculateQuotasWorkflow" workflow
+	// CalculateQuotasWorkflow computes resource quota requests from a topology
+	// (pure computation, retryable).
 	CalculateQuotasWorkflowFunction func(workflow.Context, *CalculateQuotasWorkflowRequest) (*CalculateQuotasWorkflowResponse, error)
-	// ProcessDeploymentWorkflowFunction implements a "ProcessDeploymentWorkflow" workflow
+	// ProcessDeploymentWorkflow provisions a topology end to end; always a
+	// child of TestWorkflow and never auto-retried as a whole.
 	ProcessDeploymentWorkflowFunction func(workflow.Context, *ProcessDeploymentWorkflowRequest) (*ProcessDeploymentWorkflowResponse, error)
-	// RenderDockerInputWorkflowFunction implements a "RenderDockerInputWorkflow" workflow
+	// RenderDockerInputWorkflow renders a topology into Docker compose input
+	// (pure render, retryable).
 	RenderDockerInputWorkflowFunction func(workflow.Context, *topology.Topology) (*deployment.Docker_Input, error)
-	// RenderTerraformVariablesWorkflowFunction implements a "RenderTerraformVariablesWorkflow" workflow
+	// RenderTerraformVariablesWorkflow renders a topology into Terraform
+	// variables input (pure render, retryable).
 	RenderTerraformVariablesWorkflowFunction func(workflow.Context, *topology.Topology) (*deployment.Terraform_Input, error)
 )
 
@@ -1169,13 +1177,17 @@ var (
 type (
 	// DeploymentServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
 	DeploymentServiceWorkflowFunctions interface {
-		// CalculateQuotasWorkflow executes a "CalculateQuotasWorkflow" workflow inline
+		// CalculateQuotasWorkflow computes resource quota requests from a topology
+		// (pure computation, retryable).
 		CalculateQuotasWorkflow(workflow.Context, *CalculateQuotasWorkflowRequest) (*CalculateQuotasWorkflowResponse, error)
-		// ProcessDeploymentWorkflow executes a "ProcessDeploymentWorkflow" workflow inline
+		// ProcessDeploymentWorkflow provisions a topology end to end; always a
+		// child of TestWorkflow and never auto-retried as a whole.
 		ProcessDeploymentWorkflow(workflow.Context, *ProcessDeploymentWorkflowRequest) (*ProcessDeploymentWorkflowResponse, error)
-		// RenderDockerInputWorkflow executes a "RenderDockerInputWorkflow" workflow inline
+		// RenderDockerInputWorkflow renders a topology into Docker compose input
+		// (pure render, retryable).
 		RenderDockerInputWorkflow(workflow.Context, *topology.Topology) (*deployment.Docker_Input, error)
-		// RenderTerraformVariablesWorkflow executes a "RenderTerraformVariablesWorkflow" workflow inline
+		// RenderTerraformVariablesWorkflow renders a topology into Terraform
+		// variables input (pure render, retryable).
 		RenderTerraformVariablesWorkflow(workflow.Context, *topology.Topology) (*deployment.Terraform_Input, error)
 	}
 	// deploymentServiceWorkflowFunctions provides an internal DeploymentServiceWorkflowFunctions implementation
@@ -1186,7 +1198,8 @@ func NewDeploymentServiceWorkflowFunctions() DeploymentServiceWorkflowFunctions 
 	return &deploymentServiceWorkflowFunctions{}
 }
 
-// CalculateQuotasWorkflow executes a "CalculateQuotasWorkflow" workflow inline
+// CalculateQuotasWorkflow computes resource quota requests from a topology
+// (pure computation, retryable).
 func (f *deploymentServiceWorkflowFunctions) CalculateQuotasWorkflow(ctx workflow.Context, req *CalculateQuotasWorkflowRequest) (*CalculateQuotasWorkflowResponse, error) {
 	if CalculateQuotasWorkflowFunction == nil {
 		return nil, errors.New("CalculateQuotasWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterCalculateQuotasWorkflowWorkflow")
@@ -1194,7 +1207,8 @@ func (f *deploymentServiceWorkflowFunctions) CalculateQuotasWorkflow(ctx workflo
 	return CalculateQuotasWorkflowFunction(ctx, req)
 }
 
-// ProcessDeploymentWorkflow executes a "ProcessDeploymentWorkflow" workflow inline
+// ProcessDeploymentWorkflow provisions a topology end to end; always a
+// child of TestWorkflow and never auto-retried as a whole.
 func (f *deploymentServiceWorkflowFunctions) ProcessDeploymentWorkflow(ctx workflow.Context, req *ProcessDeploymentWorkflowRequest) (*ProcessDeploymentWorkflowResponse, error) {
 	if ProcessDeploymentWorkflowFunction == nil {
 		return nil, errors.New("ProcessDeploymentWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterProcessDeploymentWorkflowWorkflow")
@@ -1202,7 +1216,8 @@ func (f *deploymentServiceWorkflowFunctions) ProcessDeploymentWorkflow(ctx workf
 	return ProcessDeploymentWorkflowFunction(ctx, req)
 }
 
-// RenderDockerInputWorkflow executes a "RenderDockerInputWorkflow" workflow inline
+// RenderDockerInputWorkflow renders a topology into Docker compose input
+// (pure render, retryable).
 func (f *deploymentServiceWorkflowFunctions) RenderDockerInputWorkflow(ctx workflow.Context, req *topology.Topology) (*deployment.Docker_Input, error) {
 	if RenderDockerInputWorkflowFunction == nil {
 		return nil, errors.New("RenderDockerInputWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterRenderDockerInputWorkflowWorkflow")
@@ -1210,7 +1225,8 @@ func (f *deploymentServiceWorkflowFunctions) RenderDockerInputWorkflow(ctx workf
 	return RenderDockerInputWorkflowFunction(ctx, req)
 }
 
-// RenderTerraformVariablesWorkflow executes a "RenderTerraformVariablesWorkflow" workflow inline
+// RenderTerraformVariablesWorkflow renders a topology into Terraform
+// variables input (pure render, retryable).
 func (f *deploymentServiceWorkflowFunctions) RenderTerraformVariablesWorkflow(ctx workflow.Context, req *topology.Topology) (*deployment.Terraform_Input, error) {
 	if RenderTerraformVariablesWorkflowFunction == nil {
 		return nil, errors.New("RenderTerraformVariablesWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterRenderTerraformVariablesWorkflowWorkflow")
@@ -1220,16 +1236,20 @@ func (f *deploymentServiceWorkflowFunctions) RenderTerraformVariablesWorkflow(ct
 
 // DeploymentServiceWorkflows provides methods for initializing new cloud.v1.workflow.DeploymentService workflow values
 type DeploymentServiceWorkflows interface {
-	// CalculateQuotasWorkflow initializes a new a(n) CalculateQuotasWorkflowWorkflow implementation
+	// CalculateQuotasWorkflow computes resource quota requests from a topology
+	// (pure computation, retryable).
 	CalculateQuotasWorkflow(ctx workflow.Context, input *CalculateQuotasWorkflowWorkflowInput) (CalculateQuotasWorkflowWorkflow, error)
 
-	// ProcessDeploymentWorkflow initializes a new a(n) ProcessDeploymentWorkflowWorkflow implementation
+	// ProcessDeploymentWorkflow provisions a topology end to end; always a
+	// child of TestWorkflow and never auto-retried as a whole.
 	ProcessDeploymentWorkflow(ctx workflow.Context, input *ProcessDeploymentWorkflowWorkflowInput) (ProcessDeploymentWorkflowWorkflow, error)
 
-	// RenderDockerInputWorkflow initializes a new a(n) RenderDockerInputWorkflowWorkflow implementation
+	// RenderDockerInputWorkflow renders a topology into Docker compose input
+	// (pure render, retryable).
 	RenderDockerInputWorkflow(ctx workflow.Context, input *RenderDockerInputWorkflowWorkflowInput) (RenderDockerInputWorkflowWorkflow, error)
 
-	// RenderTerraformVariablesWorkflow initializes a new a(n) RenderTerraformVariablesWorkflowWorkflow implementation
+	// RenderTerraformVariablesWorkflow renders a topology into Terraform
+	// variables input (pure render, retryable).
 	RenderTerraformVariablesWorkflow(ctx workflow.Context, input *RenderTerraformVariablesWorkflowWorkflowInput) (RenderTerraformVariablesWorkflowWorkflow, error)
 }
 
@@ -1285,13 +1305,15 @@ func (i *CalculateQuotasWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Contex
 	return nil, workflow.NewContinueAsNewError(ctx, CalculateQuotasWorkflowWorkflowName, next)
 }
 
-// CalculateQuotasWorkflowWorkflow describes a(n) CalculateQuotasWorkflow workflow implementation
+// CalculateQuotasWorkflow computes resource quota requests from a topology
+// (pure computation, retryable).
 type CalculateQuotasWorkflowWorkflow interface {
 	// Execute defines the entrypoint to a(n) CalculateQuotasWorkflow workflow
 	Execute(ctx workflow.Context) (*CalculateQuotasWorkflowResponse, error)
 }
 
-// CalculateQuotasWorkflowChild executes a child CalculateQuotasWorkflow workflow and blocks until error or response received
+// CalculateQuotasWorkflow computes resource quota requests from a topology
+// (pure computation, retryable).
 func CalculateQuotasWorkflowChild(ctx workflow.Context, req *CalculateQuotasWorkflowRequest, options ...*CalculateQuotasWorkflowChildOptions) (*CalculateQuotasWorkflowResponse, error) {
 	childRun, err := CalculateQuotasWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
@@ -1300,7 +1322,8 @@ func CalculateQuotasWorkflowChild(ctx workflow.Context, req *CalculateQuotasWork
 	return childRun.Get(ctx)
 }
 
-// CalculateQuotasWorkflowChildAsync starts a child CalculateQuotasWorkflow workflow and returns a handle to the child workflow run
+// CalculateQuotasWorkflow computes resource quota requests from a topology
+// (pure computation, retryable).
 func CalculateQuotasWorkflowChildAsync(ctx workflow.Context, req *CalculateQuotasWorkflowRequest, options ...*CalculateQuotasWorkflowChildOptions) (*CalculateQuotasWorkflowChildRun, error) {
 	var o *CalculateQuotasWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
@@ -1551,13 +1574,15 @@ func (i *ProcessDeploymentWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Cont
 	return nil, workflow.NewContinueAsNewError(ctx, ProcessDeploymentWorkflowWorkflowName, next)
 }
 
-// ProcessDeploymentWorkflowWorkflow describes a(n) ProcessDeploymentWorkflow workflow implementation
+// ProcessDeploymentWorkflow provisions a topology end to end; always a
+// child of TestWorkflow and never auto-retried as a whole.
 type ProcessDeploymentWorkflowWorkflow interface {
 	// Execute defines the entrypoint to a(n) ProcessDeploymentWorkflow workflow
 	Execute(ctx workflow.Context) (*ProcessDeploymentWorkflowResponse, error)
 }
 
-// ProcessDeploymentWorkflowChild executes a child ProcessDeploymentWorkflow workflow and blocks until error or response received
+// ProcessDeploymentWorkflow provisions a topology end to end; always a
+// child of TestWorkflow and never auto-retried as a whole.
 func ProcessDeploymentWorkflowChild(ctx workflow.Context, req *ProcessDeploymentWorkflowRequest, options ...*ProcessDeploymentWorkflowChildOptions) (*ProcessDeploymentWorkflowResponse, error) {
 	childRun, err := ProcessDeploymentWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
@@ -1566,7 +1591,8 @@ func ProcessDeploymentWorkflowChild(ctx workflow.Context, req *ProcessDeployment
 	return childRun.Get(ctx)
 }
 
-// ProcessDeploymentWorkflowChildAsync starts a child ProcessDeploymentWorkflow workflow and returns a handle to the child workflow run
+// ProcessDeploymentWorkflow provisions a topology end to end; always a
+// child of TestWorkflow and never auto-retried as a whole.
 func ProcessDeploymentWorkflowChildAsync(ctx workflow.Context, req *ProcessDeploymentWorkflowRequest, options ...*ProcessDeploymentWorkflowChildOptions) (*ProcessDeploymentWorkflowChildRun, error) {
 	var o *ProcessDeploymentWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
@@ -1815,13 +1841,15 @@ func (i *RenderDockerInputWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Cont
 	return nil, workflow.NewContinueAsNewError(ctx, RenderDockerInputWorkflowWorkflowName, next)
 }
 
-// RenderDockerInputWorkflowWorkflow describes a(n) RenderDockerInputWorkflow workflow implementation
+// RenderDockerInputWorkflow renders a topology into Docker compose input
+// (pure render, retryable).
 type RenderDockerInputWorkflowWorkflow interface {
 	// Execute defines the entrypoint to a(n) RenderDockerInputWorkflow workflow
 	Execute(ctx workflow.Context) (*deployment.Docker_Input, error)
 }
 
-// RenderDockerInputWorkflowChild executes a child RenderDockerInputWorkflow workflow and blocks until error or response received
+// RenderDockerInputWorkflow renders a topology into Docker compose input
+// (pure render, retryable).
 func RenderDockerInputWorkflowChild(ctx workflow.Context, req *topology.Topology, options ...*RenderDockerInputWorkflowChildOptions) (*deployment.Docker_Input, error) {
 	childRun, err := RenderDockerInputWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
@@ -1830,7 +1858,8 @@ func RenderDockerInputWorkflowChild(ctx workflow.Context, req *topology.Topology
 	return childRun.Get(ctx)
 }
 
-// RenderDockerInputWorkflowChildAsync starts a child RenderDockerInputWorkflow workflow and returns a handle to the child workflow run
+// RenderDockerInputWorkflow renders a topology into Docker compose input
+// (pure render, retryable).
 func RenderDockerInputWorkflowChildAsync(ctx workflow.Context, req *topology.Topology, options ...*RenderDockerInputWorkflowChildOptions) (*RenderDockerInputWorkflowChildRun, error) {
 	var o *RenderDockerInputWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2081,13 +2110,15 @@ func (i *RenderTerraformVariablesWorkflowWorkflowInput) ContinueAsNew(ctx workfl
 	return nil, workflow.NewContinueAsNewError(ctx, RenderTerraformVariablesWorkflowWorkflowName, next)
 }
 
-// RenderTerraformVariablesWorkflowWorkflow describes a(n) RenderTerraformVariablesWorkflow workflow implementation
+// RenderTerraformVariablesWorkflow renders a topology into Terraform
+// variables input (pure render, retryable).
 type RenderTerraformVariablesWorkflowWorkflow interface {
 	// Execute defines the entrypoint to a(n) RenderTerraformVariablesWorkflow workflow
 	Execute(ctx workflow.Context) (*deployment.Terraform_Input, error)
 }
 
-// RenderTerraformVariablesWorkflowChild executes a child RenderTerraformVariablesWorkflow workflow and blocks until error or response received
+// RenderTerraformVariablesWorkflow renders a topology into Terraform
+// variables input (pure render, retryable).
 func RenderTerraformVariablesWorkflowChild(ctx workflow.Context, req *topology.Topology, options ...*RenderTerraformVariablesWorkflowChildOptions) (*deployment.Terraform_Input, error) {
 	childRun, err := RenderTerraformVariablesWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
@@ -2096,7 +2127,8 @@ func RenderTerraformVariablesWorkflowChild(ctx workflow.Context, req *topology.T
 	return childRun.Get(ctx)
 }
 
-// RenderTerraformVariablesWorkflowChildAsync starts a child RenderTerraformVariablesWorkflow workflow and returns a handle to the child workflow run
+// RenderTerraformVariablesWorkflow renders a topology into Terraform
+// variables input (pure render, retryable).
 func RenderTerraformVariablesWorkflowChildAsync(ctx workflow.Context, req *topology.Topology, options ...*RenderTerraformVariablesWorkflowChildOptions) (*RenderTerraformVariablesWorkflowChildRun, error) {
 	var o *RenderTerraformVariablesWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2305,28 +2337,35 @@ func (r *RenderTerraformVariablesWorkflowChildRun) WaitStart(ctx workflow.Contex
 
 // DeploymentServiceActivities describes available worker activities
 type DeploymentServiceActivities interface {
-	// cloud.v1.workflow.DeploymentService.AcquireNetworkActivity implements a(n) cloud.v1.workflow.DeploymentService.AcquireNetworkActivity activity definition
+	// AcquireNetworkActivity acquires a network from the provider (deduped by
+	// name, retried on transient errors).
 	AcquireNetworkActivity(ctx context.Context, req *AcquireNetworkActivityRequest) (*AcquireNetworkActivityResponse, error)
 
-	// cloud.v1.workflow.DeploymentService.AcquireQuotasActivity implements a(n) cloud.v1.workflow.DeploymentService.AcquireQuotasActivity activity definition
+	// AcquireQuotasActivity acquires the requested quotas from the provider
+	// (retried with backoff).
 	AcquireQuotasActivity(ctx context.Context, req *AcquireQuotasActivityRequest) (*AcquireQuotasActivityResponse, error)
 
-	// cloud.v1.workflow.DeploymentService.DockerDownActivity implements a(n) cloud.v1.workflow.DeploymentService.DockerDownActivity activity definition
+	// DockerDownActivity tears the compose stack down (idempotent, retryable).
 	DockerDownActivity(ctx context.Context, req *deployment.Docker_Input) (*deployment.Docker_Output, error)
 
-	// cloud.v1.workflow.DeploymentService.DockerPullActivity implements a(n) cloud.v1.workflow.DeploymentService.DockerPullActivity activity definition
+	// DockerPullActivity pulls the required container images (idempotent,
+	// retried with backoff).
 	DockerPullActivity(ctx context.Context, req *deployment.Docker_Input) (*deployment.Docker_Output, error)
 
-	// cloud.v1.workflow.DeploymentService.DockerUpActivity implements a(n) cloud.v1.workflow.DeploymentService.DockerUpActivity activity definition
+	// DockerUpActivity brings the compose stack up (idempotent/converges,
+	// heartbeats while starting).
 	DockerUpActivity(ctx context.Context, req *deployment.Docker_Input) (*deployment.Docker_Output, error)
 
-	// cloud.v1.workflow.DeploymentService.TerraformApplyActivity implements a(n) cloud.v1.workflow.DeploymentService.TerraformApplyActivity activity definition
+	// TerraformApplyActivity runs terraform apply to provision resources
+	// (mutating; retried sparingly under the state lock).
 	TerraformApplyActivity(ctx context.Context, req *deployment.Terraform_Input) (*deployment.Terraform_Output, error)
 
-	// cloud.v1.workflow.DeploymentService.TerraformDestroyActivity implements a(n) cloud.v1.workflow.DeploymentService.TerraformDestroyActivity activity definition
+	// TerraformDestroyActivity runs terraform destroy to tear down all
+	// resources (idempotent/converges, retried to avoid leaks).
 	TerraformDestroyActivity(ctx context.Context, req *deployment.Terraform_Input) (*deployment.Terraform_Output, error)
 
-	// cloud.v1.workflow.DeploymentService.TerraformPlanActivity implements a(n) cloud.v1.workflow.DeploymentService.TerraformPlanActivity activity definition
+	// TerraformPlanActivity runs terraform plan against the provider (read-only,
+	// retryable).
 	TerraformPlanActivity(ctx context.Context, req *deployment.Terraform_Input) (*deployment.Terraform_Output, error)
 }
 
@@ -2372,12 +2411,14 @@ func (f *AcquireNetworkActivityFuture) Select(sel workflow.Selector, fn func(*Ac
 	})
 }
 
-// AcquireNetworkActivity executes a(n) cloud.v1.workflow.DeploymentService.AcquireNetworkActivity activity
+// AcquireNetworkActivity acquires a network from the provider (deduped by
+// name, retried on transient errors).
 func AcquireNetworkActivity(ctx workflow.Context, req *AcquireNetworkActivityRequest, options ...*AcquireNetworkActivityActivityOptions) (*AcquireNetworkActivityResponse, error) {
 	return AcquireNetworkActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// AcquireNetworkActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.AcquireNetworkActivity activity (asynchronously)
+// AcquireNetworkActivity acquires a network from the provider (deduped by
+// name, retried on transient errors).
 func AcquireNetworkActivityAsync(ctx workflow.Context, req *AcquireNetworkActivityRequest, options ...*AcquireNetworkActivityActivityOptions) *AcquireNetworkActivityFuture {
 	var o *AcquireNetworkActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2399,12 +2440,14 @@ func AcquireNetworkActivityAsync(ctx workflow.Context, req *AcquireNetworkActivi
 	return future
 }
 
-// AcquireNetworkActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.AcquireNetworkActivity activity (locally)
+// AcquireNetworkActivity acquires a network from the provider (deduped by
+// name, retried on transient errors).
 func AcquireNetworkActivityLocal(ctx workflow.Context, req *AcquireNetworkActivityRequest, options ...*AcquireNetworkActivityLocalActivityOptions) (*AcquireNetworkActivityResponse, error) {
 	return AcquireNetworkActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// AcquireNetworkActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.AcquireNetworkActivity activity (asynchronously, locally)
+// AcquireNetworkActivity acquires a network from the provider (deduped by
+// name, retried on transient errors).
 func AcquireNetworkActivityLocalAsync(ctx workflow.Context, req *AcquireNetworkActivityRequest, options ...*AcquireNetworkActivityLocalActivityOptions) *AcquireNetworkActivityFuture {
 	var o *AcquireNetworkActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2636,12 +2679,14 @@ func (f *AcquireQuotasActivityFuture) Select(sel workflow.Selector, fn func(*Acq
 	})
 }
 
-// AcquireQuotasActivity executes a(n) cloud.v1.workflow.DeploymentService.AcquireQuotasActivity activity
+// AcquireQuotasActivity acquires the requested quotas from the provider
+// (retried with backoff).
 func AcquireQuotasActivity(ctx workflow.Context, req *AcquireQuotasActivityRequest, options ...*AcquireQuotasActivityActivityOptions) (*AcquireQuotasActivityResponse, error) {
 	return AcquireQuotasActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// AcquireQuotasActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.AcquireQuotasActivity activity (asynchronously)
+// AcquireQuotasActivity acquires the requested quotas from the provider
+// (retried with backoff).
 func AcquireQuotasActivityAsync(ctx workflow.Context, req *AcquireQuotasActivityRequest, options ...*AcquireQuotasActivityActivityOptions) *AcquireQuotasActivityFuture {
 	var o *AcquireQuotasActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2663,12 +2708,14 @@ func AcquireQuotasActivityAsync(ctx workflow.Context, req *AcquireQuotasActivity
 	return future
 }
 
-// AcquireQuotasActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.AcquireQuotasActivity activity (locally)
+// AcquireQuotasActivity acquires the requested quotas from the provider
+// (retried with backoff).
 func AcquireQuotasActivityLocal(ctx workflow.Context, req *AcquireQuotasActivityRequest, options ...*AcquireQuotasActivityLocalActivityOptions) (*AcquireQuotasActivityResponse, error) {
 	return AcquireQuotasActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// AcquireQuotasActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.AcquireQuotasActivity activity (asynchronously, locally)
+// AcquireQuotasActivity acquires the requested quotas from the provider
+// (retried with backoff).
 func AcquireQuotasActivityLocalAsync(ctx workflow.Context, req *AcquireQuotasActivityRequest, options ...*AcquireQuotasActivityLocalActivityOptions) *AcquireQuotasActivityFuture {
 	var o *AcquireQuotasActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2900,12 +2947,12 @@ func (f *DockerDownActivityFuture) Select(sel workflow.Selector, fn func(*Docker
 	})
 }
 
-// DockerDownActivity executes a(n) cloud.v1.workflow.DeploymentService.DockerDownActivity activity
+// DockerDownActivity tears the compose stack down (idempotent, retryable).
 func DockerDownActivity(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerDownActivityActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerDownActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerDownActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.DockerDownActivity activity (asynchronously)
+// DockerDownActivity tears the compose stack down (idempotent, retryable).
 func DockerDownActivityAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerDownActivityActivityOptions) *DockerDownActivityFuture {
 	var o *DockerDownActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2927,12 +2974,12 @@ func DockerDownActivityAsync(ctx workflow.Context, req *deployment.Docker_Input,
 	return future
 }
 
-// DockerDownActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.DockerDownActivity activity (locally)
+// DockerDownActivity tears the compose stack down (idempotent, retryable).
 func DockerDownActivityLocal(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerDownActivityLocalActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerDownActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerDownActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.DockerDownActivity activity (asynchronously, locally)
+// DockerDownActivity tears the compose stack down (idempotent, retryable).
 func DockerDownActivityLocalAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerDownActivityLocalActivityOptions) *DockerDownActivityFuture {
 	var o *DockerDownActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3164,12 +3211,14 @@ func (f *DockerPullActivityFuture) Select(sel workflow.Selector, fn func(*Docker
 	})
 }
 
-// DockerPullActivity executes a(n) cloud.v1.workflow.DeploymentService.DockerPullActivity activity
+// DockerPullActivity pulls the required container images (idempotent,
+// retried with backoff).
 func DockerPullActivity(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerPullActivityActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerPullActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerPullActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.DockerPullActivity activity (asynchronously)
+// DockerPullActivity pulls the required container images (idempotent,
+// retried with backoff).
 func DockerPullActivityAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerPullActivityActivityOptions) *DockerPullActivityFuture {
 	var o *DockerPullActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3191,12 +3240,14 @@ func DockerPullActivityAsync(ctx workflow.Context, req *deployment.Docker_Input,
 	return future
 }
 
-// DockerPullActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.DockerPullActivity activity (locally)
+// DockerPullActivity pulls the required container images (idempotent,
+// retried with backoff).
 func DockerPullActivityLocal(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerPullActivityLocalActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerPullActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerPullActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.DockerPullActivity activity (asynchronously, locally)
+// DockerPullActivity pulls the required container images (idempotent,
+// retried with backoff).
 func DockerPullActivityLocalAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerPullActivityLocalActivityOptions) *DockerPullActivityFuture {
 	var o *DockerPullActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3428,12 +3479,14 @@ func (f *DockerUpActivityFuture) Select(sel workflow.Selector, fn func(*DockerUp
 	})
 }
 
-// DockerUpActivity executes a(n) cloud.v1.workflow.DeploymentService.DockerUpActivity activity
+// DockerUpActivity brings the compose stack up (idempotent/converges,
+// heartbeats while starting).
 func DockerUpActivity(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerUpActivityActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerUpActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerUpActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.DockerUpActivity activity (asynchronously)
+// DockerUpActivity brings the compose stack up (idempotent/converges,
+// heartbeats while starting).
 func DockerUpActivityAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerUpActivityActivityOptions) *DockerUpActivityFuture {
 	var o *DockerUpActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3455,12 +3508,14 @@ func DockerUpActivityAsync(ctx workflow.Context, req *deployment.Docker_Input, o
 	return future
 }
 
-// DockerUpActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.DockerUpActivity activity (locally)
+// DockerUpActivity brings the compose stack up (idempotent/converges,
+// heartbeats while starting).
 func DockerUpActivityLocal(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerUpActivityLocalActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerUpActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerUpActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.DockerUpActivity activity (asynchronously, locally)
+// DockerUpActivity brings the compose stack up (idempotent/converges,
+// heartbeats while starting).
 func DockerUpActivityLocalAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerUpActivityLocalActivityOptions) *DockerUpActivityFuture {
 	var o *DockerUpActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3694,12 +3749,14 @@ func (f *TerraformApplyActivityFuture) Select(sel workflow.Selector, fn func(*Te
 	})
 }
 
-// TerraformApplyActivity executes a(n) cloud.v1.workflow.DeploymentService.TerraformApplyActivity activity
+// TerraformApplyActivity runs terraform apply to provision resources
+// (mutating; retried sparingly under the state lock).
 func TerraformApplyActivity(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformApplyActivityActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformApplyActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformApplyActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.TerraformApplyActivity activity (asynchronously)
+// TerraformApplyActivity runs terraform apply to provision resources
+// (mutating; retried sparingly under the state lock).
 func TerraformApplyActivityAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformApplyActivityActivityOptions) *TerraformApplyActivityFuture {
 	var o *TerraformApplyActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3721,12 +3778,14 @@ func TerraformApplyActivityAsync(ctx workflow.Context, req *deployment.Terraform
 	return future
 }
 
-// TerraformApplyActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.TerraformApplyActivity activity (locally)
+// TerraformApplyActivity runs terraform apply to provision resources
+// (mutating; retried sparingly under the state lock).
 func TerraformApplyActivityLocal(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformApplyActivityLocalActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformApplyActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformApplyActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.TerraformApplyActivity activity (asynchronously, locally)
+// TerraformApplyActivity runs terraform apply to provision resources
+// (mutating; retried sparingly under the state lock).
 func TerraformApplyActivityLocalAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformApplyActivityLocalActivityOptions) *TerraformApplyActivityFuture {
 	var o *TerraformApplyActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3960,12 +4019,14 @@ func (f *TerraformDestroyActivityFuture) Select(sel workflow.Selector, fn func(*
 	})
 }
 
-// TerraformDestroyActivity executes a(n) cloud.v1.workflow.DeploymentService.TerraformDestroyActivity activity
+// TerraformDestroyActivity runs terraform destroy to tear down all
+// resources (idempotent/converges, retried to avoid leaks).
 func TerraformDestroyActivity(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformDestroyActivityActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformDestroyActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformDestroyActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.TerraformDestroyActivity activity (asynchronously)
+// TerraformDestroyActivity runs terraform destroy to tear down all
+// resources (idempotent/converges, retried to avoid leaks).
 func TerraformDestroyActivityAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformDestroyActivityActivityOptions) *TerraformDestroyActivityFuture {
 	var o *TerraformDestroyActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3987,12 +4048,14 @@ func TerraformDestroyActivityAsync(ctx workflow.Context, req *deployment.Terrafo
 	return future
 }
 
-// TerraformDestroyActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.TerraformDestroyActivity activity (locally)
+// TerraformDestroyActivity runs terraform destroy to tear down all
+// resources (idempotent/converges, retried to avoid leaks).
 func TerraformDestroyActivityLocal(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformDestroyActivityLocalActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformDestroyActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformDestroyActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.TerraformDestroyActivity activity (asynchronously, locally)
+// TerraformDestroyActivity runs terraform destroy to tear down all
+// resources (idempotent/converges, retried to avoid leaks).
 func TerraformDestroyActivityLocalAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformDestroyActivityLocalActivityOptions) *TerraformDestroyActivityFuture {
 	var o *TerraformDestroyActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -4226,12 +4289,14 @@ func (f *TerraformPlanActivityFuture) Select(sel workflow.Selector, fn func(*Ter
 	})
 }
 
-// TerraformPlanActivity executes a(n) cloud.v1.workflow.DeploymentService.TerraformPlanActivity activity
+// TerraformPlanActivity runs terraform plan against the provider (read-only,
+// retryable).
 func TerraformPlanActivity(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformPlanActivityActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformPlanActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformPlanActivityAsync executes a(n) cloud.v1.workflow.DeploymentService.TerraformPlanActivity activity (asynchronously)
+// TerraformPlanActivity runs terraform plan against the provider (read-only,
+// retryable).
 func TerraformPlanActivityAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformPlanActivityActivityOptions) *TerraformPlanActivityFuture {
 	var o *TerraformPlanActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -4253,12 +4318,14 @@ func TerraformPlanActivityAsync(ctx workflow.Context, req *deployment.Terraform_
 	return future
 }
 
-// TerraformPlanActivityLocal executes a(n) cloud.v1.workflow.DeploymentService.TerraformPlanActivity activity (locally)
+// TerraformPlanActivity runs terraform plan against the provider (read-only,
+// retryable).
 func TerraformPlanActivityLocal(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformPlanActivityLocalActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformPlanActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformPlanActivityLocalAsync executes a(n) cloud.v1.workflow.DeploymentService.TerraformPlanActivity activity (asynchronously, locally)
+// TerraformPlanActivity runs terraform plan against the provider (read-only,
+// retryable).
 func TerraformPlanActivityLocalAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformPlanActivityLocalActivityOptions) *TerraformPlanActivityFuture {
 	var o *TerraformPlanActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -4840,573 +4907,27 @@ func (r *testRenderTerraformVariablesWorkflowRun) Terminate(ctx context.Context,
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
 }
 
-// DeploymentServiceCliOptions describes runtime configuration for cloud.v1.workflow.DeploymentService cli
-type DeploymentServiceCliOptions struct {
-	after            func(*v2.Context) error
-	before           func(*v2.Context) error
-	clientForCommand func(*v2.Context) (client.Client, error)
-	worker           func(*v2.Context, client.Client) (worker.Worker, error)
-}
-
-// NewDeploymentServiceCliOptions initializes a new DeploymentServiceCliOptions value
-func NewDeploymentServiceCliOptions() *DeploymentServiceCliOptions {
-	return &DeploymentServiceCliOptions{}
-}
-
-// WithAfter injects a custom After hook to be run after any command invocation
-func (opts *DeploymentServiceCliOptions) WithAfter(fn func(*v2.Context) error) *DeploymentServiceCliOptions {
-	opts.after = fn
-	return opts
-}
-
-// WithBefore injects a custom Before hook to be run prior to any command invocation
-func (opts *DeploymentServiceCliOptions) WithBefore(fn func(*v2.Context) error) *DeploymentServiceCliOptions {
-	opts.before = fn
-	return opts
-}
-
-// WithClient provides a Temporal client factory for use by commands
-func (opts *DeploymentServiceCliOptions) WithClient(fn func(*v2.Context) (client.Client, error)) *DeploymentServiceCliOptions {
-	opts.clientForCommand = fn
-	return opts
-}
-
-// WithWorker provides an method for initializing a worker
-func (opts *DeploymentServiceCliOptions) WithWorker(fn func(*v2.Context, client.Client) (worker.Worker, error)) *DeploymentServiceCliOptions {
-	opts.worker = fn
-	return opts
-}
-
-// NewDeploymentServiceCli initializes a cli for a(n) cloud.v1.workflow.DeploymentService service
-func NewDeploymentServiceCli(options ...*DeploymentServiceCliOptions) (*v2.App, error) {
-	commands, err := newDeploymentServiceCommands(options...)
-	if err != nil {
-		return nil, fmt.Errorf("error initializing subcommands: %w", err)
+// WithDeploymentServiceSchemeTypes registers all DeploymentService protobuf types with the given scheme
+func WithDeploymentServiceSchemeTypes() scheme.Option {
+	return func(s *scheme.Scheme) {
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireNetworkActivityRequest"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireNetworkActivityResponse"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireQuotasActivityRequest"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireQuotasActivityRequest").Messages().ByName("QuotaRequestsEntry"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireQuotasActivityResponse"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireQuotasActivityResponse").Messages().ByName("QuotaAllocationEntry"))
+		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Input"))
+		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Input").Messages().ByName("ContainersEntry"))
+		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Output"))
+		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Output").Messages().ByName("ContainersEntry"))
+		s.RegisterType(deployment.File_cloud_v1_deployment_terraform_proto.Messages().ByName("Input"))
+		s.RegisterType(deployment.File_cloud_v1_deployment_terraform_proto.Messages().ByName("Output"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CalculateQuotasWorkflowRequest"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CalculateQuotasWorkflowResponse"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CalculateQuotasWorkflowResponse").Messages().ByName("QuotaRequestsEntry"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ProcessDeploymentWorkflowRequest"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ProcessDeploymentWorkflowResponse"))
+		s.RegisterType(topology.File_cloud_v1_topology_topology_proto.Messages().ByName("Topology"))
+		s.RegisterType(topology.File_cloud_v1_topology_topology_proto.Messages().ByName("Topology").Messages().ByName("Instance"))
 	}
-	return &v2.App{
-		Name:                      "deployment-service",
-		Usage:                     "cloud.v1.workflow.DeploymentService operations",
-		Commands:                  commands,
-		DisableSliceFlagSeparator: true,
-	}, nil
-}
-
-// NewDeploymentServiceCliCommand initializes a cli command for a cloud.v1.workflow.DeploymentService service with subcommands for each query, signal, update, and workflow
-func NewDeploymentServiceCliCommand(options ...*DeploymentServiceCliOptions) (*v2.Command, error) {
-	subcommands, err := newDeploymentServiceCommands(options...)
-	if err != nil {
-		return nil, fmt.Errorf("error initializing subcommands: %w", err)
-	}
-	return &v2.Command{
-		Name:        "deployment-service",
-		Usage:       "cloud.v1.workflow.DeploymentService operations",
-		Subcommands: subcommands,
-	}, nil
-}
-
-// newDeploymentServiceCommands initializes (sub)commands for a cloud.v1.workflow.DeploymentService cli or command
-func newDeploymentServiceCommands(options ...*DeploymentServiceCliOptions) ([]*v2.Command, error) {
-	opts := &DeploymentServiceCliOptions{}
-	if len(options) > 0 {
-		opts = options[0]
-	}
-	if opts.clientForCommand == nil {
-		opts.clientForCommand = func(*v2.Context) (client.Client, error) {
-			return client.Dial(client.Options{})
-		}
-	}
-	commands := []*v2.Command{
-		{
-			Name:                   "calculate-quotas-workflow",
-			Usage:                  "executes a(n) CalculateQuotasWorkflow workflow",
-			Category:               "WORKFLOWS",
-			UseShortOptionHandling: true,
-			Before:                 opts.before,
-			After:                  opts.after,
-			Flags: []v2.Flag{
-				&v2.BoolFlag{
-					Name:    "detach",
-					Usage:   "run workflow in the background and print workflow and execution id",
-					Aliases: []string{"d"},
-				},
-				&v2.StringFlag{
-					Name:    "task-queue",
-					Usage:   "task queue name",
-					Aliases: []string{"t"},
-					EnvVars: []string{"TEMPORAL_TASK_QUEUE_NAME", "TEMPORAL_TASK_QUEUE", "TASK_QUEUE_NAME", "TASK_QUEUE"},
-					Value:   "stroppy-cloud",
-				},
-				&v2.StringFlag{
-					Name:     "input-file",
-					Usage:    "path to json-formatted input file",
-					Aliases:  []string{"f"},
-					Category: "INPUT",
-				},
-				&v2.StringFlag{
-					Name:     "topology",
-					Usage:    "set the value of the operation's \"Topology\" parameter (json-encoded: {instances: <cloud.v1.topology.Topology.Instance>, connections: <cloud.v1.topology.Connection>, externalComponents: <cloud.v1.topology.Component>, tags: <cloud.v1.common.Tags>})",
-					Category: "INPUT",
-				},
-			},
-			Action: func(cmd *v2.Context) error {
-				tc, err := opts.clientForCommand(cmd)
-				if err != nil {
-					return fmt.Errorf("error initializing client for command: %w", err)
-				}
-				defer tc.Close()
-				c := NewDeploymentServiceClient(tc)
-				req, err := UnmarshalCliFlagsToCalculateQuotasWorkflowRequest(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
-				if err != nil {
-					return fmt.Errorf("error unmarshalling request: %w", err)
-				}
-				opts := client.StartWorkflowOptions{}
-				if tq := cmd.String("task-queue"); tq != "" {
-					opts.TaskQueue = tq
-				}
-				run, err := c.CalculateQuotasWorkflowAsync(cmd.Context, req, NewCalculateQuotasWorkflowOptions().WithStartWorkflowOptions(opts))
-				if err != nil {
-					return fmt.Errorf("error starting %s workflow: %w", CalculateQuotasWorkflowWorkflowName, err)
-				}
-				if cmd.Bool("detach") {
-					fmt.Println("success")
-					fmt.Printf("workflow id: %s\n", run.ID())
-					fmt.Printf("run id: %s\n", run.RunID())
-					return nil
-				}
-				if resp, err := run.Get(cmd.Context); err != nil {
-					return err
-				} else {
-					b, err := protojson.Marshal(resp)
-					if err != nil {
-						return fmt.Errorf("error serializing response json: %w", err)
-					}
-					var out bytes.Buffer
-					if err := json.Indent(&out, b, "", "  "); err != nil {
-						return fmt.Errorf("error formatting json: %w", err)
-					}
-					fmt.Println(out.String())
-					return nil
-				}
-			},
-		},
-		{
-			Name:                   "process-deployment-workflow",
-			Usage:                  "executes a(n) ProcessDeploymentWorkflow workflow",
-			Category:               "WORKFLOWS",
-			UseShortOptionHandling: true,
-			Before:                 opts.before,
-			After:                  opts.after,
-			Flags: []v2.Flag{
-				&v2.BoolFlag{
-					Name:    "detach",
-					Usage:   "run workflow in the background and print workflow and execution id",
-					Aliases: []string{"d"},
-				},
-				&v2.StringFlag{
-					Name:    "task-queue",
-					Usage:   "task queue name",
-					Aliases: []string{"t"},
-					EnvVars: []string{"TEMPORAL_TASK_QUEUE_NAME", "TEMPORAL_TASK_QUEUE", "TASK_QUEUE_NAME", "TASK_QUEUE"},
-					Value:   "stroppy-cloud",
-				},
-				&v2.StringFlag{
-					Name:     "input-file",
-					Usage:    "path to json-formatted input file",
-					Aliases:  []string{"f"},
-					Category: "INPUT",
-				},
-				&v2.StringFlag{
-					Name:     "provider",
-					Usage:    "set the value of the operation's \"Provider\" parameter (PROVIDER_UNSPECIFIED, PROVIDER_DOCKER, PROVIDER_YANDEX)",
-					Category: "INPUT",
-				},
-				&v2.StringFlag{
-					Name:     "topology",
-					Usage:    "MUST BE WITH INSTANCES provider_parms (json-encoded: {instances: <cloud.v1.topology.Topology.Instance>, connections: <cloud.v1.topology.Connection>, externalComponents: <cloud.v1.topology.Component>, tags: <cloud.v1.common.Tags>})",
-					Category: "INPUT",
-				},
-			},
-			Action: func(cmd *v2.Context) error {
-				tc, err := opts.clientForCommand(cmd)
-				if err != nil {
-					return fmt.Errorf("error initializing client for command: %w", err)
-				}
-				defer tc.Close()
-				c := NewDeploymentServiceClient(tc)
-				req, err := UnmarshalCliFlagsToProcessDeploymentWorkflowRequest(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
-				if err != nil {
-					return fmt.Errorf("error unmarshalling request: %w", err)
-				}
-				opts := client.StartWorkflowOptions{}
-				if tq := cmd.String("task-queue"); tq != "" {
-					opts.TaskQueue = tq
-				}
-				run, err := c.ProcessDeploymentWorkflowAsync(cmd.Context, req, NewProcessDeploymentWorkflowOptions().WithStartWorkflowOptions(opts))
-				if err != nil {
-					return fmt.Errorf("error starting %s workflow: %w", ProcessDeploymentWorkflowWorkflowName, err)
-				}
-				if cmd.Bool("detach") {
-					fmt.Println("success")
-					fmt.Printf("workflow id: %s\n", run.ID())
-					fmt.Printf("run id: %s\n", run.RunID())
-					return nil
-				}
-				if resp, err := run.Get(cmd.Context); err != nil {
-					return err
-				} else {
-					b, err := protojson.Marshal(resp)
-					if err != nil {
-						return fmt.Errorf("error serializing response json: %w", err)
-					}
-					var out bytes.Buffer
-					if err := json.Indent(&out, b, "", "  "); err != nil {
-						return fmt.Errorf("error formatting json: %w", err)
-					}
-					fmt.Println(out.String())
-					return nil
-				}
-			},
-		},
-		{
-			Name:                   "render-docker-input-workflow",
-			Usage:                  "executes a(n) RenderDockerInputWorkflow workflow",
-			Category:               "WORKFLOWS",
-			UseShortOptionHandling: true,
-			Before:                 opts.before,
-			After:                  opts.after,
-			Flags: []v2.Flag{
-				&v2.BoolFlag{
-					Name:    "detach",
-					Usage:   "run workflow in the background and print workflow and execution id",
-					Aliases: []string{"d"},
-				},
-				&v2.StringFlag{
-					Name:    "task-queue",
-					Usage:   "task queue name",
-					Aliases: []string{"t"},
-					EnvVars: []string{"TEMPORAL_TASK_QUEUE_NAME", "TEMPORAL_TASK_QUEUE", "TASK_QUEUE_NAME", "TASK_QUEUE"},
-					Value:   "stroppy-cloud",
-				},
-				&v2.StringFlag{
-					Name:     "input-file",
-					Usage:    "path to json-formatted input file",
-					Aliases:  []string{"f"},
-					Category: "INPUT",
-				},
-				&v2.StringSliceFlag{
-					Name:     "instances",
-					Usage:    "set the value of the operation's \"Instances\" parameter (json-encoded: {id: <string>, status: <cloud.v1.common.Status>, machineInfo: <cloud.v1.deployment.MachineInfo>, providerParms: <schemapb.Baked>, quotaRequests: <cloud.v1.deployment.Quota.Request>, allocatedQuotas: <cloud.v1.deployment.Quota.Allocation>, deploymentParms: <schemapb.Baked>, tags: <cloud.v1.common.Tags>})",
-					Category: "INPUT",
-				},
-				&v2.StringSliceFlag{
-					Name:     "connections",
-					Usage:    "set the value of the operation's \"Connections\" parameter (json-encoded: {from: <string>, to: <string>, kind: <cloud.v1.topology.Connection.Kind>, protocol: <cloud.v1.topology.Connection.Protocol>, mode: <cloud.v1.topology.Connection.Mode>, port: <uint32>, inner: <bool>, tags: <cloud.v1.common.Tags>})",
-					Category: "INPUT",
-				},
-				&v2.StringSliceFlag{
-					Name:     "external-components",
-					Usage:    "Here we can add something like managed database or another sevice from prviderResponsibility of this is RenderTerraformVariablesWorkflow|RenderDockerInputWorkflow (json-encoded: {id: <string>, kind: <cloud.v1.topology.Component.Kind>, status: <cloud.v1.common.Status>, deploymentStrategy: <cloud.v1.topology.Component.Strategy>, providerParms: <schemapb.Baked>, allocatedOnInstanceId: <string>, tags: <cloud.v1.common.Tags>})",
-					Category: "INPUT",
-				},
-				&v2.StringFlag{
-					Name:     "tags",
-					Usage:    "set the value of the operation's \"Tags\" parameter (json-encoded: {tags: <string>, labels: <cloud.v1.common.Tags.LabelsEntry>})",
-					Category: "INPUT",
-				},
-			},
-			Action: func(cmd *v2.Context) error {
-				tc, err := opts.clientForCommand(cmd)
-				if err != nil {
-					return fmt.Errorf("error initializing client for command: %w", err)
-				}
-				defer tc.Close()
-				c := NewDeploymentServiceClient(tc)
-				req, err := UnmarshalCliFlagsToTopology(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
-				if err != nil {
-					return fmt.Errorf("error unmarshalling request: %w", err)
-				}
-				opts := client.StartWorkflowOptions{}
-				if tq := cmd.String("task-queue"); tq != "" {
-					opts.TaskQueue = tq
-				}
-				run, err := c.RenderDockerInputWorkflowAsync(cmd.Context, req, NewRenderDockerInputWorkflowOptions().WithStartWorkflowOptions(opts))
-				if err != nil {
-					return fmt.Errorf("error starting %s workflow: %w", RenderDockerInputWorkflowWorkflowName, err)
-				}
-				if cmd.Bool("detach") {
-					fmt.Println("success")
-					fmt.Printf("workflow id: %s\n", run.ID())
-					fmt.Printf("run id: %s\n", run.RunID())
-					return nil
-				}
-				if resp, err := run.Get(cmd.Context); err != nil {
-					return err
-				} else {
-					b, err := protojson.Marshal(resp)
-					if err != nil {
-						return fmt.Errorf("error serializing response json: %w", err)
-					}
-					var out bytes.Buffer
-					if err := json.Indent(&out, b, "", "  "); err != nil {
-						return fmt.Errorf("error formatting json: %w", err)
-					}
-					fmt.Println(out.String())
-					return nil
-				}
-			},
-		},
-		{
-			Name:                   "render-terraform-variables-workflow",
-			Usage:                  "executes a(n) RenderTerraformVariablesWorkflow workflow",
-			Category:               "WORKFLOWS",
-			UseShortOptionHandling: true,
-			Before:                 opts.before,
-			After:                  opts.after,
-			Flags: []v2.Flag{
-				&v2.BoolFlag{
-					Name:    "detach",
-					Usage:   "run workflow in the background and print workflow and execution id",
-					Aliases: []string{"d"},
-				},
-				&v2.StringFlag{
-					Name:    "task-queue",
-					Usage:   "task queue name",
-					Aliases: []string{"t"},
-					EnvVars: []string{"TEMPORAL_TASK_QUEUE_NAME", "TEMPORAL_TASK_QUEUE", "TASK_QUEUE_NAME", "TASK_QUEUE"},
-					Value:   "stroppy-cloud",
-				},
-				&v2.StringFlag{
-					Name:     "input-file",
-					Usage:    "path to json-formatted input file",
-					Aliases:  []string{"f"},
-					Category: "INPUT",
-				},
-				&v2.StringSliceFlag{
-					Name:     "instances",
-					Usage:    "set the value of the operation's \"Instances\" parameter (json-encoded: {id: <string>, status: <cloud.v1.common.Status>, machineInfo: <cloud.v1.deployment.MachineInfo>, providerParms: <schemapb.Baked>, quotaRequests: <cloud.v1.deployment.Quota.Request>, allocatedQuotas: <cloud.v1.deployment.Quota.Allocation>, deploymentParms: <schemapb.Baked>, tags: <cloud.v1.common.Tags>})",
-					Category: "INPUT",
-				},
-				&v2.StringSliceFlag{
-					Name:     "connections",
-					Usage:    "set the value of the operation's \"Connections\" parameter (json-encoded: {from: <string>, to: <string>, kind: <cloud.v1.topology.Connection.Kind>, protocol: <cloud.v1.topology.Connection.Protocol>, mode: <cloud.v1.topology.Connection.Mode>, port: <uint32>, inner: <bool>, tags: <cloud.v1.common.Tags>})",
-					Category: "INPUT",
-				},
-				&v2.StringSliceFlag{
-					Name:     "external-components",
-					Usage:    "Here we can add something like managed database or another sevice from prviderResponsibility of this is RenderTerraformVariablesWorkflow|RenderDockerInputWorkflow (json-encoded: {id: <string>, kind: <cloud.v1.topology.Component.Kind>, status: <cloud.v1.common.Status>, deploymentStrategy: <cloud.v1.topology.Component.Strategy>, providerParms: <schemapb.Baked>, allocatedOnInstanceId: <string>, tags: <cloud.v1.common.Tags>})",
-					Category: "INPUT",
-				},
-				&v2.StringFlag{
-					Name:     "tags",
-					Usage:    "set the value of the operation's \"Tags\" parameter (json-encoded: {tags: <string>, labels: <cloud.v1.common.Tags.LabelsEntry>})",
-					Category: "INPUT",
-				},
-			},
-			Action: func(cmd *v2.Context) error {
-				tc, err := opts.clientForCommand(cmd)
-				if err != nil {
-					return fmt.Errorf("error initializing client for command: %w", err)
-				}
-				defer tc.Close()
-				c := NewDeploymentServiceClient(tc)
-				req, err := UnmarshalCliFlagsToTopology(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
-				if err != nil {
-					return fmt.Errorf("error unmarshalling request: %w", err)
-				}
-				opts := client.StartWorkflowOptions{}
-				if tq := cmd.String("task-queue"); tq != "" {
-					opts.TaskQueue = tq
-				}
-				run, err := c.RenderTerraformVariablesWorkflowAsync(cmd.Context, req, NewRenderTerraformVariablesWorkflowOptions().WithStartWorkflowOptions(opts))
-				if err != nil {
-					return fmt.Errorf("error starting %s workflow: %w", RenderTerraformVariablesWorkflowWorkflowName, err)
-				}
-				if cmd.Bool("detach") {
-					fmt.Println("success")
-					fmt.Printf("workflow id: %s\n", run.ID())
-					fmt.Printf("run id: %s\n", run.RunID())
-					return nil
-				}
-				if resp, err := run.Get(cmd.Context); err != nil {
-					return err
-				} else {
-					b, err := protojson.Marshal(resp)
-					if err != nil {
-						return fmt.Errorf("error serializing response json: %w", err)
-					}
-					var out bytes.Buffer
-					if err := json.Indent(&out, b, "", "  "); err != nil {
-						return fmt.Errorf("error formatting json: %w", err)
-					}
-					fmt.Println(out.String())
-					return nil
-				}
-			},
-		},
-	}
-	if opts.worker != nil {
-		commands = append(commands, []*v2.Command{
-			{
-				Name:                   "worker",
-				Usage:                  "runs a cloud.v1.workflow.DeploymentService worker process",
-				UseShortOptionHandling: true,
-				Before:                 opts.before,
-				After:                  opts.after,
-				Action: func(cmd *v2.Context) error {
-					c, err := opts.clientForCommand(cmd)
-					if err != nil {
-						return fmt.Errorf("error initializing client for command: %w", err)
-					}
-					defer c.Close()
-					w, err := opts.worker(cmd, c)
-					if opts.worker != nil {
-						if err != nil {
-							return fmt.Errorf("error initializing worker: %w", err)
-						}
-					}
-					if err := w.Start(); err != nil {
-						return fmt.Errorf("error starting worker: %w", err)
-					}
-					defer w.Stop()
-					<-cmd.Context.Done()
-					return nil
-				},
-			},
-		}...)
-	}
-	sort.Slice(commands, func(i, j int) bool {
-		return commands[i].Name < commands[j].Name
-	})
-	return commands, nil
-}
-
-// UnmarshalCliFlagsToCalculateQuotasWorkflowRequest unmarshals a CalculateQuotasWorkflowRequest from command line flags
-func UnmarshalCliFlagsToCalculateQuotasWorkflowRequest(cmd *v2.Context, options ...helpers.UnmarshalCliFlagsOptions) (*CalculateQuotasWorkflowRequest, error) {
-	opts := helpers.FlattenUnmarshalCliFlagsOptions(options...)
-	var result CalculateQuotasWorkflowRequest
-	if opts.FromFile != "" && cmd.IsSet(opts.FromFile) {
-		f, err := gohomedir.Expand(cmd.String(opts.FromFile))
-		if err != nil {
-			f = cmd.String(opts.FromFile)
-		}
-		b, err := os.ReadFile(f)
-		if err != nil {
-			return nil, fmt.Errorf("error reading %s: %w", opts.FromFile, err)
-		}
-		if err := protojson.Unmarshal(b, &result); err != nil {
-			return nil, fmt.Errorf("error parsing %s json: %w", opts.FromFile, err)
-		}
-	}
-	if flag := opts.FlagName("topology"); cmd.IsSet(flag) {
-		var tmp topology.Topology
-		if err := protojson.Unmarshal([]byte(cmd.String(flag)), &tmp); err != nil {
-			return nil, fmt.Errorf("error unmarshalling \"topology\" flag: %w", err)
-		}
-		value := &tmp
-		result.Topology = value
-	}
-	return &result, nil
-}
-
-// UnmarshalCliFlagsToProcessDeploymentWorkflowRequest unmarshals a ProcessDeploymentWorkflowRequest from command line flags
-func UnmarshalCliFlagsToProcessDeploymentWorkflowRequest(cmd *v2.Context, options ...helpers.UnmarshalCliFlagsOptions) (*ProcessDeploymentWorkflowRequest, error) {
-	opts := helpers.FlattenUnmarshalCliFlagsOptions(options...)
-	var result ProcessDeploymentWorkflowRequest
-	if opts.FromFile != "" && cmd.IsSet(opts.FromFile) {
-		f, err := gohomedir.Expand(cmd.String(opts.FromFile))
-		if err != nil {
-			f = cmd.String(opts.FromFile)
-		}
-		b, err := os.ReadFile(f)
-		if err != nil {
-			return nil, fmt.Errorf("error reading %s: %w", opts.FromFile, err)
-		}
-		if err := protojson.Unmarshal(b, &result); err != nil {
-			return nil, fmt.Errorf("error parsing %s json: %w", opts.FromFile, err)
-		}
-	}
-	if flag := opts.FlagName("provider"); cmd.IsSet(flag) {
-		enumID, ok := deployment.Provider_value[cmd.String(flag)]
-		if !ok {
-			return nil, fmt.Errorf("invalid value for enum field %s", "Provider")
-		}
-		value := deployment.Provider(enumID)
-		result.Provider = value
-	}
-	if flag := opts.FlagName("topology"); cmd.IsSet(flag) {
-		var tmp topology.Topology
-		if err := protojson.Unmarshal([]byte(cmd.String(flag)), &tmp); err != nil {
-			return nil, fmt.Errorf("error unmarshalling \"topology\" flag: %w", err)
-		}
-		value := &tmp
-		result.Topology = value
-	}
-	return &result, nil
-}
-
-// UnmarshalCliFlagsToTopology unmarshals a Topology from command line flags
-func UnmarshalCliFlagsToTopology(cmd *v2.Context, options ...helpers.UnmarshalCliFlagsOptions) (*topology.Topology, error) {
-	opts := helpers.FlattenUnmarshalCliFlagsOptions(options...)
-	var result topology.Topology
-	if opts.FromFile != "" && cmd.IsSet(opts.FromFile) {
-		f, err := gohomedir.Expand(cmd.String(opts.FromFile))
-		if err != nil {
-			f = cmd.String(opts.FromFile)
-		}
-		b, err := os.ReadFile(f)
-		if err != nil {
-			return nil, fmt.Errorf("error reading %s: %w", opts.FromFile, err)
-		}
-		if err := protojson.Unmarshal(b, &result); err != nil {
-			return nil, fmt.Errorf("error parsing %s json: %w", opts.FromFile, err)
-		}
-	}
-	if flag := opts.FlagName("instances"); cmd.IsSet(flag) {
-		value, err := convert.MapSliceFunc(cmd.StringSlice(flag), func(v string) (*topology.Topology_Instance, error) {
-			var tmp topology.Topology_Instance
-			if err := protojson.Unmarshal([]byte(v), &tmp); err != nil {
-				return nil, fmt.Errorf("error unmarshalling \"instances\" flag: %w", err)
-			}
-			return &tmp, nil
-		})
-		if err != nil {
-			return nil, err
-		}
-		result.Instances = value
-	}
-	if flag := opts.FlagName("connections"); cmd.IsSet(flag) {
-		value, err := convert.MapSliceFunc(cmd.StringSlice(flag), func(v string) (*topology.Connection, error) {
-			var tmp topology.Connection
-			if err := protojson.Unmarshal([]byte(v), &tmp); err != nil {
-				return nil, fmt.Errorf("error unmarshalling \"connections\" flag: %w", err)
-			}
-			return &tmp, nil
-		})
-		if err != nil {
-			return nil, err
-		}
-		result.Connections = value
-	}
-	if flag := opts.FlagName("external-components"); cmd.IsSet(flag) {
-		value, err := convert.MapSliceFunc(cmd.StringSlice(flag), func(v string) (*topology.Component, error) {
-			var tmp topology.Component
-			if err := protojson.Unmarshal([]byte(v), &tmp); err != nil {
-				return nil, fmt.Errorf("error unmarshalling \"external-components\" flag: %w", err)
-			}
-			return &tmp, nil
-		})
-		if err != nil {
-			return nil, err
-		}
-		result.ExternalComponents = value
-	}
-	if flag := opts.FlagName("tags"); cmd.IsSet(flag) {
-		var tmp common.Tags
-		if err := protojson.Unmarshal([]byte(cmd.String(flag)), &tmp); err != nil {
-			return nil, fmt.Errorf("error unmarshalling \"tags\" flag: %w", err)
-		}
-		value := &tmp
-		result.Tags = value
-	}
-	return &result, nil
 }

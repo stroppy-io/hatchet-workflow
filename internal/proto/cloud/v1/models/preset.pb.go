@@ -24,12 +24,20 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// DatabasePresetRecord table: a reusable database configuration.
+// DatabasePresetRecord table: a reusable, provider-agnostic database
+// configuration that can be referenced by tests and suites.
 type DatabasePresetRecord struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entity        *common.Entity         `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	Database      *domain.Database       `protobuf:"bytes,2,opt,name=database,proto3" json:"database,omitempty"`
-	IsSystem      bool                   `protobuf:"varint,3,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entity is the storage envelope (id, tenant_id, name, description,
+	// timings).
+	Entity *common.Entity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	// database is the baked, params-only database configuration payload.
+	Database *domain.Database `protobuf:"bytes,2,opt,name=database,proto3" json:"database,omitempty"`
+	// is_system marks a platform-seeded preset. System presets are READ-ONLY:
+	// the service rejects Update and Delete on them. To customize one, Clone it
+	// into a new editable tenant preset (is_system = false). Server-managed;
+	// clients cannot set it true.
+	IsSystem      bool `protobuf:"varint,3,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -87,10 +95,18 @@ func (x *DatabasePresetRecord) GetIsSystem() bool {
 
 // WorkloadPresetRecord table: a reusable stroppy workload configuration.
 type WorkloadPresetRecord struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entity        *common.Entity         `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	Workload      *domain.Workload       `protobuf:"bytes,2,opt,name=workload,proto3" json:"workload,omitempty"`
-	IsSystem      bool                   `protobuf:"varint,3,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entity is the storage envelope (id, tenant_id, name, description,
+	// timings).
+	Entity *common.Entity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	// workload is the baked, params-only stroppy workload configuration
+	// payload.
+	Workload *domain.Workload `protobuf:"bytes,2,opt,name=workload,proto3" json:"workload,omitempty"`
+	// is_system marks a platform-seeded preset. System presets are READ-ONLY:
+	// the service rejects Update and Delete on them. To customize one, Clone it
+	// into a new editable tenant preset (is_system = false). Server-managed;
+	// clients cannot set it true.
+	IsSystem      bool `protobuf:"varint,3,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -146,12 +162,20 @@ func (x *WorkloadPresetRecord) GetIsSystem() bool {
 	return false
 }
 
-// TestPresetRecord table: a reusable database + workload combo.
+// TestPresetRecord table: a reusable database + workload combo bundling both
+// sides into a single preset.
 type TestPresetRecord struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entity        *common.Entity         `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	Test          *domain.Test           `protobuf:"bytes,2,opt,name=test,proto3" json:"test,omitempty"`
-	IsSystem      bool                   `protobuf:"varint,3,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entity is the storage envelope (id, tenant_id, name, description,
+	// timings).
+	Entity *common.Entity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	// test is the baked database + workload combination payload.
+	Test *domain.Test `protobuf:"bytes,2,opt,name=test,proto3" json:"test,omitempty"`
+	// is_system marks a platform-seeded preset. System presets are READ-ONLY:
+	// the service rejects Update and Delete on them. To customize one, Clone it
+	// into a new editable tenant preset (is_system = false). Server-managed;
+	// clients cannot set it true.
+	IsSystem      bool `protobuf:"varint,3,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

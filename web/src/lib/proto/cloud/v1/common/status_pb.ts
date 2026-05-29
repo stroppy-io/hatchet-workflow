@@ -12,6 +12,8 @@ export const file_cloud_v1_common_status: GenFile = /*@__PURE__*/
   fileDesc("ChxjbG91ZC92MS9jb21tb24vc3RhdHVzLnByb3RvEg9jbG91ZC52MS5jb21tb24qiwIKBlN0YXR1cxIWChJTVEFUVVNfVU5TUEVDSUZJRUQQABISCg5TVEFUVVNfUEVORElORxABEhIKDlNUQVRVU19SVU5OSU5HEAISFQoRU1RBVFVTX1JFVFJZX1dBSVQQBRIUChBTVEFUVVNfQ09NUExFVEVEEAMSEQoNU1RBVFVTX0ZBSUxFRBAEEhIKDlNUQVRVU19TS0lQUEVEEAYSFQoRU1RBVFVTX0NBTkNFTExJTkcQBxIUChBTVEFUVVNfQ0FOQ0VMTEVEEAgSFAoQU1RBVFVTX0FMTE9DQVRFRBAJEhUKEVNUQVRVU19ERVBMT1lNRU5UEAoSEwoPU1RBVFVTX0RFUExPWUVEEAtCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvY29tbW9uYgZwcm90bzM");
 
 /**
+ * Status is the lifecycle state of an executable node. 
+ *
  * @generated from enum cloud.v1.common.Status
  */
 export enum Status {
@@ -79,22 +81,30 @@ export enum Status {
   CANCELLED = 8,
 
   /**
+   * ALLOCATED means infrastructure resources have been reserved for the node. 
+   *
    * @generated from enum value: STATUS_ALLOCATED = 9;
    */
   ALLOCATED = 9,
 
   /**
+   * DEPLOYMENT means deployment of the node is in progress. 
+   *
    * @generated from enum value: STATUS_DEPLOYMENT = 10;
    */
   DEPLOYMENT = 10,
 
   /**
+   * DEPLOYED means the node has been successfully deployed. 
+   *
    * @generated from enum value: STATUS_DEPLOYED = 11;
    */
   DEPLOYED = 11,
 }
 
 /**
+ * Status is the lifecycle state of an executable node. 
+ *
  * @generated from enum cloud.v1.common.Status
  */
 export type StatusJson = "STATUS_UNSPECIFIED" | "STATUS_PENDING" | "STATUS_RUNNING" | "STATUS_RETRY_WAIT" | "STATUS_COMPLETED" | "STATUS_FAILED" | "STATUS_SKIPPED" | "STATUS_CANCELLING" | "STATUS_CANCELLED" | "STATUS_ALLOCATED" | "STATUS_DEPLOYMENT" | "STATUS_DEPLOYED";

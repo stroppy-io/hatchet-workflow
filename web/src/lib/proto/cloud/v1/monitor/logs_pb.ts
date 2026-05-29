@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/monitor/logs.proto.
  */
 export const file_cloud_v1_monitor_logs: GenFile = /*@__PURE__*/
-  fileDesc("ChtjbG91ZC92MS9tb25pdG9yL2xvZ3MucHJvdG8SEGNsb3VkLnYxLm1vbml0b3IiUwoJTG9nQ3Vyc29yEjkKC29ic2VydmVkX2F0GAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEII+kIFsgECCAESCwoDc2VxGAIgASgEIokDCgdMb2dMaW5lEjkKC29ic2VydmVkX2F0GAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEII+kIFsgECCAESGgoGZGFnX2lkGAIgASgJQgr6QgdyBRABGIABEiMKEW5vZGVfZXhlY3V0aW9uX2lkGAMgASgJQgj6QgVyAxiAARIeCgxjb21wb25lbnRfaWQYBCABKAlCCPpCBXIDGIABEhwKCm1hY2hpbmVfaWQYBSABKAlCCPpCBXIDGIABEjIKBnNvdXJjZRgGIAEoDjIYLmNsb3VkLnYxLm1vbml0b3IuU291cmNlQgj6QgWCAQIQARIWCgR1bml0GAcgASgJQgj6QgVyAxiAAhIyCgZzdHJlYW0YCCABKA4yGC5jbG91ZC52MS5tb25pdG9yLlN0cmVhbUII+kIFggECEAESFwoEbGluZRgJIAEoCUIJ+kIGcgQYgIAEEisKBmN1cnNvchgKIAEoCzIbLmNsb3VkLnYxLm1vbml0b3IuTG9nQ3Vyc29yIscCCgZMb2dSZWYSGgoGZGFnX2lkGAEgASgJQgr6QgdyBRABGIABEigKEW5vZGVfZXhlY3V0aW9uX2lkGAIgASgJQgj6QgVyAxiAAUgAiAEBEiMKDGNvbXBvbmVudF9pZBgDIAEoCUII+kIFcgMYgAFIAYgBARIuCgVzdGFydBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAogBARIsCgNlbmQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSAOIAQESMAoGY3Vyc29yGAYgASgLMhsuY2xvdWQudjEubW9uaXRvci5Mb2dDdXJzb3JIBIgBAUIUChJfbm9kZV9leGVjdXRpb25faWRCDwoNX2NvbXBvbmVudF9pZEIICgZfc3RhcnRCBgoEX2VuZEIJCgdfY3Vyc29yIlwKB0xvZ1BhZ2USMwoFbGluZXMYASADKAsyGS5jbG91ZC52MS5tb25pdG9yLkxvZ0xpbmVCCfpCBpIBAxCQThIcCgpuZXh0X3Rva2VuGAIgASgJQgj6QgVyAxiAAipaCgZTb3VyY2USFgoSU09VUkNFX1VOU1BFQ0lGSUVEEAASEgoOU09VUkNFX0NPTU1BTkQQARITCg9TT1VSQ0VfSk9VUk5BTEQQAhIPCgtTT1VSQ0VfRklMRRADKkYKBlN0cmVhbRIWChJTVFJFQU1fVU5TUEVDSUZJRUQQABIRCg1TVFJFQU1fU1RET1VUEAESEQoNU1RSRUFNX1NUREVSUhACQkVaQ2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vbml0b3JiBnByb3RvMw", [file_google_protobuf_timestamp, file_validate_validate]);
+  fileDesc("ChtjbG91ZC92MS9tb25pdG9yL2xvZ3MucHJvdG8SEGNsb3VkLnYxLm1vbml0b3IiUwoJTG9nQ3Vyc29yEjkKC29ic2VydmVkX2F0GAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEII+kIFsgECCAESCwoDc2VxGAIgASgEIpoDCgdMb2dMaW5lEjkKC29ic2VydmVkX2F0GAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEII+kIFsgECCAESGgoGcnVuX2lkGAIgASgJQgr6QgdyBRiAARABEg8KB2xpbmVfbm8YCyABKAQSIwoRbm9kZV9leGVjdXRpb25faWQYAyABKAlCCPpCBXIDGIABEh4KDGNvbXBvbmVudF9pZBgEIAEoCUII+kIFcgMYgAESHAoKbWFjaGluZV9pZBgFIAEoCUII+kIFcgMYgAESMgoGc291cmNlGAYgASgOMhguY2xvdWQudjEubW9uaXRvci5Tb3VyY2VCCPpCBYIBAhABEhYKBHVuaXQYByABKAlCCPpCBXIDGIACEjIKBnN0cmVhbRgIIAEoDjIYLmNsb3VkLnYxLm1vbml0b3IuU3RyZWFtQgj6QgWCAQIQARIXCgRsaW5lGAkgASgJQgn6QgZyBBiAgAQSKwoGY3Vyc29yGAogASgLMhsuY2xvdWQudjEubW9uaXRvci5Mb2dDdXJzb3IixwIKBkxvZ1JlZhIaCgZydW5faWQYASABKAlCCvpCB3IFEAEYgAESKAoRbm9kZV9leGVjdXRpb25faWQYAiABKAlCCPpCBXIDGIABSACIAQESIwoMY29tcG9uZW50X2lkGAMgASgJQgj6QgVyAxiAAUgBiAEBEi4KBXN0YXJ0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEgCiAEBEiwKA2VuZBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIA4gBARIwCgZjdXJzb3IYBiABKAsyGy5jbG91ZC52MS5tb25pdG9yLkxvZ0N1cnNvckgEiAEBQhQKEl9ub2RlX2V4ZWN1dGlvbl9pZEIPCg1fY29tcG9uZW50X2lkQggKBl9zdGFydEIGCgRfZW5kQgkKB19jdXJzb3IiXAoHTG9nUGFnZRIzCgVsaW5lcxgBIAMoCzIZLmNsb3VkLnYxLm1vbml0b3IuTG9nTGluZUIJ+kIGkgEDEJBOEhwKCm5leHRfdG9rZW4YAiABKAlCCPpCBXIDGIACKloKBlNvdXJjZRIWChJTT1VSQ0VfVU5TUEVDSUZJRUQQABISCg5TT1VSQ0VfQ09NTUFORBABEhMKD1NPVVJDRV9KT1VSTkFMRBACEg8KC1NPVVJDRV9GSUxFEAMqRgoGU3RyZWFtEhYKElNUUkVBTV9VTlNQRUNJRklFRBAAEhEKDVNUUkVBTV9TVERPVVQQARIRCg1TVFJFQU1fU1RERVJSEAJCRVpDZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9uaXRvcmIGcHJvdG8z", [file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  *
@@ -24,11 +24,17 @@ export const file_cloud_v1_monitor_logs: GenFile = /*@__PURE__*/
  */
 export type LogCursor = Message<"cloud.v1.monitor.LogCursor"> & {
   /**
+   * observed_at is the precise timestamp the line was observed at. 
+   *
    * @generated from field: google.protobuf.Timestamp observed_at = 1;
    */
   observedAt?: Timestamp;
 
   /**
+   *
+   * seq is the per-timestamp sequence ordinal that disambiguates lines
+   * sharing the same observed_at, making the cursor stable and dedup-safe.
+   *
    * @generated from field: uint64 seq = 2;
    */
   seq: bigint;
@@ -43,11 +49,17 @@ export type LogCursor = Message<"cloud.v1.monitor.LogCursor"> & {
  */
 export type LogCursorJson = {
   /**
+   * observed_at is the precise timestamp the line was observed at. 
+   *
    * @generated from field: google.protobuf.Timestamp observed_at = 1;
    */
   observedAt?: TimestampJson;
 
   /**
+   *
+   * seq is the per-timestamp sequence ordinal that disambiguates lines
+   * sharing the same observed_at, making the cursor stable and dedup-safe.
+   *
    * @generated from field: uint64 seq = 2;
    */
   seq?: string;
@@ -69,19 +81,33 @@ export const LogCursorSchema: GenMessage<LogCursor, {jsonType: LogCursorJson, va
  */
 export type LogLine = Message<"cloud.v1.monitor.LogLine"> & {
   /**
+   * observed_at is when the line was emitted/observed. 
+   *
    * @generated from field: google.protobuf.Timestamp observed_at = 1;
    */
   observedAt?: Timestamp;
 
   /**
-   * dag_id is the run's Dag id (plain string, runtime-pure). 
+   * run_id is the owning test run id (plain string, runtime-pure). 
    *
-   * @generated from field: string dag_id = 2;
+   * @generated from field: string run_id = 2;
    */
-  dagId: string;
+  runId: string;
 
   /**
-   * node_execution_id is the owning DAG stage, when the line came from a node op. 
+   *
+   * line_no is a stable, monotonic, GLOBAL ordinal of this line within the run
+   * (assigned server-side at ingest). Gives a continuous numbering across the
+   * whole run regardless of filter, so the UI can "go to line N", show a stable
+   * gutter, and two users opening the same LogRef land on the same line. Cursor
+   * anchors the exact position; line_no is the human/scroll index.
+   *
+   * @generated from field: uint64 line_no = 11;
+   */
+  lineNo: bigint;
+
+  /**
+   * node_execution_id is the owning execution stage, when the line came from a stage op. 
    *
    * @generated from field: string node_execution_id = 3;
    */
@@ -95,13 +121,15 @@ export type LogLine = Message<"cloud.v1.monitor.LogLine"> & {
   componentId: string;
 
   /**
-   * machine_id is the host. 
+   * machine_id is the host the line originated on. 
    *
    * @generated from field: string machine_id = 5;
    */
   machineId: string;
 
   /**
+   * source is where the line came from (command, journald, or tailed file). 
+   *
    * @generated from field: cloud.v1.monitor.Source source = 6;
    */
   source: Source;
@@ -114,11 +142,15 @@ export type LogLine = Message<"cloud.v1.monitor.LogLine"> & {
   unit: string;
 
   /**
+   * stream is the std stream (stdout/stderr) the line was written to. 
+   *
    * @generated from field: cloud.v1.monitor.Stream stream = 8;
    */
   stream: Stream;
 
   /**
+   * line is the raw log text content. 
+   *
    * @generated from field: string line = 9;
    */
   line: string;
@@ -138,19 +170,33 @@ export type LogLine = Message<"cloud.v1.monitor.LogLine"> & {
  */
 export type LogLineJson = {
   /**
+   * observed_at is when the line was emitted/observed. 
+   *
    * @generated from field: google.protobuf.Timestamp observed_at = 1;
    */
   observedAt?: TimestampJson;
 
   /**
-   * dag_id is the run's Dag id (plain string, runtime-pure). 
+   * run_id is the owning test run id (plain string, runtime-pure). 
    *
-   * @generated from field: string dag_id = 2;
+   * @generated from field: string run_id = 2;
    */
-  dagId?: string;
+  runId?: string;
 
   /**
-   * node_execution_id is the owning DAG stage, when the line came from a node op. 
+   *
+   * line_no is a stable, monotonic, GLOBAL ordinal of this line within the run
+   * (assigned server-side at ingest). Gives a continuous numbering across the
+   * whole run regardless of filter, so the UI can "go to line N", show a stable
+   * gutter, and two users opening the same LogRef land on the same line. Cursor
+   * anchors the exact position; line_no is the human/scroll index.
+   *
+   * @generated from field: uint64 line_no = 11;
+   */
+  lineNo?: string;
+
+  /**
+   * node_execution_id is the owning execution stage, when the line came from a stage op. 
    *
    * @generated from field: string node_execution_id = 3;
    */
@@ -164,13 +210,15 @@ export type LogLineJson = {
   componentId?: string;
 
   /**
-   * machine_id is the host. 
+   * machine_id is the host the line originated on. 
    *
    * @generated from field: string machine_id = 5;
    */
   machineId?: string;
 
   /**
+   * source is where the line came from (command, journald, or tailed file). 
+   *
    * @generated from field: cloud.v1.monitor.Source source = 6;
    */
   source?: SourceJson;
@@ -183,11 +231,15 @@ export type LogLineJson = {
   unit?: string;
 
   /**
+   * stream is the std stream (stdout/stderr) the line was written to. 
+   *
    * @generated from field: cloud.v1.monitor.Stream stream = 8;
    */
   stream?: StreamJson;
 
   /**
+   * line is the raw log text content. 
+   *
    * @generated from field: string line = 9;
    */
   line?: string;
@@ -219,26 +271,36 @@ export const LogLineSchema: GenMessage<LogLine, {jsonType: LogLineJson, validTyp
  */
 export type LogRef = Message<"cloud.v1.monitor.LogRef"> & {
   /**
-   * @generated from field: string dag_id = 1;
+   * run_id is the owning test run the slice belongs to. 
+   *
+   * @generated from field: string run_id = 1;
    */
-  dagId: string;
+  runId: string;
 
   /**
+   * node_execution_id, when set, narrows the slice to one execution stage's logs. 
+   *
    * @generated from field: optional string node_execution_id = 2;
    */
   nodeExecutionId?: string;
 
   /**
+   * component_id, when set, narrows the slice to one topology component's logs. 
+   *
    * @generated from field: optional string component_id = 3;
    */
   componentId?: string;
 
   /**
+   * start, when set, bounds the slice to lines at or after this time. 
+   *
    * @generated from field: optional google.protobuf.Timestamp start = 4;
    */
   start?: Timestamp;
 
   /**
+   * end, when set, bounds the slice to lines at or before this time. 
+   *
    * @generated from field: optional google.protobuf.Timestamp end = 5;
    */
   end?: Timestamp;
@@ -261,26 +323,36 @@ export type LogRef = Message<"cloud.v1.monitor.LogRef"> & {
  */
 export type LogRefJson = {
   /**
-   * @generated from field: string dag_id = 1;
+   * run_id is the owning test run the slice belongs to. 
+   *
+   * @generated from field: string run_id = 1;
    */
-  dagId?: string;
+  runId?: string;
 
   /**
+   * node_execution_id, when set, narrows the slice to one execution stage's logs. 
+   *
    * @generated from field: optional string node_execution_id = 2;
    */
   nodeExecutionId?: string;
 
   /**
+   * component_id, when set, narrows the slice to one topology component's logs. 
+   *
    * @generated from field: optional string component_id = 3;
    */
   componentId?: string;
 
   /**
+   * start, when set, bounds the slice to lines at or after this time. 
+   *
    * @generated from field: optional google.protobuf.Timestamp start = 4;
    */
   start?: TimestampJson;
 
   /**
+   * end, when set, bounds the slice to lines at or before this time. 
+   *
    * @generated from field: optional google.protobuf.Timestamp end = 5;
    */
   end?: TimestampJson;
@@ -309,6 +381,8 @@ export const LogRefSchema: GenMessage<LogRef, {jsonType: LogRefJson, validType: 
  */
 export type LogPage = Message<"cloud.v1.monitor.LogPage"> & {
   /**
+   * lines are the log records on this page, in query order. 
+   *
    * @generated from field: repeated cloud.v1.monitor.LogLine lines = 1;
    */
   lines: LogLine[];
@@ -328,6 +402,8 @@ export type LogPage = Message<"cloud.v1.monitor.LogPage"> & {
  */
 export type LogPageJson = {
   /**
+   * lines are the log records on this page, in query order. 
+   *
    * @generated from field: repeated cloud.v1.monitor.LogLine lines = 1;
    */
   lines?: LogLineJson[];
@@ -356,26 +432,28 @@ export const LogPageSchema: GenMessage<LogPage, {jsonType: LogPageJson, validTyp
  */
 export enum Source {
   /**
+   * SOURCE_UNSPECIFIED is the zero value and is never a valid source. 
+   *
    * @generated from enum value: SOURCE_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   * COMMAND is agent command stdout/stderr (a DAG node op). 
+   * SOURCE_COMMAND is agent command stdout/stderr (an execution-stage op). 
    *
    * @generated from enum value: SOURCE_COMMAND = 1;
    */
   COMMAND = 1,
 
   /**
-   * JOURNALD is a systemd-managed service's stdout/stderr. 
+   * SOURCE_JOURNALD is a systemd-managed service's stdout/stderr. 
    *
    * @generated from enum value: SOURCE_JOURNALD = 2;
    */
   JOURNALD = 2,
 
   /**
-   * FILE is a tailed log file (e.g. a postgresql log under /var/log/postgresql). 
+   * SOURCE_FILE is a tailed log file (e.g. a postgresql log under /var/log/postgresql). 
    *
    * @generated from enum value: SOURCE_FILE = 3;
    */
@@ -396,29 +474,35 @@ export const SourceSchema: GenEnum<Source, SourceJson> = /*@__PURE__*/
   enumDesc(file_cloud_v1_monitor_logs, 0);
 
 /**
- * Stream is the std stream. 
+ * Stream is the std stream the line was written to. 
  *
  * @generated from enum cloud.v1.monitor.Stream
  */
 export enum Stream {
   /**
+   * STREAM_UNSPECIFIED is the zero value and is never a valid stream. 
+   *
    * @generated from enum value: STREAM_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
+   * STREAM_STDOUT is the standard output stream. 
+   *
    * @generated from enum value: STREAM_STDOUT = 1;
    */
   STDOUT = 1,
 
   /**
+   * STREAM_STDERR is the standard error stream. 
+   *
    * @generated from enum value: STREAM_STDERR = 2;
    */
   STDERR = 2,
 }
 
 /**
- * Stream is the std stream. 
+ * Stream is the std stream the line was written to. 
  *
  * @generated from enum cloud.v1.monitor.Stream
  */

@@ -27,12 +27,17 @@ const (
 type EntitySortField int32
 
 const (
+	// ENTITY_SORT_FIELD_UNSPECIFIED applies the server default ordering.
 	EntitySortField_ENTITY_SORT_FIELD_UNSPECIFIED EntitySortField = 0
-	EntitySortField_ENTITY_SORT_FIELD_NAME        EntitySortField = 1
-	EntitySortField_ENTITY_SORT_FIELD_CREATED_AT  EntitySortField = 2
-	EntitySortField_ENTITY_SORT_FIELD_UPDATED_AT  EntitySortField = 3
-	EntitySortField_ENTITY_SORT_FIELD_AUTHOR_ID   EntitySortField = 4
-	// Order by the caller's favorite flag (favorited rows first when desc).
+	// ENTITY_SORT_FIELD_NAME orders by the display name.
+	EntitySortField_ENTITY_SORT_FIELD_NAME EntitySortField = 1
+	// ENTITY_SORT_FIELD_CREATED_AT orders by creation time.
+	EntitySortField_ENTITY_SORT_FIELD_CREATED_AT EntitySortField = 2
+	// ENTITY_SORT_FIELD_UPDATED_AT orders by last-mutation time.
+	EntitySortField_ENTITY_SORT_FIELD_UPDATED_AT EntitySortField = 3
+	// ENTITY_SORT_FIELD_AUTHOR_ID orders by the authoring Account.
+	EntitySortField_ENTITY_SORT_FIELD_AUTHOR_ID EntitySortField = 4
+	// ENTITY_SORT_FIELD_FAVORITE orders by the caller's favorite flag (favorited rows first when desc).
 	EntitySortField_ENTITY_SORT_FIELD_FAVORITE EntitySortField = 5
 )
 
@@ -83,10 +88,14 @@ func (EntitySortField) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_common_entity_proto_rawDescGZIP(), []int{0}
 }
 
+// Timings is the audit timestamp set carried by every persisted row.
 type Timings struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// created_at is when the row was first persisted (server clock).
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// updated_at is when the row was last mutated (server clock).
+	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// deleted_at, when set, marks the row as soft-deleted.
 	DeletedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=deleted_at,json=deletedAt,proto3,oneof" json:"deleted_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -145,12 +154,17 @@ func (x *Timings) GetDeletedAt() *timestamppb.Timestamp {
 
 // Entity is the common storage envelope shared by every DB-persisted model.
 type Entity struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	TenantId    string                 `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Name        string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Description string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
-	Timings     *Timings               `protobuf:"bytes,5,opt,name=timings,proto3" json:"timings,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the stable, server-assigned unique row identifier.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// tenant_id scopes the row to its owning tenant.
+	TenantId string `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// name is the human-facing display name of the row.
+	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	// description is optional free-text describing the row.
+	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	// timings carries the created/updated/deleted audit timestamps.
+	Timings *Timings `protobuf:"bytes,5,opt,name=timings,proto3" json:"timings,omitempty"`
 	// author_id is the Account that created the row. Server-assigned from the
 	// caller; immutable afterwards.
 	AuthorId string `protobuf:"bytes,6,opt,name=author_id,json=authorId,proto3" json:"author_id,omitempty"`
@@ -252,19 +266,21 @@ func (x *Entity) GetIsFavorite() bool {
 // + the auth interceptor, never from a client-supplied filter.
 type EntityFilter struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Free-text search over name + description (substring / ILIKE).
+	// search is free-text matched over name + description (substring / ILIKE).
 	Search string `protobuf:"bytes,1,opt,name=search,proto3" json:"search,omitempty"`
-	// Restrict to these exact ids (empty = no id filter).
+	// ids restricts results to these exact ids (empty = no id filter).
 	Ids []string `protobuf:"bytes,2,rep,name=ids,proto3" json:"ids,omitempty"`
-	// Created-at window (timings.created_at).
-	CreatedAfter  *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created_after,json=createdAfter,proto3" json:"created_after,omitempty"`
+	// created_after is the lower bound of the created-at window (timings.created_at).
+	CreatedAfter *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created_after,json=createdAfter,proto3" json:"created_after,omitempty"`
+	// created_before is the upper bound of the created-at window (timings.created_at).
 	CreatedBefore *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_before,json=createdBefore,proto3" json:"created_before,omitempty"`
-	// Updated-at window (timings.updated_at).
-	UpdatedAfter  *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_after,json=updatedAfter,proto3" json:"updated_after,omitempty"`
+	// updated_after is the lower bound of the updated-at window (timings.updated_at).
+	UpdatedAfter *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_after,json=updatedAfter,proto3" json:"updated_after,omitempty"`
+	// updated_before is the upper bound of the updated-at window (timings.updated_at).
 	UpdatedBefore *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_before,json=updatedBefore,proto3" json:"updated_before,omitempty"`
-	// When true, include soft-deleted rows (timings.deleted_at set). Default false.
+	// include_deleted, when true, includes soft-deleted rows (timings.deleted_at set). Default false.
 	IncludeDeleted bool `protobuf:"varint,7,opt,name=include_deleted,json=includeDeleted,proto3" json:"include_deleted,omitempty"`
-	// Restrict to rows authored by these Accounts (empty = no author filter).
+	// author_ids restricts results to rows authored by these Accounts (empty = no author filter).
 	AuthorIds []string `protobuf:"bytes,8,rep,name=author_ids,json=authorIds,proto3" json:"author_ids,omitempty"`
 	// favorites_only: when true, return only rows the REQUESTING caller has
 	// favorited (rows with a matching FavoriteRecord for caller+kind+id). Unset
@@ -370,9 +386,11 @@ func (x *EntityFilter) GetFavoritesOnly() bool {
 
 // EntitySort is the ready-made ordering over common Entity fields.
 type EntitySort struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Field         EntitySortField        `protobuf:"varint,1,opt,name=field,proto3,enum=cloud.v1.common.EntitySortField" json:"field,omitempty"`
-	Desc          bool                   `protobuf:"varint,2,opt,name=desc,proto3" json:"desc,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// field is the Entity column to order by.
+	Field EntitySortField `protobuf:"varint,1,opt,name=field,proto3,enum=cloud.v1.common.EntitySortField" json:"field,omitempty"`
+	// desc selects descending order when true, ascending otherwise.
+	Desc          bool `protobuf:"varint,2,opt,name=desc,proto3" json:"desc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -424,7 +442,7 @@ func (x *EntitySort) GetDesc() bool {
 // Page is the reusable request-side pagination cursor.
 type Page struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// size caps returned rows; 0 -> server default.
+	// size caps returned rows; 0 means server default.
 	Size uint32 `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
 	// token is the opaque cursor from a previous response (empty = first page).
 	Token         string `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`

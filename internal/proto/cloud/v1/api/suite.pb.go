@@ -27,15 +27,23 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Kind is a suite-specific sortable column (alternative to a common
+// Entity column).
 type ListSuitesRequest_Sort_Kind int32
 
 const (
-	ListSuitesRequest_Sort_KIND_UNSPECIFIED      ListSuitesRequest_Sort_Kind = 0
-	ListSuitesRequest_Sort_KIND_PROVIDER         ListSuitesRequest_Sort_Kind = 1
+	// KIND_UNSPECIFIED leaves the suite-specific ordering unset.
+	ListSuitesRequest_Sort_KIND_UNSPECIFIED ListSuitesRequest_Sort_Kind = 0
+	// KIND_PROVIDER orders by deployment provider.
+	ListSuitesRequest_Sort_KIND_PROVIDER ListSuitesRequest_Sort_Kind = 1
+	// KIND_SCHEDULE_ENABLED orders by whether the cron schedule is enabled.
 	ListSuitesRequest_Sort_KIND_SCHEDULE_ENABLED ListSuitesRequest_Sort_Kind = 2
-	ListSuitesRequest_Sort_KIND_NEXT_RUN_AT      ListSuitesRequest_Sort_Kind = 3
-	ListSuitesRequest_Sort_KIND_LAST_RUN_AT      ListSuitesRequest_Sort_Kind = 4
-	ListSuitesRequest_Sort_KIND_RUN_COUNT        ListSuitesRequest_Sort_Kind = 5
+	// KIND_NEXT_RUN_AT orders by the next planned auto-run time.
+	ListSuitesRequest_Sort_KIND_NEXT_RUN_AT ListSuitesRequest_Sort_Kind = 3
+	// KIND_LAST_RUN_AT orders by the most recent run time.
+	ListSuitesRequest_Sort_KIND_LAST_RUN_AT ListSuitesRequest_Sort_Kind = 4
+	// KIND_RUN_COUNT orders by the total number of runs.
+	ListSuitesRequest_Sort_KIND_RUN_COUNT ListSuitesRequest_Sort_Kind = 5
 )
 
 // Enum value maps for ListSuitesRequest_Sort_Kind.
@@ -85,10 +93,13 @@ func (ListSuitesRequest_Sort_Kind) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{4, 0, 0}
 }
 
+// CreateSuiteRequest creates a new suite definition under a tenant.
 type CreateSuiteRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// Server assigns entity.id / tenant_id / timings.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// suite is the definition to persist. Server assigns entity.id / tenant_id /
+	// timings.
 	Suite         *models.SuiteRecord `protobuf:"bytes,2,opt,name=suite,proto3" json:"suite,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -138,9 +149,11 @@ func (x *CreateSuiteRequest) GetSuite() *models.SuiteRecord {
 	return nil
 }
 
+// CreateSuiteResponse returns the newly created suite definition.
 type CreateSuiteResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Suite         *models.SuiteRecord    `protobuf:"bytes,1,opt,name=suite,proto3" json:"suite,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// suite is the persisted definition with server-assigned fields populated.
+	Suite         *models.SuiteRecord `protobuf:"bytes,1,opt,name=suite,proto3" json:"suite,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -182,10 +195,13 @@ func (x *CreateSuiteResponse) GetSuite() *models.SuiteRecord {
 	return nil
 }
 
+// GetSuiteRequest fetches a single suite definition by id.
 type GetSuiteRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the suite definition identifier to fetch.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -234,9 +250,11 @@ func (x *GetSuiteRequest) GetId() string {
 	return ""
 }
 
+// GetSuiteResponse returns the requested suite definition.
 type GetSuiteResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Suite         *models.SuiteRecord    `protobuf:"bytes,1,opt,name=suite,proto3" json:"suite,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// suite is the requested definition.
+	Suite         *models.SuiteRecord `protobuf:"bytes,1,opt,name=suite,proto3" json:"suite,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -278,18 +296,26 @@ func (x *GetSuiteResponse) GetSuite() *models.SuiteRecord {
 	return nil
 }
 
+// ListSuitesRequest lists suite definitions with filtering, faceting, sorting
+// and pagination.
 type ListSuitesRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Filter   *common.EntityFilter   `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
-	// Facet filters.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// filter holds the shared Entity-level filters (search, ids, time windows).
+	Filter *common.EntityFilter `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
+	// providers restricts the listing to suites targeting these providers (facet
+	// filter).
 	Providers []deployment.Provider `protobuf:"varint,3,rep,packed,name=providers,proto3,enum=cloud.v1.deployment.Provider" json:"providers,omitempty"`
-	// Schedule state. Unset = any; true = only scheduled+enabled; false = only paused/none.
-	ScheduleEnabled *bool                   `protobuf:"varint,4,opt,name=schedule_enabled,json=scheduleEnabled,proto3,oneof" json:"schedule_enabled,omitempty"`
-	Sort            *ListSuitesRequest_Sort `protobuf:"bytes,5,opt,name=sort,proto3" json:"sort,omitempty"`
-	Page            *common.Page            `protobuf:"bytes,6,opt,name=page,proto3" json:"page,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// schedule_enabled facets by schedule state. Unset = any; true = only
+	// scheduled+enabled; false = only paused/none.
+	ScheduleEnabled *bool `protobuf:"varint,4,opt,name=schedule_enabled,json=scheduleEnabled,proto3,oneof" json:"schedule_enabled,omitempty"`
+	// sort selects the result ordering.
+	Sort *ListSuitesRequest_Sort `protobuf:"bytes,5,opt,name=sort,proto3" json:"sort,omitempty"`
+	// page carries pagination (page size + token).
+	Page          *common.Page `protobuf:"bytes,6,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListSuitesRequest) Reset() {
@@ -364,10 +390,13 @@ func (x *ListSuitesRequest) GetPage() *common.Page {
 	return nil
 }
 
+// ListSuitesResponse returns a page of suite definitions.
 type ListSuitesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Suites        []*models.SuiteRecord  `protobuf:"bytes,1,rep,name=suites,proto3" json:"suites,omitempty"`
-	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// suites is the matching page of definitions.
+	Suites []*models.SuiteRecord `protobuf:"bytes,1,rep,name=suites,proto3" json:"suites,omitempty"`
+	// next_page_token fetches the following page; empty when at the end.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -416,10 +445,12 @@ func (x *ListSuitesResponse) GetNextPageToken() string {
 	return ""
 }
 
+// UpdateSuiteRequest wholesale-replaces an existing suite definition.
 type UpdateSuiteRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// Wholesale replace; suite.entity.id selects the row.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// suite is the full replacement; suite.entity.id selects the row.
 	Suite         *models.SuiteRecord `protobuf:"bytes,2,opt,name=suite,proto3" json:"suite,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -469,9 +500,11 @@ func (x *UpdateSuiteRequest) GetSuite() *models.SuiteRecord {
 	return nil
 }
 
+// UpdateSuiteResponse returns the updated suite definition.
 type UpdateSuiteResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Suite         *models.SuiteRecord    `protobuf:"bytes,1,opt,name=suite,proto3" json:"suite,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// suite is the stored definition after the update.
+	Suite         *models.SuiteRecord `protobuf:"bytes,1,opt,name=suite,proto3" json:"suite,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -513,10 +546,13 @@ func (x *UpdateSuiteResponse) GetSuite() *models.SuiteRecord {
 	return nil
 }
 
+// DeleteSuiteRequest deletes a suite definition by id.
 type DeleteSuiteRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the suite definition identifier to delete.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -565,6 +601,7 @@ func (x *DeleteSuiteRequest) GetId() string {
 	return ""
 }
 
+// DeleteSuiteResponse is empty; deletion success is signalled by a non-error reply.
 type DeleteSuiteResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -604,10 +641,13 @@ func (*DeleteSuiteResponse) Descriptor() ([]byte, []int) {
 // CloneSuite copies a suite definition into a new editable one owned by the
 // caller (fresh id, caller as author).
 type CloneSuiteRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the source suite definition to clone.
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	// name is the optional name for the clone; empty -> server derives one.
+	Name          string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -663,9 +703,11 @@ func (x *CloneSuiteRequest) GetName() string {
 	return ""
 }
 
+// CloneSuiteResponse returns the freshly cloned suite definition.
 type CloneSuiteResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Suite         *models.SuiteRecord    `protobuf:"bytes,1,opt,name=suite,proto3" json:"suite,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// suite is the new definition owned by the caller.
+	Suite         *models.SuiteRecord `protobuf:"bytes,1,opt,name=suite,proto3" json:"suite,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -710,10 +752,13 @@ func (x *CloneSuiteResponse) GetSuite() *models.SuiteRecord {
 // SetSuiteSchedule sets/replaces a suite's cron schedule (and its enabled flag)
 // without sending the whole definition — handy for pausing/resuming auto-runs.
 type SetSuiteScheduleRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Schedule      *domain.Schedule       `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the suite definition whose schedule is being set.
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	// schedule is the cron schedule (and enabled flag) to apply.
+	Schedule      *domain.Schedule `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -769,9 +814,11 @@ func (x *SetSuiteScheduleRequest) GetSchedule() *domain.Schedule {
 	return nil
 }
 
+// SetSuiteScheduleResponse returns the suite definition with the new schedule.
 type SetSuiteScheduleResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Suite         *models.SuiteRecord    `protobuf:"bytes,1,opt,name=suite,proto3" json:"suite,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// suite is the stored definition after the schedule change.
+	Suite         *models.SuiteRecord `protobuf:"bytes,1,opt,name=suite,proto3" json:"suite,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -817,18 +864,24 @@ func (x *SetSuiteScheduleResponse) GetSuite() *models.SuiteRecord {
 // compatible cell) and launches SuiteWorkflow. Provide a stored `suite_id`
 // (re-run) or a fully-baked `suite` directly (CLI).
 type StartSuiteRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// source selects the suite to start: a stored definition by id, or a fully
+	// baked suite supplied inline.
+	//
 	// Types that are valid to be assigned to Source:
 	//
 	//	*StartSuiteRequest_SuiteId
 	//	*StartSuiteRequest_Suite
 	Source isStartSuiteRequest_Source `protobuf_oneof:"source"`
-	// Max concurrent child TestWorkflows. 0 = unlimited.
+	// max_parallel caps concurrent child TestWorkflows. 0 = unlimited.
 	MaxParallel uint32 `protobuf:"varint,4,opt,name=max_parallel,json=maxParallel,proto3" json:"max_parallel,omitempty"`
-	// Rating membership applied to all child runs; unset -> suite defaults, then
-	// platform defaults (tenant true, global false).
+	// in_tenant_rating sets tenant-rating membership for all child runs; unset ->
+	// suite defaults, then platform defaults (tenant true).
 	InTenantRating *bool `protobuf:"varint,5,opt,name=in_tenant_rating,json=inTenantRating,proto3,oneof" json:"in_tenant_rating,omitempty"`
+	// in_global_rating sets global-rating membership for all child runs; unset ->
+	// suite defaults, then platform defaults (global false).
 	InGlobalRating *bool `protobuf:"varint,6,opt,name=in_global_rating,json=inGlobalRating,proto3,oneof" json:"in_global_rating,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -922,10 +975,12 @@ type isStartSuiteRequest_Source interface {
 }
 
 type StartSuiteRequest_SuiteId struct {
+	// suite_id re-runs a stored suite definition by id.
 	SuiteId string `protobuf:"bytes,2,opt,name=suite_id,json=suiteId,proto3,oneof"`
 }
 
 type StartSuiteRequest_Suite struct {
+	// suite is a fully-baked suite supplied directly (CLI path).
 	Suite *domain.Suite `protobuf:"bytes,3,opt,name=suite,proto3,oneof"`
 }
 
@@ -933,8 +988,10 @@ func (*StartSuiteRequest_SuiteId) isStartSuiteRequest_Source() {}
 
 func (*StartSuiteRequest_Suite) isStartSuiteRequest_Source() {}
 
+// StartSuiteResponse returns the newly created suite run.
 type StartSuiteResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// suite_run is the launched suite execution record.
 	SuiteRun      *models.SuiteRunRecord `protobuf:"bytes,1,opt,name=suite_run,json=suiteRun,proto3" json:"suite_run,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -977,14 +1034,18 @@ func (x *StartSuiteResponse) GetSuiteRun() *models.SuiteRunRecord {
 	return nil
 }
 
+// Sort selects the ordering column for the listing.
 type ListSuitesRequest_Sort struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// by selects either a common Entity sort field or a suite-specific Kind.
+	//
 	// Types that are valid to be assigned to By:
 	//
 	//	*ListSuitesRequest_Sort_Entity
 	//	*ListSuitesRequest_Sort_Kind_
-	By            isListSuitesRequest_Sort_By `protobuf_oneof:"by"`
-	Desc          bool                        `protobuf:"varint,3,opt,name=desc,proto3" json:"desc,omitempty"`
+	By isListSuitesRequest_Sort_By `protobuf_oneof:"by"`
+	// desc reverses the order (descending) when true.
+	Desc          bool `protobuf:"varint,3,opt,name=desc,proto3" json:"desc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1056,10 +1117,12 @@ type isListSuitesRequest_Sort_By interface {
 }
 
 type ListSuitesRequest_Sort_Entity struct {
+	// entity orders by a shared Entity column (name, created_at, ...).
 	Entity common.EntitySortField `protobuf:"varint,1,opt,name=entity,proto3,enum=cloud.v1.common.EntitySortField,oneof"`
 }
 
 type ListSuitesRequest_Sort_Kind_ struct {
+	// kind orders by a suite-specific column.
 	Kind ListSuitesRequest_Sort_Kind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.api.ListSuitesRequest_Sort_Kind,oneof"`
 }
 

@@ -28,17 +28,24 @@ const (
 // tenant (entity.tenant_id identifies it). Distinct from the global control-plane
 // api.PlatformSettings. Starter field set; extend as features need it.
 type TenantSettingsRecord struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	Entity *common.Entity         `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	// Default provider preselected in the wizards for this tenant.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entity is the storage envelope; entity.tenant_id identifies which tenant
+	// these settings belong to (exactly one row per tenant).
+	Entity *common.Entity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	// default_provider is the deployment provider preselected in the wizards
+	// for this tenant.
 	DefaultProvider deployment.Provider `protobuf:"varint,2,opt,name=default_provider,json=defaultProvider,proto3,enum=cloud.v1.deployment.Provider" json:"default_provider,omitempty"`
-	// Default rating membership for new runs (see TestRunRecord). Optional so unset
-	// = platform defaults (tenant true, global false).
+	// default_in_tenant_rating is the default tenant-rating membership for new
+	// runs (see TestRunRecord). Optional: unset = platform default (tenant
+	// true).
 	DefaultInTenantRating *bool `protobuf:"varint,3,opt,name=default_in_tenant_rating,json=defaultInTenantRating,proto3,oneof" json:"default_in_tenant_rating,omitempty"`
+	// default_in_global_rating is the default global-rating membership for new
+	// runs. Optional: unset = platform default (global false).
 	DefaultInGlobalRating *bool `protobuf:"varint,4,opt,name=default_in_global_rating,json=defaultInGlobalRating,proto3,oneof" json:"default_in_global_rating,omitempty"`
-	// Default suite parallelism. 0 = unlimited.
+	// default_max_parallel is the default suite parallelism. 0 = unlimited.
 	DefaultMaxParallel uint32 `protobuf:"varint,5,opt,name=default_max_parallel,json=defaultMaxParallel,proto3" json:"default_max_parallel,omitempty"`
-	// Retention for finished runs in days. 0 = keep forever.
+	// run_retention_days is the retention for finished runs, in days.
+	// 0 = keep forever.
 	RunRetentionDays uint32 `protobuf:"varint,6,opt,name=run_retention_days,json=runRetentionDays,proto3" json:"run_retention_days,omitempty"`
 	// Per-provider configuration for this tenant: one ProviderSettings per
 	// provider the tenant has set up (credentials / region / global sizing

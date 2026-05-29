@@ -17,6 +17,7 @@ import (
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	"github.com/stroppy-io/stroppy-cloud/internal/services/utils"
 )
 
 // -------- CreateIdentityProvider --------
@@ -28,7 +29,7 @@ func TestCreateIdentityProvider(t *testing.T) {
 	providers := NewMockIdentityProviderRepo(ctrl)
 	secrets := NewMockProviderSecrets(ctrl)
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:        &utils.MockTrm{},
 		Providers: providers, ProviderSecrets: secrets,
 	})
 	ctx := context.Background()
@@ -91,7 +92,7 @@ func TestGetIdentityProvider(t *testing.T) {
 	defer ctrl.Finish()
 
 	providers := NewMockIdentityProviderRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Providers: providers})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Providers: providers})
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {
@@ -123,7 +124,7 @@ func TestUpdateIdentityProvider(t *testing.T) {
 	providers := NewMockIdentityProviderRepo(ctrl)
 	secrets := NewMockProviderSecrets(ctrl)
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:        &utils.MockTrm{},
 		Providers: providers, ProviderSecrets: secrets,
 	})
 	ctx := context.Background()
@@ -207,7 +208,7 @@ func TestDeleteIdentityProvider(t *testing.T) {
 	providers := NewMockIdentityProviderRepo(ctrl)
 	secrets := NewMockProviderSecrets(ctrl)
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:        &utils.MockTrm{},
 		Providers: providers, ProviderSecrets: secrets,
 	})
 	ctx := context.Background()
@@ -265,7 +266,7 @@ func TestListIdentityProviders(t *testing.T) {
 	defer ctrl.Finish()
 
 	providers := NewMockIdentityProviderRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Providers: providers})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Providers: providers})
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {
@@ -299,7 +300,7 @@ func TestStartSSO(t *testing.T) {
 	providers := NewMockIdentityProviderRepo(ctrl)
 	sso := NewMockSSOFlows(ctrl)
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:        &utils.MockTrm{},
 		Providers: providers, SSO: sso,
 	})
 	ctx := context.Background()
@@ -356,7 +357,7 @@ func TestCompleteSSO(t *testing.T) {
 	tokens := NewMockTokenService(ctrl)
 
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:        &utils.MockTrm{},
 		Providers: providers, ProviderSecrets: secrets,
 		SSO: sso, Accounts: accounts, ExternalIdentities: identities, Tokens: tokens,
 	})
@@ -497,7 +498,7 @@ func TestLinkExternalIdentity(t *testing.T) {
 	accounts := NewMockAccountRepo(ctrl)
 	identities := NewMockExternalIdentityRepo(ctrl)
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:       &utils.MockTrm{},
 		Accounts: accounts, ExternalIdentities: identities,
 	})
 	ctx := context.Background()
@@ -589,10 +590,10 @@ func TestUnlinkExternalIdentity(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	authn := NewMockAuthn(ctrl)
+	authn := utils.NewMockAuthn(ctrl)
 	identities := NewMockExternalIdentityRepo(ctrl)
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:    &utils.MockTrm{},
 		Authn: authn, ExternalIdentities: identities,
 	})
 	ctx := context.Background()
@@ -659,10 +660,10 @@ func TestListExternalIdentities(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	authn := NewMockAuthn(ctrl)
+	authn := utils.NewMockAuthn(ctrl)
 	identities := NewMockExternalIdentityRepo(ctrl)
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:    &utils.MockTrm{},
 		Authn: authn, ExternalIdentities: identities,
 	})
 	ctx := context.Background()

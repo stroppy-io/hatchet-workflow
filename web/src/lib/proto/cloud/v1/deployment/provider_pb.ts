@@ -15,30 +15,48 @@ export const file_cloud_v1_deployment_provider: GenFile = /*@__PURE__*/
   fileDesc("CiJjbG91ZC92MS9kZXBsb3ltZW50L3Byb3ZpZGVyLnByb3RvEhNjbG91ZC52MS5kZXBsb3ltZW50ImYKEFByb3ZpZGVyU2V0dGluZ3MSLwoIcHJvdmlkZXIYASABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyEiEKCHNldHRpbmdzGAIgASgLMg8uc2NoZW1hcGIuQmFrZWQqTgoIUHJvdmlkZXISGAoUUFJPVklERVJfVU5TUEVDSUZJRUQQABITCg9QUk9WSURFUl9ET0NLRVIQARITCg9QUk9WSURFUl9ZQU5ERVgQAkJIWkZnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9kZXBsb3ltZW50YgZwcm90bzM", [file_schemapb_schema]);
 
 /**
+ *
+ * ProviderSettings binds a chosen Provider to its baked, schema-backed
+ * backend configuration. provider selects the backend and, with it, the
+ * schema that settings is validated against.
+ *
  * @generated from message cloud.v1.deployment.ProviderSettings
  */
 export type ProviderSettings = Message<"cloud.v1.deployment.ProviderSettings"> & {
   /**
+   * provider selects the deployment backend these settings configure. 
+   *
    * @generated from field: cloud.v1.deployment.Provider provider = 1;
    */
   provider: Provider;
 
   /**
+   * settings is the sealed, schema-backed configuration for the provider. 
+   *
    * @generated from field: schemapb.Baked settings = 2;
    */
   settings?: Baked;
 };
 
 /**
+ *
+ * ProviderSettings binds a chosen Provider to its baked, schema-backed
+ * backend configuration. provider selects the backend and, with it, the
+ * schema that settings is validated against.
+ *
  * @generated from message cloud.v1.deployment.ProviderSettings
  */
 export type ProviderSettingsJson = {
   /**
+   * provider selects the deployment backend these settings configure. 
+   *
    * @generated from field: cloud.v1.deployment.Provider provider = 1;
    */
   provider?: ProviderJson;
 
   /**
+   * settings is the sealed, schema-backed configuration for the provider. 
+   *
    * @generated from field: schemapb.Baked settings = 2;
    */
   settings?: BakedJson;

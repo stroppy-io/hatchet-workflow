@@ -18,14 +18,22 @@ import { file_temporal_v1_temporal } from "../../../temporal/v1/temporal_pb.ts";
  * Describes the file cloud/v1/workflow/agent.proto.
  */
 export const file_cloud_v1_workflow_agent: GenFile = /*@__PURE__*/
-  fileDesc("Ch1jbG91ZC92MS93b3JrZmxvdy9hZ2VudC5wcm90bxIRY2xvdWQudjEud29ya2Zsb3cyqQMKD0FnZW50Q29tbWFuZEFwaRJWChlFbnN1cmVBZ2VudE9ubGluZUFjdGl2aXR5EhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgmSxAMFIgMIhAcSSwoRQ3JlYXRlRGlyQWN0aXZpdHkSFC5jbG91ZC52MS5jb21tb24uRGlyGhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgiSxAMEIgIIHhJSChVDcmVhdGVUZW1wRGlyQWN0aXZpdHkSGS5jbG91ZC52MS5jb21tb24uRGlyLlRlbXAaFC5jbG91ZC52MS5jb21tb24uRGlyIgiSxAMEIgIIHhJMChFXcml0ZUZpbGVBY3Rpdml0eRIVLmNsb3VkLnYxLmNvbW1vbi5GaWxlGhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgiSxAMEIgIIHhJPCg9DYWxsQ21kQWN0aXZpdHkSFC5jbG91ZC52MS5jb21tb24uQ21kGhsuY2xvdWQudjEuY29tbW9uLkNtZC5SZXN1bHQiCZLEAwUiAwjYBEJGWkRnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS93b3JrZmxvd2IGcHJvdG8z", [file_cloud_v1_common_cmd, file_cloud_v1_common_dir, file_cloud_v1_common_file, file_google_protobuf_empty, file_temporal_v1_temporal]);
+  fileDesc("Ch1jbG91ZC92MS93b3JrZmxvdy9hZ2VudC5wcm90bxIRY2xvdWQudjEud29ya2Zsb3cy9wMKE0FnZW50Q29tbWFuZFNlcnZpY2USbQoZRW5zdXJlQWdlbnRPbmxpbmVBY3Rpdml0eRIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIgksQDHDIRGgIIPAoCCAURAAAAAAAAAEAiAwiEByoCCDwSUwoRQ3JlYXRlRGlyQWN0aXZpdHkSFC5jbG91ZC52MS5jb21tb24uRGlyGhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IhCSxAMMMgYgAwoCCAIiAggeElYKFUNyZWF0ZVRlbXBEaXJBY3Rpdml0eRIZLmNsb3VkLnYxLmNvbW1vbi5EaXIuVGVtcBoULmNsb3VkLnYxLmNvbW1vbi5EaXIiDJLEAwgiAggeMgIgARJUChFXcml0ZUZpbGVBY3Rpdml0eRIVLmNsb3VkLnYxLmNvbW1vbi5GaWxlGhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IhCSxAMMMgYgAwoCCAIiAggeElkKD0NhbGxDbWRBY3Rpdml0eRIULmNsb3VkLnYxLmNvbW1vbi5DbWQaGy5jbG91ZC52MS5jb21tb24uQ21kLlJlc3VsdCITksQDDzICIAEiBQiAmp4BKgIIPBoTisQDDwoNc3Ryb3BweS1jbG91ZEJGWkRnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS93b3JrZmxvd2IGcHJvdG8z", [file_cloud_v1_common_cmd, file_cloud_v1_common_dir, file_cloud_v1_common_file, file_google_protobuf_empty, file_temporal_v1_temporal]);
 
 /**
- * @generated from service cloud.v1.workflow.AgentCommandApi
+ *
+ * AgentCommandService groups the agent-facing Temporal activities that perform
+ * filesystem and command work on an agent host.
+ *
+ * @generated from service cloud.v1.workflow.AgentCommandService
  */
-export const AgentCommandApi: GenService<{
+export const AgentCommandService: GenService<{
   /**
-   * @generated from rpc cloud.v1.workflow.AgentCommandApi.EnsureAgentOnlineActivity
+   *
+   * EnsureAgentOnlineActivity blocks until the target agent reports online,
+   * heartbeating while it polls.
+   *
+   * @generated from rpc cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity
    */
   ensureAgentOnlineActivity: {
     methodKind: "unary";
@@ -33,7 +41,11 @@ export const AgentCommandApi: GenService<{
     output: typeof EmptySchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.AgentCommandApi.CreateDirActivity
+   *
+   * CreateDirActivity creates a directory on the agent host (mkdir -p
+   * semantics).
+   *
+   * @generated from rpc cloud.v1.workflow.AgentCommandService.CreateDirActivity
    */
   createDirActivity: {
     methodKind: "unary";
@@ -41,7 +53,11 @@ export const AgentCommandApi: GenService<{
     output: typeof EmptySchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.AgentCommandApi.CreateTempDirActivity
+   *
+   * CreateTempDirActivity creates a fresh temporary directory on the agent
+   * host and returns its path.
+   *
+   * @generated from rpc cloud.v1.workflow.AgentCommandService.CreateTempDirActivity
    */
   createTempDirActivity: {
     methodKind: "unary";
@@ -49,7 +65,10 @@ export const AgentCommandApi: GenService<{
     output: typeof DirSchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.AgentCommandApi.WriteFileActivity
+   *
+   * WriteFileActivity writes a file's full contents to the agent host.
+   *
+   * @generated from rpc cloud.v1.workflow.AgentCommandService.WriteFileActivity
    */
   writeFileActivity: {
     methodKind: "unary";
@@ -57,7 +76,11 @@ export const AgentCommandApi: GenService<{
     output: typeof EmptySchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.AgentCommandApi.CallCmdActivity
+   *
+   * CallCmdActivity runs a command on the agent host (including the long
+   * stroppy load) and returns its result, heartbeating while it runs.
+   *
+   * @generated from rpc cloud.v1.workflow.AgentCommandService.CallCmdActivity
    */
   callCmdActivity: {
     methodKind: "unary";

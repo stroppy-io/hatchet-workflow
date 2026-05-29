@@ -31,21 +31,33 @@ const (
 
 // RunColumn is one run's descriptor in the comparison (config, not metrics).
 type RunColumn struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	RunId          string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	Name           string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Status         common.Status          `protobuf:"varint,3,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
-	DbKind         domain.Database_Kind   `protobuf:"varint,4,opt,name=db_kind,json=dbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kind,omitempty"`
-	DbName         string                 `protobuf:"bytes,5,opt,name=db_name,json=dbName,proto3" json:"db_name,omitempty"`
-	WorkloadName   string                 `protobuf:"bytes,6,opt,name=workload_name,json=workloadName,proto3" json:"workload_name,omitempty"`
-	StroppyVersion string                 `protobuf:"bytes,7,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
-	Provider       deployment.Provider    `protobuf:"varint,8,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	TopologyLabel  string                 `protobuf:"bytes,9,opt,name=topology_label,json=topologyLabel,proto3" json:"topology_label,omitempty"`
-	NodeCount      uint32                 `protobuf:"varint,10,opt,name=node_count,json=nodeCount,proto3" json:"node_count,omitempty"`
-	StartedAt      *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
-	Duration       *durationpb.Duration   `protobuf:"bytes,12,opt,name=duration,proto3" json:"duration,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// run_id is the test run this column describes.
+	RunId string `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// name is the run's display name.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// status is the run's lifecycle/terminal status.
+	Status common.Status `protobuf:"varint,3,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
+	// db_kind is the database engine the run targeted.
+	DbKind domain.Database_Kind `protobuf:"varint,4,opt,name=db_kind,json=dbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kind,omitempty"`
+	// db_name is the database/preset name used by the run.
+	DbName string `protobuf:"bytes,5,opt,name=db_name,json=dbName,proto3" json:"db_name,omitempty"`
+	// workload_name is the workload/preset the run executed.
+	WorkloadName string `protobuf:"bytes,6,opt,name=workload_name,json=workloadName,proto3" json:"workload_name,omitempty"`
+	// stroppy_version is the stroppy engine version used.
+	StroppyVersion string `protobuf:"bytes,7,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
+	// provider is the deployment/cloud provider the run ran on.
+	Provider deployment.Provider `protobuf:"varint,8,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	// topology_label is a human-readable summary of the cluster topology.
+	TopologyLabel string `protobuf:"bytes,9,opt,name=topology_label,json=topologyLabel,proto3" json:"topology_label,omitempty"`
+	// node_count is the number of nodes in the run's topology.
+	NodeCount uint32 `protobuf:"varint,10,opt,name=node_count,json=nodeCount,proto3" json:"node_count,omitempty"`
+	// started_at is when the run began (server clock).
+	StartedAt *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// duration is how long the run took.
+	Duration      *durationpb.Duration `protobuf:"bytes,12,opt,name=duration,proto3" json:"duration,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RunColumn) Reset() {
@@ -162,12 +174,14 @@ func (x *RunColumn) GetDuration() *durationpb.Duration {
 	return nil
 }
 
+// CompareView is the full side-by-side comparison payload: one config column
+// per run plus the per-metric diff across all of them.
 type CompareView struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Per-run config columns, aligned 1:1 with the request run_ids; columns[0] is
-	// the baseline.
+	// columns are the per-run config columns, aligned 1:1 with the request
+	// run_ids; columns[0] is the baseline.
 	Columns []*RunColumn `protobuf:"bytes,1,rep,name=columns,proto3" json:"columns,omitempty"`
-	// Per-metric diff across the runs (baseline = run_ids[0]).
+	// metrics is the per-metric diff across the runs (baseline = run_ids[0]).
 	Metrics       *monitor.Comparison `protobuf:"bytes,2,opt,name=metrics,proto3" json:"metrics,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -217,10 +231,13 @@ func (x *CompareView) GetMetrics() *monitor.Comparison {
 	return nil
 }
 
+// CompareRunsRequest asks for a side-by-side comparison of two or more runs.
 type CompareRunsRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// Runs to compare in display order; run_ids[0] is the baseline.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request; all runs must belong to this tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// run_ids are the runs to compare in display order; run_ids[0] is the
+	// baseline.
 	RunIds        []string `protobuf:"bytes,2,rep,name=run_ids,json=runIds,proto3" json:"run_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -270,9 +287,11 @@ func (x *CompareRunsRequest) GetRunIds() []string {
 	return nil
 }
 
+// CompareRunsResponse wraps the assembled comparison view.
 type CompareRunsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	View          *CompareView           `protobuf:"bytes,1,opt,name=view,proto3" json:"view,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// view is the side-by-side comparison (columns + metric diff).
+	View          *CompareView `protobuf:"bytes,1,opt,name=view,proto3" json:"view,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

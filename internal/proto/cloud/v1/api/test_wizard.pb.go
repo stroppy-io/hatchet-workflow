@@ -27,12 +27,14 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// StartTestWizardRequest opens a new test wizard draft.
 type StartTestWizardRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// Optional human label for the draft.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// name is the optional human label for the draft.
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	// Optional: seed the whole draft from an existing test preset.
+	// test_preset_id optionally seeds the whole draft from an existing test preset.
 	TestPresetId  string `protobuf:"bytes,3,opt,name=test_preset_id,json=testPresetId,proto3" json:"test_preset_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -89,8 +91,10 @@ func (x *StartTestWizardRequest) GetTestPresetId() string {
 	return ""
 }
 
+// StartTestWizardResponse returns the freshly created draft.
 type StartTestWizardResponse struct {
-	state         protoimpl.MessageState        `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// draft is the new wizard draft (carrying the initial form schema).
 	Draft         *models.TestWizardDraftRecord `protobuf:"bytes,1,opt,name=draft,proto3" json:"draft,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -133,10 +137,13 @@ func (x *StartTestWizardResponse) GetDraft() *models.TestWizardDraftRecord {
 	return nil
 }
 
+// GetTestWizardDraftRequest fetches a single wizard draft by id.
 type GetTestWizardDraftRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	DraftId       string                 `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// draft_id is the wizard draft identifier to fetch.
+	DraftId       string `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -185,8 +192,10 @@ func (x *GetTestWizardDraftRequest) GetDraftId() string {
 	return ""
 }
 
+// GetTestWizardDraftResponse returns the requested wizard draft.
 type GetTestWizardDraftResponse struct {
-	state         protoimpl.MessageState        `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// draft is the requested wizard draft.
 	Draft         *models.TestWizardDraftRecord `protobuf:"bytes,1,opt,name=draft,proto3" json:"draft,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -232,11 +241,15 @@ func (x *GetTestWizardDraftResponse) GetDraft() *models.TestWizardDraftRecord {
 // ListTestWizardDrafts lets the UI offer "continue where you left off": filter by
 // author (the caller) and sort by updated_at desc to pick the most recent draft.
 type ListTestWizardDraftsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Filter        *common.EntityFilter   `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
-	Sort          *common.EntitySort     `protobuf:"bytes,3,opt,name=sort,proto3" json:"sort,omitempty"`
-	Page          *common.Page           `protobuf:"bytes,4,opt,name=page,proto3" json:"page,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// filter holds the shared Entity-level filters (author, time windows, ...).
+	Filter *common.EntityFilter `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
+	// sort selects the result ordering.
+	Sort *common.EntitySort `protobuf:"bytes,3,opt,name=sort,proto3" json:"sort,omitempty"`
+	// page carries pagination (page size + token).
+	Page          *common.Page `protobuf:"bytes,4,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -299,10 +312,13 @@ func (x *ListTestWizardDraftsRequest) GetPage() *common.Page {
 	return nil
 }
 
+// ListTestWizardDraftsResponse returns a page of wizard drafts.
 type ListTestWizardDraftsResponse struct {
-	state         protoimpl.MessageState          `protogen:"open.v1"`
-	Drafts        []*models.TestWizardDraftRecord `protobuf:"bytes,1,rep,name=drafts,proto3" json:"drafts,omitempty"`
-	NextPageToken string                          `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// drafts is the matching page of wizard drafts.
+	Drafts []*models.TestWizardDraftRecord `protobuf:"bytes,1,rep,name=drafts,proto3" json:"drafts,omitempty"`
+	// next_page_token fetches the following page; empty when at the end.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -356,10 +372,13 @@ func (x *ListTestWizardDraftsResponse) GetNextPageToken() string {
 // returning the full new draft (form may carry a re-emitted schema when a coarse
 // choice changed the active branches).
 type PatchTestWizardRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	DraftId       string                 `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
-	Form          *schemapb.Filled       `protobuf:"bytes,3,opt,name=form,proto3" json:"form,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// draft_id is the wizard draft being edited.
+	DraftId string `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
+	// form carries the edited form values (Filled = values + schema ref).
+	Form          *schemapb.Filled `protobuf:"bytes,3,opt,name=form,proto3" json:"form,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -415,8 +434,10 @@ func (x *PatchTestWizardRequest) GetForm() *schemapb.Filled {
 	return nil
 }
 
+// PatchTestWizardResponse returns the recomputed wizard draft.
 type PatchTestWizardResponse struct {
-	state         protoimpl.MessageState        `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// draft is the full new draft after validation/topology/readiness recompute.
 	Draft         *models.TestWizardDraftRecord `protobuf:"bytes,1,opt,name=draft,proto3" json:"draft,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -459,10 +480,13 @@ func (x *PatchTestWizardResponse) GetDraft() *models.TestWizardDraftRecord {
 	return nil
 }
 
+// DeleteTestWizardDraftRequest deletes a wizard draft by id.
 type DeleteTestWizardDraftRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	DraftId       string                 `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// draft_id is the wizard draft identifier to delete.
+	DraftId       string `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -511,6 +535,8 @@ func (x *DeleteTestWizardDraftRequest) GetDraftId() string {
 	return ""
 }
 
+// DeleteTestWizardDraftResponse is empty; deletion success is signalled by a
+// non-error reply.
 type DeleteTestWizardDraftResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -552,17 +578,24 @@ func (*DeleteTestWizardDraftResponse) Descriptor() ([]byte, []int) {
 // same call: start it (internally calls TestRunAPI.StartTestRun -> persists a
 // TestRunRecord + launches TestWorkflow) and/or save it as a TestPresetRecord.
 type FinishTestWizardRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	DraftId  string                 `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
-	// Start the baked run immediately.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// draft_id is the wizard draft to bake.
+	DraftId string `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
+	// start, when true, launches the baked run immediately.
 	Start bool `protobuf:"varint,3,opt,name=start,proto3" json:"start,omitempty"`
-	// Also save the baked db+workload as a reusable test preset.
+	// save_as_preset, when true, also saves the baked db+workload as a reusable
+	// test preset.
 	SaveAsPreset bool `protobuf:"varint,4,opt,name=save_as_preset,json=saveAsPreset,proto3" json:"save_as_preset,omitempty"`
-	// Name for the saved preset (used only when save_as_preset; empty -> derived).
+	// preset_name names the saved preset (used only when save_as_preset; empty ->
+	// derived).
 	PresetName string `protobuf:"bytes,5,opt,name=preset_name,json=presetName,proto3" json:"preset_name,omitempty"`
-	// Rating membership for the started run; unset -> defaults (tenant true, global false).
+	// in_tenant_rating sets tenant-rating membership for the started run; unset ->
+	// defaults (tenant true).
 	InTenantRating *bool `protobuf:"varint,6,opt,name=in_tenant_rating,json=inTenantRating,proto3,oneof" json:"in_tenant_rating,omitempty"`
+	// in_global_rating sets global-rating membership for the started run; unset ->
+	// defaults (global false).
 	InGlobalRating *bool `protobuf:"varint,7,opt,name=in_global_rating,json=inGlobalRating,proto3,oneof" json:"in_global_rating,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -647,13 +680,15 @@ func (x *FinishTestWizardRequest) GetInGlobalRating() bool {
 	return false
 }
 
+// FinishTestWizardResponse returns the baked run and, optionally, the launched run
+// and saved preset.
 type FinishTestWizardResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The baked run spec (always present).
+	// test_run is the baked run spec (always present).
 	TestRun *domain.TestRun `protobuf:"bytes,1,opt,name=test_run,json=testRun,proto3" json:"test_run,omitempty"`
-	// Set when start = true: the persisted, launched run.
+	// run is set when start = true: the persisted, launched run.
 	Run *models.TestRunRecord `protobuf:"bytes,2,opt,name=run,proto3" json:"run,omitempty"`
-	// Set when save_as_preset = true: the saved preset.
+	// preset is set when save_as_preset = true: the saved preset.
 	Preset        *models.TestPresetRecord `protobuf:"bytes,3,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

@@ -663,26 +663,36 @@ export const Docker_FileSchema: GenMessage<Docker_File, {jsonType: Docker_FileJs
  */
 export type Docker_Healthcheck = Message<"cloud.v1.deployment.Docker.Healthcheck"> & {
   /**
+   * test is the healthcheck command, e.g. ["CMD", "curl", "-f", "..."]. 
+   *
    * @generated from field: repeated string test = 1;
    */
   test: string[];
 
   /**
+   * interval_seconds is the delay between checks. 
+   *
    * @generated from field: uint32 interval_seconds = 2;
    */
   intervalSeconds: number;
 
   /**
+   * timeout_seconds is the max time one check may run. 
+   *
    * @generated from field: uint32 timeout_seconds = 3;
    */
   timeoutSeconds: number;
 
   /**
+   * retries is the number of consecutive failures before unhealthy. 
+   *
    * @generated from field: uint32 retries = 4;
    */
   retries: number;
 
   /**
+   * start_period_seconds is the grace period before failures count. 
+   *
    * @generated from field: uint32 start_period_seconds = 5;
    */
   startPeriodSeconds: number;
@@ -695,26 +705,36 @@ export type Docker_Healthcheck = Message<"cloud.v1.deployment.Docker.Healthcheck
  */
 export type Docker_HealthcheckJson = {
   /**
+   * test is the healthcheck command, e.g. ["CMD", "curl", "-f", "..."]. 
+   *
    * @generated from field: repeated string test = 1;
    */
   test?: string[];
 
   /**
+   * interval_seconds is the delay between checks. 
+   *
    * @generated from field: uint32 interval_seconds = 2;
    */
   intervalSeconds?: number;
 
   /**
+   * timeout_seconds is the max time one check may run. 
+   *
    * @generated from field: uint32 timeout_seconds = 3;
    */
   timeoutSeconds?: number;
 
   /**
+   * retries is the number of consecutive failures before unhealthy. 
+   *
    * @generated from field: uint32 retries = 4;
    */
   retries?: number;
 
   /**
+   * start_period_seconds is the grace period before failures count. 
+   *
    * @generated from field: uint32 start_period_seconds = 5;
    */
   startPeriodSeconds?: number;
@@ -852,31 +872,43 @@ export const Docker_OutputSchema: GenMessage<Docker_Output, {jsonType: Docker_Ou
  */
 export type Docker_ContainerOutput = Message<"cloud.v1.deployment.Docker.ContainerOutput"> & {
   /**
+   * id is the Docker container id assigned by the daemon. 
+   *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
+   * name is the resolved container name. 
+   *
    * @generated from field: string name = 2;
    */
   name: string;
 
   /**
+   * internal_ip is the container IP on the Docker network. 
+   *
    * @generated from field: string internal_ip = 3;
    */
   internalIp: string;
 
   /**
+   * mapped_ports maps container ports to the host ports they bound to. 
+   *
    * @generated from field: map<uint32, uint32> mapped_ports = 4;
    */
   mappedPorts: { [key: number]: number };
 
   /**
+   * status is the container status string reported by Docker. 
+   *
    * @generated from field: string status = 5;
    */
   status: string;
 
   /**
+   * started_at is the container start timestamp as reported by Docker. 
+   *
    * @generated from field: string started_at = 6;
    */
   startedAt: string;
@@ -889,31 +921,43 @@ export type Docker_ContainerOutput = Message<"cloud.v1.deployment.Docker.Contain
  */
 export type Docker_ContainerOutputJson = {
   /**
+   * id is the Docker container id assigned by the daemon. 
+   *
    * @generated from field: string id = 1;
    */
   id?: string;
 
   /**
+   * name is the resolved container name. 
+   *
    * @generated from field: string name = 2;
    */
   name?: string;
 
   /**
+   * internal_ip is the container IP on the Docker network. 
+   *
    * @generated from field: string internal_ip = 3;
    */
   internalIp?: string;
 
   /**
+   * mapped_ports maps container ports to the host ports they bound to. 
+   *
    * @generated from field: map<uint32, uint32> mapped_ports = 4;
    */
   mappedPorts?: { [key: number]: number };
 
   /**
+   * status is the container status string reported by Docker. 
+   *
    * @generated from field: string status = 5;
    */
   status?: string;
 
   /**
+   * started_at is the container start timestamp as reported by Docker. 
+   *
    * @generated from field: string started_at = 6;
    */
   startedAt?: string;
@@ -935,16 +979,22 @@ export const Docker_ContainerOutputSchema: GenMessage<Docker_ContainerOutput, {j
  */
 export enum Docker_Protocol {
   /**
+   * PROTOCOL_UNSPECIFIED is the unset zero value; treated as tcp. 
+   *
    * @generated from enum value: PROTOCOL_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
+   * PROTOCOL_TCP binds the port over TCP. 
+   *
    * @generated from enum value: PROTOCOL_TCP = 1;
    */
   TCP = 1,
 
   /**
+   * PROTOCOL_UDP binds the port over UDP. 
+   *
    * @generated from enum value: PROTOCOL_UDP = 2;
    */
   UDP = 2,
@@ -970,26 +1020,36 @@ export const Docker_ProtocolSchema: GenEnum<Docker_Protocol, Docker_ProtocolJson
  */
 export enum Docker_RestartPolicy {
   /**
+   * RESTART_POLICY_UNSPECIFIED is the unset zero value; uses daemon default. 
+   *
    * @generated from enum value: RESTART_POLICY_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
+   * RESTART_POLICY_NO never restarts the container. 
+   *
    * @generated from enum value: RESTART_POLICY_NO = 1;
    */
   NO = 1,
 
   /**
+   * RESTART_POLICY_ON_FAILURE restarts only on non-zero exit. 
+   *
    * @generated from enum value: RESTART_POLICY_ON_FAILURE = 2;
    */
   ON_FAILURE = 2,
 
   /**
+   * RESTART_POLICY_ALWAYS always restarts the container. 
+   *
    * @generated from enum value: RESTART_POLICY_ALWAYS = 3;
    */
   ALWAYS = 3,
 
   /**
+   * RESTART_POLICY_UNLESS_STOPPED always restarts unless explicitly stopped. 
+   *
    * @generated from enum value: RESTART_POLICY_UNLESS_STOPPED = 4;
    */
   UNLESS_STOPPED = 4,

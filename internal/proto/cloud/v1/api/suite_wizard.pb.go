@@ -27,11 +27,14 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// StartSuiteWizardRequest opens a new suite wizard draft.
 type StartSuiteWizardRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Name     string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	// Optional: seed from an existing suite.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// name is the optional human label for the draft.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// suite_id optionally seeds the draft from an existing suite definition.
 	SuiteId       string `protobuf:"bytes,3,opt,name=suite_id,json=suiteId,proto3" json:"suite_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -88,8 +91,10 @@ func (x *StartSuiteWizardRequest) GetSuiteId() string {
 	return ""
 }
 
+// StartSuiteWizardResponse returns the freshly created draft.
 type StartSuiteWizardResponse struct {
-	state         protoimpl.MessageState         `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// draft is the new wizard draft (carrying the initial form schema).
 	Draft         *models.SuiteWizardDraftRecord `protobuf:"bytes,1,opt,name=draft,proto3" json:"draft,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -132,10 +137,13 @@ func (x *StartSuiteWizardResponse) GetDraft() *models.SuiteWizardDraftRecord {
 	return nil
 }
 
+// GetSuiteWizardDraftRequest fetches a single wizard draft by id.
 type GetSuiteWizardDraftRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	DraftId       string                 `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// draft_id is the wizard draft identifier to fetch.
+	DraftId       string `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -184,8 +192,10 @@ func (x *GetSuiteWizardDraftRequest) GetDraftId() string {
 	return ""
 }
 
+// GetSuiteWizardDraftResponse returns the requested wizard draft.
 type GetSuiteWizardDraftResponse struct {
-	state         protoimpl.MessageState         `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// draft is the requested wizard draft.
 	Draft         *models.SuiteWizardDraftRecord `protobuf:"bytes,1,opt,name=draft,proto3" json:"draft,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -228,12 +238,18 @@ func (x *GetSuiteWizardDraftResponse) GetDraft() *models.SuiteWizardDraftRecord 
 	return nil
 }
 
+// ListSuiteWizardDraftsRequest lists wizard drafts with filtering, sorting and
+// pagination.
 type ListSuiteWizardDraftsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Filter        *common.EntityFilter   `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
-	Sort          *common.EntitySort     `protobuf:"bytes,3,opt,name=sort,proto3" json:"sort,omitempty"`
-	Page          *common.Page           `protobuf:"bytes,4,opt,name=page,proto3" json:"page,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// filter holds the shared Entity-level filters (author, time windows, ...).
+	Filter *common.EntityFilter `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
+	// sort selects the result ordering.
+	Sort *common.EntitySort `protobuf:"bytes,3,opt,name=sort,proto3" json:"sort,omitempty"`
+	// page carries pagination (page size + token).
+	Page          *common.Page `protobuf:"bytes,4,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -296,10 +312,13 @@ func (x *ListSuiteWizardDraftsRequest) GetPage() *common.Page {
 	return nil
 }
 
+// ListSuiteWizardDraftsResponse returns a page of wizard drafts.
 type ListSuiteWizardDraftsResponse struct {
-	state         protoimpl.MessageState           `protogen:"open.v1"`
-	Drafts        []*models.SuiteWizardDraftRecord `protobuf:"bytes,1,rep,name=drafts,proto3" json:"drafts,omitempty"`
-	NextPageToken string                           `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// drafts is the matching page of wizard drafts.
+	Drafts []*models.SuiteWizardDraftRecord `protobuf:"bytes,1,rep,name=drafts,proto3" json:"drafts,omitempty"`
+	// next_page_token fetches the following page; empty when at the end.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -353,10 +372,13 @@ func (x *ListSuiteWizardDraftsResponse) GetNextPageToken() string {
 // returns the full new draft (form may carry a re-emitted schema when the set of
 // selected db presets changed the per-topology provider branches).
 type PatchSuiteWizardRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	DraftId       string                 `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
-	Form          *schemapb.Filled       `protobuf:"bytes,3,opt,name=form,proto3" json:"form,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// draft_id is the wizard draft being edited.
+	DraftId string `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
+	// form carries the edited form values (Filled = values + schema ref).
+	Form          *schemapb.Filled `protobuf:"bytes,3,opt,name=form,proto3" json:"form,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -412,8 +434,10 @@ func (x *PatchSuiteWizardRequest) GetForm() *schemapb.Filled {
 	return nil
 }
 
+// PatchSuiteWizardResponse returns the recomputed wizard draft.
 type PatchSuiteWizardResponse struct {
-	state         protoimpl.MessageState         `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// draft is the full new draft after validation/expansion/readiness recompute.
 	Draft         *models.SuiteWizardDraftRecord `protobuf:"bytes,1,opt,name=draft,proto3" json:"draft,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -456,10 +480,13 @@ func (x *PatchSuiteWizardResponse) GetDraft() *models.SuiteWizardDraftRecord {
 	return nil
 }
 
+// DeleteSuiteWizardDraftRequest deletes a wizard draft by id.
 type DeleteSuiteWizardDraftRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	DraftId       string                 `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// draft_id is the wizard draft identifier to delete.
+	DraftId       string `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -508,6 +535,8 @@ func (x *DeleteSuiteWizardDraftRequest) GetDraftId() string {
 	return ""
 }
 
+// DeleteSuiteWizardDraftResponse is empty; deletion success is signalled by a
+// non-error reply.
 type DeleteSuiteWizardDraftResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -548,9 +577,11 @@ func (*DeleteSuiteWizardDraftResponse) Descriptor() ([]byte, []int) {
 // becomes a fully baked TestRun (preset params + provider settings + generated
 // topology). Rejected unless draft.ready.
 type FinishSuiteWizardRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	DraftId       string                 `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// draft_id is the wizard draft to bake.
+	DraftId       string `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -599,9 +630,12 @@ func (x *FinishSuiteWizardRequest) GetDraftId() string {
 	return ""
 }
 
+// FinishSuiteWizardResponse returns the baked suite run spec.
 type FinishSuiteWizardResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SuiteRun      *domain.SuiteRun       `protobuf:"bytes,1,opt,name=suite_run,json=suiteRun,proto3" json:"suite_run,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// suite_run is the baked domain.SuiteRun (every compatible cell as a baked
+	// TestRun).
+	SuiteRun      *domain.SuiteRun `protobuf:"bytes,1,opt,name=suite_run,json=suiteRun,proto3" json:"suite_run,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

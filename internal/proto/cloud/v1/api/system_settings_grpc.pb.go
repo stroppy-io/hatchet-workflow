@@ -26,8 +26,15 @@ const (
 // SystemSettingsServiceClient is the client API for SystemSettingsService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// SystemSettingsService manages the global, singleton control-plane settings.
+// Admin-only on both read and write.
 type SystemSettingsServiceClient interface {
+	// GetSystemSettings reads the singleton platform settings. Admin-only,
+	// read-only.
 	GetSystemSettings(ctx context.Context, in *GetSystemSettingsRequest, opts ...grpc.CallOption) (*GetSystemSettingsResponse, error)
+	// UpdateSystemSettings replaces the singleton wholesale. Admin-only.
+	// Idempotent.
 	UpdateSystemSettings(ctx context.Context, in *UpdateSystemSettingsRequest, opts ...grpc.CallOption) (*UpdateSystemSettingsResponse, error)
 }
 
@@ -62,8 +69,15 @@ func (c *systemSettingsServiceClient) UpdateSystemSettings(ctx context.Context, 
 // SystemSettingsServiceServer is the server API for SystemSettingsService service.
 // All implementations must embed UnimplementedSystemSettingsServiceServer
 // for forward compatibility.
+//
+// SystemSettingsService manages the global, singleton control-plane settings.
+// Admin-only on both read and write.
 type SystemSettingsServiceServer interface {
+	// GetSystemSettings reads the singleton platform settings. Admin-only,
+	// read-only.
 	GetSystemSettings(context.Context, *GetSystemSettingsRequest) (*GetSystemSettingsResponse, error)
+	// UpdateSystemSettings replaces the singleton wholesale. Admin-only.
+	// Idempotent.
 	UpdateSystemSettings(context.Context, *UpdateSystemSettingsRequest) (*UpdateSystemSettingsResponse, error)
 	mustEmbedUnimplementedSystemSettingsServiceServer()
 }

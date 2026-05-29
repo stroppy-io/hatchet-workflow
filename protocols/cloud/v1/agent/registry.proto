@@ -16,33 +16,77 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     Auth is the AGENT TOKEN, not the iam RBAC interceptor (no auth annotation).
  */
 
-// AgentInfo identifies an agent host.
+/*
+    AgentInfo identifies an agent host.
+ */
 message AgentInfo {
+    /*
+        machine_id is the stable per-host identifier the agent registers under.
+     */
     string machine_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        host is the agent's hostname / network address (informational).
+     */
     string host = 2 [(validate.rules).string.max_len = 256];
+    /*
+        agent_version is the running agent build version (for compatibility/audit).
+     */
     string agent_version = 3 [(validate.rules).string.max_len = 64];
-    // Run this agent is provisioned for (scoping/audit), if any.
+    /*
+        run_id is the run this agent is provisioned for (scoping/audit), if any.
+     */
     string run_id = 4 [(validate.rules).string.max_len = 128];
 }
 
+/*
+    RegisterRequest announces an agent coming online to the server.
+ */
 message RegisterRequest {
+    /*
+        info is the identifying details of the agent host coming online.
+     */
     AgentInfo info = 1 [(validate.rules).message.required = true];
 }
+/*
+    RegisterResponse tells the agent it is registered and how often to heartbeat.
+ */
 message RegisterResponse {
-    // Heartbeat cadence the server expects; agent is considered offline after a
-    // missed window.
+    /*
+        registered_at is the server clock time the agent was recorded online.
+     */
     google.protobuf.Timestamp registered_at = 1;
+    /*
+        heartbeat_interval_seconds is the heartbeat cadence the server expects;
+        the agent is considered offline after a missed window.
+     */
     uint32 heartbeat_interval_seconds = 2;
 }
 
+/*
+    HeartbeatRequest keeps an already-registered agent marked online.
+ */
 message HeartbeatRequest {
+    /*
+        machine_id is the host whose liveness is being refreshed.
+     */
     string machine_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
 }
+/*
+    HeartbeatResponse is the empty server acknowledgement of a heartbeat.
+ */
 message HeartbeatResponse {}
 
+/*
+    AgentRegistryService is the agent-facing presence channel: agents register
+    and heartbeat so the server knows which agents are online.
+ */
 service AgentRegistryService {
-    // Register announces an agent coming online.
+    /*
+        Register announces an agent coming online.
+     */
     rpc Register (RegisterRequest) returns (RegisterResponse);
-    // Heartbeat keeps the agent marked online.
+    /*
+        Heartbeat keeps the agent marked online.
+     */
     rpc Heartbeat (HeartbeatRequest) returns (HeartbeatResponse);
 }

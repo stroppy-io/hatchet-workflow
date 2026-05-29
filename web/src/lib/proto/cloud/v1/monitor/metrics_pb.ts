@@ -22,11 +22,15 @@ export const file_cloud_v1_monitor_metrics: GenFile = /*@__PURE__*/
  */
 export type TimeRange = Message<"cloud.v1.monitor.TimeRange"> & {
   /**
+   * start is the inclusive lower bound of the window. 
+   *
    * @generated from field: google.protobuf.Timestamp start = 1;
    */
   start?: Timestamp;
 
   /**
+   * end is the inclusive upper bound of the window. 
+   *
    * @generated from field: google.protobuf.Timestamp end = 2;
    */
   end?: Timestamp;
@@ -39,11 +43,15 @@ export type TimeRange = Message<"cloud.v1.monitor.TimeRange"> & {
  */
 export type TimeRangeJson = {
   /**
+   * start is the inclusive lower bound of the window. 
+   *
    * @generated from field: google.protobuf.Timestamp start = 1;
    */
   start?: TimestampJson;
 
   /**
+   * end is the inclusive upper bound of the window. 
+   *
    * @generated from field: google.protobuf.Timestamp end = 2;
    */
   end?: TimestampJson;
@@ -86,16 +94,22 @@ export type MetricSummary = Message<"cloud.v1.monitor.MetricSummary"> & {
   unit: string;
 
   /**
+   * avg is the mean value of the series over the window. 
+   *
    * @generated from field: double avg = 4;
    */
   avg: number;
 
   /**
+   * min is the smallest observed value over the window. 
+   *
    * @generated from field: double min = 5;
    */
   min: number;
 
   /**
+   * max is the largest observed value over the window. 
+   *
    * @generated from field: double max = 6;
    */
   max: number;
@@ -157,16 +171,22 @@ export type MetricSummaryJson = {
   unit?: string;
 
   /**
+   * avg is the mean value of the series over the window. 
+   *
    * @generated from field: double avg = 4;
    */
   avg?: number | "NaN" | "Infinity" | "-Infinity";
 
   /**
+   * min is the smallest observed value over the window. 
+   *
    * @generated from field: double min = 5;
    */
   min?: number | "NaN" | "Infinity" | "-Infinity";
 
   /**
+   * max is the largest observed value over the window. 
+   *
    * @generated from field: double max = 6;
    */
   max?: number | "NaN" | "Infinity" | "-Infinity";
@@ -223,11 +243,15 @@ export type RunMetrics = Message<"cloud.v1.monitor.RunMetrics"> & {
   runId: string;
 
   /**
+   * range is the time window the metrics were computed over. 
+   *
    * @generated from field: cloud.v1.monitor.TimeRange range = 2;
    */
   range?: TimeRange;
 
   /**
+   * metrics is the per-series aggregated summary set for this run. 
+   *
    * @generated from field: repeated cloud.v1.monitor.MetricSummary metrics = 3;
    */
   metrics: MetricSummary[];
@@ -247,11 +271,15 @@ export type RunMetricsJson = {
   runId?: string;
 
   /**
+   * range is the time window the metrics were computed over. 
+   *
    * @generated from field: cloud.v1.monitor.TimeRange range = 2;
    */
   range?: TimeRangeJson;
 
   /**
+   * metrics is the per-series aggregated summary set for this run. 
+   *
    * @generated from field: repeated cloud.v1.monitor.MetricSummary metrics = 3;
    */
   metrics?: MetricSummaryJson[];
@@ -282,11 +310,15 @@ export type MetricCell = Message<"cloud.v1.monitor.MetricCell"> & {
   runId: string;
 
   /**
+   * avg is this run's mean value for the metric. 
+   *
    * @generated from field: double avg = 2;
    */
   avg: number;
 
   /**
+   * max is this run's peak value for the metric. 
+   *
    * @generated from field: double max = 3;
    */
   max: number;
@@ -299,11 +331,15 @@ export type MetricCell = Message<"cloud.v1.monitor.MetricCell"> & {
   diffAvgPct: number;
 
   /**
+   * diff_max_pct is the same relative diff applied to the max value. 
+   *
    * @generated from field: double diff_max_pct = 5;
    */
   diffMaxPct: number;
 
   /**
+   * verdict is the better/worse/same classification of this cell vs the baseline. 
+   *
    * @generated from field: cloud.v1.monitor.Verdict verdict = 6;
    */
   verdict: Verdict;
@@ -325,11 +361,15 @@ export type MetricCellJson = {
   runId?: string;
 
   /**
+   * avg is this run's mean value for the metric. 
+   *
    * @generated from field: double avg = 2;
    */
   avg?: number | "NaN" | "Infinity" | "-Infinity";
 
   /**
+   * max is this run's peak value for the metric. 
+   *
    * @generated from field: double max = 3;
    */
   max?: number | "NaN" | "Infinity" | "-Infinity";
@@ -342,11 +382,15 @@ export type MetricCellJson = {
   diffAvgPct?: number | "NaN" | "Infinity" | "-Infinity";
 
   /**
+   * diff_max_pct is the same relative diff applied to the max value. 
+   *
    * @generated from field: double diff_max_pct = 5;
    */
   diffMaxPct?: number | "NaN" | "Infinity" | "-Infinity";
 
   /**
+   * verdict is the better/worse/same classification of this cell vs the baseline. 
+   *
    * @generated from field: cloud.v1.monitor.Verdict verdict = 6;
    */
   verdict?: VerdictJson;
@@ -369,16 +413,22 @@ export const MetricCellSchema: GenMessage<MetricCell, {jsonType: MetricCellJson,
  */
 export type MetricRow = Message<"cloud.v1.monitor.MetricRow"> & {
   /**
+   * key is the stable metric key (PromQL series identity). 
+   *
    * @generated from field: string key = 1;
    */
   key: string;
 
   /**
+   * name is the human-readable metric name supplied by the backend. 
+   *
    * @generated from field: string name = 2;
    */
   name: string;
 
   /**
+   * unit is the metric unit, e.g. "ms", "ops/s". 
+   *
    * @generated from field: string unit = 3;
    */
   unit: string;
@@ -391,11 +441,15 @@ export type MetricRow = Message<"cloud.v1.monitor.MetricRow"> & {
   higherIsBetter: boolean;
 
   /**
+   * group is an optional generic UI grouping label (e.g. "throughput", "latency"). 
+   *
    * @generated from field: string group = 5;
    */
   group: string;
 
   /**
+   * cells are this metric's per-run values, aligned 1:1 with Comparison.run_ids. 
+   *
    * @generated from field: repeated cloud.v1.monitor.MetricCell cells = 6;
    */
   cells: MetricCell[];
@@ -409,16 +463,22 @@ export type MetricRow = Message<"cloud.v1.monitor.MetricRow"> & {
  */
 export type MetricRowJson = {
   /**
+   * key is the stable metric key (PromQL series identity). 
+   *
    * @generated from field: string key = 1;
    */
   key?: string;
 
   /**
+   * name is the human-readable metric name supplied by the backend. 
+   *
    * @generated from field: string name = 2;
    */
   name?: string;
 
   /**
+   * unit is the metric unit, e.g. "ms", "ops/s". 
+   *
    * @generated from field: string unit = 3;
    */
   unit?: string;
@@ -431,11 +491,15 @@ export type MetricRowJson = {
   higherIsBetter?: boolean;
 
   /**
+   * group is an optional generic UI grouping label (e.g. "throughput", "latency"). 
+   *
    * @generated from field: string group = 5;
    */
   group?: string;
 
   /**
+   * cells are this metric's per-run values, aligned 1:1 with Comparison.run_ids. 
+   *
    * @generated from field: repeated cloud.v1.monitor.MetricCell cells = 6;
    */
   cells?: MetricCellJson[];
@@ -465,11 +529,15 @@ export type Comparison = Message<"cloud.v1.monitor.Comparison"> & {
   runIds: string[];
 
   /**
+   * range is the time window the comparison was computed over. 
+   *
    * @generated from field: cloud.v1.monitor.TimeRange range = 2;
    */
   range?: TimeRange;
 
   /**
+   * metrics are the per-metric rows, each comparing all runs for that metric. 
+   *
    * @generated from field: repeated cloud.v1.monitor.MetricRow metrics = 3;
    */
   metrics: MetricRow[];
@@ -497,11 +565,15 @@ export type ComparisonJson = {
   runIds?: string[];
 
   /**
+   * range is the time window the comparison was computed over. 
+   *
    * @generated from field: cloud.v1.monitor.TimeRange range = 2;
    */
   range?: TimeRangeJson;
 
   /**
+   * metrics are the per-metric rows, each comparing all runs for that metric. 
+   *
    * @generated from field: repeated cloud.v1.monitor.MetricRow metrics = 3;
    */
   metrics?: MetricRowJson[];
@@ -530,21 +602,29 @@ export const ComparisonSchema: GenMessage<Comparison, {jsonType: ComparisonJson,
  */
 export type Comparison_RunSummary = Message<"cloud.v1.monitor.Comparison.RunSummary"> & {
   /**
+   * run_id is the non-baseline run this roll-up belongs to. 
+   *
    * @generated from field: string run_id = 1;
    */
   runId: string;
 
   /**
+   * better is the count of metrics where this run beat the baseline. 
+   *
    * @generated from field: uint32 better = 2;
    */
   better: number;
 
   /**
+   * worse is the count of metrics where this run regressed. 
+   *
    * @generated from field: uint32 worse = 3;
    */
   worse: number;
 
   /**
+   * same is the count of metrics within the threshold (no change). 
+   *
    * @generated from field: uint32 same = 4;
    */
   same: number;
@@ -557,21 +637,29 @@ export type Comparison_RunSummary = Message<"cloud.v1.monitor.Comparison.RunSumm
  */
 export type Comparison_RunSummaryJson = {
   /**
+   * run_id is the non-baseline run this roll-up belongs to. 
+   *
    * @generated from field: string run_id = 1;
    */
   runId?: string;
 
   /**
+   * better is the count of metrics where this run beat the baseline. 
+   *
    * @generated from field: uint32 better = 2;
    */
   better?: number;
 
   /**
+   * worse is the count of metrics where this run regressed. 
+   *
    * @generated from field: uint32 worse = 3;
    */
   worse?: number;
 
   /**
+   * same is the count of metrics within the threshold (no change). 
+   *
    * @generated from field: uint32 same = 4;
    */
   same?: number;
@@ -594,21 +682,29 @@ export const Comparison_RunSummarySchema: GenMessage<Comparison_RunSummary, {jso
  */
 export enum Verdict {
   /**
+   * VERDICT_UNSPECIFIED is the zero value and is never a valid verdict. 
+   *
    * @generated from enum value: VERDICT_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
+   * VERDICT_BETTER means the run improved on the baseline (per direction/threshold). 
+   *
    * @generated from enum value: VERDICT_BETTER = 1;
    */
   BETTER = 1,
 
   /**
+   * VERDICT_WORSE means the run regressed against the baseline. 
+   *
    * @generated from enum value: VERDICT_WORSE = 2;
    */
   WORSE = 2,
 
   /**
+   * VERDICT_SAME means the change was within the threshold (no meaningful difference). 
+   *
    * @generated from enum value: VERDICT_SAME = 3;
    */
   SAME = 3,

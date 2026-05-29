@@ -42,16 +42,23 @@ configure: ## Check that all required tools are installed
 protocols: # Generate Go + TS code from proto
 	cd protocols && easyp -cfg easyp.go.yaml mod update && easyp -cfg easyp.go.yaml mod vendor
 	rm -rf $(CURDIR)/internal/proto
-	cd protocols && easyp -cfg easyp.go.yaml generate
+	cd protocols && easyp -cfg easyp.go.yaml generate && easyp -cfg easyp.api.go.yaml generate
 	rm -rf $(CURDIR)/web/src/lib/proto
 	cd protocols && easyp -cfg easyp.ts.yaml generate
 
 .PHONY: mocks
-mocks: # Generate gomock mocks for every interface in the iam package (auto-discovered)
-	go run go.uber.org/mock/mockgen \
-		-destination=internal/services/iam/mocks_test.go -package=iam \
-		github.com/stroppy-io/stroppy-cloud/internal/services/iam \
-		$$(grep -hE '^type [A-Za-z0-9_]+ interface' $$(ls internal/services/iam/*.go | grep -v _test) | sed -E 's/^type ([A-Za-z0-9_]+) interface.*/\1/' | paste -sd,)
+mocks: # Generate gomock mocks for every interface in each internal/services/* package (auto-discovered)
+	go run go.uber.org/mock/mockgen -destination=internal/services/utils/mocks.go -package=utils github.com/stroppy-io/stroppy-cloud/internal/services/utils $$(grep -hE '^type [A-Za-z0-9_]+ interface' $$(ls internal/services/utils/*.go | grep -v _test | grep -v mock) | sed -E 's/^type ([A-Za-z0-9_]+) interface.*/\1/' | paste -sd,)
+	@for dir in $$(ls -d internal/services/*/ | sed 's:/$$::'); do \
+		[ "$$dir" = "internal/services/utils" ] && continue; \
+		src=$$(ls $$dir/*.go 2>/dev/null | grep -v _test | grep -v mock_); \
+		[ -z "$$src" ] && continue; \
+		ifaces=$$(grep -hE '^type [A-Za-z0-9_]+ interface' $$src | sed -E 's/^type ([A-Za-z0-9_]+) interface.*/\1/' | paste -sd,); \
+		[ -z "$$ifaces" ] && continue; \
+		pkg=$$(sed -nE 's/^package ([A-Za-z0-9_]+).*/\1/p' $$(echo $$src | awk '{print $$1}') | head -1); \
+		echo "mockgen $$dir ($$pkg): $$ifaces"; \
+		go run go.uber.org/mock/mockgen -destination=$$dir/mocks_test.go -package=$$pkg github.com/stroppy-io/stroppy-cloud/$$dir $$ifaces; \
+	done
 
 # ============================================================
 # Build

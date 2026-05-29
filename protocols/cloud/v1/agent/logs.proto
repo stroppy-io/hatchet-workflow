@@ -23,16 +23,33 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     (cloud.v1.iam.auth) annotation.
  */
 
-// LogBatch is a chunk of lines the agent flushes together (by count or time).
+/*
+    LogBatch is a chunk of lines the agent flushes together (by count or time).
+ */
 message LogBatch {
+    /*
+        lines is the batch of log lines to ship; capped at 10000 per batch so a
+        single message stays bounded.
+     */
     repeated cloud.v1.monitor.LogLine lines = 1 [(validate.rules).repeated.max_items = 10000];
 }
 
+/*
+    ShipLogsAck is the server's running acknowledgement back to the agent on the
+    log stream.
+ */
 message ShipLogsAck {
-    // How many lines the server accepted across this stream so far (backpressure).
+    /*
+        accepted is how many lines the server accepted across this stream so far
+        (used for backpressure).
+     */
     uint64 accepted = 1;
 }
 
+/*
+    AgentLogService is the agent-facing log ingestion endpoint that forwards
+    shipped lines into VictoriaLogs.
+ */
 service AgentLogService {
     /*
         ShipLogs is a client stream of batches: the agent flushes LogBatch chunks

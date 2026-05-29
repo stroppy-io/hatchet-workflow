@@ -21,95 +21,135 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/topology/component.proto.
  */
 export const file_cloud_v1_topology_component: GenFile = /*@__PURE__*/
-  fileDesc("CiFjbG91ZC92MS90b3BvbG9neS9jb21wb25lbnQucHJvdG8SEWNsb3VkLnYxLnRvcG9sb2d5IrEFCglDb21wb25lbnQSFgoCaWQYASABKAlCCvpCB3IFEAEYgAESOwoEa2luZBgCIAEoDjIhLmNsb3VkLnYxLnRvcG9sb2d5LkNvbXBvbmVudC5LaW5kQgr6QgeCAQQQASAAEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSQgoTZGVwbG95bWVudF9zdHJhdGVneRgEIAEoCzIlLmNsb3VkLnYxLnRvcG9sb2d5LkNvbXBvbmVudC5TdHJhdGVneRIsCg5wcm92aWRlcl9wYXJtcxgFIAEoCzIPLnNjaGVtYXBiLkJha2VkSACIAQESJQoYYWxsb2NhdGVkX29uX2luc3RhbmNlX2lkGAYgASgJSAGIAQESIwoEdGFncxgHIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGnYKCFN0cmF0ZWd5EjcKE2NvbmZpZ3VyYXRpb25fZmlsZXMYASADKAsyGi5jbG91ZC52MS5jb21tb24uQmFrZWRGaWxlEjEKE2RlcGxveW1lbnRfY29tbWFuZHMYAiADKAsyFC5jbG91ZC52MS5jb21tb24uQ21kIr8BCgRLaW5kEhQKEEtJTkRfVU5TUEVDSUZJRUQQABIOCgpLSU5EX0FHRU5UEAESEAoMS0lORF9NT05JVE9SEAISEQoNS0lORF9EQVRBQkFTRRADEhAKDEtJTkRfUkVQTElDQRAEEg4KCktJTkRfUFJPWFkQBRIRCg1LSU5EX1dPUktMT0FEEAYSFAoQS0lORF9DT09SRElOQVRPUhAHEg4KCktJTkRfQURET04QCBIRCg1LSU5EX0VYVEVSTkFMEAlCEQoPX3Byb3ZpZGVyX3Bhcm1zQhsKGV9hbGxvY2F0ZWRfb25faW5zdGFuY2VfaWRCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvdG9wb2xvZ3liBnByb3RvMw", [file_cloud_v1_common_cmd, file_cloud_v1_common_file, file_cloud_v1_common_status, file_cloud_v1_common_tags, file_schemapb_schema, file_validate_validate]);
+  fileDesc("CiFjbG91ZC92MS90b3BvbG9neS9jb21wb25lbnQucHJvdG8SEWNsb3VkLnYxLnRvcG9sb2d5IrEFCglDb21wb25lbnQSFgoCaWQYASABKAlCCvpCB3IFGIABEAESOwoEa2luZBgCIAEoDjIhLmNsb3VkLnYxLnRvcG9sb2d5LkNvbXBvbmVudC5LaW5kQgr6QgeCAQQQASAAEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSQgoTZGVwbG95bWVudF9zdHJhdGVneRgEIAEoCzIlLmNsb3VkLnYxLnRvcG9sb2d5LkNvbXBvbmVudC5TdHJhdGVneRIsCg5wcm92aWRlcl9wYXJtcxgFIAEoCzIPLnNjaGVtYXBiLkJha2VkSACIAQESJQoYYWxsb2NhdGVkX29uX2luc3RhbmNlX2lkGAYgASgJSAGIAQESIwoEdGFncxgHIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGnYKCFN0cmF0ZWd5EjcKE2NvbmZpZ3VyYXRpb25fZmlsZXMYASADKAsyGi5jbG91ZC52MS5jb21tb24uQmFrZWRGaWxlEjEKE2RlcGxveW1lbnRfY29tbWFuZHMYAiADKAsyFC5jbG91ZC52MS5jb21tb24uQ21kIr8BCgRLaW5kEhQKEEtJTkRfVU5TUEVDSUZJRUQQABIOCgpLSU5EX0FHRU5UEAESEAoMS0lORF9NT05JVE9SEAISEQoNS0lORF9EQVRBQkFTRRADEhAKDEtJTkRfUkVQTElDQRAEEg4KCktJTkRfUFJPWFkQBRIRCg1LSU5EX1dPUktMT0FEEAYSFAoQS0lORF9DT09SRElOQVRPUhAHEg4KCktJTkRfQURET04QCBIRCg1LSU5EX0VYVEVSTkFMEAlCEQoPX3Byb3ZpZGVyX3Bhcm1zQhsKGV9hbGxvY2F0ZWRfb25faW5zdGFuY2VfaWRCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvdG9wb2xvZ3liBnByb3RvMw", [file_cloud_v1_common_cmd, file_cloud_v1_common_file, file_cloud_v1_common_status, file_cloud_v1_common_tags, file_schemapb_schema, file_validate_validate]);
 
 /**
+ *
+ * Component is one logical node in the topology graph.
+ *
  * @generated from message cloud.v1.topology.Component
  */
 export type Component = Message<"cloud.v1.topology.Component"> & {
   /**
+   *
+   * id is the unique identifier of the component within the topology.
+   *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
+   *
+   * kind is the role this component plays; must be a defined, non-zero value.
+   *
    * @generated from field: cloud.v1.topology.Component.Kind kind = 2;
    */
   kind: Component_Kind;
 
   /**
+   *
+   * status is the current runtime status of the component.
+   *
    * @generated from field: cloud.v1.common.Status status = 3;
    */
   status: Status;
 
   /**
-   * calculated (build)
+   *
+   * deployment_strategy is the deploy recipe; calculated (build).
    *
    * @generated from field: cloud.v1.topology.Component.Strategy deployment_strategy = 4;
    */
   deploymentStrategy?: Component_Strategy;
 
   /**
-   * calculated (wisard actual for non-owr components)
+   *
+   * provider_parms are the baked provider parameters; calculated (wisard
+   * actual for non-owr components).
    *
    * @generated from field: optional schemapb.Baked provider_parms = 5;
    */
   providerParms?: Baked;
 
   /**
-   * calculated (deployment)
+   *
+   * allocated_on_instance_id is the instance this component was placed on;
+   * calculated (deployment).
    *
    * @generated from field: optional string allocated_on_instance_id = 6;
    */
   allocatedOnInstanceId?: string;
 
   /**
+   *
+   * tags are arbitrary key/value labels attached to the component.
+   *
    * @generated from field: cloud.v1.common.Tags tags = 7;
    */
   tags?: Tags;
 };
 
 /**
+ *
+ * Component is one logical node in the topology graph.
+ *
  * @generated from message cloud.v1.topology.Component
  */
 export type ComponentJson = {
   /**
+   *
+   * id is the unique identifier of the component within the topology.
+   *
    * @generated from field: string id = 1;
    */
   id?: string;
 
   /**
+   *
+   * kind is the role this component plays; must be a defined, non-zero value.
+   *
    * @generated from field: cloud.v1.topology.Component.Kind kind = 2;
    */
   kind?: Component_KindJson;
 
   /**
+   *
+   * status is the current runtime status of the component.
+   *
    * @generated from field: cloud.v1.common.Status status = 3;
    */
   status?: StatusJson;
 
   /**
-   * calculated (build)
+   *
+   * deployment_strategy is the deploy recipe; calculated (build).
    *
    * @generated from field: cloud.v1.topology.Component.Strategy deployment_strategy = 4;
    */
   deploymentStrategy?: Component_StrategyJson;
 
   /**
-   * calculated (wisard actual for non-owr components)
+   *
+   * provider_parms are the baked provider parameters; calculated (wisard
+   * actual for non-owr components).
    *
    * @generated from field: optional schemapb.Baked provider_parms = 5;
    */
   providerParms?: BakedJson;
 
   /**
-   * calculated (deployment)
+   *
+   * allocated_on_instance_id is the instance this component was placed on;
+   * calculated (deployment).
    *
    * @generated from field: optional string allocated_on_instance_id = 6;
    */
   allocatedOnInstanceId?: string;
 
   /**
+   *
+   * tags are arbitrary key/value labels attached to the component.
+   *
    * @generated from field: cloud.v1.common.Tags tags = 7;
    */
   tags?: TagsJson;
@@ -125,30 +165,50 @@ export const ComponentSchema: GenMessage<Component, {jsonType: ComponentJson, va
   messageDesc(file_cloud_v1_topology_component, 0);
 
 /**
+ *
+ * Strategy is the recipe used to deploy a component: configuration files to
+ * lay down and commands to run.
+ *
  * @generated from message cloud.v1.topology.Component.Strategy
  */
 export type Component_Strategy = Message<"cloud.v1.topology.Component.Strategy"> & {
   /**
+   *
+   * configuration_files are the rendered config files to place on the host.
+   *
    * @generated from field: repeated cloud.v1.common.BakedFile configuration_files = 1;
    */
   configurationFiles: BakedFile[];
 
   /**
+   *
+   * deployment_commands are the commands to run to bring the component up.
+   *
    * @generated from field: repeated cloud.v1.common.Cmd deployment_commands = 2;
    */
   deploymentCommands: Cmd[];
 };
 
 /**
+ *
+ * Strategy is the recipe used to deploy a component: configuration files to
+ * lay down and commands to run.
+ *
  * @generated from message cloud.v1.topology.Component.Strategy
  */
 export type Component_StrategyJson = {
   /**
+   *
+   * configuration_files are the rendered config files to place on the host.
+   *
    * @generated from field: repeated cloud.v1.common.BakedFile configuration_files = 1;
    */
   configurationFiles?: BakedFileJson[];
 
   /**
+   *
+   * deployment_commands are the commands to run to bring the component up.
+   *
    * @generated from field: repeated cloud.v1.common.Cmd deployment_commands = 2;
    */
   deploymentCommands?: CmdJson[];
@@ -164,61 +224,97 @@ export const Component_StrategySchema: GenMessage<Component_Strategy, {jsonType:
   messageDesc(file_cloud_v1_topology_component, 0, 0);
 
 /**
+ *
+ * Kind enumerates the role a component plays in the topology.
+ *
  * @generated from enum cloud.v1.topology.Component.Kind
  */
 export enum Component_Kind {
   /**
+   *
+   * KIND_UNSPECIFIED is the unset zero value (rejected by validation).
+   *
    * @generated from enum value: KIND_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
+   *
+   * KIND_AGENT is a stroppy agent host.
+   *
    * @generated from enum value: KIND_AGENT = 1;
    */
   AGENT = 1,
 
   /**
+   *
+   * KIND_MONITOR is a monitoring/metrics component.
+   *
    * @generated from enum value: KIND_MONITOR = 2;
    */
   MONITOR = 2,
 
   /**
+   *
+   * KIND_DATABASE is a primary database node.
+   *
    * @generated from enum value: KIND_DATABASE = 3;
    */
   DATABASE = 3,
 
   /**
+   *
+   * KIND_REPLICA is a database replica node.
+   *
    * @generated from enum value: KIND_REPLICA = 4;
    */
   REPLICA = 4,
 
   /**
+   *
+   * KIND_PROXY is a connection proxy/pooler.
+   *
    * @generated from enum value: KIND_PROXY = 5;
    */
   PROXY = 5,
 
   /**
+   *
+   * KIND_WORKLOAD is a workload/load-generator runner.
+   *
    * @generated from enum value: KIND_WORKLOAD = 6;
    */
   WORKLOAD = 6,
 
   /**
+   *
+   * KIND_COORDINATOR is a cluster coordinator/control node.
+   *
    * @generated from enum value: KIND_COORDINATOR = 7;
    */
   COORDINATOR = 7,
 
   /**
+   *
+   * KIND_ADDON is a supporting add-on component.
+   *
    * @generated from enum value: KIND_ADDON = 8;
    */
   ADDON = 8,
 
   /**
+   *
+   * KIND_EXTERNAL is a component provided externally (e.g. a managed service).
+   *
    * @generated from enum value: KIND_EXTERNAL = 9;
    */
   EXTERNAL = 9,
 }
 
 /**
+ *
+ * Kind enumerates the role a component plays in the topology.
+ *
  * @generated from enum cloud.v1.topology.Component.Kind
  */
 export type Component_KindJson = "KIND_UNSPECIFIED" | "KIND_AGENT" | "KIND_MONITOR" | "KIND_DATABASE" | "KIND_REPLICA" | "KIND_PROXY" | "KIND_WORKLOAD" | "KIND_COORDINATOR" | "KIND_ADDON" | "KIND_EXTERNAL";

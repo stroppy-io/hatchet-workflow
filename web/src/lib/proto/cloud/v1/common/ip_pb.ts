@@ -134,30 +134,42 @@ export const IpAddress_FamilySchema: GenEnum<IpAddress_Family, IpAddress_FamilyJ
   enumDesc(file_cloud_v1_common_ip, 0, 0);
 
 /**
+ * AddrPort pairs an IP address with a port number. 
+ *
  * @generated from message cloud.v1.common.AddrPort
  */
 export type AddrPort = Message<"cloud.v1.common.AddrPort"> & {
   /**
+   * address is the IP address. 
+   *
    * @generated from field: cloud.v1.common.IpAddress address = 1;
    */
   address?: IpAddress;
 
   /**
+   * port is the associated port number. 
+   *
    * @generated from field: uint32 port = 2;
    */
   port: number;
 };
 
 /**
+ * AddrPort pairs an IP address with a port number. 
+ *
  * @generated from message cloud.v1.common.AddrPort
  */
 export type AddrPortJson = {
   /**
+   * address is the IP address. 
+   *
    * @generated from field: cloud.v1.common.IpAddress address = 1;
    */
   address?: IpAddressJson;
 
   /**
+   * port is the associated port number. 
+   *
    * @generated from field: uint32 port = 2;
    */
   port?: number;
@@ -173,16 +185,22 @@ export const AddrPortSchema: GenMessage<AddrPort, {jsonType: AddrPortJson, valid
   messageDesc(file_cloud_v1_common_ip, 1);
 
 /**
+ * Cidr describes a network block in CIDR notation. 
+ *
  * @generated from message cloud.v1.common.Cidr
  */
 export type Cidr = Message<"cloud.v1.common.Cidr"> & {
   /**
+   * value is the CIDR string, e.g. 10.0.0.0/24. 
+   *
    * @generated from field: string value = 1;
    */
   value: string;
 
   /**
-   * optional for denormalize
+   * addresses optionally denormalizes the addresses covered by this block. 
+   *
+   * optional for denormalize 
    *
    * @generated from field: repeated cloud.v1.common.IpAddress addresses = 2;
    */
@@ -190,16 +208,22 @@ export type Cidr = Message<"cloud.v1.common.Cidr"> & {
 };
 
 /**
+ * Cidr describes a network block in CIDR notation. 
+ *
  * @generated from message cloud.v1.common.Cidr
  */
 export type CidrJson = {
   /**
+   * value is the CIDR string, e.g. 10.0.0.0/24. 
+   *
    * @generated from field: string value = 1;
    */
   value?: string;
 
   /**
-   * optional for denormalize
+   * addresses optionally denormalizes the addresses covered by this block. 
+   *
+   * optional for denormalize 
    *
    * @generated from field: repeated cloud.v1.common.IpAddress addresses = 2;
    */
@@ -216,30 +240,42 @@ export const CidrSchema: GenMessage<Cidr, {jsonType: CidrJson, validType: CidrVa
   messageDesc(file_cloud_v1_common_ip, 2);
 
 /**
+ * Net groups one or more CIDR blocks together with their member addresses. 
+ *
  * @generated from message cloud.v1.common.Net
  */
 export type Net = Message<"cloud.v1.common.Net"> & {
   /**
+   * cidrs lists the CIDR blocks that make up this network. 
+   *
    * @generated from field: repeated cloud.v1.common.Cidr cidrs = 1;
    */
   cidrs: Cidr[];
 
   /**
+   * addresses lists the IP addresses belonging to this network. 
+   *
    * @generated from field: repeated cloud.v1.common.IpAddress addresses = 2;
    */
   addresses: IpAddress[];
 };
 
 /**
+ * Net groups one or more CIDR blocks together with their member addresses. 
+ *
  * @generated from message cloud.v1.common.Net
  */
 export type NetJson = {
   /**
+   * cidrs lists the CIDR blocks that make up this network. 
+   *
    * @generated from field: repeated cloud.v1.common.Cidr cidrs = 1;
    */
   cidrs?: CidrJson[];
 
   /**
+   * addresses lists the IP addresses belonging to this network. 
+   *
    * @generated from field: repeated cloud.v1.common.IpAddress addresses = 2;
    */
   addresses?: IpAddressJson[];

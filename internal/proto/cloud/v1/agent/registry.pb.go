@@ -25,11 +25,14 @@ const (
 
 // AgentInfo identifies an agent host.
 type AgentInfo struct {
-	state        protoimpl.MessageState `protogen:"open.v1"`
-	MachineId    string                 `protobuf:"bytes,1,opt,name=machine_id,json=machineId,proto3" json:"machine_id,omitempty"`
-	Host         string                 `protobuf:"bytes,2,opt,name=host,proto3" json:"host,omitempty"`
-	AgentVersion string                 `protobuf:"bytes,3,opt,name=agent_version,json=agentVersion,proto3" json:"agent_version,omitempty"`
-	// Run this agent is provisioned for (scoping/audit), if any.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// machine_id is the stable per-host identifier the agent registers under.
+	MachineId string `protobuf:"bytes,1,opt,name=machine_id,json=machineId,proto3" json:"machine_id,omitempty"`
+	// host is the agent's hostname / network address (informational).
+	Host string `protobuf:"bytes,2,opt,name=host,proto3" json:"host,omitempty"`
+	// agent_version is the running agent build version (for compatibility/audit).
+	AgentVersion string `protobuf:"bytes,3,opt,name=agent_version,json=agentVersion,proto3" json:"agent_version,omitempty"`
+	// run_id is the run this agent is provisioned for (scoping/audit), if any.
 	RunId         string `protobuf:"bytes,4,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -93,9 +96,11 @@ func (x *AgentInfo) GetRunId() string {
 	return ""
 }
 
+// RegisterRequest announces an agent coming online to the server.
 type RegisterRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Info          *AgentInfo             `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// info is the identifying details of the agent host coming online.
+	Info          *AgentInfo `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -137,12 +142,14 @@ func (x *RegisterRequest) GetInfo() *AgentInfo {
 	return nil
 }
 
+// RegisterResponse tells the agent it is registered and how often to heartbeat.
 type RegisterResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Heartbeat cadence the server expects; agent is considered offline after a
-	// missed window.
-	RegisteredAt             *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=registered_at,json=registeredAt,proto3" json:"registered_at,omitempty"`
-	HeartbeatIntervalSeconds uint32                 `protobuf:"varint,2,opt,name=heartbeat_interval_seconds,json=heartbeatIntervalSeconds,proto3" json:"heartbeat_interval_seconds,omitempty"`
+	// registered_at is the server clock time the agent was recorded online.
+	RegisteredAt *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=registered_at,json=registeredAt,proto3" json:"registered_at,omitempty"`
+	// heartbeat_interval_seconds is the heartbeat cadence the server expects;
+	// the agent is considered offline after a missed window.
+	HeartbeatIntervalSeconds uint32 `protobuf:"varint,2,opt,name=heartbeat_interval_seconds,json=heartbeatIntervalSeconds,proto3" json:"heartbeat_interval_seconds,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -191,9 +198,11 @@ func (x *RegisterResponse) GetHeartbeatIntervalSeconds() uint32 {
 	return 0
 }
 
+// HeartbeatRequest keeps an already-registered agent marked online.
 type HeartbeatRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	MachineId     string                 `protobuf:"bytes,1,opt,name=machine_id,json=machineId,proto3" json:"machine_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// machine_id is the host whose liveness is being refreshed.
+	MachineId     string `protobuf:"bytes,1,opt,name=machine_id,json=machineId,proto3" json:"machine_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -235,6 +244,7 @@ func (x *HeartbeatRequest) GetMachineId() string {
 	return ""
 }
 
+// HeartbeatResponse is the empty server acknowledgement of a heartbeat.
 type HeartbeatResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields

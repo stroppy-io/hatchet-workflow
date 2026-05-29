@@ -15,6 +15,7 @@ import (
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	"github.com/stroppy-io/stroppy-cloud/internal/services/utils"
 )
 
 func strPtr(s string) *string { return &s }
@@ -31,7 +32,7 @@ func TestCreateAccount(t *testing.T) {
 	hasher := NewMockPasswordHasher(ctrl)
 
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:       &utils.MockTrm{},
 		Accounts: accounts, Credentials: credentials, ExternalIdentities: identities, Hasher: hasher,
 	})
 	ctx := context.Background()
@@ -166,7 +167,7 @@ func TestGetAccount(t *testing.T) {
 	defer ctrl.Finish()
 
 	accounts := NewMockAccountRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Accounts: accounts})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Accounts: accounts})
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {
@@ -203,9 +204,9 @@ func TestGetMyAccount(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	authn := NewMockAuthn(ctrl)
+	authn := utils.NewMockAuthn(ctrl)
 	accounts := NewMockAccountRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Authn: authn, Accounts: accounts})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Authn: authn, Accounts: accounts})
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {
@@ -245,7 +246,7 @@ func TestListAccounts(t *testing.T) {
 	defer ctrl.Finish()
 
 	accounts := NewMockAccountRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Accounts: accounts})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Accounts: accounts})
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {
@@ -280,7 +281,7 @@ func TestUpdateAccount(t *testing.T) {
 	defer ctrl.Finish()
 
 	accounts := NewMockAccountRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Accounts: accounts})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Accounts: accounts})
 	ctx := context.Background()
 
 	t.Run("Success_UpdateEmail", func(t *testing.T) {
@@ -382,7 +383,7 @@ func TestDeleteAccount(t *testing.T) {
 	extIds := NewMockExternalIdentityRepo(ctrl)
 	credentials := NewMockCredentialStore(ctrl)
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:       &utils.MockTrm{},
 		Accounts: accounts, Tenants: tenants, Memberships: memberships,
 		ExternalIdentities: extIds, Credentials: credentials,
 	})

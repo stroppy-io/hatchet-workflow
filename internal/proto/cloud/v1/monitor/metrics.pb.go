@@ -28,10 +28,14 @@ const (
 type Verdict int32
 
 const (
+	// VERDICT_UNSPECIFIED is the zero value and is never a valid verdict.
 	Verdict_VERDICT_UNSPECIFIED Verdict = 0
-	Verdict_VERDICT_BETTER      Verdict = 1
-	Verdict_VERDICT_WORSE       Verdict = 2
-	Verdict_VERDICT_SAME        Verdict = 3
+	// VERDICT_BETTER means the run improved on the baseline (per direction/threshold).
+	Verdict_VERDICT_BETTER Verdict = 1
+	// VERDICT_WORSE means the run regressed against the baseline.
+	Verdict_VERDICT_WORSE Verdict = 2
+	// VERDICT_SAME means the change was within the threshold (no meaningful difference).
+	Verdict_VERDICT_SAME Verdict = 3
 )
 
 // Enum value maps for Verdict.
@@ -79,8 +83,10 @@ func (Verdict) EnumDescriptor() ([]byte, []int) {
 
 // TimeRange is the [start, end] window the metrics cover.
 type TimeRange struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Start         *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// start is the inclusive lower bound of the window.
+	Start *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`
+	// end is the inclusive upper bound of the window.
 	End           *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=end,proto3" json:"end,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -138,10 +144,13 @@ type MetricSummary struct {
 	// name is the human-readable metric name supplied by the backend.
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// unit is the metric unit, e.g. "ms", "ops/s".
-	Unit string  `protobuf:"bytes,3,opt,name=unit,proto3" json:"unit,omitempty"`
-	Avg  float64 `protobuf:"fixed64,4,opt,name=avg,proto3" json:"avg,omitempty"`
-	Min  float64 `protobuf:"fixed64,5,opt,name=min,proto3" json:"min,omitempty"`
-	Max  float64 `protobuf:"fixed64,6,opt,name=max,proto3" json:"max,omitempty"`
+	Unit string `protobuf:"bytes,3,opt,name=unit,proto3" json:"unit,omitempty"`
+	// avg is the mean value of the series over the window.
+	Avg float64 `protobuf:"fixed64,4,opt,name=avg,proto3" json:"avg,omitempty"`
+	// min is the smallest observed value over the window.
+	Min float64 `protobuf:"fixed64,5,opt,name=min,proto3" json:"min,omitempty"`
+	// max is the largest observed value over the window.
+	Max float64 `protobuf:"fixed64,6,opt,name=max,proto3" json:"max,omitempty"`
 	// last is the most recent observed value.
 	Last float64 `protobuf:"fixed64,7,opt,name=last,proto3" json:"last,omitempty"`
 	// higher_is_better is the comparison direction as DATA (not an enum of metric meaning).
@@ -258,8 +267,10 @@ func (x *MetricSummary) GetGroup() string {
 type RunMetrics struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// run_id is the plain run identity (string, keeps runtime models-independent).
-	RunId         string           `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	Range         *TimeRange       `protobuf:"bytes,2,opt,name=range,proto3" json:"range,omitempty"`
+	RunId string `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// range is the time window the metrics were computed over.
+	Range *TimeRange `protobuf:"bytes,2,opt,name=range,proto3" json:"range,omitempty"`
+	// metrics is the per-series aggregated summary set for this run.
 	Metrics       []*MetricSummary `protobuf:"bytes,3,rep,name=metrics,proto3" json:"metrics,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -322,12 +333,16 @@ func (x *RunMetrics) GetMetrics() []*MetricSummary {
 type MetricCell struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// run_id is the run this cell belongs to (= Comparison.run_ids[index]).
-	RunId string  `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	Avg   float64 `protobuf:"fixed64,2,opt,name=avg,proto3" json:"avg,omitempty"`
-	Max   float64 `protobuf:"fixed64,3,opt,name=max,proto3" json:"max,omitempty"`
+	RunId string `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// avg is this run's mean value for the metric.
+	Avg float64 `protobuf:"fixed64,2,opt,name=avg,proto3" json:"avg,omitempty"`
+	// max is this run's peak value for the metric.
+	Max float64 `protobuf:"fixed64,3,opt,name=max,proto3" json:"max,omitempty"`
 	// diff_avg_pct is (cell - baseline) / baseline * 100; positive means higher.
-	DiffAvgPct    float64 `protobuf:"fixed64,4,opt,name=diff_avg_pct,json=diffAvgPct,proto3" json:"diff_avg_pct,omitempty"`
-	DiffMaxPct    float64 `protobuf:"fixed64,5,opt,name=diff_max_pct,json=diffMaxPct,proto3" json:"diff_max_pct,omitempty"`
+	DiffAvgPct float64 `protobuf:"fixed64,4,opt,name=diff_avg_pct,json=diffAvgPct,proto3" json:"diff_avg_pct,omitempty"`
+	// diff_max_pct is the same relative diff applied to the max value.
+	DiffMaxPct float64 `protobuf:"fixed64,5,opt,name=diff_max_pct,json=diffMaxPct,proto3" json:"diff_max_pct,omitempty"`
+	// verdict is the better/worse/same classification of this cell vs the baseline.
 	Verdict       Verdict `protobuf:"varint,6,opt,name=verdict,proto3,enum=cloud.v1.monitor.Verdict" json:"verdict,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -410,15 +425,20 @@ func (x *MetricCell) GetVerdict() Verdict {
 //1:1 with Comparison.run_ids.
 type MetricRow struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Key   string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Name  string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Unit  string                 `protobuf:"bytes,3,opt,name=unit,proto3" json:"unit,omitempty"`
+	// key is the stable metric key (PromQL series identity).
+	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	// name is the human-readable metric name supplied by the backend.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// unit is the metric unit, e.g. "ms", "ops/s".
+	Unit string `protobuf:"bytes,3,opt,name=unit,proto3" json:"unit,omitempty"`
 	// higher_is_better is the comparison direction as DATA (mirrors MetricSummary).
-	HigherIsBetter bool          `protobuf:"varint,4,opt,name=higher_is_better,json=higherIsBetter,proto3" json:"higher_is_better,omitempty"`
-	Group          string        `protobuf:"bytes,5,opt,name=group,proto3" json:"group,omitempty"`
-	Cells          []*MetricCell `protobuf:"bytes,6,rep,name=cells,proto3" json:"cells,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	HigherIsBetter bool `protobuf:"varint,4,opt,name=higher_is_better,json=higherIsBetter,proto3" json:"higher_is_better,omitempty"`
+	// group is an optional generic UI grouping label (e.g. "throughput", "latency").
+	Group string `protobuf:"bytes,5,opt,name=group,proto3" json:"group,omitempty"`
+	// cells are this metric's per-run values, aligned 1:1 with Comparison.run_ids.
+	Cells         []*MetricCell `protobuf:"bytes,6,rep,name=cells,proto3" json:"cells,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MetricRow) Reset() {
@@ -498,8 +518,10 @@ func (x *MetricRow) GetCells() []*MetricCell {
 type Comparison struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// run_ids are the compared runs in display order; run_ids[0] is the baseline.
-	RunIds  []string     `protobuf:"bytes,1,rep,name=run_ids,json=runIds,proto3" json:"run_ids,omitempty"`
-	Range   *TimeRange   `protobuf:"bytes,2,opt,name=range,proto3" json:"range,omitempty"`
+	RunIds []string `protobuf:"bytes,1,rep,name=run_ids,json=runIds,proto3" json:"run_ids,omitempty"`
+	// range is the time window the comparison was computed over.
+	Range *TimeRange `protobuf:"bytes,2,opt,name=range,proto3" json:"range,omitempty"`
+	// metrics are the per-metric rows, each comparing all runs for that metric.
 	Metrics []*MetricRow `protobuf:"bytes,3,rep,name=metrics,proto3" json:"metrics,omitempty"`
 	// summaries roll up per non-baseline run (aligned with run_ids[1:]).
 	Summaries     []*Comparison_RunSummary `protobuf:"bytes,4,rep,name=summaries,proto3" json:"summaries,omitempty"`
@@ -567,11 +589,15 @@ func (x *Comparison) GetSummaries() []*Comparison_RunSummary {
 
 // RunSummary rolls up one run's per-metric verdicts against the baseline.
 type Comparison_RunSummary struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RunId         string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	Better        uint32                 `protobuf:"varint,2,opt,name=better,proto3" json:"better,omitempty"`
-	Worse         uint32                 `protobuf:"varint,3,opt,name=worse,proto3" json:"worse,omitempty"`
-	Same          uint32                 `protobuf:"varint,4,opt,name=same,proto3" json:"same,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// run_id is the non-baseline run this roll-up belongs to.
+	RunId string `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// better is the count of metrics where this run beat the baseline.
+	Better uint32 `protobuf:"varint,2,opt,name=better,proto3" json:"better,omitempty"`
+	// worse is the count of metrics where this run regressed.
+	Worse uint32 `protobuf:"varint,3,opt,name=worse,proto3" json:"worse,omitempty"`
+	// same is the count of metrics within the threshold (no change).
+	Same          uint32 `protobuf:"varint,4,opt,name=same,proto3" json:"same,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

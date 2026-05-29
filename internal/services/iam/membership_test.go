@@ -16,6 +16,7 @@ import (
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	"github.com/stroppy-io/stroppy-cloud/internal/services/utils"
 )
 
 // -------- CreateMembership --------
@@ -27,7 +28,7 @@ func TestCreateMembership(t *testing.T) {
 	roles := NewMockRoleRepo(ctrl)
 	memberships := NewMockMembershipRepo(ctrl)
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:    &utils.MockTrm{},
 		Roles: roles, Memberships: memberships,
 	})
 	ctx := context.Background()
@@ -104,7 +105,7 @@ func TestGetMembership(t *testing.T) {
 	defer ctrl.Finish()
 
 	memberships := NewMockMembershipRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Memberships: memberships})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Memberships: memberships})
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {
@@ -134,7 +135,7 @@ func TestListMemberships(t *testing.T) {
 	defer ctrl.Finish()
 
 	memberships := NewMockMembershipRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Memberships: memberships})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Memberships: memberships})
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {
@@ -168,7 +169,7 @@ func TestUpdateMembership(t *testing.T) {
 	roles := NewMockRoleRepo(ctrl)
 	memberships := NewMockMembershipRepo(ctrl)
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:    &utils.MockTrm{},
 		Roles: roles, Memberships: memberships,
 	})
 	ctx := context.Background()
@@ -230,7 +231,7 @@ func TestDeleteMembership(t *testing.T) {
 	defer ctrl.Finish()
 
 	memberships := NewMockMembershipRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Memberships: memberships})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Memberships: memberships})
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {
@@ -264,9 +265,9 @@ func TestGetMyPermissions(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	authn := NewMockAuthn(ctrl)
+	authn := utils.NewMockAuthn(ctrl)
 	authz := NewMockAuthz(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Authn: authn, Authz: authz})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Authn: authn, Authz: authz})
 	ctx := context.Background()
 	req := &api.GetMyPermissionsRequest{TenantId: "t1"}
 
@@ -309,7 +310,7 @@ func TestListPermissions(t *testing.T) {
 	defer ctrl.Finish()
 
 	catalog := NewMockPermissionCatalog(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Catalog: catalog})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Catalog: catalog})
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {

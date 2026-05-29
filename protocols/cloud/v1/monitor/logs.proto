@@ -21,19 +21,23 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
 
 /* Source is where a log line came from. */
 enum Source {
+    /* SOURCE_UNSPECIFIED is the zero value and is never a valid source. */
     SOURCE_UNSPECIFIED = 0;
-    /* COMMAND is agent command stdout/stderr (an execution-stage op). */
+    /* SOURCE_COMMAND is agent command stdout/stderr (an execution-stage op). */
     SOURCE_COMMAND = 1;
-    /* JOURNALD is a systemd-managed service's stdout/stderr. */
+    /* SOURCE_JOURNALD is a systemd-managed service's stdout/stderr. */
     SOURCE_JOURNALD = 2;
-    /* FILE is a tailed log file (e.g. a postgresql log under /var/log/postgresql). */
+    /* SOURCE_FILE is a tailed log file (e.g. a postgresql log under /var/log/postgresql). */
     SOURCE_FILE = 3;
 }
 
-/* Stream is the std stream. */
+/* Stream is the std stream the line was written to. */
 enum Stream {
+    /* STREAM_UNSPECIFIED is the zero value and is never a valid stream. */
     STREAM_UNSPECIFIED = 0;
+    /* STREAM_STDOUT is the standard output stream. */
     STREAM_STDOUT = 1;
+    /* STREAM_STDERR is the standard error stream. */
     STREAM_STDERR = 2;
 }
 
@@ -42,12 +46,18 @@ enum Stream {
     sequence ordinal (provider-agnostic, stable, dedups equal timestamps).
  */
 message LogCursor {
+    /* observed_at is the precise timestamp the line was observed at. */
     google.protobuf.Timestamp observed_at = 1 [(validate.rules).timestamp.required = true];
+    /*
+        seq is the per-timestamp sequence ordinal that disambiguates lines
+        sharing the same observed_at, making the cursor stable and dedup-safe.
+     */
     uint64 seq = 2;
 }
 
 /* LogLine is one unified log record returned from a query or stream. */
 message LogLine {
+    /* observed_at is when the line was emitted/observed. */
     google.protobuf.Timestamp observed_at = 1 [(validate.rules).timestamp.required = true];
     /* run_id is the owning test run id (plain string, runtime-pure). */
     string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
@@ -63,12 +73,15 @@ message LogLine {
     string node_execution_id = 3 [(validate.rules).string.max_len = 128];
     /* component_id is the topology component the line is about. */
     string component_id = 4 [(validate.rules).string.max_len = 128];
-    /* machine_id is the host. */
+    /* machine_id is the host the line originated on. */
     string machine_id = 5 [(validate.rules).string.max_len = 128];
+    /* source is where the line came from (command, journald, or tailed file). */
     Source source = 6 [(validate.rules).enum.defined_only = true];
     /* unit is the systemd unit or file path for JOURNALD/FILE sources. */
     string unit = 7 [(validate.rules).string.max_len = 256];
+    /* stream is the std stream (stdout/stderr) the line was written to. */
     Stream stream = 8 [(validate.rules).enum.defined_only = true];
+    /* line is the raw log text content. */
     string line = 9 [(validate.rules).string.max_len = 65536];
     /* cursor anchors this exact line for deep-linking. */
     LogCursor cursor = 10;
@@ -80,10 +93,15 @@ message LogLine {
     node_execution_id = a stage's logs; cursor = a specific line anchor.
  */
 message LogRef {
+    /* run_id is the owning test run the slice belongs to. */
     string run_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /* node_execution_id, when set, narrows the slice to one execution stage's logs. */
     optional string node_execution_id = 2 [(validate.rules).string.max_len = 128];
+    /* component_id, when set, narrows the slice to one topology component's logs. */
     optional string component_id = 3 [(validate.rules).string.max_len = 128];
+    /* start, when set, bounds the slice to lines at or after this time. */
     optional google.protobuf.Timestamp start = 4;
+    /* end, when set, bounds the slice to lines at or before this time. */
     optional google.protobuf.Timestamp end = 5;
     /* cursor pins a specific line (deep-link to line). */
     optional LogCursor cursor = 6;
@@ -91,6 +109,7 @@ message LogRef {
 
 /* LogPage is a page of query results with a forward cursor token. */
 message LogPage {
+    /* lines are the log records on this page, in query order. */
     repeated LogLine lines = 1 [(validate.rules).repeated.max_items = 10000];
     /* next_token continues the query; empty when no more. */
     string next_token = 2 [(validate.rules).string.max_len = 256];

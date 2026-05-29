@@ -16,6 +16,7 @@ import (
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	"github.com/stroppy-io/stroppy-cloud/internal/services/utils"
 )
 
 // -------- CreateApiToken --------
@@ -24,13 +25,13 @@ func TestCreateApiToken(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	authn := NewMockAuthn(ctrl)
+	authn := utils.NewMockAuthn(ctrl)
 	tokens := NewMockApiTokenRepo(ctrl)
 	secrets := NewMockApiTokenSecrets(ctrl)
 	minter := NewMockApiTokenMinter(ctrl)
 	accounts := NewMockAccountRepo(ctrl)
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:    &utils.MockTrm{},
 		Authn: authn, ApiTokens: tokens, ApiTokenSecrets: secrets, ApiTokenMinter: minter, Accounts: accounts,
 	})
 	ctx := context.Background()
@@ -171,9 +172,9 @@ func TestListApiTokens(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	authn := NewMockAuthn(ctrl)
+	authn := utils.NewMockAuthn(ctrl)
 	tokens := NewMockApiTokenRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Authn: authn, ApiTokens: tokens})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Authn: authn, ApiTokens: tokens})
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {
@@ -222,11 +223,11 @@ func TestRevokeApiToken(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	authn := NewMockAuthn(ctrl)
+	authn := utils.NewMockAuthn(ctrl)
 	tokens := NewMockApiTokenRepo(ctrl)
 	secrets := NewMockApiTokenSecrets(ctrl)
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:    &utils.MockTrm{},
 		Authn: authn, ApiTokens: tokens, ApiTokenSecrets: secrets,
 	})
 	ctx := context.Background()

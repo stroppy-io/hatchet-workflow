@@ -28,9 +28,14 @@ const (
 // SuiteRunServiceClient is the client API for SuiteRunService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// SuiteRunService is the tenant-scoped read/cancel/delete API for suite runs.
 type SuiteRunServiceClient interface {
+	// GetSuiteRun fetches a single suite run by id. Read-only.
 	GetSuiteRun(ctx context.Context, in *GetSuiteRunRequest, opts ...grpc.CallOption) (*GetSuiteRunResponse, error)
+	// ListSuiteRuns lists suite runs with filtering and pagination. Read-only.
 	ListSuiteRuns(ctx context.Context, in *ListSuiteRunsRequest, opts ...grpc.CallOption) (*ListSuiteRunsResponse, error)
+	// CancelSuiteRun is idempotent: cancelling a finished/cancelled run is a no-op.
 	CancelSuiteRun(ctx context.Context, in *CancelSuiteRunRequest, opts ...grpc.CallOption) (*CancelSuiteRunResponse, error)
 	// DeleteSuiteRun is idempotent: deleting an absent suite run is a no-op.
 	DeleteSuiteRun(ctx context.Context, in *DeleteSuiteRunRequest, opts ...grpc.CallOption) (*DeleteSuiteRunResponse, error)
@@ -87,9 +92,14 @@ func (c *suiteRunServiceClient) DeleteSuiteRun(ctx context.Context, in *DeleteSu
 // SuiteRunServiceServer is the server API for SuiteRunService service.
 // All implementations must embed UnimplementedSuiteRunServiceServer
 // for forward compatibility.
+//
+// SuiteRunService is the tenant-scoped read/cancel/delete API for suite runs.
 type SuiteRunServiceServer interface {
+	// GetSuiteRun fetches a single suite run by id. Read-only.
 	GetSuiteRun(context.Context, *GetSuiteRunRequest) (*GetSuiteRunResponse, error)
+	// ListSuiteRuns lists suite runs with filtering and pagination. Read-only.
 	ListSuiteRuns(context.Context, *ListSuiteRunsRequest) (*ListSuiteRunsResponse, error)
+	// CancelSuiteRun is idempotent: cancelling a finished/cancelled run is a no-op.
 	CancelSuiteRun(context.Context, *CancelSuiteRunRequest) (*CancelSuiteRunResponse, error)
 	// DeleteSuiteRun is idempotent: deleting an absent suite run is a no-op.
 	DeleteSuiteRun(context.Context, *DeleteSuiteRunRequest) (*DeleteSuiteRunResponse, error)

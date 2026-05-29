@@ -31,15 +31,21 @@ const (
 // TestRunOverviewServiceClient is the client API for TestRunOverviewService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// TestRunOverviewService serves the read-only overview, logs and metrics for a
+// single run.
 type TestRunOverviewServiceClient interface {
-	// --- Overview ---
+	// GetTestRunOverview fetches the Overview snapshot. Read-only.
 	GetTestRunOverview(ctx context.Context, in *GetTestRunOverviewRequest, opts ...grpc.CallOption) (*GetTestRunOverviewResponse, error)
+	// StreamTestRunOverview streams full Overview snapshots as the run progresses.
 	StreamTestRunOverview(ctx context.Context, in *StreamTestRunOverviewRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[monitor.Overview], error)
-	// --- Logs ---
+	// QueryLogs fetches a cursor-paged window of historical log lines. Read-only.
 	QueryLogs(ctx context.Context, in *QueryLogsRequest, opts ...grpc.CallOption) (*QueryLogsResponse, error)
+	// StreamLogs streams a live log tail (server may coalesce/rate-limit).
 	StreamLogs(ctx context.Context, in *StreamLogsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[monitor.LogLine], error)
+	// ResolveLogRef resolves a shareable LogRef into a filter + anchor. Read-only.
 	ResolveLogRef(ctx context.Context, in *ResolveLogRefRequest, opts ...grpc.CallOption) (*ResolveLogRefResponse, error)
-	// --- Metrics ---
+	// GetRunMetrics fetches the run's metrics. Read-only.
 	GetRunMetrics(ctx context.Context, in *GetRunMetricsRequest, opts ...grpc.CallOption) (*GetRunMetricsResponse, error)
 }
 
@@ -132,15 +138,21 @@ func (c *testRunOverviewServiceClient) GetRunMetrics(ctx context.Context, in *Ge
 // TestRunOverviewServiceServer is the server API for TestRunOverviewService service.
 // All implementations must embed UnimplementedTestRunOverviewServiceServer
 // for forward compatibility.
+//
+// TestRunOverviewService serves the read-only overview, logs and metrics for a
+// single run.
 type TestRunOverviewServiceServer interface {
-	// --- Overview ---
+	// GetTestRunOverview fetches the Overview snapshot. Read-only.
 	GetTestRunOverview(context.Context, *GetTestRunOverviewRequest) (*GetTestRunOverviewResponse, error)
+	// StreamTestRunOverview streams full Overview snapshots as the run progresses.
 	StreamTestRunOverview(*StreamTestRunOverviewRequest, grpc.ServerStreamingServer[monitor.Overview]) error
-	// --- Logs ---
+	// QueryLogs fetches a cursor-paged window of historical log lines. Read-only.
 	QueryLogs(context.Context, *QueryLogsRequest) (*QueryLogsResponse, error)
+	// StreamLogs streams a live log tail (server may coalesce/rate-limit).
 	StreamLogs(*StreamLogsRequest, grpc.ServerStreamingServer[monitor.LogLine]) error
+	// ResolveLogRef resolves a shareable LogRef into a filter + anchor. Read-only.
 	ResolveLogRef(context.Context, *ResolveLogRefRequest) (*ResolveLogRefResponse, error)
-	// --- Metrics ---
+	// GetRunMetrics fetches the run's metrics. Read-only.
 	GetRunMetrics(context.Context, *GetRunMetricsRequest) (*GetRunMetricsResponse, error)
 	mustEmbedUnimplementedTestRunOverviewServiceServer()
 }

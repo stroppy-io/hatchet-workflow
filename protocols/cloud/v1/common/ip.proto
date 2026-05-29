@@ -6,6 +6,12 @@ import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
 
+/*
+    ip.proto defines reusable IP networking value types: a single address, an
+    address+port pair, a CIDR block, and a network grouping CIDRs with their
+    addresses.
+ */
+
 /* IpAddress describes an address assigned to a network interface. */
 message IpAddress {
     /* Family identifies IP protocol version. */
@@ -28,17 +34,26 @@ message IpAddress {
     string scope = 4 [(validate.rules).string.max_len = 64];
 }
 
+/* AddrPort pairs an IP address with a port number. */
 message AddrPort {
+    /* address is the IP address. */
     IpAddress address = 1;
+    /* port is the associated port number. */
     uint32 port = 2;
 }
 
+/* Cidr describes a network block in CIDR notation. */
 message Cidr {
+    /* value is the CIDR string, e.g. 10.0.0.0/24. */
     string value = 1 [(validate.rules).string = {min_len: 1}];
-    repeated IpAddress addresses = 2; // optional for denormalize
+    /* addresses optionally denormalizes the addresses covered by this block. */
+    repeated IpAddress addresses = 2; /* optional for denormalize */
 }
 
+/* Net groups one or more CIDR blocks together with their member addresses. */
 message Net {
+    /* cidrs lists the CIDR blocks that make up this network. */
     repeated Cidr cidrs = 1 [(validate.rules).repeated = {min_items: 1}];
+    /* addresses lists the IP addresses belonging to this network. */
     repeated IpAddress addresses = 2 [(validate.rules).repeated = {min_items: 1}];
 }

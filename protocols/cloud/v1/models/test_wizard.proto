@@ -26,21 +26,39 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     it bakes into a domain.TestRun.
  */
 message TestWizardDraftRecord {
+    /*
+        entity is the storage envelope (tenant-scoped: id, tenant_id, name,
+        timings).
+     */
     common.Entity entity = 1 [(validate.rules).message.required = true];
 
-    // The whole test form: one big conditional schema + its current values.
+    /*
+        form is the whole test form: one big conditional schema + its current
+        values (a Filled = schema + values).
+     */
     schemapb.Filled form = 2;
 
-    // --- server-computed (recomputed on every patch) ---
-    // Topology generated from the current form values (abstract machines;
-    // provider_parms filled once provider settings are valid).
+    /*
+        topology is the server-computed topology generated from the current form
+        values (recomputed on every patch): abstract machines, with provider_parms
+        filled once provider settings are valid.
+     */
     topology.Topology topology = 3;
-    // Current authoritative validation errors; FieldError.field carries the path
-    // so the UI can group by section (database.*, workload.*, provider.*).
+    /*
+        errors are the current authoritative validation errors (recomputed on
+        every patch); FieldError.field carries the path so the UI can group by
+        section (database.*, workload.*, provider.*).
+     */
     repeated schemapb.FieldError errors = 4;
-    // ready is true when the whole form validates and FinishTestWizard is allowed.
+    /*
+        ready is true when the whole form validates and FinishTestWizard is
+        allowed.
+     */
     bool ready = 5;
 
-    // Seeded from this test preset, if the wizard started from one.
+    /*
+        test_preset_id is the test preset the wizard was seeded from, if it
+        started from one.
+     */
     string test_preset_id = 6 [(validate.rules).string.max_len = 64];
 }

@@ -7,9 +7,22 @@ import "cloud/v1/common/tags.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
+/*
+    workload.proto defines the Workload: which stroppy version to run and the
+    baked, schema-backed parameters that drive it against the database under
+    test. It is the "how to load the database" half of a Test.
+ */
+
+/*
+    Workload describes the stroppy load to run against the database under test:
+    the stroppy binary version plus its sealed, schema-backed parameters.
+ */
 message Workload {
+    /* stroppy_version is the stroppy binary version to run. */
     string stroppy_version = 1;
+    /* params is the sealed, schema-backed stroppy workload configuration. */
     schemapb.Baked params = 2;
+    /* tags are free-form metadata attached to the workload. */
     common.Tags tags = 3;
 }
 

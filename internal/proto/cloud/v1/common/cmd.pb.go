@@ -144,6 +144,7 @@ func (x *Cmd) GetResult() *Cmd_Result {
 // Spec describes how a process should be executed.
 type Cmd_Spec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// command selects exactly one execution form: direct argv or shell script.
 	// Types that are valid to be assigned to Command:
 	//
 	//	*Cmd_Spec_Argv

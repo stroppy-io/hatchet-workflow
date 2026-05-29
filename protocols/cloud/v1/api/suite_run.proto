@@ -23,63 +23,180 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     RESOURCE_SUITE_RUN.
  */
 
+/*
+    GetSuiteRunRequest fetches a single suite run by id.
+ */
 message GetSuiteRunRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the suite run identifier to fetch.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
+/*
+    GetSuiteRunResponse returns the requested suite run.
+ */
 message GetSuiteRunResponse {
+    /*
+        suite_run is the requested execution record.
+     */
     models.SuiteRunRecord suite_run = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    ListSuiteRunsRequest lists suite runs with filtering, faceting, sorting and
+    pagination.
+ */
 message ListSuiteRunsRequest {
     /*
         Sort orders by a common Entity column OR a denormalized Summary column.
      */
     message Sort {
+        /*
+            Kind is a suite-run-specific sortable column (alternative to a common
+            Entity column).
+         */
         enum Kind {
+            /*
+                KIND_UNSPECIFIED leaves the suite-run-specific ordering unset.
+             */
             KIND_UNSPECIFIED = 0;
+            /*
+                KIND_STATUS orders by lifecycle status.
+             */
             KIND_STATUS = 1;
+            /*
+                KIND_PROVIDER orders by deployment provider.
+             */
             KIND_PROVIDER = 2;
+            /*
+                KIND_PROGRESS orders by aggregate progress.
+             */
             KIND_PROGRESS = 3;
+            /*
+                KIND_DURATION orders by run duration.
+             */
             KIND_DURATION = 4;
+            /*
+                KIND_STARTED_AT orders by start time.
+             */
             KIND_STARTED_AT = 5;
+            /*
+                KIND_FINISHED_AT orders by finish time.
+             */
             KIND_FINISHED_AT = 6;
-            KIND_TOTAL = 7;        // total child runs
+            /*
+                KIND_TOTAL orders by total child runs.
+             */
+            KIND_TOTAL = 7;
         }
+        /*
+            by selects either a common Entity sort field or a suite-run-specific
+            Kind.
+         */
         oneof by {
+            /*
+                entity orders by a shared Entity column (name, created_at, ...).
+             */
             common.EntitySortField entity = 1;
+            /*
+                kind orders by a suite-run-specific column.
+             */
             Kind kind = 2;
         }
+        /*
+            desc reverses the order (descending) when true.
+         */
         bool desc = 3;
     }
 
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        filter holds the shared Entity-level filters (search, ids, time windows).
+     */
     common.EntityFilter filter = 2;
 
-    // --- facet filters (all AND; empty / unset = not applied) ---
+    /*
+        statuses facets by lifecycle status (all AND; empty/unset = not applied).
+     */
     repeated common.Status statuses = 3;
+    /*
+        providers facets by deployment provider (empty = any).
+     */
     repeated deployment.Provider providers = 4;
-    // Distinct database kinds exercised (matches Summary.db_kinds).
+    /*
+        db_kinds facets by distinct database kinds exercised (matches
+        Summary.db_kinds).
+     */
     repeated domain.Database.Kind db_kinds = 5;
-    // Filter to runs of a single suite definition; empty = any.
+    /*
+        suite_id filters to runs of a single suite definition; empty = any.
+     */
     string suite_id = 6 [(validate.rules).string.max_len = 64];
-    // Filter by how the run was triggered (manual / cron / api); empty = any.
+    /*
+        triggers filters by how the run was triggered (manual / cron / api);
+        empty = any.
+     */
     repeated common.Trigger triggers = 17;
-    // Aggregate progress window [min,max], 0..100.
+    /*
+        progress_min is the lower bound of the aggregate progress window, 0..100.
+     */
     optional uint32 progress_min = 7 [(validate.rules).uint32.lte = 100];
+    /*
+        progress_max is the upper bound of the aggregate progress window, 0..100.
+     */
     optional uint32 progress_max = 8 [(validate.rules).uint32.lte = 100];
+    /*
+        duration_min is the lower bound of the duration window.
+     */
     google.protobuf.Duration duration_min = 9;
+    /*
+        duration_max is the upper bound of the duration window.
+     */
     google.protobuf.Duration duration_max = 10;
+    /*
+        started_after keeps runs started at or after this time.
+     */
     google.protobuf.Timestamp started_after = 11;
+    /*
+        started_before keeps runs started at or before this time.
+     */
     google.protobuf.Timestamp started_before = 12;
+    /*
+        finished_after keeps runs finished at or after this time.
+     */
     google.protobuf.Timestamp finished_after = 13;
+    /*
+        finished_before keeps runs finished at or before this time.
+     */
     google.protobuf.Timestamp finished_before = 14;
 
+    /*
+        sort selects the result ordering.
+     */
     Sort sort = 15;
+    /*
+        page carries pagination (page size + token).
+     */
     common.Page page = 16;
 }
+/*
+    ListSuiteRunsResponse returns a page of suite runs.
+ */
 message ListSuiteRunsResponse {
+    /*
+        suite_runs is the matching page of execution records.
+     */
     repeated models.SuiteRunRecord suite_runs = 1;
+    /*
+        next_page_token fetches the following page; empty when at the end.
+     */
     string next_page_token = 2;
 }
 
@@ -88,28 +205,65 @@ message ListSuiteRunsResponse {
     Idempotent: cancelling a finished/cancelled suite run is a no-op.
  */
 message CancelSuiteRunRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the suite run identifier to cancel.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
+/*
+    CancelSuiteRunResponse returns the suite run after the cancellation request.
+ */
 message CancelSuiteRunResponse {
+    /*
+        suite_run is the execution record reflecting the cancellation.
+     */
     models.SuiteRunRecord suite_run = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    DeleteSuiteRunRequest deletes a suite run by id.
+ */
 message DeleteSuiteRunRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the suite run identifier to delete.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
+/*
+    DeleteSuiteRunResponse is empty; deletion success is signalled by a non-error
+    reply.
+ */
 message DeleteSuiteRunResponse {}
 
+/*
+    SuiteRunService is the tenant-scoped read/cancel/delete API for suite runs.
+ */
 service SuiteRunService {
+    /*
+        GetSuiteRun fetches a single suite run by id. Read-only.
+     */
     rpc GetSuiteRun (GetSuiteRunRequest) returns (GetSuiteRunResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE_RUN, action: ACTION_READ}]};
     }
+    /*
+        ListSuiteRuns lists suite runs with filtering and pagination. Read-only.
+     */
     rpc ListSuiteRuns (ListSuiteRunsRequest) returns (ListSuiteRunsResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE_RUN, action: ACTION_LIST}]};
     }
+    /*
+        CancelSuiteRun is idempotent: cancelling a finished/cancelled run is a no-op.
+     */
     rpc CancelSuiteRun (CancelSuiteRunRequest) returns (CancelSuiteRunResponse) {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE_RUN, action: ACTION_UPDATE}]};

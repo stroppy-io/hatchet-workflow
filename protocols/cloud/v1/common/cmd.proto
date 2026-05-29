@@ -8,6 +8,13 @@ import "validate/validate.proto";
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
 
 /*
+    cmd.proto defines a reusable, provider-agnostic model for describing a
+    command to run and the result observed after it ran. It carries no execution
+    policy of its own — runtime ops decide how to spawn, stream, time out, and
+    interpret the command.
+ */
+
+/*
     Cmd describes a command execution request and its observable result.
     It is a reusable system model, not an operation. Runtime ops decide how to
     execute it, capture output, enforce timeout, and interpret exit codes.
@@ -20,6 +27,7 @@ message Cmd {
 
     /* Spec describes how a process should be executed. */
     message Spec {
+        /* command selects exactly one execution form: direct argv or shell script. */
         oneof command {
             option (validate.required) = true;
             /* argv executes a command directly without shell parsing. */

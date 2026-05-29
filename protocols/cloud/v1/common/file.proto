@@ -8,6 +8,12 @@ import "validate/validate.proto";
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
 
 /*
+    file.proto defines reusable models for describing a Linux file: its
+    filesystem metadata, its inline or referenced content, and a baked variant
+    that pairs a file with a resolver and its schema-validated data.
+ */
+
+/*
     File is a Linux file description that can be rendered, previewed, stored, or
     later applied by runtime ops. It intentionally contains only file data and
     filesystem metadata, without domain concepts such as database role, target,
@@ -28,8 +34,9 @@ message File {
 
     /* info contains path, permissions, owner, and group. */
     Info info = 1 [(validate.rules).message.required = true];
+    /* append, when true, appends content to an existing file instead of overwriting it. */
     bool append = 2;
-    /* Content is inline file payload. */
+    /* content carries the inline file payload as exactly one of text, bytes, or a reference. */
     oneof content {
         option (validate.required) = true;
         /* text contains UTF-8 or text-like file content. */
@@ -46,6 +53,7 @@ message File {
        files, or generated outputs without changing the file metadata model.
     */
     message AsRef {
+        /* uri locates the external file content (e.g. object/artifact storage). */
         string uri = 2 [(validate.rules).string = {min_len: 1, max_len: 4096}];
         /* checksum optionally verifies external file content. */
         string checksum = 3 [(validate.rules).string.max_len = 256];
@@ -53,8 +61,15 @@ message File {
 }
 
 
+/*
+    BakedFile pairs a File with the resolver that produced it and the
+    schema-validated data used to render it, capturing a fully materialized file.
+ */
 message BakedFile {
+    /* file is the materialized file description. */
     File file = 1;
+    /* resolver_name identifies the resolver that produced the file content. */
     string resolver_name = 2;
+    /* data is the schema-validated input baked into the file. */
     schemapb.Baked data = 3;
 }

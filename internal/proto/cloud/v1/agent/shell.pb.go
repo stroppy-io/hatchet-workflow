@@ -25,14 +25,17 @@ const (
 // OpenShell asks the agent to spawn a PTY for a new session.
 type OpenShell struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Run this shell in the context of a run (for audit/scoping); may be empty.
+	// run_id runs this shell in the context of a run (for audit/scoping); may
+	// be empty.
 	RunId string `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	// Target component on the host, optional.
+	// component_id is the target component on the host, optional.
 	ComponentId string `protobuf:"bytes,2,opt,name=component_id,json=componentId,proto3" json:"component_id,omitempty"`
-	// Initial terminal size.
+	// cols is the initial terminal width in columns.
 	Cols uint32 `protobuf:"varint,3,opt,name=cols,proto3" json:"cols,omitempty"`
+	// rows is the initial terminal height in rows.
 	Rows uint32 `protobuf:"varint,4,opt,name=rows,proto3" json:"rows,omitempty"`
-	// Shell to launch (e.g. "/bin/bash"); empty -> agent default.
+	// shell is the shell binary to launch (e.g. "/bin/bash"); empty -> agent
+	// default.
 	Shell         string `protobuf:"bytes,5,opt,name=shell,proto3" json:"shell,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -105,9 +108,11 @@ func (x *OpenShell) GetShell() string {
 
 // ShellResize updates the PTY window size.
 type ShellResize struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Cols          uint32                 `protobuf:"varint,1,opt,name=cols,proto3" json:"cols,omitempty"`
-	Rows          uint32                 `protobuf:"varint,2,opt,name=rows,proto3" json:"rows,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// cols is the new terminal width in columns.
+	Cols uint32 `protobuf:"varint,1,opt,name=cols,proto3" json:"cols,omitempty"`
+	// rows is the new terminal height in rows.
+	Rows          uint32 `protobuf:"varint,2,opt,name=rows,proto3" json:"rows,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -158,9 +163,11 @@ func (x *ShellResize) GetRows() uint32 {
 
 // ShellExit reports a session ending.
 type ShellExit struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Code          int32                  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
-	Error         string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// code is the process exit code of the shell session.
+	Code int32 `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
+	// error is an optional error message describing why the session ended.
+	Error         string `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -211,8 +218,9 @@ func (x *ShellExit) GetError() string {
 
 // Register is the agent's first AgentShellMsg, identifying which host it is.
 type Register struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	MachineId     string                 `protobuf:"bytes,1,opt,name=machine_id,json=machineId,proto3" json:"machine_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// machine_id is the host identifier the control stream belongs to.
+	MachineId     string `protobuf:"bytes,1,opt,name=machine_id,json=machineId,proto3" json:"machine_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -257,8 +265,10 @@ func (x *Register) GetMachineId() string {
 // ServerShellMsg is server -> agent over the control stream.
 type ServerShellMsg struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Session this frame belongs to (server-assigned on open).
+	// session_id is the session this frame belongs to (server-assigned on open).
 	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	// msg is the server->agent frame payload for this session.
+	//
 	// Types that are valid to be assigned to Msg:
 	//
 	//	*ServerShellMsg_Open
@@ -355,18 +365,22 @@ type isServerShellMsg_Msg interface {
 }
 
 type ServerShellMsg_Open struct {
+	// open requests spawning a new PTY session.
 	Open *OpenShell `protobuf:"bytes,2,opt,name=open,proto3,oneof"`
 }
 
 type ServerShellMsg_Stdin struct {
+	// stdin is keystroke input bytes for the session's PTY.
 	Stdin []byte `protobuf:"bytes,3,opt,name=stdin,proto3,oneof"`
 }
 
 type ServerShellMsg_Resize struct {
+	// resize updates the session's terminal window size.
 	Resize *ShellResize `protobuf:"bytes,4,opt,name=resize,proto3,oneof"`
 }
 
 type ServerShellMsg_Close struct {
+	// close terminates the session.
 	Close *emptypb.Empty `protobuf:"bytes,5,opt,name=close,proto3,oneof"`
 }
 
@@ -380,8 +394,12 @@ func (*ServerShellMsg_Close) isServerShellMsg_Msg() {}
 
 // AgentShellMsg is agent -> server over the control stream.
 type AgentShellMsg struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	SessionId string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// session_id is the session this frame belongs to (empty on the first
+	// register frame).
+	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	// msg is the agent->server frame payload for this session.
+	//
 	// Types that are valid to be assigned to Msg:
 	//
 	//	*AgentShellMsg_Register
@@ -478,18 +496,22 @@ type isAgentShellMsg_Msg interface {
 }
 
 type AgentShellMsg_Register struct {
-	Register *Register `protobuf:"bytes,2,opt,name=register,proto3,oneof"` // first frame, session_id empty
+	// register is the first frame identifying the host; session_id empty.
+	Register *Register `protobuf:"bytes,2,opt,name=register,proto3,oneof"`
 }
 
 type AgentShellMsg_Stdout struct {
+	// stdout is PTY standard-output bytes for the session.
 	Stdout []byte `protobuf:"bytes,3,opt,name=stdout,proto3,oneof"`
 }
 
 type AgentShellMsg_Stderr struct {
+	// stderr is PTY standard-error bytes for the session.
 	Stderr []byte `protobuf:"bytes,4,opt,name=stderr,proto3,oneof"`
 }
 
 type AgentShellMsg_Exit struct {
+	// exit reports the session's process ending.
 	Exit *ShellExit `protobuf:"bytes,5,opt,name=exit,proto3,oneof"`
 }
 

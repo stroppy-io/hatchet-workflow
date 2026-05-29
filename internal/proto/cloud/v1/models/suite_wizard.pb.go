@@ -39,16 +39,19 @@ const (
 // Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
 // it bakes into a domain.SuiteRun (the full N*M TestRuns).
 type SuiteWizardDraftRecord struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	Entity *common.Entity         `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	// The whole suite form: selections + provider + per-topology provider settings
-	// + max_parallel, as one conditional schema + values.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entity is the storage envelope (tenant-scoped: id, tenant_id, name,
+	// timings).
+	Entity *common.Entity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	// form is the whole suite form: selections + provider + per-topology
+	// provider settings + max_parallel, as one conditional schema + values.
 	Form *schemapb.Filled `protobuf:"bytes,2,opt,name=form,proto3" json:"form,omitempty"`
-	// --- server-computed (recomputed on every patch) ---
-	// Expanded, compatible cells (lightweight summaries; full TestRuns are baked
-	// only at finish to avoid generating a topology per cell here).
+	// preview holds the server-computed expanded, compatible cells (recomputed
+	// on every patch). These are lightweight summaries; full TestRuns are baked
+	// only at finish to avoid generating a topology per cell here.
 	Preview []*SuiteWizardDraftRecord_Cell `protobuf:"bytes,3,rep,name=preview,proto3" json:"preview,omitempty"`
-	// Authoritative validation errors (paths group by section in the UI).
+	// errors are the authoritative validation errors (recomputed on every
+	// patch); paths group by section in the UI.
 	Errors []*schemapb.FieldError `protobuf:"bytes,4,rep,name=errors,proto3" json:"errors,omitempty"`
 	// ready is true when there is >=1 compatible cell, every involved db preset
 	// has its provider settings filled, and the form validates.
@@ -125,16 +128,22 @@ func (x *SuiteWizardDraftRecord) GetReady() bool {
 // Cell is one resolved (db, workload) pair the suite will run.
 type SuiteWizardDraftRecord_Cell struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// From a db x workload matrix pair...
-	DbPresetId       string `protobuf:"bytes,1,opt,name=db_preset_id,json=dbPresetId,proto3" json:"db_preset_id,omitempty"`
+	// db_preset_id is the database preset from a db x workload matrix pair
+	// (paired with workload_preset_id).
+	DbPresetId string `protobuf:"bytes,1,opt,name=db_preset_id,json=dbPresetId,proto3" json:"db_preset_id,omitempty"`
+	// workload_preset_id is the workload preset from a db x workload matrix
+	// pair (paired with db_preset_id).
 	WorkloadPresetId string `protobuf:"bytes,2,opt,name=workload_preset_id,json=workloadPresetId,proto3" json:"workload_preset_id,omitempty"`
-	// ...or from a full TestPreset (then db/workload ids are empty).
+	// test_preset_id is set when the cell came from a full TestPreset
+	// instead of a matrix pair (then db/workload preset ids are empty).
 	TestPresetId string `protobuf:"bytes,3,opt,name=test_preset_id,json=testPresetId,proto3" json:"test_preset_id,omitempty"`
-	// Display name of the resulting run.
+	// name is the display name of the resulting run.
 	Name string `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
-	// workload is compatible with the database kind.
+	// compatible is true when the workload is compatible with the database
+	// kind.
 	Compatible bool `protobuf:"varint,5,opt,name=compatible,proto3" json:"compatible,omitempty"`
-	// Everything this cell needs (incl. its provider settings) is present.
+	// ready is true when everything this cell needs (incl. its provider
+	// settings) is present.
 	Ready         bool `protobuf:"varint,6,opt,name=ready,proto3" json:"ready,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

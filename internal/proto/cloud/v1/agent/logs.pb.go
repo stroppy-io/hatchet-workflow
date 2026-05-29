@@ -25,8 +25,10 @@ const (
 
 // LogBatch is a chunk of lines the agent flushes together (by count or time).
 type LogBatch struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Lines         []*monitor.LogLine     `protobuf:"bytes,1,rep,name=lines,proto3" json:"lines,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// lines is the batch of log lines to ship; capped at 10000 per batch so a
+	// single message stays bounded.
+	Lines         []*monitor.LogLine `protobuf:"bytes,1,rep,name=lines,proto3" json:"lines,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -68,9 +70,12 @@ func (x *LogBatch) GetLines() []*monitor.LogLine {
 	return nil
 }
 
+// ShipLogsAck is the server's running acknowledgement back to the agent on the
+// log stream.
 type ShipLogsAck struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// How many lines the server accepted across this stream so far (backpressure).
+	// accepted is how many lines the server accepted across this stream so far
+	// (used for backpressure).
 	Accepted      uint64 `protobuf:"varint,1,opt,name=accepted,proto3" json:"accepted,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

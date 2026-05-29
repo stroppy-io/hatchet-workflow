@@ -22,29 +22,19 @@ generate:
       out: ../internal/proto
       opts:
         paths: source_relative
-    - name: go-grpc
-      out: ../internal/proto
-      opts:
-        paths: source_relative
-    - name: go_temporal
-      out: ../internal/proto
-      opts:
-        paths: source_relative
-        cli-enabled: true
-#    - name: connect-go
+#    - name: go-hashpb
 #      out: ../internal/proto
 #      opts:
 #        paths: source_relative
-#        simple: true
+    - name: protoc-gen-go-jx
+      out: ../internal/proto
+      opts:
+        paths: source_relative
     - name: validate
       out: ../internal/proto
       opts:
         lang: go
         paths: source_relative
-#    - name: go-json
-#      out: ../internal/proto
-#      opts:
-#        paths: source_relative
 #    - name: go-plain
 #      out: ../internal/proto
 #      opts:
@@ -56,6 +46,20 @@ generate:
 #      out: ../internal/proto
 #      opts:
 #        paths: source_relative
+    - name: go_temporal
+      out: ../internal/proto
+      opts:
+        paths: source_relative
+        docs-out: ../docs/proto
+        enable-codec: true
+        enable-patch-support: true
+        workflow-update-enabled: true
+        ignore-acronyms: Service
+#        cli-enabled: true
+#    - name: go-graphql
+#      opts:
+#        paths: source_relative
+
 breaking:
   ignore: []
   against_git_ref: master-worker

@@ -27,9 +27,16 @@ const (
 // TenantSettingsServiceClient is the client API for TenantSettingsService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// TenantSettingsService is the tenant-scoped API for reading and updating
+// per-tenant settings and provider configs.
 type TenantSettingsServiceClient interface {
+	// GetTenantSettings fetches the tenant's settings. Read-only.
 	GetTenantSettings(ctx context.Context, in *GetTenantSettingsRequest, opts ...grpc.CallOption) (*GetTenantSettingsResponse, error)
+	// UpdateTenantSettings is idempotent: a wholesale field set converges on retry.
 	UpdateTenantSettings(ctx context.Context, in *UpdateTenantSettingsRequest, opts ...grpc.CallOption) (*UpdateTenantSettingsResponse, error)
+	// SetTenantProviderSettings is idempotent: setting the same provider config
+	// converges.
 	SetTenantProviderSettings(ctx context.Context, in *SetTenantProviderSettingsRequest, opts ...grpc.CallOption) (*SetTenantProviderSettingsResponse, error)
 }
 
@@ -74,9 +81,16 @@ func (c *tenantSettingsServiceClient) SetTenantProviderSettings(ctx context.Cont
 // TenantSettingsServiceServer is the server API for TenantSettingsService service.
 // All implementations must embed UnimplementedTenantSettingsServiceServer
 // for forward compatibility.
+//
+// TenantSettingsService is the tenant-scoped API for reading and updating
+// per-tenant settings and provider configs.
 type TenantSettingsServiceServer interface {
+	// GetTenantSettings fetches the tenant's settings. Read-only.
 	GetTenantSettings(context.Context, *GetTenantSettingsRequest) (*GetTenantSettingsResponse, error)
+	// UpdateTenantSettings is idempotent: a wholesale field set converges on retry.
 	UpdateTenantSettings(context.Context, *UpdateTenantSettingsRequest) (*UpdateTenantSettingsResponse, error)
+	// SetTenantProviderSettings is idempotent: setting the same provider config
+	// converges.
 	SetTenantProviderSettings(context.Context, *SetTenantProviderSettingsRequest) (*SetTenantProviderSettingsResponse, error)
 	mustEmbedUnimplementedTenantSettingsServiceServer()
 }

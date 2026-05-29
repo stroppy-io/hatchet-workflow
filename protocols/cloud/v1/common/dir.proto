@@ -6,6 +6,12 @@ import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
 
+/*
+    dir.proto defines reusable models for describing Linux directories and their
+    filesystem metadata. It carries only directory data, not the operations that
+    create or inspect directories.
+ */
+
 /* Dir describes a Linux directory. */
 message Dir {
     /* info contains path, permissions, owner, and group. */

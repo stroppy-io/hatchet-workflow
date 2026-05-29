@@ -28,13 +28,20 @@ const (
 type FavoriteKind int32
 
 const (
-	FavoriteKind_FAVORITE_KIND_UNSPECIFIED     FavoriteKind = 0
+	// FAVORITE_KIND_UNSPECIFIED is the unset/invalid default.
+	FavoriteKind_FAVORITE_KIND_UNSPECIFIED FavoriteKind = 0
+	// FAVORITE_KIND_DATABASE_PRESET targets a database preset row.
 	FavoriteKind_FAVORITE_KIND_DATABASE_PRESET FavoriteKind = 1
+	// FAVORITE_KIND_WORKLOAD_PRESET targets a workload preset row.
 	FavoriteKind_FAVORITE_KIND_WORKLOAD_PRESET FavoriteKind = 2
-	FavoriteKind_FAVORITE_KIND_TEST_PRESET     FavoriteKind = 3
-	FavoriteKind_FAVORITE_KIND_TEST_RUN        FavoriteKind = 4
-	FavoriteKind_FAVORITE_KIND_SUITE           FavoriteKind = 5
-	FavoriteKind_FAVORITE_KIND_SUITE_RUN       FavoriteKind = 6
+	// FAVORITE_KIND_TEST_PRESET targets a test preset row.
+	FavoriteKind_FAVORITE_KIND_TEST_PRESET FavoriteKind = 3
+	// FAVORITE_KIND_TEST_RUN targets a test run row.
+	FavoriteKind_FAVORITE_KIND_TEST_RUN FavoriteKind = 4
+	// FAVORITE_KIND_SUITE targets a suite row.
+	FavoriteKind_FAVORITE_KIND_SUITE FavoriteKind = 5
+	// FAVORITE_KIND_SUITE_RUN targets a suite run row.
+	FavoriteKind_FAVORITE_KIND_SUITE_RUN FavoriteKind = 6
 )
 
 // Enum value maps for FavoriteKind.

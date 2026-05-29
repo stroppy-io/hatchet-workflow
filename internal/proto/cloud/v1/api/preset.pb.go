@@ -30,10 +30,14 @@ const (
 type ListDatabasePresetsRequest_SourceKind int32
 
 const (
+	// SOURCE_KIND_UNSPECIFIED is the zero value (no source filter).
 	ListDatabasePresetsRequest_SOURCE_KIND_UNSPECIFIED ListDatabasePresetsRequest_SourceKind = 0
-	ListDatabasePresetsRequest_SOURCE_KIND_PARAMS      ListDatabasePresetsRequest_SourceKind = 1 // self-deploy
-	ListDatabasePresetsRequest_SOURCE_KIND_EXTERNAL    ListDatabasePresetsRequest_SourceKind = 2 // external dsn
-	ListDatabasePresetsRequest_SOURCE_KIND_PRESET_REF  ListDatabasePresetsRequest_SourceKind = 3 // database_preset_id
+	// SOURCE_KIND_PARAMS is a self-deploy database (params source).
+	ListDatabasePresetsRequest_SOURCE_KIND_PARAMS ListDatabasePresetsRequest_SourceKind = 1
+	// SOURCE_KIND_EXTERNAL is an external database (dsn source).
+	ListDatabasePresetsRequest_SOURCE_KIND_EXTERNAL ListDatabasePresetsRequest_SourceKind = 2
+	// SOURCE_KIND_PRESET_REF references another preset (database_preset_id).
+	ListDatabasePresetsRequest_SOURCE_KIND_PRESET_REF ListDatabasePresetsRequest_SourceKind = 3
 )
 
 // Enum value maps for ListDatabasePresetsRequest_SourceKind.
@@ -79,12 +83,16 @@ func (ListDatabasePresetsRequest_SourceKind) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{4, 0}
 }
 
+// Kind is the set of table-specific sort columns for database presets.
 type ListDatabasePresetsRequest_Sort_Kind int32
 
 const (
+	// KIND_UNSPECIFIED is the zero value (no table-specific column).
 	ListDatabasePresetsRequest_Sort_KIND_UNSPECIFIED ListDatabasePresetsRequest_Sort_Kind = 0
-	ListDatabasePresetsRequest_Sort_KIND_DB_KIND     ListDatabasePresetsRequest_Sort_Kind = 1 // domain.Database.Kind
-	ListDatabasePresetsRequest_Sort_KIND_IS_SYSTEM   ListDatabasePresetsRequest_Sort_Kind = 2 // system presets first/last
+	// KIND_DB_KIND sorts by domain.Database.Kind.
+	ListDatabasePresetsRequest_Sort_KIND_DB_KIND ListDatabasePresetsRequest_Sort_Kind = 1
+	// KIND_IS_SYSTEM sorts system presets first/last.
+	ListDatabasePresetsRequest_Sort_KIND_IS_SYSTEM ListDatabasePresetsRequest_Sort_Kind = 2
 )
 
 // Enum value maps for ListDatabasePresetsRequest_Sort_Kind.
@@ -128,12 +136,16 @@ func (ListDatabasePresetsRequest_Sort_Kind) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{4, 0, 0}
 }
 
+// Kind is the set of table-specific sort columns for workload presets.
 type ListWorkloadPresetsRequest_Sort_Kind int32
 
 const (
-	ListWorkloadPresetsRequest_Sort_KIND_UNSPECIFIED     ListWorkloadPresetsRequest_Sort_Kind = 0
+	// KIND_UNSPECIFIED is the zero value (no table-specific column).
+	ListWorkloadPresetsRequest_Sort_KIND_UNSPECIFIED ListWorkloadPresetsRequest_Sort_Kind = 0
+	// KIND_STROPPY_VERSION sorts by the workload's stroppy version.
 	ListWorkloadPresetsRequest_Sort_KIND_STROPPY_VERSION ListWorkloadPresetsRequest_Sort_Kind = 1
-	ListWorkloadPresetsRequest_Sort_KIND_IS_SYSTEM       ListWorkloadPresetsRequest_Sort_Kind = 2
+	// KIND_IS_SYSTEM sorts system presets first/last.
+	ListWorkloadPresetsRequest_Sort_KIND_IS_SYSTEM ListWorkloadPresetsRequest_Sort_Kind = 2
 )
 
 // Enum value maps for ListWorkloadPresetsRequest_Sort_Kind.
@@ -177,13 +189,18 @@ func (ListWorkloadPresetsRequest_Sort_Kind) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{16, 0, 0}
 }
 
+// Kind is the set of table-specific sort columns for test presets.
 type ListTestPresetsRequest_Sort_Kind int32
 
 const (
-	ListTestPresetsRequest_Sort_KIND_UNSPECIFIED     ListTestPresetsRequest_Sort_Kind = 0
-	ListTestPresetsRequest_Sort_KIND_DB_KIND         ListTestPresetsRequest_Sort_Kind = 1
+	// KIND_UNSPECIFIED is the zero value (no table-specific column).
+	ListTestPresetsRequest_Sort_KIND_UNSPECIFIED ListTestPresetsRequest_Sort_Kind = 0
+	// KIND_DB_KIND sorts by the test's database kind.
+	ListTestPresetsRequest_Sort_KIND_DB_KIND ListTestPresetsRequest_Sort_Kind = 1
+	// KIND_STROPPY_VERSION sorts by the test's stroppy version.
 	ListTestPresetsRequest_Sort_KIND_STROPPY_VERSION ListTestPresetsRequest_Sort_Kind = 2
-	ListTestPresetsRequest_Sort_KIND_IS_SYSTEM       ListTestPresetsRequest_Sort_Kind = 3
+	// KIND_IS_SYSTEM sorts system presets first/last.
+	ListTestPresetsRequest_Sort_KIND_IS_SYSTEM ListTestPresetsRequest_Sort_Kind = 3
 )
 
 // Enum value maps for ListTestPresetsRequest_Sort_Kind.
@@ -229,12 +246,13 @@ func (ListTestPresetsRequest_Sort_Kind) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_api_preset_proto_rawDescGZIP(), []int{28, 0, 0}
 }
 
-// ============================ DatabasePreset ============================
+// CreateDatabasePresetRequest creates a new database preset in the tenant.
 type CreateDatabasePresetRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// Server assigns entity.id / tenant_id / timings; values set here are
-	// ignored.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the preset; presets never cross tenants.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// preset is the database preset to create. Server assigns entity.id /
+	// tenant_id / timings; values set here are ignored.
 	Preset        *models.DatabasePresetRecord `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -284,8 +302,10 @@ func (x *CreateDatabasePresetRequest) GetPreset() *models.DatabasePresetRecord {
 	return nil
 }
 
+// CreateDatabasePresetResponse returns the created preset.
 type CreateDatabasePresetResponse struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// preset is the newly created database preset.
 	Preset        *models.DatabasePresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -328,10 +348,13 @@ func (x *CreateDatabasePresetResponse) GetPreset() *models.DatabasePresetRecord 
 	return nil
 }
 
+// GetDatabasePresetRequest fetches one database preset by id.
 type GetDatabasePresetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the preset's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the preset to fetch.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -380,8 +403,10 @@ func (x *GetDatabasePresetRequest) GetId() string {
 	return ""
 }
 
+// GetDatabasePresetResponse returns the requested database preset.
 type GetDatabasePresetResponse struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// preset is the fetched database preset.
 	Preset        *models.DatabasePresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -424,21 +449,28 @@ func (x *GetDatabasePresetResponse) GetPreset() *models.DatabasePresetRecord {
 	return nil
 }
 
+// ListDatabasePresetsRequest lists a tenant's database presets with filters,
+// sort and paging.
 type ListDatabasePresetsRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// Shared Entity-level filters (search, ids, time windows, soft-delete).
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the listing to one tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// filter is the shared Entity-level filter (search, ids, time windows,
+	// soft-delete).
 	Filter *common.EntityFilter `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
-	// Tag match: every key=value pair must be present on the database (AND).
+	// tags is a tag match: every key=value pair must be present on the database
+	// (AND).
 	Tags map[string]string `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Kind-specific filters.
-	DbKinds []domain.Database_Kind                  `protobuf:"varint,4,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
+	// db_kinds narrows to specific database engines (kind-specific filter).
+	DbKinds []domain.Database_Kind `protobuf:"varint,4,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
+	// sources narrows to specific SourceKinds (kind-specific filter).
 	Sources []ListDatabasePresetsRequest_SourceKind `protobuf:"varint,5,rep,packed,name=sources,proto3,enum=cloud.v1.api.ListDatabasePresetsRequest_SourceKind" json:"sources,omitempty"`
-	// Filter by system flag. Unset = all; true = only system; false = only user.
+	// is_system filters by the system flag. Unset = all; true = only system;
+	// false = only user.
 	IsSystem *bool `protobuf:"varint,6,opt,name=is_system,json=isSystem,proto3,oneof" json:"is_system,omitempty"`
-	// Ordering (common Entity column or table-specific).
+	// sort is the ordering (common Entity column or table-specific).
 	Sort *ListDatabasePresetsRequest_Sort `protobuf:"bytes,7,opt,name=sort,proto3" json:"sort,omitempty"`
-	// Pagination.
+	// page is the pagination cursor/size.
 	Page          *common.Page `protobuf:"bytes,8,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -530,10 +562,13 @@ func (x *ListDatabasePresetsRequest) GetPage() *common.Page {
 	return nil
 }
 
+// ListDatabasePresetsResponse returns one page of database presets.
 type ListDatabasePresetsResponse struct {
-	state         protoimpl.MessageState         `protogen:"open.v1"`
-	Presets       []*models.DatabasePresetRecord `protobuf:"bytes,1,rep,name=presets,proto3" json:"presets,omitempty"`
-	NextPageToken string                         `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// presets is this page of database presets.
+	Presets []*models.DatabasePresetRecord `protobuf:"bytes,1,rep,name=presets,proto3" json:"presets,omitempty"`
+	// next_page_token is empty when there are no more rows.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -582,10 +617,12 @@ func (x *ListDatabasePresetsResponse) GetNextPageToken() string {
 	return ""
 }
 
+// UpdateDatabasePresetRequest replaces a database preset wholesale.
 type UpdateDatabasePresetRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// Wholesale replace; preset.entity.id selects the row.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the preset's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// preset is the wholesale replacement; preset.entity.id selects the row.
 	Preset        *models.DatabasePresetRecord `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -635,8 +672,10 @@ func (x *UpdateDatabasePresetRequest) GetPreset() *models.DatabasePresetRecord {
 	return nil
 }
 
+// UpdateDatabasePresetResponse returns the preset after the edit.
 type UpdateDatabasePresetResponse struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// preset is the updated database preset.
 	Preset        *models.DatabasePresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -679,10 +718,13 @@ func (x *UpdateDatabasePresetResponse) GetPreset() *models.DatabasePresetRecord 
 	return nil
 }
 
+// DeleteDatabasePresetRequest removes one database preset by id.
 type DeleteDatabasePresetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the preset's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the preset to remove.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -731,6 +773,8 @@ func (x *DeleteDatabasePresetRequest) GetId() string {
 	return ""
 }
 
+// DeleteDatabasePresetResponse is empty; success is signalled by the absence of
+// error.
 type DeleteDatabasePresetResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -771,10 +815,13 @@ func (*DeleteDatabasePresetResponse) Descriptor() ([]byte, []int) {
 // preset owned by the caller. The copy gets a fresh id, is_system = false and
 // the caller as author.
 type CloneDatabasePresetRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id       string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	// Optional name for the copy; empty -> server derives one (e.g. "<name> (copy)").
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the source preset's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the preset to copy.
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	// name is the optional name for the copy; empty -> server derives one (e.g.
+	// "<name> (copy)").
 	Name          string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -831,8 +878,10 @@ func (x *CloneDatabasePresetRequest) GetName() string {
 	return ""
 }
 
+// CloneDatabasePresetResponse returns the new editable copy.
 type CloneDatabasePresetResponse struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// preset is the cloned, editable database preset.
 	Preset        *models.DatabasePresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -875,10 +924,13 @@ func (x *CloneDatabasePresetResponse) GetPreset() *models.DatabasePresetRecord {
 	return nil
 }
 
-// ============================ WorkloadPreset ============================
+// CreateWorkloadPresetRequest creates a new workload preset in the tenant.
 type CreateWorkloadPresetRequest struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
-	TenantId      string                       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the preset; presets never cross tenants.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// preset is the workload preset to create. Server assigns entity.id /
+	// tenant_id / timings; values set here are ignored.
 	Preset        *models.WorkloadPresetRecord `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -928,8 +980,10 @@ func (x *CreateWorkloadPresetRequest) GetPreset() *models.WorkloadPresetRecord {
 	return nil
 }
 
+// CreateWorkloadPresetResponse returns the created preset.
 type CreateWorkloadPresetResponse struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// preset is the newly created workload preset.
 	Preset        *models.WorkloadPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -972,10 +1026,13 @@ func (x *CreateWorkloadPresetResponse) GetPreset() *models.WorkloadPresetRecord 
 	return nil
 }
 
+// GetWorkloadPresetRequest fetches one workload preset by id.
 type GetWorkloadPresetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the preset's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the preset to fetch.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1024,8 +1081,10 @@ func (x *GetWorkloadPresetRequest) GetId() string {
 	return ""
 }
 
+// GetWorkloadPresetResponse returns the requested workload preset.
 type GetWorkloadPresetResponse struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// preset is the fetched workload preset.
 	Preset        *models.WorkloadPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1068,19 +1127,26 @@ func (x *GetWorkloadPresetResponse) GetPreset() *models.WorkloadPresetRecord {
 	return nil
 }
 
+// ListWorkloadPresetsRequest lists a tenant's workload presets with filters,
+// sort and paging.
 type ListWorkloadPresetsRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Filter   *common.EntityFilter   `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
-	// Tag match over the workload tags (AND).
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the listing to one tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// filter is the shared Entity-level filter (search, ids, time windows,
+	// soft-delete).
+	Filter *common.EntityFilter `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
+	// tags is a tag match over the workload tags (AND).
 	Tags map[string]string `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Kind-specific filter.
+	// stroppy_versions narrows to specific workload versions (kind-specific
+	// filter).
 	StroppyVersions []string `protobuf:"bytes,4,rep,name=stroppy_versions,json=stroppyVersions,proto3" json:"stroppy_versions,omitempty"`
-	// Filter by system flag. Unset = all; true = only system; false = only user.
+	// is_system filters by the system flag. Unset = all; true = only system;
+	// false = only user.
 	IsSystem *bool `protobuf:"varint,5,opt,name=is_system,json=isSystem,proto3,oneof" json:"is_system,omitempty"`
-	// Ordering (common Entity column or table-specific).
+	// sort is the ordering (common Entity column or table-specific).
 	Sort *ListWorkloadPresetsRequest_Sort `protobuf:"bytes,6,opt,name=sort,proto3" json:"sort,omitempty"`
-	// Pagination.
+	// page is the pagination cursor/size.
 	Page          *common.Page `protobuf:"bytes,7,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1165,10 +1231,13 @@ func (x *ListWorkloadPresetsRequest) GetPage() *common.Page {
 	return nil
 }
 
+// ListWorkloadPresetsResponse returns one page of workload presets.
 type ListWorkloadPresetsResponse struct {
-	state         protoimpl.MessageState         `protogen:"open.v1"`
-	Presets       []*models.WorkloadPresetRecord `protobuf:"bytes,1,rep,name=presets,proto3" json:"presets,omitempty"`
-	NextPageToken string                         `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// presets is this page of workload presets.
+	Presets []*models.WorkloadPresetRecord `protobuf:"bytes,1,rep,name=presets,proto3" json:"presets,omitempty"`
+	// next_page_token is empty when there are no more rows.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1217,9 +1286,12 @@ func (x *ListWorkloadPresetsResponse) GetNextPageToken() string {
 	return ""
 }
 
+// UpdateWorkloadPresetRequest replaces a workload preset wholesale.
 type UpdateWorkloadPresetRequest struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
-	TenantId      string                       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the preset's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// preset is the wholesale replacement; preset.entity.id selects the row.
 	Preset        *models.WorkloadPresetRecord `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1269,8 +1341,10 @@ func (x *UpdateWorkloadPresetRequest) GetPreset() *models.WorkloadPresetRecord {
 	return nil
 }
 
+// UpdateWorkloadPresetResponse returns the preset after the edit.
 type UpdateWorkloadPresetResponse struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// preset is the updated workload preset.
 	Preset        *models.WorkloadPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1313,10 +1387,13 @@ func (x *UpdateWorkloadPresetResponse) GetPreset() *models.WorkloadPresetRecord 
 	return nil
 }
 
+// DeleteWorkloadPresetRequest removes one workload preset by id.
 type DeleteWorkloadPresetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the preset's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the preset to remove.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1365,6 +1442,8 @@ func (x *DeleteWorkloadPresetRequest) GetId() string {
 	return ""
 }
 
+// DeleteWorkloadPresetResponse is empty; success is signalled by the absence of
+// error.
 type DeleteWorkloadPresetResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1405,10 +1484,14 @@ func (*DeleteWorkloadPresetResponse) Descriptor() ([]byte, []int) {
 // preset owned by the caller. The copy gets a fresh id, is_system = false and
 // the caller as author.
 type CloneWorkloadPresetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the source preset's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the preset to copy.
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	// name is the optional name for the copy; empty -> server derives one (e.g.
+	// "<name> (copy)").
+	Name          string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1464,8 +1547,10 @@ func (x *CloneWorkloadPresetRequest) GetName() string {
 	return ""
 }
 
+// CloneWorkloadPresetResponse returns the new editable copy.
 type CloneWorkloadPresetResponse struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// preset is the cloned, editable workload preset.
 	Preset        *models.WorkloadPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1508,10 +1593,13 @@ func (x *CloneWorkloadPresetResponse) GetPreset() *models.WorkloadPresetRecord {
 	return nil
 }
 
-// ============================== TestPreset ==============================
+// CreateTestPresetRequest creates a new test preset in the tenant.
 type CreateTestPresetRequest struct {
-	state         protoimpl.MessageState   `protogen:"open.v1"`
-	TenantId      string                   `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the preset; presets never cross tenants.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// preset is the test preset to create. Server assigns entity.id / tenant_id
+	// / timings; values set here are ignored.
 	Preset        *models.TestPresetRecord `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1561,8 +1649,10 @@ func (x *CreateTestPresetRequest) GetPreset() *models.TestPresetRecord {
 	return nil
 }
 
+// CreateTestPresetResponse returns the created preset.
 type CreateTestPresetResponse struct {
-	state         protoimpl.MessageState   `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// preset is the newly created test preset.
 	Preset        *models.TestPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1605,10 +1695,13 @@ func (x *CreateTestPresetResponse) GetPreset() *models.TestPresetRecord {
 	return nil
 }
 
+// GetTestPresetRequest fetches one test preset by id.
 type GetTestPresetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the preset's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the preset to fetch.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1657,8 +1750,10 @@ func (x *GetTestPresetRequest) GetId() string {
 	return ""
 }
 
+// GetTestPresetResponse returns the requested test preset.
 type GetTestPresetResponse struct {
-	state         protoimpl.MessageState   `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// preset is the fetched test preset.
 	Preset        *models.TestPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1701,20 +1796,28 @@ func (x *GetTestPresetResponse) GetPreset() *models.TestPresetRecord {
 	return nil
 }
 
+// ListTestPresetsRequest lists a tenant's test presets with filters, sort and
+// paging.
 type ListTestPresetsRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Filter   *common.EntityFilter   `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
-	// Tag match over the test tags (AND).
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the listing to one tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// filter is the shared Entity-level filter (search, ids, time windows,
+	// soft-delete).
+	Filter *common.EntityFilter `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
+	// tags is a tag match over the test tags (AND).
 	Tags map[string]string `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Kind-specific filters: the test's database kind and workload version.
-	DbKinds         []domain.Database_Kind `protobuf:"varint,4,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
-	StroppyVersions []string               `protobuf:"bytes,5,rep,name=stroppy_versions,json=stroppyVersions,proto3" json:"stroppy_versions,omitempty"`
-	// Filter by system flag. Unset = all; true = only system; false = only user.
+	// db_kinds narrows to specific database engines (kind-specific filter).
+	DbKinds []domain.Database_Kind `protobuf:"varint,4,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
+	// stroppy_versions narrows to specific workload versions (kind-specific
+	// filter).
+	StroppyVersions []string `protobuf:"bytes,5,rep,name=stroppy_versions,json=stroppyVersions,proto3" json:"stroppy_versions,omitempty"`
+	// is_system filters by the system flag. Unset = all; true = only system;
+	// false = only user.
 	IsSystem *bool `protobuf:"varint,6,opt,name=is_system,json=isSystem,proto3,oneof" json:"is_system,omitempty"`
-	// Ordering (common Entity column or table-specific).
+	// sort is the ordering (common Entity column or table-specific).
 	Sort *ListTestPresetsRequest_Sort `protobuf:"bytes,7,opt,name=sort,proto3" json:"sort,omitempty"`
-	// Pagination.
+	// page is the pagination cursor/size.
 	Page          *common.Page `protobuf:"bytes,8,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1806,10 +1909,13 @@ func (x *ListTestPresetsRequest) GetPage() *common.Page {
 	return nil
 }
 
+// ListTestPresetsResponse returns one page of test presets.
 type ListTestPresetsResponse struct {
-	state         protoimpl.MessageState     `protogen:"open.v1"`
-	Presets       []*models.TestPresetRecord `protobuf:"bytes,1,rep,name=presets,proto3" json:"presets,omitempty"`
-	NextPageToken string                     `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// presets is this page of test presets.
+	Presets []*models.TestPresetRecord `protobuf:"bytes,1,rep,name=presets,proto3" json:"presets,omitempty"`
+	// next_page_token is empty when there are no more rows.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1858,9 +1964,12 @@ func (x *ListTestPresetsResponse) GetNextPageToken() string {
 	return ""
 }
 
+// UpdateTestPresetRequest replaces a test preset wholesale.
 type UpdateTestPresetRequest struct {
-	state         protoimpl.MessageState   `protogen:"open.v1"`
-	TenantId      string                   `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the preset's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// preset is the wholesale replacement; preset.entity.id selects the row.
 	Preset        *models.TestPresetRecord `protobuf:"bytes,2,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1910,8 +2019,10 @@ func (x *UpdateTestPresetRequest) GetPreset() *models.TestPresetRecord {
 	return nil
 }
 
+// UpdateTestPresetResponse returns the preset after the edit.
 type UpdateTestPresetResponse struct {
-	state         protoimpl.MessageState   `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// preset is the updated test preset.
 	Preset        *models.TestPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1954,10 +2065,13 @@ func (x *UpdateTestPresetResponse) GetPreset() *models.TestPresetRecord {
 	return nil
 }
 
+// DeleteTestPresetRequest removes one test preset by id.
 type DeleteTestPresetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the preset's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the preset to remove.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2006,6 +2120,8 @@ func (x *DeleteTestPresetRequest) GetId() string {
 	return ""
 }
 
+// DeleteTestPresetResponse is empty; success is signalled by the absence of
+// error.
 type DeleteTestPresetResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -2046,10 +2162,14 @@ func (*DeleteTestPresetResponse) Descriptor() ([]byte, []int) {
 // preset owned by the caller. The copy gets a fresh id, is_system = false and
 // the caller as author.
 type CloneTestPresetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the source preset's tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the preset to copy.
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	// name is the optional name for the copy; empty -> server derives one (e.g.
+	// "<name> (copy)").
+	Name          string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2105,8 +2225,10 @@ func (x *CloneTestPresetRequest) GetName() string {
 	return ""
 }
 
+// CloneTestPresetResponse returns the new editable copy.
 type CloneTestPresetResponse struct {
-	state         protoimpl.MessageState   `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// preset is the cloned, editable test preset.
 	Preset        *models.TestPresetRecord `protobuf:"bytes,1,opt,name=preset,proto3" json:"preset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2153,12 +2275,15 @@ func (x *CloneTestPresetResponse) GetPreset() *models.TestPresetRecord {
 // desc applies to whichever is chosen.
 type ListDatabasePresetsRequest_Sort struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// by selects EITHER a common Entity column or a table-specific Kind.
+	//
 	// Types that are valid to be assigned to By:
 	//
 	//	*ListDatabasePresetsRequest_Sort_Entity
 	//	*ListDatabasePresetsRequest_Sort_Kind_
-	By            isListDatabasePresetsRequest_Sort_By `protobuf_oneof:"by"`
-	Desc          bool                                 `protobuf:"varint,3,opt,name=desc,proto3" json:"desc,omitempty"`
+	By isListDatabasePresetsRequest_Sort_By `protobuf_oneof:"by"`
+	// desc reverses the order when true.
+	Desc          bool `protobuf:"varint,3,opt,name=desc,proto3" json:"desc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2230,10 +2355,12 @@ type isListDatabasePresetsRequest_Sort_By interface {
 }
 
 type ListDatabasePresetsRequest_Sort_Entity struct {
+	// entity sorts by a common Entity column.
 	Entity common.EntitySortField `protobuf:"varint,1,opt,name=entity,proto3,enum=cloud.v1.common.EntitySortField,oneof"`
 }
 
 type ListDatabasePresetsRequest_Sort_Kind_ struct {
+	// kind sorts by a table-specific column.
 	Kind ListDatabasePresetsRequest_Sort_Kind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.api.ListDatabasePresetsRequest_Sort_Kind,oneof"`
 }
 
@@ -2241,14 +2368,19 @@ func (*ListDatabasePresetsRequest_Sort_Entity) isListDatabasePresetsRequest_Sort
 
 func (*ListDatabasePresetsRequest_Sort_Kind_) isListDatabasePresetsRequest_Sort_By() {}
 
+// Sort orders by EITHER a common Entity column OR a table-specific column.
+// desc applies to whichever is chosen.
 type ListWorkloadPresetsRequest_Sort struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// by selects EITHER a common Entity column or a table-specific Kind.
+	//
 	// Types that are valid to be assigned to By:
 	//
 	//	*ListWorkloadPresetsRequest_Sort_Entity
 	//	*ListWorkloadPresetsRequest_Sort_Kind_
-	By            isListWorkloadPresetsRequest_Sort_By `protobuf_oneof:"by"`
-	Desc          bool                                 `protobuf:"varint,3,opt,name=desc,proto3" json:"desc,omitempty"`
+	By isListWorkloadPresetsRequest_Sort_By `protobuf_oneof:"by"`
+	// desc reverses the order when true.
+	Desc          bool `protobuf:"varint,3,opt,name=desc,proto3" json:"desc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2320,10 +2452,12 @@ type isListWorkloadPresetsRequest_Sort_By interface {
 }
 
 type ListWorkloadPresetsRequest_Sort_Entity struct {
+	// entity sorts by a common Entity column.
 	Entity common.EntitySortField `protobuf:"varint,1,opt,name=entity,proto3,enum=cloud.v1.common.EntitySortField,oneof"`
 }
 
 type ListWorkloadPresetsRequest_Sort_Kind_ struct {
+	// kind sorts by a table-specific column.
 	Kind ListWorkloadPresetsRequest_Sort_Kind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.api.ListWorkloadPresetsRequest_Sort_Kind,oneof"`
 }
 
@@ -2331,14 +2465,19 @@ func (*ListWorkloadPresetsRequest_Sort_Entity) isListWorkloadPresetsRequest_Sort
 
 func (*ListWorkloadPresetsRequest_Sort_Kind_) isListWorkloadPresetsRequest_Sort_By() {}
 
+// Sort orders by EITHER a common Entity column OR a table-specific column.
+// desc applies to whichever is chosen.
 type ListTestPresetsRequest_Sort struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// by selects EITHER a common Entity column or a table-specific Kind.
+	//
 	// Types that are valid to be assigned to By:
 	//
 	//	*ListTestPresetsRequest_Sort_Entity
 	//	*ListTestPresetsRequest_Sort_Kind_
-	By            isListTestPresetsRequest_Sort_By `protobuf_oneof:"by"`
-	Desc          bool                             `protobuf:"varint,3,opt,name=desc,proto3" json:"desc,omitempty"`
+	By isListTestPresetsRequest_Sort_By `protobuf_oneof:"by"`
+	// desc reverses the order when true.
+	Desc          bool `protobuf:"varint,3,opt,name=desc,proto3" json:"desc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2410,10 +2549,12 @@ type isListTestPresetsRequest_Sort_By interface {
 }
 
 type ListTestPresetsRequest_Sort_Entity struct {
+	// entity sorts by a common Entity column.
 	Entity common.EntitySortField `protobuf:"varint,1,opt,name=entity,proto3,enum=cloud.v1.common.EntitySortField,oneof"`
 }
 
 type ListTestPresetsRequest_Sort_Kind_ struct {
+	// kind sorts by a table-specific column.
 	Kind ListTestPresetsRequest_Sort_Kind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.api.ListTestPresetsRequest_Sort_Kind,oneof"`
 }
 

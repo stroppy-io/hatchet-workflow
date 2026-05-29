@@ -24,22 +24,53 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     gated by RESOURCE_WIZARD.
  */
 
+/*
+    StartTestWizardRequest opens a new test wizard draft.
+ */
 message StartTestWizardRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
-    // Optional human label for the draft.
+    /*
+        name is the optional human label for the draft.
+     */
     string name = 2 [(validate.rules).string = {max_len: 255}];
-    // Optional: seed the whole draft from an existing test preset.
+    /*
+        test_preset_id optionally seeds the whole draft from an existing test preset.
+     */
     string test_preset_id = 3 [(validate.rules).string = {max_len: 64}];
 }
+/*
+    StartTestWizardResponse returns the freshly created draft.
+ */
 message StartTestWizardResponse {
+    /*
+        draft is the new wizard draft (carrying the initial form schema).
+     */
     models.TestWizardDraftRecord draft = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    GetTestWizardDraftRequest fetches a single wizard draft by id.
+ */
 message GetTestWizardDraftRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        draft_id is the wizard draft identifier to fetch.
+     */
     string draft_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
+/*
+    GetTestWizardDraftResponse returns the requested wizard draft.
+ */
 message GetTestWizardDraftResponse {
+    /*
+        draft is the requested wizard draft.
+     */
     models.TestWizardDraftRecord draft = 1 [(validate.rules).message.required = true];
 }
 
@@ -48,13 +79,34 @@ message GetTestWizardDraftResponse {
     author (the caller) and sort by updated_at desc to pick the most recent draft.
  */
 message ListTestWizardDraftsRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        filter holds the shared Entity-level filters (author, time windows, ...).
+     */
     common.EntityFilter filter = 2;
+    /*
+        sort selects the result ordering.
+     */
     common.EntitySort sort = 3;
+    /*
+        page carries pagination (page size + token).
+     */
     common.Page page = 4;
 }
+/*
+    ListTestWizardDraftsResponse returns a page of wizard drafts.
+ */
 message ListTestWizardDraftsResponse {
+    /*
+        drafts is the matching page of wizard drafts.
+     */
     repeated models.TestWizardDraftRecord drafts = 1;
+    /*
+        next_page_token fetches the following page; empty when at the end.
+     */
     string next_page_token = 2;
 }
 
@@ -65,18 +117,46 @@ message ListTestWizardDraftsResponse {
     choice changed the active branches).
  */
 message PatchTestWizardRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        draft_id is the wizard draft being edited.
+     */
     string draft_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        form carries the edited form values (Filled = values + schema ref).
+     */
     schemapb.Filled form = 3 [(validate.rules).message.required = true];
 }
+/*
+    PatchTestWizardResponse returns the recomputed wizard draft.
+ */
 message PatchTestWizardResponse {
+    /*
+        draft is the full new draft after validation/topology/readiness recompute.
+     */
     models.TestWizardDraftRecord draft = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    DeleteTestWizardDraftRequest deletes a wizard draft by id.
+ */
 message DeleteTestWizardDraftRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        draft_id is the wizard draft identifier to delete.
+     */
     string draft_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
+/*
+    DeleteTestWizardDraftResponse is empty; deletion success is signalled by a
+    non-error reply.
+ */
 message DeleteTestWizardDraftResponse {}
 
 /*
@@ -86,35 +166,79 @@ message DeleteTestWizardDraftResponse {}
     TestRunRecord + launches TestWorkflow) and/or save it as a TestPresetRecord.
  */
 message FinishTestWizardRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        draft_id is the wizard draft to bake.
+     */
     string draft_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
-    // Start the baked run immediately.
+    /*
+        start, when true, launches the baked run immediately.
+     */
     bool start = 3;
-    // Also save the baked db+workload as a reusable test preset.
+    /*
+        save_as_preset, when true, also saves the baked db+workload as a reusable
+        test preset.
+     */
     bool save_as_preset = 4;
-    // Name for the saved preset (used only when save_as_preset; empty -> derived).
+    /*
+        preset_name names the saved preset (used only when save_as_preset; empty ->
+        derived).
+     */
     string preset_name = 5 [(validate.rules).string = {max_len: 255}];
-    // Rating membership for the started run; unset -> defaults (tenant true, global false).
+    /*
+        in_tenant_rating sets tenant-rating membership for the started run; unset ->
+        defaults (tenant true).
+     */
     optional bool in_tenant_rating = 6;
+    /*
+        in_global_rating sets global-rating membership for the started run; unset ->
+        defaults (global false).
+     */
     optional bool in_global_rating = 7;
 }
+/*
+    FinishTestWizardResponse returns the baked run and, optionally, the launched run
+    and saved preset.
+ */
 message FinishTestWizardResponse {
-    // The baked run spec (always present).
+    /*
+        test_run is the baked run spec (always present).
+     */
     domain.TestRun test_run = 1 [(validate.rules).message.required = true];
-    // Set when start = true: the persisted, launched run.
+    /*
+        run is set when start = true: the persisted, launched run.
+     */
     models.TestRunRecord run = 2;
-    // Set when save_as_preset = true: the saved preset.
+    /*
+        preset is set when save_as_preset = true: the saved preset.
+     */
     models.TestPresetRecord preset = 3;
 }
 
+/*
+    TestWizardService drives the test wizard: start, fetch/list, patch-loop and
+    finish into a baked TestRun (optionally started and/or saved as a preset).
+ */
 service TestWizardService {
+    /*
+        StartTestWizard opens a new draft. Not idempotent.
+     */
     rpc StartTestWizard (StartTestWizardRequest) returns (StartTestWizardResponse) {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_CREATE}]};
     }
+    /*
+        GetTestWizardDraft fetches a single draft by id. Read-only.
+     */
     rpc GetTestWizardDraft (GetTestWizardDraftRequest) returns (GetTestWizardDraftResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_READ}]};
     }
+    /*
+        ListTestWizardDrafts lists drafts with filtering and pagination. Read-only.
+     */
     rpc ListTestWizardDrafts (ListTestWizardDraftsRequest) returns (ListTestWizardDraftsResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_LIST}]};

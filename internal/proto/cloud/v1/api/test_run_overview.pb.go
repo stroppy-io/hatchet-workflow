@@ -25,13 +25,16 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// ================================ Logs tab ================================
+// LogScrollDirection selects which way QueryLogs pages relative to the anchor.
 type LogScrollDirection int32
 
 const (
-	LogScrollDirection_LOG_SCROLL_DIRECTION_UNSPECIFIED LogScrollDirection = 0 // server default (newer)
-	LogScrollDirection_LOG_SCROLL_DIRECTION_OLDER       LogScrollDirection = 1 // page back in time
-	LogScrollDirection_LOG_SCROLL_DIRECTION_NEWER       LogScrollDirection = 2 // page forward in time
+	// LOG_SCROLL_DIRECTION_UNSPECIFIED uses the server default (newer).
+	LogScrollDirection_LOG_SCROLL_DIRECTION_UNSPECIFIED LogScrollDirection = 0
+	// LOG_SCROLL_DIRECTION_OLDER pages back in time.
+	LogScrollDirection_LOG_SCROLL_DIRECTION_OLDER LogScrollDirection = 1
+	// LOG_SCROLL_DIRECTION_NEWER pages forward in time.
+	LogScrollDirection_LOG_SCROLL_DIRECTION_NEWER LogScrollDirection = 2
 )
 
 // Enum value maps for LogScrollDirection.
@@ -79,15 +82,23 @@ func (LogScrollDirection) EnumDescriptor() ([]byte, []int) {
 // optional and AND-combined. `query` is the raw-LogsQL escape hatch for advanced
 // filtering beyond the structured fields.
 type LogFilter struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	NodeExecutionIds []string               `protobuf:"bytes,1,rep,name=node_execution_ids,json=nodeExecutionIds,proto3" json:"node_execution_ids,omitempty"`
-	ComponentIds     []string               `protobuf:"bytes,2,rep,name=component_ids,json=componentIds,proto3" json:"component_ids,omitempty"`
-	MachineIds       []string               `protobuf:"bytes,3,rep,name=machine_ids,json=machineIds,proto3" json:"machine_ids,omitempty"`
-	Sources          []monitor.Source       `protobuf:"varint,4,rep,packed,name=sources,proto3,enum=cloud.v1.monitor.Source" json:"sources,omitempty"`
-	Streams          []monitor.Stream       `protobuf:"varint,5,rep,packed,name=streams,proto3,enum=cloud.v1.monitor.Stream" json:"streams,omitempty"`
-	Unit             string                 `protobuf:"bytes,6,opt,name=unit,proto3" json:"unit,omitempty"`
-	Start            *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=start,proto3" json:"start,omitempty"`
-	End              *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=end,proto3" json:"end,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// node_execution_ids restricts to lines emitted by these node executions.
+	NodeExecutionIds []string `protobuf:"bytes,1,rep,name=node_execution_ids,json=nodeExecutionIds,proto3" json:"node_execution_ids,omitempty"`
+	// component_ids restricts to lines emitted by these components.
+	ComponentIds []string `protobuf:"bytes,2,rep,name=component_ids,json=componentIds,proto3" json:"component_ids,omitempty"`
+	// machine_ids restricts to lines emitted by these machines.
+	MachineIds []string `protobuf:"bytes,3,rep,name=machine_ids,json=machineIds,proto3" json:"machine_ids,omitempty"`
+	// sources restricts to these log sources.
+	Sources []monitor.Source `protobuf:"varint,4,rep,packed,name=sources,proto3,enum=cloud.v1.monitor.Source" json:"sources,omitempty"`
+	// streams restricts to these log streams (e.g. stdout/stderr).
+	Streams []monitor.Stream `protobuf:"varint,5,rep,packed,name=streams,proto3,enum=cloud.v1.monitor.Stream" json:"streams,omitempty"`
+	// unit restricts to a specific systemd/log unit.
+	Unit string `protobuf:"bytes,6,opt,name=unit,proto3" json:"unit,omitempty"`
+	// start keeps lines at or after this time.
+	Start *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=start,proto3" json:"start,omitempty"`
+	// end keeps lines at or before this time.
+	End *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=end,proto3" json:"end,omitempty"`
 	// search is a simple substring match over the line text.
 	Search string `protobuf:"bytes,9,opt,name=search,proto3" json:"search,omitempty"`
 	// query is a raw LogsQL fragment, AND-ed with the structured filters (advanced).
@@ -196,11 +207,13 @@ func (x *LogFilter) GetQuery() string {
 	return ""
 }
 
-// ============================== Overview tab ==============================
+// GetTestRunOverviewRequest fetches the Overview tab payload for a run.
 type GetTestRunOverviewRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	RunId         string                 `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// run_id identifies the run whose overview is requested.
+	RunId         string `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -249,9 +262,11 @@ func (x *GetTestRunOverviewRequest) GetRunId() string {
 	return ""
 }
 
+// GetTestRunOverviewResponse returns the run's Overview snapshot.
 type GetTestRunOverviewResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Overview      *monitor.Overview      `protobuf:"bytes,1,opt,name=overview,proto3" json:"overview,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// overview is the full overview (status/pipeline/workers/timeline).
+	Overview      *monitor.Overview `protobuf:"bytes,1,opt,name=overview,proto3" json:"overview,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -293,10 +308,15 @@ func (x *GetTestRunOverviewResponse) GetOverview() *monitor.Overview {
 	return nil
 }
 
+// StreamTestRunOverviewRequest opens a live overview stream for a run. Each stream
+// tick is a fresh full Overview (status/pipeline/workers/timeline) so the client
+// just replaces its state; no diff merging.
 type StreamTestRunOverviewRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	RunId         string                 `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// run_id identifies the run to follow.
+	RunId         string `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -345,15 +365,22 @@ func (x *StreamTestRunOverviewRequest) GetRunId() string {
 	return ""
 }
 
+// QueryLogsRequest fetches a bounded, cursor-paged window of historical log lines.
 type QueryLogsRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	RunId    string                 `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	Filter   *LogFilter             `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
-	// Anchor to page from; empty = newest (when OLDER) / oldest (when NEWER).
-	From      *monitor.LogCursor `protobuf:"bytes,4,opt,name=from,proto3" json:"from,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// run_id identifies the run whose logs are queried.
+	RunId string `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// filter narrows the lines returned.
+	Filter *LogFilter `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
+	// from is the anchor to page from; empty = newest (when OLDER) / oldest (when
+	// NEWER).
+	From *monitor.LogCursor `protobuf:"bytes,4,opt,name=from,proto3" json:"from,omitempty"`
+	// direction selects which way to page relative to the anchor.
 	Direction LogScrollDirection `protobuf:"varint,5,opt,name=direction,proto3,enum=cloud.v1.api.LogScrollDirection" json:"direction,omitempty"`
-	// Max lines to return; 0 -> server default. Bounded so the UI never drowns.
+	// limit caps the lines returned; 0 -> server default. Bounded so the UI never
+	// drowns.
 	Limit         uint32 `protobuf:"varint,6,opt,name=limit,proto3" json:"limit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -431,12 +458,16 @@ func (x *QueryLogsRequest) GetLimit() uint32 {
 	return 0
 }
 
+// QueryLogsResponse returns a page of log lines plus cursors to page either way.
 type QueryLogsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Lines []*monitor.LogLine     `protobuf:"bytes,1,rep,name=lines,proto3" json:"lines,omitempty"`
-	// Cursor to fetch the page OLDER than these results (empty = at the start).
+	// lines is the matching page of log lines.
+	Lines []*monitor.LogLine `protobuf:"bytes,1,rep,name=lines,proto3" json:"lines,omitempty"`
+	// older is the cursor to fetch the page OLDER than these results (empty = at
+	// the start).
 	Older *monitor.LogCursor `protobuf:"bytes,2,opt,name=older,proto3" json:"older,omitempty"`
-	// Cursor to fetch the page NEWER than these results (empty = at the end / tip).
+	// newer is the cursor to fetch the page NEWER than these results (empty = at
+	// the end / tip).
 	Newer         *monitor.LogCursor `protobuf:"bytes,3,opt,name=newer,proto3" json:"newer,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -493,13 +524,20 @@ func (x *QueryLogsResponse) GetNewer() *monitor.LogCursor {
 	return nil
 }
 
+// StreamLogsRequest opens a live log tail. StreamLogs returns a live stream of
+// LogLine; the server MAY coalesce / rate-limit under very high throughput. The
+// client uses QueryLogs for exact scrollback.
 type StreamLogsRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	RunId    string                 `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	// Live filter (the user can re-subscribe with a new filter to filter the tail).
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// run_id identifies the run to tail.
+	RunId string `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// filter is the live filter (the user can re-subscribe with a new filter to
+	// filter the tail).
 	Filter *LogFilter `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
-	// Optional start position; empty = from now (tail). Set to backfill from a point.
+	// from is an optional start position; empty = from now (tail). Set to backfill
+	// from a point.
 	From          *monitor.LogCursor `protobuf:"bytes,4,opt,name=from,proto3" json:"from,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -567,9 +605,11 @@ func (x *StreamLogsRequest) GetFrom() *monitor.LogCursor {
 // node) into a concrete filter + anchor cursor, so opening a link lands every
 // user on the exact same place.
 type ResolveLogRefRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Ref           *monitor.LogRef        `protobuf:"bytes,2,opt,name=ref,proto3" json:"ref,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// ref is the shareable log reference (deep-link) to resolve.
+	Ref           *monitor.LogRef `protobuf:"bytes,2,opt,name=ref,proto3" json:"ref,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -618,11 +658,16 @@ func (x *ResolveLogRefRequest) GetRef() *monitor.LogRef {
 	return nil
 }
 
+// ResolveLogRefResponse returns the run id, filter and anchor cursor the LogRef
+// resolves to.
 type ResolveLogRefResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RunId         string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	Filter        *LogFilter             `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
-	Cursor        *monitor.LogCursor     `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// run_id is the run the ref points at.
+	RunId string `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// filter is the concrete filter the ref resolves to.
+	Filter *LogFilter `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
+	// cursor is the anchor cursor to land on.
+	Cursor        *monitor.LogCursor `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -678,11 +723,14 @@ func (x *ResolveLogRefResponse) GetCursor() *monitor.LogCursor {
 	return nil
 }
 
-// =============================== Metrics tab ==============================
+// GetRunMetricsRequest fetches the Metrics tab payload for a run. Multi-run
+// comparison lives in compare.proto (CompareService.CompareRuns).
 type GetRunMetricsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	RunId         string                 `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// run_id identifies the run whose metrics are requested.
+	RunId         string `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -731,9 +779,11 @@ func (x *GetRunMetricsRequest) GetRunId() string {
 	return ""
 }
 
+// GetRunMetricsResponse returns the run's metrics.
 type GetRunMetricsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Metrics       *monitor.RunMetrics    `protobuf:"bytes,1,opt,name=metrics,proto3" json:"metrics,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// metrics is the run's aggregated metrics.
+	Metrics       *monitor.RunMetrics `protobuf:"bytes,1,opt,name=metrics,proto3" json:"metrics,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

@@ -16,6 +16,7 @@ import (
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	"github.com/stroppy-io/stroppy-cloud/internal/services/utils"
 )
 
 // -------- CreateTenant --------
@@ -24,14 +25,14 @@ func TestCreateTenant(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	authn := NewMockAuthn(ctrl)
+	authn := utils.NewMockAuthn(ctrl)
 	gates := NewMockPlatformGates(ctrl)
 	tenants := NewMockTenantRepo(ctrl)
 	roles := NewMockRoleRepo(ctrl)
 	memberships := NewMockMembershipRepo(ctrl)
 
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:    &utils.MockTrm{},
 		Authn: authn, Gates: gates, Tenants: tenants, Roles: roles, Memberships: memberships,
 	})
 	ctx := context.Background()
@@ -118,7 +119,7 @@ func TestGetTenant(t *testing.T) {
 	defer ctrl.Finish()
 
 	tenants := NewMockTenantRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Tenants: tenants})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Tenants: tenants})
 	ctx := context.Background()
 
 	t.Run("SuccessById", func(t *testing.T) {
@@ -169,9 +170,9 @@ func TestListMyTenants(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	authn := NewMockAuthn(ctrl)
+	authn := utils.NewMockAuthn(ctrl)
 	tenants := NewMockTenantRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Authn: authn, Tenants: tenants})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Authn: authn, Tenants: tenants})
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {
@@ -213,7 +214,7 @@ func TestUpdateTenant(t *testing.T) {
 	defer ctrl.Finish()
 
 	tenants := NewMockTenantRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Tenants: tenants})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Tenants: tenants})
 	ctx := context.Background()
 
 	t.Run("Success_Name", func(t *testing.T) {
@@ -295,7 +296,7 @@ func TestDeleteTenant(t *testing.T) {
 	memberships := NewMockMembershipRepo(ctrl)
 	roles := NewMockRoleRepo(ctrl)
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:      &utils.MockTrm{},
 		Tenants: tenants, Memberships: memberships, Roles: roles,
 	})
 	ctx := context.Background()
@@ -337,7 +338,7 @@ func TestTransferTenantOwnership(t *testing.T) {
 	tenants := NewMockTenantRepo(ctrl)
 	memberships := NewMockMembershipRepo(ctrl)
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:      &utils.MockTrm{},
 		Tenants: tenants, Memberships: memberships,
 	})
 	ctx := context.Background()
@@ -400,11 +401,11 @@ func TestLeaveTenant(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	authn := NewMockAuthn(ctrl)
+	authn := utils.NewMockAuthn(ctrl)
 	tenants := NewMockTenantRepo(ctrl)
 	memberships := NewMockMembershipRepo(ctrl)
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:    &utils.MockTrm{},
 		Authn: authn, Tenants: tenants, Memberships: memberships,
 	})
 	ctx := context.Background()

@@ -29,17 +29,27 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Kind is a suite-run-specific sortable column (alternative to a common
+// Entity column).
 type ListSuiteRunsRequest_Sort_Kind int32
 
 const (
+	// KIND_UNSPECIFIED leaves the suite-run-specific ordering unset.
 	ListSuiteRunsRequest_Sort_KIND_UNSPECIFIED ListSuiteRunsRequest_Sort_Kind = 0
-	ListSuiteRunsRequest_Sort_KIND_STATUS      ListSuiteRunsRequest_Sort_Kind = 1
-	ListSuiteRunsRequest_Sort_KIND_PROVIDER    ListSuiteRunsRequest_Sort_Kind = 2
-	ListSuiteRunsRequest_Sort_KIND_PROGRESS    ListSuiteRunsRequest_Sort_Kind = 3
-	ListSuiteRunsRequest_Sort_KIND_DURATION    ListSuiteRunsRequest_Sort_Kind = 4
-	ListSuiteRunsRequest_Sort_KIND_STARTED_AT  ListSuiteRunsRequest_Sort_Kind = 5
+	// KIND_STATUS orders by lifecycle status.
+	ListSuiteRunsRequest_Sort_KIND_STATUS ListSuiteRunsRequest_Sort_Kind = 1
+	// KIND_PROVIDER orders by deployment provider.
+	ListSuiteRunsRequest_Sort_KIND_PROVIDER ListSuiteRunsRequest_Sort_Kind = 2
+	// KIND_PROGRESS orders by aggregate progress.
+	ListSuiteRunsRequest_Sort_KIND_PROGRESS ListSuiteRunsRequest_Sort_Kind = 3
+	// KIND_DURATION orders by run duration.
+	ListSuiteRunsRequest_Sort_KIND_DURATION ListSuiteRunsRequest_Sort_Kind = 4
+	// KIND_STARTED_AT orders by start time.
+	ListSuiteRunsRequest_Sort_KIND_STARTED_AT ListSuiteRunsRequest_Sort_Kind = 5
+	// KIND_FINISHED_AT orders by finish time.
 	ListSuiteRunsRequest_Sort_KIND_FINISHED_AT ListSuiteRunsRequest_Sort_Kind = 6
-	ListSuiteRunsRequest_Sort_KIND_TOTAL       ListSuiteRunsRequest_Sort_Kind = 7 // total child runs
+	// KIND_TOTAL orders by total child runs.
+	ListSuiteRunsRequest_Sort_KIND_TOTAL ListSuiteRunsRequest_Sort_Kind = 7
 )
 
 // Enum value maps for ListSuiteRunsRequest_Sort_Kind.
@@ -93,10 +103,13 @@ func (ListSuiteRunsRequest_Sort_Kind) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_api_suite_run_proto_rawDescGZIP(), []int{2, 0, 0}
 }
 
+// GetSuiteRunRequest fetches a single suite run by id.
 type GetSuiteRunRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the suite run identifier to fetch.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -145,8 +158,10 @@ func (x *GetSuiteRunRequest) GetId() string {
 	return ""
 }
 
+// GetSuiteRunResponse returns the requested suite run.
 type GetSuiteRunResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// suite_run is the requested execution record.
 	SuiteRun      *models.SuiteRunRecord `protobuf:"bytes,1,opt,name=suite_run,json=suiteRun,proto3" json:"suite_run,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -189,32 +204,48 @@ func (x *GetSuiteRunResponse) GetSuiteRun() *models.SuiteRunRecord {
 	return nil
 }
 
+// ListSuiteRunsRequest lists suite runs with filtering, faceting, sorting and
+// pagination.
 type ListSuiteRunsRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Filter   *common.EntityFilter   `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
-	// --- facet filters (all AND; empty / unset = not applied) ---
-	Statuses  []common.Status       `protobuf:"varint,3,rep,packed,name=statuses,proto3,enum=cloud.v1.common.Status" json:"statuses,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// filter holds the shared Entity-level filters (search, ids, time windows).
+	Filter *common.EntityFilter `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
+	// statuses facets by lifecycle status (all AND; empty/unset = not applied).
+	Statuses []common.Status `protobuf:"varint,3,rep,packed,name=statuses,proto3,enum=cloud.v1.common.Status" json:"statuses,omitempty"`
+	// providers facets by deployment provider (empty = any).
 	Providers []deployment.Provider `protobuf:"varint,4,rep,packed,name=providers,proto3,enum=cloud.v1.deployment.Provider" json:"providers,omitempty"`
-	// Distinct database kinds exercised (matches Summary.db_kinds).
+	// db_kinds facets by distinct database kinds exercised (matches
+	// Summary.db_kinds).
 	DbKinds []domain.Database_Kind `protobuf:"varint,5,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
-	// Filter to runs of a single suite definition; empty = any.
+	// suite_id filters to runs of a single suite definition; empty = any.
 	SuiteId string `protobuf:"bytes,6,opt,name=suite_id,json=suiteId,proto3" json:"suite_id,omitempty"`
-	// Filter by how the run was triggered (manual / cron / api); empty = any.
+	// triggers filters by how the run was triggered (manual / cron / api);
+	// empty = any.
 	Triggers []common.Trigger `protobuf:"varint,17,rep,packed,name=triggers,proto3,enum=cloud.v1.common.Trigger" json:"triggers,omitempty"`
-	// Aggregate progress window [min,max], 0..100.
-	ProgressMin    *uint32                    `protobuf:"varint,7,opt,name=progress_min,json=progressMin,proto3,oneof" json:"progress_min,omitempty"`
-	ProgressMax    *uint32                    `protobuf:"varint,8,opt,name=progress_max,json=progressMax,proto3,oneof" json:"progress_max,omitempty"`
-	DurationMin    *durationpb.Duration       `protobuf:"bytes,9,opt,name=duration_min,json=durationMin,proto3" json:"duration_min,omitempty"`
-	DurationMax    *durationpb.Duration       `protobuf:"bytes,10,opt,name=duration_max,json=durationMax,proto3" json:"duration_max,omitempty"`
-	StartedAfter   *timestamppb.Timestamp     `protobuf:"bytes,11,opt,name=started_after,json=startedAfter,proto3" json:"started_after,omitempty"`
-	StartedBefore  *timestamppb.Timestamp     `protobuf:"bytes,12,opt,name=started_before,json=startedBefore,proto3" json:"started_before,omitempty"`
-	FinishedAfter  *timestamppb.Timestamp     `protobuf:"bytes,13,opt,name=finished_after,json=finishedAfter,proto3" json:"finished_after,omitempty"`
-	FinishedBefore *timestamppb.Timestamp     `protobuf:"bytes,14,opt,name=finished_before,json=finishedBefore,proto3" json:"finished_before,omitempty"`
-	Sort           *ListSuiteRunsRequest_Sort `protobuf:"bytes,15,opt,name=sort,proto3" json:"sort,omitempty"`
-	Page           *common.Page               `protobuf:"bytes,16,opt,name=page,proto3" json:"page,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// progress_min is the lower bound of the aggregate progress window, 0..100.
+	ProgressMin *uint32 `protobuf:"varint,7,opt,name=progress_min,json=progressMin,proto3,oneof" json:"progress_min,omitempty"`
+	// progress_max is the upper bound of the aggregate progress window, 0..100.
+	ProgressMax *uint32 `protobuf:"varint,8,opt,name=progress_max,json=progressMax,proto3,oneof" json:"progress_max,omitempty"`
+	// duration_min is the lower bound of the duration window.
+	DurationMin *durationpb.Duration `protobuf:"bytes,9,opt,name=duration_min,json=durationMin,proto3" json:"duration_min,omitempty"`
+	// duration_max is the upper bound of the duration window.
+	DurationMax *durationpb.Duration `protobuf:"bytes,10,opt,name=duration_max,json=durationMax,proto3" json:"duration_max,omitempty"`
+	// started_after keeps runs started at or after this time.
+	StartedAfter *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=started_after,json=startedAfter,proto3" json:"started_after,omitempty"`
+	// started_before keeps runs started at or before this time.
+	StartedBefore *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=started_before,json=startedBefore,proto3" json:"started_before,omitempty"`
+	// finished_after keeps runs finished at or after this time.
+	FinishedAfter *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=finished_after,json=finishedAfter,proto3" json:"finished_after,omitempty"`
+	// finished_before keeps runs finished at or before this time.
+	FinishedBefore *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=finished_before,json=finishedBefore,proto3" json:"finished_before,omitempty"`
+	// sort selects the result ordering.
+	Sort *ListSuiteRunsRequest_Sort `protobuf:"bytes,15,opt,name=sort,proto3" json:"sort,omitempty"`
+	// page carries pagination (page size + token).
+	Page          *common.Page `protobuf:"bytes,16,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListSuiteRunsRequest) Reset() {
@@ -366,10 +397,13 @@ func (x *ListSuiteRunsRequest) GetPage() *common.Page {
 	return nil
 }
 
+// ListSuiteRunsResponse returns a page of suite runs.
 type ListSuiteRunsResponse struct {
-	state         protoimpl.MessageState   `protogen:"open.v1"`
-	SuiteRuns     []*models.SuiteRunRecord `protobuf:"bytes,1,rep,name=suite_runs,json=suiteRuns,proto3" json:"suite_runs,omitempty"`
-	NextPageToken string                   `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// suite_runs is the matching page of execution records.
+	SuiteRuns []*models.SuiteRunRecord `protobuf:"bytes,1,rep,name=suite_runs,json=suiteRuns,proto3" json:"suite_runs,omitempty"`
+	// next_page_token fetches the following page; empty when at the end.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -421,9 +455,11 @@ func (x *ListSuiteRunsResponse) GetNextPageToken() string {
 // CancelSuiteRun requests cancellation of the suite run and its children.
 // Idempotent: cancelling a finished/cancelled suite run is a no-op.
 type CancelSuiteRunRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the suite run identifier to cancel.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -472,8 +508,10 @@ func (x *CancelSuiteRunRequest) GetId() string {
 	return ""
 }
 
+// CancelSuiteRunResponse returns the suite run after the cancellation request.
 type CancelSuiteRunResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// suite_run is the execution record reflecting the cancellation.
 	SuiteRun      *models.SuiteRunRecord `protobuf:"bytes,1,opt,name=suite_run,json=suiteRun,proto3" json:"suite_run,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -516,10 +554,13 @@ func (x *CancelSuiteRunResponse) GetSuiteRun() *models.SuiteRunRecord {
 	return nil
 }
 
+// DeleteSuiteRunRequest deletes a suite run by id.
 type DeleteSuiteRunRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// id is the suite run identifier to delete.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -568,6 +609,8 @@ func (x *DeleteSuiteRunRequest) GetId() string {
 	return ""
 }
 
+// DeleteSuiteRunResponse is empty; deletion success is signalled by a non-error
+// reply.
 type DeleteSuiteRunResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -607,12 +650,16 @@ func (*DeleteSuiteRunResponse) Descriptor() ([]byte, []int) {
 // Sort orders by a common Entity column OR a denormalized Summary column.
 type ListSuiteRunsRequest_Sort struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// by selects either a common Entity sort field or a suite-run-specific
+	// Kind.
+	//
 	// Types that are valid to be assigned to By:
 	//
 	//	*ListSuiteRunsRequest_Sort_Entity
 	//	*ListSuiteRunsRequest_Sort_Kind_
-	By            isListSuiteRunsRequest_Sort_By `protobuf_oneof:"by"`
-	Desc          bool                           `protobuf:"varint,3,opt,name=desc,proto3" json:"desc,omitempty"`
+	By isListSuiteRunsRequest_Sort_By `protobuf_oneof:"by"`
+	// desc reverses the order (descending) when true.
+	Desc          bool `protobuf:"varint,3,opt,name=desc,proto3" json:"desc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -684,10 +731,12 @@ type isListSuiteRunsRequest_Sort_By interface {
 }
 
 type ListSuiteRunsRequest_Sort_Entity struct {
+	// entity orders by a shared Entity column (name, created_at, ...).
 	Entity common.EntitySortField `protobuf:"varint,1,opt,name=entity,proto3,enum=cloud.v1.common.EntitySortField,oneof"`
 }
 
 type ListSuiteRunsRequest_Sort_Kind_ struct {
+	// kind orders by a suite-run-specific column.
 	Kind ListSuiteRunsRequest_Sort_Kind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.api.ListSuiteRunsRequest_Sort_Kind,oneof"`
 }
 

@@ -22,12 +22,20 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// MachineInfo describes the hardware resources of one compute node: CPU,
+// memory and attached disks. It captures the desired/observed shape of a
+// machine without binding to any provider-specific instance type.
 type MachineInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Cores         uint32                 `protobuf:"varint,1,opt,name=cores,proto3" json:"cores,omitempty"`
-	MemoryGb      uint64                 `protobuf:"varint,2,opt,name=memory_gb,json=memoryGb,proto3" json:"memory_gb,omitempty"`
-	DiskGb        uint64                 `protobuf:"varint,3,opt,name=disk_gb,json=diskGb,proto3" json:"disk_gb,omitempty"`
-	DataDisksGb   []uint64               `protobuf:"varint,4,rep,packed,name=data_disks_gb,json=dataDisksGb,proto3" json:"data_disks_gb,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// cores is the number of CPU cores on the machine. Must be positive.
+	Cores uint32 `protobuf:"varint,1,opt,name=cores,proto3" json:"cores,omitempty"`
+	// memory_gb is the total RAM in gigabytes. Must be positive.
+	MemoryGb uint64 `protobuf:"varint,2,opt,name=memory_gb,json=memoryGb,proto3" json:"memory_gb,omitempty"`
+	// disk_gb is the size of the boot/root disk in gigabytes. Must be positive.
+	DiskGb uint64 `protobuf:"varint,3,opt,name=disk_gb,json=diskGb,proto3" json:"disk_gb,omitempty"`
+	// data_disks_gb lists the sizes in gigabytes of additional data disks
+	// attached to the machine, one entry per extra disk.
+	DataDisksGb   []uint64 `protobuf:"varint,4,rep,packed,name=data_disks_gb,json=dataDisksGb,proto3" json:"data_disks_gb,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

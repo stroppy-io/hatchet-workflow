@@ -69,7 +69,9 @@ type Quota_Info struct {
 	// provider selects the deployment backend this reading belongs to and,
 	// with it, the QuotaKind enum that quota_kind_enum_value indexes.
 	Provider Provider `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	Name     string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// name is the provider-reported quota name, e.g. the metric/quota id
+	// that quota_kind_enum_value resolves to.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// units is the provider-reported unit of used and limit, e.g.
 	// "count", "cores", "bytes", "GB".
 	Units         string `protobuf:"bytes,6,opt,name=units,proto3" json:"units,omitempty"`
@@ -202,11 +204,13 @@ func (x *Quota_State) GetLimit() uint64 {
 	return 0
 }
 
+// Request is the amount one deployment asks to consume from a quota
+// during a preflight check, before it is committed as an Allocation.
 type Quota_Request struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// info identifies the provider and quota kind being allocated.
+	// info identifies the provider and quota kind being requested.
 	Info *Quota_Info `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
-	// used is the amount this deployment requests, in info.units.
+	// request is the amount this deployment requests, in info.units.
 	Request       uint64 `protobuf:"varint,3,opt,name=request,proto3" json:"request,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

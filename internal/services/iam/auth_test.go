@@ -132,7 +132,7 @@ func TestAuthInterceptor_Unary(t *testing.T) {
 
 	ctx := context.Background()
 	req := &api.GetMyAccountRequest{}
-	info := &grpc.UnaryServerInfo{FullMethod: "/cloud.v1.api.IamAPI/GetMyAccount"}
+	info := &grpc.UnaryServerInfo{FullMethod: "/cloud.v1.api.IamService/GetMyAccount"}
 
 	handler := func(ctx context.Context, req any) (any, error) {
 		return "ok", nil
@@ -168,7 +168,7 @@ func TestAuthInterceptor_Unary(t *testing.T) {
 	})
 
 	t.Run("AdminOnly_Denied_NonAdmin", func(t *testing.T) {
-		infoAdmin := &grpc.UnaryServerInfo{FullMethod: "/cloud.v1.api.IamAPI/NonExistent"}
+		infoAdmin := &grpc.UnaryServerInfo{FullMethod: "/cloud.v1.api.IamService/NonExistent"}
 		ctxWithToken := metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", "Bearer valid"))
 		claims := &iam.AccessClaims{AccountId: "user1", IsAdmin: false}
 		mockTokens.EXPECT().Verify(gomock.Any(), "valid").Return(claims, nil)
@@ -179,7 +179,7 @@ func TestAuthInterceptor_Unary(t *testing.T) {
 	})
 
 	t.Run("AdminOnly_Success_Admin", func(t *testing.T) {
-		infoAdmin := &grpc.UnaryServerInfo{FullMethod: "/cloud.v1.api.IamAPI/NonExistent"}
+		infoAdmin := &grpc.UnaryServerInfo{FullMethod: "/cloud.v1.api.IamService/NonExistent"}
 		ctxWithToken := metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", "Bearer valid"))
 		claims := &iam.AccessClaims{AccountId: "user1", IsAdmin: true}
 		mockTokens.EXPECT().Verify(gomock.Any(), "valid").Return(claims, nil)
@@ -193,7 +193,7 @@ func TestAuthInterceptor_Unary(t *testing.T) {
 	})
 
 	t.Run("AllOf_Success", func(t *testing.T) {
-		infoList := &grpc.UnaryServerInfo{FullMethod: "/cloud.v1.api.IamAPI/ListAccounts"}
+		infoList := &grpc.UnaryServerInfo{FullMethod: "/cloud.v1.api.IamService/ListAccounts"}
 		ctxWithToken := metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", "Bearer valid"))
 		claims := &iam.AccessClaims{AccountId: "user1"}
 		mockTokens.EXPECT().Verify(gomock.Any(), "valid").Return(claims, nil)
@@ -210,7 +210,7 @@ func TestAuthInterceptor_Unary(t *testing.T) {
 	})
 
 	t.Run("AllOf_Denied", func(t *testing.T) {
-		infoList := &grpc.UnaryServerInfo{FullMethod: "/cloud.v1.api.IamAPI/ListAccounts"}
+		infoList := &grpc.UnaryServerInfo{FullMethod: "/cloud.v1.api.IamService/ListAccounts"}
 		ctxWithToken := metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", "Bearer valid"))
 		claims := &iam.AccessClaims{AccountId: "user1"}
 		mockTokens.EXPECT().Verify(gomock.Any(), "valid").Return(claims, nil)

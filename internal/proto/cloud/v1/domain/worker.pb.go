@@ -22,12 +22,16 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Kind distinguishes the orchestrator from a host agent.
 type Worker_Kind int32
 
 const (
+	// KIND_UNSPECIFIED is the unset zero value.
 	Worker_KIND_UNSPECIFIED Worker_Kind = 0
-	Worker_KIND_MASTER      Worker_Kind = 1
-	Worker_KIND_AGENT       Worker_Kind = 2
+	// KIND_MASTER is the orchestrator worker.
+	Worker_KIND_MASTER Worker_Kind = 1
+	// KIND_AGENT is a worker running on a host.
+	Worker_KIND_AGENT Worker_Kind = 2
 )
 
 // Enum value maps for Worker_Kind.
@@ -71,13 +75,17 @@ func (Worker_Kind) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_domain_worker_proto_rawDescGZIP(), []int{0, 0}
 }
 
-// Worker is a unit that executes pipeline stages: the master (orchestrator) or an
-// agent (on a host). The live pipeline / worker info lives in monitor/overview.proto.
+// Worker is a unit that executes pipeline stages: the master (orchestrator) or
+// an agent (on a host). The live pipeline / worker info lives in
+// monitor/overview.proto.
 type Worker struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Kind          Worker_Kind            `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.domain.Worker_Kind" json:"kind,omitempty"`
-	Tags          *common.Tags           `protobuf:"bytes,3,opt,name=tags,proto3" json:"tags,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the stable worker identifier.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// kind says whether this worker is the master or an agent.
+	Kind Worker_Kind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.domain.Worker_Kind" json:"kind,omitempty"`
+	// tags are free-form metadata attached to the worker.
+	Tags          *common.Tags `protobuf:"bytes,3,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

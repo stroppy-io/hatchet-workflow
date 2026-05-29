@@ -25,10 +25,14 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// ProcessDeploymentWorkflowRequest is the input to the top-level deployment
+// workflow: which provider to use and the topology to provision.
 type ProcessDeploymentWorkflowRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	Provider deployment.Provider    `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	// MUST BE WITH INSTANCES provider_parms
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// provider is the target cloud/provider to deploy onto.
+	Provider deployment.Provider `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	// topology is the topology to provision; instances MUST already carry their
+	// provider_parms.
 	Topology      *topology.Topology `protobuf:"bytes,2,opt,name=topology,proto3" json:"topology,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -78,10 +82,14 @@ func (x *ProcessDeploymentWorkflowRequest) GetTopology() *topology.Topology {
 	return nil
 }
 
+// ProcessDeploymentWorkflowResponse is the result of the deployment workflow:
+// the provider used and the fully deployed topology.
 type ProcessDeploymentWorkflowResponse struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	Provider deployment.Provider    `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	// FULL DEPLOYD TOPOLOGY WITH ALL PARAMS
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// provider is the provider the topology was deployed onto.
+	Provider deployment.Provider `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	// deployed_topology is the full deployed topology with all runtime params
+	// filled in.
 	DeployedTopology *topology.Topology `protobuf:"bytes,2,opt,name=deployed_topology,json=deployedTopology,proto3" json:"deployed_topology,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
@@ -131,9 +139,12 @@ func (x *ProcessDeploymentWorkflowResponse) GetDeployedTopology() *topology.Topo
 	return nil
 }
 
+// CalculateQuotasWorkflowRequest asks the workflow to compute resource quotas
+// for a topology.
 type CalculateQuotasWorkflowRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Topology      *topology.Topology     `protobuf:"bytes,1,opt,name=topology,proto3" json:"topology,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// topology is the topology to compute quota requests for.
+	Topology      *topology.Topology `protobuf:"bytes,1,opt,name=topology,proto3" json:"topology,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -175,10 +186,13 @@ func (x *CalculateQuotasWorkflowRequest) GetTopology() *topology.Topology {
 	return nil
 }
 
+// CalculateQuotasWorkflowResponse returns the topology along with the computed
+// quota requests.
 type CalculateQuotasWorkflowResponse struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	Topology *topology.Topology     `protobuf:"bytes,1,opt,name=topology,proto3" json:"topology,omitempty"`
-	// This is requests located by component.id
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// topology is the (unchanged) topology the quotas were computed for.
+	Topology *topology.Topology `protobuf:"bytes,1,opt,name=topology,proto3" json:"topology,omitempty"`
+	// quota_requests are the computed requests keyed by component.id.
 	QuotaRequests map[string]*deployment.Quota_Request `protobuf:"bytes,5,rep,name=quota_requests,json=quotaRequests,proto3" json:"quota_requests,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -228,8 +242,10 @@ func (x *CalculateQuotasWorkflowResponse) GetQuotaRequests() map[string]*deploym
 	return nil
 }
 
+// AcquireNetworkActivityRequest asks the provider to acquire a network.
 type AcquireNetworkActivityRequest struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// settings are the provider-specific settings used to acquire the network.
 	Settings      *deployment.ProviderSettings `protobuf:"bytes,2,opt,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -272,9 +288,11 @@ func (x *AcquireNetworkActivityRequest) GetSettings() *deployment.ProviderSettin
 	return nil
 }
 
+// AcquireNetworkActivityResponse returns the acquired network.
 type AcquireNetworkActivityResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Net           *common.Net            `protobuf:"bytes,1,opt,name=net,proto3" json:"net,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// net is the network acquired from the provider.
+	Net           *common.Net `protobuf:"bytes,1,opt,name=net,proto3" json:"net,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -316,9 +334,11 @@ func (x *AcquireNetworkActivityResponse) GetNet() *common.Net {
 	return nil
 }
 
+// AcquireQuotasActivityRequest asks the provider to acquire the requested
+// quotas.
 type AcquireQuotasActivityRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// This is requests located by component.id
+	// quota_requests are the requests to acquire, keyed by component.id.
 	QuotaRequests map[string]*deployment.Quota_Request `protobuf:"bytes,5,rep,name=quota_requests,json=quotaRequests,proto3" json:"quota_requests,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -361,9 +381,10 @@ func (x *AcquireQuotasActivityRequest) GetQuotaRequests() map[string]*deployment
 	return nil
 }
 
+// AcquireQuotasActivityResponse returns the quotas the provider allocated.
 type AcquireQuotasActivityResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// This is allocation located by component.id
+	// quota_allocation is the granted allocation keyed by component.id.
 	QuotaAllocation map[string]*deployment.Quota_Allocation `protobuf:"bytes,1,rep,name=quota_allocation,json=quotaAllocation,proto3" json:"quota_allocation,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache

@@ -13,17 +13,20 @@ export const file_cloud_v1_common_tags: GenFile = /*@__PURE__*/
   fileDesc("ChpjbG91ZC92MS9jb21tb24vdGFncy5wcm90bxIPY2xvdWQudjEuY29tbW9uInYKBFRhZ3MSDAoEdGFncxgBIAMoCRIxCgZsYWJlbHMYAiADKAsyIS5jbG91ZC52MS5jb21tb24uVGFncy5MYWJlbHNFbnRyeRotCgtMYWJlbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2NvbW1vbmIGcHJvdG8z");
 
 /**
+ * Tags carries a flat label set and arbitrary key/value metadata for a model. 
+ *
  * @generated from message cloud.v1.common.Tags
  */
 export type Tags = Message<"cloud.v1.common.Tags"> & {
   /**
-   * tags is a flat label set.
+   * tags is a flat label set. 
    *
    * @generated from field: repeated string tags = 1;
    */
   tags: string[];
 
   /**
+   *
    * labels is arbitrary key/value metadata (reconcile/observability) — free to
    * extend since Tags is always serialized as a single column.
    *
@@ -33,17 +36,20 @@ export type Tags = Message<"cloud.v1.common.Tags"> & {
 };
 
 /**
+ * Tags carries a flat label set and arbitrary key/value metadata for a model. 
+ *
  * @generated from message cloud.v1.common.Tags
  */
 export type TagsJson = {
   /**
-   * tags is a flat label set.
+   * tags is a flat label set. 
    *
    * @generated from field: repeated string tags = 1;
    */
   tags?: string[];
 
   /**
+   *
    * labels is arbitrary key/value metadata (reconcile/observability) — free to
    * extend since Tags is always serialized as a single column.
    *

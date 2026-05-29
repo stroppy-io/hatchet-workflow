@@ -8,17 +8,12 @@
 package workflow
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	expression "github.com/cludden/protoc-gen-go-temporal/pkg/expression"
 	helpers "github.com/cludden/protoc-gen-go-temporal/pkg/helpers"
-	gohomedir "github.com/mitchellh/go-homedir"
-	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
-	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
-	v2 "github.com/urfave/cli/v2"
+	scheme "github.com/cludden/protoc-gen-go-temporal/pkg/scheme"
 	enumsv1 "go.temporal.io/api/enums/v1"
 	client "go.temporal.io/sdk/client"
 	converter "go.temporal.io/sdk/converter"
@@ -26,11 +21,8 @@ import (
 	testsuite "go.temporal.io/sdk/testsuite"
 	worker "go.temporal.io/sdk/worker"
 	workflow "go.temporal.io/sdk/workflow"
-	protojson "google.golang.org/protobuf/encoding/protojson"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	"log/slog"
-	"os"
-	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -54,7 +46,8 @@ var (
 
 // TestServiceClient describes a client for a(n) cloud.v1.workflow.TestService worker
 type TestServiceClient interface {
-	// InstallDatabaseWorkflow executes a(n) InstallDatabaseWorkflow workflow and blocks until error or response received
+	// InstallDatabaseWorkflow brings up / provisions the database (child of
+	// TestWorkflow; idempotent and retryable).
 	InstallDatabaseWorkflow(ctx context.Context, req *InstallDatabaseWorkflowRequest, opts ...*InstallDatabaseWorkflowOptions) (*InstallDatabaseWorkflowResponse, error)
 
 	// InstallDatabaseWorkflowAsync starts a(n) InstallDatabaseWorkflow workflow and returns a handle to the workflow run
@@ -63,7 +56,8 @@ type TestServiceClient interface {
 	// GetInstallDatabaseWorkflow retrieves a handle to an existing InstallDatabaseWorkflow workflow execution
 	GetInstallDatabaseWorkflow(ctx context.Context, workflowID string, runID string) InstallDatabaseWorkflowRun
 
-	// InstallStroppyWorkflow executes a(n) InstallStroppyWorkflow workflow and blocks until error or response received
+	// InstallStroppyWorkflow installs stroppy onto the runner machines (child
+	// of TestWorkflow; idempotent and retryable).
 	InstallStroppyWorkflow(ctx context.Context, req *InstallStroppyWorkflowRequest, opts ...*InstallStroppyWorkflowOptions) (*InstallStroppyWorkflowResponse, error)
 
 	// InstallStroppyWorkflowAsync starts a(n) InstallStroppyWorkflow workflow and returns a handle to the workflow run
@@ -72,7 +66,8 @@ type TestServiceClient interface {
 	// GetInstallStroppyWorkflow retrieves a handle to an existing InstallStroppyWorkflow workflow execution
 	GetInstallStroppyWorkflow(ctx context.Context, workflowID string, runID string) InstallStroppyWorkflowRun
 
-	// RunWorkloadWorkflow executes a(n) RunWorkloadWorkflow workflow and blocks until error or response received
+	// RunWorkloadWorkflow runs the workload via the agent (child of
+	// TestWorkflow; unbounded, never retried to avoid double load).
 	RunWorkloadWorkflow(ctx context.Context, req *RunWorkloadWorkflowRequest, opts ...*RunWorkloadWorkflowOptions) (*RunWorkloadWorkflowResponse, error)
 
 	// RunWorkloadWorkflowAsync starts a(n) RunWorkloadWorkflow workflow and returns a handle to the workflow run
@@ -81,7 +76,8 @@ type TestServiceClient interface {
 	// GetRunWorkloadWorkflow retrieves a handle to an existing RunWorkloadWorkflow workflow execution
 	GetRunWorkloadWorkflow(ctx context.Context, workflowID string, runID string) RunWorkloadWorkflowRun
 
-	// TestWorkflow executes a(n) TestWorkflow workflow and blocks until error or response received
+	// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
+	// derived from TestRun.id and never auto-retried as a whole.
 	TestWorkflow(ctx context.Context, req *TestWorkflowRequest, opts ...*TestWorkflowOptions) (*TestWorkflowResponse, error)
 
 	// TestWorkflowAsync starts a(n) TestWorkflow workflow and returns a handle to the workflow run
@@ -162,7 +158,8 @@ func (opts *testServiceClientOptions) getLogger() *slog.Logger {
 	return slog.Default()
 }
 
-// cloud.v1.workflow.TestService.InstallDatabaseWorkflow executes a InstallDatabaseWorkflow workflow and blocks until error or response received
+// InstallDatabaseWorkflow brings up / provisions the database (child of
+// TestWorkflow; idempotent and retryable).
 func (c *testServiceClient) InstallDatabaseWorkflow(ctx context.Context, req *InstallDatabaseWorkflowRequest, options ...*InstallDatabaseWorkflowOptions) (*InstallDatabaseWorkflowResponse, error) {
 	run, err := c.InstallDatabaseWorkflowAsync(ctx, req, options...)
 	if err != nil {
@@ -171,7 +168,8 @@ func (c *testServiceClient) InstallDatabaseWorkflow(ctx context.Context, req *In
 	return run.Get(ctx)
 }
 
-// InstallDatabaseWorkflowAsync starts a(n) InstallDatabaseWorkflow workflow and returns a handle to the workflow run
+// InstallDatabaseWorkflow brings up / provisions the database (child of
+// TestWorkflow; idempotent and retryable).
 func (c *testServiceClient) InstallDatabaseWorkflowAsync(ctx context.Context, req *InstallDatabaseWorkflowRequest, options ...*InstallDatabaseWorkflowOptions) (InstallDatabaseWorkflowRun, error) {
 	var o *InstallDatabaseWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
@@ -204,7 +202,8 @@ func (c *testServiceClient) GetInstallDatabaseWorkflow(ctx context.Context, work
 	}
 }
 
-// cloud.v1.workflow.TestService.InstallStroppyWorkflow executes a InstallStroppyWorkflow workflow and blocks until error or response received
+// InstallStroppyWorkflow installs stroppy onto the runner machines (child
+// of TestWorkflow; idempotent and retryable).
 func (c *testServiceClient) InstallStroppyWorkflow(ctx context.Context, req *InstallStroppyWorkflowRequest, options ...*InstallStroppyWorkflowOptions) (*InstallStroppyWorkflowResponse, error) {
 	run, err := c.InstallStroppyWorkflowAsync(ctx, req, options...)
 	if err != nil {
@@ -213,7 +212,8 @@ func (c *testServiceClient) InstallStroppyWorkflow(ctx context.Context, req *Ins
 	return run.Get(ctx)
 }
 
-// InstallStroppyWorkflowAsync starts a(n) InstallStroppyWorkflow workflow and returns a handle to the workflow run
+// InstallStroppyWorkflow installs stroppy onto the runner machines (child
+// of TestWorkflow; idempotent and retryable).
 func (c *testServiceClient) InstallStroppyWorkflowAsync(ctx context.Context, req *InstallStroppyWorkflowRequest, options ...*InstallStroppyWorkflowOptions) (InstallStroppyWorkflowRun, error) {
 	var o *InstallStroppyWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
@@ -246,7 +246,8 @@ func (c *testServiceClient) GetInstallStroppyWorkflow(ctx context.Context, workf
 	}
 }
 
-// cloud.v1.workflow.TestService.RunWorkloadWorkflow executes a RunWorkloadWorkflow workflow and blocks until error or response received
+// RunWorkloadWorkflow runs the workload via the agent (child of
+// TestWorkflow; unbounded, never retried to avoid double load).
 func (c *testServiceClient) RunWorkloadWorkflow(ctx context.Context, req *RunWorkloadWorkflowRequest, options ...*RunWorkloadWorkflowOptions) (*RunWorkloadWorkflowResponse, error) {
 	run, err := c.RunWorkloadWorkflowAsync(ctx, req, options...)
 	if err != nil {
@@ -255,7 +256,8 @@ func (c *testServiceClient) RunWorkloadWorkflow(ctx context.Context, req *RunWor
 	return run.Get(ctx)
 }
 
-// RunWorkloadWorkflowAsync starts a(n) RunWorkloadWorkflow workflow and returns a handle to the workflow run
+// RunWorkloadWorkflow runs the workload via the agent (child of
+// TestWorkflow; unbounded, never retried to avoid double load).
 func (c *testServiceClient) RunWorkloadWorkflowAsync(ctx context.Context, req *RunWorkloadWorkflowRequest, options ...*RunWorkloadWorkflowOptions) (RunWorkloadWorkflowRun, error) {
 	var o *RunWorkloadWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
@@ -288,7 +290,8 @@ func (c *testServiceClient) GetRunWorkloadWorkflow(ctx context.Context, workflow
 	}
 }
 
-// cloud.v1.workflow.TestService.TestWorkflow executes a TestWorkflow workflow and blocks until error or response received
+// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
+// derived from TestRun.id and never auto-retried as a whole.
 func (c *testServiceClient) TestWorkflow(ctx context.Context, req *TestWorkflowRequest, options ...*TestWorkflowOptions) (*TestWorkflowResponse, error) {
 	run, err := c.TestWorkflowAsync(ctx, req, options...)
 	if err != nil {
@@ -297,7 +300,8 @@ func (c *testServiceClient) TestWorkflow(ctx context.Context, req *TestWorkflowR
 	return run.Get(ctx)
 }
 
-// TestWorkflowAsync starts a(n) TestWorkflow workflow and returns a handle to the workflow run
+// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
+// derived from TestRun.id and never auto-retried as a whole.
 func (c *testServiceClient) TestWorkflowAsync(ctx context.Context, req *TestWorkflowRequest, options ...*TestWorkflowOptions) (TestWorkflowRun, error) {
 	var o *TestWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
@@ -1154,13 +1158,17 @@ func (r *testWorkflowRun) Terminate(ctx context.Context, reason string, details 
 var (
 	// testServiceRegistrationMutex is a mutex for registering cloud.v1.workflow.TestService workflows
 	testServiceRegistrationMutex sync.Mutex
-	// InstallDatabaseWorkflowFunction implements a "InstallDatabaseWorkflow" workflow
+	// InstallDatabaseWorkflow brings up / provisions the database (child of
+	// TestWorkflow; idempotent and retryable).
 	InstallDatabaseWorkflowFunction func(workflow.Context, *InstallDatabaseWorkflowRequest) (*InstallDatabaseWorkflowResponse, error)
-	// InstallStroppyWorkflowFunction implements a "InstallStroppyWorkflow" workflow
+	// InstallStroppyWorkflow installs stroppy onto the runner machines (child
+	// of TestWorkflow; idempotent and retryable).
 	InstallStroppyWorkflowFunction func(workflow.Context, *InstallStroppyWorkflowRequest) (*InstallStroppyWorkflowResponse, error)
-	// RunWorkloadWorkflowFunction implements a "RunWorkloadWorkflow" workflow
+	// RunWorkloadWorkflow runs the workload via the agent (child of
+	// TestWorkflow; unbounded, never retried to avoid double load).
 	RunWorkloadWorkflowFunction func(workflow.Context, *RunWorkloadWorkflowRequest) (*RunWorkloadWorkflowResponse, error)
-	// TestWorkflowFunction implements a "TestWorkflow" workflow
+	// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
+	// derived from TestRun.id and never auto-retried as a whole.
 	TestWorkflowFunction func(workflow.Context, *TestWorkflowRequest) (*TestWorkflowResponse, error)
 )
 
@@ -1168,13 +1176,17 @@ var (
 type (
 	// TestServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
 	TestServiceWorkflowFunctions interface {
-		// InstallDatabaseWorkflow executes a "InstallDatabaseWorkflow" workflow inline
+		// InstallDatabaseWorkflow brings up / provisions the database (child of
+		// TestWorkflow; idempotent and retryable).
 		InstallDatabaseWorkflow(workflow.Context, *InstallDatabaseWorkflowRequest) (*InstallDatabaseWorkflowResponse, error)
-		// InstallStroppyWorkflow executes a "InstallStroppyWorkflow" workflow inline
+		// InstallStroppyWorkflow installs stroppy onto the runner machines (child
+		// of TestWorkflow; idempotent and retryable).
 		InstallStroppyWorkflow(workflow.Context, *InstallStroppyWorkflowRequest) (*InstallStroppyWorkflowResponse, error)
-		// RunWorkloadWorkflow executes a "RunWorkloadWorkflow" workflow inline
+		// RunWorkloadWorkflow runs the workload via the agent (child of
+		// TestWorkflow; unbounded, never retried to avoid double load).
 		RunWorkloadWorkflow(workflow.Context, *RunWorkloadWorkflowRequest) (*RunWorkloadWorkflowResponse, error)
-		// TestWorkflow executes a "TestWorkflow" workflow inline
+		// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
+		// derived from TestRun.id and never auto-retried as a whole.
 		TestWorkflow(workflow.Context, *TestWorkflowRequest) (*TestWorkflowResponse, error)
 	}
 	// testServiceWorkflowFunctions provides an internal TestServiceWorkflowFunctions implementation
@@ -1185,7 +1197,8 @@ func NewTestServiceWorkflowFunctions() TestServiceWorkflowFunctions {
 	return &testServiceWorkflowFunctions{}
 }
 
-// InstallDatabaseWorkflow executes a "InstallDatabaseWorkflow" workflow inline
+// InstallDatabaseWorkflow brings up / provisions the database (child of
+// TestWorkflow; idempotent and retryable).
 func (f *testServiceWorkflowFunctions) InstallDatabaseWorkflow(ctx workflow.Context, req *InstallDatabaseWorkflowRequest) (*InstallDatabaseWorkflowResponse, error) {
 	if InstallDatabaseWorkflowFunction == nil {
 		return nil, errors.New("InstallDatabaseWorkflow requires workflow registration via RegisterTestServiceWorkflows or RegisterInstallDatabaseWorkflowWorkflow")
@@ -1193,7 +1206,8 @@ func (f *testServiceWorkflowFunctions) InstallDatabaseWorkflow(ctx workflow.Cont
 	return InstallDatabaseWorkflowFunction(ctx, req)
 }
 
-// InstallStroppyWorkflow executes a "InstallStroppyWorkflow" workflow inline
+// InstallStroppyWorkflow installs stroppy onto the runner machines (child
+// of TestWorkflow; idempotent and retryable).
 func (f *testServiceWorkflowFunctions) InstallStroppyWorkflow(ctx workflow.Context, req *InstallStroppyWorkflowRequest) (*InstallStroppyWorkflowResponse, error) {
 	if InstallStroppyWorkflowFunction == nil {
 		return nil, errors.New("InstallStroppyWorkflow requires workflow registration via RegisterTestServiceWorkflows or RegisterInstallStroppyWorkflowWorkflow")
@@ -1201,7 +1215,8 @@ func (f *testServiceWorkflowFunctions) InstallStroppyWorkflow(ctx workflow.Conte
 	return InstallStroppyWorkflowFunction(ctx, req)
 }
 
-// RunWorkloadWorkflow executes a "RunWorkloadWorkflow" workflow inline
+// RunWorkloadWorkflow runs the workload via the agent (child of
+// TestWorkflow; unbounded, never retried to avoid double load).
 func (f *testServiceWorkflowFunctions) RunWorkloadWorkflow(ctx workflow.Context, req *RunWorkloadWorkflowRequest) (*RunWorkloadWorkflowResponse, error) {
 	if RunWorkloadWorkflowFunction == nil {
 		return nil, errors.New("RunWorkloadWorkflow requires workflow registration via RegisterTestServiceWorkflows or RegisterRunWorkloadWorkflowWorkflow")
@@ -1209,7 +1224,8 @@ func (f *testServiceWorkflowFunctions) RunWorkloadWorkflow(ctx workflow.Context,
 	return RunWorkloadWorkflowFunction(ctx, req)
 }
 
-// TestWorkflow executes a "TestWorkflow" workflow inline
+// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
+// derived from TestRun.id and never auto-retried as a whole.
 func (f *testServiceWorkflowFunctions) TestWorkflow(ctx workflow.Context, req *TestWorkflowRequest) (*TestWorkflowResponse, error) {
 	if TestWorkflowFunction == nil {
 		return nil, errors.New("TestWorkflow requires workflow registration via RegisterTestServiceWorkflows or RegisterTestWorkflowWorkflow")
@@ -1219,16 +1235,20 @@ func (f *testServiceWorkflowFunctions) TestWorkflow(ctx workflow.Context, req *T
 
 // TestServiceWorkflows provides methods for initializing new cloud.v1.workflow.TestService workflow values
 type TestServiceWorkflows interface {
-	// InstallDatabaseWorkflow initializes a new a(n) InstallDatabaseWorkflowWorkflow implementation
+	// InstallDatabaseWorkflow brings up / provisions the database (child of
+	// TestWorkflow; idempotent and retryable).
 	InstallDatabaseWorkflow(ctx workflow.Context, input *InstallDatabaseWorkflowWorkflowInput) (InstallDatabaseWorkflowWorkflow, error)
 
-	// InstallStroppyWorkflow initializes a new a(n) InstallStroppyWorkflowWorkflow implementation
+	// InstallStroppyWorkflow installs stroppy onto the runner machines (child
+	// of TestWorkflow; idempotent and retryable).
 	InstallStroppyWorkflow(ctx workflow.Context, input *InstallStroppyWorkflowWorkflowInput) (InstallStroppyWorkflowWorkflow, error)
 
-	// RunWorkloadWorkflow initializes a new a(n) RunWorkloadWorkflowWorkflow implementation
+	// RunWorkloadWorkflow runs the workload via the agent (child of
+	// TestWorkflow; unbounded, never retried to avoid double load).
 	RunWorkloadWorkflow(ctx workflow.Context, input *RunWorkloadWorkflowWorkflowInput) (RunWorkloadWorkflowWorkflow, error)
 
-	// TestWorkflow initializes a new a(n) TestWorkflowWorkflow implementation
+	// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
+	// derived from TestRun.id and never auto-retried as a whole.
 	TestWorkflow(ctx workflow.Context, input *TestWorkflowWorkflowInput) (TestWorkflowWorkflow, error)
 }
 
@@ -1284,13 +1304,15 @@ func (i *InstallDatabaseWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Contex
 	return nil, workflow.NewContinueAsNewError(ctx, InstallDatabaseWorkflowWorkflowName, next)
 }
 
-// InstallDatabaseWorkflowWorkflow describes a(n) InstallDatabaseWorkflow workflow implementation
+// InstallDatabaseWorkflow brings up / provisions the database (child of
+// TestWorkflow; idempotent and retryable).
 type InstallDatabaseWorkflowWorkflow interface {
 	// Execute defines the entrypoint to a(n) InstallDatabaseWorkflow workflow
 	Execute(ctx workflow.Context) (*InstallDatabaseWorkflowResponse, error)
 }
 
-// InstallDatabaseWorkflowChild executes a child InstallDatabaseWorkflow workflow and blocks until error or response received
+// InstallDatabaseWorkflow brings up / provisions the database (child of
+// TestWorkflow; idempotent and retryable).
 func InstallDatabaseWorkflowChild(ctx workflow.Context, req *InstallDatabaseWorkflowRequest, options ...*InstallDatabaseWorkflowChildOptions) (*InstallDatabaseWorkflowResponse, error) {
 	childRun, err := InstallDatabaseWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
@@ -1299,7 +1321,8 @@ func InstallDatabaseWorkflowChild(ctx workflow.Context, req *InstallDatabaseWork
 	return childRun.Get(ctx)
 }
 
-// InstallDatabaseWorkflowChildAsync starts a child InstallDatabaseWorkflow workflow and returns a handle to the child workflow run
+// InstallDatabaseWorkflow brings up / provisions the database (child of
+// TestWorkflow; idempotent and retryable).
 func InstallDatabaseWorkflowChildAsync(ctx workflow.Context, req *InstallDatabaseWorkflowRequest, options ...*InstallDatabaseWorkflowChildOptions) (*InstallDatabaseWorkflowChildRun, error) {
 	var o *InstallDatabaseWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
@@ -1551,13 +1574,15 @@ func (i *InstallStroppyWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context
 	return nil, workflow.NewContinueAsNewError(ctx, InstallStroppyWorkflowWorkflowName, next)
 }
 
-// InstallStroppyWorkflowWorkflow describes a(n) InstallStroppyWorkflow workflow implementation
+// InstallStroppyWorkflow installs stroppy onto the runner machines (child
+// of TestWorkflow; idempotent and retryable).
 type InstallStroppyWorkflowWorkflow interface {
 	// Execute defines the entrypoint to a(n) InstallStroppyWorkflow workflow
 	Execute(ctx workflow.Context) (*InstallStroppyWorkflowResponse, error)
 }
 
-// InstallStroppyWorkflowChild executes a child InstallStroppyWorkflow workflow and blocks until error or response received
+// InstallStroppyWorkflow installs stroppy onto the runner machines (child
+// of TestWorkflow; idempotent and retryable).
 func InstallStroppyWorkflowChild(ctx workflow.Context, req *InstallStroppyWorkflowRequest, options ...*InstallStroppyWorkflowChildOptions) (*InstallStroppyWorkflowResponse, error) {
 	childRun, err := InstallStroppyWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
@@ -1566,7 +1591,8 @@ func InstallStroppyWorkflowChild(ctx workflow.Context, req *InstallStroppyWorkfl
 	return childRun.Get(ctx)
 }
 
-// InstallStroppyWorkflowChildAsync starts a child InstallStroppyWorkflow workflow and returns a handle to the child workflow run
+// InstallStroppyWorkflow installs stroppy onto the runner machines (child
+// of TestWorkflow; idempotent and retryable).
 func InstallStroppyWorkflowChildAsync(ctx workflow.Context, req *InstallStroppyWorkflowRequest, options ...*InstallStroppyWorkflowChildOptions) (*InstallStroppyWorkflowChildRun, error) {
 	var o *InstallStroppyWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
@@ -1818,13 +1844,15 @@ func (i *RunWorkloadWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, i
 	return nil, workflow.NewContinueAsNewError(ctx, RunWorkloadWorkflowWorkflowName, next)
 }
 
-// RunWorkloadWorkflowWorkflow describes a(n) RunWorkloadWorkflow workflow implementation
+// RunWorkloadWorkflow runs the workload via the agent (child of
+// TestWorkflow; unbounded, never retried to avoid double load).
 type RunWorkloadWorkflowWorkflow interface {
 	// Execute defines the entrypoint to a(n) RunWorkloadWorkflow workflow
 	Execute(ctx workflow.Context) (*RunWorkloadWorkflowResponse, error)
 }
 
-// RunWorkloadWorkflowChild executes a child RunWorkloadWorkflow workflow and blocks until error or response received
+// RunWorkloadWorkflow runs the workload via the agent (child of
+// TestWorkflow; unbounded, never retried to avoid double load).
 func RunWorkloadWorkflowChild(ctx workflow.Context, req *RunWorkloadWorkflowRequest, options ...*RunWorkloadWorkflowChildOptions) (*RunWorkloadWorkflowResponse, error) {
 	childRun, err := RunWorkloadWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
@@ -1833,7 +1861,8 @@ func RunWorkloadWorkflowChild(ctx workflow.Context, req *RunWorkloadWorkflowRequ
 	return childRun.Get(ctx)
 }
 
-// RunWorkloadWorkflowChildAsync starts a child RunWorkloadWorkflow workflow and returns a handle to the child workflow run
+// RunWorkloadWorkflow runs the workload via the agent (child of
+// TestWorkflow; unbounded, never retried to avoid double load).
 func RunWorkloadWorkflowChildAsync(ctx workflow.Context, req *RunWorkloadWorkflowRequest, options ...*RunWorkloadWorkflowChildOptions) (*RunWorkloadWorkflowChildRun, error) {
 	var o *RunWorkloadWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2082,7 +2111,8 @@ func (i *TestWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *T
 	return nil, workflow.NewContinueAsNewError(ctx, TestWorkflowWorkflowName, next)
 }
 
-// TestWorkflowWorkflow describes a(n) TestWorkflow workflow implementation
+// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
+// derived from TestRun.id and never auto-retried as a whole.
 //
 // workflow details: (id: "test-run/${! test_run.id }")
 type TestWorkflowWorkflow interface {
@@ -2090,7 +2120,8 @@ type TestWorkflowWorkflow interface {
 	Execute(ctx workflow.Context) (*TestWorkflowResponse, error)
 }
 
-// TestWorkflowChild executes a child TestWorkflow workflow and blocks until error or response received
+// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
+// derived from TestRun.id and never auto-retried as a whole.
 func TestWorkflowChild(ctx workflow.Context, req *TestWorkflowRequest, options ...*TestWorkflowChildOptions) (*TestWorkflowResponse, error) {
 	childRun, err := TestWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
@@ -2099,7 +2130,8 @@ func TestWorkflowChild(ctx workflow.Context, req *TestWorkflowRequest, options .
 	return childRun.Get(ctx)
 }
 
-// TestWorkflowChildAsync starts a child TestWorkflow workflow and returns a handle to the child workflow run
+// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
+// derived from TestRun.id and never auto-retried as a whole.
 func TestWorkflowChildAsync(ctx workflow.Context, req *TestWorkflowRequest, options ...*TestWorkflowChildOptions) (*TestWorkflowChildRun, error) {
 	var o *TestWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2712,547 +2744,18 @@ func (r *testTestWorkflowRun) Terminate(ctx context.Context, reason string, deta
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
 }
 
-// TestServiceCliOptions describes runtime configuration for cloud.v1.workflow.TestService cli
-type TestServiceCliOptions struct {
-	after            func(*v2.Context) error
-	before           func(*v2.Context) error
-	clientForCommand func(*v2.Context) (client.Client, error)
-	worker           func(*v2.Context, client.Client) (worker.Worker, error)
-}
-
-// NewTestServiceCliOptions initializes a new TestServiceCliOptions value
-func NewTestServiceCliOptions() *TestServiceCliOptions {
-	return &TestServiceCliOptions{}
-}
-
-// WithAfter injects a custom After hook to be run after any command invocation
-func (opts *TestServiceCliOptions) WithAfter(fn func(*v2.Context) error) *TestServiceCliOptions {
-	opts.after = fn
-	return opts
-}
-
-// WithBefore injects a custom Before hook to be run prior to any command invocation
-func (opts *TestServiceCliOptions) WithBefore(fn func(*v2.Context) error) *TestServiceCliOptions {
-	opts.before = fn
-	return opts
-}
-
-// WithClient provides a Temporal client factory for use by commands
-func (opts *TestServiceCliOptions) WithClient(fn func(*v2.Context) (client.Client, error)) *TestServiceCliOptions {
-	opts.clientForCommand = fn
-	return opts
-}
-
-// WithWorker provides an method for initializing a worker
-func (opts *TestServiceCliOptions) WithWorker(fn func(*v2.Context, client.Client) (worker.Worker, error)) *TestServiceCliOptions {
-	opts.worker = fn
-	return opts
-}
-
-// NewTestServiceCli initializes a cli for a(n) cloud.v1.workflow.TestService service
-func NewTestServiceCli(options ...*TestServiceCliOptions) (*v2.App, error) {
-	commands, err := newTestServiceCommands(options...)
-	if err != nil {
-		return nil, fmt.Errorf("error initializing subcommands: %w", err)
+// WithTestServiceSchemeTypes registers all TestService protobuf types with the given scheme
+func WithTestServiceSchemeTypes() scheme.Option {
+	return func(s *scheme.Scheme) {
+		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("InstallDatabaseWorkflowRequest"))
+		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("InstallDatabaseWorkflowResponse"))
+		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("InstallStroppyWorkflowRequest"))
+		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("InstallStroppyWorkflowResponse"))
+		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("RunWorkloadWorkflowRequest"))
+		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("RunWorkloadWorkflowResponse"))
+		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("TestWorkflowRequest"))
+		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("TestWorkflowResponse"))
 	}
-	return &v2.App{
-		Name:                      "test-service",
-		Usage:                     "cloud.v1.workflow.TestService operations",
-		Commands:                  commands,
-		DisableSliceFlagSeparator: true,
-	}, nil
-}
-
-// NewTestServiceCliCommand initializes a cli command for a cloud.v1.workflow.TestService service with subcommands for each query, signal, update, and workflow
-func NewTestServiceCliCommand(options ...*TestServiceCliOptions) (*v2.Command, error) {
-	subcommands, err := newTestServiceCommands(options...)
-	if err != nil {
-		return nil, fmt.Errorf("error initializing subcommands: %w", err)
-	}
-	return &v2.Command{
-		Name:        "test-service",
-		Usage:       "cloud.v1.workflow.TestService operations",
-		Subcommands: subcommands,
-	}, nil
-}
-
-// newTestServiceCommands initializes (sub)commands for a cloud.v1.workflow.TestService cli or command
-func newTestServiceCommands(options ...*TestServiceCliOptions) ([]*v2.Command, error) {
-	opts := &TestServiceCliOptions{}
-	if len(options) > 0 {
-		opts = options[0]
-	}
-	if opts.clientForCommand == nil {
-		opts.clientForCommand = func(*v2.Context) (client.Client, error) {
-			return client.Dial(client.Options{})
-		}
-	}
-	commands := []*v2.Command{
-		{
-			Name:                   "install-database-workflow",
-			Usage:                  "executes a(n) InstallDatabaseWorkflow workflow",
-			Category:               "WORKFLOWS",
-			UseShortOptionHandling: true,
-			Before:                 opts.before,
-			After:                  opts.after,
-			Flags: []v2.Flag{
-				&v2.BoolFlag{
-					Name:    "detach",
-					Usage:   "run workflow in the background and print workflow and execution id",
-					Aliases: []string{"d"},
-				},
-				&v2.StringFlag{
-					Name:    "task-queue",
-					Usage:   "task queue name",
-					Aliases: []string{"t"},
-					EnvVars: []string{"TEMPORAL_TASK_QUEUE_NAME", "TEMPORAL_TASK_QUEUE", "TASK_QUEUE_NAME", "TASK_QUEUE"},
-					Value:   "stroppy-cloud",
-				},
-				&v2.StringFlag{
-					Name:     "input-file",
-					Usage:    "path to json-formatted input file",
-					Aliases:  []string{"f"},
-					Category: "INPUT",
-				},
-				&v2.StringFlag{
-					Name:     "topology",
-					Usage:    "set the value of the operation's \"Topology\" parameter (json-encoded: {instances: <cloud.v1.topology.Topology.Instance>, connections: <cloud.v1.topology.Connection>, externalComponents: <cloud.v1.topology.Component>, tags: <cloud.v1.common.Tags>})",
-					Category: "INPUT",
-				},
-				&v2.StringFlag{
-					Name:     "database",
-					Usage:    "set the value of the operation's \"Database\" parameter (json-encoded: {kind: <cloud.v1.domain.Database.Kind>, pramsSchema: <schemapb.Schema>, params: <schemapb.Baked>, external: <cloud.v1.domain.Database.External>, databasePresetId: <cloud.v1.domain.Database.PresetId>, tags: <cloud.v1.common.Tags>})",
-					Category: "INPUT",
-				},
-			},
-			Action: func(cmd *v2.Context) error {
-				tc, err := opts.clientForCommand(cmd)
-				if err != nil {
-					return fmt.Errorf("error initializing client for command: %w", err)
-				}
-				defer tc.Close()
-				c := NewTestServiceClient(tc)
-				req, err := UnmarshalCliFlagsToInstallDatabaseWorkflowRequest(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
-				if err != nil {
-					return fmt.Errorf("error unmarshalling request: %w", err)
-				}
-				opts := client.StartWorkflowOptions{}
-				if tq := cmd.String("task-queue"); tq != "" {
-					opts.TaskQueue = tq
-				}
-				run, err := c.InstallDatabaseWorkflowAsync(cmd.Context, req, NewInstallDatabaseWorkflowOptions().WithStartWorkflowOptions(opts))
-				if err != nil {
-					return fmt.Errorf("error starting %s workflow: %w", InstallDatabaseWorkflowWorkflowName, err)
-				}
-				if cmd.Bool("detach") {
-					fmt.Println("success")
-					fmt.Printf("workflow id: %s\n", run.ID())
-					fmt.Printf("run id: %s\n", run.RunID())
-					return nil
-				}
-				if resp, err := run.Get(cmd.Context); err != nil {
-					return err
-				} else {
-					b, err := protojson.Marshal(resp)
-					if err != nil {
-						return fmt.Errorf("error serializing response json: %w", err)
-					}
-					var out bytes.Buffer
-					if err := json.Indent(&out, b, "", "  "); err != nil {
-						return fmt.Errorf("error formatting json: %w", err)
-					}
-					fmt.Println(out.String())
-					return nil
-				}
-			},
-		},
-		{
-			Name:                   "install-stroppy-workflow",
-			Usage:                  "executes a(n) InstallStroppyWorkflow workflow",
-			Category:               "WORKFLOWS",
-			UseShortOptionHandling: true,
-			Before:                 opts.before,
-			After:                  opts.after,
-			Flags: []v2.Flag{
-				&v2.BoolFlag{
-					Name:    "detach",
-					Usage:   "run workflow in the background and print workflow and execution id",
-					Aliases: []string{"d"},
-				},
-				&v2.StringFlag{
-					Name:    "task-queue",
-					Usage:   "task queue name",
-					Aliases: []string{"t"},
-					EnvVars: []string{"TEMPORAL_TASK_QUEUE_NAME", "TEMPORAL_TASK_QUEUE", "TASK_QUEUE_NAME", "TASK_QUEUE"},
-					Value:   "stroppy-cloud",
-				},
-				&v2.StringFlag{
-					Name:     "input-file",
-					Usage:    "path to json-formatted input file",
-					Aliases:  []string{"f"},
-					Category: "INPUT",
-				},
-				&v2.StringFlag{
-					Name:     "topology",
-					Usage:    "set the value of the operation's \"Topology\" parameter (json-encoded: {instances: <cloud.v1.topology.Topology.Instance>, connections: <cloud.v1.topology.Connection>, externalComponents: <cloud.v1.topology.Component>, tags: <cloud.v1.common.Tags>})",
-					Category: "INPUT",
-				},
-			},
-			Action: func(cmd *v2.Context) error {
-				tc, err := opts.clientForCommand(cmd)
-				if err != nil {
-					return fmt.Errorf("error initializing client for command: %w", err)
-				}
-				defer tc.Close()
-				c := NewTestServiceClient(tc)
-				req, err := UnmarshalCliFlagsToInstallStroppyWorkflowRequest(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
-				if err != nil {
-					return fmt.Errorf("error unmarshalling request: %w", err)
-				}
-				opts := client.StartWorkflowOptions{}
-				if tq := cmd.String("task-queue"); tq != "" {
-					opts.TaskQueue = tq
-				}
-				run, err := c.InstallStroppyWorkflowAsync(cmd.Context, req, NewInstallStroppyWorkflowOptions().WithStartWorkflowOptions(opts))
-				if err != nil {
-					return fmt.Errorf("error starting %s workflow: %w", InstallStroppyWorkflowWorkflowName, err)
-				}
-				if cmd.Bool("detach") {
-					fmt.Println("success")
-					fmt.Printf("workflow id: %s\n", run.ID())
-					fmt.Printf("run id: %s\n", run.RunID())
-					return nil
-				}
-				if resp, err := run.Get(cmd.Context); err != nil {
-					return err
-				} else {
-					b, err := protojson.Marshal(resp)
-					if err != nil {
-						return fmt.Errorf("error serializing response json: %w", err)
-					}
-					var out bytes.Buffer
-					if err := json.Indent(&out, b, "", "  "); err != nil {
-						return fmt.Errorf("error formatting json: %w", err)
-					}
-					fmt.Println(out.String())
-					return nil
-				}
-			},
-		},
-		{
-			Name:                   "run-workload-workflow",
-			Usage:                  "executes a(n) RunWorkloadWorkflow workflow",
-			Category:               "WORKFLOWS",
-			UseShortOptionHandling: true,
-			Before:                 opts.before,
-			After:                  opts.after,
-			Flags: []v2.Flag{
-				&v2.BoolFlag{
-					Name:    "detach",
-					Usage:   "run workflow in the background and print workflow and execution id",
-					Aliases: []string{"d"},
-				},
-				&v2.StringFlag{
-					Name:    "task-queue",
-					Usage:   "task queue name",
-					Aliases: []string{"t"},
-					EnvVars: []string{"TEMPORAL_TASK_QUEUE_NAME", "TEMPORAL_TASK_QUEUE", "TASK_QUEUE_NAME", "TASK_QUEUE"},
-					Value:   "stroppy-cloud",
-				},
-				&v2.StringFlag{
-					Name:     "input-file",
-					Usage:    "path to json-formatted input file",
-					Aliases:  []string{"f"},
-					Category: "INPUT",
-				},
-				&v2.StringFlag{
-					Name:     "topology",
-					Usage:    "set the value of the operation's \"Topology\" parameter (json-encoded: {instances: <cloud.v1.topology.Topology.Instance>, connections: <cloud.v1.topology.Connection>, externalComponents: <cloud.v1.topology.Component>, tags: <cloud.v1.common.Tags>})",
-					Category: "INPUT",
-				},
-				&v2.StringFlag{
-					Name:     "workload",
-					Usage:    "set the value of the operation's \"Workload\" parameter (json-encoded: {stroppyVersion: <string>, params: <schemapb.Baked>, tags: <cloud.v1.common.Tags>})",
-					Category: "INPUT",
-				},
-			},
-			Action: func(cmd *v2.Context) error {
-				tc, err := opts.clientForCommand(cmd)
-				if err != nil {
-					return fmt.Errorf("error initializing client for command: %w", err)
-				}
-				defer tc.Close()
-				c := NewTestServiceClient(tc)
-				req, err := UnmarshalCliFlagsToRunWorkloadWorkflowRequest(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
-				if err != nil {
-					return fmt.Errorf("error unmarshalling request: %w", err)
-				}
-				opts := client.StartWorkflowOptions{}
-				if tq := cmd.String("task-queue"); tq != "" {
-					opts.TaskQueue = tq
-				}
-				run, err := c.RunWorkloadWorkflowAsync(cmd.Context, req, NewRunWorkloadWorkflowOptions().WithStartWorkflowOptions(opts))
-				if err != nil {
-					return fmt.Errorf("error starting %s workflow: %w", RunWorkloadWorkflowWorkflowName, err)
-				}
-				if cmd.Bool("detach") {
-					fmt.Println("success")
-					fmt.Printf("workflow id: %s\n", run.ID())
-					fmt.Printf("run id: %s\n", run.RunID())
-					return nil
-				}
-				if resp, err := run.Get(cmd.Context); err != nil {
-					return err
-				} else {
-					b, err := protojson.Marshal(resp)
-					if err != nil {
-						return fmt.Errorf("error serializing response json: %w", err)
-					}
-					var out bytes.Buffer
-					if err := json.Indent(&out, b, "", "  "); err != nil {
-						return fmt.Errorf("error formatting json: %w", err)
-					}
-					fmt.Println(out.String())
-					return nil
-				}
-			},
-		},
-		{
-			Name:                   "test-workflow",
-			Usage:                  "executes a(n) TestWorkflow workflow",
-			Category:               "WORKFLOWS",
-			UseShortOptionHandling: true,
-			Before:                 opts.before,
-			After:                  opts.after,
-			Flags: []v2.Flag{
-				&v2.BoolFlag{
-					Name:    "detach",
-					Usage:   "run workflow in the background and print workflow and execution id",
-					Aliases: []string{"d"},
-				},
-				&v2.StringFlag{
-					Name:    "task-queue",
-					Usage:   "task queue name",
-					Aliases: []string{"t"},
-					EnvVars: []string{"TEMPORAL_TASK_QUEUE_NAME", "TEMPORAL_TASK_QUEUE", "TASK_QUEUE_NAME", "TASK_QUEUE"},
-					Value:   "stroppy-cloud",
-				},
-				&v2.StringFlag{
-					Name:     "input-file",
-					Usage:    "path to json-formatted input file",
-					Aliases:  []string{"f"},
-					Category: "INPUT",
-				},
-				&v2.StringFlag{
-					Name:     "test-run",
-					Usage:    "set the value of the operation's \"TestRun\" parameter (json-encoded: {id: <string>, suiteId: <string>, provider: <cloud.v1.deployment.ProviderSettings>, topology: <cloud.v1.topology.Topology>, database: <cloud.v1.domain.Database>, workload: <cloud.v1.domain.Workload>, tags: <cloud.v1.common.Tags>})",
-					Category: "INPUT",
-				},
-			},
-			Action: func(cmd *v2.Context) error {
-				tc, err := opts.clientForCommand(cmd)
-				if err != nil {
-					return fmt.Errorf("error initializing client for command: %w", err)
-				}
-				defer tc.Close()
-				c := NewTestServiceClient(tc)
-				req, err := UnmarshalCliFlagsToTestWorkflowRequest(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
-				if err != nil {
-					return fmt.Errorf("error unmarshalling request: %w", err)
-				}
-				opts := client.StartWorkflowOptions{}
-				if tq := cmd.String("task-queue"); tq != "" {
-					opts.TaskQueue = tq
-				}
-				run, err := c.TestWorkflowAsync(cmd.Context, req, NewTestWorkflowOptions().WithStartWorkflowOptions(opts))
-				if err != nil {
-					return fmt.Errorf("error starting %s workflow: %w", TestWorkflowWorkflowName, err)
-				}
-				if cmd.Bool("detach") {
-					fmt.Println("success")
-					fmt.Printf("workflow id: %s\n", run.ID())
-					fmt.Printf("run id: %s\n", run.RunID())
-					return nil
-				}
-				if resp, err := run.Get(cmd.Context); err != nil {
-					return err
-				} else {
-					b, err := protojson.Marshal(resp)
-					if err != nil {
-						return fmt.Errorf("error serializing response json: %w", err)
-					}
-					var out bytes.Buffer
-					if err := json.Indent(&out, b, "", "  "); err != nil {
-						return fmt.Errorf("error formatting json: %w", err)
-					}
-					fmt.Println(out.String())
-					return nil
-				}
-			},
-		},
-	}
-	if opts.worker != nil {
-		commands = append(commands, []*v2.Command{
-			{
-				Name:                   "worker",
-				Usage:                  "runs a cloud.v1.workflow.TestService worker process",
-				UseShortOptionHandling: true,
-				Before:                 opts.before,
-				After:                  opts.after,
-				Action: func(cmd *v2.Context) error {
-					c, err := opts.clientForCommand(cmd)
-					if err != nil {
-						return fmt.Errorf("error initializing client for command: %w", err)
-					}
-					defer c.Close()
-					w, err := opts.worker(cmd, c)
-					if opts.worker != nil {
-						if err != nil {
-							return fmt.Errorf("error initializing worker: %w", err)
-						}
-					}
-					if err := w.Start(); err != nil {
-						return fmt.Errorf("error starting worker: %w", err)
-					}
-					defer w.Stop()
-					<-cmd.Context.Done()
-					return nil
-				},
-			},
-		}...)
-	}
-	sort.Slice(commands, func(i, j int) bool {
-		return commands[i].Name < commands[j].Name
-	})
-	return commands, nil
-}
-
-// UnmarshalCliFlagsToInstallDatabaseWorkflowRequest unmarshals a InstallDatabaseWorkflowRequest from command line flags
-func UnmarshalCliFlagsToInstallDatabaseWorkflowRequest(cmd *v2.Context, options ...helpers.UnmarshalCliFlagsOptions) (*InstallDatabaseWorkflowRequest, error) {
-	opts := helpers.FlattenUnmarshalCliFlagsOptions(options...)
-	var result InstallDatabaseWorkflowRequest
-	if opts.FromFile != "" && cmd.IsSet(opts.FromFile) {
-		f, err := gohomedir.Expand(cmd.String(opts.FromFile))
-		if err != nil {
-			f = cmd.String(opts.FromFile)
-		}
-		b, err := os.ReadFile(f)
-		if err != nil {
-			return nil, fmt.Errorf("error reading %s: %w", opts.FromFile, err)
-		}
-		if err := protojson.Unmarshal(b, &result); err != nil {
-			return nil, fmt.Errorf("error parsing %s json: %w", opts.FromFile, err)
-		}
-	}
-	if flag := opts.FlagName("topology"); cmd.IsSet(flag) {
-		var tmp topology.Topology
-		if err := protojson.Unmarshal([]byte(cmd.String(flag)), &tmp); err != nil {
-			return nil, fmt.Errorf("error unmarshalling \"topology\" flag: %w", err)
-		}
-		value := &tmp
-		result.Topology = value
-	}
-	if flag := opts.FlagName("database"); cmd.IsSet(flag) {
-		var tmp domain.Database
-		if err := protojson.Unmarshal([]byte(cmd.String(flag)), &tmp); err != nil {
-			return nil, fmt.Errorf("error unmarshalling \"database\" flag: %w", err)
-		}
-		value := &tmp
-		result.Database = value
-	}
-	return &result, nil
-}
-
-// UnmarshalCliFlagsToInstallStroppyWorkflowRequest unmarshals a InstallStroppyWorkflowRequest from command line flags
-func UnmarshalCliFlagsToInstallStroppyWorkflowRequest(cmd *v2.Context, options ...helpers.UnmarshalCliFlagsOptions) (*InstallStroppyWorkflowRequest, error) {
-	opts := helpers.FlattenUnmarshalCliFlagsOptions(options...)
-	var result InstallStroppyWorkflowRequest
-	if opts.FromFile != "" && cmd.IsSet(opts.FromFile) {
-		f, err := gohomedir.Expand(cmd.String(opts.FromFile))
-		if err != nil {
-			f = cmd.String(opts.FromFile)
-		}
-		b, err := os.ReadFile(f)
-		if err != nil {
-			return nil, fmt.Errorf("error reading %s: %w", opts.FromFile, err)
-		}
-		if err := protojson.Unmarshal(b, &result); err != nil {
-			return nil, fmt.Errorf("error parsing %s json: %w", opts.FromFile, err)
-		}
-	}
-	if flag := opts.FlagName("topology"); cmd.IsSet(flag) {
-		var tmp topology.Topology
-		if err := protojson.Unmarshal([]byte(cmd.String(flag)), &tmp); err != nil {
-			return nil, fmt.Errorf("error unmarshalling \"topology\" flag: %w", err)
-		}
-		value := &tmp
-		result.Topology = value
-	}
-	return &result, nil
-}
-
-// UnmarshalCliFlagsToRunWorkloadWorkflowRequest unmarshals a RunWorkloadWorkflowRequest from command line flags
-func UnmarshalCliFlagsToRunWorkloadWorkflowRequest(cmd *v2.Context, options ...helpers.UnmarshalCliFlagsOptions) (*RunWorkloadWorkflowRequest, error) {
-	opts := helpers.FlattenUnmarshalCliFlagsOptions(options...)
-	var result RunWorkloadWorkflowRequest
-	if opts.FromFile != "" && cmd.IsSet(opts.FromFile) {
-		f, err := gohomedir.Expand(cmd.String(opts.FromFile))
-		if err != nil {
-			f = cmd.String(opts.FromFile)
-		}
-		b, err := os.ReadFile(f)
-		if err != nil {
-			return nil, fmt.Errorf("error reading %s: %w", opts.FromFile, err)
-		}
-		if err := protojson.Unmarshal(b, &result); err != nil {
-			return nil, fmt.Errorf("error parsing %s json: %w", opts.FromFile, err)
-		}
-	}
-	if flag := opts.FlagName("topology"); cmd.IsSet(flag) {
-		var tmp topology.Topology
-		if err := protojson.Unmarshal([]byte(cmd.String(flag)), &tmp); err != nil {
-			return nil, fmt.Errorf("error unmarshalling \"topology\" flag: %w", err)
-		}
-		value := &tmp
-		result.Topology = value
-	}
-	if flag := opts.FlagName("workload"); cmd.IsSet(flag) {
-		var tmp domain.Workload
-		if err := protojson.Unmarshal([]byte(cmd.String(flag)), &tmp); err != nil {
-			return nil, fmt.Errorf("error unmarshalling \"workload\" flag: %w", err)
-		}
-		value := &tmp
-		result.Workload = value
-	}
-	return &result, nil
-}
-
-// UnmarshalCliFlagsToTestWorkflowRequest unmarshals a TestWorkflowRequest from command line flags
-func UnmarshalCliFlagsToTestWorkflowRequest(cmd *v2.Context, options ...helpers.UnmarshalCliFlagsOptions) (*TestWorkflowRequest, error) {
-	opts := helpers.FlattenUnmarshalCliFlagsOptions(options...)
-	var result TestWorkflowRequest
-	if opts.FromFile != "" && cmd.IsSet(opts.FromFile) {
-		f, err := gohomedir.Expand(cmd.String(opts.FromFile))
-		if err != nil {
-			f = cmd.String(opts.FromFile)
-		}
-		b, err := os.ReadFile(f)
-		if err != nil {
-			return nil, fmt.Errorf("error reading %s: %w", opts.FromFile, err)
-		}
-		if err := protojson.Unmarshal(b, &result); err != nil {
-			return nil, fmt.Errorf("error parsing %s json: %w", opts.FromFile, err)
-		}
-	}
-	if flag := opts.FlagName("test-run"); cmd.IsSet(flag) {
-		var tmp domain.TestRun
-		if err := protojson.Unmarshal([]byte(cmd.String(flag)), &tmp); err != nil {
-			return nil, fmt.Errorf("error unmarshalling \"test-run\" flag: %w", err)
-		}
-		value := &tmp
-		result.TestRun = value
-	}
-	return &result, nil
 }
 
 // SuiteWorkflowServiceTaskQueue is the default task-queue for a cloud.v1.workflow.SuiteWorkflowService worker
@@ -3270,7 +2773,8 @@ var (
 
 // SuiteWorkflowServiceClient describes a client for a(n) cloud.v1.workflow.SuiteWorkflowService worker
 type SuiteWorkflowServiceClient interface {
-	// SuiteWorkflow executes a(n) SuiteWorkflow workflow and blocks until error or response received
+	// SuiteWorkflow fans out a child TestWorkflow per test run in the suite,
+	// deduplicated by a deterministic id derived from SuiteRun.id.
 	SuiteWorkflow(ctx context.Context, req *SuiteWorkflowRequest, opts ...*SuiteWorkflowOptions) (*SuiteWorkflowResponse, error)
 
 	// SuiteWorkflowAsync starts a(n) SuiteWorkflow workflow and returns a handle to the workflow run
@@ -3351,7 +2855,8 @@ func (opts *suiteWorkflowServiceClientOptions) getLogger() *slog.Logger {
 	return slog.Default()
 }
 
-// cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow executes a SuiteWorkflow workflow and blocks until error or response received
+// SuiteWorkflow fans out a child TestWorkflow per test run in the suite,
+// deduplicated by a deterministic id derived from SuiteRun.id.
 func (c *suiteWorkflowServiceClient) SuiteWorkflow(ctx context.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowOptions) (*SuiteWorkflowResponse, error) {
 	run, err := c.SuiteWorkflowAsync(ctx, req, options...)
 	if err != nil {
@@ -3360,7 +2865,8 @@ func (c *suiteWorkflowServiceClient) SuiteWorkflow(ctx context.Context, req *Sui
 	return run.Get(ctx)
 }
 
-// SuiteWorkflowAsync starts a(n) SuiteWorkflow workflow and returns a handle to the workflow run
+// SuiteWorkflow fans out a child TestWorkflow per test run in the suite,
+// deduplicated by a deterministic id derived from SuiteRun.id.
 func (c *suiteWorkflowServiceClient) SuiteWorkflowAsync(ctx context.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowOptions) (SuiteWorkflowRun, error) {
 	var o *SuiteWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3614,7 +3120,8 @@ func (r *suiteWorkflowRun) Terminate(ctx context.Context, reason string, details
 var (
 	// suiteWorkflowServiceRegistrationMutex is a mutex for registering cloud.v1.workflow.SuiteWorkflowService workflows
 	suiteWorkflowServiceRegistrationMutex sync.Mutex
-	// SuiteWorkflowFunction implements a "SuiteWorkflow" workflow
+	// SuiteWorkflow fans out a child TestWorkflow per test run in the suite,
+	// deduplicated by a deterministic id derived from SuiteRun.id.
 	SuiteWorkflowFunction func(workflow.Context, *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error)
 )
 
@@ -3622,7 +3129,8 @@ var (
 type (
 	// SuiteWorkflowServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
 	SuiteWorkflowServiceWorkflowFunctions interface {
-		// SuiteWorkflow executes a "SuiteWorkflow" workflow inline
+		// SuiteWorkflow fans out a child TestWorkflow per test run in the suite,
+		// deduplicated by a deterministic id derived from SuiteRun.id.
 		SuiteWorkflow(workflow.Context, *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error)
 	}
 	// suiteWorkflowServiceWorkflowFunctions provides an internal SuiteWorkflowServiceWorkflowFunctions implementation
@@ -3633,7 +3141,8 @@ func NewSuiteWorkflowServiceWorkflowFunctions() SuiteWorkflowServiceWorkflowFunc
 	return &suiteWorkflowServiceWorkflowFunctions{}
 }
 
-// SuiteWorkflow executes a "SuiteWorkflow" workflow inline
+// SuiteWorkflow fans out a child TestWorkflow per test run in the suite,
+// deduplicated by a deterministic id derived from SuiteRun.id.
 func (f *suiteWorkflowServiceWorkflowFunctions) SuiteWorkflow(ctx workflow.Context, req *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error) {
 	if SuiteWorkflowFunction == nil {
 		return nil, errors.New("SuiteWorkflow requires workflow registration via RegisterSuiteWorkflowServiceWorkflows or RegisterSuiteWorkflowWorkflow")
@@ -3643,7 +3152,8 @@ func (f *suiteWorkflowServiceWorkflowFunctions) SuiteWorkflow(ctx workflow.Conte
 
 // SuiteWorkflowServiceWorkflows provides methods for initializing new cloud.v1.workflow.SuiteWorkflowService workflow values
 type SuiteWorkflowServiceWorkflows interface {
-	// SuiteWorkflow initializes a new a(n) SuiteWorkflowWorkflow implementation
+	// SuiteWorkflow fans out a child TestWorkflow per test run in the suite,
+	// deduplicated by a deterministic id derived from SuiteRun.id.
 	SuiteWorkflow(ctx workflow.Context, input *SuiteWorkflowWorkflowInput) (SuiteWorkflowWorkflow, error)
 }
 
@@ -3696,7 +3206,8 @@ func (i *SuiteWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *
 	return nil, workflow.NewContinueAsNewError(ctx, SuiteWorkflowWorkflowName, next)
 }
 
-// SuiteWorkflowWorkflow describes a(n) SuiteWorkflow workflow implementation
+// SuiteWorkflow fans out a child TestWorkflow per test run in the suite,
+// deduplicated by a deterministic id derived from SuiteRun.id.
 //
 // workflow details: (id: "suite-run/${! suite_run.id }")
 type SuiteWorkflowWorkflow interface {
@@ -3704,7 +3215,8 @@ type SuiteWorkflowWorkflow interface {
 	Execute(ctx workflow.Context) (*SuiteWorkflowResponse, error)
 }
 
-// SuiteWorkflowChild executes a child SuiteWorkflow workflow and blocks until error or response received
+// SuiteWorkflow fans out a child TestWorkflow per test run in the suite,
+// deduplicated by a deterministic id derived from SuiteRun.id.
 func SuiteWorkflowChild(ctx workflow.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowChildOptions) (*SuiteWorkflowResponse, error) {
 	childRun, err := SuiteWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
@@ -3713,7 +3225,8 @@ func SuiteWorkflowChild(ctx workflow.Context, req *SuiteWorkflowRequest, options
 	return childRun.Get(ctx)
 }
 
-// SuiteWorkflowChildAsync starts a child SuiteWorkflow workflow and returns a handle to the child workflow run
+// SuiteWorkflow fans out a child TestWorkflow per test run in the suite,
+// deduplicated by a deterministic id derived from SuiteRun.id.
 func SuiteWorkflowChildAsync(ctx workflow.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowChildOptions) (*SuiteWorkflowChildRun, error) {
 	var o *SuiteWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
@@ -4066,216 +3579,10 @@ func (r *testSuiteWorkflowRun) Terminate(ctx context.Context, reason string, det
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
 }
 
-// SuiteWorkflowServiceCliOptions describes runtime configuration for cloud.v1.workflow.SuiteWorkflowService cli
-type SuiteWorkflowServiceCliOptions struct {
-	after            func(*v2.Context) error
-	before           func(*v2.Context) error
-	clientForCommand func(*v2.Context) (client.Client, error)
-	worker           func(*v2.Context, client.Client) (worker.Worker, error)
-}
-
-// NewSuiteWorkflowServiceCliOptions initializes a new SuiteWorkflowServiceCliOptions value
-func NewSuiteWorkflowServiceCliOptions() *SuiteWorkflowServiceCliOptions {
-	return &SuiteWorkflowServiceCliOptions{}
-}
-
-// WithAfter injects a custom After hook to be run after any command invocation
-func (opts *SuiteWorkflowServiceCliOptions) WithAfter(fn func(*v2.Context) error) *SuiteWorkflowServiceCliOptions {
-	opts.after = fn
-	return opts
-}
-
-// WithBefore injects a custom Before hook to be run prior to any command invocation
-func (opts *SuiteWorkflowServiceCliOptions) WithBefore(fn func(*v2.Context) error) *SuiteWorkflowServiceCliOptions {
-	opts.before = fn
-	return opts
-}
-
-// WithClient provides a Temporal client factory for use by commands
-func (opts *SuiteWorkflowServiceCliOptions) WithClient(fn func(*v2.Context) (client.Client, error)) *SuiteWorkflowServiceCliOptions {
-	opts.clientForCommand = fn
-	return opts
-}
-
-// WithWorker provides an method for initializing a worker
-func (opts *SuiteWorkflowServiceCliOptions) WithWorker(fn func(*v2.Context, client.Client) (worker.Worker, error)) *SuiteWorkflowServiceCliOptions {
-	opts.worker = fn
-	return opts
-}
-
-// NewSuiteWorkflowServiceCli initializes a cli for a(n) cloud.v1.workflow.SuiteWorkflowService service
-func NewSuiteWorkflowServiceCli(options ...*SuiteWorkflowServiceCliOptions) (*v2.App, error) {
-	commands, err := newSuiteWorkflowServiceCommands(options...)
-	if err != nil {
-		return nil, fmt.Errorf("error initializing subcommands: %w", err)
+// WithSuiteWorkflowServiceSchemeTypes registers all SuiteWorkflowService protobuf types with the given scheme
+func WithSuiteWorkflowServiceSchemeTypes() scheme.Option {
+	return func(s *scheme.Scheme) {
+		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("SuiteWorkflowRequest"))
+		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("SuiteWorkflowResponse"))
 	}
-	return &v2.App{
-		Name:                      "suite-workflow-service",
-		Usage:                     "cloud.v1.workflow.SuiteWorkflowService operations",
-		Commands:                  commands,
-		DisableSliceFlagSeparator: true,
-	}, nil
-}
-
-// NewSuiteWorkflowServiceCliCommand initializes a cli command for a cloud.v1.workflow.SuiteWorkflowService service with subcommands for each query, signal, update, and workflow
-func NewSuiteWorkflowServiceCliCommand(options ...*SuiteWorkflowServiceCliOptions) (*v2.Command, error) {
-	subcommands, err := newSuiteWorkflowServiceCommands(options...)
-	if err != nil {
-		return nil, fmt.Errorf("error initializing subcommands: %w", err)
-	}
-	return &v2.Command{
-		Name:        "suite-workflow-service",
-		Usage:       "cloud.v1.workflow.SuiteWorkflowService operations",
-		Subcommands: subcommands,
-	}, nil
-}
-
-// newSuiteWorkflowServiceCommands initializes (sub)commands for a cloud.v1.workflow.SuiteWorkflowService cli or command
-func newSuiteWorkflowServiceCommands(options ...*SuiteWorkflowServiceCliOptions) ([]*v2.Command, error) {
-	opts := &SuiteWorkflowServiceCliOptions{}
-	if len(options) > 0 {
-		opts = options[0]
-	}
-	if opts.clientForCommand == nil {
-		opts.clientForCommand = func(*v2.Context) (client.Client, error) {
-			return client.Dial(client.Options{})
-		}
-	}
-	commands := []*v2.Command{
-		{
-			Name:                   "suite-workflow",
-			Usage:                  "executes a(n) SuiteWorkflow workflow",
-			Category:               "WORKFLOWS",
-			UseShortOptionHandling: true,
-			Before:                 opts.before,
-			After:                  opts.after,
-			Flags: []v2.Flag{
-				&v2.BoolFlag{
-					Name:    "detach",
-					Usage:   "run workflow in the background and print workflow and execution id",
-					Aliases: []string{"d"},
-				},
-				&v2.StringFlag{
-					Name:    "task-queue",
-					Usage:   "task queue name",
-					Aliases: []string{"t"},
-					EnvVars: []string{"TEMPORAL_TASK_QUEUE_NAME", "TEMPORAL_TASK_QUEUE", "TASK_QUEUE_NAME", "TASK_QUEUE"},
-					Value:   "stroppy-cloud",
-				},
-				&v2.StringFlag{
-					Name:     "input-file",
-					Usage:    "path to json-formatted input file",
-					Aliases:  []string{"f"},
-					Category: "INPUT",
-				},
-				&v2.StringFlag{
-					Name:     "suite-run",
-					Usage:    "set the value of the operation's \"SuiteRun\" parameter (json-encoded: {id: <string>, suiteId: <string>, testRuns: <cloud.v1.domain.TestRun>, maxParallel: <uint32>})",
-					Category: "INPUT",
-				},
-			},
-			Action: func(cmd *v2.Context) error {
-				tc, err := opts.clientForCommand(cmd)
-				if err != nil {
-					return fmt.Errorf("error initializing client for command: %w", err)
-				}
-				defer tc.Close()
-				c := NewSuiteWorkflowServiceClient(tc)
-				req, err := UnmarshalCliFlagsToSuiteWorkflowRequest(cmd, helpers.UnmarshalCliFlagsOptions{FromFile: "input-file"})
-				if err != nil {
-					return fmt.Errorf("error unmarshalling request: %w", err)
-				}
-				opts := client.StartWorkflowOptions{}
-				if tq := cmd.String("task-queue"); tq != "" {
-					opts.TaskQueue = tq
-				}
-				run, err := c.SuiteWorkflowAsync(cmd.Context, req, NewSuiteWorkflowOptions().WithStartWorkflowOptions(opts))
-				if err != nil {
-					return fmt.Errorf("error starting %s workflow: %w", SuiteWorkflowWorkflowName, err)
-				}
-				if cmd.Bool("detach") {
-					fmt.Println("success")
-					fmt.Printf("workflow id: %s\n", run.ID())
-					fmt.Printf("run id: %s\n", run.RunID())
-					return nil
-				}
-				if resp, err := run.Get(cmd.Context); err != nil {
-					return err
-				} else {
-					b, err := protojson.Marshal(resp)
-					if err != nil {
-						return fmt.Errorf("error serializing response json: %w", err)
-					}
-					var out bytes.Buffer
-					if err := json.Indent(&out, b, "", "  "); err != nil {
-						return fmt.Errorf("error formatting json: %w", err)
-					}
-					fmt.Println(out.String())
-					return nil
-				}
-			},
-		},
-	}
-	if opts.worker != nil {
-		commands = append(commands, []*v2.Command{
-			{
-				Name:                   "worker",
-				Usage:                  "runs a cloud.v1.workflow.SuiteWorkflowService worker process",
-				UseShortOptionHandling: true,
-				Before:                 opts.before,
-				After:                  opts.after,
-				Action: func(cmd *v2.Context) error {
-					c, err := opts.clientForCommand(cmd)
-					if err != nil {
-						return fmt.Errorf("error initializing client for command: %w", err)
-					}
-					defer c.Close()
-					w, err := opts.worker(cmd, c)
-					if opts.worker != nil {
-						if err != nil {
-							return fmt.Errorf("error initializing worker: %w", err)
-						}
-					}
-					if err := w.Start(); err != nil {
-						return fmt.Errorf("error starting worker: %w", err)
-					}
-					defer w.Stop()
-					<-cmd.Context.Done()
-					return nil
-				},
-			},
-		}...)
-	}
-	sort.Slice(commands, func(i, j int) bool {
-		return commands[i].Name < commands[j].Name
-	})
-	return commands, nil
-}
-
-// UnmarshalCliFlagsToSuiteWorkflowRequest unmarshals a SuiteWorkflowRequest from command line flags
-func UnmarshalCliFlagsToSuiteWorkflowRequest(cmd *v2.Context, options ...helpers.UnmarshalCliFlagsOptions) (*SuiteWorkflowRequest, error) {
-	opts := helpers.FlattenUnmarshalCliFlagsOptions(options...)
-	var result SuiteWorkflowRequest
-	if opts.FromFile != "" && cmd.IsSet(opts.FromFile) {
-		f, err := gohomedir.Expand(cmd.String(opts.FromFile))
-		if err != nil {
-			f = cmd.String(opts.FromFile)
-		}
-		b, err := os.ReadFile(f)
-		if err != nil {
-			return nil, fmt.Errorf("error reading %s: %w", opts.FromFile, err)
-		}
-		if err := protojson.Unmarshal(b, &result); err != nil {
-			return nil, fmt.Errorf("error parsing %s json: %w", opts.FromFile, err)
-		}
-	}
-	if flag := opts.FlagName("suite-run"); cmd.IsSet(flag) {
-		var tmp domain.SuiteRun
-		if err := protojson.Unmarshal([]byte(cmd.String(flag)), &tmp); err != nil {
-			return nil, fmt.Errorf("error unmarshalling \"suite-run\" flag: %w", err)
-		}
-		value := &tmp
-		result.SuiteRun = value
-	}
-	return &result, nil
 }

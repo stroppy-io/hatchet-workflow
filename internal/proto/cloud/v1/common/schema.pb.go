@@ -23,10 +23,14 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// RenderedSchema couples a schema definition with a concrete value rendered
+// against it.
 type RenderedSchema struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Schema        *schemapb.Schema       `protobuf:"bytes,1,opt,name=schema,proto3" json:"schema,omitempty"`
-	Value         *structpb.Struct       `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// schema is the schema definition the value conforms to.
+	Schema *schemapb.Schema `protobuf:"bytes,1,opt,name=schema,proto3" json:"schema,omitempty"`
+	// value is the structured data rendered against the schema.
+	Value         *structpb.Struct `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

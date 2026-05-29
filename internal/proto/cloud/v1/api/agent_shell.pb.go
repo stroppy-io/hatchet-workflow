@@ -27,18 +27,21 @@ const (
 
 // ShellStart is the REQUIRED first client frame: it picks the target and opens.
 type ShellStart struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// Run context for audit/scoping (optional but recommended).
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the session to one tenant; the streaming auth
+	// interceptor reads it from this first frame.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// run_id is the run context for audit/scoping (optional but recommended).
 	RunId string `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	// Target host. Required.
+	// machine_id is the target host. Required.
 	MachineId string `protobuf:"bytes,3,opt,name=machine_id,json=machineId,proto3" json:"machine_id,omitempty"`
-	// Optional target component on the host.
+	// component_id is an optional target component on the host.
 	ComponentId string `protobuf:"bytes,4,opt,name=component_id,json=componentId,proto3" json:"component_id,omitempty"`
-	// Initial terminal size.
+	// cols is the initial terminal width in columns.
 	Cols uint32 `protobuf:"varint,5,opt,name=cols,proto3" json:"cols,omitempty"`
+	// rows is the initial terminal height in rows.
 	Rows uint32 `protobuf:"varint,6,opt,name=rows,proto3" json:"rows,omitempty"`
-	// Shell to launch; empty -> agent default.
+	// shell is the shell to launch; empty -> agent default.
 	Shell         string `protobuf:"bytes,7,opt,name=shell,proto3" json:"shell,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -126,6 +129,9 @@ func (x *ShellStart) GetShell() string {
 // ShellClientFrame is admin -> server. The first frame MUST be `start`.
 type ShellClientFrame struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// frame is the per-message payload: start (must be first), stdin bytes, a
+	// terminal resize, or a close request.
+	//
 	// Types that are valid to be assigned to Frame:
 	//
 	//	*ShellClientFrame_Start
@@ -215,18 +221,22 @@ type isShellClientFrame_Frame interface {
 }
 
 type ShellClientFrame_Start struct {
+	// start opens the session (required first frame).
 	Start *ShellStart `protobuf:"bytes,1,opt,name=start,proto3,oneof"`
 }
 
 type ShellClientFrame_Stdin struct {
+	// stdin carries raw keystrokes typed into the terminal.
 	Stdin []byte `protobuf:"bytes,2,opt,name=stdin,proto3,oneof"`
 }
 
 type ShellClientFrame_Resize struct {
+	// resize updates the terminal dimensions mid-session.
 	Resize *agent.ShellResize `protobuf:"bytes,3,opt,name=resize,proto3,oneof"`
 }
 
 type ShellClientFrame_Close struct {
+	// close requests an orderly shutdown of the session.
 	Close *emptypb.Empty `protobuf:"bytes,4,opt,name=close,proto3,oneof"`
 }
 
@@ -241,6 +251,9 @@ func (*ShellClientFrame_Close) isShellClientFrame_Frame() {}
 // ShellServerFrame is server -> admin.
 type ShellServerFrame struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// frame is the per-message payload: stdout bytes, stderr bytes, or the
+	// terminal's exit notification.
+	//
 	// Types that are valid to be assigned to Frame:
 	//
 	//	*ShellServerFrame_Stdout
@@ -320,14 +333,17 @@ type isShellServerFrame_Frame interface {
 }
 
 type ShellServerFrame_Stdout struct {
+	// stdout carries the terminal's standard-output bytes.
 	Stdout []byte `protobuf:"bytes,1,opt,name=stdout,proto3,oneof"`
 }
 
 type ShellServerFrame_Stderr struct {
+	// stderr carries the terminal's standard-error bytes.
 	Stderr []byte `protobuf:"bytes,2,opt,name=stderr,proto3,oneof"`
 }
 
 type ShellServerFrame_Exit struct {
+	// exit signals the shell process terminated (with its exit status).
 	Exit *agent.ShellExit `protobuf:"bytes,3,opt,name=exit,proto3,oneof"`
 }
 

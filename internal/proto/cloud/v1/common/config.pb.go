@@ -22,6 +22,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Config is the common configuration envelope shared across the control plane.
 type Config struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -58,6 +59,8 @@ func (*Config) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_common_config_proto_rawDescGZIP(), []int{0}
 }
 
+// Baked is a configuration that has been fully resolved/materialized so it
+// can be applied without further lookup.
 type Config_Baked struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields

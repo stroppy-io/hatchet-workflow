@@ -30,10 +30,14 @@ const (
 // ShareServiceClient is the client API for ShareService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// ShareService is the authenticated management side of run shares.
 type ShareServiceClient interface {
 	// CreateShare is not idempotent: each call mints a new token + snapshot.
 	CreateShare(ctx context.Context, in *CreateShareRequest, opts ...grpc.CallOption) (*CreateShareResponse, error)
+	// GetShare fetches one share by id. Read-only.
 	GetShare(ctx context.Context, in *GetShareRequest, opts ...grpc.CallOption) (*GetShareResponse, error)
+	// ListShares lists a tenant's shares. Read-only.
 	ListShares(ctx context.Context, in *ListSharesRequest, opts ...grpc.CallOption) (*ListSharesResponse, error)
 	// RevokeShare is idempotent: revoking an already-revoked share is a no-op.
 	RevokeShare(ctx context.Context, in *RevokeShareRequest, opts ...grpc.CallOption) (*RevokeShareResponse, error)
@@ -114,10 +118,14 @@ func (c *shareServiceClient) DeleteShare(ctx context.Context, in *DeleteShareReq
 // ShareServiceServer is the server API for ShareService service.
 // All implementations must embed UnimplementedShareServiceServer
 // for forward compatibility.
+//
+// ShareService is the authenticated management side of run shares.
 type ShareServiceServer interface {
 	// CreateShare is not idempotent: each call mints a new token + snapshot.
 	CreateShare(context.Context, *CreateShareRequest) (*CreateShareResponse, error)
+	// GetShare fetches one share by id. Read-only.
 	GetShare(context.Context, *GetShareRequest) (*GetShareResponse, error)
+	// ListShares lists a tenant's shares. Read-only.
 	ListShares(context.Context, *ListSharesRequest) (*ListSharesResponse, error)
 	// RevokeShare is idempotent: revoking an already-revoked share is a no-op.
 	RevokeShare(context.Context, *RevokeShareRequest) (*RevokeShareResponse, error)

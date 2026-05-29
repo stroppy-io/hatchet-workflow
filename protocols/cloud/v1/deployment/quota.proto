@@ -23,6 +23,8 @@ message Quota {
         /* provider selects the deployment backend this reading belongs to and,
            with it, the QuotaKind enum that quota_kind_enum_value indexes. */
         deployment.Provider provider = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        /* name is the provider-reported quota name, e.g. the metric/quota id
+           that quota_kind_enum_value resolves to. */
         string name = 2 [(validate.rules).string.min_len = 1];
         /* units is the provider-reported unit of used and limit, e.g.
            "count", "cores", "bytes", "GB". */
@@ -44,10 +46,14 @@ message Quota {
         uint64 limit = 4;
     }
 
+    /*
+        Request is the amount one deployment asks to consume from a quota
+        during a preflight check, before it is committed as an Allocation.
+     */
     message Request {
-        /* info identifies the provider and quota kind being allocated. */
+        /* info identifies the provider and quota kind being requested. */
         Info info = 1 [(validate.rules).message.required = true];
-        /* used is the amount this deployment requests, in info.units. */
+        /* request is the amount this deployment requests, in info.units. */
         uint64 request = 3;
     }
 

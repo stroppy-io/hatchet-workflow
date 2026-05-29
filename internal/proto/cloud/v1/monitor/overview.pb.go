@@ -27,17 +27,26 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Kind classifies what the timeline event represents.
 type Event_Kind int32
 
 const (
-	Event_KIND_UNSPECIFIED     Event_Kind = 0
-	Event_KIND_STAGE_STARTED   Event_Kind = 1
+	// KIND_UNSPECIFIED is the zero value and is never a valid kind.
+	Event_KIND_UNSPECIFIED Event_Kind = 0
+	// KIND_STAGE_STARTED is a stage beginning execution.
+	Event_KIND_STAGE_STARTED Event_Kind = 1
+	// KIND_STAGE_COMPLETED is a stage finishing successfully.
 	Event_KIND_STAGE_COMPLETED Event_Kind = 2
-	Event_KIND_STAGE_FAILED    Event_Kind = 3
-	Event_KIND_STAGE_RETRYING  Event_Kind = 4
-	Event_KIND_WORKER_ONLINE   Event_Kind = 5
-	Event_KIND_WORKER_OFFLINE  Event_Kind = 6
-	Event_KIND_RUN_STATUS      Event_Kind = 7
+	// KIND_STAGE_FAILED is a stage ending in failure.
+	Event_KIND_STAGE_FAILED Event_Kind = 3
+	// KIND_STAGE_RETRYING is a stage being retried after a failure.
+	Event_KIND_STAGE_RETRYING Event_Kind = 4
+	// KIND_WORKER_ONLINE is a worker becoming reachable.
+	Event_KIND_WORKER_ONLINE Event_Kind = 5
+	// KIND_WORKER_OFFLINE is a worker going unreachable.
+	Event_KIND_WORKER_OFFLINE Event_Kind = 6
+	// KIND_RUN_STATUS is a change in the overall run status.
+	Event_KIND_RUN_STATUS Event_Kind = 7
 )
 
 // Enum value maps for Event_Kind.
@@ -94,19 +103,23 @@ func (Event_Kind) EnumDescriptor() ([]byte, []int) {
 // Overview is the whole Overview-tab payload for one run (snapshot or stream tick).
 type Overview struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	RunId string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	// Overall run status.
-	Status     common.Status          `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
-	StartedAt  *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// run_id is the run this overview projects (plain string, runtime-pure).
+	RunId string `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// status is the overall run status.
+	Status common.Status `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
+	// started_at is when the run began executing.
+	StartedAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// finished_at is when the run reached a terminal state; unset while running.
 	FinishedAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
-	Duration   *durationpb.Duration   `protobuf:"bytes,5,opt,name=duration,proto3" json:"duration,omitempty"`
-	// Aggregate progress (0..100), derived from the pipeline.
+	// duration is the elapsed run time (so far, or final once finished).
+	Duration *durationpb.Duration `protobuf:"bytes,5,opt,name=duration,proto3" json:"duration,omitempty"`
+	// progress_pct is the aggregate progress (0..100), derived from the pipeline.
 	ProgressPct uint32 `protobuf:"varint,6,opt,name=progress_pct,json=progressPct,proto3" json:"progress_pct,omitempty"`
-	// Live pipeline view (display tree + per-node runtime + log handles).
+	// pipeline is the live pipeline view (display tree + per-node runtime + log handles).
 	Pipeline *PipelineView `protobuf:"bytes,7,opt,name=pipeline,proto3" json:"pipeline,omitempty"`
-	// Agents/workers participating in the run and their live state.
+	// workers are the agents/workers participating in the run and their live state.
 	Workers []*WorkerInfo `protobuf:"bytes,8,rep,name=workers,proto3" json:"workers,omitempty"`
-	// Temporal-derived activity feed (what is happening / happened).
+	// timeline is the Temporal-derived activity feed (what is happening / happened).
 	Timeline      []*Event `protobuf:"bytes,9,rep,name=timeline,proto3" json:"timeline,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -209,8 +222,9 @@ func (x *Overview) GetTimeline() []*Event {
 // from Temporal. There is no separate static "blueprint" — for a not-yet-started
 // run the server emits the same tree with PENDING statuses.
 type PipelineView struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Roots         []*PipelineNode        `protobuf:"bytes,1,rep,name=roots,proto3" json:"roots,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// roots are the top-level pipeline stages; each may nest children.
+	Roots         []*PipelineNode `protobuf:"bytes,1,rep,name=roots,proto3" json:"roots,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -259,22 +273,25 @@ type PipelineNode struct {
 	// It is the node's identity AND the key the LogRef/log filter uses to slice
 	// this stage's logs.
 	NodeExecutionId string `protobuf:"bytes,10,opt,name=node_execution_id,json=nodeExecutionId,proto3" json:"node_execution_id,omitempty"`
-	// Human label of the stage.
+	// name is the human label of the stage.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// Runtime status of this stage.
-	Status     common.Status          `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
-	StartedAt  *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// status is the runtime status of this stage.
+	Status common.Status `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
+	// started_at is when this stage began executing.
+	StartedAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// finished_at is when this stage reached a terminal state; unset while running.
 	FinishedAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
-	Duration   *durationpb.Duration   `protobuf:"bytes,5,opt,name=duration,proto3" json:"duration,omitempty"`
-	// Which worker ran this stage.
+	// duration is the elapsed time of this stage.
+	Duration *durationpb.Duration `protobuf:"bytes,5,opt,name=duration,proto3" json:"duration,omitempty"`
+	// worker is which worker ran this stage.
 	Worker *domain.Worker `protobuf:"bytes,6,opt,name=worker,proto3" json:"worker,omitempty"`
-	// Baked params this stage ran with (what used to live on the static task).
+	// params are the baked params this stage ran with (what used to live on the static task).
 	Params *schemapb.Baked `protobuf:"bytes,11,opt,name=params,proto3" json:"params,omitempty"`
 	// log_ref is the deep-link from this node to its logs. The UI builds the
 	// Logs tab filter from it. Carries the run/stage/component handles needed to
 	// slice the logs (node_execution_id + component_id).
 	LogRef *LogRef `protobuf:"bytes,7,opt,name=log_ref,json=logRef,proto3" json:"log_ref,omitempty"`
-	// Nested stages.
+	// children are the nested stages under this node.
 	Children []*PipelineNode `protobuf:"bytes,8,rep,name=children,proto3" json:"children,omitempty"`
 	// attempt counts a retried stage (>1 means it was retried).
 	Attempt       uint32 `protobuf:"varint,9,opt,name=attempt,proto3" json:"attempt,omitempty"`
@@ -391,18 +408,23 @@ func (x *PipelineNode) GetAttempt() uint32 {
 
 // WorkerInfo is a master/agent worker and its live state.
 type WorkerInfo struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	Id        string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Kind      domain.Worker_Kind     `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.domain.Worker_Kind" json:"kind,omitempty"` // MASTER / AGENT
-	MachineId string                 `protobuf:"bytes,3,opt,name=machine_id,json=machineId,proto3" json:"machine_id,omitempty"`
-	Host      string                 `protobuf:"bytes,4,opt,name=host,proto3" json:"host,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the worker's identifier.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// kind is whether this worker is the MASTER or an AGENT.
+	Kind domain.Worker_Kind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.domain.Worker_Kind" json:"kind,omitempty"`
+	// machine_id is the host this worker runs on.
+	MachineId string `protobuf:"bytes,3,opt,name=machine_id,json=machineId,proto3" json:"machine_id,omitempty"`
+	// host is the worker's network host/address.
+	Host string `protobuf:"bytes,4,opt,name=host,proto3" json:"host,omitempty"`
 	// online is true if the agent is currently reachable/polling.
 	Online bool `protobuf:"varint,5,opt,name=online,proto3" json:"online,omitempty"`
-	// Current stage the worker is executing, if any.
-	CurrentNodeExecutionId string        `protobuf:"bytes,6,opt,name=current_node_execution_id,json=currentNodeExecutionId,proto3" json:"current_node_execution_id,omitempty"`
-	Status                 common.Status `protobuf:"varint,7,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	// current_node_execution_id is the stage the worker is executing, if any.
+	CurrentNodeExecutionId string `protobuf:"bytes,6,opt,name=current_node_execution_id,json=currentNodeExecutionId,proto3" json:"current_node_execution_id,omitempty"`
+	// status is the worker's live status.
+	Status        common.Status `protobuf:"varint,7,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *WorkerInfo) Reset() {
@@ -486,15 +508,19 @@ func (x *WorkerInfo) GetStatus() common.Status {
 
 // Event is one item in the run's activity timeline (Temporal-derived).
 type Event struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	At      *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=at,proto3" json:"at,omitempty"`
-	Kind    Event_Kind             `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.monitor.Event_Kind" json:"kind,omitempty"`
-	Message string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
-	// Owning stage, when the event is about a stage.
-	NodeExecutionId string        `protobuf:"bytes,4,opt,name=node_execution_id,json=nodeExecutionId,proto3" json:"node_execution_id,omitempty"`
-	Status          common.Status `protobuf:"varint,5,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// at is when the event occurred.
+	At *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=at,proto3" json:"at,omitempty"`
+	// kind is the category of this event.
+	Kind Event_Kind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.monitor.Event_Kind" json:"kind,omitempty"`
+	// message is the human-readable event description.
+	Message string `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	// node_execution_id is the owning stage, when the event is about a stage.
+	NodeExecutionId string `protobuf:"bytes,4,opt,name=node_execution_id,json=nodeExecutionId,proto3" json:"node_execution_id,omitempty"`
+	// status is the run/stage status associated with the event, when relevant.
+	Status        common.Status `protobuf:"varint,5,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Event) Reset() {

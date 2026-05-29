@@ -7,21 +7,41 @@ import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
 
+/*
+    entity.proto defines the common storage primitives reused by every
+    DB-persisted model: the Entity envelope (id, tenant, name, audit timings,
+    authorship), plus the ready-made filter, sort, and pagination helpers that
+    list endpoints embed.
+ */
+
+/*
+    Timings is the audit timestamp set carried by every persisted row.
+ */
 message Timings {
+    /* created_at is when the row was first persisted (server clock). */
     google.protobuf.Timestamp created_at = 1;
+    /* updated_at is when the row was last mutated (server clock). */
     google.protobuf.Timestamp updated_at = 2;
+    /* deleted_at, when set, marks the row as soft-deleted. */
     optional google.protobuf.Timestamp deleted_at = 3;
 }
 
-// Entity is the common storage envelope shared by every DB-persisted model.
+/* Entity is the common storage envelope shared by every DB-persisted model. */
 message Entity {
+    /* id is the stable, server-assigned unique row identifier. */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /* tenant_id scopes the row to its owning tenant. */
     string tenant_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /* name is the human-facing display name of the row. */
     string name = 3 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    /* description is optional free-text describing the row. */
     string description = 4 [(validate.rules).string = {max_len: 4096}];
+    /* timings carries the created/updated/deleted audit timestamps. */
     Timings timings = 5;
-    // author_id is the Account that created the row. Server-assigned from the
-    // caller; immutable afterwards.
+    /*
+        author_id is the Account that created the row. Server-assigned from the
+        caller; immutable afterwards.
+     */
     string author_id = 6 [(validate.rules).string = {min_len: 1, max_len: 64}];
 
     /*
@@ -44,19 +64,21 @@ message Entity {
     + the auth interceptor, never from a client-supplied filter.
  */
 message EntityFilter {
-    // Free-text search over name + description (substring / ILIKE).
+    /* search is free-text matched over name + description (substring / ILIKE). */
     string search = 1 [(validate.rules).string.max_len = 256];
-    // Restrict to these exact ids (empty = no id filter).
+    /* ids restricts results to these exact ids (empty = no id filter). */
     repeated string ids = 2 [(validate.rules).repeated = {max_items: 1000, items: {string: {max_len: 64}}}];
-    // Created-at window (timings.created_at).
+    /* created_after is the lower bound of the created-at window (timings.created_at). */
     google.protobuf.Timestamp created_after = 3;
+    /* created_before is the upper bound of the created-at window (timings.created_at). */
     google.protobuf.Timestamp created_before = 4;
-    // Updated-at window (timings.updated_at).
+    /* updated_after is the lower bound of the updated-at window (timings.updated_at). */
     google.protobuf.Timestamp updated_after = 5;
+    /* updated_before is the upper bound of the updated-at window (timings.updated_at). */
     google.protobuf.Timestamp updated_before = 6;
-    // When true, include soft-deleted rows (timings.deleted_at set). Default false.
+    /* include_deleted, when true, includes soft-deleted rows (timings.deleted_at set). Default false. */
     bool include_deleted = 7;
-    // Restrict to rows authored by these Accounts (empty = no author filter).
+    /* author_ids restricts results to rows authored by these Accounts (empty = no author filter). */
     repeated string author_ids = 8 [(validate.rules).repeated = {max_items: 1000, items: {string: {max_len: 64}}}];
     /*
         favorites_only: when true, return only rows the REQUESTING caller has
@@ -67,27 +89,34 @@ message EntityFilter {
     optional bool favorites_only = 9;
 }
 
-// EntitySortField names the common Entity columns a list can be ordered by.
+/* EntitySortField names the common Entity columns a list can be ordered by. */
 enum EntitySortField {
+    /* ENTITY_SORT_FIELD_UNSPECIFIED applies the server default ordering. */
     ENTITY_SORT_FIELD_UNSPECIFIED = 0;
+    /* ENTITY_SORT_FIELD_NAME orders by the display name. */
     ENTITY_SORT_FIELD_NAME = 1;
+    /* ENTITY_SORT_FIELD_CREATED_AT orders by creation time. */
     ENTITY_SORT_FIELD_CREATED_AT = 2;
+    /* ENTITY_SORT_FIELD_UPDATED_AT orders by last-mutation time. */
     ENTITY_SORT_FIELD_UPDATED_AT = 3;
+    /* ENTITY_SORT_FIELD_AUTHOR_ID orders by the authoring Account. */
     ENTITY_SORT_FIELD_AUTHOR_ID = 4;
-    // Order by the caller's favorite flag (favorited rows first when desc).
+    /* ENTITY_SORT_FIELD_FAVORITE orders by the caller's favorite flag (favorited rows first when desc). */
     ENTITY_SORT_FIELD_FAVORITE = 5;
 }
 
-// EntitySort is the ready-made ordering over common Entity fields.
+/* EntitySort is the ready-made ordering over common Entity fields. */
 message EntitySort {
+    /* field is the Entity column to order by. */
     EntitySortField field = 1;
+    /* desc selects descending order when true, ascending otherwise. */
     bool desc = 2;
 }
 
-// Page is the reusable request-side pagination cursor.
+/* Page is the reusable request-side pagination cursor. */
 message Page {
-    // size caps returned rows; 0 -> server default.
+    /* size caps returned rows; 0 means server default. */
     uint32 size = 1 [(validate.rules).uint32.lte = 500];
-    // token is the opaque cursor from a previous response (empty = first page).
+    /* token is the opaque cursor from a previous response (empty = first page). */
     string token = 2;
 }

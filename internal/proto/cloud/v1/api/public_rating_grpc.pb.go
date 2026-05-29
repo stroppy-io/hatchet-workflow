@@ -25,6 +25,8 @@ const (
 // PublicRatingServiceClient is the client API for PublicRatingService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// PublicRatingService serves the public, unauthenticated benchmark leaderboard.
 type PublicRatingServiceClient interface {
 	// GetPublicRating resolves the public leaderboard. PUBLIC: no bearer token.
 	GetPublicRating(ctx context.Context, in *GetPublicRatingRequest, opts ...grpc.CallOption) (*GetPublicRatingResponse, error)
@@ -51,6 +53,8 @@ func (c *publicRatingServiceClient) GetPublicRating(ctx context.Context, in *Get
 // PublicRatingServiceServer is the server API for PublicRatingService service.
 // All implementations must embed UnimplementedPublicRatingServiceServer
 // for forward compatibility.
+//
+// PublicRatingService serves the public, unauthenticated benchmark leaderboard.
 type PublicRatingServiceServer interface {
 	// GetPublicRating resolves the public leaderboard. PUBLIC: no bearer token.
 	GetPublicRating(context.Context, *GetPublicRatingRequest) (*GetPublicRatingResponse, error)

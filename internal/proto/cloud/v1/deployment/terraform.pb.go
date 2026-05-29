@@ -122,8 +122,9 @@ func (*Terraform) Descriptor() ([]byte, []int) {
 
 // input contains everything needed to prepare and run one Terraform action.
 type Terraform_Input struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	Provider Provider               `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// provider selects the deployment backend this Terraform action targets.
+	Provider Provider `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
 	// operation contains Terraform executor parameters independent of tfvars.
 	Operation *Terraform_Operation `protobuf:"bytes,2,opt,name=operation,proto3" json:"operation,omitempty"`
 	// tfvars is the sealed, schema-backed values used to produce

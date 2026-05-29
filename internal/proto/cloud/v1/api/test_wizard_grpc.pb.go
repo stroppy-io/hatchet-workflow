@@ -30,9 +30,15 @@ const (
 // TestWizardServiceClient is the client API for TestWizardService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// TestWizardService drives the test wizard: start, fetch/list, patch-loop and
+// finish into a baked TestRun (optionally started and/or saved as a preset).
 type TestWizardServiceClient interface {
+	// StartTestWizard opens a new draft. Not idempotent.
 	StartTestWizard(ctx context.Context, in *StartTestWizardRequest, opts ...grpc.CallOption) (*StartTestWizardResponse, error)
+	// GetTestWizardDraft fetches a single draft by id. Read-only.
 	GetTestWizardDraft(ctx context.Context, in *GetTestWizardDraftRequest, opts ...grpc.CallOption) (*GetTestWizardDraftResponse, error)
+	// ListTestWizardDrafts lists drafts with filtering and pagination. Read-only.
 	ListTestWizardDrafts(ctx context.Context, in *ListTestWizardDraftsRequest, opts ...grpc.CallOption) (*ListTestWizardDraftsResponse, error)
 	// PatchTestWizard is idempotent: re-submitting the same form converges.
 	PatchTestWizard(ctx context.Context, in *PatchTestWizardRequest, opts ...grpc.CallOption) (*PatchTestWizardResponse, error)
@@ -113,9 +119,15 @@ func (c *testWizardServiceClient) FinishTestWizard(ctx context.Context, in *Fini
 // TestWizardServiceServer is the server API for TestWizardService service.
 // All implementations must embed UnimplementedTestWizardServiceServer
 // for forward compatibility.
+//
+// TestWizardService drives the test wizard: start, fetch/list, patch-loop and
+// finish into a baked TestRun (optionally started and/or saved as a preset).
 type TestWizardServiceServer interface {
+	// StartTestWizard opens a new draft. Not idempotent.
 	StartTestWizard(context.Context, *StartTestWizardRequest) (*StartTestWizardResponse, error)
+	// GetTestWizardDraft fetches a single draft by id. Read-only.
 	GetTestWizardDraft(context.Context, *GetTestWizardDraftRequest) (*GetTestWizardDraftResponse, error)
+	// ListTestWizardDrafts lists drafts with filtering and pagination. Read-only.
 	ListTestWizardDrafts(context.Context, *ListTestWizardDraftsRequest) (*ListTestWizardDraftsResponse, error)
 	// PatchTestWizard is idempotent: re-submitting the same form converges.
 	PatchTestWizard(context.Context, *PatchTestWizardRequest) (*PatchTestWizardResponse, error)

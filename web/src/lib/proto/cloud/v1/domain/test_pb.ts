@@ -24,7 +24,8 @@ export const file_cloud_v1_domain_test: GenFile = /*@__PURE__*/
   fileDesc("ChpjbG91ZC92MS9kb21haW4vdGVzdC5wcm90bxIPY2xvdWQudjEuZG9tYWluIpkBCgRUZXN0EjUKCGRhdGFiYXNlGAEgASgLMhkuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlQgj6QgWKAQIQARI1Cgh3b3JrbG9hZBgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZEII+kIFigECEAESIwoEdGFncxgDIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzIr8CCgdUZXN0UnVuEhMKAmlkGAEgASgJQgf6QgRyAhABEhAKCHN1aXRlX2lkGAIgASgJEkEKCHByb3ZpZGVyGAMgASgLMiUuY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlclNldHRpbmdzQgj6QgWKAQIQARI3Cgh0b3BvbG9neRgEIAEoCzIbLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5Qgj6QgWKAQIQARI1CghkYXRhYmFzZRgFIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZUII+kIFigECEAESNQoId29ya2xvYWQYBiABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWRCCPpCBYoBAhABEiMKBHRhZ3MYByABKAsyFS5jbG91ZC52MS5jb21tb24uVGFnc0JEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9kb21haW5iBnByb3RvMw", [file_cloud_v1_common_tags, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_validate_validate]);
 
 /**
- * Abstract test definition: what to test, provider-agnostic.
+ *
+ * Test is an abstract, provider-agnostic test definition: what to test.
  * Topology is derived from params (e.g. database replica count) in code; the
  * provider is chosen later, and the wizard fills provider_parms into a TestRun.
  *
@@ -32,23 +33,30 @@ export const file_cloud_v1_domain_test: GenFile = /*@__PURE__*/
  */
 export type Test = Message<"cloud.v1.domain.Test"> & {
   /**
+   * database is the database under test. 
+   *
    * @generated from field: cloud.v1.domain.Database database = 1;
    */
   database?: Database;
 
   /**
+   * workload is the stroppy workload to run against the database. 
+   *
    * @generated from field: cloud.v1.domain.Workload workload = 2;
    */
   workload?: Workload;
 
   /**
+   * tags are free-form metadata attached to the test definition. 
+   *
    * @generated from field: cloud.v1.common.Tags tags = 3;
    */
   tags?: Tags;
 };
 
 /**
- * Abstract test definition: what to test, provider-agnostic.
+ *
+ * Test is an abstract, provider-agnostic test definition: what to test.
  * Topology is derived from params (e.g. database replica count) in code; the
  * provider is chosen later, and the wizard fills provider_parms into a TestRun.
  *
@@ -56,16 +64,22 @@ export type Test = Message<"cloud.v1.domain.Test"> & {
  */
 export type TestJson = {
   /**
+   * database is the database under test. 
+   *
    * @generated from field: cloud.v1.domain.Database database = 1;
    */
   database?: DatabaseJson;
 
   /**
+   * workload is the stroppy workload to run against the database. 
+   *
    * @generated from field: cloud.v1.domain.Workload workload = 2;
    */
   workload?: WorkloadJson;
 
   /**
+   * tags are free-form metadata attached to the test definition. 
+   *
    * @generated from field: cloud.v1.common.Tags tags = 3;
    */
   tags?: TagsJson;
@@ -81,110 +95,122 @@ export const TestSchema: GenMessage<Test, {jsonType: TestJson, validType: TestVa
   messageDesc(file_cloud_v1_domain_test, 0);
 
 /**
- * A single, fully-baked test execution.
- * All fields are baked at creation time; TestWorkflow does not mutate the
- * topology, only carries runtime info returned by the deployment.
+ *
+ * TestRun is a single, fully-baked test execution. All fields are baked at
+ * creation time; TestWorkflow does not mutate the topology, only carries
+ * runtime info returned by the deployment.
  *
  * @generated from message cloud.v1.domain.TestRun
  */
 export type TestRun = Message<"cloud.v1.domain.TestRun"> & {
   /**
+   * id is the stable test-run identifier. 
+   *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
-   * Owning suite. Empty for a standalone (non-suite) run.
+   * suite_id is the owning suite. Empty for a standalone (non-suite) run. 
    *
    * @generated from field: string suite_id = 2;
    */
   suiteId: string;
 
   /**
-   * Where/how to provision the stand: backend + baked provider settings.
+   * provider says where/how to provision the stand: backend + baked provider
+   * settings. 
    *
    * @generated from field: cloud.v1.deployment.ProviderSettings provider = 3;
    */
   provider?: ProviderSettings;
 
   /**
-   * Baked topology: stroppy runner instances (+ db instances when self-deploy),
-   * and external_components when the database is external.
+   * topology is the baked topology: stroppy runner instances (+ db instances
+   * when self-deploy), and external_components when the database is external. 
    *
    * @generated from field: cloud.v1.topology.Topology topology = 4;
    */
   topology?: Topology;
 
   /**
-   * Database under test (self-deploy / managed / external).
+   * database is the database under test (self-deploy / managed / external). 
    *
    * @generated from field: cloud.v1.domain.Database database = 5;
    */
   database?: Database;
 
   /**
-   * Stroppy workload to run on top of the database.
+   * workload is the stroppy workload to run on top of the database. 
    *
    * @generated from field: cloud.v1.domain.Workload workload = 6;
    */
   workload?: Workload;
 
   /**
+   * tags are free-form metadata attached to the test run. 
+   *
    * @generated from field: cloud.v1.common.Tags tags = 7;
    */
   tags?: Tags;
 };
 
 /**
- * A single, fully-baked test execution.
- * All fields are baked at creation time; TestWorkflow does not mutate the
- * topology, only carries runtime info returned by the deployment.
+ *
+ * TestRun is a single, fully-baked test execution. All fields are baked at
+ * creation time; TestWorkflow does not mutate the topology, only carries
+ * runtime info returned by the deployment.
  *
  * @generated from message cloud.v1.domain.TestRun
  */
 export type TestRunJson = {
   /**
+   * id is the stable test-run identifier. 
+   *
    * @generated from field: string id = 1;
    */
   id?: string;
 
   /**
-   * Owning suite. Empty for a standalone (non-suite) run.
+   * suite_id is the owning suite. Empty for a standalone (non-suite) run. 
    *
    * @generated from field: string suite_id = 2;
    */
   suiteId?: string;
 
   /**
-   * Where/how to provision the stand: backend + baked provider settings.
+   * provider says where/how to provision the stand: backend + baked provider
+   * settings. 
    *
    * @generated from field: cloud.v1.deployment.ProviderSettings provider = 3;
    */
   provider?: ProviderSettingsJson;
 
   /**
-   * Baked topology: stroppy runner instances (+ db instances when self-deploy),
-   * and external_components when the database is external.
+   * topology is the baked topology: stroppy runner instances (+ db instances
+   * when self-deploy), and external_components when the database is external. 
    *
    * @generated from field: cloud.v1.topology.Topology topology = 4;
    */
   topology?: TopologyJson;
 
   /**
-   * Database under test (self-deploy / managed / external).
+   * database is the database under test (self-deploy / managed / external). 
    *
    * @generated from field: cloud.v1.domain.Database database = 5;
    */
   database?: DatabaseJson;
 
   /**
-   * Stroppy workload to run on top of the database.
+   * workload is the stroppy workload to run on top of the database. 
    *
    * @generated from field: cloud.v1.domain.Workload workload = 6;
    */
   workload?: WorkloadJson;
 
   /**
+   * tags are free-form metadata attached to the test run. 
+   *
    * @generated from field: cloud.v1.common.Tags tags = 7;
    */
   tags?: TagsJson;

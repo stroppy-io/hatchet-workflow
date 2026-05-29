@@ -22,42 +22,98 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     first frame (ShellStart); the streaming auth interceptor reads tenant from it.
  */
 
-// ShellStart is the REQUIRED first client frame: it picks the target and opens.
+/*
+    ShellStart is the REQUIRED first client frame: it picks the target and opens.
+ */
 message ShellStart {
+    /*
+        tenant_id scopes the session to one tenant; the streaming auth
+        interceptor reads it from this first frame.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
-    // Run context for audit/scoping (optional but recommended).
+    /*
+        run_id is the run context for audit/scoping (optional but recommended).
+     */
     string run_id = 2 [(validate.rules).string.max_len = 128];
-    // Target host. Required.
+    /*
+        machine_id is the target host. Required.
+     */
     string machine_id = 3 [(validate.rules).string = {min_len: 1, max_len: 128}];
-    // Optional target component on the host.
+    /*
+        component_id is an optional target component on the host.
+     */
     string component_id = 4 [(validate.rules).string.max_len = 128];
-    // Initial terminal size.
+    /*
+        cols is the initial terminal width in columns.
+     */
     uint32 cols = 5;
+    /*
+        rows is the initial terminal height in rows.
+     */
     uint32 rows = 6;
-    // Shell to launch; empty -> agent default.
+    /*
+        shell is the shell to launch; empty -> agent default.
+     */
     string shell = 7 [(validate.rules).string.max_len = 256];
 }
 
-// ShellClientFrame is admin -> server. The first frame MUST be `start`.
+/*
+    ShellClientFrame is admin -> server. The first frame MUST be `start`.
+ */
 message ShellClientFrame {
+    /*
+        frame is the per-message payload: start (must be first), stdin bytes, a
+        terminal resize, or a close request.
+     */
     oneof frame {
         option (validate.required) = true;
+        /*
+            start opens the session (required first frame).
+         */
         ShellStart start = 1;
+        /*
+            stdin carries raw keystrokes typed into the terminal.
+         */
         bytes stdin = 2;
+        /*
+            resize updates the terminal dimensions mid-session.
+         */
         cloud.v1.agent.ShellResize resize = 3;
+        /*
+            close requests an orderly shutdown of the session.
+         */
         google.protobuf.Empty close = 4;
     }
 }
 
-// ShellServerFrame is server -> admin.
+/*
+    ShellServerFrame is server -> admin.
+ */
 message ShellServerFrame {
+    /*
+        frame is the per-message payload: stdout bytes, stderr bytes, or the
+        terminal's exit notification.
+     */
     oneof frame {
+        /*
+            stdout carries the terminal's standard-output bytes.
+         */
         bytes stdout = 1;
+        /*
+            stderr carries the terminal's standard-error bytes.
+         */
         bytes stderr = 2;
+        /*
+            exit signals the shell process terminated (with its exit status).
+         */
         cloud.v1.agent.ShellExit exit = 3;
     }
 }
 
+/*
+    AgentShellService bridges an admin websocket to an agent's grpc control
+    stream, exposing one interactive reverse-shell session per OpenShell call.
+ */
 service AgentShellService {
     /*
         OpenShell attaches an interactive terminal to an agent. First client frame

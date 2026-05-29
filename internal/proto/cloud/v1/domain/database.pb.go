@@ -24,18 +24,28 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Kind enumerates the supported database engines under test.
 type Database_Kind int32
 
 const (
+	// KIND_UNSPECIFIED is the unset zero value; never a valid engine.
 	Database_KIND_UNSPECIFIED Database_Kind = 0
-	Database_KIND_POSTGRES    Database_Kind = 1
-	Database_KIND_MYSQL       Database_Kind = 2
-	Database_KIND_MARIADB     Database_Kind = 3
-	Database_KIND_YDB         Database_Kind = 4
+	// KIND_POSTGRES is PostgreSQL.
+	Database_KIND_POSTGRES Database_Kind = 1
+	// KIND_MYSQL is MySQL.
+	Database_KIND_MYSQL Database_Kind = 2
+	// KIND_MARIADB is MariaDB.
+	Database_KIND_MARIADB Database_Kind = 3
+	// KIND_YDB is self-deployed YDB.
+	Database_KIND_YDB Database_Kind = 4
+	// KIND_YDB_MANAGED is managed (cloud-provided) YDB.
 	Database_KIND_YDB_MANAGED Database_Kind = 5
-	Database_KIND_COCKROACH   Database_Kind = 6
-	Database_KIND_PICODATA    Database_Kind = 7
-	// External / unmanaged database addressed only by dsn. Use with source.external.
+	// KIND_COCKROACH is CockroachDB.
+	Database_KIND_COCKROACH Database_Kind = 6
+	// KIND_PICODATA is Picodata.
+	Database_KIND_PICODATA Database_Kind = 7
+	// KIND_EXTERNAL is an external / unmanaged database addressed only by
+	// dsn. Use with source.external.
 	Database_KIND_EXTERNAL Database_Kind = 8
 )
 
@@ -92,20 +102,26 @@ func (Database_Kind) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{0, 0}
 }
 
+// Database is the database-under-test definition for a test run. It selects a
+// Kind and provides it through exactly one source variant, optionally carrying
+// the params schema and free-form tags.
 type Database struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Kind  Database_Kind          `protobuf:"varint,1,opt,name=kind,proto3,enum=cloud.v1.domain.Database_Kind" json:"kind,omitempty"`
-	// Schema (the form) describing self-deploy params for this kind.
+	// kind selects which database engine is under test.
+	Kind Database_Kind `protobuf:"varint,1,opt,name=kind,proto3,enum=cloud.v1.domain.Database_Kind" json:"kind,omitempty"`
+	// prams_schema is the schema (the form) describing self-deploy params for
+	// this kind.
 	PramsSchema *schemapb.Schema `protobuf:"bytes,2,opt,name=prams_schema,json=pramsSchema,proto3" json:"prams_schema,omitempty"`
-	// How the database is provided for a test run.
-	//
+	// source selects how the database is provided for a test run. Exactly one
+	// variant must be set.
 	// Types that are valid to be assigned to Source:
 	//
 	//	*Database_Params
 	//	*Database_External_
 	//	*Database_DatabasePresetId
-	Source        isDatabase_Source `protobuf_oneof:"source"`
-	Tags          *common.Tags      `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
+	Source isDatabase_Source `protobuf_oneof:"source"`
+	// tags are free-form metadata attached to the database definition.
+	Tags          *common.Tags `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -200,18 +216,21 @@ type isDatabase_Source interface {
 }
 
 type Database_Params struct {
-	// Self-deploy: filled values of prams_schema. TestWorkflow deploys a DB
-	// instance into the topology and tears it down at the end.
+	// params is the self-deploy variant: filled values of prams_schema.
+	// TestWorkflow deploys a DB instance into the topology and tears it
+	// down at the end.
 	Params *schemapb.Baked `protobuf:"bytes,3,opt,name=params,proto3,oneof"`
 }
 
 type Database_External_ struct {
-	// External: connect to an existing endpoint, skip deploy/teardown.
+	// external is the external variant: connect to an existing endpoint,
+	// skip deploy/teardown.
 	External *Database_External `protobuf:"bytes,4,opt,name=external,proto3,oneof"`
 }
 
 type Database_DatabasePresetId struct {
-	// Reference to a preset, resolved into params|external server-side.
+	// database_preset_id references a preset, resolved into params|external
+	// server-side.
 	DatabasePresetId *Database_PresetId `protobuf:"bytes,5,opt,name=database_preset_id,json=databasePresetId,proto3,oneof"`
 }
 
@@ -221,11 +240,13 @@ func (*Database_External_) isDatabase_Source() {}
 
 func (*Database_DatabasePresetId) isDatabase_Source() {}
 
-// Reference to a stored database preset. Resolved server-side into one of
-// the inline `source` variants (params for self-deploy, or external).
+// PresetId is a reference to a stored database preset. Resolved
+// server-side into one of the inline `source` variants (params for
+// self-deploy, or external).
 type Database_PresetId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the stored database preset identifier to resolve.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -267,12 +288,14 @@ func (x *Database_PresetId) GetId() string {
 	return ""
 }
 
-// Already-running database. TestWorkflow does NOT deploy or tear it down,
-// it only connects to `dsn` and runs the workload on top.
+// External is an already-running database. TestWorkflow does NOT deploy or
+// tear it down, it only connects to `dsn` and runs the workload on top.
 type Database_External struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Dsn           string                 `protobuf:"bytes,1,opt,name=dsn,proto3" json:"dsn,omitempty"`
-	Tags          *common.Tags           `protobuf:"bytes,2,opt,name=tags,proto3" json:"tags,omitempty"` // extra info about the external db (version, region, owner...)
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// dsn is the connection string of the external database.
+	Dsn string `protobuf:"bytes,1,opt,name=dsn,proto3" json:"dsn,omitempty"`
+	// tags carry extra info about the external db (version, region, owner...).
+	Tags          *common.Tags `protobuf:"bytes,2,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

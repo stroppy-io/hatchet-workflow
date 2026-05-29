@@ -25,9 +25,11 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// TestWorkflowRequest is the input to a single test run.
 type TestWorkflowRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TestRun       *domain.TestRun        `protobuf:"bytes,1,opt,name=test_run,json=testRun,proto3" json:"test_run,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// test_run is the full description of the test run to execute.
+	TestRun       *domain.TestRun `protobuf:"bytes,1,opt,name=test_run,json=testRun,proto3" json:"test_run,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -69,6 +71,7 @@ func (x *TestWorkflowRequest) GetTestRun() *domain.TestRun {
 	return nil
 }
 
+// TestWorkflowResponse is the empty result of a completed test run.
 type TestWorkflowResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -105,11 +108,13 @@ func (*TestWorkflowResponse) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{1}
 }
 
-// Install stroppy on the runner instances. Runner machines are always
-// deployed, so this always runs. Topology is read-only here (baked + runtime).
+// InstallStroppyWorkflowRequest asks to install stroppy on the runner
+// instances. Runner machines are always deployed, so this always runs.
+// Topology is read-only here (baked + runtime).
 type InstallStroppyWorkflowRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Topology      *topology.Topology     `protobuf:"bytes,1,opt,name=topology,proto3" json:"topology,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// topology is the (read-only) topology whose runner machines get stroppy.
+	Topology      *topology.Topology `protobuf:"bytes,1,opt,name=topology,proto3" json:"topology,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -151,6 +156,7 @@ func (x *InstallStroppyWorkflowRequest) GetTopology() *topology.Topology {
 	return nil
 }
 
+// InstallStroppyWorkflowResponse is the empty result of installing stroppy.
 type InstallStroppyWorkflowResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -187,12 +193,15 @@ func (*InstallStroppyWorkflowResponse) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{3}
 }
 
-// Bring up / provision the database (self-deploy or managed). Our
-// responsibility for every kind except external. Skipped for external dbs.
+// InstallDatabaseWorkflowRequest asks to bring up / provision the database
+// (self-deploy or managed). Our responsibility for every kind except external;
+// skipped for external dbs.
 type InstallDatabaseWorkflowRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Topology      *topology.Topology     `protobuf:"bytes,1,opt,name=topology,proto3" json:"topology,omitempty"`
-	Database      *domain.Database       `protobuf:"bytes,2,opt,name=database,proto3" json:"database,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// topology is the topology the database is brought up within.
+	Topology *topology.Topology `protobuf:"bytes,1,opt,name=topology,proto3" json:"topology,omitempty"`
+	// database is the database definition to provision.
+	Database      *domain.Database `protobuf:"bytes,2,opt,name=database,proto3" json:"database,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -241,6 +250,7 @@ func (x *InstallDatabaseWorkflowRequest) GetDatabase() *domain.Database {
 	return nil
 }
 
+// InstallDatabaseWorkflowResponse is the empty result of installing the database.
 type InstallDatabaseWorkflowResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -277,12 +287,14 @@ func (*InstallDatabaseWorkflowResponse) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{5}
 }
 
-// Run the workload via the agent (write stroppy config + call stroppy).
-// Results land in metrics, not in the response.
+// RunWorkloadWorkflowRequest asks to run the workload via the agent (write
+// stroppy config + call stroppy). Results land in metrics, not in the response.
 type RunWorkloadWorkflowRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Topology      *topology.Topology     `protobuf:"bytes,1,opt,name=topology,proto3" json:"topology,omitempty"`
-	Workload      *domain.Workload       `protobuf:"bytes,2,opt,name=workload,proto3" json:"workload,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// topology is the topology the workload runs against.
+	Topology *topology.Topology `protobuf:"bytes,1,opt,name=topology,proto3" json:"topology,omitempty"`
+	// workload is the workload definition to execute.
+	Workload      *domain.Workload `protobuf:"bytes,2,opt,name=workload,proto3" json:"workload,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -331,6 +343,8 @@ func (x *RunWorkloadWorkflowRequest) GetWorkload() *domain.Workload {
 	return nil
 }
 
+// RunWorkloadWorkflowResponse is the empty result of a workload run (results go
+// to metrics).
 type RunWorkloadWorkflowResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -367,9 +381,11 @@ func (*RunWorkloadWorkflowResponse) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{7}
 }
 
+// SuiteWorkflowRequest is the input to a suite run.
 type SuiteWorkflowRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SuiteRun      *domain.SuiteRun       `protobuf:"bytes,1,opt,name=suite_run,json=suiteRun,proto3" json:"suite_run,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// suite_run is the full description of the suite run to execute.
+	SuiteRun      *domain.SuiteRun `protobuf:"bytes,1,opt,name=suite_run,json=suiteRun,proto3" json:"suite_run,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -411,6 +427,7 @@ func (x *SuiteWorkflowRequest) GetSuiteRun() *domain.SuiteRun {
 	return nil
 }
 
+// SuiteWorkflowResponse is the empty result of a completed suite run.
 type SuiteWorkflowResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields

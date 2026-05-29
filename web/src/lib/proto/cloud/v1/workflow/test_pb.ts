@@ -22,23 +22,35 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/workflow/test.proto.
  */
 export const file_cloud_v1_workflow_test: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS93b3JrZmxvdy90ZXN0LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyJLChNUZXN0V29ya2Zsb3dSZXF1ZXN0EjQKCHRlc3RfcnVuGAEgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABIhYKFFRlc3RXb3JrZmxvd1Jlc3BvbnNlIlgKHUluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXF1ZXN0EjcKCHRvcG9sb2d5GAEgASgLMhsuY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3lCCPpCBYoBAhABIiAKHkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXNwb25zZSKQAQoeSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXF1ZXN0EjcKCHRvcG9sb2d5GAEgASgLMhsuY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3lCCPpCBYoBAhABEjUKCGRhdGFiYXNlGAIgASgLMhkuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlQgj6QgWKAQIQASIhCh9JbnN0YWxsRGF0YWJhc2VXb3JrZmxvd1Jlc3BvbnNlIowBChpSdW5Xb3JrbG9hZFdvcmtmbG93UmVxdWVzdBI3Cgh0b3BvbG9neRgBIAEoCzIbLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5Qgj6QgWKAQIQARI1Cgh3b3JrbG9hZBgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZEII+kIFigECEAEiHQobUnVuV29ya2xvYWRXb3JrZmxvd1Jlc3BvbnNlIk4KFFN1aXRlV29ya2Zsb3dSZXF1ZXN0EjYKCXN1aXRlX3J1bhgBIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5TdWl0ZVJ1bkII+kIFigECEAEiFwoVU3VpdGVXb3JrZmxvd1Jlc3BvbnNlMrIFCgdUZXN0QXBpEpsBCgxUZXN0V29ya2Zsb3cSJi5jbG91ZC52MS53b3JrZmxvdy5UZXN0V29ya2Zsb3dSZXF1ZXN0GicuY2xvdWQudjEud29ya2Zsb3cuVGVzdFdvcmtmbG93UmVzcG9uc2UiOorEAzYiBAjgqAFKAiABcgxUZXN0V29ya2Zsb3cqGnRlc3QtcnVuLyR7ISB0ZXN0X3J1bi5pZCB9MAISqAEKFkluc3RhbGxTdHJvcHB5V29ya2Zsb3cSMC5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsU3Ryb3BweVdvcmtmbG93UmVxdWVzdBoxLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXNwb25zZSIpisQDJXIWSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1IDCIgOSgYgAwoCCAUSrAEKF0luc3RhbGxEYXRhYmFzZVdvcmtmbG93EjEuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXF1ZXN0GjIuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXNwb25zZSIqisQDJnIXSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSAwiIDkoGIAMKAggFEpkBChNSdW5Xb3JrbG9hZFdvcmtmbG93Ei0uY2xvdWQudjEud29ya2Zsb3cuUnVuV29ya2xvYWRXb3JrZmxvd1JlcXVlc3QaLi5jbG91ZC52MS53b3JrZmxvdy5SdW5Xb3JrbG9hZFdvcmtmbG93UmVzcG9uc2UiI4rEAx9SBAjA0QJKAiABchNSdW5Xb3JrbG9hZFdvcmtmbG93GhOKxAMPCg1zdHJvcHB5LWNsb3VkMssBChBTdWl0ZVdvcmtmbG93QXBpEqEBCg1TdWl0ZVdvcmtmbG93EicuY2xvdWQudjEud29ya2Zsb3cuU3VpdGVXb3JrZmxvd1JlcXVlc3QaKC5jbG91ZC52MS53b3JrZmxvdy5TdWl0ZVdvcmtmbG93UmVzcG9uc2UiPYrEAzlKAiABcg1TdWl0ZVdvcmtmbG93KhxzdWl0ZS1ydW4vJHshIHN1aXRlX3J1bi5pZCB9MAIiBAiAxgoaE4rEAw8KDXN0cm9wcHktY2xvdWRCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvd29ya2Zsb3diBnByb3RvMw", [file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_temporal_v1_temporal, file_validate_validate]);
+  fileDesc("ChxjbG91ZC92MS93b3JrZmxvdy90ZXN0LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyJLChNUZXN0V29ya2Zsb3dSZXF1ZXN0EjQKCHRlc3RfcnVuGAEgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABIhYKFFRlc3RXb3JrZmxvd1Jlc3BvbnNlIlgKHUluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXF1ZXN0EjcKCHRvcG9sb2d5GAEgASgLMhsuY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3lCCPpCBYoBAhABIiAKHkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXNwb25zZSKQAQoeSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXF1ZXN0EjcKCHRvcG9sb2d5GAEgASgLMhsuY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3lCCPpCBYoBAhABEjUKCGRhdGFiYXNlGAIgASgLMhkuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlQgj6QgWKAQIQASIhCh9JbnN0YWxsRGF0YWJhc2VXb3JrZmxvd1Jlc3BvbnNlIowBChpSdW5Xb3JrbG9hZFdvcmtmbG93UmVxdWVzdBI3Cgh0b3BvbG9neRgBIAEoCzIbLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5Qgj6QgWKAQIQARI1Cgh3b3JrbG9hZBgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZEII+kIFigECEAEiHQobUnVuV29ya2xvYWRXb3JrZmxvd1Jlc3BvbnNlIk4KFFN1aXRlV29ya2Zsb3dSZXF1ZXN0EjYKCXN1aXRlX3J1bhgBIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5TdWl0ZVJ1bkII+kIFigECEAEiFwoVU3VpdGVXb3JrZmxvd1Jlc3BvbnNlMqoFCgtUZXN0U2VydmljZRKVAQoMVGVzdFdvcmtmbG93EiYuY2xvdWQudjEud29ya2Zsb3cuVGVzdFdvcmtmbG93UmVxdWVzdBonLmNsb3VkLnYxLndvcmtmbG93LlRlc3RXb3JrZmxvd1Jlc3BvbnNlIjSKxAMwcgxUZXN0V29ya2Zsb3cqGnRlc3QtcnVuLyR7ISB0ZXN0X3J1bi5pZCB9MAJKAiABEqgBChZJbnN0YWxsU3Ryb3BweVdvcmtmbG93EjAuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1JlcXVlc3QaMS5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsU3Ryb3BweVdvcmtmbG93UmVzcG9uc2UiKYrEAyVKBiADCgIIBXIWSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1IDCIgOEqwBChdJbnN0YWxsRGF0YWJhc2VXb3JrZmxvdxIxLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxEYXRhYmFzZVdvcmtmbG93UmVxdWVzdBoyLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxEYXRhYmFzZVdvcmtmbG93UmVzcG9uc2UiKorEAyZyF0luc3RhbGxEYXRhYmFzZVdvcmtmbG93UgMIiA5KBiADCgIIBRKTAQoTUnVuV29ya2xvYWRXb3JrZmxvdxItLmNsb3VkLnYxLndvcmtmbG93LlJ1bldvcmtsb2FkV29ya2Zsb3dSZXF1ZXN0Gi4uY2xvdWQudjEud29ya2Zsb3cuUnVuV29ya2xvYWRXb3JrZmxvd1Jlc3BvbnNlIh2KxAMZchNSdW5Xb3JrbG9hZFdvcmtmbG93SgIgARoTisQDDwoNc3Ryb3BweS1jbG91ZDLJAQoUU3VpdGVXb3JrZmxvd1NlcnZpY2USmwEKDVN1aXRlV29ya2Zsb3cSJy5jbG91ZC52MS53b3JrZmxvdy5TdWl0ZVdvcmtmbG93UmVxdWVzdBooLmNsb3VkLnYxLndvcmtmbG93LlN1aXRlV29ya2Zsb3dSZXNwb25zZSI3isQDM3INU3VpdGVXb3JrZmxvdyocc3VpdGUtcnVuLyR7ISBzdWl0ZV9ydW4uaWQgfTACSgIgARoTisQDDwoNc3Ryb3BweS1jbG91ZEJGWkRnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS93b3JrZmxvd2IGcHJvdG8z", [file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_temporal_v1_temporal, file_validate_validate]);
 
 /**
+ *
+ * TestWorkflowRequest is the input to a single test run.
+ *
  * @generated from message cloud.v1.workflow.TestWorkflowRequest
  */
 export type TestWorkflowRequest = Message<"cloud.v1.workflow.TestWorkflowRequest"> & {
   /**
+   *
+   * test_run is the full description of the test run to execute.
+   *
    * @generated from field: cloud.v1.domain.TestRun test_run = 1;
    */
   testRun?: TestRun;
 };
 
 /**
+ *
+ * TestWorkflowRequest is the input to a single test run.
+ *
  * @generated from message cloud.v1.workflow.TestWorkflowRequest
  */
 export type TestWorkflowRequestJson = {
   /**
+   *
+   * test_run is the full description of the test run to execute.
+   *
    * @generated from field: cloud.v1.domain.TestRun test_run = 1;
    */
   testRun?: TestRunJson;
@@ -54,12 +66,18 @@ export const TestWorkflowRequestSchema: GenMessage<TestWorkflowRequest, {jsonTyp
   messageDesc(file_cloud_v1_workflow_test, 0);
 
 /**
+ *
+ * TestWorkflowResponse is the empty result of a completed test run.
+ *
  * @generated from message cloud.v1.workflow.TestWorkflowResponse
  */
 export type TestWorkflowResponse = Message<"cloud.v1.workflow.TestWorkflowResponse"> & {
 };
 
 /**
+ *
+ * TestWorkflowResponse is the empty result of a completed test run.
+ *
  * @generated from message cloud.v1.workflow.TestWorkflowResponse
  */
 export type TestWorkflowResponseJson = {
@@ -75,26 +93,36 @@ export const TestWorkflowResponseSchema: GenMessage<TestWorkflowResponse, {jsonT
   messageDesc(file_cloud_v1_workflow_test, 1);
 
 /**
- * Install stroppy on the runner instances. Runner machines are always
- * deployed, so this always runs. Topology is read-only here (baked + runtime).
+ *
+ * InstallStroppyWorkflowRequest asks to install stroppy on the runner
+ * instances. Runner machines are always deployed, so this always runs.
+ * Topology is read-only here (baked + runtime).
  *
  * @generated from message cloud.v1.workflow.InstallStroppyWorkflowRequest
  */
 export type InstallStroppyWorkflowRequest = Message<"cloud.v1.workflow.InstallStroppyWorkflowRequest"> & {
   /**
+   *
+   * topology is the (read-only) topology whose runner machines get stroppy.
+   *
    * @generated from field: cloud.v1.topology.Topology topology = 1;
    */
   topology?: Topology;
 };
 
 /**
- * Install stroppy on the runner instances. Runner machines are always
- * deployed, so this always runs. Topology is read-only here (baked + runtime).
+ *
+ * InstallStroppyWorkflowRequest asks to install stroppy on the runner
+ * instances. Runner machines are always deployed, so this always runs.
+ * Topology is read-only here (baked + runtime).
  *
  * @generated from message cloud.v1.workflow.InstallStroppyWorkflowRequest
  */
 export type InstallStroppyWorkflowRequestJson = {
   /**
+   *
+   * topology is the (read-only) topology whose runner machines get stroppy.
+   *
    * @generated from field: cloud.v1.topology.Topology topology = 1;
    */
   topology?: TopologyJson;
@@ -110,12 +138,18 @@ export const InstallStroppyWorkflowRequestSchema: GenMessage<InstallStroppyWorkf
   messageDesc(file_cloud_v1_workflow_test, 2);
 
 /**
+ *
+ * InstallStroppyWorkflowResponse is the empty result of installing stroppy.
+ *
  * @generated from message cloud.v1.workflow.InstallStroppyWorkflowResponse
  */
 export type InstallStroppyWorkflowResponse = Message<"cloud.v1.workflow.InstallStroppyWorkflowResponse"> & {
 };
 
 /**
+ *
+ * InstallStroppyWorkflowResponse is the empty result of installing stroppy.
+ *
  * @generated from message cloud.v1.workflow.InstallStroppyWorkflowResponse
  */
 export type InstallStroppyWorkflowResponseJson = {
@@ -131,36 +165,52 @@ export const InstallStroppyWorkflowResponseSchema: GenMessage<InstallStroppyWork
   messageDesc(file_cloud_v1_workflow_test, 3);
 
 /**
- * Bring up / provision the database (self-deploy or managed). Our
- * responsibility for every kind except external. Skipped for external dbs.
+ *
+ * InstallDatabaseWorkflowRequest asks to bring up / provision the database
+ * (self-deploy or managed). Our responsibility for every kind except external;
+ * skipped for external dbs.
  *
  * @generated from message cloud.v1.workflow.InstallDatabaseWorkflowRequest
  */
 export type InstallDatabaseWorkflowRequest = Message<"cloud.v1.workflow.InstallDatabaseWorkflowRequest"> & {
   /**
+   *
+   * topology is the topology the database is brought up within.
+   *
    * @generated from field: cloud.v1.topology.Topology topology = 1;
    */
   topology?: Topology;
 
   /**
+   *
+   * database is the database definition to provision.
+   *
    * @generated from field: cloud.v1.domain.Database database = 2;
    */
   database?: Database;
 };
 
 /**
- * Bring up / provision the database (self-deploy or managed). Our
- * responsibility for every kind except external. Skipped for external dbs.
+ *
+ * InstallDatabaseWorkflowRequest asks to bring up / provision the database
+ * (self-deploy or managed). Our responsibility for every kind except external;
+ * skipped for external dbs.
  *
  * @generated from message cloud.v1.workflow.InstallDatabaseWorkflowRequest
  */
 export type InstallDatabaseWorkflowRequestJson = {
   /**
+   *
+   * topology is the topology the database is brought up within.
+   *
    * @generated from field: cloud.v1.topology.Topology topology = 1;
    */
   topology?: TopologyJson;
 
   /**
+   *
+   * database is the database definition to provision.
+   *
    * @generated from field: cloud.v1.domain.Database database = 2;
    */
   database?: DatabaseJson;
@@ -176,12 +226,18 @@ export const InstallDatabaseWorkflowRequestSchema: GenMessage<InstallDatabaseWor
   messageDesc(file_cloud_v1_workflow_test, 4);
 
 /**
+ *
+ * InstallDatabaseWorkflowResponse is the empty result of installing the database.
+ *
  * @generated from message cloud.v1.workflow.InstallDatabaseWorkflowResponse
  */
 export type InstallDatabaseWorkflowResponse = Message<"cloud.v1.workflow.InstallDatabaseWorkflowResponse"> & {
 };
 
 /**
+ *
+ * InstallDatabaseWorkflowResponse is the empty result of installing the database.
+ *
  * @generated from message cloud.v1.workflow.InstallDatabaseWorkflowResponse
  */
 export type InstallDatabaseWorkflowResponseJson = {
@@ -197,36 +253,50 @@ export const InstallDatabaseWorkflowResponseSchema: GenMessage<InstallDatabaseWo
   messageDesc(file_cloud_v1_workflow_test, 5);
 
 /**
- * Run the workload via the agent (write stroppy config + call stroppy).
- * Results land in metrics, not in the response.
+ *
+ * RunWorkloadWorkflowRequest asks to run the workload via the agent (write
+ * stroppy config + call stroppy). Results land in metrics, not in the response.
  *
  * @generated from message cloud.v1.workflow.RunWorkloadWorkflowRequest
  */
 export type RunWorkloadWorkflowRequest = Message<"cloud.v1.workflow.RunWorkloadWorkflowRequest"> & {
   /**
+   *
+   * topology is the topology the workload runs against.
+   *
    * @generated from field: cloud.v1.topology.Topology topology = 1;
    */
   topology?: Topology;
 
   /**
+   *
+   * workload is the workload definition to execute.
+   *
    * @generated from field: cloud.v1.domain.Workload workload = 2;
    */
   workload?: Workload;
 };
 
 /**
- * Run the workload via the agent (write stroppy config + call stroppy).
- * Results land in metrics, not in the response.
+ *
+ * RunWorkloadWorkflowRequest asks to run the workload via the agent (write
+ * stroppy config + call stroppy). Results land in metrics, not in the response.
  *
  * @generated from message cloud.v1.workflow.RunWorkloadWorkflowRequest
  */
 export type RunWorkloadWorkflowRequestJson = {
   /**
+   *
+   * topology is the topology the workload runs against.
+   *
    * @generated from field: cloud.v1.topology.Topology topology = 1;
    */
   topology?: TopologyJson;
 
   /**
+   *
+   * workload is the workload definition to execute.
+   *
    * @generated from field: cloud.v1.domain.Workload workload = 2;
    */
   workload?: WorkloadJson;
@@ -242,12 +312,20 @@ export const RunWorkloadWorkflowRequestSchema: GenMessage<RunWorkloadWorkflowReq
   messageDesc(file_cloud_v1_workflow_test, 6);
 
 /**
+ *
+ * RunWorkloadWorkflowResponse is the empty result of a workload run (results go
+ * to metrics).
+ *
  * @generated from message cloud.v1.workflow.RunWorkloadWorkflowResponse
  */
 export type RunWorkloadWorkflowResponse = Message<"cloud.v1.workflow.RunWorkloadWorkflowResponse"> & {
 };
 
 /**
+ *
+ * RunWorkloadWorkflowResponse is the empty result of a workload run (results go
+ * to metrics).
+ *
  * @generated from message cloud.v1.workflow.RunWorkloadWorkflowResponse
  */
 export type RunWorkloadWorkflowResponseJson = {
@@ -263,20 +341,32 @@ export const RunWorkloadWorkflowResponseSchema: GenMessage<RunWorkloadWorkflowRe
   messageDesc(file_cloud_v1_workflow_test, 7);
 
 /**
+ *
+ * SuiteWorkflowRequest is the input to a suite run.
+ *
  * @generated from message cloud.v1.workflow.SuiteWorkflowRequest
  */
 export type SuiteWorkflowRequest = Message<"cloud.v1.workflow.SuiteWorkflowRequest"> & {
   /**
+   *
+   * suite_run is the full description of the suite run to execute.
+   *
    * @generated from field: cloud.v1.domain.SuiteRun suite_run = 1;
    */
   suiteRun?: SuiteRun;
 };
 
 /**
+ *
+ * SuiteWorkflowRequest is the input to a suite run.
+ *
  * @generated from message cloud.v1.workflow.SuiteWorkflowRequest
  */
 export type SuiteWorkflowRequestJson = {
   /**
+   *
+   * suite_run is the full description of the suite run to execute.
+   *
    * @generated from field: cloud.v1.domain.SuiteRun suite_run = 1;
    */
   suiteRun?: SuiteRunJson;
@@ -292,12 +382,18 @@ export const SuiteWorkflowRequestSchema: GenMessage<SuiteWorkflowRequest, {jsonT
   messageDesc(file_cloud_v1_workflow_test, 8);
 
 /**
+ *
+ * SuiteWorkflowResponse is the empty result of a completed suite run.
+ *
  * @generated from message cloud.v1.workflow.SuiteWorkflowResponse
  */
 export type SuiteWorkflowResponse = Message<"cloud.v1.workflow.SuiteWorkflowResponse"> & {
 };
 
 /**
+ *
+ * SuiteWorkflowResponse is the empty result of a completed suite run.
+ *
  * @generated from message cloud.v1.workflow.SuiteWorkflowResponse
  */
 export type SuiteWorkflowResponseJson = {
@@ -313,16 +409,21 @@ export const SuiteWorkflowResponseSchema: GenMessage<SuiteWorkflowResponse, {jso
   messageDesc(file_cloud_v1_workflow_test, 9);
 
 /**
- * TestWorkflow orchestrates one full test cycle:
- *   deploy -> install stroppy -> [install database unless external] -> run workload -> teardown.
+ *
+ * TestService orchestrates one full test cycle:
+ * deploy -> install stroppy -> [install database unless external] -> run workload -> teardown.
  * It composes child workflows; topology stays baked, only runtime info from the
  * deployment is carried forward.
  *
- * @generated from service cloud.v1.workflow.TestApi
+ * @generated from service cloud.v1.workflow.TestService
  */
-export const TestApi: GenService<{
+export const TestService: GenService<{
   /**
-   * @generated from rpc cloud.v1.workflow.TestApi.TestWorkflow
+   *
+   * TestWorkflow runs one full test cycle, deduplicated by a deterministic id
+   * derived from TestRun.id and never auto-retried as a whole.
+   *
+   * @generated from rpc cloud.v1.workflow.TestService.TestWorkflow
    */
   testWorkflow: {
     methodKind: "unary";
@@ -330,7 +431,11 @@ export const TestApi: GenService<{
     output: typeof TestWorkflowResponseSchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.TestApi.InstallStroppyWorkflow
+   *
+   * InstallStroppyWorkflow installs stroppy onto the runner machines (child
+   * of TestWorkflow; idempotent and retryable).
+   *
+   * @generated from rpc cloud.v1.workflow.TestService.InstallStroppyWorkflow
    */
   installStroppyWorkflow: {
     methodKind: "unary";
@@ -338,7 +443,11 @@ export const TestApi: GenService<{
     output: typeof InstallStroppyWorkflowResponseSchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.TestApi.InstallDatabaseWorkflow
+   *
+   * InstallDatabaseWorkflow brings up / provisions the database (child of
+   * TestWorkflow; idempotent and retryable).
+   *
+   * @generated from rpc cloud.v1.workflow.TestService.InstallDatabaseWorkflow
    */
   installDatabaseWorkflow: {
     methodKind: "unary";
@@ -346,7 +455,11 @@ export const TestApi: GenService<{
     output: typeof InstallDatabaseWorkflowResponseSchema;
   },
   /**
-   * @generated from rpc cloud.v1.workflow.TestApi.RunWorkloadWorkflow
+   *
+   * RunWorkloadWorkflow runs the workload via the agent (child of
+   * TestWorkflow; unbounded, never retried to avoid double load).
+   *
+   * @generated from rpc cloud.v1.workflow.TestService.RunWorkloadWorkflow
    */
   runWorkloadWorkflow: {
     methodKind: "unary";
@@ -357,13 +470,19 @@ export const TestApi: GenService<{
   serviceDesc(file_cloud_v1_workflow_test, 0);
 
 /**
- * SuiteWorkflow runs a child TestWorkflow per test_run, honoring max_parallel.
  *
- * @generated from service cloud.v1.workflow.SuiteWorkflowApi
+ * SuiteWorkflowService runs a child TestWorkflow per test_run, honoring
+ * max_parallel.
+ *
+ * @generated from service cloud.v1.workflow.SuiteWorkflowService
  */
-export const SuiteWorkflowApi: GenService<{
+export const SuiteWorkflowService: GenService<{
   /**
-   * @generated from rpc cloud.v1.workflow.SuiteWorkflowApi.SuiteWorkflow
+   *
+   * SuiteWorkflow fans out a child TestWorkflow per test run in the suite,
+   * deduplicated by a deterministic id derived from SuiteRun.id.
+   *
+   * @generated from rpc cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow
    */
   suiteWorkflow: {
     methodKind: "unary";

@@ -25,34 +25,67 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     it bakes into a domain.SuiteRun (the full N*M TestRuns).
  */
 message SuiteWizardDraftRecord {
+    /*
+        entity is the storage envelope (tenant-scoped: id, tenant_id, name,
+        timings).
+     */
     common.Entity entity = 1 [(validate.rules).message.required = true];
 
-    // The whole suite form: selections + provider + per-topology provider settings
-    // + max_parallel, as one conditional schema + values.
+    /*
+        form is the whole suite form: selections + provider + per-topology
+        provider settings + max_parallel, as one conditional schema + values.
+     */
     schemapb.Filled form = 2;
 
-    // --- server-computed (recomputed on every patch) ---
-    // Expanded, compatible cells (lightweight summaries; full TestRuns are baked
-    // only at finish to avoid generating a topology per cell here).
+    /*
+        preview holds the server-computed expanded, compatible cells (recomputed
+        on every patch). These are lightweight summaries; full TestRuns are baked
+        only at finish to avoid generating a topology per cell here.
+     */
     repeated Cell preview = 3;
-    // Authoritative validation errors (paths group by section in the UI).
+    /*
+        errors are the authoritative validation errors (recomputed on every
+        patch); paths group by section in the UI.
+     */
     repeated schemapb.FieldError errors = 4;
-    // ready is true when there is >=1 compatible cell, every involved db preset
-    // has its provider settings filled, and the form validates.
+    /*
+        ready is true when there is >=1 compatible cell, every involved db preset
+        has its provider settings filled, and the form validates.
+     */
     bool ready = 5;
 
-    // Cell is one resolved (db, workload) pair the suite will run.
+    /*
+        Cell is one resolved (db, workload) pair the suite will run.
+     */
     message Cell {
-        // From a db x workload matrix pair...
+        /*
+            db_preset_id is the database preset from a db x workload matrix pair
+            (paired with workload_preset_id).
+         */
         string db_preset_id = 1;
+        /*
+            workload_preset_id is the workload preset from a db x workload matrix
+            pair (paired with db_preset_id).
+         */
         string workload_preset_id = 2;
-        // ...or from a full TestPreset (then db/workload ids are empty).
+        /*
+            test_preset_id is set when the cell came from a full TestPreset
+            instead of a matrix pair (then db/workload preset ids are empty).
+         */
         string test_preset_id = 3;
-        // Display name of the resulting run.
+        /*
+            name is the display name of the resulting run.
+         */
         string name = 4;
-        // workload is compatible with the database kind.
+        /*
+            compatible is true when the workload is compatible with the database
+            kind.
+         */
         bool compatible = 5;
-        // Everything this cell needs (incl. its provider settings) is present.
+        /*
+            ready is true when everything this cell needs (incl. its provider
+            settings) is present.
+         */
         bool ready = 6;
     }
 }

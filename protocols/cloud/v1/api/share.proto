@@ -18,39 +18,94 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     background job keeps the snapshot fresh while the share is alive.
  */
 
+/*
+    CreateShareRequest mints a new share (token + first snapshot) for a run.
+ */
 message CreateShareRequest {
+    /*
+        tenant_id scopes the share; shares are tenant-scoped.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
-    // What to share (test run / suite run + id).
+    /*
+        target is what to share (test run / suite run + id).
+     */
     models.ShareRecord.Target target = 2 [(validate.rules).message.required = true];
     /*
-        Lifetime. 0 / unset -> server default (1 week). Explicit 0 to mean "never"
-        is allowed but the client SHOULD warn the user: it is insecure and keeps
-        the background refresh running forever.
+        ttl is the share lifetime. 0 / unset -> server default (1 week). Explicit 0
+        to mean "never" is allowed but the client SHOULD warn the user: it is
+        insecure and keeps the background refresh running forever.
      */
     google.protobuf.Duration ttl = 3;
 }
+/*
+    CreateShareResponse returns the created share record (with its token).
+ */
 message CreateShareResponse {
+    /*
+        share is the newly created share record.
+     */
     models.ShareRecord share = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    GetShareRequest fetches one share by id.
+ */
 message GetShareRequest {
+    /*
+        tenant_id scopes the request to the share's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the share to fetch.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
+/*
+    GetShareResponse returns the requested share.
+ */
 message GetShareResponse {
+    /*
+        share is the fetched share record.
+     */
     models.ShareRecord share = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    ListSharesRequest lists a tenant's shares with filtering, sort and paging.
+ */
 message ListSharesRequest {
+    /*
+        tenant_id scopes the listing to one tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        filter is the shared Entity-level filter (search, ids, time windows).
+     */
     common.EntityFilter filter = 2;
+    /*
+        sort is the ordering over the common Entity columns.
+     */
     common.EntitySort sort = 3;
+    /*
+        page is the pagination cursor/size.
+     */
     common.Page page = 4;
-    // Narrow to shares of one run; empty = any.
+    /*
+        target_id narrows to shares of one run; empty = any.
+     */
     string target_id = 5 [(validate.rules).string.max_len = 64];
 }
+/*
+    ListSharesResponse returns one page of shares.
+ */
 message ListSharesResponse {
+    /*
+        shares is this page of share records.
+     */
     repeated models.ShareRecord shares = 1;
+    /*
+        next_page_token is empty when there are no more rows.
+     */
     string next_page_token = 2;
 }
 
@@ -59,10 +114,22 @@ message ListSharesResponse {
     deleting the record. Idempotent.
  */
 message RevokeShareRequest {
+    /*
+        tenant_id scopes the request to the share's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the share to disable.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
+/*
+    RevokeShareResponse returns the share after it was disabled.
+ */
 message RevokeShareResponse {
+    /*
+        share is the now-revoked share record.
+     */
     models.ShareRecord share = 1 [(validate.rules).message.required = true];
 }
 
@@ -71,20 +138,51 @@ message RevokeShareResponse {
     create (0/unset = default, explicit 0 = never with a warning).
  */
 message SetShareExpiryRequest {
+    /*
+        tenant_id scopes the request to the share's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the share whose lifetime to change.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        ttl is the new lifetime; same semantics as create (0/unset = default,
+        explicit 0 = never with a warning).
+     */
     google.protobuf.Duration ttl = 3;
 }
+/*
+    SetShareExpiryResponse returns the share after its lifetime was changed.
+ */
 message SetShareExpiryResponse {
+    /*
+        share is the share record with the updated expiry.
+     */
     models.ShareRecord share = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    DeleteShareRequest removes one share by id.
+ */
 message DeleteShareRequest {
+    /*
+        tenant_id scopes the request to the share's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the share to remove.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
+/*
+    DeleteShareResponse is empty; success is signalled by the absence of error.
+ */
 message DeleteShareResponse {}
 
+/*
+    ShareService is the authenticated management side of run shares.
+ */
 service ShareService {
     /*
         CreateShare is not idempotent: each call mints a new token + snapshot.
@@ -92,10 +190,16 @@ service ShareService {
     rpc CreateShare (CreateShareRequest) returns (CreateShareResponse) {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SHARE, action: ACTION_CREATE}]};
     }
+    /*
+        GetShare fetches one share by id. Read-only.
+     */
     rpc GetShare (GetShareRequest) returns (GetShareResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SHARE, action: ACTION_READ}]};
     }
+    /*
+        ListShares lists a tenant's shares. Read-only.
+     */
     rpc ListShares (ListSharesRequest) returns (ListSharesResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SHARE, action: ACTION_LIST}]};

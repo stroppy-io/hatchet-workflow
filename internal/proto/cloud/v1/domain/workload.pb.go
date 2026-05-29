@@ -23,13 +23,18 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Workload describes the stroppy load to run against the database under test:
+// the stroppy binary version plus its sealed, schema-backed parameters.
 type Workload struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	StroppyVersion string                 `protobuf:"bytes,1,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
-	Params         *schemapb.Baked        `protobuf:"bytes,2,opt,name=params,proto3" json:"params,omitempty"`
-	Tags           *common.Tags           `protobuf:"bytes,3,opt,name=tags,proto3" json:"tags,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// stroppy_version is the stroppy binary version to run.
+	StroppyVersion string `protobuf:"bytes,1,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
+	// params is the sealed, schema-backed stroppy workload configuration.
+	Params *schemapb.Baked `protobuf:"bytes,2,opt,name=params,proto3" json:"params,omitempty"`
+	// tags are free-form metadata attached to the workload.
+	Tags          *common.Tags `protobuf:"bytes,3,opt,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Workload) Reset() {

@@ -26,6 +26,9 @@ const (
 // RatingServiceClient is the client API for RatingService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// RatingService serves the authenticated benchmark leaderboards (system + tenant
+// scopes).
 type RatingServiceClient interface {
 	// GetSystemRating: cross-system private board over in_global_rating runs. Any
 	// authenticated account (no specific permission).
@@ -65,6 +68,9 @@ func (c *ratingServiceClient) GetTenantRating(ctx context.Context, in *GetTenant
 // RatingServiceServer is the server API for RatingService service.
 // All implementations must embed UnimplementedRatingServiceServer
 // for forward compatibility.
+//
+// RatingService serves the authenticated benchmark leaderboards (system + tenant
+// scopes).
 type RatingServiceServer interface {
 	// GetSystemRating: cross-system private board over in_global_rating runs. Any
 	// authenticated account (no specific permission).

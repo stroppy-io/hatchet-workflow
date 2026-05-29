@@ -28,15 +28,26 @@ export const file_cloud_v1_topology_topology: GenFile = /*@__PURE__*/
   fileDesc("CiBjbG91ZC92MS90b3BvbG9neS90b3BvbG9neS5wcm90bxIRY2xvdWQudjEudG9wb2xvZ3kiowUKCFRvcG9sb2d5EkEKCWluc3RhbmNlcxgBIAMoCzIkLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5Lkluc3RhbmNlQgj6QgWSAQIIARI8Cgtjb25uZWN0aW9ucxgCIAMoCzIdLmNsb3VkLnYxLnRvcG9sb2d5LkNvbm5lY3Rpb25CCPpCBZIBAggBEkMKE2V4dGVybmFsX2NvbXBvbmVudHMYAyADKAsyHC5jbG91ZC52MS50b3BvbG9neS5Db21wb25lbnRCCPpCBZIBAhBAEiMKBHRhZ3MYBCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxqrAwoISW5zdGFuY2USFgoCaWQYASABKAlCCvpCB3IFEAEYgAESJwoGc3RhdHVzGAIgASgOMhcuY2xvdWQudjEuY29tbW9uLlN0YXR1cxI2CgxtYWNoaW5lX2luZm8YAyABKAsyIC5jbG91ZC52MS5kZXBsb3ltZW50Lk1hY2hpbmVJbmZvEiwKDnByb3ZpZGVyX3Bhcm1zGAQgASgLMg8uc2NoZW1hcGIuQmFrZWRIAIgBARI6Cg5xdW90YV9yZXF1ZXN0cxgFIAMoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuUmVxdWVzdBI/ChBhbGxvY2F0ZWRfcXVvdGFzGAYgAygLMiUuY2xvdWQudjEuZGVwbG95bWVudC5RdW90YS5BbGxvY2F0aW9uEi4KEGRlcGxveW1lbnRfcGFybXMYByABKAsyDy5zY2hlbWFwYi5CYWtlZEgBiAEBEiMKBHRhZ3MYCCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFnc0IRCg9fcHJvdmlkZXJfcGFybXNCEwoRX2RlcGxveW1lbnRfcGFybXNCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvdG9wb2xvZ3liBnByb3RvMw", [file_cloud_v1_common_status, file_cloud_v1_common_tags, file_cloud_v1_deployment_machine, file_cloud_v1_deployment_quota, file_cloud_v1_topology_component, file_cloud_v1_topology_connection, file_schemapb_schema, file_validate_validate]);
 
 /**
+ *
+ * Topology is the complete description of a benchmark deployment: its
+ * instances, the edges between components, and any external components.
+ *
  * @generated from message cloud.v1.topology.Topology
  */
 export type Topology = Message<"cloud.v1.topology.Topology"> & {
   /**
+   *
+   * instances are the physical machines making up the topology; at least one
+   * is required.
+   *
    * @generated from field: repeated cloud.v1.topology.Topology.Instance instances = 1;
    */
   instances: Topology_Instance[];
 
   /**
+   *
+   * connections are the edges between components; at least one is required.
+   *
    * @generated from field: repeated cloud.v1.topology.Connection connections = 2;
    */
   connections: Connection[];
@@ -51,21 +62,35 @@ export type Topology = Message<"cloud.v1.topology.Topology"> & {
   externalComponents: Component[];
 
   /**
+   *
+   * tags are arbitrary key/value labels attached to the whole topology.
+   *
    * @generated from field: cloud.v1.common.Tags tags = 4;
    */
   tags?: Tags;
 };
 
 /**
+ *
+ * Topology is the complete description of a benchmark deployment: its
+ * instances, the edges between components, and any external components.
+ *
  * @generated from message cloud.v1.topology.Topology
  */
 export type TopologyJson = {
   /**
+   *
+   * instances are the physical machines making up the topology; at least one
+   * is required.
+   *
    * @generated from field: repeated cloud.v1.topology.Topology.Instance instances = 1;
    */
   instances?: Topology_InstanceJson[];
 
   /**
+   *
+   * connections are the edges between components; at least one is required.
+   *
    * @generated from field: repeated cloud.v1.topology.Connection connections = 2;
    */
   connections?: ConnectionJson[];
@@ -80,6 +105,9 @@ export type TopologyJson = {
   externalComponents?: ComponentJson[];
 
   /**
+   *
+   * tags are arbitrary key/value labels attached to the whole topology.
+   *
    * @generated from field: cloud.v1.common.Tags tags = 4;
    */
   tags?: TagsJson;
@@ -95,106 +123,152 @@ export const TopologySchema: GenMessage<Topology, {jsonType: TopologyJson, valid
   messageDesc(file_cloud_v1_topology_topology, 0);
 
 /**
+ *
+ * Instance is one physical machine (VM) in the topology onto which
+ * components are allocated.
+ *
  * @generated from message cloud.v1.topology.Topology.Instance
  */
 export type Topology_Instance = Message<"cloud.v1.topology.Topology.Instance"> & {
   /**
+   *
+   * id is the unique identifier of the instance within the topology.
+   *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
+   *
+   * status is the current runtime status of the instance.
+   *
    * @generated from field: cloud.v1.common.Status status = 2;
    */
   status: Status;
 
   /**
+   *
+   * machine_info describes the requested machine shape/specs.
+   *
    * @generated from field: cloud.v1.deployment.MachineInfo machine_info = 3;
    */
   machineInfo?: MachineInfo;
 
   /**
-   * calculated (wisard)
+   *
+   * provider_parms are the baked provider parameters; calculated (wisard).
    *
    * @generated from field: optional schemapb.Baked provider_parms = 4;
    */
   providerParms?: Baked;
 
   /**
-   * calculated (deployment)
+   *
+   * quota_requests are the resource quotas requested for this instance;
+   * calculated (deployment).
    *
    * @generated from field: repeated cloud.v1.deployment.Quota.Request quota_requests = 5;
    */
   quotaRequests: Quota_Request[];
 
   /**
-   * calculated (deployment)
+   *
+   * allocated_quotas are the quotas actually granted to this instance;
+   * calculated (deployment).
    *
    * @generated from field: repeated cloud.v1.deployment.Quota.Allocation allocated_quotas = 6;
    */
   allocatedQuotas: Quota_Allocation[];
 
   /**
-   * calculated (deployment)
+   *
+   * deployment_parms are the baked deployment parameters; calculated
+   * (deployment).
    *
    * @generated from field: optional schemapb.Baked deployment_parms = 7;
    */
   deploymentParms?: Baked;
 
   /**
+   *
+   * tags are arbitrary key/value labels attached to the instance.
+   *
    * @generated from field: cloud.v1.common.Tags tags = 8;
    */
   tags?: Tags;
 };
 
 /**
+ *
+ * Instance is one physical machine (VM) in the topology onto which
+ * components are allocated.
+ *
  * @generated from message cloud.v1.topology.Topology.Instance
  */
 export type Topology_InstanceJson = {
   /**
+   *
+   * id is the unique identifier of the instance within the topology.
+   *
    * @generated from field: string id = 1;
    */
   id?: string;
 
   /**
+   *
+   * status is the current runtime status of the instance.
+   *
    * @generated from field: cloud.v1.common.Status status = 2;
    */
   status?: StatusJson;
 
   /**
+   *
+   * machine_info describes the requested machine shape/specs.
+   *
    * @generated from field: cloud.v1.deployment.MachineInfo machine_info = 3;
    */
   machineInfo?: MachineInfoJson;
 
   /**
-   * calculated (wisard)
+   *
+   * provider_parms are the baked provider parameters; calculated (wisard).
    *
    * @generated from field: optional schemapb.Baked provider_parms = 4;
    */
   providerParms?: BakedJson;
 
   /**
-   * calculated (deployment)
+   *
+   * quota_requests are the resource quotas requested for this instance;
+   * calculated (deployment).
    *
    * @generated from field: repeated cloud.v1.deployment.Quota.Request quota_requests = 5;
    */
   quotaRequests?: Quota_RequestJson[];
 
   /**
-   * calculated (deployment)
+   *
+   * allocated_quotas are the quotas actually granted to this instance;
+   * calculated (deployment).
    *
    * @generated from field: repeated cloud.v1.deployment.Quota.Allocation allocated_quotas = 6;
    */
   allocatedQuotas?: Quota_AllocationJson[];
 
   /**
-   * calculated (deployment)
+   *
+   * deployment_parms are the baked deployment parameters; calculated
+   * (deployment).
    *
    * @generated from field: optional schemapb.Baked deployment_parms = 7;
    */
   deploymentParms?: BakedJson;
 
   /**
+   *
+   * tags are arbitrary key/value labels attached to the instance.
+   *
    * @generated from field: cloud.v1.common.Tags tags = 8;
    */
   tags?: TagsJson;

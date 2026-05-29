@@ -40,20 +40,26 @@ const (
 // Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
 // it bakes into a domain.TestRun.
 type TestWizardDraftRecord struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	Entity *common.Entity         `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	// The whole test form: one big conditional schema + its current values.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entity is the storage envelope (tenant-scoped: id, tenant_id, name,
+	// timings).
+	Entity *common.Entity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	// form is the whole test form: one big conditional schema + its current
+	// values (a Filled = schema + values).
 	Form *schemapb.Filled `protobuf:"bytes,2,opt,name=form,proto3" json:"form,omitempty"`
-	// --- server-computed (recomputed on every patch) ---
-	// Topology generated from the current form values (abstract machines;
-	// provider_parms filled once provider settings are valid).
+	// topology is the server-computed topology generated from the current form
+	// values (recomputed on every patch): abstract machines, with provider_parms
+	// filled once provider settings are valid.
 	Topology *topology.Topology `protobuf:"bytes,3,opt,name=topology,proto3" json:"topology,omitempty"`
-	// Current authoritative validation errors; FieldError.field carries the path
-	// so the UI can group by section (database.*, workload.*, provider.*).
+	// errors are the current authoritative validation errors (recomputed on
+	// every patch); FieldError.field carries the path so the UI can group by
+	// section (database.*, workload.*, provider.*).
 	Errors []*schemapb.FieldError `protobuf:"bytes,4,rep,name=errors,proto3" json:"errors,omitempty"`
-	// ready is true when the whole form validates and FinishTestWizard is allowed.
+	// ready is true when the whole form validates and FinishTestWizard is
+	// allowed.
 	Ready bool `protobuf:"varint,5,opt,name=ready,proto3" json:"ready,omitempty"`
-	// Seeded from this test preset, if the wizard started from one.
+	// test_preset_id is the test preset the wizard was seeded from, if it
+	// started from one.
 	TestPresetId  string `protobuf:"bytes,6,opt,name=test_preset_id,json=testPresetId,proto3" json:"test_preset_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

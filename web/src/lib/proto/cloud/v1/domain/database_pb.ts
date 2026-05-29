@@ -15,33 +15,43 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/domain/database.proto.
  */
 export const file_cloud_v1_domain_database: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9kb21haW4vZGF0YWJhc2UucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiLXBAoIRGF0YWJhc2USOAoEa2luZBgBIAEoDjIeLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5LaW5kQgr6QgeCAQQgABABEiYKDHByYW1zX3NjaGVtYRgCIAEoCzIQLnNjaGVtYXBiLlNjaGVtYRIhCgZwYXJhbXMYAyABKAsyDy5zY2hlbWFwYi5CYWtlZEgAEjYKCGV4dGVybmFsGAQgASgLMiIuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlLkV4dGVybmFsSAASQAoSZGF0YWJhc2VfcHJlc2V0X2lkGAUgASgLMiIuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlLlByZXNldElkSAASIwoEdGFncxgHIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGh8KCFByZXNldElkEhMKAmlkGAEgASgJQgf6QgRyAhABGkUKCEV4dGVybmFsEhQKA2RzbhgBIAEoCUIH+kIEcgIQARIjCgR0YWdzGAIgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MirwEKBEtpbmQSFAoQS0lORF9VTlNQRUNJRklFRBAAEhEKDUtJTkRfUE9TVEdSRVMQARIOCgpLSU5EX01ZU1FMEAISEAoMS0lORF9NQVJJQURCEAMSDAoIS0lORF9ZREIQBBIUChBLSU5EX1lEQl9NQU5BR0VEEAUSEgoOS0lORF9DT0NLUk9BQ0gQBhIRCg1LSU5EX1BJQ09EQVRBEAcSEQoNS0lORF9FWFRFUk5BTBAIQg0KBnNvdXJjZRID+EIBQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RvbWFpbmIGcHJvdG8z", [file_cloud_v1_common_tags, file_schemapb_schema, file_validate_validate]);
+  fileDesc("Ch5jbG91ZC92MS9kb21haW4vZGF0YWJhc2UucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiLXBAoIRGF0YWJhc2USOAoEa2luZBgBIAEoDjIeLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5LaW5kQgr6QgeCAQQQASAAEiYKDHByYW1zX3NjaGVtYRgCIAEoCzIQLnNjaGVtYXBiLlNjaGVtYRIhCgZwYXJhbXMYAyABKAsyDy5zY2hlbWFwYi5CYWtlZEgAEjYKCGV4dGVybmFsGAQgASgLMiIuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlLkV4dGVybmFsSAASQAoSZGF0YWJhc2VfcHJlc2V0X2lkGAUgASgLMiIuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlLlByZXNldElkSAASIwoEdGFncxgHIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGh8KCFByZXNldElkEhMKAmlkGAEgASgJQgf6QgRyAhABGkUKCEV4dGVybmFsEhQKA2RzbhgBIAEoCUIH+kIEcgIQARIjCgR0YWdzGAIgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MirwEKBEtpbmQSFAoQS0lORF9VTlNQRUNJRklFRBAAEhEKDUtJTkRfUE9TVEdSRVMQARIOCgpLSU5EX01ZU1FMEAISEAoMS0lORF9NQVJJQURCEAMSDAoIS0lORF9ZREIQBBIUChBLSU5EX1lEQl9NQU5BR0VEEAUSEgoOS0lORF9DT0NLUk9BQ0gQBhIRCg1LSU5EX1BJQ09EQVRBEAcSEQoNS0lORF9FWFRFUk5BTBAIQg0KBnNvdXJjZRID+EIBQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RvbWFpbmIGcHJvdG8z", [file_cloud_v1_common_tags, file_schemapb_schema, file_validate_validate]);
 
 /**
+ *
+ * Database is the database-under-test definition for a test run. It selects a
+ * Kind and provides it through exactly one source variant, optionally carrying
+ * the params schema and free-form tags.
+ *
  * @generated from message cloud.v1.domain.Database
  */
 export type Database = Message<"cloud.v1.domain.Database"> & {
   /**
+   * kind selects which database engine is under test. 
+   *
    * @generated from field: cloud.v1.domain.Database.Kind kind = 1;
    */
   kind: Database_Kind;
 
   /**
-   * Schema (the form) describing self-deploy params for this kind.
+   * prams_schema is the schema (the form) describing self-deploy params for
+   * this kind. 
    *
    * @generated from field: schemapb.Schema prams_schema = 2;
    */
   pramsSchema?: Schema;
 
   /**
-   * How the database is provided for a test run.
+   * source selects how the database is provided for a test run. Exactly one
+   * variant must be set. 
    *
    * @generated from oneof cloud.v1.domain.Database.source
    */
   source: {
     /**
-     * Self-deploy: filled values of prams_schema. TestWorkflow deploys a DB
-     * instance into the topology and tears it down at the end.
+     * params is the self-deploy variant: filled values of prams_schema.
+     * TestWorkflow deploys a DB instance into the topology and tears it
+     * down at the end. 
      *
      * @generated from field: schemapb.Baked params = 3;
      */
@@ -49,7 +59,8 @@ export type Database = Message<"cloud.v1.domain.Database"> & {
     case: "params";
   } | {
     /**
-     * External: connect to an existing endpoint, skip deploy/teardown.
+     * external is the external variant: connect to an existing endpoint,
+     * skip deploy/teardown. 
      *
      * @generated from field: cloud.v1.domain.Database.External external = 4;
      */
@@ -57,7 +68,8 @@ export type Database = Message<"cloud.v1.domain.Database"> & {
     case: "external";
   } | {
     /**
-     * Reference to a preset, resolved into params|external server-side.
+     * database_preset_id references a preset, resolved into params|external
+     * server-side. 
      *
      * @generated from field: cloud.v1.domain.Database.PresetId database_preset_id = 5;
      */
@@ -66,50 +78,65 @@ export type Database = Message<"cloud.v1.domain.Database"> & {
   } | { case: undefined; value?: undefined };
 
   /**
+   * tags are free-form metadata attached to the database definition. 
+   *
    * @generated from field: cloud.v1.common.Tags tags = 7;
    */
   tags?: Tags;
 };
 
 /**
+ *
+ * Database is the database-under-test definition for a test run. It selects a
+ * Kind and provides it through exactly one source variant, optionally carrying
+ * the params schema and free-form tags.
+ *
  * @generated from message cloud.v1.domain.Database
  */
 export type DatabaseJson = {
   /**
+   * kind selects which database engine is under test. 
+   *
    * @generated from field: cloud.v1.domain.Database.Kind kind = 1;
    */
   kind?: Database_KindJson;
 
   /**
-   * Schema (the form) describing self-deploy params for this kind.
+   * prams_schema is the schema (the form) describing self-deploy params for
+   * this kind. 
    *
    * @generated from field: schemapb.Schema prams_schema = 2;
    */
   pramsSchema?: SchemaJson;
 
   /**
-   * Self-deploy: filled values of prams_schema. TestWorkflow deploys a DB
-   * instance into the topology and tears it down at the end.
+   * params is the self-deploy variant: filled values of prams_schema.
+   * TestWorkflow deploys a DB instance into the topology and tears it
+   * down at the end. 
    *
    * @generated from field: schemapb.Baked params = 3;
    */
   params?: BakedJson;
 
   /**
-   * External: connect to an existing endpoint, skip deploy/teardown.
+   * external is the external variant: connect to an existing endpoint,
+   * skip deploy/teardown. 
    *
    * @generated from field: cloud.v1.domain.Database.External external = 4;
    */
   external?: Database_ExternalJson;
 
   /**
-   * Reference to a preset, resolved into params|external server-side.
+   * database_preset_id references a preset, resolved into params|external
+   * server-side. 
    *
    * @generated from field: cloud.v1.domain.Database.PresetId database_preset_id = 5;
    */
   databasePresetId?: Database_PresetIdJson;
 
   /**
+   * tags are free-form metadata attached to the database definition. 
+   *
    * @generated from field: cloud.v1.common.Tags tags = 7;
    */
   tags?: TagsJson;
@@ -125,26 +152,34 @@ export const DatabaseSchema: GenMessage<Database, {jsonType: DatabaseJson, valid
   messageDesc(file_cloud_v1_domain_database, 0);
 
 /**
- * Reference to a stored database preset. Resolved server-side into one of
- * the inline `source` variants (params for self-deploy, or external).
+ *
+ * PresetId is a reference to a stored database preset. Resolved
+ * server-side into one of the inline `source` variants (params for
+ * self-deploy, or external).
  *
  * @generated from message cloud.v1.domain.Database.PresetId
  */
 export type Database_PresetId = Message<"cloud.v1.domain.Database.PresetId"> & {
   /**
+   * id is the stored database preset identifier to resolve. 
+   *
    * @generated from field: string id = 1;
    */
   id: string;
 };
 
 /**
- * Reference to a stored database preset. Resolved server-side into one of
- * the inline `source` variants (params for self-deploy, or external).
+ *
+ * PresetId is a reference to a stored database preset. Resolved
+ * server-side into one of the inline `source` variants (params for
+ * self-deploy, or external).
  *
  * @generated from message cloud.v1.domain.Database.PresetId
  */
 export type Database_PresetIdJson = {
   /**
+   * id is the stored database preset identifier to resolve. 
+   *
    * @generated from field: string id = 1;
    */
   id?: string;
@@ -160,19 +195,22 @@ export const Database_PresetIdSchema: GenMessage<Database_PresetId, {jsonType: D
   messageDesc(file_cloud_v1_domain_database, 0, 0);
 
 /**
- * Already-running database. TestWorkflow does NOT deploy or tear it down,
- * it only connects to `dsn` and runs the workload on top.
+ *
+ * External is an already-running database. TestWorkflow does NOT deploy or
+ * tear it down, it only connects to `dsn` and runs the workload on top.
  *
  * @generated from message cloud.v1.domain.Database.External
  */
 export type Database_External = Message<"cloud.v1.domain.Database.External"> & {
   /**
+   * dsn is the connection string of the external database. 
+   *
    * @generated from field: string dsn = 1;
    */
   dsn: string;
 
   /**
-   * extra info about the external db (version, region, owner...)
+   * tags carry extra info about the external db (version, region, owner...). 
    *
    * @generated from field: cloud.v1.common.Tags tags = 2;
    */
@@ -180,19 +218,22 @@ export type Database_External = Message<"cloud.v1.domain.Database.External"> & {
 };
 
 /**
- * Already-running database. TestWorkflow does NOT deploy or tear it down,
- * it only connects to `dsn` and runs the workload on top.
+ *
+ * External is an already-running database. TestWorkflow does NOT deploy or
+ * tear it down, it only connects to `dsn` and runs the workload on top.
  *
  * @generated from message cloud.v1.domain.Database.External
  */
 export type Database_ExternalJson = {
   /**
+   * dsn is the connection string of the external database. 
+   *
    * @generated from field: string dsn = 1;
    */
   dsn?: string;
 
   /**
-   * extra info about the external db (version, region, owner...)
+   * tags carry extra info about the external db (version, region, owner...). 
    *
    * @generated from field: cloud.v1.common.Tags tags = 2;
    */
@@ -209,51 +250,70 @@ export const Database_ExternalSchema: GenMessage<Database_External, {jsonType: D
   messageDesc(file_cloud_v1_domain_database, 0, 1);
 
 /**
+ * Kind enumerates the supported database engines under test. 
+ *
  * @generated from enum cloud.v1.domain.Database.Kind
  */
 export enum Database_Kind {
   /**
+   * KIND_UNSPECIFIED is the unset zero value; never a valid engine. 
+   *
    * @generated from enum value: KIND_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
+   * KIND_POSTGRES is PostgreSQL. 
+   *
    * @generated from enum value: KIND_POSTGRES = 1;
    */
   POSTGRES = 1,
 
   /**
+   * KIND_MYSQL is MySQL. 
+   *
    * @generated from enum value: KIND_MYSQL = 2;
    */
   MYSQL = 2,
 
   /**
+   * KIND_MARIADB is MariaDB. 
+   *
    * @generated from enum value: KIND_MARIADB = 3;
    */
   MARIADB = 3,
 
   /**
+   * KIND_YDB is self-deployed YDB. 
+   *
    * @generated from enum value: KIND_YDB = 4;
    */
   YDB = 4,
 
   /**
+   * KIND_YDB_MANAGED is managed (cloud-provided) YDB. 
+   *
    * @generated from enum value: KIND_YDB_MANAGED = 5;
    */
   YDB_MANAGED = 5,
 
   /**
+   * KIND_COCKROACH is CockroachDB. 
+   *
    * @generated from enum value: KIND_COCKROACH = 6;
    */
   COCKROACH = 6,
 
   /**
+   * KIND_PICODATA is Picodata. 
+   *
    * @generated from enum value: KIND_PICODATA = 7;
    */
   PICODATA = 7,
 
   /**
-   * External / unmanaged database addressed only by dsn. Use with source.external.
+   * KIND_EXTERNAL is an external / unmanaged database addressed only by
+   * dsn. Use with source.external. 
    *
    * @generated from enum value: KIND_EXTERNAL = 8;
    */
@@ -261,6 +321,8 @@ export enum Database_Kind {
 }
 
 /**
+ * Kind enumerates the supported database engines under test. 
+ *
  * @generated from enum cloud.v1.domain.Database.Kind
  */
 export type Database_KindJson = "KIND_UNSPECIFIED" | "KIND_POSTGRES" | "KIND_MYSQL" | "KIND_MARIADB" | "KIND_YDB" | "KIND_YDB_MANAGED" | "KIND_COCKROACH" | "KIND_PICODATA" | "KIND_EXTERNAL";

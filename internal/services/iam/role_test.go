@@ -15,6 +15,7 @@ import (
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	"github.com/stroppy-io/stroppy-cloud/internal/services/utils"
 )
 
 // -------- CreateRole --------
@@ -24,7 +25,7 @@ func TestCreateRole(t *testing.T) {
 	defer ctrl.Finish()
 
 	roles := NewMockRoleRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Roles: roles})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Roles: roles})
 	ctx := context.Background()
 
 	t.Run("SuccessTenantScope", func(t *testing.T) {
@@ -92,7 +93,7 @@ func TestGetRole(t *testing.T) {
 	defer ctrl.Finish()
 
 	roles := NewMockRoleRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Roles: roles})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Roles: roles})
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {
@@ -130,7 +131,7 @@ func TestListRoles(t *testing.T) {
 	defer ctrl.Finish()
 
 	roles := NewMockRoleRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Roles: roles})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Roles: roles})
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {
@@ -162,7 +163,7 @@ func TestUpdateRole(t *testing.T) {
 	defer ctrl.Finish()
 
 	roles := NewMockRoleRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Roles: roles})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Roles: roles})
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {
@@ -229,7 +230,7 @@ func TestDeleteRole(t *testing.T) {
 	defer ctrl.Finish()
 
 	roles := NewMockRoleRepo(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Roles: roles})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Roles: roles})
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {

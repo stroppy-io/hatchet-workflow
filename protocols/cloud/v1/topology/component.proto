@@ -12,29 +12,105 @@ import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology";
 
+/*
+    component.proto defines a single logical node in a benchmark topology — a
+    database, monitor, workload runner, proxy, etc. A Component carries its kind,
+    runtime status, the strategy used to deploy it (config files + commands), and
+    the provider/deployment parameters that get filled in as the pipeline runs.
+ */
+
+/*
+    Component is one logical node in the topology graph.
+ */
 message Component {
+    /*
+        id is the unique identifier of the component within the topology.
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        Kind enumerates the role a component plays in the topology.
+     */
     enum Kind {
+        /*
+            KIND_UNSPECIFIED is the unset zero value (rejected by validation).
+         */
         KIND_UNSPECIFIED = 0;
+        /*
+            KIND_AGENT is a stroppy agent host.
+         */
         KIND_AGENT = 1;
+        /*
+            KIND_MONITOR is a monitoring/metrics component.
+         */
         KIND_MONITOR = 2;
+        /*
+            KIND_DATABASE is a primary database node.
+         */
         KIND_DATABASE = 3;
+        /*
+            KIND_REPLICA is a database replica node.
+         */
         KIND_REPLICA = 4;
+        /*
+            KIND_PROXY is a connection proxy/pooler.
+         */
         KIND_PROXY = 5;
+        /*
+            KIND_WORKLOAD is a workload/load-generator runner.
+         */
         KIND_WORKLOAD = 6;
+        /*
+            KIND_COORDINATOR is a cluster coordinator/control node.
+         */
         KIND_COORDINATOR = 7;
+        /*
+            KIND_ADDON is a supporting add-on component.
+         */
         KIND_ADDON = 8;
+        /*
+            KIND_EXTERNAL is a component provided externally (e.g. a managed service).
+         */
         KIND_EXTERNAL = 9;
     }
+    /*
+        kind is the role this component plays; must be a defined, non-zero value.
+     */
     Kind kind = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /*
+        status is the current runtime status of the component.
+     */
     common.Status status = 3;
+    /*
+        Strategy is the recipe used to deploy a component: configuration files to
+        lay down and commands to run.
+     */
     message Strategy {
+        /*
+            configuration_files are the rendered config files to place on the host.
+         */
         repeated common.BakedFile configuration_files = 1;
+        /*
+            deployment_commands are the commands to run to bring the component up.
+         */
         repeated common.Cmd deployment_commands = 2;
     }
-    Strategy deployment_strategy = 4; // calculated (build)
-    optional schemapb.Baked provider_parms = 5; // calculated (wisard actual for non-owr components)
-    optional string allocated_on_instance_id = 6; // calculated (deployment)
+    /*
+        deployment_strategy is the deploy recipe; calculated (build).
+     */
+    Strategy deployment_strategy = 4;
+    /*
+        provider_parms are the baked provider parameters; calculated (wisard
+        actual for non-owr components).
+     */
+    optional schemapb.Baked provider_parms = 5;
+    /*
+        allocated_on_instance_id is the instance this component was placed on;
+        calculated (deployment).
+     */
+    optional string allocated_on_instance_id = 6;
+    /*
+        tags are arbitrary key/value labels attached to the component.
+     */
     common.Tags tags = 7;
 }
 

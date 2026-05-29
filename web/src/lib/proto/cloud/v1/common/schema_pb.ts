@@ -17,30 +17,46 @@ export const file_cloud_v1_common_schema: GenFile = /*@__PURE__*/
   fileDesc("ChxjbG91ZC92MS9jb21tb24vc2NoZW1hLnByb3RvEg9jbG91ZC52MS5jb21tb24iWgoOUmVuZGVyZWRTY2hlbWESIAoGc2NoZW1hGAEgASgLMhAuc2NoZW1hcGIuU2NoZW1hEiYKBXZhbHVlGAIgASgLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdEJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9jb21tb25iBnByb3RvMw", [file_google_protobuf_struct, file_schemapb_schema]);
 
 /**
+ *
+ * RenderedSchema couples a schema definition with a concrete value rendered
+ * against it.
+ *
  * @generated from message cloud.v1.common.RenderedSchema
  */
 export type RenderedSchema = Message<"cloud.v1.common.RenderedSchema"> & {
   /**
+   * schema is the schema definition the value conforms to. 
+   *
    * @generated from field: schemapb.Schema schema = 1;
    */
   schema?: Schema;
 
   /**
+   * value is the structured data rendered against the schema. 
+   *
    * @generated from field: google.protobuf.Struct value = 2;
    */
   value?: JsonObject;
 };
 
 /**
+ *
+ * RenderedSchema couples a schema definition with a concrete value rendered
+ * against it.
+ *
  * @generated from message cloud.v1.common.RenderedSchema
  */
 export type RenderedSchemaJson = {
   /**
+   * schema is the schema definition the value conforms to. 
+   *
    * @generated from field: schemapb.Schema schema = 1;
    */
   schema?: SchemaJson;
 
   /**
+   * value is the structured data rendered against the schema. 
+   *
    * @generated from field: google.protobuf.Struct value = 2;
    */
   value?: StructJson;

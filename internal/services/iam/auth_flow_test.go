@@ -17,6 +17,7 @@ import (
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	iampb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	"github.com/stroppy-io/stroppy-cloud/internal/services/utils"
 )
 
 // -------- Register --------
@@ -35,7 +36,7 @@ func TestRegister(t *testing.T) {
 	ttl := NewMockTokenTTL(ctrl)
 
 	deps := IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:    &utils.MockTrm{},
 		Gates: gates, Accounts: accounts, Hasher: hasher,
 		Credentials: credentials, OneTimeTokens: oneTimeTokens,
 		Notifier: notifier, Tokens: tokens, TTL: ttl,
@@ -216,7 +217,7 @@ func TestLogin(t *testing.T) {
 	tokens := NewMockTokenService(ctrl)
 
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:       &utils.MockTrm{},
 		Accounts: accounts, Hasher: hasher, Credentials: credentials, Tokens: tokens,
 	})
 	ctx := context.Background()
@@ -300,7 +301,7 @@ func TestLogout(t *testing.T) {
 	defer ctrl.Finish()
 
 	tokens := NewMockTokenService(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Tokens: tokens})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Tokens: tokens})
 	ctx := context.Background()
 	req := &api.LogoutRequest{RefreshToken: "rt1"}
 
@@ -337,7 +338,7 @@ func TestRefresh(t *testing.T) {
 
 	accounts := NewMockAccountRepo(ctrl)
 	tokens := NewMockTokenService(ctrl)
-	svc := NewIamService(IamDeps{Tx: &MockTrm{}, Clock: FakeClock{}, Accounts: accounts, Tokens: tokens})
+	svc := NewIamService(IamDeps{Tx: &utils.MockTrm{}, Accounts: accounts, Tokens: tokens})
 	ctx := context.Background()
 	req := &api.RefreshRequest{RefreshToken: "rt1"}
 
@@ -395,7 +396,7 @@ func TestRequestPasswordReset(t *testing.T) {
 	ttl := NewMockTokenTTL(ctrl)
 
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:       &utils.MockTrm{},
 		Accounts: accounts, OneTimeTokens: oneTimeTokens, Notifier: notifier, TTL: ttl,
 	})
 	ctx := context.Background()
@@ -434,7 +435,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 	credentials := NewMockCredentialStore(ctrl)
 
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:            &utils.MockTrm{},
 		OneTimeTokens: oneTimeTokens, Hasher: hasher, Credentials: credentials,
 	})
 	ctx := context.Background()
@@ -488,7 +489,7 @@ func TestVerifyEmail(t *testing.T) {
 	oneTimeTokens := NewMockOneTimeTokens(ctrl)
 
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:       &utils.MockTrm{},
 		Accounts: accounts, OneTimeTokens: oneTimeTokens,
 	})
 	ctx := context.Background()
@@ -538,12 +539,12 @@ func TestChangePassword(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	authn := NewMockAuthn(ctrl)
+	authn := utils.NewMockAuthn(ctrl)
 	credentials := NewMockCredentialStore(ctrl)
 	hasher := NewMockPasswordHasher(ctrl)
 
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:    &utils.MockTrm{},
 		Authn: authn, Credentials: credentials, Hasher: hasher,
 	})
 	ctx := context.Background()
@@ -623,7 +624,7 @@ func TestResetPassword(t *testing.T) {
 	hasher := NewMockPasswordHasher(ctrl)
 
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:       &utils.MockTrm{},
 		Accounts: accounts, Credentials: credentials, Hasher: hasher,
 	})
 	ctx := context.Background()
@@ -673,14 +674,14 @@ func TestResendVerification(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	authn := NewMockAuthn(ctrl)
+	authn := utils.NewMockAuthn(ctrl)
 	accounts := NewMockAccountRepo(ctrl)
 	oneTimeTokens := NewMockOneTimeTokens(ctrl)
 	notifier := NewMockNotifier(ctrl)
 	ttl := NewMockTokenTTL(ctrl)
 
 	svc := NewIamService(IamDeps{
-		Tx: &MockTrm{}, Clock: FakeClock{},
+		Tx:    &utils.MockTrm{},
 		Authn: authn, Accounts: accounts, OneTimeTokens: oneTimeTokens, Notifier: notifier, TTL: ttl,
 	})
 	ctx := context.Background()

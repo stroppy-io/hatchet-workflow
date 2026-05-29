@@ -24,12 +24,16 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Format is the on-disk kind of the uploaded package blob.
 type PackageRecord_Format int32
 
 const (
+	// FORMAT_UNSPECIFIED is the unset default.
 	PackageRecord_FORMAT_UNSPECIFIED PackageRecord_Format = 0
-	PackageRecord_FORMAT_DEB         PackageRecord_Format = 1 // apt / dpkg package
-	PackageRecord_FORMAT_BINARY      PackageRecord_Format = 2 // a raw executable / archive run by install commands
+	// FORMAT_DEB is an apt / dpkg package.
+	PackageRecord_FORMAT_DEB PackageRecord_Format = 1
+	// FORMAT_BINARY is a raw executable / archive run by install commands.
+	PackageRecord_FORMAT_BINARY PackageRecord_Format = 2
 )
 
 // Enum value maps for PackageRecord_Format.
@@ -73,13 +77,20 @@ func (PackageRecord_Format) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_models_package_proto_rawDescGZIP(), []int{0, 0}
 }
 
+// Status tracks the upload + verification lifecycle of the blob.
 type PackageRecord_Status int32
 
 const (
+	// STATUS_UNSPECIFIED is the unset default.
 	PackageRecord_STATUS_UNSPECIFIED PackageRecord_Status = 0
-	PackageRecord_STATUS_UPLOADING   PackageRecord_Status = 1 // record created, blob not yet uploaded/verified
-	PackageRecord_STATUS_READY       PackageRecord_Status = 2 // uploaded + checksum/size verified
-	PackageRecord_STATUS_FAILED      PackageRecord_Status = 3 // verification failed
+	// STATUS_UPLOADING means the record is created but the blob is not yet
+	// uploaded/verified.
+	PackageRecord_STATUS_UPLOADING PackageRecord_Status = 1
+	// STATUS_READY means the blob is uploaded and its checksum/size are
+	// verified.
+	PackageRecord_STATUS_READY PackageRecord_Status = 2
+	// STATUS_FAILED means verification failed.
+	PackageRecord_STATUS_FAILED PackageRecord_Status = 3
 )
 
 // Enum value maps for PackageRecord_Status.
@@ -132,20 +143,30 @@ func (PackageRecord_Status) EnumDescriptor() ([]byte, []int) {
 // time the agent fetches the blob by a file reference (resolved to a presigned
 // download). Tenant-private.
 type PackageRecord struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	Entity  *common.Entity         `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	Format  PackageRecord_Format   `protobuf:"varint,2,opt,name=format,proto3,enum=cloud.v1.models.PackageRecord_Format" json:"format,omitempty"`
-	Version string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
-	// Which database engine this build targets.
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entity is the storage envelope (id, tenant_id, name, timings). Packages
+	// are tenant-private.
+	Entity *common.Entity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	// format is the on-disk kind of the blob (deb or raw binary). Must be a
+	// defined Format value.
+	Format PackageRecord_Format `protobuf:"varint,2,opt,name=format,proto3,enum=cloud.v1.models.PackageRecord_Format" json:"format,omitempty"`
+	// version is the package version label (free text).
+	Version string `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
+	// target_db_kind is which database engine this build targets.
 	TargetDbKind domain.Database_Kind `protobuf:"varint,4,opt,name=target_db_kind,json=targetDbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"target_db_kind,omitempty"`
-	// Target host descriptors (informational / matching).
-	Os   string `protobuf:"bytes,5,opt,name=os,proto3" json:"os,omitempty"`     // e.g. "ubuntu-22.04"
-	Arch string `protobuf:"bytes,6,opt,name=arch,proto3" json:"arch,omitempty"` // e.g. "amd64"
-	// Object-storage key (server-assigned; not client-set).
+	// os is a target host descriptor for informational / matching purposes,
+	// e.g. "ubuntu-22.04".
+	Os string `protobuf:"bytes,5,opt,name=os,proto3" json:"os,omitempty"`
+	// arch is the target CPU architecture, e.g. "amd64".
+	Arch string `protobuf:"bytes,6,opt,name=arch,proto3" json:"arch,omitempty"`
+	// storage_uri is the object-storage key for the blob. Server-assigned, not
+	// client-set.
 	StorageUri string `protobuf:"bytes,7,opt,name=storage_uri,json=storageUri,proto3" json:"storage_uri,omitempty"`
-	SizeBytes  uint64 `protobuf:"varint,8,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
-	// Expected content hash, verified on CompleteUpload.
-	Sha256        string               `protobuf:"bytes,9,opt,name=sha256,proto3" json:"sha256,omitempty"`
+	// size_bytes is the size of the uploaded blob in bytes.
+	SizeBytes uint64 `protobuf:"varint,8,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
+	// sha256 is the expected content hash (hex), verified on CompleteUpload.
+	Sha256 string `protobuf:"bytes,9,opt,name=sha256,proto3" json:"sha256,omitempty"`
+	// status is the current upload + verification lifecycle state.
 	Status        PackageRecord_Status `protobuf:"varint,10,opt,name=status,proto3,enum=cloud.v1.models.PackageRecord_Status" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

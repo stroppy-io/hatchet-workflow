@@ -23,9 +23,18 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     requesting caller. Nothing else stores a favorite flag.
  */
 message FavoriteRecord {
+    /*
+        entity is the storage envelope: it carries the row id, the favoriting
+        user (entity.author_id) and the tenant (entity.tenant_id).
+     */
     common.Entity entity = 1 [(validate.rules).message.required = true];
-    // Which table the favorite points at.
+    /*
+        kind names which table the favorite points at. Must be a defined,
+        non-zero FavoriteKind.
+     */
     common.FavoriteKind kind = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
-    // Id of the favorited row (in the table named by kind).
+    /*
+        target_id is the id of the favorited row, in the table named by kind.
+     */
     string target_id = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }

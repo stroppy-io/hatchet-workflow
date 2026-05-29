@@ -25,14 +25,17 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Abstract test definition: what to test, provider-agnostic.
+// Test is an abstract, provider-agnostic test definition: what to test.
 // Topology is derived from params (e.g. database replica count) in code; the
 // provider is chosen later, and the wizard fills provider_parms into a TestRun.
 type Test struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Database      *Database              `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
-	Workload      *Workload              `protobuf:"bytes,2,opt,name=workload,proto3" json:"workload,omitempty"`
-	Tags          *common.Tags           `protobuf:"bytes,3,opt,name=tags,proto3" json:"tags,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// database is the database under test.
+	Database *Database `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
+	// workload is the stroppy workload to run against the database.
+	Workload *Workload `protobuf:"bytes,2,opt,name=workload,proto3" json:"workload,omitempty"`
+	// tags are free-form metadata attached to the test definition.
+	Tags          *common.Tags `protobuf:"bytes,3,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -88,23 +91,26 @@ func (x *Test) GetTags() *common.Tags {
 	return nil
 }
 
-// A single, fully-baked test execution.
-// All fields are baked at creation time; TestWorkflow does not mutate the
-// topology, only carries runtime info returned by the deployment.
+// TestRun is a single, fully-baked test execution. All fields are baked at
+// creation time; TestWorkflow does not mutate the topology, only carries
+// runtime info returned by the deployment.
 type TestRun struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Owning suite. Empty for a standalone (non-suite) run.
+	// id is the stable test-run identifier.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// suite_id is the owning suite. Empty for a standalone (non-suite) run.
 	SuiteId string `protobuf:"bytes,2,opt,name=suite_id,json=suiteId,proto3" json:"suite_id,omitempty"`
-	// Where/how to provision the stand: backend + baked provider settings.
+	// provider says where/how to provision the stand: backend + baked provider
+	// settings.
 	Provider *deployment.ProviderSettings `protobuf:"bytes,3,opt,name=provider,proto3" json:"provider,omitempty"`
-	// Baked topology: stroppy runner instances (+ db instances when self-deploy),
-	// and external_components when the database is external.
+	// topology is the baked topology: stroppy runner instances (+ db instances
+	// when self-deploy), and external_components when the database is external.
 	Topology *topology.Topology `protobuf:"bytes,4,opt,name=topology,proto3" json:"topology,omitempty"`
-	// Database under test (self-deploy / managed / external).
+	// database is the database under test (self-deploy / managed / external).
 	Database *Database `protobuf:"bytes,5,opt,name=database,proto3" json:"database,omitempty"`
-	// Stroppy workload to run on top of the database.
-	Workload      *Workload    `protobuf:"bytes,6,opt,name=workload,proto3" json:"workload,omitempty"`
+	// workload is the stroppy workload to run on top of the database.
+	Workload *Workload `protobuf:"bytes,6,opt,name=workload,proto3" json:"workload,omitempty"`
+	// tags are free-form metadata attached to the test run.
 	Tags          *common.Tags `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

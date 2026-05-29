@@ -148,10 +148,13 @@ func (x *IpAddress) GetScope() string {
 	return ""
 }
 
+// AddrPort pairs an IP address with a port number.
 type AddrPort struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Address       *IpAddress             `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// address is the IP address.
+	Address *IpAddress `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	// port is the associated port number.
+	Port          uint32 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -200,10 +203,13 @@ func (x *AddrPort) GetPort() uint32 {
 	return 0
 }
 
+// Cidr describes a network block in CIDR notation.
 type Cidr struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	Addresses     []*IpAddress           `protobuf:"bytes,2,rep,name=addresses,proto3" json:"addresses,omitempty"` // optional for denormalize
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// value is the CIDR string, e.g. 10.0.0.0/24.
+	Value string `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	// addresses optionally denormalizes the addresses covered by this block.
+	Addresses     []*IpAddress `protobuf:"bytes,2,rep,name=addresses,proto3" json:"addresses,omitempty"` // optional for denormalize
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -252,10 +258,13 @@ func (x *Cidr) GetAddresses() []*IpAddress {
 	return nil
 }
 
+// Net groups one or more CIDR blocks together with their member addresses.
 type Net struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Cidrs         []*Cidr                `protobuf:"bytes,1,rep,name=cidrs,proto3" json:"cidrs,omitempty"`
-	Addresses     []*IpAddress           `protobuf:"bytes,2,rep,name=addresses,proto3" json:"addresses,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// cidrs lists the CIDR blocks that make up this network.
+	Cidrs []*Cidr `protobuf:"bytes,1,rep,name=cidrs,proto3" json:"cidrs,omitempty"`
+	// addresses lists the IP addresses belonging to this network.
+	Addresses     []*IpAddress `protobuf:"bytes,2,rep,name=addresses,proto3" json:"addresses,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

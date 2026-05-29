@@ -17,40 +17,60 @@ export const file_cloud_v1_domain_workload: GenFile = /*@__PURE__*/
   fileDesc("Ch5jbG91ZC92MS9kb21haW4vd29ya2xvYWQucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiJpCghXb3JrbG9hZBIXCg9zdHJvcHB5X3ZlcnNpb24YASABKAkSHwoGcGFyYW1zGAIgASgLMg8uc2NoZW1hcGIuQmFrZWQSIwoEdGFncxgDIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RvbWFpbmIGcHJvdG8z", [file_schemapb_schema, file_cloud_v1_common_tags]);
 
 /**
+ *
+ * Workload describes the stroppy load to run against the database under test:
+ * the stroppy binary version plus its sealed, schema-backed parameters.
+ *
  * @generated from message cloud.v1.domain.Workload
  */
 export type Workload = Message<"cloud.v1.domain.Workload"> & {
   /**
+   * stroppy_version is the stroppy binary version to run. 
+   *
    * @generated from field: string stroppy_version = 1;
    */
   stroppyVersion: string;
 
   /**
+   * params is the sealed, schema-backed stroppy workload configuration. 
+   *
    * @generated from field: schemapb.Baked params = 2;
    */
   params?: Baked;
 
   /**
+   * tags are free-form metadata attached to the workload. 
+   *
    * @generated from field: cloud.v1.common.Tags tags = 3;
    */
   tags?: Tags;
 };
 
 /**
+ *
+ * Workload describes the stroppy load to run against the database under test:
+ * the stroppy binary version plus its sealed, schema-backed parameters.
+ *
  * @generated from message cloud.v1.domain.Workload
  */
 export type WorkloadJson = {
   /**
+   * stroppy_version is the stroppy binary version to run. 
+   *
    * @generated from field: string stroppy_version = 1;
    */
   stroppyVersion?: string;
 
   /**
+   * params is the sealed, schema-backed stroppy workload configuration. 
+   *
    * @generated from field: schemapb.Baked params = 2;
    */
   params?: BakedJson;
 
   /**
+   * tags are free-form metadata attached to the workload. 
+   *
    * @generated from field: cloud.v1.common.Tags tags = 3;
    */
   tags?: TagsJson;

@@ -9,6 +9,13 @@ import "cloud/v1/common/ip.proto";
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
 
 /*
+    os.proto defines a read-only snapshot of Linux host facts an agent can
+    collect: host identity, distribution release, kernel, CPU, memory,
+    filesystems, block devices, and network interfaces. It is data, not an
+    operation.
+ */
+
+/*
     OsInfo describes observable Linux host facts collected by the agent.
     It is a data snapshot, not an operation. Runtime ops may populate this model
     from /etc/os-release, uname, /proc, sysfs, lsblk, mountinfo, iproute2, or

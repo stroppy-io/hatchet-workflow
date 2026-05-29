@@ -24,26 +24,34 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Suite definition. References provider-agnostic, params-only presets; the
-// provider is applied once here, and the wizard bakes provider_parms when
-// expanding presets into TestRuns.
+// Suite is a reusable test bundle. It references provider-agnostic,
+// params-only presets; the provider is applied once here, and the wizard bakes
+// provider_parms when expanding presets into TestRuns.
 type Suite struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Presets composing the suite (Database / Workload / Test presets).
+	// id is the stable suite identifier.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// preset_ids are the presets composing the suite (Database / Workload /
+	// Test presets).
 	PresetIds []string `protobuf:"bytes,2,rep,name=preset_ids,json=presetIds,proto3" json:"preset_ids,omitempty"`
-	// Single provider for now. Multi-provider (cross-product to compare clouds)
-	// is planned: this becomes `repeated Provider providers` and expansion does
-	// presets x providers. Deferred to avoid the exponential bake cost for now.
+	// provider is the single deployment provider for now. Multi-provider
+	// (cross-product to compare clouds) is planned: this becomes
+	// `repeated Provider providers` and expansion does presets x providers.
+	// Deferred to avoid the exponential bake cost for now.
 	Provider deployment.Provider `protobuf:"varint,3,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	Tags     *common.Tags        `protobuf:"bytes,4,opt,name=tags,proto3" json:"tags,omitempty"`
-	// Optional cron schedule that auto-starts this suite. Absent / disabled = the
-	// suite only runs when started manually.
+	// tags are free-form metadata attached to the suite.
+	Tags *common.Tags `protobuf:"bytes,4,opt,name=tags,proto3" json:"tags,omitempty"`
+	// schedule is an optional cron schedule that auto-starts this suite.
+	// Absent / disabled = the suite only runs when started manually.
 	Schedule *Schedule `protobuf:"bytes,5,opt,name=schedule,proto3" json:"schedule,omitempty"`
-	// Rating defaults propagated to every child TestRun the suite spawns (incl.
-	// cron runs). Same semantics as TestRunRecord: tenant defaults true, global
-	// defaults false (opt-in). Modeled as optional so unset = the platform default.
+	// default_in_tenant_rating is the tenant-rating default propagated to every
+	// child TestRun the suite spawns (incl. cron runs). Same semantics as
+	// TestRunRecord: tenant defaults true. Optional so unset = platform default.
 	DefaultInTenantRating *bool `protobuf:"varint,6,opt,name=default_in_tenant_rating,json=defaultInTenantRating,proto3,oneof" json:"default_in_tenant_rating,omitempty"`
+	// default_in_global_rating is the global-rating default propagated to every
+	// child TestRun the suite spawns (incl. cron runs). Same semantics as
+	// TestRunRecord: global defaults false (opt-in). Optional so unset =
+	// platform default.
 	DefaultInGlobalRating *bool `protobuf:"varint,7,opt,name=default_in_global_rating,json=defaultInGlobalRating,proto3,oneof" json:"default_in_global_rating,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
@@ -135,9 +143,11 @@ type Schedule struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// enabled gates the schedule: false = paused (never auto-runs).
 	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	// Standard cron expression (e.g. "0 2 * * *"). Validated server-side.
+	// cron is a standard cron expression (e.g. "0 2 * * *"). Validated
+	// server-side.
 	Cron string `protobuf:"bytes,2,opt,name=cron,proto3" json:"cron,omitempty"`
-	// IANA timezone for the cron (e.g. "Europe/Moscow"); empty = UTC.
+	// timezone is the IANA timezone for the cron (e.g. "Europe/Moscow");
+	// empty = UTC.
 	Timezone      string `protobuf:"bytes,3,opt,name=timezone,proto3" json:"timezone,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -194,14 +204,17 @@ func (x *Schedule) GetTimezone() string {
 	return ""
 }
 
-// Materialized suite execution: preset_ids expanded into concrete TestRuns.
+// SuiteRun is a materialized suite execution: the Suite's preset_ids expanded
+// into concrete TestRuns, executed with a bounded degree of parallelism.
 type SuiteRun struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	Id      string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	SuiteId string                 `protobuf:"bytes,2,opt,name=suite_id,json=suiteId,proto3" json:"suite_id,omitempty"`
-	// Expanded runs (one per resolved preset).
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the stable suite-run identifier.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// suite_id references the Suite this run was expanded from.
+	SuiteId string `protobuf:"bytes,2,opt,name=suite_id,json=suiteId,proto3" json:"suite_id,omitempty"`
+	// test_runs are the expanded runs (one per resolved preset).
 	TestRuns []*TestRun `protobuf:"bytes,3,rep,name=test_runs,json=testRuns,proto3" json:"test_runs,omitempty"`
-	// Max concurrent TestWorkflows. 0 = unlimited.
+	// max_parallel is the max concurrent TestWorkflows. 0 = unlimited.
 	MaxParallel   uint32 `protobuf:"varint,4,opt,name=max_parallel,json=maxParallel,proto3" json:"max_parallel,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

@@ -90,8 +90,17 @@ message TokenPair {
     account is never a platform admin.
  */
 message RegisterRequest {
+    /*
+        email is the new account's contact + login address (format-validated).
+     */
     string email = 1 [(validate.rules).string = {min_len: 5, max_len: 255, email: true}];
+    /*
+        nickname is the URL/handle-safe display handle (also an alternate login).
+     */
     string nickname = 2 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-zA-Z0-9_.-]+$"}];
+    /*
+        password is the plaintext password to set; hashed and stored server-side.
+     */
     string password = 3 [(validate.rules).string = {min_len: 8, max_len: 1024}];
 }
 
@@ -103,6 +112,9 @@ message RegisterRequest {
     blocked on verification — it is surfaced for the UI to nudge the user.
  */
 message RegisterResponse {
+    /*
+        tokens auto-logs-in the new account (no follow-up Login needed).
+     */
     TokenPair tokens = 1 [(validate.rules).message.required = true];
 }
 
@@ -122,7 +134,13 @@ message LoginRequest {
     string password = 2 [(validate.rules).string = {min_len: 1, max_len: 1024}];
 }
 
+/*
+    LoginResponse returns the issued credential pair on a successful Login.
+ */
 message LoginResponse {
+    /*
+        tokens is the freshly minted access + refresh credential pair.
+     */
     TokenPair tokens = 1 [(validate.rules).message.required = true];
 }
 
@@ -132,10 +150,19 @@ message LoginResponse {
     rotated refresh_token. Travels in the body, not a cookie.
  */
 message RefreshRequest {
+    /*
+        refresh_token is the single-use token to exchange; consumed on success.
+     */
     string refresh_token = 1 [(validate.rules).string = {min_len: 1, max_len: 4096}];
 }
 
+/*
+    RefreshResponse returns the rotated credential pair (new refresh_token).
+ */
 message RefreshResponse {
+    /*
+        tokens is the new pair; persist the new refresh_token for the next Refresh.
+     */
     TokenPair tokens = 1 [(validate.rules).message.required = true];
 }
 
@@ -143,9 +170,15 @@ message RefreshResponse {
     LogoutRequest revokes the server-side session for the given refresh_token.
  */
 message LogoutRequest {
+    /*
+        refresh_token identifies the server-side session to revoke.
+     */
     string refresh_token = 1 [(validate.rules).string = {min_len: 1, max_len: 4096}];
 }
 
+/*
+    LogoutResponse is empty; success is signalled by the absence of error.
+ */
 message LogoutResponse {}
 
 /*
@@ -163,7 +196,13 @@ message LogoutResponse {}
     can ever log into. Supply a password, a link, or both.
  */
 message CreateAccountRequest {
+    /*
+        email is the new account's contact + login address (format-validated).
+     */
     string email = 1 [(validate.rules).string = {min_len: 5, max_len: 255, email: true}];
+    /*
+        nickname is the URL/handle-safe display handle (also an alternate login).
+     */
     string nickname = 2 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-zA-Z0-9_.-]+$"}];
     /*
         password is optional: omit it to create an SSO-only account that signs in
@@ -189,7 +228,13 @@ message CreateAccountRequest {
     performed to verify it.
  */
 message ExternalIdentityLink {
+    /*
+        provider_id is the IdentityProvider the subject belongs to.
+     */
     string provider_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        subject is the IdP's stable subject identifier for the user.
+     */
     string subject = 2 [(validate.rules).string = {min_len: 1, max_len: 255}];
     /*
         email is the address to record on the link (display / domain checks).
@@ -197,15 +242,33 @@ message ExternalIdentityLink {
     string email = 3 [(validate.rules).string = {max_len: 255}];
 }
 
+/*
+    CreateAccountResponse returns the newly provisioned account (no secret).
+ */
 message CreateAccountResponse {
+    /*
+        account is the created global identity (credentials never echoed).
+     */
     iam.Account account = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    GetAccountRequest fetches one account by id (RESOURCE_ACCOUNT/READ).
+ */
 message GetAccountRequest {
+    /*
+        id is the account to fetch.
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    GetAccountResponse returns the requested account.
+ */
 message GetAccountResponse {
+    /*
+        account is the fetched global identity.
+     */
     iam.Account account = 1 [(validate.rules).message.required = true];
 }
 
@@ -216,7 +279,13 @@ message GetAccountResponse {
  */
 message GetMyAccountRequest {}
 
+/*
+    GetMyAccountResponse returns the caller's own account.
+ */
 message GetMyAccountResponse {
+    /*
+        account is the caller's own global identity.
+     */
     iam.Account account = 1 [(validate.rules).message.required = true];
 }
 
@@ -235,6 +304,9 @@ message ListAccountsRequest {
 }
 
 message ListAccountsResponse {
+    /*
+        accounts is this page of global identities.
+     */
     repeated iam.Account accounts = 1;
     /*
         next_page_token is empty when there are no more rows.
@@ -248,12 +320,27 @@ message ListAccountsResponse {
     privilege-gated operations.
  */
 message UpdateAccountRequest {
+    /*
+        id is the account to mutate.
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        email, when present, replaces the account's contact + login address.
+     */
     optional string email = 2 [(validate.rules).string = {min_len: 5, max_len: 255, email: true}];
+    /*
+        nickname, when present, replaces the account's handle.
+     */
     optional string nickname = 3 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-zA-Z0-9_.-]+$"}];
 }
 
+/*
+    UpdateAccountResponse returns the account after the edit.
+ */
 message UpdateAccountResponse {
+    /*
+        account is the updated global identity.
+     */
     iam.Account account = 1 [(validate.rules).message.required = true];
 }
 
@@ -266,9 +353,15 @@ message UpdateAccountResponse {
     (TransferTenantOwnership) so no tenant is orphaned.
  */
 message DeleteAccountRequest {
+    /*
+        id is the account to remove.
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    DeleteAccountResponse is empty; success is signalled by the absence of error.
+ */
 message DeleteAccountResponse {}
 
 /*
@@ -282,10 +375,19 @@ message DeleteAccountResponse {}
     once old_password no longer matches.
  */
 message ChangePasswordRequest {
+    /*
+        old_password is the caller's current password, verified before the change.
+     */
     string old_password = 1 [(validate.rules).string = {min_len: 1, max_len: 1024}];
+    /*
+        new_password is the replacement password to set.
+     */
     string new_password = 2 [(validate.rules).string = {min_len: 8, max_len: 1024}];
 }
 
+/*
+    ChangePasswordResponse is empty; success is signalled by the absence of error.
+ */
 message ChangePasswordResponse {}
 
 /*
@@ -293,10 +395,19 @@ message ChangePasswordResponse {}
     password for any account without knowing the old one (e.g. account recovery).
  */
 message ResetPasswordRequest {
+    /*
+        account_id is the account whose password the admin is resetting.
+     */
     string account_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        new_password is the replacement password to set.
+     */
     string new_password = 2 [(validate.rules).string = {min_len: 8, max_len: 1024}];
 }
 
+/*
+    ResetPasswordResponse is empty; success is signalled by the absence of error.
+ */
 message ResetPasswordResponse {}
 
 /*
@@ -306,9 +417,16 @@ message ResetPasswordResponse {}
     regardless of whether the email exists — never leak account existence.
  */
 message RequestPasswordResetRequest {
+    /*
+        email is the address to send the reset token to (existence never leaked).
+     */
     string email = 1 [(validate.rules).string = {min_len: 5, max_len: 255, email: true}];
 }
 
+/*
+    RequestPasswordResetResponse is always empty/success (no account-existence
+    leak).
+ */
 message RequestPasswordResetResponse {}
 
 /*
@@ -317,10 +435,20 @@ message RequestPasswordResetResponse {}
     Not idempotent — the token is single-use.
  */
 message ConfirmPasswordResetRequest {
+    /*
+        token is the single-use emailed reset token (the credential).
+     */
     string token = 1 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+    /*
+        new_password is the replacement password to set.
+     */
     string new_password = 2 [(validate.rules).string = {min_len: 8, max_len: 1024}];
 }
 
+/*
+    ConfirmPasswordResetResponse is empty; success is signalled by the absence of
+    error.
+ */
 message ConfirmPasswordResetResponse {}
 
 /*
@@ -338,9 +466,15 @@ message ConfirmPasswordResetResponse {}
     credential and the user may not be logged in when clicking the link.
  */
 message VerifyEmailRequest {
+    /*
+        token is the single-use emailed verification token (the credential).
+     */
     string token = 1 [(validate.rules).string = {min_len: 1, max_len: 4096}];
 }
 
+/*
+    VerifyEmailResponse is empty; success is signalled by the absence of error.
+ */
 message VerifyEmailResponse {}
 
 /*
@@ -350,6 +484,10 @@ message VerifyEmailResponse {}
  */
 message ResendVerificationRequest {}
 
+/*
+    ResendVerificationResponse is empty; success is signalled by the absence of
+    error.
+ */
 message ResendVerificationResponse {}
 
 /*
@@ -362,11 +500,23 @@ message ResendVerificationResponse {}
     tenant. slug must be unique and url-safe (see iam/tenant.proto).
  */
 message CreateTenantRequest {
+    /*
+        name is the tenant's human-readable display name.
+     */
     string name = 1 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    /*
+        slug is the unique, url-safe routing key (/t/<slug>).
+     */
     string slug = 2 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-z0-9_-]+$"}];
 }
 
+/*
+    CreateTenantResponse returns the created tenant.
+ */
 message CreateTenantResponse {
+    /*
+        tenant is the newly created workspace (caller seeded as owner).
+     */
     iam.Tenant tenant = 1 [(validate.rules).message.required = true];
 }
 
@@ -375,14 +525,29 @@ message CreateTenantResponse {
     is the routing path: the gate resolves /t/<slug> to a Tenant via this.
  */
 message GetTenantRequest {
+    /*
+        ref selects the tenant by EITHER id or slug.
+     */
     oneof ref {
         option (validate.required) = true;
+        /*
+            id is the tenant's stable identifier.
+         */
         string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+        /*
+            slug is the url-safe routing key (the /t/<slug> resolve path).
+         */
         string slug = 2 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-z0-9_-]+$"}];
     }
 }
 
+/*
+    GetTenantResponse returns the requested tenant.
+ */
 message GetTenantResponse {
+    /*
+        tenant is the fetched workspace.
+     */
     iam.Tenant tenant = 1 [(validate.rules).message.required = true];
 }
 
@@ -392,7 +557,13 @@ message GetTenantResponse {
  */
 message ListMyTenantsRequest {}
 
+/*
+    ListMyTenantsResponse returns the caller's tenants (the org switcher data).
+ */
 message ListMyTenantsResponse {
+    /*
+        tenants are the workspaces the caller is a member of.
+     */
     repeated iam.Tenant tenants = 1;
 }
 
@@ -400,19 +571,43 @@ message ListMyTenantsResponse {
     UpdateTenantRequest mutates name/slug. Renaming slug breaks old links.
  */
 message UpdateTenantRequest {
+    /*
+        id is the tenant to mutate.
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        name, when present, replaces the display name.
+     */
     optional string name = 2 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    /*
+        slug, when present, replaces the routing key (breaks old links).
+     */
     optional string slug = 3 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-z0-9_-]+$"}];
 }
 
+/*
+    UpdateTenantResponse returns the tenant after the edit.
+ */
 message UpdateTenantResponse {
+    /*
+        tenant is the updated workspace.
+     */
     iam.Tenant tenant = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    DeleteTenantRequest removes a tenant by id.
+ */
 message DeleteTenantRequest {
+    /*
+        id is the tenant to remove.
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    DeleteTenantResponse is empty; success is signalled by the absence of error.
+ */
 message DeleteTenantResponse {}
 
 /*
@@ -422,11 +617,23 @@ message DeleteTenantResponse {}
     explicit, auditable action.
  */
 message TransferTenantOwnershipRequest {
+    /*
+        tenant_id is the tenant whose ownership is being reassigned.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        new_owner_account_id is the new owner; MUST already be a member.
+     */
     string new_owner_account_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    TransferTenantOwnershipResponse returns the tenant after the transfer.
+ */
 message TransferTenantOwnershipResponse {
+    /*
+        tenant is the workspace with its new owner_account_id.
+     */
     iam.Tenant tenant = 1 [(validate.rules).message.required = true];
 }
 
@@ -439,9 +646,15 @@ message TransferTenantOwnershipResponse {
     no-op.
  */
 message LeaveTenantRequest {
+    /*
+        tenant_id is the tenant the caller is leaving.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    LeaveTenantResponse is empty; success is signalled by the absence of error.
+ */
 message LeaveTenantResponse {}
 
 /*
@@ -454,21 +667,51 @@ message LeaveTenantResponse {}
     roles are seeded by the server and cannot be created here.
  */
 message CreateRoleRequest {
+    /*
+        name is the role's display name.
+     */
     string name = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        scope is SCOPE_TENANT or SCOPE_PLATFORM (must be defined, non-zero).
+     */
     iam.Scope scope = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /*
+        tenant_id is required for SCOPE_TENANT, empty for SCOPE_PLATFORM.
+     */
     string tenant_id = 3 [(validate.rules).string.max_len = 64];
+    /*
+        permissions is the role's granted permission set.
+     */
     repeated iam.Permission permissions = 4;
 }
 
+/*
+    CreateRoleResponse returns the created role.
+ */
 message CreateRoleResponse {
+    /*
+        role is the newly created custom role.
+     */
     iam.Role role = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    GetRoleRequest fetches one role by id.
+ */
 message GetRoleRequest {
+    /*
+        id is the role to fetch.
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    GetRoleResponse returns the requested role.
+ */
 message GetRoleResponse {
+    /*
+        role is the fetched role.
+     */
     iam.Role role = 1 [(validate.rules).message.required = true];
 }
 
@@ -478,6 +721,9 @@ message GetRoleResponse {
     included and marked via iam.Role.is_system.
  */
 message ListRolesRequest {
+    /*
+        tenant_id filters to one tenant's roles; empty lists platform-scoped roles.
+     */
     string tenant_id = 1 [(validate.rules).string.max_len = 64];
     /*
         page_size caps returned rows; 0 -> server default.
@@ -490,6 +736,9 @@ message ListRolesRequest {
 }
 
 message ListRolesResponse {
+    /*
+        roles is this page of roles (system roles marked via Role.is_system).
+     */
     repeated iam.Role roles = 1;
     /*
         next_page_token is empty when there are no more rows.
@@ -501,7 +750,13 @@ message ListRolesResponse {
     UpdateRoleRequest edits a custom role. System roles (is_system) are rejected.
  */
 message UpdateRoleRequest {
+    /*
+        id is the custom role to edit (system roles are rejected).
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        name, when present, replaces the role's display name.
+     */
     optional string name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
     /*
         permissions, when present, REPLACES the role's permission set wholesale.
@@ -509,14 +764,29 @@ message UpdateRoleRequest {
     repeated iam.Permission permissions = 3;
 }
 
+/*
+    UpdateRoleResponse returns the role after the edit.
+ */
 message UpdateRoleResponse {
+    /*
+        role is the updated role.
+     */
     iam.Role role = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    DeleteRoleRequest removes a role by id.
+ */
 message DeleteRoleRequest {
+    /*
+        id is the role to remove.
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    DeleteRoleResponse is empty; success is signalled by the absence of error.
+ */
 message DeleteRoleResponse {}
 
 /*
@@ -529,20 +799,48 @@ message DeleteRoleResponse {}
     the same tenant_id or SCOPE_PLATFORM roles.
  */
 message CreateMembershipRequest {
+    /*
+        account_id is the account being added to the tenant.
+     */
     string account_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        tenant_id is the tenant the account joins.
+     */
     string tenant_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        role_ids are the granted roles (SCOPE_TENANT of this tenant, or
+        SCOPE_PLATFORM); at least one is required.
+     */
     repeated string role_ids = 3 [(validate.rules).repeated = {min_items: 1, items: {string: {min_len: 1, max_len: 64}}}];
 }
 
+/*
+    CreateMembershipResponse returns the created membership.
+ */
 message CreateMembershipResponse {
+    /*
+        membership is the newly created account-in-tenant grant.
+     */
     iam.Membership membership = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    GetMembershipRequest fetches one membership by id.
+ */
 message GetMembershipRequest {
+    /*
+        id is the membership to fetch.
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    GetMembershipResponse returns the requested membership.
+ */
 message GetMembershipResponse {
+    /*
+        membership is the fetched account-in-tenant grant.
+     */
     iam.Membership membership = 1 [(validate.rules).message.required = true];
 }
 
@@ -550,6 +848,9 @@ message GetMembershipResponse {
     ListMembershipsRequest lists all members of one tenant.
  */
 message ListMembershipsRequest {
+    /*
+        tenant_id is the tenant whose members to list.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
     /*
         page_size caps returned rows; 0 -> server default.
@@ -562,6 +863,9 @@ message ListMembershipsRequest {
 }
 
 message ListMembershipsResponse {
+    /*
+        memberships is this page of the tenant's members.
+     */
     repeated iam.Membership memberships = 1;
     /*
         next_page_token is empty when there are no more rows.
@@ -575,11 +879,23 @@ message ListMembershipsResponse {
     instead of leaving it role-less).
  */
 message UpdateMembershipRequest {
+    /*
+        id is the membership to edit.
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        role_ids REPLACES the granted role set wholesale; an empty set is rejected.
+     */
     repeated string role_ids = 2 [(validate.rules).repeated = {min_items: 1, items: {string: {min_len: 1, max_len: 64}}}];
 }
 
+/*
+    UpdateMembershipResponse returns the membership after the edit.
+ */
 message UpdateMembershipResponse {
+    /*
+        membership is the updated grant.
+     */
     iam.Membership membership = 1 [(validate.rules).message.required = true];
 }
 
@@ -587,9 +903,16 @@ message UpdateMembershipResponse {
     DeleteMembershipRequest removes a member from a tenant (revokes access).
  */
 message DeleteMembershipRequest {
+    /*
+        id is the membership to remove (revokes the account's tenant access).
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    DeleteMembershipResponse is empty; success is signalled by the absence of
+    error.
+ */
 message DeleteMembershipResponse {}
 
 /*
@@ -598,10 +921,20 @@ message DeleteMembershipResponse {}
     show/hide controls. The account comes from the token; tenant from the ref.
  */
 message GetMyPermissionsRequest {
+    /*
+        tenant_id is the tenant to resolve the caller's effective permissions in.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    GetMyPermissionsResponse returns the caller's effective permissions.
+ */
 message GetMyPermissionsResponse {
+    /*
+        permissions is the live union the gate computes for the caller in the
+        tenant.
+     */
     repeated iam.Permission permissions = 1;
 }
 
@@ -621,6 +954,9 @@ message ListPermissionsRequest {}
     CatalogEntry is one grantable Permission plus a human label for the UI.
  */
 message CatalogEntry {
+    /*
+        permission is one grantable {resource, action} pair.
+     */
     iam.Permission permission = 1 [(validate.rules).message.required = true];
     /*
         label is a display string for the role editor, e.g. "Create role".
@@ -628,7 +964,13 @@ message CatalogEntry {
     string label = 2;
 }
 
+/*
+    ListPermissionsResponse returns the full grantable-permission catalog.
+ */
 message ListPermissionsResponse {
+    /*
+        entries are the grantable permissions, each with a UI label.
+     */
     repeated CatalogEntry entries = 1;
 }
 
@@ -643,25 +985,67 @@ message ListPermissionsResponse {
     defaults false); hide it later via UpdateIdentityProvider if needed.
  */
 message CreateIdentityProviderRequest {
+    /*
+        slug is the url-safe key used in the SSO callback route.
+     */
     string slug = 1 [(validate.rules).string = {min_len: 3, max_len: 64, pattern: "^[a-z0-9_-]+$"}];
+    /*
+        display_name is the login-button label shown to users.
+     */
     string display_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        issuer is the OIDC issuer URL (https, used for discovery).
+     */
     string issuer = 3 [(validate.rules).string = {min_len: 8, max_len: 2048, uri: true, pattern: "^https://"}];
+    /*
+        client_id is the OAuth client identifier registered at the IdP.
+     */
     string client_id = 4 [(validate.rules).string = {min_len: 1, max_len: 512}];
+    /*
+        client_secret is the OAuth client secret; write-only (never returned).
+     */
     string client_secret = 5 [(validate.rules).string = {min_len: 1, max_len: 1024}];
+    /*
+        scopes are the OIDC scopes to request at authorize time.
+     */
     repeated string scopes = 6;
+    /*
+        allowed_domains restricts which email domains may sign in via this IdP.
+     */
     repeated string allowed_domains = 7;
+    /*
+        auto_provision enables JIT account creation for first-time SSO users.
+     */
     bool auto_provision = 8;
 }
 
+/*
+    CreateIdentityProviderResponse returns the created provider (no secret).
+ */
 message CreateIdentityProviderResponse {
+    /*
+        provider is the newly created (enabled) OIDC provider config.
+     */
     iam.IdentityProvider provider = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    GetIdentityProviderRequest fetches one provider by id.
+ */
 message GetIdentityProviderRequest {
+    /*
+        id is the provider to fetch.
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    GetIdentityProviderResponse returns the requested provider.
+ */
 message GetIdentityProviderResponse {
+    /*
+        provider is the fetched OIDC provider config (no secret).
+     */
     iam.IdentityProvider provider = 1 [(validate.rules).message.required = true];
 }
 
@@ -670,13 +1054,38 @@ message GetIdentityProviderResponse {
     client_secret ROTATES the stored secret; an absent one leaves it unchanged.
  */
 message UpdateIdentityProviderRequest {
+    /*
+        id is the provider to edit.
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        display_name, when present, replaces the login-button label.
+     */
     optional string display_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        issuer, when present, replaces the OIDC issuer URL.
+     */
     optional string issuer = 3 [(validate.rules).string = {min_len: 8, max_len: 2048, uri: true, pattern: "^https://"}];
+    /*
+        client_id, when present, replaces the OAuth client identifier.
+     */
     optional string client_id = 4 [(validate.rules).string = {min_len: 1, max_len: 512}];
+    /*
+        client_secret, when present and non-empty, ROTATES the stored secret;
+        absent leaves it unchanged.
+     */
     optional string client_secret = 5 [(validate.rules).string = {min_len: 1, max_len: 1024}];
+    /*
+        scopes, when present, replaces the requested OIDC scopes.
+     */
     repeated string scopes = 6;
+    /*
+        allowed_domains, when present, replaces the email-domain allowlist.
+     */
     repeated string allowed_domains = 7;
+    /*
+        auto_provision, when present, toggles JIT account creation.
+     */
     optional bool auto_provision = 8;
     /*
         disabled hides the provider (inverted polarity: false = enabled). See
@@ -685,14 +1094,30 @@ message UpdateIdentityProviderRequest {
     optional bool disabled = 9;
 }
 
+/*
+    UpdateIdentityProviderResponse returns the provider after the edit.
+ */
 message UpdateIdentityProviderResponse {
+    /*
+        provider is the updated OIDC provider config (no secret).
+     */
     iam.IdentityProvider provider = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    DeleteIdentityProviderRequest removes a provider by id.
+ */
 message DeleteIdentityProviderRequest {
+    /*
+        id is the provider to remove.
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    DeleteIdentityProviderResponse is empty; success is signalled by the absence
+    of error.
+ */
 message DeleteIdentityProviderResponse {}
 
 /*
@@ -708,12 +1133,27 @@ message ListIdentityProvidersRequest {}
     SsoButton is the public, login-page view of an enabled provider.
  */
 message SsoButton {
+    /*
+        id is the provider id to pass to StartSSO.
+     */
     string id = 1;
+    /*
+        slug is the provider's url-safe key.
+     */
     string slug = 2;
+    /*
+        display_name is the button label.
+     */
     string display_name = 3;
 }
 
+/*
+    ListIdentityProvidersResponse returns the enabled providers' login buttons.
+ */
 message ListIdentityProvidersResponse {
+    /*
+        buttons are the enabled providers, slimmed to what a login button needs.
+     */
     repeated SsoButton buttons = 1;
 }
 
@@ -724,6 +1164,9 @@ message ListIdentityProvidersResponse {
     user there.
  */
 message StartSSORequest {
+    /*
+        provider_id is the OIDC provider to begin the authorization-code flow for.
+     */
     string provider_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
@@ -759,12 +1202,28 @@ message StartSSOResponse {
     the provider_id field below — the RPC keys on id, the URL on slug.
  */
 message CompleteSSORequest {
+    /*
+        provider_id is the OIDC provider this callback belongs to (URL maps slug
+        -> id).
+     */
     string provider_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        code is the IdP authorization code to exchange for tokens.
+     */
     string code = 2 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+    /*
+        state is the CSRF token from StartSSO, validated against the stashed value.
+     */
     string state = 3 [(validate.rules).string = {min_len: 1, max_len: 512}];
 }
 
+/*
+    CompleteSSOResponse returns our own TokenPair for the resolved account.
+ */
 message CompleteSSOResponse {
+    /*
+        tokens is the minted access + refresh credential pair.
+     */
     TokenPair tokens = 1 [(validate.rules).message.required = true];
 }
 
@@ -773,11 +1232,23 @@ message CompleteSSOResponse {
     (admin-asserted, like CreateAccount.link). Idempotent on (provider, subject).
  */
 message LinkExternalIdentityRequest {
+    /*
+        account_id is the existing account to bind to the IdP subject.
+     */
     string account_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        link is the admin-asserted (provider, subject) binding to record.
+     */
     ExternalIdentityLink link = 2 [(validate.rules).message.required = true];
 }
 
+/*
+    LinkExternalIdentityResponse returns the created (or existing) link.
+ */
 message LinkExternalIdentityResponse {
+    /*
+        identity is the resulting external-identity link.
+     */
     iam.ExternalIdentity identity = 1 [(validate.rules).message.required = true];
 }
 
@@ -788,9 +1259,16 @@ message LinkExternalIdentityResponse {
     server-side).
  */
 message UnlinkExternalIdentityRequest {
+    /*
+        id is the external-identity link to remove.
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    UnlinkExternalIdentityResponse is empty; success is signalled by the absence
+    of error.
+ */
 message UnlinkExternalIdentityResponse {}
 
 /*
@@ -799,10 +1277,19 @@ message UnlinkExternalIdentityResponse {}
     is the "my linked logins" view as well as the admin one.
  */
 message ListExternalIdentitiesRequest {
+    /*
+        account_id is the account whose linked identities to list.
+     */
     string account_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    ListExternalIdentitiesResponse returns the account's linked identities.
+ */
 message ListExternalIdentitiesResponse {
+    /*
+        identities are the external-identity links bound to the account.
+     */
     repeated iam.ExternalIdentity identities = 1;
 }
 
@@ -826,8 +1313,18 @@ message ListExternalIdentitiesResponse {
     account's authority.
  */
 message CreateApiTokenRequest {
+    /*
+        account_id is the account the token authenticates as.
+     */
     string account_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        name is a human-readable label for the token.
+     */
     string name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        type is PERSONAL (inherits the account's authority) or SERVICE (a capped
+        subset); must be defined, non-zero.
+     */
     iam.ApiTokenType type = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
     /*
         permissions is the requested grant for a SERVICE token; leave empty for a
@@ -847,6 +1344,9 @@ message CreateApiTokenRequest {
     it now.
  */
 message CreateApiTokenResponse {
+    /*
+        token is the created token's metadata (no secret).
+     */
     iam.ApiToken token = 1 [(validate.rules).message.required = true];
     /*
         secret is the full plaintext token (prefix + secret) to send as a bearer
@@ -861,10 +1361,19 @@ message CreateApiTokenResponse {
     well as the admin one. Secrets are never included.
  */
 message ListApiTokensRequest {
+    /*
+        account_id is the account whose tokens to list.
+     */
     string account_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    ListApiTokensResponse returns the account's token metadata (no secrets).
+ */
 message ListApiTokensResponse {
+    /*
+        tokens is the account's tokens (metadata only).
+     */
     repeated iam.ApiToken tokens = 1;
 }
 
@@ -873,9 +1382,15 @@ message ListApiTokensResponse {
     own the token's account or be a platform admin (enforced server-side).
  */
 message RevokeApiTokenRequest {
+    /*
+        id is the token to permanently disable.
+     */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
+/*
+    RevokeApiTokenResponse is empty; success is signalled by the absence of error.
+ */
 message RevokeApiTokenResponse {}
 
 /*
@@ -948,6 +1463,9 @@ service IamService {
     rpc CreateAccount (CreateAccountRequest) returns (CreateAccountResponse) {
         option (cloud.v1.iam.auth) = {admin_only: true};
     }
+    /*
+        GetAccount fetches one account by id. Read-only.
+     */
     rpc GetAccount (GetAccountRequest) returns (GetAccountResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ACCOUNT, action: ACTION_READ}]};
@@ -960,6 +1478,9 @@ service IamService {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {};
     }
+    /*
+        ListAccounts lists accounts platform-wide. Read-only.
+     */
     rpc ListAccounts (ListAccountsRequest) returns (ListAccountsResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ACCOUNT, action: ACTION_LIST}]};
@@ -1024,10 +1545,18 @@ service IamService {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {};
     }
+    /*
+        UpdateTenant edits name/slug. Idempotent: a wholesale field set converges
+        on retry.
+     */
     rpc UpdateTenant (UpdateTenantRequest) returns (UpdateTenantResponse) {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TENANT, action: ACTION_UPDATE}], tenant_field: "id"};
     }
+    /*
+        DeleteTenant removes a tenant. Idempotent: deleting an absent tenant is a
+        no-op.
+     */
     rpc DeleteTenant (DeleteTenantRequest) returns (DeleteTenantResponse) {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TENANT, action: ACTION_DELETE}], tenant_field: "id"};
@@ -1058,10 +1587,17 @@ service IamService {
     rpc CreateRole (CreateRoleRequest) returns (CreateRoleResponse) {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ROLE, action: ACTION_CREATE}]};
     }
+    /*
+        GetRole fetches one role by id. Read-only.
+     */
     rpc GetRole (GetRoleRequest) returns (GetRoleResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ROLE, action: ACTION_READ}]};
     }
+    /*
+        ListRoles lists roles visible to the caller (tenant or platform scope).
+        Read-only.
+     */
     rpc ListRoles (ListRolesRequest) returns (ListRolesResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ROLE, action: ACTION_LIST}]};
@@ -1073,6 +1609,10 @@ service IamService {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ROLE, action: ACTION_UPDATE}]};
     }
+    /*
+        DeleteRole removes a custom role. Idempotent: deleting an absent role is a
+        no-op.
+     */
     rpc DeleteRole (DeleteRoleRequest) returns (DeleteRoleResponse) {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ROLE, action: ACTION_DELETE}]};
@@ -1087,10 +1627,16 @@ service IamService {
     rpc CreateMembership (CreateMembershipRequest) returns (CreateMembershipResponse) {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_MEMBERSHIP, action: ACTION_CREATE}]};
     }
+    /*
+        GetMembership fetches one membership by id. Read-only.
+     */
     rpc GetMembership (GetMembershipRequest) returns (GetMembershipResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_MEMBERSHIP, action: ACTION_READ}]};
     }
+    /*
+        ListMemberships lists one tenant's members. Read-only.
+     */
     rpc ListMemberships (ListMembershipsRequest) returns (ListMembershipsResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_MEMBERSHIP, action: ACTION_LIST}]};
@@ -1102,6 +1648,10 @@ service IamService {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_MEMBERSHIP, action: ACTION_UPDATE}]};
     }
+    /*
+        DeleteMembership removes a member from a tenant (revokes access).
+        Idempotent: removing an absent membership is a no-op.
+     */
     rpc DeleteMembership (DeleteMembershipRequest) returns (DeleteMembershipResponse) {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_MEMBERSHIP, action: ACTION_DELETE}]};
@@ -1124,17 +1674,32 @@ service IamService {
     /*
         --- SSO: provider config (admin-only) ---
      */
+    /*
+        CreateIdentityProvider configures a new OIDC provider. Admin-only. Not
+        idempotent: each call creates a new provider.
+     */
     rpc CreateIdentityProvider (CreateIdentityProviderRequest) returns (CreateIdentityProviderResponse) {
         option (cloud.v1.iam.auth) = {admin_only: true};
     }
+    /*
+        GetIdentityProvider fetches one provider by id. Admin-only, read-only.
+     */
     rpc GetIdentityProvider (GetIdentityProviderRequest) returns (GetIdentityProviderResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {admin_only: true};
     }
+    /*
+        UpdateIdentityProvider edits a provider (a present secret rotates it).
+        Admin-only. Idempotent: a wholesale field set converges on retry.
+     */
     rpc UpdateIdentityProvider (UpdateIdentityProviderRequest) returns (UpdateIdentityProviderResponse) {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {admin_only: true};
     }
+    /*
+        DeleteIdentityProvider removes a provider. Admin-only. Idempotent: deleting
+        an absent provider is a no-op.
+     */
     rpc DeleteIdentityProvider (DeleteIdentityProviderRequest) returns (DeleteIdentityProviderResponse) {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {admin_only: true};

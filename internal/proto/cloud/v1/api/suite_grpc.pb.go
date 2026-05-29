@@ -32,9 +32,14 @@ const (
 // SuiteServiceClient is the client API for SuiteService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// SuiteService is the tenant-scoped CRUD + lifecycle API for suite definitions.
 type SuiteServiceClient interface {
+	// CreateSuite persists a new suite definition. Not idempotent.
 	CreateSuite(ctx context.Context, in *CreateSuiteRequest, opts ...grpc.CallOption) (*CreateSuiteResponse, error)
+	// GetSuite fetches a single suite definition by id. Read-only.
 	GetSuite(ctx context.Context, in *GetSuiteRequest, opts ...grpc.CallOption) (*GetSuiteResponse, error)
+	// ListSuites lists suite definitions with filtering and pagination. Read-only.
 	ListSuites(ctx context.Context, in *ListSuitesRequest, opts ...grpc.CallOption) (*ListSuitesResponse, error)
 	// UpdateSuite is idempotent: a wholesale field set converges on retry.
 	UpdateSuite(ctx context.Context, in *UpdateSuiteRequest, opts ...grpc.CallOption) (*UpdateSuiteResponse, error)
@@ -139,9 +144,14 @@ func (c *suiteServiceClient) StartSuite(ctx context.Context, in *StartSuiteReque
 // SuiteServiceServer is the server API for SuiteService service.
 // All implementations must embed UnimplementedSuiteServiceServer
 // for forward compatibility.
+//
+// SuiteService is the tenant-scoped CRUD + lifecycle API for suite definitions.
 type SuiteServiceServer interface {
+	// CreateSuite persists a new suite definition. Not idempotent.
 	CreateSuite(context.Context, *CreateSuiteRequest) (*CreateSuiteResponse, error)
+	// GetSuite fetches a single suite definition by id. Read-only.
 	GetSuite(context.Context, *GetSuiteRequest) (*GetSuiteResponse, error)
+	// ListSuites lists suite definitions with filtering and pagination. Read-only.
 	ListSuites(context.Context, *ListSuitesRequest) (*ListSuitesResponse, error)
 	// UpdateSuite is idempotent: a wholesale field set converges on retry.
 	UpdateSuite(context.Context, *UpdateSuiteRequest) (*UpdateSuiteResponse, error)

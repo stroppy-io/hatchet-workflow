@@ -26,33 +26,78 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
 /*
     ============================ DatabasePreset ============================
  */
+/*
+    CreateDatabasePresetRequest creates a new database preset in the tenant.
+ */
 message CreateDatabasePresetRequest {
+    /*
+        tenant_id scopes the preset; presets never cross tenants.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
     /*
-        Server assigns entity.id / tenant_id / timings; values set here are
-        ignored.
+        preset is the database preset to create. Server assigns entity.id /
+        tenant_id / timings; values set here are ignored.
      */
     models.DatabasePresetRecord preset = 2 [(validate.rules).message.required = true];
 }
+/*
+    CreateDatabasePresetResponse returns the created preset.
+ */
 message CreateDatabasePresetResponse {
+    /*
+        preset is the newly created database preset.
+     */
     models.DatabasePresetRecord preset = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    GetDatabasePresetRequest fetches one database preset by id.
+ */
 message GetDatabasePresetRequest {
+    /*
+        tenant_id scopes the request to the preset's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the preset to fetch.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
+/*
+    GetDatabasePresetResponse returns the requested database preset.
+ */
 message GetDatabasePresetResponse {
+    /*
+        preset is the fetched database preset.
+     */
     models.DatabasePresetRecord preset = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    ListDatabasePresetsRequest lists a tenant's database presets with filters,
+    sort and paging.
+ */
 message ListDatabasePresetsRequest {
-    // SourceKind mirrors domain.Database.source oneof, for filtering.
+    /*
+        SourceKind mirrors domain.Database.source oneof, for filtering.
+     */
     enum SourceKind {
+        /*
+            SOURCE_KIND_UNSPECIFIED is the zero value (no source filter).
+         */
         SOURCE_KIND_UNSPECIFIED = 0;
-        SOURCE_KIND_PARAMS = 1;       // self-deploy
-        SOURCE_KIND_EXTERNAL = 2;     // external dsn
-        SOURCE_KIND_PRESET_REF = 3;   // database_preset_id
+        /*
+            SOURCE_KIND_PARAMS is a self-deploy database (params source).
+         */
+        SOURCE_KIND_PARAMS = 1;
+        /*
+            SOURCE_KIND_EXTERNAL is an external database (dsn source).
+         */
+        SOURCE_KIND_EXTERNAL = 2;
+        /*
+            SOURCE_KIND_PRESET_REF references another preset (database_preset_id).
+         */
+        SOURCE_KIND_PRESET_REF = 3;
     }
 
     /*
@@ -60,51 +105,132 @@ message ListDatabasePresetsRequest {
         desc applies to whichever is chosen.
      */
     message Sort {
+        /*
+            Kind is the set of table-specific sort columns for database presets.
+         */
         enum Kind {
+            /*
+                KIND_UNSPECIFIED is the zero value (no table-specific column).
+             */
             KIND_UNSPECIFIED = 0;
-            KIND_DB_KIND = 1;     // domain.Database.Kind
-            KIND_IS_SYSTEM = 2;   // system presets first/last
+            /*
+                KIND_DB_KIND sorts by domain.Database.Kind.
+             */
+            KIND_DB_KIND = 1;
+            /*
+                KIND_IS_SYSTEM sorts system presets first/last.
+             */
+            KIND_IS_SYSTEM = 2;
         }
+        /*
+            by selects EITHER a common Entity column or a table-specific Kind.
+         */
         oneof by {
+            /*
+                entity sorts by a common Entity column.
+             */
             common.EntitySortField entity = 1;
+            /*
+                kind sorts by a table-specific column.
+             */
             Kind kind = 2;
         }
+        /*
+            desc reverses the order when true.
+         */
         bool desc = 3;
     }
 
+    /*
+        tenant_id scopes the listing to one tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
-    // Shared Entity-level filters (search, ids, time windows, soft-delete).
+    /*
+        filter is the shared Entity-level filter (search, ids, time windows,
+        soft-delete).
+     */
     common.EntityFilter filter = 2;
-    // Tag match: every key=value pair must be present on the database (AND).
+    /*
+        tags is a tag match: every key=value pair must be present on the database
+        (AND).
+     */
     map<string, string> tags = 3;
-    // Kind-specific filters.
+    /*
+        db_kinds narrows to specific database engines (kind-specific filter).
+     */
     repeated domain.Database.Kind db_kinds = 4;
+    /*
+        sources narrows to specific SourceKinds (kind-specific filter).
+     */
     repeated SourceKind sources = 5;
-    // Filter by system flag. Unset = all; true = only system; false = only user.
+    /*
+        is_system filters by the system flag. Unset = all; true = only system;
+        false = only user.
+     */
     optional bool is_system = 6;
-    // Ordering (common Entity column or table-specific).
+    /*
+        sort is the ordering (common Entity column or table-specific).
+     */
     Sort sort = 7;
-    // Pagination.
+    /*
+        page is the pagination cursor/size.
+     */
     common.Page page = 8;
 }
+/*
+    ListDatabasePresetsResponse returns one page of database presets.
+ */
 message ListDatabasePresetsResponse {
+    /*
+        presets is this page of database presets.
+     */
     repeated models.DatabasePresetRecord presets = 1;
+    /*
+        next_page_token is empty when there are no more rows.
+     */
     string next_page_token = 2;
 }
 
+/*
+    UpdateDatabasePresetRequest replaces a database preset wholesale.
+ */
 message UpdateDatabasePresetRequest {
+    /*
+        tenant_id scopes the request to the preset's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
-    // Wholesale replace; preset.entity.id selects the row.
+    /*
+        preset is the wholesale replacement; preset.entity.id selects the row.
+     */
     models.DatabasePresetRecord preset = 2 [(validate.rules).message.required = true];
 }
+/*
+    UpdateDatabasePresetResponse returns the preset after the edit.
+ */
 message UpdateDatabasePresetResponse {
+    /*
+        preset is the updated database preset.
+     */
     models.DatabasePresetRecord preset = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    DeleteDatabasePresetRequest removes one database preset by id.
+ */
 message DeleteDatabasePresetRequest {
+    /*
+        tenant_id scopes the request to the preset's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the preset to remove.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
+/*
+    DeleteDatabasePresetResponse is empty; success is signalled by the absence of
+    error.
+ */
 message DeleteDatabasePresetResponse {}
 
 /*
@@ -113,23 +239,51 @@ message DeleteDatabasePresetResponse {}
     the caller as author.
  */
 message CloneDatabasePresetRequest {
+    /*
+        tenant_id scopes the request to the source preset's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the preset to copy.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
-    // Optional name for the copy; empty -> server derives one (e.g. "<name> (copy)").
+    /*
+        name is the optional name for the copy; empty -> server derives one (e.g.
+        "<name> (copy)").
+     */
     string name = 3 [(validate.rules).string = {max_len: 255}];
 }
+/*
+    CloneDatabasePresetResponse returns the new editable copy.
+ */
 message CloneDatabasePresetResponse {
+    /*
+        preset is the cloned, editable database preset.
+     */
     models.DatabasePresetRecord preset = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    DatabasePresetService is the tenant-scoped CRUD over database presets.
+ */
 service DatabasePresetService {
+    /*
+        CreateDatabasePreset creates a database preset. Not idempotent: each call
+        mints a new preset.
+     */
     rpc CreateDatabasePreset (CreateDatabasePresetRequest) returns (CreateDatabasePresetResponse) {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_CREATE}]};
     }
+    /*
+        GetDatabasePreset fetches one database preset by id. Read-only.
+     */
     rpc GetDatabasePreset (GetDatabasePresetRequest) returns (GetDatabasePresetResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_READ}]};
     }
+    /*
+        ListDatabasePresets lists a tenant's database presets. Read-only.
+     */
     rpc ListDatabasePresets (ListDatabasePresetsRequest) returns (ListDatabasePresetsResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_LIST}]};
@@ -162,66 +316,185 @@ service DatabasePresetService {
 /*
     ============================ WorkloadPreset ============================
  */
+/*
+    CreateWorkloadPresetRequest creates a new workload preset in the tenant.
+ */
 message CreateWorkloadPresetRequest {
+    /*
+        tenant_id scopes the preset; presets never cross tenants.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        preset is the workload preset to create. Server assigns entity.id /
+        tenant_id / timings; values set here are ignored.
+     */
     models.WorkloadPresetRecord preset = 2 [(validate.rules).message.required = true];
 }
+/*
+    CreateWorkloadPresetResponse returns the created preset.
+ */
 message CreateWorkloadPresetResponse {
+    /*
+        preset is the newly created workload preset.
+     */
     models.WorkloadPresetRecord preset = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    GetWorkloadPresetRequest fetches one workload preset by id.
+ */
 message GetWorkloadPresetRequest {
+    /*
+        tenant_id scopes the request to the preset's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the preset to fetch.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
+/*
+    GetWorkloadPresetResponse returns the requested workload preset.
+ */
 message GetWorkloadPresetResponse {
+    /*
+        preset is the fetched workload preset.
+     */
     models.WorkloadPresetRecord preset = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    ListWorkloadPresetsRequest lists a tenant's workload presets with filters,
+    sort and paging.
+ */
 message ListWorkloadPresetsRequest {
+    /*
+        Sort orders by EITHER a common Entity column OR a table-specific column.
+        desc applies to whichever is chosen.
+     */
     message Sort {
+        /*
+            Kind is the set of table-specific sort columns for workload presets.
+         */
         enum Kind {
+            /*
+                KIND_UNSPECIFIED is the zero value (no table-specific column).
+             */
             KIND_UNSPECIFIED = 0;
+            /*
+                KIND_STROPPY_VERSION sorts by the workload's stroppy version.
+             */
             KIND_STROPPY_VERSION = 1;
+            /*
+                KIND_IS_SYSTEM sorts system presets first/last.
+             */
             KIND_IS_SYSTEM = 2;
         }
+        /*
+            by selects EITHER a common Entity column or a table-specific Kind.
+         */
         oneof by {
+            /*
+                entity sorts by a common Entity column.
+             */
             common.EntitySortField entity = 1;
+            /*
+                kind sorts by a table-specific column.
+             */
             Kind kind = 2;
         }
+        /*
+            desc reverses the order when true.
+         */
         bool desc = 3;
     }
 
+    /*
+        tenant_id scopes the listing to one tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        filter is the shared Entity-level filter (search, ids, time windows,
+        soft-delete).
+     */
     common.EntityFilter filter = 2;
-    // Tag match over the workload tags (AND).
+    /*
+        tags is a tag match over the workload tags (AND).
+     */
     map<string, string> tags = 3;
-    // Kind-specific filter.
+    /*
+        stroppy_versions narrows to specific workload versions (kind-specific
+        filter).
+     */
     repeated string stroppy_versions = 4 [(validate.rules).repeated = {max_items: 100, items: {string: {max_len: 64}}}];
-    // Filter by system flag. Unset = all; true = only system; false = only user.
+    /*
+        is_system filters by the system flag. Unset = all; true = only system;
+        false = only user.
+     */
     optional bool is_system = 5;
-    // Ordering (common Entity column or table-specific).
+    /*
+        sort is the ordering (common Entity column or table-specific).
+     */
     Sort sort = 6;
-    // Pagination.
+    /*
+        page is the pagination cursor/size.
+     */
     common.Page page = 7;
 }
+/*
+    ListWorkloadPresetsResponse returns one page of workload presets.
+ */
 message ListWorkloadPresetsResponse {
+    /*
+        presets is this page of workload presets.
+     */
     repeated models.WorkloadPresetRecord presets = 1;
+    /*
+        next_page_token is empty when there are no more rows.
+     */
     string next_page_token = 2;
 }
 
+/*
+    UpdateWorkloadPresetRequest replaces a workload preset wholesale.
+ */
 message UpdateWorkloadPresetRequest {
+    /*
+        tenant_id scopes the request to the preset's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        preset is the wholesale replacement; preset.entity.id selects the row.
+     */
     models.WorkloadPresetRecord preset = 2 [(validate.rules).message.required = true];
 }
+/*
+    UpdateWorkloadPresetResponse returns the preset after the edit.
+ */
 message UpdateWorkloadPresetResponse {
+    /*
+        preset is the updated workload preset.
+     */
     models.WorkloadPresetRecord preset = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    DeleteWorkloadPresetRequest removes one workload preset by id.
+ */
 message DeleteWorkloadPresetRequest {
+    /*
+        tenant_id scopes the request to the preset's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the preset to remove.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
+/*
+    DeleteWorkloadPresetResponse is empty; success is signalled by the absence of
+    error.
+ */
 message DeleteWorkloadPresetResponse {}
 
 /*
@@ -230,37 +503,76 @@ message DeleteWorkloadPresetResponse {}
     the caller as author.
  */
 message CloneWorkloadPresetRequest {
+    /*
+        tenant_id scopes the request to the source preset's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the preset to copy.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        name is the optional name for the copy; empty -> server derives one (e.g.
+        "<name> (copy)").
+     */
     string name = 3 [(validate.rules).string = {max_len: 255}];
 }
+/*
+    CloneWorkloadPresetResponse returns the new editable copy.
+ */
 message CloneWorkloadPresetResponse {
+    /*
+        preset is the cloned, editable workload preset.
+     */
     models.WorkloadPresetRecord preset = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    WorkloadPresetService is the tenant-scoped CRUD over workload presets.
+ */
 service WorkloadPresetService {
+    /*
+        CreateWorkloadPreset creates a workload preset. Not idempotent: each call
+        mints a new preset.
+     */
     rpc CreateWorkloadPreset (CreateWorkloadPresetRequest) returns (CreateWorkloadPresetResponse) {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_CREATE}]};
     }
+    /*
+        GetWorkloadPreset fetches one workload preset by id. Read-only.
+     */
     rpc GetWorkloadPreset (GetWorkloadPresetRequest) returns (GetWorkloadPresetResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_READ}]};
     }
+    /*
+        ListWorkloadPresets lists a tenant's workload presets. Read-only.
+     */
     rpc ListWorkloadPresets (ListWorkloadPresetsRequest) returns (ListWorkloadPresetsResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_LIST}]};
     }
     /*
-        System presets (is_system) are read-only and rejected — clone instead.
+        UpdateWorkloadPreset is idempotent: a wholesale field set converges on
+        retry. System presets (is_system) are read-only and rejected — clone
+        instead.
      */
     rpc UpdateWorkloadPreset (UpdateWorkloadPresetRequest) returns (UpdateWorkloadPresetResponse) {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_UPDATE}]};
     }
+    /*
+        DeleteWorkloadPreset is idempotent: deleting an absent preset is a no-op.
+        System presets (is_system) are rejected.
+     */
     rpc DeleteWorkloadPreset (DeleteWorkloadPresetRequest) returns (DeleteWorkloadPresetResponse) {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_DELETE}]};
     }
+    /*
+        CloneWorkloadPreset creates a new editable copy. Not idempotent: each call
+        mints a new preset.
+     */
     rpc CloneWorkloadPreset (CloneWorkloadPresetRequest) returns (CloneWorkloadPresetResponse) {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_CREATE}]};
     }
@@ -269,68 +581,193 @@ service WorkloadPresetService {
 /*
     ============================== TestPreset ==============================
  */
+/*
+    CreateTestPresetRequest creates a new test preset in the tenant.
+ */
 message CreateTestPresetRequest {
+    /*
+        tenant_id scopes the preset; presets never cross tenants.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        preset is the test preset to create. Server assigns entity.id / tenant_id
+        / timings; values set here are ignored.
+     */
     models.TestPresetRecord preset = 2 [(validate.rules).message.required = true];
 }
+/*
+    CreateTestPresetResponse returns the created preset.
+ */
 message CreateTestPresetResponse {
+    /*
+        preset is the newly created test preset.
+     */
     models.TestPresetRecord preset = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    GetTestPresetRequest fetches one test preset by id.
+ */
 message GetTestPresetRequest {
+    /*
+        tenant_id scopes the request to the preset's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the preset to fetch.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
+/*
+    GetTestPresetResponse returns the requested test preset.
+ */
 message GetTestPresetResponse {
+    /*
+        preset is the fetched test preset.
+     */
     models.TestPresetRecord preset = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    ListTestPresetsRequest lists a tenant's test presets with filters, sort and
+    paging.
+ */
 message ListTestPresetsRequest {
+    /*
+        Sort orders by EITHER a common Entity column OR a table-specific column.
+        desc applies to whichever is chosen.
+     */
     message Sort {
+        /*
+            Kind is the set of table-specific sort columns for test presets.
+         */
         enum Kind {
+            /*
+                KIND_UNSPECIFIED is the zero value (no table-specific column).
+             */
             KIND_UNSPECIFIED = 0;
+            /*
+                KIND_DB_KIND sorts by the test's database kind.
+             */
             KIND_DB_KIND = 1;
+            /*
+                KIND_STROPPY_VERSION sorts by the test's stroppy version.
+             */
             KIND_STROPPY_VERSION = 2;
+            /*
+                KIND_IS_SYSTEM sorts system presets first/last.
+             */
             KIND_IS_SYSTEM = 3;
         }
+        /*
+            by selects EITHER a common Entity column or a table-specific Kind.
+         */
         oneof by {
+            /*
+                entity sorts by a common Entity column.
+             */
             common.EntitySortField entity = 1;
+            /*
+                kind sorts by a table-specific column.
+             */
             Kind kind = 2;
         }
+        /*
+            desc reverses the order when true.
+         */
         bool desc = 3;
     }
 
+    /*
+        tenant_id scopes the listing to one tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        filter is the shared Entity-level filter (search, ids, time windows,
+        soft-delete).
+     */
     common.EntityFilter filter = 2;
-    // Tag match over the test tags (AND).
+    /*
+        tags is a tag match over the test tags (AND).
+     */
     map<string, string> tags = 3;
-    // Kind-specific filters: the test's database kind and workload version.
+    /*
+        db_kinds narrows to specific database engines (kind-specific filter).
+     */
     repeated domain.Database.Kind db_kinds = 4;
+    /*
+        stroppy_versions narrows to specific workload versions (kind-specific
+        filter).
+     */
     repeated string stroppy_versions = 5 [(validate.rules).repeated = {max_items: 100, items: {string: {max_len: 64}}}];
-    // Filter by system flag. Unset = all; true = only system; false = only user.
+    /*
+        is_system filters by the system flag. Unset = all; true = only system;
+        false = only user.
+     */
     optional bool is_system = 6;
-    // Ordering (common Entity column or table-specific).
+    /*
+        sort is the ordering (common Entity column or table-specific).
+     */
     Sort sort = 7;
-    // Pagination.
+    /*
+        page is the pagination cursor/size.
+     */
     common.Page page = 8;
 }
+/*
+    ListTestPresetsResponse returns one page of test presets.
+ */
 message ListTestPresetsResponse {
+    /*
+        presets is this page of test presets.
+     */
     repeated models.TestPresetRecord presets = 1;
+    /*
+        next_page_token is empty when there are no more rows.
+     */
     string next_page_token = 2;
 }
 
+/*
+    UpdateTestPresetRequest replaces a test preset wholesale.
+ */
 message UpdateTestPresetRequest {
+    /*
+        tenant_id scopes the request to the preset's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        preset is the wholesale replacement; preset.entity.id selects the row.
+     */
     models.TestPresetRecord preset = 2 [(validate.rules).message.required = true];
 }
+/*
+    UpdateTestPresetResponse returns the preset after the edit.
+ */
 message UpdateTestPresetResponse {
+    /*
+        preset is the updated test preset.
+     */
     models.TestPresetRecord preset = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    DeleteTestPresetRequest removes one test preset by id.
+ */
 message DeleteTestPresetRequest {
+    /*
+        tenant_id scopes the request to the preset's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the preset to remove.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
+/*
+    DeleteTestPresetResponse is empty; success is signalled by the absence of
+    error.
+ */
 message DeleteTestPresetResponse {}
 
 /*
@@ -339,37 +776,75 @@ message DeleteTestPresetResponse {}
     the caller as author.
  */
 message CloneTestPresetRequest {
+    /*
+        tenant_id scopes the request to the source preset's tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the preset to copy.
+     */
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        name is the optional name for the copy; empty -> server derives one (e.g.
+        "<name> (copy)").
+     */
     string name = 3 [(validate.rules).string = {max_len: 255}];
 }
+/*
+    CloneTestPresetResponse returns the new editable copy.
+ */
 message CloneTestPresetResponse {
+    /*
+        preset is the cloned, editable test preset.
+     */
     models.TestPresetRecord preset = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    TestPresetService is the tenant-scoped CRUD over test presets.
+ */
 service TestPresetService {
+    /*
+        CreateTestPreset creates a test preset. Not idempotent: each call mints a
+        new preset.
+     */
     rpc CreateTestPreset (CreateTestPresetRequest) returns (CreateTestPresetResponse) {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_CREATE}]};
     }
+    /*
+        GetTestPreset fetches one test preset by id. Read-only.
+     */
     rpc GetTestPreset (GetTestPresetRequest) returns (GetTestPresetResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_READ}]};
     }
+    /*
+        ListTestPresets lists a tenant's test presets. Read-only.
+     */
     rpc ListTestPresets (ListTestPresetsRequest) returns (ListTestPresetsResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_LIST}]};
     }
     /*
+        UpdateTestPreset is idempotent: a wholesale field set converges on retry.
         System presets (is_system) are read-only and rejected — clone instead.
      */
     rpc UpdateTestPreset (UpdateTestPresetRequest) returns (UpdateTestPresetResponse) {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_UPDATE}]};
     }
+    /*
+        DeleteTestPreset is idempotent: deleting an absent preset is a no-op.
+        System presets (is_system) are rejected.
+     */
     rpc DeleteTestPreset (DeleteTestPresetRequest) returns (DeleteTestPresetResponse) {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_DELETE}]};
     }
+    /*
+        CloneTestPreset creates a new editable copy. Not idempotent: each call
+        mints a new preset.
+     */
     rpc CloneTestPreset (CloneTestPresetRequest) returns (CloneTestPresetResponse) {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_CREATE}]};
     }

@@ -30,16 +30,22 @@ const (
 // (metric_key); direction is the metric's own higher_is_better.
 type RatingFilter struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Metric to rank by (a MetricSummary.key). Required.
+	// metric_key is the metric to rank by (a MetricSummary.key). Required.
 	MetricKey string `protobuf:"bytes,1,opt,name=metric_key,json=metricKey,proto3" json:"metric_key,omitempty"`
-	// Narrowing facets (all AND; empty = not applied).
-	DbKinds         []domain.Database_Kind `protobuf:"varint,2,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
-	StroppyVersions []string               `protobuf:"bytes,3,rep,name=stroppy_versions,json=stroppyVersions,proto3" json:"stroppy_versions,omitempty"`
-	Providers       []deployment.Provider  `protobuf:"varint,4,rep,packed,name=providers,proto3,enum=cloud.v1.deployment.Provider" json:"providers,omitempty"`
-	StartedAfter    *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=started_after,json=startedAfter,proto3" json:"started_after,omitempty"`
-	StartedBefore   *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=started_before,json=startedBefore,proto3" json:"started_before,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// db_kinds narrows to specific database engines (AND; empty = not applied).
+	DbKinds []domain.Database_Kind `protobuf:"varint,2,rep,packed,name=db_kinds,json=dbKinds,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kinds,omitempty"`
+	// stroppy_versions narrows to specific engine versions (AND; empty = not
+	// applied).
+	StroppyVersions []string `protobuf:"bytes,3,rep,name=stroppy_versions,json=stroppyVersions,proto3" json:"stroppy_versions,omitempty"`
+	// providers narrows to specific deployment providers (AND; empty = not
+	// applied).
+	Providers []deployment.Provider `protobuf:"varint,4,rep,packed,name=providers,proto3,enum=cloud.v1.deployment.Provider" json:"providers,omitempty"`
+	// started_after keeps only runs that started at/after this time.
+	StartedAfter *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=started_after,json=startedAfter,proto3" json:"started_after,omitempty"`
+	// started_before keeps only runs that started at/before this time.
+	StartedBefore *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=started_before,json=startedBefore,proto3" json:"started_before,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RatingFilter) Reset() {
@@ -117,22 +123,32 @@ func (x *RatingFilter) GetStartedBefore() *timestamppb.Timestamp {
 // RatingEntry is one ranked benchmark for the authenticated boards. Includes
 // identifying info (run_id, author, tenant) the public board omits.
 type RatingEntry struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	Rank        uint32                 `protobuf:"varint,1,opt,name=rank,proto3" json:"rank,omitempty"`
-	MetricValue float64                `protobuf:"fixed64,2,opt,name=metric_value,json=metricValue,proto3" json:"metric_value,omitempty"`
-	MetricUnit  string                 `protobuf:"bytes,3,opt,name=metric_unit,json=metricUnit,proto3" json:"metric_unit,omitempty"`
-	// Benchmark descriptors.
-	DbKind         domain.Database_Kind   `protobuf:"varint,4,opt,name=db_kind,json=dbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kind,omitempty"`
-	WorkloadName   string                 `protobuf:"bytes,5,opt,name=workload_name,json=workloadName,proto3" json:"workload_name,omitempty"`
-	StroppyVersion string                 `protobuf:"bytes,6,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
-	Provider       deployment.Provider    `protobuf:"varint,7,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	TopologyLabel  string                 `protobuf:"bytes,8,opt,name=topology_label,json=topologyLabel,proto3" json:"topology_label,omitempty"`
-	NodeCount      uint32                 `protobuf:"varint,9,opt,name=node_count,json=nodeCount,proto3" json:"node_count,omitempty"`
-	RunAt          *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=run_at,json=runAt,proto3" json:"run_at,omitempty"`
-	// Identifying (authenticated scopes only).
-	RunId      string `protobuf:"bytes,11,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// rank is the 1-based position on the leaderboard.
+	Rank uint32 `protobuf:"varint,1,opt,name=rank,proto3" json:"rank,omitempty"`
+	// metric_value is the ranked metric's value for this entry.
+	MetricValue float64 `protobuf:"fixed64,2,opt,name=metric_value,json=metricValue,proto3" json:"metric_value,omitempty"`
+	// metric_unit is the unit the metric_value is expressed in.
+	MetricUnit string `protobuf:"bytes,3,opt,name=metric_unit,json=metricUnit,proto3" json:"metric_unit,omitempty"`
+	// db_kind is the database engine the benchmark ran against.
+	DbKind domain.Database_Kind `protobuf:"varint,4,opt,name=db_kind,json=dbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kind,omitempty"`
+	// workload_name is the workload the benchmark executed.
+	WorkloadName string `protobuf:"bytes,5,opt,name=workload_name,json=workloadName,proto3" json:"workload_name,omitempty"`
+	// stroppy_version is the stroppy engine version used.
+	StroppyVersion string `protobuf:"bytes,6,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
+	// provider is the deployment/cloud provider the benchmark ran on.
+	Provider deployment.Provider `protobuf:"varint,7,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	// topology_label is a human-readable summary of the cluster topology.
+	TopologyLabel string `protobuf:"bytes,8,opt,name=topology_label,json=topologyLabel,proto3" json:"topology_label,omitempty"`
+	// node_count is the number of nodes in the topology.
+	NodeCount uint32 `protobuf:"varint,9,opt,name=node_count,json=nodeCount,proto3" json:"node_count,omitempty"`
+	// run_at is when the benchmark run started.
+	RunAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=run_at,json=runAt,proto3" json:"run_at,omitempty"`
+	// run_id identifies the underlying test run (authenticated scopes only).
+	RunId string `protobuf:"bytes,11,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// author_name is who created the run (authenticated scopes only).
 	AuthorName string `protobuf:"bytes,12,opt,name=author_name,json=authorName,proto3" json:"author_name,omitempty"`
-	// tenant_name is set only on the system-wide board.
+	// tenant_name is the owning tenant; set only on the system-wide board.
 	TenantName    string `protobuf:"bytes,13,opt,name=tenant_name,json=tenantName,proto3" json:"tenant_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -259,11 +275,15 @@ func (x *RatingEntry) GetTenantName() string {
 	return ""
 }
 
+// GetSystemRatingRequest selects and pages the cross-system private board.
 type GetSystemRatingRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filter        *RatingFilter          `protobuf:"bytes,1,opt,name=filter,proto3" json:"filter,omitempty"`
-	Limit         uint32                 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
-	PageToken     string                 `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// filter selects and ranks the benchmark runs.
+	Filter *RatingFilter `protobuf:"bytes,1,opt,name=filter,proto3" json:"filter,omitempty"`
+	// limit caps returned entries (<= 500); 0 -> server default.
+	Limit uint32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	// page_token is the opaque cursor from a previous response.
+	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -319,10 +339,13 @@ func (x *GetSystemRatingRequest) GetPageToken() string {
 	return ""
 }
 
+// GetSystemRatingResponse returns one page of the system-wide board.
 type GetSystemRatingResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entries       []*RatingEntry         `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
-	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entries are the ranked benchmarks for this page.
+	Entries []*RatingEntry `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
+	// next_page_token is empty when there are no more rows.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -371,12 +394,17 @@ func (x *GetSystemRatingResponse) GetNextPageToken() string {
 	return ""
 }
 
+// GetTenantRatingRequest selects and pages one tenant's board.
 type GetTenantRatingRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Filter        *RatingFilter          `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
-	Limit         uint32                 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
-	PageToken     string                 `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the board to one tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// filter selects and ranks the benchmark runs.
+	Filter *RatingFilter `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
+	// limit caps returned entries (<= 500); 0 -> server default.
+	Limit uint32 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	// page_token is the opaque cursor from a previous response.
+	PageToken     string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -439,10 +467,13 @@ func (x *GetTenantRatingRequest) GetPageToken() string {
 	return ""
 }
 
+// GetTenantRatingResponse returns one page of the tenant's board.
 type GetTenantRatingResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entries       []*RatingEntry         `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
-	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// entries are the ranked benchmarks for this page.
+	Entries []*RatingEntry `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
+	// next_page_token is empty when there are no more rows.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

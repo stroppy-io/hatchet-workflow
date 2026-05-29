@@ -23,6 +23,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// GetSystemSettingsRequest takes no arguments: it reads the singleton settings.
 type GetSystemSettingsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -59,9 +60,11 @@ func (*GetSystemSettingsRequest) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_system_settings_proto_rawDescGZIP(), []int{0}
 }
 
+// GetSystemSettingsResponse returns the current control-plane settings.
 type GetSystemSettingsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Settings      *PlatformSettings      `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// settings is the singleton platform configuration.
+	Settings      *PlatformSettings `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -105,8 +108,9 @@ func (x *GetSystemSettingsResponse) GetSettings() *PlatformSettings {
 
 // UpdateSystemSettings replaces the singleton wholesale. Idempotent.
 type UpdateSystemSettingsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Settings      *PlatformSettings      `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// settings is the full replacement platform configuration.
+	Settings      *PlatformSettings `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -148,9 +152,11 @@ func (x *UpdateSystemSettingsRequest) GetSettings() *PlatformSettings {
 	return nil
 }
 
+// UpdateSystemSettingsResponse returns the settings after the update.
 type UpdateSystemSettingsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Settings      *PlatformSettings      `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// settings is the updated singleton platform configuration.
+	Settings      *PlatformSettings `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

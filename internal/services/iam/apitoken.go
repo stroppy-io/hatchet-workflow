@@ -3,6 +3,7 @@ package iam
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
@@ -65,7 +66,7 @@ func (s *IamService) CreateApiToken(ctx context.Context, req *api.CreateApiToken
 	}
 	var expiresAt *timestamppb.Timestamp
 	if d := req.GetTtl().AsDuration(); d > 0 {
-		expiresAt = timestamppb.New(s.d.Clock.Now().Add(d))
+		expiresAt = timestamppb.New(time.Now().Add(d))
 	}
 	tok := &iam.ApiToken{
 		Id:          uuid.NewString(),

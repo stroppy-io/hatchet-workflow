@@ -97,17 +97,25 @@ message Docker {
 
     /* Protocol maps to Docker port protocol. */
     enum Protocol {
+        /* PROTOCOL_UNSPECIFIED is the unset zero value; treated as tcp. */
         PROTOCOL_UNSPECIFIED = 0;
+        /* PROTOCOL_TCP binds the port over TCP. */
         PROTOCOL_TCP = 1;
+        /* PROTOCOL_UDP binds the port over UDP. */
         PROTOCOL_UDP = 2;
     }
 
     /* RestartPolicy maps to Docker HostConfig.RestartPolicy. */
     enum RestartPolicy {
+        /* RESTART_POLICY_UNSPECIFIED is the unset zero value; uses daemon default. */
         RESTART_POLICY_UNSPECIFIED = 0;
+        /* RESTART_POLICY_NO never restarts the container. */
         RESTART_POLICY_NO = 1;
+        /* RESTART_POLICY_ON_FAILURE restarts only on non-zero exit. */
         RESTART_POLICY_ON_FAILURE = 2;
+        /* RESTART_POLICY_ALWAYS always restarts the container. */
         RESTART_POLICY_ALWAYS = 3;
+        /* RESTART_POLICY_UNLESS_STOPPED always restarts unless explicitly stopped. */
         RESTART_POLICY_UNLESS_STOPPED = 4;
     }
 
@@ -147,10 +155,15 @@ message Docker {
 
     /* Healthcheck overrides image-level healthcheck. */
     message Healthcheck {
+        /* test is the healthcheck command, e.g. ["CMD", "curl", "-f", "..."]. */
         repeated string test = 1 [(validate.rules).repeated.min_items = 1];
+        /* interval_seconds is the delay between checks. */
         uint32 interval_seconds = 2;
+        /* timeout_seconds is the max time one check may run. */
         uint32 timeout_seconds = 3;
+        /* retries is the number of consecutive failures before unhealthy. */
         uint32 retries = 4;
+        /* start_period_seconds is the grace period before failures count. */
         uint32 start_period_seconds = 5;
     }
 
@@ -174,11 +187,17 @@ message Docker {
 
     /* ContainerOutput describes one created container. */
     message ContainerOutput {
+        /* id is the Docker container id assigned by the daemon. */
         string id = 1;
+        /* name is the resolved container name. */
         string name = 2;
+        /* internal_ip is the container IP on the Docker network. */
         string internal_ip = 3;
+        /* mapped_ports maps container ports to the host ports they bound to. */
         map<uint32, uint32> mapped_ports = 4;
+        /* status is the container status string reported by Docker. */
         string status = 5;
+        /* started_at is the container start timestamp as reported by Docker. */
         string started_at = 6;
     }
 }

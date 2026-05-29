@@ -25,16 +25,22 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Topology is the complete description of a benchmark deployment: its
+// instances, the edges between components, and any external components.
 type Topology struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	Instances   []*Topology_Instance   `protobuf:"bytes,1,rep,name=instances,proto3" json:"instances,omitempty"`
-	Connections []*Connection          `protobuf:"bytes,2,rep,name=connections,proto3" json:"connections,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// instances are the physical machines making up the topology; at least one
+	// is required.
+	Instances []*Topology_Instance `protobuf:"bytes,1,rep,name=instances,proto3" json:"instances,omitempty"`
+	// connections are the edges between components; at least one is required.
+	Connections []*Connection `protobuf:"bytes,2,rep,name=connections,proto3" json:"connections,omitempty"`
 	// Here we can add something like managed database or another sevice from prvider
 	// Responsibility of this is RenderTerraformVariablesWorkflow|RenderDockerInputWorkflow
 	ExternalComponents []*Component `protobuf:"bytes,3,rep,name=external_components,json=externalComponents,proto3" json:"external_components,omitempty"`
-	Tags               *common.Tags `protobuf:"bytes,4,opt,name=tags,proto3" json:"tags,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// tags are arbitrary key/value labels attached to the whole topology.
+	Tags          *common.Tags `protobuf:"bytes,4,opt,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Topology) Reset() {
@@ -95,18 +101,31 @@ func (x *Topology) GetTags() *common.Tags {
 	return nil
 }
 
+// Instance is one physical machine (VM) in the topology onto which
+// components are allocated.
 type Topology_Instance struct {
-	state           protoimpl.MessageState         `protogen:"open.v1"`
-	Id              string                         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Status          common.Status                  `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
-	MachineInfo     *deployment.MachineInfo        `protobuf:"bytes,3,opt,name=machine_info,json=machineInfo,proto3" json:"machine_info,omitempty"`
-	ProviderParms   *schemapb.Baked                `protobuf:"bytes,4,opt,name=provider_parms,json=providerParms,proto3,oneof" json:"provider_parms,omitempty"`       // calculated (wisard)
-	QuotaRequests   []*deployment.Quota_Request    `protobuf:"bytes,5,rep,name=quota_requests,json=quotaRequests,proto3" json:"quota_requests,omitempty"`             // calculated (deployment)
-	AllocatedQuotas []*deployment.Quota_Allocation `protobuf:"bytes,6,rep,name=allocated_quotas,json=allocatedQuotas,proto3" json:"allocated_quotas,omitempty"`       // calculated (deployment)
-	DeploymentParms *schemapb.Baked                `protobuf:"bytes,7,opt,name=deployment_parms,json=deploymentParms,proto3,oneof" json:"deployment_parms,omitempty"` // calculated (deployment)
-	Tags            *common.Tags                   `protobuf:"bytes,8,opt,name=tags,proto3" json:"tags,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the unique identifier of the instance within the topology.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// status is the current runtime status of the instance.
+	Status common.Status `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
+	// machine_info describes the requested machine shape/specs.
+	MachineInfo *deployment.MachineInfo `protobuf:"bytes,3,opt,name=machine_info,json=machineInfo,proto3" json:"machine_info,omitempty"`
+	// provider_parms are the baked provider parameters; calculated (wisard).
+	ProviderParms *schemapb.Baked `protobuf:"bytes,4,opt,name=provider_parms,json=providerParms,proto3,oneof" json:"provider_parms,omitempty"`
+	// quota_requests are the resource quotas requested for this instance;
+	// calculated (deployment).
+	QuotaRequests []*deployment.Quota_Request `protobuf:"bytes,5,rep,name=quota_requests,json=quotaRequests,proto3" json:"quota_requests,omitempty"`
+	// allocated_quotas are the quotas actually granted to this instance;
+	// calculated (deployment).
+	AllocatedQuotas []*deployment.Quota_Allocation `protobuf:"bytes,6,rep,name=allocated_quotas,json=allocatedQuotas,proto3" json:"allocated_quotas,omitempty"`
+	// deployment_parms are the baked deployment parameters; calculated
+	// (deployment).
+	DeploymentParms *schemapb.Baked `protobuf:"bytes,7,opt,name=deployment_parms,json=deploymentParms,proto3,oneof" json:"deployment_parms,omitempty"`
+	// tags are arbitrary key/value labels attached to the instance.
+	Tags          *common.Tags `protobuf:"bytes,8,opt,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Topology_Instance) Reset() {

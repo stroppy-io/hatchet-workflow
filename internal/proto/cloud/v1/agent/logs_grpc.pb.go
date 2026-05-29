@@ -25,6 +25,9 @@ const (
 // AgentLogServiceClient is the client API for AgentLogService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// AgentLogService is the agent-facing log ingestion endpoint that forwards
+// shipped lines into VictoriaLogs.
 type AgentLogServiceClient interface {
 	// ShipLogs is a client stream of batches: the agent flushes LogBatch chunks
 	// continuously; the server writes them to VictoriaLogs and acks counts.
@@ -55,6 +58,9 @@ type AgentLogService_ShipLogsClient = grpc.ClientStreamingClient[LogBatch, ShipL
 // AgentLogServiceServer is the server API for AgentLogService service.
 // All implementations must embed UnimplementedAgentLogServiceServer
 // for forward compatibility.
+//
+// AgentLogService is the agent-facing log ingestion endpoint that forwards
+// shipped lines into VictoriaLogs.
 type AgentLogServiceServer interface {
 	// ShipLogs is a client stream of batches: the agent flushes LogBatch chunks
 	// continuously; the server writes them to VictoriaLogs and acks counts.

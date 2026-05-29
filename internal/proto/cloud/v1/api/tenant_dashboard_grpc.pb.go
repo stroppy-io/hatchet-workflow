@@ -25,7 +25,10 @@ const (
 // TenantDashboardServiceClient is the client API for TenantDashboardService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// TenantDashboardService serves the tenant landing-page dashboard.
 type TenantDashboardServiceClient interface {
+	// GetTenantDashboard returns the aggregated dashboard. Read-only.
 	GetTenantDashboard(ctx context.Context, in *GetTenantDashboardRequest, opts ...grpc.CallOption) (*GetTenantDashboardResponse, error)
 }
 
@@ -50,7 +53,10 @@ func (c *tenantDashboardServiceClient) GetTenantDashboard(ctx context.Context, i
 // TenantDashboardServiceServer is the server API for TenantDashboardService service.
 // All implementations must embed UnimplementedTenantDashboardServiceServer
 // for forward compatibility.
+//
+// TenantDashboardService serves the tenant landing-page dashboard.
 type TenantDashboardServiceServer interface {
+	// GetTenantDashboard returns the aggregated dashboard. Read-only.
 	GetTenantDashboard(context.Context, *GetTenantDashboardRequest) (*GetTenantDashboardResponse, error)
 	mustEmbedUnimplementedTenantDashboardServiceServer()
 }

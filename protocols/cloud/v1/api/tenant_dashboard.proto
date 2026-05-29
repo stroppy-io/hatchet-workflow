@@ -21,48 +21,114 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     pattern as the share-snapshot and rating refresh) — no dashboard DB record.
  */
 
-// StatusCounts is the run breakdown by lifecycle status.
+/*
+    StatusCounts is the run breakdown by lifecycle status.
+ */
 message StatusCounts {
+    /*
+        total is the count of all runs in scope.
+     */
     uint32 total = 1;
+    /*
+        pending is the count of runs not yet started.
+     */
     uint32 pending = 2;
+    /*
+        running is the count of currently executing runs.
+     */
     uint32 running = 3;
+    /*
+        completed is the count of successfully finished runs.
+     */
     uint32 completed = 4;
+    /*
+        failed is the count of runs that ended in failure.
+     */
     uint32 failed = 5;
+    /*
+        cancelled is the count of runs that were cancelled.
+     */
     uint32 cancelled = 6;
 }
 
-// UpcomingSuite is a scheduled suite and its next planned auto-run.
+/*
+    UpcomingSuite is a scheduled suite and its next planned auto-run.
+ */
 message UpcomingSuite {
+    /*
+        suite_id identifies the scheduled suite definition.
+     */
     string suite_id = 1 [(validate.rules).string = {max_len: 64}];
+    /*
+        name is the suite's display name.
+     */
     string name = 2 [(validate.rules).string.max_len = 255];
+    /*
+        cron is the schedule expression driving the auto-runs.
+     */
     string cron = 3 [(validate.rules).string.max_len = 128];
+    /*
+        next_run_at is when the next auto-run is planned.
+     */
     google.protobuf.Timestamp next_run_at = 4;
 }
 
-// TenantDashboard is the whole landing payload.
+/*
+    TenantDashboard is the whole landing payload.
+ */
 message TenantDashboard {
-    // Run counts by status (for the headline tiles).
+    /*
+        run_counts is the run breakdown by status (for the headline tiles).
+     */
     StatusCounts run_counts = 1;
-    // Success rate (completed / finished) over a recent window, 0..1.
+    /*
+        success_rate is completed / finished over a recent window, 0..1.
+     */
     float success_rate = 2;
-    // Most recent runs (limited).
+    /*
+        recent_runs is the most recent test runs (limited).
+     */
     repeated models.TestRunRecord recent_runs = 3;
-    // Most recent suite runs (limited).
+    /*
+        recent_suite_runs is the most recent suite runs (limited).
+     */
     repeated models.SuiteRunRecord recent_suite_runs = 4;
-    // Scheduled suites with their next planned auto-run.
+    /*
+        upcoming is the scheduled suites with their next planned auto-run.
+     */
     repeated UpcomingSuite upcoming = 5;
-    // This tenant's top benchmarks (tenant rating top-N).
+    /*
+        top_benchmarks is this tenant's top benchmarks (tenant rating top-N).
+     */
     repeated RatingEntry top_benchmarks = 6;
 }
 
+/*
+    GetTenantDashboardRequest fetches the aggregated dashboard for a tenant.
+ */
 message GetTenantDashboardRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
+/*
+    GetTenantDashboardResponse returns the computed dashboard payload.
+ */
 message GetTenantDashboardResponse {
+    /*
+        dashboard is the aggregated landing view.
+     */
     TenantDashboard dashboard = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    TenantDashboardService serves the tenant landing-page dashboard.
+ */
 service TenantDashboardService {
+    /*
+        GetTenantDashboard returns the aggregated dashboard. Read-only.
+     */
     rpc GetTenantDashboard (GetTenantDashboardRequest) returns (GetTenantDashboardResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_LIST}]};

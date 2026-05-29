@@ -20,24 +20,52 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     SuiteRunRecord.
  */
 message SuiteRecord {
+    /*
+        entity is the storage envelope (id, tenant_id, name, description,
+        timings).
+     */
     common.Entity entity = 1 [(validate.rules).message.required = true];
+    /*
+        spec is the suite definition payload that SuiteAPI.Start expands into a
+        SuiteRunRecord.
+     */
     domain.Suite spec = 2 [(validate.rules).message.required = true];
 
-    // Denormalized facets for the suites table (schedule state + last-run info).
+    /*
+        summary holds denormalized facets for the suites table (schedule state +
+        last-run info).
+     */
     Summary summary = 3;
 
+    /*
+        Summary is the flat, indexed projection of the suite definition used by
+        the suites table.
+     */
     message Summary {
-        // Mirrors spec.schedule.enabled for fast filter/sort.
+        /*
+            schedule_enabled mirrors spec.schedule.enabled for fast filter/sort.
+         */
         bool schedule_enabled = 1;
-        // Mirrors spec.schedule.cron.
+        /*
+            cron mirrors spec.schedule.cron.
+         */
         string cron = 2 [(validate.rules).string.max_len = 128];
-        // Next planned auto-run (computed from the cron); unset if disabled.
+        /*
+            next_run_at is the next planned auto-run computed from the cron;
+            unset if scheduling is disabled.
+         */
         google.protobuf.Timestamp next_run_at = 3;
-        // Last time the suite was started (manual or cron).
+        /*
+            last_run_at is the last time the suite was started (manual or cron).
+         */
         google.protobuf.Timestamp last_run_at = 4;
-        // Status of the last suite run.
+        /*
+            last_run_status is the status of the last suite run.
+         */
         common.Status last_run_status = 5;
-        // How many suite runs this definition has spawned.
+        /*
+            run_count is how many suite runs this definition has spawned.
+         */
         uint32 run_count = 6;
     }
 }
@@ -49,39 +77,94 @@ message SuiteRecord {
     SuiteWorkflow receives a domain.SuiteRun assembled from the children at start.
  */
 message SuiteRunRecord {
+    /*
+        entity is the storage envelope (id, tenant_id, name, timings).
+     */
     common.Entity entity = 1 [(validate.rules).message.required = true];
-    // The definition this run came from.
+    /*
+        suite_id references the SuiteRecord definition this run came from.
+     */
     string suite_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
-    // Lifecycle status of the suite run as a whole.
+    /*
+        status is the lifecycle status of the suite run as a whole.
+     */
     common.Status status = 3;
-    // How this run was triggered (MANUAL / CRON / API).
+    /*
+        trigger records how this run was triggered (MANUAL / CRON / API).
+     */
     common.Trigger trigger = 7;
-    // Max concurrent child TestWorkflows. 0 = unlimited.
+    /*
+        max_parallel is the max number of concurrent child TestWorkflows.
+        0 = unlimited.
+     */
     uint32 max_parallel = 4;
-    // Child runs (ids of TestRunRecord rows).
+    /*
+        test_run_ids are the ids of the child TestRunRecord rows this suite run
+        expanded into.
+     */
     repeated string test_run_ids = 5 [(validate.rules).repeated = {items: {string: {max_len: 64}}}];
 
-    // Denormalized, queryable facets for the suite-runs table (fewer than a test
-    // run: mostly child-count aggregates + provider + timing).
+    /*
+        summary holds denormalized, queryable facets for the suite-runs table
+        (fewer than a test run: mostly child-count aggregates + provider +
+        timing).
+     */
     Summary summary = 6;
 
+    /*
+        Summary is the flat, indexed projection of the suite run used by the
+        suite-runs table.
+     */
     message Summary {
-        // Name of the originating suite definition.
+        /*
+            suite_name is the name of the originating suite definition.
+         */
         string suite_name = 1 [(validate.rules).string.max_len = 255];
-        // Single provider the whole suite ran on.
+        /*
+            provider is the single provider the whole suite ran on.
+         */
         deployment.Provider provider = 2;
-        // Distinct database kinds exercised by the suite (for filtering).
+        /*
+            db_kinds are the distinct database kinds exercised by the suite (for
+            filtering).
+         */
         repeated domain.Database.Kind db_kinds = 3;
-        // Child run counts by outcome.
+        /*
+            total is the total number of child runs.
+         */
         uint32 total = 4;
+        /*
+            completed is the number of child runs that finished successfully.
+         */
         uint32 completed = 5;
+        /*
+            failed is the number of child runs that failed.
+         */
         uint32 failed = 6;
+        /*
+            running is the number of child runs currently in progress.
+         */
         uint32 running = 7;
+        /*
+            pending is the number of child runs not yet started.
+         */
         uint32 pending = 8;
-        // Aggregate progress (0..100), derived on the backend from children.
+        /*
+            progress_pct is the aggregate progress (0..100), derived on the
+            backend from the children.
+         */
         uint32 progress_pct = 9 [(validate.rules).uint32.lte = 100];
+        /*
+            started_at is when the suite run started.
+         */
         google.protobuf.Timestamp started_at = 10;
+        /*
+            finished_at is when the suite run finished (unset while running).
+         */
         google.protobuf.Timestamp finished_at = 11;
+        /*
+            duration is the suite run's elapsed time.
+         */
         google.protobuf.Duration duration = 12;
     }
 }

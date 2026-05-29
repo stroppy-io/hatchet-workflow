@@ -6,9 +6,21 @@ import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
 
+/*
+    config.proto holds the shared configuration container types. Config is the
+    outer envelope; its nested forms (e.g. Baked) capture a configuration after
+    it has been resolved/materialized for use.
+ */
 
+/*
+    Config is the common configuration envelope shared across the control plane.
+ */
 message Config {
 
+    /*
+        Baked is a configuration that has been fully resolved/materialized so it
+        can be applied without further lookup.
+     */
     message Baked {
 
     }

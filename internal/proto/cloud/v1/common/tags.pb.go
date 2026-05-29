@@ -21,6 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Tags carries a flat label set and arbitrary key/value metadata for a model.
 type Tags struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tags is a flat label set.

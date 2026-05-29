@@ -4,6 +4,12 @@ package cloud.v1.common;
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
 
+/*
+    status.proto defines the shared lifecycle status enum used by executable
+    nodes (runs, suites, deployments) across the control plane.
+ */
+
+/* Status is the lifecycle state of an executable node. */
 enum Status {
     /* UNSPECIFIED is invalid. */
     STATUS_UNSPECIFIED = 0;
@@ -23,7 +29,10 @@ enum Status {
     STATUS_CANCELLING = 7;
     /* CANCELLED means cancellation completed. */
     STATUS_CANCELLED = 8;
+    /* ALLOCATED means infrastructure resources have been reserved for the node. */
     STATUS_ALLOCATED = 9;
+    /* DEPLOYMENT means deployment of the node is in progress. */
     STATUS_DEPLOYMENT = 10;
+    /* DEPLOYED means the node has been successfully deployed. */
     STATUS_DEPLOYED = 11;
 }

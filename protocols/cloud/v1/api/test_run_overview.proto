@@ -36,75 +36,181 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     filtering beyond the structured fields.
  */
 message LogFilter {
+    /*
+        node_execution_ids restricts to lines emitted by these node executions.
+     */
     repeated string node_execution_ids = 1 [(validate.rules).repeated = {max_items: 256, items: {string: {max_len: 128}}}];
+    /*
+        component_ids restricts to lines emitted by these components.
+     */
     repeated string component_ids = 2 [(validate.rules).repeated = {max_items: 256, items: {string: {max_len: 128}}}];
+    /*
+        machine_ids restricts to lines emitted by these machines.
+     */
     repeated string machine_ids = 3 [(validate.rules).repeated = {max_items: 256, items: {string: {max_len: 128}}}];
+    /*
+        sources restricts to these log sources.
+     */
     repeated monitor.Source sources = 4;
+    /*
+        streams restricts to these log streams (e.g. stdout/stderr).
+     */
     repeated monitor.Stream streams = 5;
+    /*
+        unit restricts to a specific systemd/log unit.
+     */
     string unit = 6 [(validate.rules).string.max_len = 256];
+    /*
+        start keeps lines at or after this time.
+     */
     google.protobuf.Timestamp start = 7;
+    /*
+        end keeps lines at or before this time.
+     */
     google.protobuf.Timestamp end = 8;
-    // search is a simple substring match over the line text.
+    /*
+        search is a simple substring match over the line text.
+     */
     string search = 9 [(validate.rules).string.max_len = 1024];
-    // query is a raw LogsQL fragment, AND-ed with the structured filters (advanced).
+    /*
+        query is a raw LogsQL fragment, AND-ed with the structured filters (advanced).
+     */
     string query = 10 [(validate.rules).string.max_len = 4096];
 }
 
 /*
-    ============================== Overview tab ==============================
+    GetTestRunOverviewRequest fetches the Overview tab payload for a run.
  */
 message GetTestRunOverviewRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        run_id identifies the run whose overview is requested.
+     */
     string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
 }
+/*
+    GetTestRunOverviewResponse returns the run's Overview snapshot.
+ */
 message GetTestRunOverviewResponse {
+    /*
+        overview is the full overview (status/pipeline/workers/timeline).
+     */
     monitor.Overview overview = 1 [(validate.rules).message.required = true];
 }
 
+/*
+    StreamTestRunOverviewRequest opens a live overview stream for a run. Each stream
+    tick is a fresh full Overview (status/pipeline/workers/timeline) so the client
+    just replaces its state; no diff merging.
+ */
 message StreamTestRunOverviewRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        run_id identifies the run to follow.
+     */
     string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
 }
-// Each stream tick is a fresh full Overview (status/pipeline/workers/timeline) so
-// the client just replaces its state; no diff merging.
 
 /*
-    ================================ Logs tab ================================
+    LogScrollDirection selects which way QueryLogs pages relative to the anchor.
  */
 enum LogScrollDirection {
-    LOG_SCROLL_DIRECTION_UNSPECIFIED = 0; // server default (newer)
-    LOG_SCROLL_DIRECTION_OLDER = 1;       // page back in time
-    LOG_SCROLL_DIRECTION_NEWER = 2;       // page forward in time
+    /*
+        LOG_SCROLL_DIRECTION_UNSPECIFIED uses the server default (newer).
+     */
+    LOG_SCROLL_DIRECTION_UNSPECIFIED = 0;
+    /*
+        LOG_SCROLL_DIRECTION_OLDER pages back in time.
+     */
+    LOG_SCROLL_DIRECTION_OLDER = 1;
+    /*
+        LOG_SCROLL_DIRECTION_NEWER pages forward in time.
+     */
+    LOG_SCROLL_DIRECTION_NEWER = 2;
 }
 
+/*
+    QueryLogsRequest fetches a bounded, cursor-paged window of historical log lines.
+ */
 message QueryLogsRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        run_id identifies the run whose logs are queried.
+     */
     string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        filter narrows the lines returned.
+     */
     LogFilter filter = 3;
-    // Anchor to page from; empty = newest (when OLDER) / oldest (when NEWER).
+    /*
+        from is the anchor to page from; empty = newest (when OLDER) / oldest (when
+        NEWER).
+     */
     monitor.LogCursor from = 4;
+    /*
+        direction selects which way to page relative to the anchor.
+     */
     LogScrollDirection direction = 5;
-    // Max lines to return; 0 -> server default. Bounded so the UI never drowns.
+    /*
+        limit caps the lines returned; 0 -> server default. Bounded so the UI never
+        drowns.
+     */
     uint32 limit = 6 [(validate.rules).uint32.lte = 5000];
 }
+/*
+    QueryLogsResponse returns a page of log lines plus cursors to page either way.
+ */
 message QueryLogsResponse {
+    /*
+        lines is the matching page of log lines.
+     */
     repeated monitor.LogLine lines = 1;
-    // Cursor to fetch the page OLDER than these results (empty = at the start).
+    /*
+        older is the cursor to fetch the page OLDER than these results (empty = at
+        the start).
+     */
     monitor.LogCursor older = 2;
-    // Cursor to fetch the page NEWER than these results (empty = at the end / tip).
+    /*
+        newer is the cursor to fetch the page NEWER than these results (empty = at
+        the end / tip).
+     */
     monitor.LogCursor newer = 3;
 }
 
+/*
+    StreamLogsRequest opens a live log tail. StreamLogs returns a live stream of
+    LogLine; the server MAY coalesce / rate-limit under very high throughput. The
+    client uses QueryLogs for exact scrollback.
+ */
 message StreamLogsRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        run_id identifies the run to tail.
+     */
     string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
-    // Live filter (the user can re-subscribe with a new filter to filter the tail).
+    /*
+        filter is the live filter (the user can re-subscribe with a new filter to
+        filter the tail).
+     */
     LogFilter filter = 3;
-    // Optional start position; empty = from now (tail). Set to backfill from a point.
+    /*
+        from is an optional start position; empty = from now (tail). Set to backfill
+        from a point.
+     */
     monitor.LogCursor from = 4;
 }
-// StreamLogs returns a live stream of LogLine. The server MAY coalesce / rate-limit
-// under very high throughput; the client uses QueryLogs for exact scrollback.
 
 /*
     ResolveLogRef turns a shareable LogRef (deep-link, e.g. built from a pipeline
@@ -112,49 +218,99 @@ message StreamLogsRequest {
     user on the exact same place.
  */
 message ResolveLogRefRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        ref is the shareable log reference (deep-link) to resolve.
+     */
     monitor.LogRef ref = 2 [(validate.rules).message.required = true];
 }
+/*
+    ResolveLogRefResponse returns the run id, filter and anchor cursor the LogRef
+    resolves to.
+ */
 message ResolveLogRefResponse {
+    /*
+        run_id is the run the ref points at.
+     */
     string run_id = 1;
+    /*
+        filter is the concrete filter the ref resolves to.
+     */
     LogFilter filter = 2;
+    /*
+        cursor is the anchor cursor to land on.
+     */
     monitor.LogCursor cursor = 3;
 }
 
 /*
-    =============================== Metrics tab ==============================
+    GetRunMetricsRequest fetches the Metrics tab payload for a run. Multi-run
+    comparison lives in compare.proto (CompareService.CompareRuns).
  */
 message GetRunMetricsRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        run_id identifies the run whose metrics are requested.
+     */
     string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
 }
+/*
+    GetRunMetricsResponse returns the run's metrics.
+ */
 message GetRunMetricsResponse {
+    /*
+        metrics is the run's aggregated metrics.
+     */
     monitor.RunMetrics metrics = 1 [(validate.rules).message.required = true];
 }
-// Multi-run comparison lives in compare.proto (CompareService.CompareRuns).
 
+/*
+    TestRunOverviewService serves the read-only overview, logs and metrics for a
+    single run.
+ */
 service TestRunOverviewService {
-    // --- Overview ---
+    /*
+        GetTestRunOverview fetches the Overview snapshot. Read-only.
+     */
     rpc GetTestRunOverview (GetTestRunOverviewRequest) returns (GetTestRunOverviewResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
     }
+    /*
+        StreamTestRunOverview streams full Overview snapshots as the run progresses.
+     */
     rpc StreamTestRunOverview (StreamTestRunOverviewRequest) returns (stream monitor.Overview) {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
     }
-    // --- Logs ---
+    /*
+        QueryLogs fetches a cursor-paged window of historical log lines. Read-only.
+     */
     rpc QueryLogs (QueryLogsRequest) returns (QueryLogsResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
     }
+    /*
+        StreamLogs streams a live log tail (server may coalesce/rate-limit).
+     */
     rpc StreamLogs (StreamLogsRequest) returns (stream monitor.LogLine) {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
     }
+    /*
+        ResolveLogRef resolves a shareable LogRef into a filter + anchor. Read-only.
+     */
     rpc ResolveLogRef (ResolveLogRefRequest) returns (ResolveLogRefResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
     }
-    // --- Metrics ---
+    /*
+        GetRunMetrics fetches the run's metrics. Read-only.
+     */
     rpc GetRunMetrics (GetRunMetricsRequest) returns (GetRunMetricsResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};

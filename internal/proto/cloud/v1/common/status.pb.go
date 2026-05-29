@@ -21,6 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Status is the lifecycle state of an executable node.
 type Status int32
 
 const (
@@ -41,10 +42,13 @@ const (
 	// CANCELLING means cancellation has been requested.
 	Status_STATUS_CANCELLING Status = 7
 	// CANCELLED means cancellation completed.
-	Status_STATUS_CANCELLED  Status = 8
-	Status_STATUS_ALLOCATED  Status = 9
+	Status_STATUS_CANCELLED Status = 8
+	// ALLOCATED means infrastructure resources have been reserved for the node.
+	Status_STATUS_ALLOCATED Status = 9
+	// DEPLOYMENT means deployment of the node is in progress.
 	Status_STATUS_DEPLOYMENT Status = 10
-	Status_STATUS_DEPLOYED   Status = 11
+	// DEPLOYED means the node has been successfully deployed.
+	Status_STATUS_DEPLOYED Status = 11
 )
 
 // Enum value maps for Status.

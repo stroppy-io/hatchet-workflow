@@ -26,9 +26,11 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// GetTenantSettingsRequest fetches the settings for a tenant.
 type GetTenantSettingsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId      string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -70,8 +72,10 @@ func (x *GetTenantSettingsRequest) GetTenantId() string {
 	return ""
 }
 
+// GetTenantSettingsResponse returns the tenant's settings record.
 type GetTenantSettingsResponse struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// settings is the tenant's current settings.
 	Settings      *models.TenantSettingsRecord `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -116,8 +120,10 @@ func (x *GetTenantSettingsResponse) GetSettings() *models.TenantSettingsRecord {
 
 // UpdateTenantSettings replaces the tenant's settings wholesale. Idempotent.
 type UpdateTenantSettingsRequest struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
-	TenantId      string                       `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// settings is the full replacement settings record.
 	Settings      *models.TenantSettingsRecord `protobuf:"bytes,2,opt,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -167,8 +173,10 @@ func (x *UpdateTenantSettingsRequest) GetSettings() *models.TenantSettingsRecord
 	return nil
 }
 
+// UpdateTenantSettingsResponse returns the stored settings after the update.
 type UpdateTenantSettingsResponse struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// settings is the tenant's settings after the update.
 	Settings      *models.TenantSettingsRecord `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -217,10 +225,15 @@ func (x *UpdateTenantSettingsResponse) GetSettings() *models.TenantSettingsRecor
 // validates against the provider's settings schema and bakes the result. Keyed by
 // `provider`. Idempotent.
 type SetTenantProviderSettingsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Provider      deployment.Provider    `protobuf:"varint,2,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	Settings      *schemapb.Filled       `protobuf:"bytes,3,opt,name=settings,proto3" json:"settings,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// provider selects which provider's config to set (must be a defined,
+	// non-zero provider).
+	Provider deployment.Provider `protobuf:"varint,2,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	// settings carries only the form values (Filled = values + schema ref); the
+	// server validates against the provider schema and bakes the result.
+	Settings      *schemapb.Filled `protobuf:"bytes,3,opt,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -276,9 +289,10 @@ func (x *SetTenantProviderSettingsRequest) GetSettings() *schemapb.Filled {
 	return nil
 }
 
+// SetTenantProviderSettingsResponse returns the saved, baked provider config.
 type SetTenantProviderSettingsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The saved, baked provider config.
+	// settings is the saved, baked provider config.
 	Settings      *deployment.ProviderSettings `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

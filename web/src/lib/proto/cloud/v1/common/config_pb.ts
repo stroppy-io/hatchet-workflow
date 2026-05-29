@@ -14,12 +14,18 @@ export const file_cloud_v1_common_config: GenFile = /*@__PURE__*/
   fileDesc("ChxjbG91ZC92MS9jb21tb24vY29uZmlnLnByb3RvEg9jbG91ZC52MS5jb21tb24iEQoGQ29uZmlnGgcKBUJha2VkQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2NvbW1vbmIGcHJvdG8z", [file_validate_validate]);
 
 /**
+ *
+ * Config is the common configuration envelope shared across the control plane.
+ *
  * @generated from message cloud.v1.common.Config
  */
 export type Config = Message<"cloud.v1.common.Config"> & {
 };
 
 /**
+ *
+ * Config is the common configuration envelope shared across the control plane.
+ *
  * @generated from message cloud.v1.common.Config
  */
 export type ConfigJson = {
@@ -35,12 +41,20 @@ export const ConfigSchema: GenMessage<Config, {jsonType: ConfigJson, validType: 
   messageDesc(file_cloud_v1_common_config, 0);
 
 /**
+ *
+ * Baked is a configuration that has been fully resolved/materialized so it
+ * can be applied without further lookup.
+ *
  * @generated from message cloud.v1.common.Config.Baked
  */
 export type Config_Baked = Message<"cloud.v1.common.Config.Baked"> & {
 };
 
 /**
+ *
+ * Baked is a configuration that has been fully resolved/materialized so it
+ * can be applied without further lookup.
+ *
  * @generated from message cloud.v1.common.Config.Baked
  */
 export type Config_BakedJson = {

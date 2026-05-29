@@ -27,12 +27,13 @@ const (
 type Source int32
 
 const (
+	// SOURCE_UNSPECIFIED is the zero value and is never a valid source.
 	Source_SOURCE_UNSPECIFIED Source = 0
-	// COMMAND is agent command stdout/stderr (an execution-stage op).
+	// SOURCE_COMMAND is agent command stdout/stderr (an execution-stage op).
 	Source_SOURCE_COMMAND Source = 1
-	// JOURNALD is a systemd-managed service's stdout/stderr.
+	// SOURCE_JOURNALD is a systemd-managed service's stdout/stderr.
 	Source_SOURCE_JOURNALD Source = 2
-	// FILE is a tailed log file (e.g. a postgresql log under /var/log/postgresql).
+	// SOURCE_FILE is a tailed log file (e.g. a postgresql log under /var/log/postgresql).
 	Source_SOURCE_FILE Source = 3
 )
 
@@ -79,13 +80,16 @@ func (Source) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_monitor_logs_proto_rawDescGZIP(), []int{0}
 }
 
-// Stream is the std stream.
+// Stream is the std stream the line was written to.
 type Stream int32
 
 const (
+	// STREAM_UNSPECIFIED is the zero value and is never a valid stream.
 	Stream_STREAM_UNSPECIFIED Stream = 0
-	Stream_STREAM_STDOUT      Stream = 1
-	Stream_STREAM_STDERR      Stream = 2
+	// STREAM_STDOUT is the standard output stream.
+	Stream_STREAM_STDOUT Stream = 1
+	// STREAM_STDERR is the standard error stream.
+	Stream_STREAM_STDERR Stream = 2
 )
 
 // Enum value maps for Stream.
@@ -132,9 +136,12 @@ func (Stream) EnumDescriptor() ([]byte, []int) {
 // LogCursor anchors an exact line: the precise observed_at plus a per-timestamp
 // sequence ordinal (provider-agnostic, stable, dedups equal timestamps).
 type LogCursor struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ObservedAt    *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=observed_at,json=observedAt,proto3" json:"observed_at,omitempty"`
-	Seq           uint64                 `protobuf:"varint,2,opt,name=seq,proto3" json:"seq,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// observed_at is the precise timestamp the line was observed at.
+	ObservedAt *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=observed_at,json=observedAt,proto3" json:"observed_at,omitempty"`
+	// seq is the per-timestamp sequence ordinal that disambiguates lines
+	// sharing the same observed_at, making the cursor stable and dedup-safe.
+	Seq           uint64 `protobuf:"varint,2,opt,name=seq,proto3" json:"seq,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -185,7 +192,8 @@ func (x *LogCursor) GetSeq() uint64 {
 
 // LogLine is one unified log record returned from a query or stream.
 type LogLine struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// observed_at is when the line was emitted/observed.
 	ObservedAt *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=observed_at,json=observedAt,proto3" json:"observed_at,omitempty"`
 	// run_id is the owning test run id (plain string, runtime-pure).
 	RunId string `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
@@ -199,13 +207,16 @@ type LogLine struct {
 	NodeExecutionId string `protobuf:"bytes,3,opt,name=node_execution_id,json=nodeExecutionId,proto3" json:"node_execution_id,omitempty"`
 	// component_id is the topology component the line is about.
 	ComponentId string `protobuf:"bytes,4,opt,name=component_id,json=componentId,proto3" json:"component_id,omitempty"`
-	// machine_id is the host.
+	// machine_id is the host the line originated on.
 	MachineId string `protobuf:"bytes,5,opt,name=machine_id,json=machineId,proto3" json:"machine_id,omitempty"`
-	Source    Source `protobuf:"varint,6,opt,name=source,proto3,enum=cloud.v1.monitor.Source" json:"source,omitempty"`
+	// source is where the line came from (command, journald, or tailed file).
+	Source Source `protobuf:"varint,6,opt,name=source,proto3,enum=cloud.v1.monitor.Source" json:"source,omitempty"`
 	// unit is the systemd unit or file path for JOURNALD/FILE sources.
-	Unit   string `protobuf:"bytes,7,opt,name=unit,proto3" json:"unit,omitempty"`
+	Unit string `protobuf:"bytes,7,opt,name=unit,proto3" json:"unit,omitempty"`
+	// stream is the std stream (stdout/stderr) the line was written to.
 	Stream Stream `protobuf:"varint,8,opt,name=stream,proto3,enum=cloud.v1.monitor.Stream" json:"stream,omitempty"`
-	Line   string `protobuf:"bytes,9,opt,name=line,proto3" json:"line,omitempty"`
+	// line is the raw log text content.
+	Line string `protobuf:"bytes,9,opt,name=line,proto3" json:"line,omitempty"`
 	// cursor anchors this exact line for deep-linking.
 	Cursor        *LogCursor `protobuf:"bytes,10,opt,name=cursor,proto3" json:"cursor,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -323,12 +334,17 @@ func (x *LogLine) GetCursor() *LogCursor {
 // into a LogsQL query + a deep-link URL. component_id alone = a component's logs;
 // node_execution_id = a stage's logs; cursor = a specific line anchor.
 type LogRef struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	RunId           string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	NodeExecutionId *string                `protobuf:"bytes,2,opt,name=node_execution_id,json=nodeExecutionId,proto3,oneof" json:"node_execution_id,omitempty"`
-	ComponentId     *string                `protobuf:"bytes,3,opt,name=component_id,json=componentId,proto3,oneof" json:"component_id,omitempty"`
-	Start           *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=start,proto3,oneof" json:"start,omitempty"`
-	End             *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=end,proto3,oneof" json:"end,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// run_id is the owning test run the slice belongs to.
+	RunId string `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// node_execution_id, when set, narrows the slice to one execution stage's logs.
+	NodeExecutionId *string `protobuf:"bytes,2,opt,name=node_execution_id,json=nodeExecutionId,proto3,oneof" json:"node_execution_id,omitempty"`
+	// component_id, when set, narrows the slice to one topology component's logs.
+	ComponentId *string `protobuf:"bytes,3,opt,name=component_id,json=componentId,proto3,oneof" json:"component_id,omitempty"`
+	// start, when set, bounds the slice to lines at or after this time.
+	Start *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=start,proto3,oneof" json:"start,omitempty"`
+	// end, when set, bounds the slice to lines at or before this time.
+	End *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=end,proto3,oneof" json:"end,omitempty"`
 	// cursor pins a specific line (deep-link to line).
 	Cursor        *LogCursor `protobuf:"bytes,6,opt,name=cursor,proto3,oneof" json:"cursor,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -410,7 +426,8 @@ func (x *LogRef) GetCursor() *LogCursor {
 // LogPage is a page of query results with a forward cursor token.
 type LogPage struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Lines []*LogLine             `protobuf:"bytes,1,rep,name=lines,proto3" json:"lines,omitempty"`
+	// lines are the log records on this page, in query order.
+	Lines []*LogLine `protobuf:"bytes,1,rep,name=lines,proto3" json:"lines,omitempty"`
 	// next_token continues the query; empty when no more.
 	NextToken     string `protobuf:"bytes,2,opt,name=next_token,json=nextToken,proto3" json:"next_token,omitempty"`
 	unknownFields protoimpl.UnknownFields

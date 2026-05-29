@@ -27,11 +27,15 @@ const (
 // FavoriteServiceClient is the client API for FavoriteService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// FavoriteService is the per-user favorite API covering every favoritable kind.
 type FavoriteServiceClient interface {
 	// AddFavorite is idempotent.
 	AddFavorite(ctx context.Context, in *AddFavoriteRequest, opts ...grpc.CallOption) (*AddFavoriteResponse, error)
 	// RemoveFavorite is idempotent.
 	RemoveFavorite(ctx context.Context, in *RemoveFavoriteRequest, opts ...grpc.CallOption) (*RemoveFavoriteResponse, error)
+	// ListFavorites returns the caller's favorite join rows, optionally narrowed
+	// to one kind. Read-only.
 	ListFavorites(ctx context.Context, in *ListFavoritesRequest, opts ...grpc.CallOption) (*ListFavoritesResponse, error)
 }
 
@@ -76,11 +80,15 @@ func (c *favoriteServiceClient) ListFavorites(ctx context.Context, in *ListFavor
 // FavoriteServiceServer is the server API for FavoriteService service.
 // All implementations must embed UnimplementedFavoriteServiceServer
 // for forward compatibility.
+//
+// FavoriteService is the per-user favorite API covering every favoritable kind.
 type FavoriteServiceServer interface {
 	// AddFavorite is idempotent.
 	AddFavorite(context.Context, *AddFavoriteRequest) (*AddFavoriteResponse, error)
 	// RemoveFavorite is idempotent.
 	RemoveFavorite(context.Context, *RemoveFavoriteRequest) (*RemoveFavoriteResponse, error)
+	// ListFavorites returns the caller's favorite join rows, optionally narrowed
+	// to one kind. Read-only.
 	ListFavorites(context.Context, *ListFavoritesRequest) (*ListFavoritesResponse, error)
 	mustEmbedUnimplementedFavoriteServiceServer()
 }

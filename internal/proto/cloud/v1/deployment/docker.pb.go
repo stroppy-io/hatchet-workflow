@@ -26,9 +26,12 @@ const (
 type Docker_Protocol int32
 
 const (
+	// PROTOCOL_UNSPECIFIED is the unset zero value; treated as tcp.
 	Docker_PROTOCOL_UNSPECIFIED Docker_Protocol = 0
-	Docker_PROTOCOL_TCP         Docker_Protocol = 1
-	Docker_PROTOCOL_UDP         Docker_Protocol = 2
+	// PROTOCOL_TCP binds the port over TCP.
+	Docker_PROTOCOL_TCP Docker_Protocol = 1
+	// PROTOCOL_UDP binds the port over UDP.
+	Docker_PROTOCOL_UDP Docker_Protocol = 2
 )
 
 // Enum value maps for Docker_Protocol.
@@ -76,10 +79,15 @@ func (Docker_Protocol) EnumDescriptor() ([]byte, []int) {
 type Docker_RestartPolicy int32
 
 const (
-	Docker_RESTART_POLICY_UNSPECIFIED    Docker_RestartPolicy = 0
-	Docker_RESTART_POLICY_NO             Docker_RestartPolicy = 1
-	Docker_RESTART_POLICY_ON_FAILURE     Docker_RestartPolicy = 2
-	Docker_RESTART_POLICY_ALWAYS         Docker_RestartPolicy = 3
+	// RESTART_POLICY_UNSPECIFIED is the unset zero value; uses daemon default.
+	Docker_RESTART_POLICY_UNSPECIFIED Docker_RestartPolicy = 0
+	// RESTART_POLICY_NO never restarts the container.
+	Docker_RESTART_POLICY_NO Docker_RestartPolicy = 1
+	// RESTART_POLICY_ON_FAILURE restarts only on non-zero exit.
+	Docker_RESTART_POLICY_ON_FAILURE Docker_RestartPolicy = 2
+	// RESTART_POLICY_ALWAYS always restarts the container.
+	Docker_RESTART_POLICY_ALWAYS Docker_RestartPolicy = 3
+	// RESTART_POLICY_UNLESS_STOPPED always restarts unless explicitly stopped.
 	Docker_RESTART_POLICY_UNLESS_STOPPED Docker_RestartPolicy = 4
 )
 
@@ -776,12 +784,17 @@ func (x *Docker_File) GetMode() uint32 {
 
 // Healthcheck overrides image-level healthcheck.
 type Docker_Healthcheck struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	Test               []string               `protobuf:"bytes,1,rep,name=test,proto3" json:"test,omitempty"`
-	IntervalSeconds    uint32                 `protobuf:"varint,2,opt,name=interval_seconds,json=intervalSeconds,proto3" json:"interval_seconds,omitempty"`
-	TimeoutSeconds     uint32                 `protobuf:"varint,3,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty"`
-	Retries            uint32                 `protobuf:"varint,4,opt,name=retries,proto3" json:"retries,omitempty"`
-	StartPeriodSeconds uint32                 `protobuf:"varint,5,opt,name=start_period_seconds,json=startPeriodSeconds,proto3" json:"start_period_seconds,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// test is the healthcheck command, e.g. ["CMD", "curl", "-f", "..."].
+	Test []string `protobuf:"bytes,1,rep,name=test,proto3" json:"test,omitempty"`
+	// interval_seconds is the delay between checks.
+	IntervalSeconds uint32 `protobuf:"varint,2,opt,name=interval_seconds,json=intervalSeconds,proto3" json:"interval_seconds,omitempty"`
+	// timeout_seconds is the max time one check may run.
+	TimeoutSeconds uint32 `protobuf:"varint,3,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty"`
+	// retries is the number of consecutive failures before unhealthy.
+	Retries uint32 `protobuf:"varint,4,opt,name=retries,proto3" json:"retries,omitempty"`
+	// start_period_seconds is the grace period before failures count.
+	StartPeriodSeconds uint32 `protobuf:"varint,5,opt,name=start_period_seconds,json=startPeriodSeconds,proto3" json:"start_period_seconds,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -972,13 +985,19 @@ func (x *Docker_Output) GetNetworkId() string {
 
 // ContainerOutput describes one created container.
 type Docker_ContainerOutput struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	InternalIp    string                 `protobuf:"bytes,3,opt,name=internal_ip,json=internalIp,proto3" json:"internal_ip,omitempty"`
-	MappedPorts   map[uint32]uint32      `protobuf:"bytes,4,rep,name=mapped_ports,json=mappedPorts,proto3" json:"mapped_ports,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
-	Status        string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
-	StartedAt     string                 `protobuf:"bytes,6,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the Docker container id assigned by the daemon.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// name is the resolved container name.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// internal_ip is the container IP on the Docker network.
+	InternalIp string `protobuf:"bytes,3,opt,name=internal_ip,json=internalIp,proto3" json:"internal_ip,omitempty"`
+	// mapped_ports maps container ports to the host ports they bound to.
+	MappedPorts map[uint32]uint32 `protobuf:"bytes,4,rep,name=mapped_ports,json=mappedPorts,proto3" json:"mapped_ports,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	// status is the container status string reported by Docker.
+	Status string `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
+	// started_at is the container start timestamp as reported by Docker.
+	StartedAt     string `protobuf:"bytes,6,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

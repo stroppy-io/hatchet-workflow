@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/iam/permission.proto.
  */
 export const file_cloud_v1_iam_permission: GenFile = /*@__PURE__*/
-  fileDesc("Ch1jbG91ZC92MS9pYW0vcGVybWlzc2lvbi5wcm90bxIMY2xvdWQudjEuaWFtInQKClBlcm1pc3Npb24SNAoIcmVzb3VyY2UYASABKA4yFi5jbG91ZC52MS5pYW0uUmVzb3VyY2VCCvpCB4IBBBABIAASMAoGYWN0aW9uGAIgASgOMhQuY2xvdWQudjEuaWFtLkFjdGlvbkIK+kIHggEEIAAQASqSAQoIUmVzb3VyY2USGAoUUkVTT1VSQ0VfVU5TUEVDSUZJRUQQABIUChBSRVNPVVJDRV9BQ0NPVU5UEAESEwoPUkVTT1VSQ0VfVEVOQU5UEAISEQoNUkVTT1VSQ0VfUk9MRRADEhcKE1JFU09VUkNFX01FTUJFUlNISVAQBBIVChFSRVNPVVJDRV9TRVRUSU5HUxAFKo4BCgZBY3Rpb24SFgoSQUNUSU9OX1VOU1BFQ0lGSUVEEAASEQoNQUNUSU9OX0NSRUFURRABEg8KC0FDVElPTl9SRUFEEAISEQoNQUNUSU9OX1VQREFURRADEhEKDUFDVElPTl9ERUxFVEUQBBIPCgtBQ1RJT05fTElTVBAFEhEKDUFDVElPTl9NQU5BR0UQBipECgVTY29wZRIVChFTQ09QRV9VTlNQRUNJRklFRBAAEhIKDlNDT1BFX1BMQVRGT1JNEAESEAoMU0NPUEVfVEVOQU5UEAJCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvaWFtYgZwcm90bzM", [file_validate_validate]);
+  fileDesc("Ch1jbG91ZC92MS9pYW0vcGVybWlzc2lvbi5wcm90bxIMY2xvdWQudjEuaWFtInQKClBlcm1pc3Npb24SNAoIcmVzb3VyY2UYASABKA4yFi5jbG91ZC52MS5pYW0uUmVzb3VyY2VCCvpCB4IBBCAAEAESMAoGYWN0aW9uGAIgASgOMhQuY2xvdWQudjEuaWFtLkFjdGlvbkIK+kIHggEEIAAQASraAgoIUmVzb3VyY2USGAoUUkVTT1VSQ0VfVU5TUEVDSUZJRUQQABIUChBSRVNPVVJDRV9BQ0NPVU5UEAESEwoPUkVTT1VSQ0VfVEVOQU5UEAISEQoNUkVTT1VSQ0VfUk9MRRADEhcKE1JFU09VUkNFX01FTUJFUlNISVAQBBIVChFSRVNPVVJDRV9TRVRUSU5HUxAFEhMKD1JFU09VUkNFX1BSRVNFVBAGEhMKD1JFU09VUkNFX1dJWkFSRBAHEhUKEVJFU09VUkNFX1RFU1RfUlVOEAgSEgoOUkVTT1VSQ0VfU1VJVEUQCRIWChJSRVNPVVJDRV9TVUlURV9SVU4QChIVChFSRVNPVVJDRV9GQVZPUklURRALEhgKFFJFU09VUkNFX0FHRU5UX1NIRUxMEAwSEgoOUkVTT1VSQ0VfU0hBUkUQDRIUChBSRVNPVVJDRV9QQUNLQUdFEA4qjgEKBkFjdGlvbhIWChJBQ1RJT05fVU5TUEVDSUZJRUQQABIRCg1BQ1RJT05fQ1JFQVRFEAESDwoLQUNUSU9OX1JFQUQQAhIRCg1BQ1RJT05fVVBEQVRFEAMSEQoNQUNUSU9OX0RFTEVURRAEEg8KC0FDVElPTl9MSVNUEAUSEQoNQUNUSU9OX01BTkFHRRAGKkQKBVNjb3BlEhUKEVNDT1BFX1VOU1BFQ0lGSUVEEAASEgoOU0NPUEVfUExBVEZPUk0QARIQCgxTQ09QRV9URU5BTlQQAkJBWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9pYW1iBnByb3RvMw", [file_validate_validate]);
 
 /**
  *
@@ -136,6 +136,92 @@ export enum Resource {
    * @generated from enum value: RESOURCE_SETTINGS = 5;
    */
   SETTINGS = 5,
+
+  /**
+   *
+   * RESOURCE_PRESET is a tenant-scoped, reusable test/database/workload
+   * preset (see models.DatabasePreset / WorkloadPreset / TestPreset).
+   *
+   * @generated from enum value: RESOURCE_PRESET = 6;
+   */
+  PRESET = 6,
+
+  /**
+   *
+   * RESOURCE_WIZARD is a tenant-scoped wizard draft (see
+   * models.TestWizardDraftRecord / SuiteWizardDraftRecord) used to assemble a
+   * TestRun / SuiteRun step by step.
+   *
+   * @generated from enum value: RESOURCE_WIZARD = 7;
+   */
+  WIZARD = 7,
+
+  /**
+   *
+   * RESOURCE_TEST_RUN is a tenant-scoped test execution (models.TestRunRecord):
+   * start, read, list, cancel, delete.
+   *
+   * @generated from enum value: RESOURCE_TEST_RUN = 8;
+   */
+  TEST_RUN = 8,
+
+  /**
+   *
+   * RESOURCE_SUITE is a tenant-scoped suite definition (models.SuiteRecord):
+   * full CRUD + clone.
+   *
+   * @generated from enum value: RESOURCE_SUITE = 9;
+   */
+  SUITE = 9,
+
+  /**
+   *
+   * RESOURCE_SUITE_RUN is a tenant-scoped suite execution (models.SuiteRunRecord):
+   * start, read, list, cancel, delete.
+   *
+   * @generated from enum value: RESOURCE_SUITE_RUN = 10;
+   */
+  SUITE_RUN = 10,
+
+  /**
+   *
+   * RESOURCE_FAVORITE is the per-user favorite relation (models.FavoriteRecord).
+   * Tenant-scoped so favoriting requires tenant membership; favorites are
+   * personal to the caller. Reading the computed Entity.is_favorite flag needs
+   * no grant (it rides on data the caller already reads).
+   *
+   * @generated from enum value: RESOURCE_FAVORITE = 11;
+   */
+  FAVORITE = 11,
+
+  /**
+   *
+   * RESOURCE_AGENT_SHELL is the interactive reverse-shell to an agent from the
+   * admin UI. High-privilege (arbitrary command execution on the host): grant
+   * sparingly, audit every session.
+   *
+   * @generated from enum value: RESOURCE_AGENT_SHELL = 12;
+   */
+  AGENT_SHELL = 12,
+
+  /**
+   *
+   * RESOURCE_SHARE manages public share links for a run (models.ShareRecord):
+   * create / list / revoke. The PUBLIC resolve endpoint is unauthenticated and
+   * needs no grant.
+   *
+   * @generated from enum value: RESOURCE_SHARE = 13;
+   */
+  SHARE = 13,
+
+  /**
+   *
+   * RESOURCE_PACKAGE is a tenant-uploaded custom package (models.PackageRecord),
+   * e.g. a custom .deb / binary used to install a database build. Tenant-private.
+   *
+   * @generated from enum value: RESOURCE_PACKAGE = 14;
+   */
+  PACKAGE = 14,
 }
 
 /**
@@ -147,7 +233,7 @@ export enum Resource {
  *
  * @generated from enum cloud.v1.iam.Resource
  */
-export type ResourceJson = "RESOURCE_UNSPECIFIED" | "RESOURCE_ACCOUNT" | "RESOURCE_TENANT" | "RESOURCE_ROLE" | "RESOURCE_MEMBERSHIP" | "RESOURCE_SETTINGS";
+export type ResourceJson = "RESOURCE_UNSPECIFIED" | "RESOURCE_ACCOUNT" | "RESOURCE_TENANT" | "RESOURCE_ROLE" | "RESOURCE_MEMBERSHIP" | "RESOURCE_SETTINGS" | "RESOURCE_PRESET" | "RESOURCE_WIZARD" | "RESOURCE_TEST_RUN" | "RESOURCE_SUITE" | "RESOURCE_SUITE_RUN" | "RESOURCE_FAVORITE" | "RESOURCE_AGENT_SHELL" | "RESOURCE_SHARE" | "RESOURCE_PACKAGE";
 
 /**
  * Describes the enum cloud.v1.iam.Resource.

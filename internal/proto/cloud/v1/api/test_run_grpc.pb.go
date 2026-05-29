@@ -30,11 +30,16 @@ const (
 // TestRunServiceClient is the client API for TestRunService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// TestRunService is the tenant-scoped lifecycle API for test runs.
 type TestRunServiceClient interface {
 	// StartTestRun is not idempotent: each call launches a new run.
 	StartTestRun(ctx context.Context, in *StartTestRunRequest, opts ...grpc.CallOption) (*StartTestRunResponse, error)
+	// GetTestRun fetches a single run by id. Read-only.
 	GetTestRun(ctx context.Context, in *GetTestRunRequest, opts ...grpc.CallOption) (*GetTestRunResponse, error)
+	// ListTestRuns lists runs with filtering and pagination. Read-only.
 	ListTestRuns(ctx context.Context, in *ListTestRunsRequest, opts ...grpc.CallOption) (*ListTestRunsResponse, error)
+	// CancelTestRun is idempotent: cancelling a finished/cancelled run is a no-op.
 	CancelTestRun(ctx context.Context, in *CancelTestRunRequest, opts ...grpc.CallOption) (*CancelTestRunResponse, error)
 	// DeleteTestRun is idempotent: deleting an absent run is a no-op.
 	DeleteTestRun(ctx context.Context, in *DeleteTestRunRequest, opts ...grpc.CallOption) (*DeleteTestRunResponse, error)
@@ -113,11 +118,16 @@ func (c *testRunServiceClient) ExtractToPreset(ctx context.Context, in *ExtractT
 // TestRunServiceServer is the server API for TestRunService service.
 // All implementations must embed UnimplementedTestRunServiceServer
 // for forward compatibility.
+//
+// TestRunService is the tenant-scoped lifecycle API for test runs.
 type TestRunServiceServer interface {
 	// StartTestRun is not idempotent: each call launches a new run.
 	StartTestRun(context.Context, *StartTestRunRequest) (*StartTestRunResponse, error)
+	// GetTestRun fetches a single run by id. Read-only.
 	GetTestRun(context.Context, *GetTestRunRequest) (*GetTestRunResponse, error)
+	// ListTestRuns lists runs with filtering and pagination. Read-only.
 	ListTestRuns(context.Context, *ListTestRunsRequest) (*ListTestRunsResponse, error)
+	// CancelTestRun is idempotent: cancelling a finished/cancelled run is a no-op.
 	CancelTestRun(context.Context, *CancelTestRunRequest) (*CancelTestRunResponse, error)
 	// DeleteTestRun is idempotent: deleting an absent run is a no-op.
 	DeleteTestRun(context.Context, *DeleteTestRunRequest) (*DeleteTestRunResponse, error)

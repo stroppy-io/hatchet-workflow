@@ -29,12 +29,13 @@ const (
 type Trigger int32
 
 const (
+	// TRIGGER_UNSPECIFIED is the unset/invalid default.
 	Trigger_TRIGGER_UNSPECIFIED Trigger = 0
-	// Started manually by a user.
+	// TRIGGER_MANUAL means the run was started manually by a user.
 	Trigger_TRIGGER_MANUAL Trigger = 1
-	// Auto-started by a suite's cron schedule.
+	// TRIGGER_CRON means the run was auto-started by a suite's cron schedule.
 	Trigger_TRIGGER_CRON Trigger = 2
-	// Started by an api token / automation.
+	// TRIGGER_API means the run was started by an api token / automation.
 	Trigger_TRIGGER_API Trigger = 3
 )
 
