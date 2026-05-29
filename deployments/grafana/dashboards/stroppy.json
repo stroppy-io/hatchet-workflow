@@ -2129,7 +2129,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sort_desc(sum by (table_name) (max_over_time(${prefix}insert_rows_total{service.name=~\"$job\"}[$__range])))",
+          "expr": "sort_desc(sum by (table_name) (max_over_time(${prefix}insert_rows_total{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", table_name=~\"$table_name\"}[$__range])))",
           "format": "table",
           "instant": true,
           "legendFormat": "{{table_name}}",
@@ -2223,14 +2223,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_rows_per_second_bucket{service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])))",
+          "expr": "sort_desc(sum by (table_name) (last_over_time(${prefix}insert_progress_rows_per_second_sum{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", table_name=~\"$table_name\"}[$__range])) / clamp_min(sum by (table_name) (last_over_time(${prefix}insert_progress_rows_per_second_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", table_name=~\"$table_name\"}[$__range])), 1))",
           "instant": true,
           "legendFormat": "{{table_name}}",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "Insert rows/s p90",
+      "title": "Insert rows/s avg",
       "type": "bargauge"
     },
     {
@@ -2299,7 +2299,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_duration_bucket{service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])))",
+          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", table_name=~\"$table_name\"}[$__range])))",
           "instant": true,
           "legendFormat": "{{table_name}}",
           "range": false,
@@ -2375,7 +2375,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(sum by (table_name) (max_over_time({__name__=\"${prefix}insert_error_rate.total\", condition=\"nonzero\", service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])) or sum by (table_name) (max_over_time({__name__=\"${prefix}insert_error_rate.total\", service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])) * 0) / clamp_min(sum by (table_name) (max_over_time({__name__=\"${prefix}insert_error_rate.total\", service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])), 1e-9)",
+          "expr": "(sum by (table_name) (max_over_time({__name__=\"${prefix}insert_error_rate.total\", condition=\"nonzero\", service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", table_name=~\"$table_name\"}[$__range])) or sum by (table_name) (max_over_time({__name__=\"${prefix}insert_error_rate.total\", service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", table_name=~\"$table_name\"}[$__range])) * 0) / clamp_min(sum by (table_name) (max_over_time({__name__=\"${prefix}insert_error_rate.total\", service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", table_name=~\"$table_name\"}[$__range])), 1e-9)",
           "instant": true,
           "legendFormat": "{{table_name}}",
           "range": false,
@@ -2475,8 +2475,8 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_rows_per_second_bucket{service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])))",
-          "legendFormat": "p90 {{table_name}}",
+          "expr": "sum by (table_name) (rate(${prefix}insert_progress_rows_total{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", table_name=~\"$table_name\"}[$__rate_interval]))",
+          "legendFormat": "{{table_name}}",
           "range": true,
           "refId": "A"
         }
@@ -2574,7 +2574,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_duration_bucket{service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])))",
+          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", table_name=~\"$table_name\"}[$__range])))",
           "legendFormat": "p90 {{table_name}}",
           "range": true,
           "refId": "A"
