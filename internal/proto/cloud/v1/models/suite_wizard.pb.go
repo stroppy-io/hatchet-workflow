@@ -26,15 +26,15 @@ const (
 
 // SuiteWizardDraft is the server-held, mutable state of a SUITE wizard.
 //
-// Big-schema model, like the test wizard: the whole suite form is ONE conditional
-// schemapb schema in `form`. It carries the selections (db / workload / test
-// preset ids), the single provider, the per-topology provider settings (one
-// branch per selected db preset, gated/emitted by the server), and max_parallel.
-// Presets already hold baked db/workload params, so the suite wizard does NOT
-// re-fill those — it only composes presets and fills the provider settings that
-// differ per topology. The server validates the form, prunes the matrix to
-// workload<->db compatible pairs (a root CEL rule), expands the preview and
-// recomputes readiness on every patch.
+// Big-schema model, like the test wizard: the whole suite form is ONE schemapb
+// schema in `form`. It carries the selections — preset_ids (a db x workload
+// matrix) + test_preset_ids — plus ONE provider_type for the whole suite (naming
+// the tenant provider every cell deploys on) and max_parallel. Presets already
+// hold baked db/workload params, so the suite wizard does NOT re-fill those — and
+// it carries NO provider settings: machines are derived per cell at bake from the
+// db config (role->VM expander + provider overlay), not entered. The server
+// validates the form, prunes the matrix to workload<->db compatible pairs (a root
+// CEL rule), expands the preview and recomputes readiness on every patch.
 //
 // Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
 // it bakes into a domain.SuiteRun (the full N*M TestRuns).
@@ -43,8 +43,9 @@ type SuiteWizardDraftRecord struct {
 	// entity is the storage envelope (tenant-scoped: id, tenant_id, name,
 	// timings).
 	Entity *common.Entity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	// form is the whole suite form: selections + provider + per-topology
-	// provider settings + max_parallel, as one conditional schema + values.
+	// form is the whole suite form as one schema + values: preset_ids (the
+	// db x workload matrix) + test_preset_ids + ONE provider_type for the whole
+	// suite + max_parallel. No per-topology provider settings.
 	Form *schemapb.Filled `protobuf:"bytes,2,opt,name=form,proto3" json:"form,omitempty"`
 	// preview holds the server-computed expanded, compatible cells (recomputed
 	// on every patch). These are lightweight summaries; full TestRuns are baked
@@ -53,8 +54,7 @@ type SuiteWizardDraftRecord struct {
 	// errors are the authoritative validation errors (recomputed on every
 	// patch); paths group by section in the UI.
 	Errors []*schemapb.FieldError `protobuf:"bytes,4,rep,name=errors,proto3" json:"errors,omitempty"`
-	// ready is true when there is >=1 compatible cell, every involved db preset
-	// has its provider settings filled, and the form validates.
+	// ready is true when there is >=1 compatible cell and the form validates.
 	Ready         bool `protobuf:"varint,5,opt,name=ready,proto3" json:"ready,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -142,9 +142,12 @@ type SuiteWizardDraftRecord_Cell struct {
 	// compatible is true when the workload is compatible with the database
 	// kind.
 	Compatible bool `protobuf:"varint,5,opt,name=compatible,proto3" json:"compatible,omitempty"`
-	// ready is true when everything this cell needs (incl. its provider
-	// settings) is present.
-	Ready         bool `protobuf:"varint,6,opt,name=ready,proto3" json:"ready,omitempty"`
+	// ready is true when the cell's (db, workload) are compatible and it
+	// has no per-cell errors.
+	Ready bool `protobuf:"varint,6,opt,name=ready,proto3" json:"ready,omitempty"`
+	// errors are per-cell capacity/sanity errors (quota/zones), computed at
+	// preview.
+	Errors        []*schemapb.FieldError `protobuf:"bytes,7,rep,name=errors,proto3" json:"errors,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -221,17 +224,24 @@ func (x *SuiteWizardDraftRecord_Cell) GetReady() bool {
 	return false
 }
 
+func (x *SuiteWizardDraftRecord_Cell) GetErrors() []*schemapb.FieldError {
+	if x != nil {
+		return x.Errors
+	}
+	return nil
+}
+
 var File_cloud_v1_models_suite_wizard_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_suite_wizard_proto_rawDesc = "" +
 	"\n" +
-	"\"cloud/v1/models/suite_wizard.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\xce\x03\n" +
+	"\"cloud/v1/models/suite_wizard.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\xfc\x03\n" +
 	"\x16SuiteWizardDraftRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x12$\n" +
 	"\x04form\x18\x02 \x01(\v2\x10.schemapb.FilledR\x04form\x12F\n" +
 	"\apreview\x18\x03 \x03(\v2,.cloud.v1.models.SuiteWizardDraftRecord.CellR\apreview\x12,\n" +
 	"\x06errors\x18\x04 \x03(\v2\x14.schemapb.FieldErrorR\x06errors\x12\x14\n" +
-	"\x05ready\x18\x05 \x01(\bR\x05ready\x1a\xc6\x01\n" +
+	"\x05ready\x18\x05 \x01(\bR\x05ready\x1a\xf4\x01\n" +
 	"\x04Cell\x12 \n" +
 	"\fdb_preset_id\x18\x01 \x01(\tR\n" +
 	"dbPresetId\x12,\n" +
@@ -241,7 +251,8 @@ const file_cloud_v1_models_suite_wizard_proto_rawDesc = "" +
 	"\n" +
 	"compatible\x18\x05 \x01(\bR\n" +
 	"compatible\x12\x14\n" +
-	"\x05ready\x18\x06 \x01(\bR\x05readyBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
+	"\x05ready\x18\x06 \x01(\bR\x05ready\x12,\n" +
+	"\x06errors\x18\a \x03(\v2\x14.schemapb.FieldErrorR\x06errorsBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
 
 var (
 	file_cloud_v1_models_suite_wizard_proto_rawDescOnce sync.Once
@@ -268,11 +279,12 @@ var file_cloud_v1_models_suite_wizard_proto_depIdxs = []int32{
 	3, // 1: cloud.v1.models.SuiteWizardDraftRecord.form:type_name -> schemapb.Filled
 	1, // 2: cloud.v1.models.SuiteWizardDraftRecord.preview:type_name -> cloud.v1.models.SuiteWizardDraftRecord.Cell
 	4, // 3: cloud.v1.models.SuiteWizardDraftRecord.errors:type_name -> schemapb.FieldError
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	4, // 4: cloud.v1.models.SuiteWizardDraftRecord.Cell.errors:type_name -> schemapb.FieldError
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_suite_wizard_proto_init() }

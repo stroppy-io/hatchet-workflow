@@ -16,9 +16,13 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
 
 /*
     test_wizard.proto is the TEST wizard API (suite wizard is separate). Big-schema
-    patch-loop: the whole test form is ONE conditional schema (models.TestWizardDraft.form).
-    The API is thin — Start, then repeatedly PatchTestWizard(Filled), then Finish.
-    All branching/validation/topology lives in the schema + server, not in the proto.
+    patch-loop: the whole test form is ONE composite schema (models.TestWizardDraft.form)
+    = chosen database schema (by kind, provider-agnostic) + workload schema +
+    a provider_type selector that picks one of the tenant's providers
+    (TenantSettings.providers). Provider settings are NOT in the form, and machines
+    are not entered either: the topology is DERIVED by the server (role->VM expander
+    + provider overlay) on every patch. The API is thin — Start, then repeatedly
+    PatchTestWizard(Filled), then Finish.
 
     Every request is tenant-scoped (tenant_id, the default auth tenant_field) and
     gated by RESOURCE_WIZARD.

@@ -23,29 +23,24 @@ const (
 	RoleMonitor     Role = "monitor"     // monitoring node
 )
 
-// Shape is the abstract, provider-agnostic machine capacity.
+// Shape is the abstract, provider-agnostic machine capacity. This is the WHOLE
+// machine — there is no provider-specific data on a machine. Provider override
+// parameters (disk class, zone, platform) are a SEPARATE, server-emitted schema
+// computed from (db config × provider) and edited by the user; at bake the
+// abstract machine maps to topology.Instance.machine_info and the override
+// values map to Instance.provider_parms.
 type Shape struct {
 	Cores    int `json:"cores"`
 	MemoryGB int `json:"memory_gb"`
 	DiskGB   int `json:"disk_gb"`
 }
 
-// ProviderParams is the provider-specific overlay applied to a VM once a
-// provider is chosen (ApplyProvider). Empty for providers that don't use a
-// field (e.g. docker has no zones/platform).
-type ProviderParams struct {
-	Zone         string `json:"zone,omitempty"`
-	DiskType     string `json:"disk_type,omitempty"`
-	Platform     string `json:"platform_id,omitempty"`
-	NetworkAccel string `json:"network_acceleration,omitempty"`
-}
-
-// VM is one logical machine in a deployment.
+// VM is one logical, ABSTRACT machine in a deployment (role + capacity shape).
+// No provider fields — provider overrides live in the emitted override schema.
 type VM struct {
-	Role     Role           `json:"role"`
-	Name     string         `json:"name"`
-	Shape    Shape          `json:"shape"`
-	Provider ProviderParams `json:"provider,omitempty"`
+	Role  Role   `json:"role"`
+	Name  string `json:"name"`
+	Shape Shape  `json:"shape"`
 }
 
 // Default per-role shapes — production-ish starting points the wizard/user can

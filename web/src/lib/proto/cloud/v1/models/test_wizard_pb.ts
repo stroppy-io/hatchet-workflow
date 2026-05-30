@@ -23,15 +23,19 @@ export const file_cloud_v1_models_test_wizard: GenFile = /*@__PURE__*/
  *
  * TestWizardDraft is the server-held, mutable state of a TEST wizard.
  *
- * Big-schema model: the whole test form is ONE conditional schemapb schema,
- * carried in `form` (a Filled = schema + values). Database kind, database params,
- * workload, provider and provider settings all live under their paths in
- * form.values; conditional branches (e.g. provider sizing per topology) are gated
- * by schemapb `when` (validated/shown only when their CEL condition holds). The
- * server builds the schema, validates the whole form authoritatively, regenerates
- * the topology and recomputes readiness on every patch. The frontend renders the
- * form straight from `form` (schemapb ts sdk + cel-es for live UX) and sends back
- * a patched Filled.
+ * Big-schema model: the whole test form is ONE composite schemapb schema,
+ * carried in `form` (a Filled = schema + values). It is the chosen DATABASE
+ * schema (selected by kind: postgres/mysql/mariadb/picodata/ydb/ydbmanaged/
+ * cockroach — pure and provider-agnostic, owning its own DB-internal cross-rules)
+ * + a WORKLOAD schema + a `provider_type` selector that names which tenant
+ * provider to deploy on. The form does NOT carry provider SETTINGS (those come
+ * from TenantSettings.providers, keyed by provider_type) and does NOT carry
+ * per-node machine forms (machines are derived, never entered by the user).
+ *
+ * The server builds the composite schema, validates the whole form
+ * authoritatively, re-derives the topology and recomputes readiness on every
+ * patch. The frontend renders the form straight from `form` (schemapb ts sdk +
+ * cel-es for live UX) and sends back a patched Filled.
  *
  * Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
  * it bakes into a domain.TestRun.
@@ -50,8 +54,10 @@ export type TestWizardDraftRecord = Message<"cloud.v1.models.TestWizardDraftReco
 
   /**
    *
-   * form is the whole test form: one big conditional schema + its current
-   * values (a Filled = schema + values).
+   * form is the whole test form as one composite schema + its current values
+   * (a Filled = schema + values): the chosen database schema (by kind,
+   * provider-agnostic) + a workload schema + a provider_type selector. No
+   * provider settings, no per-node machine forms.
    *
    * @generated from field: schemapb.Filled form = 2;
    */
@@ -59,9 +65,10 @@ export type TestWizardDraftRecord = Message<"cloud.v1.models.TestWizardDraftReco
 
   /**
    *
-   * topology is the server-computed topology generated from the current form
-   * values (recomputed on every patch): abstract machines, with provider_parms
-   * filled once provider settings are valid.
+   * topology is the server-DERIVED topology, recomputed on every patch: the
+   * role->VM expander turns the validated DB config into machines, then a
+   * provider overlay (zone/disk/platform from the selected provider_type's
+   * TenantSettings) fills each machine's provider_parms. Never user-entered.
    *
    * @generated from field: cloud.v1.topology.Topology topology = 3;
    */
@@ -69,9 +76,10 @@ export type TestWizardDraftRecord = Message<"cloud.v1.models.TestWizardDraftReco
 
   /**
    *
-   * errors are the current authoritative validation errors (recomputed on
-   * every patch); FieldError.field carries the path so the UI can group by
-   * section (database.*, workload.*, provider.*).
+   * errors are the current authoritative errors (recomputed on every patch):
+   * schema validation errors PLUS the bake-time capacity/sanity errors
+   * (RAM/quota/zones). FieldError.field carries the path so the UI can group
+   * by section (database.*, workload.*, provider_type).
    *
    * @generated from field: repeated schemapb.FieldError errors = 4;
    */
@@ -100,15 +108,19 @@ export type TestWizardDraftRecord = Message<"cloud.v1.models.TestWizardDraftReco
  *
  * TestWizardDraft is the server-held, mutable state of a TEST wizard.
  *
- * Big-schema model: the whole test form is ONE conditional schemapb schema,
- * carried in `form` (a Filled = schema + values). Database kind, database params,
- * workload, provider and provider settings all live under their paths in
- * form.values; conditional branches (e.g. provider sizing per topology) are gated
- * by schemapb `when` (validated/shown only when their CEL condition holds). The
- * server builds the schema, validates the whole form authoritatively, regenerates
- * the topology and recomputes readiness on every patch. The frontend renders the
- * form straight from `form` (schemapb ts sdk + cel-es for live UX) and sends back
- * a patched Filled.
+ * Big-schema model: the whole test form is ONE composite schemapb schema,
+ * carried in `form` (a Filled = schema + values). It is the chosen DATABASE
+ * schema (selected by kind: postgres/mysql/mariadb/picodata/ydb/ydbmanaged/
+ * cockroach — pure and provider-agnostic, owning its own DB-internal cross-rules)
+ * + a WORKLOAD schema + a `provider_type` selector that names which tenant
+ * provider to deploy on. The form does NOT carry provider SETTINGS (those come
+ * from TenantSettings.providers, keyed by provider_type) and does NOT carry
+ * per-node machine forms (machines are derived, never entered by the user).
+ *
+ * The server builds the composite schema, validates the whole form
+ * authoritatively, re-derives the topology and recomputes readiness on every
+ * patch. The frontend renders the form straight from `form` (schemapb ts sdk +
+ * cel-es for live UX) and sends back a patched Filled.
  *
  * Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
  * it bakes into a domain.TestRun.
@@ -127,8 +139,10 @@ export type TestWizardDraftRecordJson = {
 
   /**
    *
-   * form is the whole test form: one big conditional schema + its current
-   * values (a Filled = schema + values).
+   * form is the whole test form as one composite schema + its current values
+   * (a Filled = schema + values): the chosen database schema (by kind,
+   * provider-agnostic) + a workload schema + a provider_type selector. No
+   * provider settings, no per-node machine forms.
    *
    * @generated from field: schemapb.Filled form = 2;
    */
@@ -136,9 +150,10 @@ export type TestWizardDraftRecordJson = {
 
   /**
    *
-   * topology is the server-computed topology generated from the current form
-   * values (recomputed on every patch): abstract machines, with provider_parms
-   * filled once provider settings are valid.
+   * topology is the server-DERIVED topology, recomputed on every patch: the
+   * role->VM expander turns the validated DB config into machines, then a
+   * provider overlay (zone/disk/platform from the selected provider_type's
+   * TenantSettings) fills each machine's provider_parms. Never user-entered.
    *
    * @generated from field: cloud.v1.topology.Topology topology = 3;
    */
@@ -146,9 +161,10 @@ export type TestWizardDraftRecordJson = {
 
   /**
    *
-   * errors are the current authoritative validation errors (recomputed on
-   * every patch); FieldError.field carries the path so the UI can group by
-   * section (database.*, workload.*, provider.*).
+   * errors are the current authoritative errors (recomputed on every patch):
+   * schema validation errors PLUS the bake-time capacity/sanity errors
+   * (RAM/quota/zones). FieldError.field carries the path so the UI can group
+   * by section (database.*, workload.*, provider_type).
    *
    * @generated from field: repeated schemapb.FieldError errors = 4;
    */

@@ -172,6 +172,14 @@ func (m *SuiteWizardDraftRecord_Cell) Encode(e *jx.Encoder) {
 		e.FieldStart("ready")
 		e.Bool(m.Ready)
 	}
+	if len(m.Errors) > 0 {
+		e.FieldStart("errors")
+		e.ArrStart()
+		for _, v := range m.Errors {
+			jxpb.EncMessage(e, v)
+		}
+		e.ArrEnd()
+	}
 	e.ObjEnd()
 }
 
@@ -263,6 +271,22 @@ func (m *SuiteWizardDraftRecord_Cell) Decode(d *jx.Decoder) error {
 			}
 			m.Ready = v
 			return nil
+		case "errors":
+			if seen["Errors"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Errors"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &schemapb.FieldError{}
+				if err := jxpb.DecMessage(d, el); err != nil {
+					return err
+				}
+				m.Errors = append(m.Errors, el)
+				return nil
+			})
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}

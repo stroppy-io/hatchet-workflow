@@ -2845,8 +2845,8 @@ go_name: Preset</pre></td>
 
 <pre>
 //FinishSuiteWizard bakes the draft into a domain.SuiteRun: every compatible cell
-//becomes a fully baked TestRun (preset params + provider settings + generated
-//topology). Rejected unless draft.ready.
+//becomes a fully baked TestRun (preset params + the suite's provider settings +
+//derived topology). Rejected unless draft.ready.
 </pre>
 
 <table>
@@ -7222,8 +7222,8 @@ go_name: RefreshToken</pre></td>
 <pre>
 //PatchSuiteWizard submits the edited form. The server validates it, prunes the
 //matrix to compatible cells, expands the preview, recomputes readiness and
-//returns the full new draft (form may carry a re-emitted schema when the set of
-//selected db presets changed the per-topology provider branches).
+//returns the full new draft (form may carry a re-emitted schema when the
+//selected presets changed the active matrix).
 </pre>
 
 <table>

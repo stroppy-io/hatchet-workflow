@@ -70,6 +70,10 @@ type SuiteReader interface {
 //     ready.
 type WizardEngine interface {
 	InitialForm(ctx context.Context, tenantID, name string, seed *domain.Suite) (*schemapb.Filled, error)
+	// TODO(wizard-flow): when the concrete Compute is implemented, populate each
+	// returned Cell.Errors from expand.Sanity (per-cell capacity/zone/quota
+	// errors) so the preview surfaces per-cell validity alongside the overall form
+	// errors.
 	Compute(ctx context.Context, tenantID string, form *schemapb.Filled) (newForm *schemapb.Filled, preview []*models.SuiteWizardDraftRecord_Cell, errs []*schemapb.FieldError, ready bool, err error)
 	Bake(ctx context.Context, draft *models.SuiteWizardDraftRecord) (*domain.SuiteRun, error)
 }

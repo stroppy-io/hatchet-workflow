@@ -1062,15 +1062,15 @@ go_name: Total</pre></td>
 <pre>
 //SuiteWizardDraft is the server-held, mutable state of a SUITE wizard.
 
-//Big-schema model, like the test wizard: the whole suite form is ONE conditional
-//schemapb schema in `form`. It carries the selections (db / workload / test
-//preset ids), the single provider, the per-topology provider settings (one
-//branch per selected db preset, gated/emitted by the server), and max_parallel.
-//Presets already hold baked db/workload params, so the suite wizard does NOT
-//re-fill those — it only composes presets and fills the provider settings that
-//differ per topology. The server validates the form, prunes the matrix to
-//workload<->db compatible pairs (a root CEL rule), expands the preview and
-//recomputes readiness on every patch.
+//Big-schema model, like the test wizard: the whole suite form is ONE schemapb
+//schema in `form`. It carries the selections — preset_ids (a db x workload
+//matrix) + test_preset_ids — plus ONE provider_type for the whole suite (naming
+//the tenant provider every cell deploys on) and max_parallel. Presets already
+//hold baked db/workload params, so the suite wizard does NOT re-fill those — and
+//it carries NO provider settings: machines are derived per cell at bake from the
+//db config (role->VM expander + provider overlay), not entered. The server
+//validates the form, prunes the matrix to workload<->db compatible pairs (a root
+//CEL rule), expands the preview and recomputes readiness on every patch.
 
 //Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
 //it bakes into a domain.SuiteRun (the full N*M TestRuns).
@@ -1104,8 +1104,9 @@ go_name: Errors</pre></td>
 <td>form</td>
 <td><a href="../../../schemapb/README.md#schemapb-filled">schemapb.Filled</a></td>
 <td><pre>
-//form is the whole suite form: selections + provider + per-topology
-//provider settings + max_parallel, as one conditional schema + values.<br>
+//form is the whole suite form as one schema + values: preset_ids (the
+//db x workload matrix) + test_preset_ids + ONE provider_type for the whole
+//suite + max_parallel. No per-topology provider settings.<br>
 
 json_name: form
 go_name: Form</pre></td>
@@ -1123,8 +1124,7 @@ go_name: Preview</pre></td>
 <td>ready</td>
 <td>bool</td>
 <td><pre>
-//ready is true when there is >=1 compatible cell, every involved db preset
-//has its provider settings filled, and the form validates.<br>
+//ready is true when there is >=1 compatible cell and the form validates.<br>
 
 json_name: ready
 go_name: Ready</pre></td>
@@ -1165,6 +1165,15 @@ go_name: Compatible</pre></td>
 json_name: dbPresetId
 go_name: DbPresetId</pre></td>
 </tr><tr>
+<td>errors</td>
+<td><a href="../../../schemapb/README.md#schemapb-fielderror">schemapb.FieldError</a></td>
+<td><pre>
+//errors are per-cell capacity/sanity errors (quota/zones), computed at
+//preview.<br>
+
+json_name: errors
+go_name: Errors</pre></td>
+</tr><tr>
 <td>name</td>
 <td>string</td>
 <td><pre>
@@ -1176,8 +1185,8 @@ go_name: Name</pre></td>
 <td>ready</td>
 <td>bool</td>
 <td><pre>
-//ready is true when everything this cell needs (incl. its provider
-//settings) is present.<br>
+//ready is true when the cell's (db, workload) are compatible and it
+//has no per-cell errors.<br>
 
 json_name: ready
 go_name: Ready</pre></td>
@@ -1575,15 +1584,19 @@ go_name: WorkloadPresetId</pre></td>
 <pre>
 //TestWizardDraft is the server-held, mutable state of a TEST wizard.
 
-//Big-schema model: the whole test form is ONE conditional schemapb schema,
-//carried in `form` (a Filled = schema + values). Database kind, database params,
-//workload, provider and provider settings all live under their paths in
-//form.values; conditional branches (e.g. provider sizing per topology) are gated
-//by schemapb `when` (validated/shown only when their CEL condition holds). The
-//server builds the schema, validates the whole form authoritatively, regenerates
-//the topology and recomputes readiness on every patch. The frontend renders the
-//form straight from `form` (schemapb ts sdk + cel-es for live UX) and sends back
-//a patched Filled.
+//Big-schema model: the whole test form is ONE composite schemapb schema,
+//carried in `form` (a Filled = schema + values). It is the chosen DATABASE
+//schema (selected by kind: postgres/mysql/mariadb/picodata/ydb/ydbmanaged/
+//cockroach — pure and provider-agnostic, owning its own DB-internal cross-rules)
+//+ a WORKLOAD schema + a `provider_type` selector that names which tenant
+//provider to deploy on. The form does NOT carry provider SETTINGS (those come
+//from TenantSettings.providers, keyed by provider_type) and does NOT carry
+//per-node machine forms (machines are derived, never entered by the user).
+
+//The server builds the composite schema, validates the whole form
+//authoritatively, re-derives the topology and recomputes readiness on every
+//patch. The frontend renders the form straight from `form` (schemapb ts sdk +
+//cel-es for live UX) and sends back a patched Filled.
 
 //Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
 //it bakes into a domain.TestRun.
@@ -1608,9 +1621,10 @@ go_name: Entity</pre></td>
 <td>errors</td>
 <td><a href="../../../schemapb/README.md#schemapb-fielderror">schemapb.FieldError</a></td>
 <td><pre>
-//errors are the current authoritative validation errors (recomputed on
-//every patch); FieldError.field carries the path so the UI can group by
-//section (database.*, workload.*, provider.*).<br>
+//errors are the current authoritative errors (recomputed on every patch):
+//schema validation errors PLUS the bake-time capacity/sanity errors
+//(RAM/quota/zones). FieldError.field carries the path so the UI can group
+//by section (database.*, workload.*, provider_type).<br>
 
 json_name: errors
 go_name: Errors</pre></td>
@@ -1618,8 +1632,10 @@ go_name: Errors</pre></td>
 <td>form</td>
 <td><a href="../../../schemapb/README.md#schemapb-filled">schemapb.Filled</a></td>
 <td><pre>
-//form is the whole test form: one big conditional schema + its current
-//values (a Filled = schema + values).<br>
+//form is the whole test form as one composite schema + its current values
+//(a Filled = schema + values): the chosen database schema (by kind,
+//provider-agnostic) + a workload schema + a provider_type selector. No
+//provider settings, no per-node machine forms.<br>
 
 json_name: form
 go_name: Form</pre></td>
@@ -1645,9 +1661,10 @@ go_name: TestPresetId</pre></td>
 <td>topology</td>
 <td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
 <td><pre>
-//topology is the server-computed topology generated from the current form
-//values (recomputed on every patch): abstract machines, with provider_parms
-//filled once provider settings are valid.<br>
+//topology is the server-DERIVED topology, recomputed on every patch: the
+//role->VM expander turns the validated DB config into machines, then a
+//provider overlay (zone/disk/platform from the selected provider_type's
+//TenantSettings) fills each machine's provider_parms. Never user-entered.<br>
 
 json_name: topology
 go_name: Topology</pre></td>

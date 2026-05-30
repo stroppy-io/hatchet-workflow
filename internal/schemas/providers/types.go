@@ -34,6 +34,23 @@ var DiskTypeValues = []string{
 	DiskNetworkHDD, DiskNetworkSSD, DiskNetworkSSDNonReplicated, DiskNetworkSSDIOM3,
 }
 
+// Network acceleration (per-machine Yandex override).
+const (
+	NetAccelStandard = "standard"
+	NetAccelSoftware = "software_accelerated"
+)
+
+var NetAccelValues = []string{NetAccelStandard, NetAccelSoftware}
+
+// Per-machine OVERRIDE field names (singular — the chosen value, vs the plural
+// tenant-catalog fields above). These are the params a user may override on an
+// abstract machine; they map to topology.Instance.provider_parms.
+const (
+	FieldDiskType     = types.Field("disk_type")
+	FieldZone         = types.Field("zone")
+	FieldNetworkAccel = types.Field("network_acceleration")
+)
+
 // =============================================================================
 // Field names
 // =============================================================================

@@ -2,6 +2,12 @@ package expand
 
 import "fmt"
 
+// Provider kind tokens (match the provider schema names).
+const (
+	ProviderYandex = "yandex"
+	ProviderDocker = "docker"
+)
+
 // Expander derives the database VMs from a baked database config (the schema's
 // values, e.g. structpb.Struct.AsMap()).
 type Expander func(db map[string]any) []VM
@@ -81,13 +87,4 @@ func mapStrSlice(m map[string]any, key string) []string {
 		}
 	}
 	return out
-}
-
-func contains(ss []string, s string) bool {
-	for _, x := range ss {
-		if x == s {
-			return true
-		}
-	}
-	return false
 }

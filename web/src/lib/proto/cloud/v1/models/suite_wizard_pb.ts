@@ -15,21 +15,21 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/suite_wizard.proto.
  */
 export const file_cloud_v1_models_suite_wizard: GenFile = /*@__PURE__*/
-  fileDesc("CiJjbG91ZC92MS9tb2RlbHMvc3VpdGVfd2l6YXJkLnByb3RvEg9jbG91ZC52MS5tb2RlbHMi4wIKFlN1aXRlV2l6YXJkRHJhZnRSZWNvcmQSMQoGZW50aXR5GAEgASgLMhcuY2xvdWQudjEuY29tbW9uLkVudGl0eUII+kIFigECEAESHgoEZm9ybRgCIAEoCzIQLnNjaGVtYXBiLkZpbGxlZBI9CgdwcmV2aWV3GAMgAygLMiwuY2xvdWQudjEubW9kZWxzLlN1aXRlV2l6YXJkRHJhZnRSZWNvcmQuQ2VsbBIkCgZlcnJvcnMYBCADKAsyFC5zY2hlbWFwYi5GaWVsZEVycm9yEg0KBXJlYWR5GAUgASgIGoEBCgRDZWxsEhQKDGRiX3ByZXNldF9pZBgBIAEoCRIaChJ3b3JrbG9hZF9wcmVzZXRfaWQYAiABKAkSFgoOdGVzdF9wcmVzZXRfaWQYAyABKAkSDAoEbmFtZRgEIAEoCRISCgpjb21wYXRpYmxlGAUgASgIEg0KBXJlYWR5GAYgASgIQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_cloud_v1_common_entity, file_schemapb_schema, file_validate_validate]);
+  fileDesc("CiJjbG91ZC92MS9tb2RlbHMvc3VpdGVfd2l6YXJkLnByb3RvEg9jbG91ZC52MS5tb2RlbHMiiQMKFlN1aXRlV2l6YXJkRHJhZnRSZWNvcmQSMQoGZW50aXR5GAEgASgLMhcuY2xvdWQudjEuY29tbW9uLkVudGl0eUII+kIFigECEAESHgoEZm9ybRgCIAEoCzIQLnNjaGVtYXBiLkZpbGxlZBI9CgdwcmV2aWV3GAMgAygLMiwuY2xvdWQudjEubW9kZWxzLlN1aXRlV2l6YXJkRHJhZnRSZWNvcmQuQ2VsbBIkCgZlcnJvcnMYBCADKAsyFC5zY2hlbWFwYi5GaWVsZEVycm9yEg0KBXJlYWR5GAUgASgIGqcBCgRDZWxsEhQKDGRiX3ByZXNldF9pZBgBIAEoCRIaChJ3b3JrbG9hZF9wcmVzZXRfaWQYAiABKAkSFgoOdGVzdF9wcmVzZXRfaWQYAyABKAkSDAoEbmFtZRgEIAEoCRISCgpjb21wYXRpYmxlGAUgASgIEg0KBXJlYWR5GAYgASgIEiQKBmVycm9ycxgHIAMoCzIULnNjaGVtYXBiLkZpZWxkRXJyb3JCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_common_entity, file_schemapb_schema, file_validate_validate]);
 
 /**
  *
  * SuiteWizardDraft is the server-held, mutable state of a SUITE wizard.
  *
- * Big-schema model, like the test wizard: the whole suite form is ONE conditional
- * schemapb schema in `form`. It carries the selections (db / workload / test
- * preset ids), the single provider, the per-topology provider settings (one
- * branch per selected db preset, gated/emitted by the server), and max_parallel.
- * Presets already hold baked db/workload params, so the suite wizard does NOT
- * re-fill those — it only composes presets and fills the provider settings that
- * differ per topology. The server validates the form, prunes the matrix to
- * workload<->db compatible pairs (a root CEL rule), expands the preview and
- * recomputes readiness on every patch.
+ * Big-schema model, like the test wizard: the whole suite form is ONE schemapb
+ * schema in `form`. It carries the selections — preset_ids (a db x workload
+ * matrix) + test_preset_ids — plus ONE provider_type for the whole suite (naming
+ * the tenant provider every cell deploys on) and max_parallel. Presets already
+ * hold baked db/workload params, so the suite wizard does NOT re-fill those — and
+ * it carries NO provider settings: machines are derived per cell at bake from the
+ * db config (role->VM expander + provider overlay), not entered. The server
+ * validates the form, prunes the matrix to workload<->db compatible pairs (a root
+ * CEL rule), expands the preview and recomputes readiness on every patch.
  *
  * Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
  * it bakes into a domain.SuiteRun (the full N*M TestRuns).
@@ -48,8 +48,9 @@ export type SuiteWizardDraftRecord = Message<"cloud.v1.models.SuiteWizardDraftRe
 
   /**
    *
-   * form is the whole suite form: selections + provider + per-topology
-   * provider settings + max_parallel, as one conditional schema + values.
+   * form is the whole suite form as one schema + values: preset_ids (the
+   * db x workload matrix) + test_preset_ids + ONE provider_type for the whole
+   * suite + max_parallel. No per-topology provider settings.
    *
    * @generated from field: schemapb.Filled form = 2;
    */
@@ -76,8 +77,7 @@ export type SuiteWizardDraftRecord = Message<"cloud.v1.models.SuiteWizardDraftRe
 
   /**
    *
-   * ready is true when there is >=1 compatible cell, every involved db preset
-   * has its provider settings filled, and the form validates.
+   * ready is true when there is >=1 compatible cell and the form validates.
    *
    * @generated from field: bool ready = 5;
    */
@@ -88,15 +88,15 @@ export type SuiteWizardDraftRecord = Message<"cloud.v1.models.SuiteWizardDraftRe
  *
  * SuiteWizardDraft is the server-held, mutable state of a SUITE wizard.
  *
- * Big-schema model, like the test wizard: the whole suite form is ONE conditional
- * schemapb schema in `form`. It carries the selections (db / workload / test
- * preset ids), the single provider, the per-topology provider settings (one
- * branch per selected db preset, gated/emitted by the server), and max_parallel.
- * Presets already hold baked db/workload params, so the suite wizard does NOT
- * re-fill those — it only composes presets and fills the provider settings that
- * differ per topology. The server validates the form, prunes the matrix to
- * workload<->db compatible pairs (a root CEL rule), expands the preview and
- * recomputes readiness on every patch.
+ * Big-schema model, like the test wizard: the whole suite form is ONE schemapb
+ * schema in `form`. It carries the selections — preset_ids (a db x workload
+ * matrix) + test_preset_ids — plus ONE provider_type for the whole suite (naming
+ * the tenant provider every cell deploys on) and max_parallel. Presets already
+ * hold baked db/workload params, so the suite wizard does NOT re-fill those — and
+ * it carries NO provider settings: machines are derived per cell at bake from the
+ * db config (role->VM expander + provider overlay), not entered. The server
+ * validates the form, prunes the matrix to workload<->db compatible pairs (a root
+ * CEL rule), expands the preview and recomputes readiness on every patch.
  *
  * Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
  * it bakes into a domain.SuiteRun (the full N*M TestRuns).
@@ -115,8 +115,9 @@ export type SuiteWizardDraftRecordJson = {
 
   /**
    *
-   * form is the whole suite form: selections + provider + per-topology
-   * provider settings + max_parallel, as one conditional schema + values.
+   * form is the whole suite form as one schema + values: preset_ids (the
+   * db x workload matrix) + test_preset_ids + ONE provider_type for the whole
+   * suite + max_parallel. No per-topology provider settings.
    *
    * @generated from field: schemapb.Filled form = 2;
    */
@@ -143,8 +144,7 @@ export type SuiteWizardDraftRecordJson = {
 
   /**
    *
-   * ready is true when there is >=1 compatible cell, every involved db preset
-   * has its provider settings filled, and the form validates.
+   * ready is true when there is >=1 compatible cell and the form validates.
    *
    * @generated from field: bool ready = 5;
    */
@@ -213,12 +213,21 @@ export type SuiteWizardDraftRecord_Cell = Message<"cloud.v1.models.SuiteWizardDr
 
   /**
    *
-   * ready is true when everything this cell needs (incl. its provider
-   * settings) is present.
+   * ready is true when the cell's (db, workload) are compatible and it
+   * has no per-cell errors.
    *
    * @generated from field: bool ready = 6;
    */
   ready: boolean;
+
+  /**
+   *
+   * errors are per-cell capacity/sanity errors (quota/zones), computed at
+   * preview.
+   *
+   * @generated from field: repeated schemapb.FieldError errors = 7;
+   */
+  errors: FieldError[];
 };
 
 /**
@@ -274,12 +283,21 @@ export type SuiteWizardDraftRecord_CellJson = {
 
   /**
    *
-   * ready is true when everything this cell needs (incl. its provider
-   * settings) is present.
+   * ready is true when the cell's (db, workload) are compatible and it
+   * has no per-cell errors.
    *
    * @generated from field: bool ready = 6;
    */
   ready?: boolean;
+
+  /**
+   *
+   * errors are per-cell capacity/sanity errors (quota/zones), computed at
+   * preview.
+   *
+   * @generated from field: repeated schemapb.FieldError errors = 7;
+   */
+  errors?: FieldErrorJson[];
 };
 
 export type SuiteWizardDraftRecord_CellValid = SuiteWizardDraftRecord_Cell;

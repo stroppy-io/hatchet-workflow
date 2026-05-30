@@ -11,15 +11,15 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
 /*
     SuiteWizardDraft is the server-held, mutable state of a SUITE wizard.
 
-    Big-schema model, like the test wizard: the whole suite form is ONE conditional
-    schemapb schema in `form`. It carries the selections (db / workload / test
-    preset ids), the single provider, the per-topology provider settings (one
-    branch per selected db preset, gated/emitted by the server), and max_parallel.
-    Presets already hold baked db/workload params, so the suite wizard does NOT
-    re-fill those — it only composes presets and fills the provider settings that
-    differ per topology. The server validates the form, prunes the matrix to
-    workload<->db compatible pairs (a root CEL rule), expands the preview and
-    recomputes readiness on every patch.
+    Big-schema model, like the test wizard: the whole suite form is ONE schemapb
+    schema in `form`. It carries the selections — preset_ids (a db x workload
+    matrix) + test_preset_ids — plus ONE provider_type for the whole suite (naming
+    the tenant provider every cell deploys on) and max_parallel. Presets already
+    hold baked db/workload params, so the suite wizard does NOT re-fill those — and
+    it carries NO provider settings: machines are derived per cell at bake from the
+    db config (role->VM expander + provider overlay), not entered. The server
+    validates the form, prunes the matrix to workload<->db compatible pairs (a root
+    CEL rule), expands the preview and recomputes readiness on every patch.
 
     Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
     it bakes into a domain.SuiteRun (the full N*M TestRuns).
@@ -32,8 +32,9 @@ message SuiteWizardDraftRecord {
     common.Entity entity = 1 [(validate.rules).message.required = true];
 
     /*
-        form is the whole suite form: selections + provider + per-topology
-        provider settings + max_parallel, as one conditional schema + values.
+        form is the whole suite form as one schema + values: preset_ids (the
+        db x workload matrix) + test_preset_ids + ONE provider_type for the whole
+        suite + max_parallel. No per-topology provider settings.
      */
     schemapb.Filled form = 2;
 
@@ -49,8 +50,7 @@ message SuiteWizardDraftRecord {
      */
     repeated schemapb.FieldError errors = 4;
     /*
-        ready is true when there is >=1 compatible cell, every involved db preset
-        has its provider settings filled, and the form validates.
+        ready is true when there is >=1 compatible cell and the form validates.
      */
     bool ready = 5;
 
@@ -83,9 +83,14 @@ message SuiteWizardDraftRecord {
          */
         bool compatible = 5;
         /*
-            ready is true when everything this cell needs (incl. its provider
-            settings) is present.
+            ready is true when the cell's (db, workload) are compatible and it
+            has no per-cell errors.
          */
         bool ready = 6;
+        /*
+            errors are per-cell capacity/sanity errors (quota/zones), computed at
+            preview.
+         */
+        repeated schemapb.FieldError errors = 7;
     }
 }

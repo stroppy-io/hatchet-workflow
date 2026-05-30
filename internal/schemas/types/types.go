@@ -6,6 +6,7 @@ const (
 	DatabaseNamespace = SchemaNs("database")
 	ProviderNamespace = SchemaNs("provider")
 	ClusterNamespace  = SchemaNs("cluster")
+	WorkloadNamespace = SchemaNs("workload")
 )
 
 type SchemaName = string

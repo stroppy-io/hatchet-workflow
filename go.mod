@@ -4,7 +4,6 @@ go 1.25.5
 
 require (
 	connectrpc.com/connect v1.20.0
-	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/avito-tech/go-transaction-manager v1.5.1
 	github.com/cludden/protoc-gen-go-temporal v1.23.1
 	github.com/envoyproxy/protoc-gen-validate v1.3.3

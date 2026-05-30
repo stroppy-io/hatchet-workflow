@@ -14,10 +14,11 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
 
 /*
     suite_wizard.proto is the SUITE wizard API. Same big-schema patch-loop as the
-    test wizard: the whole suite form is ONE conditional schema
-    (models.SuiteWizardDraft.form). Start, then repeatedly PatchSuiteWizard(Filled),
-    then Finish -> domain.SuiteRun. Matrix expansion, workload<->db compatibility
-    and per-topology provider settings all live in the schema + server.
+    test wizard: the whole suite form is ONE schema (models.SuiteWizardDraft.form).
+    Start, then repeatedly PatchSuiteWizard(Filled), then Finish -> domain.SuiteRun.
+    The suite picks ONE provider_type for every cell; matrix expansion and
+    workload<->db compatibility live in the schema + server, and machines are
+    DERIVED per cell at bake (role->VM expander + provider overlay), not entered.
 
     Every request is tenant-scoped (tenant_id, the default auth tenant_field) and
     gated by RESOURCE_WIZARD.
@@ -112,8 +113,8 @@ message ListSuiteWizardDraftsResponse {
 /*
     PatchSuiteWizard submits the edited form. The server validates it, prunes the
     matrix to compatible cells, expands the preview, recomputes readiness and
-    returns the full new draft (form may carry a re-emitted schema when the set of
-    selected db presets changed the per-topology provider branches).
+    returns the full new draft (form may carry a re-emitted schema when the
+    selected presets changed the active matrix).
  */
 message PatchSuiteWizardRequest {
     /*
@@ -160,8 +161,8 @@ message DeleteSuiteWizardDraftResponse {}
 
 /*
     FinishSuiteWizard bakes the draft into a domain.SuiteRun: every compatible cell
-    becomes a fully baked TestRun (preset params + provider settings + generated
-    topology). Rejected unless draft.ready.
+    becomes a fully baked TestRun (preset params + the suite's provider settings +
+    derived topology). Rejected unless draft.ready.
  */
 message FinishSuiteWizardRequest {
     /*

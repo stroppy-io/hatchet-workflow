@@ -4785,8 +4785,8 @@ non-error reply.
 
 ### FinishSuiteWizardRequest
 FinishSuiteWizard bakes the draft into a domain.SuiteRun: every compatible cell
-becomes a fully baked TestRun (preset params &#43; provider settings &#43; generated
-topology). Rejected unless draft.ready.
+becomes a fully baked TestRun (preset params &#43; the suite&#39;s provider settings &#43;
+derived topology). Rejected unless draft.ready.
 
 
 | Field | Type | Label | Description |
@@ -4885,8 +4885,8 @@ ListSuiteWizardDraftsResponse returns a page of wizard drafts.
 ### PatchSuiteWizardRequest
 PatchSuiteWizard submits the edited form. The server validates it, prunes the
 matrix to compatible cells, expands the preview, recomputes readiness and
-returns the full new draft (form may carry a re-emitted schema when the set of
-selected db presets changed the per-topology provider branches).
+returns the full new draft (form may carry a re-emitted schema when the
+selected presets changed the active matrix).
 
 
 | Field | Type | Label | Description |
