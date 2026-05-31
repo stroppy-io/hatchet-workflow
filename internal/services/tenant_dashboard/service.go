@@ -96,7 +96,7 @@ type TenantDashboardService struct {
 var _ api.TenantDashboardServiceServer = (*TenantDashboardService)(nil)
 
 func NewTenantDashboardService(deps TenantDashboardDeps) *TenantDashboardService {
-	return &TenantDashboardService{d: deps}
+	return &TenantDashboardService{UnimplementedTenantDashboardServiceServer: &api.UnimplementedTenantDashboardServiceServer{}, d: deps}
 }
 
 /*

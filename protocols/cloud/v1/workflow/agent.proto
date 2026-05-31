@@ -92,6 +92,18 @@ service AgentCommandService {
         };
     };
     /*
+        FetchFileActivity downloads a file/binary by reference (URL / S3 minio) to
+        the agent host at File.info.path and caches it by File.AsRef.checksum (e.g.
+        the stroppy binary, packages). Idempotent given the checksum => retryable.
+     */
+    rpc FetchFileActivity (common.File) returns (google.protobuf.Empty) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 600}
+            heartbeat_timeout: {seconds: 60}
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}, backoff_coefficient: 2.0}
+        };
+    };
+    /*
         CallCmdActivity runs a command on the agent host (including the long
         stroppy load) and returns its result, heartbeating while it runs.
      */

@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 )
 
 // ensure the imports are used
@@ -33,6 +35,8 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = common.Status(0)
 )
 
 // Validate checks the field values on TestWorkflowRequest with the rules
@@ -278,6 +282,305 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = TestWorkflowResponseValidationError{}
+
+// Validate checks the field values on RunState with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *RunState) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunState with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in RunStateMultiError, or nil
+// if none found.
+func (m *RunState) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunState) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Status
+
+	for idx, item := range m.GetStages() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, RunStateValidationError{
+						field:  fmt.Sprintf("Stages[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, RunStateValidationError{
+						field:  fmt.Sprintf("Stages[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return RunStateValidationError{
+					field:  fmt.Sprintf("Stages[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return RunStateMultiError(errors)
+	}
+
+	return nil
+}
+
+// RunStateMultiError is an error wrapping multiple validation errors returned
+// by RunState.ValidateAll() if the designated constraints aren't met.
+type RunStateMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunStateMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunStateMultiError) AllErrors() []error { return m }
+
+// RunStateValidationError is the validation error returned by
+// RunState.Validate if the designated constraints aren't met.
+type RunStateValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RunStateValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RunStateValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RunStateValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RunStateValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RunStateValidationError) ErrorName() string { return "RunStateValidationError" }
+
+// Error satisfies the builtin error interface
+func (e RunStateValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRunState.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RunStateValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RunStateValidationError{}
+
+// Validate checks the field values on Stage with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Stage) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Stage with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in StageMultiError, or nil if none found.
+func (m *Stage) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Stage) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for NodeExecutionId
+
+	// no validation rules for Name
+
+	// no validation rules for Status
+
+	if all {
+		switch v := interface{}(m.GetStartedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, StageValidationError{
+					field:  "StartedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, StageValidationError{
+					field:  "StartedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetStartedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return StageValidationError{
+				field:  "StartedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetFinishedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, StageValidationError{
+					field:  "FinishedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, StageValidationError{
+					field:  "FinishedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFinishedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return StageValidationError{
+				field:  "FinishedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Attempt
+
+	if len(errors) > 0 {
+		return StageMultiError(errors)
+	}
+
+	return nil
+}
+
+// StageMultiError is an error wrapping multiple validation errors returned by
+// Stage.ValidateAll() if the designated constraints aren't met.
+type StageMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StageMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StageMultiError) AllErrors() []error { return m }
+
+// StageValidationError is the validation error returned by Stage.Validate if
+// the designated constraints aren't met.
+type StageValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StageValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StageValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StageValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StageValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StageValidationError) ErrorName() string { return "StageValidationError" }
+
+// Error satisfies the builtin error interface
+func (e StageValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStage.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StageValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StageValidationError{}
 
 // Validate checks the field values on InstallStroppyWorkflowRequest with the
 // rules defined in the proto definition for this message. If any rules are

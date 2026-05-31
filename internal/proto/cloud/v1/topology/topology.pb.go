@@ -123,7 +123,9 @@ type Topology_Instance struct {
 	// (deployment).
 	DeploymentParms *schemapb.Baked `protobuf:"bytes,7,opt,name=deployment_parms,json=deploymentParms,proto3,oneof" json:"deployment_parms,omitempty"`
 	// tags are arbitrary key/value labels attached to the instance.
-	Tags          *common.Tags `protobuf:"bytes,8,opt,name=tags,proto3" json:"tags,omitempty"`
+	Tags *common.Tags `protobuf:"bytes,8,opt,name=tags,proto3" json:"tags,omitempty"`
+	// components are the logical components (roles) hosted on this instance.
+	Components    []*Component `protobuf:"bytes,9,rep,name=components,proto3" json:"components,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -214,16 +216,23 @@ func (x *Topology_Instance) GetTags() *common.Tags {
 	return nil
 }
 
+func (x *Topology_Instance) GetComponents() []*Component {
+	if x != nil {
+		return x.Components
+	}
+	return nil
+}
+
 var File_cloud_v1_topology_topology_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_topology_topology_proto_rawDesc = "" +
 	"\n" +
-	" cloud/v1/topology/topology.proto\x12\x11cloud.v1.topology\x1a\x1ccloud/v1/common/status.proto\x1a\x1acloud/v1/common/tags.proto\x1a!cloud/v1/deployment/machine.proto\x1a\x1fcloud/v1/deployment/quota.proto\x1a!cloud/v1/topology/component.proto\x1a\"cloud/v1/topology/connection.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\xb4\x06\n" +
+	" cloud/v1/topology/topology.proto\x12\x11cloud.v1.topology\x1a\x1ccloud/v1/common/status.proto\x1a\x1acloud/v1/common/tags.proto\x1a!cloud/v1/deployment/machine.proto\x1a\x1fcloud/v1/deployment/quota.proto\x1a!cloud/v1/topology/component.proto\x1a\"cloud/v1/topology/connection.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\xf2\x06\n" +
 	"\bTopology\x12L\n" +
 	"\tinstances\x18\x01 \x03(\v2$.cloud.v1.topology.Topology.InstanceB\b\xfaB\x05\x92\x01\x02\b\x01R\tinstances\x12I\n" +
 	"\vconnections\x18\x02 \x03(\v2\x1d.cloud.v1.topology.ConnectionB\b\xfaB\x05\x92\x01\x02\b\x01R\vconnections\x12W\n" +
 	"\x13external_components\x18\x03 \x03(\v2\x1c.cloud.v1.topology.ComponentB\b\xfaB\x05\x92\x01\x02\x10@R\x12externalComponents\x12)\n" +
-	"\x04tags\x18\x04 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\x8a\x04\n" +
+	"\x04tags\x18\x04 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\xc8\x04\n" +
 	"\bInstance\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12/\n" +
@@ -233,7 +242,10 @@ const file_cloud_v1_topology_topology_proto_rawDesc = "" +
 	"\x0equota_requests\x18\x05 \x03(\v2\".cloud.v1.deployment.Quota.RequestR\rquotaRequests\x12P\n" +
 	"\x10allocated_quotas\x18\x06 \x03(\v2%.cloud.v1.deployment.Quota.AllocationR\x0fallocatedQuotas\x12?\n" +
 	"\x10deployment_parms\x18\a \x01(\v2\x0f.schemapb.BakedH\x01R\x0fdeploymentParms\x88\x01\x01\x12)\n" +
-	"\x04tags\x18\b \x01(\v2\x15.cloud.v1.common.TagsR\x04tagsB\x11\n" +
+	"\x04tags\x18\b \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x12<\n" +
+	"\n" +
+	"components\x18\t \x03(\v2\x1c.cloud.v1.topology.ComponentR\n" +
+	"componentsB\x11\n" +
 	"\x0f_provider_parmsB\x13\n" +
 	"\x11_deployment_parmsBFZDgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topologyb\x06proto3"
 
@@ -274,11 +286,12 @@ var file_cloud_v1_topology_topology_proto_depIdxs = []int32{
 	9,  // 8: cloud.v1.topology.Topology.Instance.allocated_quotas:type_name -> cloud.v1.deployment.Quota.Allocation
 	7,  // 9: cloud.v1.topology.Topology.Instance.deployment_parms:type_name -> schemapb.Baked
 	4,  // 10: cloud.v1.topology.Topology.Instance.tags:type_name -> cloud.v1.common.Tags
-	11, // [11:11] is the sub-list for method output_type
-	11, // [11:11] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	3,  // 11: cloud.v1.topology.Topology.Instance.components:type_name -> cloud.v1.topology.Component
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_topology_topology_proto_init() }

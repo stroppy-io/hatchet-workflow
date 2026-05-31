@@ -221,7 +221,7 @@ type IamService struct {
 var _ api.IamServiceServer = (*IamService)(nil)
 
 func NewIamService(deps IamDeps) *IamService {
-	return &IamService{d: deps}
+	return &IamService{UnimplementedIamServiceServer: &api.UnimplementedIamServiceServer{}, d: deps}
 }
 
 /*

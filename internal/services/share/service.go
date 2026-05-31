@@ -91,7 +91,7 @@ type ShareService struct {
 var _ api.ShareServiceServer = (*ShareService)(nil)
 
 func NewShareService(deps ShareDeps) *ShareService {
-	return &ShareService{d: deps}
+	return &ShareService{UnimplementedShareServiceServer: &api.UnimplementedShareServiceServer{}, d: deps}
 }
 
 /*

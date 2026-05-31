@@ -182,6 +182,14 @@ func (m *Topology_Instance) Encode(e *jx.Encoder) {
 		e.FieldStart("tags")
 		jxpb.EncMessage(e, m.Tags)
 	}
+	if len(m.Components) > 0 {
+		e.FieldStart("components")
+		e.ArrStart()
+		for _, v := range m.Components {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
 	e.ObjEnd()
 }
 
@@ -316,6 +324,22 @@ func (m *Topology_Instance) Decode(d *jx.Decoder) error {
 				return err
 			}
 			return nil
+		case "components":
+			if seen["Components"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Components"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &Component{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Components = append(m.Components, el)
+				return nil
+			})
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}

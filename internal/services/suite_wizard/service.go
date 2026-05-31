@@ -96,7 +96,7 @@ type SuiteWizardService struct {
 var _ api.SuiteWizardServiceServer = (*SuiteWizardService)(nil)
 
 func NewSuiteWizardService(deps SuiteWizardDeps) *SuiteWizardService {
-	return &SuiteWizardService{d: deps}
+	return &SuiteWizardService{UnimplementedSuiteWizardServiceServer: &api.UnimplementedSuiteWizardServiceServer{}, d: deps}
 }
 
 /*

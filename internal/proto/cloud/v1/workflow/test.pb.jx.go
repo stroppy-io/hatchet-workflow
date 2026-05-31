@@ -6,8 +6,10 @@ import (
 	fmt "fmt"
 	jx "github.com/go-faster/jx"
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (m *TestWorkflowRequest) Encode(e *jx.Encoder) {
@@ -84,6 +86,254 @@ func (m *TestWorkflowResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (m *TestWorkflowResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *RunState) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Status != 0 {
+		e.FieldStart("status")
+		if s, ok := common.Status_name[int32(m.Status)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Status))
+		}
+	}
+	if len(m.Stages) > 0 {
+		e.FieldStart("stages")
+		e.ArrStart()
+		for _, v := range m.Stages {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *RunState) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "status":
+			if seen["Status"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Status"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := common.Status_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Status = common.Status(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Status = common.Status(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "stages":
+			if seen["Stages"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Stages"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &Stage{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Stages = append(m.Stages, el)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *RunState) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *RunState) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *Stage) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.NodeExecutionId != "" {
+		e.FieldStart("nodeExecutionId")
+		e.Str(m.NodeExecutionId)
+	}
+	if m.Name != "" {
+		e.FieldStart("name")
+		e.Str(m.Name)
+	}
+	if m.Status != 0 {
+		e.FieldStart("status")
+		if s, ok := common.Status_name[int32(m.Status)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Status))
+		}
+	}
+	if m.StartedAt != nil {
+		e.FieldStart("startedAt")
+		jxpb.EncTimestamp(e, m.StartedAt)
+	}
+	if m.FinishedAt != nil {
+		e.FieldStart("finishedAt")
+		jxpb.EncTimestamp(e, m.FinishedAt)
+	}
+	if m.Attempt != 0 {
+		e.FieldStart("attempt")
+		e.UInt32(m.Attempt)
+	}
+	e.ObjEnd()
+}
+
+func (m *Stage) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "nodeExecutionId", "node_execution_id":
+			if seen["NodeExecutionId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NodeExecutionId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.NodeExecutionId = v
+			return nil
+		case "name":
+			if seen["Name"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Name"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Name = v
+			return nil
+		case "status":
+			if seen["Status"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Status"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := common.Status_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Status = common.Status(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Status = common.Status(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "startedAt", "started_at":
+			if seen["StartedAt"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StartedAt"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.StartedAt = &timestamppb.Timestamp{}
+			if err := jxpb.DecTimestamp(d, m.StartedAt); err != nil {
+				return err
+			}
+			return nil
+		case "finishedAt", "finished_at":
+			if seen["FinishedAt"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["FinishedAt"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.FinishedAt = &timestamppb.Timestamp{}
+			if err := jxpb.DecTimestamp(d, m.FinishedAt); err != nil {
+				return err
+			}
+			return nil
+		case "attempt":
+			if seen["Attempt"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Attempt"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.Attempt = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *Stage) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *Stage) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

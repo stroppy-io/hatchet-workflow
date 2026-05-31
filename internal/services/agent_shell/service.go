@@ -120,7 +120,7 @@ type AgentShellService struct {
 var _ api.AgentShellServiceServer = (*AgentShellService)(nil)
 
 func NewAgentShellService(deps AgentShellDeps) *AgentShellService {
-	return &AgentShellService{d: deps}
+	return &AgentShellService{UnimplementedAgentShellServiceServer: &api.UnimplementedAgentShellServiceServer{}, d: deps}
 }
 
 /*

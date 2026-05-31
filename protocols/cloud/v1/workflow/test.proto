@@ -2,11 +2,14 @@ syntax = "proto3";
 
 package cloud.v1.workflow;
 
+import "cloud/v1/common/status.proto";
 import "cloud/v1/domain/database.proto";
 import "cloud/v1/domain/suite.proto";
 import "cloud/v1/domain/test.proto";
 import "cloud/v1/domain/workload.proto";
 import "cloud/v1/topology/topology.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 import "temporal/v1/temporal.proto";
 import "validate/validate.proto";
 
@@ -32,6 +35,51 @@ message TestWorkflowRequest {
     TestWorkflowResponse is the empty result of a completed test run.
  */
 message TestWorkflowResponse {}
+
+/*
+    RunState is the live overview of a test run, returned by the GetRunState
+    Temporal query against a running TestWorkflow.
+ */
+message RunState {
+    /*
+        status is the overall status of the run.
+     */
+    common.Status status = 1;
+    /*
+        stages is the per-stage breakdown of the run.
+     */
+    repeated Stage stages = 2;
+}
+/*
+    Stage is one step of a test run (a child workflow / activity execution) as
+    surfaced in the run Overview.
+ */
+message Stage {
+    /*
+        node_execution_id identifies the underlying node execution.
+     */
+    string node_execution_id = 1;
+    /*
+        name is the human-readable stage name.
+     */
+    string name = 2;
+    /*
+        status is the status of this stage.
+     */
+    common.Status status = 3;
+    /*
+        started_at is when the stage started.
+     */
+    google.protobuf.Timestamp started_at = 4;
+    /*
+        finished_at is when the stage finished (unset while running).
+     */
+    google.protobuf.Timestamp finished_at = 5;
+    /*
+        attempt is the current attempt number for this stage.
+     */
+    uint32 attempt = 6;
+}
 
 /*
     InstallStroppyWorkflowRequest asks to install stroppy on the runner
@@ -132,7 +180,20 @@ service TestService {
                 workflows / activities instead.
             */
             retry_policy: {max_attempts: 1}
+            /*
+                query: TestWorkflow answers the GetRunState query, used by the run
+                Overview to read the live RunState (status + per-stage breakdown).
+            */
+            query: {ref: "GetRunState"}
         };
+    }
+    /*
+        GetRunState is a Temporal query against a running TestWorkflow returning
+        the live RunState (overall status + per-stage breakdown) for the run
+        Overview. Read-only; takes no input.
+     */
+    rpc GetRunState (google.protobuf.Empty) returns (RunState) {
+        option (temporal.v1.query) = {name: "GetRunState"};
     }
     /*
         InstallStroppyWorkflow installs stroppy onto the runner machines (child

@@ -4,6 +4,8 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Status, StatusJson } from "../common/status_pb.ts";
+import { file_cloud_v1_common_status } from "../common/status_pb.ts";
 import type { Database, DatabaseJson } from "../domain/database_pb.ts";
 import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
 import type { SuiteRun, SuiteRunJson } from "../domain/suite_pb.ts";
@@ -14,6 +16,8 @@ import type { Workload, WorkloadJson } from "../domain/workload_pb.ts";
 import { file_cloud_v1_domain_workload } from "../domain/workload_pb.ts";
 import type { Topology, TopologyJson } from "../topology/topology_pb.ts";
 import { file_cloud_v1_topology_topology } from "../topology/topology_pb.ts";
+import type { EmptySchema, Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_temporal_v1_temporal } from "../../../temporal/v1/temporal_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
@@ -22,7 +26,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/workflow/test.proto.
  */
 export const file_cloud_v1_workflow_test: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS93b3JrZmxvdy90ZXN0LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyJLChNUZXN0V29ya2Zsb3dSZXF1ZXN0EjQKCHRlc3RfcnVuGAEgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABIhYKFFRlc3RXb3JrZmxvd1Jlc3BvbnNlIlgKHUluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXF1ZXN0EjcKCHRvcG9sb2d5GAEgASgLMhsuY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3lCCPpCBYoBAhABIiAKHkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXNwb25zZSKQAQoeSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXF1ZXN0EjcKCHRvcG9sb2d5GAEgASgLMhsuY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3lCCPpCBYoBAhABEjUKCGRhdGFiYXNlGAIgASgLMhkuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlQgj6QgWKAQIQASIhCh9JbnN0YWxsRGF0YWJhc2VXb3JrZmxvd1Jlc3BvbnNlIowBChpSdW5Xb3JrbG9hZFdvcmtmbG93UmVxdWVzdBI3Cgh0b3BvbG9neRgBIAEoCzIbLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5Qgj6QgWKAQIQARI1Cgh3b3JrbG9hZBgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZEII+kIFigECEAEiHQobUnVuV29ya2xvYWRXb3JrZmxvd1Jlc3BvbnNlIk4KFFN1aXRlV29ya2Zsb3dSZXF1ZXN0EjYKCXN1aXRlX3J1bhgBIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5TdWl0ZVJ1bkII+kIFigECEAEiFwoVU3VpdGVXb3JrZmxvd1Jlc3BvbnNlMqoFCgtUZXN0U2VydmljZRKVAQoMVGVzdFdvcmtmbG93EiYuY2xvdWQudjEud29ya2Zsb3cuVGVzdFdvcmtmbG93UmVxdWVzdBonLmNsb3VkLnYxLndvcmtmbG93LlRlc3RXb3JrZmxvd1Jlc3BvbnNlIjSKxAMwSgIgAXIMVGVzdFdvcmtmbG93Khp0ZXN0LXJ1bi8keyEgdGVzdF9ydW4uaWQgfTACEqgBChZJbnN0YWxsU3Ryb3BweVdvcmtmbG93EjAuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1JlcXVlc3QaMS5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsU3Ryb3BweVdvcmtmbG93UmVzcG9uc2UiKYrEAyVKBiADCgIIBXIWSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1IDCIgOEqwBChdJbnN0YWxsRGF0YWJhc2VXb3JrZmxvdxIxLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxEYXRhYmFzZVdvcmtmbG93UmVxdWVzdBoyLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxEYXRhYmFzZVdvcmtmbG93UmVzcG9uc2UiKorEAyZSAwiIDkoGIAMKAggFchdJbnN0YWxsRGF0YWJhc2VXb3JrZmxvdxKTAQoTUnVuV29ya2xvYWRXb3JrZmxvdxItLmNsb3VkLnYxLndvcmtmbG93LlJ1bldvcmtsb2FkV29ya2Zsb3dSZXF1ZXN0Gi4uY2xvdWQudjEud29ya2Zsb3cuUnVuV29ya2xvYWRXb3JrZmxvd1Jlc3BvbnNlIh2KxAMZchNSdW5Xb3JrbG9hZFdvcmtmbG93SgIgARoTisQDDwoNc3Ryb3BweS1jbG91ZDLJAQoUU3VpdGVXb3JrZmxvd1NlcnZpY2USmwEKDVN1aXRlV29ya2Zsb3cSJy5jbG91ZC52MS53b3JrZmxvdy5TdWl0ZVdvcmtmbG93UmVxdWVzdBooLmNsb3VkLnYxLndvcmtmbG93LlN1aXRlV29ya2Zsb3dSZXNwb25zZSI3isQDM3INU3VpdGVXb3JrZmxvdyocc3VpdGUtcnVuLyR7ISBzdWl0ZV9ydW4uaWQgfTACSgIgARoTisQDDwoNc3Ryb3BweS1jbG91ZEJGWkRnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS93b3JrZmxvd2IGcHJvdG8z", [file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_temporal_v1_temporal, file_validate_validate]);
+  fileDesc("ChxjbG91ZC92MS93b3JrZmxvdy90ZXN0LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyJLChNUZXN0V29ya2Zsb3dSZXF1ZXN0EjQKCHRlc3RfcnVuGAEgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABIhYKFFRlc3RXb3JrZmxvd1Jlc3BvbnNlIl0KCFJ1blN0YXRlEicKBnN0YXR1cxgBIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSKAoGc3RhZ2VzGAIgAygLMhguY2xvdWQudjEud29ya2Zsb3cuU3RhZ2UiywEKBVN0YWdlEhkKEW5vZGVfZXhlY3V0aW9uX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSJwoGc3RhdHVzGAMgASgOMhcuY2xvdWQudjEuY29tbW9uLlN0YXR1cxIuCgpzdGFydGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtmaW5pc2hlZF9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHYXR0ZW1wdBgGIAEoDSJYCh1JbnN0YWxsU3Ryb3BweVdvcmtmbG93UmVxdWVzdBI3Cgh0b3BvbG9neRgBIAEoCzIbLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5Qgj6QgWKAQIQASIgCh5JbnN0YWxsU3Ryb3BweVdvcmtmbG93UmVzcG9uc2UikAEKHkluc3RhbGxEYXRhYmFzZVdvcmtmbG93UmVxdWVzdBI3Cgh0b3BvbG9neRgBIAEoCzIbLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5Qgj6QgWKAQIQARI1CghkYXRhYmFzZRgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZUII+kIFigECEAEiIQofSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXNwb25zZSKMAQoaUnVuV29ya2xvYWRXb3JrZmxvd1JlcXVlc3QSNwoIdG9wb2xvZ3kYASABKAsyGy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neUII+kIFigECEAESNQoId29ya2xvYWQYAiABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWRCCPpCBYoBAhABIh0KG1J1bldvcmtsb2FkV29ya2Zsb3dSZXNwb25zZSJOChRTdWl0ZVdvcmtmbG93UmVxdWVzdBI2CglzdWl0ZV9ydW4YASABKAsyGS5jbG91ZC52MS5kb21haW4uU3VpdGVSdW5CCPpCBYoBAhABIhcKFVN1aXRlV29ya2Zsb3dSZXNwb25zZTKQBgoLVGVzdFNlcnZpY2USpAEKDFRlc3RXb3JrZmxvdxImLmNsb3VkLnYxLndvcmtmbG93LlRlc3RXb3JrZmxvd1JlcXVlc3QaJy5jbG91ZC52MS53b3JrZmxvdy5UZXN0V29ya2Zsb3dSZXNwb25zZSJDisQDP3IMVGVzdFdvcmtmbG93Khp0ZXN0LXJ1bi8keyEgdGVzdF9ydW4uaWQgfTACSgIgAQoNCgtHZXRSdW5TdGF0ZRJVCgtHZXRSdW5TdGF0ZRIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRobLmNsb3VkLnYxLndvcmtmbG93LlJ1blN0YXRlIhGaxAMNCgtHZXRSdW5TdGF0ZRKoAQoWSW5zdGFsbFN0cm9wcHlXb3JrZmxvdxIwLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXF1ZXN0GjEuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1Jlc3BvbnNlIimKxAMlUgMIiA5KBiADCgIIBXIWSW5zdGFsbFN0cm9wcHlXb3JrZmxvdxKsAQoXSW5zdGFsbERhdGFiYXNlV29ya2Zsb3cSMS5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsRGF0YWJhc2VXb3JrZmxvd1JlcXVlc3QaMi5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsRGF0YWJhc2VXb3JrZmxvd1Jlc3BvbnNlIiqKxAMmUgMIiA5KBiADCgIIBXIXSW5zdGFsbERhdGFiYXNlV29ya2Zsb3cSkwEKE1J1bldvcmtsb2FkV29ya2Zsb3cSLS5jbG91ZC52MS53b3JrZmxvdy5SdW5Xb3JrbG9hZFdvcmtmbG93UmVxdWVzdBouLmNsb3VkLnYxLndvcmtmbG93LlJ1bldvcmtsb2FkV29ya2Zsb3dSZXNwb25zZSIdisQDGXITUnVuV29ya2xvYWRXb3JrZmxvd0oCIAEaE4rEAw8KDXN0cm9wcHktY2xvdWQyyQEKFFN1aXRlV29ya2Zsb3dTZXJ2aWNlEpsBCg1TdWl0ZVdvcmtmbG93EicuY2xvdWQudjEud29ya2Zsb3cuU3VpdGVXb3JrZmxvd1JlcXVlc3QaKC5jbG91ZC52MS53b3JrZmxvdy5TdWl0ZVdvcmtmbG93UmVzcG9uc2UiN4rEAzNyDVN1aXRlV29ya2Zsb3cqHHN1aXRlLXJ1bi8keyEgc3VpdGVfcnVuLmlkIH0wAkoCIAEaE4rEAw8KDXN0cm9wcHktY2xvdWRCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvd29ya2Zsb3diBnByb3RvMw", [file_cloud_v1_common_status, file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_google_protobuf_empty, file_google_protobuf_timestamp, file_temporal_v1_temporal, file_validate_validate]);
 
 /**
  *
@@ -94,6 +98,188 @@ export const TestWorkflowResponseSchema: GenMessage<TestWorkflowResponse, {jsonT
 
 /**
  *
+ * RunState is the live overview of a test run, returned by the GetRunState
+ * Temporal query against a running TestWorkflow.
+ *
+ * @generated from message cloud.v1.workflow.RunState
+ */
+export type RunState = Message<"cloud.v1.workflow.RunState"> & {
+  /**
+   *
+   * status is the overall status of the run.
+   *
+   * @generated from field: cloud.v1.common.Status status = 1;
+   */
+  status: Status;
+
+  /**
+   *
+   * stages is the per-stage breakdown of the run.
+   *
+   * @generated from field: repeated cloud.v1.workflow.Stage stages = 2;
+   */
+  stages: Stage[];
+};
+
+/**
+ *
+ * RunState is the live overview of a test run, returned by the GetRunState
+ * Temporal query against a running TestWorkflow.
+ *
+ * @generated from message cloud.v1.workflow.RunState
+ */
+export type RunStateJson = {
+  /**
+   *
+   * status is the overall status of the run.
+   *
+   * @generated from field: cloud.v1.common.Status status = 1;
+   */
+  status?: StatusJson;
+
+  /**
+   *
+   * stages is the per-stage breakdown of the run.
+   *
+   * @generated from field: repeated cloud.v1.workflow.Stage stages = 2;
+   */
+  stages?: StageJson[];
+};
+
+export type RunStateValid = RunState;
+
+/**
+ * Describes the message cloud.v1.workflow.RunState.
+ * Use `create(RunStateSchema)` to create a new message.
+ */
+export const RunStateSchema: GenMessage<RunState, {jsonType: RunStateJson, validType: RunStateValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_test, 2);
+
+/**
+ *
+ * Stage is one step of a test run (a child workflow / activity execution) as
+ * surfaced in the run Overview.
+ *
+ * @generated from message cloud.v1.workflow.Stage
+ */
+export type Stage = Message<"cloud.v1.workflow.Stage"> & {
+  /**
+   *
+   * node_execution_id identifies the underlying node execution.
+   *
+   * @generated from field: string node_execution_id = 1;
+   */
+  nodeExecutionId: string;
+
+  /**
+   *
+   * name is the human-readable stage name.
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   *
+   * status is the status of this stage.
+   *
+   * @generated from field: cloud.v1.common.Status status = 3;
+   */
+  status: Status;
+
+  /**
+   *
+   * started_at is when the stage started.
+   *
+   * @generated from field: google.protobuf.Timestamp started_at = 4;
+   */
+  startedAt?: Timestamp;
+
+  /**
+   *
+   * finished_at is when the stage finished (unset while running).
+   *
+   * @generated from field: google.protobuf.Timestamp finished_at = 5;
+   */
+  finishedAt?: Timestamp;
+
+  /**
+   *
+   * attempt is the current attempt number for this stage.
+   *
+   * @generated from field: uint32 attempt = 6;
+   */
+  attempt: number;
+};
+
+/**
+ *
+ * Stage is one step of a test run (a child workflow / activity execution) as
+ * surfaced in the run Overview.
+ *
+ * @generated from message cloud.v1.workflow.Stage
+ */
+export type StageJson = {
+  /**
+   *
+   * node_execution_id identifies the underlying node execution.
+   *
+   * @generated from field: string node_execution_id = 1;
+   */
+  nodeExecutionId?: string;
+
+  /**
+   *
+   * name is the human-readable stage name.
+   *
+   * @generated from field: string name = 2;
+   */
+  name?: string;
+
+  /**
+   *
+   * status is the status of this stage.
+   *
+   * @generated from field: cloud.v1.common.Status status = 3;
+   */
+  status?: StatusJson;
+
+  /**
+   *
+   * started_at is when the stage started.
+   *
+   * @generated from field: google.protobuf.Timestamp started_at = 4;
+   */
+  startedAt?: TimestampJson;
+
+  /**
+   *
+   * finished_at is when the stage finished (unset while running).
+   *
+   * @generated from field: google.protobuf.Timestamp finished_at = 5;
+   */
+  finishedAt?: TimestampJson;
+
+  /**
+   *
+   * attempt is the current attempt number for this stage.
+   *
+   * @generated from field: uint32 attempt = 6;
+   */
+  attempt?: number;
+};
+
+export type StageValid = Stage;
+
+/**
+ * Describes the message cloud.v1.workflow.Stage.
+ * Use `create(StageSchema)` to create a new message.
+ */
+export const StageSchema: GenMessage<Stage, {jsonType: StageJson, validType: StageValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_test, 3);
+
+/**
+ *
  * InstallStroppyWorkflowRequest asks to install stroppy on the runner
  * instances. Runner machines are always deployed, so this always runs.
  * Topology is read-only here (baked + runtime).
@@ -135,7 +321,7 @@ export type InstallStroppyWorkflowRequestValid = InstallStroppyWorkflowRequest;
  * Use `create(InstallStroppyWorkflowRequestSchema)` to create a new message.
  */
 export const InstallStroppyWorkflowRequestSchema: GenMessage<InstallStroppyWorkflowRequest, {jsonType: InstallStroppyWorkflowRequestJson, validType: InstallStroppyWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 2);
+  messageDesc(file_cloud_v1_workflow_test, 4);
 
 /**
  *
@@ -162,7 +348,7 @@ export type InstallStroppyWorkflowResponseValid = InstallStroppyWorkflowResponse
  * Use `create(InstallStroppyWorkflowResponseSchema)` to create a new message.
  */
 export const InstallStroppyWorkflowResponseSchema: GenMessage<InstallStroppyWorkflowResponse, {jsonType: InstallStroppyWorkflowResponseJson, validType: InstallStroppyWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 3);
+  messageDesc(file_cloud_v1_workflow_test, 5);
 
 /**
  *
@@ -223,7 +409,7 @@ export type InstallDatabaseWorkflowRequestValid = InstallDatabaseWorkflowRequest
  * Use `create(InstallDatabaseWorkflowRequestSchema)` to create a new message.
  */
 export const InstallDatabaseWorkflowRequestSchema: GenMessage<InstallDatabaseWorkflowRequest, {jsonType: InstallDatabaseWorkflowRequestJson, validType: InstallDatabaseWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 4);
+  messageDesc(file_cloud_v1_workflow_test, 6);
 
 /**
  *
@@ -250,7 +436,7 @@ export type InstallDatabaseWorkflowResponseValid = InstallDatabaseWorkflowRespon
  * Use `create(InstallDatabaseWorkflowResponseSchema)` to create a new message.
  */
 export const InstallDatabaseWorkflowResponseSchema: GenMessage<InstallDatabaseWorkflowResponse, {jsonType: InstallDatabaseWorkflowResponseJson, validType: InstallDatabaseWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 5);
+  messageDesc(file_cloud_v1_workflow_test, 7);
 
 /**
  *
@@ -309,7 +495,7 @@ export type RunWorkloadWorkflowRequestValid = RunWorkloadWorkflowRequest;
  * Use `create(RunWorkloadWorkflowRequestSchema)` to create a new message.
  */
 export const RunWorkloadWorkflowRequestSchema: GenMessage<RunWorkloadWorkflowRequest, {jsonType: RunWorkloadWorkflowRequestJson, validType: RunWorkloadWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 6);
+  messageDesc(file_cloud_v1_workflow_test, 8);
 
 /**
  *
@@ -338,7 +524,7 @@ export type RunWorkloadWorkflowResponseValid = RunWorkloadWorkflowResponse;
  * Use `create(RunWorkloadWorkflowResponseSchema)` to create a new message.
  */
 export const RunWorkloadWorkflowResponseSchema: GenMessage<RunWorkloadWorkflowResponse, {jsonType: RunWorkloadWorkflowResponseJson, validType: RunWorkloadWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 7);
+  messageDesc(file_cloud_v1_workflow_test, 9);
 
 /**
  *
@@ -379,7 +565,7 @@ export type SuiteWorkflowRequestValid = SuiteWorkflowRequest;
  * Use `create(SuiteWorkflowRequestSchema)` to create a new message.
  */
 export const SuiteWorkflowRequestSchema: GenMessage<SuiteWorkflowRequest, {jsonType: SuiteWorkflowRequestJson, validType: SuiteWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 8);
+  messageDesc(file_cloud_v1_workflow_test, 10);
 
 /**
  *
@@ -406,7 +592,7 @@ export type SuiteWorkflowResponseValid = SuiteWorkflowResponse;
  * Use `create(SuiteWorkflowResponseSchema)` to create a new message.
  */
 export const SuiteWorkflowResponseSchema: GenMessage<SuiteWorkflowResponse, {jsonType: SuiteWorkflowResponseJson, validType: SuiteWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 9);
+  messageDesc(file_cloud_v1_workflow_test, 11);
 
 /**
  *
@@ -429,6 +615,19 @@ export const TestService: GenService<{
     methodKind: "unary";
     input: typeof TestWorkflowRequestSchema;
     output: typeof TestWorkflowResponseSchema;
+  },
+  /**
+   *
+   * GetRunState is a Temporal query against a running TestWorkflow returning
+   * the live RunState (overall status + per-stage breakdown) for the run
+   * Overview. Read-only; takes no input.
+   *
+   * @generated from rpc cloud.v1.workflow.TestService.GetRunState
+   */
+  getRunState: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof RunStateSchema;
   },
   /**
    *

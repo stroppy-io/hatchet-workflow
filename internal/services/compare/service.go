@@ -59,7 +59,7 @@ type CompareService struct {
 var _ api.CompareServiceServer = (*CompareService)(nil)
 
 func NewCompareService(deps CompareDeps) *CompareService {
-	return &CompareService{d: deps}
+	return &CompareService{UnimplementedCompareServiceServer: &api.UnimplementedCompareServiceServer{}, d: deps}
 }
 
 /*

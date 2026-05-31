@@ -67,7 +67,7 @@ type SuiteRunService struct {
 var _ api.SuiteRunServiceServer = (*SuiteRunService)(nil)
 
 func NewSuiteRunService(deps SuiteRunDeps) *SuiteRunService {
-	return &SuiteRunService{d: deps}
+	return &SuiteRunService{UnimplementedSuiteRunServiceServer: &api.UnimplementedSuiteRunServiceServer{}, d: deps}
 }
 
 /*

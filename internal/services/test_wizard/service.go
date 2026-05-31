@@ -113,7 +113,7 @@ type TestWizardService struct {
 var _ api.TestWizardServiceServer = (*TestWizardService)(nil)
 
 func NewTestWizardService(deps TestWizardDeps) *TestWizardService {
-	return &TestWizardService{d: deps}
+	return &TestWizardService{UnimplementedTestWizardServiceServer: &api.UnimplementedTestWizardServiceServer{}, d: deps}
 }
 
 /*

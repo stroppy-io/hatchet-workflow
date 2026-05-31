@@ -65,6 +65,10 @@ message Topology {
             tags are arbitrary key/value labels attached to the instance.
          */
         common.Tags tags = 8;
+        /*
+            components are the logical components (roles) hosted on this instance.
+         */
+        repeated Component components = 9;
     }
     /*
         instances are the physical machines making up the topology; at least one

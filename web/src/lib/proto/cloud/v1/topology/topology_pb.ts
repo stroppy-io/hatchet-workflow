@@ -25,7 +25,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/topology/topology.proto.
  */
 export const file_cloud_v1_topology_topology: GenFile = /*@__PURE__*/
-  fileDesc("CiBjbG91ZC92MS90b3BvbG9neS90b3BvbG9neS5wcm90bxIRY2xvdWQudjEudG9wb2xvZ3kiowUKCFRvcG9sb2d5EkEKCWluc3RhbmNlcxgBIAMoCzIkLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5Lkluc3RhbmNlQgj6QgWSAQIIARI8Cgtjb25uZWN0aW9ucxgCIAMoCzIdLmNsb3VkLnYxLnRvcG9sb2d5LkNvbm5lY3Rpb25CCPpCBZIBAggBEkMKE2V4dGVybmFsX2NvbXBvbmVudHMYAyADKAsyHC5jbG91ZC52MS50b3BvbG9neS5Db21wb25lbnRCCPpCBZIBAhBAEiMKBHRhZ3MYBCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxqrAwoISW5zdGFuY2USFgoCaWQYASABKAlCCvpCB3IFEAEYgAESJwoGc3RhdHVzGAIgASgOMhcuY2xvdWQudjEuY29tbW9uLlN0YXR1cxI2CgxtYWNoaW5lX2luZm8YAyABKAsyIC5jbG91ZC52MS5kZXBsb3ltZW50Lk1hY2hpbmVJbmZvEiwKDnByb3ZpZGVyX3Bhcm1zGAQgASgLMg8uc2NoZW1hcGIuQmFrZWRIAIgBARI6Cg5xdW90YV9yZXF1ZXN0cxgFIAMoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuUmVxdWVzdBI/ChBhbGxvY2F0ZWRfcXVvdGFzGAYgAygLMiUuY2xvdWQudjEuZGVwbG95bWVudC5RdW90YS5BbGxvY2F0aW9uEi4KEGRlcGxveW1lbnRfcGFybXMYByABKAsyDy5zY2hlbWFwYi5CYWtlZEgBiAEBEiMKBHRhZ3MYCCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFnc0IRCg9fcHJvdmlkZXJfcGFybXNCEwoRX2RlcGxveW1lbnRfcGFybXNCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvdG9wb2xvZ3liBnByb3RvMw", [file_cloud_v1_common_status, file_cloud_v1_common_tags, file_cloud_v1_deployment_machine, file_cloud_v1_deployment_quota, file_cloud_v1_topology_component, file_cloud_v1_topology_connection, file_schemapb_schema, file_validate_validate]);
+  fileDesc("CiBjbG91ZC92MS90b3BvbG9neS90b3BvbG9neS5wcm90bxIRY2xvdWQudjEudG9wb2xvZ3ki1QUKCFRvcG9sb2d5EkEKCWluc3RhbmNlcxgBIAMoCzIkLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5Lkluc3RhbmNlQgj6QgWSAQIIARI8Cgtjb25uZWN0aW9ucxgCIAMoCzIdLmNsb3VkLnYxLnRvcG9sb2d5LkNvbm5lY3Rpb25CCPpCBZIBAggBEkMKE2V4dGVybmFsX2NvbXBvbmVudHMYAyADKAsyHC5jbG91ZC52MS50b3BvbG9neS5Db21wb25lbnRCCPpCBZIBAhBAEiMKBHRhZ3MYBCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxrdAwoISW5zdGFuY2USFgoCaWQYASABKAlCCvpCB3IFEAEYgAESJwoGc3RhdHVzGAIgASgOMhcuY2xvdWQudjEuY29tbW9uLlN0YXR1cxI2CgxtYWNoaW5lX2luZm8YAyABKAsyIC5jbG91ZC52MS5kZXBsb3ltZW50Lk1hY2hpbmVJbmZvEiwKDnByb3ZpZGVyX3Bhcm1zGAQgASgLMg8uc2NoZW1hcGIuQmFrZWRIAIgBARI6Cg5xdW90YV9yZXF1ZXN0cxgFIAMoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuUmVxdWVzdBI/ChBhbGxvY2F0ZWRfcXVvdGFzGAYgAygLMiUuY2xvdWQudjEuZGVwbG95bWVudC5RdW90YS5BbGxvY2F0aW9uEi4KEGRlcGxveW1lbnRfcGFybXMYByABKAsyDy5zY2hlbWFwYi5CYWtlZEgBiAEBEiMKBHRhZ3MYCCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxIwCgpjb21wb25lbnRzGAkgAygLMhwuY2xvdWQudjEudG9wb2xvZ3kuQ29tcG9uZW50QhEKD19wcm92aWRlcl9wYXJtc0ITChFfZGVwbG95bWVudF9wYXJtc0JGWkRnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS90b3BvbG9neWIGcHJvdG8z", [file_cloud_v1_common_status, file_cloud_v1_common_tags, file_cloud_v1_deployment_machine, file_cloud_v1_deployment_quota, file_cloud_v1_topology_component, file_cloud_v1_topology_connection, file_schemapb_schema, file_validate_validate]);
 
 /**
  *
@@ -196,6 +196,14 @@ export type Topology_Instance = Message<"cloud.v1.topology.Topology.Instance"> &
    * @generated from field: cloud.v1.common.Tags tags = 8;
    */
   tags?: Tags;
+
+  /**
+   *
+   * components are the logical components (roles) hosted on this instance.
+   *
+   * @generated from field: repeated cloud.v1.topology.Component components = 9;
+   */
+  components: Component[];
 };
 
 /**
@@ -272,6 +280,14 @@ export type Topology_InstanceJson = {
    * @generated from field: cloud.v1.common.Tags tags = 8;
    */
   tags?: TagsJson;
+
+  /**
+   *
+   * components are the logical components (roles) hosted on this instance.
+   *
+   * @generated from field: repeated cloud.v1.topology.Component components = 9;
+   */
+  components?: ComponentJson[];
 };
 
 export type Topology_InstanceValid = Topology_Instance;

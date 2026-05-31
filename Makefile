@@ -113,6 +113,20 @@ test-integration: build ## Run integration tests (requires Docker)
 test-e2e: build ## Run E2E tests for all databases
 	go test -tags=integration -timeout 60m -v ./tests/ -run TestE2E
 
+.PHONY: demo-up demo-down demo-e2e
+demo-up: ## Build images + bring up the docker-provider demo stack (temporal, postgres, minio, apt-cacher-ng, server-demo)
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -trimpath -o bin/stroppy-cloud-linux ./cmd/cli
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -trimpath -o bin/stroppy-agent-linux ./cmd/agent
+	docker build -t stroppy-agent:latest -f deployments/docker/agent.Dockerfile .
+	docker compose --profile demo up -d --build
+	@echo "demo stack up: api gRPC :8081, gateway :8080, apt-relay :3142, temporal-ui :8233"
+
+demo-down: ## Tear down the demo stack
+	docker compose --profile demo down
+
+demo-e2e: ## Run the docker-provider e2e against the running demo stack
+	go test -tags=integration -timeout 15m -v ./tests/integration/ -run TestE2E_WizardToOverview
+
 test-browser: ## Run Playwright browser E2E tests (requires running server at localhost:8080)
 	cd tests/e2e && npx playwright test
 

@@ -78,7 +78,7 @@ type TenantSettingsService struct {
 var _ api.TenantSettingsServiceServer = (*TenantSettingsService)(nil)
 
 func NewTenantSettingsService(deps TenantSettingsDeps) *TenantSettingsService {
-	return &TenantSettingsService{d: deps}
+	return &TenantSettingsService{UnimplementedTenantSettingsServiceServer: &api.UnimplementedTenantSettingsServiceServer{}, d: deps}
 }
 
 /*

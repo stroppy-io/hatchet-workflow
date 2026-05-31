@@ -99,7 +99,7 @@ type TestRunOverviewService struct {
 var _ api.TestRunOverviewServiceServer = (*TestRunOverviewService)(nil)
 
 func NewTestRunOverviewService(deps TestRunOverviewDeps) *TestRunOverviewService {
-	return &TestRunOverviewService{d: deps}
+	return &TestRunOverviewService{UnimplementedTestRunOverviewServiceServer: &api.UnimplementedTestRunOverviewServiceServer{}, d: deps}
 }
 
 /*

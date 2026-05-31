@@ -75,7 +75,7 @@ type FavoriteService struct {
 var _ api.FavoriteServiceServer = (*FavoriteService)(nil)
 
 func NewFavoriteService(deps FavoriteDeps) *FavoriteService {
-	return &FavoriteService{d: deps}
+	return &FavoriteService{UnimplementedFavoriteServiceServer: &api.UnimplementedFavoriteServiceServer{}, d: deps}
 }
 
 /*

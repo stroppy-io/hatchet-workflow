@@ -501,6 +501,14 @@ go_name: Tags</pre></td>
 json_name: allocatedQuotas
 go_name: AllocatedQuotas</pre></td>
 </tr><tr>
+<td>components</td>
+<td><a href="#cloud-v1-topology-component">cloud.v1.topology.Component</a></td>
+<td><pre>
+//components are the logical components (roles) hosted on this instance.<br>
+
+json_name: components
+go_name: Components</pre></td>
+</tr><tr>
 <td>deployment_parms</td>
 <td><a href="../../../schemapb/README.md#schemapb-baked">schemapb.Baked</a></td>
 <td><pre>

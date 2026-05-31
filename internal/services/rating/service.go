@@ -82,7 +82,7 @@ type RatingService struct {
 var _ api.RatingServiceServer = (*RatingService)(nil)
 
 func NewRatingService(deps RatingDeps) *RatingService {
-	return &RatingService{d: deps}
+	return &RatingService{UnimplementedRatingServiceServer: &api.UnimplementedRatingServiceServer{}, d: deps}
 }
 
 /*

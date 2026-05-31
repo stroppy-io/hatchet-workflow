@@ -23,6 +23,29 @@ const (
 	RoleMonitor     Role = "monitor"     // monitoring node
 )
 
+// Tier is the deploy ordering of a role across machines: lower tiers come up
+// first, so dependencies are satisfied (consensus before the DB it backs, the DB
+// before the proxy in front of it, everything before the workload that drives
+// it). Machines in the same tier are independent and may deploy concurrently.
+func (r Role) Tier() int {
+	switch r {
+	case RoleCoordinator: // etcd / DCS — must be up before Patroni
+		return 0
+	case RoleDatabase, RoleReplica:
+		return 1
+	case RolePooler:
+		return 2
+	case RoleProxy:
+		return 3
+	case RoleWorkload:
+		return 4
+	case RoleMonitor:
+		return 5
+	default:
+		return 6
+	}
+}
+
 // Shape is the abstract, provider-agnostic machine capacity. This is the WHOLE
 // machine — there is no provider-specific data on a machine. Provider override
 // parameters (disk class, zone, platform) are a SEPARATE, server-emitted schema

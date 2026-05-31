@@ -28,6 +28,7 @@ const (
 	CreateDirActivityActivityName         = "cloud.v1.workflow.AgentCommandService.CreateDirActivity"
 	CreateTempDirActivityActivityName     = "cloud.v1.workflow.AgentCommandService.CreateTempDirActivity"
 	EnsureAgentOnlineActivityActivityName = "cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity"
+	FetchFileActivityActivityName         = "cloud.v1.workflow.AgentCommandService.FetchFileActivity"
 	WriteFileActivityActivityName         = "cloud.v1.workflow.AgentCommandService.WriteFileActivity"
 )
 
@@ -49,6 +50,11 @@ type AgentCommandServiceActivities interface {
 	// heartbeating while it polls.
 	EnsureAgentOnlineActivity(ctx context.Context) error
 
+	// FetchFileActivity downloads a file/binary by reference (URL / S3 minio) to
+	// the agent host at File.info.path and caches it by File.AsRef.checksum (e.g.
+	// the stroppy binary, packages). Idempotent given the checksum => retryable.
+	FetchFileActivity(ctx context.Context, req *common.File) error
+
 	// WriteFileActivity writes a file's full contents to the agent host.
 	WriteFileActivity(ctx context.Context, req *common.File) error
 }
@@ -59,6 +65,7 @@ func RegisterAgentCommandServiceActivities(r worker.ActivityRegistry, activities
 	RegisterCreateDirActivityActivity(r, activities.CreateDirActivity)
 	RegisterCreateTempDirActivityActivity(r, activities.CreateTempDirActivity)
 	RegisterEnsureAgentOnlineActivityActivity(r, activities.EnsureAgentOnlineActivity)
+	RegisterFetchFileActivityActivity(r, activities.FetchFileActivity)
 	RegisterWriteFileActivityActivity(r, activities.WriteFileActivity)
 }
 
@@ -1126,6 +1133,276 @@ func (o *EnsureAgentOnlineActivityLocalActivityOptions) WithScheduleToCloseTimeo
 
 // WithStartToCloseTimeout sets the StartToCloseTimeout value
 func (o *EnsureAgentOnlineActivityLocalActivityOptions) WithStartToCloseTimeout(d time.Duration) *EnsureAgentOnlineActivityLocalActivityOptions {
+	o.startToCloseTimeout = &d
+	return o
+}
+
+// RegisterFetchFileActivityActivity registers a cloud.v1.workflow.AgentCommandService.FetchFileActivity activity
+func RegisterFetchFileActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *common.File) error) {
+	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
+		Name: FetchFileActivityActivityName,
+	})
+}
+
+// FetchFileActivityFuture describes a(n) cloud.v1.workflow.AgentCommandService.FetchFileActivity activity execution
+type FetchFileActivityFuture struct {
+	Future workflow.Future
+}
+
+// Get blocks on the activity's completion, returning the response
+func (f *FetchFileActivityFuture) Get(ctx workflow.Context) error {
+	return f.Future.Get(ctx, nil)
+}
+
+// Select adds the activity's completion to the selector, callback can be nil
+func (f *FetchFileActivityFuture) Select(sel workflow.Selector, fn func(*FetchFileActivityFuture)) workflow.Selector {
+	return sel.AddFuture(f.Future, func(workflow.Future) {
+		if fn != nil {
+			fn(f)
+		}
+	})
+}
+
+// FetchFileActivity downloads a file/binary by reference (URL / S3 minio) to
+// the agent host at File.info.path and caches it by File.AsRef.checksum (e.g.
+// the stroppy binary, packages). Idempotent given the checksum => retryable.
+func FetchFileActivity(ctx workflow.Context, req *common.File, options ...*FetchFileActivityActivityOptions) error {
+	return FetchFileActivityAsync(ctx, req, options...).Get(ctx)
+}
+
+// FetchFileActivity downloads a file/binary by reference (URL / S3 minio) to
+// the agent host at File.info.path and caches it by File.AsRef.checksum (e.g.
+// the stroppy binary, packages). Idempotent given the checksum => retryable.
+func FetchFileActivityAsync(ctx workflow.Context, req *common.File, options ...*FetchFileActivityActivityOptions) *FetchFileActivityFuture {
+	var o *FetchFileActivityActivityOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewFetchFileActivityActivityOptions()
+	}
+	var err error
+	if ctx, err = o.Build(ctx); err != nil {
+		errF, errS := workflow.NewFuture(ctx)
+		errS.SetError(err)
+		return &FetchFileActivityFuture{Future: errF}
+	}
+	activity := FetchFileActivityActivityName
+	if o.dc != nil {
+		ctx = workflow.WithDataConverter(ctx, o.dc)
+	}
+	future := &FetchFileActivityFuture{Future: workflow.ExecuteActivity(ctx, activity, req)}
+	return future
+}
+
+// FetchFileActivity downloads a file/binary by reference (URL / S3 minio) to
+// the agent host at File.info.path and caches it by File.AsRef.checksum (e.g.
+// the stroppy binary, packages). Idempotent given the checksum => retryable.
+func FetchFileActivityLocal(ctx workflow.Context, req *common.File, options ...*FetchFileActivityLocalActivityOptions) error {
+	return FetchFileActivityLocalAsync(ctx, req, options...).Get(ctx)
+}
+
+// FetchFileActivity downloads a file/binary by reference (URL / S3 minio) to
+// the agent host at File.info.path and caches it by File.AsRef.checksum (e.g.
+// the stroppy binary, packages). Idempotent given the checksum => retryable.
+func FetchFileActivityLocalAsync(ctx workflow.Context, req *common.File, options ...*FetchFileActivityLocalActivityOptions) *FetchFileActivityFuture {
+	var o *FetchFileActivityLocalActivityOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewFetchFileActivityLocalActivityOptions()
+	}
+	var err error
+	if ctx, err = o.Build(ctx); err != nil {
+		errF, errS := workflow.NewFuture(ctx)
+		errS.SetError(err)
+		return &FetchFileActivityFuture{Future: errF}
+	}
+	var activity any
+	if o.fn != nil {
+		activity = o.fn
+	} else {
+		activity = FetchFileActivityActivityName
+	}
+	if o.dc != nil {
+		ctx = workflow.WithDataConverter(ctx, o.dc)
+	}
+	future := &FetchFileActivityFuture{Future: workflow.ExecuteLocalActivity(ctx, activity, req)}
+	return future
+}
+
+// FetchFileActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandService.FetchFileActivity activity
+type FetchFileActivityActivityOptions struct {
+	options                workflow.ActivityOptions
+	retryPolicy            *temporal.RetryPolicy
+	scheduleToCloseTimeout *time.Duration
+	startToCloseTimeout    *time.Duration
+	dc                     converter.DataConverter
+	heartbeatTimeout       *time.Duration
+	scheduleToStartTimeout *time.Duration
+	taskQueue              *string
+	waitForCancellation    *bool
+}
+
+// NewFetchFileActivityActivityOptions initializes a new FetchFileActivityActivityOptions value
+func NewFetchFileActivityActivityOptions() *FetchFileActivityActivityOptions {
+	return &FetchFileActivityActivityOptions{}
+}
+
+// Build initializes a workflow.Context with appropriate ActivityOptions values derived from schema defaults and any user-defined overrides
+func (o *FetchFileActivityActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
+	opts := o.options
+	if v := o.heartbeatTimeout; v != nil {
+		opts.HeartbeatTimeout = *v
+	} else if opts.HeartbeatTimeout == 0 {
+		opts.HeartbeatTimeout = 60000000000 // 1 minute
+	}
+	if v := o.retryPolicy; v != nil {
+		opts.RetryPolicy = v
+	} else if opts.RetryPolicy == nil {
+		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 5000000000, BackoffCoefficient: 2.0, MaximumAttempts: int32(3)}
+	}
+	if v := o.scheduleToCloseTimeout; v != nil {
+		opts.ScheduleToCloseTimeout = *v
+	}
+	if v := o.scheduleToStartTimeout; v != nil {
+		opts.ScheduleToStartTimeout = *v
+	}
+	if v := o.startToCloseTimeout; v != nil {
+		opts.StartToCloseTimeout = *v
+	} else if opts.StartToCloseTimeout == 0 {
+		opts.StartToCloseTimeout = 600000000000 // 10 minutes
+	}
+	if v := o.taskQueue; v != nil {
+		opts.TaskQueue = *v
+	} else if opts.TaskQueue == "" {
+		opts.TaskQueue = AgentCommandServiceTaskQueue
+	}
+	if v := o.waitForCancellation; v != nil {
+		opts.WaitForCancellation = *v
+	}
+	return workflow.WithActivityOptions(ctx, opts), nil
+}
+
+// WithActivityOptions specifies an initial ActivityOptions value to which defaults will be applied
+func (o *FetchFileActivityActivityOptions) WithActivityOptions(options workflow.ActivityOptions) *FetchFileActivityActivityOptions {
+	o.options = options
+	return o
+}
+
+// WithDataConverter registers a DataConverter for the (local) activity
+func (o *FetchFileActivityActivityOptions) WithDataConverter(dc converter.DataConverter) *FetchFileActivityActivityOptions {
+	o.dc = dc
+	return o
+}
+
+// WithHeartbeatTimeout sets the HeartbeatTimeout value
+func (o *FetchFileActivityActivityOptions) WithHeartbeatTimeout(d time.Duration) *FetchFileActivityActivityOptions {
+	o.heartbeatTimeout = &d
+	return o
+}
+
+// WithRetryPolicy sets the RetryPolicy value
+func (o *FetchFileActivityActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *FetchFileActivityActivityOptions {
+	o.retryPolicy = policy
+	return o
+}
+
+// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
+func (o *FetchFileActivityActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *FetchFileActivityActivityOptions {
+	o.scheduleToCloseTimeout = &d
+	return o
+}
+
+// WithScheduleToStartTimeout sets the ScheduleToStartTimeout value
+func (o *FetchFileActivityActivityOptions) WithScheduleToStartTimeout(d time.Duration) *FetchFileActivityActivityOptions {
+	o.scheduleToStartTimeout = &d
+	return o
+}
+
+// WithStartToCloseTimeout sets the StartToCloseTimeout value
+func (o *FetchFileActivityActivityOptions) WithStartToCloseTimeout(d time.Duration) *FetchFileActivityActivityOptions {
+	o.startToCloseTimeout = &d
+	return o
+}
+
+// WithTaskQueue sets the TaskQueue value
+func (o *FetchFileActivityActivityOptions) WithTaskQueue(tq string) *FetchFileActivityActivityOptions {
+	o.taskQueue = &tq
+	return o
+}
+
+// WithWaitForCancellation sets the WaitForCancellation value
+func (o *FetchFileActivityActivityOptions) WithWaitForCancellation(wait bool) *FetchFileActivityActivityOptions {
+	o.waitForCancellation = &wait
+	return o
+}
+
+// FetchFileActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.AgentCommandService.FetchFileActivity activity
+type FetchFileActivityLocalActivityOptions struct {
+	options                workflow.LocalActivityOptions
+	retryPolicy            *temporal.RetryPolicy
+	scheduleToCloseTimeout *time.Duration
+	startToCloseTimeout    *time.Duration
+	dc                     converter.DataConverter
+	fn                     func(context.Context, *common.File) error
+}
+
+// NewFetchFileActivityLocalActivityOptions initializes a new FetchFileActivityLocalActivityOptions value
+func NewFetchFileActivityLocalActivityOptions() *FetchFileActivityLocalActivityOptions {
+	return &FetchFileActivityLocalActivityOptions{}
+}
+
+// Build initializes a workflow.Context with appropriate LocalActivityOptions values derived from schema defaults and any user-defined overrides
+func (o *FetchFileActivityLocalActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
+	opts := o.options
+	if v := o.retryPolicy; v != nil {
+		opts.RetryPolicy = v
+	} else if opts.RetryPolicy == nil {
+		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 5000000000, BackoffCoefficient: 2.0, MaximumAttempts: int32(3)}
+	}
+	if v := o.scheduleToCloseTimeout; v != nil {
+		opts.ScheduleToCloseTimeout = *v
+	}
+	if v := o.startToCloseTimeout; v != nil {
+		opts.StartToCloseTimeout = *v
+	} else if opts.StartToCloseTimeout == 0 {
+		opts.StartToCloseTimeout = 600000000000 // 10 minutes
+	}
+	return workflow.WithLocalActivityOptions(ctx, opts), nil
+}
+
+// Local specifies a custom cloud.v1.workflow.AgentCommandService.FetchFileActivity implementation
+func (o *FetchFileActivityLocalActivityOptions) Local(fn func(context.Context, *common.File) error) *FetchFileActivityLocalActivityOptions {
+	o.fn = fn
+	return o
+}
+
+// WithLocalActivityOptions specifies an initial LocalActivityOptions value to which defaults will be applied
+func (o *FetchFileActivityLocalActivityOptions) WithLocalActivityOptions(options workflow.LocalActivityOptions) *FetchFileActivityLocalActivityOptions {
+	o.options = options
+	return o
+}
+
+// WithDataConverter registers a DataConverter for the (local) activity
+func (o *FetchFileActivityLocalActivityOptions) WithDataConverter(dc converter.DataConverter) *FetchFileActivityLocalActivityOptions {
+	o.dc = dc
+	return o
+}
+
+// WithRetryPolicy sets the RetryPolicy value
+func (o *FetchFileActivityLocalActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *FetchFileActivityLocalActivityOptions {
+	o.retryPolicy = policy
+	return o
+}
+
+// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
+func (o *FetchFileActivityLocalActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *FetchFileActivityLocalActivityOptions {
+	o.scheduleToCloseTimeout = &d
+	return o
+}
+
+// WithStartToCloseTimeout sets the StartToCloseTimeout value
+func (o *FetchFileActivityLocalActivityOptions) WithStartToCloseTimeout(d time.Duration) *FetchFileActivityLocalActivityOptions {
 	o.startToCloseTimeout = &d
 	return o
 }

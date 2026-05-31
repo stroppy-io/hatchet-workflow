@@ -18,7 +18,7 @@ import { file_temporal_v1_temporal } from "../../../temporal/v1/temporal_pb.ts";
  * Describes the file cloud/v1/workflow/agent.proto.
  */
 export const file_cloud_v1_workflow_agent: GenFile = /*@__PURE__*/
-  fileDesc("Ch1jbG91ZC92MS93b3JrZmxvdy9hZ2VudC5wcm90bxIRY2xvdWQudjEud29ya2Zsb3cy9wMKE0FnZW50Q29tbWFuZFNlcnZpY2USbQoZRW5zdXJlQWdlbnRPbmxpbmVBY3Rpdml0eRIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIgksQDHCIDCIQHKgIIPDIRCgIIBREAAAAAAAAAQBoCCDwSUwoRQ3JlYXRlRGlyQWN0aXZpdHkSFC5jbG91ZC52MS5jb21tb24uRGlyGhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IhCSxAMMMgYKAggCIAMiAggeElYKFUNyZWF0ZVRlbXBEaXJBY3Rpdml0eRIZLmNsb3VkLnYxLmNvbW1vbi5EaXIuVGVtcBoULmNsb3VkLnYxLmNvbW1vbi5EaXIiDJLEAwgyAiABIgIIHhJUChFXcml0ZUZpbGVBY3Rpdml0eRIVLmNsb3VkLnYxLmNvbW1vbi5GaWxlGhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IhCSxAMMIgIIHjIGIAMKAggCElkKD0NhbGxDbWRBY3Rpdml0eRIULmNsb3VkLnYxLmNvbW1vbi5DbWQaGy5jbG91ZC52MS5jb21tb24uQ21kLlJlc3VsdCITksQDDyIFCICangEqAgg8MgIgARoTisQDDwoNc3Ryb3BweS1jbG91ZEJGWkRnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS93b3JrZmxvd2IGcHJvdG8z", [file_cloud_v1_common_cmd, file_cloud_v1_common_dir, file_cloud_v1_common_file, file_google_protobuf_empty, file_temporal_v1_temporal]);
+  fileDesc("Ch1jbG91ZC92MS93b3JrZmxvdy9hZ2VudC5wcm90bxIRY2xvdWQudjEud29ya2Zsb3cy2wQKE0FnZW50Q29tbWFuZFNlcnZpY2USbQoZRW5zdXJlQWdlbnRPbmxpbmVBY3Rpdml0eRIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIgksQDHCIDCIQHKgIIPDIRCgIIBREAAAAAAAAAQBoCCDwSUwoRQ3JlYXRlRGlyQWN0aXZpdHkSFC5jbG91ZC52MS5jb21tb24uRGlyGhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IhCSxAMMIgIIHjIGIAMKAggCElYKFUNyZWF0ZVRlbXBEaXJBY3Rpdml0eRIZLmNsb3VkLnYxLmNvbW1vbi5EaXIuVGVtcBoULmNsb3VkLnYxLmNvbW1vbi5EaXIiDJLEAwgiAggeMgIgARJUChFXcml0ZUZpbGVBY3Rpdml0eRIVLmNsb3VkLnYxLmNvbW1vbi5GaWxlGhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IhCSxAMMMgYgAwoCCAIiAggeEmIKEUZldGNoRmlsZUFjdGl2aXR5EhUuY2xvdWQudjEuY29tbW9uLkZpbGUaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiHpLEAxoqAgg8Mg8gAwoCCAURAAAAAAAAAEAiAwjYBBJZCg9DYWxsQ21kQWN0aXZpdHkSFC5jbG91ZC52MS5jb21tb24uQ21kGhsuY2xvdWQudjEuY29tbW9uLkNtZC5SZXN1bHQiE5LEAw8qAgg8MgIgASIFCICangEaE4rEAw8KDXN0cm9wcHktY2xvdWRCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvd29ya2Zsb3diBnByb3RvMw", [file_cloud_v1_common_cmd, file_cloud_v1_common_dir, file_cloud_v1_common_file, file_google_protobuf_empty, file_temporal_v1_temporal]);
 
 /**
  *
@@ -71,6 +71,19 @@ export const AgentCommandService: GenService<{
    * @generated from rpc cloud.v1.workflow.AgentCommandService.WriteFileActivity
    */
   writeFileActivity: {
+    methodKind: "unary";
+    input: typeof FileSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   *
+   * FetchFileActivity downloads a file/binary by reference (URL / S3 minio) to
+   * the agent host at File.info.path and caches it by File.AsRef.checksum (e.g.
+   * the stroppy binary, packages). Idempotent given the checksum => retryable.
+   *
+   * @generated from rpc cloud.v1.workflow.AgentCommandService.FetchFileActivity
+   */
+  fetchFileActivity: {
     methodKind: "unary";
     input: typeof FileSchema;
     output: typeof EmptySchema;

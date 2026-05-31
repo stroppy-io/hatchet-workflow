@@ -44,6 +44,11 @@ var (
 	TestWorkflowIdexpression = expression.MustParseExpression("test-run/${! test_run.id }")
 )
 
+// cloud.v1.workflow.TestService query names
+const (
+	GetRunStateQueryName = "GetRunState"
+)
+
 // TestServiceClient describes a client for a(n) cloud.v1.workflow.TestService worker
 type TestServiceClient interface {
 	// InstallDatabaseWorkflow brings up / provisions the database (child of
@@ -91,6 +96,11 @@ type TestServiceClient interface {
 
 	// TerminateWorkflow an existing workflow execution
 	TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error
+
+	// GetRunState is a Temporal query against a running TestWorkflow returning
+	// the live RunState (overall status + per-stage breakdown) for the run
+	// Overview. Read-only; takes no input.
+	GetRunState(ctx context.Context, workflowID string, runID string) (*RunState, error)
 }
 
 // testServiceClient implements a temporal client for a cloud.v1.workflow.TestService service
@@ -342,6 +352,19 @@ func (c *testServiceClient) CancelWorkflow(ctx context.Context, workflowID strin
 // TerminateWorkflow terminates an existing workflow execution
 func (c *testServiceClient) TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error {
 	return c.client.TerminateWorkflow(ctx, workflowID, runID, reason, details...)
+}
+
+// GetRunState is a Temporal query against a running TestWorkflow returning
+// the live RunState (overall status + per-stage breakdown) for the run
+// Overview. Read-only; takes no input.
+func (c *testServiceClient) GetRunState(ctx context.Context, workflowID string, runID string) (*RunState, error) {
+	var resp RunState
+	if val, err := c.client.QueryWorkflow(ctx, workflowID, runID, GetRunStateQueryName); err != nil {
+		return nil, err
+	} else if err = val.Get(&resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
 }
 
 // InstallDatabaseWorkflowOptions provides configuration for a InstallDatabaseWorkflow workflow operation
@@ -1112,6 +1135,11 @@ type TestWorkflowRun interface {
 
 	// Terminate terminates a workflow in execution, returning an error if applicable
 	Terminate(ctx context.Context, reason string, details ...interface{}) error
+
+	// GetRunState is a Temporal query against a running TestWorkflow returning
+	// the live RunState (overall status + per-stage breakdown) for the run
+	// Overview. Read-only; takes no input.
+	GetRunState(ctx context.Context) (*RunState, error)
 }
 
 // testWorkflowRun provides an internal implementation of a(n) TestWorkflowRunRun
@@ -1152,6 +1180,13 @@ func (r *testWorkflowRun) Get(ctx context.Context) (*TestWorkflowResponse, error
 // Terminate terminates a workflow in execution, returning an error if applicable
 func (r *testWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
+}
+
+// GetRunState is a Temporal query against a running TestWorkflow returning
+// the live RunState (overall status + per-stage breakdown) for the run
+// Overview. Read-only; takes no input.
+func (r *testWorkflowRun) GetRunState(ctx context.Context) (*RunState, error) {
+	return r.client.GetRunState(ctx, r.ID(), "")
 }
 
 // Reference to generated workflow functions
@@ -2090,6 +2125,9 @@ func buildTestWorkflow(ctor func(workflow.Context, *TestWorkflowWorkflowInput) (
 				return nil, err
 			}
 		}
+		if err := workflow.SetQueryHandler(ctx, GetRunStateQueryName, wf.GetRunState); err != nil {
+			return nil, err
+		}
 		return wf.Execute(ctx)
 	}
 }
@@ -2118,6 +2156,11 @@ func (i *TestWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *T
 type TestWorkflowWorkflow interface {
 	// Execute defines the entrypoint to a(n) TestWorkflow workflow
 	Execute(ctx workflow.Context) (*TestWorkflowResponse, error)
+
+	// GetRunState is a Temporal query against a running TestWorkflow returning
+	// the live RunState (overall status + per-stage breakdown) for the run
+	// Overview. Read-only; takes no input.
+	GetRunState() (*RunState, error)
 }
 
 // TestWorkflow runs one full test cycle, deduplicated by a deterministic id
@@ -2512,6 +2555,22 @@ func (c *TestTestServiceClient) TerminateWorkflow(ctx context.Context, workflowI
 	return c.CancelWorkflow(ctx, workflowID, runID)
 }
 
+// GetRunState executes a GetRunState query
+func (c *TestTestServiceClient) GetRunState(ctx context.Context, workflowID string, runID string) (*RunState, error) {
+	val, err := c.env.QueryWorkflow(GetRunStateQueryName)
+	if err != nil {
+		return nil, err
+	} else if !val.HasValue() {
+		return nil, nil
+	} else {
+		var result RunState
+		if err := val.Get(&result); err != nil {
+			return nil, err
+		}
+		return &result, nil
+	}
+}
+
 var _ InstallDatabaseWorkflowRun = &testInstallDatabaseWorkflowRun{}
 
 // testInstallDatabaseWorkflowRun provides convenience methods for interacting with a(n) InstallDatabaseWorkflow workflow in the test environment
@@ -2744,9 +2803,15 @@ func (r *testTestWorkflowRun) Terminate(ctx context.Context, reason string, deta
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
 }
 
+// GetRunState executes a GetRunState query against a test TestWorkflow workflow
+func (r *testTestWorkflowRun) GetRunState(ctx context.Context) (*RunState, error) {
+	return r.client.GetRunState(ctx, r.ID(), r.RunID())
+}
+
 // WithTestServiceSchemeTypes registers all TestService protobuf types with the given scheme
 func WithTestServiceSchemeTypes() scheme.Option {
 	return func(s *scheme.Scheme) {
+		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("RunState"))
 		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("InstallDatabaseWorkflowRequest"))
 		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("InstallDatabaseWorkflowResponse"))
 		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("InstallStroppyWorkflowRequest"))

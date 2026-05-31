@@ -91,7 +91,7 @@ type TestRunService struct {
 var _ api.TestRunServiceServer = (*TestRunService)(nil)
 
 func NewTestRunService(deps TestRunDeps) *TestRunService {
-	return &TestRunService{d: deps}
+	return &TestRunService{UnimplementedTestRunServiceServer: &api.UnimplementedTestRunServiceServer{}, d: deps}
 }
 
 /*

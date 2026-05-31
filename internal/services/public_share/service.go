@@ -51,7 +51,7 @@ type PublicShareService struct {
 var _ api.PublicShareServiceServer = (*PublicShareService)(nil)
 
 func NewPublicShareService(deps PublicShareDeps) *PublicShareService {
-	return &PublicShareService{d: deps}
+	return &PublicShareService{UnimplementedPublicShareServiceServer: &api.UnimplementedPublicShareServiceServer{}, d: deps}
 }
 
 /*

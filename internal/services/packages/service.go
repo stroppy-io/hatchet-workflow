@@ -111,7 +111,7 @@ type PackageService struct {
 var _ api.PackageServiceServer = (*PackageService)(nil)
 
 func NewPackageService(deps PackageDeps) *PackageService {
-	return &PackageService{d: deps}
+	return &PackageService{UnimplementedPackageServiceServer: &api.UnimplementedPackageServiceServer{}, d: deps}
 }
 
 /*

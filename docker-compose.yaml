@@ -137,6 +137,112 @@ services:
       YC_CLOUD_ID: ${YC_CLOUD_ID:-}
       YC_FOLDER_ID: ${YC_FOLDER_ID:-}
 
+  # --- Temporal (demo profile) ---
+  temporal:
+    image: temporalio/auto-setup:1.25.2
+    profiles: [demo]
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=stroppy
+      - POSTGRES_PWD=${POSTGRES_PASSWORD:-stroppy}
+      - POSTGRES_SEEDS=postgres
+      - DBNAME=temporal
+      - VISIBILITY_DBNAME=temporal_visibility
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:7233:7233"
+
+  temporal-ui:
+    image: temporalio/ui:2.31.2
+    profiles: [demo]
+    restart: always
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:8233
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:8233:8080"
+
+  # --- MinIO (stroppy binary / artifact store for the demo) ---
+  minio:
+    image: minio/minio:latest
+    profiles: [demo]
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:9000:9000"
+      - "${BIND_ADDR:-0.0.0.0}:9001:9001"
+    volumes:
+      - miniodata:/data
+
+  # --- apt-cacher-ng (transparent .deb cache, hidden behind the server) ---
+  # On the shared network but agents are never told its address: the server's apt
+  # relay (:3142) forwards to it, so an agent's apt goes through the server alone.
+  # Caches http repos (Ubuntu base, PGDG) → identical, fast repeat installs.
+  apt-cacher-ng:
+    image: sameersbn/apt-cacher-ng:3.7.4-20220421
+    profiles: [demo]
+    restart: always
+    volumes:
+      - aptcache:/var/cache/apt-cacher-ng
+
+  # --- Demo control-plane server (docker-provider e2e) ---
+  # Lean image (no SPA). On the compose network for its OWN server-side discovery
+  # (temporal/postgres/apt-cacher by name) and publishes the agent gateway (:8080)
+  # + api gRPC (:8081) on the host. Agent VMs run on per-run bridges and reach the
+  # gateway at the address the server gives them — http://host.docker.internal:8080
+  # (the docker host gateway), exactly like a cloud VM reaches a public endpoint.
+  # Everything an agent needs (Temporal proxy, agent binary, artifacts, apt) is on
+  # that one address.
+  server-demo:
+    profiles: [demo]
+    restart: on-failure
+    build:
+      context: .
+      dockerfile: deployments/docker/demo-server.Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      temporal:
+        condition: service_started
+      apt-cacher-ng:
+        condition: service_started
+    command: ["serve", "--addr=:8080"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - binaries:/var/lib/stroppy-cache
+    environment:
+      TEMPORAL_HOSTPORT: temporal:7233
+      TEMPORAL_NAMESPACE: default
+      DATABASE_URL: postgres://stroppy:${POSTGRES_PASSWORD:-stroppy}@postgres:5432/stroppy?sslmode=disable
+      AGENT_IMAGE: stroppy-agent:latest
+      # The single address agent VMs are told (admin-set in prod; here the docker
+      # host gateway so per-run-bridge agents reach the published gateway).
+      AGENT_SERVER_ADDR: http://host.docker.internal:8080
+      AGENT_GATEWAY_ADDR: :8080
+      GRPC_ADDR: :8081
+      STROPPY_BINARY_CACHE_DIR: /var/lib/stroppy-cache/binaries
+      # Real stroppy 5.1.2 release; the gateway caches it and serves it at
+      # /artifacts/stroppy so agents run an actual ~1-minute tpcc load.
+      STROPPY_UPSTREAM: https://github.com/stroppy-io/stroppy/releases/download/v5.1.2/stroppy_linux_amd64.tar.gz
+      # apt: the gateway forwards agent apt traffic (on the same :8080) to this
+      # hidden apt-cacher-ng. Agents never address it directly.
+      STROPPY_APT_CACHE_BACKEND: "apt-cacher-ng:3142"
+      STROPPY_KEEP_AGENTS: "${STROPPY_KEEP_AGENTS:-}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:8080:8080"
+      - "${BIND_ADDR:-0.0.0.0}:8081:8081"
+
   # --- Caddy reverse proxy (prod only) ---
   caddy:
     image: caddy:2-alpine
@@ -150,6 +256,8 @@ services:
 
 volumes:
   pgdata:
+  aptcache:
+  miniodata:
   vmdata:
   vldata:
   tfstate:

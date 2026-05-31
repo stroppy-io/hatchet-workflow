@@ -54,7 +54,7 @@ type SystemSettingsService struct {
 var _ api.SystemSettingsServiceServer = (*SystemSettingsService)(nil)
 
 func NewSystemSettingsService(deps SystemSettingsDeps) *SystemSettingsService {
-	return &SystemSettingsService{d: deps}
+	return &SystemSettingsService{UnimplementedSystemSettingsServiceServer: &api.UnimplementedSystemSettingsServiceServer{}, d: deps}
 }
 
 /*

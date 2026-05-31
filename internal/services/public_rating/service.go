@@ -58,7 +58,7 @@ type PublicRatingService struct {
 var _ api.PublicRatingServiceServer = (*PublicRatingService)(nil)
 
 func NewPublicRatingService(deps PublicRatingDeps) *PublicRatingService {
-	return &PublicRatingService{d: deps}
+	return &PublicRatingService{UnimplementedPublicRatingServiceServer: &api.UnimplementedPublicRatingServiceServer{}, d: deps}
 }
 
 /*

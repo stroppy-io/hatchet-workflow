@@ -60,7 +60,7 @@ type DatabasePresetService struct {
 var _ api.DatabasePresetServiceServer = (*DatabasePresetService)(nil)
 
 func NewDatabasePresetService(deps Deps) *DatabasePresetService {
-	return &DatabasePresetService{d: deps}
+	return &DatabasePresetService{UnimplementedDatabasePresetServiceServer: &api.UnimplementedDatabasePresetServiceServer{}, d: deps}
 }
 
 /*
@@ -76,7 +76,7 @@ type WorkloadPresetService struct {
 var _ api.WorkloadPresetServiceServer = (*WorkloadPresetService)(nil)
 
 func NewWorkloadPresetService(deps Deps) *WorkloadPresetService {
-	return &WorkloadPresetService{d: deps}
+	return &WorkloadPresetService{UnimplementedWorkloadPresetServiceServer: &api.UnimplementedWorkloadPresetServiceServer{}, d: deps}
 }
 
 /*
@@ -92,7 +92,7 @@ type TestPresetService struct {
 var _ api.TestPresetServiceServer = (*TestPresetService)(nil)
 
 func NewTestPresetService(deps Deps) *TestPresetService {
-	return &TestPresetService{d: deps}
+	return &TestPresetService{UnimplementedTestPresetServiceServer: &api.UnimplementedTestPresetServiceServer{}, d: deps}
 }
 
 /*
