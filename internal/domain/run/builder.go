@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/auth"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 )
 
-// Deps holds external dependencies injected into DAG tasks.
+// Deps holds the dependencies the recipe + infra phases need. Client is the
+// command SINK (the BuildRecipe plan collector); Deployer/Settings drive the
+// real deploy/teardown side effects.
 type Deps struct {
-	Client   agent.Client
+	Client   CommandSink
 	Deployer *agent.DockerDeployer
 	State    *State
-	// ServerAddr is the server callback address for agents.
+	// ServerAddr is the agent-facing server address (gateway).
 	ServerAddr string
 	// Settings provides cloud configuration (Yandex credentials, binary URL, etc.).
 	Settings *types.ServerSettings
@@ -31,235 +32,195 @@ type Deps struct {
 	TenantID string
 }
 
-// Build constructs a dag.Graph and dag.Registry from a RunConfig.
-func Build(cfg types.RunConfig, deps Deps) (*dag.Graph, *dag.Registry, error) {
-	b := &builder{
-		g:    dag.New(),
-		reg:  dag.NewRegistry(),
-		cfg:  cfg,
-		deps: deps,
+// task is one recipe/infra step. Replaces the old dag.Task now that there is no
+// graph executor — steps run sequentially. noopTask (managed-YDB placeholder)
+// lives in task_patroni.go.
+type task interface {
+	Execute(nc *NodeContext) error
+}
+
+// Deploy provisions the network + machines for real (docker containers /
+// terraform VMs) and populates deps.State with the resulting targets, endpoint,
+// and teardown handles.
+func Deploy(nc *NodeContext, cfg types.RunConfig, deps Deps) error {
+	net := &networkTask{cfg: cfg.Network, provider: cfg.Provider, deployer: deps.Deployer, state: deps.State, runID: cfg.ID}
+	if err := net.Execute(nc); err != nil {
+		return fmt.Errorf("deploy: network: %w", err)
 	}
-	if err := b.build(); err != nil {
-		return nil, nil, err
+	machines := &machinesTask{runCfg: cfg, state: deps.State, deployer: deps.Deployer, serverAddr: deps.ServerAddr, settings: deps.Settings, jwtIssuer: deps.JWTIssuer, tenantID: deps.TenantID}
+	if err := machines.Execute(nc); err != nil {
+		return fmt.Errorf("deploy: machines: %w", err)
 	}
-	return b.g, b.reg, nil
+	return nil
+}
+
+// Teardown destroys the run's infrastructure from the State handles.
+func Teardown(nc *NodeContext, cfg types.RunConfig, deps Deps) error {
+	td := &teardownTask{provider: cfg.Provider, state: deps.State, deployer: deps.Deployer, settings: deps.Settings}
+	return td.Execute(nc)
+}
+
+// BuildRecipe runs the command-building tasks sequentially in dependency order,
+// collecting their per-target command sequences into deps.Client (the plan
+// sink). No agent I/O happens here — the collected commands are executed later
+// as Temporal activities. deps.State must already hold the deployed targets +
+// endpoint (from Deploy).
+func BuildRecipe(nc *NodeContext, cfg types.RunConfig, deps Deps) error {
+	b := &builder{cfg: cfg, deps: deps}
+	return b.recipe(nc)
 }
 
 type builder struct {
-	g    *dag.Graph
-	reg  *dag.Registry
 	cfg  types.RunConfig
 	deps Deps
-	// runStroppyDeps collects all phases that must complete before run_stroppy.
-	runStroppyDeps []string
 }
 
-func (b *builder) ph(p types.Phase) string { return string(p) }
-
-func (b *builder) add(phase string, deps []string, task dag.Task) {
-	// g.Add only fails on duplicate IDs; phases are unique constants, so error is impossible.
-	_ = b.g.Add(&dag.Node{ID: phase, Type: phase, Deps: deps, Task: task})
-	b.reg.Register(phase, func() dag.Task { return task })
+func (b *builder) run(nc *NodeContext, label string, t task) error {
+	if err := t.Execute(nc); err != nil {
+		return fmt.Errorf("recipe: %s: %w", label, err)
+	}
+	return nil
 }
 
-func (b *builder) addMustComplete(phase string, deps []string, task dag.Task) {
-	_ = b.g.Add(&dag.Node{ID: phase, Type: phase, Deps: deps, Task: task, MustComplete: true})
-	b.reg.Register(phase, func() dag.Task { return task })
-}
+func (b *builder) recipe(nc *NodeContext) error {
+	d := b.deps
+	cfg := b.cfg
 
-func (b *builder) addAlwaysRun(phase string, deps []string, task dag.Task) {
-	_ = b.g.Add(&dag.Node{ID: phase, Type: phase, Deps: deps, Task: task, AlwaysRun: true})
-	b.reg.Register(phase, func() dag.Task { return task })
-}
-
-func (b *builder) build() error {
-	// Bring-your-own database: skip everything that would have managed the
-	// database (install/configure/monitor/proxy/etcd/patroni/pgbouncer/ydb-init).
-	// We still need a network + a stroppy runner machine, then stroppy points
-	// straight at the user-supplied endpoint.
-	if b.cfg.ExternalDB != nil {
-		return b.buildExternalDB()
+	// Bring-your-own database: only bootstrap + install/run stroppy against the
+	// supplied endpoint (already set on State by the caller for external runs).
+	if cfg.ExternalDB != nil {
+		host, port := splitHostPort(cfg.ExternalDB.Endpoint)
+		if host == "" {
+			return fmt.Errorf("external_db.endpoint must be host:port")
+		}
+		d.State.SetDBEndpoint(host, port)
+		if err := b.run(nc, "bootstrap", &bootstrapTask{client: d.Client, state: d.State}); err != nil {
+			return err
+		}
+		if err := b.run(nc, "install_stroppy", &stroppyInstallTask{client: d.Client, state: d.State, stroppy: cfg.Stroppy}); err != nil {
+			return err
+		}
+		return b.run(nc, "run_stroppy", b.stroppyRunTask())
 	}
 
-	// --- infrastructure (MustComplete — must finish before teardown on cancel) ---
-	b.addMustComplete(b.ph(types.PhaseNetwork), nil,
-		&networkTask{cfg: b.cfg.Network, provider: b.cfg.Provider, deployer: b.deps.Deployer, state: b.deps.State, runID: b.cfg.ID})
+	// 1. bootstrap base packages on every machine.
+	if err := b.run(nc, "bootstrap", &bootstrapTask{client: d.Client, state: d.State}); err != nil {
+		return err
+	}
 
-	b.addMustComplete(b.ph(types.PhaseMachines), []string{b.ph(types.PhaseNetwork)},
-		&machinesTask{runCfg: b.cfg, state: b.deps.State, deployer: b.deps.Deployer, serverAddr: b.deps.ServerAddr, settings: b.deps.Settings, jwtIssuer: b.deps.JWTIssuer, tenantID: b.deps.TenantID})
-
-	// --- bootstrap base packages on every machine; all installs depend on it ---
-	b.add(b.ph(types.PhaseBootstrap), []string{b.ph(types.PhaseMachines)},
-		&bootstrapTask{client: b.deps.Client, state: b.deps.State})
-
-	// afterMachines is the dependency every agent-touching install phase uses:
-	// machines provisioned AND base packages installed.
-	afterMachines := []string{b.ph(types.PhaseBootstrap)}
-
-	// --- etcd (if Postgres HA with etcd) ---
-	configDBDeps := []string{b.ph(types.PhaseInstallDB)}
+	// 2. etcd (postgres HA with etcd) — before DB configure.
 	if b.needsEtcd() {
-		b.addEtcd(afterMachines)
-		configDBDeps = append(configDBDeps, b.ph(types.PhaseConfigureEtcd))
+		if err := b.run(nc, "install_etcd", &etcdInstallTask{client: d.Client, state: d.State}); err != nil {
+			return err
+		}
+		if err := b.run(nc, "configure_etcd", &etcdConfigTask{client: d.Client, state: d.State}); err != nil {
+			return err
+		}
 	}
 
-	// --- install DB ---
+	// 3. install DB.
 	installDB, configDB, err := b.dbTasks()
 	if err != nil {
-		return fmt.Errorf("run: %w", err)
+		return err
 	}
-	b.add(b.ph(types.PhaseInstallDB), afterMachines, installDB)
+	if err := b.run(nc, "install_db", installDB); err != nil {
+		return err
+	}
 
-	// --- Patroni (if Postgres HA with Patroni) ---
+	// 4. configure DB (Patroni replaces the plain configure phase entirely).
 	if b.needsPatroni() {
-		// When Patroni is enabled, it manages postgresql.conf and cluster bootstrap.
-		// Patroni REPLACES the PG configure phase entirely.
-		b.add(b.ph(types.PhaseInstallPatroni), afterMachines,
-			&patroniInstallTask{client: b.deps.Client, state: b.deps.State})
-		patroniConfigDeps := append(append([]string{}, configDBDeps...), b.ph(types.PhaseInstallPatroni))
-		b.add(b.ph(types.PhaseConfigurePatroni), patroniConfigDeps,
-			&patroniConfigTask{
-				client:    b.deps.Client,
-				state:     b.deps.State,
-				version:   b.cfg.Database.Version,
-				topology:  b.cfg.Database.Postgres,
-				overrides: b.cfg.Database.RenderedConfigOverrides,
-			})
-		// PhaseConfigureDB becomes a no-op that depends on Patroni configure.
-		b.add(b.ph(types.PhaseConfigureDB), []string{b.ph(types.PhaseConfigurePatroni)}, &noopTask{})
+		if err := b.run(nc, "install_patroni", &patroniInstallTask{client: d.Client, state: d.State}); err != nil {
+			return err
+		}
+		if err := b.run(nc, "configure_patroni", &patroniConfigTask{client: d.Client, state: d.State, version: cfg.Database.Version, topology: cfg.Database.Postgres, overrides: cfg.Database.RenderedConfigOverrides}); err != nil {
+			return err
+		}
 	} else {
-		b.add(b.ph(types.PhaseConfigureDB), configDBDeps, configDB)
+		if err := b.run(nc, "configure_db", configDB); err != nil {
+			return err
+		}
 	}
 
-	// --- monitoring ---
-	// Install exporters on ALL machines (node_exporter everywhere, DB exporter on DB nodes, vmagent on monitor).
-	b.add(b.ph(types.PhaseInstallMonitor), afterMachines,
-		&monitorInstallTask{client: b.deps.Client, state: b.deps.State, dbKind: b.cfg.Database.Kind, serverAddr: b.deps.ServerAddr})
-	// Configure/start daemons after install AND after DB is configured (so postgres_exporter can connect).
-	monitorConfigDeps := []string{b.ph(types.PhaseInstallMonitor), b.ph(types.PhaseConfigureDB)}
+	// 5. YDB cluster init + dynamic node start (must run before monitor config).
 	if b.needsYDBInit() {
-		monitorConfigDeps = append(monitorConfigDeps, b.ph(types.PhaseStartYDBDatabase))
+		if err := b.run(nc, "init_ydb_cluster", &ydbInitTask{client: d.Client, state: d.State, topology: cfg.Database.YDB}); err != nil {
+			return err
+		}
+		if err := b.run(nc, "start_ydb_database", &ydbStartDBTask{client: d.Client, state: d.State, topology: cfg.Database.YDB, overrides: cfg.Database.RenderedConfigOverrides, pgwirePort: ydbPgwirePort(cfg)}); err != nil {
+			return err
+		}
 	}
-	if b.needsCockroachInit() {
-		monitorConfigDeps = append(monitorConfigDeps, b.ph(types.PhaseInitCockroach))
-	}
-	b.add(b.ph(types.PhaseConfigureMonitor), monitorConfigDeps,
-		&monitorConfigTask{client: b.deps.Client, state: b.deps.State, monitor: b.cfg.Monitor, runID: b.cfg.ID, dbKind: b.cfg.Database.Kind, ydbCombined: isYDBCombined(b.cfg.Database), monitoringURL: b.deps.MonitoringURL, monitoringToken: b.deps.MonitoringToken, accountID: b.deps.AccountID})
 
-	// --- pgbouncer (if Postgres HA with pgbouncer, colocated on DB nodes) ---
+	// 6. CockroachDB cluster init (one-shot on the first node).
+	if b.needsCockroachInit() {
+		if err := b.run(nc, "init_cockroach", &cockroachInitTask{client: d.Client, state: d.State, topology: cfg.Database.Cockroach}); err != nil {
+			return err
+		}
+	}
+
+	// 7. monitoring install + configure (config after DB is up so exporters connect).
+	if err := b.run(nc, "install_monitor", &monitorInstallTask{client: d.Client, state: d.State, dbKind: cfg.Database.Kind, serverAddr: d.ServerAddr}); err != nil {
+		return err
+	}
+	if err := b.run(nc, "configure_monitor", &monitorConfigTask{client: d.Client, state: d.State, monitor: cfg.Monitor, runID: cfg.ID, dbKind: cfg.Database.Kind, ydbCombined: isYDBCombined(cfg.Database), monitoringURL: d.MonitoringURL, monitoringToken: d.MonitoringToken, accountID: d.AccountID}); err != nil {
+		return err
+	}
+
+	// 8. pgbouncer (postgres HA, colocated on DB nodes).
 	if b.needsPgBouncer() {
-		b.addPgBouncer(afterMachines)
+		if err := b.run(nc, "install_pgbouncer", &pgBouncerInstallTask{client: d.Client, state: d.State}); err != nil {
+			return err
+		}
+		if err := b.run(nc, "configure_pgbouncer", &pgBouncerConfigTask{client: d.Client, state: d.State, topology: cfg.Database.Postgres, overrides: cfg.Database.RenderedConfigOverrides}); err != nil {
+			return err
+		}
 	}
 
-	// --- proxy (HAProxy for PG/Picodata, ProxySQL for MySQL) ---
+	// 9. proxy (HAProxy for PG/Picodata/YDB, ProxySQL for MySQL/MariaDB).
 	if b.needsProxy() {
-		b.addProxy(afterMachines)
+		if err := b.run(nc, "install_proxy", &proxyInstallTask{client: d.Client, state: d.State, dbKind: cfg.Database.Kind}); err != nil {
+			return err
+		}
+		mysqlT := cfg.Database.MySQL
+		if cfg.Database.Kind == types.DatabaseMariaDB {
+			mysqlT = cfg.Database.MariaDB
+		}
+		if err := b.run(nc, "configure_proxy", &proxyConfigTask{client: d.Client, state: d.State, dbKind: cfg.Database.Kind,
+			pgTopology: cfg.Database.Postgres, mysqlTopology: mysqlT, picoTopology: cfg.Database.Picodata, ydbTopology: cfg.Database.YDB,
+			overrides: cfg.Database.RenderedConfigOverrides}); err != nil {
+			return err
+		}
 	}
 
-	// --- YDB cluster init + database start ---
-	if b.needsYDBInit() {
-		b.addYDBPhases()
+	// 10. stroppy install + run.
+	if err := b.run(nc, "install_stroppy", &stroppyInstallTask{client: d.Client, state: d.State, stroppy: cfg.Stroppy}); err != nil {
+		return err
 	}
-
-	// --- CockroachDB cluster init ---
-	if b.needsCockroachInit() {
-		b.addCockroachInitPhase()
-	}
-
-	// --- stroppy ---
-	b.add(b.ph(types.PhaseInstallStroppy), afterMachines,
-		&stroppyInstallTask{client: b.deps.Client, state: b.deps.State, stroppy: b.cfg.Stroppy})
-
-	// --- run stroppy (depends on all configure phases + install stroppy) ---
-	b.runStroppyDeps = append(b.runStroppyDeps,
-		b.ph(types.PhaseConfigureDB),
-		b.ph(types.PhaseConfigureMonitor),
-		b.ph(types.PhaseInstallStroppy),
-	)
-	stroppySettings := types.DefaultStroppySettings()
-	// Metric prefix = runID so each run's metrics are namespaced (e.g. run_xxx_vus, run_xxx_iterations).
-	// Replace dashes with underscores — PromQL metric names don't support dashes.
-	stroppySettings.OTLPMetricPrefix = strings.ReplaceAll(b.cfg.ID, "-", "_") + "_"
-	if b.deps.MonitoringURL != "" {
-		stroppySettings.SetFromMonitoringURL(b.deps.MonitoringURL, b.deps.MonitoringToken, b.deps.AccountID)
-	}
-	b.add(b.ph(types.PhaseRunStroppy), b.runStroppyDeps,
-		&stroppyRunTask{
-			client:          b.deps.Client,
-			state:           b.deps.State,
-			stroppy:         b.cfg.Stroppy,
-			stroppySettings: stroppySettings,
-			dbKind:          b.cfg.Database.Kind,
-			dbCfg:           b.cfg.Database,
-			runID:           b.cfg.ID,
-			monitoringURL:   b.deps.MonitoringURL,
-			monitoringToken: b.deps.MonitoringToken,
-			accountID:       b.deps.AccountID,
-		})
-
-	// --- teardown (always runs, even if upstream fails) ---
-	b.addAlwaysRun(b.ph(types.PhaseTeardown), []string{b.ph(types.PhaseRunStroppy)},
-		&teardownTask{provider: b.cfg.Provider, state: b.deps.State, deployer: b.deps.Deployer, settings: b.deps.Settings})
-
-	if err := b.g.Validate(); err != nil {
-		return fmt.Errorf("run: invalid graph: %w", err)
-	}
-	return nil
+	return b.run(nc, "run_stroppy", b.stroppyRunTask())
 }
 
-// buildExternalDB assembles a minimal DAG when the user supplies an external
-// database endpoint. Skips install/configure/monitor/proxy/etcd/etc — the
-// agent only needs to spin up a stroppy runner and aim it at the supplied
-// endpoint. Pre-seeds State.DBEndpoint so stroppy doesn't try to look it up
-// from a missing configure_db phase.
-func (b *builder) buildExternalDB() error {
-	host, port := splitHostPort(b.cfg.ExternalDB.Endpoint)
-	if host == "" {
-		return fmt.Errorf("external_db.endpoint must be host:port")
+func (b *builder) stroppyRunTask() *stroppyRunTask {
+	cfg := b.cfg
+	d := b.deps
+	ss := types.DefaultStroppySettings()
+	// Metric prefix = runID so each run's metrics are namespaced. PromQL metric
+	// names don't support dashes.
+	ss.OTLPMetricPrefix = strings.ReplaceAll(cfg.ID, "-", "_") + "_"
+	if d.MonitoringURL != "" {
+		ss.SetFromMonitoringURL(d.MonitoringURL, d.MonitoringToken, d.AccountID)
 	}
-	b.deps.State.SetDBEndpoint(host, port)
-
-	afterMachines := []string{b.ph(types.PhaseMachines)}
-
-	b.addMustComplete(b.ph(types.PhaseNetwork), nil,
-		&networkTask{cfg: b.cfg.Network, provider: b.cfg.Provider, deployer: b.deps.Deployer, state: b.deps.State, runID: b.cfg.ID})
-
-	b.addMustComplete(b.ph(types.PhaseMachines), []string{b.ph(types.PhaseNetwork)},
-		&machinesTask{runCfg: b.cfg, state: b.deps.State, deployer: b.deps.Deployer, serverAddr: b.deps.ServerAddr, settings: b.deps.Settings, jwtIssuer: b.deps.JWTIssuer, tenantID: b.deps.TenantID})
-
-	b.add(b.ph(types.PhaseBootstrap), []string{b.ph(types.PhaseMachines)},
-		&bootstrapTask{client: b.deps.Client, state: b.deps.State})
-	afterMachines = []string{b.ph(types.PhaseBootstrap)}
-
-	b.add(b.ph(types.PhaseInstallStroppy), afterMachines,
-		&stroppyInstallTask{client: b.deps.Client, state: b.deps.State, stroppy: b.cfg.Stroppy})
-
-	stroppySettings := types.DefaultStroppySettings()
-	stroppySettings.OTLPMetricPrefix = strings.ReplaceAll(b.cfg.ID, "-", "_") + "_"
-	if b.deps.MonitoringURL != "" {
-		stroppySettings.SetFromMonitoringURL(b.deps.MonitoringURL, b.deps.MonitoringToken, b.deps.AccountID)
+	return &stroppyRunTask{
+		client:          d.Client,
+		state:           d.State,
+		stroppy:         cfg.Stroppy,
+		stroppySettings: ss,
+		dbKind:          cfg.Database.Kind,
+		dbCfg:           cfg.Database,
+		runID:           cfg.ID,
+		monitoringURL:   d.MonitoringURL,
+		monitoringToken: d.MonitoringToken,
+		accountID:       d.AccountID,
 	}
-	b.add(b.ph(types.PhaseRunStroppy), []string{b.ph(types.PhaseInstallStroppy)},
-		&stroppyRunTask{
-			client:          b.deps.Client,
-			state:           b.deps.State,
-			stroppy:         b.cfg.Stroppy,
-			stroppySettings: stroppySettings,
-			dbKind:          b.cfg.Database.Kind,
-			dbCfg:           b.cfg.Database,
-			runID:           b.cfg.ID,
-			monitoringURL:   b.deps.MonitoringURL,
-			monitoringToken: b.deps.MonitoringToken,
-			accountID:       b.deps.AccountID,
-		})
-
-	b.addAlwaysRun(b.ph(types.PhaseTeardown), []string{b.ph(types.PhaseRunStroppy)},
-		&teardownTask{provider: b.cfg.Provider, state: b.deps.State, deployer: b.deps.Deployer, settings: b.deps.Settings})
-
-	if err := b.g.Validate(); err != nil {
-		return fmt.Errorf("run: invalid graph: %w", err)
-	}
-	return nil
 }
 
 func splitHostPort(addr string) (string, int) {
@@ -279,27 +240,18 @@ func splitHostPort(addr string) (string, int) {
 	return host, port
 }
 
-// --- conditional phase helpers ---
+// --- conditional helpers ---
 
 func (b *builder) needsEtcd() bool {
-	if b.cfg.Database.Kind == types.DatabasePostgres && b.cfg.Database.Postgres != nil {
-		return b.cfg.Database.Postgres.Etcd
-	}
-	return false
+	return b.cfg.Database.Kind == types.DatabasePostgres && b.cfg.Database.Postgres != nil && b.cfg.Database.Postgres.Etcd
 }
 
 func (b *builder) needsPatroni() bool {
-	if b.cfg.Database.Kind == types.DatabasePostgres && b.cfg.Database.Postgres != nil {
-		return b.cfg.Database.Postgres.Patroni
-	}
-	return false
+	return b.cfg.Database.Kind == types.DatabasePostgres && b.cfg.Database.Postgres != nil && b.cfg.Database.Postgres.Patroni
 }
 
 func (b *builder) needsPgBouncer() bool {
-	if b.cfg.Database.Kind == types.DatabasePostgres && b.cfg.Database.Postgres != nil {
-		return b.cfg.Database.Postgres.PgBouncer
-	}
-	return false
+	return b.cfg.Database.Kind == types.DatabasePostgres && b.cfg.Database.Postgres != nil && b.cfg.Database.Postgres.PgBouncer
 }
 
 func (b *builder) needsProxy() bool {
@@ -319,10 +271,8 @@ func (b *builder) needsProxy() bool {
 	return false
 }
 
-// ydbPgwirePort returns the port ydbd should expose its postgres-wire
-// surface on, or 0 when the run isn't using the ydb-pgwire protocol. Both
-// the storage and database tasks consult it so the static and dynamic
-// daemons enable pgwire consistently.
+// ydbPgwirePort returns the port ydbd exposes its postgres-wire surface on, or 0
+// when the run isn't using the ydb-pgwire protocol.
 func ydbPgwirePort(cfg types.RunConfig) int {
 	if cfg.Stroppy.Protocol != types.ProtocolYDBPgwire {
 		return 0
@@ -334,104 +284,39 @@ func (b *builder) needsYDBInit() bool {
 	return b.cfg.Database.Kind == types.DatabaseYDB && b.cfg.Database.YDB != nil
 }
 
-func (b *builder) addYDBPhases() {
-	b.add(b.ph(types.PhaseInitYDBCluster), []string{b.ph(types.PhaseConfigureDB)},
-		&ydbInitTask{client: b.deps.Client, state: b.deps.State, topology: b.cfg.Database.YDB})
-	b.add(b.ph(types.PhaseStartYDBDatabase), []string{b.ph(types.PhaseInitYDBCluster)},
-		&ydbStartDBTask{
-			client:     b.deps.Client,
-			state:      b.deps.State,
-			topology:   b.cfg.Database.YDB,
-			overrides:  b.cfg.Database.RenderedConfigOverrides,
-			pgwirePort: ydbPgwirePort(b.cfg),
-		})
-	b.runStroppyDeps = append(b.runStroppyDeps, b.ph(types.PhaseStartYDBDatabase))
-}
-
 func (b *builder) needsCockroachInit() bool {
 	return b.cfg.Database.Kind == types.DatabaseCockroach && b.cfg.Database.Cockroach != nil
 }
 
-func (b *builder) addCockroachInitPhase() {
-	// `cockroach init` is the one-shot bootstrap step that turns a set of
-	// running nodes into a working cluster. Runs once on the first node
-	// after every node has finished cockroachConfigTask.
-	b.add(b.ph(types.PhaseInitCockroach), []string{b.ph(types.PhaseConfigureDB)},
-		&cockroachInitTask{client: b.deps.Client, state: b.deps.State, topology: b.cfg.Database.Cockroach})
-	b.runStroppyDeps = append(b.runStroppyDeps, b.ph(types.PhaseInitCockroach))
-}
-
-func (b *builder) addEtcd(afterMachines []string) {
-	b.add(b.ph(types.PhaseInstallEtcd), afterMachines,
-		&etcdInstallTask{client: b.deps.Client, state: b.deps.State})
-	b.add(b.ph(types.PhaseConfigureEtcd), []string{b.ph(types.PhaseInstallEtcd)},
-		&etcdConfigTask{client: b.deps.Client, state: b.deps.State})
-}
-
-func (b *builder) addPgBouncer(afterMachines []string) {
-	// PgBouncer depends on DB being configured (needs PG running).
-	b.add(b.ph(types.PhaseInstallPgBouncer), afterMachines,
-		&pgBouncerInstallTask{client: b.deps.Client, state: b.deps.State})
-	b.add(b.ph(types.PhaseConfigurePgBouncer), []string{b.ph(types.PhaseInstallPgBouncer), b.ph(types.PhaseConfigureDB)},
-		&pgBouncerConfigTask{client: b.deps.Client, state: b.deps.State, topology: b.cfg.Database.Postgres, overrides: b.cfg.Database.RenderedConfigOverrides})
-	b.runStroppyDeps = append(b.runStroppyDeps, b.ph(types.PhaseConfigurePgBouncer))
-}
-
-func (b *builder) addProxy(afterMachines []string) {
-	// Proxy depends on DB being configured (needs backends list).
-	b.add(b.ph(types.PhaseInstallProxy), afterMachines,
-		&proxyInstallTask{client: b.deps.Client, state: b.deps.State, dbKind: b.cfg.Database.Kind})
-	// MySQL and MariaDB share the same proxy topology shape; route MariaDB's
-	// pointer through mysqlTopology so the proxy task doesn't need a third
-	// kind branch.
-	mysqlT := b.cfg.Database.MySQL
-	if b.cfg.Database.Kind == types.DatabaseMariaDB {
-		mysqlT = b.cfg.Database.MariaDB
-	}
-	b.add(b.ph(types.PhaseConfigureProxy), []string{b.ph(types.PhaseInstallProxy), b.ph(types.PhaseConfigureDB)},
-		&proxyConfigTask{client: b.deps.Client, state: b.deps.State, dbKind: b.cfg.Database.Kind,
-			pgTopology: b.cfg.Database.Postgres, mysqlTopology: mysqlT, picoTopology: b.cfg.Database.Picodata, ydbTopology: b.cfg.Database.YDB,
-			overrides: b.cfg.Database.RenderedConfigOverrides})
-	b.runStroppyDeps = append(b.runStroppyDeps, b.ph(types.PhaseConfigureProxy))
-}
-
-// --- DB task factory ---
-
-func (b *builder) dbTasks() (install dag.Task, config dag.Task, err error) {
+// dbTasks returns the install + configure tasks for the configured engine.
+func (b *builder) dbTasks() (install task, config task, err error) {
 	db := b.cfg.Database
-	pkg := b.cfg.ResolvedPackage // set by runStart before building DAG
+	pkg := b.cfg.ResolvedPackage
+	d := b.deps
 	switch db.Kind {
 	case types.DatabasePostgres:
-		return &pgInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.Postgres, pkg: pkg},
-			&pgConfigTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.Postgres, overrides: db.RenderedConfigOverrides}, nil
+		return &pgInstallTask{client: d.Client, state: d.State, version: db.Version, topology: db.Postgres, pkg: pkg},
+			&pgConfigTask{client: d.Client, state: d.State, version: db.Version, topology: db.Postgres, overrides: db.RenderedConfigOverrides}, nil
 	case types.DatabaseMySQL:
-		return &mysqlInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.MySQL, pkg: pkg},
-			&mysqlConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.MySQL, overrides: db.RenderedConfigOverrides}, nil
+		return &mysqlInstallTask{client: d.Client, state: d.State, version: db.Version, topology: db.MySQL, pkg: pkg},
+			&mysqlConfigTask{client: d.Client, state: d.State, topology: db.MySQL, overrides: db.RenderedConfigOverrides}, nil
 	case types.DatabaseMariaDB:
-		// MariaDB rides the MySQL install / config tasks — same wire
-		// protocol, same my.cnf format. The Package selected by the user
-		// has DbKind=mariadb and apt_packages=[mariadb-server …], so
-		// installPackage on the agent installs the right binary.
-		return &mysqlInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.MariaDB, pkg: pkg},
-			&mysqlConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.MariaDB, overrides: db.RenderedConfigOverrides}, nil
+		return &mysqlInstallTask{client: d.Client, state: d.State, version: db.Version, topology: db.MariaDB, pkg: pkg},
+			&mysqlConfigTask{client: d.Client, state: d.State, topology: db.MariaDB, overrides: db.RenderedConfigOverrides}, nil
 	case types.DatabasePicodata:
-		return &picoInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.Picodata, pkg: pkg},
-			&picoConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.Picodata, overrides: db.RenderedConfigOverrides}, nil
+		return &picoInstallTask{client: d.Client, state: d.State, version: db.Version, topology: db.Picodata, pkg: pkg},
+			&picoConfigTask{client: d.Client, state: d.State, topology: db.Picodata, overrides: db.RenderedConfigOverrides}, nil
 	case types.DatabaseYDB:
-		return &ydbInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version, topology: db.YDB, pkg: pkg},
-			&ydbConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.YDB, overrides: db.RenderedConfigOverrides, pgwirePort: ydbPgwirePort(b.cfg)}, nil
+		return &ydbInstallTask{client: d.Client, state: d.State, version: db.Version, topology: db.YDB, pkg: pkg},
+			&ydbConfigTask{client: d.Client, state: d.State, topology: db.YDB, overrides: db.RenderedConfigOverrides, pgwirePort: ydbPgwirePort(b.cfg)}, nil
 	case types.DatabaseYDBManaged:
-		// Managed YDB: YC manages the database. Install / configure phases
-		// are noops — the only thing we provision in the run is the client
-		// VM (handled by the machines phase, which routes to the
-		// yandex_managed_ydb terraform module when Kind is YDBManaged).
 		return &noopTask{}, &noopTask{}, nil
 	case types.DatabaseCockroach:
 		if db.Cockroach == nil {
 			return nil, nil, fmt.Errorf("cockroach topology missing for database.kind=cockroach")
 		}
-		return &cockroachInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version},
-			&cockroachConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.Cockroach}, nil
+		return &cockroachInstallTask{client: d.Client, state: d.State, version: db.Version},
+			&cockroachConfigTask{client: d.Client, state: d.State, topology: db.Cockroach}, nil
 	default:
 		return nil, nil, fmt.Errorf("unsupported database kind %q", db.Kind)
 	}

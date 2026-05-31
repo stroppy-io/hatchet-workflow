@@ -1,0 +1,233 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/common/entity.proto";
+import "cloud/v1/domain/suite.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/permission.proto";
+import "cloud/v1/models/suite_wizard.proto";
+import "schemapb/schema.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    suite_wizard.proto is the SUITE wizard API. Same big-schema patch-loop as the
+    test wizard: the whole suite form is ONE schema (models.SuiteWizardDraft.form).
+    Start, then repeatedly PatchSuiteWizard(Filled), then Finish -> domain.SuiteRun.
+    The suite picks ONE provider_type for every cell; matrix expansion and
+    workload<->db compatibility live in the schema + server, and machines are
+    DERIVED per cell at bake (role->VM expander + provider overlay), not entered.
+
+    Every request is tenant-scoped (tenant_id, the default auth tenant_field) and
+    gated by RESOURCE_WIZARD.
+ */
+
+/*
+    StartSuiteWizardRequest opens a new suite wizard draft.
+ */
+message StartSuiteWizardRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        name is the optional human label for the draft.
+     */
+    string name = 2 [(validate.rules).string = {max_len: 255}];
+    /*
+        suite_id optionally seeds the draft from an existing suite definition.
+     */
+    string suite_id = 3 [(validate.rules).string = {max_len: 64}];
+}
+/*
+    StartSuiteWizardResponse returns the freshly created draft.
+ */
+message StartSuiteWizardResponse {
+    /*
+        draft is the new wizard draft (carrying the initial form schema).
+     */
+    models.SuiteWizardDraftRecord draft = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    GetSuiteWizardDraftRequest fetches a single wizard draft by id.
+ */
+message GetSuiteWizardDraftRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        draft_id is the wizard draft identifier to fetch.
+     */
+    string draft_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+/*
+    GetSuiteWizardDraftResponse returns the requested wizard draft.
+ */
+message GetSuiteWizardDraftResponse {
+    /*
+        draft is the requested wizard draft.
+     */
+    models.SuiteWizardDraftRecord draft = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    ListSuiteWizardDraftsRequest lists wizard drafts with filtering, sorting and
+    pagination.
+ */
+message ListSuiteWizardDraftsRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        filter holds the shared Entity-level filters (author, time windows, ...).
+     */
+    common.EntityFilter filter = 2;
+    /*
+        sort selects the result ordering.
+     */
+    common.EntitySort sort = 3;
+    /*
+        page carries pagination (page size + token).
+     */
+    common.Page page = 4;
+}
+/*
+    ListSuiteWizardDraftsResponse returns a page of wizard drafts.
+ */
+message ListSuiteWizardDraftsResponse {
+    /*
+        drafts is the matching page of wizard drafts.
+     */
+    repeated models.SuiteWizardDraftRecord drafts = 1;
+    /*
+        next_page_token fetches the following page; empty when at the end.
+     */
+    string next_page_token = 2;
+}
+
+/*
+    PatchSuiteWizard submits the edited form. The server validates it, prunes the
+    matrix to compatible cells, expands the preview, recomputes readiness and
+    returns the full new draft (form may carry a re-emitted schema when the
+    selected presets changed the active matrix).
+ */
+message PatchSuiteWizardRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        draft_id is the wizard draft being edited.
+     */
+    string draft_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        form carries the edited form values (Filled = values + schema ref).
+     */
+    schemapb.Filled form = 3 [(validate.rules).message.required = true];
+}
+/*
+    PatchSuiteWizardResponse returns the recomputed wizard draft.
+ */
+message PatchSuiteWizardResponse {
+    /*
+        draft is the full new draft after validation/expansion/readiness recompute.
+     */
+    models.SuiteWizardDraftRecord draft = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    DeleteSuiteWizardDraftRequest deletes a wizard draft by id.
+ */
+message DeleteSuiteWizardDraftRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        draft_id is the wizard draft identifier to delete.
+     */
+    string draft_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+/*
+    DeleteSuiteWizardDraftResponse is empty; deletion success is signalled by a
+    non-error reply.
+ */
+message DeleteSuiteWizardDraftResponse {}
+
+/*
+    FinishSuiteWizard bakes the draft into a domain.SuiteRun: every compatible cell
+    becomes a fully baked TestRun (preset params + the suite's provider settings +
+    derived topology). Rejected unless draft.ready.
+ */
+message FinishSuiteWizardRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        draft_id is the wizard draft to bake.
+     */
+    string draft_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+/*
+    FinishSuiteWizardResponse returns the baked suite run spec.
+ */
+message FinishSuiteWizardResponse {
+    /*
+        suite_run is the baked domain.SuiteRun (every compatible cell as a baked
+        TestRun).
+     */
+    domain.SuiteRun suite_run = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    SuiteWizardService drives the suite wizard: start, fetch/list, patch-loop and
+    finish into a baked SuiteRun.
+ */
+service SuiteWizardService {
+    /*
+        StartSuiteWizard opens a new draft. Not idempotent.
+     */
+    rpc StartSuiteWizard (StartSuiteWizardRequest) returns (StartSuiteWizardResponse) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_CREATE}]};
+    }
+    /*
+        GetSuiteWizardDraft fetches a single draft by id. Read-only.
+     */
+    rpc GetSuiteWizardDraft (GetSuiteWizardDraftRequest) returns (GetSuiteWizardDraftResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_READ}]};
+    }
+    /*
+        ListSuiteWizardDrafts lists drafts with filtering and pagination. Read-only.
+     */
+    rpc ListSuiteWizardDrafts (ListSuiteWizardDraftsRequest) returns (ListSuiteWizardDraftsResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_LIST}]};
+    }
+    /*
+        PatchSuiteWizard is idempotent: re-submitting the same form converges.
+     */
+    rpc PatchSuiteWizard (PatchSuiteWizardRequest) returns (PatchSuiteWizardResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_UPDATE}]};
+    }
+    /*
+        DeleteSuiteWizardDraft is idempotent: deleting an absent draft is a no-op.
+     */
+    rpc DeleteSuiteWizardDraft (DeleteSuiteWizardDraftRequest) returns (DeleteSuiteWizardDraftResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_DELETE}]};
+    }
+    /*
+        FinishSuiteWizard mints a SuiteRun from the draft. Not idempotent.
+     */
+    rpc FinishSuiteWizard (FinishSuiteWizardRequest) returns (FinishSuiteWizardResponse) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_UPDATE}]};
+    }
+}

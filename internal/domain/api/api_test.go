@@ -55,10 +55,10 @@ func postgresSingleConfig() types.RunConfig {
 	}
 }
 
-func TestNew_InMemory(t *testing.T) {
+func TestNew_App(t *testing.T) {
 	app := newTestApp(t)
-	if app.storage == nil {
-		t.Fatal("expected non-nil storage")
+	if app == nil {
+		t.Fatal("expected non-nil app")
 	}
 }
 
@@ -95,21 +95,24 @@ func TestDryRun_ReturnsJSON(t *testing.T) {
 		t.Fatal("DryRun() returned invalid JSON")
 	}
 
-	// Verify it contains expected node IDs.
+	// Verify it decodes as a graph object.
 	var graph map[string]any
 	if err := json.Unmarshal(data, &graph); err != nil {
 		t.Fatalf("unmarshal graph: %v", err)
 	}
 }
 
-func TestDryRun_UnsupportedKindErrors(t *testing.T) {
+func TestDryRun_ReturnsResolvedConfig(t *testing.T) {
 	app := newTestApp(t)
 	cfg := postgresSingleConfig()
-	cfg.Database.Kind = "cockroach"
-	cfg.Database.Postgres = nil
 
-	_, _, err := app.DryRun(cfg)
-	if err == nil {
-		t.Fatal("expected error for unsupported kind, got nil")
+	// DryRun no longer builds/validates a DAG (execution lives in Temporal);
+	// it returns the resolved config so the review step can preview it.
+	_, resolved, err := app.DryRun(cfg)
+	if err != nil {
+		t.Fatalf("DryRun() error: %v", err)
+	}
+	if resolved == nil || resolved.ID != cfg.ID {
+		t.Fatalf("DryRun() resolved config mismatch: %+v", resolved)
 	}
 }

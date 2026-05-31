@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package cloud.v1.deployment;
+
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment";
+
+/*
+    machine.proto describes the hardware shape of a single compute node in a
+    deployment topology. It is a provider-agnostic capacity description (cores,
+    RAM, disks) used to size instances and to compare requested vs available
+    resources, independent of any specific cloud backend.
+ */
+
+/*
+    MachineInfo describes the hardware resources of one compute node: CPU,
+    memory and attached disks. It captures the desired/observed shape of a
+    machine without binding to any provider-specific instance type.
+ */
+message MachineInfo {
+    /*
+        cores is the number of CPU cores on the machine. Must be positive.
+     */
+    uint32 cores = 1 [(validate.rules).uint32.gt = 0];
+    /*
+        memory_gb is the total RAM in gigabytes. Must be positive.
+     */
+    uint64 memory_gb = 2 [(validate.rules).uint64.gt = 0];
+    /*
+        disk_gb is the size of the boot/root disk in gigabytes. Must be positive.
+     */
+    uint64 disk_gb = 3 [(validate.rules).uint64.gt = 0];
+    /*
+        data_disks_gb lists the sizes in gigabytes of additional data disks
+        attached to the machine, one entry per extra disk.
+     */
+    repeated uint64 data_disks_gb = 4 [(validate.rules).repeated.max_items = 64];
+}

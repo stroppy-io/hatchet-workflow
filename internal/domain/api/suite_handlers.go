@@ -214,10 +214,8 @@ func (s *Server) getSuite(w http.ResponseWriter, r *http.Request) {
 			resp.Items = append(resp.Items, itemToResp(it))
 		}
 	}
-	if s.scheduler != nil {
-		if jobs, err := s.scheduler.Jobs().ListBySuite(r.Context(), tenantID, id); err == nil {
-			resp.Batches = summariseBatches(jobs)
-		}
+	if jobs, err := postgres.NewJobStorage(s.pool).ListBySuite(r.Context(), tenantID, id); err == nil {
+		resp.Batches = s.summariseBatches(r.Context(), jobs)
 	}
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -555,10 +553,6 @@ func (s *Server) reorderSuiteItems(w http.ResponseWriter, r *http.Request) {
 func (s *Server) launchSuite(w http.ResponseWriter, r *http.Request) {
 	tenantID := auth.TenantID(r.Context())
 	id := chi.URLParam(r, "id")
-	if s.scheduler == nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "scheduler not initialised"})
-		return
-	}
 	batchID, count, skipped, err := s.runSuiteOnce(r.Context(), tenantID, id, "manual", nil)
 	if err != nil {
 		writeJSON(w, errStatusOr(err, http.StatusInternalServerError), map[string]string{"error": err.Error()})
@@ -610,26 +604,14 @@ func (s *Server) runSuiteOnce(
 		return "", 0, nil, &enqueueError{code: http.StatusBadRequest, err: errors.New("suite has no enabled workloads")}
 	}
 
-	// concurrent_policy=forbid: skip if any prior batch row is still alive.
-	if su.ConcurrentPolicy == "forbid" && su.LastBatchID != "" {
-		prev, _ := s.scheduler.Jobs().ListByBatch(ctx, tenantID, su.LastBatchID)
-		for _, j := range prev {
-			if j.State == postgres.JobStateQueued ||
-				j.State == postgres.JobStateClaimed ||
-				j.State == postgres.JobStateRunning {
-				return "", 0, nil, &enqueueError{
-					code: http.StatusConflict,
-					err:  errors.New("previous batch still running (concurrent_policy=forbid)"),
-				}
-			}
-		}
-	}
+	// concurrent_policy=forbid was enforced by the durable scheduler's batch
+	// state. With execution in Temporal, concurrency is best-effort: we launch
+	// every matrix cell and rely on Temporal + run-id dedup to serialize.
 
 	policy := su.Policy
 	if policy.Mode == "" {
 		policy = postgres.DefaultSuitePolicy()
 	}
-	policyJSON, _ := json.Marshal(policy)
 
 	// Pre-load every preset once; the cartesian below would otherwise hit
 	// the DB N*M times.
@@ -739,7 +721,12 @@ func (s *Server) runSuiteOnce(
 
 			cost := run.EstimateRunCost(cfg)
 			cfgJSON, _ := json.Marshal(&cfg)
-			if err := s.scheduler.Jobs().Enqueue(ctx, postgres.JobRun{
+			// Record a job_runs row purely for suite batch tracking (batch /
+			// item / preset associations the suite UI groups by). Execution
+			// itself is driven by Temporal via s.app.Start below, not by a
+			// scheduler claiming this row.
+			jobs := postgres.NewJobStorage(s.pool)
+			if err := jobs.Enqueue(ctx, postgres.JobRun{
 				RunID:       cfg.ID,
 				TenantID:    tenantID,
 				BatchID:     batchID,
@@ -748,7 +735,6 @@ func (s *Server) runSuiteOnce(
 				DBPresetID:  pid,
 				Position:    pos,
 				Config:      cfgJSON,
-				SuitePolicy: policyJSON,
 				Trigger:     trigger,
 				FireAt:      fireAt,
 				Cost: postgres.JobCost{
@@ -756,7 +742,24 @@ func (s *Server) runSuiteOnce(
 					VMCount: cost.VMCount, RunsRunning: cost.RunsRunning,
 				},
 			}); err != nil {
-				return "", 0, nil, fmt.Errorf("enqueue cell (%s × %s): %w", pid, it.ID, err)
+				return "", 0, nil, fmt.Errorf("track suite cell (%s × %s): %w", pid, it.ID, err)
+			}
+			// Persist the run metadata record + launch the RunWorkflow.
+			rec := types.RunRecord{
+				ID:          cfg.ID,
+				TenantID:    tenantID,
+				Name:        cfg.Name,
+				Description: cfg.Description,
+				SuiteID:     suiteID,
+				Provider:    string(cfg.Provider),
+				CreatedAt:   time.Now().UTC(),
+				Cfg:         cfg,
+			}
+			if err := s.runs.Create(ctx, rec); err != nil {
+				return "", 0, nil, fmt.Errorf("persist suite cell (%s × %s): %w", pid, it.ID, err)
+			}
+			if err := s.app.Start(ctx, tenantID, cfg); err != nil {
+				return "", 0, nil, fmt.Errorf("launch suite cell (%s × %s): %w", pid, it.ID, err)
 			}
 			enqueued++
 			pos++
@@ -764,12 +767,10 @@ func (s *Server) runSuiteOnce(
 	}
 	if enqueued > 0 {
 		// Stamp suite.last_fire_at + last_batch_id for both manual and cron
-		// launches. Cron path will overwrite via ReleaseCronLease; manual
-		// path used to leave these blank, hiding "last batch" info on the
-		// suites list until a cron fire happened.
+		// launches so the suites list shows "last batch" info.
 		if err := st.MarkLaunched(ctx, tenantID, suiteID, batchID); err != nil {
-			// Non-fatal: the runs themselves are already enqueued. Just log
-			// via the caller's path by surfacing a soft warning into skipped.
+			// Non-fatal: the runs themselves are already launched. Surface a
+			// soft warning into skipped.
 			skipped = append(skipped, fmt.Sprintf("mark-launched: %s", err.Error()))
 		}
 	}
@@ -809,21 +810,16 @@ func (s *Server) cancelBatch(w http.ResponseWriter, r *http.Request) {
 	tenantID := auth.TenantID(r.Context())
 	id := chi.URLParam(r, "id")
 	batchID := chi.URLParam(r, "batchID")
-	if s.scheduler == nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "scheduler not initialised"})
-		return
-	}
-	rows, err := s.scheduler.Jobs().ListByBatch(r.Context(), tenantID, batchID)
+	rows, err := postgres.NewJobStorage(s.pool).ListByBatch(r.Context(), tenantID, batchID)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
 	cancelled := 0
 	for _, j := range rows {
-		if j.State == postgres.JobStateFinished || j.State == postgres.JobStateFailed || j.State == postgres.JobStateCancelled {
-			continue
-		}
-		if ok, _ := s.scheduler.CancelRun(r.Context(), tenantID, j.RunID); ok {
+		// Best-effort: request cancellation of each run's Temporal workflow.
+		if err := s.app.Cancel(r.Context(), j.RunID); err == nil {
+			s.cancelledRuns[j.RunID] = true
 			cancelled++
 		}
 	}
@@ -854,11 +850,7 @@ func (s *Server) crossCompareBatch(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "pivot must be 'item' or 'preset'"})
 		return
 	}
-	if s.scheduler == nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "scheduler not initialised"})
-		return
-	}
-	jobs, err := s.scheduler.Jobs().ListByBatch(r.Context(), tenantID, batchID)
+	jobs, err := postgres.NewJobStorage(s.pool).ListByBatch(r.Context(), tenantID, batchID)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
@@ -926,8 +918,13 @@ func (s *Server) crossCompareBatch(w http.ResponseWriter, r *http.Request) {
 			groups[key] = g
 			order = append(order, key)
 		}
+		// Live run state from Temporal (best-effort).
+		memberState := "pending"
+		if st, qerr := s.app.Status(r.Context(), j.RunID); qerr == nil && st != nil {
+			memberState = statusString(st.GetStatus())
+		}
 		g.Members = append(g.Members, member{
-			RunID: j.RunID, State: string(j.State),
+			RunID: j.RunID, State: memberState,
 			DBPresetID:  j.DBPresetID,
 			PresetName:  presetName[j.DBPresetID],
 			SuiteItemID: j.SuiteItemID,
@@ -949,7 +946,10 @@ func (s *Server) crossCompareBatch(w http.ResponseWriter, r *http.Request) {
 
 // --- shared helpers ---
 
-func summariseBatches(jobs []postgres.JobRun) []suiteBatchSummary {
+// summariseBatches groups job_runs rows (kept only for batch/item/preset
+// associations) into per-batch summaries. Run state is resolved live from
+// Temporal per run, since the durable scheduler no longer maintains it.
+func (s *Server) summariseBatches(ctx context.Context, jobs []postgres.JobRun) []suiteBatchSummary {
 	if len(jobs) == 0 {
 		return nil
 	}
@@ -970,23 +970,31 @@ func summariseBatches(jobs []postgres.JobRun) []suiteBatchSummary {
 			idx[j.BatchID] = b
 			order = append(order, j.BatchID)
 		}
+		// Live state (best-effort) from Temporal.
+		state := "pending"
+		if st, qerr := s.app.Status(ctx, j.RunID); qerr == nil && st != nil {
+			state = statusString(st.GetStatus())
+		}
+		if s.cancelledRuns[j.RunID] {
+			state = "cancelled"
+		}
 		b.Total++
-		switch j.State {
-		case postgres.JobStateFinished:
+		switch state {
+		case "done":
 			b.Finished++
-		case postgres.JobStateFailed:
+		case "failed":
 			b.Failed++
-		case postgres.JobStateCancelled:
+		case "cancelled":
 			b.Cancelled++
-		case postgres.JobStateRunning, postgres.JobStateClaimed:
+		case "running":
 			b.Running++
-		case postgres.JobStateQueued:
+		default:
 			b.Queued++
 		}
 		b.Runs = append(b.Runs, suiteRunBrief{
 			RunID: j.RunID, SuiteItemID: j.SuiteItemID,
 			DBPresetID: j.DBPresetID,
-			Position:   j.Position, State: string(j.State),
+			Position:   j.Position, State: state,
 		})
 	}
 	out := make([]suiteBatchSummary, 0, len(order))

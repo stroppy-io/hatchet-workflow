@@ -3,7 +3,6 @@ package run
 import (
 	"fmt"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/dbconfig"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
@@ -12,14 +11,14 @@ import (
 // pgInstallTask installs the postgres package on every DB node. The agent only
 // runs the opaque apt script the server composes here.
 type pgInstallTask struct {
-	client   agent.Client
+	client   CommandSink
 	state    *State
 	version  string
 	topology *types.PostgresTopology
 	pkg      *types.Package
 }
 
-func (t *pgInstallTask) Execute(nc *dag.NodeContext) error {
+func (t *pgInstallTask) Execute(nc *NodeContext) error {
 	targets := t.state.DBTargets()
 	if t.pkg == nil {
 		return fmt.Errorf("install postgres: no package provided")
@@ -33,14 +32,14 @@ func (t *pgInstallTask) Execute(nc *dag.NodeContext) error {
 // cluster. All rendering happens here; the agent just writes files and runs
 // the start/replication scripts.
 type pgConfigTask struct {
-	client    agent.Client
+	client    CommandSink
 	state     *State
 	version   string
 	topology  *types.PostgresTopology
 	overrides map[string]string // keys: "postgresql.conf:<role>", "pg_hba.conf"
 }
 
-func (t *pgConfigTask) Execute(nc *dag.NodeContext) error {
+func (t *pgConfigTask) Execute(nc *NodeContext) error {
 	targets := t.state.DBTargets()
 	nc.Log().Info("configuring postgres cluster")
 

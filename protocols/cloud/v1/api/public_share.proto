@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/models/share.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    public_share.proto is the PUBLIC, UNAUTHENTICATED resolve side of run shares —
+    this is the "from outside the system" surface. No tenant, no account: just the
+    unguessable token from the share URL. It serves ONLY the stored, limited
+    snapshot (never the live system, never the spec/secrets/logs/shell). The server
+    returns a not-found/gone error if the token is unknown, revoked, or expired.
+ */
+
+/*
+    GetSharedRunRequest resolves one share by its public token.
+ */
+message GetSharedRunRequest {
+    /*
+        token is the unguessable token from the share URL.
+     */
+    string token = 1 [(validate.rules).string = {min_len: 16, max_len: 128}];
+}
+/*
+    GetSharedRunResponse returns the limited public snapshot for the token.
+ */
+message GetSharedRunResponse {
+    /*
+        snapshot is the limited public snapshot (test or suite run) + when it was
+        captured.
+     */
+    models.ShareRecord.Snapshot snapshot = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    PublicShareService is the public, unauthenticated resolve side of run shares.
+ */
+service PublicShareService {
+    /*
+        GetSharedRun resolves a share token to its limited snapshot. PUBLIC: no
+        bearer token. Returns gone if revoked/expired.
+     */
+    rpc GetSharedRun (GetSharedRunRequest) returns (GetSharedRunResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {public: true};
+    }
+}

@@ -1,0 +1,146 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/common/entity.proto";
+import "cloud/v1/common/status.proto";
+import "cloud/v1/common/trigger.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/domain/test.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+/*
+    TestRunRecord is a persisted test execution (one table). The baked spec is the
+    input to TestWorkflow; status tracks the run lifecycle; suite_run_id links it to
+    a parent SuiteRunRecord when the run is part of a suite (empty = standalone).
+
+    `spec` is a baked Struct and is NOT queryable. For the runs table (filter / sort
+    / display of db, workload, preset, topology, progress, duration, ...) the server
+    DENORMALIZES those into flat columns in `summary`, filled at Start and updated
+    as the run progresses.
+
+    Runtime observations (logs/metrics) are keyed by the run id directly (no dag
+    id) — see monitor/logs.proto, monitor/metrics.proto.
+ */
+message TestRunRecord {
+    /*
+        entity is the storage envelope (id, tenant_id, name, timings).
+     */
+    common.Entity entity = 1 [(validate.rules).message.required = true];
+    /*
+        spec is the baked run spec — the TestWorkflow input (for details/relaunch,
+        NOT for queries).
+     */
+    domain.TestRun spec = 2 [(validate.rules).message.required = true];
+    /*
+        status is the run lifecycle status
+        (PENDING/RUNNING/COMPLETED/FAILED/CANCELLING/CANCELLED/...).
+     */
+    common.Status status = 3;
+    /*
+        suite_run_id is the owning suite run; empty for a standalone run.
+     */
+    string suite_run_id = 4 [(validate.rules).string.max_len = 64];
+    /*
+        trigger is the root cause of the run: MANUAL / CRON / API. For a suite
+        child it carries the PARENT suite run's trigger (e.g. CRON), while suite
+        membership is shown by suite_run_id. So "cron + from suite" = trigger=CRON
+        && suite_run_id set.
+     */
+    common.Trigger trigger = 7;
+
+    /*
+        in_tenant_rating is the tenant-leaderboard membership, set at creation
+        (any path: manual/wizard/suite/cron). Defaults TRUE: the run counts in
+        this tenant's leaderboard.
+     */
+    bool in_tenant_rating = 8;
+    /*
+        in_global_rating is the global-leaderboard membership, set at creation.
+        Defaults FALSE: publishing to the cross-system / public leaderboard is
+        explicit opt-in. Both global views (public + system-wide private) key off
+        this flag.
+     */
+    bool in_global_rating = 9;
+
+    /*
+        Field 5 is retired: the live pipeline is NOT stored here — it is runtime,
+        fetched via TestRunOverviewService (monitor.PipelineView).
+     */
+    reserved 5;
+
+    /*
+        summary holds denormalized, queryable facets for the runs table (incl.
+        progress_pct, which the backend derives from the live pipeline /
+        Temporal).
+     */
+    Summary summary = 6;
+
+    /*
+        Summary is the flat, indexed projection of the run used by the table:
+        every field is filterable and sortable without touching the baked spec.
+     */
+    message Summary {
+        /*
+            db_kind is the database engine the run targets (database facet).
+         */
+        domain.Database.Kind db_kind = 1;
+        /*
+            db_preset_id is the id of the database preset used.
+         */
+        string db_preset_id = 2 [(validate.rules).string.max_len = 64];
+        /*
+            db_preset_name is the display name of the database preset used.
+         */
+        string db_preset_name = 3 [(validate.rules).string.max_len = 255];
+        /*
+            workload_preset_id is the id of the workload preset used (workload
+            facet).
+         */
+        string workload_preset_id = 4 [(validate.rules).string.max_len = 64];
+        /*
+            workload_name is the display name of the workload.
+         */
+        string workload_name = 5 [(validate.rules).string.max_len = 255];
+        /*
+            stroppy_version is the stroppy build that ran the workload.
+         */
+        string stroppy_version = 6 [(validate.rules).string.max_len = 64];
+        /*
+            topology_label is the human-readable topology summary (topology
+            facet), e.g. "PG HA x3".
+         */
+        string topology_label = 7 [(validate.rules).string.max_len = 128];
+        /*
+            node_count is the number of nodes in the topology.
+         */
+        uint32 node_count = 8;
+        /*
+            provider is the deployment provider the run ran on (provider facet).
+         */
+        deployment.Provider provider = 9;
+        /*
+            progress_pct (0..100) is the run progress (runtime facet), derived on
+            the backend from the pipeline / Temporal.
+         */
+        uint32 progress_pct = 10 [(validate.rules).uint32.lte = 100];
+        /*
+            started_at is when the run started.
+         */
+        google.protobuf.Timestamp started_at = 11;
+        /*
+            finished_at is when the run finished (unset while running).
+         */
+        google.protobuf.Timestamp finished_at = 12;
+        /*
+            duration is finished_at - started_at, or the live elapsed time while
+            running.
+         */
+        google.protobuf.Duration duration = 13;
+    }
+}

@@ -6,7 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 )
@@ -64,7 +63,7 @@ func startDaemonCmd(label, name, bin string, args []string, env map[string]strin
 
 // sendSeq dispatches commands to a single target in order, stopping at the
 // first error. Each Send blocks until the agent reports completion.
-func sendSeq(nc *dag.NodeContext, client agent.Client, target agent.Target, cmds ...agent.Command) error {
+func sendSeq(nc *NodeContext, client CommandSink, target agent.Target, cmds ...agent.Command) error {
 	for _, c := range cmds {
 		if len(cmds) == 0 {
 			continue
@@ -78,7 +77,7 @@ func sendSeq(nc *dag.NodeContext, client agent.Client, target agent.Target, cmds
 
 // sendSeqAll dispatches the same command sequence to every target in parallel,
 // returning the first error (fail-fast, cancelling the rest).
-func sendSeqAll(nc *dag.NodeContext, client agent.Client, targets []agent.Target, cmds ...agent.Command) error {
+func sendSeqAll(nc *NodeContext, client CommandSink, targets []agent.Target, cmds ...agent.Command) error {
 	if len(targets) == 0 {
 		return nil
 	}
@@ -114,7 +113,7 @@ func sendSeqAll(nc *dag.NodeContext, client agent.Client, targets []agent.Target
 // sendPerTarget dispatches a DIFFERENT command sequence per target in parallel,
 // returning the first error (fail-fast). build(target) returns the commands for
 // that target; an empty/nil result skips the target.
-func sendPerTarget(nc *dag.NodeContext, client agent.Client, targets []agent.Target, build func(agent.Target) []agent.Command) error {
+func sendPerTarget(nc *NodeContext, client CommandSink, targets []agent.Target, build func(agent.Target) []agent.Command) error {
 	if len(targets) == 0 {
 		return nil
 	}
@@ -176,11 +175,11 @@ func bootstrapCmd() agent.Command {
 // All install phases depend on it, so apt/curl primitives downstream can assume
 // curl/wget/etc. are present.
 type bootstrapTask struct {
-	client agent.Client
+	client CommandSink
 	state  *State
 }
 
-func (t *bootstrapTask) Execute(nc *dag.NodeContext) error {
+func (t *bootstrapTask) Execute(nc *NodeContext) error {
 	targets := t.state.AllTargets()
 	nc.Log().Info("bootstrapping base packages on all machines")
 	return sendSeqAll(nc, t.client, targets, bootstrapCmd())

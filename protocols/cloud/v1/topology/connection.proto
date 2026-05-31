@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package cloud.v1.topology;
+
+import "cloud/v1/common/ip.proto";
+import "validate/validate.proto";
+import "cloud/v1/common/tags.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology";
+
+/*
+    connection.proto defines a directed edge between two topology components. A
+    Connection captures who talks to whom (from -> to), the semantic kind of the
+    relationship, the wire protocol and traffic mode, and the port involved.
+ */
+
+/*
+    Connection is a directed edge between two components in the topology.
+ */
+message Connection {
+    /*
+        Kind is the semantic relationship an edge represents.
+     */
+    enum Kind {
+        /*
+            KIND_UNSPECIFIED is the unset zero value.
+         */
+        KIND_UNSPECIFIED = 0;
+        /*
+            KIND_FLOW is a normal data/application flow.
+         */
+        KIND_FLOW = 1;
+        /*
+            KIND_PROXY is traffic routed through a proxy/pooler.
+         */
+        KIND_PROXY = 2;
+        /*
+            KIND_REPLICATION is database replication traffic.
+         */
+        KIND_REPLICATION = 3;
+        /*
+            KIND_COORDINATION is cluster coordination/control traffic.
+         */
+        KIND_COORDINATION = 4;
+        /*
+            KIND_OBSERVATION is monitoring/metrics observation traffic.
+         */
+        KIND_OBSERVATION = 5;
+        /*
+            KIND_SUPPORT is auxiliary/supporting traffic.
+         */
+        KIND_SUPPORT = 6;
+    }
+    /* Protocol is the wire format on an edge. */
+    enum Protocol {
+        /*
+            PROTOCOL_UNSPECIFIED is the unset zero value.
+         */
+        PROTOCOL_UNSPECIFIED = 0;
+        /* TCP is plain TCP/IP traffic. */
+        PROTOCOL_TCP = 1;
+        /* GRPC is gRPC. */
+        PROTOCOL_GRPC = 2;
+        /* HTTP is HTTP/HTTPS. */
+        PROTOCOL_HTTP = 3;
+        /* REPLICATION is a DB-engine replication stream. */
+        PROTOCOL_REPLICATION = 4;
+        /* POOL is a pooled connection (pgbouncer, proxysql). */
+        PROTOCOL_POOL = 5;
+        /* CONTROL is a control-plane protocol (DCS, raft). */
+        PROTOCOL_CONTROL = 6;
+        /* OTLP is a metrics/logs/traces scrape. */
+        PROTOCOL_OTLP = 7;
+        /* PROTOCOL_PROMETHEUS_REMOTE_WRITE is a Prometheus remote-write metrics push. */
+        PROTOCOL_PROMETHEUS_REMOTE_WRITE = 8;
+        /* PROTOCOL_PROMETHEUS_PULL is a Prometheus pull/scrape of metrics. */
+        PROTOCOL_PROMETHEUS_PULL = 9;
+    }
+    /* Mode is the traffic character on an edge. */
+    enum Mode {
+        /*
+            MODE_UNSPECIFIED is the unset zero value.
+         */
+        MODE_UNSPECIFIED = 0;
+        /* REQUEST is request/response. */
+        MODE_REQUEST = 1;
+        /* STREAM is a continuous one-way data stream. */
+        MODE_STREAM = 2;
+        /* SYNC is bidirectional state synchronization. */
+        MODE_SYNC = 3;
+        /* HEARTBEAT is periodic liveness/keepalive. */
+        MODE_HEARTBEAT = 4;
+        /* BROADCAST is one-to-many fanout. */
+        MODE_BROADCAST = 5;
+    }
+    /*
+        from is the source component id of the edge.
+     */
+    string from = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        to is the destination component id of the edge.
+     */
+    string to = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        kind is the semantic relationship of the edge.
+     */
+    Kind kind = 3 [(validate.rules).enum.defined_only = true];
+    /*
+        protocol is the wire protocol carried on the edge.
+     */
+    Protocol protocol = 4 [(validate.rules).enum.defined_only = true];
+    /*
+        mode is the traffic character of the edge.
+     */
+    Mode mode = 5 [(validate.rules).enum.defined_only = true];
+    /*
+        port is the destination port, when applicable (<= 65535).
+     */
+    optional uint32 port = 6 [(validate.rules).uint32.lte = 65535];
+    /*
+        inner is true when both endpoints live on one physical VM.
+     */
+    bool inner = 8;
+    /*
+        tags are arbitrary key/value labels attached to the connection.
+     */
+    common.Tags tags = 7;
+}
+
+

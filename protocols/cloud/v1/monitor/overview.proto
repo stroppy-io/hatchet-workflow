@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package cloud.v1.monitor;
+
+import "cloud/v1/common/status.proto";
+import "cloud/v1/domain/worker.proto";
+import "cloud/v1/monitor/logs.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "schemapb/schema.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor";
+
+/*
+    overview.proto holds the live, runtime projection of a test run for the
+    Overview tab. It is NOT a stored entity — the server derives it from the
+    Temporal workflow state (and the agent registry) and pushes it live. Keyed by
+    run id (plain string).
+
+    The key cross-cutting contract: every PipelineNode carries a LogRef so the UI
+    can jump from any point in the pipeline straight to that node's logs.
+ */
+
+/* Overview is the whole Overview-tab payload for one run (snapshot or stream tick). */
+message Overview {
+    /* run_id is the run this overview projects (plain string, runtime-pure). */
+    string run_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /* status is the overall run status. */
+    common.Status status = 2;
+    /* started_at is when the run began executing. */
+    google.protobuf.Timestamp started_at = 3;
+    /* finished_at is when the run reached a terminal state; unset while running. */
+    google.protobuf.Timestamp finished_at = 4;
+    /* duration is the elapsed run time (so far, or final once finished). */
+    google.protobuf.Duration duration = 5;
+    /* progress_pct is the aggregate progress (0..100), derived from the pipeline. */
+    uint32 progress_pct = 6 [(validate.rules).uint32.lte = 100];
+
+    /* pipeline is the live pipeline view (display tree + per-node runtime + log handles). */
+    PipelineView pipeline = 7;
+    /* workers are the agents/workers participating in the run and their live state. */
+    repeated WorkerInfo workers = 8;
+    /* timeline is the Temporal-derived activity feed (what is happening / happened). */
+    repeated Event timeline = 9;
+}
+
+/*
+    PipelineView is the ONE pipeline representation: the live run pipeline derived
+    from Temporal. There is no separate static "blueprint" — for a not-yet-started
+    run the server emits the same tree with PENDING statuses.
+ */
+message PipelineView {
+    /* roots are the top-level pipeline stages; each may nest children. */
+    repeated PipelineNode roots = 1;
+}
+
+/* PipelineNode is one stage in the live pipeline. */
+message PipelineNode {
+    /*
+        node_execution_id is the stable id of this stage (its Temporal execution).
+        It is the node's identity AND the key the LogRef/log filter uses to slice
+        this stage's logs.
+     */
+    string node_execution_id = 10 [(validate.rules).string.max_len = 128];
+    /* name is the human label of the stage. */
+    string name = 1;
+    /* status is the runtime status of this stage. */
+    common.Status status = 2;
+    /* started_at is when this stage began executing. */
+    google.protobuf.Timestamp started_at = 3;
+    /* finished_at is when this stage reached a terminal state; unset while running. */
+    google.protobuf.Timestamp finished_at = 4;
+    /* duration is the elapsed time of this stage. */
+    google.protobuf.Duration duration = 5;
+    /* worker is which worker ran this stage. */
+    domain.Worker worker = 6;
+    /* params are the baked params this stage ran with (what used to live on the static task). */
+    schemapb.Baked params = 11;
+    /*
+        log_ref is the deep-link from this node to its logs. The UI builds the
+        Logs tab filter from it. Carries the run/stage/component handles needed to
+        slice the logs (node_execution_id + component_id).
+     */
+    LogRef log_ref = 7;
+    /* children are the nested stages under this node. */
+    repeated PipelineNode children = 8;
+    /* attempt counts a retried stage (>1 means it was retried). */
+    uint32 attempt = 9;
+}
+
+/* WorkerInfo is a master/agent worker and its live state. */
+message WorkerInfo {
+    /* id is the worker's identifier. */
+    string id = 1 [(validate.rules).string = {max_len: 128}];
+    /* kind is whether this worker is the MASTER or an AGENT. */
+    domain.Worker.Kind kind = 2;
+    /* machine_id is the host this worker runs on. */
+    string machine_id = 3 [(validate.rules).string.max_len = 128];
+    /* host is the worker's network host/address. */
+    string host = 4 [(validate.rules).string.max_len = 256];
+    /* online is true if the agent is currently reachable/polling. */
+    bool online = 5;
+    /* current_node_execution_id is the stage the worker is executing, if any. */
+    string current_node_execution_id = 6 [(validate.rules).string.max_len = 128];
+    /* status is the worker's live status. */
+    common.Status status = 7;
+}
+
+/* Event is one item in the run's activity timeline (Temporal-derived). */
+message Event {
+    /* at is when the event occurred. */
+    google.protobuf.Timestamp at = 1 [(validate.rules).timestamp.required = true];
+    /* Kind classifies what the timeline event represents. */
+    enum Kind {
+        /* KIND_UNSPECIFIED is the zero value and is never a valid kind. */
+        KIND_UNSPECIFIED = 0;
+        /* KIND_STAGE_STARTED is a stage beginning execution. */
+        KIND_STAGE_STARTED = 1;
+        /* KIND_STAGE_COMPLETED is a stage finishing successfully. */
+        KIND_STAGE_COMPLETED = 2;
+        /* KIND_STAGE_FAILED is a stage ending in failure. */
+        KIND_STAGE_FAILED = 3;
+        /* KIND_STAGE_RETRYING is a stage being retried after a failure. */
+        KIND_STAGE_RETRYING = 4;
+        /* KIND_WORKER_ONLINE is a worker becoming reachable. */
+        KIND_WORKER_ONLINE = 5;
+        /* KIND_WORKER_OFFLINE is a worker going unreachable. */
+        KIND_WORKER_OFFLINE = 6;
+        /* KIND_RUN_STATUS is a change in the overall run status. */
+        KIND_RUN_STATUS = 7;
+    }
+    /* kind is the category of this event. */
+    Kind kind = 2;
+    /* message is the human-readable event description. */
+    string message = 3 [(validate.rules).string.max_len = 4096];
+    /* node_execution_id is the owning stage, when the event is about a stage. */
+    string node_execution_id = 4 [(validate.rules).string.max_len = 128];
+    /* status is the run/stage status associated with the event, when relevant. */
+    common.Status status = 5;
+}

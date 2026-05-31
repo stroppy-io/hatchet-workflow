@@ -1,0 +1,122 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/permission.proto";
+import "cloud/v1/models/tenant_settings.proto";
+import "schemapb/schema.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    tenant_settings.proto manages the per-tenant settings (models.TenantSettingsRecord,
+    one row per tenant). Tenant-scoped, gated by RESOURCE_SETTINGS. Separate from
+    the global control plane (system_settings.proto / PlatformSettings).
+ */
+
+/*
+    GetTenantSettingsRequest fetches the settings for a tenant.
+ */
+message GetTenantSettingsRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+/*
+    GetTenantSettingsResponse returns the tenant's settings record.
+ */
+message GetTenantSettingsResponse {
+    /*
+        settings is the tenant's current settings.
+     */
+    models.TenantSettingsRecord settings = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    UpdateTenantSettings replaces the tenant's settings wholesale. Idempotent.
+ */
+message UpdateTenantSettingsRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        settings is the full replacement settings record.
+     */
+    models.TenantSettingsRecord settings = 2 [(validate.rules).message.required = true];
+}
+/*
+    UpdateTenantSettingsResponse returns the stored settings after the update.
+ */
+message UpdateTenantSettingsResponse {
+    /*
+        settings is the tenant's settings after the update.
+     */
+    models.TenantSettingsRecord settings = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    SetTenantProviderSettings sets/replaces the config for ONE provider. The client
+    sends only the form VALUES (schemapb.Filled = values + schema ref), NOT a full
+    Baked (which would re-send the schema the server already owns); the server
+    validates against the provider's settings schema and bakes the result. Keyed by
+    `provider`. Idempotent.
+ */
+message SetTenantProviderSettingsRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        provider selects which provider's config to set (must be a defined,
+        non-zero provider).
+     */
+    deployment.Provider provider = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /*
+        settings carries only the form values (Filled = values + schema ref); the
+        server validates against the provider schema and bakes the result.
+     */
+    schemapb.Filled settings = 3 [(validate.rules).message.required = true];
+}
+/*
+    SetTenantProviderSettingsResponse returns the saved, baked provider config.
+ */
+message SetTenantProviderSettingsResponse {
+    /*
+        settings is the saved, baked provider config.
+     */
+    deployment.ProviderSettings settings = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    TenantSettingsService is the tenant-scoped API for reading and updating
+    per-tenant settings and provider configs.
+ */
+service TenantSettingsService {
+    /*
+        GetTenantSettings fetches the tenant's settings. Read-only.
+     */
+    rpc GetTenantSettings (GetTenantSettingsRequest) returns (GetTenantSettingsResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SETTINGS, action: ACTION_READ}]};
+    }
+    /*
+        UpdateTenantSettings is idempotent: a wholesale field set converges on retry.
+     */
+    rpc UpdateTenantSettings (UpdateTenantSettingsRequest) returns (UpdateTenantSettingsResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SETTINGS, action: ACTION_UPDATE}]};
+    }
+    /*
+        SetTenantProviderSettings is idempotent: setting the same provider config
+        converges.
+     */
+    rpc SetTenantProviderSettings (SetTenantProviderSettingsRequest) returns (SetTenantProviderSettingsResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SETTINGS, action: ACTION_UPDATE}]};
+    }
+}

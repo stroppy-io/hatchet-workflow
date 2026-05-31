@@ -1,8 +1,6 @@
 package run
 
 import (
-	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
-	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/dbconfig"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 )
@@ -11,11 +9,11 @@ import (
 // PgBouncer is colocated on all DB nodes; the agent only runs the opaque apt
 // script the server composes here.
 type pgBouncerInstallTask struct {
-	client agent.Client
+	client CommandSink
 	state  *State
 }
 
-func (t *pgBouncerInstallTask) Execute(nc *dag.NodeContext) error {
+func (t *pgBouncerInstallTask) Execute(nc *NodeContext) error {
 	targets := t.state.DBTargets()
 	nc.Log().Info("installing pgbouncer on DB nodes")
 	// Ported verbatim from the old agent installPgBouncer / aptInstall("pgbouncer").
@@ -28,13 +26,13 @@ func (t *pgBouncerInstallTask) Execute(nc *dag.NodeContext) error {
 // pooler. All rendering happens here; the agent just writes files and runs the
 // start script.
 type pgBouncerConfigTask struct {
-	client    agent.Client
+	client    CommandSink
 	state     *State
 	topology  *types.PostgresTopology
 	overrides map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "pgbouncer.ini"
 }
 
-func (t *pgBouncerConfigTask) Execute(nc *dag.NodeContext) error {
+func (t *pgBouncerConfigTask) Execute(nc *NodeContext) error {
 	targets := t.state.DBTargets()
 	nc.Log().Info("configuring pgbouncer")
 

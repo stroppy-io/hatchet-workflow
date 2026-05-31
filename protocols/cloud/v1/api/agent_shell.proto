@@ -1,0 +1,125 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/agent/shell.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/permission.proto";
+import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    agent_shell.proto is the ADMIN/USER-FACING side of the interactive reverse
+    shell. Transport is a websocket carrying these protobuf frames; the server
+    bridges it to the agent's grpc control stream (agent/shell.proto). One
+    OpenShell call = one terminal session.
+
+    HIGH PRIVILEGE: this runs arbitrary commands on a host. Gated by
+    RESOURCE_AGENT_SHELL; the server MUST audit every session (who, which host,
+    when) and scope to the caller's tenant. The target + tenant arrive in the
+    first frame (ShellStart); the streaming auth interceptor reads tenant from it.
+ */
+
+/*
+    ShellStart is the REQUIRED first client frame: it picks the target and opens.
+ */
+message ShellStart {
+    /*
+        tenant_id scopes the session to one tenant; the streaming auth
+        interceptor reads it from this first frame.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        run_id is the run context for audit/scoping (optional but recommended).
+     */
+    string run_id = 2 [(validate.rules).string.max_len = 128];
+    /*
+        machine_id is the target host. Required.
+     */
+    string machine_id = 3 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        component_id is an optional target component on the host.
+     */
+    string component_id = 4 [(validate.rules).string.max_len = 128];
+    /*
+        cols is the initial terminal width in columns.
+     */
+    uint32 cols = 5;
+    /*
+        rows is the initial terminal height in rows.
+     */
+    uint32 rows = 6;
+    /*
+        shell is the shell to launch; empty -> agent default.
+     */
+    string shell = 7 [(validate.rules).string.max_len = 256];
+}
+
+/*
+    ShellClientFrame is admin -> server. The first frame MUST be `start`.
+ */
+message ShellClientFrame {
+    /*
+        frame is the per-message payload: start (must be first), stdin bytes, a
+        terminal resize, or a close request.
+     */
+    oneof frame {
+        option (validate.required) = true;
+        /*
+            start opens the session (required first frame).
+         */
+        ShellStart start = 1;
+        /*
+            stdin carries raw keystrokes typed into the terminal.
+         */
+        bytes stdin = 2;
+        /*
+            resize updates the terminal dimensions mid-session.
+         */
+        cloud.v1.agent.ShellResize resize = 3;
+        /*
+            close requests an orderly shutdown of the session.
+         */
+        google.protobuf.Empty close = 4;
+    }
+}
+
+/*
+    ShellServerFrame is server -> admin.
+ */
+message ShellServerFrame {
+    /*
+        frame is the per-message payload: stdout bytes, stderr bytes, or the
+        terminal's exit notification.
+     */
+    oneof frame {
+        /*
+            stdout carries the terminal's standard-output bytes.
+         */
+        bytes stdout = 1;
+        /*
+            stderr carries the terminal's standard-error bytes.
+         */
+        bytes stderr = 2;
+        /*
+            exit signals the shell process terminated (with its exit status).
+         */
+        cloud.v1.agent.ShellExit exit = 3;
+    }
+}
+
+/*
+    AgentShellService bridges an admin websocket to an agent's grpc control
+    stream, exposing one interactive reverse-shell session per OpenShell call.
+ */
+service AgentShellService {
+    /*
+        OpenShell attaches an interactive terminal to an agent. First client frame
+        must be ShellStart. High-privilege: RESOURCE_AGENT_SHELL + audit.
+     */
+    rpc OpenShell (stream ShellClientFrame) returns (stream ShellServerFrame) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_AGENT_SHELL, action: ACTION_CREATE}]};
+    }
+}

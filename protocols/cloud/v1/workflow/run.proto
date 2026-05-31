@@ -1,0 +1,177 @@
+syntax = "proto3";
+
+package cloud.v1.workflow;
+
+import "cloud/v1/workflow/test.proto";
+import "google/protobuf/empty.proto";
+import "temporal/v1/temporal.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow";
+
+/*
+    run.proto is the pragmatic, current-model port of the existing run engine
+    (internal/core/dag + internal/domain/scheduler + internal/domain/run) onto
+    Temporal. It deliberately does NOT use the topology/domain redesign yet:
+    RunWorkflow carries the current types.RunConfig opaquely (config_json) so the
+    engine can move to Temporal without first migrating the whole domain model.
+
+    Orchestration (phase ordering, conditional etcd/patroni/proxy/ydb-init,
+    per-database command building) stays in the Go workflow worker. This proto
+    only defines the workflow/activity signatures and the data that crosses
+    activity boundaries. Leaf agent operations (write a file, run a command,
+    fetch a binary, ensure online) live in agent.proto's AgentCommandService and
+    are reused as-is.
+ */
+
+/*
+    RunConfig is the input to RunWorkflow. For this first port it carries the
+    current types.RunConfig as opaque JSON: the worker unmarshals config_json
+    into the existing Go struct, so no domain remodeling is needed up front.
+    Top-level fields the workflow branches on are surfaced explicitly.
+ */
+message RunConfig {
+    /* id is the stable run identifier (drives the deterministic workflow id). */
+    string id = 1 [(validate.rules).string = {min_len: 1}];
+    /* provider selects the deployment backend ("docker" | "yandex"). */
+    string provider = 2 [(validate.rules).string = {min_len: 1}];
+    /*
+        external_db, when true, is a bring-your-own-database run: the workflow
+        skips the network/machines/install/configure phases and only installs
+        stroppy + runs the workload against the supplied endpoint.
+     */
+    bool external_db = 3;
+    /*
+        config_json is the full types.RunConfig serialized as JSON. The worker
+        decodes it into the existing Go model. Replaced by typed proto fields in
+        a later pass.
+     */
+    bytes config_json = 4 [(validate.rules).bytes = {min_len: 1}];
+}
+
+/*
+    Target is an agent endpoint plus its role — the current run.State target,
+    plus a role tag derived from the machine id.
+ */
+message Target {
+    /* id is the machine id ("<run>-<role>-<i>"); also the agent task-queue. */
+    string id = 1 [(validate.rules).string = {min_len: 1}];
+    /* host is the server->agent address (may be empty in poll/host mode). */
+    string host = 2;
+    /* internal_host is the container name / internal IP for node-to-node comms. */
+    string internal_host = 3;
+    /* agent_port is the agent's port when reachable directly. */
+    int32 agent_port = 4;
+    /* zone is the provider placement zone, when known. */
+    string zone = 5;
+    /*
+        role is the component role on this machine: database | replica | monitor |
+        proxy | stroppy | etcd | ydb-storage | ydb-database.
+     */
+    string role = 6;
+}
+
+/*
+    Deployment is the cross-phase state the current run.State holds after the
+    machines phase: the agent targets, the DB endpoint stroppy connects to, and
+    the provider handles needed for teardown. Produced by DeployMachinesActivity,
+    threaded through the workflow, and consumed by TeardownActivity.
+ */
+message Deployment {
+    /* targets are all provisioned agent machines. */
+    repeated Target targets = 1;
+    /* db_host is the endpoint host stroppy connects to (container name / IP / proxy). */
+    string db_host = 2;
+    /* db_port is the endpoint port for the selected protocol. */
+    int32 db_port = 3;
+    /* container_ids are the docker container ids for docker-provider teardown. */
+    repeated string container_ids = 4;
+    /* network_id is the docker network id for docker-provider teardown. */
+    string network_id = 5;
+    /* terraform_wd_id is the terraform working-dir id for yandex-provider teardown. */
+    string terraform_wd_id = 6;
+}
+
+// RunState + Stage are reused from test.proto (same package): the live run
+// overview returned by GetRunState, replacing the dag.RunState DB snapshot.
+
+/*
+    RunWorkflowService is the Temporal replacement for the custom DAG executor +
+    durable scheduler. RunWorkflow orchestrates the full run cycle in Go,
+    delegating side effects to the infra activities below and to agent.proto's
+    AgentCommandService (per-target agent ops, routed by Target.id task queue).
+ */
+service RunWorkflowService {
+    /*
+        task_queue: the shared server-side worker queue. Agent activities are
+        re-routed per call to the target machine's own queue (Target.id).
+     */
+    option (temporal.v1.service) = {task_queue: "stroppy-cloud"};
+
+    /*
+        RunWorkflow runs one full benchmark run: network -> machines -> bootstrap
+        -> install/configure database (+ conditional etcd/patroni/pgbouncer/proxy
+        /ydb-init/cockroach-init) -> install/configure monitor -> install stroppy
+        -> run workload -> teardown. Deduplicated by a deterministic id from
+        RunConfig.id; re-run allowed only after a failed previous attempt; never
+        auto-retried as a whole (side effects). Answers the GetRunState query.
+     */
+    rpc RunWorkflow (RunConfig) returns (google.protobuf.Empty) {
+        option (temporal.v1.workflow) = {
+            name: "RunWorkflow"
+            id: 'run/${! id }'
+            id_reuse_policy: WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY
+            retry_policy: {max_attempts: 1}
+            query: {ref: "GetRunWorkflowState"}
+        };
+    }
+
+    /*
+        GetRunWorkflowState is a query against a running RunWorkflow returning the
+        live RunState (overall status + per-phase breakdown) for the run Overview.
+        Named distinctly from TestService.GetRunState to avoid a generated query
+        constant clash in the shared cloud.v1.workflow package.
+     */
+    rpc GetRunWorkflowState (google.protobuf.Empty) returns (RunState) {
+        option (temporal.v1.query) = {name: "GetRunWorkflowState"};
+    }
+
+    /*
+        CreateNetworkActivity acquires the run network (docker network create /
+        yandex subnet) and returns the partial Deployment carrying its handle.
+        Idempotent (dedupe by name) => retryable.
+     */
+    rpc CreateNetworkActivity (RunConfig) returns (Deployment) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 300}
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}, backoff_coefficient: 2.0}
+        };
+    }
+
+    /*
+        DeployMachinesActivity provisions the machines (docker containers /
+        terraform apply), waits for them, and returns the full Deployment:
+        targets, db endpoint, and teardown handles. Mutating but
+        terraform/docker-idempotent; retried sparingly, heartbeats while running.
+     */
+    rpc DeployMachinesActivity (RunConfig) returns (Deployment) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 1800}
+            heartbeat_timeout: {seconds: 60}
+            retry_policy: {max_attempts: 2, initial_interval: {seconds: 10}}
+        };
+    }
+
+    /*
+        TeardownActivity destroys the run's infrastructure (docker rm + network
+        remove / terraform destroy) from the Deployment handles. Idempotent
+        (converges to empty) => retried to avoid leaks. Runs even on failure.
+     */
+    rpc TeardownActivity (Deployment) returns (google.protobuf.Empty) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 1800}
+            heartbeat_timeout: {seconds: 60}
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 10}}
+        };
+    }
+}

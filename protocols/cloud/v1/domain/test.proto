@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package cloud.v1.domain;
+
+import "cloud/v1/common/tags.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/domain/workload.proto";
+import "cloud/v1/topology/topology.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
+
+/*
+    test.proto defines the abstract Test (what to test, provider-agnostic) and
+    the fully-baked TestRun (a concrete execution). A Test pairs a Database with
+    a Workload; baking it resolves a provider, derives a topology, and produces
+    a TestRun that TestWorkflow executes without further mutation.
+ */
+
+/*
+    Test is an abstract, provider-agnostic test definition: what to test.
+    Topology is derived from params (e.g. database replica count) in code; the
+    provider is chosen later, and the wizard fills provider_parms into a TestRun.
+ */
+message Test {
+    /* database is the database under test. */
+    Database database = 1 [(validate.rules).message.required = true];
+    /* workload is the stroppy workload to run against the database. */
+    Workload workload = 2 [(validate.rules).message.required = true];
+    /* tags are free-form metadata attached to the test definition. */
+    common.Tags tags = 3;
+}
+
+/*
+    TestRun is a single, fully-baked test execution. All fields are baked at
+    creation time; TestWorkflow does not mutate the topology, only carries
+    runtime info returned by the deployment.
+ */
+message TestRun {
+    /* id is the stable test-run identifier. */
+    string id = 1 [(validate.rules).string = {min_len: 1}];
+
+    /* suite_id is the owning suite. Empty for a standalone (non-suite) run. */
+    string suite_id = 2;
+
+    /* provider says where/how to provision the stand: backend + baked provider
+       settings. */
+    deployment.ProviderSettings provider = 3 [(validate.rules).message.required = true];
+
+    /* topology is the baked topology: stroppy runner instances (+ db instances
+       when self-deploy), and external_components when the database is external. */
+    topology.Topology topology = 4 [(validate.rules).message.required = true];
+
+    /* database is the database under test (self-deploy / managed / external). */
+    Database database = 5 [(validate.rules).message.required = true];
+
+    /* workload is the stroppy workload to run on top of the database. */
+    Workload workload = 6 [(validate.rules).message.required = true];
+
+    /* tags are free-form metadata attached to the test run. */
+    common.Tags tags = 7;
+}

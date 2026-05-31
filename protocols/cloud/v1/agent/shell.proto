@@ -1,0 +1,159 @@
+syntax = "proto3";
+
+package cloud.v1.agent;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent";
+
+/*
+    shell.proto is the AGENT-FACING side of the interactive reverse shell. The
+    agent authenticates with its agent token and dials a single long-lived control
+    stream (Connect); the server multiplexes any number of shell sessions over it,
+    keyed by session_id. This is the inner half — the admin/user half lives in
+    api/agent_shell.proto and the server bridges the two (admin websocket <-> this
+    grpc stream).
+
+    Direction: server -> agent = ServerShellMsg (open / stdin / resize / close);
+    agent -> server = AgentShellMsg (register / stdout / stderr / exit).
+ */
+
+/*
+    OpenShell asks the agent to spawn a PTY for a new session.
+ */
+message OpenShell {
+    /*
+        run_id runs this shell in the context of a run (for audit/scoping); may
+        be empty.
+     */
+    string run_id = 1;
+    /*
+        component_id is the target component on the host, optional.
+     */
+    string component_id = 2;
+    /*
+        cols is the initial terminal width in columns.
+     */
+    uint32 cols = 3;
+    /*
+        rows is the initial terminal height in rows.
+     */
+    uint32 rows = 4;
+    /*
+        shell is the shell binary to launch (e.g. "/bin/bash"); empty -> agent
+        default.
+     */
+    string shell = 5;
+}
+
+/*
+    ShellResize updates the PTY window size.
+ */
+message ShellResize {
+    /*
+        cols is the new terminal width in columns.
+     */
+    uint32 cols = 1;
+    /*
+        rows is the new terminal height in rows.
+     */
+    uint32 rows = 2;
+}
+
+/*
+    ShellExit reports a session ending.
+ */
+message ShellExit {
+    /*
+        code is the process exit code of the shell session.
+     */
+    int32 code = 1;
+    /*
+        error is an optional error message describing why the session ended.
+     */
+    string error = 2;
+}
+
+/*
+    Register is the agent's first AgentShellMsg, identifying which host it is.
+ */
+message Register {
+    /*
+        machine_id is the host identifier the control stream belongs to.
+     */
+    string machine_id = 1;
+}
+
+/*
+    ServerShellMsg is server -> agent over the control stream.
+ */
+message ServerShellMsg {
+    /*
+        session_id is the session this frame belongs to (server-assigned on open).
+     */
+    string session_id = 1;
+    /*
+        msg is the server->agent frame payload for this session.
+     */
+    oneof msg {
+        /*
+            open requests spawning a new PTY session.
+         */
+        OpenShell open = 2;
+        /*
+            stdin is keystroke input bytes for the session's PTY.
+         */
+        bytes stdin = 3;
+        /*
+            resize updates the session's terminal window size.
+         */
+        ShellResize resize = 4;
+        /*
+            close terminates the session.
+         */
+        google.protobuf.Empty close = 5;
+    }
+}
+
+/*
+    AgentShellMsg is agent -> server over the control stream.
+ */
+message AgentShellMsg {
+    /*
+        session_id is the session this frame belongs to (empty on the first
+        register frame).
+     */
+    string session_id = 1;
+    /*
+        msg is the agent->server frame payload for this session.
+     */
+    oneof msg {
+        /*
+            register is the first frame identifying the host; session_id empty.
+         */
+        Register register = 2;
+        /*
+            stdout is PTY standard-output bytes for the session.
+         */
+        bytes stdout = 3;
+        /*
+            stderr is PTY standard-error bytes for the session.
+         */
+        bytes stderr = 4;
+        /*
+            exit reports the session's process ending.
+         */
+        ShellExit exit = 5;
+    }
+}
+
+/*
+    AgentShellAgentApi is dialed by the agent (not by users). Auth is the agent
+    token, NOT the iam RBAC interceptor — hence no (cloud.v1.iam.auth) annotation.
+ */
+service AgentShellAgentService {
+    /*
+        Connect opens the long-lived, multiplexed control stream.
+     */
+    rpc Connect (stream AgentShellMsg) returns (stream ServerShellMsg);
+}

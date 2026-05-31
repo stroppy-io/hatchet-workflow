@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 // Provider is the infrastructure provider for machine provisioning.
 type Provider string
 
@@ -446,6 +448,12 @@ var CockroachPresets = map[CockroachPreset]CockroachTopology{
 type MonitorConfig struct {
 	MetricsEndpoint string `json:"metrics_endpoint,omitempty"` // Prometheus remote_write URL
 	LogsEndpoint    string `json:"logs_endpoint,omitempty"`    // Loki push URL
+	// AccountID is the VictoriaMetrics/VictoriaLogs tenant the run's agents must
+	// write to. It MUST equal the reader's account (the run tenant's account_id)
+	// or the UI reads an empty tenant. Stamped at launch from the run's tenant;
+	// TenantID!="" marks it resolved (so a legitimate account 0 is honored).
+	AccountID int32  `json:"account_id,omitempty"`
+	TenantID  string `json:"tenant_id,omitempty"`
 }
 
 // WorkloadFile is a run-scoped file that must be present in stroppy's working
@@ -564,4 +572,19 @@ type ExternalDBConfig struct {
 	Password string `json:"password,omitempty"`
 	// SSLMode is engine-specific (e.g. "disable", "require"). Optional.
 	SSLMode string `json:"ssl_mode,omitempty"`
+}
+
+// RunRecord is the persisted metadata for a run (resolved config + identity).
+// Live status comes from Temporal, not here. Stored in the `runs.snapshot`
+// column as JSON. Defined in types so the postgres store can implement the
+// api.RunStore interface without an import cycle.
+type RunRecord struct {
+	ID          string    `json:"id"`
+	TenantID    string    `json:"tenant_id"`
+	Name        string    `json:"name,omitempty"`
+	Description string    `json:"description,omitempty"`
+	SuiteID     string    `json:"suite_id,omitempty"`
+	Provider    string    `json:"provider,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+	Cfg         RunConfig `json:"cfg"`
 }

@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -15,6 +17,21 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 	pgdb "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/generated"
 )
+
+// dockerHostAddr builds an HTTP address that Docker containers can use to
+// reach the server. On Linux containers use the Docker bridge gateway
+// (172.17.0.1); on macOS/Windows they use host.docker.internal.
+func dockerHostAddr(listenAddr string) string {
+	_, port, _ := net.SplitHostPort(listenAddr)
+	if port == "" {
+		port = "8080"
+	}
+	host := "host.docker.internal"
+	if runtime.GOOS == "linux" {
+		host = "172.17.0.1"
+	}
+	return fmt.Sprintf("http://%s:%s", host, port)
+}
 
 type pkgListItem struct {
 	ID          string   `json:"id"`
@@ -376,7 +393,7 @@ func (s *Server) resolveRunPackage(ctx context.Context, tenantID string, cfg *ty
 			serverAddr = settings.Cloud.ServerAddr
 		}
 		if serverAddr == "" {
-			serverAddr = dockerHostAddr(s.app.listenAddr)
+			serverAddr = dockerHostAddr(s.listenAddr)
 		}
 		resolved.DebFilename = fmt.Sprintf("%s/api/v1/packages/%s/deb", serverAddr, pkg.ID)
 

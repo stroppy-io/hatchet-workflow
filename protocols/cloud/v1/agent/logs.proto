@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package cloud.v1.agent;
+
+import "cloud/v1/monitor/logs.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent";
+
+/*
+    logs.proto is the AGENT-FACING log ingestion. The agent executes work as a
+    Temporal worker, but logs do NOT go through Temporal — the agent ships them to
+    OUR server here, and the server forwards them into VictoriaLogs. Covers both
+    command stdout/stderr and continuous component/DB logs (journald + log files);
+    the unified shape is monitor.LogLine (agent fills run_id / node_execution_id /
+    component_id / machine_id / source / stream / line / observed_at).
+
+    Throughput: a run can emit hundreds of thousands of lines, so the agent ships
+    in BATCHES (LogBatch), not line-by-line, over a client stream — far less
+    per-message overhead.
+
+    Auth is the AGENT TOKEN, not the iam RBAC interceptor — so no
+    (cloud.v1.iam.auth) annotation.
+ */
+
+/*
+    LogBatch is a chunk of lines the agent flushes together (by count or time).
+ */
+message LogBatch {
+    /*
+        lines is the batch of log lines to ship; capped at 10000 per batch so a
+        single message stays bounded.
+     */
+    repeated cloud.v1.monitor.LogLine lines = 1 [(validate.rules).repeated.max_items = 10000];
+}
+
+/*
+    ShipLogsAck is the server's running acknowledgement back to the agent on the
+    log stream.
+ */
+message ShipLogsAck {
+    /*
+        accepted is how many lines the server accepted across this stream so far
+        (used for backpressure).
+     */
+    uint64 accepted = 1;
+}
+
+/*
+    AgentLogService is the agent-facing log ingestion endpoint that forwards
+    shipped lines into VictoriaLogs.
+ */
+service AgentLogService {
+    /*
+        ShipLogs is a client stream of batches: the agent flushes LogBatch chunks
+        continuously; the server writes them to VictoriaLogs and acks counts.
+     */
+    rpc ShipLogs (stream LogBatch) returns (ShipLogsAck);
+}

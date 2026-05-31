@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/dbconfig"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
@@ -14,16 +13,16 @@ import (
 // is logically replaced by another phase but must still exist in the graph).
 type noopTask struct{}
 
-func (t *noopTask) Execute(_ *dag.NodeContext) error { return nil }
+func (t *noopTask) Execute(_ *NodeContext) error { return nil }
 
 // patroniInstallTask installs Patroni on all DB nodes. The agent only runs the
 // opaque apt/pip scripts the server composes here.
 type patroniInstallTask struct {
-	client agent.Client
+	client CommandSink
 	state  *State
 }
 
-func (t *patroniInstallTask) Execute(nc *dag.NodeContext) error {
+func (t *patroniInstallTask) Execute(nc *NodeContext) error {
 	targets := t.state.DBTargets()
 	nc.Log().Info("installing patroni on DB nodes")
 	// Both ops are package installs → exclusive (serialize on the apt/dpkg lock).
@@ -38,14 +37,14 @@ func (t *patroniInstallTask) Execute(nc *dag.NodeContext) error {
 // placeholder substitution happens here; the agent just writes the config file
 // and runs the start/readiness scripts.
 type patroniConfigTask struct {
-	client    agent.Client
+	client    CommandSink
 	state     *State
 	version   string
 	topology  *types.PostgresTopology
 	overrides map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "patroni.yml"
 }
 
-func (t *patroniConfigTask) Execute(nc *dag.NodeContext) error {
+func (t *patroniConfigTask) Execute(nc *NodeContext) error {
 	targets := t.state.DBTargets()
 	nc.Log().Info("configuring patroni cluster")
 

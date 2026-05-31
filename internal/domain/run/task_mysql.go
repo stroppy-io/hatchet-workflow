@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/dbconfig"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
@@ -13,14 +12,14 @@ import (
 // mysqlInstallTask installs the MySQL/MariaDB package on every DB node. The
 // agent only runs the opaque apt script the server composes here.
 type mysqlInstallTask struct {
-	client   agent.Client
+	client   CommandSink
 	state    *State
 	version  string
 	topology *types.MySQLTopology
 	pkg      *types.Package
 }
 
-func (t *mysqlInstallTask) Execute(nc *dag.NodeContext) error {
+func (t *mysqlInstallTask) Execute(nc *NodeContext) error {
 	targets := t.state.DBTargets()
 	if t.pkg == nil {
 		return fmt.Errorf("install mysql: no package provided")
@@ -42,13 +41,13 @@ func (t *mysqlInstallTask) Execute(nc *dag.NodeContext) error {
 // placeholder substitution happens here; the agent just writes files and runs
 // the start/replication scripts.
 type mysqlConfigTask struct {
-	client    agent.Client
+	client    CommandSink
 	state     *State
 	topology  *types.MySQLTopology
 	overrides map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "my.cnf:<role>"
 }
 
-func (t *mysqlConfigTask) Execute(nc *dag.NodeContext) error {
+func (t *mysqlConfigTask) Execute(nc *NodeContext) error {
 	targets := t.state.DBTargets()
 	nc.Log().Info("configuring mysql cluster")
 

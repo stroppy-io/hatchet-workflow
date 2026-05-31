@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 )
@@ -41,12 +40,12 @@ func resolveCockroachVersion(v string) string {
 // cockroachInstallTask pulls the cockroach tarball on every DB node and sets
 // up the dedicated cockroach user/dirs.
 type cockroachInstallTask struct {
-	client  agent.Client
+	client  CommandSink
 	state   *State
 	version string
 }
 
-func (t *cockroachInstallTask) Execute(nc *dag.NodeContext) error {
+func (t *cockroachInstallTask) Execute(nc *NodeContext) error {
 	targets := t.state.DBTargets()
 	nc.Log().Info("installing cockroach on targets")
 
@@ -75,12 +74,12 @@ func (t *cockroachInstallTask) Execute(nc *dag.NodeContext) error {
 // and --join pointing at the other nodes. All nodes must come up concurrently
 // to discover each other via --join; init runs after.
 type cockroachConfigTask struct {
-	client   agent.Client
+	client   CommandSink
 	state    *State
 	topology *types.CockroachTopology
 }
 
-func (t *cockroachConfigTask) Execute(nc *dag.NodeContext) error {
+func (t *cockroachConfigTask) Execute(nc *NodeContext) error {
 	targets := t.state.DBTargets()
 	nc.Log().Info("configuring cockroach cluster")
 
@@ -166,12 +165,12 @@ exit 1`,
 // turn the running nodes into a working cluster, then applies any
 // SET CLUSTER SETTING from topology.Options.
 type cockroachInitTask struct {
-	client   agent.Client
+	client   CommandSink
 	state    *State
 	topology *types.CockroachTopology
 }
 
-func (t *cockroachInitTask) Execute(nc *dag.NodeContext) error {
+func (t *cockroachInitTask) Execute(nc *NodeContext) error {
 	targets := t.state.DBTargets()
 	if len(targets) == 0 {
 		return nil

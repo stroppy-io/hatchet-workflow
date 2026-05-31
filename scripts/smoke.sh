@@ -87,7 +87,7 @@ cat > /tmp/smoke-run.json <<JSON
   "database": {"kind": "postgres", "version": "16"},
   "monitor": {},
   "stroppy": {
-    "version": "4.1.0",
+    "version": "5.1.2",
     "script": "tpcc/procs",
     "duration": "10s",
     "vus": 1,

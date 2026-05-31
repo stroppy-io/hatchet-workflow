@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package cloud.v1.domain;
+
+import "cloud/v1/common/tags.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
+
+/*
+    worker.proto defines a Worker: a unit that executes pipeline stages, either
+    the master (orchestrator) or an agent (running on a host). This is the
+    static identity of a worker; live pipeline / worker status lives in
+    monitor/overview.proto.
+ */
+
+/*
+    Worker is a unit that executes pipeline stages: the master (orchestrator) or
+    an agent (on a host). The live pipeline / worker info lives in
+    monitor/overview.proto.
+ */
+message Worker {
+    /* id is the stable worker identifier. */
+    string id = 1;
+    /* Kind distinguishes the orchestrator from a host agent. */
+    enum Kind {
+        /* KIND_UNSPECIFIED is the unset zero value. */
+        KIND_UNSPECIFIED = 0;
+        /* KIND_MASTER is the orchestrator worker. */
+        KIND_MASTER = 1;
+        /* KIND_AGENT is a worker running on a host. */
+        KIND_AGENT = 2;
+    }
+    /* kind says whether this worker is the master or an agent. */
+    Kind kind = 2;
+    /* tags are free-form metadata attached to the worker. */
+    common.Tags tags = 3;
+}

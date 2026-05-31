@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/dbconfig"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
@@ -13,14 +12,14 @@ import (
 // picoInstallTask installs the picodata package on every DB node. The agent
 // only runs the opaque apt script the server composes here.
 type picoInstallTask struct {
-	client   agent.Client
+	client   CommandSink
 	state    *State
 	version  string
 	topology *types.PicodataTopology
 	pkg      *types.Package
 }
 
-func (t *picoInstallTask) Execute(nc *dag.NodeContext) error {
+func (t *picoInstallTask) Execute(nc *NodeContext) error {
 	targets := t.state.DBTargets()
 	if t.pkg == nil {
 		return fmt.Errorf("install picodata: no package provided")
@@ -34,13 +33,13 @@ func (t *picoInstallTask) Execute(nc *dag.NodeContext) error {
 // systemd-run. All rendering happens here; the agent just writes the config
 // file and runs the start/readiness scripts.
 type picoConfigTask struct {
-	client    agent.Client
+	client    CommandSink
 	state     *State
 	topology  *types.PicodataTopology
 	overrides map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "picodata.yaml"
 }
 
-func (t *picoConfigTask) Execute(nc *dag.NodeContext) error {
+func (t *picoConfigTask) Execute(nc *NodeContext) error {
 	targets := t.state.DBTargets()
 	nc.Log().Info("configuring picodata cluster")
 

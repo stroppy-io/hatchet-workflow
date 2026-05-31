@@ -8,7 +8,6 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 
@@ -26,12 +25,12 @@ const (
 )
 
 type stroppyInstallTask struct {
-	client  agent.Client
+	client  CommandSink
 	state   *State
 	stroppy types.StroppyConfig
 }
 
-func (t *stroppyInstallTask) Execute(nc *dag.NodeContext) error {
+func (t *stroppyInstallTask) Execute(nc *NodeContext) error {
 	target := t.state.StroppyTarget()
 	if target == nil {
 		return fmt.Errorf("stroppy target not provisioned")
@@ -122,7 +121,7 @@ func safeWorkloadFileName(name string) (string, error) {
 }
 
 type stroppyRunTask struct {
-	client          agent.Client
+	client          CommandSink
 	state           *State
 	stroppy         types.StroppyConfig
 	stroppySettings types.StroppySettings
@@ -134,7 +133,7 @@ type stroppyRunTask struct {
 	accountID       int32
 }
 
-func (t *stroppyRunTask) Execute(nc *dag.NodeContext) error {
+func (t *stroppyRunTask) Execute(nc *NodeContext) error {
 	target := t.state.StroppyTarget()
 	if target == nil {
 		return fmt.Errorf("stroppy target not provisioned")

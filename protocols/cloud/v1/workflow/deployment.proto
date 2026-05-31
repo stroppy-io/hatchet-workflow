@@ -1,0 +1,326 @@
+syntax = "proto3";
+
+package cloud.v1.workflow;
+
+import "cloud/v1/common/ip.proto";
+import "cloud/v1/deployment/docker.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/deployment/quota.proto";
+import "cloud/v1/deployment/terraform.proto";
+import "cloud/v1/topology/topology.proto";
+import "temporal/v1/temporal.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow";
+
+/*
+    deployment.proto defines the Temporal workflows and activities that turn a
+    topology into running infrastructure: calculating and acquiring quotas,
+    acquiring networks, rendering Docker/Terraform inputs, and applying them.
+    Each rpc carries its own workflow/activity timeout and retry policy.
+ */
+
+/*
+    ProcessDeploymentWorkflowRequest is the input to the top-level deployment
+    workflow: which provider to use and the topology to provision.
+ */
+message ProcessDeploymentWorkflowRequest {
+    /*
+        provider is the target cloud/provider to deploy onto.
+     */
+    deployment.Provider provider = 1;
+    /*
+        topology is the topology to provision; instances MUST already carry their
+        provider_parms.
+    */
+    topology.Topology topology = 2;
+}
+/*
+    ProcessDeploymentWorkflowResponse is the result of the deployment workflow:
+    the provider used and the fully deployed topology.
+ */
+message ProcessDeploymentWorkflowResponse {
+    /*
+        provider is the provider the topology was deployed onto.
+     */
+    deployment.Provider provider = 1;
+    /*
+       deployed_topology is the full deployed topology with all runtime params
+       filled in.
+   */
+    topology.Topology deployed_topology = 2;
+}
+
+/*
+    CalculateQuotasWorkflowRequest asks the workflow to compute resource quotas
+    for a topology.
+ */
+message CalculateQuotasWorkflowRequest {
+    /*
+        topology is the topology to compute quota requests for.
+     */
+    topology.Topology topology = 1;
+}
+
+/*
+    CalculateQuotasWorkflowResponse returns the topology along with the computed
+    quota requests.
+ */
+message CalculateQuotasWorkflowResponse {
+    /*
+        topology is the (unchanged) topology the quotas were computed for.
+     */
+    topology.Topology topology = 1;
+    /*
+        quota_requests are the computed requests keyed by component.id.
+    */
+    map<string, deployment.Quota.Request> quota_requests = 5;
+}
+
+/*
+    AcquireNetworkActivityRequest asks the provider to acquire a network.
+ */
+message AcquireNetworkActivityRequest {
+    /*
+        settings are the provider-specific settings used to acquire the network.
+     */
+    deployment.ProviderSettings settings = 2;
+}
+/*
+    AcquireNetworkActivityResponse returns the acquired network.
+ */
+message AcquireNetworkActivityResponse {
+    /*
+        net is the network acquired from the provider.
+     */
+    common.Net net = 1;
+}
+
+/*
+    AcquireQuotasActivityRequest asks the provider to acquire the requested
+    quotas.
+ */
+message AcquireQuotasActivityRequest {
+    /*
+        quota_requests are the requests to acquire, keyed by component.id.
+    */
+    map<string, deployment.Quota.Request> quota_requests = 5;
+}
+/*
+    AcquireQuotasActivityResponse returns the quotas the provider allocated.
+ */
+message AcquireQuotasActivityResponse {
+    /*
+        quota_allocation is the granted allocation keyed by component.id.
+    */
+    map<string, deployment.Quota.Allocation> quota_allocation = 1;
+}
+
+/*
+    DeploymentService groups the Temporal workflows and activities that provision
+    and tear down a topology's infrastructure.
+ */
+service DeploymentService {
+    /*
+        task_queue: shared queue for the deployment workflows/activities.
+    */
+    option (temporal.v1.service) = {task_queue: "stroppy-cloud"};
+
+    /*
+        ProcessDeploymentWorkflow provisions a topology end to end; always a
+        child of TestWorkflow and never auto-retried as a whole.
+     */
+    rpc ProcessDeploymentWorkflow (ProcessDeploymentWorkflowRequest) returns (ProcessDeploymentWorkflowResponse) {
+        option (temporal.v1.workflow) = {
+            name: "ProcessDeploymentWorkflow"
+            /*
+                No explicit id: always a child of TestWorkflow (deployment never
+                runs without a test). Trace via the root workflow execution.
+            */
+            /*
+                No execution_timeout: provisioning a large cluster on a cold cloud
+                can take a long time. Liveness is enforced by the activity
+                timeouts/heartbeats below, not a workflow wall clock.
+            */
+            /*
+                retry_policy: do NOT auto-retry the whole deployment — it has side
+                effects (created infra). Retries live on the activities.
+            */
+            retry_policy: {max_attempts: 1}
+        };
+    }
+
+    /*
+        AcquireNetworkActivity acquires a network from the provider (deduped by
+        name, retried on transient errors).
+     */
+    rpc AcquireNetworkActivity (AcquireNetworkActivityRequest) returns (AcquireNetworkActivityResponse) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 300}
+            /*
+                Provider API call; transient errors are common => retry with
+                backoff. Provider must dedupe by name.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}, backoff_coefficient: 2.0}
+        };
+    }
+
+    /*
+        CalculateQuotasWorkflow computes resource quota requests from a topology
+        (pure computation, retryable).
+     */
+    rpc CalculateQuotasWorkflow (CalculateQuotasWorkflowRequest) returns (CalculateQuotasWorkflowResponse) {
+        option (temporal.v1.workflow) = {
+            name: "CalculateQuotasWorkflow"
+            /*
+                Pure computation over the topology. 5m run_timeout, retryable.
+            */
+            run_timeout: {seconds: 300}
+            retry_policy: {max_attempts: 3}
+        };
+    }
+    /*
+        AcquireQuotasActivity acquires the requested quotas from the provider
+        (retried with backoff).
+     */
+    rpc AcquireQuotasActivity (AcquireQuotasActivityRequest) returns (AcquireQuotasActivityResponse) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 300}
+            /*
+                Provider API call => retry with backoff.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}, backoff_coefficient: 2.0}
+        };
+    }
+
+    /*
+        RenderDockerInputWorkflow renders a topology into Docker compose input
+        (pure render, retryable).
+     */
+    rpc RenderDockerInputWorkflow (topology.Topology) returns (deployment.Docker.Input) {
+        option (temporal.v1.workflow) = {
+            name: "RenderDockerInputWorkflow"
+            /*
+                Pure render (topology -> docker input). Fast, retryable.
+            */
+            run_timeout: {seconds: 60}
+            retry_policy: {max_attempts: 3}
+        };
+    }
+    /*
+        DockerPullActivity pulls the required container images (idempotent,
+        retried with backoff).
+     */
+    rpc DockerPullActivity (deployment.Docker.Input) returns (deployment.Docker.Output) {
+        option (temporal.v1.activity) = {
+            /*
+                start_to_close_timeout: image pulls can be slow. 10m.
+            */
+            start_to_close_timeout: {seconds: 600}
+            /*
+                Idempotent (pull) => retry with backoff.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}, backoff_coefficient: 2.0}
+        };
+    }
+    /*
+        DockerUpActivity brings the compose stack up (idempotent/converges,
+        heartbeats while starting).
+     */
+    rpc DockerUpActivity (deployment.Docker.Input) returns (deployment.Docker.Output) {
+        option (temporal.v1.activity) = {
+            /*
+                start_to_close_timeout: compose up may pull + start containers. 10m.
+            */
+            start_to_close_timeout: {seconds: 600}
+            /*
+                heartbeat_timeout: long startup heartbeats so a dead worker is
+                detected within 60s.
+            */
+            heartbeat_timeout: {seconds: 60}
+            /*
+                Idempotent (compose up converges) => retry.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}}
+        };
+    }
+    /*
+        DockerDownActivity tears the compose stack down (idempotent, retryable).
+     */
+    rpc DockerDownActivity (deployment.Docker.Input) returns (deployment.Docker.Output) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 300}
+            /*
+                Idempotent (compose down) => retry.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}}
+        };
+    }
+
+    /*
+        RenderTerraformVariablesWorkflow renders a topology into Terraform
+        variables input (pure render, retryable).
+     */
+    rpc RenderTerraformVariablesWorkflow (topology.Topology) returns (deployment.Terraform.Input) {
+        option (temporal.v1.workflow) = {
+            name: "RenderTerraformVariablesWorkflow"
+            /*
+                Pure render (topology -> terraform vars). Fast, retryable.
+            */
+            run_timeout: {seconds: 60}
+            retry_policy: {max_attempts: 3}
+        };
+    }
+    /*
+        TerraformPlanActivity runs terraform plan against the provider (read-only,
+        retryable).
+     */
+    rpc TerraformPlanActivity (deployment.Terraform.Input) returns (deployment.Terraform.Output) {
+        option (temporal.v1.activity) = {
+            /*
+                start_to_close_timeout: plan refreshes state against the provider.
+                15m.
+            */
+            start_to_close_timeout: {seconds: 900}
+            heartbeat_timeout: {seconds: 60}
+            /*
+                Read-only (no apply) => retryable.
+            */
+            retry_policy: {max_attempts: 2, initial_interval: {seconds: 10}}
+        };
+    }
+    /*
+        TerraformApplyActivity runs terraform apply to provision resources
+        (mutating; retried sparingly under the state lock).
+     */
+    rpc TerraformApplyActivity (deployment.Terraform.Input) returns (deployment.Terraform.Output) {
+        option (temporal.v1.activity) = {
+            /*
+                start_to_close_timeout: provisioning VMs/network can be slow. 30m.
+            */
+            start_to_close_timeout: {seconds: 1800}
+            heartbeat_timeout: {seconds: 60}
+            /*
+                Idempotent via terraform state, but mutating. Retry sparingly; the
+                state lock serializes concurrent attempts.
+            */
+            retry_policy: {max_attempts: 2, initial_interval: {seconds: 10}}
+        };
+    }
+    /*
+        TerraformDestroyActivity runs terraform destroy to tear down all
+        resources (idempotent/converges, retried to avoid leaks).
+     */
+    rpc TerraformDestroyActivity (deployment.Terraform.Input) returns (deployment.Terraform.Output) {
+        option (temporal.v1.activity) = {
+            /*
+                start_to_close_timeout: teardown of all resources. 30m.
+            */
+            start_to_close_timeout: {seconds: 1800}
+            heartbeat_timeout: {seconds: 60}
+            /*
+                Idempotent (destroy converges to empty) => retry to avoid leaks.
+            */
+            retry_policy: {max_attempts: 3, initial_interval: {seconds: 10}}
+        };
+    }
+}

@@ -3,19 +3,18 @@ package run
 import (
 	"fmt"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/dbconfig"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 )
 
 type proxyInstallTask struct {
-	client agent.Client
+	client CommandSink
 	state  *State
 	dbKind types.DatabaseKind
 }
 
-func (t *proxyInstallTask) Execute(nc *dag.NodeContext) error {
+func (t *proxyInstallTask) Execute(nc *NodeContext) error {
 	targets := t.state.ProxyTargets()
 	if len(targets) == 0 {
 		nc.Log().Info("no proxy targets, skipping install")
@@ -52,7 +51,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends proxys
 }
 
 type proxyConfigTask struct {
-	client        agent.Client
+	client        CommandSink
 	state         *State
 	dbKind        types.DatabaseKind
 	pgTopology    *types.PostgresTopology
@@ -62,7 +61,7 @@ type proxyConfigTask struct {
 	overrides     map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "haproxy.cfg", "proxysql.cnf"
 }
 
-func (t *proxyConfigTask) Execute(nc *dag.NodeContext) error {
+func (t *proxyConfigTask) Execute(nc *NodeContext) error {
 	targets := t.state.ProxyTargets()
 	if len(targets) == 0 {
 		nc.Log().Info("no proxy targets, skipping config")
@@ -99,7 +98,7 @@ func (t *proxyConfigTask) haproxyCmds(opts dbconfig.RenderHAProxyConfOpts) []age
 	}
 }
 
-func (t *proxyConfigTask) configHAProxyPostgres(nc *dag.NodeContext, proxyTargets, dbTargets []agent.Target) error {
+func (t *proxyConfigTask) configHAProxyPostgres(nc *NodeContext, proxyTargets, dbTargets []agent.Target) error {
 	nc.Log().Info("configuring haproxy for postgres (patroni health checks)")
 
 	var backends []string
@@ -124,7 +123,7 @@ func (t *proxyConfigTask) configHAProxyPostgres(nc *dag.NodeContext, proxyTarget
 	return sendSeqAll(nc, t.client, proxyTargets, cmds...)
 }
 
-func (t *proxyConfigTask) configProxySQLMySQL(nc *dag.NodeContext, proxyTargets, dbTargets []agent.Target) error {
+func (t *proxyConfigTask) configProxySQLMySQL(nc *NodeContext, proxyTargets, dbTargets []agent.Target) error {
 	nc.Log().Info("configuring proxysql for mysql")
 
 	var backends []string
@@ -155,7 +154,7 @@ func (t *proxyConfigTask) configProxySQLMySQL(nc *dag.NodeContext, proxyTargets,
 	return sendSeqAll(nc, t.client, proxyTargets, cmds...)
 }
 
-func (t *proxyConfigTask) configHAProxyPicodata(nc *dag.NodeContext, proxyTargets, dbTargets []agent.Target) error {
+func (t *proxyConfigTask) configHAProxyPicodata(nc *NodeContext, proxyTargets, dbTargets []agent.Target) error {
 	nc.Log().Info("configuring haproxy for picodata (pgproto)")
 
 	var backends []string
@@ -172,7 +171,7 @@ func (t *proxyConfigTask) configHAProxyPicodata(nc *dag.NodeContext, proxyTarget
 	return sendSeqAll(nc, t.client, proxyTargets, cmds...)
 }
 
-func (t *proxyConfigTask) configHAProxyYDB(nc *dag.NodeContext, proxyTargets, dbTargets []agent.Target) error {
+func (t *proxyConfigTask) configHAProxyYDB(nc *NodeContext, proxyTargets, dbTargets []agent.Target) error {
 	nc.Log().Info("configuring haproxy for YDB (gRPC)")
 
 	var backends []string

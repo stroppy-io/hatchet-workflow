@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/common/entity.proto";
+import "cloud/v1/common/favorite.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+/*
+    FavoriteRecord is one user's favorite of one row (a join row in its own table).
+
+    The favoriting user is entity.author_id; the tenant is entity.tenant_id. The
+    target is (kind, target_id). There MUST be at most one FavoriteRecord per
+    (author_id, kind, target_id) — enforce a unique index on those three; AddFavorite
+    is idempotent against it.
+
+    This table is the source of truth for two derived things on other reads:
+      - common.Entity.is_favorite (per-caller computed flag), and
+      - common.EntityFilter.favorites_only / EntitySortField.FAVORITE,
+    which are computed by joining the queried rows against this table for the
+    requesting caller. Nothing else stores a favorite flag.
+ */
+message FavoriteRecord {
+    /*
+        entity is the storage envelope: it carries the row id, the favoriting
+        user (entity.author_id) and the tenant (entity.tenant_id).
+     */
+    common.Entity entity = 1 [(validate.rules).message.required = true];
+    /*
+        kind names which table the favorite points at. Must be a defined,
+        non-zero FavoriteKind.
+     */
+    common.FavoriteKind kind = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /*
+        target_id is the id of the favorited row, in the table named by kind.
+     */
+    string target_id = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}

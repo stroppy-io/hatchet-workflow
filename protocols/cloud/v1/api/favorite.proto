@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/common/entity.proto";
+import "cloud/v1/common/favorite.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/permission.proto";
+import "cloud/v1/models/favorite.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    favorite.proto is the generic, per-user favorite API. One mechanic covers every
+    favoritable kind (the 3 preset tables, test runs, suites, suite runs). The
+    favoriting user is the caller; favorites are tenant-scoped and personal.
+
+    How it ties into the rest:
+      - Add/RemoveFavorite write/delete a models.FavoriteRecord for (caller, kind,
+        target_id).
+      - Every other list/get fills common.Entity.is_favorite for the caller and
+        honors common.EntityFilter.favorites_only / EntitySortField.FAVORITE by
+        joining against this caller's FavoriteRecords. So consumers do NOT need a
+        per-resource favorite endpoint — only this one.
+
+    Gated by RESOURCE_FAVORITE (tenant membership required to mutate/list).
+ */
+
+/*
+    AddFavorite marks (kind, target_id) as a favorite of the caller. Idempotent:
+    favoriting an already-favorited row is a no-op (returns the existing record).
+    The server validates the target exists and is in the caller's tenant.
+ */
+message AddFavoriteRequest {
+    /*
+        tenant_id scopes the favorite; favorites are tenant-local and personal.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        kind is the favoritable resource type (must be a defined, non-zero kind).
+     */
+    common.FavoriteKind kind = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /*
+        target_id is the id of the row being favorited, within `kind`.
+     */
+    string target_id = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message AddFavoriteResponse {
+    /*
+        favorite is the resulting (or pre-existing) favorite join record.
+     */
+    models.FavoriteRecord favorite = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    RemoveFavorite unmarks (kind, target_id). Idempotent: removing an absent
+    favorite is a no-op.
+ */
+message RemoveFavoriteRequest {
+    /*
+        tenant_id scopes the favorite to the caller's tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        kind is the favoritable resource type (must be a defined, non-zero kind).
+     */
+    common.FavoriteKind kind = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /*
+        target_id is the id of the row to unfavorite, within `kind`.
+     */
+    string target_id = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+/*
+    RemoveFavoriteResponse is empty; success is signalled by the absence of error.
+ */
+message RemoveFavoriteResponse {}
+
+/*
+    ListFavorites returns the caller's favorites, optionally narrowed to one kind.
+    This lists the raw join rows; to list the favorited ENTITIES themselves, use
+    the target resource's List with EntityFilter.favorites_only = true instead.
+ */
+message ListFavoritesRequest {
+    /*
+        tenant_id scopes the listing to the caller's tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        kind narrows to one kind; UNSPECIFIED = all kinds.
+     */
+    common.FavoriteKind kind = 2;
+    /*
+        page is the pagination cursor/size.
+     */
+    common.Page page = 3;
+}
+message ListFavoritesResponse {
+    /*
+        favorites are the caller's favorite join rows for this page.
+     */
+    repeated models.FavoriteRecord favorites = 1;
+    /*
+        next_page_token is empty when there are no more rows.
+     */
+    string next_page_token = 2;
+}
+
+/*
+    FavoriteService is the per-user favorite API covering every favoritable kind.
+ */
+service FavoriteService {
+    /*
+        AddFavorite is idempotent.
+     */
+    rpc AddFavorite (AddFavoriteRequest) returns (AddFavoriteResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_FAVORITE, action: ACTION_CREATE}]};
+    }
+    /*
+        RemoveFavorite is idempotent.
+     */
+    rpc RemoveFavorite (RemoveFavoriteRequest) returns (RemoveFavoriteResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_FAVORITE, action: ACTION_DELETE}]};
+    }
+    /*
+        ListFavorites returns the caller's favorite join rows, optionally narrowed
+        to one kind. Read-only.
+     */
+    rpc ListFavorites (ListFavoritesRequest) returns (ListFavoritesResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_FAVORITE, action: ACTION_LIST}]};
+    }
+}

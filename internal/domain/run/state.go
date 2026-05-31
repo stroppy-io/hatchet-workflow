@@ -3,7 +3,6 @@ package run
 import (
 	"sync"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/terraform"
 )
@@ -205,12 +204,12 @@ func (s *State) AllTargets() []agent.Target {
 	return all
 }
 
-// ExportRunState serializes the current state into a dag.RunState for snapshot persistence.
-func (s *State) ExportRunState() *dag.RunState {
+// ExportRunState serializes the current state into a RunState for snapshot persistence.
+func (s *State) ExportRunState() *RunState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	rs := &dag.RunState{
+	rs := &RunState{
 		ContainerIDs: append([]string{}, s.containerIDs...),
 		NetworkID:    s.networkID,
 		DBHost:       s.dbHost,
@@ -237,23 +236,23 @@ func (s *State) ExportRunState() *dag.RunState {
 				break
 			}
 		}
-		rs.Targets = append(rs.Targets, dag.TargetInfo{ID: t.ID, Host: t.Host, InternalHost: t.InternalHost, AgentPort: t.AgentPort, Zone: t.Zone, Role: role})
+		rs.Targets = append(rs.Targets, TargetInfo{ID: t.ID, Host: t.Host, InternalHost: t.InternalHost, AgentPort: t.AgentPort, Zone: t.Zone, Role: role})
 	}
 	for _, t := range s.monitorTargets {
-		rs.Targets = append(rs.Targets, dag.TargetInfo{ID: t.ID, Host: t.Host, InternalHost: t.InternalHost, AgentPort: t.AgentPort, Zone: t.Zone, Role: "monitor"})
+		rs.Targets = append(rs.Targets, TargetInfo{ID: t.ID, Host: t.Host, InternalHost: t.InternalHost, AgentPort: t.AgentPort, Zone: t.Zone, Role: "monitor"})
 	}
 	for _, t := range s.proxyTargets {
-		rs.Targets = append(rs.Targets, dag.TargetInfo{ID: t.ID, Host: t.Host, InternalHost: t.InternalHost, AgentPort: t.AgentPort, Zone: t.Zone, Role: "proxy"})
+		rs.Targets = append(rs.Targets, TargetInfo{ID: t.ID, Host: t.Host, InternalHost: t.InternalHost, AgentPort: t.AgentPort, Zone: t.Zone, Role: "proxy"})
 	}
 	if s.stroppyTarget != nil {
-		rs.Targets = append(rs.Targets, dag.TargetInfo{ID: s.stroppyTarget.ID, Host: s.stroppyTarget.Host, InternalHost: s.stroppyTarget.InternalHost, AgentPort: s.stroppyTarget.AgentPort, Zone: s.stroppyTarget.Zone, Role: "stroppy"})
+		rs.Targets = append(rs.Targets, TargetInfo{ID: s.stroppyTarget.ID, Host: s.stroppyTarget.Host, InternalHost: s.stroppyTarget.InternalHost, AgentPort: s.stroppyTarget.AgentPort, Zone: s.stroppyTarget.Zone, Role: "stroppy"})
 	}
 
 	return rs
 }
 
-// ImportRunState restores the state from a persisted dag.RunState.
-func (s *State) ImportRunState(rs *dag.RunState) {
+// ImportRunState restores the state from a persisted RunState.
+func (s *State) ImportRunState(rs *RunState) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

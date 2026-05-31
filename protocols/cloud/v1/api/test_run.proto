@@ -1,0 +1,394 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/common/entity.proto";
+import "cloud/v1/common/status.proto";
+import "cloud/v1/common/trigger.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/domain/test.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/permission.proto";
+import "cloud/v1/models/preset.proto";
+import "cloud/v1/models/test_run.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    test_run.proto is the tenant-scoped API over models.TestRunRecord. A run is
+    started from a fully-baked domain.TestRun (produced by the test wizard finish,
+    or supplied directly by a CLI), or re-run by id. Starting persists the record
+    and launches TestWorkflow. Runtime logs/metrics are keyed by the run id (see
+    monitor/*). Every request is tenant-scoped (tenant_id) and gated by
+    RESOURCE_TEST_RUN (ExtractToPreset is gated by RESOURCE_PRESET).
+ */
+
+/*
+    StartTestRun launches a run. Provide a fully-baked `run` (CLI / wizard finish)
+    to persist a new record and start it; or `test_run_id` to re-run an existing
+    record's spec as a new run. Launches TestWorkflow.
+ */
+message StartTestRunRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        source selects what to start: a fully baked run supplied inline, or an
+        existing record re-run by id.
+     */
+    oneof source {
+        option (validate.required) = true;
+        /*
+            run is a fully-baked TestRun to persist and start (CLI / wizard finish).
+         */
+        domain.TestRun run = 2;
+        /*
+            test_run_id re-runs an existing record's spec as a new run.
+         */
+        string test_run_id = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    }
+    /*
+        in_tenant_rating sets tenant-rating membership; unset -> server defaults
+        (tenant true).
+     */
+    optional bool in_tenant_rating = 4;
+    /*
+        in_global_rating sets global-rating membership; unset -> server defaults
+        (global false).
+     */
+    optional bool in_global_rating = 5;
+}
+/*
+    StartTestRunResponse returns the persisted, launched run.
+ */
+message StartTestRunResponse {
+    /*
+        run is the persisted, launched run record.
+     */
+    models.TestRunRecord run = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    GetTestRunRequest fetches a single test run by id.
+ */
+message GetTestRunRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the test run identifier to fetch.
+     */
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+/*
+    GetTestRunResponse returns the requested test run.
+ */
+message GetTestRunResponse {
+    /*
+        run is the requested run record.
+     */
+    models.TestRunRecord run = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    ListTestRunsRequest lists test runs with filtering, faceting, sorting and
+    pagination.
+ */
+message ListTestRunsRequest {
+    /*
+        Sort orders by a common Entity column OR a denormalized Summary column.
+        desc applies to whichever is chosen.
+     */
+    message Sort {
+        /*
+            Kind is a test-run-specific sortable column (alternative to a common
+            Entity column).
+         */
+        enum Kind {
+            /*
+                KIND_UNSPECIFIED leaves the test-run-specific ordering unset.
+             */
+            KIND_UNSPECIFIED = 0;
+            /*
+                KIND_STATUS orders by lifecycle status.
+             */
+            KIND_STATUS = 1;
+            /*
+                KIND_DB_KIND orders by database kind.
+             */
+            KIND_DB_KIND = 2;
+            /*
+                KIND_WORKLOAD orders by workload_name / stroppy_version.
+             */
+            KIND_WORKLOAD = 3;
+            /*
+                KIND_PROVIDER orders by deployment provider.
+             */
+            KIND_PROVIDER = 4;
+            /*
+                KIND_PROGRESS orders by progress.
+             */
+            KIND_PROGRESS = 5;
+            /*
+                KIND_DURATION orders by run duration.
+             */
+            KIND_DURATION = 6;
+            /*
+                KIND_STARTED_AT orders by start time.
+             */
+            KIND_STARTED_AT = 7;
+            /*
+                KIND_FINISHED_AT orders by finish time.
+             */
+            KIND_FINISHED_AT = 8;
+            /*
+                KIND_NODE_COUNT orders by node count.
+             */
+            KIND_NODE_COUNT = 9;
+        }
+        /*
+            by selects either a common Entity sort field or a test-run-specific Kind.
+         */
+        oneof by {
+            /*
+                entity orders by a shared Entity column (name, created_at, ...).
+             */
+            common.EntitySortField entity = 1;
+            /*
+                kind orders by a test-run-specific column.
+             */
+            Kind kind = 2;
+        }
+        /*
+            desc reverses the order (descending) when true.
+         */
+        bool desc = 3;
+    }
+
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        filter holds the shared Entity-level filters (search, ids, author, time
+        windows, soft-delete).
+     */
+    common.EntityFilter filter = 2;
+
+    /*
+        statuses facets by lifecycle status (all AND; empty list / unset = not
+        applied).
+     */
+    repeated common.Status statuses = 3;
+    /*
+        db_kinds facets by database kind.
+     */
+    repeated domain.Database.Kind db_kinds = 4;
+    /*
+        providers facets by deployment provider.
+     */
+    repeated deployment.Provider providers = 5;
+    /*
+        db_preset_ids facets by database preset id.
+     */
+    repeated string db_preset_ids = 6 [(validate.rules).repeated = {max_items: 200, items: {string: {max_len: 64}}}];
+    /*
+        workload_preset_ids facets by workload preset id.
+     */
+    repeated string workload_preset_ids = 7 [(validate.rules).repeated = {max_items: 200, items: {string: {max_len: 64}}}];
+    /*
+        stroppy_versions facets by stroppy version.
+     */
+    repeated string stroppy_versions = 8 [(validate.rules).repeated = {max_items: 100, items: {string: {max_len: 64}}}];
+    /*
+        suite_run_id scopes to a single suite run's children.
+     */
+    string suite_run_id = 9 [(validate.rules).string.max_len = 64];
+    /*
+        standalone facets by suite membership. Unset = both; true = only standalone
+        (no suite); false = only suite children.
+     */
+    optional bool standalone = 10;
+    /*
+        progress_min is the lower bound of the progress_pct window, 0..100.
+     */
+    optional uint32 progress_min = 11 [(validate.rules).uint32.lte = 100];
+    /*
+        progress_max is the upper bound of the progress_pct window, 0..100.
+     */
+    optional uint32 progress_max = 12 [(validate.rules).uint32.lte = 100];
+    /*
+        duration_min is the lower bound of the duration window.
+     */
+    google.protobuf.Duration duration_min = 13;
+    /*
+        duration_max is the upper bound of the duration window.
+     */
+    google.protobuf.Duration duration_max = 14;
+    /*
+        started_after keeps runs started at or after this time.
+     */
+    google.protobuf.Timestamp started_after = 15;
+    /*
+        started_before keeps runs started at or before this time.
+     */
+    google.protobuf.Timestamp started_before = 16;
+    /*
+        finished_after keeps runs finished at or after this time.
+     */
+    google.protobuf.Timestamp finished_after = 17;
+    /*
+        finished_before keeps runs finished at or before this time.
+     */
+    google.protobuf.Timestamp finished_before = 18;
+    /*
+        triggers filters by how the run was triggered (manual / api / suite child);
+        empty = any.
+     */
+    repeated common.Trigger triggers = 21;
+
+    /*
+        sort selects the result ordering.
+     */
+    Sort sort = 19;
+    /*
+        page carries pagination (page size + token).
+     */
+    common.Page page = 20;
+}
+/*
+    ListTestRunsResponse returns a page of test runs.
+ */
+message ListTestRunsResponse {
+    /*
+        runs is the matching page of run records.
+     */
+    repeated models.TestRunRecord runs = 1;
+    /*
+        next_page_token fetches the following page; empty when at the end.
+     */
+    string next_page_token = 2;
+}
+
+/*
+    CancelTestRun requests cancellation (status -> CANCELLING, then CANCELLED when
+    the workflow stops). Idempotent: cancelling a finished/cancelled run is a no-op.
+ */
+message CancelTestRunRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the test run identifier to cancel.
+     */
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+/*
+    CancelTestRunResponse returns the run after the cancellation request.
+ */
+message CancelTestRunResponse {
+    /*
+        run is the run record reflecting the cancellation.
+     */
+    models.TestRunRecord run = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    DeleteTestRunRequest deletes a test run by id.
+ */
+message DeleteTestRunRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the test run identifier to delete.
+     */
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+/*
+    DeleteTestRunResponse is empty; deletion success is signalled by a non-error
+    reply.
+ */
+message DeleteTestRunResponse {}
+
+/*
+    ExtractToPreset saves a run's database+workload as a reusable TestPresetRecord,
+    so a one-off run can be promoted into a named preset.
+ */
+message ExtractToPresetRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the source run to extract the preset from.
+     */
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        name is the optional name for the new preset; empty -> server derives one.
+     */
+    string name = 3 [(validate.rules).string = {max_len: 255}];
+}
+/*
+    ExtractToPresetResponse returns the newly created preset.
+ */
+message ExtractToPresetResponse {
+    /*
+        preset is the saved, reusable test preset.
+     */
+    models.TestPresetRecord preset = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    TestRunService is the tenant-scoped lifecycle API for test runs.
+ */
+service TestRunService {
+    /*
+        StartTestRun is not idempotent: each call launches a new run.
+     */
+    rpc StartTestRun (StartTestRunRequest) returns (StartTestRunResponse) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_CREATE}]};
+    }
+    /*
+        GetTestRun fetches a single run by id. Read-only.
+     */
+    rpc GetTestRun (GetTestRunRequest) returns (GetTestRunResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
+    }
+    /*
+        ListTestRuns lists runs with filtering and pagination. Read-only.
+     */
+    rpc ListTestRuns (ListTestRunsRequest) returns (ListTestRunsResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_LIST}]};
+    }
+    /*
+        CancelTestRun is idempotent: cancelling a finished/cancelled run is a no-op.
+     */
+    rpc CancelTestRun (CancelTestRunRequest) returns (CancelTestRunResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_UPDATE}]};
+    }
+    /*
+        DeleteTestRun is idempotent: deleting an absent run is a no-op.
+     */
+    rpc DeleteTestRun (DeleteTestRunRequest) returns (DeleteTestRunResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_DELETE}]};
+    }
+    /*
+        ExtractToPreset mints a new preset. Not idempotent.
+     */
+    rpc ExtractToPreset (ExtractToPresetRequest) returns (ExtractToPresetResponse) {
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_CREATE}]};
+    }
+}

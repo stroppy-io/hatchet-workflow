@@ -6,7 +6,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 )
@@ -50,13 +49,13 @@ func binURL(serverAddr, name, ver, file string) string {
 func isDatabaseMachine(machineID string) bool { return strings.Contains(machineID, "-database-") }
 
 type monitorInstallTask struct {
-	client     agent.Client
+	client     CommandSink
 	state      *State
 	dbKind     types.DatabaseKind
 	serverAddr string
 }
 
-func (t *monitorInstallTask) Execute(nc *dag.NodeContext) error {
+func (t *monitorInstallTask) Execute(nc *NodeContext) error {
 	allTargets := t.state.AllTargets()
 	nc.Log().Info("installing monitoring exporters on all machines", zap.Int("count", len(allTargets)))
 
@@ -138,7 +137,7 @@ func (t *monitorInstallTask) Execute(nc *dag.NodeContext) error {
 }
 
 type monitorConfigTask struct {
-	client          agent.Client
+	client          CommandSink
 	state           *State
 	monitor         types.MonitorConfig
 	runID           string
@@ -149,7 +148,7 @@ type monitorConfigTask struct {
 	accountID       int32
 }
 
-func (t *monitorConfigTask) Execute(nc *dag.NodeContext) error {
+func (t *monitorConfigTask) Execute(nc *NodeContext) error {
 	allTargets := t.state.AllTargets()
 	nc.Log().Info("configuring monitoring on all machines", zap.Int("count", len(allTargets)))
 
@@ -205,13 +204,18 @@ func (t *monitorConfigTask) Execute(nc *dag.NodeContext) error {
 		}
 		cmds = append(cmds, startDaemonCmd("config_monitor", "vmagent", "/usr/local/bin/vmagent", vmagentArgs, nil))
 
-		// vector log shipper (journald + DB log files → VictoriaLogs).
+		// vector log shipper (journald + DB log files → VictoriaLogs). Vector is
+		// best-effort (the install step swallows download failures), so start it
+		// only when the binary is actually present — never fail the run for a
+		// missing log shipper.
 		if logsEndpoint != "" {
 			vecCfg := buildVectorConfig(machineID, dbKind, t.runID, logsEndpoint, t.monitoringToken, t.accountID)
 			cmds = append(cmds, writeFile("config_monitor", "/etc/vector/vector.yaml", vecCfg))
-			cmds = append(cmds, runCmd("config_monitor", "mkdir -p /var/lib/vector"))
-			cmds = append(cmds, startDaemonCmd("config_monitor", "vector", "/usr/local/bin/vector",
-				[]string{"--config", "/etc/vector/vector.yaml"}, nil))
+			cmds = append(cmds, runCmd("config_monitor",
+				`mkdir -p /var/lib/vector; if [ -x /usr/local/bin/vector ]; then `+
+					`systemctl reset-failed vector 2>/dev/null; `+
+					`systemd-run --unit=vector -- /usr/local/bin/vector --config /etc/vector/vector.yaml; `+
+					`else echo "vector not installed; log shipping to VictoriaLogs disabled"; fi`))
 		}
 
 		return cmds

@@ -4,23 +4,29 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"log"
+	"log/slog"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/spf13/cobra"
+	temporalclient "go.temporal.io/sdk/client"
+	temporallog "go.temporal.io/sdk/log"
+	temporalworker "go.temporal.io/sdk/worker"
 	"go.uber.org/zap"
 
 	"github.com/stroppy-io/stroppy-cloud/web"
 
+	agentworker "github.com/stroppy-io/stroppy-cloud/internal/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/api"
-	"github.com/stroppy-io/stroppy-cloud/internal/domain/scheduler"
+	"github.com/stroppy-io/stroppy-cloud/internal/gateway"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
+	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
+	"github.com/stroppy-io/stroppy-cloud/internal/workflows"
 )
 
 var (
@@ -99,33 +105,49 @@ func serveCmd() *cobra.Command {
 				logger.Warn("io-m3 preset migration failed (non-fatal)", zap.Error(err))
 			}
 
-			app := api.New(api.Config{Pool: pool, Logger: logger})
-			srv := api.NewServer(app, logger, pool, jwtSec, monitoringURL, monitoringToken, grafanaURL, listenAddr)
-			// Pre-scheduler best-effort: clean leftover Docker containers/networks
-			// from previous lifetimes. Run recovery is owned by the scheduler.
-			srv.CleanupOrphanResourcesOnly()
-
-			// Durable scheduler — replaces in-memory queue + recovers any
-			// jobs left claimed/running by a previous server process.
-			sch := scheduler.New(scheduler.Config{
-				InstanceID:       uuid.New().String(),
-				Logger:           logger,
-				Pool:             pool,
-				Runner:           app,
-				SettingsResolver: srv.SettingsResolver(),
-				RecoverChecker:   srv.RecoverChecker(),
-				SuiteLauncher:    srv.SuiteLauncher(),
-				CronNext:         srv.CronNext(),
+			// --- Temporal: runs execute as workflows now (no DAG/scheduler) ---
+			slogger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+			temporalHostPort := envOrDefault("TEMPORAL_HOSTPORT", "127.0.0.1:7233")
+			temporalNS := envOrDefault("TEMPORAL_NAMESPACE", "default")
+			tc, err := temporalclient.Dial(temporalclient.Options{
+				HostPort:  temporalHostPort,
+				Namespace: temporalNS,
+				Logger:    temporallog.NewStructuredLogger(slogger),
 			})
-			srv.SetScheduler(sch)
-			if err := sch.Start(ctx); err != nil {
-				return fmt.Errorf("scheduler start: %w", err)
+			if err != nil {
+				return fmt.Errorf("dial temporal: %w", err)
 			}
-			defer func() {
-				stopCtx, stopCancel := context.WithTimeout(context.Background(), 30*time.Second)
-				defer stopCancel()
-				sch.Stop(stopCtx)
-			}()
+			defer tc.Close()
+
+			app := api.New(api.Config{Pool: pool, Logger: logger})
+			app.SetTemporal(tc)
+			srv := api.NewServer(app, logger, pool, jwtSec, monitoringURL, monitoringToken, grafanaURL, listenAddr)
+
+			// Docker deployer for the deploy activity. AttachNetwork joins agents
+			// to the server's docker network so they reach the gateway in-network
+			// (a host-gateway hairpin breaks the agent's gRPC Temporal connection
+			// through docker's userland proxy).
+			deployer, err := agent.NewDockerDeployer("")
+			if err != nil {
+				return fmt.Errorf("docker deployer: %w", err)
+			}
+			deployer.AttachNetwork = os.Getenv("AGENT_ATTACH_NETWORK")
+			agentServerAddr := envOrDefault("AGENT_SERVER_ADDR", "http://host.docker.internal:8080")
+
+			// Server worker: RunWorkflow + deploy/buildRecipe/teardown activities
+			// on the shared "stroppy-cloud" task queue.
+			w := temporalworker.New(tc, "stroppy-cloud", temporalworker.Options{})
+			workflows.RegisterServer(w, &workflows.ServerActivities{
+				Deployer:        deployer,
+				ServerAddr:      agentServerAddr,
+				MonitoringURL:   monitoringURL,
+				MonitoringToken: monitoringToken,
+				Logger:          logger,
+			})
+			if err := w.Start(); err != nil {
+				return fmt.Errorf("start temporal worker: %w", err)
+			}
+			defer w.Stop()
 
 			// Embed SPA into the server.
 			spaFS, err := fs.Sub(web.Dist, "dist")
@@ -134,19 +156,51 @@ func serveCmd() *cobra.Command {
 				logger.Info("SPA embedded and served at /")
 			}
 
-			httpSrv := &http.Server{Addr: listenAddr, Handler: srv.Router()}
-
+			// Agent gateway: ONE port serves everything — the Temporal gRPC proxy
+			// + agent binary/artifact cache/apt relay (agent-facing) AND the
+			// control-plane UI + REST API (via HTTPFallback = the chi router). So
+			// the frontend stays on the same address as before.
+			gw, err := gateway.New(gateway.Config{
+				TemporalHostPort: temporalHostPort,
+				AgentBinaryPath:  os.Getenv("AGENT_BINARY_PATH"),
+				CacheDir:         envOrDefault("STROPPY_BINARY_CACHE_DIR", "/var/lib/stroppy-cache/binaries"),
+				Artifacts:        map[string]string{"stroppy": os.Getenv("STROPPY_UPSTREAM")},
+				AptBackend:       os.Getenv("STROPPY_APT_CACHE_BACKEND"),
+				HTTPFallback:     srv.Router(),
+				Logger:           slogger,
+			})
+			if err != nil {
+				return fmt.Errorf("build gateway: %w", err)
+			}
+			gwAddr := envOrDefault("AGENT_GATEWAY_ADDR", listenAddr)
+			gwLis, err := net.Listen("tcp", gwAddr)
+			if err != nil {
+				return fmt.Errorf("listen gateway %s: %w", gwAddr, err)
+			}
 			go func() {
-				logger.Info("server listening", zap.String("addr", listenAddr))
-				if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-					logger.Fatal("server error", zap.Error(err))
+				logger.Info("server listening (gateway + UI + API)", zap.String("addr", gwAddr))
+				if err := gw.Serve(gwLis); err != nil {
+					logger.Error("gateway serve error", zap.Error(err))
 				}
 			}()
+
+			// Optional: also expose the plain control-plane API on a second port
+			// (e.g. for the e2e gRPC/HTTP client) when API_ADDR is set.
+			if apiAddr := os.Getenv("API_ADDR"); apiAddr != "" && apiAddr != gwAddr {
+				httpSrv := &http.Server{Addr: apiAddr, Handler: srv.Router()}
+				go func() {
+					logger.Info("api server listening", zap.String("addr", apiAddr))
+					if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+						logger.Error("api server error", zap.Error(err))
+					}
+				}()
+			}
 
 			sigCtx := signalCtx()
 			<-sigCtx.Done()
 			logger.Info("shutting down")
-			return httpSrv.Shutdown(context.Background())
+			gw.Close()
+			return nil
 		},
 	}
 	cmd.Flags().StringVar(&addr, "addr", ":8080", "listen address")
@@ -257,47 +311,62 @@ func dryRunCmd() *cobra.Command {
 func agentCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "agent",
-		Short: "Run in agent mode on a target machine (polls server for commands)",
+		Short: "Run in agent mode on a target machine (a Temporal worker reached via the server's gRPC proxy)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			serverAddr := os.Getenv("STROPPY_SERVER_ADDR")
+			// The agent is told ONLY the server address (a full URL). Temporal is
+			// reached through the gateway's transparent gRPC proxy at that same
+			// address, so dialing the server IS dialing Temporal — but the gRPC
+			// client wants a bare host:port, so strip the scheme. The agent runs
+			// its activities on its OWN task queue so the workflow can pin this
+			// machine's steps to exactly this agent (deterministic placement).
+			serverAddr := envOr("STROPPY_SERVER_ADDR", "http://127.0.0.1:8080")
+			namespace := envOr("TEMPORAL_NAMESPACE", "default")
+			taskQueue := envOr("AGENT_TASK_QUEUE", "stroppy-agent")
+			hostPort := grpcHostPort(serverAddr)
 
-			machineID := os.Getenv("STROPPY_MACHINE_ID")
-			if machineID == "" {
-				h, err := os.Hostname()
-				if err != nil {
-					return fmt.Errorf("determine machine ID: %w", err)
-				}
-				machineID = h
+			logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+			logger.Info("starting stroppy agent",
+				"server_addr", serverAddr, "temporal_hostport", hostPort,
+				"namespace", namespace, "task_queue", taskQueue)
+
+			c, err := temporalclient.Dial(temporalclient.Options{
+				HostPort:  hostPort,
+				Namespace: namespace,
+				Logger:    temporallog.NewStructuredLogger(logger),
+			})
+			if err != nil {
+				return fmt.Errorf("agent: dial temporal: %w", err)
 			}
+			defer c.Close()
 
-			srv := agent.NewAgentServer(serverAddr, machineID, 0)
+			// EnableSessionWorker lets the orchestrating workflow pin a sequence of
+			// activities (write configs, fetch binaries, run the load) to THIS
+			// agent via a Temporal worker session.
+			w := temporalworker.New(c, taskQueue, temporalworker.Options{EnableSessionWorker: true})
+			impl := agentworker.NewActivities(agentworker.WithLogger(logger))
+			workflowpb.RegisterAgentCommandServiceActivities(w, impl)
 
-			// Set auth token if provided (generated by server at agent provisioning).
-			if agentToken := os.Getenv("STROPPY_AGENT_TOKEN"); agentToken != "" {
-				srv.SetToken(agentToken)
-			}
-
-			// Register with the server so it knows we exist.
-			if err := srv.Register(); err != nil {
-				log.Printf("WARNING: agent registration failed (will continue): %v", err)
-			}
-
-			ctx := signalCtx()
-
-			// Run poll loop -- blocks until ctx is cancelled.
-			go func() {
-				if err := srv.Run(ctx); err != nil {
-					log.Printf("agent poll loop error: %v", err)
-				}
-			}()
-
-			<-ctx.Done()
-			log.Println("agent shutting down -- killing managed processes")
-			srv.Executor().Shutdown()
-			return nil
+			return w.Run(temporalworker.InterruptCh())
 		},
 	}
 	return cmd
+}
+
+// envOr returns the env value for key or def when unset/empty.
+func envOr(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
+}
+
+// grpcHostPort strips a URL scheme (and path) from the server address so the
+// Temporal gRPC client gets a bare host:port. "http://host:8080" -> "host:8080".
+func grpcHostPort(serverAddr string) string {
+	if u, err := url.Parse(serverAddr); err == nil && u.Host != "" {
+		return u.Host
+	}
+	return serverAddr
 }
 
 func signalCtx() context.Context {

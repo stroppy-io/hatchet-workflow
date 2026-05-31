@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package cloud.v1.deployment;
+
+import "cloud/v1/deployment/provider.proto";
+import "schemapb/schema.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment";
+
+/*
+    Terraform is the execution boundary for Terraform-backed deployments.
+    It records the internal operation model the control-plane needs to run
+    terraform plan/apply/destroy: an action, a stable workdir id, embedded .tf
+    sources, optional baked tfvars, environment, and CLI/runtime options.
+ */
+message Terraform {
+    /* Action selects the Terraform lifecycle command represented by input. */
+    enum Action {
+        /* ACTION_UNSPECIFIED is invalid. */
+        ACTION_UNSPECIFIED = 0;
+        /* ACTION_PLAN prepares the workdir, runs init/plan, and records the plan result. */
+        ACTION_PLAN = 1;
+        /* ACTION_APPLY prepares the workdir, runs init/apply/output. */
+        ACTION_APPLY = 2;
+        /* ACTION_DESTROY destroys resources from an existing workdir state. */
+        ACTION_DESTROY = 3;
+    }
+
+    /* input contains everything needed to prepare and run one Terraform action. */
+    message Input {
+        /* provider selects the deployment backend this Terraform action targets. */
+        deployment.Provider provider = 1;
+        /* operation contains Terraform executor parameters independent of tfvars. */
+        Operation operation = 2 [(validate.rules).message.required = true];
+        /*
+            tfvars is the sealed, schema-backed values used to produce
+            terraform.tfvars.json. It is required for plan/apply and optional
+            for destroy, because crash-recovery destroy may reuse an existing
+            workdir that already contains terraform.tfvars.json and tfstate.
+         */
+        schemapb.Baked tfvars = 3;
+    }
+
+    /* output contains observed Terraform state and baked output values. */
+    message Output {
+        /* action echoes Input.operation.action for logs and state machines. */
+        Action action = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        /* workdir_id echoes Input.operation.workdir_id for teardown and recovery. */
+        string workdir_id = 2 [(validate.rules).string = {min_len: 1, max_len: 256}];
+        /* workdir is the resolved directory used by Terraform, if materialized. */
+        string workdir = 3 [(validate.rules).string.max_len = 4096];
+        /* state_file_present records whether terraform.tfstate exists after the action. */
+        bool state_file_present = 4;
+        /*
+            plan is filled for ACTION_PLAN. It stores the sealed, schema-backed
+            plan projection chosen by the executor.
+         */
+        schemapb.Baked plan = 5;
+        /*
+            outputs is filled for ACTION_APPLY. It stores the sealed,
+            schema-backed projection of values returned by terraform output.
+         */
+        schemapb.Baked outputs = 6;
+    }
+
+    /* Operation contains the internal Terraform executor parameters. */
+    message Operation {
+        /* SourceFile is one Terraform source file embedded into the operation workdir. */
+        message SourceFile {
+            /* path is workdir-relative, for example main.tf or network.tf. */
+            string path = 1 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+            /* content contains the .tf file bytes. */
+            bytes content = 2 [(validate.rules).bytes.min_len = 1];
+        }
+
+        /* action is the lifecycle command to execute. */
+        Action action = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        /*
+            workdir_id is the stable id under workdir_root. Current runtime uses
+            run_id and persists it before apply/destroy so teardown can recover
+            after a process crash.
+         */
+        string workdir_id = 2 [(validate.rules).string = {min_len: 1, max_len: 256}];
+        /*
+            workdir_root is the Terraform root directory. Empty means executor
+            default, currently /tmp/stroppy-terraform.
+         */
+        string workdir_root = 3 [(validate.rules).string.max_len = 4096];
+        /*
+            var_file_name is the workdir-relative tfvars filename passed to
+            terraform plan/apply/destroy when tfvars are present. Empty means
+            executor default terraform.tfvars.json.
+         */
+        string var_file_name = 4 [(validate.rules).string.max_len = 255];
+        /*
+            files are Terraform source files written into the workdir before
+            init/plan/apply/destroy. File paths are workdir-relative. Destroy
+            recovery may omit files when reusing a complete existing workdir.
+         */
+        repeated SourceFile files = 5 [(validate.rules).repeated.max_items = 512];
+        /*
+            env contains Terraform process environment overrides. The executor
+            adds TF_CLI_CONFIG_FILE for the generated tfrc.
+         */
+        map<string, string> env = 6 [(validate.rules).map.max_pairs = 128];
+        /*
+            parallelism is passed to terraform plan/apply/destroy when the CLI
+            command supports it. Zero means executor default, currently 10.
+         */
+        uint32 parallelism = 7 [(validate.rules).uint32.lte = 1024];
+        /*
+            terraform_exec_path optionally records the Terraform binary path.
+            Empty means executor default, currently TERRAFORM_EXEC_PATH or
+            /usr/local/bin/terraform.
+         */
+        string terraform_exec_path = 8 [(validate.rules).string.max_len = 4096];
+        /*
+            preserve_existing_state keeps an existing terraform.tfstate when
+            preparing the workdir. This is required for idempotent recovered
+            apply/destroy and prevents orphaned cloud resources.
+         */
+        bool preserve_existing_state = 9;
+        /*
+            destroy_on_apply_error requests rollback with terraform destroy
+            when ACTION_APPLY fails after Terraform has been initialized.
+         */
+        bool destroy_on_apply_error = 10;
+        /*
+            refresh controls Terraform state refresh for plan/apply when the
+            executor exposes that option. The zero value leaves executor
+            defaults unchanged.
+         */
+        bool refresh = 11;
+    }
+
+
+}

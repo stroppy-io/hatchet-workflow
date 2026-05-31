@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/api/admin.proto";
+import "cloud/v1/iam/options.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+/*
+    system_settings.proto manages the GLOBAL control-plane settings (api.PlatformSettings,
+    the singleton). Platform-reserved: admin_only on both read and write — there is
+    one control plane and one row, changed only by the root admin. Tenant-level
+    settings are a SEPARATE api (tenant_settings.proto).
+ */
+
+/*
+    GetSystemSettingsRequest takes no arguments: it reads the singleton settings.
+ */
+message GetSystemSettingsRequest {}
+/*
+    GetSystemSettingsResponse returns the current control-plane settings.
+ */
+message GetSystemSettingsResponse {
+    /*
+        settings is the singleton platform configuration.
+     */
+    PlatformSettings settings = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    UpdateSystemSettings replaces the singleton wholesale. Idempotent.
+ */
+message UpdateSystemSettingsRequest {
+    /*
+        settings is the full replacement platform configuration.
+     */
+    PlatformSettings settings = 1 [(validate.rules).message.required = true];
+}
+/*
+    UpdateSystemSettingsResponse returns the settings after the update.
+ */
+message UpdateSystemSettingsResponse {
+    /*
+        settings is the updated singleton platform configuration.
+     */
+    PlatformSettings settings = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    SystemSettingsService manages the global, singleton control-plane settings.
+    Admin-only on both read and write.
+ */
+service SystemSettingsService {
+    /*
+        GetSystemSettings reads the singleton platform settings. Admin-only,
+        read-only.
+     */
+    rpc GetSystemSettings (GetSystemSettingsRequest) returns (GetSystemSettingsResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {admin_only: true};
+    }
+    /*
+        UpdateSystemSettings replaces the singleton wholesale. Admin-only.
+        Idempotent.
+     */
+    rpc UpdateSystemSettings (UpdateSystemSettingsRequest) returns (UpdateSystemSettingsResponse) {
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {admin_only: true};
+    }
+}

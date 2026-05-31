@@ -6,7 +6,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 )
@@ -15,11 +14,11 @@ import (
 // colocated with postgres for HA). The agent only runs the opaque curl|tar
 // script the server composes here.
 type etcdInstallTask struct {
-	client agent.Client
+	client CommandSink
 	state  *State
 }
 
-func (t *etcdInstallTask) Execute(nc *dag.NodeContext) error {
+func (t *etcdInstallTask) Execute(nc *NodeContext) error {
 	// etcd is colocated on DB nodes (first 3).
 	targets := t.state.DBTargets()
 	if len(targets) > 3 {
@@ -53,11 +52,11 @@ func (t *etcdInstallTask) Execute(nc *dag.NodeContext) error {
 // DB nodes. All node naming / cluster-membership computation happens here; the
 // agent just writes the env file and runs the start/health scripts.
 type etcdConfigTask struct {
-	client agent.Client
+	client CommandSink
 	state  *State
 }
 
-func (t *etcdConfigTask) Execute(nc *dag.NodeContext) error {
+func (t *etcdConfigTask) Execute(nc *NodeContext) error {
 	targets := t.state.DBTargets()
 	if len(targets) > 3 {
 		targets = targets[:3]

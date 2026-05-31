@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package cloud.v1.domain;
+
+import "cloud/v1/common/tags.proto";
+import "schemapb/schema.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
+
+/*
+    database.proto describes the database under test. A Database picks a Kind
+    and supplies it via one of three mutually exclusive sources: baked
+    self-deploy params, an external already-running endpoint, or a preset id
+    resolved server-side. It is provider-agnostic; how/where it deploys is
+    decided later when a Test is baked into a TestRun.
+ */
+
+/*
+    Database is the database-under-test definition for a test run. It selects a
+    Kind and provides it through exactly one source variant, optionally carrying
+    the params schema and free-form tags.
+ */
+message Database {
+    /*
+        PresetId is a reference to a stored database preset. Resolved
+        server-side into one of the inline `source` variants (params for
+        self-deploy, or external).
+     */
+    message PresetId {
+        /* id is the stored database preset identifier to resolve. */
+        string id = 1 [(validate.rules).string = {min_len: 1}];
+    }
+
+    /*
+        External is an already-running database. TestWorkflow does NOT deploy or
+        tear it down, it only connects to `dsn` and runs the workload on top.
+     */
+    message External {
+        /* dsn is the connection string of the external database. */
+        string dsn = 1 [(validate.rules).string = {min_len: 1}];
+        /* tags carry extra info about the external db (version, region, owner...). */
+        common.Tags tags = 2;
+    }
+
+    /* Kind enumerates the supported database engines under test. */
+    enum Kind {
+        /* KIND_UNSPECIFIED is the unset zero value; never a valid engine. */
+        KIND_UNSPECIFIED = 0;
+        /* KIND_POSTGRES is PostgreSQL. */
+        KIND_POSTGRES = 1;
+        /* KIND_MYSQL is MySQL. */
+        KIND_MYSQL = 2;
+        /* KIND_MARIADB is MariaDB. */
+        KIND_MARIADB = 3;
+        /* KIND_YDB is self-deployed YDB. */
+        KIND_YDB = 4;
+        /* KIND_YDB_MANAGED is managed (cloud-provided) YDB. */
+        KIND_YDB_MANAGED = 5;
+        /* KIND_COCKROACH is CockroachDB. */
+        KIND_COCKROACH = 6;
+        /* KIND_PICODATA is Picodata. */
+        KIND_PICODATA = 7;
+        /* KIND_EXTERNAL is an external / unmanaged database addressed only by
+           dsn. Use with source.external. */
+        KIND_EXTERNAL = 8;
+    }
+    /* kind selects which database engine is under test. */
+    Kind kind = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+
+    /* prams_schema is the schema (the form) describing self-deploy params for
+       this kind. */
+    schemapb.Schema prams_schema = 2;
+
+    /* source selects how the database is provided for a test run. Exactly one
+       variant must be set. */
+    oneof source {
+        option (validate.required) = true;
+
+        /* params is the self-deploy variant: filled values of prams_schema.
+           TestWorkflow deploys a DB instance into the topology and tears it
+           down at the end. */
+        schemapb.Baked params = 3;
+
+        /* external is the external variant: connect to an existing endpoint,
+           skip deploy/teardown. */
+        External external = 4;
+
+        /* database_preset_id references a preset, resolved into params|external
+           server-side. */
+        PresetId database_preset_id = 5;
+    }
+
+    /* tags are free-form metadata attached to the database definition. */
+    common.Tags tags = 7;
+}

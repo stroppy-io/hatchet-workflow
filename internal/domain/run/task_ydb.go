@@ -5,7 +5,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/dbconfig"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
@@ -35,14 +34,14 @@ func resolveYDBVersion(v string) string {
 }
 
 type ydbInstallTask struct {
-	client   agent.Client
+	client   CommandSink
 	state    *State
 	version  string
 	topology *types.YDBTopology
 	pkg      *types.Package
 }
 
-func (t *ydbInstallTask) Execute(nc *dag.NodeContext) error {
+func (t *ydbInstallTask) Execute(nc *NodeContext) error {
 	// Install ydbd binaries on every YDB node (storage + compute alike).
 	targets := t.state.DBTargets()
 	nc.Log().Info("installing YDB on targets")
@@ -67,14 +66,14 @@ mkdir -p /opt/ydb/cfg /ydb_data && chown -R ydb:ydb /ydb_data`, ydbVersion, down
 }
 
 type ydbConfigTask struct {
-	client     agent.Client
+	client     CommandSink
 	state      *State
 	topology   *types.YDBTopology
 	overrides  map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "ydb.yaml:storage"
 	pgwirePort int               // > 0 → ydbd starts with --pgwire-port (set when run uses ydb-pgwire protocol)
 }
 
-func (t *ydbConfigTask) Execute(nc *dag.NodeContext) error {
+func (t *ydbConfigTask) Execute(nc *NodeContext) error {
 	// Static (storage) daemon runs on storage nodes only. In combined mode
 	// these are also the only YDB nodes, so this matches DBTargets().
 	targets := t.state.YDBStorageTargets()
@@ -277,12 +276,12 @@ fi`
 }
 
 type ydbInitTask struct {
-	client   agent.Client
+	client   CommandSink
 	state    *State
 	topology *types.YDBTopology
 }
 
-func (t *ydbInitTask) Execute(nc *dag.NodeContext) error {
+func (t *ydbInitTask) Execute(nc *NodeContext) error {
 	// Cluster init runs once against the static endpoint — first storage node.
 	targets := t.state.YDBStorageTargets()
 	if len(targets) == 0 {
@@ -320,14 +319,14 @@ for i in $(seq 1 15); do LD_LIBRARY_PATH=/opt/ydb/lib /opt/ydb/bin/ydbd -s %s ad
 }
 
 type ydbStartDBTask struct {
-	client     agent.Client
+	client     CommandSink
 	state      *State
 	topology   *types.YDBTopology
 	overrides  map[string]string // DatabaseConfig.RenderedConfigOverrides — keys: "ydb.yaml:database"
 	pgwirePort int               // > 0 → ydbd starts with --pgwire-port (set when run uses ydb-pgwire protocol)
 }
 
-func (t *ydbStartDBTask) Execute(nc *dag.NodeContext) error {
+func (t *ydbStartDBTask) Execute(nc *NodeContext) error {
 	// Dynamic (database) daemon: in split mode it runs on dedicated compute
 	// nodes; in combined mode the storage nodes themselves host it co-located.
 	targets := t.state.YDBDatabaseTargets()

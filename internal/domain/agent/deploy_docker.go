@@ -33,6 +33,13 @@ type DeployResult struct {
 type DockerDeployer struct {
 	cli         *client.Client
 	networkName string
+	// AttachNetwork, when non-empty, is an EXISTING docker network each agent
+	// container is also connected to (in addition to networkName). This is the
+	// network the server (and its gateway) runs on, so agents reach the gateway
+	// in-network (server container name) over a direct bridge path — avoiding the
+	// cross-bridge host-gateway hairpin that routes through docker's userland
+	// proxy and breaks the agent's gRPC/HTTP2 Temporal worker connection.
+	AttachNetwork string
 }
 
 // NewDockerDeployer creates a deployer backed by the local Docker daemon.
@@ -70,6 +77,8 @@ func (d *DockerDeployer) Deploy(ctx context.Context, machineID string, serverAdd
 				fmt.Sprintf("STROPPY_SERVER_ADDR=%s", serverAddr),
 				fmt.Sprintf("STROPPY_MACHINE_ID=%s", machineID),
 				fmt.Sprintf("STROPPY_AGENT_TOKEN=%s", agentToken),
+				fmt.Sprintf("AGENT_TASK_QUEUE=%s", "stroppy-agent-"+machineID),
+				"TEMPORAL_NAMESPACE=default",
 			},
 		}
 	} else {
@@ -89,6 +98,8 @@ func (d *DockerDeployer) Deploy(ctx context.Context, machineID string, serverAdd
 				fmt.Sprintf("STROPPY_SERVER_ADDR=%s", serverAddr),
 				fmt.Sprintf("STROPPY_MACHINE_ID=%s", machineID),
 				fmt.Sprintf("STROPPY_AGENT_TOKEN=%s", agentToken),
+				fmt.Sprintf("AGENT_TASK_QUEUE=%s", "stroppy-agent-"+machineID),
+				"TEMPORAL_NAMESPACE=default",
 			},
 		}
 	}
@@ -128,10 +139,21 @@ func (d *DockerDeployer) Deploy(ctx context.Context, machineID string, serverAdd
 		return DeployResult{}, fmt.Errorf("agent: docker create %s: %w", name, err)
 	}
 
+	// Also attach the agent to the server's network (when configured) so it can
+	// reach the gateway in-network (server container name) over a direct bridge
+	// path — avoiding the cross-bridge host-gateway hairpin that routes through
+	// docker's userland proxy and breaks the agent's gRPC/HTTP2 Temporal worker
+	// connection.
+	if d.AttachNetwork != "" {
+		if err := d.cli.NetworkConnect(ctx, d.AttachNetwork, resp.ID, nil); err != nil {
+			return DeployResult{}, fmt.Errorf("agent: attach %s to network %s: %w", name, d.AttachNetwork, err)
+		}
+	}
+
 	// For systemd containers: write env file before starting so the agent service picks it up.
 	if useSystemd {
-		envContent := fmt.Sprintf("STROPPY_SERVER_ADDR=%s\nSTROPPY_MACHINE_ID=%s\nSTROPPY_AGENT_TOKEN=%s\n",
-			serverAddr, machineID, agentToken)
+		envContent := fmt.Sprintf("STROPPY_SERVER_ADDR=%s\nSTROPPY_MACHINE_ID=%s\nSTROPPY_AGENT_TOKEN=%s\nAGENT_TASK_QUEUE=%s\nTEMPORAL_NAMESPACE=default\n",
+			serverAddr, machineID, agentToken, "stroppy-agent-"+machineID)
 		if err := d.copyFileToContainer(ctx, resp.ID, "/etc/stroppy-agent.env", envContent); err != nil {
 			return DeployResult{}, fmt.Errorf("agent: write env file %s: %w", name, err)
 		}

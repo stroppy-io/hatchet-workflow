@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package cloud.v1.iam;
+
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "cloud/v1/iam/permission.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam";
+
+/*
+    role.proto defines the named bundle of Permissions. Roles are the unit
+    operators actually reason about ("admin", "viewer"), while Permissions (from
+    permission.proto) are the fine-grained atoms underneath. Accounts never hold
+    Permissions directly — they hold Roles, via Membership (membership.proto).
+ */
+
+/*
+    Role is a named, scoped collection of Permissions.
+
+    Scope decides reach:
+      - SCOPE_PLATFORM: tenant_id MUST be empty; the role applies across the
+        whole control plane (e.g. a platform auditor).
+      - SCOPE_TENANT: tenant_id MUST be set; the role only grants inside that
+        one tenant. The same logical role ("admin") therefore exists once per
+        tenant as distinct rows.
+
+    is_system marks built-in roles (owner/admin/viewer and the like) that the
+    server seeds and that clients may read but never edit or delete. Custom
+    roles created by operators leave is_system false and are fully mutable.
+ */
+message Role {
+    /*
+        id is the stable, server-assigned unique identifier (e.g. UUID).
+     */
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        name is the human-readable label, unique within its scope/tenant.
+     */
+    string name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        scope decides whether this role is platform-wide or tenant-local.
+     */
+    Scope scope = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /*
+        tenant_id binds a SCOPE_TENANT role to its tenant. It MUST be empty for
+        SCOPE_PLATFORM roles. The scope<->tenant_id consistency is enforced in
+        the service layer (proto cannot express the conditional requirement).
+     */
+    string tenant_id = 4 [(validate.rules).string.max_len = 64];
+    /*
+        permissions is the set of capabilities this role grants. An empty set is
+        a valid (if useless) role; duplicates are harmless and ignored by the
+        authorization layer, which unions all permissions anyway.
+     */
+    repeated Permission permissions = 5;
+    /*
+        is_system marks built-in, immutable roles seeded by the server.
+     */
+    bool is_system = 6;
+    /*
+        created_at is when the role was first created (server clock).
+     */
+    google.protobuf.Timestamp created_at = 7;
+    /*
+        updated_at is when the role was last mutated (server clock).
+     */
+    google.protobuf.Timestamp updated_at = 8;
+}

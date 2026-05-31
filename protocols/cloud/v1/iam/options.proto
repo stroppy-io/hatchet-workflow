@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package cloud.v1.iam;
+
+import "google/protobuf/descriptor.proto";
+import "cloud/v1/iam/permission.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam";
+
+/*
+    options.proto declares the custom method option that pins each RPC to the
+    authority it demands. It is the machine-readable form of "which API is closed
+    by which permission".
+
+    WHY this exists. The annotation is the SINGLE SOURCE OF TRUTH for both sides
+    of authorization:
+      - Enforcement: a server interceptor reads (cloud.v1.iam.auth) off the
+        invoked method's descriptor at runtime and checks the caller against it,
+        so no handler can forget its gate.
+      - Discovery: reflecting over the annotations of EVERY service (not just
+        IamAPI — the catalog spans all RPCs in the build) yields the set of
+        Resource/Action pairs anything checks. The role editor catalog (see
+        IamAPI.ListPermissions) is built from that set, PLUS a synthesized
+        {resource, ACTION_MANAGE} entry for every Resource that appears: MANAGE
+        is grantable on a role yet never named in an annotation (it is implied at
+        check time), so the catalog must add it explicitly or it could never be
+        granted.
+
+    The option lives in the iam package (next to the Permission it references) so
+    any service file can import it and tag its RPCs, while the extracted catalog
+    stays in iam terms.
+ */
+
+/*
+    MethodAuth is the per-RPC authorization requirement, attached via the auth
+    method option. Four states (checked in this order):
+
+      - public = true               -> no bearer token at all (Login/Refresh/...).
+      - admin_only = true            -> a valid token AND Account.is_admin; no role
+                                        can satisfy it (platform-admin reserved,
+                                        e.g. CreateAccount).
+      - all_of = [..]                -> caller must hold EVERY listed Permission,
+                                        resolved per request in the active tenant
+                                        (is_admin short-circuits to allow).
+      - all empty                    -> any authenticated account; no specific
+                                        permission (e.g. "list MY tenants").
+
+    all_of is an AND set on purpose: most RPCs name exactly one permission, and
+    the rare multi-permission RPC wants all of them. There is intentionally no
+    any_of — split such an endpoint or model it as a coarser permission instead.
+ */
+message MethodAuth {
+    /*
+        public marks an unauthenticated endpoint; when true, the rest is ignored.
+     */
+    bool public = 1;
+    /*
+        all_of lists the Permissions the caller must ALL hold (AND).
+     */
+    repeated Permission all_of = 2;
+    /*
+        admin_only requires Account.is_admin and is satisfiable by NO role — for
+        platform-reserved operations that must never be delegated via RBAC.
+        Mutually exclusive with all_of: a method that sets both is a
+        misconfiguration; the interceptor treats admin_only as winning (the
+        strictest reading) and the build should reject the combination.
+     */
+    bool admin_only = 3;
+    /*
+        tenant_field names the request field carrying the active tenant id that
+        all_of permissions are resolved against. It exists because most
+        tenant-scoped RPCs name that field "tenant_id" (the interceptor's default
+        when this is empty), but a few key the tenant by its own primary id —
+        e.g. UpdateTenant/DeleteTenant carry the tenant in "id". Set this to the
+        field name so the gate resolves the caller's membership in the right
+        tenant instead of falling back to a missing "tenant_id" and denying the
+        legitimate owner. Only meaningful with all_of.
+     */
+    string tenant_field = 4;
+}
+
+extend google.protobuf.MethodOptions {
+    /*
+        auth pins an RPC to its authorization requirement. Absent annotation is
+        treated as the most restrictive default (deny / admin-only) by the
+        interceptor — every public or permissioned method MUST annotate
+        explicitly so the gate is never implicit.
+     */
+    MethodAuth auth = 50001;
+}

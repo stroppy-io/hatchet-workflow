@@ -1,5 +1,5 @@
 # stroppy-cloud Makefile
-.PHONY: help configure build build-all test test-integration test-e2e test-coverage \
+.PHONY: help configure build build-all protocols test test-integration test-e2e test-coverage \
         test-unit test-db test-full smoke smoke-clean \
         lint fmt docker-build docker-push docker-up docker-down docker-logs \
         serve docs-install docs-dev docs-build web-install web-dev web-build \
@@ -51,6 +51,16 @@ build-all: ## Build for all platforms
 	GOOS=linux   GOARCH=arm64 CGO_ENABLED=0 go build $(GOFLAGS) -o bin/$(BINARY)-linux-arm64   ./cmd/cli/
 	GOOS=darwin  GOARCH=amd64 CGO_ENABLED=0 go build $(GOFLAGS) -o bin/$(BINARY)-darwin-amd64  ./cmd/cli/
 	GOOS=darwin  GOARCH=arm64 CGO_ENABLED=0 go build $(GOFLAGS) -o bin/$(BINARY)-darwin-arm64  ./cmd/cli/
+
+# ============================================================
+# Protocols
+# ============================================================
+protocols: ## Generate Go + TS code from proto
+	cd protocols && easyp -cfg easyp.go.yaml mod update && easyp -cfg easyp.go.yaml mod vendor
+	rm -rf $(CURDIR)/internal/proto
+	cd protocols && easyp -cfg easyp.go.yaml generate && easyp -cfg easyp.api.go.yaml generate
+	rm -rf $(CURDIR)/web/src/lib/proto
+	cd protocols && easyp -cfg easyp.ts.yaml generate
 
 # ============================================================
 # Test

@@ -1,0 +1,178 @@
+syntax = "proto3";
+
+package cloud.v1.iam;
+
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam";
+
+/*
+    permission.proto holds the atoms of the RBAC model: the enums that classify
+    WHAT can be touched (Resource), HOW it can be touched (Action), and WHERE a
+    grant applies (Scope), plus the Permission message that pairs a resource
+    with an action into a single capability.
+
+    Nothing here references an Account, Tenant, Role, or Membership — those build
+    ON TOP of these primitives. Keeping the atoms in their own file lets every
+    other IAM file import just this one without dragging in the whole model.
+ */
+
+/*
+    Resource enumerates the object classes the control plane protects. Every
+    Permission names exactly one Resource. Add a new value here the moment a new
+    protected object class appears — an unlisted resource can never be granted,
+    which is the safe default.
+ */
+enum Resource {
+    /*
+        RESOURCE_UNSPECIFIED is the zero value and is never a valid grant.
+     */
+    RESOURCE_UNSPECIFIED = 0;
+    /*
+        RESOURCE_ACCOUNT is the global identity object (read/list/update/delete
+        accounts; creation is admin-only, not granted via this resource).
+     */
+    RESOURCE_ACCOUNT = 1;
+    /*
+        RESOURCE_TENANT is the workspace object itself (rename, delete, transfer).
+     */
+    RESOURCE_TENANT = 2;
+    /*
+        RESOURCE_ROLE covers role definitions and the permission sets they carry.
+     */
+    RESOURCE_ROLE = 3;
+    /*
+        RESOURCE_MEMBERSHIP covers the account<->tenant role bindings.
+     */
+    RESOURCE_MEMBERSHIP = 4;
+    /*
+        RESOURCE_SETTINGS is the control-plane (platform) configuration.
+     */
+    RESOURCE_SETTINGS = 5;
+    /*
+        RESOURCE_PRESET is a tenant-scoped, reusable test/database/workload
+        preset (see models.DatabasePreset / WorkloadPreset / TestPreset).
+     */
+    RESOURCE_PRESET = 6;
+    /*
+        RESOURCE_WIZARD is a tenant-scoped wizard draft (see
+        models.TestWizardDraftRecord / SuiteWizardDraftRecord) used to assemble a
+        TestRun / SuiteRun step by step.
+     */
+    RESOURCE_WIZARD = 7;
+    /*
+        RESOURCE_TEST_RUN is a tenant-scoped test execution (models.TestRunRecord):
+        start, read, list, cancel, delete.
+     */
+    RESOURCE_TEST_RUN = 8;
+    /*
+        RESOURCE_SUITE is a tenant-scoped suite definition (models.SuiteRecord):
+        full CRUD + clone.
+     */
+    RESOURCE_SUITE = 9;
+    /*
+        RESOURCE_SUITE_RUN is a tenant-scoped suite execution (models.SuiteRunRecord):
+        start, read, list, cancel, delete.
+     */
+    RESOURCE_SUITE_RUN = 10;
+    /*
+        RESOURCE_FAVORITE is the per-user favorite relation (models.FavoriteRecord).
+        Tenant-scoped so favoriting requires tenant membership; favorites are
+        personal to the caller. Reading the computed Entity.is_favorite flag needs
+        no grant (it rides on data the caller already reads).
+     */
+    RESOURCE_FAVORITE = 11;
+    /*
+        RESOURCE_AGENT_SHELL is the interactive reverse-shell to an agent from the
+        admin UI. High-privilege (arbitrary command execution on the host): grant
+        sparingly, audit every session.
+     */
+    RESOURCE_AGENT_SHELL = 12;
+    /*
+        RESOURCE_SHARE manages public share links for a run (models.ShareRecord):
+        create / list / revoke. The PUBLIC resolve endpoint is unauthenticated and
+        needs no grant.
+     */
+    RESOURCE_SHARE = 13;
+    /*
+        RESOURCE_PACKAGE is a tenant-uploaded custom package (models.PackageRecord),
+        e.g. a custom .deb / binary used to install a database build. Tenant-private.
+     */
+    RESOURCE_PACKAGE = 14;
+}
+
+/*
+    Action enumerates the verbs a Permission can allow on its Resource. The
+    first five mirror standard CRUD+list. ACTION_MANAGE is a deliberate wildcard
+    so a role can say "everything on this resource" without listing each verb;
+    the authorization layer MUST treat ACTION_MANAGE as implying every other
+    action on the same Resource.
+ */
+enum Action {
+    /*
+        ACTION_UNSPECIFIED is the zero value and is never a valid grant.
+     */
+    ACTION_UNSPECIFIED = 0;
+    /*
+        ACTION_CREATE allows creating new instances of the resource.
+     */
+    ACTION_CREATE = 1;
+    /*
+        ACTION_READ allows fetching a single instance by id.
+     */
+    ACTION_READ = 2;
+    /*
+        ACTION_UPDATE allows mutating an existing instance.
+     */
+    ACTION_UPDATE = 3;
+    /*
+        ACTION_DELETE allows removing an instance.
+     */
+    ACTION_DELETE = 4;
+    /*
+        ACTION_LIST allows enumerating/searching instances.
+     */
+    ACTION_LIST = 5;
+    /*
+        ACTION_MANAGE is the wildcard verb: implies every other action above.
+     */
+    ACTION_MANAGE = 6;
+}
+
+/*
+    Scope bounds where a Role (and therefore its Permissions) takes effect.
+    A platform-scoped grant ignores tenant boundaries; a tenant-scoped grant is
+    only meaningful inside the one tenant the role is bound to.
+ */
+enum Scope {
+    /*
+        SCOPE_UNSPECIFIED is the zero value and is never a valid scope.
+     */
+    SCOPE_UNSPECIFIED = 0;
+    /*
+        SCOPE_PLATFORM applies control-plane-wide, across every tenant.
+     */
+    SCOPE_PLATFORM = 1;
+    /*
+        SCOPE_TENANT applies only within the tenant the role is bound in.
+     */
+    SCOPE_TENANT = 2;
+}
+
+/*
+    Permission is one (resource, action) capability — the smallest unit of
+    authority in the system. Permissions are never granted directly to an
+    Account; they are bundled into a Role, and Roles are granted via Membership.
+    Both fields reject their zero value: a permission with an unspecified
+    resource or action is meaningless and must not be storable.
+ */
+message Permission {
+    /*
+        resource is the object class this capability acts on.
+     */
+    Resource resource = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /*
+        action is the verb this capability allows on resource.
+     */
+    Action action = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+}

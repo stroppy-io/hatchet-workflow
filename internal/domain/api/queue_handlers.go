@@ -1,11 +1,12 @@
 package api
 
 import (
-	"encoding/json"
-	"net/http"
 	"time"
 
+	"net/http"
+
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/auth"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/run"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
 )
 
@@ -27,13 +28,6 @@ func formatTime(v any) string {
 	}
 	return ""
 }
-func formatTimePtr(v any) string { return formatTime(deref(v)) }
-func deref(v any) any {
-	if p, ok := v.(*any); ok && p != nil {
-		return *p
-	}
-	return v
-}
 
 type queueRow struct {
 	RunID       string           `json:"run_id"`
@@ -49,56 +43,40 @@ type queueRow struct {
 	ConfigName  string           `json:"name,omitempty"`
 }
 
-// listQueue returns every queued/claimed/running/recently-finished job for
-// the tenant. Drives the Queue UI page and lets users see what's blocked
-// behind a quota.
+// listQueue returns the tenant's non-terminal runs (pending/running). Drives
+// the Queue UI page. Execution state now lives in Temporal, so each run's
+// live status is queried best-effort; runs that are terminal (done/failed/
+// cancelled) or unreachable are filtered out.
 func (s *Server) listQueue(w http.ResponseWriter, r *http.Request) {
 	tenantID := auth.TenantID(r.Context())
-	if s.scheduler == nil {
-		writeJSON(w, http.StatusOK, []queueRow{})
-		return
-	}
-	rows, err := s.pool.Query(r.Context(), `
-		SELECT run_id, COALESCE(batch_id,''), COALESCE(suite_id,''), position,
-		       state, cost, COALESCE(error,''), config,
-		       created_at, started_at, heartbeat_at
-		FROM job_runs
-		WHERE tenant_id=$1 AND state IN ('queued','claimed','running')
-		ORDER BY priority DESC, created_at ASC`, tenantID)
+	recs, err := s.runs.List(r.Context(), tenantID)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-	defer rows.Close()
 	out := make([]queueRow, 0, 16)
-	for rows.Next() {
-		var (
-			q         queueRow
-			cost, cfg string
-			started   *interface{}
-			hb        *interface{}
-		)
-		// Use generic *interface{} placeholders for nullable timestamps;
-		// we rewrite to RFC3339 below when present.
-		var started2, hb2 any
-		started = &started2
-		hb = &hb2
-		var createdAt any
-		if err := rows.Scan(&q.RunID, &q.BatchID, &q.SuiteID, &q.Position,
-			&q.State, &cost, &q.Error, &cfg, &createdAt, started, hb); err != nil {
+	for i := range recs {
+		rec := &recs[i]
+		state := "pending"
+		if st, qerr := s.app.Status(r.Context(), rec.ID); qerr == nil && st != nil {
+			state = statusString(st.GetStatus())
+		}
+		// Only surface non-terminal runs in the queue view.
+		if state == "done" || state == "failed" || state == "cancelled" {
 			continue
 		}
-		_ = json.Unmarshal([]byte(cost), &q.Cost)
-		// Surface human-friendly run name pulled from the snapshotted RunConfig.
-		var partial struct {
-			Name string `json:"name"`
-		}
-		_ = json.Unmarshal([]byte(cfg), &partial)
-		q.ConfigName = partial.Name
-		q.CreatedAt = formatTime(createdAt)
-		q.StartedAt = formatTimePtr(started)
-		q.HeartbeatAt = formatTimePtr(hb)
-		out = append(out, q)
+		cost := run.EstimateRunCost(rec.Cfg)
+		out = append(out, queueRow{
+			RunID:      rec.ID,
+			SuiteID:    rec.SuiteID,
+			State:      state,
+			ConfigName: rec.Name,
+			CreatedAt:  formatTime(rec.CreatedAt),
+			Cost: postgres.JobCost{
+				CPUs: cost.CPUs, MemoryMB: cost.MemoryMB, DiskGB: cost.DiskGB,
+				VMCount: cost.VMCount, RunsRunning: cost.RunsRunning,
+			},
+		})
 	}
 	writeJSON(w, http.StatusOK, out)
 }
@@ -110,26 +88,46 @@ type quotasResp struct {
 	Running int              `json:"running_count"`
 }
 
-// getQuotas surfaces current resource usage + tenant limits + queue depth.
-// Lets the UI tell users why their next run is queued instead of running.
+// getQuotas surfaces tenant resource limits + a best-effort count of
+// in-flight runs. Per-run live status comes from Temporal; the durable
+// scheduler's accounting is gone, so "used" cost is summed from the configs
+// of currently non-terminal runs.
 func (s *Server) getQuotas(w http.ResponseWriter, r *http.Request) {
 	tenantID := auth.TenantID(r.Context())
 	resp := quotasResp{}
-	if s.scheduler == nil {
-		writeJSON(w, http.StatusOK, resp)
-		return
-	}
-	used, _ := s.scheduler.Jobs().GetUsed(r.Context(), tenantID)
-	resp.Used = used
 	q := s.settingsForTenant(tenantID).Quotas
 	resp.Limits = postgres.JobCost{
 		CPUs: q.MaxConcurrentCPUs, MemoryMB: q.MaxConcurrentMemoryMB,
 		DiskGB: q.MaxConcurrentDiskGB, VMCount: q.MaxConcurrentVMs,
 		RunsRunning: q.MaxConcurrentRuns,
 	}
-	if n, err := s.scheduler.Jobs().CountQueued(r.Context(), tenantID); err == nil {
-		resp.Queue = n
+
+	recs, err := s.runs.List(r.Context(), tenantID)
+	if err != nil {
+		writeJSON(w, http.StatusOK, resp)
+		return
 	}
-	resp.Running = used.RunsRunning
+	running, queued := 0, 0
+	for i := range recs {
+		rec := &recs[i]
+		state := "pending"
+		if st, qerr := s.app.Status(r.Context(), rec.ID); qerr == nil && st != nil {
+			state = statusString(st.GetStatus())
+		}
+		switch state {
+		case "running":
+			running++
+			cost := run.EstimateRunCost(rec.Cfg)
+			resp.Used.CPUs += cost.CPUs
+			resp.Used.MemoryMB += cost.MemoryMB
+			resp.Used.DiskGB += cost.DiskGB
+			resp.Used.VMCount += cost.VMCount
+			resp.Used.RunsRunning += cost.RunsRunning
+		case "pending":
+			queued++
+		}
+	}
+	resp.Queue = queued
+	resp.Running = running
 	writeJSON(w, http.StatusOK, resp)
 }

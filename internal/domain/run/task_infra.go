@@ -13,7 +13,6 @@ import (
 
 	"time"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/auth"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
@@ -45,7 +44,7 @@ type networkTask struct {
 	runID    string
 }
 
-func (t *networkTask) Execute(nc *dag.NodeContext) error {
+func (t *networkTask) Execute(nc *NodeContext) error {
 	switch t.provider {
 	case types.ProviderDocker:
 		return t.dockerNetwork(nc)
@@ -57,7 +56,7 @@ func (t *networkTask) Execute(nc *dag.NodeContext) error {
 	}
 }
 
-func (t *networkTask) yandexNetwork(nc *dag.NodeContext) error {
+func (t *networkTask) yandexNetwork(nc *NodeContext) error {
 	// VPC/subnet creation is handled as part of the machines terraform apply.
 	// Log the intent for observability; no error so the pipeline proceeds.
 	nc.Log().Info("network phase: Yandex Cloud VPC/subnet will be provisioned by terraform in machines phase",
@@ -67,7 +66,7 @@ func (t *networkTask) yandexNetwork(nc *dag.NodeContext) error {
 	return nil
 }
 
-func (t *networkTask) dockerNetwork(nc *dag.NodeContext) error {
+func (t *networkTask) dockerNetwork(nc *NodeContext) error {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return fmt.Errorf("network: docker client: %w", err)
@@ -115,7 +114,7 @@ type machinesTask struct {
 	tenantID   string
 }
 
-func (t *machinesTask) Execute(nc *dag.NodeContext) error {
+func (t *machinesTask) Execute(nc *NodeContext) error {
 	switch t.runCfg.Provider {
 	case types.ProviderDocker:
 		return t.dockerMachines(nc)
@@ -126,7 +125,7 @@ func (t *machinesTask) Execute(nc *dag.NodeContext) error {
 	}
 }
 
-func (t *machinesTask) dockerMachines(nc *dag.NodeContext) error {
+func (t *machinesTask) dockerMachines(nc *NodeContext) error {
 	if t.deployer == nil {
 		return fmt.Errorf("machines: DockerDeployer is nil")
 	}
@@ -318,7 +317,7 @@ type yandexVmIPs map[string]struct {
 	InternalIP string `json:"internal_ip"`
 }
 
-func (t *machinesTask) yandexMachines(nc *dag.NodeContext) error {
+func (t *machinesTask) yandexMachines(nc *NodeContext) error {
 	if t.runCfg.Database.Kind == types.DatabaseYDBManaged {
 		return t.yandexManagedYDBMachines(nc)
 	}
@@ -712,7 +711,7 @@ func parseYDBEndpoint(raw string) (string, int) {
 	return host, port
 }
 
-func (t *machinesTask) yandexManagedYDBMachines(nc *dag.NodeContext) error {
+func (t *machinesTask) yandexManagedYDBMachines(nc *NodeContext) error {
 	if t.settings == nil {
 		return fmt.Errorf("machines: server settings not configured for Yandex Cloud provider")
 	}
@@ -993,7 +992,7 @@ type teardownTask struct {
 	settings *types.ServerSettings
 }
 
-func (t *teardownTask) Execute(nc *dag.NodeContext) error {
+func (t *teardownTask) Execute(nc *NodeContext) error {
 	switch t.provider {
 	case types.ProviderDocker:
 		return t.dockerTeardown(nc)
@@ -1006,7 +1005,7 @@ func (t *teardownTask) Execute(nc *dag.NodeContext) error {
 	}
 }
 
-func (t *teardownTask) dockerTeardown(nc *dag.NodeContext) error {
+func (t *teardownTask) dockerTeardown(nc *NodeContext) error {
 	ctx := context.Context(nc)
 
 	// Remove containers.
@@ -1032,7 +1031,7 @@ func (t *teardownTask) dockerTeardown(nc *dag.NodeContext) error {
 	return nil
 }
 
-func (t *teardownTask) yandexTeardown(nc *dag.NodeContext) error {
+func (t *teardownTask) yandexTeardown(nc *NodeContext) error {
 	wdIdStr := t.state.TerraformWdId()
 	if wdIdStr == "" {
 		nc.Log().Info("teardown: no terraform working directory recorded, skipping")

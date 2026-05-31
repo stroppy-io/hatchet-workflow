@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package cloud.v1.deployment;
+
+import "schemapb/schema.proto";
+
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment";
+
+/*
+    Provider identifies the deployment backend that materializes a topology.
+    It selects which provider-specific message (Docker, Yandex) and QuotaKind
+    enum apply to a given deployment or quota reading.
+ */
+enum Provider {
+    /* PROVIDER_UNSPECIFIED is the unset zero value; never a valid backend. */
+    PROVIDER_UNSPECIFIED = 0;
+    /* PROVIDER_DOCKER is the local Docker daemon backend (Docker message). */
+    PROVIDER_DOCKER = 1;
+    /* PROVIDER_YANDEX is the Yandex Cloud Terraform backend (Yandex message). */
+    PROVIDER_YANDEX = 2;
+}
+
+/*
+    ProviderSettings binds a chosen Provider to its baked, schema-backed
+    backend configuration. provider selects the backend and, with it, the
+    schema that settings is validated against.
+ */
+message ProviderSettings {
+    /* provider selects the deployment backend these settings configure. */
+    Provider provider = 1;
+    /* settings is the sealed, schema-backed configuration for the provider. */
+    schemapb.Baked settings = 2;
+}

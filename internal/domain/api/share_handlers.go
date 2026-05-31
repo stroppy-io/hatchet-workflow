@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -12,8 +13,32 @@ import (
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/auth"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/metrics"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 	pgdb "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/generated"
 )
+
+// buildShareSnapshot freezes a run into the snapshot-shaped JSON the share
+// viewer renders (same shape as runStatus): nodes[] from the live Temporal
+// state, plus state.run_config / started_at from the persisted record.
+func (s *Server) buildShareSnapshot(ctx context.Context, rec *types.RunRecord) []byte {
+	nodes := []nodeStatus{}
+	if st, err := s.app.Status(ctx, rec.ID); err == nil && st != nil {
+		nodes = stagesToNodes(st.GetStages())
+	}
+	cfgJSON, _ := json.Marshal(rec.Cfg)
+	snap := map[string]any{
+		"graph":      "",
+		"nodes":      nodes,
+		"started_at": rec.CreatedAt,
+		"state": map[string]any{
+			"provider":   rec.Provider,
+			"run_config": json.RawMessage(cfgJSON),
+			"targets":    []any{},
+		},
+	}
+	b, _ := json.Marshal(snap)
+	return b
+}
 
 // createShareLink freezes the run snapshot + metrics into a read-only share record.
 func (s *Server) createShareLink(w http.ResponseWriter, r *http.Request) {
@@ -21,20 +46,21 @@ func (s *Server) createShareLink(w http.ResponseWriter, r *http.Request) {
 	userID := auth.GetClaims(r.Context()).UserID
 	runID := chi.URLParam(r, "runID")
 
-	// Load snapshot.
-	snap, err := s.app.storage.Load(r.Context(), tenantID, runID)
-	if err != nil || snap == nil {
+	// Load run record.
+	rec, err := s.runs.Get(r.Context(), tenantID, runID)
+	if err != nil || rec == nil {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "run not found"})
 		return
 	}
 
 	// Collect metrics.
 	accountID, _ := s.tenantAccountID(r.Context(), tenantID)
-	dbKind := extractDBKind(snap)
+	dbKind := recDBKind(rec)
 	collector := s.metricsCollector(accountID, dbKind)
 
-	start := snap.StartedAt.Add(-30 * time.Second)
-	end := snap.FinishedAt.Add(30 * time.Second)
+	winStart, winEnd := s.runTimeWindow(r.Context(), rec)
+	start := winStart.Add(-30 * time.Second)
+	end := winEnd.Add(30 * time.Second)
 	if end.Before(start) || end.IsZero() {
 		end = time.Now()
 	}
@@ -42,12 +68,14 @@ func (s *Server) createShareLink(w http.ResponseWriter, r *http.Request) {
 	runMetrics, err := collector.Collect(r.Context(), runID, metrics.TimeRange{Start: start, End: end})
 	if err != nil {
 		s.logger.Warn("share: failed to collect metrics", zap.Error(err))
-		// Continue with empty metrics — snapshot is still valuable.
+		// Continue with empty metrics — the record is still valuable.
 		runMetrics = &metrics.RunMetrics{}
 	}
 
 	metricsJSON, _ := json.Marshal(runMetrics)
-	snapJSON, _ := json.Marshal(snap)
+	// Freeze a snapshot-shaped blob the share viewer renders: nodes[] (live
+	// from Temporal), plus state.run_config / started_at from the record.
+	snapJSON := s.buildShareSnapshot(r.Context(), rec)
 
 	// Generate token.
 	tokenBytes := make([]byte, 16)

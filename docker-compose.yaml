@@ -102,37 +102,86 @@ services:
 
   # --- Stroppy Cloud server ---
   # Runs with host networking so it can reach Docker agent containers directly.
+  # --- apt cache (agents apt through the gateway -> this backend) ---
+  apt-cacher-ng:
+    image: sameersbn/apt-cacher-ng:3.7.4-20220421
+    restart: unless-stopped
+    volumes:
+      - aptcache:/var/cache/apt-cacher-ng
+
+  # --- Temporal (runs execute as workflows) ---
+  temporal:
+    image: temporalio/auto-setup:1.25.2
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=stroppy
+      - POSTGRES_PWD=${POSTGRES_PASSWORD:-stroppy}
+      - POSTGRES_SEEDS=postgres
+      - DBNAME=temporal
+      - VISIBILITY_DBNAME=temporal_visibility
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:7233:7233"
+
+  temporal-ui:
+    image: temporalio/ui:2.31.2
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:8233
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:8233:8080"
+
   server:
-    restart: always
+    restart: on-failure
     build:
       context: .
       dockerfile: deployments/docker/stroppy-cloud.Dockerfile
-    network_mode: host
     depends_on:
       postgres:
         condition: service_healthy
       vmauth:
         condition: service_started
+      temporal:
+        condition: service_started
+      apt-cacher-ng:
+        condition: service_started
     command:
       - serve
-      - --addr=:8080
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      # Terraform workdir — survives `docker compose down/up` so a server
-      # restart never strands cloud resources by losing tfstate.
       - tfstate:/tmp/stroppy-terraform
-      # Persistent cache of fetched binaries (node_exporter, vmagent, stroppy,
-      # vector, postgres_exporter, mysqld_exporter). Survives compose
-      # restarts so agents reuse local downloads instead of going to github.
       - binaries:/var/lib/stroppy-cache
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:8080:8080"   # agent gateway (Temporal proxy + binary + apt)
+      - "${BIND_ADDR:-0.0.0.0}:8081:8081"   # control-plane API / UI
     environment:
-      DATABASE_URL: postgres://stroppy:${POSTGRES_PASSWORD:-stroppy}@127.0.0.1:5436/stroppy?sslmode=disable
+      DATABASE_URL: postgres://stroppy:${POSTGRES_PASSWORD:-stroppy}@postgres:5432/stroppy?sslmode=disable
       JWT_SECRET: ${JWT_SECRET:-stroppy-dev-secret}
-      MONITORING_URL: http://127.0.0.1:8427
+      MONITORING_URL: http://vmauth:8427
       MONITORING_TOKEN: ${MONITORING_TOKEN:-stroppy-monitoring-secret}
-      GRAFANA_URL: ${GRAFANA_URL:-http://127.0.0.1:3001}
+      GRAFANA_URL: ${GRAFANA_URL:-http://grafana:3000}
       STROPPY_ADMIN_PASSWORD: ${STROPPY_ADMIN_PASSWORD:-}
       STROPPY_MIN_VERSION: ${STROPPY_MIN_VERSION:-5.1.2}
+      # --- Temporal + gateway wiring ---
+      TEMPORAL_HOSTPORT: temporal:7233
+      TEMPORAL_NAMESPACE: default
+      AGENT_GATEWAY_ADDR: ":8080"
+      API_ADDR: ":8081"
+      # Agents are joined to the server's compose network and dial the gateway
+      # in-network (direct bridge DNAT, not a userland-proxy hairpin that breaks gRPC).
+      AGENT_SERVER_ADDR: http://server:8080
+      AGENT_ATTACH_NETWORK: stroppy-cloud_default
+      AGENT_BINARY_PATH: /usr/local/bin/stroppy-cloud
+      STROPPY_BINARY_CACHE_DIR: /var/lib/stroppy-cache/binaries
+      STROPPY_APT_CACHE_BACKEND: apt-cacher-ng:3142
+      STROPPY_UPSTREAM: https://github.com/stroppy-io/stroppy/releases/download/v5.1.2/stroppy_linux_amd64.tar.gz
       YC_TOKEN: ${YC_TOKEN:-}
       YC_CLOUD_ID: ${YC_CLOUD_ID:-}
       YC_FOLDER_ID: ${YC_FOLDER_ID:-}
@@ -150,6 +199,7 @@ services:
 
 volumes:
   pgdata:
+  aptcache:
   vmdata:
   vldata:
   tfstate:
