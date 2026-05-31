@@ -47,6 +47,7 @@ export const ALL_DB_KINDS: DatabaseKind[] = ["postgres", "mysql", "mariadb", "pi
 export type Phase =
   | "network"
   | "machines"
+  | "bootstrap"
   | "install_db"
   | "configure_db"
   | "install_monitor"

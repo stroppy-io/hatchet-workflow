@@ -7,8 +7,32 @@ import (
 
 	"github.com/stroppy-io/stroppy-cloud/internal/core/dag"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/dbconfig"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 )
+
+// ydbVersionMap maps short version labels (from UI) to full patch versions
+// available at binaries.ydb.tech/release/. Update when new YDB releases ship.
+var ydbVersionMap = map[string]string{
+	"25.2": "25.2.1.24",
+	"25.1": "25.1.4.7",
+	"24.4": "24.4.4.12",
+	"24.3": "24.3.15.5",
+	"24.2": "24.2.7",
+	"24.1": "24.1.18",
+}
+
+// resolveYDBVersion maps a short version like "25.2" to the full "25.2.1.24".
+// If the input is already a full version (e.g. "25.2.1.24"), returns it as-is.
+func resolveYDBVersion(v string) string {
+	if v == "" {
+		return "25.2.1.24"
+	}
+	if full, ok := ydbVersionMap[v]; ok {
+		return full
+	}
+	return v // assume full version was passed directly
+}
 
 type ydbInstallTask struct {
 	client   agent.Client
@@ -22,10 +46,24 @@ func (t *ydbInstallTask) Execute(nc *dag.NodeContext) error {
 	// Install ydbd binaries on every YDB node (storage + compute alike).
 	targets := t.state.DBTargets()
 	nc.Log().Info("installing YDB on targets")
-	return t.client.SendAll(nc, targets, agent.Command{
-		Action: agent.ActionInstallYDB,
-		Config: agent.YDBInstallConfig{Version: t.version},
-	})
+
+	// Map short versions (e.g. "25.2") to full patch versions available at binaries.ydb.tech.
+	ydbVersion := resolveYDBVersion(t.version)
+	downloadURL := fmt.Sprintf("https://binaries.ydb.tech/release/%s/ydbd-%s-linux-amd64.tar.gz", ydbVersion, ydbVersion)
+
+	// Idempotency guard: skip the download when ydbd is already on disk.
+	// YDB CLI not needed — ydbd admin commands are used directly. Skip to save time.
+	script := fmt.Sprintf(`set -e
+if [ -x /opt/ydb/bin/ydbd ]; then
+  echo "ydbd already installed, skipping download"
+else
+  echo "downloading ydbd %s from %s..."
+  mkdir -p /opt/ydb && curl -fSL %s | tar -xz --strip-component=1 -C /opt/ydb
+fi
+groupadd -f ydb && (id -u ydb &>/dev/null || useradd ydb -g ydb)
+mkdir -p /opt/ydb/cfg /ydb_data && chown -R ydb:ydb /ydb_data`, ydbVersion, downloadURL, downloadURL)
+
+	return sendSeqAll(nc, t.client, targets, runCmd("install_ydb", script))
 }
 
 type ydbConfigTask struct {
@@ -45,11 +83,7 @@ func (t *ydbConfigTask) Execute(nc *dag.NodeContext) error {
 	hosts := make([]string, len(targets))
 	locations := make([]string, len(targets))
 	for i, tgt := range targets {
-		h := tgt.InternalHost
-		if h == "" {
-			h = tgt.Host
-		}
-		hosts[i] = h
+		hosts[i] = advertiseHost(tgt)
 		locations[i] = tgt.Zone
 	}
 
@@ -75,38 +109,121 @@ func (t *ydbConfigTask) Execute(nc *dag.NodeContext) error {
 		storageMemMB /= 2
 	}
 
+	diskPath := "/ydb_data"
+	confPath := "/opt/ydb/cfg/config.yaml"
+
+	// Disk size: use allocated disk minus 2 GB headroom for OS/logs, min 10 GB.
+	diskGBalloc := t.topology.Storage.DiskGB
+	if diskGBalloc <= 0 {
+		diskGBalloc = 80
+	}
+	pdiskGB := diskGBalloc - 2
+	if pdiskGB < 10 {
+		pdiskGB = 10
+	}
+
+	// Render the storage config.yaml body server-side: user override wins,
+	// else render from topology. Host placeholders are substituted with the
+	// storage host list (same for every node).
+	body := t.overrides["ydb.yaml:storage"]
+	if body == "" {
+		body = dbconfig.RenderYDBStorageConf(dbconfig.RenderYDBConfOpts{
+			HostCount:         len(hosts),
+			HostLocations:     locations,
+			DiskPath:          diskPath,
+			BlockDevicePaths:  blockDevicePaths,
+			CPUs:              t.topology.Storage.CPUs,
+			MemoryMB:          storageMemMB,
+			FaultTolerance:    ft,
+			FailureDomainType: t.topology.FailureDomainType,
+			DefaultDiskType:   t.topology.DefaultDiskType,
+		})
+	}
+	body = dbconfig.SubstituteYDBHostPlaceholders(body, hosts)
+
+	pgwireFlag := ""
+	if t.pgwirePort > 0 {
+		pgwireFlag = fmt.Sprintf("--pgwire-port %d ", t.pgwirePort)
+	}
+
 	// Start all static nodes in parallel — YDB needs all nodes up to form a cluster.
 	var wg sync.WaitGroup
 	errs := make([]error, len(targets))
 	for i, target := range targets {
-		advHost := target.InternalHost
-		if advHost == "" {
-			advHost = target.Host
+		advHost := advertiseHost(target)
+
+		cmds := []agent.Command{
+			writeFile("config_ydb", confPath, body),
 		}
-		cfg := agent.YDBStaticConfig{
-			Hosts:             hosts,
-			HostLocations:     locations,
-			InstanceID:        i,
-			AdvertiseHost:     advHost,
-			DiskPath:          "/ydb_data",
-			BlockDevicePaths:  blockDevicePaths,
-			DiskGB:            t.topology.Storage.DiskGB,
-			MemoryMB:          storageMemMB,
-			CPUs:              t.topology.Storage.CPUs,
-			PgwirePort:        t.pgwirePort,
-			FaultTolerance:    ft,
-			FailureDomainType: t.topology.FailureDomainType,
-			DefaultDiskType:   t.topology.DefaultDiskType,
-			Options:           t.topology.StorageOptions,
-			ConfOverride:      t.overrides["ydb.yaml:storage"],
+
+		// Prepare pdisks. With raw block devices we point YDB at each device
+		// directly — no filesystem, no /ydb_data dir. Without any, fall back to
+		// the file-backed pdisk that's used in dev/Docker (single pdisk only).
+		var prepScript strings.Builder
+		prepScript.WriteString("set -e\n")
+		if len(blockDevicePaths) == 0 {
+			fmt.Fprintf(&prepScript, "mkdir -p %s && chown -R ydb:ydb %s\n", diskPath, diskPath)
+			fmt.Fprintf(&prepScript, "test -f %s/pdisk.data || truncate -s %dG %s/pdisk.data\n", diskPath, pdiskGB, diskPath)
+			fmt.Fprintf(&prepScript, "chown ydb:ydb %s/pdisk.data\n", diskPath)
+		} else {
+			// Raw block devices: ydbd runs as user "ydb" via systemd-run, but
+			// /dev/vdX is root:disk by default. chown each device so the daemon
+			// can open it. chown follows the symlink in /dev/disk/by-id, so we
+			// can target the friendly paths.
+			for _, p := range blockDevicePaths {
+				fmt.Fprintf(&prepScript, "chown ydb:ydb %s\n", p)
+			}
 		}
+		pdiskTargets := blockDevicePaths
+		if len(pdiskTargets) == 0 {
+			pdiskTargets = []string{diskPath + "/pdisk.data"}
+		}
+		fmt.Fprintf(&prepScript, "echo \"preparing %d YDB pdisk(s)...\"\n", len(pdiskTargets))
+		for _, p := range pdiskTargets {
+			fmt.Fprintf(&prepScript, "LD_LIBRARY_PATH=/opt/ydb/lib /opt/ydb/bin/ydbd admin bs disk obliterate %s\n", p)
+		}
+		cmds = append(cmds, runCmd("config_ydb", prepScript.String()))
+
+		// Ensure hostname matches hosts[].host so YDB can detect its node ID.
+		// On Docker: hostname already set to container name.
+		// On YC VMs: hostname is auto-assigned, need to set it to advertiseHost (internal IP).
+		if advHost != "" {
+			cmds = append(cmds, runCmd("config_ydb", fmt.Sprintf(
+				"hostnamectl set-hostname %s 2>/dev/null || hostname %s", advHost, advHost)))
+		}
+
+		// Start static node. When the run picked the ydb-pgwire protocol the
+		// run task sets PgwirePort > 0 and we add --pgwire-port to expose the
+		// experimental postgres-wire surface alongside the gRPC one.
+		startScript := fmt.Sprintf(`set -e
+systemctl stop ydbd-storage 2>/dev/null; systemctl reset-failed ydbd-storage 2>/dev/null
+echo "starting YDB static (storage) node..."
+systemd-run --unit=ydbd-storage --uid=ydb --gid=ydb `+
+			`--setenv=LD_LIBRARY_PATH=/opt/ydb/lib `+
+			`/opt/ydb/bin/ydbd server `+
+			`--yaml-config %s `+
+			`--grpc-port 2136 --ic-port 19001 --mon-port 8765 `+
+			`%s`+
+			`--node static`, confPath, pgwireFlag)
+		cmds = append(cmds, runCmd("config_ydb", startScript))
+
+		// Readiness loop; on failure dump the journal for debugging. The
+		// subshell wraps the loop so a non-success run reaches the journal
+		// dump and exits nonzero (the bare loop would otherwise exit 0).
+		readyScript := `if (for i in $(seq 1 60); do (echo > /dev/tcp/localhost/2136) 2>/dev/null && exit 0; sleep 1; done; exit 1); then
+  echo "YDB static node started"
+else
+  journalctl -u ydbd-storage --no-pager -n 50 2>/dev/null || true
+  echo "ydbd-storage did not start" >&2
+  exit 1
+fi`
+		cmds = append(cmds, runCmd("config_ydb", readyScript))
+
 		wg.Add(1)
-		go func(idx int, tgt agent.Target, c agent.YDBStaticConfig) {
+		go func(idx int, tgt agent.Target, c []agent.Command) {
 			defer wg.Done()
-			errs[idx] = t.client.Send(nc, tgt, agent.Command{
-				Action: agent.ActionConfigYDB, Config: c,
-			})
-		}(i, target, cfg)
+			errs[idx] = sendSeq(nc, t.client, tgt, c...)
+		}(i, target, cmds)
 	}
 	wg.Wait()
 	for _, err := range errs {
@@ -129,9 +246,9 @@ func (t *ydbConfigTask) Execute(nc *dag.NodeContext) error {
 	if cpus <= 0 {
 		cpus = 2
 	}
-	pdiskGB := diskGB - 2
-	if pdiskGB < 10 {
-		pdiskGB = 10
+	pdiskGBeff := diskGB - 2
+	if pdiskGBeff < 10 {
+		pdiskGBeff = 10
 	}
 	hardMB := memMB * 85 / 100
 	nodes := fmt.Sprintf("%d storage", st.Count)
@@ -144,7 +261,7 @@ func (t *ydbConfigTask) Execute(nc *dag.NodeContext) error {
 		"kind":           "ydb",
 		"nodes":          nodes,
 		"per_node":       fmt.Sprintf("%d vCPU / %d MB / %d GB", cpus, memMB, diskGB),
-		"pdisk_gb":       fmt.Sprintf("%d", pdiskGB),
+		"pdisk_gb":       fmt.Sprintf("%d", pdiskGBeff),
 		"mem_limit":      fmt.Sprintf("%d MB", hardMB),
 		"cpu_count":      fmt.Sprintf("%d", cpus),
 		"erasure":        ft,
@@ -173,27 +290,33 @@ func (t *ydbInitTask) Execute(nc *dag.NodeContext) error {
 	}
 
 	first := targets[0]
-	host := first.InternalHost
-	if host == "" {
-		host = first.Host
-	}
+	host := advertiseHost(first)
 
 	dbPath := t.topology.DatabasePath
 	if dbPath == "" {
 		dbPath = "/Root/testdb"
 	}
 
+	endpoint := fmt.Sprintf("grpc://%s:2136", host)
+	confPath := "/opt/ydb/cfg/config.yaml"
+	storageGroups := ydbStorageGroups(t.topology)
+	storagePoolKind := ydbStoragePoolKind(t.topology)
+
 	nc.Log().Info("initializing YDB cluster")
-	return t.client.Send(nc, first, agent.Command{
-		Action: agent.ActionInitYDB,
-		Config: agent.YDBInitConfig{
-			StaticEndpoint:  fmt.Sprintf("grpc://%s:2136", host),
-			DatabasePath:    dbPath,
-			ConfigPath:      "/opt/ydb/cfg/config.yaml",
-			StorageGroups:   ydbStorageGroups(t.topology),
-			StoragePoolKind: ydbStoragePoolKind(t.topology),
-		},
-	})
+
+	// Initialize blobstorage (retry — cluster needs time to form quorum).
+	blobScript := fmt.Sprintf(`echo "initializing YDB blobstorage..."
+for i in $(seq 1 30); do LD_LIBRARY_PATH=/opt/ydb/lib /opt/ydb/bin/ydbd -s %s admin blobstorage config init --yaml-file %s 2>&1 && exit 0; sleep 2; done; exit 1`,
+		endpoint, confPath)
+
+	dbScript := fmt.Sprintf(`echo "creating YDB database %s..."
+for i in $(seq 1 15); do LD_LIBRARY_PATH=/opt/ydb/lib /opt/ydb/bin/ydbd -s %s admin database %s create %s:%d 2>&1 && { echo "YDB cluster initialized"; exit 0; }; sleep 2; done; exit 1`,
+		dbPath, endpoint, dbPath, storagePoolKind, storageGroups)
+
+	return sendSeq(nc, t.client, first,
+		runCmd("init_ydb", blobScript),
+		runCmd("init_ydb", dbScript),
+	)
 }
 
 type ydbStartDBTask struct {
@@ -220,11 +343,7 @@ func (t *ydbStartDBTask) Execute(nc *dag.NodeContext) error {
 	staticHosts := make([]string, len(storageTargets))
 	staticLocations := make([]string, len(storageTargets))
 	for i, tgt := range storageTargets {
-		h := tgt.InternalHost
-		if h == "" {
-			h = tgt.Host
-		}
-		staticHosts[i] = h
+		staticHosts[i] = advertiseHost(tgt)
 		staticLocations[i] = tgt.Zone
 	}
 
@@ -233,14 +352,27 @@ func (t *ydbStartDBTask) Execute(nc *dag.NodeContext) error {
 		dbPath = "/Root/testdb"
 	}
 
+	blockDevicePaths := allBlockDevicePaths(t.topology.Storage.SecondaryDisks)
+	dbConfPath := "/opt/ydb/cfg/database.yaml"
+
+	// --node-broker flags — the full static endpoint list.
+	var brokerFlags strings.Builder
+	for _, ep := range staticHosts {
+		fmt.Fprintf(&brokerFlags, " --node-broker grpc://%s:2136", ep)
+	}
+
+	// When the run picked ydb-pgwire, expose the postgres-wire surface on
+	// the dynamic node so clients can hit it directly rather than via the
+	// static node's gRPC port.
+	pgwireFlag := ""
+	if t.pgwirePort > 0 {
+		pgwireFlag = fmt.Sprintf("--pgwire-port %d ", t.pgwirePort)
+	}
+
 	// Start all dynamic nodes in parallel.
 	var wg sync.WaitGroup
 	errs := make([]error, len(targets))
 	for i, target := range targets {
-		advHost := target.InternalHost
-		if advHost == "" {
-			advHost = target.Host
-		}
 		// Use database node specs if split mode, otherwise storage specs.
 		// In combined mode (Database == nil) the same node also runs
 		// ydbd-storage, and each daemon claims hard_limit_bytes = memMB ×
@@ -260,29 +392,54 @@ func (t *ydbStartDBTask) Execute(nc *dag.NodeContext) error {
 		if ft == "" {
 			ft = "none"
 		}
-		cfg := agent.YDBDatabaseConfig{
-			StaticEndpoints:   staticHosts,
-			AdvertiseHost:     advHost,
-			DatabasePath:      dbPath,
-			MemoryMB:          memMB,
-			CPUs:              cpus,
-			FaultTolerance:    ft,
-			FailureDomainType: t.topology.FailureDomainType,
-			DefaultDiskType:   t.topology.DefaultDiskType,
-			StorageHosts:      staticHosts,
-			StorageLocations:  staticLocations,
-			BlockDevicePaths:  allBlockDevicePaths(t.topology.Storage.SecondaryDisks),
-			PgwirePort:        t.pgwirePort,
-			Options:           t.topology.DatabaseOptions,
-			ConfOverride:      t.overrides["ydb.yaml:database"],
-		}
-		wg.Add(1)
-		go func(idx int, tgt agent.Target, c agent.YDBDatabaseConfig) {
-			defer wg.Done()
-			errs[idx] = t.client.Send(nc, tgt, agent.Command{
-				Action: agent.ActionStartYDBDB, Config: c,
+
+		// Render (or accept) the database-node yaml. Falls back to the storage
+		// hosts list for placeholder substitution.
+		body := t.overrides["ydb.yaml:database"]
+		if body == "" {
+			body = dbconfig.RenderYDBDatabaseConf(dbconfig.RenderYDBDatabaseConfOpts{
+				HostCount:         len(staticHosts),
+				HostLocations:     staticLocations,
+				DiskPath:          "/ydb_data",
+				BlockDevicePaths:  blockDevicePaths,
+				CPUs:              cpus,
+				MemoryMB:          memMB,
+				FaultTolerance:    ft,
+				FailureDomainType: t.topology.FailureDomainType,
+				DefaultDiskType:   t.topology.DefaultDiskType,
 			})
-		}(i, target, cfg)
+		}
+		body = dbconfig.SubstituteYDBHostPlaceholders(body, staticHosts)
+
+		startScript := fmt.Sprintf(`set -e
+systemctl stop ydbd-database 2>/dev/null; systemctl reset-failed ydbd-database 2>/dev/null
+echo "starting YDB dynamic (database) node..."
+systemd-run --unit=ydbd-database --uid=ydb --gid=ydb `+
+			`--setenv=LD_LIBRARY_PATH=/opt/ydb/lib `+
+			`/opt/ydb/bin/ydbd server `+
+			`--yaml-config %s `+
+			`--grpc-port 2136 --ic-port 19002 --mon-port 8766 `+
+			`%s`+
+			`--tenant %s%s`, dbConfPath, pgwireFlag, dbPath, brokerFlags.String())
+
+		readyScript := `if (for i in $(seq 1 60); do (echo > /dev/tcp/localhost/2136) 2>/dev/null && exit 0; sleep 1; done; exit 1); then
+  echo "YDB database node started"
+else
+  echo "ydbd-database did not start" >&2
+  exit 1
+fi`
+
+		cmds := []agent.Command{
+			writeFile("start_ydb_db", dbConfPath, body),
+			runCmd("start_ydb_db", startScript),
+			runCmd("start_ydb_db", readyScript),
+		}
+
+		wg.Add(1)
+		go func(idx int, tgt agent.Target, c []agent.Command) {
+			defer wg.Done()
+			errs[idx] = sendSeq(nc, t.client, tgt, c...)
+		}(i, target, cmds)
 	}
 	wg.Wait()
 	for _, err := range errs {

@@ -81,14 +81,20 @@ func (b *builder) build() error {
 		return b.buildExternalDB()
 	}
 
-	afterMachines := []string{b.ph(types.PhaseMachines)}
-
 	// --- infrastructure (MustComplete — must finish before teardown on cancel) ---
 	b.addMustComplete(b.ph(types.PhaseNetwork), nil,
 		&networkTask{cfg: b.cfg.Network, provider: b.cfg.Provider, deployer: b.deps.Deployer, state: b.deps.State, runID: b.cfg.ID})
 
 	b.addMustComplete(b.ph(types.PhaseMachines), []string{b.ph(types.PhaseNetwork)},
 		&machinesTask{runCfg: b.cfg, state: b.deps.State, deployer: b.deps.Deployer, serverAddr: b.deps.ServerAddr, settings: b.deps.Settings, jwtIssuer: b.deps.JWTIssuer, tenantID: b.deps.TenantID})
+
+	// --- bootstrap base packages on every machine; all installs depend on it ---
+	b.add(b.ph(types.PhaseBootstrap), []string{b.ph(types.PhaseMachines)},
+		&bootstrapTask{client: b.deps.Client, state: b.deps.State})
+
+	// afterMachines is the dependency every agent-touching install phase uses:
+	// machines provisioned AND base packages installed.
+	afterMachines := []string{b.ph(types.PhaseBootstrap)}
 
 	// --- etcd (if Postgres HA with etcd) ---
 	configDBDeps := []string{b.ph(types.PhaseInstallDB)}
@@ -128,7 +134,7 @@ func (b *builder) build() error {
 	// --- monitoring ---
 	// Install exporters on ALL machines (node_exporter everywhere, DB exporter on DB nodes, vmagent on monitor).
 	b.add(b.ph(types.PhaseInstallMonitor), afterMachines,
-		&monitorInstallTask{client: b.deps.Client, state: b.deps.State, dbKind: b.cfg.Database.Kind})
+		&monitorInstallTask{client: b.deps.Client, state: b.deps.State, dbKind: b.cfg.Database.Kind, serverAddr: b.deps.ServerAddr})
 	// Configure/start daemons after install AND after DB is configured (so postgres_exporter can connect).
 	monitorConfigDeps := []string{b.ph(types.PhaseInstallMonitor), b.ph(types.PhaseConfigureDB)}
 	if b.needsYDBInit() {
@@ -220,6 +226,10 @@ func (b *builder) buildExternalDB() error {
 
 	b.addMustComplete(b.ph(types.PhaseMachines), []string{b.ph(types.PhaseNetwork)},
 		&machinesTask{runCfg: b.cfg, state: b.deps.State, deployer: b.deps.Deployer, serverAddr: b.deps.ServerAddr, settings: b.deps.Settings, jwtIssuer: b.deps.JWTIssuer, tenantID: b.deps.TenantID})
+
+	b.add(b.ph(types.PhaseBootstrap), []string{b.ph(types.PhaseMachines)},
+		&bootstrapTask{client: b.deps.Client, state: b.deps.State})
+	afterMachines = []string{b.ph(types.PhaseBootstrap)}
 
 	b.add(b.ph(types.PhaseInstallStroppy), afterMachines,
 		&stroppyInstallTask{client: b.deps.Client, state: b.deps.State, stroppy: b.cfg.Stroppy})

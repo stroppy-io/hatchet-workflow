@@ -27,6 +27,7 @@ type Phase string
 const (
 	PhaseNetwork            Phase = "network"           // subnet/VPC allocation
 	PhaseMachines           Phase = "machines"          // VM provisioning or Docker container creation
+	PhaseBootstrap          Phase = "bootstrap"         // base-package install on every machine
 	PhaseInstallDB          Phase = "install_db"        // database binary installation
 	PhaseConfigureDB        Phase = "configure_db"      // database cluster configuration
 	PhaseInstallMonitor     Phase = "install_monitor"   // monitoring stack deployment

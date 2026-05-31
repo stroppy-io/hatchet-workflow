@@ -2,6 +2,7 @@ package run
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -36,10 +37,88 @@ func (t *stroppyInstallTask) Execute(nc *dag.NodeContext) error {
 		return fmt.Errorf("stroppy target not provisioned")
 	}
 	nc.Log().Info("installing stroppy")
-	return t.client.Send(nc, *target, agent.Command{
-		Action: agent.ActionInstallStroppy,
-		Config: agent.StroppyInstallConfig{Version: t.stroppy.Version},
-	})
+	return sendSeq(nc, t.client, *target, stroppyInstallCmd(t.stroppy.Version))
+}
+
+// stroppyWorkDir is where the stroppy runner writes its config + workload files.
+const stroppyWorkDir = "/tmp/stroppy-run"
+
+// stroppyInstallCmd builds the (idempotent) stroppy download command. Released
+// versions are skipped when the pre-installed binary already matches; commit-
+// pinned versions always (re)install the exact SHA. Ported from the old agent
+// installStroppy — the version-check is now baked into the bash so the agent
+// stays dumb.
+func stroppyInstallCmd(version string) agent.Command {
+	if version == "" {
+		version = types.DefaultStroppySettings().Version
+	}
+
+	// Commit-pinned: download the raw binary from the per-commit pre-release
+	// (tag `nightly-<short_sha>` published by stroppy-io/stroppy CI). Always
+	// reinstall to honour the exact SHA.
+	if sha, ok := strings.CutPrefix(version, "commit:"); ok {
+		short := sha
+		if len(short) > 7 {
+			short = short[:7]
+		}
+		dlURL := fmt.Sprintf("https://github.com/stroppy-io/stroppy/releases/download/nightly-%s/stroppy", short)
+		script := fmt.Sprintf(
+			`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 %q -o /usr/local/bin/stroppy && chmod +x /usr/local/bin/stroppy`,
+			dlURL)
+		return runCmd("install_stroppy", script)
+	}
+
+	// Released version: accept the pre-installed image binary only if its
+	// version matches what the run requested (the agent image ships a pinned
+	// stroppy; skipping unconditionally would silently use a stale binary and
+	// miss metrics newer releases introduced).
+	want := strings.TrimPrefix(version, "v")
+	dlURL := fmt.Sprintf("https://github.com/stroppy-io/stroppy/releases/download/v%s/stroppy_linux_amd64.tar.gz", version)
+	script := fmt.Sprintf(`if which stroppy >/dev/null 2>&1 && [ "$(stroppy version 2>&1 | head -1 | awk '{print $2}' | sed 's/^v//')" = %q ]; then
+  echo "stroppy %s already installed"
+  exit 0
+fi
+curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 %q -o /tmp/stroppy.tar.gz && \
+  tar xzf /tmp/stroppy.tar.gz -C /tmp && \
+  cp /tmp/stroppy /usr/local/bin/stroppy && \
+  chmod +x /usr/local/bin/stroppy && \
+  rm -rf /tmp/stroppy*`, want, want, dlURL)
+	return runCmd("install_stroppy", script)
+}
+
+// stroppyRunCmds builds the primitive sequence that writes the stroppy config +
+// workload files into stroppyWorkDir and runs the benchmark from there (so
+// uploaded SQL file names resolve through stroppy's normal cwd lookup).
+func stroppyRunCmds(configJSON string, files []types.WorkloadFile) ([]agent.Command, error) {
+	cmds := []agent.Command{
+		runCmd("run_stroppy", fmt.Sprintf("rm -rf %s && mkdir -p %s", stroppyWorkDir, stroppyWorkDir)),
+	}
+	for _, f := range files {
+		name, err := safeWorkloadFileName(f.Name)
+		if err != nil {
+			return nil, err
+		}
+		cmds = append(cmds, writeFile("run_stroppy", stroppyWorkDir+"/"+name, f.Content))
+	}
+	cmds = append(cmds,
+		writeFile("run_stroppy", stroppyWorkDir+"/stroppy-config.json", configJSON),
+		runCmd("run_stroppy", fmt.Sprintf("cd %s && stroppy run -f stroppy-config.json", stroppyWorkDir)),
+	)
+	return cmds, nil
+}
+
+// safeWorkloadFileName rejects path-traversal / absolute names. Ported verbatim
+// from the old agent.
+func safeWorkloadFileName(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "", fmt.Errorf("workload file name is required")
+	}
+	clean := filepath.Clean(name)
+	if clean != name || filepath.Base(name) != name || strings.Contains(name, "\x00") {
+		return "", fmt.Errorf("invalid workload file name %q", name)
+	}
+	return name, nil
 }
 
 type stroppyRunTask struct {
@@ -88,10 +167,11 @@ func (t *stroppyRunTask) Execute(nc *dag.NodeContext) error {
 			return fmt.Errorf("marshal patched stroppy config: %w", err)
 		}
 
-		return t.client.Send(nc, *target, agent.Command{
-			Action: agent.ActionRunStroppy,
-			Config: agent.StroppyRunConfig{ConfigJSON: string(patched), Files: stroppyRunFiles(t.stroppy.Files)},
-		})
+		cmds, err := stroppyRunCmds(string(patched), t.stroppy.Files)
+		if err != nil {
+			return err
+		}
+		return sendSeq(nc, t.client, *target, cmds...)
 	}
 
 	jsonBytes, err := BuildStroppyConfigJSON(t.stroppy, t.dbKind, dbHost, dbPort, settings, t.runID, t.dbCfg)
@@ -99,28 +179,11 @@ func (t *stroppyRunTask) Execute(nc *dag.NodeContext) error {
 		return fmt.Errorf("marshal stroppy config: %w", err)
 	}
 
-	return t.client.Send(nc, *target, agent.Command{
-		Action: agent.ActionRunStroppy,
-		Config: agent.StroppyRunConfig{
-			ConfigJSON: string(jsonBytes),
-			Files:      stroppyRunFiles(t.stroppy.Files),
-		},
-	})
-}
-
-func stroppyRunFiles(files []types.WorkloadFile) []agent.StroppyRunFile {
-	if len(files) == 0 {
-		return nil
+	cmds, err := stroppyRunCmds(string(jsonBytes), t.stroppy.Files)
+	if err != nil {
+		return err
 	}
-	out := make([]agent.StroppyRunFile, 0, len(files))
-	for _, f := range files {
-		out = append(out, agent.StroppyRunFile{
-			Name:    f.Name,
-			Kind:    f.Kind,
-			Content: f.Content,
-		})
-	}
-	return out
+	return sendSeq(nc, t.client, *target, cmds...)
 }
 
 // injectOTLP populates the stroppy global exporter + OTEL_RESOURCE_ATTRIBUTES

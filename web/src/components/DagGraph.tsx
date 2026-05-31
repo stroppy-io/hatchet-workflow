@@ -11,7 +11,7 @@ const phaseGroups: { label: string; icon: typeof Zap; phases: string[] }[] = [
   {
     label: "Infrastructure",
     icon: Server,
-    phases: ["network", "machines"],
+    phases: ["network", "machines", "bootstrap"],
   },
   {
     label: "Database",
