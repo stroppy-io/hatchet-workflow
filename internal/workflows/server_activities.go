@@ -20,8 +20,13 @@ import (
 // RegisterAll; the workflow references them by func, so a nil receiver is fine
 // at ExecuteActivity-build time.
 type ServerActivities struct {
-	Deployer        *agent.DockerDeployer
-	Settings        *types.ServerSettings
+	Deployer *agent.DockerDeployer
+	// Settings is a static fallback used when SettingsFunc is unset.
+	Settings *types.ServerSettings
+	// SettingsFunc resolves a run's ServerSettings from its tenant. The worker
+	// serves all tenants, so cloud creds (settings.Cloud.Yandex) MUST be resolved
+	// per run from the run's tenant — a static Settings can't carry them.
+	SettingsFunc    func(tenantID string) *types.ServerSettings
 	JWTIssuer       *auth.JWTIssuer
 	ServerAddr      string
 	MonitoringURL   string
@@ -38,12 +43,23 @@ func (sa *ServerActivities) logger() *zap.Logger {
 	return zap.NewNop()
 }
 
-func (sa *ServerActivities) deps(state *run.State) run.Deps {
+// settingsFor resolves the run tenant's ServerSettings (cloud creds, etc),
+// falling back to the static Settings when no resolver/tenant is available.
+func (sa *ServerActivities) settingsFor(tenantID string) *types.ServerSettings {
+	if sa.SettingsFunc != nil && tenantID != "" {
+		if s := sa.SettingsFunc(tenantID); s != nil {
+			return s
+		}
+	}
+	return sa.Settings
+}
+
+func (sa *ServerActivities) deps(state *run.State, settings *types.ServerSettings) run.Deps {
 	return run.Deps{
 		Deployer:        sa.Deployer,
 		State:           state,
 		ServerAddr:      sa.ServerAddr,
-		Settings:        sa.Settings,
+		Settings:        settings,
 		MonitoringURL:   sa.MonitoringURL,
 		MonitoringToken: sa.MonitoringToken,
 		AccountID:       sa.AccountID,
@@ -61,7 +77,7 @@ func (sa *ServerActivities) DeployMachinesActivity(ctx context.Context, rc *work
 	}
 	state := run.NewState()
 	nc := run.NewNodeContext(ctx, sa.logger())
-	if err := run.Deploy(nc, cfg, sa.deps(state)); err != nil {
+	if err := run.Deploy(nc, cfg, sa.deps(state, sa.settingsFor(cfg.Monitor.TenantID))); err != nil {
 		return nil, err
 	}
 	return runStateToDeployment(state.ExportRunState()), nil
@@ -77,7 +93,7 @@ func (sa *ServerActivities) TeardownActivity(ctx context.Context, req *TeardownR
 	state := run.NewState()
 	state.ImportRunState(deploymentToRunState(req.Deployment))
 	nc := run.NewNodeContext(ctx, sa.logger())
-	return run.Teardown(nc, cfg, sa.deps(state))
+	return run.Teardown(nc, cfg, sa.deps(state, sa.settingsFor(cfg.Monitor.TenantID)))
 }
 
 // BuildRecipeActivity builds the per-machine command plans by driving the run

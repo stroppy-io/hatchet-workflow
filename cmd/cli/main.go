@@ -139,6 +139,8 @@ func serveCmd() *cobra.Command {
 			w := temporalworker.New(tc, "stroppy-cloud", temporalworker.Options{})
 			workflows.RegisterServer(w, &workflows.ServerActivities{
 				Deployer:        deployer,
+				SettingsFunc:    app.SettingsFunc(), // per-tenant cloud creds (YC etc)
+				JWTIssuer:       app.JWTIssuer(),     // agent tokens for provisioned VMs
 				ServerAddr:      agentServerAddr,
 				MonitoringURL:   monitoringURL,
 				MonitoringToken: monitoringToken,

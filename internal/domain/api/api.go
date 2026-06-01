@@ -54,6 +54,16 @@ func (a *App) SetTemporal(c temporalclient.Client) {
 	a.launcher = workflowpb.NewRunWorkflowServiceClient(c)
 }
 
+// SettingsFunc returns the per-tenant ServerSettings resolver (set by Server).
+// The Temporal server worker uses it to resolve a run's cloud creds from the
+// run's tenant.
+func (a *App) SettingsFunc() func(tenantID string) *types.ServerSettings {
+	return a.settingsFunc
+}
+
+// JWTIssuer returns the issuer used to mint agent tokens for provisioned VMs.
+func (a *App) JWTIssuer() *auth.JWTIssuer { return a.jwtIssuer }
+
 // runWorkflowID is the deterministic workflow id for a run.
 func runWorkflowID(runID string) string { return "run/" + runID }
 
