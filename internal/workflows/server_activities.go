@@ -139,9 +139,22 @@ func (sa *ServerActivities) BuildRecipeActivity(ctx context.Context, req *BuildR
 	if cfg.Monitor.TenantID != "" {
 		acct, tenant = cfg.Monitor.AccountID, cfg.Monitor.TenantID
 	}
+	// Cloud VMs reach the control plane ONLY through the public gateway, so both
+	// the binary/artifact downloads (ServerAddr → /api/binaries, /artifacts) and
+	// the metrics/log ingest (MetricsURL → /insert/*, relayed by the gateway to
+	// vmauth) must use the PUBLIC cloud.server_addr. The docker-internal
+	// AGENT_SERVER_ADDR ("http://server:8080") / MONITORING_URL ("http://vmauth:8427")
+	// can't be resolved from a YC VM. Docker agents keep the in-cluster addresses.
+	serverAddr, metricsURL := sa.ServerAddr, sa.MonitoringURL
+	if cfg.Provider == types.ProviderYandex {
+		if s := sa.settingsFor(cfg.Monitor.TenantID); s != nil && s.Cloud.ServerAddr != "" {
+			serverAddr = s.Cloud.ServerAddr
+			metricsURL = s.Cloud.ServerAddr
+		}
+	}
 	return BuildPlans(ctx, sa.logger(), cfg, req.Deployment, MonitoringRefs{
-		ServerAddr: sa.ServerAddr,
-		MetricsURL: sa.MonitoringURL,
+		ServerAddr: serverAddr,
+		MetricsURL: metricsURL,
 		Token:      sa.MonitoringToken,
 		AccountID:  acct,
 		TenantID:   tenant,

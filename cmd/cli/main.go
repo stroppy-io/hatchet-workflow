@@ -140,7 +140,7 @@ func serveCmd() *cobra.Command {
 			workflows.RegisterServer(w, &workflows.ServerActivities{
 				Deployer:        deployer,
 				SettingsFunc:    app.SettingsFunc(), // per-tenant cloud creds (YC etc)
-				JWTIssuer:       app.JWTIssuer(),     // agent tokens for provisioned VMs
+				JWTIssuer:       app.JWTIssuer(),    // agent tokens for provisioned VMs
 				ServerAddr:      agentServerAddr,
 				MonitoringURL:   monitoringURL,
 				MonitoringToken: monitoringToken,
@@ -163,13 +163,14 @@ func serveCmd() *cobra.Command {
 			// control-plane UI + REST API (via HTTPFallback = the chi router). So
 			// the frontend stays on the same address as before.
 			gw, err := gateway.New(gateway.Config{
-				TemporalHostPort: temporalHostPort,
-				AgentBinaryPath:  os.Getenv("AGENT_BINARY_PATH"),
-				CacheDir:         envOrDefault("STROPPY_BINARY_CACHE_DIR", "/var/lib/stroppy-cache/binaries"),
-				Artifacts:        map[string]string{"stroppy": os.Getenv("STROPPY_UPSTREAM")},
-				AptBackend:       os.Getenv("STROPPY_APT_CACHE_BACKEND"),
-				HTTPFallback:     srv.Router(),
-				Logger:           slogger,
+				TemporalHostPort:  temporalHostPort,
+				AgentBinaryPath:   os.Getenv("AGENT_BINARY_PATH"),
+				CacheDir:          envOrDefault("STROPPY_BINARY_CACHE_DIR", "/var/lib/stroppy-cache/binaries"),
+				Artifacts:         map[string]string{"stroppy": os.Getenv("STROPPY_UPSTREAM")},
+				AptBackend:        os.Getenv("STROPPY_APT_CACHE_BACKEND"),
+				MonitoringBackend: monitoringURL, // relay agent /insert/* → vmauth for cloud VMs
+				HTTPFallback:      srv.Router(),
+				Logger:            slogger,
 			})
 			if err != nil {
 				return fmt.Errorf("build gateway: %w", err)

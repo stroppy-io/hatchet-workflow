@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -28,6 +29,10 @@ type Config struct {
 	// AptBackend is the internal apt-cacher-ng address (e.g. "apt-cacher-ng:3142")
 	// the gateway pipes agent apt traffic to. Empty disables apt forwarding.
 	AptBackend string
+	// MonitoringBackend is the internal vmauth base URL (e.g. "http://vmauth:8427")
+	// the gateway relays agent metrics/log ingest (/insert/*) to, so cloud VMs
+	// reach monitoring through the one public gateway address. Empty disables it.
+	MonitoringBackend string
 	// HTTPFallback handles every HTTP/1.1 request that is not one of the gateway's
 	// own agent routes (/healthz, /agent/binary, /artifacts/*, /api/binaries/*).
 	// Wire the control-plane UI/API router here so the SPA + REST API are served
@@ -47,7 +52,8 @@ type Gateway struct {
 	aptBackend      string
 	logger          *slog.Logger
 
-	fallback http.Handler
+	fallback     http.Handler
+	monitorProxy http.Handler
 
 	grpc    *grpc.Server
 	backend *grpc.ClientConn
@@ -82,6 +88,13 @@ func New(cfg Config) (*Gateway, error) {
 		grpc:            proxySrv,
 		backend:         backend,
 	}
+	if cfg.MonitoringBackend != "" {
+		mp, err := newMonitorProxy(cfg.MonitoringBackend)
+		if err != nil {
+			return nil, fmt.Errorf("gateway: monitoring backend %q: %w", cfg.MonitoringBackend, err)
+		}
+		g.monitorProxy = mp
+	}
 	g.http = &http.Server{Handler: http.HandlerFunc(g.serveHTTP), ReadHeaderTimeout: 30 * time.Second}
 	return g, nil
 }
@@ -99,6 +112,9 @@ func (g *Gateway) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		g.serveArtifact(w, r)
 	case strings.HasPrefix(r.URL.Path, "/api/binaries/"):
 		g.serveCachedBinary(w, r)
+	case g.monitorProxy != nil && strings.HasPrefix(r.URL.Path, "/insert/"):
+		// Agent metrics/log ingest relayed to the internal vmauth.
+		g.monitorProxy.ServeHTTP(w, r)
 	case g.fallback != nil:
 		// Control-plane UI + REST API (SPA, /api/v1/...) on the same port.
 		g.fallback.ServeHTTP(w, r)
