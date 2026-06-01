@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
+	"go.temporal.io/sdk/activity"
 	"go.uber.org/zap"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
@@ -13,6 +15,31 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 )
+
+// heartbeat keeps a long, single-blocking-call activity (terraform apply/teardown,
+// recipe build) alive against its HeartbeatTimeout. terraform doesn't expose
+// progress, so we beat on a fixed interval; the goroutine stops via the returned
+// func. This lets Temporal detect a dead worker within the HeartbeatTimeout while
+// NOT retrying an activity that is merely slow (which would collide on the
+// terraform state lock held by the still-running first attempt).
+func heartbeat(ctx context.Context) (stop func()) {
+	done := make(chan struct{})
+	go func() {
+		t := time.NewTicker(20 * time.Second)
+		defer t.Stop()
+		for {
+			select {
+			case <-done:
+				return
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				activity.RecordHeartbeat(ctx)
+			}
+		}
+	}()
+	return func() { close(done) }
+}
 
 // ServerActivities holds the dependencies for the side-effectful, server-side
 // activities (deploy / teardown / recipe build). They run on the shared server
@@ -75,6 +102,7 @@ func (sa *ServerActivities) DeployMachinesActivity(ctx context.Context, rc *work
 	if err != nil {
 		return nil, err
 	}
+	defer heartbeat(ctx)()
 	state := run.NewState()
 	nc := run.NewNodeContext(ctx, sa.logger())
 	if err := run.Deploy(nc, cfg, sa.deps(state, sa.settingsFor(cfg.Monitor.TenantID))); err != nil {
@@ -91,6 +119,7 @@ func (sa *ServerActivities) TeardownActivity(ctx context.Context, req *TeardownR
 		return err
 	}
 	state := run.NewState()
+	defer heartbeat(ctx)()
 	state.ImportRunState(deploymentToRunState(req.Deployment))
 	nc := run.NewNodeContext(ctx, sa.logger())
 	return run.Teardown(nc, cfg, sa.deps(state, sa.settingsFor(cfg.Monitor.TenantID)))

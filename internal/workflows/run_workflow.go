@@ -52,12 +52,11 @@ func (w *runWorkflow) Execute(ctx wf.Context) error {
 	w.status = common.Status_STATUS_RUNNING
 	runID := w.req.GetId()
 
-	// No HeartbeatTimeout: the server activities (terraform apply/teardown) run a
-	// single long blocking call and don't heartbeat. A heartbeat deadline would
-	// make Temporal retry mid-apply, and the retry collides on the terraform
-	// state lock held by the still-running first attempt. StartToCloseTimeout
-	// alone bounds them.
-	serverCtx := wf.WithActivityOptions(ctx, wf.ActivityOptions{StartToCloseTimeout: 30 * time.Minute})
+	// The server activities (terraform apply/teardown) beat a heartbeat every 20s
+	// (see heartbeat() in server_activities.go) so a 1m HeartbeatTimeout detects a
+	// dead worker fast WITHOUT retrying an activity that is merely slow — a false
+	// retry would collide on the terraform state lock held by the first attempt.
+	serverCtx := wf.WithActivityOptions(ctx, wf.ActivityOptions{StartToCloseTimeout: 30 * time.Minute, HeartbeatTimeout: time.Minute})
 
 	var sa *ServerActivities // nil receiver: ExecuteActivity-by-func resolves the registered method.
 
@@ -75,7 +74,7 @@ func (w *runWorkflow) Execute(ctx wf.Context) error {
 	// Always tear down (even on failure/cancel) using the deploy handles.
 	defer func() {
 		dctx, _ := wf.NewDisconnectedContext(ctx)
-		dctx = wf.WithActivityOptions(dctx, wf.ActivityOptions{StartToCloseTimeout: 30 * time.Minute})
+		dctx = wf.WithActivityOptions(dctx, wf.ActivityOptions{StartToCloseTimeout: 30 * time.Minute, HeartbeatTimeout: time.Minute})
 		w.startStage(ctx, stageTeardown)
 		if err := wf.ExecuteActivity(dctx, sa.TeardownActivity, &TeardownRequest{Config: w.req, Deployment: &dep}).Get(dctx, nil); err != nil {
 			logger.Error("teardown failed", "err", err)
