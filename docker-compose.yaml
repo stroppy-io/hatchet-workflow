@@ -112,6 +112,7 @@ services:
   # --- Temporal (runs execute as workflows) ---
   temporal:
     image: temporalio/auto-setup:1.25.2
+    restart: always
     depends_on:
       postgres:
         condition: service_healthy
@@ -128,6 +129,7 @@ services:
 
   temporal-ui:
     image: temporalio/ui:2.31.2
+    restart: always
     depends_on:
       - temporal
     environment:

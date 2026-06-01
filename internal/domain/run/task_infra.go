@@ -17,9 +17,8 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/auth"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/types"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/terraform"
-
-	yctf "github.com/stroppy-io/stroppy-cloud/deployments/terraform/yandex"
-	yctfmanaged "github.com/stroppy-io/stroppy-cloud/deployments/terraform/yandex_managed_ydb"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/terraformprov"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 )
 
 // dbConnectPort returns the port stroppy connects to for a given (kind,
@@ -247,80 +246,98 @@ func runSubnetCIDR(runID string, _ string) string {
 	return fmt.Sprintf("10.%d.0.0/16", octet)
 }
 
-func runSubnetCIDRs(runID string, zones []string) map[string]yandexTfSubnet {
+func runSubnetCIDRs(runID string, zones []string) map[string]*deployment.Yandex_Subnet {
 	var h byte
 	for _, b := range []byte(runID) {
 		h = h*31 + b
 	}
 	octet := int(h%254) + 1
-	out := make(map[string]yandexTfSubnet, len(zones))
+	out := make(map[string]*deployment.Yandex_Subnet, len(zones))
 	for i, zone := range zones {
-		out[zone] = yandexTfSubnet{
+		out[zone] = &deployment.Yandex_Subnet{
 			Zone: zone,
-			CIDR: fmt.Sprintf("10.%d.%d.0/24", octet, i),
+			Cidr: fmt.Sprintf("10.%d.%d.0/24", octet, i),
 		}
 	}
 	return out
 }
 
-// yandexTfVars matches the terraform variable structure from main branch.
-type yandexTfVars struct {
-	Networking yandexTfNetworking `json:"networking"`
-	Compute    yandexTfCompute    `json:"compute"`
-}
-
-type yandexTfNetworking struct {
-	Name       string                    `json:"name"`
-	ExternalID string                    `json:"external_id"`
-	CIDR       string                    `json:"cidr"`
-	Zone       string                    `json:"zone"`
-	Subnets    map[string]yandexTfSubnet `json:"subnets,omitempty"`
-}
-
-type yandexTfSubnet struct {
-	Zone string `json:"zone"`
-	CIDR string `json:"cidr"`
-}
-
-type yandexTfCompute struct {
-	PlatformID       string                `json:"platform_id"`
-	ImageID          string                `json:"image_id"`
-	SerialPortEnable bool                  `json:"serial_port_enable"`
-	VMs              map[string]yandexTfVM `json:"vms"`
-}
-
-type yandexTfVM struct {
-	Cores                   int                     `json:"cores"`
-	Memory                  int                     `json:"memory"`
-	DiskSize                int                     `json:"disk_size"`
-	DiskType                string                  `json:"disk_type"`
-	Zone                    string                  `json:"zone,omitempty"`
-	InternalIP              string                  `json:"internal_ip"`
-	HasPublicIP             bool                    `json:"has_public_ip"`
-	UserData                string                  `json:"user_data"`
-	SecondaryDisks          []yandexTfSecondaryDisk `json:"secondary_disks"`
-	NetworkAccelerationType string                  `json:"network_acceleration_type"`
-}
-
-// yandexTfSecondaryDisk mirrors the secondary_disks list element in the TF
-// compute schema. DeviceName surfaces in-guest as virtio-<DeviceName>.
-type yandexTfSecondaryDisk struct {
-	DeviceName string `json:"device_name"`
-	SizeGB     int    `json:"size_gb"`
-	Type       string `json:"type"`
-}
-
-// yandexVmIPs is the terraform output structure for vm_ips.
-type yandexVmIPs map[string]struct {
-	ID         string `json:"id"`
-	NatIP      string `json:"nat_ip"`
-	InternalIP string `json:"internal_ip"`
-}
-
-func (t *machinesTask) yandexMachines(nc *NodeContext) error {
-	if t.runCfg.Database.Kind == types.DatabaseYDBManaged {
-		return t.yandexManagedYDBMachines(nc)
+// managedYdbInput builds the deployment.Yandex_ManagedYdb message (the
+// managed_ydb tfvar) from the run's ydb-managed topology. Only set when the run
+// targets Managed YDB; nil otherwise so the single terraform root skips the
+// managed resources entirely.
+func managedYdbInput(m *types.YDBManagedTopology, yc types.YandexCloudSettings, runID string) *deployment.Yandex_ManagedYdb {
+	// Managed YDB DB name must be unique within the folder; a stable
+	// runID-derived suffix keeps tear-down/re-apply idempotent.
+	dbName := fmt.Sprintf("stroppy-%s", strings.ReplaceAll(runID, "_", "-"))
+	if len(dbName) > 63 {
+		dbName = dbName[:63]
 	}
+	// YC expects a zone-less location ("ru-central1") for managed YDB; yc.Zone
+	// is the per-VM zone ("ru-central1-b"), so trim the trailing zone suffix.
+	locationID := yc.Zone
+	if i := strings.LastIndex(locationID, "-"); i > 0 && len(locationID)-i <= 3 {
+		locationID = locationID[:i]
+	}
+
+	out := &deployment.Yandex_ManagedYdb{Name: dbName, FolderId: yc.FolderID, LocationId: locationID}
+
+	mgType := string(m.Type)
+	if mgType == "" {
+		mgType = string(types.YDBManagedKindServerless)
+	}
+	if mgType == string(types.YDBManagedKindDedicated) {
+		groups := uint32(m.StorageGroups)
+		if groups < 1 {
+			groups = 1
+		}
+		storageType := m.StorageType
+		if storageType == "" {
+			storageType = "ssd"
+		}
+		ded := &deployment.Yandex_ManagedYdb_Dedicated{
+			ResourcePresetId: m.ResourcePresetID,
+			StorageConfig: &deployment.Yandex_ManagedYdb_StorageConfig{
+				GroupCount: groups, StorageTypeId: storageType,
+			},
+		}
+		if m.AutoScale != nil {
+			pct := m.AutoScale.CPUUtilizationPct
+			if pct <= 0 {
+				pct = 70
+			}
+			ded.ScalePolicy = &deployment.Yandex_ManagedYdb_ScalePolicy{
+				Policy: &deployment.Yandex_ManagedYdb_ScalePolicy_Auto_{Auto: &deployment.Yandex_ManagedYdb_ScalePolicy_Auto{
+					MinSize: uint32(m.AutoScale.MinSize), MaxSize: uint32(m.AutoScale.MaxSize), CpuUtilizationPercent: uint32(pct),
+				}},
+			}
+		} else {
+			size := uint32(m.NodeCount)
+			if size < 1 {
+				size = 1
+			}
+			ded.ScalePolicy = &deployment.Yandex_ManagedYdb_ScalePolicy{
+				Policy: &deployment.Yandex_ManagedYdb_ScalePolicy_Fixed_{Fixed: &deployment.Yandex_ManagedYdb_ScalePolicy_Fixed{Size: size}},
+			}
+		}
+		out.Kind = &deployment.Yandex_ManagedYdb_Dedicated_{Dedicated: ded}
+	} else {
+		sl := &deployment.Yandex_ManagedYdb_Serverless{}
+		if m.ThrottlingRCUs > 0 {
+			sl.ThrottlingRcuLimit = uint32(m.ThrottlingRCUs)
+		}
+		out.Kind = &deployment.Yandex_ManagedYdb_Serverless_{Serverless: sl}
+	}
+	return out
+}
+
+// yandexMachines provisions the run's Yandex Cloud infrastructure through the
+// single terraform root (deployments/terraform/yandex). It builds the typed
+// deployment.Yandex.Input (network + compute VMs + optional managed YDB) — which
+// IS the terraform tfvars — applies it via the provisioner, then reads the
+// resulting VM and managed-YDB endpoints back from Yandex.Output into State.
+func (t *machinesTask) yandexMachines(nc *NodeContext) error {
+	isManaged := t.runCfg.Database.Kind == types.DatabaseYDBManaged
 	if t.settings == nil {
 		return fmt.Errorf("machines: server settings not configured for Yandex Cloud provider")
 	}
@@ -343,32 +360,31 @@ func (t *machinesTask) yandexMachines(nc *NodeContext) error {
 		return fmt.Errorf("machines: binary_url or server_addr must be configured for cloud provider")
 	}
 
-	// Load embedded terraform templates for Yandex Cloud.
-	tfFiles, err := yctf.EmbeddedTfFiles()
-	if err != nil {
-		return fmt.Errorf("machines: load embedded terraform templates: %w", err)
-	}
-	if len(tfFiles) == 0 {
-		return fmt.Errorf("machines: no embedded terraform templates found")
-	}
-
-	// Build cloud-init and VM specs for each machine.
-	vmSpecs := make(map[string]yandexTfVM)
-	// Track role per VM name for state population after apply.
+	// Build VM specs for each machine. For Managed YDB the topology has no
+	// DB-side machines — only the stroppy client VM(s).
+	vmSpecs := make(map[string]*deployment.Yandex_Vm)
 	vmRoles := make(map[string]types.MachineRole)
 	vmZones := make(map[string]string)
 	subnetZones := map[string]struct{}{}
 
 	for _, spec := range t.runCfg.Machines {
+		if isManaged && spec.Role != types.RoleStroppy {
+			continue // managed YDB: no DB-side machines (defensive skip)
+		}
 		zones := yandexPlacementZones(spec.Placement, yc.Zone)
 		for i := range spec.Count {
 			machineID := fmt.Sprintf("%s-%s-%d", t.runCfg.ID, spec.Role, i)
-			vmZone := zoneForInstance(spec.Placement, zones, i)
-			if vmZone == "" {
-				vmZone = yc.Zone
-			}
-			if vmZone != "" {
-				subnetZones[vmZone] = struct{}{}
+			// Per-VM zone only for self-hosted; managed VMs sit in the network
+			// default zone (managed subnets are zone-fixed).
+			vmZone := ""
+			if !isManaged {
+				vmZone = zoneForInstance(spec.Placement, zones, i)
+				if vmZone == "" {
+					vmZone = yc.Zone
+				}
+				if vmZone != "" {
+					subnetZones[vmZone] = struct{}{}
+				}
 			}
 
 			// Generate agent JWT token (valid for 24h).
@@ -415,6 +431,13 @@ func (t *machinesTask) yandexMachines(nc *NodeContext) error {
 				diskGB = 50
 			}
 
+			diskType := spec.DiskType
+			if diskType == "" {
+				diskType = "network-ssd"
+			}
+			// YC io-m3 requires disk size be a multiple of 93 GiB.
+			diskGB = roundIOM3GB(diskGB, diskType)
+
 			nc.Log().Info("preparing VM",
 				zap.String("machine_id", machineID),
 				zap.String("role", string(spec.Role)),
@@ -423,15 +446,7 @@ func (t *machinesTask) yandexMachines(nc *NodeContext) error {
 				zap.Int("disk_gb", diskGB),
 			)
 
-			diskType := spec.DiskType
-			if diskType == "" {
-				diskType = "network-ssd"
-			}
-			// YC io-m3 requires disk size be a multiple of 93 GiB; round
-			// up the boot disk so the API accepts it.
-			diskGB = roundIOM3GB(diskGB, diskType)
-
-			secondary := make([]yandexTfSecondaryDisk, 0, len(spec.SecondaryDisks))
+			secondary := make([]*deployment.Yandex_Disk, 0, len(spec.SecondaryDisks))
 			for _, d := range spec.SecondaryDisks {
 				if d.DeviceName == "" || d.SizeGB <= 0 {
 					continue
@@ -440,9 +455,9 @@ func (t *machinesTask) yandexMachines(nc *NodeContext) error {
 				if dt == "" {
 					dt = "network-ssd"
 				}
-				secondary = append(secondary, yandexTfSecondaryDisk{
+				secondary = append(secondary, &deployment.Yandex_Disk{
 					DeviceName: d.DeviceName,
-					SizeGB:     roundIOM3GB(d.SizeGB, dt),
+					SizeGb:     uint32(roundIOM3GB(d.SizeGB, dt)),
 					Type:       dt,
 				})
 			}
@@ -452,16 +467,16 @@ func (t *machinesTask) yandexMachines(nc *NodeContext) error {
 				netAccel = "software_accelerated"
 			}
 
-			vmSpecs[machineID] = yandexTfVM{
-				Cores:                   cores,
-				Memory:                  memGB,
-				DiskSize:                diskGB,
-				DiskType:                diskType,
-				Zone:                    vmZone,
-				HasPublicIP:             yc.AssignPublicIP,
-				UserData:                cloudInit,
-				SecondaryDisks:          secondary,
-				NetworkAccelerationType: netAccel,
+			vmSpecs[machineID] = &deployment.Yandex_Vm{
+				Cores:               uint32(cores),
+				MemoryGb:            uint64(memGB),
+				BootDiskGb:          uint64(diskGB),
+				BootDiskType:        diskType,
+				Zone:                vmZone,
+				PublicIp:            yc.AssignPublicIP,
+				UserData:            cloudInit,
+				NetworkAcceleration: netAccel,
+				SecondaryDisks:      secondary,
 			}
 			vmRoles[machineID] = spec.Role
 			vmZones[machineID] = vmZone
@@ -477,11 +492,11 @@ func (t *machinesTask) yandexMachines(nc *NodeContext) error {
 		platformID = "standard-v2"
 	}
 
-	// Generate unique subnet name and CIDR per run to avoid collisions.
+	// Unique subnet name + CIDR per run avoids collisions across concurrent runs.
 	subnetName := fmt.Sprintf("%s-%s", yc.NetworkName, t.runCfg.ID)
 	subnetCIDR := runSubnetCIDR(t.runCfg.ID, yc.SubnetCIDR)
-	var subnetMap map[string]yandexTfSubnet
-	if len(subnetZones) > 1 {
+	var subnetMap map[string]*deployment.Yandex_Subnet
+	if !isManaged && len(subnetZones) > 1 {
 		zones := make([]string, 0, len(subnetZones))
 		for z := range subnetZones {
 			zones = append(zones, z)
@@ -490,95 +505,74 @@ func (t *machinesTask) yandexMachines(nc *NodeContext) error {
 		subnetMap = runSubnetCIDRs(t.runCfg.ID, zones)
 	}
 
-	// Build terraform variables matching main branch format.
-	vars := yandexTfVars{
-		Networking: yandexTfNetworking{
-			Name:       subnetName,
-			ExternalID: yc.NetworkID,
-			CIDR:       subnetCIDR,
-			Zone:       yc.Zone,
-			Subnets:    subnetMap,
+	// The proto Input IS the terraform tfvars (see deployment/yandex.proto):
+	// protojson(Input) yields terraform.tfvars.json matching variables.tf 1:1.
+	input := &deployment.Yandex_Input{
+		Network: &deployment.Yandex_Network{
+			Name:      subnetName,
+			NetworkId: yc.NetworkID,
+			Cidr:      subnetCIDR,
+			Zone:      yc.Zone,
+			Subnets:   subnetMap,
 		},
-		Compute: yandexTfCompute{
-			PlatformID:       platformID,
-			ImageID:          yc.ImageID,
+		Compute: &deployment.Yandex_Compute{
+			PlatformId:       platformID,
+			ImageId:          yc.ImageID,
 			SerialPortEnable: true,
-			VMs:              vmSpecs,
+			Vms:              vmSpecs,
 		},
 	}
-
-	varFile, err := terraform.NewTfVarFile(vars)
-	if err != nil {
-		return fmt.Errorf("machines: marshal terraform vars: %w", err)
+	if isManaged {
+		input.ManagedYdb = managedYdbInput(t.runCfg.Database.YDBManaged, yc, t.runCfg.ID)
 	}
 
-	// Create terraform actor and apply.
-	actor, err := terraform.NewActor()
-	if err != nil {
-		return fmt.Errorf("machines: create terraform actor: %w", err)
+	env := map[string]string{
+		"YC_TOKEN":     yc.Token,
+		"YC_CLOUD_ID":  yc.CloudID,
+		"YC_FOLDER_ID": yc.FolderID,
+		"YC_ZONE":      yc.Zone,
 	}
 
-	wdId := terraform.NewWdId(t.runCfg.ID)
-	wd := terraform.NewWorkdirWithParams(wdId,
-		terraform.WithTfFiles(tfFiles),
-		terraform.WithVarFile(varFile),
-		terraform.WithEnv(map[string]string{
-			"YC_TOKEN":     yc.Token,
-			"YC_CLOUD_ID":  yc.CloudID,
-			"YC_FOLDER_ID": yc.FolderID,
-			"YC_ZONE":      yc.Zone,
-		}),
-	)
-
-	// Record the workdir BEFORE apply so a server crash mid-apply still
-	// leaves enough state in the snapshot for the teardown phase to fire
-	// `terraform destroy` against whatever VMs got partially created.
-	// Without this, an early apply failure would orphan VMs in YC.
-	t.state.SetTerraformWdId(string(wdId))
-	t.state.SetTerraformActor(actor)
+	// Record the workdir BEFORE apply so a server crash mid-apply still leaves
+	// enough state for teardown to `terraform destroy` partially-created infra.
+	// The provisioner keys the workdir by run id; teardown rebuilds a cold actor.
+	t.state.SetTerraformWdId(t.runCfg.ID)
 	nc.SaveSnapshot()
 
 	nc.Log().Info("running terraform apply for Yandex Cloud",
 		zap.String("run_id", t.runCfg.ID),
+		zap.Bool("managed_ydb", isManaged),
 		zap.Int("vm_count", len(vmSpecs)),
 	)
 
 	ctx := context.Context(nc)
-	output, err := actor.ApplyTerraform(ctx, wd)
+	y, err := terraformprov.Apply(ctx, t.runCfg.ID, &deployment.Yandex{Input: input}, env)
 	if err != nil {
-		return fmt.Errorf("machines: terraform apply: %w", err)
+		return fmt.Errorf("machines: %w", err)
 	}
+	out := y.GetOutput()
 
-	// Parse terraform output — main branch format returns nat_ip + internal_ip.
-	vmIPs, err := terraform.GetTfOutputVal[yandexVmIPs](output, "vm_ips")
-	if err != nil {
-		return fmt.Errorf("machines: parse terraform output 'vm_ips': %w", err)
-	}
-
-	// Populate state with targets from terraform output.
+	// Populate state with targets from the typed Yandex.Output.
 	var dbTargets []agent.Target
 	var proxyTargets []agent.Target
 	var ydbStorageTargets []agent.Target
 	var ydbDatabaseTargets []agent.Target
 
 	for name, role := range vmRoles {
-		vmInfo, ok := vmIPs[name]
+		vmInfo, ok := out.GetVms()[name]
 		if !ok {
 			return fmt.Errorf("machines: terraform output missing IP for VM %q", name)
 		}
-
-		ip := vmInfo.NatIP
+		ip := vmInfo.GetPublicIp()
 		if ip == "" {
-			ip = vmInfo.InternalIP
+			ip = vmInfo.GetInternalIp()
 		}
-
 		target := agent.Target{
 			ID:           name,
 			Host:         ip,
-			InternalHost: vmInfo.InternalIP,
+			InternalHost: vmInfo.GetInternalIp(),
 			Zone:         vmZones[name],
 		}
-
 		switch role {
 		case types.RoleDatabase, types.RoleYDBStorage, types.RoleYDBDatabase:
 			dbTargets = append(dbTargets, target)
@@ -595,10 +589,46 @@ func (t *machinesTask) yandexMachines(nc *NodeContext) error {
 		}
 	}
 
-	// Set the SQL endpoint stroppy will hit. For YDB split mode prefer a
-	// compute node; otherwise just take the first DB target. Map iteration
-	// over vmRoles is non-deterministic, so this needs to happen after the
-	// loop — picking inside the loop would race on iteration order.
+	t.state.SetDBTargets(dbTargets)
+	t.state.SetProxyTargets(proxyTargets)
+	t.state.SetYDBStorageTargets(ydbStorageTargets)
+	t.state.SetYDBDatabaseTargets(ydbDatabaseTargets)
+
+	// Managed YDB: the SQL endpoint comes from the managed-YDB terraform output.
+	if isManaged {
+		myo := out.GetManagedYdb()
+		if myo == nil || myo.GetYdbApiEndpoint() == "" {
+			return fmt.Errorf("machines: terraform produced no managed YDB endpoint")
+		}
+		endpoint := myo.GetYdbApiEndpoint()
+		dbPath := myo.GetDatabasePath()
+		host, port := parseYDBEndpoint(endpoint)
+		if host == "" {
+			return fmt.Errorf("machines: cannot parse managed YDB endpoint %q", endpoint)
+		}
+		if port == 0 {
+			port = types.Protocols[types.ProtocolYDBGRPCS].Port
+		}
+		// Share the resolved endpoint/path via the topology pointer dbDriverURL reads.
+		managed := t.runCfg.Database.YDBManaged
+		managed.Endpoint = endpoint
+		managed.DatabasePath = dbPath
+		t.state.SetDBEndpoint(host, port)
+		t.state.SetEffectiveConfig("database", map[string]string{
+			"kind":     "ydb-managed",
+			"type":     myo.GetType(),
+			"endpoint": endpoint,
+			"db_path":  dbPath,
+		})
+		nc.Log().Info("managed YDB provisioned",
+			zap.String("endpoint", endpoint),
+			zap.String("database_path", dbPath),
+		)
+		return nil
+	}
+
+	// Self-hosted: pick the SQL endpoint stroppy hits (post-loop; map order is
+	// non-deterministic). YDB split mode prefers a compute node.
 	if len(dbTargets) > 0 {
 		dbPort := dbConnectPort(t.runCfg.Database.Kind, t.runCfg.Stroppy.Protocol)
 		endpoint := dbTargets[0]
@@ -612,13 +642,7 @@ func (t *machinesTask) yandexMachines(nc *NodeContext) error {
 		t.state.SetDBEndpoint(host, dbPort)
 	}
 
-	t.state.SetDBTargets(dbTargets)
-	t.state.SetProxyTargets(proxyTargets)
-	t.state.SetYDBStorageTargets(ydbStorageTargets)
-	t.state.SetYDBDatabaseTargets(ydbDatabaseTargets)
-
-	// If proxy is present, stroppy connects through proxy instead of directly to DB.
-	// Exception: Picodata — picodata-go driver does topology discovery and needs direct connection.
+	// Proxy present → stroppy connects through it (except Picodata: direct).
 	if len(proxyTargets) > 0 && t.runCfg.Database.Kind != types.DatabasePicodata {
 		proxyHost := proxyTargets[0].InternalHost
 		if proxyHost == "" {
@@ -638,55 +662,10 @@ func (t *machinesTask) yandexMachines(nc *NodeContext) error {
 		zap.Int("db", len(dbTargets)),
 		zap.Int("proxy", len(proxyTargets)),
 	)
-
 	return nil
 }
 
 // --- Managed YDB (Yandex Cloud) ---
-
-// yandexManagedTfVars matches the yandex_managed_ydb terraform module schema.
-type yandexManagedTfVars struct {
-	Networking yandexTfNetworking     `json:"networking"`
-	Compute    yandexTfCompute        `json:"compute"`
-	Managed    yandexManagedTfManaged `json:"managed"`
-}
-
-type yandexManagedTfAutoScale struct {
-	MinSize           int `json:"min_size"`
-	MaxSize           int `json:"max_size"`
-	CPUUtilizationPct int `json:"cpu_utilization_percent,omitempty"`
-}
-
-type yandexManagedTfManaged struct {
-	Name               string                    `json:"name"`
-	Type               string                    `json:"type"`
-	FolderID           string                    `json:"folder_id"`
-	LocationID         string                    `json:"location_id"`
-	ResourcePresetID   string                    `json:"resource_preset_id,omitempty"`
-	NodeCount          int                       `json:"node_count,omitempty"`
-	AutoScale          *yandexManagedTfAutoScale `json:"auto_scale,omitempty"`
-	StorageGroups      int                       `json:"storage_groups,omitempty"`
-	StorageTypeID      string                    `json:"storage_type_id,omitempty"`
-	ThrottlingRcuLimit int                       `json:"throttling_rcu_limit,omitempty"`
-}
-
-// managedAutoScaleVar maps the public AutoScale block to the terraform
-// var shape, defaulting CPUUtilizationPct to 70% when the caller leaves
-// it zero — same default the YC console offers.
-func managedAutoScaleVar(t *types.YDBManagedTopology) *yandexManagedTfAutoScale {
-	if t == nil || t.AutoScale == nil {
-		return nil
-	}
-	pct := t.AutoScale.CPUUtilizationPct
-	if pct <= 0 {
-		pct = 70
-	}
-	return &yandexManagedTfAutoScale{
-		MinSize:           t.AutoScale.MinSize,
-		MaxSize:           t.AutoScale.MaxSize,
-		CPUUtilizationPct: pct,
-	}
-}
 
 // parseYDBEndpoint splits a YC ydb_api_endpoint URL into host and port.
 // Returns ("", 0) on parse failure so callers can fall back to defaults.
@@ -709,279 +688,6 @@ func parseYDBEndpoint(raw string) (string, int) {
 		return "", 0
 	}
 	return host, port
-}
-
-func (t *machinesTask) yandexManagedYDBMachines(nc *NodeContext) error {
-	if t.settings == nil {
-		return fmt.Errorf("machines: server settings not configured for Yandex Cloud provider")
-	}
-	cloud := t.settings.Cloud
-	if err := cloud.ValidateCloud(); err != nil {
-		return fmt.Errorf("machines: %w", err)
-	}
-	yc := cloud.Yandex
-	if err := yc.Validate(); err != nil {
-		return fmt.Errorf("machines: %w", err)
-	}
-	managed := t.runCfg.Database.YDBManaged
-	if managed == nil {
-		return fmt.Errorf("machines: ydb_managed topology missing")
-	}
-
-	binaryURL := cloud.BinaryURL
-	if binaryURL == "" && t.serverAddr != "" {
-		binaryURL = t.serverAddr + "/agent/binary"
-	}
-	if binaryURL == "" {
-		return fmt.Errorf("machines: binary_url or server_addr must be configured for cloud provider")
-	}
-
-	tfFiles, err := yctfmanaged.EmbeddedTfFiles()
-	if err != nil {
-		return fmt.Errorf("machines: load managed-ydb terraform templates: %w", err)
-	}
-	if len(tfFiles) == 0 {
-		return fmt.Errorf("machines: no managed-ydb terraform templates found")
-	}
-
-	vmSpecs := make(map[string]yandexTfVM)
-	vmRoles := make(map[string]types.MachineRole)
-
-	for _, spec := range t.runCfg.Machines {
-		if spec.Role != types.RoleStroppy {
-			// Managed YDB has no DB-side machines; skip anything else
-			// that may have leaked through (defensive).
-			continue
-		}
-		for i := range spec.Count {
-			machineID := fmt.Sprintf("%s-%s-%d", t.runCfg.ID, spec.Role, i)
-
-			agentToken := ""
-			if t.jwtIssuer != nil {
-				token, err := t.jwtIssuer.Issue(auth.Claims{
-					UserID: machineID, Username: machineID, TenantID: t.tenantID, Role: "operator",
-				}, 24*time.Hour)
-				if err == nil {
-					agentToken = token
-				}
-			}
-
-			cloudInit, ciErr := agent.GenerateCloudInit(agent.CloudInitParams{
-				BinaryURL:    binaryURL,
-				ServerAddr:   t.serverAddr,
-				AgentPort:    agent.DefaultAgentPort,
-				MachineID:    machineID,
-				AgentToken:   agentToken,
-				SSHUser:      yc.SSHUser,
-				SSHPublicKey: yc.SSHPublicKey,
-			})
-			if ciErr != nil {
-				return fmt.Errorf("machines: generate cloud-init for %s: %w", machineID, ciErr)
-			}
-
-			cores := spec.CPUs
-			if cores == 0 {
-				cores = 2
-			}
-			memGB := spec.MemoryMB / 1024
-			if memGB == 0 {
-				memGB = 4
-			}
-			if cores > 0 && memGB%cores != 0 {
-				memGB = ((memGB + cores - 1) / cores) * cores
-			}
-			diskGB := spec.DiskGB
-			if diskGB == 0 {
-				diskGB = 50
-			}
-			diskType := spec.DiskType
-			if diskType == "" {
-				diskType = "network-ssd"
-			}
-			// YC io-m3 requires disk size be a multiple of 93 GiB.
-			diskGB = roundIOM3GB(diskGB, diskType)
-			netAccel := "standard"
-			if yc.SoftwareAcceleratedNetwork {
-				netAccel = "software_accelerated"
-			}
-
-			vmSpecs[machineID] = yandexTfVM{
-				Cores:                   cores,
-				Memory:                  memGB,
-				DiskSize:                diskGB,
-				DiskType:                diskType,
-				HasPublicIP:             yc.AssignPublicIP,
-				UserData:                cloudInit,
-				NetworkAccelerationType: netAccel,
-			}
-			vmRoles[machineID] = spec.Role
-		}
-	}
-
-	if len(vmSpecs) == 0 {
-		return fmt.Errorf("machines: managed YDB run has no client VM (RoleStroppy) machines")
-	}
-
-	platformID := t.runCfg.PlatformID
-	if platformID == "" {
-		platformID = yc.PlatformID
-	}
-	if platformID == "" {
-		platformID = "standard-v2"
-	}
-
-	subnetName := fmt.Sprintf("%s-%s", yc.NetworkName, t.runCfg.ID)
-	subnetCIDR := runSubnetCIDR(t.runCfg.ID, yc.SubnetCIDR)
-
-	// Managed YDB DB name has to be unique within the folder. Use a stable
-	// runID-derived suffix so tear-down/re-apply stays idempotent.
-	dbName := fmt.Sprintf("stroppy-%s", strings.ReplaceAll(t.runCfg.ID, "_", "-"))
-	if len(dbName) > 63 {
-		dbName = dbName[:63]
-	}
-
-	mgType := string(managed.Type)
-	if mgType == "" {
-		mgType = string(types.YDBManagedKindServerless)
-	}
-	locationID := yc.Zone
-	// Yandex Cloud expects a zone-less location ("ru-central1") for the
-	// managed YDB resources; the YandexCloudSettings.Zone is the per-VM
-	// zone (e.g. "ru-central1-b"), so trim the trailing zone suffix.
-	if i := strings.LastIndex(locationID, "-"); i > 0 {
-		head := locationID[:i]
-		// "ru-central1-b" → "ru-central1"; only trim when the suffix is
-		// a single short token (zone letter).
-		if len(locationID)-i <= 3 {
-			locationID = head
-		}
-	}
-
-	vars := yandexManagedTfVars{
-		Networking: yandexTfNetworking{
-			Name: subnetName, ExternalID: yc.NetworkID, CIDR: subnetCIDR, Zone: yc.Zone,
-		},
-		Compute: yandexTfCompute{
-			PlatformID: platformID, ImageID: yc.ImageID, SerialPortEnable: true, VMs: vmSpecs,
-		},
-		Managed: yandexManagedTfManaged{
-			Name:               dbName,
-			Type:               mgType,
-			FolderID:           yc.FolderID,
-			LocationID:         locationID,
-			ResourcePresetID:   managed.ResourcePresetID,
-			NodeCount:          managed.NodeCount,
-			AutoScale:          managedAutoScaleVar(managed),
-			StorageGroups:      managed.StorageGroups,
-			StorageTypeID:      managed.StorageType,
-			ThrottlingRcuLimit: managed.ThrottlingRCUs,
-		},
-	}
-
-	varFile, err := terraform.NewTfVarFile(vars)
-	if err != nil {
-		return fmt.Errorf("machines: marshal managed-ydb terraform vars: %w", err)
-	}
-
-	actor, err := terraform.NewActor()
-	if err != nil {
-		return fmt.Errorf("machines: create terraform actor: %w", err)
-	}
-
-	wdId := terraform.NewWdId(t.runCfg.ID)
-	wd := terraform.NewWorkdirWithParams(wdId,
-		terraform.WithTfFiles(tfFiles),
-		terraform.WithVarFile(varFile),
-		terraform.WithEnv(map[string]string{
-			"YC_TOKEN":     yc.Token,
-			"YC_CLOUD_ID":  yc.CloudID,
-			"YC_FOLDER_ID": yc.FolderID,
-			"YC_ZONE":      yc.Zone,
-		}),
-	)
-
-	// Record workdir before apply so an apply crash still leaves state for
-	// teardown to clean up partially created managed-YDB resources.
-	t.state.SetTerraformWdId(string(wdId))
-	t.state.SetTerraformActor(actor)
-	nc.SaveSnapshot()
-
-	nc.Log().Info("running terraform apply for Yandex Cloud Managed YDB",
-		zap.String("run_id", t.runCfg.ID),
-		zap.String("managed_type", mgType),
-		zap.Int("client_vm_count", len(vmSpecs)),
-	)
-
-	ctx := context.Context(nc)
-	output, err := actor.ApplyTerraform(ctx, wd)
-	if err != nil {
-		return fmt.Errorf("machines: terraform apply (managed ydb): %w", err)
-	}
-
-	vmIPs, err := terraform.GetTfOutputVal[yandexVmIPs](output, "vm_ips")
-	if err != nil {
-		return fmt.Errorf("machines: parse terraform output 'vm_ips': %w", err)
-	}
-	endpoint, err := terraform.GetTfOutputVal[string](output, "ydb_endpoint")
-	if err != nil {
-		return fmt.Errorf("machines: parse terraform output 'ydb_endpoint': %w", err)
-	}
-	dbPath, err := terraform.GetTfOutputVal[string](output, "ydb_database_path")
-	if err != nil {
-		return fmt.Errorf("machines: parse terraform output 'ydb_database_path': %w", err)
-	}
-
-	host, port := parseYDBEndpoint(endpoint)
-	if host == "" {
-		return fmt.Errorf("machines: cannot parse managed YDB endpoint %q", endpoint)
-	}
-	if port == 0 {
-		port = types.Protocols[types.ProtocolYDBGRPCS].Port
-	}
-
-	// Mutate the topology in place so dbDriverURL — which receives a copy
-	// of DatabaseConfig but shares the *YDBManagedTopology pointer — picks
-	// up the path when it builds the stroppy URL.
-	managed.Endpoint = endpoint
-	managed.DatabasePath = dbPath
-
-	// Capture the full terraform attribute snapshot. Best-effort: log on
-	// parse failure but don't abort — endpoint/database_path are already
-	// set, the snapshot is for UI display only.
-	if tfOut, tfErr := terraform.GetTfOutputVal[types.YDBManagedTerraformOutput](output, "ydb_managed"); tfErr == nil {
-		managed.TerraformOutput = &tfOut
-	} else {
-		nc.Log().Warn("machines: failed to parse ydb_managed terraform output", zap.Error(tfErr))
-	}
-
-	for name, role := range vmRoles {
-		vmInfo, ok := vmIPs[name]
-		if !ok {
-			return fmt.Errorf("machines: terraform output missing IP for VM %q", name)
-		}
-		ip := vmInfo.NatIP
-		if ip == "" {
-			ip = vmInfo.InternalIP
-		}
-		target := agent.Target{ID: name, Host: ip, InternalHost: vmInfo.InternalIP}
-		if role == types.RoleStroppy {
-			t.state.SetStroppyTarget(target)
-		}
-	}
-
-	t.state.SetDBEndpoint(host, port)
-	t.state.SetEffectiveConfig("database", map[string]string{
-		"kind":     "ydb-managed",
-		"type":     mgType,
-		"endpoint": endpoint,
-		"db_path":  dbPath,
-	})
-
-	nc.Log().Info("managed YDB provisioned",
-		zap.String("endpoint", endpoint),
-		zap.String("database_path", dbPath),
-	)
-	return nil
 }
 
 // teardownTask destroys containers and network.
