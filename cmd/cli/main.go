@@ -323,7 +323,20 @@ func agentCmd() *cobra.Command {
 			// machine's steps to exactly this agent (deterministic placement).
 			serverAddr := envOr("STROPPY_SERVER_ADDR", "http://127.0.0.1:8080")
 			namespace := envOr("TEMPORAL_NAMESPACE", "default")
-			taskQueue := envOr("AGENT_TASK_QUEUE", "stroppy-agent")
+			// The agent listens on a per-machine queue ("stroppy-agent-<machineID>")
+			// so the workflow can pin this machine's steps to exactly this agent
+			// (workflows.AgentQueue). Docker sets AGENT_TASK_QUEUE explicitly; cloud
+			// VMs only get STROPPY_MACHINE_ID via cloud-init, so derive the queue
+			// from it when AGENT_TASK_QUEUE is unset. A bare "stroppy-agent" (no
+			// machine id) would never match the workflow's session queue.
+			taskQueue := os.Getenv("AGENT_TASK_QUEUE")
+			if taskQueue == "" {
+				if machineID := os.Getenv("STROPPY_MACHINE_ID"); machineID != "" {
+					taskQueue = "stroppy-agent-" + machineID
+				} else {
+					taskQueue = "stroppy-agent"
+				}
+			}
 			hostPort := grpcHostPort(serverAddr)
 
 			logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
