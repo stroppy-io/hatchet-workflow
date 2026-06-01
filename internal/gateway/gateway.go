@@ -33,6 +33,11 @@ type Config struct {
 	// the gateway relays agent metrics/log ingest (/insert/*) to, so cloud VMs
 	// reach monitoring through the one public gateway address. Empty disables it.
 	MonitoringBackend string
+	// GrafanaBackend is the internal Grafana base URL (e.g. "http://grafana:3000")
+	// the gateway reverse-proxies /grafana/* to, so the embedded dashboards are
+	// served from the SAME server origin — no separate public Grafana URL needed.
+	// Grafana must serve from the /grafana sub-path. Empty disables it.
+	GrafanaBackend string
 	// HTTPFallback handles every HTTP/1.1 request that is not one of the gateway's
 	// own agent routes (/healthz, /agent/binary, /artifacts/*, /api/binaries/*).
 	// Wire the control-plane UI/API router here so the SPA + REST API are served
@@ -54,6 +59,7 @@ type Gateway struct {
 
 	fallback     http.Handler
 	monitorProxy http.Handler
+	grafanaProxy http.Handler
 
 	grpc    *grpc.Server
 	backend *grpc.ClientConn
@@ -95,6 +101,13 @@ func New(cfg Config) (*Gateway, error) {
 		}
 		g.monitorProxy = mp
 	}
+	if cfg.GrafanaBackend != "" {
+		gp, err := newMonitorProxy(cfg.GrafanaBackend) // same single-host reverse proxy
+		if err != nil {
+			return nil, fmt.Errorf("gateway: grafana backend %q: %w", cfg.GrafanaBackend, err)
+		}
+		g.grafanaProxy = gp
+	}
 	g.http = &http.Server{Handler: http.HandlerFunc(g.serveHTTP), ReadHeaderTimeout: 30 * time.Second}
 	return g, nil
 }
@@ -115,6 +128,9 @@ func (g *Gateway) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	case g.monitorProxy != nil && strings.HasPrefix(r.URL.Path, "/insert/"):
 		// Agent metrics/log ingest relayed to the internal vmauth.
 		g.monitorProxy.ServeHTTP(w, r)
+	case g.grafanaProxy != nil && (r.URL.Path == "/grafana" || strings.HasPrefix(r.URL.Path, "/grafana/")):
+		// Embedded Grafana served from the server origin (sub-path /grafana).
+		g.grafanaProxy.ServeHTTP(w, r)
 	case g.fallback != nil:
 		// Control-plane UI + REST API (SPA, /api/v1/...) on the same port.
 		g.fallback.ServeHTTP(w, r)

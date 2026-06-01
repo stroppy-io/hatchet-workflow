@@ -168,7 +168,8 @@ func serveCmd() *cobra.Command {
 				CacheDir:          envOrDefault("STROPPY_BINARY_CACHE_DIR", "/var/lib/stroppy-cache/binaries"),
 				Artifacts:         map[string]string{"stroppy": os.Getenv("STROPPY_UPSTREAM")},
 				AptBackend:        os.Getenv("STROPPY_APT_CACHE_BACKEND"),
-				MonitoringBackend: monitoringURL, // relay agent /insert/* → vmauth for cloud VMs
+				MonitoringBackend: monitoringURL,                // relay agent /insert/* → vmauth for cloud VMs
+				GrafanaBackend:    os.Getenv("GRAFANA_BACKEND"), // serve /grafana/* from the server origin
 				HTTPFallback:      srv.Router(),
 				Logger:            slogger,
 			})

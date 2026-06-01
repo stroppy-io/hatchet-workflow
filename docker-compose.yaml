@@ -81,8 +81,11 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: ${GF_ANON_ENABLED:-true}
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
       GF_SECURITY_ALLOW_EMBEDDING: "true"
-      GF_SERVER_ROOT_URL: ${GF_ROOT_URL:-http://localhost:3001}
-      GF_SERVER_SERVE_FROM_SUB_PATH: ${GF_SERVE_SUB_PATH:-false}
+      # Grafana is reached through the server gateway at <server>/grafana (no
+      # separate public Grafana URL). Serve from the /grafana sub-path; the
+      # root_url path must be /grafana (domain is only used for absolute links).
+      GF_SERVER_ROOT_URL: ${GF_ROOT_URL:-http://localhost:8080/grafana/}
+      GF_SERVER_SERVE_FROM_SUB_PATH: ${GF_SERVE_SUB_PATH:-true}
     volumes:
       - grafanadata:/var/lib/grafana
       - ./deployments/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -168,7 +171,10 @@ services:
       JWT_SECRET: ${JWT_SECRET:-stroppy-dev-secret}
       MONITORING_URL: http://vmauth:8427
       MONITORING_TOKEN: ${MONITORING_TOKEN:-stroppy-monitoring-secret}
-      GRAFANA_URL: ${GRAFANA_URL:-http://grafana:3000}
+      # grafana.url returned to the SPA: a SAME-ORIGIN relative path served by the
+      # gateway (GRAFANA_BACKEND) — no separate public Grafana URL per environment.
+      GRAFANA_URL: ${GRAFANA_URL:-/grafana}
+      GRAFANA_BACKEND: ${GRAFANA_BACKEND:-http://grafana:3000}
       STROPPY_ADMIN_PASSWORD: ${STROPPY_ADMIN_PASSWORD:-}
       STROPPY_MIN_VERSION: ${STROPPY_MIN_VERSION:-5.1.2}
       # --- Temporal + gateway wiring ---
