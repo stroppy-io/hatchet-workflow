@@ -1332,13 +1332,20 @@ func (s *Server) runTimeWindow(ctx context.Context, rec *types.RunRecord) (time.
 		switch st.GetStatus() {
 		case common.Status_STATUS_COMPLETED, common.Status_STATUS_FAILED,
 			common.Status_STATUS_CANCELLED, common.Status_STATUS_SKIPPED:
-			// Terminal: use the latest finished_at across stages if available.
+			// Terminal: end the window at the LATEST stage finish (teardown),
+			// not the earliest — on cloud the benchmark runs minutes after
+			// launch (deploy + install), so a window anchored to the first
+			// finished stage misses all the metrics.
+			var latest time.Time
 			for _, stg := range st.GetStages() {
 				if fa := stg.GetFinishedAt(); fa != nil {
-					if t := fa.AsTime(); t.After(start) && t.Before(end) {
-						end = t
+					if t := fa.AsTime(); t.After(latest) {
+						latest = t
 					}
 				}
+			}
+			if latest.After(start) {
+				end = latest
 			}
 		}
 	}
