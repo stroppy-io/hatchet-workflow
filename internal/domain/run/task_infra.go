@@ -351,13 +351,20 @@ func (t *machinesTask) yandexMachines(nc *NodeContext) error {
 		return fmt.Errorf("machines: %w", err)
 	}
 
-	// Determine binary URL for cloud-init.
-	binaryURL := cloud.BinaryURL
-	if binaryURL == "" && t.serverAddr != "" {
-		binaryURL = t.serverAddr + "/agent/binary"
+	// Cloud VMs reach the control plane over the PUBLIC address (cloud.server_addr,
+	// the cloud-init callback address) — NOT the docker-internal AGENT_SERVER_ADDR
+	// (t.serverAddr) used by in-cluster docker agents, which a YC VM can't resolve.
+	serverAddr := cloud.ServerAddr
+	if serverAddr == "" {
+		serverAddr = t.serverAddr
 	}
+	if serverAddr == "" {
+		return fmt.Errorf("machines: cloud server_addr must be configured for cloud provider")
+	}
+	// Determine binary URL for cloud-init (defaults to self-serve via the gateway).
+	binaryURL := cloud.BinaryURL
 	if binaryURL == "" {
-		return fmt.Errorf("machines: binary_url or server_addr must be configured for cloud provider")
+		binaryURL = serverAddr + "/agent/binary"
 	}
 
 	// Build VM specs for each machine. For Managed YDB the topology has no
@@ -403,7 +410,7 @@ func (t *machinesTask) yandexMachines(nc *NodeContext) error {
 
 			cloudInit, ciErr := agent.GenerateCloudInit(agent.CloudInitParams{
 				BinaryURL:    binaryURL,
-				ServerAddr:   t.serverAddr,
+				ServerAddr:   serverAddr,
 				AgentPort:    agent.DefaultAgentPort,
 				MachineID:    machineID,
 				AgentToken:   agentToken,
